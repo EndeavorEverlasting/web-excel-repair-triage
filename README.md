@@ -1,8 +1,54 @@
 # Web-Excel Repair Triage
 
-A local, browser-based tool that diagnoses why `.xlsx` workbooks trigger the
-**"Fix this workbook?" / WORKBOOK REPAIRED** banner in Excel for Web (OneDrive /
-SharePoint), and proposes minimal byte-level patch recipes to eliminate it.
+> **Diagnose, diff, patch, and verify `.xlsx` workbooks that trigger the
+> "Fix this workbook?" / WORKBOOK REPAIRED banner in Excel for Web —
+> without touching OneDrive manually.**
+
+---
+
+## What Is This?
+
+When you open an `.xlsx` file in Excel for Web (OneDrive / SharePoint), the
+browser sometimes shows a yellow banner:
+
+> **"We found a problem with some content in 'MyFile.xlsx'. Do you want us to
+> try to recover as much as we can?"**
+
+or silently repairs the file and shows **WORKBOOK REPAIRED** in the title bar.
+This means Excel for Web found a structural defect in the OOXML package and
+auto-corrected it — often changing the file in ways that break formulas,
+conditional formatting, or shared-string references.
+
+**Web-Excel Repair Triage** is a local, browser-based tool that:
+
+| Capability | How |
+|-----------|-----|
+| 🔍 **Diagnoses** the exact structural defect | 10 gate checks scan the raw ZIP/XML |
+| 🔀 **Diffs** your file against Excel's repaired version | SHA-256 per ZIP part + unified XML diff |
+| 🧩 **Classifies** the repair into named patterns | 7 known Excel-for-Web repair behaviours |
+| 🩹 **Generates** a minimal byte-level patch recipe | JSON recipe — no XML reserialization |
+| ⚙️ **Applies** the patch and exports a clean `.xlsx` | Byte-safe patcher, no openpyxl/lxml |
+| 🌐 **Verifies** the fix via Microsoft Graph API | Upload → createSession → listWorksheets |
+| 🤖 **Exposes all phases as MCP tools** | Augment Code ("auggie") can call them directly |
+
+### Who is it for?
+
+- **Excel power users** who build complex workbooks and need to understand why
+  OneDrive keeps repairing them.
+- **Developers** who generate `.xlsx` files programmatically and need to
+  validate OOXML compliance before deployment.
+- **IT / SharePoint admins** who need a repeatable, auditable repair workflow.
+
+### Key design decisions
+
+- **No XML reserialization** — all patches are byte/string-level (`str.replace`,
+  slice-and-splice). Zero risk of whitespace or attribute-order drift.
+- **Python stdlib only** for the core engine — `zipfile`, `hashlib`, `re`,
+  `difflib`, `urllib`. Streamlit is the only UI dependency.
+- **Patch recipes are plain JSON** — version-control them, share them, apply
+  them in CI pipelines.
+- **MCP-first** — every triage phase is also an MCP tool, so Augment Code can
+  orchestrate the full pipeline from a chat prompt.
 
 ---
 
@@ -206,6 +252,82 @@ Tokens expire after ~1 hour.
 
 ---
 
+## Patch Recipe Versioning Workflow
+
+The patch recipe is the core artifact of the triage process. Here is the
+full iterative lifecycle for generating and refining a recipe until the
+workbook passes the Graph probe.
+
+### Version 1 — Gate-only auto-recipe (no repaired file needed)
+
+```
+Tab 1 / Tab 2  →  run gate checks on Candidate
+Tab 5          →  click "Generate Recipe"
+               →  auto-recipe v1 is created (gate findings only)
+               →  save to Outputs/ as  MyBook_recipe_v1.json
+```
+
+The `version` field in the JSON will be `"1"`. Operations that need manual
+input contain `<FILL_IN_...>` placeholders.
+
+### Version 2 — Richer recipe (gate + diff patterns)
+
+```
+Tab 3          →  upload Repaired file → run diff
+Tab 4          →  patterns detected automatically
+Tab 5          →  click "Generate Recipe" again
+               →  recipe now includes pattern-derived operations
+               →  save as  MyBook_recipe_v2.json
+```
+
+### Filling in placeholders
+
+Open the recipe JSON in any text editor. Replace every `<FILL_IN_...>` value
+with the exact byte string from the XML diff (Tab 3 copy button). Example:
+
+```json
+// Before (auto-generated):
+"match": "<FILL_IN_MATCH>",
+"replacement": "<FILL_IN_REPLACEMENT>"
+
+// After (manually edited):
+"match": "count=\"3\"",
+"replacement": "count=\"5\""
+```
+
+### Bumping the version
+
+Each time you edit and re-apply a recipe, increment the `version` field:
+
+```json
+{ "version": "3", "source_file": "MyBook.xlsx", ... }
+```
+
+This makes it easy to track which iteration produced which patched file.
+
+### Apply → Test → Iterate
+
+```
+Tab 5  →  upload edited recipe JSON (Override section)
+       →  click "Apply & Export"
+       →  patched file saved to Outputs/MyBook_patched.xlsx
+
+Tab 6  →  upload patched file as Candidate
+       →  click "Upload & Test"
+       →  if PASS → promote to Active/
+       →  if FAIL → read error, edit recipe, bump version, repeat
+```
+
+### Recipe as code
+
+Because recipes are plain JSON, you can:
+- **Version-control** them alongside the workbook in git
+- **Share** them with colleagues who have the same workbook
+- **Apply** them in a CI pipeline: `python -c "from triage.patcher import apply_recipe_from_file; apply_recipe_from_file('Candidates/MyBook.xlsx', 'Outputs/MyBook_recipe_v3.json', 'Outputs/MyBook_patched.xlsx')"`
+- **Ask auggie** to generate or refine a recipe via the MCP tools (see § MCP Configuration below)
+
+---
+
 ## GitHub Setup (first time)
 
 ```bash
@@ -258,7 +380,184 @@ That's it — the full triage tool is running in your browser.
 | `triage/report.py` | Build and merge `PatchRecipe` objects; serialize to JSON |
 | `triage/patcher.py` | Apply a `PatchRecipe` to a ZIP, write output file |
 | `triage/graph_probe.py` | Microsoft Graph API upload-and-test probe |
+| `triage/agents.py` | One agent class per phase + `TriageOrchestrator` |
+| `mcp_server.py` | MCP server — exposes all agents as callable tools |
 | `app.py` | Streamlit UI — 6 tabs wiring all modules together |
+
+---
+
+## AI Agents
+
+`triage/agents.py` wraps each triage module in a clean agent class so the
+pipeline can be driven from code, scripts, or the MCP server — not just the UI.
+
+### Agent classes
+
+| Agent | Phase | `.run()` signature | Returns |
+|-------|-------|--------------------|---------|
+| `GateCheckAgent` | 1 | `run(candidate_path)` | `GateReport` |
+| `DiffAgent` | 2 | `run(candidate_path, repaired_path)` | `DiffReport` |
+| `PatternAgent` | 3 | `run(diff_report)` | `List[Pattern]` |
+| `RecipeAgent` | 4 | `run(source_file, gate_report, patterns)` | `PatchRecipe` |
+| `PatchAgent` | 5 | `run(candidate_path, recipe_dict, output_path)` | `str` (path) |
+| `GraphProbeAgent` | 6 | `run(token, candidate_path, remote_name)` | `GraphResult` |
+| `TriageOrchestrator` | All | `run_full_pipeline(candidate, repaired, token)` | `dict` |
+
+### Using agents from a script
+
+```python
+from triage.agents import TriageOrchestrator
+
+orch = TriageOrchestrator()
+result = orch.run_full_pipeline(
+    candidate_path="Candidates/MyBook.xlsx",
+    repaired_path="Repaired/MyBook.xlsx",   # optional
+    token=None,                              # set to Graph token to probe
+)
+
+print(result["gate_report"]["pass_all"])    # True / False
+print(result["recipe_json"])                # pretty-printed JSON recipe
+```
+
+### Using a single agent
+
+```python
+from triage.agents import GateCheckAgent, RecipeAgent
+
+gate = GateCheckAgent().run("Candidates/MyBook.xlsx")
+print(gate.failing_gates)   # {"calcchain_invalid": 3, ...}
+
+recipe = RecipeAgent().run(
+    source_file="Candidates/MyBook.xlsx",
+    gate_report=gate,
+)
+print(recipe.to_json())
+```
+
+### Extending the pipeline
+
+To add a new phase:
+1. Add a module in `triage/` with a pure function that takes/returns dataclasses.
+2. Add an agent class in `triage/agents.py` wrapping that function.
+3. Add an `@mcp.tool()` in `mcp_server.py` wrapping the agent.
+4. Wire it into `TriageOrchestrator.run_full_pipeline()`.
+
+---
+
+## MCP Configuration (Augment Code / "auggie")
+
+The MCP server (`mcp_server.py`) exposes all 7 triage tools so that Augment
+Code can call them directly from the chat panel — no Streamlit UI needed.
+
+### Step 1 — Install the dependency
+
+```bash
+pip install "mcp[cli]"
+```
+
+### Step 2 — Start the MCP server
+
+Keep this running in a terminal while you use Augment Code:
+
+```bash
+# From the project root:
+python mcp_server.py
+```
+
+The server communicates over **stdio** (standard input/output), which is the
+default transport for local MCP servers. No port or network config needed.
+
+### Step 3 — Register in Augment Code (VS Code)
+
+Open the Augment panel → **⚙ Settings** (gear icon, top-right) → **MCP** section.
+
+Click **Import from JSON** and paste:
+
+```json
+{
+  "mcpServers": {
+    "excel-triage": {
+      "command": "python",
+      "args": ["${workspaceFolder}/mcp_server.py"]
+    }
+  }
+}
+```
+
+> **`${workspaceFolder}`** expands to the project root automatically when
+> Augment Code is open in the `web-excel-repair-triage` folder.
+
+Click **Save**. The server appears in the MCP list. Augment will restart it
+automatically each session.
+
+### Step 4 — Use the tools from auggie
+
+Once registered, you can ask auggie things like:
+
+```
+Run gate checks on Candidates/MyBook.xlsx and tell me what's failing.
+```
+```
+Generate a patch recipe for Candidates/MyBook.xlsx using Repaired/MyBook.xlsx.
+```
+```
+Apply the recipe in Outputs/MyBook_recipe_v2.json to Candidates/MyBook.xlsx
+and save the result to Outputs/MyBook_patched.xlsx.
+```
+```
+Run the full triage pipeline on Candidates/MyBook.xlsx and Repaired/MyBook.xlsx.
+```
+
+Auggie will call the appropriate MCP tool, stream the result back, and can
+chain multiple tools in a single conversation turn.
+
+### MCP tools reference
+
+| Tool | Description |
+|------|-------------|
+| `run_gate_checks(candidate_path)` | Phase 1 — 10 structural checks |
+| `run_diff(candidate_path, repaired_path)` | Phase 2 — part-level diff |
+| `detect_patterns(candidate_path, repaired_path)` | Phase 3 — pattern classification |
+| `generate_recipe(candidate_path, repaired_path?)` | Phase 4 — build recipe JSON |
+| `apply_patch_recipe(candidate_path, recipe_json, output_path?)` | Phase 5 — apply patch |
+| `graph_probe(token, candidate_path, remote_name?)` | Phase 6 — Graph API probe |
+| `run_full_pipeline(candidate_path, repaired_path?, token?)` | All phases in one call |
+
+### Environment variables (optional)
+
+If you prefer not to pass the Graph token in every prompt, set it as an
+environment variable and the server will pick it up:
+
+```bash
+# Windows PowerShell:
+$env:GRAPH_TOKEN = "eyJ0eXAiOiJKV1Q..."
+python mcp_server.py
+```
+
+Then in auggie: *"Run a graph probe on Candidates/MyBook.xlsx"* — the server
+reads `GRAPH_TOKEN` automatically.
+
+### Alternative: VS Code `settings.json`
+
+If you prefer to configure MCP via the VS Code settings file directly:
+
+```json
+// .vscode/settings.json  (or user settings)
+{
+  "augment.advanced": {
+    "mcpServers": [
+      {
+        "name": "excel-triage",
+        "command": "python",
+        "args": ["${workspaceFolder}/mcp_server.py"],
+        "env": {
+          "GRAPH_TOKEN": "<paste-token-here>"
+        }
+      }
+    ]
+  }
+}
+```
 
 ---
 
