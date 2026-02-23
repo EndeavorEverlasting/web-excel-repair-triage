@@ -36,9 +36,25 @@ To use a different port: `python -m streamlit run app.py --server.port 8502`
 | `Candidates/` | Next-version workbooks under test for promotion to Active |
 | `Repaired/` | What Excel for Web outputs after it "repairs" a Candidate |
 | `Deprecated/` | Confirmed non-working / retired workbooks |
+| `Outputs/` | Generated triage outputs — patched `.xlsx` files and saved recipe `.json` files |
 | `triage/` | Core Python engine (scanner, gate checks, diff, patcher, …) |
 | `Scripts to Start with/` | Original prototype scripts (kept for reference) |
 | `Web Excel Compatibility Rules/` | Reference workbooks documenting OOXML rules |
+
+### Workbook lifecycle
+
+```
+Candidates/ ──► (run triage) ──► Outputs/ (patched .xlsx + recipe .json)
+                                      │
+                          passes probe ▼
+                               Active/
+                                      │
+                     Excel repairs it ▼
+                              Repaired/   ◄── upload to Part Diff tab
+                                      │
+                       confirmed broken ▼
+                             Deprecated/
+```
 
 ---
 
@@ -52,8 +68,10 @@ To use a different port: `python -m streamlit run app.py --server.port 8502`
 3. **Bearer Token** *(optional)* — a Microsoft Graph API access token for the
    Graph Probe tab.
 
-The sidebar also shows **folder shortcuts** listing your Active, Candidate, and
-Repaired files so you can quickly identify which files to upload.
+The sidebar also shows **folder shortcuts** listing every `.xlsx` and `.json` file
+in each lifecycle folder — full filenames, never truncated — so you can quickly
+identify which files to upload.  The `Outputs/` folder is included so you can
+see previously generated patches at a glance.
 
 ---
 
@@ -84,41 +102,88 @@ show a JSON sample of the first offending items.
 
 Requires a Repaired file. Shows:
 - Summary counts (added / removed / changed / unchanged ZIP entries)
-- Per-changed-part size delta
-- Expandable unified diff of the XML content
+- Per-changed-part size delta and unified XML diff
+- **Copy button** on every diff block (top-right of the code block)
+- **Download diff** button per part, plus **Download ALL diffs** as a single `.txt`
 
 ### Tab 4 — 🧩 Patterns
 
-Automatically classifies the diff into known repair patterns:
+Automatically classifies the diff into named repair patterns:
 
-| Pattern | Meaning |
-|---------|---------|
-| `CALCCHAIN_DROP` | Excel deleted `calcChain.xml` |
-| `DXFS_INSERTION` | Excel appended missing `<dxf>` blocks to `styles.xml` |
-| `CF_DXFID_CLONE` | Excel remapped `cfRule/@dxfId` references |
-| `SHAREDSTRINGS_REBUILD` | Shared-strings table was rewritten |
-| `TABLE_STYLE_NORM` | Table style references were normalized |
-| `SHARED_REF_TRIM` | Shared-formula `ref=` attributes were trimmed |
-| `RELS_CLEANUP` | Orphaned relationship entries were removed |
+| Pattern | Confidence | Meaning |
+|---------|-----------|---------|
+| `CALCCHAIN_DROP` | HIGH | Excel deleted `calcChain.xml` — invalid cell references in it |
+| `DXFS_INSERTION` | HIGH | Excel appended missing `<dxf>` blocks to `styles.xml` |
+| `CF_DXFID_CLONE` | MEDIUM | Excel remapped `cfRule/@dxfId` references |
+| `SHAREDSTRINGS_REBUILD` | MEDIUM | Shared-strings table was rewritten |
+| `TABLE_STYLE_NORM` | LOW | Table style references were normalized |
+| `SHARED_REF_TRIM` | MEDIUM | Shared-formula `ref=` attributes were trimmed |
+| `RELS_CLEANUP` | HIGH | Orphaned relationship entries were removed |
 
-Each pattern shows a confidence badge (HIGH / MEDIUM / LOW) and a patch hint.
+Each pattern card shows a **patch hint** with a copy button.
 
 ### Tab 5 — 🩹 Patch & Export
 
 - **Auto-generated recipe**: JSON patch recipe built from gate findings and
-  detected patterns. You can download it as `patch_recipe.json`.
-- **Apply Recipe**: click **Apply & Export** to write patches into a copy of the
-  Candidate and download the result as `*_patched.xlsx`.
-- **Override**: upload your own edited `patch_recipe.json` to apply custom patches.
+  detected patterns. Metrics show how many operations need manual review.
+- **Copy button** on the recipe JSON block (top-right).
+- **Download** the recipe as `<stem>_recipe_<timestamp>.json`.
+- **Save to Outputs/** button writes the recipe to disk immediately.
+- **Apply & Export**: applies the recipe to a copy of the Candidate, saves the
+  patched `.xlsx` to `Outputs/` on disk, and offers a browser download.
+- **Override**: upload your own edited recipe JSON to apply custom patches.
 
 #### Patch Operation Reference
 
-| `operation` | Fields | Effect |
-|-------------|--------|--------|
-| `literal_replace` | `match`, `replacement`, `occurrence` | Replace Nth occurrence of a byte string (no XML parse) |
-| `append_block` | `anchor`, `block`, `position` (`before`/`after`) | Insert a text block relative to an anchor string |
-| `delete_part` | *(none)* | Remove the ZIP entry entirely |
+| `operation` | Required fields | Effect |
+|-------------|----------------|--------|
+| `delete_part` | *(none)* | Remove the ZIP entry entirely (e.g. drop `calcChain.xml`) |
+| `literal_replace` | `match`, `replacement`, `occurrence` | Replace the Nth occurrence of a byte string — **no XML parse** |
+| `append_block` | `anchor`, `block`, `position` | Insert text `before` or `after` an anchor string |
 | `set_part` | `content` | Replace the entire ZIP entry with new text |
+
+> **Key constraint:** this tool never re-serializes XML. All mutations are
+> byte/string-level, guaranteeing no whitespace or attribute-order drift.
+
+#### `patch_recipe.json` schema
+
+```json
+{
+  "schema_version": "1.0",
+  "id": "unique-uuid-string",
+  "created": "2026-02-23T12:00:00",
+  "source_file": "MyWorkbook.xlsx",
+  "patches": [
+    {
+      "id": "patch-uuid",
+      "part": "xl/calcChain.xml",
+      "operation": "delete_part",
+      "description": "Drop invalid calcChain — Excel for Web will rebuild it"
+    },
+    {
+      "id": "patch-uuid-2",
+      "part": "xl/styles.xml",
+      "operation": "literal_replace",
+      "description": "Fix dxfs count attribute",
+      "match": "count=\"3\"",
+      "replacement": "count=\"4\"",
+      "occurrence": 1
+    },
+    {
+      "id": "patch-uuid-3",
+      "part": "xl/worksheets/sheet1.xml",
+      "operation": "append_block",
+      "description": "Insert missing dxf entry",
+      "anchor": "</dxfs>",
+      "block": "<dxf><fill><patternFill patternType=\"none\"/></fill></dxf>",
+      "position": "before"
+    }
+  ]
+}
+```
+
+Placeholders like `<FILL_IN_MATCH>` appear when the engine cannot determine the
+exact byte string automatically — edit these before applying.
 
 ### Tab 6 — 🌐 Graph Probe
 
@@ -127,10 +192,12 @@ Calls the Microsoft Graph API to verify that Excel for Web can open the workbook
 browser.
 
 **Setup** — get a token with `Files.ReadWrite` scope:
-```
-https://developer.microsoft.com/en-us/graph/graph-explorer
-```
-Log in, copy the **Access token** from the top-right, paste into the sidebar.
+1. Go to [Graph Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer)
+2. Sign in with your Microsoft account
+3. Copy the **Access token** from the *Access token* tab
+4. Paste into the **Bearer Token** field in the sidebar
+
+Tokens expire after ~1 hour.
 
 **Modes**:
 - **Upload & test** — uploads your Candidate directly from the app, runs the probe, result in seconds.
@@ -172,7 +239,51 @@ That's it — the full triage tool is running in your browser.
   mutations are byte/string-level (`str.replace`, slice-and-splice). This
   guarantees no whitespace or attribute-order changes that could confuse Excel.
 - Gate checks process each ZIP part once using split-based cell scanning
-  (O(n), not O(n²) regex backtracking) — a 7,000-row workbook scans in < 1 s.
+  (`xml.split("</c>")`) — O(n), not O(n²) regex backtracking. A 7,000-row
+  workbook scans in < 1 s.
 - The patch recipe is a plain JSON file — you can author, edit, version-control,
   and share recipes independently of the workbooks.
+- `Outputs/` is the single landing zone for all generated files. Patched `.xlsx`
+  files are excluded from git (re-generatable); recipe `.json` files are tracked
+  by default (valuable, small, human-readable).
+
+### Module map
+
+| Module | Responsibility |
+|--------|---------------|
+| `triage/scanner.py` | ZIP traversal, part extraction, SHA-256 hashing |
+| `triage/gate_checks.py` | 10 structural hazard checks → `GateReport` |
+| `triage/diff.py` | Part-level diff between two `.xlsx` files → `DiffReport` |
+| `triage/patterns.py` | Classify `DiffReport` into named `Pattern` objects |
+| `triage/report.py` | Build and merge `PatchRecipe` objects; serialize to JSON |
+| `triage/patcher.py` | Apply a `PatchRecipe` to a ZIP, write output file |
+| `triage/graph_probe.py` | Microsoft Graph API upload-and-test probe |
+| `app.py` | Streamlit UI — 6 tabs wiring all modules together |
+
+---
+
+## Contributing / Development
+
+```bash
+# Run the app in dev mode (auto-reloads on file save)
+python -m streamlit run app.py --server.runOnSave true
+
+# Syntax-check all modules
+python -c "
+import ast, pathlib
+for f in pathlib.Path('.').rglob('*.py'):
+    try: ast.parse(f.read_text(encoding='utf-8'))
+    except SyntaxError as e: print(f'{f}: {e}')
+print('All OK')
+"
+```
+
+**Adding a new gate check:**
+1. Add a function `check_<name>(parts: dict[str, bytes]) -> list[str]` in `triage/gate_checks.py`
+2. Register it in `ALL_CHECKS` at the bottom of that file
+3. Add a row to the gate table in `app.py` (`ALL_GATES`) and in this README
+
+**Adding a new patch operation:**
+1. Add a handler in `triage/patcher.py` → `_apply_one(op, part_bytes) -> bytes`
+2. Document the required fields in the schema table above
 
