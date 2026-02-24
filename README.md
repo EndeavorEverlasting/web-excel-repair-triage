@@ -54,23 +54,99 @@ conditional formatting, or shared-string references.
 
 ## Quick Start
 
-```bash
-# 1. Clone (once per machine)
-git clone https://github.com/<you>/web-excel-repair-triage.git
-cd web-excel-repair-triage
+> **Estimated time: 5 minutes** — even if you have never used a terminal before.
 
-# 2. Install the single dependency
-pip install -r requirements.txt
+### Step 0 — Things you need (one-time setup)
 
-# 3. Run
+| Requirement | How to get it | Check you have it |
+|-------------|---------------|-------------------|
+| **Python 3.11 or newer** | [python.org/downloads](https://www.python.org/downloads/) — use the big yellow button, run the installer, **tick "Add python.exe to PATH"** | Open a terminal, type `python --version` → should print `3.11` or higher |
+| **git** | [git-scm.com/downloads](https://git-scm.com/downloads) — default options are fine | Type `git --version` → should print a version number |
+
+**How to open a terminal on Windows:**
+Press **Win + R**, type `powershell`, press Enter.
+Or open the Start menu and search for **PowerShell**.
+
+---
+
+### Step 1 — Get the code (once per machine)
+
+```powershell
+git clone https://github.com/EndeavorEverlasting/web-excel-repair-triage.git
+cd "web-excel-repair-triage"
+```
+
+This downloads the project into a folder called `web-excel-repair-triage`
+on your Desktop (wherever PowerShell was pointing when you ran it).
+If you already have the folder, skip this — just `cd` into it.
+
+---
+
+### Step 2 — Install dependencies (once per machine)
+
+```powershell
+pip install streamlit "mcp[cli]"
+```
+
+`pip` is Python's package manager — it comes with Python automatically.
+This installs two packages:
+
+| Package | What it does |
+|---------|-------------|
+| `streamlit` | Turns the Python script into a browser app |
+| `mcp[cli]` | Lets Augment Code ("auggie") call the triage tools directly |
+
+You will see a lot of text scroll by. When it stops and you see `Successfully installed`, you are done.
+
+---
+
+### Step 3 — Open the app
+
+```powershell
 python -m streamlit run app.py
 ```
 
-The app opens automatically at **http://localhost:8501**.  
-To use a different port: `python -m streamlit run app.py --server.port 8502`
+**What you should see in the terminal:**
 
-> **Python 3.11+** required. The core engine uses only stdlib (`zipfile`,
-> `hashlib`, `re`, `difflib`, `urllib`) — no openpyxl, no lxml.
+```
+  You can now view your Streamlit app in your browser.
+  Local URL: http://localhost:8501
+```
+
+Your browser will open automatically. If it does not, copy
+**http://localhost:8501** and paste it into your browser's address bar.
+
+> **To stop the app:** click back into the terminal and press **Ctrl + C**.
+> **To restart it:** run the same `python -m streamlit run app.py` command again.
+> **Different port:** `python -m streamlit run app.py --server.port 8502`
+
+---
+
+### Every time after that (daily use)
+
+```powershell
+# 1. Open PowerShell
+# 2. Navigate to the project folder:
+cd "C:\path\to\web-excel-repair-triage"
+
+# 3. Start the app:
+python -m streamlit run app.py
+```
+
+That is all. Steps 0–2 only happen once.
+
+---
+
+### Pulling updates from GitHub
+
+If someone pushed new features and you want them:
+
+```powershell
+git pull
+python -m streamlit run app.py
+```
+
+No reinstalling needed unless `requirements.txt` changed (the terminal will tell you if it did).
 
 ---
 
