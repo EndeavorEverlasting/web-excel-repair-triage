@@ -9,12 +9,12 @@
 ## What Is This?
 
 When you open an `.xlsx` file in Excel for Web (OneDrive / SharePoint), the
-browser sometimes shows a yellow banner:
+browser sometimes shows a green banner:  
 
 > **"We found a problem with some content in 'MyFile.xlsx'. Do you want us to
 > try to recover as much as we can?"**
 
-or silently repairs the file and shows **WORKBOOK REPAIRED** in the title bar.
+or silently repairs the file and shows **WORKBOOK REPAIRED** in the title bar.  
 This means Excel for Web found a structural defect in the OOXML package and
 auto-corrected it — often changing the file in ways that break formulas,
 conditional formatting, or shared-string references.

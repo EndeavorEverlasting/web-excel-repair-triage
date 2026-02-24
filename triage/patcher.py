@@ -57,6 +57,34 @@ class PatchError(Exception):
     pass
 
 
+class PatchWarning(Exception):
+    """
+    Raised when the patch engine wrote a valid output file but skipped one or
+    more stub placeholder patches (REVIEW_REQUIRED / FILL_IN_*) that require
+    human editing before they can be applied.
+
+    Attributes
+    ----------
+    output_path : str
+        Path of the successfully-written patched file.
+    skipped : list[str]
+        Human-readable descriptions of every skipped stub.
+    """
+    def __init__(self, message: str, output_path: str, skipped: list):
+        super().__init__(message)
+        self.output_path = output_path
+        self.skipped = skipped
+
+
+# Placeholder values emitted by recipe_from_patterns() and recipe_from_gates()
+# for patches that need human review before they can be applied literally.
+STUB_PLACEHOLDERS: frozenset[str] = frozenset({
+    "<REVIEW_REQUIRED>",
+    "<FILL_IN_LINEFEED_VALUE>",
+    "<FILL_IN_CLEAN_VALUE>",
+})
+
+
 def _encode(s: str | bytes) -> bytes:
     return s.encode("utf-8") if isinstance(s, str) else s
 
@@ -134,11 +162,25 @@ def apply_recipe(
 
     deleted: set[str] = set()
     errors: List[str] = []
+    skipped: List[str] = []
 
     for patch in recipe.get("patches", []):
         pid = patch.get("id", "?")
         part = patch.get("part")
         op = patch.get("operation")
+
+        # ── Stub detection ────────────────────────────────────────────────
+        # recipe_from_patterns() emits literal_replace stubs with sentinel
+        # values (e.g. "<REVIEW_REQUIRED>") to signal that a human must fill
+        # in the real match/replacement before the patch can run.  Attempting
+        # a byte-level search for those sentinel strings would always fail, so
+        # we skip them here and surface them as warnings, not errors.
+        if op == "literal_replace":
+            match_val = patch.get("match", "")
+            if match_val in STUB_PLACEHOLDERS:
+                desc = patch.get("description", "(no description)")
+                skipped.append(f"[{pid}] STUB SKIPPED — {desc}")
+                continue
 
         if op == "delete_part":
             if part in parts:
@@ -158,7 +200,7 @@ def apply_recipe(
         except PatchError as e:
             errors.append(f"[{pid}] {e}")
 
-    # Write output ZIP
+    # Write output ZIP (always, so a partially-applied patch is still usable)
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as zout:
         for name, data in parts.items():
@@ -167,8 +209,18 @@ def apply_recipe(
 
     Path(output_path).write_bytes(buf.getvalue())
 
+    # Hard failures → PatchError (file was written but may be incomplete)
     if errors:
         raise PatchError("Patch completed with errors:\n" + "\n".join(errors))
+
+    # Stubs-only → PatchWarning (file is valid; human must fill placeholders)
+    if skipped:
+        raise PatchWarning(
+            f"Patch applied — {len(skipped)} stub(s) skipped (need manual review):\n"
+            + "\n".join(skipped),
+            output_path=output_path,
+            skipped=skipped,
+        )
 
     return output_path
 

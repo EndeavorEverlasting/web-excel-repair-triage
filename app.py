@@ -23,7 +23,7 @@ from triage.gate_checks import run_all, GateReport
 from triage.diff import diff_packages, DiffReport
 from triage.patterns import detect_all, Pattern
 from triage.report import recipe_from_gates, recipe_from_patterns, merge_recipes, PatchRecipe
-from triage.patcher import apply_recipe, PatchError
+from triage.patcher import apply_recipe, PatchError, PatchWarning
 
 # ── output folder ─────────────────────────────────────────────────────────────
 OUTPUTS_DIR = Path("Outputs")
@@ -490,11 +490,24 @@ any machine — all without needing the original workbook open.
     )
 
     if st.button("Apply & Export", type="primary"):
+        warn_exc: PatchWarning | None = None
         try:
             final_recipe = json.loads(uploaded_recipe.read()) if uploaded_recipe else recipe_dict
             with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_out:
                 out_path = tmp_out.name
             apply_recipe(cand_path, final_recipe, out_path)
+        except PatchWarning as pw:
+            # File was written successfully; stubs were intentionally skipped.
+            warn_exc = pw
+            out_path = pw.output_path
+        except PatchError as e:
+            st.error(f"Patch error: {e}")
+            out_path = None
+        except Exception as e:
+            st.error(f"Unexpected error: {e}")
+            out_path = None
+
+        if out_path and Path(out_path).exists():
             patched_bytes = Path(out_path).read_bytes()
             patched_name  = f"{stem}_patched.xlsx"
 
@@ -502,8 +515,16 @@ any machine — all without needing the original workbook open.
             disk_out = OUTPUTS_DIR / patched_name
             disk_out.write_bytes(patched_bytes)
 
-            st.success(f"✅ Patch applied — {len(patched_bytes):,} bytes.  "
-                       f"Saved to `{disk_out}`")
+            if warn_exc:
+                stub_lines = "\n".join(f"• {s}" for s in warn_exc.skipped)
+                st.warning(
+                    f"⚠️ Patch applied — {len(warn_exc.skipped)} stub(s) skipped "
+                    f"(fill in match/replacement manually before re-running):\n\n{stub_lines}"
+                )
+            else:
+                st.success(f"✅ Patch applied — {len(patched_bytes):,} bytes.  "
+                           f"Saved to `{disk_out}`")
+
             st.download_button(
                 "⬇️ Download patched .xlsx",
                 patched_bytes,
@@ -511,10 +532,6 @@ any machine — all without needing the original workbook open.
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 key="dl_patched",
             )
-        except PatchError as e:
-            st.error(f"Patch error:\n{e}")
-        except Exception as e:
-            st.error(f"Unexpected error: {e}")
 
 # ═══════════════════════════════════════════════════════════════════════
 # TAB 6: GRAPH PROBE
