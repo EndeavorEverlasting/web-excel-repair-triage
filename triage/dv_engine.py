@@ -140,7 +140,11 @@ def extract_dv_spec(path: str) -> DVSpec:
 # ──────────────────── applying DV to a workbook ────────────────────
 
 
-def apply_dv_spec(xlsx_bytes: bytes, spec: DVSpec) -> bytes:
+def apply_dv_spec(
+    xlsx_bytes: bytes,
+    spec: DVSpec,
+    sheet_name_mapping: dict[str, str] | None = None,
+) -> bytes:
     """Apply a DVSpec to an in-memory .xlsx, returning patched bytes.
 
     For each sheet in the spec, this replaces/inserts the
@@ -153,12 +157,35 @@ def apply_dv_spec(xlsx_bytes: bytes, spec: DVSpec) -> bytes:
     buf = io.BytesIO()
     dst = zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED)
 
-    parts_with_rules = {r.sheet_part for r in spec.rules}
+    # Map DV rules from the spec's source sheet names onto the active workbook's
+    # sheet parts. This is crucial when applying rules extracted from a different
+    # workbook (deprecated -> active) where sheetN.xml numbering differs.
+    active_part_to_name = sheet_name_map(src)
+    active_name_to_part: dict[str, str] = {name: part for part, name in active_part_to_name.items()}
+
+    rules_by_target_part: dict[str, list[DVRule]] = {}
+    for r in spec.rules:
+        # Prefer applying by sheet name (possibly mapped), falling back to part
+        # only when it exists in the active workbook.
+        source_name = r.sheet_name or ""
+        target_name = (
+            sheet_name_mapping.get(source_name, source_name)
+            if (sheet_name_mapping and source_name)
+            else source_name
+        )
+        target_part = active_name_to_part.get(target_name)
+        if target_part is None and r.sheet_part in active_part_to_name:
+            target_part = r.sheet_part
+        if target_part is None:
+            continue
+        rules_by_target_part.setdefault(target_part, []).append(r)
+
+    parts_with_rules = set(rules_by_target_part.keys())
 
     for item in src.infolist():
         data = src.read(item.filename)
         if item.filename in parts_with_rules:
-            rules = spec.rules_for_sheet(item.filename)
+            rules = rules_by_target_part.get(item.filename, [])
             data = _inject_dv_block(data, rules)
         dst.writestr(item, data)
 
@@ -340,6 +367,90 @@ def make_list_validation(
         formula1=formula,
         show_dropdown=True if show_dropdown_hidden else None,
     )
+
+
+# ──────────────────── auto-detection from sheet XML ────────────────────
+
+
+def auto_dv_from_sheet(
+    xlsx_path: str,
+    sheet_name: Optional[str] = None,
+    header_row: int = 1,
+    data_start_row: int = 2,
+    data_end_row: Optional[int] = None,
+) -> DVSpec:
+    """Auto-detect cell types and generate DV protection rules.
+
+    Scans a sheet and classifies each column:
+      - Row 1 (header_row) cells → header_row protection
+      - Cells with <f> (formula) → formula_cell protection
+      - Remaining data cells are left unprotected
+
+    Returns a DVSpec ready to apply.
+    """
+    import zipfile as _zf
+    from triage.xlsx_utils import (
+        read_text as _rt, sheet_parts as _sp,
+        sheet_name_map as _snm, col_to_num as _c2n, num_to_col as _n2c,
+        max_row as _mr,
+    )
+
+    spec = DVSpec(source_file=xlsx_path)
+
+    with _zf.ZipFile(xlsx_path, "r") as z:
+        name_map = _snm(z)
+
+        # Resolve target sheet
+        target_part = None
+        target_name = ""
+        if sheet_name:
+            for part, nm in name_map.items():
+                if nm == sheet_name:
+                    target_part = part
+                    target_name = nm
+                    break
+        if not target_part:
+            # Use the first sheet with data
+            parts = _sp(z)
+            if parts:
+                target_part = parts[0]
+                target_name = name_map.get(target_part, target_part)
+
+        if not target_part:
+            return spec
+
+        xml = _rt(z, target_part)
+
+    # Determine data end row if not specified
+    if data_end_row is None:
+        data_end_row = _mr(xml) or 532
+
+    # Parse header row — find all cells in the header row
+    header_cells = re.findall(
+        rf'<c\b[^>]*r="([A-Z]+){header_row}"[^>]*>',
+        xml,
+    )
+    if header_cells:
+        # Build sqref for full header row protection
+        min_col = min(_c2n(c) for c in header_cells)
+        max_col = max(_c2n(c) for c in header_cells)
+        sqref = f"{_n2c(min_col)}{header_row}:{_n2c(max_col)}{header_row}"
+        spec.rules.append(make_header_protection(target_part, sqref, target_name))
+
+    # Scan all cells for formulas — group contiguous formula columns
+    formula_cols: set = set()
+    for m in re.finditer(r'<c\b[^>]*r="([A-Z]+)\d+"[^>]*>.*?</c>', xml, re.DOTALL):
+        cell_xml = m.group(0)
+        col_letter = m.group(1)
+        if '<f' in cell_xml:
+            formula_cols.add(col_letter)
+
+    # Create formula protection for each formula column
+    for col_letter in sorted(formula_cols, key=_c2n):
+        sqref = f"{col_letter}{data_start_row}:{col_letter}{data_end_row}"
+        spec.rules.append(make_formula_protection(target_part, sqref, target_name))
+
+    return spec
 
 
 # ──────────────────── CLI ────────────────────

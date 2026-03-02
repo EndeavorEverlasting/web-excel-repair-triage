@@ -298,19 +298,28 @@ class DVAgent:
         """Extract all data-validation rules from the workbook at *path*."""
         return extract_dv_spec(path)
 
-    def apply(self, xlsx_bytes: bytes, spec: DVSpec) -> bytes:
+    def apply(
+        self,
+        xlsx_bytes: bytes,
+        spec: DVSpec,
+        sheet_name_mapping: dict[str, str] | None = None,
+    ) -> bytes:
         """Apply a DVSpec to in-memory xlsx bytes, returning patched bytes."""
-        return apply_dv_spec(xlsx_bytes, spec)
+        return apply_dv_spec(xlsx_bytes, spec, sheet_name_mapping=sheet_name_mapping)
 
     def apply_file(
-        self, source_path: str, spec: DVSpec, output_path: str | None = None,
+        self,
+        source_path: str,
+        spec: DVSpec,
+        output_path: str | None = None,
+        sheet_name_mapping: dict[str, str] | None = None,
     ) -> str:
         """Apply a DVSpec to a file on disk.  Returns the output path."""
         import pathlib
         src = pathlib.Path(source_path)
         if output_path is None:
             output_path = str(src.with_stem(src.stem + "_dv"))
-        patched = apply_dv_spec(src.read_bytes(), spec)
+        patched = apply_dv_spec(src.read_bytes(), spec, sheet_name_mapping=sheet_name_mapping)
         out = pathlib.Path(output_path)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_bytes(patched)
@@ -327,19 +336,30 @@ class CFAgent:
         """Extract the full CF dictionary from the workbook at *path*."""
         return extract_cf_dictionary(path)
 
-    def apply(self, xlsx_bytes: bytes, cfd: CFDictionary) -> bytes:
+    def apply(
+        self,
+        xlsx_bytes: bytes,
+        cfd: CFDictionary,
+        sheet_name_mapping: dict[str, str] | None = None,
+        mode: str = "append",
+    ) -> bytes:
         """Apply a CFDictionary to in-memory xlsx bytes."""
-        return apply_cf_dictionary(xlsx_bytes, cfd)
+        return apply_cf_dictionary(xlsx_bytes, cfd, sheet_name_mapping=sheet_name_mapping, mode=mode)
 
     def apply_file(
-        self, source_path: str, cfd: CFDictionary, output_path: str | None = None,
+        self,
+        source_path: str,
+        cfd: CFDictionary,
+        output_path: str | None = None,
+        sheet_name_mapping: dict[str, str] | None = None,
+        mode: str = "append",
     ) -> str:
         """Apply a CFDictionary to a file on disk.  Returns the output path."""
         import pathlib
         src = pathlib.Path(source_path)
         if output_path is None:
             output_path = str(src.with_stem(src.stem + "_cf"))
-        patched = apply_cf_dictionary(src.read_bytes(), cfd)
+        patched = apply_cf_dictionary(src.read_bytes(), cfd, sheet_name_mapping=sheet_name_mapping, mode=mode)
         out = pathlib.Path(output_path)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_bytes(patched)

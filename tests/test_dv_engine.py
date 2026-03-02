@@ -85,6 +85,24 @@ def _make_xlsx(sheet_xml: bytes = _SHEET_NO_DV) -> bytes:
     return buf.getvalue()
 
 
+def _make_xlsx_named(sheet_name: str, sheet_xml: bytes = _SHEET_NO_DV) -> bytes:
+    """Minimal .xlsx bytes with a single sheet whose friendly name is *sheet_name*."""
+    wb = f"""<?xml version=\"1.0\"?>
+<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"
+          xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">
+  <sheets>
+    <sheet name=\"{sheet_name}\" sheetId=\"1\" r:id=\"rId1\"/>
+  </sheets>
+</workbook>""".encode("utf-8")
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("[Content_Types].xml", _CONTENT_TYPES)
+        z.writestr("xl/workbook.xml", wb)
+        z.writestr("xl/_rels/workbook.xml.rels", _WORKBOOK_RELS)
+        z.writestr("xl/worksheets/sheet1.xml", sheet_xml)
+    return buf.getvalue()
+
+
 def _read_sheet(patched: bytes, part: str = "xl/worksheets/sheet1.xml") -> str:
     with zipfile.ZipFile(io.BytesIO(patched), "r") as z:
         return z.read(part).decode("utf-8")
@@ -163,6 +181,22 @@ def test_t6_apply_replaces_existing_dv(tmp_path):
     # Old list rule should be gone; header protection should be in
     assert "Yes,No" not in sheet
     assert "header" in sheet.lower() or HEADER_ROW_TITLE in sheet
+
+
+def test_apply_dv_supports_sheet_name_mapping():
+    """When the spec comes from another workbook, sheet_part may not exist.
+    Mapping by sheet name should still target the active workbook correctly."""
+    # Spec claims it came from a different part name, but has a source sheet_name.
+    spec = DVSpec(source_file="", rules=[
+        make_header_protection("xl/worksheets/oldSheet99.xml", "1:1", "Old Deployments"),
+    ])
+    patched = apply_dv_spec(
+        _make_xlsx_named("Target Deployments", _SHEET_NO_DV),
+        spec,
+        sheet_name_mapping={"Old Deployments": "Target Deployments"},
+    )
+    sheet = _read_sheet(patched)
+    assert "<dataValidations" in sheet
 
 
 # ─────────────────────────── T7 _categorise ────────────────────────────────

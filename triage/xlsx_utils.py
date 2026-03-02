@@ -43,6 +43,22 @@ def table_parts(z: zipfile.ZipFile) -> List[str]:
 # ─────────────────────── sheet-name mapping ───────────────────────
 
 
+def _normalize_rel_target(target: str) -> str:
+    """Normalize a .rels Target attribute to a ZIP part-ish path.
+
+    Excel writes worksheet relationship targets in multiple forms:
+    - "worksheets/sheet1.xml" (relative)
+    - "xl/worksheets/sheet1.xml" (already rooted)
+    - "/xl/worksheets/sheet1.xml" (absolute, leading slash)
+    """
+    t = (target or "").strip().replace("\\", "/")
+    # Relationship Targets may be absolute within the package (leading '/').
+    # ZIP member names never start with '/'.
+    while t.startswith("/"):
+        t = t[1:]
+    return t
+
+
 def sheet_name_map(z: zipfile.ZipFile) -> Dict[str, str]:
     """Return {part_path: sheet_display_name} mapping.
 
@@ -52,21 +68,27 @@ def sheet_name_map(z: zipfile.ZipFile) -> Dict[str, str]:
     rels = read_text(z, "xl/_rels/workbook.xml.rels")
 
     # rId → target
+    # Attribute order in workbook.xml.rels is not stable (Target may precede Id).
     rid_target: Dict[str, str] = {}
-    for m in re.finditer(r'Id="([^"]+)"[^>]*Target="([^"]+)"', rels):
-        rid_target[m.group(1)] = m.group(2)
+    for m in re.finditer(r"<Relationship\b[^>]*>", rels):
+        frag = m.group(0)
+        rid = get_attr(frag, "Id")
+        target = get_attr(frag, "Target")
+        if rid and target:
+            rid_target[rid] = _normalize_rel_target(target)
 
     # sheet name → rId
     mapping: Dict[str, str] = {}
-    for m in re.finditer(r'<sheet[^>]+name="([^"]+)"[^>]+r:id="([^"]+)"', wb):
-        name, rid = m.group(1), m.group(2)
+    for m in re.finditer(r"<sheet\b[^>]*>", wb):
+        frag = m.group(0)
+        name = get_attr(frag, "name")
+        rid = get_attr(frag, "r:id")
+        if not name or not rid:
+            continue
         target = rid_target.get(rid, "")
-        if target.startswith("worksheets/"):
-            part = "xl/" + target
-        elif target.startswith("xl/"):
-            part = target
-        else:
-            part = "xl/" + target
+        if not target:
+            continue
+        part = target if target.startswith("xl/") else ("xl/" + target)
         mapping[part] = name
 
     return mapping
@@ -78,15 +100,24 @@ def sheet_index_map(z: zipfile.ZipFile) -> Dict[str, int]:
     rels = read_text(z, "xl/_rels/workbook.xml.rels")
 
     rid_target: Dict[str, str] = {}
-    for m in re.finditer(r'Id="([^"]+)"[^>]*Target="([^"]+)"', rels):
-        rid_target[m.group(1)] = m.group(2)
+    for m in re.finditer(r"<Relationship\b[^>]*>", rels):
+        frag = m.group(0)
+        rid = get_attr(frag, "Id")
+        target = get_attr(frag, "Target")
+        if rid and target:
+            rid_target[rid] = _normalize_rel_target(target)
 
     result: Dict[str, int] = {}
-    sheet_tags = list(re.finditer(r'<sheet[^>]+r:id="([^"]+)"', wb))
+    sheet_tags = list(re.finditer(r"<sheet\b[^>]*>", wb))
     for idx, m in enumerate(sheet_tags):
-        rid = m.group(1)
+        frag = m.group(0)
+        rid = get_attr(frag, "r:id")
+        if not rid:
+            continue
         target = rid_target.get(rid, "")
-        part = "xl/" + target if not target.startswith("xl/") else target
+        if not target:
+            continue
+        part = target if target.startswith("xl/") else ("xl/" + target)
         result[part] = idx
 
     return result

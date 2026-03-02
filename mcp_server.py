@@ -334,6 +334,7 @@ def apply_data_validation(
     source_path: str,
     spec_json: str,
     output_path: Optional[str] = None,
+    sheet_name_mapping_json: Optional[str] = None,
 ) -> str:
     """Apply a DV specification to a .xlsx workbook.
 
@@ -358,7 +359,8 @@ def apply_data_validation(
         src = Path(source_path)
         output_path = str(Path("Outputs") / (src.stem + "_dv.xlsx"))
         Path("Outputs").mkdir(exist_ok=True)
-    return _dv.apply_file(source_path, spec, output_path)
+    mapping = json.loads(sheet_name_mapping_json) if sheet_name_mapping_json else None
+    return _dv.apply_file(source_path, spec, output_path, sheet_name_mapping=mapping)
 
 
 @mcp.tool()
@@ -387,6 +389,8 @@ def apply_conditional_formatting(
     source_path: str,
     cf_dict_json: str,
     output_path: Optional[str] = None,
+    sheet_name_mapping_json: Optional[str] = None,
+    mode: str = "append",
 ) -> str:
     """Apply a CF dictionary to a .xlsx workbook.
 
@@ -411,7 +415,8 @@ def apply_conditional_formatting(
         src = Path(source_path)
         output_path = str(Path("Outputs") / (src.stem + "_cf.xlsx"))
         Path("Outputs").mkdir(exist_ok=True)
-    return _cf.apply_file(source_path, cfd, output_path)
+    mapping = json.loads(sheet_name_mapping_json) if sheet_name_mapping_json else None
+    return _cf.apply_file(source_path, cfd, output_path, sheet_name_mapping=mapping, mode=mode)
 
 
 @mcp.tool()

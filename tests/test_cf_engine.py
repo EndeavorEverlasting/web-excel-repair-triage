@@ -95,6 +95,24 @@ def _make_xlsx(sheet_xml: bytes = _SHEET_NO_CF,
     return buf.getvalue()
 
 
+def _make_xlsx_named(sheet_name: str,
+                     sheet_xml: bytes = _SHEET_NO_CF,
+                     styles_xml: bytes = _STYLES_NO_DXF) -> bytes:
+    wb = f"""<?xml version=\"1.0\"?>
+<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"
+          xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">
+  <sheets><sheet name=\"{sheet_name}\" sheetId=\"1\" r:id=\"rId1\"/></sheets>
+</workbook>""".encode("utf-8")
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("[Content_Types].xml", _CONTENT_TYPES)
+        z.writestr("xl/workbook.xml", wb)
+        z.writestr("xl/_rels/workbook.xml.rels", _WORKBOOK_RELS)
+        z.writestr("xl/worksheets/sheet1.xml", sheet_xml)
+        z.writestr("xl/styles.xml", styles_xml)
+    return buf.getvalue()
+
+
 def _read_part(patched: bytes, part: str) -> str:
     with zipfile.ZipFile(io.BytesIO(patched), "r") as z:
         return z.read(part).decode("utf-8")
@@ -196,6 +214,32 @@ def test_t8_apply_appends_cf_block():
     assert "B2:B10" in sheet
     # Original block is NOT removed — non-destructive append
     assert "A1:A10" in sheet
+
+
+def test_apply_cf_replace_mode_removes_existing_cf():
+    cfd = _make_cfd_with_block(sqref="B2:B10")
+    patched = apply_cf_dictionary(
+        _make_xlsx(_SHEET_WITH_CF, _STYLES_NO_DXF),
+        cfd,
+        mode="replace",
+    )
+    sheet = _read_part(patched, "xl/worksheets/sheet1.xml")
+    assert "B2:B10" in sheet
+    assert "A1:A10" not in sheet
+
+
+def test_apply_cf_supports_sheet_name_mapping():
+    cfd = _make_cfd_with_block()
+    # Pretend the dictionary came from a deprecated workbook with a different
+    # sheet name; apply to a target workbook with that name.
+    cfd.blocks[0].sheet_name = "Old Deployments"
+    patched = apply_cf_dictionary(
+        _make_xlsx_named("Target Deployments", _SHEET_NO_CF, _STYLES_NO_DXF),
+        cfd,
+        sheet_name_mapping={"Old Deployments": "Target Deployments"},
+    )
+    sheet = _read_part(patched, "xl/worksheets/sheet1.xml")
+    assert "<conditionalFormatting" in sheet
 
 
 # ─────────────────────────── T9 apply — patches styles DXF ─────────────────

@@ -136,7 +136,12 @@ def extract_cf_dictionary(path: str) -> CFDictionary:
 # ──────────────────── application ────────────────────
 
 
-def apply_cf_dictionary(xlsx_bytes: bytes, cfd: CFDictionary) -> bytes:
+def apply_cf_dictionary(
+    xlsx_bytes: bytes,
+    cfd: CFDictionary,
+    sheet_name_mapping: Dict[str, str] | None = None,
+    mode: str = "append",
+) -> bytes:
     """Apply a CF dictionary to an in-memory .xlsx, returning patched bytes.
 
     Strategy (safe, non-destructive):
@@ -156,11 +161,18 @@ def apply_cf_dictionary(xlsx_bytes: bytes, cfd: CFDictionary) -> bytes:
     for part, name in sheet_name_map(src).items():
         active_name_to_part[name] = part
 
-    # ── group dictionary blocks by sheet_name ─────────────────────
+    # ── group dictionary blocks by *target* sheet_name ─────────────
+    # CF dictionaries are extracted with friendly sheet names; when applying
+    # to a different workbook, allow mapping (e.g. "Deployments" ->
+    # "12 - Device_Configuration").
     blocks_by_name: Dict[str, List[CFBlock]] = {}
     for b in cfd.blocks:
-        key = b.sheet_name or b.sheet_part
-        blocks_by_name.setdefault(key, []).append(b)
+        source_name = b.sheet_name or b.sheet_part
+        target_name = (
+            sheet_name_mapping.get(source_name, source_name)
+            if sheet_name_mapping else source_name
+        )
+        blocks_by_name.setdefault(target_name, []).append(b)
 
     # ── step 1: compute DXF offset and merged list ─────────────────
     # Read existing DXF from active styles.xml; append deprecated styles after.
@@ -198,7 +210,12 @@ def apply_cf_dictionary(xlsx_bytes: bytes, cfd: CFDictionary) -> bytes:
             active_name = active_part_to_name.get(item.filename, "")
             blocks_for_part = blocks_by_name.get(active_name, [])
             if blocks_for_part:
-                data = _append_cf_blocks(data, blocks_for_part, dxf_offset)
+                if mode not in ("append", "replace"):
+                    raise ValueError(f"Unknown CF apply mode: {mode!r} (expected 'append' or 'replace')")
+                if mode == "append":
+                    data = _append_cf_blocks(data, blocks_for_part, dxf_offset)
+                else:
+                    data = _replace_cf_blocks(data, blocks_for_part, dxf_offset)
 
         dst.writestr(item, data)
 
@@ -312,6 +329,45 @@ def _append_cf_blocks(sheet_bytes: bytes, blocks: List[CFBlock], dxf_offset: int
             if idx != -1:
                 xml = xml[:idx] + cf_xml + xml[idx:]
                 break
+
+    return xml.encode("utf-8")
+
+
+def _replace_cf_blocks(sheet_bytes: bytes, blocks: List[CFBlock], dxf_offset: int) -> bytes:
+    """Replace ALL existing <conditionalFormatting> blocks with provided ones.
+
+    Useful when you want the reference workbook to be the single source of truth.
+    Keeps the rest of the sheet untouched.
+    """
+    xml = sheet_bytes.decode("utf-8", errors="ignore")
+
+    # Remove existing CF blocks (both normal and any self-closing edge cases).
+    xml = re.sub(
+        r"<conditionalFormatting\b[^>]*(?:/>|>.*?</conditionalFormatting>)",
+        "",
+        xml,
+        flags=re.DOTALL,
+    )
+
+    # Build new CF XML from the dictionary blocks (use raw_xml for fidelity)
+    cf_xml = ""
+    for b in blocks:
+        if b.raw_xml:
+            raw = _rewrite_dxf_ids(b.raw_xml, dxf_offset)
+        else:
+            rules_xml = "".join(
+                _rewrite_dxf_ids(r.raw_xml, dxf_offset)
+                for r in b.rules if r.raw_xml
+            )
+            raw = f'<conditionalFormatting sqref="{b.sqref}">{rules_xml}</conditionalFormatting>'
+        cf_xml += raw
+
+    # Insert CF in a stable location.
+    for anchor in ("</sheetData>", "<pageMargins", "<pageSetup", "<drawing", "</worksheet>"):
+        idx = xml.find(anchor)
+        if idx != -1:
+            xml = xml[:idx] + cf_xml + xml[idx:]
+            break
 
     return xml.encode("utf-8")
 
