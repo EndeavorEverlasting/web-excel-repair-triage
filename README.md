@@ -154,28 +154,55 @@ No reinstalling needed unless `requirements.txt` changed (the terminal will tell
 
 | Folder | Purpose |
 |--------|---------|
-| `Active/` | Production-ready, currently working workbooks |
-| `Candidates/` | Next-version workbooks under test for promotion to Active |
-| `Repaired/` | What Excel for Web outputs after it "repairs" a Candidate |
-| `Deprecated/` | Confirmed non-working / retired workbooks |
-| `Outputs/` | Generated triage outputs — patched `.xlsx` files and saved recipe `.json` files |
-| `triage/` | Core Python engine (scanner, gate checks, diff, patcher, …) |
-| `Scripts to Start with/` | Original prototype scripts (kept for reference) |
-| `Web Excel Compatibility Rules/` | Reference workbooks documenting OOXML rules |
+| `Active/` | Production-ready, currently working workbooks (e.g. i100 WEBSAFE) |
+| `Web Excel Compatibility Rules and References/` | Reference docs: README patch workbook, DocsPack, compatibility guide |
+| `triage/` | Core Python engine (scanner, gate checks, diff, patcher, probes, …) |
+| `tests/` | Unit and integration tests |
+| `Deprecated/` | Archived pre-i100 artifacts — organized into subdirectories (see below) |
+
+#### Deprecated subdirectories
+
+| Subfolder | Contents |
+|-----------|----------|
+| `candidates_pre_i100/` | All candidate iterations i076–i099 + corrupt/Teams variants |
+| `outputs_pre_i100/` | Patched outputs, autofix reports, batch summaries, excel_runs, desktop_iter |
+| `repaired/` | Desktop and web-repaired .xlsx files |
+| `scripts_legacy/` | Original prototype scripts (superseded by `triage/` module) |
+| `bundles/` | OneDrive export zips and loose root-level .xlsx files |
+| `readme/` | Older README patches, screenshots, web-repaired i099 |
+| `xml_fragments/` | Miscellaneous XML error snippets |
 
 ### Workbook lifecycle
 
 ```
-Candidates/ ──► (run triage) ──► Outputs/ (patched .xlsx + recipe .json)
-                                      │
-                          passes probe ▼
-                               Active/
-                                      │
-                     Excel repairs it ▼
-                              Repaired/   ◄── upload to Part Diff tab
-                                      │
-                       confirmed broken ▼
-                             Deprecated/
+ Candidate .xlsx
+      │
+      ▼
+ Gate checks (triage/gate_checks.py) ──► STOP-SHIP scan
+      │
+      ├── PASS ──► Active/
+      │
+      ├── FAIL ──► Open in Excel for Web
+      │                  │
+      │         Web repairs it?
+      │            │           │
+      │           YES          NO ──► investigate gate findings
+      │            │
+      │            ▼
+      │   Export web-repaired .xlsx
+      │            │
+      │            ▼
+      │   Zip-diff candidate vs web-repaired = repair spec
+      │            │
+      │            ▼
+      │   Start from web-repaired base
+      │   + reapply invariants (tabs, tables, CF) as minimal patch
+      │            │
+      │            ▼
+      │   Re-test in Web ──► if clean ──► Active/
+      │                      if not  ──► repeat
+      │
+      └── Retired ──► Deprecated/
 ```
 
 ---
@@ -487,9 +514,8 @@ That's it — the full triage tool is running in your browser.
   workbook scans in < 1 s.
 - The patch recipe is a plain JSON file — you can author, edit, version-control,
   and share recipes independently of the workbooks.
-- `Outputs/` is the single landing zone for all generated files. Patched `.xlsx`
-  files are excluded from git (re-generatable); recipe `.json` files are tracked
-  by default (valuable, small, human-readable).
+- Generated outputs (patched `.xlsx`, recipe `.json`, probe reports) land in
+  `Outputs/` at runtime. Pre-i100 outputs have been archived to `Deprecated/`.
 
 ### Module map
 
@@ -504,9 +530,80 @@ That's it — the full triage tool is running in your browser.
 | `triage/graph_probe.py` | Microsoft Graph API upload-and-test probe |
 | `triage/excel_desktop.py` | **Desktop Microsoft Excel** probe (COM automation): open/repair, auto-click dialogs, screenshots, harvest `%TEMP%/error*.xml` |
 | `triage/desktop_iterate.py` | Iterative loop: desktop open/repair → diff vs Excel-repaired copy → generate recipe → patch → repeat |
+| `triage/web_excel_browser.py` | Playwright-based browser probe — DOM-level smoke test |
+| `triage/web_excel_browser_worker.py` | Isolated subprocess worker for browser probe |
+| `triage/batch_runner.py` | Batch autofix across multiple workbooks |
 | `triage/agents.py` | One agent class per phase + `TriageOrchestrator` |
 | `mcp_server.py` | MCP server — exposes all agents as callable tools |
 | `app.py` | Streamlit UI — tabs wiring all modules together |
+| `autofix_loop.py` | CLI autofix loop: gate-check → patch → re-check |
+
+---
+
+## i100 Forensics Methodology
+
+> **The i100 milestone (2026-03-01):** the first iteration that opens in Excel
+> for Web with **no** "WORKBOOK REPAIRED" banner and **no** "Fix this workbook?"
+> modal — opening directly on Tab 12: Device_Configuration.
+
+The breakthrough was **not** a new guess or a new patch. It was a change in
+**method**: stop fixing blind, start diffing what Web actually changes.
+
+### The forensics pipeline
+
+1. **Open candidate in Excel for Web.** If Web repairs it, export the
+   web-repaired workbook.
+2. **Zip-diff** candidate vs web-repaired (`hashlib.sha256` per ZIP entry).
+   The diff is the **repair spec** — the exact set of parts Web rewrote.
+3. **Start from the web-repaired base** (the "accepted OOXML shape").
+4. **Reapply project invariants** as a minimal patch:
+   - `workbookView/@activeTab` → correct tab
+   - Table identity restore (e.g. `tblDeviceConfig` = `/xl/tables/table9.xml`)
+   - Sheet tableParts relationship targets match table parts
+5. **Re-test in Web.** If it repairs again, repeat from step 1.
+
+### Why this works
+
+Excel for Web rewrites the package into its own normalized form. If the
+workbook already matches that form, Web has nothing to repair. The key insight:
+**don't fight the normalizer — feed it what it expects.**
+
+### STOP-SHIP gate tokens
+
+Before any candidate ships, scan every `.xml` and `.rels` part in the ZIP for:
+
+| Token | Why it's a stop-ship |
+|-------|---------------------|
+| `inlineStr` | Must use `sharedStrings.xml` — inline strings break Web |
+| `ns0:` / `xmlns:ns0` | openpyxl namespace prefix leakage — Web rejects it |
+| `_xlfn.` / `_xludf.` / `_xlpm` | Unsupported function prefixes — Web can't evaluate |
+| `FORMULATEXT` / `AGGREGATE` | Desktop-only functions — Web either errors or blanks |
+
+Additionally verify: `xl/sharedStrings.xml` exists, `workbookView/@activeTab`
+is correct, and max `cfRule/@dxfId` < `dxfs/@count` in `styles.xml`.
+
+### Hard invariants (i100 reference)
+
+| Invariant | Expected value |
+|-----------|---------------|
+| Open tab | `activeTab=12` (0-based), only `sheet13.xml` has `tabSelected="1"` |
+| tblDeviceConfig | `/xl/tables/table9.xml`, `name=tblDeviceConfig`, `id=9` |
+| CF dxfId ceiling | All `cfRule/@dxfId` values < `dxfs/@count` |
+| No inlineStr | 0 occurrences across all XML parts |
+| sharedStrings | `xl/sharedStrings.xml` present in ZIP |
+
+### Key analysis functions (from forensics tooling)
+
+| Function | Purpose |
+|----------|---------|
+| `zip_diff(p1, p2)` | SHA-256 diff of two .xlsx ZIPs → added/deleted/changed parts |
+| `stop_ship_counts(path)` | Token scan across all XML/rels parts |
+| `extract_cf_rules(path)` | Full conditional formatting rule extraction with dxf style mapping |
+| `extract_tables(path)` | Table inventory: name, ref, part path, per sheet |
+| `get_dxfs_style_map(path)` | Parse `styles.xml` → dxfId-to-style dictionary |
+
+These functions are the basis for the next phase of tooling: scripted data
+validation and conditional formatting logic enforcement.
 
 ---
 
