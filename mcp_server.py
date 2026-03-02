@@ -43,6 +43,8 @@ from triage.agents import (
     GraphProbeAgent,
     WebExcelBrowserProbeAgent,
     ExcelDesktopProbeAgent,
+    DVAgent,
+    CFAgent,
     TriageOrchestrator,
 )
 
@@ -66,6 +68,8 @@ _patch   = PatchAgent()
 _graph   = GraphProbeAgent()
 _web_ui  = WebExcelBrowserProbeAgent()
 _desktop = ExcelDesktopProbeAgent()
+_dv      = DVAgent()
+_cf      = CFAgent()
 _orch    = TriageOrchestrator()
 
 
@@ -302,6 +306,112 @@ def desktop_excel_probe(
         timeout_seconds=timeout_seconds,
     )
     return dataclasses.asdict(r)
+
+
+@mcp.tool()
+def extract_data_validation(source_path: str) -> dict:
+    """Extract all data-validation rules from a .xlsx workbook.
+
+    Returns a DV specification dict with categorised rules:
+    header_row, formula_cell, automated, list, custom, etc.
+
+    Parameters
+    ----------
+    source_path : str
+        Path to the .xlsx file to inspect.
+
+    Returns
+    -------
+    dict
+        DVSpec as a dict — rules grouped by category with sqref ranges.
+    """
+    spec = _dv.extract(source_path)
+    return json.loads(spec.to_json())
+
+
+@mcp.tool()
+def apply_data_validation(
+    source_path: str,
+    spec_json: str,
+    output_path: Optional[str] = None,
+) -> str:
+    """Apply a DV specification to a .xlsx workbook.
+
+    Parameters
+    ----------
+    source_path : str
+        Path to the source .xlsx to patch.
+    spec_json : str
+        JSON string of the DV specification (output of extract_data_validation).
+    output_path : str, optional
+        Where to write the patched file.
+
+    Returns
+    -------
+    str
+        Path of the output file.
+    """
+    from triage.dv_engine import DVSpec
+    spec = DVSpec.from_json(spec_json)
+    if output_path is None:
+        from pathlib import Path
+        src = Path(source_path)
+        output_path = str(Path("Outputs") / (src.stem + "_dv.xlsx"))
+        Path("Outputs").mkdir(exist_ok=True)
+    return _dv.apply_file(source_path, spec, output_path)
+
+
+@mcp.tool()
+def extract_conditional_formatting(source_path: str) -> dict:
+    """Extract the full conditional formatting dictionary from a .xlsx workbook.
+
+    Returns CF blocks with their rules and associated DXF styles.
+    Each rule is unique and keyed by sheet + sqref + formula.
+
+    Parameters
+    ----------
+    source_path : str
+        Path to the .xlsx file to inspect.
+
+    Returns
+    -------
+    dict
+        CFDictionary as a dict — blocks, rules, and DXF style XML.
+    """
+    cfd = _cf.extract(source_path)
+    return json.loads(cfd.to_json())
+
+
+@mcp.tool()
+def apply_conditional_formatting(
+    source_path: str,
+    cf_dict_json: str,
+    output_path: Optional[str] = None,
+) -> str:
+    """Apply a CF dictionary to a .xlsx workbook.
+
+    Parameters
+    ----------
+    source_path : str
+        Path to the source .xlsx to patch.
+    cf_dict_json : str
+        JSON string of the CF dictionary (output of extract_conditional_formatting).
+    output_path : str, optional
+        Where to write the patched file.
+
+    Returns
+    -------
+    str
+        Path of the output file.
+    """
+    from triage.cf_engine import CFDictionary
+    cfd = CFDictionary.from_json(cf_dict_json)
+    if output_path is None:
+        from pathlib import Path
+        src = Path(source_path)
+        output_path = str(Path("Outputs") / (src.stem + "_cf.xlsx"))
+        Path("Outputs").mkdir(exist_ok=True)
+    return _cf.apply_file(source_path, cfd, output_path)
 
 
 @mcp.tool()

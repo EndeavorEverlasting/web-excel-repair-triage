@@ -43,6 +43,16 @@ from triage.web_excel_browser import (
     WebExcelBrowserResult,
     probe_open_in_web_excel_isolated,
 )
+from triage.dv_engine import (
+    extract_dv_spec,
+    apply_dv_spec,
+    DVSpec,
+)
+from triage.cf_engine import (
+    extract_cf_dictionary,
+    apply_cf_dictionary,
+    CFDictionary,
+)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -276,6 +286,64 @@ class WebExcelBrowserProbeAgent:
             channel=channel,
             take_screenshot=take_screenshot,
         )
+
+
+class DVAgent:
+    """
+    Data Validation engine agent.
+    Extracts DV rules from a workbook or applies a DV spec to one.
+    """
+
+    def extract(self, path: str) -> DVSpec:
+        """Extract all data-validation rules from the workbook at *path*."""
+        return extract_dv_spec(path)
+
+    def apply(self, xlsx_bytes: bytes, spec: DVSpec) -> bytes:
+        """Apply a DVSpec to in-memory xlsx bytes, returning patched bytes."""
+        return apply_dv_spec(xlsx_bytes, spec)
+
+    def apply_file(
+        self, source_path: str, spec: DVSpec, output_path: str | None = None,
+    ) -> str:
+        """Apply a DVSpec to a file on disk.  Returns the output path."""
+        import pathlib
+        src = pathlib.Path(source_path)
+        if output_path is None:
+            output_path = str(src.with_stem(src.stem + "_dv"))
+        patched = apply_dv_spec(src.read_bytes(), spec)
+        out = pathlib.Path(output_path)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_bytes(patched)
+        return str(out)
+
+
+class CFAgent:
+    """
+    Conditional Formatting engine agent.
+    Extracts CF dictionary from a workbook or applies one.
+    """
+
+    def extract(self, path: str) -> CFDictionary:
+        """Extract the full CF dictionary from the workbook at *path*."""
+        return extract_cf_dictionary(path)
+
+    def apply(self, xlsx_bytes: bytes, cfd: CFDictionary) -> bytes:
+        """Apply a CFDictionary to in-memory xlsx bytes."""
+        return apply_cf_dictionary(xlsx_bytes, cfd)
+
+    def apply_file(
+        self, source_path: str, cfd: CFDictionary, output_path: str | None = None,
+    ) -> str:
+        """Apply a CFDictionary to a file on disk.  Returns the output path."""
+        import pathlib
+        src = pathlib.Path(source_path)
+        if output_path is None:
+            output_path = str(src.with_stem(src.stem + "_cf"))
+        patched = apply_cf_dictionary(src.read_bytes(), cfd)
+        out = pathlib.Path(output_path)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_bytes(patched)
+        return str(out)
 
 
 # ──────────────────────────────────────────────────────────────────────────────

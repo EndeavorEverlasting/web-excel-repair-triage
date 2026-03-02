@@ -15,8 +15,8 @@ env/
 ENV/
 
 # ── Generated outputs from the triage tool ────────────────────────────────────
-# Patched workbooks — always re-generatable, kept out of git
-Outputs/*_patched.xlsx
+# Patched / generated workbooks — always re-generatable, kept out of git
+Outputs/*.xlsx
 # Legacy location (root-level patch file)
 *_patched.xlsx
 # Root-level recipe if accidentally saved there
