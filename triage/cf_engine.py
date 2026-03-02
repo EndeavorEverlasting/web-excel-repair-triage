@@ -139,23 +139,66 @@ def extract_cf_dictionary(path: str) -> CFDictionary:
 def apply_cf_dictionary(xlsx_bytes: bytes, cfd: CFDictionary) -> bytes:
     """Apply a CF dictionary to an in-memory .xlsx, returning patched bytes.
 
-    This replaces CF blocks per sheet and ensures styles.xml has the
-    required DXF entries.  Byte-level — no XML parser.
+    Strategy (safe, non-destructive):
+    1. Read the active workbook's existing DXF styles.  Append the
+       dictionary's DXF styles after them.  Build a dxf_offset so that
+       ``deprecated_dxf_id + dxf_offset = new_id_in_active``.
+    2. Match CF blocks to sheets BY NAME (from xl/workbook.xml), not by
+       part filename — avoids injecting into the wrong sheet when zip
+       numbering differs between the deprecated and active workbooks.
+    3. Append the rewritten CF blocks AFTER existing CF in the target
+       sheet — never removes existing formatting.
     """
     src = zipfile.ZipFile(io.BytesIO(xlsx_bytes), "r")
+
+    # ── build name→part map for the active workbook ───────────────
+    active_name_to_part: Dict[str, str] = {}
+    for part, name in sheet_name_map(src).items():
+        active_name_to_part[name] = part
+
+    # ── group dictionary blocks by sheet_name ─────────────────────
+    blocks_by_name: Dict[str, List[CFBlock]] = {}
+    for b in cfd.blocks:
+        key = b.sheet_name or b.sheet_part
+        blocks_by_name.setdefault(key, []).append(b)
+
+    # ── step 1: compute DXF offset and merged list ─────────────────
+    # Read existing DXF from active styles.xml; append deprecated styles after.
+    styles_xml_raw: Optional[bytes] = None
+    if "xl/styles.xml" in src.namelist():
+        styles_xml_raw = src.read("xl/styles.xml")
+
+    existing_dxf: List[str] = []
+    if styles_xml_raw:
+        existing_dxf = _extract_dxf_list(styles_xml_raw.decode("utf-8", errors="ignore"))
+    dxf_offset = len(existing_dxf)
+    merged_dxf = existing_dxf + list(cfd.dxf_styles)
+
+    # ── build target parts set (sheets that will get new CF) ──────
+    target_parts: set = set()
+    for sheet_name, blocks in blocks_by_name.items():
+        part = active_name_to_part.get(sheet_name)
+        if part:
+            target_parts.add(part)
+
+    # ── build part→sheet_name map once (before ZIP iteration) ────
+    # sheet_name_map reads workbook.xml.rels; must not be called mid-loop.
+    active_part_to_name: Dict[str, str] = sheet_name_map(src)
+
+    # ── write patched ZIP ─────────────────────────────────────────
     buf = io.BytesIO()
     dst = zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED)
-
-    sheets_with_cf = {b.sheet_part for b in cfd.blocks}
 
     for item in src.infolist():
         data = src.read(item.filename)
 
         if item.filename == "xl/styles.xml":
-            data = _patch_styles_dxf(data, cfd.dxf_styles)
-        elif item.filename in sheets_with_cf:
-            blocks = cfd.blocks_for_sheet(item.filename)
-            data = _inject_cf_blocks(data, blocks)
+            data = _patch_styles_dxf(data, merged_dxf)
+        elif item.filename in target_parts:
+            active_name = active_part_to_name.get(item.filename, "")
+            blocks_for_part = blocks_by_name.get(active_name, [])
+            if blocks_for_part:
+                data = _append_cf_blocks(data, blocks_for_part, dxf_offset)
 
         dst.writestr(item, data)
 
@@ -226,51 +269,71 @@ def _parse_cf_blocks(
     return result
 
 
-def _inject_cf_blocks(sheet_bytes: bytes, blocks: List[CFBlock]) -> bytes:
-    """Replace or insert CF blocks in a sheet XML."""
-    xml = sheet_bytes.decode("utf-8", errors="ignore")
-
-    # Remove all existing CF blocks
-    xml = re.sub(
-        r"<conditionalFormatting\b[^>]*>.*?</conditionalFormatting>",
-        "",
-        xml,
-        flags=re.DOTALL,
+def _rewrite_dxf_ids(xml_fragment: str, offset: int) -> str:
+    """Shift every dxfId="N" in *xml_fragment* by *offset*."""
+    if offset == 0:
+        return xml_fragment
+    return re.sub(
+        r'dxfId="(\d+)"',
+        lambda m: f'dxfId="{int(m.group(1)) + offset}"',
+        xml_fragment,
     )
+
+
+def _append_cf_blocks(sheet_bytes: bytes, blocks: List[CFBlock], dxf_offset: int) -> bytes:
+    """Append CF blocks to a sheet XML WITHOUT removing existing CF.
+
+    The dxfId values in the new blocks are shifted by *dxf_offset* so they
+    reference the correct position in the merged DXF list.
+    """
+    xml = sheet_bytes.decode("utf-8", errors="ignore")
 
     # Build new CF XML from the dictionary blocks (use raw_xml for fidelity)
     cf_xml = ""
     for b in blocks:
         if b.raw_xml:
-            cf_xml += b.raw_xml
+            raw = _rewrite_dxf_ids(b.raw_xml, dxf_offset)
         else:
-            # Reconstruct from rules
-            rules_xml = "".join(r.raw_xml for r in b.rules if r.raw_xml)
-            cf_xml += f'<conditionalFormatting sqref="{b.sqref}">{rules_xml}</conditionalFormatting>'
+            rules_xml = "".join(
+                _rewrite_dxf_ids(r.raw_xml, dxf_offset)
+                for r in b.rules if r.raw_xml
+            )
+            raw = f'<conditionalFormatting sqref="{b.sqref}">{rules_xml}</conditionalFormatting>'
+        cf_xml += raw
 
-    # Insert before pageMargins or before </worksheet>
-    for anchor in ("<pageMargins", "<pageSetup", "<drawing", "</worksheet>"):
-        idx = xml.find(anchor)
-        if idx != -1:
-            xml = xml[:idx] + cf_xml + xml[idx:]
-            break
+    # Insert AFTER existing CF if any, otherwise before pageMargins / </worksheet>
+    last_cf = [m.end() for m in re.finditer(r"</conditionalFormatting>", xml)]
+    if last_cf:
+        insert_at = last_cf[-1]
+        xml = xml[:insert_at] + cf_xml + xml[insert_at:]
+    else:
+        for anchor in ("<pageMargins", "<pageSetup", "<drawing", "</worksheet>"):
+            idx = xml.find(anchor)
+            if idx != -1:
+                xml = xml[:idx] + cf_xml + xml[idx:]
+                break
 
     return xml.encode("utf-8")
 
 
-def _patch_styles_dxf(styles_bytes: bytes, dxf_styles: List[str]) -> bytes:
-    """Ensure styles.xml has exactly the DXF entries from the CF dictionary."""
+def _patch_styles_dxf(styles_bytes: bytes, merged_dxf_styles: List[str]) -> bytes:
+    """Write the merged DXF list into styles.xml.
+
+    *merged_dxf_styles* is already the complete list (existing + appended);
+    this function just serialises it back into the XML.
+    """
     xml = styles_bytes.decode("utf-8", errors="ignore")
 
-    # Build new <dxfs> block
-    dxf_block = f'<dxfs count="{len(dxf_styles)}">' + "".join(dxf_styles) + "</dxfs>"
+    dxf_block = (
+        f'<dxfs count="{len(merged_dxf_styles)}">'
+        + "".join(merged_dxf_styles)
+        + "</dxfs>"
+    )
 
-    # Replace existing <dxfs>…</dxfs>
     pattern = r"<dxfs\b[^>]*>.*?</dxfs>"
     if re.search(pattern, xml, re.DOTALL):
         xml = re.sub(pattern, dxf_block, xml, count=1, flags=re.DOTALL)
     else:
-        # Insert before </styleSheet>
         idx = xml.find("</styleSheet>")
         if idx != -1:
             xml = xml[:idx] + dxf_block + xml[idx:]

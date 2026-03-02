@@ -186,14 +186,16 @@ def test_t7_apply_inserts_cf_block():
     assert "<cfRule" in sheet
 
 
-# ─────────────────────────── T8 apply — replaces existing CF ───────────────
-def test_t8_apply_replaces_cf_block():
+# ─────────────────────────── T8 apply — appends, preserves existing CF ────────
+def test_t8_apply_appends_cf_block():
+    """New CF blocks are APPENDED; existing CF in the sheet is preserved."""
     cfd = _make_cfd_with_block(sqref="B2:B10")
     patched = apply_cf_dictionary(_make_xlsx(_SHEET_WITH_CF, _STYLES_NO_DXF), cfd)
     sheet = _read_part(patched, "xl/worksheets/sheet1.xml")
-    # Old block (A1:A10) replaced; new block (B2:B10) present
+    # New block is present
     assert "B2:B10" in sheet
-    assert "A1:A10" not in sheet
+    # Original block is NOT removed — non-destructive append
+    assert "A1:A10" in sheet
 
 
 # ─────────────────────────── T9 apply — patches styles DXF ─────────────────
