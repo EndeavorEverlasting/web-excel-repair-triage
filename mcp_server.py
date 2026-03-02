@@ -41,6 +41,8 @@ from triage.agents import (
     RecipeAgent,
     PatchAgent,
     GraphProbeAgent,
+    WebExcelBrowserProbeAgent,
+    ExcelDesktopProbeAgent,
     TriageOrchestrator,
 )
 
@@ -62,6 +64,8 @@ _pattern = PatternAgent()
 _recipe  = RecipeAgent()
 _patch   = PatchAgent()
 _graph   = GraphProbeAgent()
+_web_ui  = WebExcelBrowserProbeAgent()
+_desktop = ExcelDesktopProbeAgent()
 _orch    = TriageOrchestrator()
 
 
@@ -234,6 +238,70 @@ def graph_probe(
     """
     result = _graph.run(token, candidate_path, remote_name)
     return dataclasses.asdict(result)
+
+
+@mcp.tool()
+def web_excel_browser_probe(
+    url: str,
+    out_root: str = "Outputs/web_runs",
+    timeout_seconds: int = 15,
+    headless: bool = False,
+    user_data_dir: Optional[str] = None,
+    browser: str = "chromium",
+    channel: Optional[str] = None,
+    take_screenshot: bool = False,
+) -> dict:
+    """Optional — Browser UI probe for Excel for the web.
+
+    Opens the provided workbook sharing URL in a real browser (via Playwright),
+    checks for worksheet UI evidence and common repair banner text, then closes
+    the browser under a strict timeout.
+
+    If Playwright is not installed, returns an error message rather than raising.
+    """
+    import dataclasses
+
+    r = _web_ui.run(
+        url=url,
+        out_root=out_root,
+        timeout_seconds=timeout_seconds,
+        headless=headless,
+        user_data_dir=user_data_dir,
+        browser=browser,
+        channel=channel,
+        take_screenshot=take_screenshot,
+    )
+    return dataclasses.asdict(r)
+
+
+@mcp.tool()
+def desktop_excel_probe(
+    candidate_path: str,
+    out_root: str = "Outputs/excel_runs",
+    visible: bool = True,
+    try_repair: bool = True,
+    save_repaired_copy: bool = True,
+    timeout_seconds: int = 90,
+) -> dict:
+    """Optional — Desktop Excel probe.
+
+    Launches Microsoft Excel (desktop), attempts to open/repair the workbook,
+    auto-clicks common corruption/recovery dialogs, captures screenshots, and
+    collects recoveryLog XML (error*.xml) written to %TEMP%.
+
+    Returns a JSON-serialisable dict with artifact paths.
+    """
+    import dataclasses
+
+    r = _desktop.run(
+        candidate_path=candidate_path,
+        out_root=out_root,
+        visible=visible,
+        try_repair=try_repair,
+        save_repaired_copy=save_repaired_copy,
+        timeout_seconds=timeout_seconds,
+    )
+    return dataclasses.asdict(r)
 
 
 @mcp.tool()

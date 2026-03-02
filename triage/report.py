@@ -81,6 +81,10 @@ def recipe_from_gates(gate: GateReport) -> PatchRecipe:
     """
     Auto-generate minimal patch operations from a GateReport alone
     (no diff required).  Produces safe, conservative suggestions.
+
+    Now generates *concrete* literal_replace patches for shared_ref_bbox
+    issues (actual ref= values are known from the gate scan) instead of
+    placeholder stubs.
     """
     recipe = PatchRecipe(source_file=gate.path)
 
@@ -93,7 +97,46 @@ def recipe_from_gates(gate: GateReport) -> PatchRecipe:
                          "Excel will rebuild it on next open.",
         ))
 
-    # 2. dxfs count mismatch → fix count attribute
+    # 2. shared_ref_bbox → generate a concrete literal_replace per mismatch
+    #    The ref= value on the shared-formula base cell is unique enough to
+    #    match safely (these ranges are never reused in other XML contexts).
+    for issue in gate.shared_ref_bbox:
+        declared = issue["declared_ref"]
+        actual   = issue["actual_ref"]
+        part     = issue["part"]
+        si       = issue["si"]
+        recipe.patches.append(PatchOp(
+            part=part,
+            operation="literal_replace",
+            description=(f"Fix shared formula si={si} ref= bbox: "
+                         f'"{declared}" → "{actual}" in {part}.'),
+            match=f'ref="{declared}"',
+            replacement=f'ref="{actual}"',
+            occurrence=1,
+        ))
+
+    # 3. shared_ref_oob → clamp ref= end-row to sheet max row
+    for issue in gate.shared_ref_oob:
+        ref      = issue.get("ref", "")
+        part     = issue.get("part", "")
+        max_row  = issue.get("sheet_max_row", 0)
+        si       = issue.get("si", "?")
+        # Parse the ref and clamp last row
+        import re as _re
+        m = _re.match(r'^([A-Z]+)(\d+):([A-Z]+)(\d+)$', ref)
+        if m and max_row:
+            clamped = f'{m.group(1)}{m.group(2)}:{m.group(3)}{max_row}'
+            recipe.patches.append(PatchOp(
+                part=part,
+                operation="literal_replace",
+                description=(f"Clamp shared formula si={si} OOB ref= "
+                             f'"{ref}" → "{clamped}" (sheet max row {max_row}).'),
+                match=f'ref="{ref}"',
+                replacement=f'ref="{clamped}"',
+                occurrence=1,
+            ))
+
+    # 4. dxfs count mismatch → fix count attribute
     for issue in gate.styles_dxf:
         if issue.get("issue") == "dxfs_count_mismatch":
             declared = issue["declared"]
@@ -108,7 +151,7 @@ def recipe_from_gates(gate: GateReport) -> PatchRecipe:
             ))
             break  # only one <dxfs> element
 
-    # 3. tableColumn linefeed → hint only (we can't safely auto-fix without knowing the value)
+    # 5. tableColumn linefeed → hint only (we can't safely auto-fix without knowing the value)
     for hit in gate.tablecolumn_lf:
         recipe.patches.append(PatchOp(
             part=hit["part"],
@@ -122,11 +165,70 @@ def recipe_from_gates(gate: GateReport) -> PatchRecipe:
     return recipe
 
 
-def recipe_from_patterns(source_file: str, patterns: List[Pattern]) -> PatchRecipe:
+def _extract_dxf_block_from_diff(xml_diff: Optional[str]) -> Optional[str]:
+    """
+    Mine added <dxf> elements from a unified diff of xl/styles.xml.
+    Returns a string of the added <dxf>...</dxf> elements suitable for
+    inserting before </dxfs>, or None if not found.
+    """
+    if not xml_diff:
+        return None
+    import re as _re
+    added_lines = [ln[1:] for ln in xml_diff.splitlines() if ln.startswith("+")]
+    block = "\n".join(added_lines)
+    # Collect all <dxf> ... </dxf> elements from the added lines
+    dxfs = _re.findall(r"<dxf\b[^>]*>.*?</dxf>", block, _re.DOTALL)
+    if not dxfs:
+        # Try single-line / self-closing <dxf/>
+        dxfs = _re.findall(r"<dxf\b[^>]*/?>", block)
+    return "\n".join(dxfs) if dxfs else None
+
+
+def _extract_count_from_diff(xml_diff: Optional[str]) -> Optional[tuple]:
+    """
+    Extract (old_count, new_count) for dxfs @count attribute from diff.
+    Returns (old, new) strings or None.
+    """
+    if not xml_diff:
+        return None
+    import re as _re
+    old_m = _re.search(r'^-.*dxfs[^>]*count="(\d+)"', xml_diff, _re.MULTILINE)
+    new_m = _re.search(r'^\+.*dxfs[^>]*count="(\d+)"', xml_diff, _re.MULTILINE)
+    if old_m and new_m:
+        return old_m.group(1), new_m.group(1)
+    return None
+
+
+def _read_part_from_zip(zip_path: str, part_name: str) -> Optional[bytes]:
+    """Read a single part from a ZIP file, returning None if not found."""
+    try:
+        import zipfile as _zf
+        with _zf.ZipFile(zip_path, "r") as z:
+            if part_name in z.namelist():
+                return z.read(part_name)
+    except Exception:
+        pass
+    return None
+
+
+def recipe_from_patterns(
+    source_file: str,
+    patterns: List[Pattern],
+    diff_report: Optional["DiffReport"] = None,  # type: ignore[name-defined]
+) -> PatchRecipe:
     """
     Translate detected diff patterns into patch operations.
     More precise than gate-only recipes because we have the actual diff.
+
+    When *diff_report* is provided, concrete XML content is mined from the
+    diff so patches are ready-to-apply rather than placeholder stubs.
     """
+    # Build a quick lookup: part name → PartDelta
+    diff_map: Dict[str, Any] = {}
+    if diff_report is not None:
+        for pd in diff_report.parts:
+            diff_map[pd.name] = pd
+
     recipe = PatchRecipe(source_file=source_file)
     for p in patterns:
         if p.name == "CALCCHAIN_DROP":
@@ -135,16 +237,67 @@ def recipe_from_patterns(source_file: str, patterns: List[Pattern]) -> PatchReci
                 operation="delete_part",
                 description=p.description,
             ))
+
         elif p.name == "DXFS_INSERTION":
-            recipe.patches.append(PatchOp(
-                part="xl/styles.xml",
-                operation="append_block",
-                description=p.description + " — Fill in <dxf> content from repaired file diff.",
-                anchor="</dxfs>",
-                block="<!-- INSERT_DXF_ELEMENTS_HERE -->",
-                position="before",
-            ))
-        elif p.name in ("CF_DXFID_CLONE", "SHARED_REF_TRIM", "TABLE_STYLE_NORM",
+            # Best strategy: replace xl/styles.xml wholesale with the repaired
+            # version's bytes.  This avoids the count-mismatch that arises when
+            # we append all N dxf elements from the repaired file instead of
+            # only the delta.  The repaired file's styles.xml is byte-identical
+            # to what Excel-for-Web would produce, so it is safe to use verbatim.
+            repaired_styles: Optional[bytes] = None
+            if diff_report is not None:
+                repaired_styles = _read_part_from_zip(
+                    diff_report.repaired_path, "xl/styles.xml"
+                )
+
+            if repaired_styles is not None:
+                recipe.patches.append(PatchOp(
+                    part="xl/styles.xml",
+                    operation="set_part",
+                    description=(p.description +
+                                 " — xl/styles.xml replaced wholesale from repaired file "
+                                 "(safest: avoids count-mismatch)."),
+                    content=repaired_styles.decode("utf-8", errors="replace"),
+                ))
+            else:
+                # Fallback: append_block stub
+                recipe.patches.append(PatchOp(
+                    part="xl/styles.xml",
+                    operation="append_block",
+                    description=p.description + " — Fill in <dxf> content from repaired file diff.",
+                    anchor="</dxfs>",
+                    block="<!-- INSERT_DXF_ELEMENTS_HERE -->",
+                    position="before",
+                ))
+
+        elif p.name == "CF_DXFID_CLONE":
+            # Excel renumbered dxfIds in cfRules.  The safest fix is to replace
+            # each affected worksheet part wholesale from the repaired file.
+            # This avoids computing the exact dxfId remapping table.
+            for part in p.affected_parts:
+                repaired_bytes: Optional[bytes] = None
+                if diff_report is not None:
+                    repaired_bytes = _read_part_from_zip(
+                        diff_report.repaired_path, part
+                    )
+                if repaired_bytes is not None:
+                    recipe.patches.append(PatchOp(
+                        part=part,
+                        operation="set_part",
+                        description=(f"[CF_DXFID_CLONE] Replace {part} wholesale from "
+                                     "repaired file to fix dxfId renumbering."),
+                        content=repaired_bytes.decode("utf-8", errors="replace"),
+                    ))
+                else:
+                    recipe.patches.append(PatchOp(
+                        part=part,
+                        operation="literal_replace",
+                        description=f"[CF_DXFID_CLONE] {p.description} — Manual review required.",
+                        match="<REVIEW_REQUIRED>",
+                        replacement="<REVIEW_REQUIRED>",
+                    ))
+
+        elif p.name in ("SHARED_REF_TRIM", "TABLE_STYLE_NORM",
                          "SHAREDSTRINGS_REBUILD", "RELS_CLEANUP"):
             # These require human review; emit a stub
             for part in p.affected_parts:

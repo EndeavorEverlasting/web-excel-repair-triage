@@ -326,6 +326,52 @@ Tokens expire after ~1 hour.
 - **By drive+item** — probe an existing file by OneDrive drive ID + item ID.
 - **By share URL** — probe via a OneDrive sharing URL.
 
+**Observable artifacts (so we can verify a sheet is actually readable)**:
+- The probe attempts a small **range read** (`A1:L20`) from the first worksheet and shows it in the UI.
+- Artifacts are written to `Outputs/graph_runs/<label>_<timestamp>/`:
+  - `graph_probe_report.json`
+  - `graph_probe_preview.json` *(only when a range read succeeds)*
+  - `graph_sheet_preview.png` *(only when a range read succeeds and Pillow is available)*
+
+### Tab 7 — 🌍 Browser Excel Probe *(optional)*
+
+This tab performs a **real browser UI smoke-test**:
+
+- Opens a workbook **sharing link** in a browser
+- Checks for DOM evidence that a **worksheet UI** loaded (grid/tab heuristics)
+- Attempts to detect common **repair banner** text
+- Closes the browser under a strict **time budget** (default: 15s)
+
+This complements (not replaces) the Graph Probe:
+
+- **Graph Probe** = best backend signal (worksheets + range read), no browser required
+- **Browser Probe** = UI-level confirmation that a sheet actually renders
+
+#### Requirements
+
+The Browser probe uses **Playwright** and is optional. Install once:
+
+```bash
+pip install playwright
+python -m playwright install
+```
+
+#### When sign-in is required
+
+If the workbook is private, you may hit a sign-in page. In that case, provide a
+browser **user data dir** (profile) in the tab so the probe can reuse your
+existing signed-in session.
+
+#### Artifacts
+
+Artifacts are written under:
+
+- `Outputs/web_runs/<label>_<timestamp>[_isolated]/`
+  - `web_excel_probe_report.json`
+  - `page_title.txt`, `page_url.txt`
+  - `page_text_excerpt.txt`
+  - `web_excel.png` *(best-effort only; may be disabled by policy)*
+
 ---
 
 ## Patch Recipe Versioning Workflow
@@ -456,9 +502,11 @@ That's it — the full triage tool is running in your browser.
 | `triage/report.py` | Build and merge `PatchRecipe` objects; serialize to JSON |
 | `triage/patcher.py` | Apply a `PatchRecipe` to a ZIP, write output file |
 | `triage/graph_probe.py` | Microsoft Graph API upload-and-test probe |
+| `triage/excel_desktop.py` | **Desktop Microsoft Excel** probe (COM automation): open/repair, auto-click dialogs, screenshots, harvest `%TEMP%/error*.xml` |
+| `triage/desktop_iterate.py` | Iterative loop: desktop open/repair → diff vs Excel-repaired copy → generate recipe → patch → repeat |
 | `triage/agents.py` | One agent class per phase + `TriageOrchestrator` |
 | `mcp_server.py` | MCP server — exposes all agents as callable tools |
-| `app.py` | Streamlit UI — 6 tabs wiring all modules together |
+| `app.py` | Streamlit UI — tabs wiring all modules together |
 
 ---
 
@@ -477,7 +525,57 @@ pipeline can be driven from code, scripts, or the MCP server — not just the UI
 | `RecipeAgent` | 4 | `run(source_file, gate_report, patterns)` | `PatchRecipe` |
 | `PatchAgent` | 5 | `run(candidate_path, recipe_dict, output_path)` | `str` (path) |
 | `GraphProbeAgent` | 6 | `run(token, candidate_path, remote_name)` | `GraphResult` |
+| `ExcelDesktopProbeAgent` | Optional | `run(candidate_path, out_root, visible, try_repair, save_repaired_copy, timeout_seconds)` | `ExcelDesktopProbeResult` |
 | `TriageOrchestrator` | All | `run_full_pipeline(candidate, repaired, token)` | `dict` |
+
+---
+
+## Desktop Excel is the canonical validator
+
+Excel for Web “gate checks” and OOXML heuristics are useful, but **desktop Microsoft Excel is the truth**:
+
+- If desktop Excel can’t open it, it’s not “repaired”.
+- If desktop Excel opens it *only after recovery*, it’s still not clean.
+- When Excel recovers a file it usually writes a recovery log like:
+  - `%TEMP%\error*.xml` (example: `C:\Users\<you>\AppData\Local\Temp\error284680_01.xml`)
+
+### Run the Desktop Excel probe (CLI)
+
+```bash
+python -m triage.excel_desktop --file "Active\SomeWorkbook.xlsx" --timeout 15 --isolate
+```
+
+Notes:
+
+- `--timeout 15` is the recommended “fast verdict” budget.
+- `--isolate` runs the probe in a worker subprocess so the supervisor can enforce a **hard wall‑clock timeout** even if Excel/COM hangs.
+
+Artifacts are written under:
+
+- `Outputs/excel_runs/<stem>_<timestamp>/`
+  - `desktop_excel_probe_report.json`
+  - `excel_initial_*.png`, `excel_postopen_*.png`
+  - `dialog_*.png` (if dialogs were detected)
+  - `recovery_XX_error*.xml` (copied from `%TEMP%` when present)
+  - `temp_errorxml_listing.json` (**always written**) — a snapshot of what `%TEMP%\error*.xml` files existed during the run, so “no recovery log produced” vs “we missed it” is auditable
+
+### Iterate until desktop Excel opens cleanly
+
+This loop uses desktop Excel repair output as the “teacher”:
+
+1) open/repair in desktop Excel (auto-click prompts) → SaveCopyAs repaired copy
+2) diff candidate vs repaired copy → detect patterns
+3) generate patch recipe → apply patch
+4) repeat
+
+```bash
+python -m triage.desktop_iterate --file "Candidates\SomeWorkbook.xlsx" --max-iters 5 --timeout 180
+```
+
+Outputs:
+- `Outputs/desktop_iter/excel_runs/...` (probe artifacts per iteration)
+- `Outputs/desktop_iter/<stem>_iterN.xlsx` (patched workbooks)
+- `Outputs/desktop_iter/<stem>_desktop_iterate.json` (iteration summary)
 
 ### Using agents from a script
 

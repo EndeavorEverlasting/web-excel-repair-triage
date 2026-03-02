@@ -27,6 +27,9 @@ patch_recipe.json
 # ── Streamlit runtime ─────────────────────────────────────────────────────────
 .streamlit/
 
+# ── Deprecated archive (binary .xlsx history, not needed in repo) ───────────
+Deprecated/
+
 # ── OneDrive export archives (large, not needed on other machines) ────────────
 OneDrive_*.zip
 

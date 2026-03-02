@@ -48,6 +48,7 @@ Recipe JSON schema (see report.py for generation):
 from __future__ import annotations
 import io
 import json
+import re
 import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -141,6 +142,78 @@ def _apply_one(data: bytes, patch: Dict[str, Any]) -> Optional[bytes]:
         raise PatchError(f"Unknown operation: {op!r}")
 
 
+def _rels_path_for(part: str) -> str:
+    """
+    Return the OPC .rels file path that owns *part*.
+    e.g. "xl/calcChain.xml" → "xl/_rels/workbook.xml.rels"
+         "xl/worksheets/sheet1.xml" → "xl/worksheets/_rels/sheet1.xml.rels"
+    """
+    p = Path(part.replace("/", "\\"))
+    return str(p.parent / "_rels" / (p.name + ".rels")).replace("\\", "/")
+
+
+def _owning_rels_file(part: str) -> str:
+    """
+    Return the .rels file that *contains* a Relationship pointing to *part*.
+    For "xl/calcChain.xml" the owning rels is "xl/_rels/workbook.xml.rels".
+    We derive this by looking at the parent directory's rels file.
+    """
+    p = part.replace("\\", "/")
+    # Split into directory and filename
+    if "/" in p:
+        directory, filename = p.rsplit("/", 1)
+        return f"{directory}/_rels/workbook.xml.rels"
+    return "_rels/workbook.xml.rels"
+
+
+def _strip_rels_entry(parts: Dict[str, bytes], deleted_part: str) -> None:
+    """
+    Remove the <Relationship> element(s) that reference *deleted_part* from
+    every .rels file in *parts*.  Operates on the raw bytes with a simple
+    split-based approach (no catastrophic backtracking).
+
+    The Target= attribute in .rels files is relative to the owning part's
+    directory, so we match on the basename of the deleted part.
+    """
+    dp = deleted_part.replace("\\", "/")
+    basename = dp.rsplit("/", 1)[-1].encode()  # e.g. b"calcChain.xml"
+
+    for rels_name in list(parts.keys()):
+        if not rels_name.endswith(".rels"):
+            continue
+        data = parts[rels_name]
+        if basename not in data:
+            continue
+        # Split on <Relationship and filter out any element whose Target
+        # attribute ends with our basename.  This avoids regex backtracking.
+        chunks = data.split(b"<Relationship")
+        kept = [chunks[0]]
+        for chunk in chunks[1:]:
+            # chunk starts right after "<Relationship"
+            # Find the closing /> of this element
+            end = chunk.find(b"/>")
+            if end == -1:
+                kept.append(chunk)
+                continue
+            element = chunk[:end + 2]
+            # Check if Target="...basename" appears in this element
+            target_marker = b'Target="'
+            ti = element.find(target_marker)
+            if ti != -1:
+                target_val_start = ti + len(target_marker)
+                target_val_end = element.find(b'"', target_val_start)
+                if target_val_end != -1:
+                    target_val = element[target_val_start:target_val_end]
+                    if target_val.endswith(basename):
+                        # Skip this element (drop it)
+                        kept.append(chunk[end + 2:])  # keep content after />
+                        continue
+            kept.append(chunk)
+        new_data = b"<Relationship".join(kept)
+        if new_data != data:
+            parts[rels_name] = new_data
+
+
 def apply_recipe(
     source_path: str,
     recipe: Dict[str, Any],
@@ -185,6 +258,9 @@ def apply_recipe(
         if op == "delete_part":
             if part in parts:
                 deleted.add(part)
+                # Also strip the <Relationship> entry that points to this part
+                # from the owning .rels file so no dangling reference remains.
+                _strip_rels_entry(parts, part)
             else:
                 errors.append(f"[{pid}] delete_part: '{part}' not in archive (already absent?)")
             continue

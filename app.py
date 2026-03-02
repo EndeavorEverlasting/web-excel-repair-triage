@@ -124,8 +124,16 @@ def _save_temp(name: str, data: bytes) -> str:
     return tmp.name
 
 # ── main tabs ────────────────────────────────────────────────────────────────
-tab_names = ["📊 Overview", "🚦 Gate Checks", "🔀 Part Diff",
-             "🧩 Patterns", "🩹 Patch & Export", "🌐 Graph Probe"]
+tab_names = [
+    "📊 Overview",
+    "🚦 Gate Checks",
+    "🔀 Part Diff",
+    "🧩 Patterns",
+    "🩹 Patch & Export",
+    "🌐 Graph Probe",
+    "🌍 Browser Excel Probe",
+    "🖥 Desktop Excel Probe",
+]
 tabs = st.tabs(tab_names)
 
 if not cand_file:
@@ -571,22 +579,47 @@ Tokens expire after ~1 hour.  For automation, use a service principal with a cli
         st.warning("Enter a **Bearer Token** in the sidebar to enable this feature.")
     else:
         if st.button("🚀 Run Graph Probe", type="primary"):
-            from triage.graph_probe import (
-                probe_upload_and_test, probe_by_item, probe_by_share_url, GraphResult
-            )
+            from triage.graph_probe import probe_by_item, probe_by_share_url, probe_upload_and_test
             with st.spinner("Probing Excel for Web via Graph API…"):
                 try:
                     if probe_mode == "Upload & test":
-                        result = probe_upload_and_test(graph_token, cand_path,
-                                                       remote_name=cand_file.name)
+                        result = probe_upload_and_test(
+                            graph_token,
+                            cand_path,
+                            remote_name=cand_file.name,
+                            out_root="Outputs/graph_runs",
+                        )
                     elif probe_mode == "By drive+item":
-                        result = probe_by_item(graph_token, g_drive, g_item)
+                        result = probe_by_item(graph_token, g_drive, g_item, out_root="Outputs/graph_runs")
                     else:
-                        result = probe_by_share_url(graph_token, g_share)
+                        result = probe_by_share_url(graph_token, g_share, out_root="Outputs/graph_runs")
 
                     if result.success:
                         st.success(f"✅ Graph probe PASSED — {len(result.worksheets)} worksheets visible.")
                         st.code(json.dumps({"worksheets": result.worksheets}, indent=2), language="json")
+
+                        # Show a small preview of sheet content if available.
+                        if getattr(result, "preview_text", None):
+                            st.markdown("#### Sheet preview (Graph range read)")
+                            st.caption(
+                                f"Sheet={getattr(result, 'preview_sheet', None)}  "
+                                f"Address={getattr(result, 'preview_address', None)}"
+                            )
+                            try:
+                                import pandas as pd  # type: ignore
+
+                                st.dataframe(pd.DataFrame(result.preview_text))
+                            except Exception:
+                                st.code(json.dumps(result.preview_text, indent=2), language="json")
+
+                        if getattr(result, "preview_image", None):
+                            try:
+                                st.image(result.preview_image, caption="Graph sheet preview")
+                            except Exception:
+                                st.write(result.preview_image)
+
+                        if getattr(result, "out_dir", None):
+                            st.caption(f"Artifacts: {result.out_dir}")
                     else:
                         st.error(f"❌ Graph probe FAILED at step '{result.step}' "
                                  f"(HTTP {result.status_code})")
@@ -594,4 +627,170 @@ Tokens expire after ~1 hour.  For automation, use a service principal with a cli
                             st.code(result.error)
                 except Exception as ex:
                     st.error(f"Exception during probe: {ex}")
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# TAB 7: BROWSER EXCEL PROBE
+# ═══════════════════════════════════════════════════════════════════════
+with tabs[6]:
+    st.markdown("### 🌍 Browser — Excel for the web UI Probe")
+    st.caption(
+        "Opens the workbook sharing link in a real browser and looks for worksheet UI evidence "
+        "(DOM heuristics; screenshots optional). Useful when you want to confirm the *actual* "
+        "Excel web UI loads a sheet within ~15 seconds."
+    )
+
+    st.info(
+        "This feature is optional and requires Playwright. If you haven't installed it yet: "
+        "`pip install playwright` then `python -m playwright install`."
+    )
+
+    web_url = st.text_input(
+        "Workbook share URL",
+        value="",
+        placeholder="https://... (OneDrive/SharePoint sharing link that opens in Excel for the web)",
+        help="You must supply a share link that opens the workbook in Excel for the web.",
+    )
+
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        web_headless = st.checkbox("Headless", value=False)
+        web_timeout = st.number_input(
+            "Timeout (seconds)",
+            min_value=5,
+            max_value=60,
+            value=15,
+            step=5,
+        )
+    with col2:
+        web_browser = st.selectbox(
+            "Browser engine",
+            options=["chromium", "firefox", "webkit"],
+            index=0,
+            help="Playwright engine; Excel for the web is most reliable with Chromium.",
+        )
+        web_channel = st.selectbox(
+            "Browser channel",
+            options=["(default)", "msedge", "chrome"],
+	            index=2,
+	            help="Use 'chrome' to reuse your Microsoft 365 sign-in (recommended if you normally use Chrome).",
+        )
+    with col3:
+        web_user_data_dir = st.text_input(
+            "User data dir (optional)",
+            value="",
+	            placeholder=r"C:\Users\<you>\AppData\Local\Google\Chrome\User Data",
+            help=(
+                "If the workbook requires sign-in, provide a browser profile directory so the probe "
+                "can reuse your existing session (persistent context)."
+            ),
+        )
+        web_take_screenshot = st.checkbox("Try screenshot (best-effort)", value=False)
+
+    if st.button("▶️ Run Browser Probe", type="primary"):
+        if not web_url.strip():
+            st.warning("Enter a workbook share URL.")
+        else:
+            try:
+                from triage.web_excel_browser import probe_open_in_web_excel_isolated
+
+                with st.spinner("Opening workbook in browser (timeboxed)…"):
+                    r = probe_open_in_web_excel_isolated(
+                        url=web_url.strip(),
+                        out_root="Outputs/web_runs",
+                        timeout_seconds=int(web_timeout),
+                        headless=bool(web_headless),
+                        user_data_dir=(web_user_data_dir.strip() or None),
+                        browser=str(web_browser),
+                        channel=(None if web_channel == "(default)" else str(web_channel)),
+                        take_screenshot=bool(web_take_screenshot),
+                    )
+
+                if r.sheet_observed and not r.repair_banner_detected:
+                    st.success(
+                        f"✅ Sheet observed in web UI. Elapsed={getattr(r,'elapsed_seconds',None)}s  Out={r.out_dir}"
+                    )
+                elif r.needs_login:
+                    st.warning(
+                        f"⚠️ Probe hit a sign-in wall (needs_login=True). Provide a user data dir. Out={r.out_dir}"
+                    )
+                else:
+                    st.error(
+                        f"❌ Browser probe did not observe a sheet UI. RepairBanner={r.repair_banner_detected} "
+                        f"TimedOut={getattr(r,'timed_out',False)} Out={r.out_dir}"
+                    )
+
+                st.markdown("#### Report")
+                st.json(r.to_dict())
+
+                if r.out_dir:
+                    st.caption(f"Artifacts: {r.out_dir}")
+            except Exception as ex:
+                st.error(f"Browser probe failed: {ex}")
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# TAB 8: DESKTOP EXCEL PROBE
+# ═══════════════════════════════════════════════════════════════════════
+with tabs[7]:
+    st.markdown("### 🖥 Desktop Excel — Open/Repair Probe")
+    st.caption(
+        "Launches desktop Microsoft Excel, opens the workbook, auto-clicks common repair dialogs, "
+        "captures screenshots, and copies any new %TEMP%/error*.xml recovery logs into Outputs/."
+    )
+
+    col1, col2 = st.columns(2)
+    with col1:
+        desktop_visible = st.checkbox("Show Excel UI (recommended for screenshots)", value=True)
+        desktop_try_repair = st.checkbox("Try repair (CorruptLoad=repair)", value=True)
+    with col2:
+        desktop_save_repaired = st.checkbox("Save repaired copy (SaveCopyAs)", value=True)
+        desktop_timeout = st.number_input(
+            "Timeout (seconds)",
+            min_value=5,
+            max_value=60,
+            value=15,
+            step=5,
+            help="Probe is intended to decide open-state quickly; keep this short so we can iterate.",
+        )
+
+    if st.button("▶️ Run Desktop Excel Probe", type="primary"):
+        try:
+            from triage.excel_desktop import probe_open_in_desktop_excel_isolated
+
+            with st.spinner("Running desktop Excel probe (this will launch Excel)…"):
+                r = probe_open_in_desktop_excel_isolated(
+                    candidate_path=cand_path,
+                    out_root="Outputs/excel_runs",
+                    visible=desktop_visible,
+                    try_repair=desktop_try_repair,
+                    save_repaired_copy=desktop_save_repaired,
+                    timeout_seconds=int(desktop_timeout),
+                )
+
+            st.success(
+                f"Probe complete. Opened={r.opened} Fatal={r.fatal} TimedOut={getattr(r,'timed_out',False)} "
+                f"Elapsed={getattr(r,'elapsed_seconds',None)}s  Out={r.out_dir}"
+            )
+            st.markdown("#### Report")
+            st.json(r.to_dict())
+
+            if r.screenshots:
+                st.markdown("#### Screenshots")
+                for p in r.screenshots[:30]:
+                    try:
+                        st.image(p, caption=os.path.basename(p))
+                    except Exception:
+                        st.write(p)
+
+            if r.recovery_logs:
+                st.markdown("#### Recovery XML")
+                for rec in r.recovery_logs[:10]:
+                    st.write(rec.get("copied", ""))
+                    snip = rec.get("snippet", "")
+                    if snip:
+                        st.code(snip[:1500])
+        except Exception as ex:
+            st.error(f"Desktop probe failed: {ex}")
 

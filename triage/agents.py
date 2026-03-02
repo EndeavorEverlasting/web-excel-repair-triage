@@ -13,6 +13,8 @@ Agent classes
   RecipeAgent       – merge_recipes()    → PatchRecipe
   PatchAgent        – apply_recipe()     → str (output path)
   GraphProbeAgent   – probe_upload_and_test() → GraphResult
+  WebExcelBrowserProbeAgent – probe_open_in_web_excel_isolated() → WebExcelBrowserResult
+  ExcelDesktopProbeAgent – probe_open_in_desktop_excel_isolated() → ExcelDesktopProbeResult
   TriageOrchestrator – chains all agents → dict summary
 
 All agents are stateless; instantiate once and call .run() as many times
@@ -32,6 +34,15 @@ from triage.report import (
 )
 from triage.patcher import apply_recipe
 from triage.graph_probe import probe_upload_and_test, GraphResult
+from triage.excel_desktop import (
+    ExcelDesktopProbeResult,
+    probe_open_in_desktop_excel,
+    probe_open_in_desktop_excel_isolated,
+)
+from triage.web_excel_browser import (
+    WebExcelBrowserResult,
+    probe_open_in_web_excel_isolated,
+)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -205,6 +216,66 @@ class GraphProbeAgent:
             Call dataclasses.asdict(result) for a JSON-serialisable dict.
         """
         return probe_upload_and_test(token, candidate_path, remote_name)
+
+
+class ExcelDesktopProbeAgent:
+    """
+    Optional — Desktop Excel validation.
+    Launches Microsoft Excel (desktop), attempts to open/repair the workbook,
+    auto-clicks common recovery dialogs, captures screenshots, and collects
+    recoveryLog XML (error*.xml) written to %TEMP%.
+    """
+
+    def run(
+        self,
+        candidate_path: str,
+        out_root: str = "Outputs/excel_runs",
+        visible: bool = True,
+        try_repair: bool = True,
+        save_repaired_copy: bool = True,
+        timeout_seconds: int = 90,
+        isolate_process: bool = True,
+    ) -> ExcelDesktopProbeResult:
+        fn = probe_open_in_desktop_excel_isolated if isolate_process else probe_open_in_desktop_excel
+        return fn(
+            candidate_path=candidate_path,
+            out_root=out_root,
+            visible=visible,
+            try_repair=try_repair,
+            save_repaired_copy=save_repaired_copy,
+            timeout_seconds=timeout_seconds,
+        )
+
+
+class WebExcelBrowserProbeAgent:
+    """Optional — real browser UI probe for Excel for the web.
+
+    Opens a workbook sharing link in a browser (via Playwright), checks for DOM
+    evidence of a worksheet UI and common repair banner strings, and then closes
+    the browser under a strict timeout.
+    """
+
+    def run(
+        self,
+        url: str,
+        out_root: str = "Outputs/web_runs",
+        timeout_seconds: int = 15,
+        headless: bool = False,
+        user_data_dir: Optional[str] = None,
+        browser: str = "chromium",
+        channel: Optional[str] = None,
+        take_screenshot: bool = False,
+    ) -> WebExcelBrowserResult:
+        return probe_open_in_web_excel_isolated(
+            url=url,
+            out_root=out_root,
+            timeout_seconds=timeout_seconds,
+            headless=headless,
+            user_data_dir=user_data_dir,
+            browser=browser,
+            channel=channel,
+            take_screenshot=take_screenshot,
+        )
 
 
 # ──────────────────────────────────────────────────────────────────────────────

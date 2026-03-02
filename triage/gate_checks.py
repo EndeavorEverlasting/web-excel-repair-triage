@@ -236,6 +236,40 @@ def check_illegal_control_chars(z: zipfile.ZipFile) -> List[dict]:
     return bad
 
 
+def _resolve_ooxml_target(rels_path: str, target: str) -> str:
+    """
+    Resolve an OPC relationship target relative to the owning part's directory.
+
+    In OPC, xl/worksheets/_rels/sheet1.xml.rels belongs to xl/worksheets/sheet1.xml.
+    The owning part's directory (xl/worksheets/) is the base for relative targets.
+    We then normalize away any .. path components.
+    """
+    # Derive owning part path: strip /_rels/ prefix from directory and .rels suffix
+    # e.g. "xl/worksheets/_rels/sheet1.xml.rels" -> "xl/worksheets/sheet1.xml"
+    parts = rels_path.split("/")
+    if "_rels" in parts:
+        idx = parts.index("_rels")
+        fname = parts[-1]
+        if fname.endswith(".rels"):
+            fname = fname[:-5]  # strip .rels suffix
+        owner_parts = parts[:idx] + [fname]
+    else:
+        owner_parts = parts
+
+    # Base directory = directory of the owning part
+    base_parts = owner_parts[:-1]  # drop the filename
+
+    # Resolve the target relative to the base directory
+    for segment in target.split("/"):
+        if segment == "..":
+            if base_parts:
+                base_parts.pop()
+        elif segment and segment != ".":
+            base_parts.append(segment)
+
+    return "/".join(base_parts)
+
+
 def check_rels_missing(z: zipfile.ZipFile) -> List[dict]:
     missing: List[dict] = []
     all_parts = set(z.namelist())
@@ -249,10 +283,9 @@ def check_rels_missing(z: zipfile.ZipFile) -> List[dict]:
             if not tm:
                 continue
             target = tm.group(1)
-            base = rels.rsplit("/", 1)[0]
-            owner = base.rsplit("/", 1)[0] if "/" in base else ""
-            resolved = "/".join(p for p in (owner + "/" + target).replace("//", "/").split("/")
-                                if p not in ("", "."))
+            if target.startswith("/") or "://" in target:
+                continue  # absolute or external
+            resolved = _resolve_ooxml_target(rels, target)
             if resolved not in all_parts:
                 missing.append({"rels": rels, "target": target, "resolved": resolved})
     return missing
