@@ -22,20 +22,23 @@ Outputs/**
 !Outputs/dv_spec_deprecated.json
 
 # Legacy location (root-level patch file)
-*_patched.xlsx
+/*_patched.xlsx
 # Root-level recipe if accidentally saved there
-patch_recipe.json
+/patch_recipe.json
 
 # Common local workbook artifacts (keep out of git)
-CANDIDATE_*.xlsx
-web_repaired_*.xlsx
-README_CANDIDATE_*.xlsx
+# (root-only; do NOT ignore sample corpora under Deprecated/)
+/CANDIDATE_*.xlsx
+/web_repaired_*.xlsx
+/README_CANDIDATE_*.xlsx
 
 # ── Streamlit runtime ─────────────────────────────────────────────────────────
 .streamlit/
 
-# ── Deprecated archive (binary .xlsx history, not needed in repo) ───────────
-Deprecated/
+# ── Deprecated archive policy ────────────────────────────────────────────────
+# Keep curated, high-signal samples under Deprecated/ tracked,
+# but ignore bulky/reproducible runtime outputs.
+Deprecated/outputs_pre_i100/
 
 # ── OneDrive export archives (large, not needed on other machines) ────────────
 OneDrive_*.zip

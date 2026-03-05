@@ -184,7 +184,7 @@ No reinstalling needed unless `requirements.txt` changed (the terminal will tell
 | Subfolder | Contents |
 |-----------|----------|
 | `candidates_pre_i100/` | All candidate iterations i076–i099 + corrupt/Teams variants |
-| `outputs_pre_i100/` | Patched outputs, autofix reports, batch summaries, excel_runs, desktop_iter |
+| `outputs_pre_i100/` | Large generated runtime outputs (intentionally **not versioned** to keep pulls fast) |
 | `repaired/` | Desktop and web-repaired .xlsx files |
 | `scripts_legacy/` | Original prototype scripts (superseded by `triage/` module) |
 | `bundles/` | OneDrive export zips and loose root-level .xlsx files |
