@@ -191,6 +191,8 @@ No reinstalling needed unless `requirements.txt` changed (the terminal will tell
 | `readme/` | Older README patches, screenshots, web-repaired i099 |
 | `xml_fragments/` | Miscellaneous XML error snippets |
 
+Note: this repo versions **curated** `Deprecated/` samples for reproducible triage; bulky runtime artifacts under `Deprecated/outputs_pre_i100/` are intentionally ignored to keep `git clone/pull` fast.
+
 ### Workbook lifecycle
 
 ```
