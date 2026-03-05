@@ -34,6 +34,7 @@ from triage.report import (
     PatchRecipe,
 )
 from triage.patcher import apply_recipe, PatchError, PatchWarning
+from triage.path_policy import is_active_path
 
 CANDIDATES_DIR = Path("Candidates")
 REPAIRED_DIR   = Path("Repaired")
@@ -132,6 +133,12 @@ def run_one(
         "error":        None,
     }
     try:
+        if is_active_path(outputs_dir):
+            raise ValueError(
+                "ENDEAVOR: Batch pipeline patch output — refused. "
+                "Active/ is read-only (golden standards). "
+                f"Choose Outputs/ or Deprecated/. outputs_dir={outputs_dir}"
+            )
         # Phase 1: gate checks
         gate = _gate_run_all(str(candidate))
         gate_dict = gate.to_dict()
@@ -202,6 +209,13 @@ def run_batch(
     """
     candidates = sorted(candidates_dir.glob("*.xlsx"))
     results: List[Dict[str, Any]] = []
+
+    if is_active_path(outputs_dir):
+        raise ValueError(
+            "ENDEAVOR: Batch pipeline summary output — refused. "
+            "Active/ is read-only (golden standards). "
+            f"Choose Outputs/ or Deprecated/. outputs_dir={outputs_dir}"
+        )
 
     for c in candidates:
         repaired = _find_repaired(c)

@@ -50,6 +50,25 @@ conditional formatting, or shared-string references.
 - **MCP-first** — every triage phase is also an MCP tool, so Augment Code can
   orchestrate the full pipeline from a chat prompt.
 
+### Lifecycle folder rules (quick reference)
+
+This repo uses lifecycle folders so the engine can keep artifacts organized:
+
+- `Active/` — **golden standards**. Treat as **read-only** (analysis only).
+- `Deprecated/` — **work area**. Iteration/repair/experiments happen here.
+- `Candidates/` — inputs you want to triage (often uploaded as the Candidate).
+- `Repaired/` — “repaired by Excel” variants (web-exported or desktop SaveCopyAs).
+- `Outputs/` — all generated artifacts (reports, recipes, patched workbooks, probe runs, backups).
+
+Tiny lifecycle flow:
+
+```mermaid
+flowchart LR
+  Active <--> Deprecated <--> Outputs
+```
+
+Repo Engine actions are **copy-by-default** (non-destructive). Moving is always opt-in.
+
 ---
 
 ## Quick Start
@@ -155,7 +174,7 @@ No reinstalling needed unless `requirements.txt` changed (the terminal will tell
 | Folder | Purpose |
 |--------|---------|
 | `Active/` | Production-ready, currently working workbooks (e.g. i100 WEBSAFE) |
-| `Web Excel Compatibility Rules and References/` | Reference docs: README patch workbook, DocsPack, compatibility guide |
+| `Web Excel Compatibility Rules and References/` | Reference docs: README patch workbook, compatibility guide (DocsPack deprecated) |
 | `triage/` | Core Python engine (scanner, gate checks, diff, patcher, probes, …) |
 | `tests/` | Unit and integration tests |
 | `Deprecated/` | Archived pre-i100 artifacts — organized into subdirectories (see below) |
@@ -216,6 +235,10 @@ No reinstalling needed unless `requirements.txt` changed (the terminal will tell
    repair (from `Repaired/`). Enables the Diff, Patterns, and full Patch Recipe tabs.
 3. **Bearer Token** *(optional)* — a Microsoft Graph API access token for the
    Graph Probe tab.
+
+> Note: If you have **not** uploaded a Candidate yet, the app still provides two
+> workspace-level tabs that do not require uploads:
+> **🧪 Batch Runner** (folder-based checks) and **🗂 Repo Engine** (scan/ingest/apply).
 
 The sidebar also shows **folder shortcuts** listing every `.xlsx` and `.json` file
 in each lifecycle folder — full filenames, never truncated — so you can quickly
@@ -399,6 +422,73 @@ Artifacts are written under:
   - `page_text_excerpt.txt`
   - `web_excel.png` *(best-effort only; may be disabled by policy)*
 
+### Tab 8 — 🖥 Desktop Excel Probe
+
+Launches **desktop Microsoft Excel** (COM automation) to open the Candidate,
+optionally triggers repair, captures screenshots of any dialogs, and preserves
+forensic recovery logs (`%TEMP%/error*.xml`) into the repo.
+
+**Requirements**:
+- Windows + Microsoft Excel installed
+- `pywin32` installed (`pip install pywin32`)
+
+**Artifacts**:
+- `Outputs/excel_runs/<candidate>_<timestamp>[_isolated]/`
+  - `desktop_excel_probe_report.json`
+  - screenshots / window metadata (best-effort)
+  - copied recovery logs (`error*.xml`) when found
+
+### Tab 9 — 🧪 Batch Runner
+
+Runs endeavor-specific **read-only gate checks** across a chosen folder of
+workbooks (e.g. `Deprecated/`, `Candidates/`, `Repaired/`, `Active/`). Results
+render as per-file cards so you can quickly spot common failure modes.
+
+Notes:
+- **Active/** is treated as **read-only** (analysis only).
+- If you enable **Write Outputs**, a run report is written to:
+  `Outputs/batch_runs/batch_<timestamp>/run_report.json`
+
+### Tab 10 — 🗂 Repo Engine
+
+The Repo Engine is a workspace maintenance tool that helps keep lifecycle
+folders clean and auditable.
+
+It provides three opt-in steps:
+
+1) **Scan & classify**
+   - Classifies files into lifecycle buckets: `Active/`, `Deprecated/`,
+     `Candidates/`, `Repaired/`, `Outputs/` (and `unknown`).
+   - Produces non-destructive **recommendations**.
+   - Report written to: `Outputs/repo_scans/repo_scan_<timestamp>.json`
+
+2) **Ingest external XML insights**
+   - Copies recovery-log XML (and other `.xml`) from external locations into the
+     repo so you never lose forensic evidence.
+   - Writes under `Outputs/insights/xml/ingest_<timestamp>/` and also writes a
+     summary JSON report under `Outputs/insights/insight_ingest_<timestamp>.json`.
+
+3) **Apply recommendations (opt-in)**
+   - Applies selected recommendation actions to bring files into the correct
+     lifecycle folders.
+   - **Copy-by-default forever**: the default mode is **copy (non-destructive)**.
+     Moving is never automatic and must be explicitly selected.
+   - Collision policy:
+     - If destination exists with the **same SHA-256**, it is skipped.
+     - If destination differs, overwrite is refused unless you enable overwrite
+       and type the confirmation phrase (`OVERWRITE`).
+     - Overwrites create backups under `Outputs/backups/backup_<timestamp>/`.
+   - Report written to: `Outputs/repo_actions/apply_recommendations_<timestamp>.json`
+
+#### Outputs storage budget (Repo Engine)
+
+The Repo Engine surfaces an **Outputs/** storage budget and enforces it in a
+safe-by-default way:
+
+- A conservative default budget is computed from free disk space.
+- When the budget would be exceeded, the engine **skips new writes** rather than
+  deleting anything automatically.
+
 ---
 
 ## Patch Recipe Versioning Workflow
@@ -479,28 +569,31 @@ Because recipes are plain JSON, you can:
 
 ## GitHub Setup (first time)
 
-```bash
-# Inside the project folder:
-git init
-git add .
-git commit -m "Initial commit — Web-Excel Repair Triage"
+**Upstream repo (pull from here to get the latest):**
 
-# Create an empty repo on GitHub (no README, no .gitignore), then:
-git remote add origin https://github.com/<you>/web-excel-repair-triage.git
-git branch -M main
-git push -u origin main
-```
+- https://github.com/EndeavorEverlasting/web-excel-repair-triage
+  - default branch: `main`
 
-### Pulling on another machine
+### Clone (first time per machine)
 
 ```bash
-git clone https://github.com/<you>/web-excel-repair-triage.git
+git clone https://github.com/EndeavorEverlasting/web-excel-repair-triage.git
 cd web-excel-repair-triage
 pip install -r requirements.txt
 python -m streamlit run app.py
 ```
 
-That's it — the full triage tool is running in your browser.
+### Pull updates
+
+```bash
+git pull --ff-only
+```
+
+### Run unit tests
+
+```bash
+python -m pytest -q
+```
 
 ---
 
@@ -514,8 +607,9 @@ That's it — the full triage tool is running in your browser.
   workbook scans in < 1 s.
 - The patch recipe is a plain JSON file — you can author, edit, version-control,
   and share recipes independently of the workbooks.
-- Generated outputs (patched `.xlsx`, recipe `.json`, probe reports) land in
-  `Outputs/` at runtime. Pre-i100 outputs have been archived to `Deprecated/`.
+- Generated artifacts (patched `.xlsx`, recipe `.json`, probe reports, scan/apply
+  reports, backups, and forensic XML) land under `Outputs/` at runtime. Pre-i100
+  outputs have been archived under `Deprecated/`.
 
 ### Module map
 
@@ -532,7 +626,11 @@ That's it — the full triage tool is running in your browser.
 | `triage/desktop_iterate.py` | Iterative loop: desktop open/repair → diff vs Excel-repaired copy → generate recipe → patch → repeat |
 | `triage/web_excel_browser.py` | Playwright-based browser probe — DOM-level smoke test |
 | `triage/web_excel_browser_worker.py` | Isolated subprocess worker for browser probe |
-| `triage/batch_runner.py` | Batch autofix across multiple workbooks |
+| `triage/batch_runner.py` | Batch pipeline runner (gates → recipe → patch → re-gate) |
+| `triage/repo_engine.py` | Workspace scan/classify + recommendations (non-destructive) |
+| `triage/insight_ingest.py` | Ingest/copy external XML forensic insights into `Outputs/insights/` |
+| `triage/repo_apply.py` | Apply selected Repo Engine recommendations (copy-by-default, hash checks, overwrite+backup) |
+| `triage/storage_policy.py` | Outputs storage budget heuristics + size accounting |
 | `triage/agents.py` | One agent class per phase + `TriageOrchestrator` |
 | `mcp_server.py` | MCP server — exposes all agents as callable tools |
 | `app.py` | Streamlit UI — tabs wiring all modules together |

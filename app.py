@@ -3,6 +3,7 @@ app.py — Web-Excel Repair Triage  (Streamlit UI)
 Run:  python -m streamlit run app.py
 """
 from __future__ import annotations
+import dataclasses
 import datetime
 import json
 import os
@@ -24,6 +25,13 @@ from triage.diff import diff_packages, DiffReport
 from triage.patterns import detect_all, Pattern
 from triage.report import recipe_from_gates, recipe_from_patterns, merge_recipes, PatchRecipe
 from triage.patcher import apply_recipe, PatchError, PatchWarning
+from triage.path_policy import is_deprecated_path
+from triage.promote import PromotionError, promote_to_active
+from triage.repo_engine import scan_repo as repo_scan_repo, write_report as repo_write_report
+from triage.insight_ingest import ingest_xml_insights
+from triage.repo_apply import apply_recommendations
+from triage.storage_policy import budget_status, default_outputs_budget_bytes
+from triage.tutorial import get_tutorial_sections
 
 # ── output folder ─────────────────────────────────────────────────────────────
 OUTPUTS_DIR = Path("Outputs")
@@ -62,6 +70,50 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+
+def _rerun_safe() -> None:
+    """Compatibility wrapper (Streamlit renamed experimental_rerun → rerun)."""
+    try:
+        st.rerun()
+    except Exception:
+        try:
+            st.experimental_rerun()  # type: ignore[attr-defined]
+        except Exception:
+            return
+
+
+def _render_tutorial() -> None:
+    """First-run onboarding tutorial (dismissible + re-openable from sidebar)."""
+    if "tutorial_dismissed" not in st.session_state:
+        st.session_state["tutorial_dismissed"] = False
+
+    # Sidebar toggle to bring it back.
+    with st.sidebar:
+        st.markdown("---")
+        if st.session_state.get("tutorial_dismissed", False):
+            if st.button("👋 Show tutorial", key="tutorial_show"):
+                st.session_state["tutorial_dismissed"] = False
+                _rerun_safe()
+
+    expanded = not bool(st.session_state.get("tutorial_dismissed", False))
+    with st.expander("👋 Tutorial (first run)", expanded=expanded):
+        st.markdown('<div class="tutorial-box">', unsafe_allow_html=True)
+        for sec in get_tutorial_sections():
+            st.markdown(f"**{sec.title}**")
+            st.markdown(sec.markdown)
+
+        c1, c2 = st.columns([1, 6])
+        with c1:
+            if st.button("✅ Got it", key="tutorial_dismiss"):
+                st.session_state["tutorial_dismissed"] = True
+                _rerun_safe()
+        with c2:
+            st.caption("Tip: you can bring this back any time from the sidebar.")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+
+_render_tutorial()
+
 # ── helpers ──────────────────────────────────────────────────────────────────
 def _fmt_bytes(n: int) -> str:
     if n < 1024: return f"{n} B"
@@ -73,6 +125,782 @@ def _file_info_html(label: str, name: str, size: int, colour: str = "#4a9ede") -
             f'<b>{label}</b><br>'
             f'<span style="color:#eee">{name}</span><br>'
             f'<span style="color:#888">{_fmt_bytes(size)}</span></div>')
+
+
+def _html_escape(s: str) -> str:
+    return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
+def _gate_tooltip(gate_dict: dict) -> str:
+    fg = gate_dict.get("failing_gates", {}) or {}
+    samples = gate_dict.get("samples", {}) or {}
+
+    if not fg:
+        return "PASS (no failing gates)"
+
+    # failing_gates keys do not always match samples keys (historical naming).
+    sample_key_for_gate = {
+        "stopship_tokens": "stopship",
+        "cf_ref_hits": "cf_ref",
+        "styles_dxf_integrity": "styles_dxf",
+        "illegal_control_chars": "illegal_control",
+        "rels_missing_targets": "rels_missing",
+    }
+
+    def _sample_summary(gate_key: str, sample: dict) -> str:
+        # Keep these single-line-ish for HTML title tooltips.
+        if gate_key == "stopship_tokens":
+            return f"{sample.get('part')} → {sample.get('token')} ({(sample.get('formula_snippet') or '')[:60]})"
+        if gate_key == "calcchain_invalid":
+            return f"{sample.get('sheet_part')}:{sample.get('cell')} ({sample.get('reason')})"
+        if gate_key == "cf_policy_deploymenttracker":
+            rid = sample.get("rule_id")
+            sev = sample.get("severity")
+            return f"{rid} ({sev}) on {sample.get('table_part')}"
+        if gate_key == "cf_ref_hits":
+            return f"{sample.get('part')} → #REF! in conditionalFormatting"
+        if gate_key == "tablecolumn_lf":
+            v = (sample.get("value") or "").replace("\n", "\\n").replace("\r", "\\r")
+            return f"{sample.get('part')} → tableColumn/@name has newline: {v[:40]}"
+        if gate_key == "shared_ref_oob":
+            return f"{sample.get('part')} si={sample.get('si')} ref={sample.get('ref')} (maxRow={sample.get('sheet_max_row')})"
+        if gate_key == "shared_ref_bbox":
+            return f"{sample.get('part')} si={sample.get('si')} declared={sample.get('declared_ref')} actual={sample.get('actual_ref')}"
+        if gate_key == "styles_dxf_integrity":
+            return f"{sample.get('part')} → {sample.get('issue')}"
+        if gate_key == "xml_wellformed":
+            return f"{sample.get('part')} → {sample.get('error')}"
+        if gate_key == "illegal_control_chars":
+            return f"{sample.get('part')} → illegal control bytes (examples={sample.get('examples')})"
+        if gate_key == "rels_missing_targets":
+            return f"{sample.get('rels')} → missing {sample.get('resolved')} (from {sample.get('target')})"
+        # Fallback
+        return str(sample)[:160]
+
+    lines = ["Failing gates (counts + example):"]
+    for gate_key, count in fg.items():
+        sk = sample_key_for_gate.get(gate_key, gate_key)
+        samp_list = samples.get(sk) or []
+        if samp_list:
+            lines.append(f"- {gate_key}: {count} | e.g. {_sample_summary(gate_key, samp_list[0])}")
+        else:
+            lines.append(f"- {gate_key}: {count}")
+
+    tip = "\n".join(lines)
+    # Prevent absurdly-large title attributes.
+    return tip[:2000]
+
+
+def _render_batch_runner() -> None:
+    st.markdown("### 🧪 Batch Runner")
+    st.caption(
+        "Run endeavor-specific automated testing across a folder of .xlsx files. "
+        "Each file is shown as a hoverable card so you can spot flaws quickly."
+    )
+
+    preferred = ("Deprecated", "Candidates", "Repaired", "Active")
+    folder_choices = [p for p in preferred if Path(p).exists()]
+    if not folder_choices:
+        folder_choices = ["(no standard folders found)"]
+    default_index = folder_choices.index("Deprecated") if "Deprecated" in folder_choices else 0
+    folder = st.selectbox("Folder", folder_choices, index=default_index)
+    custom = st.text_input("Or custom folder path", value="")
+    root = Path(custom) if custom.strip() else Path(folder)
+    max_files = st.number_input("Max files", min_value=1, max_value=500, value=50, step=1)
+    write_outputs = st.checkbox("Write run artifacts under Outputs/batch_runs/", value=True)
+
+    purpose = (
+        "ENDEAVOR: Batch gate check + Deployment Tracker CF policy check. "
+        "Goal: identify web-compatibility hazards and policy regressions early, "
+        "with errors tailored to the check being performed."
+    )
+    st.info(purpose)
+
+    if str(root).strip().lower().startswith("active") or root.name.lower() == "active":
+        st.warning(
+            "Active/ is read-only (golden standards). "
+            "Batch Runner will only *analyze* files here; do not repair/patch from Active/."
+        )
+
+    # Persisted state so result cards + action buttons continue to work across reruns.
+    batch_state: dict = st.session_state.setdefault("batch_runner_state", {})
+
+    b_run, b_clear = st.columns([3, 1])
+    run_now = b_run.button("▶ Run batch gates", type="primary")
+    clear_now = b_clear.button("🧹 Clear", help="Clear the last Batch Runner results")
+    if clear_now:
+        batch_state.clear()
+
+    if run_now:
+        if not root.exists() or not root.is_dir():
+            st.error(f"Folder not found: {root}")
+            return
+
+        files = sorted(root.glob("*.xlsx"), key=lambda p: p.name)[: int(max_files)]
+        if not files:
+            st.warning("No .xlsx files found.")
+            return
+
+        ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        out_dir = OUTPUTS_DIR / "batch_runs" / f"batch_{ts}"
+        if write_outputs:
+            out_dir.mkdir(parents=True, exist_ok=True)
+
+        results: list[dict] = []
+        prog = st.progress(0)
+        for idx, p in enumerate(files, start=1):
+            try:
+                gd = run_all(str(p)).to_dict()
+                results.append({"file": str(p), "gate": gd})
+                if write_outputs:
+                    (out_dir / (p.stem + "_gates.json")).write_text(
+                        json.dumps(gd, indent=2), encoding="utf-8"
+                    )
+            except Exception as e:  # pragma: no cover (UI only)
+                results.append({"file": str(p), "error": repr(e)})
+            prog.progress(int(idx * 100 / len(files)))
+
+        if write_outputs:
+            run_report = {
+                "endeavor": "BATCH_GATES_AND_CF_POLICY",
+                "purpose": purpose,
+                "root": str(root),
+                "timestamp": ts,
+                "count": len(results),
+                "results": [
+                    {
+                        "file": r["file"],
+                        "pass": ("gate" in r and r["gate"].get("pass")),
+                        "failing_gates": (r.get("gate", {}) or {}).get("failing_gates", {}),
+                        "error": r.get("error"),
+                    }
+                    for r in results
+                ],
+            }
+            (out_dir / "run_report.json").write_text(json.dumps(run_report, indent=2), encoding="utf-8")
+
+        batch_state.update(
+            {
+                "root": str(root),
+                "timestamp": ts,
+                "write_outputs": bool(write_outputs),
+                "out_dir": str(out_dir) if write_outputs else None,
+                "results": results,
+            }
+        )
+
+    results = batch_state.get("results")
+    if not results:
+        st.info("Run **Batch gates** to populate results, then use per-file or bulk workflow buttons.")
+        return
+
+    if batch_state.get("out_dir"):
+        st.success(f"Saved run artifacts → {batch_state['out_dir']}")
+    st.caption(f"Showing last run: root={batch_state.get('root')}  ts={batch_state.get('timestamp')}")
+
+    st.markdown("#### Results (hover a card for details)")
+    st.caption(
+        "Workflow: workbooks in Deprecated/ can be auto-fixed / iterated, then copied into Active/ only when they PASS gates."
+    )
+
+    # Workflow state (per session): origin Deprecated workbook -> latest working variant.
+    wf_latest: dict[str, str] = st.session_state.setdefault("wf_latest", {})
+    wf_gates: dict[str, dict] = st.session_state.setdefault("wf_gates", {})
+
+    def _safe_stem(s: str, limit: int = 60) -> str:
+        stem = Path(s).stem
+        out = "".join(ch if (ch.isalnum() or ch in "._-") else "_" for ch in stem)
+        out = out.strip("._-") or "workbook"
+        return out[:limit]
+
+    def _current_variant(origin_key: str) -> Path:
+        return Path(wf_latest.get(origin_key, origin_key))
+
+    def _current_gate_dict(origin_key: str, origin_gate: dict | None) -> dict | None:
+        cur = _current_variant(origin_key)
+        if str(cur) == origin_key:
+            return origin_gate
+        return wf_gates.get(str(cur))
+
+    st.markdown("##### Automation controls")
+    c1, c2 = st.columns(2)
+    desktop_max_iters = c1.number_input(
+        "Desktop iterate: max iterations",
+        min_value=1,
+        max_value=20,
+        value=5,
+        step=1,
+        key="batch_desktop_max_iters",
+    )
+    desktop_timeout = c2.number_input(
+        "Desktop iterate: timeout (seconds)",
+        min_value=5,
+        max_value=600,
+        value=15,
+        step=5,
+        key="batch_desktop_timeout",
+    )
+
+    st.markdown("##### Bulk workflow buttons")
+    st.caption(
+        "Philosophy: one-click *local* iteration first (desktop Excel), then one-click *web* iteration (Graph probe loop)."
+    )
+    bulk_only_failing = st.checkbox(
+        "Bulk targets: only files whose CURRENT variant FAILS gates",
+        value=True,
+        key="bulk_only_failing",
+        help="If a file already has a passing working variant, bulk iterate will skip it.",
+    )
+    bulk_limit = st.number_input(
+        "Bulk limit (safety)",
+        min_value=1,
+        max_value=max(1, len(results)),
+        value=min(10, len(results)),
+        step=1,
+        key="bulk_limit",
+    )
+    graph_max_iters = st.number_input(
+        "Web iterate (Graph): max iterations",
+        min_value=1,
+        max_value=10,
+        value=3,
+        step=1,
+        key="bulk_graph_max_iters",
+    )
+    graph_patch_between = st.checkbox(
+        "Web iterate (Graph): apply gate patches between probes",
+        value=True,
+        key="bulk_graph_patch_between",
+        help="If enabled: probe → if FAIL → gate recipe patch → probe again.",
+    )
+
+    bulk_promote_confirm = st.checkbox(
+        "Bulk promote: I understand this copies PASSing variants into Active/",
+        value=False,
+        key="bulk_promote_confirm",
+    )
+    bulk_promote_overwrite = st.checkbox(
+        "Bulk promote: allow overwrite",
+        value=False,
+        key="bulk_promote_overwrite",
+    )
+
+    col_a, col_b, col_c = st.columns(3)
+    if col_a.button("🔁 Iterate locally (Desktop) — bulk", type="primary", key="bulk_desktop_iter_btn"):
+        endeavor = (
+            "ENDEAVOR: Bulk local iteration — run desktop Excel iterate loop across Deprecated files, "
+            "update working variants, and persist artifacts under Outputs/workflow_runs/."
+        )
+        from triage.desktop_iterate import iterate_until_desktop_clean
+
+        tsb = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        batch_dir = OUTPUTS_DIR / "workflow_runs" / f"batch_local_{tsb}"
+        batch_dir.mkdir(parents=True, exist_ok=True)
+
+        # Select targets.
+        targets: list[tuple[str, dict | None]] = []
+        for r in results:
+            if "gate" not in r:
+                continue
+            origin_key = str(Path(r["file"]))
+            if not is_deprecated_path(origin_key):
+                continue
+            origin_gate = r.get("gate")
+            cur_gate = _current_gate_dict(origin_key, origin_gate)
+            cur_pass = bool((cur_gate or {}).get("pass"))
+            if bulk_only_failing and cur_pass:
+                continue
+            targets.append((origin_key, origin_gate))
+            if len(targets) >= int(bulk_limit):
+                break
+
+        if not targets:
+            st.info("No eligible Deprecated targets selected for bulk local iteration.")
+        else:
+            prog = st.progress(0)
+            bulk_rows: list[dict] = []
+            for idx, (origin_key, origin_gate) in enumerate(targets, start=1):
+                origin_path = Path(origin_key)
+                cur_path = _current_variant(origin_key)
+                file_dir = batch_dir / _safe_stem(origin_key)
+                file_dir.mkdir(parents=True, exist_ok=True)
+                try:
+                    it = iterate_until_desktop_clean(
+                        candidate_path=str(cur_path),
+                        out_root=str(file_dir / "desktop_iter"),
+                        max_iters=int(desktop_max_iters),
+                        timeout_seconds=int(desktop_timeout),
+                    )
+                    (file_dir / "desktop_iterate.json").write_text(
+                        json.dumps(dataclasses.asdict(it), indent=2), encoding="utf-8"
+                    )
+
+                    wf_latest[origin_key] = str(it.final_path)
+                    final_path = Path(it.final_path)
+                    post_gate = run_all(str(final_path)).to_dict()
+                    wf_gates[str(final_path)] = post_gate
+                    (file_dir / "post_gates.json").write_text(
+                        json.dumps(post_gate, indent=2), encoding="utf-8"
+                    )
+
+                    bulk_rows.append(
+                        {
+                            "origin": origin_key,
+                            "start_variant": str(cur_path),
+                            "final_variant": str(final_path),
+                            "desktop_clean": bool(it.success_clean),
+                            "gate_pass": bool(post_gate.get("pass")),
+                            "artifacts_dir": str(file_dir),
+                        }
+                    )
+                except Exception as e:  # pragma: no cover (UI only)
+                    bulk_rows.append(
+                        {
+                            "origin": origin_key,
+                            "start_variant": str(cur_path),
+                            "error": f"{type(e).__name__}: {e}",
+                            "artifacts_dir": str(file_dir),
+                        }
+                    )
+                prog.progress(int(idx * 100 / len(targets)))
+
+            report = {
+                "endeavor": "BULK_LOCAL_ITERATE_DESKTOP",
+                "purpose": endeavor,
+                "timestamp": tsb,
+                "count": len(bulk_rows),
+                "results": bulk_rows,
+            }
+            report_path = batch_dir / "bulk_local_report.json"
+            report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+            st.success(f"Bulk local iteration complete. Report: {report_path}")
+
+    if col_b.button("🌐 Iterate in web (Graph) — bulk", key="bulk_graph_iter_btn"):
+        endeavor = (
+            "ENDEAVOR: Bulk web iteration (Graph) — probe Excel-for-Web via Microsoft Graph. "
+            "Optionally apply deterministic gate patches between probes, then re-probe. "
+            "Artifacts saved under Outputs/workflow_runs/."
+        )
+        if not graph_token:
+            st.error(
+                "ENDEAVOR: Bulk web iteration (Graph) — refused. Provide a Bearer token in the sidebar Graph Probe section."
+            )
+        else:
+            from triage.graph_probe import probe_upload_and_test
+
+            tsb = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            batch_dir = OUTPUTS_DIR / "workflow_runs" / f"batch_web_{tsb}"
+            batch_dir.mkdir(parents=True, exist_ok=True)
+
+            targets: list[tuple[str, dict | None]] = []
+            for r in results:
+                if "gate" not in r:
+                    continue
+                origin_key = str(Path(r["file"]))
+                if not is_deprecated_path(origin_key):
+                    continue
+                origin_gate = r.get("gate")
+                cur_gate = _current_gate_dict(origin_key, origin_gate)
+                cur_pass = bool((cur_gate or {}).get("pass"))
+                if bulk_only_failing and cur_pass:
+                    continue
+                targets.append((origin_key, origin_gate))
+                if len(targets) >= int(bulk_limit):
+                    break
+
+            if not targets:
+                st.info("No eligible Deprecated targets selected for bulk web iteration.")
+            else:
+                prog = st.progress(0)
+                bulk_rows: list[dict] = []
+                for idx, (origin_key, origin_gate) in enumerate(targets, start=1):
+                    cur_path = _current_variant(origin_key)
+                    file_dir = batch_dir / _safe_stem(origin_key)
+                    file_dir.mkdir(parents=True, exist_ok=True)
+                    try:
+                        cur = Path(cur_path)
+                        steps: list[dict] = []
+                        for itn in range(1, int(graph_max_iters) + 1):
+                            # Reuse a stable remote name per workbook+batch run to avoid cluttering OneDrive.
+                            remote_name = f"{_safe_stem(origin_key, limit=40)}_{tsb}.xlsx"
+                            g = probe_upload_and_test(
+                                graph_token,
+                                str(cur),
+                                remote_name=remote_name,
+                                out_root=str(file_dir / "graph_runs"),
+                            )
+                            g_dict = dataclasses.asdict(g)
+                            (file_dir / f"graph_probe_iter{itn}.json").write_text(
+                                json.dumps(g_dict, indent=2), encoding="utf-8"
+                            )
+                            steps.append({"iter": itn, "probe": g_dict, "path": str(cur)})
+
+                            if g.success:
+                                break
+                            if not graph_patch_between:
+                                break
+
+                            gate_obj = run_all(str(cur))
+                            recipe = recipe_from_gates(gate_obj)
+                            (file_dir / f"gate_recipe_iter{itn}.json").write_text(
+                                json.dumps(recipe.to_dict(), indent=2), encoding="utf-8"
+                            )
+                            if not recipe.patches:
+                                steps.append({"iter": itn, "note": "No gate patches generated; stopping."})
+                                break
+
+                            patched_path = file_dir / f"{_safe_stem(str(cur))}_webiter{itn}_patched.xlsx"
+                            warn_exc = None
+                            try:
+                                apply_recipe(str(cur), recipe.to_dict(), str(patched_path))
+                            except PatchWarning as pw:
+                                warn_exc = pw
+                                patched_path = Path(pw.output_path)
+                            cur = patched_path
+                            wf_latest[origin_key] = str(cur)
+                            post_gate = run_all(str(cur)).to_dict()
+                            wf_gates[str(cur)] = post_gate
+                            (file_dir / f"post_gates_after_patch_iter{itn}.json").write_text(
+                                json.dumps(post_gate, indent=2), encoding="utf-8"
+                            )
+                            if warn_exc:
+                                steps.append(
+                                    {
+                                        "iter": itn,
+                                        "patch_warning": True,
+                                        "skipped": list(getattr(warn_exc, "skipped", []) or []),
+                                    }
+                                )
+
+                        # Final gate snapshot
+                        final_gate = run_all(str(cur)).to_dict()
+                        wf_gates[str(cur)] = final_gate
+                        (file_dir / "final_gates.json").write_text(
+                            json.dumps(final_gate, indent=2), encoding="utf-8"
+                        )
+
+                        bulk_rows.append(
+                            {
+                                "origin": origin_key,
+                                "final_variant": str(cur),
+                                "gate_pass": bool(final_gate.get("pass")),
+                                "steps": steps,
+                                "artifacts_dir": str(file_dir),
+                            }
+                        )
+                    except Exception as e:  # pragma: no cover (UI only)
+                        bulk_rows.append(
+                            {
+                                "origin": origin_key,
+                                "start_variant": str(cur_path),
+                                "error": f"{type(e).__name__}: {e}",
+                                "artifacts_dir": str(file_dir),
+                            }
+                        )
+                    prog.progress(int(idx * 100 / len(targets)))
+
+                report = {
+                    "endeavor": "BULK_WEB_ITERATE_GRAPH",
+                    "purpose": endeavor,
+                    "timestamp": tsb,
+                    "count": len(bulk_rows),
+                    "results": bulk_rows,
+                }
+                report_path = batch_dir / "bulk_web_report.json"
+                report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+                st.success(f"Bulk web iteration complete. Report: {report_path}")
+
+    if col_c.button("⬆️ Promote all PASS variants — bulk", key="bulk_promote_btn"):
+        endeavor = (
+            "ENDEAVOR: Bulk promote — copy PASSing Deprecated working variants into Active/ (golden standards). "
+            "Writes per-file promotion reports under Outputs/workflow_runs/."
+        )
+        if not bulk_promote_confirm:
+            st.warning(
+                "ENDEAVOR: Bulk promote — confirmation required. Tick the bulk promote confirmation checkbox first."
+            )
+        else:
+            tsb = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            batch_dir = OUTPUTS_DIR / "workflow_runs" / f"batch_promote_{tsb}"
+            batch_dir.mkdir(parents=True, exist_ok=True)
+
+            prog = st.progress(0)
+            bulk_rows: list[dict] = []
+            eligible: list[str] = []
+            for r in results:
+                if "gate" not in r:
+                    continue
+                origin_key = str(Path(r["file"]))
+                if not is_deprecated_path(origin_key):
+                    continue
+                eligible.append(origin_key)
+            eligible = eligible[: int(bulk_limit)]
+            if not eligible:
+                st.info("No eligible Deprecated origins found for bulk promote.")
+            else:
+                for idx, origin_key in enumerate(eligible, start=1):
+                    origin_path = Path(origin_key)
+                    cur = _current_variant(origin_key)
+                    cur_gate = wf_gates.get(str(cur))
+                    if cur_gate is None:
+                        try:
+                            cur_gate = run_all(str(cur)).to_dict()
+                            wf_gates[str(cur)] = cur_gate
+                        except Exception as e:  # pragma: no cover
+                            bulk_rows.append(
+                                {
+                                    "origin": origin_key,
+                                    "variant": str(cur),
+                                    "error": f"Gate check failed before promote: {type(e).__name__}: {e}",
+                                }
+                            )
+                            prog.progress(int(idx * 100 / len(eligible)))
+                            continue
+
+                    if not bool((cur_gate or {}).get("pass")):
+                        bulk_rows.append(
+                            {
+                                "origin": origin_key,
+                                "variant": str(cur),
+                                "skipped": True,
+                                "reason": "Current variant does not PASS gates",
+                            }
+                        )
+                        prog.progress(int(idx * 100 / len(eligible)))
+                        continue
+
+                    try:
+                        pr = promote_to_active(
+                            origin_deprecated_path=str(origin_path),
+                            source_path=str(cur),
+                            allow_overwrite=bool(bulk_promote_overwrite),
+                            outputs_dir=str(batch_dir / "promotions"),
+                            extra={
+                                "gate_pass": True,
+                                "promoted_variant": str(cur),
+                            },
+                        )
+                        bulk_rows.append(
+                            {
+                                "origin": origin_key,
+                                "variant": str(cur),
+                                "dest": pr.dest_path,
+                                "report": pr.report_path,
+                            }
+                        )
+                    except PromotionError as e:
+                        bulk_rows.append(
+                            {"origin": origin_key, "variant": str(cur), "error": str(e)}
+                        )
+                    except Exception as e:  # pragma: no cover
+                        bulk_rows.append(
+                            {
+                                "origin": origin_key,
+                                "variant": str(cur),
+                                "error": f"{type(e).__name__}: {e}",
+                            }
+                        )
+                    prog.progress(int(idx * 100 / len(eligible)))
+
+                report = {
+                    "endeavor": "BULK_PROMOTE_TO_ACTIVE",
+                    "purpose": endeavor,
+                    "timestamp": tsb,
+                    "count": len(bulk_rows),
+                    "results": bulk_rows,
+                }
+                report_path = batch_dir / "bulk_promote_report.json"
+                report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+                st.success(f"Bulk promote complete. Report: {report_path}")
+
+    st.markdown("---")
+
+    for r in results:
+        file_path = Path(r["file"])
+        name = file_path.name
+
+        left, right = st.columns([7, 3], gap="small")
+
+        if "error" in r:
+            tip = _html_escape(f"ERROR\n{r['error']}")
+            left.markdown(
+                f'<div class="gate-fail"><span title="{tip}">❌ {name}</span></div>',
+                unsafe_allow_html=True,
+            )
+            right.write("")
+            continue
+
+        origin_gate = r["gate"]
+        origin_key = str(file_path)
+        cur_path = _current_variant(origin_key)
+        cur_gate = _current_gate_dict(origin_key, origin_gate)
+        display_gate = cur_gate or origin_gate
+
+        tip = _html_escape(_gate_tooltip(display_gate))
+        css = "gate-pass" if display_gate.get("pass") else "gate-fail"
+        icon = "✅" if display_gate.get("pass") else "❌"
+        left.markdown(
+            f'<div class="{css}"><span title="{tip}">{icon} {name}</span></div>',
+            unsafe_allow_html=True,
+        )
+
+        # Actions: only for Deprecated/.
+        if not is_deprecated_path(file_path):
+            right.caption("Actions disabled (not Deprecated/)")
+            continue
+
+        current_path = cur_path
+        current_gate = cur_gate
+
+        with right:
+	        if str(current_path) != origin_key:
+	            st.caption(f"Working variant: {current_path.name}")
+
+	        if st.button("🔄 Re-check gates", key=f"wf_regates::{origin_key}"):
+	            with st.spinner("Re-running gates on current variant…"):
+	                try:
+	                    current_gate = run_all(str(current_path)).to_dict()
+	                    wf_gates[str(current_path)] = current_gate
+	                    st.success(f"Gate verdict: {'PASS' if current_gate.get('pass') else 'FAIL'}")
+	                except Exception as e:  # pragma: no cover (UI only)
+	                    st.error(f"ENDEAVOR: Re-check gates — failed. {type(e).__name__}: {e}")
+
+	        if st.button("🩹 Auto-fix once (gate recipe)", key=f"wf_autofix::{origin_key}"):
+	            endeavor = (
+	                "ENDEAVOR: Auto-fix once (gate recipe) — apply deterministic patches derived from failing gates, "
+	                "write artifacts under Outputs/workflow_runs/, then re-check gates."
+	            )
+	            with st.spinner("Applying deterministic gate recipe…"):
+	                try:
+	                    ts2 = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+	                    out_dir2 = OUTPUTS_DIR / "workflow_runs" / f"{file_path.stem}_{ts2}"
+	                    out_dir2.mkdir(parents=True, exist_ok=True)
+
+	                    gate_obj = run_all(str(current_path))
+	                    pre_dict = gate_obj.to_dict()
+	                    recipe = recipe_from_gates(gate_obj)
+	                    (out_dir2 / "pre_gates.json").write_text(json.dumps(pre_dict, indent=2), encoding="utf-8")
+	                    (out_dir2 / "recipe.json").write_text(json.dumps(recipe.to_dict(), indent=2), encoding="utf-8")
+
+	                    if not recipe.patches:
+	                        st.info("No deterministic patches generated (already clean or requires manual work).")
+	                    else:
+	                        patched_path = out_dir2 / f"{file_path.stem}_autofix_{ts2}.xlsx"
+	                        warn_exc = None
+	                        try:
+	                            apply_recipe(str(current_path), recipe.to_dict(), str(patched_path))
+	                        except PatchWarning as pw:
+	                            warn_exc = pw
+	                            patched_path = Path(pw.output_path)
+
+	                        post_dict = run_all(str(patched_path)).to_dict()
+	                        (out_dir2 / "post_gates.json").write_text(json.dumps(post_dict, indent=2), encoding="utf-8")
+
+	                        wf_latest[origin_key] = str(patched_path)
+	                        wf_gates[str(patched_path)] = post_dict
+	                        current_path = patched_path
+	                        current_gate = post_dict
+
+	                        if warn_exc:
+	                            st.warning(
+	                                "PatchWarning: some stub operations were skipped. "
+	                                f"Skipped={len(warn_exc.skipped)}"
+	                            )
+
+	                        st.success(f"Auto-fix wrote: {patched_path.name}")
+	                        st.caption(f"Artifacts: {out_dir2}")
+	                except PatchError as e:
+	                    st.error(str(e))
+	                except Exception as e:  # pragma: no cover (UI only)
+	                    st.error(f"{endeavor}\nFAILED: {type(e).__name__}: {e}")
+
+	        if st.button("🔁 Desktop iterate loop", key=f"wf_desktop_iter::{origin_key}"):
+	            endeavor = (
+	                "ENDEAVOR: Desktop iterate loop — open/repair in desktop Excel, mine fixes, patch, repeat. "
+	                "Outputs saved under Outputs/workflow_runs/."
+	            )
+	            with st.spinner("Running desktop iterate loop (this will launch Excel)…"):
+	                try:
+	                    from triage.desktop_iterate import iterate_until_desktop_clean
+
+	                    ts2 = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+	                    out_dir2 = OUTPUTS_DIR / "workflow_runs" / f"{file_path.stem}_{ts2}"
+	                    out_root = out_dir2 / "desktop_iter"
+	                    out_root.mkdir(parents=True, exist_ok=True)
+
+	                    it = iterate_until_desktop_clean(
+	                        candidate_path=str(current_path),
+	                        out_root=str(out_root),
+	                        max_iters=int(desktop_max_iters),
+	                        timeout_seconds=int(desktop_timeout),
+	                    )
+	                    (out_dir2 / "desktop_iterate.json").write_text(
+	                        json.dumps(dataclasses.asdict(it), indent=2), encoding="utf-8"
+	                    )
+
+	                    wf_latest[origin_key] = str(it.final_path)
+	                    current_path = Path(it.final_path)
+
+	                    post_dict = run_all(str(current_path)).to_dict()
+	                    wf_gates[str(current_path)] = post_dict
+	                    current_gate = post_dict
+	                    (out_dir2 / "post_gates.json").write_text(json.dumps(post_dict, indent=2), encoding="utf-8")
+
+	                    st.success(
+	                        f"Desktop iterate finished: {'CLEAN' if it.success_clean else 'NOT CLEAN'} — {current_path.name}"
+	                    )
+	                    st.caption(f"Artifacts: {out_dir2}")
+	                except Exception as e:  # pragma: no cover (UI only)
+	                    st.error(f"{endeavor}\nFAILED: {type(e).__name__}: {e}")
+
+	        if st.button("↩ Reset variant", key=f"wf_reset::{origin_key}"):
+	            wf_latest.pop(origin_key, None)
+	            st.info("Reset to original Deprecated file.")
+
+	        # Promote is enabled only when *current* gates pass.
+	        pass_now = bool((current_gate or {}).get("pass"))
+	        if not pass_now:
+	            st.caption("Promote disabled (current variant must PASS gates)")
+	        else:
+	            confirm = st.checkbox(
+	                "Confirm promote",
+	                key=f"promote_confirm::{origin_key}",
+	                help="This will COPY the workbook into Active/ as a golden standard.",
+	            )
+	            allow_overwrite = st.checkbox(
+	                "Allow overwrite",
+	                value=False,
+	                key=f"promote_overwrite::{origin_key}",
+	                help="Off by default. If a file with the same name exists in Active/, promotion is refused.",
+	            )
+	            if st.button(
+	                "⬆️ Promote → Active",
+	                type="primary",
+	                key=f"promote_btn::{origin_key}",
+	            ):
+	                if not confirm:
+	                    st.warning(
+	                        "ENDEAVOR: Promote to Active — confirmation required. "
+	                        "Tick 'Confirm promote' before copying into Active/."
+	                    )
+	                else:
+	                    try:
+	                        pr = promote_to_active(
+	                            origin_deprecated_path=str(file_path),
+	                            source_path=str(current_path),
+	                            allow_overwrite=bool(allow_overwrite),
+	                            extra={
+	                                "gate_pass": True,
+	                                "failing_gates": (current_gate or {}).get("failing_gates", {}) or {},
+	                                "promoted_variant": str(current_path),
+	                            },
+	                        )
+	                        st.success(f"Promoted → {pr.dest_path}")
+	                        st.caption(f"Report: {pr.report_path}")
+	                    except PromotionError as e:
+	                        st.error(str(e))
+	                    except Exception as e:  # pragma: no cover (UI only)
+	                        st.error(f"ENDEAVOR: Promote to Active — failed. {type(e).__name__}: {e}")
 
 # ── sidebar: file uploads ────────────────────────────────────────────────────
 with st.sidebar:
@@ -123,6 +951,179 @@ def _save_temp(name: str, data: bytes) -> str:
     tmp.flush()
     return tmp.name
 
+
+def _render_repo_engine() -> None:
+    st.markdown("### 🗂 Repo Engine")
+    st.caption(
+        "Scan and classify the workspace into lifecycle buckets (Active/Candidates/Repaired/Deprecated/Outputs). "
+        "This view is non-destructive: it does not move/delete files."
+    )
+
+    st.info(
+        "ENDEAVOR: Repo engine — classify artifacts, surface risks, and preserve XML forensic insights. "
+        "Goal: keep golden standards in Active/, do work in Deprecated/, and keep Outputs/ organized."
+    )
+
+    # Storage budget (safe-by-default). We enforce by skipping new artifact writes
+    # when budget is exceeded (no automatic deletion).
+    default_budget_b = int(default_outputs_budget_bytes())
+    if "repo_engine_outputs_budget_mb" not in st.session_state:
+        st.session_state["repo_engine_outputs_budget_mb"] = max(50, int(default_budget_b / (1024 * 1024)))
+    budget_mb = st.number_input(
+        "Outputs storage budget (MB)",
+        min_value=50,
+        max_value=200_000,
+        value=int(st.session_state["repo_engine_outputs_budget_mb"]),
+        step=50,
+        key="repo_engine_outputs_budget_mb",
+        help="Used to cap new writes into Outputs/. When exceeded, new copies are skipped (no auto-cleanup).",
+    )
+    outputs_budget_b = int(budget_mb) * 1024 * 1024
+    bs = budget_status("Outputs", outputs_budget_b)
+    st.caption(
+        f"Outputs/ usage: {_fmt_bytes(bs.used_bytes)} / {_fmt_bytes(bs.budget_bytes)} "
+        f"(remaining {_fmt_bytes(bs.remaining_bytes)})"
+    )
+
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown("#### 1) Scan & classify")
+        root_choice = st.selectbox(
+            "Root to scan",
+            ["(repo root)", "Active", "Deprecated", "Candidates", "Repaired", "Outputs"],
+            index=1 if Path("Deprecated").exists() else 0,
+            key="repo_engine_root_choice",
+        )
+        custom_root = st.text_input("Or custom folder path", value="", key="repo_engine_custom_root")
+        recursive = st.checkbox("Recursive", value=True, key="repo_engine_recursive")
+        max_files = st.number_input("Max files", min_value=1, max_value=20000, value=2000, step=100, key="repo_engine_max")
+        run_gates = st.checkbox("Also run gate checks on .xlsx (bounded)", value=False, key="repo_engine_run_gates")
+        gates_max = st.number_input("Gate-check max workbooks", min_value=0, max_value=2000, value=50, step=10, key="repo_engine_gates_max")
+        do_scan = st.button("🔎 Scan now", type="primary", key="repo_engine_scan_btn")
+
+    with col_b:
+        st.markdown("#### 2) Ingest external XML insights")
+        default_src = tempfile.gettempdir()
+        src = st.text_input(
+            "External folder or XML file path",
+            value=default_src,
+            help="Example: %TEMP% or a folder where you saved error*.xml recovery logs.",
+            key="repo_engine_xml_src",
+        )
+        ingest_recursive = st.checkbox("Recursive ingest", value=True, key="repo_engine_ingest_recursive")
+        ingest_max = st.number_input("Max XML files", min_value=1, max_value=5000, value=500, step=50, key="repo_engine_ingest_max")
+        do_ingest = st.button("📥 Ingest XML", key="repo_engine_ingest_btn")
+
+    if do_scan:
+        try:
+            root = None
+            if custom_root.strip():
+                root = custom_root.strip()
+            elif root_choice != "(repo root)":
+                root = root_choice
+
+            with st.spinner("Scanning and classifying…"):
+                res = repo_scan_repo(
+                    root=root,
+                    recursive=bool(recursive),
+                    max_files=int(max_files),
+                    run_gates=bool(run_gates),
+                    gates_max_files=int(gates_max),
+                )
+                report_path = repo_write_report(res)
+
+            # Persist recommendations in session state so we can apply them without
+            # forcing another scan.
+            st.session_state["repo_engine_last_recs"] = [r.__dict__ for r in (res.recommendations or [])]
+            st.session_state["repo_engine_last_summary"] = dict(res.summary or {})
+            st.session_state["repo_engine_last_report"] = str(report_path)
+
+            st.success(f"Repo scan complete. Report written: {report_path}")
+            st.markdown("#### Summary")
+            st.json(res.summary)
+
+            if res.recommendations:
+                st.markdown("#### Recommendations (non-destructive)")
+                st.json([r.__dict__ for r in res.recommendations[:200]])
+                if len(res.recommendations) > 200:
+                    st.caption(f"Showing first 200 of {len(res.recommendations)} recommendations.")
+            else:
+                st.caption("No recommendations produced for the scanned set.")
+        except Exception as e:  # pragma: no cover (UI only)
+            st.error(f"ENDEAVOR: Repo scan — failed. {type(e).__name__}: {e}")
+
+    if do_ingest:
+        try:
+            if not src.strip():
+                st.warning("Enter a source path to ingest from.")
+            else:
+                insights_budget_b = int(min(outputs_budget_b // 4, 1024**3))  # <= 1GiB, <= 25% of Outputs budget
+                with st.spinner("Ingesting XML insights…"):
+                    ir = ingest_xml_insights(
+                        [src.strip()],
+                        recursive=bool(ingest_recursive),
+                        max_files=int(ingest_max),
+                        budget_bytes=insights_budget_b,
+                    )
+                st.success(
+                    f"Ingest complete. Copied={ir.copied}  SkippedDup={ir.skipped_duplicates}  Errors={ir.errors}"
+                )
+                st.caption(f"Insights budget: {_fmt_bytes(insights_budget_b)}")
+                st.caption(f"Report: {ir.report_path}")
+                # Show a small sample.
+                st.json(ir.to_dict() if len(ir.insights) <= 25 else {**ir.to_dict(), "insights": [x.__dict__ for x in ir.insights[:25]]})
+        except Exception as e:  # pragma: no cover (UI only)
+            st.error(f"ENDEAVOR: Insight ingest — failed. {type(e).__name__}: {e}")
+
+    st.markdown("---")
+    st.markdown("#### 3) Apply recommendations (opt-in)")
+    st.caption(
+        "This step can copy/move files to match lifecycle semantics. "
+        "By default it copies (non-destructive). Overwrites require confirmation and create backups."
+    )
+
+    last_recs = st.session_state.get("repo_engine_last_recs") or []
+    applyable = [r for r in last_recs if r.get("suggested_dest")]
+    actions_present = sorted({r.get("action") for r in applyable if r.get("action")})
+    if not actions_present:
+        st.info("Run a scan to generate applyable recommendations.")
+        return
+
+    selected_actions = st.multiselect(
+        "Recommendation actions to apply",
+        options=actions_present,
+        default=[a for a in actions_present if a in {"IMPORT_TO_DEPRECATED", "RELOCATE_DEPRECATED_ARTIFACT_TO_OUTPUTS"}],
+        key="repo_engine_apply_actions",
+    )
+    move_mode = st.checkbox("Move instead of copy (deletes sources)", value=False, key="repo_engine_apply_move")
+    allow_overwrite = st.checkbox("Allow overwrite at destination (with backup)", value=False, key="repo_engine_apply_overwrite")
+    confirm_phrase = ""
+    if allow_overwrite:
+        confirm_phrase = st.text_input(
+            "Type OVERWRITE to confirm overwriting when destination differs",
+            value="",
+            key="repo_engine_apply_confirm",
+        )
+        st.caption("Overwrites create a backup under Outputs/backups/ before writing.")
+
+    if st.button("✅ Apply selected recommendations", type="primary", key="repo_engine_apply_btn"):
+        try:
+            with st.spinner("Applying recommendations…"):
+                ar = apply_recommendations(
+                    applyable,
+                    selected_actions=list(selected_actions),
+                    move_instead_of_copy=bool(move_mode),
+                    allow_overwrite=bool(allow_overwrite),
+                    confirmation_phrase=str(confirm_phrase or ""),
+                    budget_root="Outputs",
+                    budget_bytes=int(outputs_budget_b),
+                )
+            st.success(f"Apply complete. ok={ar.summary.get('ok')} skipped={ar.summary.get('skipped')} error={ar.summary.get('error')}")
+            st.caption(f"Report: {ar.report_path}")
+            st.json(ar.to_dict() if len(ar.ops) <= 25 else {**ar.to_dict(), "ops": [o.__dict__ for o in ar.ops[:25]]})
+        except Exception as e:  # pragma: no cover (UI only)
+            st.error(f"ENDEAVOR: Apply recommendations — failed. {type(e).__name__}: {e}")
+
 # ── main tabs ────────────────────────────────────────────────────────────────
 tab_names = [
     "📊 Overview",
@@ -133,13 +1134,23 @@ tab_names = [
     "🌐 Graph Probe",
     "🌍 Browser Excel Probe",
     "🖥 Desktop Excel Probe",
+    "🧪 Batch Runner",
+    "🗂 Repo Engine",
 ]
 tabs = st.tabs(tab_names)
 
+_TAB_BATCH = tab_names.index("🧪 Batch Runner")
+_TAB_ENGINE = tab_names.index("🗂 Repo Engine")
+
 if not cand_file:
-    for tab in tabs:
+    for i, tab in enumerate(tabs):
         with tab:
-            st.info("Upload a **Candidate .xlsx** in the sidebar to begin.")
+            if i == _TAB_BATCH:
+                _render_batch_runner()
+            elif i == _TAB_ENGINE:
+                _render_repo_engine()
+            else:
+                st.info("Upload a **Candidate .xlsx** in the sidebar to begin.")
     st.stop()
 
 # Save uploads (cache by file content so re-uploads don't re-read)
@@ -170,7 +1181,7 @@ with tabs[0]:
 **Overview** gives you a one-glance verdict on your Candidate workbook.
 
 1. Upload a **Candidate .xlsx** in the sidebar (the file you want to test).
-2. All 10 structural gate checks run automatically — each one lights up green ✅ or red ❌.
+2. All 11 structural gate checks run automatically — each one lights up green ✅ or red ❌.
 3. If you also upload a **Repaired .xlsx** (what Excel for Web saved after repairing your file),
    the *Changed parts* metric shows how many ZIP entries differ.
 
@@ -200,6 +1211,7 @@ with tabs[0]:
         ("shared_ref_oob",        "Shared formula ref OOB (exceeds max row)"),
         ("shared_ref_bbox",       "Shared formula bbox mismatch"),
         ("styles_dxf_integrity",  "dxfs count / cfRule dxfId integrity"),
+        ("cf_policy_deploymenttracker", "CF policy: Deployment Tracker (severity colors + required rules)"),
         ("xml_wellformed",        "XML well-formedness errors"),
         ("illegal_control_chars", "Illegal control characters in XML"),
         ("rels_missing_targets",  "Missing relationship targets"),
@@ -227,6 +1239,7 @@ _GATE_TO_SAMPLE = {
     "shared_ref_oob":        "shared_ref_oob",
     "shared_ref_bbox":       "shared_ref_bbox",
     "styles_dxf_integrity":  "styles_dxf",
+    "cf_policy_deploymenttracker": "cf_policy_deploymenttracker",
     "xml_wellformed":        "xml_wellformed",
     "illegal_control_chars": "illegal_control",
     "rels_missing_targets":  "rels_missing",
@@ -254,6 +1267,10 @@ _GATE_HELP = {
     "styles_dxf_integrity":
         "`dxfs/@count` disagrees with the actual number of `<dxf>` children, or a `cfRule/@dxfId` "
         "points to an index beyond the pool.  Both trigger style-repair.",
+    "cf_policy_deploymenttracker":
+        "Deployment Tracker policy check: verifies key conditional-formatting rules exist on the "
+        "Device_Configuration table and that severity  HIGH/MEDIUM/LOW maps to the intended "
+        "fill colors (red/purple/yellow).",
     "xml_wellformed":
         "Any ZIP part that is not valid XML (unclosed tags, illegal entities, etc.) causes "
         "Excel for Web to abort parsing and fall back to repair mode.",
@@ -268,7 +1285,7 @@ _GATE_HELP = {
 with tabs[1]:
     with st.expander("ℹ️  How this tab works", expanded=False):
         st.markdown("""
-**Gate Checks** runs 10 structural hazard checks against every XML part in your workbook.
+**Gate Checks** runs 11 structural hazard checks against every XML part in your workbook.
 
 - **Failing gates** (❌) are auto-expanded so you see the problem immediately.
 - Each gate shows a **JSON sample** of the first offending items — use the **copy icon** in the
@@ -793,4 +1810,17 @@ with tabs[7]:
                         st.code(snip[:1500])
         except Exception as ex:
             st.error(f"Desktop probe failed: {ex}")
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# TAB: BATCH RUNNER
+# ═══════════════════════════════════════════════════════════════════════
+with tabs[_TAB_BATCH]:
+    _render_batch_runner()
+
+
+# TAB: REPO ENGINE
+# ═══════════════════════════════════════════════════════════════════════
+with tabs[_TAB_ENGINE]:
+    _render_repo_engine()
 

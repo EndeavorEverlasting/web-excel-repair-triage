@@ -176,6 +176,38 @@ def test_t7_mixed_stubs_and_bad_real_match_raises_patch_error(tmp_path):
         apply_recipe(src, recipe, out)
 
 
+def test_policy_refuse_active_source(monkeypatch, tmp_path):
+    """Active/ is read-only: applying a recipe to a source within Active/ must be refused."""
+    monkeypatch.setenv("TRIAGE_REPO_ROOT", str(tmp_path))
+    (tmp_path / "Active").mkdir()
+    src = tmp_path / "Active" / "gold.xlsx"
+    src.write_bytes(_make_xlsx())
+    out = tmp_path / "Deprecated" / "gold_patched.xlsx"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    recipe = {"patches": [{"id": "p01", "part": "xl/worksheets/sheet1.xml",
+                            "operation": "literal_replace",
+                            "match": "HELLO", "replacement": "WORLD"}]}
+    with pytest.raises(PatchError) as exc_info:
+        apply_recipe(str(src), recipe, str(out))
+    assert "Active" in str(exc_info.value)
+
+
+def test_policy_refuse_active_output(monkeypatch, tmp_path):
+    """Active/ is read-only: writing patched output into Active/ must be refused."""
+    monkeypatch.setenv("TRIAGE_REPO_ROOT", str(tmp_path))
+    (tmp_path / "Active").mkdir()
+    (tmp_path / "Deprecated").mkdir()
+    src = tmp_path / "Deprecated" / "work.xlsx"
+    src.write_bytes(_make_xlsx())
+    out = tmp_path / "Active" / "work_patched.xlsx"
+    recipe = {"patches": [{"id": "p01", "part": "xl/worksheets/sheet1.xml",
+                            "operation": "literal_replace",
+                            "match": "HELLO", "replacement": "WORLD"}]}
+    with pytest.raises(PatchError) as exc_info:
+        apply_recipe(str(src), recipe, str(out))
+    assert "Active" in str(exc_info.value)
+
+
 def test_stub_placeholders_constant_coverage():
     """All three placeholder strings from report.py are registered."""
     assert "<REVIEW_REQUIRED>" in STUB_PLACEHOLDERS

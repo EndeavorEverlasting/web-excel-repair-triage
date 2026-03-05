@@ -53,6 +53,8 @@ import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from triage.path_policy import is_active_path
+
 
 class PatchError(Exception):
     pass
@@ -223,9 +225,24 @@ def apply_recipe(
     Apply all patches in *recipe* to *source_path*, write result to *output_path*.
     Returns the output path used.
     """
+    # Folder policy: Active/ is read-only (golden standards).
+    if is_active_path(source_path):
+        raise PatchError(
+            "ENDEAVOR: Apply patch recipe — refused. "
+            "Active/ is read-only (golden standards). "
+            f"Copy the file into Deprecated/ (or another working folder) first. Source={source_path}"
+        )
+
     if output_path is None:
         src = Path(source_path)
         output_path = str(src.with_stem(src.stem + "_patched"))
+
+    if is_active_path(output_path):
+        raise PatchError(
+            "ENDEAVOR: Apply patch recipe — refused. "
+            "Will not write patched outputs into Active/. "
+            f"Choose Outputs/ or Deprecated/. Output={output_path}"
+        )
 
     # Load all parts into memory first (avoid mid-write conflicts)
     parts: Dict[str, bytes] = {}
@@ -283,7 +300,9 @@ def apply_recipe(
             if name not in deleted:
                 zout.writestr(name, data)
 
-    Path(output_path).write_bytes(buf.getvalue())
+    outp = Path(output_path)
+    outp.parent.mkdir(parents=True, exist_ok=True)
+    outp.write_bytes(buf.getvalue())
 
     # Hard failures → PatchError (file was written but may be incomplete)
     if errors:
@@ -298,7 +317,7 @@ def apply_recipe(
             skipped=skipped,
         )
 
-    return output_path
+    return str(outp)
 
 
 def apply_recipe_from_file(source_path: str, recipe_path: str, output_path: Optional[str] = None) -> str:

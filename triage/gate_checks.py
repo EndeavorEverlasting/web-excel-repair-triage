@@ -14,6 +14,8 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
+from triage.cf_policy_deploymenttracker import check_cf_policy_deploymenttracker
+
 STOPSHIP_TOKENS = ("_xlfn.", "_xludf.", "_xlpm.", "AGGREGATE(")
 
 
@@ -321,6 +323,7 @@ class GateReport:
     shared_ref_oob: List[dict] = field(default_factory=list)
     shared_ref_bbox: List[dict] = field(default_factory=list)
     styles_dxf: List[dict] = field(default_factory=list)
+    cf_policy_deploymenttracker: List[dict] = field(default_factory=list)
     xml_wellformed: List[dict] = field(default_factory=list)
     illegal_control: List[dict] = field(default_factory=list)
     rels_missing: List[dict] = field(default_factory=list)
@@ -335,6 +338,7 @@ class GateReport:
             "shared_ref_oob":       self.shared_ref_oob,
             "shared_ref_bbox":      self.shared_ref_bbox,
             "styles_dxf_integrity": self.styles_dxf,
+            "cf_policy_deploymenttracker": self.cf_policy_deploymenttracker,
             "xml_wellformed":       self.xml_wellformed,
             "illegal_control_chars":self.illegal_control,
             "rels_missing_targets": self.rels_missing,
@@ -357,6 +361,7 @@ class GateReport:
                 "shared_ref_oob": self.shared_ref_oob[:25],
                 "shared_ref_bbox": self.shared_ref_bbox[:25],
                 "styles_dxf": self.styles_dxf[:25],
+                "cf_policy_deploymenttracker": self.cf_policy_deploymenttracker[:25],
                 "xml_wellformed": self.xml_wellformed[:10],
                 "illegal_control": self.illegal_control[:10],
                 "rels_missing": self.rels_missing[:20],
@@ -375,6 +380,7 @@ def run_all(path: str) -> GateReport:
         rpt.calcchain_invalid = check_calcchain_invalid(z)
         rpt.shared_ref_oob, rpt.shared_ref_bbox = check_shared_ref(z)
         rpt.styles_dxf = check_styles_dxf(z)
+        rpt.cf_policy_deploymenttracker = check_cf_policy_deploymenttracker(z)
         rpt.xml_wellformed = check_xml_wellformed(z)
         rpt.illegal_control = check_illegal_control_chars(z)
         rpt.rels_missing = check_rels_missing(z)

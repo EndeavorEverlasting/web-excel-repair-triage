@@ -54,6 +54,8 @@ from triage.cf_engine import (
     CFDictionary,
 )
 
+from triage.path_policy import is_active_path
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Phase agents
@@ -317,8 +319,18 @@ class DVAgent:
         """Apply a DVSpec to a file on disk.  Returns the output path."""
         import pathlib
         src = pathlib.Path(source_path)
+        if is_active_path(src):
+            raise ValueError(
+                "ENDEAVOR: Apply DV spec — refused. Active/ is read-only (golden standards). "
+                f"Copy the workbook into Deprecated/ before applying DV. Source={source_path}"
+            )
         if output_path is None:
             output_path = str(src.with_stem(src.stem + "_dv"))
+        if is_active_path(output_path):
+            raise ValueError(
+                "ENDEAVOR: Apply DV spec — refused. Will not write outputs into Active/. "
+                f"Choose Outputs/ or Deprecated/. Output={output_path}"
+            )
         patched = apply_dv_spec(src.read_bytes(), spec, sheet_name_mapping=sheet_name_mapping)
         out = pathlib.Path(output_path)
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -357,8 +369,18 @@ class CFAgent:
         """Apply a CFDictionary to a file on disk.  Returns the output path."""
         import pathlib
         src = pathlib.Path(source_path)
+        if is_active_path(src):
+            raise ValueError(
+                "ENDEAVOR: Apply CF dictionary — refused. Active/ is read-only (golden standards). "
+                f"Copy the workbook into Deprecated/ before applying CF. Source={source_path}"
+            )
         if output_path is None:
             output_path = str(src.with_stem(src.stem + "_cf"))
+        if is_active_path(output_path):
+            raise ValueError(
+                "ENDEAVOR: Apply CF dictionary — refused. Will not write outputs into Active/. "
+                f"Choose Outputs/ or Deprecated/. Output={output_path}"
+            )
         patched = apply_cf_dictionary(src.read_bytes(), cfd, sheet_name_mapping=sheet_name_mapping, mode=mode)
         out = pathlib.Path(output_path)
         out.parent.mkdir(parents=True, exist_ok=True)

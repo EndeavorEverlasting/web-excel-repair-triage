@@ -15,14 +15,21 @@ env/
 ENV/
 
 # ── Generated outputs from the triage tool ────────────────────────────────────
-# Patched / generated workbooks — always re-generatable, kept out of git
-Outputs/*.xlsx
+# Outputs/ is runtime-generated. Keep only curated reference JSONs tracked.
+Outputs/**
+!Outputs/
+!Outputs/cf_dict_deprecated.json
+!Outputs/dv_spec_deprecated.json
+
 # Legacy location (root-level patch file)
 *_patched.xlsx
 # Root-level recipe if accidentally saved there
 patch_recipe.json
-# ✅ Outputs/*.json (named recipes) ARE tracked — remove the next line to un-track them
-# Outputs/*.json
+
+# Common local workbook artifacts (keep out of git)
+CANDIDATE_*.xlsx
+web_repaired_*.xlsx
+README_CANDIDATE_*.xlsx
 
 # ── Streamlit runtime ─────────────────────────────────────────────────────────
 .streamlit/
