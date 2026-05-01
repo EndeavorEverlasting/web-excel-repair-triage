@@ -47,6 +47,15 @@ def get_tutorial_sections() -> list[TutorialSection]:
             ),
         ),
         TutorialSection(
+            title="3) Monthly Paylocity hours intake (PDF uploads)",
+            markdown=(
+                "Use this copy/paste request with your team each month so payroll PDFs are standardized for automation.\n\n"
+                "> Please upload your **Paylocity PDF for this month** in this thread by end-of-day Friday. "
+                "File name format: `YYYY-MM_LastName_FirstName_Paylocity.pdf`. "
+                "If your PDF has multiple pages, include all pages in one file."
+            ),
+        ),
+        TutorialSection(
             title="Lifecycle folders (mental model)",
             markdown=(
                 "- `Active/` = read-only golden standards\n"
