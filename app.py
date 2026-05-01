@@ -8,6 +8,7 @@ import datetime
 import json
 import os
 import tempfile
+import re
 from pathlib import Path
 
 import streamlit as st
@@ -36,6 +37,8 @@ from triage.tutorial import get_tutorial_sections
 # ── output folder ─────────────────────────────────────────────────────────────
 OUTPUTS_DIR = Path("Outputs")
 OUTPUTS_DIR.mkdir(exist_ok=True)
+PAYLOCITY_UPLOADS_DIR = OUTPUTS_DIR / "paylocity_uploads"
+PAYLOCITY_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── CSS theme ────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -129,6 +132,67 @@ def _file_info_html(label: str, name: str, size: int, colour: str = "#4a9ede") -
 
 def _html_escape(s: str) -> str:
     return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
+def _safe_slug(value: str) -> str:
+    cleaned = re.sub(r"[^a-zA-Z0-9._-]+", "_", (value or "").strip())
+    cleaned = cleaned.strip("._")
+    return cleaned or "unknown"
+
+
+def _render_paylocity_pdf_intake() -> None:
+    st.markdown("### 🧾 Paylocity PDF Intake (Monthly Hours)")
+    st.caption(
+        "Collect monthly Paylocity PDFs from your techs and build a queue file "
+        "for downstream hour-entry automation."
+    )
+
+    month_value = st.text_input("Payroll month (example: 2026-04)", value=datetime.date.today().strftime("%Y-%m"))
+    tech_name = st.text_input("Tech / Employee name", value="")
+    pdfs = st.file_uploader(
+        "Upload one or more Paylocity PDFs",
+        type=["pdf"],
+        accept_multiple_files=True,
+        key="paylocity_pdf_uploader",
+    )
+
+    if st.button("Save monthly intake", type="primary", key="save_paylocity_intake"):
+        if not tech_name.strip():
+            st.error("Please enter a tech/employee name before saving.")
+            return
+        if not month_value.strip():
+            st.error("Please enter the payroll month before saving.")
+            return
+        if not pdfs:
+            st.error("Please upload at least one PDF.")
+            return
+
+        month_slug = _safe_slug(month_value)
+        tech_slug = _safe_slug(tech_name)
+        run_stamp = datetime.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+        run_dir = PAYLOCITY_UPLOADS_DIR / month_slug / tech_slug / run_stamp
+        run_dir.mkdir(parents=True, exist_ok=True)
+
+        saved = []
+        for p in pdfs:
+            safe_name = _safe_slug(p.name)
+            out_path = run_dir / safe_name
+            out_path.write_bytes(p.getbuffer())
+            saved.append(out_path)
+
+        queue_csv = run_dir / "hours_entry_queue.csv"
+        header = "month,tech_name,pdf_path,uploaded_at_utc\n"
+        rows = [
+            f"{month_value},{tech_name},{path.as_posix()},{run_stamp}\n"
+            for path in saved
+        ]
+        queue_csv.write_text(header + "".join(rows), encoding="utf-8")
+
+        st.success(f"Saved {len(saved)} PDF(s). Queue file ready: {queue_csv.as_posix()}")
+        st.code(queue_csv.read_text(encoding="utf-8"), language="csv")
+
+
+_render_paylocity_pdf_intake()
 
 
 def _gate_tooltip(gate_dict: dict) -> str:
@@ -1823,4 +1887,3 @@ with tabs[_TAB_BATCH]:
 # ═══════════════════════════════════════════════════════════════════════
 with tabs[_TAB_ENGINE]:
     _render_repo_engine()
-
