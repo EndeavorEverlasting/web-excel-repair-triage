@@ -32,6 +32,10 @@ POLL_INTERVAL   = 30          # seconds between sweeps
 LOG_LEVEL       = logging.INFO
 # ───────────────────────────────────────────────────────────────────────────
 
+# Ensure drop-zones exist so users don't have to create them manually
+for _d in (CANDIDATES_DIR, OUTPUTS_DIR):
+    _d.mkdir(parents=True, exist_ok=True)
+
 logging.basicConfig(
     level=LOG_LEVEL,
     format="%(asctime)s [%(levelname)s] %(message)s",

@@ -1,0 +1,2 @@
+# Drop downloaded spreadsheets here.
+# The triage engine scans this folder for new .xlsx files to process.

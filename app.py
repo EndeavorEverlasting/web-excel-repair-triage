@@ -200,12 +200,22 @@ def _render_batch_runner() -> None:
 
     preferred = ("Deprecated", "Candidates", "Repaired", "Active")
     folder_choices = [p for p in preferred if Path(p).exists()]
+    missing = [p for p in preferred if not Path(p).exists()]
     if not folder_choices:
         folder_choices = ["(no standard folders found)"]
     default_index = folder_choices.index("Deprecated") if "Deprecated" in folder_choices else 0
     folder = st.selectbox("Folder", folder_choices, index=default_index)
     custom = st.text_input("Or custom folder path", value="")
     root = Path(custom) if custom.strip() else Path(folder)
+
+    if missing:
+        missing_hint = (
+            f"Missing folders: **{', '.join(missing)}**.  "
+            f"Downloaded files usually land in your **Downloads** folder.  "
+            f"Copy new workbooks to **`Candidates/`** and repaired Excel-Web exports to **`Repaired/`** "
+            f"so the Batch Runner can find them automatically."
+        )
+        st.info(missing_hint)
     max_files = st.number_input("Max files", min_value=1, max_value=500, value=50, step=1)
     write_outputs = st.checkbox("Write run artifacts under Outputs/batch_runs/", value=True)
 
