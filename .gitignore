@@ -14,6 +14,16 @@ venv/
 env/
 ENV/
 
+# ── Input folders ────────────────────────────────────────────────────────────
+# Candidates/ and Repaired/ are user drop-zones. Keep the folders tracked via
+# .gitkeep so users see them, but ignore all actual workbook contents.
+Candidates/**
+!Candidates/
+!Candidates/.gitkeep
+Repaired/**
+!Repaired/
+!Repaired/.gitkeep
+
 # ── Generated outputs from the triage tool ────────────────────────────────────
 # Outputs/ is runtime-generated. Keep only curated reference JSONs tracked.
 Outputs/**

@@ -169,6 +169,43 @@ No reinstalling needed unless `requirements.txt` changed (the terminal will tell
 
 ---
 
+## Where to put your files
+
+When you download a workbook from OneDrive, SharePoint, or email, it lands in your **Downloads** folder by default. The triage engine can't see it there — it only looks inside the repo's lifecycle folders.
+
+### 📥 New file to triage?
+
+1. **Find your downloaded file** — open File Explorer, go to `Downloads`.
+2. **Copy or move the file** into this repo's **`Candidates/`** folder.
+3. **That's it.** The Batch Runner, autofix loop, and sidebar uploaders all look here.
+
+**Quick path:**
+```
+C:\Users\<You>\Downloads\MyWorkbook.xlsx
+    → C:\path\to\web-excel-repair-triage\Candidates\MyWorkbook.xlsx
+```
+
+### 🔧 File repaired by Excel for Web?
+
+When Excel Web shows **"WORKBOOK REPAIRED"** and you download the fixed version, put it in **`Repaired/`**:
+
+```
+C:\Users\<You>\Downloads\MyWorkbook (repaired).xlsx
+    → C:\path\to\web-excel-repair-triage\Repaired\MyWorkbook_repaired.xlsx
+```
+
+The Diff tab needs a **Candidate** (original) + a **Repaired** (from Excel Web) side-by-side.
+
+### 🛡️ Golden standard reference?
+
+If you have a known-good, production-ready workbook, place it in **`Active/`** so the engine can diff against it as a baseline. **Do not edit files in Active/** — treat it as read-only.
+
+### 🗑️ Old iterations and experiments?
+
+Put anything you're iterating on, experimenting with, or trying to fix in **`Deprecated/`**. This is the default work area for the Batch Runner and most repair tools.
+
+---
+
 ## Folder Structure
 
 | Folder | Purpose |
@@ -232,11 +269,14 @@ Note: this repo versions **curated** `Deprecated/` samples for reproducible tria
 
 ### Sidebar — File Inputs
 
-1. **Candidate .xlsx** — the workbook you want to test (drag from `Candidates/`)
-2. **Repaired .xlsx** *(optional)* — drop the file Excel for Web produced after
-   repair (from `Repaired/`). Enables the Diff, Patterns, and full Patch Recipe tabs.
+1. **Candidate .xlsx** — the workbook you want to test.
+   Drag it from `Candidates/` (or anywhere — the uploader accepts any `.xlsx`).
+2. **Repaired .xlsx** *(optional)* — the file Excel for Web produced after repair.
+   Place it in `Repaired/` first, then drag it here. Enables the Diff, Patterns, and full Patch Recipe tabs.
 3. **Bearer Token** *(optional)* — a Microsoft Graph API access token for the
    Graph Probe tab.
+
+> **New to the workflow?** See [Where to put your files](#where-to-put-your-files) above.
 
 > Note: If you have **not** uploaded a Candidate yet, the app still provides two
 > workspace-level tabs that do not require uploads:
