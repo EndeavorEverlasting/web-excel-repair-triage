@@ -38,3 +38,7 @@ externalPort = 80
 [deployment]
 deploymentTarget = "autoscale"
 run = ["python", "-m", "streamlit", "run", "app.py"]
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 120000
