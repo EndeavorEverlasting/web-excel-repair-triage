@@ -64,3 +64,6 @@ desktop.ini
 *.swp
 *.swo
 
+
+# ── Billing pipeline runtime outputs ────────────────────────────────────────
+billing_runs/
