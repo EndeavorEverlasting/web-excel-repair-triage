@@ -1,0 +1,15 @@
+{
+  "run_id": "billing-2026-04-1777835767",
+  "timestamp": "2026-05-03T19:16:07Z",
+  "status": "generated",
+  "inputs": [],
+  "outputs": [
+    "billing_runs_tmp/2026-04/workbook/billing_summary_2026-04.xlsx"
+  ],
+  "billing_month": "2026-04",
+  "roster_records": 111,
+  "invoices": 4,
+  "gross_hours": 898.6,
+  "net_hours": 814.1,
+  "invoice_total": 5614.5
+}

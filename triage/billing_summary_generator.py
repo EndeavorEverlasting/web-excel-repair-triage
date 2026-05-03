@@ -3,13 +3,20 @@ triage/billing_summary_generator.py
 ------------------------------------
 Build the monthly billing summary .xlsx from roster records + parsed invoices.
 
-Output sheets (matching Agilant Admins template):
-  1. "Billing Summary - {Mon YYYY}"
-       - Monthly Rollup block (side-by-side with Hours by Project)
-       - Daily Billing Detail section
+Output sheets (matching Agilant Admins template exactly):
+  1. "Billing Summary - {Month YYYY}"  (≤31 chars — Excel tab name limit)
+       - Title: "{Month YYYY} Billing Summary - Candidate"
+       - Monthly Rollup block (A-D) side-by-side with Pivot by Team/Project (F-K)
+       - Invoice-Ready Calculation section at rows 13+ (trucking/logistics invoices)
+       - Staff Rollup (A-G) side-by-side with Val Weekly Hours (I-O)
+       - Daily Billing Detail section (A-J)
   2. "Invoice Pivots - Candidate"
-       - Monthly Invoice Totals + Totals by Category (side by side)
-       - Totals by PO Number | Totals by Project | Totals by Vendor/Crew (side by side)
+       - Monthly Invoice Totals (A-H) + Totals by Category (J-N)
+       - Totals by PO Number (A-D) | Totals by Project (F-H) | Totals by Vendor/Crew (J-N)
+       - Audit Notes block
+
+Color palette verified cell-by-cell against:
+  attached_assets/Agilant_Admins_April_2026_Billing_Summary_PO176759_Neurons_*.xlsx
 
 Output path: billing_runs/YYYY-MM/workbook/billing_summary_{YYYY-MM}.xlsx
 Also writes:  billing_runs/YYYY-MM/run_manifest.json
@@ -33,6 +40,7 @@ def generate_billing_summary(
     out_root: str = "billing_runs",
     run_id: Optional[str] = None,
     input_paths: Optional[List[str]] = None,
+    audit_notes: Optional[List[str]] = None,
 ) -> str:
     """
     Generate the monthly billing summary workbook.
@@ -45,6 +53,8 @@ def generate_billing_summary(
     out_root      : root folder (default 'billing_runs')
     run_id        : optional run identifier
     input_paths   : list of source file paths for the manifest
+    audit_notes   : optional list of note strings for the Invoice Pivots
+                    Audit Notes block (matches Agilant template rows 24+)
 
     Returns
     -------
@@ -63,6 +73,8 @@ def generate_billing_summary(
         from openpyxl.utils import get_column_letter
     except ImportError:
         raise RuntimeError("openpyxl is required: pip install openpyxl")
+
+    import datetime as _dt
 
     year_s, month_s = billing_month.split("-")
     month_label = date(int(year_s), int(month_s), 1).strftime("%B %Y")
@@ -88,9 +100,23 @@ def generate_billing_summary(
         project_map[proj]["techs"].add(rec["staff"])
         project_map[proj]["daily_rows"] += 1
 
+    # Per-staff aggregate for Staff Rollup section
+    staff_map: Dict[str, Dict[str, Any]] = defaultdict(
+        lambda: {"gross": 0.0, "lunch": 0.0, "net": 0.0,
+                 "projects": set(), "rows": 0}
+    )
+    for rec in records:
+        s = rec["staff"]
+        staff_map[s]["gross"]    += rec["gross_hours"]
+        staff_map[s]["lunch"]    += rec["lunch_deduction"]
+        staff_map[s]["net"]      += rec["net_hours"]
+        staff_map[s]["projects"].add(rec["project"] or "Unassigned")
+        staff_map[s]["rows"]     += 1
+
     # Sort records and projects for display
-    sorted_records = sorted(records, key=lambda r: (r["date"], r["staff"]))
+    sorted_records  = sorted(records, key=lambda r: (r["date"], r["staff"]))
     sorted_projects = sorted(project_map.items())
+    sorted_staff    = sorted(staff_map.items())
 
     # ── Aggregate invoice data ─────────────────────────────────────────────────
     inv_by_month: Dict[str, Dict[str, Any]] = defaultdict(
@@ -113,7 +139,6 @@ def generate_billing_summary(
                  "count": 0, "total": 0.0}
     )
 
-    # Category → descriptive project bucket (matches roster project buckets)
     _CATEGORY_TO_PROJECT = {
         "trucking": "Delivery / Transport / Disposal",
         "courier":  "Delivery / Transport / Disposal",
@@ -126,18 +151,11 @@ def generate_billing_summary(
         po     = inv.get("po_number") or "Unknown"
         vendor = inv["vendor"]
 
-        # Service month: parse from service_date/service_window if present.
-        # service_window may be a date range like "Feb 7 - 8, 2026" or
-        # "Feb 14 - 15, 2026"; extract the FIRST date token to determine month.
         svc = inv.get("service_date") or inv.get("service_window") or ""
-        inv_month = billing_month  # default fallback
+        inv_month = billing_month
         if svc:
             import re as _re
-            # Normalise: take the portion before any " - " range separator,
-            # then strip trailing whitespace/punctuation.
             svc_first = _re.split(r"\s*[-–—]\s*\d", svc.strip())[0].strip()
-            # If the first token already has a 4-digit year, use it directly.
-            # Otherwise, we need to append the year from the end of the original string.
             if not _re.search(r"\b\d{4}\b", svc_first):
                 year_m = _re.search(r"\b(\d{4})\b", svc)
                 if year_m:
@@ -157,9 +175,6 @@ def generate_billing_summary(
         vendor_map[vendor]["count"] += 1
         category_map[vendor]["count"] += 1
 
-        # Aggregate categories from individual line items so that invoices
-        # with mixed categories (e.g. trucking + labor on same invoice) are
-        # split correctly across trucking/labor/courier/other columns.
         line_items = inv.get("line_items") or []
         if line_items:
             li_sum: Dict[str, float] = {"trucking": 0.0, "labor": 0.0,
@@ -170,14 +185,11 @@ def generate_billing_summary(
                     item_cat = "other"
                 li_sum[item_cat] += float(item.get("amount") or 0)
 
-            # Scale line-item totals to match the invoice total (preserves
-            # accuracy when line-item sum ≠ invoice total due to rounding/taxes).
             li_raw_sum = sum(li_sum.values())
             if li_raw_sum > 0 and abs(li_raw_sum - inv_total_amt) / li_raw_sum > 0.001:
                 scale = inv_total_amt / li_raw_sum
                 li_sum = {k: v * scale for k, v in li_sum.items()}
         else:
-            # Fallback: entire invoice goes to invoice-level category
             fallback_cat = inv.get("cost_category") or "other"
             li_sum = {"trucking": 0.0, "labor": 0.0, "courier": 0.0, "other": 0.0}
             li_sum[fallback_cat if fallback_cat in li_sum else "other"] = inv_total_amt
@@ -194,8 +206,6 @@ def generate_billing_summary(
         vendor_map[vendor]["total"]      += inv_total_amt
         category_map[vendor]["total"]    += inv_total_amt
 
-        # Populate project_inv_map: dominant category of this invoice
-        # determines the project bucket (by largest category amount).
         dom_cat = max(li_sum, key=li_sum.get) if any(li_sum.values()) else "other"
         proj_bucket = _CATEGORY_TO_PROJECT.get(dom_cat, "Unassigned / Review")
         project_inv_map[proj_bucket]["total"] += inv_total_amt
@@ -210,31 +220,46 @@ def generate_billing_summary(
     wb = openpyxl.Workbook()
     wb.remove(wb.active)
 
-    ws1 = wb.create_sheet(f"Billing Summary - {month_label}")
+    # Sheet tab names must be ≤31 chars (Excel limit).
+    # Pattern mirrors the Agilant template naming convention.
+    # "Billing Summary - December 2026" = 31 chars (longest possible, exactly fits).
+    sheet1_name = f"Billing Summary - {month_label}"[:31]
+    ws1 = wb.create_sheet(sheet1_name)
     ws2 = wb.create_sheet("Invoice Pivots - Candidate")
 
-    # ── Style helpers ─────────────────────────────────────────────────────────
-    C_DARK   = "0E4C2F"
-    C_MED    = "1A5C38"
-    C_SUB    = "0D3320"
-    C_ALT    = "0A1A10"
-    C_TOTAL  = "0A3020"
-    C_WHITE  = "FFFFFF"
-    C_YELLOW = "FFC107"
+    # ── Color palette (verified against Agilant Admins April 2026 template) ───
+    # Sheet 1
+    C1_HEADER  = "1F365C"   # dark navy — title bar, section headers
+    C1_SUBHDR  = "D9EAF7"   # light blue — column sub-header fill
+    C1_SUBTITLE = "EAF1F8"  # very light blue — subtitle row fill
+    C1_TOTAL   = "E2F0D9"   # light green — TOTAL row fill
+    C1_TXT     = "1F365C"   # dark navy — text on light/white backgrounds
+    C_WHITE    = "FFFFFF"   # white — text on dark fills
+
+    # Sheet 2
+    C2_HEADER  = "1F2937"   # dark charcoal — title, Audit Notes header
+    C2_SECHDR  = "0F766E"   # teal — section headers
+    C2_SUBHDR  = "374151"   # medium gray — column sub-headers
+    C2_SUBTITLE = "DBEAFE"  # light blue — subtitle
+    C2_TOTAL   = "DCFCE7"   # light green — TOTAL rows
 
     def _fill(hex_color: str) -> PatternFill:
+        # openpyxl requires 8-char ARGB (alpha prefix FF = fully opaque).
+        if len(hex_color) == 6:
+            hex_color = "FF" + hex_color
         return PatternFill("solid", fgColor=hex_color)
 
-    def _font(bold=False, size=10, color=C_WHITE) -> Font:
-        return Font(bold=bold, size=size, color=color)
-
-    def _align(h="left", v="center", wrap=False) -> Alignment:
-        return Alignment(horizontal=h, vertical=v, wrap_text=wrap)
-
-    def cell(ws, row, col, value=None, bold=False, size=10, color=C_WHITE,
+    def cell(ws, row, col, value=None, bold=False, size=10, txt_color=None,
              fill=None, h="left", v="center", wrap=False, fmt=None):
+        """Write a cell with optional fill and formatting.
+        Data rows: pass fill=None (no fill) and txt_color=None (default dark).
+        Header rows: pass fill=color_hex and txt_color=C_WHITE.
+        """
         c = ws.cell(row=row, column=col, value=value)
-        c.font      = Font(bold=bold, size=size, color=color)
+        if txt_color:
+            c.font = Font(bold=bold, size=size, color=txt_color)
+        else:
+            c.font = Font(bold=bold, size=size)
         c.alignment = Alignment(horizontal=h, vertical=v, wrap_text=wrap)
         if fill:
             c.fill = _fill(fill)
@@ -242,244 +267,378 @@ def generate_billing_summary(
             c.number_format = fmt
         return c
 
-    def hdr(ws, row, col, value, span=1, fill=C_MED, bold=True, h="center"):
+    def hdr(ws, row, col, value, span=1, fill=C1_HEADER, txt=C_WHITE,
+            bold=True, h="center", size=10):
+        """Write a header cell (section or sub-header)."""
         if span > 1:
             ws.merge_cells(start_row=row, start_column=col,
                            end_row=row, end_column=col + span - 1)
-        return cell(ws, row, col, value, bold=bold, fill=fill, h=h)
+        return cell(ws, row, col, value, bold=bold, size=size,
+                    txt_color=txt, fill=fill, h=h)
+
+    # ── Time/date helpers ──────────────────────────────────────────────────────
+    def _to_time(h):
+        """Convert float hour value to datetime.time (for h:mm AM/PM format)."""
+        if h is None:
+            return None
+        hh = int(h) % 24
+        mm = int(round((h - int(h)) * 60))
+        if mm == 60:
+            hh = (hh + 1) % 24
+            mm = 0
+        return _dt.time(hh, mm)
+
+    def _to_datetime(d):
+        """Convert date to datetime (Excel stores dates as datetime)."""
+        if d is None:
+            return None
+        if isinstance(d, _dt.datetime):
+            return d
+        return _dt.datetime(d.year, d.month, d.day)
+
+    def _month_datetime(ym_str):
+        """Convert 'YYYY-MM' to datetime for mmm yyyy format."""
+        try:
+            return _dt.datetime.strptime(ym_str, "%Y-%m")
+        except Exception:
+            return None
 
     # ════════════════════════════════════════════════════════════════════════════
     # SHEET 1: Billing Summary
     # ════════════════════════════════════════════════════════════════════════════
 
-    # Row 1: Title
-    ws1.merge_cells("A1:J1")
-    cell(ws1, 1, 1, f"{month_label} Billing Summary - Candidate", bold=True, size=13,
-         fill=C_DARK, h="center")
+    # Row 1: Title — A1:K1, navy fill, white bold 16pt
+    ws1.merge_cells("A1:K1")
+    cell(ws1, 1, 1, f"{month_label} Billing Summary - Candidate",
+         bold=True, size=16, txt_color=C_WHITE, fill=C1_HEADER, h="center")
     ws1.row_dimensions[1].height = 22
 
-    # Row 2: Subtitle
-    ws1.merge_cells("A2:J2")
+    # Row 2: Subtitle — A2:K2, light-blue fill, dark text
+    ws1.merge_cells("A2:K2")
     cell(ws1, 2, 1,
          "Separating Logistics from Device Integration; Including Lunch Deductions",
-         size=9, fill=C_SUB, h="left")
+         size=10, txt_color=C1_TXT, fill=C1_SUBTITLE, h="left")
     ws1.row_dimensions[2].height = 14
 
-    # Row 4: Section headers (side by side)
-    hdr(ws1, 4, 1, "Monthly Rollup",   span=4, fill=C_MED)
-    hdr(ws1, 4, 6, "Hours by Project", span=6, fill=C_MED)
+    # Row 3: blank spacer
+    ws1.row_dimensions[3].height = 6
+
+    # Row 4: Section headers
+    hdr(ws1, 4, 1, "Monthly Rollup",                   span=4, fill=C1_HEADER)
+    hdr(ws1, 4, 6, "Pivot by Team / Project Bucket",   span=6, fill=C1_HEADER)
     ws1.row_dimensions[4].height = 18
 
-    # Row 5: Column headers
+    # Row 5: Column sub-headers — light-blue fill, dark bold text
     for ci, h_val in enumerate(["Metric", "Value", "Basis", "Notes"], 1):
-        hdr(ws1, 5, ci, h_val, fill=C_SUB)
+        hdr(ws1, 5, ci, h_val, fill=C1_SUBHDR, txt=C1_TXT)
     for ci, h_val in enumerate(
-        ["Project", "Tech Count", "Daily Rows", "Gross Hours", "Lunch Deducted", "Net Billable Hours"],
+        ["Team / Project Bucket", "Tech Count", "Daily Rows",
+         "Gross Hours", "Lunch Deducted", "Net Billable Hours"],
         6
     ):
-        hdr(ws1, 5, ci, h_val, fill=C_SUB, h="center")
+        hdr(ws1, 5, ci, h_val, fill=C1_SUBHDR, txt=C1_TXT, h="center")
     ws1.row_dimensions[5].height = 16
 
-    # Rows 6-10: Rollup data (left) + project data (right, up to 5 rows)
+    # Rows 6-10: Rollup data (left) + project data (right, up to 5 real slots)
     rollup_data = [
-        ("Gross hours",          round(gross_total, 2), "Live " + month_label,
+        ("Gross hours",        round(gross_total, 2), "Live " + month_label,
          "Before lunch deduction"),
-        ("Lunch deducted",       round(lunch_total, 2), "Policy rule",
+        ("Lunch deducted",     round(lunch_total, 2), "Policy rule",
          "0 under 6h; 0.5 from 6 to <8h; 1.0 at 8h+"),
-        ("Net billable hours",   round(net_total,   2), "Gross - lunch",
-         "Use this for billing unless company policy says otherwise"),
-        (f"Techs with {month_label} hours",
-         len(all_staff), "Live " + month_label, ""),
-        ("Daily work rows",      daily_rows,            "Live " + month_label, ""),
+        ("Net billable hours", round(net_total,   2), "Gross - lunch",
+         "Use unless company billing policy overrides"),
+        ("Tracked staff",      len(all_staff),         "Distinct staff", ""),
+        ("Daily work rows",    daily_rows,              "Daily detail rows", ""),
     ]
 
-    # Build the project display list: real projects + TOTAL sentinel.
-    # Up to 4 real projects fit in rows 6-9; TOTAL lands at row 10 (right side)
-    # to match the Agilant template layout exactly.
-    # If there are more than 4 real projects the extras overflow to extra_row.
-    total_sentinel = {
-        "gross":     gross_total,
-        "lunch":     lunch_total,
-        "net":       net_total,
-        "techs":     all_staff,
-        "daily_rows": daily_rows,
-        "_is_total": True,
-    }
-    proj_rows = list(sorted_projects)           # real projects
-
-    # Build a 5-slot display list so TOTAL always lands at row 10 (ri=4).
-    # Slots 0-3 hold real projects; slot 4 is always TOTAL.
-    real_slots: list = (proj_rows[:4] + [None, None, None, None])[:4]
-    proj_display = real_slots + [("TOTAL", total_sentinel)]
+    # Up to 5 real project slots in rows 6-10; TOTAL at row 11.
+    proj_rows = list(sorted_projects)
+    real_slots: list = (proj_rows[:5] + [None] * 5)[:5]
 
     for i in range(6, 11):
         ri = i - 6
-        alt = C_ALT if i % 2 == 0 else None
-
-        # Left: rollup
         metric, value, basis, notes = rollup_data[ri]
-        cell(ws1, i, 1, metric, fill=alt or "", h="left")
-        cell(ws1, i, 2, value,  fill=alt or "", h="right", bold=True)
-        cell(ws1, i, 3, basis,  fill=alt or "", h="left")
-        cell(ws1, i, 4, notes,  fill=alt or "", h="left", size=9)
+        # Left: no fill, dark text; value column uses 0.00 format for hours
+        cell(ws1, i, 1, metric, h="left")
+        c_val = cell(ws1, i, 2, value, bold=False, h="right")
+        if isinstance(value, float):
+            c_val.number_format = "0.00"
+        cell(ws1, i, 3, basis,  h="left")
+        cell(ws1, i, 4, notes,  h="left", size=9)
 
-        # Right: project slot (may be None = empty, or a (name, pdata) tuple)
-        entry = proj_display[ri]
+        # Right: project slot
+        entry = real_slots[ri]
         if entry is not None:
             proj, pdata = entry
-            is_total = pdata.get("_is_total", False)
-            proj_fill = C_TOTAL if is_total else (alt or "")
-            cell(ws1, i, 6,  proj,                       fill=proj_fill, h="left",   bold=is_total)
-            cell(ws1, i, 7,  len(pdata["techs"]),        fill=proj_fill, h="center", bold=is_total)
-            cell(ws1, i, 8,  pdata["daily_rows"],        fill=proj_fill, h="center", bold=is_total)
-            cell(ws1, i, 9,  round(pdata["gross"], 2),   fill=proj_fill, h="right",  bold=is_total)
-            cell(ws1, i, 10, round(pdata["lunch"], 2),   fill=proj_fill, h="right",  bold=is_total)
-            cell(ws1, i, 11, round(pdata["net"],   2),   fill=proj_fill, h="right",  bold=is_total)
+            cell(ws1, i, 6,  proj,                     h="left")
+            cell(ws1, i, 7,  len(pdata["techs"]),      h="center")
+            cell(ws1, i, 8,  pdata["daily_rows"],      h="center")
+            c = cell(ws1, i, 9,  round(pdata["gross"], 2), h="right")
+            c.number_format = "0.00"
+            c = cell(ws1, i, 10, round(pdata["lunch"], 2), h="right")
+            c.number_format = "0.00"
+            c = cell(ws1, i, 11, round(pdata["net"],   2), h="right")
+            c.number_format = "0.00"
         ws1.row_dimensions[i].height = 15
 
-    # Overflow: any real projects beyond slot 4 go at extra_row (≥11)
-    extra_row = 11
-    if len(proj_rows) > 4:
-        for proj, pdata in proj_rows[4:]:
-            cell(ws1, extra_row, 6,  proj,                  h="left")
-            cell(ws1, extra_row, 7,  len(pdata["techs"]),   h="center")
-            cell(ws1, extra_row, 8,  pdata["daily_rows"],   h="center")
-            cell(ws1, extra_row, 9,  round(pdata["gross"],2), h="right")
-            cell(ws1, extra_row, 10, round(pdata["lunch"],2), h="right")
-            cell(ws1, extra_row, 11, round(pdata["net"],  2), h="right", bold=True)
+    # Row 11: TOTAL row (right side F-K), light-green fill, dark bold text
+    cell(ws1, 11, 6,  "TOTAL",                     bold=True, fill=C1_TOTAL, txt_color=C1_TXT)
+    cell(ws1, 11, 7,  len(all_staff),               bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="center")
+    cell(ws1, 11, 8,  daily_rows,                   bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="center")
+    c = cell(ws1, 11, 9,  round(gross_total, 2),    bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="right")
+    c.number_format = "0.00"
+    c = cell(ws1, 11, 10, round(lunch_total, 2),    bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="right")
+    c.number_format = "0.00"
+    c = cell(ws1, 11, 11, round(net_total,   2),    bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="right")
+    c.number_format = "0.00"
+    ws1.row_dimensions[11].height = 15
+
+    # Overflow: any real projects beyond slot 5 go below row 11
+    extra_row = 12
+    if len(proj_rows) > 5:
+        for proj, pdata in proj_rows[5:]:
+            cell(ws1, extra_row, 6,  proj,                    h="left")
+            cell(ws1, extra_row, 7,  len(pdata["techs"]),     h="center")
+            cell(ws1, extra_row, 8,  pdata["daily_rows"],     h="center")
+            c = cell(ws1, extra_row, 9,  round(pdata["gross"], 2), h="right")
+            c.number_format = "0.00"
+            c = cell(ws1, extra_row, 10, round(pdata["lunch"], 2), h="right")
+            c.number_format = "0.00"
+            c = cell(ws1, extra_row, 11, round(pdata["net"],   2), h="right")
+            c.number_format = "0.00"
             extra_row += 1
         # TOTAL after overflow
-        cell(ws1, extra_row, 6,  "TOTAL",              bold=True, fill=C_TOTAL)
-        cell(ws1, extra_row, 7,  len(all_staff),        bold=True, fill=C_TOTAL, h="center")
-        cell(ws1, extra_row, 8,  daily_rows,            bold=True, fill=C_TOTAL, h="center")
-        cell(ws1, extra_row, 9,  round(gross_total,2),  bold=True, fill=C_TOTAL, h="right")
-        cell(ws1, extra_row, 10, round(lunch_total,2),  bold=True, fill=C_TOTAL, h="right")
-        cell(ws1, extra_row, 11, round(net_total, 2),   bold=True, fill=C_TOTAL, h="right")
+        cell(ws1, extra_row, 6,  "TOTAL",               bold=True, fill=C1_TOTAL, txt_color=C1_TXT)
+        cell(ws1, extra_row, 7,  len(all_staff),         bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="center")
+        cell(ws1, extra_row, 8,  daily_rows,             bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="center")
+        c = cell(ws1, extra_row, 9,  round(gross_total, 2), bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="right")
+        c.number_format = "0.00"
+        c = cell(ws1, extra_row, 10, round(lunch_total, 2), bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="right")
+        c.number_format = "0.00"
+        c = cell(ws1, extra_row, 11, round(net_total,   2), bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="right")
+        c.number_format = "0.00"
         extra_row += 1
 
-    # ── Val Weekly Hours | Val Daily Detail (side by side) ─────────────────────
-    val_start = max(11, extra_row)
+    # ── Invoice-Ready Calculation section (matches template rows 13-18) ─────────
+    # Template layout: dark-navy header merged A:F at row 13, sub-headers at row 14,
+    # one row per line item (Qty / Unit / Rate / Amount), Subtotal row (no fill),
+    # Total Due row (light-green fill with PO | Net 30 | USD note in col F).
+    # Column header "Amount" — NOT "Amount ($)" — matches the template exactly.
+    trucking_invs = [inv for inv in invoices
+                     if inv.get("cost_category") in ("trucking", "courier")]
+    if trucking_invs:
+        truck_start = max(13, extra_row + 1)
 
-    # Compute weekly buckets from records
-    from collections import defaultdict as _dd
-    import datetime as _dt
-    weekly: dict = _dd(lambda: {"gross": 0.0, "lunch": 0.0, "net": 0.0,
-                                 "projects": set(), "days": set()})
+        # Title derived from first vendor + service date (mirrors template convention)
+        first_inv    = trucking_invs[0]
+        first_vendor = first_inv.get("vendor", billing_month)
+        first_date   = first_inv.get("service_date", "")
+        truck_title  = (f"{first_vendor} Invoice-Ready Calculation"
+                        + (f" — {first_date}" if first_date else ""))
+
+        ws1.merge_cells(
+            start_row=truck_start, start_column=1,
+            end_row=truck_start, end_column=6
+        )
+        cell(ws1, truck_start, 1, truck_title,
+             bold=True, txt_color=C_WHITE, fill=C1_HEADER, h="center")
+        ws1.row_dimensions[truck_start].height = 18
+
+        truck_hdr = truck_start + 1
+        for ci, h_val in enumerate(
+            ["Line Item", "Qty", "Unit", "Rate", "Amount", "Notes"], 1
+        ):
+            hdr(ws1, truck_hdr, ci, h_val, fill=C1_SUBHDR, txt=C1_TXT, h="center")
+        ws1.row_dimensions[truck_hdr].height = 15
+
+        truck_data        = truck_hdr + 1
+        grand_truck_total = 0.0
+        first_po          = ""
+        _first_data_row   = True  # first line-item row gets 25.5pt height (matches ref)
+
+        for inv in trucking_invs:
+            if not first_po:
+                first_po = str(inv.get("po_number", ""))
+            line_items = inv.get("line_items") or []
+            po_note    = f"PO {inv.get('po_number', '?')} | {inv.get('service_date', '')}"
+
+            if line_items:
+                # Write individual line items (matches template rows 15-16 style)
+                for li in line_items:
+                    li_label = li.get("description") or li.get("category", "").capitalize()
+                    li_qty   = li.get("qty", "")
+                    li_unit  = li.get("unit", "")
+                    li_rate  = li.get("rate", "")
+                    li_amt   = round(float(li.get("amount") or 0), 2)
+                    cell(ws1, truck_data, 1, li_label,  h="left")
+                    cell(ws1, truck_data, 2, li_qty,    h="center")
+                    cell(ws1, truck_data, 3, li_unit,   h="left")
+                    if li_rate != "":
+                        c = cell(ws1, truck_data, 4, round(float(li_rate), 2), h="right")
+                        c.number_format = '"$"#,##0.00'
+                    c = cell(ws1, truck_data, 5, li_amt, h="right", bold=True)
+                    c.number_format = '"$"#,##0.00'
+                    cell(ws1, truck_data, 6, po_note, h="left", size=9)
+                    ws1.row_dimensions[truck_data].height = 25.5 if _first_data_row else 14
+                    _first_data_row   = False
+                    truck_data        += 1
+                    grand_truck_total += li_amt
+            else:
+                inv_total_f = round(float(inv.get("total") or 0), 2)
+                cell(ws1, truck_data, 1, inv.get("vendor", "Invoice"), h="left")
+                cell(ws1, truck_data, 2, 1,          h="center")
+                cell(ws1, truck_data, 3, "invoice",  h="left")
+                c = cell(ws1, truck_data, 4, inv_total_f, h="right")
+                c.number_format = '"$"#,##0.00'
+                c = cell(ws1, truck_data, 5, inv_total_f, h="right", bold=True)
+                c.number_format = '"$"#,##0.00'
+                cell(ws1, truck_data, 6, po_note, h="left", size=9)
+                ws1.row_dimensions[truck_data].height = 25.5 if _first_data_row else 14
+                _first_data_row   = False
+                truck_data        += 1
+                grand_truck_total += inv_total_f
+
+        # Subtotal row — no fill (matches template row 17)
+        cell(ws1, truck_data, 1, "Subtotal", h="left")
+        c = cell(ws1, truck_data, 5, round(grand_truck_total, 2), bold=True, h="right")
+        c.number_format = '"$"#,##0.00'
+        ws1.row_dimensions[truck_data].height = 14
+        truck_data += 1
+
+        # Total Due row — light-green fill (matches template row 18)
+        cell(ws1, truck_data, 1, "Total Due",
+             bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="left")
+        c = cell(ws1, truck_data, 5, round(grand_truck_total, 2),
+                 bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="right")
+        c.number_format = '"$"#,##0.00'
+        cell(ws1, truck_data, 6,
+             f"PO {first_po} | Net 30 | USD" if first_po else "",
+             fill=C1_TOTAL, txt_color=C1_TXT, h="left", size=9)
+        ws1.row_dimensions[truck_data].height = 14
+        extra_row = truck_data + 1
+    else:
+        extra_row = max(13, extra_row + 1)
+
+    # ── Staff Rollup (A-G) + Val Weekly Hours (I-O) ───────────────────────────
+    # Template anchors Staff Rollup at row 21 (after trucking section ends at row 18).
+    # Guard: if data pushed extra_row past 21, use extra_row + 2 (one blank-row gap).
+    staff_start = max(21, extra_row + 2)
+
+    ws1.merge_cells(
+        start_row=staff_start, start_column=1,
+        end_row=staff_start, end_column=7
+    )
+    cell(ws1, staff_start, 1, "Staff Rollup",
+         bold=True, txt_color=C_WHITE, fill=C1_HEADER, h="center")
+
+    # Compute weekly buckets
+    weekly: dict = defaultdict(lambda: {"gross": 0.0, "lunch": 0.0, "net": 0.0,
+                                        "projects": set(), "days": set()})
     for rec in sorted_records:
         d = rec["date"]
         mon = d - _dt.timedelta(days=d.weekday())
         fri = mon + _dt.timedelta(days=4)
-        wk = mon
+        wk  = mon
         label = f"{mon.strftime('%b %-d')}–{fri.strftime('%-d')}"
-        weekly[wk]["label"] = label
+        weekly[wk]["label"]  = label
         weekly[wk]["gross"] += rec["gross_hours"]
         weekly[wk]["lunch"] += rec["lunch_deduction"]
         weekly[wk]["net"]   += rec["net_hours"]
         weekly[wk]["projects"].add(rec["project"] or "Unassigned")
         weekly[wk]["days"].add(d)
 
-    hdr(ws1, val_start, 1, "Val Weekly Hours", span=8, fill=C_MED)
-    hdr(ws1, val_start, 9, "Val Daily Detail", span=7, fill=C_MED)
-    ws1.row_dimensions[val_start].height = 18
+    ws1.merge_cells(
+        start_row=staff_start, start_column=9,
+        end_row=staff_start, end_column=15
+    )
+    cell(ws1, staff_start, 9, "Val Weekly Hours",
+         bold=True, txt_color=C_WHITE, fill=C1_HEADER, h="center")
+    ws1.row_dimensions[staff_start].height = 18
 
-    val_hdr = val_start + 1
+    staff_hdr = staff_start + 1
+    for ci, h_val in enumerate(
+        ["Staff Name", "Team / Project Bucket(s)", "Daily Rows",
+         "Gross Hours", "Lunch Deducted", "Net Billable Hours", "Source"],
+        1
+    ):
+        hdr(ws1, staff_hdr, ci, h_val, fill=C1_SUBHDR, txt=C1_TXT, h="center")
     for ci, h_val in enumerate(
         ["Week", "Date Range", "Projects", "Days Worked",
          "Gross Hours", "Lunch Deducted", "Net Billable Hours"],
-        1
-    ):
-        hdr(ws1, val_hdr, ci, h_val, fill=C_SUB, h="center")
-    for ci, h_val in enumerate(
-        ["Date", "Project", "Clock In", "Clock Out",
-         "Gross Hours", "Lunch Deducted", "Net Billable Hours"],
         9
     ):
-        hdr(ws1, val_hdr, ci, h_val, fill=C_SUB, h="center")
-    ws1.row_dimensions[val_hdr].height = 15
+        hdr(ws1, staff_hdr, ci, h_val, fill=C1_SUBHDR, txt=C1_TXT, h="center")
+    ws1.row_dimensions[staff_hdr].height = 15
 
-    def _ftime(h):
-        if h is None:
-            return ""
-        hh = int(h)
-        mm = int(round((h - hh) * 60))
-        return f"{hh:02d}:{mm:02d}"
-
-    val_data = val_hdr + 1
+    staff_data = staff_hdr + 1
     sorted_weekly = sorted(weekly.items())
-    for wk_mon, wdata in sorted_weekly:
-        alt = C_ALT if (val_data % 2 == 0) else None
-        cell(ws1, val_data, 1, wk_mon.strftime("%Y-%m-%d"),        fill=alt or "")
-        cell(ws1, val_data, 2, wdata.get("label", ""),              fill=alt or "")
-        cell(ws1, val_data, 3, ", ".join(sorted(wdata["projects"])), fill=alt or "", size=8)
-        cell(ws1, val_data, 4, len(wdata["days"]),                  fill=alt or "", h="center")
-        cell(ws1, val_data, 5, round(wdata["gross"], 2),            fill=alt or "", h="right")
-        cell(ws1, val_data, 6, round(wdata["lunch"], 2),            fill=alt or "", h="right")
-        cell(ws1, val_data, 7, round(wdata["net"],   2),            fill=alt or "", h="right", bold=True)
-        wk_recs = [r for r in sorted_records
-                   if (r["date"] - _dt.timedelta(days=r["date"].weekday())) == wk_mon]
-        if wk_recs:
-            dr = wk_recs[0]
-            cell(ws1, val_data, 9,  dr["date"].strftime("%b %d, %Y"),  fill=alt or "")
-            cell(ws1, val_data, 10, dr["project"],                      fill=alt or "")
-            cell(ws1, val_data, 11, _ftime(dr["clock_in"]),             fill=alt or "", h="right")
-            cell(ws1, val_data, 12, _ftime(dr["clock_out"]),            fill=alt or "", h="right")
-            cell(ws1, val_data, 13, round(dr["gross_hours"],     2),    fill=alt or "", h="right")
-            cell(ws1, val_data, 14, round(dr["lunch_deduction"], 1),    fill=alt or "", h="right")
-            cell(ws1, val_data, 15, round(dr["net_hours"],       2),    fill=alt or "", h="right", bold=True)
-        ws1.row_dimensions[val_data].height = 15
-        val_data += 1
 
-    # TOTAL row for weekly validation
-    cell(ws1, val_data, 1, "TOTAL", bold=True, fill=C_TOTAL)
-    cell(ws1, val_data, 4, sum(len(w["days"]) for w in weekly.values()), bold=True, fill=C_TOTAL, h="center")
-    cell(ws1, val_data, 5, round(gross_total, 2), bold=True, fill=C_TOTAL, h="right")
-    cell(ws1, val_data, 6, round(lunch_total, 2), bold=True, fill=C_TOTAL, h="right")
-    cell(ws1, val_data, 7, round(net_total,   2), bold=True, fill=C_TOTAL, h="right")
-    val_data += 1
+    max_staff_rows = max(len(sorted_staff), len(sorted_weekly), 1)
+    for i in range(max_staff_rows):
+        r = staff_data + i
 
-    # ── Trucking / Logistics Invoice Cost Placeholder ─────────────────────────
-    trucking_invs = [inv for inv in invoices
-                     if inv.get("cost_category") in ("trucking", "courier")]
-    if trucking_invs:
-        truck_start = val_data + 1
-        hdr(ws1, truck_start, 1,
-            "Trucking / Logistics Invoice Cost Placeholder", span=11, fill=C_MED)
-        ws1.row_dimensions[truck_start].height = 18
+        # Left: per-staff
+        if i < len(sorted_staff):
+            sname, sdata = sorted_staff[i]
+            proj_list = ", ".join(sorted(sdata["projects"]))
+            cell(ws1, r, 1, sname,                        h="left")
+            cell(ws1, r, 2, proj_list,                    h="left", size=9)
+            cell(ws1, r, 3, sdata["rows"],                h="center")
+            c = cell(ws1, r, 4, round(sdata["gross"], 2), h="right")
+            c.number_format = "0.00"
+            c = cell(ws1, r, 5, round(sdata["lunch"], 2), h="right")
+            c.number_format = "0.00"
+            c = cell(ws1, r, 6, round(sdata["net"],   2), h="right")
+            c.number_format = "0.00"
+            cell(ws1, r, 7, "Live " + month_label,        h="left", size=9)
 
-        truck_hdr = truck_start + 1
-        for ci, h_val in enumerate(
-            ["Invoice / Cost Item", "Vendor", "Date / Range", "Project Bucket",
-             "Amount ($)", "Status", "Notes"],
-            1
-        ):
-            hdr(ws1, truck_hdr, ci, h_val, fill=C_SUB, h="center")
-        ws1.row_dimensions[truck_hdr].height = 15
+        # Right: per-week — col 9 (I) = week start datetime
+        if i < len(sorted_weekly):
+            wk_mon, wdata = sorted_weekly[i]
+            wk_datetime = _to_datetime(wk_mon)
+            c = cell(ws1, r, 9, wk_datetime, h="left")
+            c.number_format = "mm-dd-yy"
+            cell(ws1, r, 10, wdata.get("label", ""), h="left")
+            cell(ws1, r, 11, ", ".join(sorted(wdata["projects"])), h="left", size=8)
+            cell(ws1, r, 12, len(wdata["days"]), h="center")
+            c = cell(ws1, r, 13, round(wdata["gross"], 2), h="right")
+            c.number_format = "0.00"
+            c = cell(ws1, r, 14, round(wdata["lunch"], 2), h="right")
+            c.number_format = "0.00"
+            c = cell(ws1, r, 15, round(wdata["net"],   2), h="right")
+            c.number_format = "0.00"
 
-        truck_data = truck_hdr + 1
-        for inv in trucking_invs:
-            alt = C_ALT if (truck_data % 2 == 0) else None
-            inv_label = (inv.get("invoice_number") or
-                         f"{inv['vendor']} invoice {inv.get('service_date','')}")
-            proj_bucket = ("Delivery / Transport / Disposal"
-                           if inv.get("cost_category") in ("trucking","courier")
-                           else "Unassigned")
-            cell(ws1, truck_data, 1, inv_label,                         fill=alt or "")
-            cell(ws1, truck_data, 2, inv["vendor"],                      fill=alt or "")
-            cell(ws1, truck_data, 3, inv.get("service_date") or "",      fill=alt or "")
-            cell(ws1, truck_data, 4, proj_bucket,                        fill=alt or "")
-            cell(ws1, truck_data, 5, round(float(inv.get("total") or 0), 2),
-                 fill=alt or "", h="right", bold=True)
-            cell(ws1, truck_data, 6, "Completed Invoice",                fill=alt or "")
-            cell(ws1, truck_data, 7, f"PO {inv.get('po_number','?')} | Net 30 | {inv.get('currency','USD')}",
-                 fill=alt or "", size=9)
-            ws1.row_dimensions[truck_data].height = 14
-            truck_data += 1
-        val_data = truck_data + 1
+        ws1.row_dimensions[r].height = 15
+
+    # TOTAL row for both sections
+    total_r = staff_data + max_staff_rows
+    cell(ws1, total_r, 1, "TOTAL", bold=True, fill=C1_TOTAL, txt_color=C1_TXT)
+    cell(ws1, total_r, 3, len(records),              bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="center")
+    c = cell(ws1, total_r, 4, round(gross_total, 2), bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="right")
+    c.number_format = "0.00"
+    c = cell(ws1, total_r, 5, round(lunch_total, 2), bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="right")
+    c.number_format = "0.00"
+    c = cell(ws1, total_r, 6, round(net_total,   2), bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="right")
+    c.number_format = "0.00"
+    cell(ws1, total_r, 9,  "TOTAL", bold=True, fill=C1_TOTAL, txt_color=C1_TXT)
+    cell(ws1, total_r, 12, sum(len(w["days"]) for w in weekly.values()),
+         bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="center")
+    c = cell(ws1, total_r, 13, round(gross_total, 2), bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="right")
+    c.number_format = "0.00"
+    c = cell(ws1, total_r, 14, round(lunch_total, 2), bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="right")
+    c.number_format = "0.00"
+    c = cell(ws1, total_r, 15, round(net_total,   2), bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="right")
+    c.number_format = "0.00"
+    ws1.row_dimensions[total_r].height = 15
 
     # ── Daily Billing Detail ───────────────────────────────────────────────────
-    detail_start = val_data + 2  # always below the val/trucking sections
-    hdr(ws1, detail_start, 1, "Daily Billing Detail with Lunch Deduction",
-        span=11, fill=C_MED)
+    detail_start = total_r + 2
+    ws1.merge_cells(
+        start_row=detail_start, start_column=1,
+        end_row=detail_start, end_column=10
+    )
+    cell(ws1, detail_start, 1, "Daily Billing Detail with Lunch Deduction",
+         bold=True, txt_color=C_WHITE, fill=C1_HEADER, h="center")
     ws1.row_dimensions[detail_start].height = 18
 
     detail_hdr_row = detail_start + 1
@@ -488,91 +647,100 @@ def generate_billing_summary(
          "Gross Hours", "Lunch Deduction", "Net Billable Hours", "Source / Rule"],
         1
     ):
-        hdr(ws1, detail_hdr_row, ci, h_val, fill=C_SUB, h="center")
+        hdr(ws1, detail_hdr_row, ci, h_val, fill=C1_SUBHDR, txt=C1_TXT, h="center")
     ws1.row_dimensions[detail_hdr_row].height = 15
 
     detail_data_row = detail_hdr_row + 1
-    for i, rec in enumerate(sorted_records):
-        alt = C_ALT if i % 2 == 0 else None
+    for rec in sorted_records:
         d = rec["date"]
         week_mon = d - _dt.timedelta(days=d.weekday())
         week_fri = week_mon + _dt.timedelta(days=4)
         week_label = f"{week_mon.strftime('%b %-d')}–{week_fri.strftime('%-d')}"
 
-        row_vals = [
-            rec["staff"],
-            d.strftime("%b %d, %Y"),
-            week_label,
-            rec["project"],
-            _ftime(rec["clock_in"]),
-            _ftime(rec["clock_out"]),
-            round(rec["gross_hours"],     2),
-            round(rec["lunch_deduction"], 1),
-            round(rec["net_hours"],       2),
-            "Live " + month_label + "; lunch rule applied",
-        ]
-        for ci, val in enumerate(row_vals, 1):
-            cell(ws1, detail_data_row, ci, val,
-                 fill=alt or "", h="right" if ci >= 7 else "left",
-                 bold=(ci == 9))
+        # Date as datetime object with mm-dd-yy format
+        date_cell = cell(ws1, detail_data_row, 2, _to_datetime(d), h="left")
+        date_cell.number_format = "mm-dd-yy"
+
+        # Clock in/out as time objects with h:mm AM/PM format
+        ci_cell = cell(ws1, detail_data_row, 5, _to_time(rec["clock_in"]), h="right")
+        ci_cell.number_format = "h:mm AM/PM"
+        co_cell = cell(ws1, detail_data_row, 6, _to_time(rec["clock_out"]), h="right")
+        co_cell.number_format = "h:mm AM/PM"
+
+        cell(ws1, detail_data_row, 1, rec["staff"],   h="left")
+        cell(ws1, detail_data_row, 3, week_label,     h="left")
+        cell(ws1, detail_data_row, 4, rec["project"], h="left")
+
+        c = cell(ws1, detail_data_row, 7, round(rec["gross_hours"],     2), h="right")
+        c.number_format = "0.00"
+        c = cell(ws1, detail_data_row, 8, round(rec["lunch_deduction"], 1), h="right")
+        c.number_format = "0.00"
+        c = cell(ws1, detail_data_row, 9, round(rec["net_hours"],       2), h="right")
+        c.number_format = "0.00"
+        cell(ws1, detail_data_row, 10,
+             "Live " + month_label + "; lunch rule applied", h="left", size=9)
+
         ws1.row_dimensions[detail_data_row].height = 14
         detail_data_row += 1
 
     # TOTAL row for detail
-    cell(ws1, detail_data_row, 1, "TOTAL", bold=True, fill=C_TOTAL)
-    cell(ws1, detail_data_row, 7, round(gross_total, 2), bold=True, fill=C_TOTAL, h="right")
-    cell(ws1, detail_data_row, 8, round(lunch_total, 2), bold=True, fill=C_TOTAL, h="right")
-    cell(ws1, detail_data_row, 9, round(net_total,   2), bold=True, fill=C_TOTAL, h="right")
+    cell(ws1, detail_data_row, 1, "TOTAL", bold=True, fill=C1_TOTAL, txt_color=C1_TXT)
+    c = cell(ws1, detail_data_row, 7, round(gross_total, 2), bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="right")
+    c.number_format = "0.00"
+    c = cell(ws1, detail_data_row, 8, round(lunch_total, 2), bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="right")
+    c.number_format = "0.00"
+    c = cell(ws1, detail_data_row, 9, round(net_total,   2), bold=True, fill=C1_TOTAL, txt_color=C1_TXT, h="right")
+    c.number_format = "0.00"
 
-    # Column widths for sheet 1
-    ws1.column_dimensions["A"].width = 22
-    ws1.column_dimensions["B"].width = 14
-    ws1.column_dimensions["C"].width = 18
-    ws1.column_dimensions["D"].width = 22
-    ws1.column_dimensions["E"].width = 10
-    ws1.column_dimensions["F"].width = 10
-    ws1.column_dimensions["G"].width = 14
-    ws1.column_dimensions["H"].width = 16
-    ws1.column_dimensions["I"].width = 18
-    ws1.column_dimensions["J"].width = 30
-    ws1.column_dimensions["K"].width = 18
-    ws1.freeze_panes = "A6"
+    # Column widths for sheet 1 (matching Agilant template)
+    ws1.column_dimensions["A"].width = 22.125
+    ws1.column_dimensions["B"].width = 17.875
+    ws1.column_dimensions["C"].width = 16.375
+    ws1.column_dimensions["D"].width = 25.75
+    ws1.column_dimensions["E"].width = 12.875
+    ws1.column_dimensions["F"].width = 25.0
+    ws1.column_dimensions["G"].width = 13.625
+    ws1.column_dimensions["I"].width = 17.875
+    ws1.column_dimensions["J"].width = 22.125
+    ws1.column_dimensions["K"].width = 16.375
+    # No freeze panes — template has none
 
     # ════════════════════════════════════════════════════════════════════════════
     # SHEET 2: Invoice Pivots - Candidate
     # ════════════════════════════════════════════════════════════════════════════
 
-    # Row 1: Title
-    ws2.merge_cells("A1:M1")
-    cell(ws2, 1, 1, "Invoice Pivot Summary - Candidate", bold=True, size=13,
-         fill=C_DARK, h="center")
-    ws2.row_dimensions[1].height = 22
+    # Row 1: Title — dark charcoal fill, white bold 16pt
+    ws2.merge_cells("A1:N1")
+    cell(ws2, 1, 1, "Invoice Pivot Summary - Candidate",
+         bold=True, size=16, txt_color=C_WHITE, fill=C2_HEADER, h="center")
+    ws2.row_dimensions[1].height = 27.95
 
-    # Row 2: Subtitle
-    ws2.merge_cells("A2:M2")
+    # Row 2: Subtitle — light-blue fill, dark text
+    ws2.merge_cells("A2:N2")
     cell(ws2, 2, 1,
-         "Monthly invoice aggregation from the invoice ledger.",
-         size=9, fill=C_SUB)
+         "Monthly invoice aggregation from the invoice ledger. This is pivot-style and formula-driven so new rows can be added to the ledger.",
+         size=11, txt_color=None, fill=C2_SUBTITLE, wrap=True)
     ws2.row_dimensions[2].height = 14
 
-    # Row 4: Monthly Invoice Totals (cols 1-8) + Totals by Category (cols 10-14)
-    # col 9 is intentionally blank — matches Agilant template layout.
-    hdr(ws2, 4, 1,  "Monthly Invoice Totals", span=8, fill=C_MED)
-    hdr(ws2, 4, 10, "Totals by Category",     span=5, fill=C_MED)
-    ws2.row_dimensions[4].height = 18
+    # Row 4: Section headers (teal)
+    # col 9 (I) is blank gap — matches Agilant template layout
+    hdr(ws2, 4, 1,  "Monthly Invoice Totals", span=8, fill=C2_SECHDR, size=11)
+    hdr(ws2, 4, 10, "Totals by Category",     span=5, fill=C2_SECHDR, size=11)
+    ws2.row_dimensions[4].height = 15
 
-    # Row 5: Column headers
+    # Row 5: Column sub-headers (medium gray fill, white text)
     for ci, h_val in enumerate(
-        ["Service Month", "Invoice Count", "Trucking", "Labor", "Courier", "Other", "Total", "PO Count"],
+        ["Service Month", "Invoice Count", "Trucking", "Labor",
+         "Courier", "Other", "Total", "PO Count"],
         1
     ):
-        hdr(ws2, 5, ci, h_val, fill=C_SUB, h="center")
+        hdr(ws2, 5, ci, h_val, fill=C2_SUBHDR, txt=C_WHITE, h="center", size=11)
     for ci, h_val in enumerate(
         ["Invoice Category", "Invoice Count", "Trucking", "Labor", "Total"],
         10
     ):
-        hdr(ws2, 5, ci, h_val, fill=C_SUB, h="center")
-    ws2.row_dimensions[5].height = 16
+        hdr(ws2, 5, ci, h_val, fill=C2_SUBHDR, txt=C_WHITE, h="center", size=11)
+    ws2.row_dimensions[5].height = 15
 
     # Monthly totals rows
     mit_row = 6
@@ -589,277 +757,557 @@ def generate_billing_summary(
         grand_truck   += t_; grand_labor  += l_
         grand_courier += c_; grand_other  += o_
         grand_count   += cnt; all_po_sets |= pos
-        alt = C_ALT if (mit_row % 2 == 0) else None
 
-        try:
-            month_date = datetime.strptime(inv_month, "%Y-%m")
-            month_disp = month_date.strftime("%B %Y")
-        except Exception:
-            month_disp = inv_month
+        # Service Month: datetime object with mmm yyyy format
+        month_dt = _month_datetime(inv_month)
+        c_sm = cell(ws2, mit_row, 1, month_dt, size=11)
+        c_sm.number_format = "mmm\\ yyyy"
 
-        cell(ws2, mit_row, 1, month_disp, fill=alt or "")
-        cell(ws2, mit_row, 2, cnt,           fill=alt or "", h="center")
-        cell(ws2, mit_row, 3, round(t_,  2), fill=alt or "", h="right")
-        cell(ws2, mit_row, 4, round(l_,  2), fill=alt or "", h="right")
-        cell(ws2, mit_row, 5, round(c_,  2), fill=alt or "", h="right")
-        cell(ws2, mit_row, 6, round(o_,  2), fill=alt or "", h="right")
-        cell(ws2, mit_row, 7, round(tot, 2), fill=alt or "", h="right", bold=True)
-        cell(ws2, mit_row, 8, len(pos),       fill=alt or "", h="center")
+        cell(ws2, mit_row, 2, cnt,          size=11, h="center")
+        c = cell(ws2, mit_row, 3, round(t_,  2), size=11, h="right")
+        c.number_format = r'\$#,##0.00'
+        c = cell(ws2, mit_row, 4, round(l_,  2), size=11, h="right")
+        c.number_format = r'\$#,##0.00'
+        c = cell(ws2, mit_row, 5, round(c_,  2), size=11, h="right")
+        c.number_format = r'\$#,##0.00'
+        c = cell(ws2, mit_row, 6, round(o_,  2), size=11, h="right")
+        c.number_format = r'\$#,##0.00'
+        c = cell(ws2, mit_row, 7, round(tot, 2), size=11, h="right", bold=True)
+        c.number_format = r'\$#,##0.00'
+        cell(ws2, mit_row, 8, len(pos),      size=11, h="center")
         ws2.row_dimensions[mit_row].height = 15
         mit_row += 1
 
     # TOTAL row for Monthly Invoice Totals
+    # Col H (PO Count) is intentionally blank in the template TOTAL row.
     grand_tot = grand_truck + grand_labor + grand_courier + grand_other
-    cell(ws2, mit_row, 1, "TOTAL", bold=True, fill=C_TOTAL)
-    cell(ws2, mit_row, 2, grand_count,           bold=True, fill=C_TOTAL, h="center")
-    cell(ws2, mit_row, 3, round(grand_truck,  2), bold=True, fill=C_TOTAL, h="right")
-    cell(ws2, mit_row, 4, round(grand_labor,  2), bold=True, fill=C_TOTAL, h="right")
-    cell(ws2, mit_row, 5, round(grand_courier,2), bold=True, fill=C_TOTAL, h="right")
-    cell(ws2, mit_row, 6, round(grand_other,  2), bold=True, fill=C_TOTAL, h="right")
-    cell(ws2, mit_row, 7, round(grand_tot,    2), bold=True, fill=C_TOTAL, h="right")
-    cell(ws2, mit_row, 8, len(all_po_sets),       bold=True, fill=C_TOTAL, h="center")
-    mit_row += 2
+    cell(ws2, mit_row, 1, "TOTAL",                     bold=True, fill=C2_TOTAL, size=11)
+    cell(ws2, mit_row, 2, grand_count,                  bold=True, fill=C2_TOTAL, size=11, h="center")
+    c = cell(ws2, mit_row, 3, round(grand_truck,  2),   bold=True, fill=C2_TOTAL, size=11, h="right")
+    c.number_format = r'\$#,##0.00'
+    c = cell(ws2, mit_row, 4, round(grand_labor,  2),   bold=True, fill=C2_TOTAL, size=11, h="right")
+    c.number_format = r'\$#,##0.00'
+    c = cell(ws2, mit_row, 5, round(grand_courier,2),   bold=True, fill=C2_TOTAL, size=11, h="right")
+    c.number_format = r'\$#,##0.00'
+    c = cell(ws2, mit_row, 6, round(grand_other,  2),   bold=True, fill=C2_TOTAL, size=11, h="right")
+    c.number_format = r'\$#,##0.00'
+    c = cell(ws2, mit_row, 7, round(grand_tot,    2),   bold=True, fill=C2_TOTAL, size=11, h="right")
+    c.number_format = r'\$#,##0.00'
+    ws2.row_dimensions[mit_row].height = 15
+    mit_row += 1  # advance past TOTAL row
 
-    # Vendor/Category block (right side, rows 6+) — cols 10-14 match template.
-    # Template vendor section: Vendor/Crew | Invoice Count | Trucking | Labor | Total
-    # col 9 is blank (gap), matching the Agilant template layout.
+    # Vendor/Category block (right side, rows 6+) — cols 10-14
+    # Invoice Category | Invoice Count | Trucking | Labor | Total
     cat_row = 6
     for vendor, vdata in sorted(vendor_map.items()):
-        alt = C_ALT if (cat_row % 2 == 0) else None
-        cell(ws2, cat_row, 10, vendor,                      fill=alt or "")
-        cell(ws2, cat_row, 11, vdata["count"],               fill=alt or "", h="center")
-        cell(ws2, cat_row, 12, round(vdata["trucking"], 2),  fill=alt or "", h="right")
-        cell(ws2, cat_row, 13, round(vdata["labor"],    2),  fill=alt or "", h="right")
-        cell(ws2, cat_row, 14, round(vdata["total"],    2),  fill=alt or "", h="right", bold=True)
+        cell(ws2, cat_row, 10, vendor,                      size=11)
+        cell(ws2, cat_row, 11, vdata["count"],               size=11, h="center")
+        c = cell(ws2, cat_row, 12, round(vdata["trucking"], 2), size=11, h="right")
+        c.number_format = r'\$#,##0.00'
+        c = cell(ws2, cat_row, 13, round(vdata["labor"],    2), size=11, h="right")
+        c.number_format = r'\$#,##0.00'
+        c = cell(ws2, cat_row, 14, round(vdata["total"],    2), size=11, h="right", bold=True)
+        c.number_format = r'\$#,##0.00'
         ws2.row_dimensions[cat_row].height = 15
         cat_row += 1
 
     # ── Three side-by-side sections: PO | Project | Vendor ───────────────────
-    # Template R13: PO at col 1, Project at col 6, Vendor/Crew at col 10.
-    # Cols 5 and 9 are blank gaps — matches Agilant template exactly.
-    section_row = mit_row
-    hdr(ws2, section_row, 1,  "Totals by PO Number",    span=4, fill=C_MED)
-    hdr(ws2, section_row, 6,  "Totals by Project",      span=3, fill=C_MED)
-    hdr(ws2, section_row, 10, "Totals by Vendor / Crew", span=5, fill=C_MED)
-    ws2.row_dimensions[section_row].height = 18
+    # PO at col 1 (A-D), Project at col 6 (F-H), Vendor/Crew at col 10 (J-N)
+    # Cols 5 (E) and 9 (I) are blank gaps — matches Agilant template exactly.
+    # Start row = 2 rows after whichever block (monthly totals or category) ends later.
+    section_row = max(mit_row, cat_row) + 2
+    hdr(ws2, section_row, 1,  "Totals by PO Number",     span=4, fill=C2_SECHDR, size=11)
+    hdr(ws2, section_row, 6,  "Totals by Project",       span=3, fill=C2_SECHDR, size=11)
+    hdr(ws2, section_row, 10, "Totals by Vendor / Crew", span=5, fill=C2_SECHDR, size=11)
+    ws2.row_dimensions[section_row].height = 15
     section_row += 1
 
-    # Sub-headers (template R14)
     for ci, h_val in enumerate(["PO Number", "Invoice Count", "Total", "Notes"], 1):
-        hdr(ws2, section_row, ci, h_val, fill=C_SUB, h="center")
+        hdr(ws2, section_row, ci, h_val, fill=C2_SUBHDR, txt=C_WHITE, h="center", size=11)
     for ci, h_val in enumerate(["Project", "Invoice Count", "Total"], 6):
-        hdr(ws2, section_row, ci, h_val, fill=C_SUB, h="center")
-    # Template vendor sub-headers: Vendor/Crew, Invoice Count, Trucking, Labor, Total (5 cols)
-    for ci, h_val in enumerate(["Vendor / Crew", "Invoice Count", "Trucking", "Labor", "Total"], 10):
-        hdr(ws2, section_row, ci, h_val, fill=C_SUB, h="center")
-    ws2.row_dimensions[section_row].height = 16
+        hdr(ws2, section_row, ci, h_val, fill=C2_SUBHDR, txt=C_WHITE, h="center", size=11)
+    for ci, h_val in enumerate(
+        ["Vendor / Crew", "Invoice Count", "Trucking", "Labor", "Total"], 10
+    ):
+        hdr(ws2, section_row, ci, h_val, fill=C2_SUBHDR, txt=C_WHITE, h="center", size=11)
+    ws2.row_dimensions[section_row].height = 15
     section_row += 1
 
-    po_items   = sorted(po_map.items())
+    po_items       = sorted(po_map.items())
     proj_inv_items = list(sorted(project_inv_map.items())) if project_inv_map else []
-    vendor_items = sorted(vendor_map.items())
+    vendor_items   = sorted(vendor_map.items())
 
     max_rows = max(len(po_items), max(len(proj_inv_items), 1), len(vendor_items))
     for i in range(max_rows):
-        alt = C_ALT if i % 2 == 0 else None
         r = section_row + i
 
         if i < len(po_items):
             po, pdata = po_items[i]
-            cell(ws2, r, 1, po,                     fill=alt or "")
-            cell(ws2, r, 2, pdata["count"],          fill=alt or "", h="center")
-            cell(ws2, r, 3, round(pdata["total"],2), fill=alt or "", h="right", bold=True)
-            cell(ws2, r, 4, "",                      fill=alt or "")
+            cell(ws2, r, 1, po,                      size=11)
+            cell(ws2, r, 2, pdata["count"],           size=11, h="center")
+            c = cell(ws2, r, 3, round(pdata["total"], 2), size=11, h="right", bold=True)
+            c.number_format = r'\$#,##0.00'
+            cell(ws2, r, 4, pdata.get("notes", ""),  size=11)
 
         if i < len(proj_inv_items):
             proj, pdata_proj = proj_inv_items[i]
-            inv_count = pdata_proj["count"] if isinstance(pdata_proj, dict) else "-"
+            inv_count  = pdata_proj["count"] if isinstance(pdata_proj, dict) else "-"
             proj_total = pdata_proj["total"] if isinstance(pdata_proj, dict) else pdata_proj
-            cell(ws2, r, 6, proj,                    fill=alt or "")
-            cell(ws2, r, 7, inv_count,               fill=alt or "", h="center")
-            cell(ws2, r, 8, round(proj_total, 2),    fill=alt or "", h="right", bold=True)
+            cell(ws2, r, 6, proj,                    size=11)
+            cell(ws2, r, 7, inv_count,               size=11, h="center")
+            c = cell(ws2, r, 8, round(proj_total, 2), size=11, h="right", bold=True)
+            c.number_format = r'\$#,##0.00'
 
         if i < len(vendor_items):
             vendor, vdata = vendor_items[i]
-            cell(ws2, r, 10, vendor,                      fill=alt or "")
-            cell(ws2, r, 11, vdata["count"],               fill=alt or "", h="center")
-            cell(ws2, r, 12, round(vdata["trucking"], 2),  fill=alt or "", h="right")
-            cell(ws2, r, 13, round(vdata["labor"],    2),  fill=alt or "", h="right")
-            cell(ws2, r, 14, round(vdata["total"],    2),  fill=alt or "", h="right", bold=True)
+            cell(ws2, r, 10, vendor,                      size=11)
+            cell(ws2, r, 11, vdata["count"],               size=11, h="center")
+            c = cell(ws2, r, 12, round(vdata["trucking"], 2), size=11, h="right")
+            c.number_format = r'\$#,##0.00'
+            c = cell(ws2, r, 13, round(vdata["labor"],    2), size=11, h="right")
+            c.number_format = r'\$#,##0.00'
+            c = cell(ws2, r, 14, round(vdata["total"],    2), size=11, h="right", bold=True)
+            c.number_format = r'\$#,##0.00'
 
         ws2.row_dimensions[r].height = 15
 
-    # Grand total row for three-section block
-    total_r = section_row + max_rows
-    cell(ws2, total_r, 1,  "TOTAL", bold=True, fill=C_TOTAL)
-    cell(ws2, total_r, 2,  sum(p["count"] for p in po_map.values()), bold=True, fill=C_TOTAL, h="center")
-    cell(ws2, total_r, 3,  round(sum(p["total"] for p in po_map.values()), 2), bold=True, fill=C_TOTAL, h="right")
-    cell(ws2, total_r, 10, "TOTAL", bold=True, fill=C_TOTAL)
-    cell(ws2, total_r, 11, sum(v["count"] for v in vendor_map.values()), bold=True, fill=C_TOTAL, h="center")
-    cell(ws2, total_r, 14, round(sum(v["total"] for v in vendor_map.values()), 2), bold=True, fill=C_TOTAL, h="right")
+    # Grand total row
+    total_r2 = section_row + max_rows
+    cell(ws2, total_r2, 1,  "TOTAL", bold=True, fill=C2_TOTAL, size=11)
+    cell(ws2, total_r2, 2,  sum(p["count"] for p in po_map.values()), bold=True, fill=C2_TOTAL, size=11, h="center")
+    c = cell(ws2, total_r2, 3,
+             round(sum(p["total"] for p in po_map.values()), 2),
+             bold=True, fill=C2_TOTAL, size=11, h="right")
+    c.number_format = r'\$#,##0.00'
+    cell(ws2, total_r2, 10, "TOTAL", bold=True, fill=C2_TOTAL, size=11)
+    cell(ws2, total_r2, 11, sum(v["count"] for v in vendor_map.values()), bold=True, fill=C2_TOTAL, size=11, h="center")
+    c = cell(ws2, total_r2, 14,
+             round(sum(v["total"] for v in vendor_map.values()), 2),
+             bold=True, fill=C2_TOTAL, size=11, h="right")
+    c.number_format = r'\$#,##0.00'
 
-    # Column widths for sheet 2 (14 content columns + extra for audit notes)
-    ws2.column_dimensions["A"].width = 18
-    ws2.column_dimensions["B"].width = 14
-    ws2.column_dimensions["C"].width = 14
-    ws2.column_dimensions["D"].width = 22
-    ws2.column_dimensions["E"].width = 6
-    ws2.column_dimensions["F"].width = 22
-    ws2.column_dimensions["G"].width = 14
-    ws2.column_dimensions["H"].width = 14
-    ws2.column_dimensions["I"].width = 6
-    ws2.column_dimensions["J"].width = 24
-    ws2.column_dimensions["K"].width = 14
-    ws2.column_dimensions["L"].width = 14
-    ws2.column_dimensions["M"].width = 14
-    ws2.column_dimensions["N"].width = 14
-    ws2.freeze_panes = "A6"
+    # ── Audit Notes block (matches Agilant template A24+) ─────────────────────
+    # Dark charcoal header merged A:N, then numbered note rows (col A = index,
+    # col B:N merged = note text).  Populated from the audit_notes parameter.
+    notes_header_row = total_r2 + 2
+    ws2.merge_cells(
+        start_row=notes_header_row, start_column=1,
+        end_row=notes_header_row, end_column=14
+    )
+    cell(ws2, notes_header_row, 1, "Audit Notes",
+         bold=True, size=11, txt_color=C_WHITE, fill=C2_HEADER, h="left")
+    ws2.row_dimensions[notes_header_row].height = 15
+
+    notes_list = audit_notes or []
+    for idx, note_text in enumerate(notes_list, 1):
+        note_r = notes_header_row + idx
+        cell(ws2, note_r, 1, str(idx), size=11, h="center")
+        ws2.merge_cells(
+            start_row=note_r, start_column=2,
+            end_row=note_r, end_column=14
+        )
+        cell(ws2, note_r, 2, note_text, size=11, wrap=True)
+        ws2.row_dimensions[note_r].height = 15
+
+    # Column widths for sheet 2 — only set columns that have custom widths in
+    # the Agilant template.  C, D, E, L, M use Excel's default width.
+    ws2.column_dimensions["A"].width = 15.0
+    ws2.column_dimensions["B"].width = 13.0
+    ws2.column_dimensions["F"].width = 32.0
+    ws2.column_dimensions["G"].width = 13.0
+    ws2.column_dimensions["H"].width = 15.0
+    ws2.column_dimensions["I"].width = 3.0
+    ws2.column_dimensions["J"].width = 31.0
+    ws2.column_dimensions["K"].width = 13.0
+    ws2.column_dimensions["N"].width = 15.0
+    # No freeze panes — template has none
 
     # ── Structural assertions (fail hard if layout drifts from template) ──────
     def _assert_billing_structure(ws) -> None:
-        """Raise RuntimeError if required cells deviate from the Agilant template contract.
+        """Raise RuntimeError if Sheet 1 fixed-position labels deviate from the template.
 
-        Rows 4-10 are fixed (they come before the project-overflow section).
-        'Val Weekly Hours' / 'Val Daily Detail' can shift down when there are
-        more than 4 project rows — so those are found dynamically by scanning.
+        Fixed-position structural labels (rows 4-5) are compared exactly.
+        Dynamic sections (Staff Rollup, Daily Billing Detail) are scanned by value.
         """
         errors = []
-        # Fixed-position checks (rows 4-10 never shift)
+
+        # Rows 4-5: section + column sub-headers (exact positions from template)
         fixed_checks = {
-            (4, 1): "Monthly Rollup",
-            (4, 6): "Hours by Project",
-            (5, 1): "Metric",
-            (5, 6): "Project",
-            (10, 6): "TOTAL",
+            (4, 1):  "Monthly Rollup",
+            (4, 6):  "Pivot by Team / Project Bucket",
+            (5, 1):  "Metric",
+            (5, 2):  "Value",
+            (5, 3):  "Basis",
+            (5, 4):  "Notes",
+            (5, 6):  "Team / Project Bucket",
+            (5, 7):  "Tech Count",
+            (5, 8):  "Daily Rows",
+            (5, 9):  "Gross Hours",
+            (5, 10): "Lunch Deducted",
+            (5, 11): "Net Billable Hours",
         }
         for (r, c), expected in fixed_checks.items():
             actual = str(ws.cell(r, c).value or "").strip()
             if actual != expected:
-                errors.append(f"R{r}C{c}: expected {expected!r}, got {actual!r}")
+                errors.append(f"Sheet1 R{r}C{c}: expected {expected!r}, got {actual!r}")
 
-        # Dynamic-position checks: find 'Val Weekly Hours' by scanning col 1
-        val_weekly_row = None
-        for row in ws.iter_rows(min_row=11, max_row=ws.max_row, min_col=1, max_col=1):
-            for c in row:
-                if str(c.value or "").strip() == "Val Weekly Hours":
-                    val_weekly_row = c.row
-                    break
-            if val_weekly_row:
-                break
+        # Invoice-Ready Calculation section — locate header row by content scan.
+        # (Row varies when project-bucket overflow pushes the invoice block down.)
+        # Only asserted when the section is present (no invoices → no block).
+        inv_hdr_row = next(
+            (r for r in range(10, ws.max_row + 1)
+             if str(ws.cell(r, 1).value or "").strip() == "Line Item"),
+            None,
+        )
+        if inv_hdr_row is not None:
+            for c_off, expected_h in enumerate(
+                ["Line Item", "Qty", "Unit", "Rate", "Amount", "Notes"], 1
+            ):
+                actual = str(ws.cell(inv_hdr_row, c_off).value or "").strip()
+                if actual != expected_h:
+                    errors.append(
+                        f"Sheet1 R{inv_hdr_row}C{c_off}: expected {expected_h!r},"
+                        f" got {actual!r}"
+                    )
 
-        if val_weekly_row is None:
-            errors.append("'Val Weekly Hours' section header not found in col 1")
+        # TOTAL for project pivot — must appear in col 6 between rows 10-20
+        total_found = any(
+            str(ws.cell(r, 6).value or "").strip() == "TOTAL"
+            for r in range(10, 21)
+        )
+        if not total_found:
+            errors.append("Sheet1: 'TOTAL' sentinel not found in col F rows 10-20")
+
+        # Staff Rollup in col 1 → Val Weekly Hours at col 9 same row
+        staff_rollup_row = next(
+            (ws.cell(r, 1).row
+             for r in range(11, ws.max_row + 1)
+             if str(ws.cell(r, 1).value or "").strip() == "Staff Rollup"),
+            None
+        )
+        if staff_rollup_row is None:
+            errors.append("Sheet1: 'Staff Rollup' section header not found in col A")
         else:
-            # 'Val Daily Detail' must be on the same row at col 9
-            val_daily = str(ws.cell(val_weekly_row, 9).value or "").strip()
-            if val_daily != "Val Daily Detail":
+            val_weekly = str(ws.cell(staff_rollup_row, 9).value or "").strip()
+            if val_weekly != "Val Weekly Hours":
                 errors.append(
-                    f"R{val_weekly_row}C9: expected 'Val Daily Detail', got {val_daily!r}"
+                    f"Sheet1 R{staff_rollup_row}C9: expected 'Val Weekly Hours',"
+                    f" got {val_weekly!r}"
                 )
+
+        # Daily Billing Detail header in col 1
+        detail_found = any(
+            str(ws.cell(r, 1).value or "").strip().startswith("Daily Billing Detail")
+            for r in range(11, ws.max_row + 1)
+        )
+        if not detail_found:
+            errors.append("Sheet1: 'Daily Billing Detail' section header not found")
 
         if errors:
             raise RuntimeError(
-                "Generated workbook does not match Agilant template structure:\n"
+                "Generated Sheet 1 does not match Agilant template structure:\n"
                 + "\n".join(f"  {e}" for e in errors)
             )
 
     def _assert_pivot_structure(ws2) -> None:
-        """Raise RuntimeError if Invoice Pivots sheet deviates from the Agilant template.
-
-        Verified against:
-        attached_assets/Agilant_Admins_April_2026_Billing_Summary_PO176759_Neurons_*.xlsx
-        Invoice Pivots - Candidate sheet (inspected via openpyxl).
-
-        Template column layout:
-          R4  C1  = 'Monthly Invoice Totals'   (spans cols 1-8)
-          R4  C10 = 'Totals by Category'        (spans cols 10-14)
-          R5  C1  = 'Service Month'
-          R5  C2  = 'Invoice Count'
-          R5  C3  = 'Trucking'
-          R5  C7  = 'Total'
-          R5  C10 = 'Invoice Category'
-          R5  C14 = 'Total'
-        Three-section area (dynamic row, check sub-header positions relative to
-        the first occurrence of 'Totals by PO Number'):
-          PO section starts at col 1, Project at col 6, Vendor/Crew at col 10.
-          Sub-headers: PO Number (C1), Project (C6), Vendor/Crew (C10).
-        """
+        """Raise RuntimeError if Sheet 2 fixed-position labels deviate from the template."""
         errors = []
 
-        # Row 4 fixed checks
-        r4_checks = {
-            (4, 1):  "Monthly Invoice Totals",
-            (4, 10): "Totals by Category",
+        # Rows 1, 4-5: fixed labels
+        fixed_checks = {
+            (1,  1):  "Invoice Pivot Summary - Candidate",
+            (4,  1):  "Monthly Invoice Totals",
+            (4,  10): "Totals by Category",
+            (5,  1):  "Service Month",
+            (5,  2):  "Invoice Count",
+            (5,  3):  "Trucking",
+            (5,  4):  "Labor",
+            (5,  5):  "Courier",
+            (5,  6):  "Other",
+            (5,  7):  "Total",
+            (5,  8):  "PO Count",
+            (5,  10): "Invoice Category",
+            (5,  11): "Invoice Count",
+            (5,  14): "Total",
         }
-        for (r, c), expected in r4_checks.items():
+        for (r, c), expected in fixed_checks.items():
             actual = str(ws2.cell(r, c).value or "").strip()
             if actual != expected:
-                errors.append(f"Pivot R{r}C{c}: expected {expected!r}, got {actual!r}")
+                errors.append(f"Sheet2 R{r}C{c}: expected {expected!r}, got {actual!r}")
 
-        # Row 5 header checks (monthly section)
-        r5_monthly = {
-            (5, 1): "Service Month",
-            (5, 2): "Invoice Count",
-            (5, 3): "Trucking",
-            (5, 7): "Total",
-        }
-        r5_cat = {
-            (5, 10): "Invoice Category",
-            (5, 14): "Total",
-        }
-        for checks_dict in (r5_monthly, r5_cat):
-            for (r, c), expected in checks_dict.items():
-                actual = str(ws2.cell(r, c).value or "").strip()
-                if actual != expected:
-                    errors.append(f"Pivot R{r}C{c}: expected {expected!r}, got {actual!r}")
-
-        # Locate the "Totals by PO Number" section header (dynamic row)
-        po_section_row = None
-        for row in ws2.iter_rows(min_row=6, max_row=ws2.max_row):
-            for cell_ in row:
-                if str(cell_.value or "").strip() == "Totals by PO Number":
-                    po_section_row = cell_.row
-                    break
-            if po_section_row:
-                break
-
+        # Locate "Totals by PO Number" (dynamic row, scanned)
+        po_section_row = next(
+            (ws2.cell(r, 1).row
+             for r in range(6, ws2.max_row + 1)
+             if str(ws2.cell(r, 1).value or "").strip() == "Totals by PO Number"),
+            None
+        )
         if po_section_row is None:
-            errors.append("Pivot: 'Totals by PO Number' section header not found")
+            errors.append("Sheet2: 'Totals by PO Number' section header not found")
         else:
-            # Section header row: PO at C1, Project at C6, Vendor/Crew at C10
-            section_checks = {
-                (po_section_row, 1):  "Totals by PO Number",
-                (po_section_row, 6):  "Totals by Project",
-                (po_section_row, 10): "Totals by Vendor / Crew",
+            three_sec_checks = {
+                (po_section_row,     1):  "Totals by PO Number",
+                (po_section_row,     6):  "Totals by Project",
+                (po_section_row,     10): "Totals by Vendor / Crew",
+                (po_section_row + 1, 1):  "PO Number",
+                (po_section_row + 1, 6):  "Project",
+                (po_section_row + 1, 10): "Vendor / Crew",
+                (po_section_row + 1, 12): "Trucking",
+                (po_section_row + 1, 13): "Labor",
+                (po_section_row + 1, 14): "Total",
             }
-            for (r, c), expected in section_checks.items():
+            for (r, c), expected in three_sec_checks.items():
                 actual = str(ws2.cell(r, c).value or "").strip()
                 if actual != expected:
-                    errors.append(f"Pivot R{r}C{c}: expected {expected!r}, got {actual!r}")
+                    errors.append(
+                        f"Sheet2 R{r}C{c}: expected {expected!r}, got {actual!r}"
+                    )
 
-            # Sub-header row (one below section header)
-            sub_row = po_section_row + 1
-            sub_checks = {
-                (sub_row, 1):  "PO Number",
-                (sub_row, 6):  "Project",
-                (sub_row, 10): "Vendor / Crew",
-                (sub_row, 12): "Trucking",
-                (sub_row, 13): "Labor",
-                (sub_row, 14): "Total",
-            }
-            for (r, c), expected in sub_checks.items():
-                actual = str(ws2.cell(r, c).value or "").strip()
-                if actual != expected:
-                    errors.append(f"Pivot R{r}C{c}: expected {expected!r}, got {actual!r}")
+        # Audit Notes header must exist
+        audit_found = any(
+            str(ws2.cell(r, 1).value or "").strip() == "Audit Notes"
+            for r in range(6, ws2.max_row + 1)
+        )
+        if not audit_found:
+            errors.append("Sheet2: 'Audit Notes' header not found")
 
         if errors:
             raise RuntimeError(
-                "Generated Invoice Pivots sheet does not match Agilant template:\n"
+                "Generated Sheet 2 does not match Agilant template structure:\n"
+                + "\n".join(f"  {e}" for e in errors)
+            )
+
+    def _assert_against_reference_template(ws1_gen, ws2_gen) -> None:
+        """Zone-aware comparison of generated sheets against the Agilant reference workbook.
+
+        Opens attached_assets/Agilant_Admins_April_2026_Billing_Summary_*.xlsx (if
+        present) using openpyxl data_only=True and compares the generated sheets
+        against two specific reference sheets:
+
+          "April 2026 Updated Candidate"  →  ws1_gen  (Billing Summary)
+          "Invoice Pivots - Candidate"    →  ws2_gen  (Invoice Pivots)
+
+        Comparison covers:
+          • Static cell values — section headers, column sub-headers (rows 4-5 and
+            scanned invoice block).  Month-specific title cells and all data rows
+            are excluded so the function works for any billing month.
+          • Merged cell ranges — structural merges (title, subtitle, section labels).
+            The invoice-section title merge is located by content scan so it passes
+            whether or not the block is shifted by project-bucket overflow.
+          • Column widths — every column that has a custom width in the reference.
+          • Row heights — only structural header rows where the reference sets them.
+          • Cell fills (fgColor RGB) — title row, section header rows.
+          • Number formats — money-format cells in the invoice pivot sheet.
+          • Freeze panes — both sheets must have none, matching the reference.
+
+        Silently returns when the reference file is absent (e.g. CI without assets).
+        """
+        import glob as _glob
+
+        asset_dir = Path(__file__).parent.parent / "attached_assets"
+        matches = sorted(_glob.glob(
+            str(asset_dir / "Agilant_Admins_April_2026_Billing_Summary_*.xlsx")
+        ))
+        if not matches:
+            return  # Reference file not present — skip (CI / stripped repo)
+
+        ref_wb = openpyxl.load_workbook(matches[0], data_only=True)
+        ref_name = Path(matches[0]).name
+
+        # Sheet 1 reference: "April 2026 Updated Candidate" (structural template)
+        # Sheet 2 reference: "Invoice Pivots - Candidate"
+        if "April 2026 Updated Candidate" not in ref_wb.sheetnames:
+            return  # Reference structure changed — skip to avoid false failures
+        if "Invoice Pivots - Candidate" not in ref_wb.sheetnames:
+            return
+
+        ref_ws1 = ref_wb["April 2026 Updated Candidate"]
+        ref_ws2 = ref_wb["Invoice Pivots - Candidate"]
+        errors: List[str] = []
+
+        # ── Helpers ───────────────────────────────────────────────────────────
+
+        def _rgb(cell) -> str:
+            f = cell.fill
+            return f.fgColor.rgb if (f and f.fgColor) else "00000000"
+
+        def _cmp_cells(label, ref_ws, gen_ws, positions):
+            for r, c in positions:
+                ref_v = str(ref_ws.cell(r, c).value or "").strip()
+                gen_v = str(gen_ws.cell(r, c).value or "").strip()
+                if ref_v and gen_v != ref_v:
+                    errors.append(
+                        f"{label} R{r}C{c}: ref={ref_v!r}, generated={gen_v!r}"
+                    )
+
+        def _cmp_fills(label, ref_ws, gen_ws, positions):
+            for r, c in positions:
+                ref_rgb = _rgb(ref_ws.cell(r, c))
+                gen_rgb = _rgb(gen_ws.cell(r, c))
+                if ref_rgb != "00000000" and gen_rgb != ref_rgb:
+                    errors.append(
+                        f"{label} R{r}C{c} fill: ref={ref_rgb!r}, generated={gen_rgb!r}"
+                    )
+
+        def _cmp_widths(label, ref_ws, gen_ws):
+            for col, dim in ref_ws.column_dimensions.items():
+                if not dim.customWidth:
+                    continue
+                gen_dim = gen_ws.column_dimensions.get(col)
+                gen_w = gen_dim.width if (gen_dim and gen_dim.customWidth) else 8.43
+                if abs(gen_w - dim.width) > 0.5:
+                    errors.append(
+                        f"{label} col {col}: ref width={dim.width}, generated={gen_w}"
+                    )
+
+        def _cmp_row_heights(label, ref_ws, gen_ws, rows):
+            for r in rows:
+                ref_h = (ref_ws.row_dimensions[r].height
+                         if r in ref_ws.row_dimensions else None)
+                gen_h = (gen_ws.row_dimensions[r].height
+                         if r in gen_ws.row_dimensions else None)
+                if ref_h and gen_h and abs(gen_h - ref_h) > 1.0:
+                    errors.append(
+                        f"{label} row {r} height: ref={ref_h}, generated={gen_h}"
+                    )
+
+        def _cmp_merges(label, ref_ws, gen_ws, expected_merge_strs):
+            gen_merges = {str(m) for m in gen_ws.merged_cells.ranges}
+            for mr in expected_merge_strs:
+                if mr not in gen_merges:
+                    errors.append(
+                        f"{label} merge {mr!r}: present in ref, missing in generated"
+                    )
+
+        def _cmp_number_fmt(label, ref_ws, gen_ws, r, c):
+            ref_fmt = ref_ws.cell(r, c).number_format
+            gen_fmt = gen_ws.cell(r, c).number_format
+            if ref_fmt and ref_fmt != "General" and gen_fmt != ref_fmt:
+                errors.append(
+                    f"{label} R{r}C{c} number_format:"
+                    f" ref={ref_fmt!r}, generated={gen_fmt!r}"
+                )
+
+        # ── Sheet 1: Billing Summary ──────────────────────────────────────────
+
+        # Static cell values: rows 4-5 (section headers + column sub-headers)
+        _cmp_cells("Sheet1", ref_ws1, ws1_gen, [
+            (4, 1), (4, 6),
+            (5, 1), (5, 2), (5, 3), (5, 4),
+            (5, 6), (5, 7), (5, 8), (5, 9), (5, 10), (5, 11),
+        ])
+
+        # Invoice-Ready Calculation sub-headers — dynamic row (may shift with
+        # project-bucket overflow); skipped entirely when no invoices are present.
+        inv_hdr_row = next(
+            (r for r in range(10, ws1_gen.max_row + 1)
+             if str(ws1_gen.cell(r, 1).value or "").strip() == "Line Item"),
+            None,
+        )
+        if inv_hdr_row is not None:
+            for c_idx, expected_h in enumerate(
+                ["Line Item", "Qty", "Unit", "Rate", "Amount", "Notes"], 1
+            ):
+                actual = str(ws1_gen.cell(inv_hdr_row, c_idx).value or "").strip()
+                if actual != expected_h:
+                    errors.append(
+                        f"Sheet1 invoice hdr C{c_idx}:"
+                        f" ref={expected_h!r}, generated={actual!r}"
+                    )
+            # Invoice section title row must be merged A{title_r}:F{title_r}
+            inv_title_row = inv_hdr_row - 1
+            gen_merges = {str(m) for m in ws1_gen.merged_cells.ranges}
+            expected_inv_merge = f"A{inv_title_row}:F{inv_title_row}"
+            if expected_inv_merge not in gen_merges:
+                errors.append(
+                    f"Sheet1 invoice title merge {expected_inv_merge!r} missing"
+                )
+
+        # Column widths (all custom-width columns from the reference)
+        _cmp_widths("Sheet1", ref_ws1, ws1_gen)
+
+        # Row heights: the first invoice line-item row has 25.5 pt in the reference.
+        # Its row number is dynamic (shifts with project-bucket overflow), so we
+        # locate it by scanning for "Line Item" header and checking row below it.
+        if inv_hdr_row is not None:
+            first_li_row = inv_hdr_row + 1
+            gen_dim = ws1_gen.row_dimensions.get(first_li_row)
+            gen_h = gen_dim.height if gen_dim else None
+            if gen_h and abs(gen_h - 25.5) > 1.0:
+                errors.append(
+                    f"Sheet1 first invoice line-item row height:"
+                    f" ref=25.5, generated={gen_h}"
+                )
+
+        # Structural merged ranges that must always be present
+        _cmp_merges("Sheet1", ref_ws1, ws1_gen,
+                    ["A1:K1", "A2:K2", "A4:D4", "F4:K4"])
+
+        # Fill colors: section header rows (structural, must match reference)
+        _cmp_fills("Sheet1", ref_ws1, ws1_gen,
+                   [(4, 1), (4, 6), (5, 1), (5, 6)])
+
+        # Freeze panes
+        if ws1_gen.freeze_panes != ref_ws1.freeze_panes:
+            errors.append(
+                f"Sheet1 freeze_panes: ref={ref_ws1.freeze_panes!r},"
+                f" generated={ws1_gen.freeze_panes!r}"
+            )
+
+        # ── Sheet 2: Invoice Pivots ───────────────────────────────────────────
+
+        # Static cell values: rows 1, 4-5
+        _cmp_cells("Sheet2", ref_ws2, ws2_gen, [
+            (1,  1),
+            (4,  1),  (4,  10),
+            (5,  1),  (5,  2),  (5,  3),  (5,  4),  (5,  5),
+            (5,  6),  (5,  7),  (5,  8),
+            (5,  10), (5,  11), (5,  12), (5,  13), (5,  14),
+        ])
+
+        # Subtitle row (row 2, col 1) — full text
+        ref_sub = str(ref_ws2.cell(2, 1).value or "").strip()
+        gen_sub = str(ws2_gen.cell(2, 1).value or "").strip()
+        if ref_sub and gen_sub != ref_sub:
+            errors.append(
+                f"Sheet2 R2C1 subtitle: ref={ref_sub!r}, generated={gen_sub!r}"
+            )
+
+        # Column widths
+        _cmp_widths("Sheet2", ref_ws2, ws2_gen)
+
+        # Row heights: rows 1, 4, 5 are set in the reference
+        _cmp_row_heights("Sheet2", ref_ws2, ws2_gen, [1, 4, 5])
+
+        # Structural merged ranges
+        _cmp_merges("Sheet2", ref_ws2, ws2_gen,
+                    ["A1:N1", "A2:N2", "A4:H4", "J4:N4"])
+
+        # Fill colors: title and section header rows
+        _cmp_fills("Sheet2", ref_ws2, ws2_gen,
+                   [(1, 1), (4, 1), (4, 10), (5, 1)])
+
+        # Number format: money-format data cells in pivot table (C6 = Trucking total)
+        _cmp_number_fmt("Sheet2", ref_ws2, ws2_gen, 6, 3)
+
+        # Freeze panes
+        if ws2_gen.freeze_panes != ref_ws2.freeze_panes:
+            errors.append(
+                f"Sheet2 freeze_panes: ref={ref_ws2.freeze_panes!r},"
+                f" generated={ws2_gen.freeze_panes!r}"
+            )
+
+        ref_wb.close()
+
+        if errors:
+            raise RuntimeError(
+                f"Generated workbook diverges from Agilant reference ({ref_name}):\n"
                 + "\n".join(f"  {e}" for e in errors)
             )
 
     _assert_billing_structure(ws1)
     _assert_pivot_structure(ws2)
+    _assert_against_reference_template(ws1, ws2)
 
     # ── Save ──────────────────────────────────────────────────────────────────
     out_dir  = Path(out_root) / billing_month / "workbook"
@@ -867,7 +1315,7 @@ def generate_billing_summary(
     out_path = out_dir / f"billing_summary_{billing_month}.xlsx"
     wb.save(str(out_path))
 
-    # ── Manifest (status: "generated" — UI updates to "pass"/"fail" after gate check) ─
+    # ── Manifest ──────────────────────────────────────────────────────────────
     resolved_run_id = run_id or f"billing-{billing_month}-{int(time.time())}"
     _write_manifest(
         out_root      = out_root,
@@ -906,11 +1354,11 @@ def update_manifest_status(
         data = _json.loads(manifest_path.read_text(encoding="utf-8"))
     except Exception:
         data = {}
-    data["status"]             = status
-    data["gate_status"]        = gate_status
-    data["gate_failures"]      = failures or []
-    data["gate_warnings"]      = warnings or []
-    data["validated_at"]       = time.strftime("%Y-%m-%dT%H:%M:%SZ")
+    data["status"]         = status
+    data["gate_status"]    = gate_status
+    data["gate_failures"]  = failures or []
+    data["gate_warnings"]  = warnings or []
+    data["validated_at"]   = time.strftime("%Y-%m-%dT%H:%M:%SZ")
     manifest_path.write_text(
         _json.dumps(data, indent=2, default=str), encoding="utf-8"
     )
