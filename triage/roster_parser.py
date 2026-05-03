@@ -39,7 +39,14 @@ def _lunch_deduction(gross_hours: float) -> float:
 # ── Time helpers ──────────────────────────────────────────────────────────────
 
 def _time_to_hours(value: Any) -> Optional[float]:
-    """Convert any clock-in/out cell value to decimal hours (0–24)."""
+    """Convert any clock-in/out cell value to decimal hours (0–24).
+
+    Handles:
+      - datetime.time / datetime.datetime / datetime.timedelta objects
+      - Excel time fractions (float 0.0–1.0)
+      - Strings like '9:28:00 AM', '17:00', '9:28:00 AM/ Bonita'
+        (appended notes after the time are silently ignored)
+    """
     import datetime as dt
     if value is None:
         return None
@@ -54,6 +61,25 @@ def _time_to_hours(value: Any) -> Optional[float]:
         if 0.0 <= frac < 2.0:          # Excel time fraction (0.0–1.0)
             return frac * 24.0
         return None                     # Probably an unrelated number
+    if isinstance(value, str):
+        # Extract leading HH:MM or HH:MM:SS, optionally followed by AM/PM.
+        # Any trailing text (e.g. "/ Bonita", "- note") is ignored.
+        m = re.match(
+            r"(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?",
+            value.strip(),
+            re.IGNORECASE,
+        )
+        if not m:
+            return None
+        hour   = int(m.group(1))
+        minute = int(m.group(2))
+        second = int(m.group(3)) if m.group(3) else 0
+        ampm   = (m.group(4) or "").upper()
+        if ampm == "PM" and hour != 12:
+            hour += 12
+        elif ampm == "AM" and hour == 12:
+            hour = 0
+        return hour + minute / 60.0 + second / 3600.0
     return None
 
 
