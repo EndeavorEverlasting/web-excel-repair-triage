@@ -20,6 +20,21 @@ Coverage
   T13 parse_roster — smoke test against live April 2026 roster file
   T14 parse_roster — Patricia Marrero Apr 30 record parsed (was the bug)
   T15 parse_roster — zero malformed rows on April 2026 file
+
+Assignments / per-day project override coverage
+  A1  _load_assignments — None worksheet returns empty dict (safe no-op)
+  A2  _load_assignments — main table populates lookup for worked days
+  A3  _load_assignments — overrides section wins over main-table entry
+  A4  _find_assignments_sheet — returns correct sheet when present
+  A5  _find_assignments_sheet — returns None when absent (non-fatal)
+  A6  parse_roster (synthetic) — assignments override replaces Live project
+  A7  parse_roster (synthetic) — days with different projects produce
+      separate records each with the correct project label
+  A8  parse_roster (synthetic) — no Assignments sheet → Live project used
+  A9  parse_roster (live) — Cyen Heyliger Apr 6 gets 'Projects Team'
+      from the Overrides sub-table (not her default project)
+  A10 parse_roster (live) — Alejandro Perales all records use
+      'Neuron Deployments' as confirmed by the Assignments main table
 """
 from __future__ import annotations
 
@@ -29,7 +44,13 @@ from pathlib import Path
 
 import pytest
 
-from triage.roster_parser import _time_to_hours, parse_roster, RosterParseError
+from triage.roster_parser import (
+    _time_to_hours,
+    _find_assignments_sheet,
+    _load_assignments,
+    parse_roster,
+    RosterParseError,
+)
 
 _ROSTER = Path(__file__).parent.parent / "attached_assets" / (
     "Active_Roster_Log_5_1_2026_Billing_April_Pack_(1)_1777807743057.xlsx"
@@ -326,3 +347,252 @@ class TestRosterParserSynthetic:
         assert records == []
         assert len(malformed) == 1
         assert "Half Worker" in malformed[0]
+
+
+# ── Assignments / per-day project override tests ──────────────────────────────
+
+class TestLoadAssignments:
+    """A1–A3: unit tests for _load_assignments and _find_assignments_sheet."""
+
+    def test_none_worksheet_returns_empty_dict(self):
+        """A1: _load_assignments(None) must return an empty dict without error."""
+        result = _load_assignments(None)
+        assert result == {}
+
+    def _build_assignments_wb(self, tmp_path, main_rows, override_rows=None):
+        """
+        Build a minimal workbook with:
+          Live - April 2026   (one clock pair so parse_roster works)
+          Assignments - April 2026  (main table + optional overrides sub-table)
+        """
+        import openpyxl as _xl
+        wb = _xl.Workbook()
+
+        # Live sheet
+        live_ws = wb.active
+        live_ws.title = "Live - April 2026"
+        live_ws.append(["Attendance Log"])
+        live_ws.append(["Staff Name", "Project", "Apr 01 - Clock In", "Apr 01 - Clock Out",
+                         "Apr 02 - Clock In", "Apr 02 - Clock Out"])
+        for r in main_rows:
+            live_ws.append([r[0], r[1],
+                             datetime.time(9, 0), datetime.time(17, 0),
+                             datetime.time(9, 0), datetime.time(17, 0)])
+
+        # Assignments sheet
+        asn_ws = wb.create_sheet("Assignments - April 2026")
+        asn_ws.append(["April 2026 - Project Assignments"])
+        asn_ws.append(["Staff Name", "Default Project",
+                        datetime.datetime(2026, 4, 1),
+                        datetime.datetime(2026, 4, 2)])
+        for r in main_rows:
+            asn_ws.append([r[0], r[1], r[2], r[3]])
+
+        if override_rows:
+            asn_ws.append(["Overrides (only if different from Default Project)"])
+            asn_ws.append(["Override Staff Name", "Override Date", "Override Project", "Notes"])
+            for ov in override_rows:
+                asn_ws.append(ov)
+
+        path = str(tmp_path / "roster.xlsx")
+        wb.save(path)
+        return path
+
+    def test_main_table_populates_lookup(self, tmp_path):
+        """A2: per-day project values in the main table are loaded into the lookup."""
+        path = self._build_assignments_wb(
+            tmp_path,
+            main_rows=[["Jane Doe", "Alpha", "Alpha", "Alpha"]],
+        )
+        import openpyxl as _xl
+        wb = _xl.load_workbook(path, data_only=True)
+        asn_ws = wb["Assignments - April 2026"]
+        lookup = _load_assignments(asn_ws)
+        assert lookup.get((datetime.date(2026, 4, 1), "Jane Doe")) == "Alpha"
+        assert lookup.get((datetime.date(2026, 4, 2), "Jane Doe")) == "Alpha"
+
+    def test_overrides_win_over_main_table(self, tmp_path):
+        """A3: an Overrides sub-table entry overrides the main-table project for that day."""
+        path = self._build_assignments_wb(
+            tmp_path,
+            main_rows=[["Jane Doe", "Alpha", "Alpha", "Alpha"]],
+            override_rows=[
+                ["Jane Doe", datetime.datetime(2026, 4, 2), "Beta", "switched"],
+            ],
+        )
+        import openpyxl as _xl
+        wb = _xl.load_workbook(path, data_only=True)
+        asn_ws = wb["Assignments - April 2026"]
+        lookup = _load_assignments(asn_ws)
+        assert lookup.get((datetime.date(2026, 4, 1), "Jane Doe")) == "Alpha"
+        assert lookup.get((datetime.date(2026, 4, 2), "Jane Doe")) == "Beta"
+
+
+class TestFindAssignmentsSheet:
+    """A4–A5: unit tests for _find_assignments_sheet."""
+
+    def _make_wb_with_sheet(self, tmp_path, sheet_name):
+        import openpyxl as _xl
+        wb = _xl.Workbook()
+        wb.active.title = sheet_name
+        path = str(tmp_path / "wb.xlsx")
+        wb.save(path)
+        return path
+
+    def test_finds_matching_sheet(self, tmp_path):
+        """A4: _find_assignments_sheet returns the correct sheet when present."""
+        import openpyxl as _xl
+        wb = _xl.Workbook()
+        wb.active.title = "Summary"
+        wb.create_sheet("Assignments - April 2026")
+        path = str(tmp_path / "wb.xlsx")
+        wb.save(path)
+        wb2 = _xl.load_workbook(path)
+        ws = _find_assignments_sheet(wb2, "April 2026")
+        assert ws is not None
+        assert ws.title == "Assignments - April 2026"
+
+    def test_returns_none_when_absent(self, tmp_path):
+        """A5: _find_assignments_sheet returns None (no error) when sheet is missing."""
+        import openpyxl as _xl
+        wb = _xl.Workbook()
+        wb.active.title = "Live - April 2026"
+        path = str(tmp_path / "wb.xlsx")
+        wb.save(path)
+        wb2 = _xl.load_workbook(path)
+        ws = _find_assignments_sheet(wb2, "April 2026")
+        assert ws is None
+
+
+class TestAssignmentsIntegrationSynthetic:
+    """A6–A8: integration tests with synthetic workbooks."""
+
+    def _build_wb(self, tmp_path, live_rows, asn_rows=None, override_rows=None):
+        """
+        Build a workbook with a Live sheet and optional Assignments sheet.
+        live_rows: list of [name, live_project, in_apr1, out_apr1, in_apr2, out_apr2]
+        asn_rows:  list of [name, default_project, asn_project_apr1, asn_project_apr2]
+        """
+        import openpyxl as _xl
+        wb = _xl.Workbook()
+
+        live_ws = wb.active
+        live_ws.title = "Live - April 2026"
+        live_ws.append(["Attendance Log"])
+        live_ws.append(["Staff Name", "Project",
+                         "Apr 01 - Clock In", "Apr 01 - Clock Out",
+                         "Apr 02 - Clock In", "Apr 02 - Clock Out"])
+        for r in live_rows:
+            live_ws.append(r)
+
+        if asn_rows is not None:
+            asn_ws = wb.create_sheet("Assignments - April 2026")
+            asn_ws.append(["April 2026 - Project Assignments"])
+            asn_ws.append(["Staff Name", "Default Project",
+                            datetime.datetime(2026, 4, 1),
+                            datetime.datetime(2026, 4, 2)])
+            for r in asn_rows:
+                asn_ws.append(r)
+            if override_rows:
+                asn_ws.append(["Overrides (only if different from Default Project)"])
+                asn_ws.append(["Override Staff Name", "Override Date",
+                                "Override Project", "Notes"])
+                for ov in override_rows:
+                    asn_ws.append(ov)
+
+        path = str(tmp_path / "roster.xlsx")
+        wb.save(path)
+        return path
+
+    def test_assignments_project_overrides_live_project(self, tmp_path):
+        """A6: per-day project from Assignments sheet replaces the Live sheet project."""
+        path = self._build_wb(
+            tmp_path,
+            live_rows=[["Jane Doe", "OldProject",
+                         datetime.time(9, 0), datetime.time(17, 0),
+                         datetime.time(9, 0), datetime.time(17, 0)]],
+            asn_rows=[["Jane Doe", "NewProject", "NewProject", "NewProject"]],
+        )
+        records = parse_roster(path, target_month="April 2026")
+        assert all(r["project"] == "NewProject" for r in records), (
+            f"Expected 'NewProject' for all records, got: {[r['project'] for r in records]}"
+        )
+
+    def test_different_projects_per_day_produce_separate_records(self, tmp_path):
+        """A7: days with different Assignments projects each get the correct label."""
+        path = self._build_wb(
+            tmp_path,
+            live_rows=[["Sam Smith", "DefaultProject",
+                         datetime.time(9, 0), datetime.time(17, 0),
+                         datetime.time(9, 0), datetime.time(17, 0)]],
+            asn_rows=[["Sam Smith", "DefaultProject", "ProjectA", "ProjectB"]],
+        )
+        records = parse_roster(path, target_month="April 2026")
+        assert len(records) == 2
+        by_date = {r["date"]: r["project"] for r in records}
+        assert by_date[datetime.date(2026, 4, 1)] == "ProjectA"
+        assert by_date[datetime.date(2026, 4, 2)] == "ProjectB"
+
+    def test_no_assignments_sheet_falls_back_to_live_project(self, tmp_path):
+        """A8: when the Assignments sheet is absent the Live project column is used."""
+        path = self._build_wb(
+            tmp_path,
+            live_rows=[["Jane Doe", "FallbackProject",
+                         datetime.time(9, 0), datetime.time(17, 0),
+                         None, None]],
+            asn_rows=None,
+        )
+        records = parse_roster(path, target_month="April 2026")
+        assert len(records) == 1
+        assert records[0]["project"] == "FallbackProject"
+
+
+@pytest.mark.skipif(not _ROSTER_PRESENT, reason="Live roster asset not present")
+class TestAssignmentsIntegrationLive:
+    """A9–A10: integration tests against the real April 2026 workbook."""
+
+    @pytest.fixture(scope="class")
+    def april_records(self):
+        malformed: list[str] = []
+        records = parse_roster(
+            str(_ROSTER),
+            target_month="April 2026",
+            malformed_out=malformed,
+        )
+        return records
+
+    def test_cyen_heyliger_apr6_is_projects_team(self, april_records):
+        """A9: Cyen Heyliger's Apr 6 record uses 'Projects Team' from the Overrides table."""
+        target = datetime.date(2026, 4, 6)
+        matches = [
+            r for r in april_records
+            if r["staff"] == "Cyen Heyliger" and r["date"] == target
+        ]
+        assert len(matches) == 1, (
+            f"Expected exactly one record for Cyen Heyliger on Apr 6, got {len(matches)}"
+        )
+        assert matches[0]["project"] == "Projects Team", (
+            f"Expected 'Projects Team', got '{matches[0]['project']}'"
+        )
+
+    def test_cyen_heyliger_apr2_is_bonita(self, april_records):
+        """A9b: Cyen Heyliger's Apr 2 record uses 'Bonita' from the Assignments main table."""
+        target = datetime.date(2026, 4, 2)
+        matches = [
+            r for r in april_records
+            if r["staff"] == "Cyen Heyliger" and r["date"] == target
+        ]
+        assert len(matches) == 1
+        assert matches[0]["project"] == "Bonita", (
+            f"Expected 'Bonita', got '{matches[0]['project']}'"
+        )
+
+    def test_alejandro_perales_all_records_neuron_deployments(self, april_records):
+        """A10: Alejandro Perales's Assignments entries are all 'Neuron Deployments'."""
+        alejandro = [r for r in april_records if r["staff"] == "Alejandro Perales"]
+        assert len(alejandro) > 0, "No records found for Alejandro Perales"
+        for rec in alejandro:
+            assert rec["project"] == "Neuron Deployments", (
+                f"Expected 'Neuron Deployments' on {rec['date']}, "
+                f"got '{rec['project']}'"
+            )

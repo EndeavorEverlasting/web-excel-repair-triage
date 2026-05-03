@@ -174,6 +174,131 @@ def _month_variants(month_str: str) -> list:
     return list(dict.fromkeys(variants))  # preserve order, deduplicate
 
 
+def _find_assignments_sheet(wb, month_label: str):
+    """
+    Locate the 'Assignments - {Month YYYY}' worksheet that matches month_label.
+    Returns the worksheet object, or None if not found (non-fatal).
+    """
+    pattern = re.compile(r"^Assignments\s*[-–]\s*(.+)$", re.IGNORECASE)
+    candidates = [
+        (name, m.group(1).strip())
+        for name in wb.sheetnames
+        if (m := pattern.match(name.strip()))
+    ]
+    if not candidates or not month_label:
+        return None
+    variants = _month_variants(month_label)
+    if re.search(r"\d{4}", month_label):
+        variants = [v for v in variants if re.search(r"\d{4}", v)]
+    for variant in variants:
+        for name, label in candidates:
+            if variant in label.lower():
+                return wb[name]
+    return None
+
+
+def _load_assignments(ws) -> Dict[Tuple[date, str], str]:
+    """
+    Parse an Assignments sheet and return a per-day project lookup:
+
+        {(date, staff_name): project_label}
+
+    Two sources are merged (overrides win over the main table):
+      1. Main auto-fill table  — wide form: staff rows × date columns
+      2. Overrides sub-table   — rows: [Override Staff Name, Override Date,
+                                         Override Project, Notes, ...]
+    """
+    import datetime as dt
+
+    lookup: Dict[Tuple[date, str], str] = {}
+    if ws is None:
+        return lookup
+
+    max_row = ws.max_row
+    max_col = ws.max_column
+
+    # ── Locate the header row and the overrides section ───────────────────────
+    hdr_row: Optional[int] = None
+    overrides_start: Optional[int] = None
+
+    for r in range(1, min(max_row + 1, 20)):
+        val = ws.cell(r, 1).value
+        if val is None:
+            continue
+        val_s = str(val).strip().lower()
+        if hdr_row is None and ("staff name" in val_s or ("staff" in val_s and "name" in val_s)):
+            hdr_row = r
+        elif "override" in val_s and overrides_start is None:
+            overrides_start = r
+            break
+
+    if hdr_row is None:
+        return lookup
+
+    # ── Build date-column index from the header row ───────────────────────────
+    date_cols: Dict[int, date] = {}
+    for c in range(1, max_col + 1):
+        val = ws.cell(hdr_row, c).value
+        if isinstance(val, dt.datetime):
+            date_cols[c] = val.date()
+        elif isinstance(val, dt.date):
+            date_cols[c] = val
+
+    if not date_cols:
+        return lookup
+
+    # ── Parse the main auto-fill table ───────────────────────────────────────
+    main_end = (overrides_start - 1) if overrides_start else max_row
+    for r in range(hdr_row + 1, main_end + 1):
+        staff_val = ws.cell(r, 1).value
+        if not staff_val or str(staff_val).strip() in ("", "None", "0"):
+            continue
+        if isinstance(staff_val, (int, float)):
+            continue
+        staff_name = str(staff_val).strip()
+        for c, d in date_cols.items():
+            proj_val = ws.cell(r, c).value
+            if proj_val is None or str(proj_val).strip() in ("", "0"):
+                continue
+            lookup[(d, staff_name)] = str(proj_val).strip()
+
+    # ── Parse the Overrides sub-table ─────────────────────────────────────────
+    if overrides_start is None:
+        return lookup
+
+    # Find the overrides header row (directly below the section title)
+    override_hdr: Optional[int] = None
+    for r in range(overrides_start, min(overrides_start + 5, max_row + 1)):
+        val = ws.cell(r, 1).value
+        if val and "override staff" in str(val).strip().lower():
+            override_hdr = r
+            break
+        if val and "staff" in str(val).strip().lower() and r != overrides_start:
+            override_hdr = r
+            break
+
+    if override_hdr is None:
+        return lookup
+
+    for r in range(override_hdr + 1, max_row + 1):
+        staff_val   = ws.cell(r, 1).value
+        date_val    = ws.cell(r, 2).value
+        project_val = ws.cell(r, 3).value
+        if not staff_val or not date_val or not project_val:
+            continue
+        staff_name = str(staff_val).strip()
+        project    = str(project_val).strip()
+        if isinstance(date_val, dt.datetime):
+            override_date = date_val.date()
+        elif isinstance(date_val, dt.date):
+            override_date = date_val
+        else:
+            continue
+        lookup[(override_date, staff_name)] = project
+
+    return lookup
+
+
 def _find_live_sheet(wb, target_month: Optional[str] = None):
     """
     Locate the 'Live - {Month YYYY}' worksheet.
@@ -293,6 +418,16 @@ def parse_roster(
     else:
         sheets_to_parse.append(_find_live_sheet(wb, target_month))
 
+    # ── Load per-day project assignments (non-fatal if sheet absent) ───────────
+    # Build a combined lookup from all relevant Assignments sheets so that
+    # cross-month weeks also get the right project labels for each half.
+    assignments_lookup: Dict[Tuple[date, str], str] = {}
+    for live_ws in sheets_to_parse:
+        month_label_for_ws = live_ws.title.split("-", 1)[-1].strip()
+        asn_ws = _find_assignments_sheet(wb, month_label_for_ws)
+        if asn_ws is not None:
+            assignments_lookup.update(_load_assignments(asn_ws))
+
     # ── Parse each sheet (usually one; two for cross-month weeks) ──────────────
     records: List[Dict[str, Any]] = []
     seen_keys: set = set()   # (staff, date) — deduplicate if sheets overlap
@@ -352,14 +487,14 @@ def parse_roster(
             if isinstance(staff_val, (int, float)):
                 continue
 
-            project_val = (
+            live_project = (
                 str(row[idx_project]).strip()
                 if idx_project is not None and idx_project < len(row)
                 and row[idx_project] is not None
                 else ""
             )
-            if project_val in ("0", ""):
-                project_val = ""
+            if live_project in ("0", ""):
+                live_project = ""
 
             staff_name = str(staff_val).strip()
 
@@ -368,6 +503,12 @@ def parse_roster(
                     continue
                 if target_week_end and record_date > target_week_end:
                     continue
+
+                # Resolve project: per-day Assignments sheet entry wins over
+                # the Live sheet's default project column.
+                project_val = assignments_lookup.get(
+                    (record_date, staff_name), live_project
+                )
 
                 # Key includes project so that staff with multiple project
                 # assignments on the same date each produce a separate record.
