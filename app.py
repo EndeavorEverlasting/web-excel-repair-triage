@@ -763,154 +763,154 @@ def _render_batch_runner() -> None:
         current_gate = cur_gate
 
         with right:
-	        if str(current_path) != origin_key:
-	            st.caption(f"Working variant: {current_path.name}")
+                if str(current_path) != origin_key:
+                    st.caption(f"Working variant: {current_path.name}")
 
-	        if st.button("🔄 Re-check gates", key=f"wf_regates::{origin_key}"):
-	            with st.spinner("Re-running gates on current variant…"):
-	                try:
-	                    current_gate = run_all(str(current_path)).to_dict()
-	                    wf_gates[str(current_path)] = current_gate
-	                    st.success(f"Gate verdict: {'PASS' if current_gate.get('pass') else 'FAIL'}")
-	                except Exception as e:  # pragma: no cover (UI only)
-	                    st.error(f"ENDEAVOR: Re-check gates — failed. {type(e).__name__}: {e}")
+                if st.button("🔄 Re-check gates", key=f"wf_regates::{origin_key}"):
+                    with st.spinner("Re-running gates on current variant…"):
+                        try:
+                            current_gate = run_all(str(current_path)).to_dict()
+                            wf_gates[str(current_path)] = current_gate
+                            st.success(f"Gate verdict: {'PASS' if current_gate.get('pass') else 'FAIL'}")
+                        except Exception as e:  # pragma: no cover (UI only)
+                            st.error(f"ENDEAVOR: Re-check gates — failed. {type(e).__name__}: {e}")
 
-	        if st.button("🩹 Auto-fix once (gate recipe)", key=f"wf_autofix::{origin_key}"):
-	            endeavor = (
-	                "ENDEAVOR: Auto-fix once (gate recipe) — apply deterministic patches derived from failing gates, "
-	                "write artifacts under Outputs/workflow_runs/, then re-check gates."
-	            )
-	            with st.spinner("Applying deterministic gate recipe…"):
-	                try:
-	                    ts2 = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-	                    out_dir2 = OUTPUTS_DIR / "workflow_runs" / f"{file_path.stem}_{ts2}"
-	                    out_dir2.mkdir(parents=True, exist_ok=True)
+                if st.button("🩹 Auto-fix once (gate recipe)", key=f"wf_autofix::{origin_key}"):
+                    endeavor = (
+                        "ENDEAVOR: Auto-fix once (gate recipe) — apply deterministic patches derived from failing gates, "
+                        "write artifacts under Outputs/workflow_runs/, then re-check gates."
+                    )
+                    with st.spinner("Applying deterministic gate recipe…"):
+                        try:
+                            ts2 = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                            out_dir2 = OUTPUTS_DIR / "workflow_runs" / f"{file_path.stem}_{ts2}"
+                            out_dir2.mkdir(parents=True, exist_ok=True)
 
-	                    gate_obj = run_all(str(current_path))
-	                    pre_dict = gate_obj.to_dict()
-	                    recipe = recipe_from_gates(gate_obj)
-	                    (out_dir2 / "pre_gates.json").write_text(json.dumps(pre_dict, indent=2), encoding="utf-8")
-	                    (out_dir2 / "recipe.json").write_text(json.dumps(recipe.to_dict(), indent=2), encoding="utf-8")
+                            gate_obj = run_all(str(current_path))
+                            pre_dict = gate_obj.to_dict()
+                            recipe = recipe_from_gates(gate_obj)
+                            (out_dir2 / "pre_gates.json").write_text(json.dumps(pre_dict, indent=2), encoding="utf-8")
+                            (out_dir2 / "recipe.json").write_text(json.dumps(recipe.to_dict(), indent=2), encoding="utf-8")
 
-	                    if not recipe.patches:
-	                        st.info("No deterministic patches generated (already clean or requires manual work).")
-	                    else:
-	                        patched_path = out_dir2 / f"{file_path.stem}_autofix_{ts2}.xlsx"
-	                        warn_exc = None
-	                        try:
-	                            apply_recipe(str(current_path), recipe.to_dict(), str(patched_path))
-	                        except PatchWarning as pw:
-	                            warn_exc = pw
-	                            patched_path = Path(pw.output_path)
+                            if not recipe.patches:
+                                st.info("No deterministic patches generated (already clean or requires manual work).")
+                            else:
+                                patched_path = out_dir2 / f"{file_path.stem}_autofix_{ts2}.xlsx"
+                                warn_exc = None
+                                try:
+                                    apply_recipe(str(current_path), recipe.to_dict(), str(patched_path))
+                                except PatchWarning as pw:
+                                    warn_exc = pw
+                                    patched_path = Path(pw.output_path)
 
-	                        post_dict = run_all(str(patched_path)).to_dict()
-	                        (out_dir2 / "post_gates.json").write_text(json.dumps(post_dict, indent=2), encoding="utf-8")
+                                post_dict = run_all(str(patched_path)).to_dict()
+                                (out_dir2 / "post_gates.json").write_text(json.dumps(post_dict, indent=2), encoding="utf-8")
 
-	                        wf_latest[origin_key] = str(patched_path)
-	                        wf_gates[str(patched_path)] = post_dict
-	                        current_path = patched_path
-	                        current_gate = post_dict
+                                wf_latest[origin_key] = str(patched_path)
+                                wf_gates[str(patched_path)] = post_dict
+                                current_path = patched_path
+                                current_gate = post_dict
 
-	                        if warn_exc:
-	                            st.warning(
-	                                "PatchWarning: some stub operations were skipped. "
-	                                f"Skipped={len(warn_exc.skipped)}"
-	                            )
+                                if warn_exc:
+                                    st.warning(
+                                        "PatchWarning: some stub operations were skipped. "
+                                        f"Skipped={len(warn_exc.skipped)}"
+                                    )
 
-	                        st.success(f"Auto-fix wrote: {patched_path.name}")
-	                        st.caption(f"Artifacts: {out_dir2}")
-	                except PatchError as e:
-	                    st.error(str(e))
-	                except Exception as e:  # pragma: no cover (UI only)
-	                    st.error(f"{endeavor}\nFAILED: {type(e).__name__}: {e}")
+                                st.success(f"Auto-fix wrote: {patched_path.name}")
+                                st.caption(f"Artifacts: {out_dir2}")
+                        except PatchError as e:
+                            st.error(str(e))
+                        except Exception as e:  # pragma: no cover (UI only)
+                            st.error(f"{endeavor}\nFAILED: {type(e).__name__}: {e}")
 
-	        if st.button("🔁 Desktop iterate loop", key=f"wf_desktop_iter::{origin_key}"):
-	            endeavor = (
-	                "ENDEAVOR: Desktop iterate loop — open/repair in desktop Excel, mine fixes, patch, repeat. "
-	                "Outputs saved under Outputs/workflow_runs/."
-	            )
-	            with st.spinner("Running desktop iterate loop (this will launch Excel)…"):
-	                try:
-	                    from triage.desktop_iterate import iterate_until_desktop_clean
+                if st.button("🔁 Desktop iterate loop", key=f"wf_desktop_iter::{origin_key}"):
+                    endeavor = (
+                        "ENDEAVOR: Desktop iterate loop — open/repair in desktop Excel, mine fixes, patch, repeat. "
+                        "Outputs saved under Outputs/workflow_runs/."
+                    )
+                    with st.spinner("Running desktop iterate loop (this will launch Excel)…"):
+                        try:
+                            from triage.desktop_iterate import iterate_until_desktop_clean
 
-	                    ts2 = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-	                    out_dir2 = OUTPUTS_DIR / "workflow_runs" / f"{file_path.stem}_{ts2}"
-	                    out_root = out_dir2 / "desktop_iter"
-	                    out_root.mkdir(parents=True, exist_ok=True)
+                            ts2 = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                            out_dir2 = OUTPUTS_DIR / "workflow_runs" / f"{file_path.stem}_{ts2}"
+                            out_root = out_dir2 / "desktop_iter"
+                            out_root.mkdir(parents=True, exist_ok=True)
 
-	                    it = iterate_until_desktop_clean(
-	                        candidate_path=str(current_path),
-	                        out_root=str(out_root),
-	                        max_iters=int(desktop_max_iters),
-	                        timeout_seconds=int(desktop_timeout),
-	                    )
-	                    (out_dir2 / "desktop_iterate.json").write_text(
-	                        json.dumps(dataclasses.asdict(it), indent=2), encoding="utf-8"
-	                    )
+                            it = iterate_until_desktop_clean(
+                                candidate_path=str(current_path),
+                                out_root=str(out_root),
+                                max_iters=int(desktop_max_iters),
+                                timeout_seconds=int(desktop_timeout),
+                            )
+                            (out_dir2 / "desktop_iterate.json").write_text(
+                                json.dumps(dataclasses.asdict(it), indent=2), encoding="utf-8"
+                            )
 
-	                    wf_latest[origin_key] = str(it.final_path)
-	                    current_path = Path(it.final_path)
+                            wf_latest[origin_key] = str(it.final_path)
+                            current_path = Path(it.final_path)
 
-	                    post_dict = run_all(str(current_path)).to_dict()
-	                    wf_gates[str(current_path)] = post_dict
-	                    current_gate = post_dict
-	                    (out_dir2 / "post_gates.json").write_text(json.dumps(post_dict, indent=2), encoding="utf-8")
+                            post_dict = run_all(str(current_path)).to_dict()
+                            wf_gates[str(current_path)] = post_dict
+                            current_gate = post_dict
+                            (out_dir2 / "post_gates.json").write_text(json.dumps(post_dict, indent=2), encoding="utf-8")
 
-	                    st.success(
-	                        f"Desktop iterate finished: {'CLEAN' if it.success_clean else 'NOT CLEAN'} — {current_path.name}"
-	                    )
-	                    st.caption(f"Artifacts: {out_dir2}")
-	                except Exception as e:  # pragma: no cover (UI only)
-	                    st.error(f"{endeavor}\nFAILED: {type(e).__name__}: {e}")
+                            st.success(
+                                f"Desktop iterate finished: {'CLEAN' if it.success_clean else 'NOT CLEAN'} — {current_path.name}"
+                            )
+                            st.caption(f"Artifacts: {out_dir2}")
+                        except Exception as e:  # pragma: no cover (UI only)
+                            st.error(f"{endeavor}\nFAILED: {type(e).__name__}: {e}")
 
-	        if st.button("↩ Reset variant", key=f"wf_reset::{origin_key}"):
-	            wf_latest.pop(origin_key, None)
-	            st.info("Reset to original Deprecated file.")
+                if st.button("↩ Reset variant", key=f"wf_reset::{origin_key}"):
+                    wf_latest.pop(origin_key, None)
+                    st.info("Reset to original Deprecated file.")
 
-	        # Promote is enabled only when *current* gates pass.
-	        pass_now = bool((current_gate or {}).get("pass"))
-	        if not pass_now:
-	            st.caption("Promote disabled (current variant must PASS gates)")
-	        else:
-	            confirm = st.checkbox(
-	                "Confirm promote",
-	                key=f"promote_confirm::{origin_key}",
-	                help="This will COPY the workbook into Active/ as a golden standard.",
-	            )
-	            allow_overwrite = st.checkbox(
-	                "Allow overwrite",
-	                value=False,
-	                key=f"promote_overwrite::{origin_key}",
-	                help="Off by default. If a file with the same name exists in Active/, promotion is refused.",
-	            )
-	            if st.button(
-	                "⬆️ Promote → Active",
-	                type="primary",
-	                key=f"promote_btn::{origin_key}",
-	            ):
-	                if not confirm:
-	                    st.warning(
-	                        "ENDEAVOR: Promote to Active — confirmation required. "
-	                        "Tick 'Confirm promote' before copying into Active/."
-	                    )
-	                else:
-	                    try:
-	                        pr = promote_to_active(
-	                            origin_deprecated_path=str(file_path),
-	                            source_path=str(current_path),
-	                            allow_overwrite=bool(allow_overwrite),
-	                            extra={
-	                                "gate_pass": True,
-	                                "failing_gates": (current_gate or {}).get("failing_gates", {}) or {},
-	                                "promoted_variant": str(current_path),
-	                            },
-	                        )
-	                        st.success(f"Promoted → {pr.dest_path}")
-	                        st.caption(f"Report: {pr.report_path}")
-	                    except PromotionError as e:
-	                        st.error(str(e))
-	                    except Exception as e:  # pragma: no cover (UI only)
-	                        st.error(f"ENDEAVOR: Promote to Active — failed. {type(e).__name__}: {e}")
+                # Promote is enabled only when *current* gates pass.
+                pass_now = bool((current_gate or {}).get("pass"))
+                if not pass_now:
+                    st.caption("Promote disabled (current variant must PASS gates)")
+                else:
+                    confirm = st.checkbox(
+                        "Confirm promote",
+                        key=f"promote_confirm::{origin_key}",
+                        help="This will COPY the workbook into Active/ as a golden standard.",
+                    )
+                    allow_overwrite = st.checkbox(
+                        "Allow overwrite",
+                        value=False,
+                        key=f"promote_overwrite::{origin_key}",
+                        help="Off by default. If a file with the same name exists in Active/, promotion is refused.",
+                    )
+                    if st.button(
+                        "⬆️ Promote → Active",
+                        type="primary",
+                        key=f"promote_btn::{origin_key}",
+                    ):
+                        if not confirm:
+                            st.warning(
+                                "ENDEAVOR: Promote to Active — confirmation required. "
+                                "Tick 'Confirm promote' before copying into Active/."
+                            )
+                        else:
+                            try:
+                                pr = promote_to_active(
+                                    origin_deprecated_path=str(file_path),
+                                    source_path=str(current_path),
+                                    allow_overwrite=bool(allow_overwrite),
+                                    extra={
+                                        "gate_pass": True,
+                                        "failing_gates": (current_gate or {}).get("failing_gates", {}) or {},
+                                        "promoted_variant": str(current_path),
+                                    },
+                                )
+                                st.success(f"Promoted → {pr.dest_path}")
+                                st.caption(f"Report: {pr.report_path}")
+                            except PromotionError as e:
+                                st.error(str(e))
+                            except Exception as e:  # pragma: no cover (UI only)
+                                st.error(f"ENDEAVOR: Promote to Active — failed. {type(e).__name__}: {e}")
 
 # ── sidebar: file uploads ────────────────────────────────────────────────────
 with st.sidebar:
@@ -936,6 +936,36 @@ with st.sidebar:
         g_item  = st.text_input("Item ID")
     elif probe_mode == "By share URL":
         g_share = st.text_input("Share URL")
+
+    st.markdown("---")
+    st.markdown("### 💳 Billing & Attendance")
+    st.caption("Quick access — full UI in the **💳 Billing & Attendance** tab.")
+    _billing_runs_root = Path("billing_runs")
+    _recent_runs = sorted(_billing_runs_root.glob("*/run_manifest.json")) if _billing_runs_root.exists() else []
+    if _recent_runs:
+        import json as _json
+        for _mf in reversed(_recent_runs[-3:]):
+            try:
+                _m = _json.loads(_mf.read_text(encoding="utf-8"))
+                _status_icon = "✅" if _m.get("status") == "pass" else ("⚠️" if _m.get("status") == "generated" else "❌")
+                st.caption(
+                    f"{_status_icon} `{_mf.parent.name}` — {_m.get('status','?')} "
+                    f"| {_m.get('roster_records','?')} records | "
+                    f"{_m.get('net_hours','?')}h net"
+                )
+            except Exception:
+                pass
+    else:
+        st.caption("No billing runs yet. Use the **💳 Billing & Attendance** tab to generate.")
+    with st.expander("📁 billing_runs/ outputs"):
+        _billing_outputs = sorted(_billing_runs_root.rglob("*.xlsx")) if _billing_runs_root.exists() else []
+        if _billing_outputs:
+            for _bf in _billing_outputs[-8:]:
+                st.markdown(f'<div class="folder-file">📄 {_bf.name}<br>'
+                            f'<span style="color:#666">{_fmt_bytes(_bf.stat().st_size)}</span></div>',
+                            unsafe_allow_html=True)
+        else:
+            st.caption("No .xlsx outputs yet.")
 
     st.markdown("---")
     st.markdown("### 📁 Folder Shortcuts")
@@ -1134,6 +1164,650 @@ def _render_repo_engine() -> None:
         except Exception as e:  # pragma: no cover (UI only)
             st.error(f"ENDEAVOR: Apply recommendations — failed. {type(e).__name__}: {e}")
 
+# ═══════════════════════════════════════════════════════════════════════
+# BILLING & ATTENDANCE — render function
+# ═══════════════════════════════════════════════════════════════════════
+
+def _render_billing_attendance() -> None:
+    """Render the Billing & Attendance section (two sub-tabs)."""
+    import traceback
+    from datetime import date, timedelta
+
+    st.markdown("### 💳 Billing & Attendance")
+    st.caption(
+        "Generate weekly attendance reports and monthly billing summaries. "
+        "All inputs are read-only; outputs are written to `billing_runs/YYYY-MM/`."
+    )
+
+    attn_tab, billing_tab = st.tabs(["📅 Weekly Attendance", "🧾 Monthly Billing"])
+
+    # ── ATTENDANCE TAB ────────────────────────────────────────────────────────
+    with attn_tab:
+        st.markdown("#### Weekly Attendance Report")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            today = date.today()
+            days_since_friday = (today.weekday() - 4) % 7
+            default_friday = today - timedelta(days=days_since_friday)
+            default_monday = default_friday - timedelta(days=4)
+
+            week_start_pick = st.date_input(
+                "Week start (Monday)",
+                value=default_monday,
+                key="attn_week_start",
+                help="Select any Monday to define the reporting week.",
+            )
+        with col2:
+            week_end_pick = st.date_input(
+                "Week end (Friday)",
+                value=week_start_pick + timedelta(days=4),
+                key="attn_week_end",
+                help="Defaults to the Friday of the selected week.",
+            )
+
+        roster_file_attn = st.file_uploader(
+            "Upload Active Roster Log (.xlsx)",
+            type=["xlsx"],
+            key="attn_roster",
+            help="The 'Live - {Month YYYY}' sheet will be parsed automatically.",
+        )
+
+        attn_folder = st.text_input(
+            "Or: folder path to auto-discover Roster Log",
+            value="",
+            key="attn_folder",
+            placeholder="e.g. attached_assets/",
+        )
+
+        # ── Malformed-row confirmation UI (outside Generate button) ──────────
+        _attn_pending_malformed = st.session_state.get("attn_malformed_error")
+        if _attn_pending_malformed:
+            st.error(f"**Roster parse error:** {_attn_pending_malformed}")
+            st.warning(
+                "The roster contains one or more rows with invalid "
+                "clock-in / clock-out values. You can exclude these rows and "
+                "continue, but the excluded staff-days will be **missing from "
+                "the attendance report**."
+            )
+            _a_excl_col, _a_cancel_col = st.columns(2)
+            with _a_excl_col:
+                if st.button(
+                    "Exclude malformed rows and re-run",
+                    key="attn_confirm_exclusion",
+                    type="primary",
+                ):
+                    st.session_state["attn_exclude_confirmed"] = True
+                    st.session_state["attn_malformed_error"]   = None
+                    st.session_state["attn_run_requested"]     = True
+                    st.rerun()
+            with _a_cancel_col:
+                if st.button("Cancel", key="attn_cancel_exclusion"):
+                    st.session_state["attn_malformed_error"]   = None
+                    st.session_state["attn_exclude_confirmed"] = False
+                    st.rerun()
+
+        # ── Generate button ────────────────────────────────────────────────
+        if st.button("📋 Generate Attendance Report", type="primary", key="attn_generate"):
+            # Clear previous state and re-resolve file paths
+            st.session_state["attn_malformed_error"] = None
+            st.session_state.pop("attn_exclude_confirmed", None)
+
+            _roster_path_attn: str | None = None
+            _attn_input_paths: list[str]  = []
+
+            if roster_file_attn:
+                tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx",
+                                                  prefix="roster_attn_")
+                tmp.write(roster_file_attn.read())
+                tmp.flush()
+                _roster_path_attn = tmp.name
+                _attn_input_paths.append(roster_file_attn.name)
+            elif attn_folder.strip():
+                folder = Path(attn_folder.strip())
+                found = sorted(folder.glob("*.xlsx"))
+                if found:
+                    # Prefer files whose names suggest an Active Roster Log
+                    preferred = [
+                        f for f in found
+                        if any(kw in f.name.lower() for kw in ("roster", "active"))
+                    ]
+                    pick = preferred[0] if preferred else found[0]
+                    _roster_path_attn = str(pick)
+                    _attn_input_paths.append(str(pick))
+                    st.info(f"Auto-discovered roster: `{pick.name}`")
+                else:
+                    st.error(f"No .xlsx files found in folder: `{attn_folder}`")
+
+            st.session_state["attn_roster_path"]   = _roster_path_attn
+            st.session_state["attn_input_paths"]   = _attn_input_paths
+            st.session_state["attn_run_requested"] = True
+
+        # ── Execute attendance pipeline (Generate click OR confirmed rerun) ─
+        if st.session_state.pop("attn_run_requested", False):
+            from triage.roster_parser import parse_roster, RosterParseError
+            from triage.billing_bridge_validator import validate_billing_workbook
+
+            roster_path_attn = st.session_state.get("attn_roster_path")
+            attn_input_paths = st.session_state.get("attn_input_paths", [])
+            _attn_exclude_confirmed = st.session_state.get("attn_exclude_confirmed", False)
+
+            if not roster_path_attn:
+                st.error("Please upload a Roster Log or provide a valid folder path.")
+            else:
+                with st.spinner("Parsing roster & generating report…"):
+                    try:
+                        attn_target_month = week_start_pick.strftime("%B %Y")
+                        _attn_malformed: list = []
+
+                        if _attn_exclude_confirmed:
+                            records = parse_roster(
+                                path=roster_path_attn,
+                                target_week_start=week_start_pick,
+                                target_week_end=week_end_pick,
+                                target_month=attn_target_month,
+                                malformed_out=_attn_malformed,
+                            )
+                        else:
+                            records = parse_roster(
+                                path=roster_path_attn,
+                                target_week_start=week_start_pick,
+                                target_week_end=week_end_pick,
+                                target_month=attn_target_month,
+                            )
+
+                        if not records:
+                            st.warning(
+                                f"No attendance records found for "
+                                f"{week_start_pick} – {week_end_pick}. "
+                                "Check that the Roster Log covers this date range."
+                            )
+                        else:
+                            from triage.attendance_report import (
+                                generate_attendance_report,
+                                update_attendance_manifest_status,
+                            )
+                            out_path = generate_attendance_report(
+                                records=records,
+                                week_start=week_start_pick,
+                                week_end=week_end_pick,
+                                input_paths=attn_input_paths,
+                            )
+
+                            month_str = week_start_pick.strftime("%Y-%m")
+                            val = validate_billing_workbook(
+                                path=out_path, month=month_str,
+                                out_root="billing_runs",
+                            )
+                            update_attendance_manifest_status(
+                                out_root="billing_runs",
+                                month_str=month_str,
+                                status=val.status,
+                                gate_status=val.status,
+                                failures=list(val.failures),
+                                warnings=list(val.warnings),
+                            )
+
+                            if val.failures:
+                                if Path(out_path).exists():
+                                    os.remove(out_path)
+                                st.error(
+                                    "**Gate check FAILED** — output deleted.\n\n"
+                                    + "\n".join(f"- {f}" for f in val.failures)
+                                )
+                            else:
+                                if val.warnings:
+                                    with st.expander("⚠️ Gate check warnings (non-blocking)"):
+                                        for w in val.warnings:
+                                            st.warning(w)
+                                st.success(
+                                    f"Report generated: `{out_path}` "
+                                    f"({len(records)} records, gate: {val.status})"
+                                )
+                                st.markdown("##### Preview — Attendance Records")
+                                preview = [
+                                    {
+                                        "Staff":   r["staff"],
+                                        "Project": r["project"],
+                                        "Date":    str(r["date"]),
+                                        "In":      f"{r['clock_in']:.2f}h" if r["clock_in"] else "",
+                                        "Out":     f"{r['clock_out']:.2f}h" if r["clock_out"] else "",
+                                        "Gross":   f"{r['gross_hours']:.2f}h",
+                                        "Lunch":   f"{r['lunch_deduction']:.1f}h",
+                                        "Net":     f"{r['net_hours']:.2f}h",
+                                    }
+                                    for r in records[:50]
+                                ]
+                                st.dataframe(preview, use_container_width=True)
+                                if len(records) > 50:
+                                    st.caption(f"Showing first 50 of {len(records)} records.")
+                                with open(out_path, "rb") as fh:
+                                    st.download_button(
+                                        "⬇️ Download Attendance Report",
+                                        data=fh.read(),
+                                        file_name=Path(out_path).name,
+                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                        key="attn_download",
+                                    )
+
+                            # Show excluded rows after confirmed re-run
+                            if _attn_exclude_confirmed and _attn_malformed:
+                                with st.expander(
+                                    f"⚠️ {len(_attn_malformed)} malformed roster "
+                                    "row(s) excluded per your confirmation"
+                                ):
+                                    st.warning(
+                                        "Correct these rows in the source file for "
+                                        "a complete attendance report."
+                                    )
+                                    for _m in _attn_malformed:
+                                        st.code(_m)
+                                if st.button(
+                                    "Reset (strict mode on next run)",
+                                    key="attn_reset_strict",
+                                ):
+                                    st.session_state["attn_exclude_confirmed"] = False
+                                    st.rerun()
+
+                    except RosterParseError as e:
+                        err_msg = str(e)
+                        if any(kw in err_msg.lower() for kw in
+                               ("malformed", "clock", "missing clock", "invalid")):
+                            st.session_state["attn_malformed_error"] = err_msg
+                            st.rerun()
+                        else:
+                            st.error(f"**Roster parse error:** {err_msg}")
+                    except Exception as e:
+                        st.error(f"**Unexpected error:** {type(e).__name__}: {e}")
+                        with st.expander("Traceback"):
+                            st.code(traceback.format_exc())
+
+    # ── BILLING TAB ───────────────────────────────────────────────────────────
+    with billing_tab:
+        st.markdown("#### Monthly Billing Summary")
+        st.caption(
+            "Inputs: Active Roster Log (.xlsx), Tech Hours workbook (.xlsx, optional), "
+            "vendor invoices (.docx). All files are read-only."
+        )
+
+        col_a, col_b = st.columns(2)
+        with col_a:
+            billing_month_pick = st.date_input(
+                "Billing month (pick any day in the month)",
+                value=date.today().replace(day=1),
+                key="billing_month_pick",
+            )
+            billing_month_str = billing_month_pick.strftime("%Y-%m")
+            st.caption(f"Billing month: **{billing_month_str}**")
+
+        st.markdown("**Upload files (or use folder auto-discovery below)**")
+        bcol1, bcol2 = st.columns(2)
+        with bcol1:
+            roster_file_billing = st.file_uploader(
+                "Active Roster Log (.xlsx) — required",
+                type=["xlsx"],
+                key="billing_roster",
+            )
+            tech_hours_file = st.file_uploader(
+                "Tech Hours workbook (.xlsx) — optional",
+                type=["xlsx"],
+                key="billing_tech_hours",
+                help="NW_PRJ_Tech_hours*.xlsx — parsed for 'Project Team' sheet. "
+                     "If provided, roster records whose (staff, date) overlap "
+                     "are reclassified to 'Projects Team'.",
+            )
+        with bcol2:
+            invoice_files = st.file_uploader(
+                "Vendor invoice(s) (.docx) — multiple allowed",
+                type=["docx"],
+                accept_multiple_files=True,
+                key="billing_invoices",
+            )
+
+        billing_folder = st.text_input(
+            "Or: folder path to auto-discover files (Roster Log, Tech Hours, invoices)",
+            value="",
+            key="billing_folder",
+            placeholder="e.g. attached_assets/",
+            help=(
+                "Roster Log: first .xlsx whose name contains 'roster' or 'active'. "
+                "Tech Hours: first .xlsx whose name contains 'tech'. "
+                "Invoices: non-zero .docx files."
+            ),
+        )
+
+        # ── Malformed-row confirmation UI (rendered every rerun, outside button) ──
+        # When strict-mode parse raises on a malformed clock pair, the error and
+        # file paths are stored in session state so the confirmation widget
+        # survives the Streamlit rerun that clears the Generate button state.
+        _pending_malformed = st.session_state.get("billing_malformed_error")
+        if _pending_malformed:
+            st.error(f"**Roster parse error:** {_pending_malformed}")
+            st.warning(
+                "The roster contains one or more rows with invalid "
+                "clock-in / clock-out values. You can exclude these rows and "
+                "continue, but the excluded staff-days will be **missing from "
+                "the billing summary**."
+            )
+            _excl_col, _cancel_col = st.columns(2)
+            with _excl_col:
+                if st.button(
+                    "Exclude malformed rows and re-run",
+                    key="billing_confirm_exclusion",
+                    type="primary",
+                ):
+                    st.session_state["billing_exclude_confirmed"] = True
+                    st.session_state["billing_malformed_error"]   = None
+                    st.session_state["billing_run_requested"]     = True
+                    st.rerun()
+            with _cancel_col:
+                if st.button("Cancel", key="billing_cancel_exclusion"):
+                    st.session_state["billing_malformed_error"]   = None
+                    st.session_state["billing_exclude_confirmed"] = False
+                    st.rerun()
+
+        # ── Generate button ────────────────────────────────────────────────
+        if st.button("🧾 Generate Billing Summary", type="primary", key="billing_generate"):
+            # Clear any previous malformed-error state so a fresh run always
+            # starts in strict mode unless the user explicitly re-confirmed.
+            st.session_state["billing_malformed_error"] = None
+            st.session_state.pop("billing_exclude_confirmed", None)
+
+            # Resolve file paths and write uploads to temp files, then store
+            # paths in session state so they survive reruns triggered by the
+            # "Exclude and re-run" confirmation workflow.
+            _roster_path_b:     str | None = None
+            _tech_hours_path_b: str | None = None
+            _invoice_paths:     list[str]  = []
+            _input_paths:       list[str]  = []
+
+            if roster_file_billing:
+                tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx",
+                                                  prefix="roster_bill_")
+                tmp.write(roster_file_billing.read()); tmp.flush()
+                _roster_path_b = tmp.name
+                _input_paths.append(roster_file_billing.name)
+
+            if tech_hours_file:
+                tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx",
+                                                  prefix="tech_hours_")
+                tmp.write(tech_hours_file.read()); tmp.flush()
+                _tech_hours_path_b = tmp.name
+                _input_paths.append(tech_hours_file.name)
+
+            if invoice_files:
+                for inv_f in invoice_files:
+                    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".docx",
+                                                      prefix="invoice_")
+                    tmp.write(inv_f.read()); tmp.flush()
+                    _invoice_paths.append(tmp.name)
+                    _input_paths.append(inv_f.name)
+
+            if billing_folder.strip() and not (roster_file_billing or tech_hours_file or invoice_files):
+                folder = Path(billing_folder.strip())
+                if not folder.is_dir():
+                    st.error(f"Folder not found: `{billing_folder}`")
+                else:
+                    xlsx_files = sorted(folder.glob("*.xlsx"))
+                    docx_files = sorted(folder.glob("*.docx"))
+
+                    for xf in xlsx_files:
+                        lname = xf.name.lower()
+                        if not _roster_path_b and ("roster" in lname or "active" in lname):
+                            _roster_path_b = str(xf)
+                            _input_paths.append(str(xf))
+                            st.info(f"Auto-discovered Roster Log: `{xf.name}`")
+                        elif not _tech_hours_path_b and ("tech" in lname):
+                            _tech_hours_path_b = str(xf)
+                            _input_paths.append(str(xf))
+                            st.info(f"Auto-discovered Tech Hours: `{xf.name}`")
+
+                    for f in docx_files:
+                        if f.stat().st_size == 0:
+                            st.error(
+                                f"Invoice file `{f.name}` is empty (0 bytes). "
+                                "Replace it with a valid .docx file before running "
+                                "the billing pipeline."
+                            )
+                            st.stop()
+                    _invoice_paths = [str(f) for f in docx_files]
+                    _input_paths  += [str(f) for f in docx_files]
+                    if docx_files:
+                        st.info(f"Auto-discovered {len(docx_files)} invoice(s).")
+
+            # Persist paths so the confirmed-exclusion rerun can reuse them
+            st.session_state["billing_roster_path"]    = _roster_path_b
+            st.session_state["billing_tech_path"]      = _tech_hours_path_b
+            st.session_state["billing_invoice_paths"]  = _invoice_paths
+            st.session_state["billing_input_paths"]    = _input_paths
+            st.session_state["billing_run_requested"]  = True
+
+        # ── Execute pipeline (on Generate click OR confirmed-exclusion rerun) ─
+        if st.session_state.pop("billing_run_requested", False):
+            from triage.roster_parser import parse_roster, RosterParseError
+            from triage.invoice_parser import parse_invoice, InvoiceParseError
+            from triage.tech_hours_parser import parse_tech_hours, TechHoursParseError
+            from triage.billing_summary_generator import (
+                generate_billing_summary, update_manifest_status
+            )
+            from triage.billing_bridge_validator import validate_billing_workbook
+
+            roster_path_b     = st.session_state.get("billing_roster_path")
+            tech_hours_path_b = st.session_state.get("billing_tech_path")
+            invoice_paths     = st.session_state.get("billing_invoice_paths", [])
+            input_paths       = st.session_state.get("billing_input_paths", [])
+            _billing_exclude_confirmed = st.session_state.get("billing_exclude_confirmed", False)
+
+            if not roster_path_b:
+                st.error("Please upload a Roster Log (.xlsx) or provide a valid folder path.")
+            else:
+                _billing_exclude_rows: list = []
+
+                with st.spinner("Parsing roster, tech hours & invoices, building billing summary…"):
+                    try:
+                        # ── Parse Roster Log ───────────────────────────────
+                        if _billing_exclude_confirmed:
+                            records = parse_roster(
+                                path=roster_path_b,
+                                target_month=billing_month_pick.strftime("%B %Y"),
+                                malformed_out=_billing_exclude_rows,
+                            )
+                        else:
+                            records = parse_roster(
+                                path=roster_path_b,
+                                target_month=billing_month_pick.strftime("%B %Y"),
+                            )
+
+                        # ── Parse Tech Hours workbook (optional) ───────────
+                        tech_records = []
+                        tech_staff_count = 0
+                        tech_net_total   = 0.0
+                        if tech_hours_path_b:
+                            tech_records = parse_tech_hours(
+                                path=tech_hours_path_b,
+                                sheet_name="Project Team",
+                                project="Projects Team",
+                                target_month=billing_month_str,
+                            )
+                            tech_staff_count = len({r["staff"] for r in tech_records})
+                            tech_net_total   = sum(r["net_hours"] for r in tech_records)
+                            st.info(
+                                f"Tech Hours: {len(tech_records)} records, "
+                                f"{tech_staff_count} staff, "
+                                f"{tech_net_total:.2f}h net — overlapping roster "
+                                "records reclassified to 'Projects Team'."
+                            )
+
+                        # ── Build merged billing record set ────────────────
+                        zero_skipped = [r for r in records if r["gross_hours"] <= 0]
+                        tech_keys    = {(r["staff"], r["date"]) for r in tech_records}
+                        merged_records = []
+                        for r in records:
+                            if r["gross_hours"] <= 0:
+                                continue
+                            rec = dict(r)
+                            if (rec["staff"], rec["date"]) in tech_keys:
+                                rec["project"] = "Projects Team"
+                            merged_records.append(rec)
+
+                        if zero_skipped:
+                            st.caption(
+                                f"ℹ️ {len(zero_skipped)} zero-gross roster record(s) "
+                                "excluded from billing (no billable time)."
+                            )
+                        proj_team_cnt = sum(
+                            1 for r in merged_records
+                            if r.get("project") == "Projects Team"
+                        )
+                        if proj_team_cnt:
+                            st.caption(
+                                f"ℹ️ {proj_team_cnt} record(s) reclassified to "
+                                "'Projects Team' via Tech Hours date overlap."
+                            )
+
+                        # ── Parse invoices ─────────────────────────────────
+                        parsed_invoices = []
+                        for ip in invoice_paths:
+                            ip_path = Path(ip)
+                            if ip_path.stat().st_size == 0:
+                                raise InvoiceParseError(
+                                    f"Invoice file '{ip_path.name}' is empty (0 bytes). "
+                                    "Upload a valid .docx file."
+                                )
+                            try:
+                                parsed_invoices.append(parse_invoice(ip))
+                            except InvoiceParseError as ie:
+                                raise InvoiceParseError(
+                                    f"Invoice parse failed for '{ip_path.name}': {ie}"
+                                )
+
+                        if not merged_records:
+                            st.warning(
+                                f"No roster records found for {billing_month_str}. "
+                                "Verify the sheet name matches 'Live - {Month YYYY}'."
+                            )
+                        else:
+                            out_path = generate_billing_summary(
+                                records=merged_records,
+                                invoices=parsed_invoices,
+                                billing_month=billing_month_str,
+                                input_paths=input_paths,
+                            )
+
+                            val = validate_billing_workbook(
+                                path=out_path,
+                                month=billing_month_str,
+                                out_root="billing_runs",
+                            )
+
+                            _manifest_status = (
+                                "fail" if val.failures else
+                                "warn" if val.warnings else
+                                "pass"
+                            )
+                            update_manifest_status(
+                                out_root="billing_runs",
+                                billing_month=billing_month_str,
+                                status=_manifest_status,
+                                gate_status=val.status,
+                                failures=list(val.failures),
+                                warnings=list(val.warnings),
+                            )
+
+                            if val.failures:
+                                os.remove(out_path)
+                                st.error(
+                                    "**Gate check FAILED** — output deleted.\n\n"
+                                    + "\n".join(f"- {f}" for f in val.failures)
+                                )
+                            else:
+                                if val.warnings:
+                                    with st.expander("⚠️ Gate check warnings (non-blocking)"):
+                                        for w in val.warnings:
+                                            st.warning(w)
+
+                                st.success(
+                                    f"Billing summary generated: `{out_path}` "
+                                    f"(gate: {val.status})"
+                                )
+
+                                gross = sum(r["gross_hours"]     for r in merged_records)
+                                lunch = sum(r["lunch_deduction"] for r in merged_records)
+                                net   = sum(r["net_hours"]       for r in merged_records)
+                                inv_t = sum((i.get("total") or 0) for i in parsed_invoices)
+
+                                st.markdown("##### Monthly Rollup")
+                                st.dataframe([
+                                    {"Metric": "Roster Records",            "Value": str(len(records))},
+                                    {"Metric": "Tech Hours Staff (ref)",    "Value": str(tech_staff_count)},
+                                    {"Metric": "Tech Hours Net (ref)",      "Value": f"{tech_net_total:.2f}h"},
+                                    {"Metric": "Gross Hours",               "Value": f"{gross:.2f}"},
+                                    {"Metric": "Lunch Deductions",          "Value": f"{lunch:.2f}"},
+                                    {"Metric": "Net Billable Hours",        "Value": f"{net:.2f}"},
+                                    {"Metric": "Invoices Parsed",           "Value": str(len(parsed_invoices))},
+                                    {"Metric": "Total Invoice Amount",      "Value": f"${inv_t:,.2f}"},
+                                ], use_container_width=True)
+
+                                if parsed_invoices:
+                                    st.markdown("##### Invoice Pivot")
+                                    st.dataframe([
+                                        {
+                                            "Vendor":   i["vendor"],
+                                            "PO":       i.get("po_number") or "",
+                                            "Category": i["cost_category"].title(),
+                                            "Total":    f"${(i.get('total') or 0):,.2f}",
+                                        }
+                                        for i in parsed_invoices
+                                    ], use_container_width=True)
+
+                                with open(out_path, "rb") as fh:
+                                    st.download_button(
+                                        "⬇️ Download Billing Summary",
+                                        data=fh.read(),
+                                        file_name=Path(out_path).name,
+                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                        key="billing_download",
+                                    )
+
+                        # Show excluded rows after successful confirmed re-run
+                        if _billing_exclude_confirmed and _billing_exclude_rows:
+                            with st.expander(
+                                f"⚠️ {len(_billing_exclude_rows)} malformed roster "
+                                "row(s) excluded per your confirmation"
+                            ):
+                                st.warning(
+                                    "These rows were excluded from the billing summary "
+                                    "because they had invalid clock-in / clock-out data. "
+                                    "Correct them in the source file for a complete report."
+                                )
+                                for _m in _billing_exclude_rows:
+                                    st.code(_m)
+                            if st.button(
+                                "Reset (strict mode on next run)",
+                                key="billing_reset_strict",
+                            ):
+                                st.session_state["billing_exclude_confirmed"] = False
+                                st.rerun()
+
+                    except RosterParseError as e:
+                        err_msg = str(e)
+                        if any(kw in err_msg.lower() for kw in
+                               ("malformed", "clock", "missing clock", "invalid")):
+                            # Store error in session state so the confirmation UI
+                            # (rendered ABOVE the Generate button on the next rerun)
+                            # can show it even though the Generate button is now false.
+                            st.session_state["billing_malformed_error"] = err_msg
+                            st.rerun()
+                        else:
+                            st.error(f"**Roster parse error:** {err_msg}")
+                    except InvoiceParseError as e:
+                        st.error(f"**Invoice parse error:** {e}")
+                    except Exception as e:
+                        st.error(f"**Unexpected error:** {type(e).__name__}: {e}")
+                        with st.expander("Traceback"):
+                            st.code(traceback.format_exc())
+
+
 # ── main tabs ────────────────────────────────────────────────────────────────
 tab_names = [
     "📊 Overview",
@@ -1146,11 +1820,13 @@ tab_names = [
     "🖥 Desktop Excel Probe",
     "🧪 Batch Runner",
     "🗂 Repo Engine",
+    "💳 Billing & Attendance",
 ]
 tabs = st.tabs(tab_names)
 
-_TAB_BATCH = tab_names.index("🧪 Batch Runner")
-_TAB_ENGINE = tab_names.index("🗂 Repo Engine")
+_TAB_BATCH    = tab_names.index("🧪 Batch Runner")
+_TAB_ENGINE   = tab_names.index("🗂 Repo Engine")
+_TAB_BILLING  = tab_names.index("💳 Billing & Attendance")
 
 if not cand_file:
     for i, tab in enumerate(tabs):
@@ -1159,6 +1835,8 @@ if not cand_file:
                 _render_batch_runner()
             elif i == _TAB_ENGINE:
                 _render_repo_engine()
+            elif i == _TAB_BILLING:
+                _render_billing_attendance()
             else:
                 st.info("Upload a **Candidate .xlsx** in the sidebar to begin.")
     st.stop()
@@ -1700,14 +2378,14 @@ with tabs[6]:
         web_channel = st.selectbox(
             "Browser channel",
             options=["(default)", "msedge", "chrome"],
-	            index=2,
-	            help="Use 'chrome' to reuse your Microsoft 365 sign-in (recommended if you normally use Chrome).",
+                    index=2,
+                    help="Use 'chrome' to reuse your Microsoft 365 sign-in (recommended if you normally use Chrome).",
         )
     with col3:
         web_user_data_dir = st.text_input(
             "User data dir (optional)",
             value="",
-	            placeholder=r"C:\Users\<you>\AppData\Local\Google\Chrome\User Data",
+                    placeholder=r"C:\Users\<you>\AppData\Local\Google\Chrome\User Data",
             help=(
                 "If the workbook requires sign-in, provide a browser profile directory so the probe "
                 "can reuse your existing session (persistent context)."
@@ -1833,4 +2511,10 @@ with tabs[_TAB_BATCH]:
 # ═══════════════════════════════════════════════════════════════════════
 with tabs[_TAB_ENGINE]:
     _render_repo_engine()
+
+
+# TAB: BILLING & ATTENDANCE
+# ═══════════════════════════════════════════════════════════════════════
+with tabs[_TAB_BILLING]:
+    _render_billing_attendance()
 
