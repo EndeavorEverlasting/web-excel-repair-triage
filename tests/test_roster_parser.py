@@ -173,3 +173,156 @@ class TestParseRosterApril2026:
             assert rec["net_hours"] >= 0.0, (
                 f"Negative net hours for {rec['staff']} on {rec['date']}"
             )
+
+
+# ── Synthetic workbook tests: missing sheet, missing columns, lunch deduction ──
+
+class TestRosterParserSynthetic:
+    """Tests using minimal in-memory workbooks — no live asset required."""
+
+    def _build_wb(self, tmp_path, sheet_name: str, headers: list, rows: list):
+        """Create a minimal roster workbook with the given sheet/header/row layout."""
+        import openpyxl as _xl
+        wb = _xl.Workbook()
+        ws = wb.active
+        ws.title = sheet_name
+        ws.append(["Attendance Log — Test"])      # row 1: title
+        ws.append(headers)                         # row 2: headers
+        for row in rows:
+            ws.append(row)                         # row 3+: data
+        path = str(tmp_path / "roster.xlsx")
+        wb.save(path)
+        return path
+
+    def test_missing_live_sheet_raises(self, tmp_path):
+        """Workbook with no 'Live - ...' sheet must raise RosterParseError."""
+        import openpyxl as _xl
+        wb = _xl.Workbook()
+        wb.active.title = "Summary"
+        path = str(tmp_path / "no_live.xlsx")
+        wb.save(path)
+        with pytest.raises(RosterParseError, match="[Ll]ive"):
+            parse_roster(path)
+
+    def test_missing_staff_column_raises(self, tmp_path):
+        """Sheet that has no 'Staff Name' column must raise RosterParseError."""
+        path = self._build_wb(
+            tmp_path,
+            sheet_name="Live - April 2026",
+            headers=["Apr 01 - Clock In", "Apr 01 - Clock Out"],
+            rows=[[datetime.time(9, 0), datetime.time(17, 0)]],
+        )
+        with pytest.raises(RosterParseError, match="[Ss]taff"):
+            parse_roster(path)
+
+    def test_missing_date_columns_raises(self, tmp_path):
+        """Sheet with only Staff Name column and no date columns raises RosterParseError."""
+        path = self._build_wb(
+            tmp_path,
+            sheet_name="Live - April 2026",
+            headers=["Staff Name", "Project"],
+            rows=[["Test Worker", "Alpha"]],
+        )
+        with pytest.raises(RosterParseError, match="[Dd]ate"):
+            parse_roster(path)
+
+    def test_target_month_not_found_raises(self, tmp_path):
+        """Requesting a month that has no matching Live sheet raises RosterParseError."""
+        path = self._build_wb(
+            tmp_path,
+            sheet_name="Live - April 2026",
+            headers=["Staff Name", "Project", "Apr 01 - Clock In", "Apr 01 - Clock Out"],
+            rows=[["Test Worker", "Alpha", datetime.time(9, 0), datetime.time(17, 0)]],
+        )
+        with pytest.raises(RosterParseError, match="[Ll]ive|[Mm]atching"):
+            parse_roster(path, target_month="March 2026")
+
+    def test_happy_path_parses_record(self, tmp_path):
+        """Valid workbook with one staff member produces one record."""
+        path = self._build_wb(
+            tmp_path,
+            sheet_name="Live - April 2026",
+            headers=["Staff Name", "Project", "Apr 01 - Clock In", "Apr 01 - Clock Out"],
+            rows=[["Jane Doe", "Alpha", datetime.time(9, 0), datetime.time(17, 0)]],
+        )
+        records = parse_roster(path, target_month="April 2026")
+        assert len(records) == 1
+        rec = records[0]
+        assert rec["staff"] == "Jane Doe"
+        assert rec["project"] == "Alpha"
+        assert rec["gross_hours"] == pytest.approx(8.0)
+
+    def test_lunch_deduction_under_six_hours(self, tmp_path):
+        """Shifts under 6h receive no lunch deduction."""
+        path = self._build_wb(
+            tmp_path,
+            sheet_name="Live - April 2026",
+            headers=["Staff Name", "Project", "Apr 01 - Clock In", "Apr 01 - Clock Out"],
+            rows=[["Short Worker", "Beta", datetime.time(9, 0), datetime.time(13, 0)]],
+        )
+        records = parse_roster(path, target_month="April 2026")
+        assert len(records) == 1
+        assert records[0]["lunch_deduction"] == pytest.approx(0.0)
+        assert records[0]["net_hours"] == pytest.approx(4.0)
+
+    def test_lunch_deduction_six_to_eight_hours(self, tmp_path):
+        """Shifts between 6h and <8h receive 0.5h lunch deduction."""
+        path = self._build_wb(
+            tmp_path,
+            sheet_name="Live - April 2026",
+            headers=["Staff Name", "Project", "Apr 01 - Clock In", "Apr 01 - Clock Out"],
+            rows=[["Mid Worker", "Beta", datetime.time(9, 0), datetime.time(15, 0)]],
+        )
+        records = parse_roster(path, target_month="April 2026")
+        assert len(records) == 1
+        assert records[0]["lunch_deduction"] == pytest.approx(0.5)
+        assert records[0]["net_hours"] == pytest.approx(5.5)
+
+    def test_lunch_deduction_eight_or_more_hours(self, tmp_path):
+        """Shifts of 8h+ receive 1.0h lunch deduction."""
+        path = self._build_wb(
+            tmp_path,
+            sheet_name="Live - April 2026",
+            headers=["Staff Name", "Project", "Apr 01 - Clock In", "Apr 01 - Clock Out"],
+            rows=[["Full Worker", "Alpha", datetime.time(9, 0), datetime.time(17, 0)]],
+        )
+        records = parse_roster(path, target_month="April 2026")
+        assert len(records) == 1
+        assert records[0]["lunch_deduction"] == pytest.approx(1.0)
+        assert records[0]["net_hours"] == pytest.approx(7.0)
+
+    def test_both_clocks_missing_skips_row(self, tmp_path):
+        """A row with no clock-in and no clock-out is silently skipped."""
+        path = self._build_wb(
+            tmp_path,
+            sheet_name="Live - April 2026",
+            headers=["Staff Name", "Project", "Apr 01 - Clock In", "Apr 01 - Clock Out"],
+            rows=[["Ghost Worker", "Alpha", None, None]],
+        )
+        records = parse_roster(path, target_month="April 2026")
+        assert records == []
+
+    def test_one_clock_missing_strict_raises(self, tmp_path):
+        """One clock value missing in strict mode (no malformed_out) raises."""
+        path = self._build_wb(
+            tmp_path,
+            sheet_name="Live - April 2026",
+            headers=["Staff Name", "Project", "Apr 01 - Clock In", "Apr 01 - Clock Out"],
+            rows=[["Half Worker", "Alpha", datetime.time(9, 0), None]],
+        )
+        with pytest.raises(RosterParseError, match="[Mm]alformed|[Bb]lank|[Cc]lock"):
+            parse_roster(path, target_month="April 2026")
+
+    def test_one_clock_missing_collect_mode_warns(self, tmp_path):
+        """One clock value missing in collect mode appends warning and skips row."""
+        path = self._build_wb(
+            tmp_path,
+            sheet_name="Live - April 2026",
+            headers=["Staff Name", "Project", "Apr 01 - Clock In", "Apr 01 - Clock Out"],
+            rows=[["Half Worker", "Alpha", datetime.time(9, 0), None]],
+        )
+        malformed = []
+        records = parse_roster(path, target_month="April 2026", malformed_out=malformed)
+        assert records == []
+        assert len(malformed) == 1
+        assert "Half Worker" in malformed[0]
