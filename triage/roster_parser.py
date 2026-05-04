@@ -11,7 +11,8 @@ Wide-form layout:
   Row 3+: One row per staff member; clock columns hold datetime.time values.
 
 Returns a list of dicts per staff/date record:
-    {staff, project, date, clock_in, clock_out, gross_hours, lunch_deduction, net_hours}
+    {staff, project, date, clock_in, clock_out, gross_hours,
+     lunch_deduction, net_hours, long_shift}
 
 Raises RosterParseError if expected structure is missing.
 """
@@ -39,7 +40,14 @@ def _lunch_deduction(gross_hours: float) -> float:
 # ── Time helpers ──────────────────────────────────────────────────────────────
 
 def _time_to_hours(value: Any) -> Optional[float]:
-    """Convert any clock-in/out cell value to decimal hours (0–24)."""
+    """Convert any clock-in/out cell value to decimal hours (0–24).
+
+    Handles:
+      - datetime.time / datetime.datetime / datetime.timedelta objects
+      - Excel time fractions (float 0.0–1.0)
+      - Strings like '9:28:00 AM', '17:00', '9:28:00 AM/ Bonita'
+        (appended notes after the time are silently ignored)
+    """
     import datetime as dt
     if value is None:
         return None
@@ -54,6 +62,25 @@ def _time_to_hours(value: Any) -> Optional[float]:
         if 0.0 <= frac < 2.0:          # Excel time fraction (0.0–1.0)
             return frac * 24.0
         return None                     # Probably an unrelated number
+    if isinstance(value, str):
+        # Extract leading HH:MM or HH:MM:SS, optionally followed by AM/PM.
+        # Any trailing text (e.g. "/ Bonita", "- note") is ignored.
+        m = re.match(
+            r"(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?",
+            value.strip(),
+            re.IGNORECASE,
+        )
+        if not m:
+            return None
+        hour   = int(m.group(1))
+        minute = int(m.group(2))
+        second = int(m.group(3)) if m.group(3) else 0
+        ampm   = (m.group(4) or "").upper()
+        if ampm == "PM" and hour != 12:
+            hour += 12
+        elif ampm == "AM" and hour == 12:
+            hour = 0
+        return hour + minute / 60.0 + second / 3600.0
     return None
 
 
@@ -65,6 +92,13 @@ def _compute_gross(clock_in: Optional[float], clock_out: Optional[float]) -> flo
     if diff < 0:
         diff += 24.0      # Overnight shift
     return round(diff, 4)
+
+
+def _is_overnight(clock_in: Optional[float], clock_out: Optional[float]) -> bool:
+    """Return True when clock_out < clock_in (shift crossed midnight)."""
+    if clock_in is None or clock_out is None:
+        return False
+    return clock_out < clock_in
 
 
 # ── Header parsing ────────────────────────────────────────────────────────────
@@ -148,6 +182,131 @@ def _month_variants(month_str: str) -> list:
     return list(dict.fromkeys(variants))  # preserve order, deduplicate
 
 
+def _find_assignments_sheet(wb, month_label: str):
+    """
+    Locate the 'Assignments - {Month YYYY}' worksheet that matches month_label.
+    Returns the worksheet object, or None if not found (non-fatal).
+    """
+    pattern = re.compile(r"^Assignments\s*[-–]\s*(.+)$", re.IGNORECASE)
+    candidates = [
+        (name, m.group(1).strip())
+        for name in wb.sheetnames
+        if (m := pattern.match(name.strip()))
+    ]
+    if not candidates or not month_label:
+        return None
+    variants = _month_variants(month_label)
+    if re.search(r"\d{4}", month_label):
+        variants = [v for v in variants if re.search(r"\d{4}", v)]
+    for variant in variants:
+        for name, label in candidates:
+            if variant in label.lower():
+                return wb[name]
+    return None
+
+
+def _load_assignments(ws) -> Dict[Tuple[date, str], str]:
+    """
+    Parse an Assignments sheet and return a per-day project lookup:
+
+        {(date, staff_name): project_label}
+
+    Two sources are merged (overrides win over the main table):
+      1. Main auto-fill table  — wide form: staff rows × date columns
+      2. Overrides sub-table   — rows: [Override Staff Name, Override Date,
+                                         Override Project, Notes, ...]
+    """
+    import datetime as dt
+
+    lookup: Dict[Tuple[date, str], str] = {}
+    if ws is None:
+        return lookup
+
+    max_row = ws.max_row
+    max_col = ws.max_column
+
+    # ── Locate the header row and the overrides section ───────────────────────
+    hdr_row: Optional[int] = None
+    overrides_start: Optional[int] = None
+
+    for r in range(1, min(max_row + 1, 20)):
+        val = ws.cell(r, 1).value
+        if val is None:
+            continue
+        val_s = str(val).strip().lower()
+        if hdr_row is None and ("staff name" in val_s or ("staff" in val_s and "name" in val_s)):
+            hdr_row = r
+        elif "override" in val_s and overrides_start is None:
+            overrides_start = r
+            break
+
+    if hdr_row is None:
+        return lookup
+
+    # ── Build date-column index from the header row ───────────────────────────
+    date_cols: Dict[int, date] = {}
+    for c in range(1, max_col + 1):
+        val = ws.cell(hdr_row, c).value
+        if isinstance(val, dt.datetime):
+            date_cols[c] = val.date()
+        elif isinstance(val, dt.date):
+            date_cols[c] = val
+
+    if not date_cols:
+        return lookup
+
+    # ── Parse the main auto-fill table ───────────────────────────────────────
+    main_end = (overrides_start - 1) if overrides_start else max_row
+    for r in range(hdr_row + 1, main_end + 1):
+        staff_val = ws.cell(r, 1).value
+        if not staff_val or str(staff_val).strip() in ("", "None", "0"):
+            continue
+        if isinstance(staff_val, (int, float)):
+            continue
+        staff_name = str(staff_val).strip()
+        for c, d in date_cols.items():
+            proj_val = ws.cell(r, c).value
+            if proj_val is None or str(proj_val).strip() in ("", "0"):
+                continue
+            lookup[(d, staff_name)] = str(proj_val).strip()
+
+    # ── Parse the Overrides sub-table ─────────────────────────────────────────
+    if overrides_start is None:
+        return lookup
+
+    # Find the overrides header row (directly below the section title)
+    override_hdr: Optional[int] = None
+    for r in range(overrides_start, min(overrides_start + 5, max_row + 1)):
+        val = ws.cell(r, 1).value
+        if val and "override staff" in str(val).strip().lower():
+            override_hdr = r
+            break
+        if val and "staff" in str(val).strip().lower() and r != overrides_start:
+            override_hdr = r
+            break
+
+    if override_hdr is None:
+        return lookup
+
+    for r in range(override_hdr + 1, max_row + 1):
+        staff_val   = ws.cell(r, 1).value
+        date_val    = ws.cell(r, 2).value
+        project_val = ws.cell(r, 3).value
+        if not staff_val or not date_val or not project_val:
+            continue
+        staff_name = str(staff_val).strip()
+        project    = str(project_val).strip()
+        if isinstance(date_val, dt.datetime):
+            override_date = date_val.date()
+        elif isinstance(date_val, dt.date):
+            override_date = date_val
+        else:
+            continue
+        lookup[(override_date, staff_name)] = project
+
+    return lookup
+
+
 def _find_live_sheet(wb, target_month: Optional[str] = None):
     """
     Locate the 'Live - {Month YYYY}' worksheet.
@@ -197,6 +356,8 @@ def parse_roster(
     target_week_start: Optional[date] = None,
     target_week_end: Optional[date] = None,
     malformed_out: Optional[List[str]] = None,
+    overnight_out: Optional[List[Dict[str, Any]]] = None,
+    long_shift_threshold_hours: float = 12.0,
 ) -> List[Dict[str, Any]]:
     """
     Parse the wide-form Roster Log and return a list of attendance records.
@@ -211,12 +372,23 @@ def parse_roster(
                         and parsing continues (collect-and-warn mode).
                         If None (default), a RosterParseError is raised on
                         the first malformed pair (strict mode).
+    overnight_out     : if provided, dicts describing overnight-shift records
+                        are appended here as they are encountered.  Each dict
+                        has the same keys as a normal record plus a human-
+                        readable 'note' string.  Overnight records are still
+                        included in the normal returned list.
+    long_shift_threshold_hours
+                      : gross hours above this threshold are flagged with
+                        long_shift=True for extra review.
 
     Returns
     -------
     List of dicts with keys:
         staff, project, date, clock_in, clock_out,
-        gross_hours, lunch_deduction, net_hours
+        gross_hours, lunch_deduction, net_hours, long_shift
+
+    Overnight records are included with correct gross hours (24h added), and
+    are also reported via overnight_out when that parameter is provided.
     """
     try:
         import openpyxl
@@ -266,6 +438,16 @@ def parse_roster(
             )
     else:
         sheets_to_parse.append(_find_live_sheet(wb, target_month))
+
+    # ── Load per-day project assignments (non-fatal if sheet absent) ───────────
+    # Build a combined lookup from all relevant Assignments sheets so that
+    # cross-month weeks also get the right project labels for each half.
+    assignments_lookup: Dict[Tuple[date, str], str] = {}
+    for live_ws in sheets_to_parse:
+        month_label_for_ws = live_ws.title.split("-", 1)[-1].strip()
+        asn_ws = _find_assignments_sheet(wb, month_label_for_ws)
+        if asn_ws is not None:
+            assignments_lookup.update(_load_assignments(asn_ws))
 
     # ── Parse each sheet (usually one; two for cross-month weeks) ──────────────
     records: List[Dict[str, Any]] = []
@@ -326,14 +508,14 @@ def parse_roster(
             if isinstance(staff_val, (int, float)):
                 continue
 
-            project_val = (
+            live_project = (
                 str(row[idx_project]).strip()
                 if idx_project is not None and idx_project < len(row)
                 and row[idx_project] is not None
                 else ""
             )
-            if project_val in ("0", ""):
-                project_val = ""
+            if live_project in ("0", ""):
+                live_project = ""
 
             staff_name = str(staff_val).strip()
 
@@ -342,6 +524,12 @@ def parse_roster(
                     continue
                 if target_week_end and record_date > target_week_end:
                     continue
+
+                # Resolve project: per-day Assignments sheet entry wins over
+                # the Live sheet's default project column.
+                project_val = assignments_lookup.get(
+                    (record_date, staff_name), live_project
+                )
 
                 # Key includes project so that staff with multiple project
                 # assignments on the same date each produce a separate record.
@@ -375,12 +563,14 @@ def parse_roster(
                         continue
                     raise RosterParseError(msg)
 
-                gross = _compute_gross(clock_in, clock_out)
+                gross        = _compute_gross(clock_in, clock_out)
+                is_overnight = _is_overnight(clock_in, clock_out)
+                is_long_shift = gross > long_shift_threshold_hours
                 lunch = _lunch_deduction(gross)
                 net   = round(max(0.0, gross - lunch), 4)
 
                 seen_keys.add(key)
-                records.append({
+                rec = {
                     "staff":           staff_name,
                     "project":         project_val,
                     "date":            record_date,
@@ -389,7 +579,24 @@ def parse_roster(
                     "gross_hours":     round(gross, 4),
                     "lunch_deduction": lunch,
                     "net_hours":       net,
-                })
+                    "long_shift":      is_long_shift,
+                }
+                records.append(rec)
+
+                if is_overnight and overnight_out is not None:
+                    def _fmt_h(h: float) -> str:
+                        total_minutes = int(round(h * 60)) % (24 * 60)
+                        hh, mm = divmod(total_minutes, 60)
+                        return f"{hh:02d}:{mm:02d}"
+                    overnight_out.append({
+                        **rec,
+                        "overnight": True,
+                        "note": (
+                            f"{staff_name} on {record_date.isoformat()}: "
+                            f"clock-in {_fmt_h(clock_in)} → clock-out {_fmt_h(clock_out)} "
+                            f"(overnight, gross {gross:.2f}h)"
+                        ),
+                    })
 
     for ws in sheets_to_parse:
         _parse_sheet(ws)

@@ -67,3 +67,6 @@ desktop.ini
 
 # ── Billing pipeline runtime outputs ────────────────────────────────────────
 billing_runs/
+
+# Generated billing report outputs
+billing_runs_tmp/

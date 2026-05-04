@@ -20,7 +20,7 @@ A Streamlit-based diagnostic and repair toolset for `.xlsx` files that trigger r
   - `report.py` — Patch recipe builder
   - `billing_bridge_validator.py` — Billing workbook gate-check wrapper
   - `billing_workbook_profile.py` — Billing workbook structure profiler
-  - `roster_parser.py` — Active Roster Log (.xlsx) parser; extracts clock-in/out + lunch deductions
+  - `roster_parser.py` — Active Roster Log (.xlsx) parser; extracts clock-in/out + lunch deductions; handles string clock values with appended notes (e.g. "9:28:00 AM/ Bonita")
   - `invoice_parser.py` — Vendor .docx invoice parser (AAA Disposal, NYM Courier, AGL, Cybernet)
   - `attendance_report.py` — Weekly attendance .xlsx report generator
   - `billing_summary_generator.py` — Monthly billing summary .xlsx generator (2-sheet: Billing Summary + Invoice Pivots)
