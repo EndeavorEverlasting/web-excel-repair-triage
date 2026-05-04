@@ -60,6 +60,7 @@ def _make_records(week_start: datetime.date, staff_data: list) -> list:
             "gross_hours":     round(gross, 4),
             "lunch_deduction": lunch,
             "net_hours":       net,
+            "long_shift":      gross > 12.0,
         })
     return records
 
@@ -196,6 +197,33 @@ def test_gate_check_passes(attendance_result):
     report = run_all(out_path)
     assert not report.stopship, f"Stopship tokens found: {report.stopship}"
     assert not report.cf_ref,   f"CF #REF! hits found: {report.cf_ref}"
+
+
+def test_long_shift_uses_distinct_fill_and_comment(tmp_path):
+    """Long shifts use a stronger fill than regular overnight shifts."""
+    records = _make_records(
+        _WEEK_START,
+        [("Night Owl", "Project Gamma", 18.0, 7.5, 0)],
+    )
+    assert records[0]["long_shift"] is True
+
+    out_path = generate_attendance_report(
+        records=records,
+        week_start=_WEEK_START,
+        week_end=_WEEK_END,
+        out_root=str(tmp_path),
+        run_id="long-shift-test",
+    )
+
+    wb = openpyxl.load_workbook(out_path)
+    ws = wb.active
+    ci_cell = ws.cell(4, 3)
+    fill_rgb = str(ci_cell.fill.fgColor.rgb or "")
+
+    assert fill_rgb.endswith("7F1D1D")
+    assert not fill_rgb.endswith("7B3F00")
+    assert ci_cell.comment is not None
+    assert "Long shift" in ci_cell.comment.text
 
 
 # ── T10–T12: formatting helpers ───────────────────────────────────────────────

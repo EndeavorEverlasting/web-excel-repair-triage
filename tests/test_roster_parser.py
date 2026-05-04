@@ -46,6 +46,7 @@ import pytest
 
 from triage.roster_parser import (
     _time_to_hours,
+    _compute_gross,
     _find_assignments_sheet,
     _load_assignments,
     parse_roster,
@@ -117,6 +118,21 @@ class TestTimeToHours:
         assert _time_to_hours("8:30 AM - note here") == pytest.approx(8.5)
 
 
+class TestComputeGross:
+    def test_compute_gross_same_day_shift(self):
+        assert _compute_gross(9.0, 17.0) == pytest.approx(8.0)
+
+    def test_compute_gross_overnight_shift(self):
+        assert _compute_gross(23.0, 7.0) == pytest.approx(8.0)
+
+    def test_compute_gross_midnight_exact_clock_out(self):
+        assert _compute_gross(22.0, 0.0) == pytest.approx(2.0)
+
+    def test_compute_gross_missing_clock_returns_zero(self):
+        assert _compute_gross(None, 17.0) == pytest.approx(0.0)
+        assert _compute_gross(9.0, None) == pytest.approx(0.0)
+
+
 # ── Integration: parse_roster against the live April 2026 file ───────────────
 
 @pytest.mark.skipif(not _ROSTER_PRESENT, reason="Live roster asset not present")
@@ -173,6 +189,7 @@ class TestParseRosterApril2026:
             "staff", "project", "date",
             "clock_in", "clock_out",
             "gross_hours", "lunch_deduction", "net_hours",
+            "long_shift",
         }
         for rec in records:
             assert required_keys == set(rec.keys()), f"Unexpected record keys: {rec.keys()}"
@@ -272,6 +289,64 @@ class TestRosterParserSynthetic:
         assert rec["staff"] == "Jane Doe"
         assert rec["project"] == "Alpha"
         assert rec["gross_hours"] == pytest.approx(8.0)
+
+    def test_parse_roster_collects_overnight_records(self, tmp_path):
+        """Overnight shifts remain normal records and are copied to overnight_out."""
+        path = self._build_wb(
+            tmp_path,
+            sheet_name="Live - April 2026",
+            headers=["Staff Name", "Project", "Apr 01 - Clock In", "Apr 01 - Clock Out"],
+            rows=[["Night Worker", "Ops", datetime.time(23, 0), datetime.time(7, 0)]],
+        )
+        overnight: list[dict] = []
+        records = parse_roster(
+            path,
+            target_month="April 2026",
+            overnight_out=overnight,
+        )
+
+        assert len(records) == 1
+        rec = records[0]
+        assert rec["gross_hours"] == pytest.approx(8.0)
+        assert rec["long_shift"] is False
+
+        assert len(overnight) == 1
+        assert overnight[0]["staff"] == "Night Worker"
+        assert overnight[0]["overnight"] is True
+        assert overnight[0]["long_shift"] is False
+
+    def test_parse_roster_flags_long_overnight_shift(self, tmp_path):
+        """Overnight shifts above the threshold are flagged for extra review."""
+        path = self._build_wb(
+            tmp_path,
+            sheet_name="Live - April 2026",
+            headers=["Staff Name", "Project", "Apr 01 - Clock In", "Apr 01 - Clock Out"],
+            rows=[["Long Night Worker", "Ops", datetime.time(18, 0), datetime.time(7, 30)]],
+        )
+        overnight: list[dict] = []
+        records = parse_roster(
+            path,
+            target_month="April 2026",
+            overnight_out=overnight,
+            long_shift_threshold_hours=12.0,
+        )
+
+        assert len(records) == 1
+        assert records[0]["gross_hours"] == pytest.approx(13.5)
+        assert records[0]["long_shift"] is True
+        assert overnight[0]["long_shift"] is True
+
+    def test_parse_roster_long_shift_threshold_is_configurable(self, tmp_path):
+        """The long-shift threshold can be raised for special cases."""
+        path = self._build_wb(
+            tmp_path,
+            sheet_name="Live - April 2026",
+            headers=["Staff Name", "Project", "Apr 01 - Clock In", "Apr 01 - Clock Out"],
+            rows=[["Long But Allowed", "Ops", datetime.time(18, 0), datetime.time(7, 30)]],
+        )
+        records = parse_roster(path, target_month="April 2026", long_shift_threshold_hours=14.0)
+        assert records[0]["gross_hours"] == pytest.approx(13.5)
+        assert records[0]["long_shift"] is False
 
     def test_lunch_deduction_under_six_hours(self, tmp_path):
         """Shifts under 6h receive no lunch deduction."""

@@ -79,6 +79,22 @@ def main() -> None:
     else:
         print("No overnight shifts detected.")
 
+    long_shifts = [r for r in records if r.get("long_shift")]
+    if long_shifts:
+        print(f"\nLong shifts — possible data errors ({len(long_shifts)} record(s)):")
+        for rec in long_shifts:
+            ci_s = _fmt(rec["clock_in"])
+            co_s = _fmt(rec["clock_out"])
+            overnight_tag = " overnight" if rec["clock_out"] < rec["clock_in"] else ""
+            print(
+                f"  - {rec['staff']:<32} {rec['date'].isoformat()}  "
+                f"in {ci_s} → out {co_s}  "
+                f"gross {rec['gross_hours']:.2f}h  net {rec['net_hours']:.2f}h"
+                f"{overnight_tag}"
+            )
+    else:
+        print("No long shifts detected.")
+
     print(f"\nNet hours per staff ({TARGET_MONTH}):")
     from collections import defaultdict
     by_staff: dict[str, float] = defaultdict(float)

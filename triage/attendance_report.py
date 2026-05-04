@@ -57,6 +57,20 @@ def _make_overnight_comment(rec: Dict[str, Any], Comment):
     return Comment(text, "Attendance Report")
 
 
+def _make_long_shift_comment(rec: Dict[str, Any], Comment):
+    """Build an openpyxl Comment for a suspiciously long shift cell."""
+    ci_s = _fmt_time(rec.get("clock_in"))
+    co_s = _fmt_time(rec.get("clock_out"))
+    text = (
+        f"Long shift - possible data error\n"
+        f"Clock-in:  {ci_s}\n"
+        f"Clock-out: {co_s}\n"
+        f"Gross hrs: {rec.get('gross_hours', 0):.2f}\n"
+        f"Review the source roster before billing."
+    )
+    return Comment(text, "Attendance Report")
+
+
 def generate_attendance_report(
     records: List[Dict[str, Any]],
     week_start: date,
@@ -112,6 +126,7 @@ def generate_attendance_report(
     hdr_fill       = PatternFill("solid", fgColor="1A5C38")
     date_fill      = PatternFill("solid", fgColor="0D3320")
     overnight_fill = PatternFill("solid", fgColor="7B3F00")  # dark amber — overnight rows
+    long_shift_fill = PatternFill("solid", fgColor="7F1D1D")  # dark red — suspicious duration
     bold_font = Font(bold=True, color="FFFFFF", size=11)
     bold_dark = Font(bold=True, color="FFFFFF", size=10)
     normal    = Font(size=10)
@@ -215,15 +230,20 @@ def generate_attendance_report(
                 ci_h       = rec.get("clock_in")
                 co_h       = rec.get("clock_out")
                 is_night   = (ci_h is not None and co_h is not None and co_h < ci_h)
+                is_long    = bool(rec.get("long_shift"))
             else:
                 ci = co = net_s = ""
                 is_night = False
+                is_long = False
 
             for val in (ci, co, net_s):
                 c = ws.cell(row=data_row, column=d_col, value=val)
                 c.font      = normal
                 c.alignment = center
-                if is_night:
+                if is_long:
+                    c.fill    = long_shift_fill
+                    c.comment = _make_long_shift_comment(rec, Comment)
+                elif is_night:
                     c.fill    = overnight_fill
                     c.comment = _make_overnight_comment(rec, Comment)
                 elif row_fill:

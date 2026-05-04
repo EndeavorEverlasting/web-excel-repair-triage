@@ -11,7 +11,8 @@ Wide-form layout:
   Row 3+: One row per staff member; clock columns hold datetime.time values.
 
 Returns a list of dicts per staff/date record:
-    {staff, project, date, clock_in, clock_out, gross_hours, lunch_deduction, net_hours}
+    {staff, project, date, clock_in, clock_out, gross_hours,
+     lunch_deduction, net_hours, long_shift}
 
 Raises RosterParseError if expected structure is missing.
 """
@@ -356,6 +357,7 @@ def parse_roster(
     target_week_end: Optional[date] = None,
     malformed_out: Optional[List[str]] = None,
     overnight_out: Optional[List[Dict[str, Any]]] = None,
+    long_shift_threshold_hours: float = 12.0,
 ) -> List[Dict[str, Any]]:
     """
     Parse the wide-form Roster Log and return a list of attendance records.
@@ -375,14 +377,17 @@ def parse_roster(
                         has the same keys as a normal record plus a human-
                         readable 'note' string.  Overnight records are still
                         included in the normal returned list.
+    long_shift_threshold_hours
+                      : gross hours above this threshold are flagged with
+                        long_shift=True for extra review.
 
     Returns
     -------
     List of dicts with keys:
         staff, project, date, clock_in, clock_out,
-        gross_hours, lunch_deduction, net_hours
+        gross_hours, lunch_deduction, net_hours, long_shift
 
-    Overnight records are included with correct gross hours (24h added) and
+    Overnight records are included with correct gross hours (24h added), and
     are also reported via overnight_out when that parameter is provided.
     """
     try:
@@ -560,6 +565,7 @@ def parse_roster(
 
                 gross        = _compute_gross(clock_in, clock_out)
                 is_overnight = _is_overnight(clock_in, clock_out)
+                is_long_shift = gross > long_shift_threshold_hours
                 lunch = _lunch_deduction(gross)
                 net   = round(max(0.0, gross - lunch), 4)
 
@@ -573,6 +579,7 @@ def parse_roster(
                     "gross_hours":     round(gross, 4),
                     "lunch_deduction": lunch,
                     "net_hours":       net,
+                    "long_shift":      is_long_shift,
                 }
                 records.append(rec)
 
@@ -582,6 +589,7 @@ def parse_roster(
                         return f"{hh:02d}:{mm:02d}"
                     overnight_out.append({
                         **rec,
+                        "overnight": True,
                         "note": (
                             f"{staff_name} on {record_date.isoformat()}: "
                             f"clock-in {_fmt_h(clock_in)} → clock-out {_fmt_h(clock_out)} "
