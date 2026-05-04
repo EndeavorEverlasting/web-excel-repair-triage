@@ -23,6 +23,13 @@ sys.path.insert(0, str(ROOT))
 from triage.roster_parser import parse_roster, RosterParseError
 from triage.attendance_report import generate_attendance_report
 
+
+def _fmt(decimal_hours: float) -> str:
+    """Format decimal hours as HH:MM (e.g. 23.75 → '23:45')."""
+    hh = int(decimal_hours)
+    mm = int(round((decimal_hours - hh) * 60))
+    return f"{hh:02d}:{mm:02d}"
+
 ROSTER_FILE = ROOT / "attached_assets" / (
     "Active_Roster_Log_5_1_2026_Billing_April_Pack_(1)_1777807743057.xlsx"
 )
@@ -36,11 +43,13 @@ def main() -> None:
     print(f"Parsing roster: {ROSTER_FILE.name}")
 
     malformed: list[str] = []
+    overnight: list[dict] = []
     try:
         records = parse_roster(
             str(ROSTER_FILE),
             target_month=TARGET_MONTH,
             malformed_out=malformed,
+            overnight_out=overnight,
         )
     except RosterParseError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
@@ -56,6 +65,19 @@ def main() -> None:
             print(f"  - {w}")
     else:
         print("No malformed rows.")
+
+    if overnight:
+        print(f"\nOvernight shifts detected ({len(overnight)} record(s) — review recommended):")
+        for ov in overnight:
+            ci_s = _fmt(ov["clock_in"])
+            co_s = _fmt(ov["clock_out"])
+            print(
+                f"  - {ov['staff']:<32} {ov['date'].isoformat()}  "
+                f"in {ci_s} → out {co_s}  "
+                f"gross {ov['gross_hours']:.2f}h  net {ov['net_hours']:.2f}h"
+            )
+    else:
+        print("No overnight shifts detected.")
 
     print(f"\nNet hours per staff ({TARGET_MONTH}):")
     from collections import defaultdict

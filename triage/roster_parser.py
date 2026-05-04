@@ -93,6 +93,13 @@ def _compute_gross(clock_in: Optional[float], clock_out: Optional[float]) -> flo
     return round(diff, 4)
 
 
+def _is_overnight(clock_in: Optional[float], clock_out: Optional[float]) -> bool:
+    """Return True when clock_out < clock_in (shift crossed midnight)."""
+    if clock_in is None or clock_out is None:
+        return False
+    return clock_out < clock_in
+
+
 # ── Header parsing ────────────────────────────────────────────────────────────
 
 # Matches headers like:
@@ -348,6 +355,7 @@ def parse_roster(
     target_week_start: Optional[date] = None,
     target_week_end: Optional[date] = None,
     malformed_out: Optional[List[str]] = None,
+    overnight_out: Optional[List[Dict[str, Any]]] = None,
 ) -> List[Dict[str, Any]]:
     """
     Parse the wide-form Roster Log and return a list of attendance records.
@@ -362,12 +370,20 @@ def parse_roster(
                         and parsing continues (collect-and-warn mode).
                         If None (default), a RosterParseError is raised on
                         the first malformed pair (strict mode).
+    overnight_out     : if provided, dicts describing overnight-shift records
+                        are appended here as they are encountered.  Each dict
+                        has the same keys as a normal record plus a human-
+                        readable 'note' string.  Overnight records are still
+                        included in the normal returned list.
 
     Returns
     -------
     List of dicts with keys:
         staff, project, date, clock_in, clock_out,
         gross_hours, lunch_deduction, net_hours
+
+    Overnight records are included with correct gross hours (24h added) and
+    are also reported via overnight_out when that parameter is provided.
     """
     try:
         import openpyxl
@@ -542,12 +558,13 @@ def parse_roster(
                         continue
                     raise RosterParseError(msg)
 
-                gross = _compute_gross(clock_in, clock_out)
+                gross        = _compute_gross(clock_in, clock_out)
+                is_overnight = _is_overnight(clock_in, clock_out)
                 lunch = _lunch_deduction(gross)
                 net   = round(max(0.0, gross - lunch), 4)
 
                 seen_keys.add(key)
-                records.append({
+                rec = {
                     "staff":           staff_name,
                     "project":         project_val,
                     "date":            record_date,
@@ -556,7 +573,21 @@ def parse_roster(
                     "gross_hours":     round(gross, 4),
                     "lunch_deduction": lunch,
                     "net_hours":       net,
-                })
+                }
+                records.append(rec)
+
+                if is_overnight and overnight_out is not None:
+                    def _fmt_h(h: float) -> str:
+                        hh, mm = int(h), int(round((h - int(h)) * 60))
+                        return f"{hh:02d}:{mm:02d}"
+                    overnight_out.append({
+                        **rec,
+                        "note": (
+                            f"{staff_name} on {record_date.isoformat()}: "
+                            f"clock-in {_fmt_h(clock_in)} → clock-out {_fmt_h(clock_out)} "
+                            f"(overnight, gross {gross:.2f}h)"
+                        ),
+                    })
 
     for ws in sheets_to_parse:
         _parse_sheet(ws)
