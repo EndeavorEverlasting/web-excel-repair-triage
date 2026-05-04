@@ -248,6 +248,28 @@ def test_with_invoices_pivot_data_populated(tmp_path):
     assert len(numeric_values) > 0, "Expected numeric invoice amounts in Invoice Pivots sheet"
 
 
+def test_sheet2_totals_by_category_uses_category_keys(tmp_path):
+    records = _sample_records("2026-04")
+    invoices = [
+        _sample_invoice("AAA Disposal", 700.0, "trucking"),
+        _sample_invoice("ZZZ Labor Crew", 360.0, "labor"),
+    ]
+    path = generate_billing_summary(
+        records=records,
+        invoices=invoices,
+        billing_month="2026-04",
+        out_root=str(tmp_path),
+        run_id="cat-test",
+    )
+    wb = openpyxl.load_workbook(path, data_only=True)
+    ws2 = wb["Invoice Pivots - Candidate"]
+
+    category_labels = {str(ws2.cell(r, 10).value or "").strip() for r in range(6, 12)}
+    assert "trucking" in category_labels
+    assert "labor" in category_labels
+    assert "AAA Disposal" not in category_labels
+
+
 # ── T13: net <= gross ─────────────────────────────────────────────────────────
 
 def test_net_le_gross_in_rollup(ws1):

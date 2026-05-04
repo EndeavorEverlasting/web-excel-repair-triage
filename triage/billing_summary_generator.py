@@ -173,7 +173,7 @@ def generate_billing_summary(
         inv_by_month[inv_month]["pos"].add(po)
         po_map[po]["count"] += 1
         vendor_map[vendor]["count"] += 1
-        category_map[vendor]["count"] += 1
+
 
         line_items = inv.get("line_items") or []
         if line_items:
@@ -200,11 +200,12 @@ def generate_billing_summary(
             inv_by_month[inv_month][cat] += amt
             po_map[po][cat]              += amt
             vendor_map[vendor][cat]      += amt
-            category_map[vendor][cat]    += amt
+            category_map[cat]["count"] += 1
+            category_map[cat][cat] += amt
+            category_map[cat]["total"] += amt
 
         po_map[po]["total"]              += inv_total_amt
         vendor_map[vendor]["total"]      += inv_total_amt
-        category_map[vendor]["total"]    += inv_total_amt
 
         dom_cat = max(li_sum, key=li_sum.get) if any(li_sum.values()) else "other"
         proj_bucket = _CATEGORY_TO_PROJECT.get(dom_cat, "Unassigned / Review")
@@ -799,8 +800,8 @@ def generate_billing_summary(
     # Vendor/Category block (right side, rows 6+) — cols 10-14
     # Invoice Category | Invoice Count | Trucking | Labor | Total
     cat_row = 6
-    for vendor, vdata in sorted(vendor_map.items()):
-        cell(ws2, cat_row, 10, vendor,                      size=11)
+    for category, vdata in sorted(category_map.items()):
+        cell(ws2, cat_row, 10, category,                    size=11)
         cell(ws2, cat_row, 11, vdata["count"],               size=11, h="center")
         c = cell(ws2, cat_row, 12, round(vdata["trucking"], 2), size=11, h="right")
         c.number_format = r'\$#,##0.00'

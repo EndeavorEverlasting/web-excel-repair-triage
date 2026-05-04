@@ -585,7 +585,8 @@ def parse_roster(
 
                 if is_overnight and overnight_out is not None:
                     def _fmt_h(h: float) -> str:
-                        hh, mm = int(h), int(round((h - int(h)) * 60))
+                        total_minutes = int(round(h * 60)) % (24 * 60)
+                        hh, mm = divmod(total_minutes, 60)
                         return f"{hh:02d}:{mm:02d}"
                     overnight_out.append({
                         **rec,

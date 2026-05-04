@@ -315,6 +315,22 @@ class TestRosterParserSynthetic:
         assert overnight[0]["overnight"] is True
         assert overnight[0]["long_shift"] is False
 
+
+    def test_parse_roster_overnight_note_rounds_to_next_hour(self, tmp_path):
+        """Overnight notes normalize minute rounding so :60 is never emitted."""
+        path = self._build_wb(
+            tmp_path,
+            sheet_name="Live - April 2026",
+            headers=["Staff Name", "Project", "Apr 01 - Clock In", "Apr 01 - Clock Out"],
+            rows=[["Minute Edge", "Ops", datetime.time(23, 0), datetime.time(8, 59, 59)]],
+        )
+        overnight: list[dict] = []
+        parse_roster(path, target_month="April 2026", overnight_out=overnight)
+
+        note = overnight[0]["note"]
+        assert "08:60" not in note
+        assert "clock-out 09:00" in note
+
     def test_parse_roster_flags_long_overnight_shift(self, tmp_path):
         """Overnight shifts above the threshold are flagged for extra review."""
         path = self._build_wb(
