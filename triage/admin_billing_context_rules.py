@@ -27,10 +27,10 @@ from typing import Iterable
 
 
 FRAMING_LINE = (
-    "Submission Posture: Updated April billing summary  "
+    "Submission Posture: Updated April billing summary → "
     "hours-tracker-safe admin context. "
     "Built for consistent Friday reporting/submission review."
-).replace("\u001a", "→")
+)
 
 APPROVED_EXCEPTION_SUMMARY = "Exception rows reconciled and cleared where applicable."
 BLANK_ROW_SUMMARY = "Blank-hour OOO/context-only rows reviewed and cleared where applicable."
