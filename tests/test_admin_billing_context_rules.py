@@ -29,6 +29,10 @@ def test_submission_posture_uses_approved_framing():
     )
 
 
+def test_framing_line_has_no_control_characters():
+    assert all(ord(ch) >= 32 or ch in "\t\n\r" for ch in FRAMING_LINE)
+
+
 def test_no_invented_hours_is_blocked_language():
     assert contains_suspicious_language(
         "Blank-hour OOO/context-only rows reviewed and cleared; no invented hours."
