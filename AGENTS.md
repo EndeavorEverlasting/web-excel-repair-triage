@@ -50,6 +50,27 @@ Rules:
 - Never silently mutate the roster log.
 - Rejected updates stay as tracker-only context.
 
+## Note-Tolerant Roster Parsing
+
+Roster users may write human notes directly in punch cells when operational reality demands it. Scripts must treat this as valid input, not corruption.
+
+Examples of valid note-bearing punch values:
+
+```text
+9:28:00 AM / Client support
+9:28 AM - off-project coverage
+17:30 / inventory follow-up
+```
+
+Parsing requirements:
+
+- Extract the time portion for hour calculations.
+- Preserve the note portion for internal context and exception review.
+- Do not allow the note portion to break admin artifact generation.
+- If a note implies a project classification different from the resolved worked project, create an exception or proposed override.
+- Do not silently reclassify admin output from a raw note alone unless an approved override or resolved worked-project rule supports it.
+- Do not expose raw private notes in admin-facing outputs unless explicitly requested.
+
 ## Priority Order
 
 1. Roster Log to Admin Sheet
