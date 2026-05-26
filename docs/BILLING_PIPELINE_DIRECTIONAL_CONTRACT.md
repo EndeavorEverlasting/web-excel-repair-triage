@@ -27,6 +27,37 @@ Agents must identify the requested direction before generating scripts, workbook
 
 ---
 
+## Note-Tolerant Roster Parsing
+
+Roster users may write human notes directly in punch cells when operational reality demands it. Scripts must treat this as valid input, not corruption.
+
+Examples of valid note-bearing punch values:
+
+```text
+9:28:00 AM / Client support
+9:28 AM - off-project coverage
+17:30 / inventory follow-up
+```
+
+### Required Behavior
+
+| Input Piece | Required Script Behavior |
+|---|---|
+| Time portion | Extract for hour calculation |
+| Note portion | Preserve for internal context and exception review |
+| Project signal in note | Compare against resolved worked-project logic |
+| Conflict between note and resolved project | Create exception or proposed override |
+| Admin-facing output | Do not expose private raw notes unless explicitly requested |
+| Artifact generation | Must not fail because a punch cell contains a note |
+
+### Classification Rule
+
+Raw notes are evidence, not final authority.
+
+If a note implies a project classification different from the resolved worked project, the script should create an exception or proposed override. It should not silently reclassify admin output from a raw note alone unless an approved override or resolved worked-project rule supports it.
+
+---
+
 ## 1. Roster Log to Admin Sheet
 
 High-priority submission workflow.
@@ -34,12 +65,13 @@ High-priority submission workflow.
 ```mermaid
 flowchart TD
     A["Roster Log"] --> B["Read live month tabs"]
-    B --> C["Read assignments and overrides"]
-    C --> D["Resolve worked project"]
-    D --> E["Filter to admin submission scope"]
-    E --> F["Populate Project Team tab only"]
-    F --> G["Generate admin-facing workbook"]
-    G --> H["Friday submission"]
+    B --> C["Parse punch times and preserve punch notes"]
+    C --> D["Read assignments and overrides"]
+    D --> E["Resolve worked project"]
+    E --> F["Filter to admin submission scope"]
+    F --> G["Populate Project Team tab only"]
+    G --> H["Generate admin-facing workbook"]
+    H --> I["Friday submission"]
 ```
 
 ### Purpose
@@ -71,11 +103,12 @@ Medium-priority contextualization workflow.
 ```mermaid
 flowchart TD
     A["Roster Log"] --> B["Read staff, date, and hour records"]
-    B --> C["Resolve project assignment and override"]
-    C --> D["Attach hours to task-tracker context"]
-    D --> E["Map hours to work categories"]
-    E --> F["Support narratives and weekly summaries"]
-    F --> G["Task Tracker"]
+    B --> C["Parse punch notes and operational context"]
+    C --> D["Resolve project assignment and override"]
+    D --> E["Attach hours to task-tracker context"]
+    E --> F["Map hours to work categories"]
+    F --> G["Support narratives and weekly summaries"]
+    G --> H["Task Tracker"]
 ```
 
 ### Purpose
@@ -172,3 +205,4 @@ Friday is the reporting batch marker. Work performed Monday through Friday maps 
 - Admin-facing output should remain clean and narrow.
 - Internal task-tracker context can be richer, but it must not leak into admin submission artifacts.
 - Backfill from Task Tracker into Roster Log must be proposed, reviewed, and approved before mutation.
+- Note-bearing punch cells are valid input and must not break artifact generation.
