@@ -70,3 +70,7 @@ billing_runs/
 
 # Generated billing report outputs
 billing_runs_tmp/
+
+# Local script env overrides (secrets; never commit)
+scripts/online_env.local.ps1
+scripts/*.local.ps1
