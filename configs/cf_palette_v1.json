@@ -1,0 +1,49 @@
+{
+  "schema_version": "cf_palette_v1",
+  "fills": {
+    "resolved_green": "FF92D050",
+    "skipped_gray": "FFBFBFBF",
+    "blocker_red": "FFFF6666",
+    "review_amber": "FFFFC000",
+    "rich_guard_purple": "FFB4A7D6",
+    "roster_blue": "FF9DC3E6",
+    "quiet_muted": "FFE7E6E6"
+  },
+  "tab_colors": {
+    "Start Here": "FF4472C4",
+    "Dashboard_Tool_v6_x": "FF70AD47",
+    "Active_Admin_Targets": "FFFF0000",
+    "Partial_Hours_Active": "FFFFC000",
+    "Review_Guardrails": "FF7030A0",
+    "Quiet_Queues": "FFD9D9D9",
+    "Resolved_Archive": "FF7F7F7F",
+    "Tech_Summary": "FF00B0F0",
+    "CF_Dictionary": "FF00B0F0",
+    "Definitions_Current": "FF00B0F0",
+    "Visual_System_v6_x": "FF00B0F0",
+    "Dropdown_Values": "FF00B0F0",
+    "Repo_Automation_Notes": "FF595959"
+  },
+  "tab_roles": {
+    "Start Here": "operator_entry",
+    "Dashboard_Tool_v6_x": "dashboard_hub",
+    "Active_Admin_Targets": "active_queue",
+    "Partial_Hours_Active": "review_queue",
+    "Review_Guardrails": "guardrail",
+    "Quiet_Queues": "quiet",
+    "Resolved_Archive": "archive",
+    "CF_Dictionary": "reference",
+    "Definitions_Current": "reference",
+    "Dropdown_Values": "reference",
+    "Repo_Automation_Notes": "automation"
+  },
+  "cf_priority_order": [
+    "column_a_resolved_green",
+    "column_a_skipped_gray",
+    "submission_blocker_red",
+    "partial_review_amber",
+    "rich_guard_purple",
+    "roster_later_blue",
+    "quiet_archive_muted"
+  ]
+}
