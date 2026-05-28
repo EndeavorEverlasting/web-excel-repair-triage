@@ -1,27 +1,17 @@
 {
   "checkpoint": "NW PRJ Tech Roster Dashboard v6.8 resolution ledger checkpoint",
   "date": "2026-05-28",
-  "archive": "NW_PRJ_v6_8_checkpoint_artifacts_2026-05-28.zip",
-  "archive_b64": "NW_PRJ_v6_8_checkpoint_artifacts_2026-05-28.zip.b64",
-  "archive_sha256": "f04822901a12e6954cabd8b777af9af1432b8cb0a5fb983fc8f0a4650d1d4fd9",
+  "payload_storage": "encrypted_zip_aes",
+  "payload_path": "artifacts/nw_prj_dashboard_v6_8/payload/NW_PRJ_v6_8_checkpoint_payload_2026-05-28.zip",
+  "password_storage": "external_only",
+  "payload_subset": "generator_critical",
+  "archive_sha256": "3e3604c2137017e7754f1d2c22b9fb2e8ef856b255cee6d326bf205a8fa140e8",
   "contents": [
     {
       "filename": "NW_PRJ_Tech_Roster_Dashboard_v6_8_RESOLUTION_LEDGER_WEBSAFE.xlsx",
       "size_bytes": 58616,
       "sha256": "ec502e1ff6b00c5ce22ead72a4000cb8c3164bcd9711bb71a1b86df9caa55497",
       "role": "latest generated v6.8 dashboard checkpoint"
-    },
-    {
-      "filename": "NW_PRJ_Dashboard_v6_8_Repo_Carryover_Notes.md",
-      "size_bytes": 2221,
-      "sha256": "37be4871493deccd5666bcafd4b5a469f82bcdcea98474f3468a70bd94cdd4ad",
-      "role": "repo carryover notes/gaps/risks/targets from v6.8 sprint"
-    },
-    {
-      "filename": "NW_PRJ_Tech_Roster_Dashboard_v6_7_STATUS_DICTIONARY_WEBSAFE-5-28-2026.xlsx",
-      "size_bytes": 75784,
-      "sha256": "a1a11c50606898ca62de69ef0b4777427f67ae710c532608f15a24909e21933d",
-      "role": "latest uploaded working dashboard source before v6.8"
     },
     {
       "filename": "NW PRJ Tech hours 5-27-2026 - Khadejah and Alejandro Updates - Manually Updated 5x.xlsx",
@@ -34,20 +24,30 @@
       "size_bytes": 6879661,
       "sha256": "f84e65ff1f691b8678c27a88707f65c89465beb1c4da1707668d39f06a2620a6",
       "role": "latest active roster log checkpoint"
+    }
+  ],
+  "not_included": [
+    {
+      "filename": "NW_PRJ_Tech_Roster_Dashboard_v6_7_STATUS_DICTIONARY_WEBSAFE-5-28-2026.xlsx",
+      "sha256": "a1a11c50606898ca62de69ef0b4777427f67ae710c532608f15a24909e21933d",
+      "reason": "optional prior dashboard source; not in local checkpoint bundle"
+    },
+    {
+      "filename": "NW_PRJ_Dashboard_v6_8_Repo_Carryover_Notes.md",
+      "reason": "committed as UTF-8 text in artifacts/nw_prj_dashboard_v6_8/"
     },
     {
       "filename": "35ef5c83-2d95-4264-9cc2-4a99685abed3.png",
-      "size_bytes": 42073,
       "sha256": "831d280eaa9152bf9957f8c04311a911a4693ab17011adf67bb6095175c999d8",
-      "role": "visual screenshot proving Start Here blank-position issue and tab color feedback"
+      "reason": "visual screenshot; not in local checkpoint bundle"
     },
     {
       "filename": "11e11659-6121-482c-be4a-76a4c7b85584.png",
-      "size_bytes": 87702,
       "sha256": "9be79eb2ce3e413d031e6b4fbefb81577ac67836ee951155541705cdf8dee638",
-      "role": "visual screenshot proving dashboard summary / tab color feedback"
+      "reason": "visual screenshot; not in local checkpoint bundle"
     }
   ],
+  "package": "python scripts/artifacts/package_nw_prj_v6_8_checkpoint.py",
   "decode": "python scripts/artifacts/decode_nw_prj_v6_8_checkpoint.py",
-  "notes": "Binary files are stored as a base64 zip because the connector supports UTF-8 text commits. Decode after pulling repo."
+  "notes": "Generator-critical xlsx workbooks are stored as an AES-encrypted zip (pyzipper). Password is external only."
 }

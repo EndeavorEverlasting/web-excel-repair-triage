@@ -14,27 +14,55 @@ The v6.8 sprint established the current Web Excel-safe dashboard baseline:
 - roster log as confirmation evidence
 - hidden backend columns for analysis while keeping tech-facing tabs fast
 
-## Restore the files
+## Payload scope
 
-From the repo root after pulling:
+This checkpoint commit includes **generator-critical xlsx only** (3 files):
 
-```bash
+- `NW_PRJ_Tech_Roster_Dashboard_v6_8_RESOLUTION_LEDGER_WEBSAFE.xlsx`
+- `NW PRJ Tech hours 5-27-2026 - Khadejah and Alejandro Updates - Manually Updated 5x.xlsx`
+- `INTERNAL_May_Billing_Active_Roster_Log_2026-05-28-update so that partial hours are flagged before submission.xlsx`
+
+Optional items (v6.7 dashboard source, PNG screenshots) are listed under `not_included` in `manifest.json`.
+
+Carryover notes are committed as UTF-8 text: `NW_PRJ_Dashboard_v6_8_Repo_Carryover_Notes.md`.
+
+## Restore the payloads
+
+From the repo root after pulling branch `artifacts/nw-prj-v6-8-checkpoint-2026-05-28`:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 python scripts/artifacts/decode_nw_prj_v6_8_checkpoint.py
 ```
 
-The script decodes:
+When prompted, enter the checkpoint password (stored externally — never in the repo).
 
-```text
-artifacts/nw_prj_dashboard_v6_8/NW_PRJ_v6_8_checkpoint_artifacts_2026-05-28.zip.b64
+Non-interactive decode:
+
+```powershell
+$env:NW_PRJ_CHECKPOINT_PASSWORD = "your-secret"
+python scripts/artifacts/decode_nw_prj_v6_8_checkpoint.py
 ```
 
-into:
+Files extract to:
 
 ```text
 RecoveredArtifacts/NW_PRJ_v6_8_checkpoint_artifacts_2026-05-28/
 ```
 
-Then verify the checksum shown in `manifest.json`.
+Verify against `payload_checksums.sha256` and per-file SHA-256 entries in `manifest.json`.
+
+## Re-package (maintainers only)
+
+If you have raw workbooks in `Workbook Payload Artifacts/` (gitignored):
+
+```powershell
+python scripts/artifacts/package_nw_prj_v6_8_checkpoint.py
+```
+
+Then update `manifest.json` `archive_sha256` from script output and commit the new archive + checksums.
 
 ## Important doctrine captured by this checkpoint
 
@@ -47,4 +75,4 @@ Then verify the checksum shown in `manifest.json`.
 
 ## Contents
 
-See `manifest.json` for file roles and SHA-256 checksums.
+See `manifest.json` for file roles, SHA-256 checksums, and storage method.
