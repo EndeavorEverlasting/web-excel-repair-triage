@@ -17,6 +17,8 @@ from typing import Any, Dict, List
 from triage.cf_policy_deploymenttracker import check_cf_policy_deploymenttracker
 
 STOPSHIP_TOKENS = ("_xlfn.", "_xludf.", "_xlpm.", "AGGREGATE(")
+ERROR_LITERAL_TOKENS = ("#REF!", "#VALUE!", "#NAME?")
+RC_CF_PATTERN = re.compile(r"\bRC\d+\b")
 
 
 # ─────────────────────────── helpers ────────────────────────────
@@ -58,12 +60,49 @@ def _parse_ref(ref: str):
 
 def check_stopship_tokens(z: zipfile.ZipFile) -> List[dict]:
     hits: List[dict] = []
-    for name in _sheets(z):
+    scan_parts = list(_sheets(z)) + [
+        n for n in z.namelist()
+        if n.lower().endswith(".xml") and not n.startswith("xl/worksheets/")
+    ]
+    for name in scan_parts:
         s = _txt(z, name)
         for m in re.finditer(r"<f\b[^>]*>(.*?)</f>", s, re.DOTALL):
-            for tok in STOPSHIP_TOKENS:
-                if tok in m.group(1):
-                    hits.append({"part": name, "token": tok, "formula_snippet": m.group(1)[:120]})
+            frag = m.group(1)
+            for tok in STOPSHIP_TOKENS + ERROR_LITERAL_TOKENS:
+                if tok in frag:
+                    hits.append({"part": name, "token": tok, "formula_snippet": frag[:120]})
+    return hits
+
+
+def check_duplicate_table_names(z: zipfile.ZipFile) -> List[dict]:
+    seen: dict[str, str] = {}
+    hits: List[dict] = []
+    for name in z.namelist():
+        if not (name.startswith("xl/tables/table") and name.endswith(".xml")):
+            continue
+        txt = _txt(z, name)
+        for attr in ("displayName", "name"):
+            for m in re.finditer(rf'<table\b[^>]*\b{attr}="([^"]*)"', txt):
+                key = m.group(1)
+                if not key:
+                    continue
+                if key in seen and seen[key] != name:
+                    hits.append({"table_name": key, "first_part": seen[key], "duplicate_part": name})
+                else:
+                    seen[key] = name
+    return hits
+
+
+def check_rc_formula_refs(z: zipfile.ZipFile) -> List[dict]:
+    """Detect R1C1-style RC references inside conditional formatting blocks."""
+    hits: List[dict] = []
+    for name in _sheets(z):
+        s = _txt(z, name)
+        for block in re.finditer(r"<conditionalFormatting\b.*?</conditionalFormatting>", s, re.DOTALL):
+            blob = block.group(0)
+            for m in RC_CF_PATTERN.finditer(blob):
+                hits.append({"part": name, "token": m.group(0), "snippet": blob[:160]})
+                break
     return hits
 
 
@@ -327,6 +366,8 @@ class GateReport:
     xml_wellformed: List[dict] = field(default_factory=list)
     illegal_control: List[dict] = field(default_factory=list)
     rels_missing: List[dict] = field(default_factory=list)
+    duplicate_table_names: List[dict] = field(default_factory=list)
+    rc_formula_refs: List[dict] = field(default_factory=list)
     activetab: dict = field(default_factory=dict)
 
     def failing_gates(self) -> Dict[str, int]:
@@ -342,6 +383,8 @@ class GateReport:
             "xml_wellformed":       self.xml_wellformed,
             "illegal_control_chars":self.illegal_control,
             "rels_missing_targets": self.rels_missing,
+            "duplicate_table_names": self.duplicate_table_names,
+            "rc_formula_refs":      self.rc_formula_refs,
         }.items() if v}
 
     @property
@@ -365,6 +408,8 @@ class GateReport:
                 "xml_wellformed": self.xml_wellformed[:10],
                 "illegal_control": self.illegal_control[:10],
                 "rels_missing": self.rels_missing[:20],
+                "duplicate_table_names": self.duplicate_table_names[:20],
+                "rc_formula_refs": self.rc_formula_refs[:20],
             },
             "triage": {"activetab": self.activetab},
         }
@@ -384,6 +429,8 @@ def run_all(path: str) -> GateReport:
         rpt.xml_wellformed = check_xml_wellformed(z)
         rpt.illegal_control = check_illegal_control_chars(z)
         rpt.rels_missing = check_rels_missing(z)
+        rpt.duplicate_table_names = check_duplicate_table_names(z)
+        rpt.rc_formula_refs = check_rc_formula_refs(z)
         rpt.activetab = check_workbook_activetab(z)
     return rpt
 

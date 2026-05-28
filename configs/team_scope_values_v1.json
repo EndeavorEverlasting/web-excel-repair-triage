@@ -1,0 +1,14 @@
+{
+  "schema_version": "team_scope_values_v1",
+  "allowed_values": [
+    "Cybernet/Neuron Active",
+    "Tracked Only",
+    "Out of Scope"
+  ],
+  "defaults_by_signal": {
+    "cybernet_neuron_assignment": "Cybernet/Neuron Active",
+    "projects_team_noise": "Out of Scope",
+    "watch_only": "Tracked Only"
+  },
+  "project_team_tab_is_authority": false
+}

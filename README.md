@@ -50,6 +50,16 @@ conditional formatting, or shared-string references.
 - **MCP-first** — every triage phase is also an MCP tool, so Augment Code can
   orchestrate the full pipeline from a chat prompt.
 
+### NW PRJ dashboard v6 (Tech Roster)
+
+Contract, configs, generator, and validators for the NW PRJ Tech Roster Dashboard workflow:
+
+- Docs: `docs/NW_PRJ_DASHBOARD_V6_CONTRACT.md`
+- Configs: `configs/nw_prj_dashboard_v6_schema.json`
+- Validate: `python -m triage.nw_prj_dashboard_validator <workbook.xlsx>` (via API: `validate_nw_prj_dashboard`)
+- Generate: `python -m triage.nw_prj_dashboard_generator --admin-scratch <scratch.xlsx> [--dashboard ...] [--roster ...]`
+- Compare: `python -m triage.nw_prj_artifact_compare --admin-scratch <scratch.xlsx> [--dashboard ...]`
+
 ### Lifecycle folder rules (quick reference)
 
 This repo uses lifecycle folders so the engine can keep artifacts organized:
