@@ -63,7 +63,6 @@ def test_may_saturday_rule():
         end_time=time(17, 0),
     )
     assert context == "Inventory Management"
-    assert context != "Logistics"
 
 
 def test_april_saturday_rule():
