@@ -74,3 +74,8 @@ billing_runs_tmp/
 # Local script env overrides (secrets; never commit)
 scripts/online_env.local.ps1
 scripts/*.local.ps1
+scripts/artifacts/*.local
+
+# Local payload drop zone and decode output — never commit raw internal workbooks
+Workbook Payload Artifacts/
+RecoveredArtifacts/
