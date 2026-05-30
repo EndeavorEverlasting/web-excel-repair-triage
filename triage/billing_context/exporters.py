@@ -255,6 +255,10 @@ def export_monthly_summary(
     *,
     include_tracker_import: bool = False,
 ) -> str:
+    month_labels = {4: "April 2026", 5: "May 2026"}
+    if month not in month_labels:
+        raise ValueError(f"Unsupported month for billing summary: {month}")
+
     wb = Workbook()
     ws = wb.active
     ws.title = "Admin Summary"
@@ -265,7 +269,7 @@ def export_monthly_summary(
     ws["A1"] = "Billing Summary"
     ws["A1"].font = Font(size=16, bold=True)
     ws["A3"] = "Month"
-    ws["B3"] = "April 2026" if month == 4 else "May 2026"
+    ws["B3"] = month_labels[month]
     ws["A4"] = "Total Hours"
     ws["B4"] = total_hours
     ws["A5"] = "Total Rows"
@@ -305,6 +309,7 @@ def export_internal_detail(entries: list[WorkEntry], out_path: str) -> str:
 def export_mismatches(mismatches: list[Mismatch], out_json: str, out_csv: str) -> None:
     rows = [m.to_dict() for m in mismatches]
     Path(out_json).parent.mkdir(parents=True, exist_ok=True)
+    Path(out_csv).parent.mkdir(parents=True, exist_ok=True)
 
     with open(out_json, "w", encoding="utf-8") as f:
         json.dump(rows, f, indent=2)
