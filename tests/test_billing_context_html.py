@@ -30,3 +30,26 @@ def test_html_dashboard_exports(tmp_path):
     assert "Inventory Management" in text
     assert "no Office license required" in text
     assert "https://" not in text
+
+
+def test_html_escapes_script_breakout(tmp_path):
+    entries = [
+        WorkEntry(
+            source="x.xlsx",
+            sheet_name="May",
+            row_number=2,
+            tech="</script><img src=x onerror=alert(1)>",
+            work_date=date(2026, 5, 14),
+            start_time=None,
+            end_time=None,
+            hours=1,
+            original_assignment="test",
+            work_context="Configuration",
+            context_reason="</script>",
+        )
+    ]
+    out = tmp_path / "dashboard.html"
+    export_html_dashboard(entries, [], str(out))
+    text = out.read_text(encoding="utf-8")
+    assert "<\\/script>" in text
+    assert "function esc(" in text

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date, time
 from typing import Optional
-
 
 RULES_DOC = "docs/BILLING_WORK_CONTEXT_RULES.md"
 
@@ -17,11 +17,38 @@ PLACEHOLDER_LABELS = {
 
 CONFIGURATION_HINTS = {"configure", "configuration", "imaged", "image", "setup", "build"}
 
+ALLOWED_CONTEXTS = {
+    "Configuration",
+    "Inventory Management",
+    "Inventory Management & Logistics",
+    "Deployment Support",
+    "Incident Response",
+    "Ticket Coordination",
+    "Client Coordination",
+    "Logistics",
+    "Mixed Operational Support",
+    "Unknown / Needs Review",
+}
+
+REQ_PATTERN = re.compile(r"\bREQ\d+\b", re.IGNORECASE)
+RITM_PATTERN = re.compile(r"\bRITM\d+\b", re.IGNORECASE)
+PM_PATTERN = re.compile(r"\bPM\b", re.IGNORECASE)
+
 
 def is_placeholder_assignment(value: str | None) -> bool:
     if not value:
         return False
     return str(value).strip().lower() in PLACEHOLDER_LABELS
+
+
+def normalize_assignment_label(value: str) -> str | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    for label in ALLOWED_CONTEXTS:
+        if text.lower() == label.lower():
+            return label
+    return None
 
 
 def is_evening(start_time: Optional[time], end_time: Optional[time]) -> bool:
@@ -61,10 +88,10 @@ def classify_from_task_text(text: str) -> tuple[str, str, str]:
     if any(k in raw for k in ["incident", "break/fix", "outage", "urgent", "support issue"]):
         return "Incident Response", "Task tracker contains incident response language.", "high"
 
-    if any(k in raw for k in ["ticket", "servicenow", "ritm", "req"]):
+    if REQ_PATTERN.search(text or "") or RITM_PATTERN.search(text or "") or "servicenow" in raw or "ticket" in raw:
         return "Ticket Coordination", "Task tracker contains ticket coordination language.", "high"
 
-    if any(k in raw for k in ["client", "pm", "coordination", "coordinate", "follow up", "follow-up"]):
+    if PM_PATTERN.search(text or "") or any(k in raw for k in ["client", "coordination", "coordinate", "follow up", "follow-up"]):
         return "Client Coordination", "Task tracker contains coordination language.", "medium"
 
     return "Unknown / Needs Review", "No decisive task-tracker context found.", "low"
@@ -112,12 +139,19 @@ def resolve_work_context(
     end_time: Optional[time],
 ) -> tuple[str, str, str]:
     task_context, task_reason, task_conf = classify_from_task_text(task_text)
+    assignment_label = normalize_assignment_label(assignment) if assignment and not is_placeholder_assignment(assignment) else None
 
     if task_context != "Unknown / Needs Review":
+        if assignment_label and assignment_label != task_context:
+            return (
+                "Unknown / Needs Review",
+                "Task tracker and assignment disagree; manual review required.",
+                "low",
+            )
         return task_context, task_reason, task_conf
 
-    if assignment and not is_placeholder_assignment(assignment):
-        return str(assignment), "Non-placeholder assignment retained.", "medium"
+    if assignment_label:
+        return assignment_label, "Non-placeholder assignment retained.", "medium"
 
     return classify_by_time_rules(
         work_date=work_date,

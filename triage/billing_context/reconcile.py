@@ -43,10 +43,27 @@ def parse_time(value: Any) -> Optional[time]:
         return None
 
     text = str(value).strip()
-    for sep in ["/", "-", "|", ";"]:
-        if sep in text:
-            text = text.split(sep, 1)[0].strip()
-            break
+
+    datetime_formats = (
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d %H:%M",
+        "%m/%d/%Y %I:%M:%S %p",
+        "%m/%d/%Y %I:%M %p",
+        "%m/%d/%y %I:%M %p",
+    )
+    for fmt in datetime_formats:
+        try:
+            return datetime.strptime(text, fmt).time()
+        except ValueError:
+            pass
+
+    if " " in text:
+        time_part = text.rsplit(" ", 1)[-1]
+        for fmt in ("%I:%M:%S %p", "%I:%M %p", "%H:%M:%S", "%H:%M"):
+            try:
+                return datetime.strptime(time_part, fmt).time()
+            except ValueError:
+                pass
 
     for fmt in ("%I:%M:%S %p", "%I:%M %p", "%H:%M:%S", "%H:%M"):
         try:
@@ -213,10 +230,10 @@ def _generic_hours_index(path: str) -> dict[tuple[str, str], float]:
     return dict(index)
 
 
-def build_dashboard_index(dashboard_path: str | None) -> dict[tuple[str, str], dict[str, Any]]:
+def build_dashboard_index(dashboard_path: str | None) -> dict[tuple[str, str], dict[str, Any]] | None:
     if not dashboard_path:
-        return {}
-    index: dict[tuple[str, str], dict[str, Any]] = {}
+        return None
+    rows_by_key: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for row in load_dashboard_rows(dashboard_path):
         d = parse_date(row.date)
         if not row.tech or not d:
@@ -226,13 +243,44 @@ def build_dashboard_index(dashboard_path: str | None) -> dict[tuple[str, str], d
         admin_h = safe_float(row.current_admin_value, default=-1.0)
         expected = safe_float(row.expected_total, default=-1.0)
         hours = roster_h if roster_h >= 0 else (admin_h if admin_h >= 0 else expected)
+        rows_by_key[key].append(
+            {
+                "hours": hours if hours >= 0 else 0.0,
+                "review_status": row.review_status,
+                "reason_code": row.reason_code,
+                "partial": 0 < hours < 8 if hours > 0 else False,
+            }
+        )
+
+    index: dict[tuple[str, str], dict[str, Any]] = {}
+    for key, rows in rows_by_key.items():
+        total_hours = round(sum(safe_float(r.get("hours")) for r in rows), 2)
+        worst_status = ""
+        partial = False
+        for r in rows:
+            status = str(r.get("review_status") or "")
+            bucket = review_status_bucket(status)
+            if bucket not in ("resolved_green", "skipped_gray"):
+                worst_status = status or worst_status
+            if r.get("partial"):
+                partial = True
         index[key] = {
-            "hours": hours if hours >= 0 else 0.0,
-            "review_status": row.review_status,
-            "reason_code": row.reason_code,
-            "partial": 0 < hours < 8 if hours > 0 else False,
+            "hours": total_hours,
+            "review_status": worst_status,
+            "reason_code": rows[-1].get("reason_code", ""),
+            "partial": partial,
         }
     return index
+
+
+def aggregate_daily_track_hours(entries: list[WorkEntry]) -> tuple[dict[tuple[str, str], float], dict[tuple[str, str], str]]:
+    totals: dict[tuple[str, str], float] = defaultdict(float)
+    tech_names: dict[tuple[str, str], str] = {}
+    for e in entries:
+        key = entry_key(e.tech, e.work_date)
+        totals[key] += e.hours
+        tech_names[key] = e.tech
+    return {k: round(v, 2) for k, v in totals.items()}, tech_names
 
 
 def find_context_mismatches(entries: list[WorkEntry]) -> list[Mismatch]:
@@ -256,15 +304,18 @@ def find_context_mismatches(entries: list[WorkEntry]) -> list[Mismatch]:
             )
 
         if e.work_context == "Unknown / Needs Review":
+            mismatch_type = "missing_work_context"
+            if "disagree" in e.context_reason.lower():
+                mismatch_type = "context_assignment_conflict"
             mismatches.append(
                 Mismatch(
                     severity="red",
-                    mismatch_type="missing_work_context",
+                    mismatch_type=mismatch_type,
                     tech=e.tech,
                     work_date=e.work_date.isoformat(),
                     source_a="task_tracker/roster/timing",
                     source_b="resolved_context",
-                    source_a_value="No decisive context",
+                    source_a_value=e.original_assignment or "No decisive context",
                     source_b_value=e.work_context,
                     recommendation="Review task tracker or add explicit context override.",
                     leadership_safe=False,
@@ -288,45 +339,71 @@ def find_cross_source_mismatches(
     roster_index: dict[tuple[str, str], float] | None = None,
     admin_index: dict[tuple[str, str], float] | None = None,
     dashboard_index: dict[tuple[str, str], dict[str, Any]] | None = None,
+    roster_enabled: bool = False,
+    admin_enabled: bool = False,
+    dashboard_enabled: bool = False,
 ) -> list[Mismatch]:
     mismatches: list[Mismatch] = []
-    roster_index = roster_index or {}
-    admin_index = admin_index or {}
-    dashboard_index = dashboard_index or {}
+    roster_idx = roster_index or {}
+    admin_idx = admin_index or {}
+    dashboard_idx = dashboard_index or {}
 
-    for e in entries:
-        key = entry_key(e.tech, e.work_date)
+    daily_track, tech_names = aggregate_daily_track_hours(entries)
+    seen_partial: set[tuple[str, str, str]] = set()
 
-        for source_name, idx in (
-            ("roster_log", roster_index),
-            ("admin_copy", admin_index),
+    for key, track_hours in daily_track.items():
+        tech_key, work_date = key
+        tech_display = tech_names.get(key, tech_key)
+
+        for source_name, idx, enabled in (
+            ("roster_log", roster_idx, roster_enabled),
+            ("admin_copy", admin_idx, admin_enabled),
         ):
-            if key not in idx:
+            if not enabled:
                 continue
+            if key not in idx:
+                mismatches.append(
+                    Mismatch(
+                        severity="blue",
+                        mismatch_type="missing_in_source",
+                        tech=tech_display,
+                        work_date=work_date,
+                        source_a="track_hours",
+                        source_b=source_name,
+                        source_a_value=str(track_hours),
+                        source_b_value="(absent)",
+                        recommendation=f"Track row not found in {source_name}.",
+                        leadership_safe=False,
+                    )
+                )
+                continue
+
             other = idx[key]
-            delta = round(e.hours - other, 2)
+            delta = round(track_hours - other, 2)
             if abs(delta) > HOUR_TOLERANCE:
                 mismatches.append(
                     Mismatch(
                         severity=_hour_delta_severity(delta),  # type: ignore[arg-type]
                         mismatch_type="hours_delta",
-                        tech=e.tech,
-                        work_date=e.work_date.isoformat(),
+                        tech=tech_display,
+                        work_date=work_date,
                         source_a="track_hours",
                         source_b=source_name,
-                        source_a_value=str(e.hours),
+                        source_a_value=str(track_hours),
                         source_b_value=str(other),
                         recommendation=f"Reconcile hour delta ({delta:+.2f}h) between track hours and {source_name}.",
                         leadership_safe=False,
                     )
                 )
-            if 0 < other < 8:
+            partial_key = (work_date, tech_key, source_name)
+            if 0 < other < 8 and partial_key not in seen_partial:
+                seen_partial.add(partial_key)
                 mismatches.append(
                     Mismatch(
                         severity="amber",
                         mismatch_type="partial_hours",
-                        tech=e.tech,
-                        work_date=e.work_date.isoformat(),
+                        tech=tech_display,
+                        work_date=work_date,
                         source_a=source_name,
                         source_b="expected_full_day",
                         source_a_value=str(other),
@@ -336,86 +413,77 @@ def find_cross_source_mismatches(
                     )
                 )
 
-        if key in dashboard_index:
-            dash = dashboard_index[key]
-            dash_h = safe_float(dash.get("hours"))
-            if dash_h > 0:
-                delta = round(e.hours - dash_h, 2)
-                if abs(delta) > HOUR_TOLERANCE:
-                    mismatches.append(
-                        Mismatch(
-                            severity=_hour_delta_severity(delta),  # type: ignore[arg-type]
-                            mismatch_type="hours_delta",
-                            tech=e.tech,
-                            work_date=e.work_date.isoformat(),
-                            source_a="track_hours",
-                            source_b="dashboard",
-                            source_a_value=str(e.hours),
-                            source_b_value=str(dash_h),
-                            recommendation=f"Reconcile hour delta ({delta:+.2f}h) with resolution ledger.",
-                            leadership_safe=False,
-                        )
-                    )
-            status = str(dash.get("review_status") or "")
-            bucket = review_status_bucket(status)
-            if bucket not in ("resolved_green", "skipped_gray") and e.hours > 0:
-                mismatches.append(
-                    Mismatch(
-                        severity="red",
-                        mismatch_type="dashboard_unresolved",
-                        tech=e.tech,
-                        work_date=e.work_date.isoformat(),
-                        source_a="dashboard_review_status",
-                        source_b="track_hours",
-                        source_a_value=status or "(blank)",
-                        source_b_value=str(e.hours),
-                        recommendation="Dashboard row not resolved before billing export.",
-                        leadership_safe=False,
-                    )
-                )
-            if dash.get("partial"):
-                mismatches.append(
-                    Mismatch(
-                        severity="amber",
-                        mismatch_type="partial_hours",
-                        tech=e.tech,
-                        work_date=e.work_date.isoformat(),
-                        source_a="dashboard",
-                        source_b="expected_full_day",
-                        source_a_value=str(dash_h),
-                        source_b_value="8.0",
-                        recommendation="Partial hours flagged on dashboard resolution ledger.",
-                        leadership_safe=False,
-                    )
-                )
-        elif dashboard_index:
+        if not dashboard_enabled:
+            continue
+
+        if key not in dashboard_idx:
             mismatches.append(
                 Mismatch(
                     severity="gray",
                     mismatch_type="missing_in_source",
-                    tech=e.tech,
-                    work_date=e.work_date.isoformat(),
+                    tech=tech_key.title(),
+                    work_date=work_date,
                     source_a="track_hours",
                     source_b="dashboard",
-                    source_a_value=str(e.hours),
+                    source_a_value=str(track_hours),
                     source_b_value="(absent)",
                     recommendation="Track row not found on dashboard resolution ledger.",
                     leadership_safe=False,
                 )
             )
+            continue
 
-        if roster_index and key not in roster_index:
+        dash = dashboard_idx[key]
+        dash_h = safe_float(dash.get("hours"))
+        if dash_h > 0:
+            delta = round(track_hours - dash_h, 2)
+            if abs(delta) > HOUR_TOLERANCE:
+                mismatches.append(
+                    Mismatch(
+                        severity=_hour_delta_severity(delta),  # type: ignore[arg-type]
+                        mismatch_type="hours_delta",
+                        tech=tech_display,
+                        work_date=work_date,
+                        source_a="track_hours",
+                        source_b="dashboard",
+                        source_a_value=str(track_hours),
+                        source_b_value=str(dash_h),
+                        recommendation=f"Reconcile hour delta ({delta:+.2f}h) with resolution ledger.",
+                        leadership_safe=False,
+                    )
+                )
+        status = str(dash.get("review_status") or "")
+        if status and track_hours > 0:
+            bucket = review_status_bucket(status)
+            if bucket not in ("resolved_green", "skipped_gray"):
+                mismatches.append(
+                    Mismatch(
+                        severity="red",
+                        mismatch_type="dashboard_unresolved",
+                        tech=tech_display,
+                        work_date=work_date,
+                        source_a="dashboard_review_status",
+                        source_b="track_hours",
+                        source_a_value=status,
+                        source_b_value=str(track_hours),
+                        recommendation="Dashboard row not resolved before billing export.",
+                        leadership_safe=False,
+                    )
+                )
+        partial_key = (work_date, tech_key, "dashboard")
+        if dash.get("partial") and partial_key not in seen_partial:
+            seen_partial.add(partial_key)
             mismatches.append(
                 Mismatch(
-                    severity="blue",
-                    mismatch_type="missing_in_source",
-                    tech=e.tech,
-                    work_date=e.work_date.isoformat(),
-                    source_a="track_hours",
-                    source_b="roster_log",
-                    source_a_value=str(e.hours),
-                    source_b_value="(absent)",
-                    recommendation="Track row not found in active roster log.",
+                    severity="amber",
+                    mismatch_type="partial_hours",
+                    tech=tech_key.title(),
+                    work_date=work_date,
+                    source_a="dashboard",
+                    source_b="expected_full_day",
+                    source_a_value=str(dash_h),
+                    source_b_value="8.0",
+                    recommendation="Partial hours flagged on dashboard resolution ledger.",
                     leadership_safe=False,
                 )
             )
@@ -431,11 +499,17 @@ def find_all_mismatches(
     dashboard_path: str | None = None,
 ) -> list[Mismatch]:
     context = find_context_mismatches(entries)
+    roster_enabled = roster_path is not None
+    admin_enabled = admin_path is not None
+    dashboard_enabled = dashboard_path is not None
     cross = find_cross_source_mismatches(
         entries,
-        roster_index=build_roster_hours_index(roster_path),
-        admin_index=build_admin_hours_index(admin_path),
+        roster_index=build_roster_hours_index(roster_path) if roster_enabled else None,
+        admin_index=build_admin_hours_index(admin_path) if admin_enabled else None,
         dashboard_index=build_dashboard_index(dashboard_path),
+        roster_enabled=roster_enabled,
+        admin_enabled=admin_enabled,
+        dashboard_enabled=dashboard_enabled,
     )
     return context + cross
 

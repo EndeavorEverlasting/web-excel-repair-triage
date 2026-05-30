@@ -18,18 +18,29 @@ from .reconcile import friday_batch_key
 HEADER_FILL = "1F4E78"
 HEADER_FONT = "FFFFFF"
 ERROR_TOKENS = ("#REF!", "#VALUE!", "#DIV/0!", "#NAME?", "#N/A")
+FORBIDDEN_TEXT_TOKENS = ("...", "…", "TBD", "TODO", "context goes here")
 
-LEADERSHIP_HEADERS = [
+LEADERSHIP_HEADERS = ["Date", "Tech", "Hours", "Work Context"]
+
+INTERNAL_HEADERS = [
     "Date",
     "Tech",
     "Hours",
     "Work Context",
+    "Context Reason",
     "Original Assignment",
     "Start Time",
     "End Time",
     "Source Sheet",
     "Source Row",
 ]
+
+
+def safe_csv_value(value: object) -> str:
+    text = "" if value is None else str(value)
+    if text.startswith(("=", "+", "-", "@")):
+        return "'" + text
+    return text
 
 
 def autosize(ws) -> None:
@@ -60,6 +71,18 @@ def write_rows(ws, headers: list[str], rows: list[dict]) -> None:
 
 
 def entries_to_leadership_rows(entries: list[WorkEntry]) -> list[dict]:
+    return [
+        {
+            "Date": e.work_date.isoformat(),
+            "Tech": e.tech,
+            "Hours": round(e.hours, 2),
+            "Work Context": e.work_context,
+        }
+        for e in entries
+    ]
+
+
+def entries_to_internal_rows(entries: list[WorkEntry]) -> list[dict]:
     rows = []
     for e in entries:
         assignment = e.original_assignment
@@ -71,6 +94,7 @@ def entries_to_leadership_rows(entries: list[WorkEntry]) -> list[dict]:
                 "Tech": e.tech,
                 "Hours": round(e.hours, 2),
                 "Work Context": e.work_context,
+                "Context Reason": e.context_reason,
                 "Original Assignment": assignment,
                 "Start Time": e.start_time.isoformat() if e.start_time else "",
                 "End Time": e.end_time.isoformat() if e.end_time else "",
@@ -149,10 +173,12 @@ def add_line_chart(ws, title: str, category_col: int, value_col: int, anchor: st
     ws.add_chart(chart, anchor)
 
 
-def scan_workbook_errors(path: str | Path) -> list[tuple[str, str, str]]:
+def _scan_cells(path: str | Path, data_only: bool) -> list[tuple[str, str, str]]:
     hits: list[tuple[str, str, str]] = []
-    wb = load_workbook(path, data_only=False)
+    wb = load_workbook(path, data_only=data_only)
     for ws in wb.worksheets:
+        if getattr(ws, "sheet_state", "visible") != "visible":
+            continue
         for row in ws.iter_rows():
             for cell in row:
                 val = str(cell.value or "")
@@ -160,6 +186,30 @@ def scan_workbook_errors(path: str | Path) -> list[tuple[str, str, str]]:
                     hits.append((ws.title, cell.coordinate, val))
     wb.close()
     return hits
+
+
+def scan_workbook_errors(path: str | Path) -> list[tuple[str, str, str]]:
+    hits = _scan_cells(path, data_only=True)
+    if not hits:
+        hits = _scan_cells(path, data_only=False)
+    return hits
+
+
+def scan_forbidden_text(path: str | Path) -> list[str]:
+    issues: list[str] = []
+    wb = load_workbook(path, data_only=True)
+    for ws in wb.worksheets:
+        if getattr(ws, "sheet_state", "visible") != "visible":
+            continue
+        for row in ws.iter_rows():
+            for cell in row:
+                value = str(cell.value or "")
+                lower = value.lower()
+                for token in FORBIDDEN_TEXT_TOKENS:
+                    if token.lower() in lower:
+                        issues.append(f"{ws.title}!{cell.coordinate}: forbidden token {token!r}")
+    wb.close()
+    return issues
 
 
 def scan_leadership_language(path: str | Path) -> list[str]:
@@ -186,13 +236,11 @@ def export_neuron_project_hours(entries: list[WorkEntry], out_path: str) -> str:
         write_rows(ws, LEADERSHIP_HEADERS, entries_to_leadership_rows(month_entries))
 
         context_ws = wb.create_sheet(f"{title} Context Summary")
-        context_rows = summarize_by_context(month_entries)
-        write_rows(context_ws, ["Work Context", "Hours"], context_rows)
+        write_rows(context_ws, ["Work Context", "Hours"], summarize_by_context(month_entries))
         add_bar_chart(context_ws, f"{title} Hours by Work Context", 1, 2, "D2")
 
         tech_ws = wb.create_sheet(f"{title} Tech Summary")
-        tech_rows = summarize_by_tech(month_entries)
-        write_rows(tech_ws, ["Tech", "Hours"], tech_rows)
+        write_rows(tech_ws, ["Tech", "Hours"], summarize_by_tech(month_entries))
         add_bar_chart(tech_ws, f"{title} Top Technician Hours", 1, 2, "D2")
 
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
@@ -200,7 +248,13 @@ def export_neuron_project_hours(entries: list[WorkEntry], out_path: str) -> str:
     return out_path
 
 
-def export_monthly_summary(entries: list[WorkEntry], month: int, out_path: str) -> str:
+def export_monthly_summary(
+    entries: list[WorkEntry],
+    month: int,
+    out_path: str,
+    *,
+    include_tracker_import: bool = False,
+) -> str:
     wb = Workbook()
     ws = wb.active
     ws.title = "Admin Summary"
@@ -229,9 +283,20 @@ def export_monthly_summary(entries: list[WorkEntry], month: int, out_path: str) 
     write_rows(batch_ws, ["Reporting Batch Friday", "Hours"], summarize_by_batch(month_entries))
     add_line_chart(batch_ws, "Hours by Reporting Batch", 1, 2, "D2")
 
-    detail_ws = wb.create_sheet("Tracker Import")
-    write_rows(detail_ws, LEADERSHIP_HEADERS, entries_to_leadership_rows(month_entries))
+    if include_tracker_import:
+        detail_ws = wb.create_sheet("Tracker Import")
+        write_rows(detail_ws, INTERNAL_HEADERS, entries_to_internal_rows(month_entries))
 
+    Path(out_path).parent.mkdir(parents=True, exist_ok=True)
+    wb.save(out_path)
+    return out_path
+
+
+def export_internal_detail(entries: list[WorkEntry], out_path: str) -> str:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Internal Detail"
+    write_rows(ws, INTERNAL_HEADERS, entries_to_internal_rows(entries))
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     wb.save(out_path)
     return out_path
@@ -259,4 +324,33 @@ def export_mismatches(mismatches: list[Mismatch], out_json: str, out_csv: str) -
     with open(out_csv, "w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
-        writer.writerows(rows)
+        for row in rows:
+            writer.writerow({k: safe_csv_value(row.get(k, "")) for k in fieldnames})
+
+
+def build_output_manifest(outputs: dict[str, str]) -> list[dict]:
+    manifest: list[dict] = []
+    for name, path in outputs.items():
+        p = Path(path)
+        manifest.append(
+            {
+                "name": name,
+                "path": str(p.resolve()),
+                "exists": p.exists(),
+                "bytes": p.stat().st_size if p.exists() else 0,
+            }
+        )
+    return manifest
+
+
+def create_zip_bundle(paths: list[str], zip_path: str) -> str:
+    import zipfile
+
+    outp = Path(zip_path)
+    outp.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(outp, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for path in paths:
+            p = Path(path)
+            if p.exists():
+                zf.write(p, p.name)
+    return str(outp)

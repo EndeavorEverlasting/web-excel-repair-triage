@@ -20,6 +20,8 @@ def export_html_dashboard(entries: list[WorkEntry], mismatches: list[Mismatch], 
         },
     }
 
+    safe_payload_json = json.dumps(payload, ensure_ascii=False).replace("</", "<\\/")
+
     html = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -27,92 +29,26 @@ def export_html_dashboard(entries: list[WorkEntry], mismatches: list[Mismatch], 
   <title>Billing Context Dashboard</title>
   <style>
     :root {{
-      --bg: #0f172a;
-      --panel: #111827;
-      --panel2: #1f2937;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --accent: #38bdf8;
-      --red: #f87171;
-      --amber: #fbbf24;
-      --blue: #60a5fa;
-      --green: #34d399;
-      --gray: #94a3b8;
+      --bg: #0f172a; --panel: #111827; --panel2: #1f2937; --text: #e5e7eb;
+      --muted: #9ca3af; --accent: #38bdf8; --red: #f87171; --amber: #fbbf24;
+      --blue: #60a5fa; --gray: #94a3b8;
     }}
-    body {{
-      margin: 0;
-      font-family: system-ui, Segoe UI, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }}
-    header {{
-      padding: 24px;
-      border-bottom: 1px solid #334155;
-      background: #020617;
-    }}
+    body {{ margin: 0; font-family: system-ui, Segoe UI, Arial, sans-serif; background: var(--bg); color: var(--text); }}
+    header {{ padding: 24px; border-bottom: 1px solid #334155; background: #020617; }}
     h1 {{ margin: 0 0 8px; font-size: 28px; }}
     .subtle {{ color: var(--muted); }}
     main {{ padding: 24px; display: grid; gap: 20px; }}
-    .cards {{
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-    }}
-    .card {{
-      background: var(--panel);
-      border: 1px solid #334155;
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 8px 22px rgba(0,0,0,.22);
-    }}
+    .cards {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }}
+    .card {{ background: var(--panel); border: 1px solid #334155; border-radius: 16px; padding: 16px; }}
     .card .value {{ font-size: 30px; font-weight: 800; margin-top: 8px; }}
-    .grid {{
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-      gap: 20px;
-    }}
-    table {{
-      width: 100%;
-      border-collapse: collapse;
-      background: var(--panel);
-      border-radius: 12px;
-      overflow: hidden;
-    }}
-    th, td {{
-      padding: 9px 10px;
-      border-bottom: 1px solid #334155;
-      text-align: left;
-      font-size: 13px;
-      vertical-align: top;
-    }}
+    .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px; }}
+    table {{ width: 100%; border-collapse: collapse; background: var(--panel); border-radius: 12px; overflow: hidden; }}
+    th, td {{ padding: 9px 10px; border-bottom: 1px solid #334155; text-align: left; font-size: 13px; vertical-align: top; }}
     th {{ background: var(--panel2); position: sticky; top: 0; }}
-    input, select {{
-      background: #020617;
-      color: var(--text);
-      border: 1px solid #475569;
-      border-radius: 10px;
-      padding: 9px 10px;
-      margin-right: 10px;
-    }}
-    .bar-row {{
-      display: grid;
-      grid-template-columns: 220px 1fr 80px;
-      align-items: center;
-      gap: 10px;
-      margin: 10px 0;
-    }}
-    .bar {{
-      height: 16px;
-      background: #1e293b;
-      border-radius: 999px;
-      overflow: hidden;
-    }}
-    .bar span {{
-      display: block;
-      height: 100%;
-      background: var(--accent);
-      border-radius: 999px;
-    }}
+    input, select {{ background: #020617; color: var(--text); border: 1px solid #475569; border-radius: 10px; padding: 9px 10px; margin-right: 10px; }}
+    .bar-row {{ display: grid; grid-template-columns: 220px 1fr 80px; align-items: center; gap: 10px; margin: 10px 0; }}
+    .bar {{ height: 16px; background: #1e293b; border-radius: 999px; overflow: hidden; }}
+    .bar span {{ display: block; height: 100%; background: var(--accent); border-radius: 999px; }}
     .severity-red {{ color: var(--red); font-weight: 700; }}
     .severity-amber {{ color: var(--amber); font-weight: 700; }}
     .severity-blue {{ color: var(--blue); font-weight: 700; }}
@@ -130,50 +66,40 @@ def export_html_dashboard(entries: list[WorkEntry], mismatches: list[Mismatch], 
     <div class="card"><h2>Hours by Work Context</h2><div id="contextBars"></div></div>
     <div class="card"><h2>Top Technician Hours</h2><div id="techBars"></div></div>
   </section>
-  <section class="card">
-    <h2>Mismatches</h2>
-    <div>
-      <input id="mismatchSearch" placeholder="Search mismatches">
-      <select id="severityFilter">
-        <option value="">All severities</option>
-        <option value="red">Red</option>
-        <option value="amber">Amber</option>
-        <option value="blue">Blue</option>
-        <option value="gray">Gray</option>
-      </select>
-    </div>
+  <section class="card"><h2>Mismatches</h2>
+    <div><input id="mismatchSearch" placeholder="Search mismatches">
+    <select id="severityFilter"><option value="">All severities</option><option value="red">Red</option><option value="amber">Amber</option><option value="blue">Blue</option><option value="gray">Gray</option></select></div>
     <div id="mismatchTable"></div>
   </section>
-  <section class="card">
-    <h2>Row-Level Work Context</h2>
-    <div>
-      <input id="entrySearch" placeholder="Search entries">
-      <select id="monthFilter">
-        <option value="">All months</option>
-        <option value="04">April</option>
-        <option value="05">May</option>
-      </select>
-    </div>
+  <section class="card"><h2>Row-Level Work Context</h2>
+    <div><input id="entrySearch" placeholder="Search entries">
+    <select id="monthFilter"><option value="">All months</option><option value="04">April</option><option value="05">May</option></select></div>
     <div id="entryTable"></div>
   </section>
 </main>
 <script>
-const DATA = {json.dumps(payload, ensure_ascii=False)};
+const DATA = {safe_payload_json};
+
+function esc(value) {{
+  return String(value == null ? "" : value).replace(/[&<>"']/g, c => ({{
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }}[c]));
+}}
 
 function money(n) {{ return Number(n || 0).toFixed(2); }}
 
 function renderCards() {{
   document.getElementById("cards").innerHTML = `
     <div class="card"><div class="subtle">Total Hours</div><div class="value">${{money(DATA.summary.total_hours)}}</div></div>
-    <div class="card"><div class="subtle">Rows</div><div class="value">${{DATA.summary.row_count}}</div></div>
-    <div class="card"><div class="subtle">Mismatches</div><div class="value">${{DATA.mismatches.length}}</div></div>`;
+    <div class="card"><div class="subtle">Rows</div><div class="value">${{esc(DATA.summary.row_count)}}</div></div>
+    <div class="card"><div class="subtle">Mismatches</div><div class="value">${{esc(DATA.mismatches.length)}}</div></div>`;
 }}
 
 function renderBars(targetId, rows, labelKey) {{
   const max = Math.max(...rows.map(r => Number(r.Hours || 0)), 1);
   document.getElementById(targetId).innerHTML = rows.map(r => {{
     const width = (Number(r.Hours || 0) / max) * 100;
-    return `<div class="bar-row"><div>${{r[labelKey]}}</div><div class="bar"><span style="width:${{width}}%"></span></div><div>${{money(r.Hours)}}</div></div>`;
+    return `<div class="bar-row"><div>${{esc(r[labelKey])}}</div><div class="bar"><span style="width:${{width}}%"></span></div><div>${{money(r.Hours)}}</div></div>`;
   }}).join("");
 }}
 
@@ -187,8 +113,8 @@ function renderMismatchTable() {{
   document.getElementById("mismatchTable").innerHTML = `
     <table><thead><tr><th>Severity</th><th>Type</th><th>Tech</th><th>Date</th><th>From</th><th>To</th><th>Recommendation</th></tr></thead>
     <tbody>${{rows.map(r => `<tr>
-      <td class="severity-${{r.severity}}">${{r.severity}}</td><td>${{r.mismatch_type}}</td><td>${{r.tech}}</td>
-      <td>${{r.work_date}}</td><td>${{r.source_a_value}}</td><td>${{r.source_b_value}}</td><td>${{r.recommendation}}</td></tr>`).join("")}}</tbody></table>`;
+      <td class="severity-${{esc(r.severity)}}">${{esc(r.severity)}}</td><td>${{esc(r.mismatch_type)}}</td><td>${{esc(r.tech)}}</td>
+      <td>${{esc(r.work_date)}}</td><td>${{esc(r.source_a_value)}}</td><td>${{esc(r.source_b_value)}}</td><td>${{esc(r.recommendation)}}</td></tr>`).join("")}}</tbody></table>`;
 }}
 
 function renderEntryTable() {{
@@ -200,8 +126,8 @@ function renderEntryTable() {{
   }});
   document.getElementById("entryTable").innerHTML = `
     <table><thead><tr><th>Date</th><th>Tech</th><th>Hours</th><th>Context</th><th>Reason</th><th>Original Assignment</th></tr></thead>
-    <tbody>${{rows.map(r => `<tr><td>${{r.work_date}}</td><td>${{r.tech}}</td><td>${{money(r.hours)}}</td>
-      <td>${{r.work_context}}</td><td>${{r.context_reason}}</td><td>${{r.original_assignment}}</td></tr>`).join("")}}</tbody></table>`;
+    <tbody>${{rows.map(r => `<tr><td>${{esc(r.work_date)}}</td><td>${{esc(r.tech)}}</td><td>${{money(r.hours)}}</td>
+      <td>${{esc(r.work_context)}}</td><td>${{esc(r.context_reason)}}</td><td>${{esc(r.original_assignment)}}</td></tr>`).join("")}}</tbody></table>`;
 }}
 
 renderCards();

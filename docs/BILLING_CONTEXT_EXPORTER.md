@@ -16,10 +16,18 @@ python -m triage.billing_context.cli \
   --admin-copy "<admin-copy.xlsx>" \
   --dashboard "<dashboard.xlsx>" \
   --out-dir Outputs \
-  --html
+  --html \
+  --zip \
+  --internal-xlsx
 ```
 
-Drop input workbooks in [`Candidates/`](../Candidates/) locally (gitignored contents).
+Optional flags:
+
+- `--include-tracker-import` — add internal Tracker Import sheet to monthly summaries
+- `--internal-xlsx` — separate internal detail workbook with provenance columns
+- `--zip` — bundle all outputs into one ZIP with manifest validation
+
+Sprint carryover: [`ARTIFACT_SPRINT_CARRYOVER_2026-05-30.md`](ARTIFACT_SPRINT_CARRYOVER_2026-05-30.md)
 
 ## Outputs
 
