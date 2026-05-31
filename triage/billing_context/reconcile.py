@@ -12,7 +12,7 @@ from triage.tech_hours_parser import TechHoursParseError, parse_tech_hours
 
 from .context_rules import is_placeholder_assignment, resolve_work_context
 from .models import Mismatch, WorkEntry
-from .workbook_io import iter_dict_rows, load_xlsx, safe_float
+from .workbook_io import fuzzy_get, iter_dict_rows, load_xlsx, safe_float
 
 HOUR_TOLERANCE = 0.01
 
@@ -90,12 +90,11 @@ def build_task_context_index(april_context_path: str) -> dict[tuple[str, str], s
     for ws in wb.worksheets:
         for row in iter_dict_rows(ws):
             tech = normalize_tech(
-                row.get("Tech")
-                or row.get("Technician")
-                or row.get("Name")
-                or row.get("Resource")
+                fuzzy_get(row, "Tech", "Technician", "Name", "Resource", "Tech Name")
             )
-            d = parse_date(row.get("Date") or row.get("Work Date"))
+            d = parse_date(
+                fuzzy_get(row, "Date", "Work Date", "Day")
+            )
             if not tech or not d:
                 continue
 
@@ -122,22 +121,29 @@ def extract_track_hours(track_hours_path: str, task_index: dict[tuple[str, str],
 
         for row in iter_dict_rows(ws):
             tech = normalize_tech(
-                row.get("Tech")
-                or row.get("Technician")
-                or row.get("Name")
+                fuzzy_get(row, "Tech", "Technician", "Name", "Resource", "Tech Name")
             )
-            work_date = parse_date(row.get("Date") or row.get("Work Date"))
+            work_date = parse_date(
+                fuzzy_get(row, "Date", "Work Date", "Day")
+            )
             if not tech or not work_date:
                 continue
 
-            hours = safe_float(row.get("Hours") or row.get("Total Hours") or row.get("Total"))
+            hours = safe_float(
+                fuzzy_get(row, "Hours", "Total Hours", "Total", "Net Hours", "Duration")
+            )
             if hours <= 0:
                 continue
 
-            start_time = parse_time(row.get("In") or row.get("Start") or row.get("Start Time"))
-            end_time = parse_time(row.get("Out") or row.get("End") or row.get("End Time"))
+            start_time = parse_time(
+                fuzzy_get(row, "In", "Start", "Start Time", "Clock In")
+            )
+            end_time = parse_time(
+                fuzzy_get(row, "Out", "End", "End Time", "Clock Out")
+            )
             assignment = str(
-                row.get("Assignment") or row.get("Assignment Type") or row.get("Work Context") or ""
+                fuzzy_get(row, "Assignment", "Assignment Type", "Project", "Project Name", "Task", "Work Context", "Work / Context")
+                or ""
             ).strip()
 
             task_text = task_index.get((tech.lower(), work_date.isoformat()), "")
@@ -218,12 +224,16 @@ def _generic_hours_index(path: str) -> dict[tuple[str, str], float]:
     for ws in wb.worksheets:
         for row in iter_dict_rows(ws):
             tech = normalize_tech(
-                row.get("Tech") or row.get("Technician") or row.get("Name") or row.get("Staff")
+                fuzzy_get(row, "Tech", "Technician", "Name", "Staff", "Resource", "Tech Name")
             )
-            d = parse_date(row.get("Date") or row.get("Work Date"))
+            d = parse_date(
+                fuzzy_get(row, "Date", "Work Date", "Day")
+            )
             if not tech or not d:
                 continue
-            hours = safe_float(row.get("Hours") or row.get("Total Hours") or row.get("Total") or row.get("net_hours"))
+            hours = safe_float(
+                fuzzy_get(row, "Hours", "Total Hours", "Total", "Net Hours", "Duration")
+            )
             if hours > 0:
                 index[entry_key(tech, d)] += hours
     wb.close()
