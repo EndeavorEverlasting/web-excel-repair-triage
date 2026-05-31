@@ -310,3 +310,36 @@ def test_gate_check_passes(generated_wb):
     report = run_all(path)
     assert not report.stopship, f"Stopship tokens: {report.stopship}"
     assert not report.cf_ref,   f"CF #REF! hits: {report.cf_ref}"
+
+
+# ── T16: weekly label helper is cross-platform ───────────────────────────────
+
+def test_month_day_label_is_cross_platform():
+    """Weekly label helper must not use POSIX-only strftime directives.
+
+    ``%-d`` raises ``ValueError: Invalid format string`` on Windows. The
+    helper uses ``date.day`` directly, which works on every platform.
+    """
+    from triage.billing_summary_generator import _month_day_label
+
+    assert _month_day_label(datetime.date(2026, 4, 1)) == "Apr 1"
+    assert _month_day_label(datetime.date(2026, 4, 27)) == "Apr 27"
+    assert _month_day_label(datetime.date(2026, 12, 31)) == "Dec 31"
+
+
+def test_month_day_label_source_has_no_posix_dash_directive():
+    """Regression guard: no ``strftime("...%-d...")`` calls in the generator.
+
+    The POSIX ``%-d`` / ``%-m`` / ``%-H`` directives are unsupported on Windows
+    and raise ``ValueError`` at runtime. Documentation references in docstrings
+    are allowed; live calls into strftime are not.
+    """
+    import re
+    from triage import billing_summary_generator
+
+    src = Path(billing_summary_generator.__file__).read_text(encoding="utf-8")
+    bad = re.search(r"strftime\s*\([^)]*%-[a-zA-Z]", src)
+    assert not bad, (
+        "POSIX-only strftime directive (e.g. %-d) reintroduced in a strftime "
+        "call; use _month_day_label or date.day instead"
+    )

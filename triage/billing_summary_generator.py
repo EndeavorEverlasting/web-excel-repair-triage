@@ -33,6 +33,16 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 
+def _month_day_label(d) -> str:
+    """Cross-platform '%b %-d' equivalent (e.g. 'Apr 1').
+
+    The POSIX ``%-d`` strftime directive is unsupported on Windows and raises
+    ``ValueError: Invalid format string``. Use the day attribute directly to
+    avoid the platform-dependent directive.
+    """
+    return f"{d:%b} {d.day}"
+
+
 def generate_billing_summary(
     records: List[Dict[str, Any]],
     invoices: List[Dict[str, Any]],
@@ -540,7 +550,7 @@ def generate_billing_summary(
         mon = d - _dt.timedelta(days=d.weekday())
         fri = mon + _dt.timedelta(days=4)
         wk  = mon
-        label = f"{mon.strftime('%b %-d')}–{fri.strftime('%-d')}"
+        label = f"{_month_day_label(mon)}–{fri.day}"
         weekly[wk]["label"]  = label
         weekly[wk]["gross"] += rec["gross_hours"]
         weekly[wk]["lunch"] += rec["lunch_deduction"]
@@ -656,7 +666,7 @@ def generate_billing_summary(
         d = rec["date"]
         week_mon = d - _dt.timedelta(days=d.weekday())
         week_fri = week_mon + _dt.timedelta(days=4)
-        week_label = f"{week_mon.strftime('%b %-d')}–{week_fri.strftime('%-d')}"
+        week_label = f"{_month_day_label(week_mon)}–{week_fri.day}"
 
         # Date as datetime object with mm-dd-yy format
         date_cell = cell(ws1, detail_data_row, 2, _to_datetime(d), h="left")
