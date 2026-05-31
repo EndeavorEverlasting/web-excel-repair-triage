@@ -1,5 +1,12 @@
 """
 Generate NW PRJ Tech Roster Dashboard v6_x WEBSAFE workbooks.
+
+Current status: carry-forward / skeleton generator. Active and archive rows
+come almost entirely from prior dashboard carry-forward via
+``nw_prj_artifact_compare``. Fresh row generation from admin scratch and
+roster evidence lands with the readers and classifier in
+``triage.nw_prj_admin_scratch_reader``, ``triage.nw_prj_roster_reader``, and
+``triage.nw_prj_target_classifier``.
 """
 from __future__ import annotations
 
