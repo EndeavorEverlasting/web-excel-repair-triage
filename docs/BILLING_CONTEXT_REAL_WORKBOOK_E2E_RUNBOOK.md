@@ -52,6 +52,22 @@ python -m triage.billing_context.cli \
 - [ ] No `#REF!`, `#VALUE!`, etc. in generated workbooks
 - [ ] `Neuron Installation` is not the dominant work context category
 
+## Ahead / Behind report
+
+After the CLI run, generate the cross-source alignment report:
+
+```powershell
+python -m triage.billing_context.ahead_behind_report
+```
+
+Open `Outputs/billing_context_ahead_behind.html` in your browser. It shows:
+
+- **Ahead/Behind Matrix** — which source has entries another source lacks
+- **Technician drill-down** — who has the most missing entries or hour deltas
+- **Actionable fixes** — exactly what to add or reconcile to bring sources into sync
+
+> If `track_hours` is far **ahead** of `roster_log` / `admin_copy`, the roster/admin sheets are missing rows. Add them, re-run the CLI, and the delta should drop.
+
 ## Automated guard
 
 CI runs synthetic E2E via [`tests/test_billing_context_cli_e2e.py`](../tests/test_billing_context_cli_e2e.py) — no real workbooks required.
