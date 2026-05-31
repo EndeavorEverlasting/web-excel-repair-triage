@@ -244,6 +244,11 @@ def generate_billing_summary(
     C2_SUBTITLE = "DBEAFE"  # light blue — subtitle
     C2_TOTAL   = "DCFCE7"   # light green — TOTAL rows
 
+    def _day(d) -> str:
+        """Return day-of-month as a string without leading zero, cross-platform.
+        %-d works on Linux/macOS; %#d on Windows; int() handles both."""
+        return str(int(d.strftime("%d")))
+
     def _fill(hex_color: str) -> PatternFill:
         # openpyxl requires 8-char ARGB (alpha prefix FF = fully opaque).
         if len(hex_color) == 6:
@@ -540,7 +545,7 @@ def generate_billing_summary(
         mon = d - _dt.timedelta(days=d.weekday())
         fri = mon + _dt.timedelta(days=4)
         wk  = mon
-        label = f"{mon.strftime('%b %-d')}–{fri.strftime('%-d')}"
+        label = f"{mon.strftime('%b')} {_day(mon)}–{_day(fri)}"
         weekly[wk]["label"]  = label
         weekly[wk]["gross"] += rec["gross_hours"]
         weekly[wk]["lunch"] += rec["lunch_deduction"]
@@ -656,7 +661,7 @@ def generate_billing_summary(
         d = rec["date"]
         week_mon = d - _dt.timedelta(days=d.weekday())
         week_fri = week_mon + _dt.timedelta(days=4)
-        week_label = f"{week_mon.strftime('%b %-d')}–{week_fri.strftime('%-d')}"
+        week_label = f"{week_mon.strftime('%b')} {_day(week_mon)}–{_day(week_fri)}"
 
         # Date as datetime object with mm-dd-yy format
         date_cell = cell(ws1, detail_data_row, 2, _to_datetime(d), h="left")
