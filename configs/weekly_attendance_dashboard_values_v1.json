@@ -1,0 +1,123 @@
+{
+  "schema_version": "weekly_attendance_dashboard_values_v1",
+  "source": {
+    "superseded_pr": 13,
+    "merged_replacement_pr": 15,
+    "purpose": "Preserve reusable weekly dashboard classifier and dropdown vocabulary from the superseded weekly attendance dashboard contract."
+  },
+  "issue_families": [
+    "Punch",
+    "Partial Hours",
+    "Notes",
+    "Project",
+    "Admin Lingering",
+    "False Flag",
+    "Reviewer Protection",
+    "Reconciled"
+  ],
+  "issue_types": [
+    "MISSING_PUNCH",
+    "PARTIAL_HOURS_REVIEW",
+    "NOTE_BEARING_PUNCH",
+    "PUNCH_MISMATCH",
+    "ADMIN_ROSTER_HOUR_MISMATCH",
+    "PROJECT_INFERENCE_FALSE_FLAG",
+    "ADMIN_LINGERING_OUT_OF_SCOPE",
+    "PROTECTED_REVIEWER_SHORT_DAY",
+    "WEEKEND_REVIEW",
+    "RECONCILED"
+  ],
+  "status": [
+    "Open",
+    "In Review",
+    "Resolved",
+    "Dismissed",
+    "Blocked",
+    "Needs Evidence"
+  ],
+  "result": [
+    "Update Admin",
+    "Update Roster",
+    "No Change",
+    "False Flag",
+    "Escalate",
+    "Defer"
+  ],
+  "submission_blocker": [
+    "Yes",
+    "No",
+    "Review"
+  ],
+  "priority": [
+    "P0",
+    "P1",
+    "P2",
+    "P3"
+  ],
+  "confidence": [
+    "High",
+    "Medium",
+    "Low"
+  ],
+  "evidence_status": [
+    "Admin Only",
+    "Roster Only",
+    "Admin + Roster",
+    "Notes Only",
+    "Conflict",
+    "Confirmed"
+  ],
+  "resolution_decision": [
+    "Accept Admin",
+    "Accept Roster",
+    "Correct Punch",
+    "Preserve Note",
+    "Create Override",
+    "Dismiss"
+  ],
+  "false_flag_disposition": [
+    "False flag - project expectation wrong",
+    "Dismissed - roster default already correct",
+    "Dismissed - admin lingering only",
+    "Not applicable",
+    "Needs new evidence"
+  ],
+  "root_cause": [
+    "Missing punch",
+    "Partial hours",
+    "Note-bearing punch",
+    "Admin mismatch",
+    "Roster mismatch",
+    "Project inference error",
+    "Lingering admin row",
+    "Weekend review",
+    "Protected reviewer short day"
+  ],
+  "update_target": [
+    "Admin workbook",
+    "Roster log",
+    "Both",
+    "No workbook change",
+    "Review only"
+  ],
+  "tech_confirmation": [
+    "Confirmed",
+    "Unconfirmed",
+    "Needs tech follow-up",
+    "Not needed"
+  ],
+  "weekly_outputs": [
+    "Outputs/weekly_attendance_dashboard_<YYYY-MM-DD>.xlsx",
+    "Outputs/weekly_attendance_dashboard_<YYYY-MM-DD>.json",
+    "Outputs/weekly_attendance_targets_<YYYY-MM-DD>.csv",
+    "Outputs/weekly_false_flags_<YYYY-MM-DD>.csv",
+    "Outputs/weekly_submission_blockers_<YYYY-MM-DD>.csv"
+  ],
+  "rules": {
+    "admin_project_team_tab_is_project_authority": false,
+    "gray_means_false_flag_or_dismissed_not_unresolved": true,
+    "human_editable_fields_need_dropdowns": true,
+    "cf_dictionary_required_for_generated_dashboard": true,
+    "web_excel_compatibility_over_desktop_opening": true
+  }
+}
