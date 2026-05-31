@@ -310,3 +310,58 @@ def test_gate_check_passes(generated_wb):
     report = run_all(path)
     assert not report.stopship, f"Stopship tokens: {report.stopship}"
     assert not report.cf_ref,   f"CF #REF! hits: {report.cf_ref}"
+
+
+# ── T16: weekly label helper is cross-platform ───────────────────────────────
+
+def test_month_day_label_is_cross_platform():
+    """Weekly label helper must not use POSIX-only strftime directives.
+
+    ``%-d`` raises ``ValueError: Invalid format string`` on Windows. The
+    helper uses ``date.day`` directly, which works on every platform.
+    """
+    from triage.billing_summary_generator import _month_day_label
+
+    assert _month_day_label(datetime.date(2026, 4, 1)) == "Apr 1"
+    assert _month_day_label(datetime.date(2026, 4, 27)) == "Apr 27"
+    assert _month_day_label(datetime.date(2026, 12, 31)) == "Dec 31"
+
+
+def test_month_day_label_source_has_no_posix_dash_directive():
+    """Regression guard: no ``strftime("...%-d...")`` calls in the generator.
+
+    The POSIX ``%-d`` / ``%-m`` / ``%-H`` directives are unsupported on Windows
+    and raise ``ValueError`` at runtime. Documentation references in docstrings
+    are allowed; live calls into strftime are not.
+    """
+    import re
+    from triage import billing_summary_generator
+
+    src = Path(billing_summary_generator.__file__).read_text(encoding="utf-8")
+    bad = re.search(r"strftime\s*\([^)]*%-[a-zA-Z]", src)
+    assert not bad, (
+        "POSIX-only strftime directive (e.g. %-d) reintroduced in a strftime "
+        "call; use _month_day_label or date.day instead"
+    )
+
+
+# ── T17: weekly label is unambiguous across month boundaries ─────────────────
+
+def test_week_label_same_month_collapses_trailing_month():
+    """Same-month weeks render as ``May 4–8``, not ``May 4–May 8``."""
+    from triage.billing_summary_generator import _week_label
+
+    assert _week_label(datetime.date(2026, 5, 4), datetime.date(2026, 5, 8)) == "May 4–8"
+    assert _week_label(datetime.date(2026, 4, 6), datetime.date(2026, 4, 10)) == "Apr 6–10"
+
+
+def test_week_label_cross_month_keeps_both_month_names():
+    """Cross-month weeks must show both months: ``Apr 27–May 1``.
+
+    Without this, the label collapses to ``Apr 27–1`` which is ambiguous
+    and silently misleading on quarter and month boundaries.
+    """
+    from triage.billing_summary_generator import _week_label
+
+    assert _week_label(datetime.date(2026, 4, 27), datetime.date(2026, 5, 1)) == "Apr 27–May 1"
+    assert _week_label(datetime.date(2025, 12, 29), datetime.date(2026, 1, 2)) == "Dec 29–Jan 2"
