@@ -105,14 +105,12 @@ def test_read_roster_log_returns_evidence_list(tmp_path: Path):
     assert all(isinstance(r, RosterEvidence) for r in result)
 
 
-@pytest.mark.xfail(raises=NotImplementedError, strict=True, reason="ingestion PR pending")
 def test_split_note_bearing_punch_separates_time_and_note():
     time_text, note_text = split_note_bearing_punch("9:28:00 AM/ Bonita")
     assert time_text.strip() == "9:28:00 AM"
     assert note_text == "Bonita"
 
 
-@pytest.mark.xfail(raises=NotImplementedError, strict=True, reason="ingestion PR pending")
 def test_split_note_bearing_punch_pure_time_has_empty_note():
     time_text, note_text = split_note_bearing_punch("9:28:00 AM")
     assert time_text == "9:28:00 AM"

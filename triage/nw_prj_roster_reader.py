@@ -92,13 +92,20 @@ def read_roster_log(path: str | Path) -> List[RosterEvidence]:
 def split_note_bearing_punch(cell_text: str) -> tuple[str, str]:
     """Split a roster punch cell into ``(time_text, note_text)``.
 
-    The time portion is whatever precedes the first ``/`` (or equivalent
-    separator). The note portion is the remainder, with surrounding whitespace
-    stripped. Either portion may be empty.
+    The time portion is whatever precedes the first ``/`` separator, stripped
+    of surrounding whitespace. The note portion is everything after the first
+    ``/``, also stripped. Either portion may be empty.
+
+    Examples::
+
+        split_note_bearing_punch("9:28:00 AM/ Bonita") -> ("9:28:00 AM", "Bonita")
+        split_note_bearing_punch("9:28:00 AM")         -> ("9:28:00 AM", "")
 
     This utility is used by ``read_roster_log`` to preserve note context that
-    the underlying time parser strips. Pure-time cells return ``(cell_text, "")``.
-
-    Implementation is pending the ingestion PR.
+    the underlying time parser strips. Pure-time cells return
+    ``(cell_text.strip(), "")``.
     """
-    raise NotImplementedError("split_note_bearing_punch is scaffolded; implementation pending")
+    if "/" not in cell_text:
+        return (cell_text.strip(), "")
+    time_part, _, note_part = cell_text.partition("/")
+    return (time_part.strip(), note_part.strip())
