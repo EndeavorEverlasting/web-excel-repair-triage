@@ -47,6 +47,8 @@ Leadership-facing billing artifacts must not include employee pay-petition frami
 
 Pay-difference analysis belongs in a separate comparison workbook or internal review artifact.
 
+**Work context classification rules:** see [`BILLING_WORK_CONTEXT_RULES.md`](BILLING_WORK_CONTEXT_RULES.md).
+
 ## Failure modes
 
 Stop and revise if any leadership-facing workbook:

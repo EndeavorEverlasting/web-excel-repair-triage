@@ -50,6 +50,18 @@ conditional formatting, or shared-string references.
 - **MCP-first** — every triage phase is also an MCP tool, so Augment Code can
   orchestrate the full pipeline from a chat prompt.
 
+### Billing context exporter (April/May contextualized artifacts)
+
+Generate leadership-safe contextualized billing workbooks, mismatch reports, and a browser dashboard:
+
+- **Rules (canonical):** [`docs/BILLING_WORK_CONTEXT_RULES.md`](docs/BILLING_WORK_CONTEXT_RULES.md)
+- **Output quality:** [`docs/CONTEXTUALIZED_BILLING_ARTIFACTS.md`](docs/CONTEXTUALIZED_BILLING_ARTIFACTS.md)
+- **CLI / usage:** [`docs/BILLING_CONTEXT_EXPORTER.md`](docs/BILLING_CONTEXT_EXPORTER.md)
+- **Sprint carryover:** [`docs/ARTIFACT_SPRINT_CARRYOVER_2026-05-30.md`](docs/ARTIFACT_SPRINT_CARRYOVER_2026-05-30.md)
+- **Run:** `python -m triage.billing_context.cli --track-hours ... --april-context ... --out-dir Outputs --html --zip`
+
+Related admin posture pipeline: [`docs/2026-05-20-admin-billing-context-pipeline.md`](docs/2026-05-20-admin-billing-context-pipeline.md)
+
 ### NW PRJ dashboard v6 (Tech Roster)
 
 Contract, configs, generator, and validators for the NW PRJ Tech Roster Dashboard workflow:
