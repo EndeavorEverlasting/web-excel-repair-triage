@@ -43,6 +43,17 @@ def _month_day_label(d) -> str:
     return f"{d:%b} {d.day}"
 
 
+def _week_label(mon, fri) -> str:
+    """Render a Monday–Friday week label, unambiguous across month boundaries.
+
+    Same-month weeks collapse the trailing month: ``May 4–8``. Cross-month
+    weeks keep both month names: ``Apr 27–May 1``.
+    """
+    if mon.month == fri.month:
+        return f"{_month_day_label(mon)}–{fri.day}"
+    return f"{_month_day_label(mon)}–{_month_day_label(fri)}"
+
+
 def generate_billing_summary(
     records: List[Dict[str, Any]],
     invoices: List[Dict[str, Any]],
@@ -550,7 +561,7 @@ def generate_billing_summary(
         mon = d - _dt.timedelta(days=d.weekday())
         fri = mon + _dt.timedelta(days=4)
         wk  = mon
-        label = f"{_month_day_label(mon)}–{fri.day}"
+        label = _week_label(mon, fri)
         weekly[wk]["label"]  = label
         weekly[wk]["gross"] += rec["gross_hours"]
         weekly[wk]["lunch"] += rec["lunch_deduction"]
@@ -666,7 +677,7 @@ def generate_billing_summary(
         d = rec["date"]
         week_mon = d - _dt.timedelta(days=d.weekday())
         week_fri = week_mon + _dt.timedelta(days=4)
-        week_label = f"{_month_day_label(week_mon)}–{week_fri.day}"
+        week_label = _week_label(week_mon, week_fri)
 
         # Date as datetime object with mm-dd-yy format
         date_cell = cell(ws1, detail_data_row, 2, _to_datetime(d), h="left")

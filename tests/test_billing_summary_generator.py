@@ -343,3 +343,25 @@ def test_month_day_label_source_has_no_posix_dash_directive():
         "POSIX-only strftime directive (e.g. %-d) reintroduced in a strftime "
         "call; use _month_day_label or date.day instead"
     )
+
+
+# ── T17: weekly label is unambiguous across month boundaries ─────────────────
+
+def test_week_label_same_month_collapses_trailing_month():
+    """Same-month weeks render as ``May 4–8``, not ``May 4–May 8``."""
+    from triage.billing_summary_generator import _week_label
+
+    assert _week_label(datetime.date(2026, 5, 4), datetime.date(2026, 5, 8)) == "May 4–8"
+    assert _week_label(datetime.date(2026, 4, 6), datetime.date(2026, 4, 10)) == "Apr 6–10"
+
+
+def test_week_label_cross_month_keeps_both_month_names():
+    """Cross-month weeks must show both months: ``Apr 27–May 1``.
+
+    Without this, the label collapses to ``Apr 27–1`` which is ambiguous
+    and silently misleading on quarter and month boundaries.
+    """
+    from triage.billing_summary_generator import _week_label
+
+    assert _week_label(datetime.date(2026, 4, 27), datetime.date(2026, 5, 1)) == "Apr 27–May 1"
+    assert _week_label(datetime.date(2025, 12, 29), datetime.date(2026, 1, 2)) == "Dec 29–Jan 2"
