@@ -19,6 +19,7 @@ HEADER_FILL = "1F4E78"
 HEADER_FONT = "FFFFFF"
 ERROR_TOKENS = ("#REF!", "#VALUE!", "#DIV/0!", "#NAME?", "#N/A")
 FORBIDDEN_TEXT_TOKENS = ("...", "…", "TBD", "TODO", "context goes here")
+EXCEL_SHEET_TITLE_LIMIT = 31
 
 LEADERSHIP_HEADERS = ["Date", "Tech", "Hours", "Work Context"]
 
@@ -34,6 +35,29 @@ INTERNAL_HEADERS = [
     "Source Sheet",
     "Source Row",
 ]
+
+TRUE_NEURON_RECON_SHEET_NAMES = (
+    "TRUE Discrepancies",
+    "Matched Neuron Dates",
+    "Excluded - Not Neuron",
+    "By Staff",
+    "By Date",
+    "Neuron Scope Source",
+)
+
+
+def validate_sheet_title_policy(sheet_names: list[str] | tuple[str, ...]) -> None:
+    """Fail fast when an export tries to use non-shorthand or invalid sheet names."""
+    too_long = [name for name in sheet_names if len(name) > EXCEL_SHEET_TITLE_LIMIT]
+    if too_long:
+        raise ValueError(f"Sheet names exceed Excel's 31-character limit: {too_long}")
+
+    duplicates = sorted({name for name in sheet_names if sheet_names.count(name) > 1})
+    if duplicates:
+        raise ValueError(f"Duplicate sheet names are not allowed: {duplicates}")
+
+
+validate_sheet_title_policy(TRUE_NEURON_RECON_SHEET_NAMES)
 
 
 def safe_csv_value(value: object) -> str:
