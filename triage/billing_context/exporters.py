@@ -45,6 +45,38 @@ TRUE_NEURON_RECON_SHEET_NAMES = (
     "Neuron Scope Source",
 )
 
+TRUE_NEURON_RECON_POLICY = {
+    "scope": "Neuron Deployment only",
+    "date_range": "2026-04-06 through 2026-05-31",
+    "project_source_of_truth": (
+        "Use the updated Internal Roster project classification by staff/date before "
+        "comparing to Admin. For April, Automated - April 2026 and Worked Projects "
+        "April 2026 are authoritative for determining whether a staff/date belongs "
+        "to Neuron Deployment. For May, use the corresponding May automated/worked "
+        "project classification sheets and live roster time sheets."
+    ),
+    "do_not_default_staff_to_neuron": (
+        "Never include a person/date just because the person is on the broader project "
+        "team or previously appeared in a Neuron-related list. A staff/date must be "
+        "documented as Neuron Deployment by the roster project classification to enter "
+        "the reconciliation scope."
+    ),
+    "excluded_other_projects": (
+        "If the roster documents the staff/date as another project, blank or different "
+        "Neuron/Admin timing is not a discrepancy. Route that row to Excluded - Not "
+        "Neuron rather than TRUE Discrepancies."
+    ),
+    "true_discrepancy_rule": (
+        "Only flag rows where the roster documents that exact staff/date as Neuron "
+        "Deployment and Admin is missing the Neuron entry, Admin assigns the date to a "
+        "different project, or Admin/roster times or hours differ."
+    ),
+    "matched_rule": (
+        "Rows documented as Neuron Deployment whose Admin and roster time evidence align "
+        "belong on Matched Neuron Dates, not TRUE Discrepancies."
+    ),
+}
+
 
 def validate_sheet_title_policy(sheet_names: list[str] | tuple[str, ...]) -> None:
     """Fail fast when an export tries to use non-shorthand or invalid sheet names."""
@@ -57,7 +89,42 @@ def validate_sheet_title_policy(sheet_names: list[str] | tuple[str, ...]) -> Non
         raise ValueError(f"Duplicate sheet names are not allowed: {duplicates}")
 
 
+def validate_true_neuron_recon_policy(policy: dict[str, str]) -> None:
+    """Keep refreshed True Neuron reconciliation rules attached to workbook output."""
+    required_keys = {
+        "scope",
+        "date_range",
+        "project_source_of_truth",
+        "do_not_default_staff_to_neuron",
+        "excluded_other_projects",
+        "true_discrepancy_rule",
+        "matched_rule",
+    }
+    missing = sorted(required_keys - set(policy))
+    if missing:
+        raise ValueError(f"Missing True Neuron reconciliation policy keys: {missing}")
+
+    policy_text = "\n".join(policy.values()).lower()
+    required_phrases = (
+        "neuron deployment only",
+        "automated - april 2026",
+        "worked projects april 2026",
+        "never include a person/date just because",
+        "another project",
+        "not a discrepancy",
+        "only flag rows where the roster documents",
+        "matched neuron dates",
+    )
+    missing_phrases = [phrase for phrase in required_phrases if phrase not in policy_text]
+    if missing_phrases:
+        raise ValueError(
+            "True Neuron reconciliation policy is missing required rule text: "
+            f"{missing_phrases}"
+        )
+
+
 validate_sheet_title_policy(TRUE_NEURON_RECON_SHEET_NAMES)
+validate_true_neuron_recon_policy(TRUE_NEURON_RECON_POLICY)
 
 
 def safe_csv_value(value: object) -> str:
