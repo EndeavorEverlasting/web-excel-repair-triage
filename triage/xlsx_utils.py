@@ -6,9 +6,11 @@ Used by gate_checks, dv_engine, cf_engine, and other triage modules.
 """
 from __future__ import annotations
 
+import io
 import re
 import zipfile
-from typing import Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 
 # ─────────────────────── ZIP / part helpers ───────────────────────
@@ -183,3 +185,218 @@ def get_attr(xml_fragment: str, attr: str) -> Optional[str]:
     m = re.search(rf'{attr}="([^"]*)"', xml_fragment)
     return m.group(1) if m else None
 
+
+class XlsxValues:
+    """Low-level reader for .xlsx cell values using ZIP+XML (no openpyxl)."""
+    def __init__(self, path: Path):
+        self.path = Path(path)
+        self.z = zipfile.ZipFile(path)
+        self.shared: List[str] = []
+
+        # Load shared strings
+        if 'xl/sharedStrings.xml' in self.z.namelist():
+            import xml.etree.ElementTree as ET
+            root = ET.fromstring(self.z.read('xl/sharedStrings.xml'))
+            ns = '{http://schemas.openxmlformats.org/spreadsheetml/2006/main}'
+            for si in root.findall(ns + 'si'):
+                # Handle both <t> and <r><t>
+                text_parts = []
+                for t in si.iter(ns + 't'):
+                    text_parts.append(t.text or "")
+                self.shared.append("".join(text_parts))
+
+        # Load sheet map
+        self.sheets = sheet_name_map(self.z)
+
+    def sheet_values(self, sheet_name: str) -> Dict[Tuple[int, int], Any]:
+        """Return {(row, col): value} for all non-empty cells in a sheet."""
+        part = None
+        for p, name in self.sheets.items():
+            if name == sheet_name:
+                part = p
+                break
+
+        if not part or part not in self.z.namelist():
+            return {}
+
+        import xml.etree.ElementTree as ET
+        root = ET.fromstring(self.z.read(part))
+        ns = '{http://schemas.openxmlformats.org/spreadsheetml/2006/main}'
+        out = {}
+
+        for c in root.iter(ns + 'c'):
+            ref = c.attrib.get('r')
+            if not ref:
+                continue
+            m = re.match(r'([A-Z]+)(\d+)', ref)
+            if not m:
+                continue
+            row = int(m.group(2))
+            col = col_to_num(m.group(1))
+
+            t = c.attrib.get('t')
+            v_el = c.find(ns + 'v')
+            is_el = c.find(ns + 'is')
+
+            value = None
+            if t == 's' and v_el is not None:
+                idx = int(v_el.text or 0)
+                if 0 <= idx < len(self.shared):
+                    value = self.shared[idx]
+            elif t == 'inlineStr' and is_el is not None:
+                text_parts = []
+                for t_el in is_el.iter(ns + 't'):
+                    text_parts.append(t_el.text or "")
+                value = "".join(text_parts)
+            elif v_el is not None:
+                raw = v_el.text
+                if raw is not None:
+                    try:
+                        if '.' in raw:
+                            value = float(raw)
+                        else:
+                            value = int(raw)
+                    except ValueError:
+                        value = raw
+
+            if value is not None:
+                out[(row, col)] = value
+        return out
+
+
+# ─────────────────────── inlineStr repair ───────────────────────────
+
+
+def fix_inlinestr(path: str) -> None:
+    """
+    Post-process an openpyxl-generated XLSX to eliminate all inlineStr tokens.
+
+    openpyxl 3.1.x produces two patterns:
+      • Non-empty: <c r="A1" s="N" t="inlineStr"><is><t>VALUE</t></is></c>
+        → converted to a shared-string reference cell
+      • Empty:     <c r="G5" t="inlineStr"></c>
+        → the t attribute is simply stripped (becomes a blank/numeric cell)
+
+    Web Excel treats ``inlineStr`` as a stop-ship token.  This function
+    rewrites all worksheet XMLs, rebuilds ``xl/sharedStrings.xml`` (merging
+    with any existing entries), and patches ``[Content_Types].xml`` if needed.
+
+    The file is rewritten in-place.
+    """
+    # Pattern 1: non-empty inlineStr cell
+    _IS_FULL = re.compile(
+        rb'(<c\b[^>]*?)\s+t="inlineStr"([^>]*?)><is><t([^>]*)>(.*?)</t></is></c>',
+        re.DOTALL,
+    )
+    # Pattern 2: empty inlineStr cell (no body or <is> element)
+    _IS_EMPTY = re.compile(rb'\s+t="inlineStr"(?=[^<]*?/>|[^<]*?></c>)')
+
+    p = Path(path)
+    original = p.read_bytes()
+
+    with zipfile.ZipFile(io.BytesIO(original), "r") as zin:
+        names = zin.namelist()
+
+        # ------------------------------------------------------------------
+        # 1. Load existing shared strings (if any)
+        # ------------------------------------------------------------------
+        str_table: List[str] = []
+        str_index: Dict[str, int] = {}
+
+        if "xl/sharedStrings.xml" in names:
+            ss_xml = zin.read("xl/sharedStrings.xml").decode("utf-8", errors="ignore")
+            for m in re.finditer(r"<t[^>]*?>(.*?)</t>", ss_xml, re.DOTALL):
+                s = m.group(1)
+                if s not in str_index:
+                    str_index[s] = len(str_table)
+                    str_table.append(s)
+
+        def _get_or_add(s: str) -> int:
+            if s not in str_index:
+                str_index[s] = len(str_table)
+                str_table.append(s)
+            return str_index[s]
+
+        # ------------------------------------------------------------------
+        # 2. Rewrite worksheet XMLs
+        # ------------------------------------------------------------------
+        patched: Dict[str, bytes] = {}
+        for name in names:
+            if not (name.startswith("xl/worksheets/sheet") and name.endswith(".xml")):
+                continue
+            raw = zin.read(name)
+            if b"inlineStr" not in raw:
+                continue
+
+            # Pass A: convert non-empty inlineStr to shared-string reference
+            def _replace_full(m: re.Match) -> bytes:
+                prefix = m.group(1) + m.group(2)  # <c attrs> without t="inlineStr"
+                value = m.group(4).decode("utf-8", errors="ignore")
+                idx = _get_or_add(value)
+                return prefix + b' t="s"><v>' + str(idx).encode() + b"</v></c>"
+
+            fixed = _IS_FULL.sub(_replace_full, raw)
+
+            # Pass B: strip t="inlineStr" from empty cells
+            fixed = _IS_EMPTY.sub(b"", fixed)
+
+            if fixed != raw:
+                patched[name] = fixed
+
+        if not patched and str_table == []:
+            return  # Nothing to do
+
+        # ------------------------------------------------------------------
+        # 3. Rebuild sharedStrings.xml
+        # ------------------------------------------------------------------
+        count = len(str_table)
+        ss_items = "".join(f"<si><t>{_xml_escape(s)}</t></si>" for s in str_table)
+        new_ss = (
+            f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            f'<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
+            f' count="{count}" uniqueCount="{count}">{ss_items}</sst>'
+        ).encode("utf-8")
+
+        # ------------------------------------------------------------------
+        # 4. Pre-compute all extra / modified parts, then write once
+        # ------------------------------------------------------------------
+        need_new_ss = "xl/sharedStrings.xml" not in names and bool(str_table)
+
+        extra: Dict[str, bytes] = {}
+        if need_new_ss:
+            extra["xl/sharedStrings.xml"] = new_ss
+            ct_name = "[Content_Types].xml"
+            if ct_name in names:
+                ct = zin.read(ct_name).decode("utf-8")
+                if "sharedStrings" not in ct:
+                    ct = ct.replace(
+                        "</Types>",
+                        '<Override PartName="/xl/sharedStrings.xml"'
+                        ' ContentType="application/vnd.openxmlformats-officedocument'
+                        ".spreadsheetml.sharedStrings+xml\"/></Types>",
+                    )
+                    extra[ct_name] = ct.encode("utf-8")
+
+        # ------------------------------------------------------------------
+        # 5. Rewrite ZIP — each part written exactly once
+        # ------------------------------------------------------------------
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zout:
+            for name in names:
+                if name in patched:
+                    zout.writestr(name, patched[name])
+                elif name == "xl/sharedStrings.xml":
+                    zout.writestr(name, new_ss)
+                elif name in extra:
+                    zout.writestr(name, extra[name])
+                else:
+                    zout.writestr(name, zin.read(name))
+            for name, data in extra.items():
+                if name not in names:
+                    zout.writestr(name, data)
+
+        p.write_bytes(buf.getvalue())
+
+
+def _xml_escape(s: str) -> str:
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
