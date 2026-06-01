@@ -73,6 +73,14 @@ Contract, configs, generator, and validators for the NW PRJ Tech Roster Dashboar
 - Generate: `python -m triage.nw_prj_dashboard_generator --admin-scratch <scratch.xlsx> [--dashboard ...] [--roster ...]`
 - Compare: `python -m triage.nw_prj_artifact_compare --admin-scratch <scratch.xlsx> [--dashboard ...]`
 
+### Cybernet target sprint (Wave 3 configuration)
+
+Scope-filtered sprint target workbook from All-Wave upstream + live sprint dashboard:
+
+- Docs: [`docs/CYBERNET_TARGET_SPRINT_CONTRACT.md`](docs/CYBERNET_TARGET_SPRINT_CONTRACT.md)
+- Configs: `configs/cybernet_sprint_scope_2026_06.json`, `configs/cybernet_targets_schema.json`
+- Run: `python -m triage.cybernet_targets.cli --all-wave "Candidates/configuration targets/ALL WAVE ANESTHESIA MACHINES for Tim 6-1-2026.xlsx" --existing-dashboard "Candidates/configuration targets/Targets_Wave3_Live_Dashboard_WebExcelSafe_2026-05-26.xlsx" --scope configs/cybernet_sprint_scope_2026_06.json --out-dir Outputs --as-of 2026-06-01 --websafe`
+
 ### Lifecycle folder rules (quick reference)
 
 This repo uses lifecycle folders so the engine can keep artifacts organized:
