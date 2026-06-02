@@ -54,6 +54,38 @@ def test_build_portal_from_fixture_csv_json(tmp_path):
     assert "<\\/script>" not in html or "</script>" in html  # escaped payload
 
 
+def test_portal_surfaces_semantic_failure(tmp_path):
+    """Preflight JSON with semantic_integrity FAIL must appear in rendered HTML."""
+    json_path = tmp_path / "preflight_semantic_fail.json"
+    json_path.write_text(
+        json.dumps({
+            "preflight_pass": False,
+            "artifact": "test.xlsx",
+            "semantic_integrity": "FAIL",
+            "sentinel_failures": ["Start Here!A1 is blank", "generic_column_strings_only:all_shared_strings_are_ColumnN"],
+            "generic_column_strings_only": True,
+            "meaningful_shared_string_ratio": 0.0,
+            "excel_for_web_manual_check": "NOT_PROVEN",
+        }),
+        encoding="utf-8",
+    )
+    sections = [
+        PortalSection(
+            id="pf",
+            title="Preflight",
+            tab="preflight",
+            kind="preflight",
+            json_path=str(json_path),
+        ),
+    ]
+    path = build_run_portal(tmp_path, "Semantic Failure Portal", sections=sections)
+    html = path.read_text(encoding="utf-8")
+    assert "semantic_integrity" in html
+    assert "FAIL" in html
+    assert "sentinel_failures" in html
+    assert "NOT_PROVEN" in html
+
+
 def test_admin_billing_manifest_portal(tmp_path_factory):
     from tests.fixtures.admin_billing_summary.builders import build
     from triage.admin_billing_summary.cli import run

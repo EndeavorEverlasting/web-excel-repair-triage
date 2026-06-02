@@ -60,6 +60,45 @@ def admin_billing_sections(manifest: Dict[str, Any], out_dir: Path) -> List[Port
         for variant, vo in (mo.get("outputs") or {}).items():
             pf = vo.get("preflight_json")
             if pf:
+                import json as _json
+                pf_data: Dict[str, Any] = {}
+                try:
+                    pf_data = _json.loads(Path(pf).read_text(encoding="utf-8"))
+                except Exception:
+                    pass
+                semantic = pf_data.get("semantic_integrity", "NOT_PROVEN")
+                sections.append(PortalSection(
+                    id=f"pf-kpi-{mk}-{variant}",
+                    title=f"Semantic gate — {mo.get('month_name')} {variant}",
+                    tab="preflight",
+                    kind="kpis",
+                    items=[
+                        {
+                            "label": "Package preflight",
+                            "value": "PASS" if pf_data.get("preflight_pass") else "FAIL",
+                            "tone": "pass" if pf_data.get("preflight_pass") else "fail",
+                        },
+                        {
+                            "label": "Semantic integrity",
+                            "value": semantic,
+                            "tone": "pass" if semantic == "PASS" else "fail",
+                        },
+                        {
+                            "label": "Generic strings only",
+                            "value": str(pf_data.get("generic_column_strings_only", "—")),
+                            "tone": "fail" if pf_data.get("generic_column_strings_only") else "pass",
+                        },
+                        {
+                            "label": "Meaningful strings ratio",
+                            "value": pf_data.get("meaningful_shared_string_ratio", "—"),
+                        },
+                        {
+                            "label": "Excel for Web",
+                            "value": pf_data.get("excel_for_web_manual_check", "NOT_PROVEN"),
+                            "tone": "warn",
+                        },
+                    ],
+                ))
                 sections.append(PortalSection(
                     id=f"pf-{mk}-{variant}",
                     title=f"Preflight — {mo.get('month_name')} {variant}",
@@ -87,6 +126,9 @@ def _month_stem_from_key(month_key: str) -> str:
 
 
 def bonita_sections(manifest: Dict[str, Any]) -> List[PortalSection]:
+    pf_pass = manifest.get("websafe_preflight_pass")
+    pf_data = manifest.get("preflight_data") or {}
+    semantic = pf_data.get("semantic_integrity", "NOT_PROVEN")
     sections: List[PortalSection] = [
         PortalSection(
             id="kpi",
@@ -98,9 +140,19 @@ def bonita_sections(manifest: Dict[str, Any]) -> List[PortalSection]:
                 {"label": "Shifts", "value": manifest.get("shift_count")},
                 {"label": "Review items", "value": manifest.get("review_item_count")},
                 {
-                    "label": "Preflight",
-                    "value": "PASS" if manifest.get("websafe_preflight_pass") else "FAIL",
-                    "tone": "pass" if manifest.get("websafe_preflight_pass") else "fail",
+                    "label": "Package preflight",
+                    "value": "PASS" if pf_pass else "FAIL",
+                    "tone": "pass" if pf_pass else "fail",
+                },
+                {
+                    "label": "Semantic integrity",
+                    "value": semantic,
+                    "tone": "pass" if semantic == "PASS" else "fail",
+                },
+                {
+                    "label": "Excel for Web",
+                    "value": pf_data.get("excel_for_web_manual_check", "NOT_PROVEN"),
+                    "tone": "warn",
                 },
             ],
         ),
