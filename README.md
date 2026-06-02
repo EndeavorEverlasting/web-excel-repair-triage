@@ -81,6 +81,14 @@ Scope-filtered sprint target workbook from All-Wave upstream + live sprint dashb
 - Configs: `configs/cybernet_sprint_scope_2026_06.json`, `configs/cybernet_targets_schema.json`
 - Run: `python -m triage.cybernet_targets.cli --all-wave "Candidates/configuration targets/ALL WAVE ANESTHESIA MACHINES for Tim 6-1-2026.xlsx" --existing-dashboard "Candidates/configuration targets/Targets_Wave3_Live_Dashboard_WebExcelSafe_2026-05-26.xlsx" --scope configs/cybernet_sprint_scope_2026_06.json --out-dir Outputs --as-of 2026-06-01 --websafe`
 
+### NW PRJ Neuron Track Hours engine
+
+Generate `Neuron_Track_Hours_April_May_2026_WEBSAFE.xlsx` locally from the private roster log:
+
+- Docs: [`docs/NW_PRJ_NEURON_TRACK_HOURS_CONTRACT.md`](docs/NW_PRJ_NEURON_TRACK_HOURS_CONTRACT.md)
+- Run: `python -m triage.nw_prj_neuron_track_hours.cli --roster-log "<roster>.xlsx" --out-dir Outputs/nw_prj_neuron_track_hours_2026_06_01 --months 2026-04 2026-05 --websafe --zip`
+- Neuron scope uses Worked-Project per-date classification (not default team membership); totals: April 1048.19, May 697.83, total 1746.02, Go Live weekend 2 rows / 22h.
+
 ### Lifecycle folder rules (quick reference)
 
 This repo uses lifecycle folders so the engine can keep artifacts organized:
