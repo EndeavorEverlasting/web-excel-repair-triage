@@ -22,6 +22,7 @@ import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from triage.webexcel_semantic_gate import run_semantic_gate
 from triage.nw_prj_neuron_track_hours.bonita_exporter import (
     build_bonita_workbook,
     tab_name_for_month_key,
@@ -40,7 +41,7 @@ PREFLIGHT_NAME = "Neuron_Track_Hours_April_May_2026_preflight.json"
 # Reference totals for the full-month source (sanity comparison only).
 REFERENCE_TOTALS = {"april": 1064.19, "may": 819.58}
 
-_STOP_SHIP_TOKENS = ["inlineStr", "ns0:", "xmlns:ns0"]
+_STOP_SHIP_TOKENS = ["ns0:", "xmlns:ns0"]  # inlineStr checked worksheet-scope only
 
 
 def _resolve(p: Optional[str], base: Path) -> Optional[Path]:
@@ -91,6 +92,14 @@ def preflight_bonita(path: str) -> Dict[str, Any]:
                 all_text += text
                 if name == "xl/workbook.xml":
                     wb_xml = text
+            # inlineStr check scoped to worksheet XML only (not sharedStrings)
+            for name in names:
+                if name.startswith("xl/worksheets/sheet") and name.endswith(".xml"):
+                    ws_text = z.read(name).decode("utf-8", errors="ignore")
+                    if 't="inlineStr"' in ws_text:
+                        res["token_failures"].append("inlineStr")
+                        break
+
             for tok in _STOP_SHIP_TOKENS:
                 if tok in all_text:
                     res["token_failures"].append(tok)
@@ -113,12 +122,18 @@ def preflight_bonita(path: str) -> Dict[str, Any]:
         res["error"] = "bad_zip"
         return res
 
+    # Semantic integrity gate
+    gate = run_semantic_gate(path, profile="bonita")
+    res.update(gate)
+
     res["preflight_pass"] = (
         bool(res["zip_valid"])
         and not res["token_failures"]
         and not res["has_calc_chain"]
         and not res["has_external_links"]
         and bool(res["sharedstrings_count_ok"])
+        and res["semantic_integrity"] == "PASS"
+        and not res["generic_column_strings_only"]
     )
     return res
 

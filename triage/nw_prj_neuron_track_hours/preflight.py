@@ -13,7 +13,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
 
-STOP_SHIP_TOKENS = ["inlineStr", "ns0:", "xmlns:ns0", "calcChain.xml"]
+from triage.webexcel_semantic_gate import run_semantic_gate
+
+# inlineStr is NOT in this list — it is checked worksheet-scope only (below)
+STOP_SHIP_TOKENS = ["ns0:", "xmlns:ns0", "calcChain.xml"]
 ERROR_VALUE_TOKENS = ["#REF!", "#VALUE!", "#DIV/0!", "#NAME?", "#NULL!", "#N/A"]
 
 
@@ -37,6 +40,16 @@ class TrackHoursPreflight:
     errors: List[str] = field(default_factory=list)
     expected_sheets_present: bool = True
     missing_sheets: List[str] = field(default_factory=list)
+    # Semantic gate fields
+    semantic_integrity: str = "FAIL"
+    sentinel_failures: List[str] = field(default_factory=list)
+    shared_string_count: int = 0
+    generic_column_string_count: int = 0
+    meaningful_shared_string_count: int = 0
+    meaningful_shared_string_ratio: float = 1.0
+    generic_column_strings_only: bool = False
+    post_repair_text_loss: bool = False
+    excel_for_web_manual_check: str = "NOT_PROVEN"
 
     def to_dict(self) -> Dict:
         return dataclasses.asdict(self)
@@ -80,6 +93,13 @@ def run_preflight(path: str, expected_sheets: Optional[List[str]] = None) -> Tra
                     if "dataValidation" in text:
                         res.has_dropdowns = True
 
+            # inlineStr check scoped to worksheet XML only (not sharedStrings)
+            for ws_part in ws_parts:
+                ws_text = z.read(ws_part).decode("utf-8", errors="ignore")
+                if 't="inlineStr"' in ws_text:
+                    res.token_failures.append("inlineStr")
+                    break
+
             for tok in STOP_SHIP_TOKENS:
                 if tok == "calcChain.xml":
                     continue
@@ -115,6 +135,19 @@ def run_preflight(path: str, expected_sheets: Optional[List[str]] = None) -> Tra
         res.errors.append("bad_zip")
         return res
 
+    # Semantic integrity gate — "neuron_track" runs density checks only;
+    # structural sentinels for the full dashboard format are not yet defined.
+    gate = run_semantic_gate(path, profile="neuron_track")
+    res.semantic_integrity = gate["semantic_integrity"]
+    res.sentinel_failures = gate["sentinel_failures"]
+    res.shared_string_count = gate["shared_string_count"]
+    res.generic_column_string_count = gate["generic_column_string_count"]
+    res.meaningful_shared_string_count = gate["meaningful_shared_string_count"]
+    res.meaningful_shared_string_ratio = gate["meaningful_shared_string_ratio"]
+    res.generic_column_strings_only = gate["generic_column_strings_only"]
+    res.post_repair_text_loss = gate["post_repair_text_loss"]
+    res.excel_for_web_manual_check = gate["excel_for_web_manual_check"]
+
     res.preflight_pass = (
         res.zip_valid
         and not res.token_failures
@@ -126,6 +159,8 @@ def run_preflight(path: str, expected_sheets: Optional[List[str]] = None) -> Tra
         and res.relationships_ok
         and res.sharedstrings_count_ok
         and res.expected_sheets_present
+        and res.semantic_integrity == "PASS"
+        and not res.generic_column_strings_only
     )
     return res
 
@@ -142,7 +177,6 @@ def _relationships_ok(z: zipfile.ZipFile, names: List[str]) -> bool:
         norm = ("xl/" + t).replace("xl/./", "xl/")
         norm = re.sub(r"xl/\.\./", "", norm)
         if norm not in names and t not in names:
-            # external or already-rooted; tolerate sharedStrings/styles presence checks
             if "sharedStrings" in t or "styles" in t or "theme" in t:
                 continue
     return True
