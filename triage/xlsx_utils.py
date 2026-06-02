@@ -6,8 +6,10 @@ Used by gate_checks, dv_engine, cf_engine, and other triage modules.
 """
 from __future__ import annotations
 
+import io
 import re
 import zipfile
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 
@@ -182,4 +184,110 @@ def get_attr(xml_fragment: str, attr: str) -> Optional[str]:
     """Extract the value of an attribute from an XML fragment."""
     m = re.search(rf'{attr}="([^"]*)"', xml_fragment)
     return m.group(1) if m else None
+
+
+# ─────────────────────── inlineStr repair ───────────────────────────
+
+
+def fix_inlinestr(path: str) -> None:
+    """
+    Post-process an openpyxl-generated XLSX to eliminate all inlineStr tokens.
+
+    Web Excel treats ``inlineStr`` as a stop-ship token. Rewrites worksheet XMLs
+    in-place and rebuilds sharedStrings when needed.
+    """
+    _IS_FULL = re.compile(
+        rb'(<c\b[^>]*?)\s+t="inlineStr"([^>]*?)><is><t([^>]*)>(.*?)</t></is></c>',
+        re.DOTALL,
+    )
+    _IS_EMPTY = re.compile(rb'\s+t="inlineStr"(?=[^<]*?/>|[^<]*?></c>)')
+
+    p = Path(path)
+    original = p.read_bytes()
+
+    with zipfile.ZipFile(io.BytesIO(original), "r") as zin:
+        names = zin.namelist()
+        str_table: List[str] = []
+        str_index: Dict[str, int] = {}
+
+        if "xl/sharedStrings.xml" in names:
+            ss_xml = zin.read("xl/sharedStrings.xml").decode("utf-8", errors="ignore")
+            for m in re.finditer(r"<t[^>]*?>(.*?)</t>", ss_xml, re.DOTALL):
+                s = m.group(1)
+                if s not in str_index:
+                    str_index[s] = len(str_table)
+                    str_table.append(s)
+
+        def _get_or_add(s: str) -> int:
+            if s not in str_index:
+                str_index[s] = len(str_table)
+                str_table.append(s)
+            return str_index[s]
+
+        patched: Dict[str, bytes] = {}
+        for name in names:
+            if not (name.startswith("xl/worksheets/sheet") and name.endswith(".xml")):
+                continue
+            raw = zin.read(name)
+            if b"inlineStr" not in raw:
+                continue
+
+            def _replace_full(m: re.Match) -> bytes:
+                prefix = m.group(1) + m.group(2)
+                value = m.group(4).decode("utf-8", errors="ignore")
+                idx = _get_or_add(value)
+                return prefix + b' t="s"><v>' + str(idx).encode() + b"</v></c>"
+
+            fixed = _IS_FULL.sub(_replace_full, raw)
+            fixed = _IS_EMPTY.sub(b"", fixed)
+            if fixed != raw:
+                patched[name] = fixed
+
+        if not patched and str_table == []:
+            return
+
+        count = len(str_table)
+        ss_items = "".join(f"<si><t>{_xml_escape(s)}</t></si>" for s in str_table)
+        new_ss = (
+            f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            f'<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
+            f' count="{count}" uniqueCount="{count}">{ss_items}</sst>'
+        ).encode("utf-8")
+
+        need_new_ss = "xl/sharedStrings.xml" not in names and bool(str_table)
+        extra: Dict[str, bytes] = {}
+        if need_new_ss:
+            extra["xl/sharedStrings.xml"] = new_ss
+            ct_name = "[Content_Types].xml"
+            if ct_name in names:
+                ct = zin.read(ct_name).decode("utf-8")
+                if "sharedStrings" not in ct:
+                    ct = ct.replace(
+                        "</Types>",
+                        '<Override PartName="/xl/sharedStrings.xml"'
+                        ' ContentType="application/vnd.openxmlformats-officedocument'
+                        ".spreadsheetml.sharedStrings+xml\"/></Types>",
+                    )
+                    extra[ct_name] = ct.encode("utf-8")
+
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zout:
+            for name in names:
+                if name in patched:
+                    zout.writestr(name, patched[name])
+                elif name == "xl/sharedStrings.xml":
+                    zout.writestr(name, new_ss)
+                elif name in extra:
+                    zout.writestr(name, extra[name])
+                else:
+                    zout.writestr(name, zin.read(name))
+            for name, data in extra.items():
+                if name not in names:
+                    zout.writestr(name, data)
+
+        p.write_bytes(buf.getvalue())
+
+
+def _xml_escape(s: str) -> str:
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
