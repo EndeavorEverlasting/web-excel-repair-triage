@@ -24,6 +24,25 @@ Repaired/**
 !Repaired/
 !Repaired/.gitkeep
 
+# ── Dated artifact intake ─────────────────────────────────────────────────────
+# ArtifactIntake/ tracks the folder map and README guidance only. Real admin,
+# billing, roster, dashboard, and tooling workbooks stay local unless sanitized.
+ArtifactIntake/**/*.xlsx
+ArtifactIntake/**/*.xlsm
+ArtifactIntake/**/*.xls
+ArtifactIntake/**/*.xlsb
+ArtifactIntake/**/*.csv
+ArtifactIntake/**/*.tsv
+ArtifactIntake/**/*.zip
+ArtifactIntake/**/*.pdf
+ArtifactIntake/**/*.docx
+ArtifactIntake/**/*.png
+ArtifactIntake/**/*.jpg
+ArtifactIntake/**/*.jpeg
+ArtifactIntake/**/*.webp
+!ArtifactIntake/**/README.md
+!ArtifactIntake/**/.gitkeep
+
 # ── Generated outputs from the triage tool ────────────────────────────────────
 # Outputs/ is runtime-generated. Keep only curated reference JSONs tracked.
 Outputs/**
