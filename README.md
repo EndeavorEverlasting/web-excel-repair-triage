@@ -89,6 +89,14 @@ Generate `Neuron_Track_Hours_April_May_2026_WEBSAFE.xlsx` locally from the priva
 - Run: `python -m triage.nw_prj_neuron_track_hours.cli --roster-log "<roster>.xlsx" --out-dir Outputs/nw_prj_neuron_track_hours_2026_06_01 --months 2026-04 2026-05 --websafe --zip`
 - Neuron scope uses Worked-Project per-date classification (not default team membership); totals: April 1048.19, May 697.83, total 1746.02, Go Live weekend 2 rows / 22h.
 
+### 1 Marcus inventory recon (part-number relink)
+
+Surgically relink the dated Part Numbers tab and produce a Web Excel-safe recon candidate from a private workbook:
+
+- Docs: [`docs/1MARCUS_RECON_PARTNUMBER_RELINK_CONTRACT.md`](docs/1MARCUS_RECON_PARTNUMBER_RELINK_CONTRACT.md)
+- Run: `python -m triage.one_marcus_recon.cli --input "Candidates/inventory recon/<workbook>.xlsx" --date auto --output Outputs/one_marcus_recon_2026_06_01/1_Marcus_Recon_2026-05-28_WEBSAFE.xlsx`
+- Patches the OOXML package in place (renames the `M-D-YYYY Part Numbers` tab, repoints formulas, localizes external refs, drops `calcChain.xml`, strips unused `xl/externalLinks/*`) instead of reserializing; preserves tables, drawings, styles, and sheet order. Use `--dry-run` to report without writing, `--strict` to fail on ambiguous dates.
+
 ### Lifecycle folder rules (quick reference)
 
 This repo uses lifecycle folders so the engine can keep artifacts organized:
