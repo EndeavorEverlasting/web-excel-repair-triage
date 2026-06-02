@@ -243,15 +243,24 @@ def fix_inlinestr(path: str) -> None:
             if fixed != raw:
                 patched[name] = fixed
 
-        if not patched and str_table == []:
+        if not patched:
             return
 
-        count = len(str_table)
-        ss_items = "".join(f"<si><t>{_xml_escape(s)}</t></si>" for s in str_table)
+        def _ss_item(s: str) -> str:
+            preserve = ' xml:space="preserve"' if s != s.strip() else ""
+            return f"<si><t{preserve}>{_xml_escape(s)}</t></si>"
+
+        ss_items = "".join(_ss_item(s) for s in str_table)
+        total_refs = 0
+        for name in names:
+            if name.startswith("xl/worksheets/sheet") and name.endswith(".xml"):
+                raw_ws = patched.get(name) or zin.read(name)
+                total_refs += raw_ws.count(b't="s"')
+        unique = len(str_table)
         new_ss = (
             f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             f'<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
-            f' count="{count}" uniqueCount="{count}">{ss_items}</sst>'
+            f' count="{total_refs or unique}" uniqueCount="{unique}">{ss_items}</sst>'
         ).encode("utf-8")
 
         need_new_ss = "xl/sharedStrings.xml" not in names and bool(str_table)
