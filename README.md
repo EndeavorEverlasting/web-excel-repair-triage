@@ -97,6 +97,14 @@ Surgically relink the dated Part Numbers tab and produce a Web Excel-safe recon 
 - Run: `python -m triage.one_marcus_recon.cli --input "Candidates/inventory recon/<workbook>.xlsx" --date auto --output Outputs/one_marcus_recon_2026_06_01/1_Marcus_Recon_2026-05-28_WEBSAFE.xlsx`
 - Patches the OOXML package in place (renames the `M-D-YYYY Part Numbers` tab, repoints formulas, localizes external refs, drops `calcChain.xml`, strips unused `xl/externalLinks/*`) instead of reserializing; preserves tables, drawings, styles, and sheet order. Use `--dry-run` to report without writing, `--strict` to fail on ambiguous dates.
 
+### NW PRJ April/May billing summary engine
+
+Generate a combined April + May billing summary (`NW_PRJ_Billing_Summary_April_May_2026_WEBSAFE.xlsx`) from the private roster log, with optional invoice rollups:
+
+- Docs: [`docs/NW_PRJ_BILLING_SUMMARY_CONTRACT.md`](docs/NW_PRJ_BILLING_SUMMARY_CONTRACT.md)
+- Run: `python -m triage.nw_prj_billing_summary.cli --roster-log "<roster>.xlsx" --months 2026-04 2026-05 --out-dir Outputs/nw_prj_billing_summary_2026_06_02 --websafe --zip`
+- Direction is Roster Log to Admin Sheet: admin tabs (Dashboard, per-month detail, Friday Batches, By Project, Invoice Pivot) stay clean. Raw punch notes, partial-hour rows, excluded non-member names, and mismatches go only to the internal `review_queue.csv`. Friday is the reporting batch marker; weekend work rolls to the next Friday. Worked-Project/override resolution beats default assignment. Reuses the roster parser, Neuron note-aware punch parsing, and the proven preflight + manifest + ZIP pattern.
+
 ### Lifecycle folder rules (quick reference)
 
 This repo uses lifecycle folders so the engine can keep artifacts organized:
