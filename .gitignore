@@ -79,3 +79,6 @@ scripts/artifacts/*.local
 # Local payload drop zone and decode output — never commit raw internal workbooks
 Workbook Payload Artifacts/
 RecoveredArtifacts/
+
+# Private source workbooks / attachments — never commit (sanitized fixtures only)
+attached_assets/
