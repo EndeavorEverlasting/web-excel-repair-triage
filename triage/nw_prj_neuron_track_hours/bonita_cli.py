@@ -28,6 +28,8 @@ from triage.nw_prj_neuron_track_hours.bonita_exporter import (
 )
 from triage.nw_prj_neuron_track_hours.bonita_resolver import resolve_bonita_shifts
 from triage.nw_prj_neuron_track_hours.reader import _month_label
+from triage.sidecar_html.adapters import bonita_sections
+from triage.sidecar_html.portal import build_run_portal
 
 DEFAULT_MONTHS = ["2026-04", "2026-05"]
 WORKBOOK_NAME = "Bonita_Neuron_Track_Hours_April_May_2026.xlsx"
@@ -204,6 +206,16 @@ def run(
     manifest_path.write_text(json.dumps(manifest, indent=2, default=str), encoding="utf-8")
     manifest["manifest_path"] = str(manifest_path)
     manifest["outputs"]["manifest_json"] = str(manifest_path)
+
+    portal_path = build_run_portal(
+        out,
+        title="Bonita Neuron Track Hours — Run Review",
+        subtitle=f"Roster: {roster_path.name}",
+        sections=bonita_sections(manifest),
+    )
+    manifest["html_portal"] = str(portal_path)
+    manifest["outputs"]["html_portal"] = str(portal_path)
+    manifest_path.write_text(json.dumps(manifest, indent=2, default=str), encoding="utf-8")
     return manifest
 
 

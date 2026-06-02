@@ -30,7 +30,7 @@ jobs:
 
       - name: Import artifact engines
         run: |
-          python -c "import triage.cybernet_targets.cli; import triage.nw_prj_neuron_track_hours.cli; import triage.nw_prj_neuron_track_hours.bonita_cli; import triage.admin_billing_summary.cli; import triage.one_marcus_recon.cli; print('imports ok')"
+          python -c "import triage.cybernet_targets.cli; import triage.nw_prj_neuron_track_hours.cli; import triage.nw_prj_neuron_track_hours.bonita_cli; import triage.admin_billing_summary.cli; import triage.one_marcus_recon.cli; import triage.sidecar_html; print('imports ok')"
 
       - name: Run artifact engine tests
         run: |
@@ -40,4 +40,5 @@ jobs:
             tests/test_nw_prj_neuron_track_hours_bonita.py \
             tests/test_admin_billing_summary.py \
             tests/test_one_marcus_recon.py \
+            tests/test_sidecar_html_portal.py \
             -q

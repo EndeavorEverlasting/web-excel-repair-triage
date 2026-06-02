@@ -43,6 +43,7 @@ Sidecars (gitignored under `Outputs/`):
 {Month}_{Year}_Billing_Summary_review_queue.csv
 {Month}_{Year}_Billing_Summary_Internal_delta.json   # April when --prior set
 admin_billing_summary_manifest.json
+index.html                    # human review portal (see docs/SIDECAR_HTML_PORTAL.md)
 ```
 
 ## Web Excel safety

@@ -13,6 +13,8 @@ from triage.nw_prj_neuron_track_hours.classifier import (
     build_tech_summary,
 )
 from triage.nw_prj_neuron_track_hours.exporter import EXPECTED_SHEETS, build_workbook
+from triage.sidecar_html.adapters import neuron_track_sections
+from triage.sidecar_html.portal import build_run_portal
 from triage.nw_prj_neuron_track_hours.models import TrackHoursReport
 from triage.nw_prj_neuron_track_hours.preflight import run_preflight
 from triage.nw_prj_neuron_track_hours.reader import read_track_hours
@@ -210,6 +212,16 @@ def run(
     manifest_path = out / "neuron_track_hours_manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2, default=str), encoding="utf-8")
     manifest["manifest_path"] = str(manifest_path)
+
+    portal_path = build_run_portal(
+        out,
+        title="Neuron Track Hours — Run Review",
+        subtitle=f"Roster: {roster_path.name}",
+        sections=neuron_track_sections(manifest),
+    )
+    manifest["html_portal"] = str(portal_path)
+    manifest["outputs"]["html_portal"] = str(portal_path)
+    manifest_path.write_text(json.dumps(manifest, indent=2, default=str), encoding="utf-8")
     return manifest
 
 

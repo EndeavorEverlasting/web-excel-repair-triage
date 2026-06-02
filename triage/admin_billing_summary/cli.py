@@ -19,6 +19,8 @@ from triage.admin_billing_summary.exporter import build_workbook
 from triage.admin_billing_summary.models import MonthSummary
 from triage.admin_billing_summary.preflight import preflight_billing_summary
 from triage.nw_prj_neuron_track_hours.bonita_exporter import tab_name_for_month_key
+from triage.sidecar_html.adapters import admin_billing_sections
+from triage.sidecar_html.portal import build_run_portal
 
 DEFAULT_MONTHS = ["2026-04", "2026-05"]
 
@@ -222,6 +224,15 @@ def run(
     manifest_path = out / "admin_billing_summary_manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2, default=str), encoding="utf-8")
     manifest["manifest_path"] = str(manifest_path)
+
+    portal_path = build_run_portal(
+        out,
+        title="Admin Billing Summary — Run Review",
+        subtitle=f"Roster: {roster_path.name}",
+        sections=admin_billing_sections(manifest, out),
+    )
+    manifest["html_portal"] = str(portal_path)
+    manifest_path.write_text(json.dumps(manifest, indent=2, default=str), encoding="utf-8")
     return manifest
 
 
