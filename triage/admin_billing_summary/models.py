@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, time
 from typing import Any, Dict, List, Optional
 
 
@@ -47,6 +47,8 @@ class DailyRecord:
     long_shift: bool = False
     note: str = ""
     worked_label: str = ""
+    start_time: Optional[time] = None   # real time for h:mm AM/PM cells
+    end_time: Optional[time] = None
 
     def to_detail_dict(self) -> Dict[str, Any]:
         return {

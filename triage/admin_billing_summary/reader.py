@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from triage.admin_billing_summary.models import DailyRecord
 from triage.nw_prj_neuron_track_hours.reader import (
+    _decimal_to_time,
     _format_clock,
     _worked_project_lookup,
 )
@@ -226,6 +227,8 @@ def read_month(roster_path: str | Path, month_key: str) -> Tuple[List[DailyRecor
                     long_shift=gross > LONG_SHIFT_HOURS,
                     note=note,
                     worked_label=worked_label,
+                    start_time=_decimal_to_time(ci),
+                    end_time=_decimal_to_time(co),
                 ))
     finally:
         wb.close()

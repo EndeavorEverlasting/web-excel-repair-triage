@@ -13,15 +13,19 @@ from typing import Dict, List, Tuple
 from triage.nw_prj_neuron_track_hours.bonita_resolver import BonitaResolution, BonitaShift
 from triage.nw_prj_neuron_track_hours.exporter import _repair_inlinestr
 
-# Two-line column headers: (top line, bottom line). The first column is the
-# day/date locator; the rest match the embedded Bonitas Tracker layout.
-HEADER_TOP = ["DATE", "TECH", "START", "END", "TOTAL", "PROJECT", "ASSIGNMENT"]
-HEADER_BOTTOM = ["(DAY)", "NAME", "TIME", "TIME", "HOURS", "NAME", "TYPE"]
+# Two-line column headers matching the "Mon YY" reference tracker tab. Column A
+# is the day/date locator and intentionally has no header text (the weekday name
+# and date are stacked there per date group, exactly like the reference).
+HEADER_TOP = ["", "TECH", "START", "END", "TOTAL", "PROJECT", "ASSIGNMENT"]
+HEADER_BOTTOM = ["", "NAME", "TIME", "TIME", "HOURS", "NAME", "TYPE"]
 
 _MONTH_ABBR = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun",
                7: "Jul", 8: "Aug", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"}
 
 _HEADER_FILL = "1F365C"
+# Excel number formats matching the reference tracker.
+_TIME_FMT = "h:mm AM/PM"
+_DATE_FMT = "mm-dd-yy"
 
 
 def tab_name_for_month_key(month_key: str) -> str:
@@ -37,17 +41,28 @@ def _require_openpyxl():
     return Workbook, Alignment, Font, PatternFill, get_column_letter
 
 
-def _shift_row(shift: BonitaShift) -> List[object]:
-    locator = f"{shift.date.strftime('%b %d')} ({shift.day})"
-    return [
-        locator,
-        shift.tech,
-        shift.clock_in,
-        shift.clock_out,
-        round(shift.total_hours, 2),
-        shift.project_name,
-        shift.assignment_type,
-    ]
+def _group_locators(shifts: List[BonitaShift]) -> List[object]:
+    """Column-A locator per row: weekday name on the first row of a date group,
+    the date value on the second row, blank thereafter (reference layout).
+
+    Single-row date groups get the date directly so the date is never dropped.
+    """
+    locators: List[object] = []
+    n = len(shifts)
+    i = 0
+    while i < n:
+        j = i
+        while j < n and shifts[j].date == shifts[i].date:
+            j += 1
+        size = j - i
+        if size == 1:
+            locators.append(shifts[i].date)
+        else:
+            locators.append(shifts[i].date.strftime("%A").upper())
+            locators.append(shifts[i].date)
+            locators.extend([""] * (size - 2))
+        i = j
+    return locators
 
 
 def _write_month_tab(wb, tab: str, shifts: List[BonitaShift]) -> None:
@@ -62,15 +77,36 @@ def _write_month_tab(wb, tab: str, shifts: List[BonitaShift]) -> None:
             cell.fill = fill
             cell.alignment = Alignment(horizontal="center")
 
-    for r_idx, shift in enumerate(shifts, 3):
-        for c, val in enumerate(_shift_row(shift), 1):
-            ws.cell(row=r_idx, column=c, value=val)
+    bold = Font(bold=True)
+    locators = _group_locators(shifts)
+    for r_idx, (shift, locator) in enumerate(zip(shifts, locators), 3):
+        a = ws.cell(row=r_idx, column=1, value=locator)
+        a.font = bold
+        if isinstance(locator, date):
+            a.number_format = _DATE_FMT
 
-    last_row = max(2, len(shifts) + 2)
-    last_col = get_column_letter(len(HEADER_TOP))
-    ws.freeze_panes = ws.cell(row=3, column=1).coordinate
-    ws.auto_filter.ref = f"A2:{last_col}{last_row}"
-    widths = [16, 22, 12, 12, 11, 22, 26]
+        tech = ws.cell(row=r_idx, column=2, value=shift.tech)
+
+        # Real time cells (h:mm AM/PM) when available, else the display string.
+        if shift.start_time is not None:
+            si = ws.cell(row=r_idx, column=3, value=shift.start_time)
+            si.number_format = _TIME_FMT
+        else:
+            si = ws.cell(row=r_idx, column=3, value=shift.clock_in)
+        if shift.end_time is not None:
+            so = ws.cell(row=r_idx, column=4, value=shift.end_time)
+            so.number_format = _TIME_FMT
+        else:
+            so = ws.cell(row=r_idx, column=4, value=shift.clock_out)
+
+        tot = ws.cell(row=r_idx, column=5, value=round(shift.total_hours, 2))
+        tot.number_format = "0.00"
+        proj = ws.cell(row=r_idx, column=6, value=shift.project_name)
+        asn = ws.cell(row=r_idx, column=7, value=shift.assignment_type)
+        for cell in (tech, si, so, tot, proj, asn):
+            cell.font = bold
+
+    widths = [14, 27, 12, 12, 11, 22, 28]
     for c, w in enumerate(widths, 1):
         ws.column_dimensions[get_column_letter(c)].width = w
 

@@ -65,6 +65,7 @@ def preflight_bonita(path: str) -> Dict[str, Any]:
         "token_failures": [],
         "has_calc_chain": False,
         "has_external_links": False,
+        "sharedstrings_count_ok": True,
         "tabs": [],
         "preflight_pass": False,
     }
@@ -92,6 +93,20 @@ def preflight_bonita(path: str) -> Dict[str, Any]:
                 if tok in all_text:
                     res["token_failures"].append(tok)
             res["tabs"] = re.findall(r'<sheet[^>]*name="([^"]+)"', wb_xml)
+            # sharedStrings invariant: declared count must equal the total
+            # number of t="s" references across worksheets. A mismatch is the
+            # exact corruption that makes Excel for Web "repair" the workbook.
+            if "xl/sharedStrings.xml" in names:
+                ss = z.read("xl/sharedStrings.xml").decode("utf-8", errors="ignore")
+                m = re.search(r'\bcount="(\d+)"', ss)
+                declared = int(m.group(1)) if m else -1
+                refs = 0
+                for n in names:
+                    if n.startswith("xl/worksheets/sheet") and n.endswith(".xml"):
+                        refs += z.read(n).decode("utf-8", errors="ignore").count('t="s"')
+                res["sharedstrings_declared_count"] = declared
+                res["sharedstrings_actual_refs"] = refs
+                res["sharedstrings_count_ok"] = (declared == refs)
     except zipfile.BadZipFile:
         res["error"] = "bad_zip"
         return res
@@ -101,6 +116,7 @@ def preflight_bonita(path: str) -> Dict[str, Any]:
         and not res["token_failures"]
         and not res["has_calc_chain"]
         and not res["has_external_links"]
+        and bool(res["sharedstrings_count_ok"])
     )
     return res
 

@@ -148,3 +148,31 @@ def test_delta_vs_prior(generated):
     by = {d["Project"]: d for d in delta["by_project"]}
     assert by["Neuron Deployments"]["Delta"] == 13.0  # current 40 - prior 27
     assert delta["total_net_delta"] == 13.0           # current 48 - prior 35
+
+
+# 14 ─ sharedStrings count invariant + preferred-format number formats/palette
+def test_sharedstrings_invariant_and_preferred_format(generated):
+    pf = json.loads(Path(generated["per_month"]["2026-04"]["preflight_json"]).read_text(encoding="utf-8"))
+    assert pf["sharedstrings_count_ok"] is True
+    assert pf["sharedstrings_declared_count"] == pf["sharedstrings_actual_refs"]
+
+    wb = openpyxl.load_workbook(generated["per_month"]["2026-04"]["workbook"])
+    ps = wb["Project Summary"]
+    assert ps.cell(1, 1).fill.fgColor.rgb.endswith("0F172A")        # navy title band
+    assert ps.cell(5, 1).fill.fgColor.rgb.endswith("1E3A8A")        # blue header band
+    assert ps.cell(6, 6).number_format == "0.00"                    # Net Hours numeric
+    ex = wb["Executive Summary"]
+    assert ex.cell(8, 1).fill.fgColor.rgb.endswith("0F766E")        # teal metric label
+    assert ex.cell(9, 1).number_format == "0.00"                    # metric value numeric
+    wb.close()
+
+
+# 15 ─ Embedded tracker uses real time cells (h:mm AM/PM)
+def test_embedded_tracker_time_values(generated):
+    import datetime
+    wb = openpyxl.load_workbook(generated["per_month"]["2026-04"]["workbook"])
+    ws = wb["Apr 26"]
+    assert ws.cell(3, 3).value.__class__ is datetime.time
+    assert ws.cell(3, 3).number_format == "h:mm AM/PM"
+    assert ws.cell(3, 5).number_format == "0.00"
+    wb.close()

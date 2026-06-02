@@ -31,6 +31,7 @@ class TrackHoursPreflight:
     has_dropdowns: bool = False
     has_cf_dictionary: bool = False
     relationships_ok: bool = True
+    sharedstrings_count_ok: bool = True
     token_failures: List[str] = field(default_factory=list)
     error_value_failures: List[str] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
@@ -95,6 +96,16 @@ def run_preflight(path: str, expected_sheets: Optional[List[str]] = None) -> Tra
             # Relationship integrity: every worksheet rId resolves
             res.relationships_ok = _relationships_ok(z, names)
 
+            # sharedStrings invariant: declared count must equal total t="s"
+            # references; a mismatch triggers Excel-for-Web repair.
+            if "xl/sharedStrings.xml" in names:
+                ss = z.read("xl/sharedStrings.xml").decode("utf-8", errors="ignore")
+                m = re.search(r'\bcount="(\d+)"', ss)
+                declared = int(m.group(1)) if m else -1
+                refs = sum(z.read(p).decode("utf-8", errors="ignore").count('t="s"')
+                           for p in ws_parts)
+                res.sharedstrings_count_ok = (declared == refs)
+
             if expected_sheets:
                 present = set(re.findall(r'<sheet[^>]*name="([^"]+)"', wb_xml))
                 missing = [s for s in expected_sheets if s not in present]
@@ -113,6 +124,7 @@ def run_preflight(path: str, expected_sheets: Optional[List[str]] = None) -> Tra
         and res.has_frozen_header
         and res.has_cf_dictionary
         and res.relationships_ok
+        and res.sharedstrings_count_ok
         and res.expected_sheets_present
     )
     return res

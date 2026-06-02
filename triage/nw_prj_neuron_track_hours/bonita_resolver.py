@@ -23,7 +23,7 @@ from __future__ import annotations
 import re
 from calendar import month_name
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -31,6 +31,7 @@ from triage.nw_prj_neuron_track_hours.reader import (
     RosterReadError,
     _compute_gross,
     _DATE_HEADER,
+    _decimal_to_time,
     _find_sheet,
     _format_clock,
     _is_neuron,
@@ -82,6 +83,8 @@ class BonitaShift:
     assignment_type: str = DEFAULT_ASSIGNMENT_TYPE
     note: str = ""
     long_shift: bool = False
+    start_time: Optional[time] = None   # real time for h:mm AM/PM cells
+    end_time: Optional[time] = None
 
 
 @dataclass
@@ -302,6 +305,8 @@ def _resolve_month(wb, month_key: str, resolution: BonitaResolution) -> None:
                 assignment_type=assignment_type,
                 note=note,
                 long_shift=long_shift,
+                start_time=_decimal_to_time(ci),
+                end_time=_decimal_to_time(co),
             )
             resolution.shifts.append(shift)
 

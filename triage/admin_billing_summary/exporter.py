@@ -33,8 +33,20 @@ from triage.nw_prj_neuron_track_hours.bonita_resolver import (
 )
 from triage.nw_prj_neuron_track_hours.exporter import _repair_inlinestr
 
-_HEADER_FILL = "1F365C"
-_SUBTITLE_FILL = "EAF1F8"
+# Reference "My Preferred Format" palette (April workbook).
+_TITLE_FILL = "0F172A"      # dark navy title band
+_SUBTITLE_FILL = "334155"   # slate subtitle band (white text)
+_METRIC_LABEL_FILL = "0F766E"   # teal executive metric labels
+_METRIC_VALUE_FILL = "E0F2FE"   # light-blue executive value cells
+_NOTE_COLOR = "475569"      # muted grey note text
+_BLUE = "1E3A8A"            # table header band (blue)
+_TEAL = "0F766E"            # table header band (teal)
+_INDIGO = "312E81"          # table header band (indigo)
+
+# Columns rendered as numbers (hours -> 0.00, counts -> 0).
+_HOURS_COLS = {"Gross Span Hours", "Lunch Deducted", "Net Hours", "Billable Hours",
+               "Hours", "Gross Span", "Lunch"}
+_COUNT_COLS = {"Tech Count", "Worked Days", "Worked Rows", "Count"}
 
 
 def _xl():
@@ -45,22 +57,38 @@ def _xl():
     return Workbook, BarChart, Reference, Alignment, Font, PatternFill, get_column_letter
 
 
-def _band(ws, title: str, subtitle: str, width: int) -> None:
-    _, _, _, _, Font, PatternFill, _ = _xl()
+def _num_format(header: str) -> str:
+    if header in _HOURS_COLS:
+        return "0.00"
+    if header in _COUNT_COLS:
+        return "0"
+    return "General"
+
+
+def _band(ws, title: str, subtitle: str, width: int, tab_color: str = None) -> None:
+    _, _, _, _, Font, PatternFill, get_column_letter = _xl()
+    w = max(2, width)
     ws.cell(row=1, column=1, value=title).font = Font(bold=True, size=14, color="FFFFFF")
-    tf = PatternFill("solid", fgColor=_HEADER_FILL)
+    tf = PatternFill("solid", fgColor=_TITLE_FILL)
     sf = PatternFill("solid", fgColor=_SUBTITLE_FILL)
-    for c in range(1, max(2, width + 1)):
+    for c in range(1, w + 1):
         ws.cell(row=1, column=c).fill = tf
         ws.cell(row=2, column=c).fill = sf
-    ws.cell(row=2, column=1, value=subtitle)
+    sub = ws.cell(row=2, column=1, value=subtitle)
+    sub.font = Font(color="FFFFFF")
+    span = get_column_letter(w)
+    ws.merge_cells(f"A1:{span}1")
+    ws.merge_cells(f"A2:{span}2")
+    if tab_color:
+        ws.sheet_properties.tabColor = tab_color
 
 
 def _write_table(ws, title: str, subtitle: str, headers: List[str],
-                 rows: List[Dict[str, Any]], header_row: int = 4) -> Tuple[int, int]:
+                 rows: List[Dict[str, Any]], header_row: int = 5,
+                 header_fill: str = _TEAL, tab_color: str = None) -> Tuple[int, int]:
     _, _, _, Alignment, Font, PatternFill, get_column_letter = _xl()
-    _band(ws, title, subtitle, len(headers))
-    fill = PatternFill("solid", fgColor=_HEADER_FILL)
+    _band(ws, title, subtitle, len(headers), tab_color=tab_color)
+    fill = PatternFill("solid", fgColor=header_fill)
     for c, h in enumerate(headers, 1):
         cell = ws.cell(row=header_row, column=c, value=h)
         cell.font = Font(bold=True, color="FFFFFF")
@@ -68,12 +96,14 @@ def _write_table(ws, title: str, subtitle: str, headers: List[str],
         cell.alignment = Alignment(horizontal="center")
     for ri, row in enumerate(rows, header_row + 1):
         for c, h in enumerate(headers, 1):
-            ws.cell(row=ri, column=c, value=row.get(h, ""))
+            cell = ws.cell(row=ri, column=c, value=row.get(h, ""))
+            fmt = _num_format(h)
+            if fmt != "General" and isinstance(row.get(h), (int, float)):
+                cell.number_format = fmt
     last_row = max(header_row, len(rows) + header_row)
     ws.freeze_panes = ws.cell(row=header_row + 1, column=1).coordinate
-    ws.auto_filter.ref = f"A{header_row}:{get_column_letter(len(headers))}{last_row}"
     for c in range(1, len(headers) + 1):
-        ws.column_dimensions[get_column_letter(c)].width = 24 if c <= 2 else 16
+        ws.column_dimensions[get_column_letter(c)].width = 28 if c <= 2 else 16
     return header_row, last_row
 
 
@@ -116,6 +146,8 @@ def _neuron_shifts(summary: MonthSummary) -> List[BonitaShift]:
             assignment_type=assignment_type,
             note=r.note,
             long_shift=r.long_shift,
+            start_time=r.start_time,
+            end_time=r.end_time,
         ))
     shifts.sort(key=lambda s: (s.date, s.tech))
     return shifts
@@ -134,33 +166,47 @@ def build_workbook(summary: MonthSummary, out_path: str,
     wb.remove(wb.active)
     label = summary.month_name
 
-    # ── Executive Summary ──
+    # ── Executive Summary ── metric grid in the reference palette
+    _, _, _, Alignment, Font, PatternFill, get_column_letter = _xl()
     ws = wb.create_sheet("Executive Summary")
     _band(ws, f"{label} Admin Billing Summary",
-          "Admin-facing rollup: net hours after lunch, multi-project resolved.", 7)
+          "Admin-facing rollup: net hours after lunch, multi-project resolved.", 7,
+          tab_color=_TITLE_FILL)
+    label_fill = PatternFill("solid", fgColor=_METRIC_LABEL_FILL)
+    value_fill = PatternFill("solid", fgColor=_METRIC_VALUE_FILL)
     grid = [
-        (8, [("Total Net Hours", summary.total_net), ("Gross Span", summary.total_gross),
-             ("Lunch / Unpaid", summary.total_lunch), ("Techs Reflected", summary.techs_reflected)]),
-        (11, [("Projects Reflected", summary.projects_reflected),
-              ("Neuron Net", summary.net_for_bucket("Neurons")),
-              ("Projects Team Net", summary.net_for_bucket("Projects Team")),
-              ("Delivery / Transport Net", summary.net_for_bucket("Delivery / Transport / Disposal"))]),
+        (8, [("Total Net Hours", summary.total_net, "0.00"),
+             ("Gross Span", summary.total_gross, "0.00"),
+             ("Lunch / Unpaid", summary.total_lunch, "0.00"),
+             ("Techs Reflected", summary.techs_reflected, "0")]),
+        (11, [("Projects Reflected", summary.projects_reflected, "0"),
+              ("Neuron Net", summary.net_for_bucket("Neurons"), "0.00"),
+              ("Projects Team Net", summary.net_for_bucket("Projects Team"), "0.00"),
+              ("Delivery / Transport Net",
+               summary.net_for_bucket("Delivery / Transport / Disposal"), "0.00")]),
     ]
-    from openpyxl.styles import Font as _F
     for label_row, items in grid:
-        for i, (name, _v) in enumerate(items):
-            ws.cell(row=label_row, column=1 + i * 2, value=name).font = _F(bold=True)
-        for i, (_n, value) in enumerate(items):
-            ws.cell(row=label_row + 1, column=1 + i * 2, value=value)
+        for i, (name, value, fmt) in enumerate(items):
+            col = 1 + i * 2
+            lc = ws.cell(row=label_row, column=col, value=name)
+            lc.font = Font(bold=True, color="FFFFFF")
+            lc.fill = label_fill
+            lc.alignment = Alignment(horizontal="center")
+            vc = ws.cell(row=label_row + 1, column=col, value=value)
+            vc.font = Font(bold=True)
+            vc.fill = value_fill
+            vc.number_format = fmt
+            vc.alignment = Alignment(horizontal="center")
     for c in range(1, 8):
-        ws.column_dimensions[chr(64 + c)].width = 18
+        ws.column_dimensions[get_column_letter(c)].width = 20 if c % 2 else 4
 
     # ── Project Summary (+ chart) ──
     ws = wb.create_sheet("Project Summary")
     headers = ["Project", "Tech Count", "Worked Days", "Gross Span Hours", "Lunch Deducted", "Net Hours"]
     hr, lr = _write_table(ws, f"{label} Project Summary",
                           "Roster-based project rollup (net hours after lunch).",
-                          headers, [r.to_dict() for r in summary.project_rows])
+                          headers, [r.to_dict() for r in summary.project_rows],
+                          header_fill=_BLUE, tab_color=_BLUE)
     _add_net_hours_chart(ws, "Net Hours by Project", headers, hr, lr, "H4")
 
     # ── Tech Summary ──
@@ -168,14 +214,16 @@ def build_workbook(summary: MonthSummary, out_path: str,
     th = ["Tech", "Project(s)", "Worked Days", "Gross Span Hours", "Lunch Deducted", "Net Hours"]
     _write_table(ws, f"{label} Technician Summary",
                  "Summary-only technician rollup with project list.",
-                 th, [r.to_dict() for r in summary.tech_rows])
+                 th, [r.to_dict() for r in summary.tech_rows],
+                 header_fill=_TEAL, tab_color=_TEAL)
 
     # ── Tech Project Summary (+ chart) ──
     ws = wb.create_sheet("Tech Project Summary")
     tph = ["Tech", "Project", "Worked Days", "Gross Span Hours", "Lunch Deducted", "Net Hours"]
     hr, lr = _write_table(ws, f"{label} Technician by Project",
                           "Technician/project aggregate (net hours after lunch).",
-                          tph, [r.to_dict() for r in summary.tech_project_rows])
+                          tph, [r.to_dict() for r in summary.tech_project_rows],
+                          header_fill=_BLUE, tab_color=_BLUE)
     _add_net_hours_chart(ws, "Net Hours by Technician and Project", tph, hr, lr, "H4")
 
     # ── Trucking Reference ──
@@ -187,14 +235,16 @@ def build_workbook(summary: MonthSummary, out_path: str,
                  ["Field", "Value", "Notes"],
                  [{"Field": "Crew count", "Value": len(crew), "Notes": ", ".join(crew)},
                   {"Field": "Standard schedule", "Value": "8:00 AM-5:00 PM", "Notes": "9-hour span"},
-                  {"Field": "Billing bucket", "Value": "Delivery / Transport / Disposal", "Notes": ""}])
+                  {"Field": "Billing bucket", "Value": "Delivery / Transport / Disposal", "Notes": ""}],
+                 header_fill=_TEAL, tab_color=_TEAL)
 
     # ── Billing Bucket Snapshot ──
     ws = wb.create_sheet("Billing Bucket Snapshot")
     bh = ["Billing Bucket", "Tech Count", "Worked Rows", "Billable Hours"]
     _write_table(ws, f"{label} Billing Bucket Snapshot",
                  "Bucket-scoped net hours across all resolved rows.",
-                 bh, [r.to_dict() for r in summary.bucket_rows])
+                 bh, [r.to_dict() for r in summary.bucket_rows],
+                 header_fill=_INDIGO, tab_color=_INDIGO)
 
     # ── Time Alignment (informational) ──
     ws = wb.create_sheet("Time Alignment")
@@ -204,7 +254,8 @@ def build_workbook(summary: MonthSummary, out_path: str,
                  [{"Metric": "Gross Span Hours", "Hours": summary.total_gross, "Note": "From roster punches."},
                   {"Metric": "Lunch / Unpaid", "Hours": summary.total_lunch, "Note": "Lunch policy deduction."},
                   {"Metric": "Net Hours", "Hours": summary.total_net, "Note": "Gross minus lunch."},
-                  {"Metric": "Submitted Regular / OT", "Hours": "", "Note": "External payroll feed - provide to populate."}])
+                  {"Metric": "Submitted Regular / OT", "Hours": "", "Note": "External payroll feed - provide to populate."}],
+                 header_fill=_TEAL, tab_color=_TEAL)
 
     # ── Roster QA - Internal ──
     ws = wb.create_sheet("Roster QA - Internal")
@@ -214,7 +265,8 @@ def build_workbook(summary: MonthSummary, out_path: str,
                  [{"QA Type": "Errors", "Count": len(summary.malformed),
                    "Detail": "; ".join(summary.malformed[:5])},
                   {"QA Type": "Warnings", "Count": len(summary.warnings),
-                   "Detail": "; ".join(summary.warnings[:5])}])
+                   "Detail": "; ".join(summary.warnings[:5])}],
+                 header_fill=_TITLE_FILL)
     ws.sheet_state = "hidden"
 
     # ── Daily Detail - Internal ──
@@ -223,7 +275,8 @@ def build_workbook(summary: MonthSummary, out_path: str,
           "Gross Span", "Lunch", "Net Hours", "Flag"]
     _write_table(ws, "Daily Detail - Internal",
                  "Hidden support tab: daily resolved records.",
-                 dh, [r.to_detail_dict() for r in summary.records])
+                 dh, [r.to_detail_dict() for r in summary.records],
+                 header_fill=_BLUE)
     ws.sheet_state = "hidden"
 
     # ── Build Notes ──

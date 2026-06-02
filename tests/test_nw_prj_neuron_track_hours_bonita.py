@@ -162,3 +162,26 @@ def test_off_project_bonita_excluded_but_in_review(resolution):
     assert all(s.tech != "Charlie Tech" for s in resolution.shifts)
     off = [r for r in resolution.review if r.category == "off_project"]
     assert any(r.tech == "Charlie Tech" and "bonita" in r.note.lower() for r in off)
+
+
+# 14 ─ sharedStrings count invariant (the Excel-for-Web repair guard) ─
+def test_sharedstrings_count_invariant(generated):
+    import json
+    pf = json.loads(Path(generated["outputs"]["preflight_json"]).read_text(encoding="utf-8"))
+    assert pf["sharedstrings_count_ok"] is True
+    assert pf["sharedstrings_declared_count"] == pf["sharedstrings_actual_refs"]
+
+
+# 15 ─ Tracker uses real time cells (h:mm AM/PM), numeric totals, bold ─
+def test_tracker_time_values_and_number_formats(generated):
+    import datetime
+    wb = openpyxl.load_workbook(generated["outputs"]["workbook"])
+    ws = wb["Apr 26"]
+    assert ws.cell(1, 1).value in (None, "")   # column A header is blank
+    assert ws.cell(3, 3).value.__class__ is datetime.time
+    assert ws.cell(3, 4).value.__class__ is datetime.time
+    assert ws.cell(3, 3).number_format == "h:mm AM/PM"
+    assert ws.cell(3, 5).number_format == "0.00"
+    assert isinstance(ws.cell(3, 5).value, (int, float))
+    assert ws.cell(3, 2).font.bold is True
+    wb.close()

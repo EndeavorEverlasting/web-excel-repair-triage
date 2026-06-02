@@ -96,6 +96,14 @@ def _format_clock(decimal_hours: Optional[float]) -> str:
     return f"{hour12}:{minute:02d} {ampm}"
 
 
+def _decimal_to_time(decimal_hours: Optional[float]) -> Optional[time]:
+    """Decimal hours (e.g. 9.5) -> a real ``datetime.time`` for true time cells."""
+    if decimal_hours is None:
+        return None
+    total_min = int(round(decimal_hours * 60)) % (24 * 60)
+    return time(total_min // 60, total_min % 60)
+
+
 def _compute_gross(clock_in: Optional[float], clock_out: Optional[float]) -> float:
     if clock_in is None or clock_out is None:
         return 0.0
