@@ -14,7 +14,7 @@ These notes preserve billing, roster, dashboard, and attendance-validation use c
 6. [Attribute Rezaul Roman to Neuron when otherwise untracked](./06-rezaul-roman-neuron-project-attribution.md)
 7. [Treat Patricia CASR issue as accepted day-off evidence](./07-patricia-casr-day-off-handling.md)
 8. [Require latest source tracker for regenerated summaries](./08-latest-source-tracker-intake-for-regeneration.md)
-9. [Keep override tables functional and reviewable](./09-functional-override-table-doctrine.md)
+9. [Keep project correction tables functional and reviewable](./09-project-correction-table-doctrine.md)
 10. [Protect monthly headers and conditional formatting improvements](./10-monthly-header-and-cf-regression-guard.md)
 
 ## Non-negotiable theme
