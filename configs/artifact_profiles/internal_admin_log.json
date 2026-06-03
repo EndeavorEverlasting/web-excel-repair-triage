@@ -1,9 +1,11 @@
 {
   "profile": "internal_admin_log",
+  "submission_safe": false,
   "required_sheets": ["Start Here"],
   "required_semantic_cells": [
     {"sheet": "Start Here", "cell": "A1", "check": "nonblank"}
   ],
   "forbidden_values": ["Column1", "Column2", "Column3"],
-  "compare_totals": false
+  "compare_totals": false,
+  "_note": "Reserved profile only. No standalone internal admin log workbook engine exists; use admin_billing_summary Internal variant."
 }

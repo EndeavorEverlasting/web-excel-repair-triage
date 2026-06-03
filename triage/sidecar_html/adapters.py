@@ -71,6 +71,7 @@ def artifact_compare_sections(
 
 def admin_billing_sections(manifest: Dict[str, Any], out_dir: Path) -> List[PortalSection]:
     sections: List[PortalSection] = []
+    rc = manifest.get("release_candidate")
     sections.append(PortalSection(
         id="run-meta",
         title="Run metadata",
@@ -80,6 +81,16 @@ def admin_billing_sections(manifest: Dict[str, Any], out_dir: Path) -> List[Port
             {"label": "Engine", "value": manifest.get("engine", "")},
             {"label": "Generated UTC", "value": manifest.get("generated_utc", "")},
             {"label": "Format", "value": manifest.get("format", "")},
+            {
+                "label": "Release candidate",
+                "value": rc,
+                "tone": "pass" if rc else "fail",
+            },
+            {
+                "label": "Release blockers",
+                "value": ", ".join(manifest.get("release_blockers") or []) or "—",
+                "tone": "fail" if manifest.get("release_blockers") else "pass",
+            },
         ],
     ))
     for mk, mo in (manifest.get("per_month") or {}).items():
@@ -157,7 +168,18 @@ def admin_billing_sections(manifest: Dict[str, Any], out_dir: Path) -> List[Port
                         {
                             "label": "Excel for Web",
                             "value": pf_data.get("excel_for_web_manual_check", "NOT_PROVEN"),
-                            "tone": "warn",
+                            "tone": (
+                                "pass"
+                                if pf_data.get("excel_for_web_manual_check") == "PROVEN"
+                                else "fail"
+                                if pf_data.get("excel_for_web_manual_check") == "FAILED"
+                                else "warn"
+                            ),
+                        },
+                        {
+                            "label": "Release candidate",
+                            "value": vo.get("release_candidate", "—"),
+                            "tone": "pass" if vo.get("release_candidate") else "fail",
                         },
                     ],
                 ))
@@ -222,7 +244,18 @@ def bonita_sections(manifest: Dict[str, Any]) -> List[PortalSection]:
                 {
                     "label": "Excel for Web",
                     "value": pf_data.get("excel_for_web_manual_check", "NOT_PROVEN"),
-                    "tone": "warn",
+                    "tone": (
+                        "pass"
+                        if pf_data.get("excel_for_web_manual_check") == "PROVEN"
+                        else "fail"
+                        if pf_data.get("excel_for_web_manual_check") == "FAILED"
+                        else "warn"
+                    ),
+                },
+                {
+                    "label": "Release candidate",
+                    "value": manifest.get("release_candidate", "—"),
+                    "tone": "pass" if manifest.get("release_candidate") else "fail",
                 },
             ],
         ),

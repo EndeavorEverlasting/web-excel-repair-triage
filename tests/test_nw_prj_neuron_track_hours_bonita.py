@@ -88,6 +88,55 @@ def test_non_work_marker_skipped_to_review(resolution):
     assert any(r.tech == "Golf Tech" and "PTO" in r.note.upper() for r in markers)
 
 
+# 6b ─ One workbook row per resolved shift (not collapsed aggregate) ─────────
+def test_workbook_row_per_shift_not_collapsed(resolution, generated):
+    wb = openpyxl.load_workbook(generated["outputs"]["workbook"], read_only=True)
+    for month_name, tab in (("April", "Apr 26"), ("May", "May 26")):
+        expected = len(resolution.shifts_for_month(month_name))
+        ws = wb[tab]
+        col_tech = col_total = None
+        for c in range(1, (ws.max_column or 1) + 1):
+            h = str(ws.cell(row=1, column=c).value or "").strip().upper()
+            if h == "TECH":
+                col_tech = c
+            if h == "TOTAL":
+                col_total = c
+        assert col_tech and col_total
+        rows = 0
+        for row in ws.iter_rows(min_row=3, values_only=True):
+            if len(row) < col_total:
+                continue
+            hours = row[col_total - 1]
+            tech = row[col_tech - 1] if len(row) >= col_tech else None
+            if isinstance(hours, (int, float)) and float(hours) > 0 and tech:
+                rows += 1
+        assert rows == expected, f"{tab}: expected {expected} shift rows, saw {rows}"
+    wb.close()
+
+
+def test_assignment_column_not_uniform_generic_label(generated):
+    wb = openpyxl.load_workbook(generated["outputs"]["workbook"], read_only=True)
+    seen: set[str] = set()
+    for sheet in wb.sheetnames:
+        ws = wb[sheet]
+        col_assign = None
+        for c in range(1, (ws.max_column or 1) + 1):
+            if str(ws.cell(row=1, column=c).value or "").strip().upper() == "ASSIGNMENT":
+                col_assign = c
+                break
+        if not col_assign:
+            continue
+        for row in ws.iter_rows(min_row=3, values_only=True):
+            if len(row) < col_assign:
+                continue
+            val = row[col_assign - 1]
+            if val is not None and str(val).strip():
+                seen.add(str(val).strip())
+    wb.close()
+    assert seen, "expected assignment values in workbook"
+    assert not all(v.lower() == "generic" for v in seen)
+
+
 # 6 ─ Worked-project override beats default ──────────────────────────
 def test_worked_project_override_beats_default(resolution):
     # Delta default Delivery, worked-project override -> Neuron: counted.

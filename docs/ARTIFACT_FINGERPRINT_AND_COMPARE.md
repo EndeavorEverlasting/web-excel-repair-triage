@@ -31,8 +31,13 @@ Exit code `1` when `compare_pass` is false.
 
 ```powershell
 python -m triage.admin_billing_summary.cli `
-  --roster-log ... --reference References/approved/...xlsx --websafe
+  --roster-log ... `
+  --reference-client References/approved/...Client.xlsx `
+  --reference-internal References/approved/...Internal.xlsx `
+  --websafe
 ```
+
+`--reference` remains an alias for `--reference-client`. Internal compare is `NOT_RUN` when no internal reference is supplied (manifest records reason).
 
 **Bonita**:
 
@@ -46,6 +51,14 @@ Sidecar HTML portals show compare KPIs on the **Preflight** tab when `*_artifact
 ## Approved delta
 
 See [`configs/artifact_profiles/README.md`](../configs/artifact_profiles/README.md).
+
+## Release candidate
+
+Manifests expose `release_candidate` and `release_blockers`. Delivery Client workbooks require `excel_for_web_manual_check: PROVEN` (via [`triage.record_excel_for_web_manual`](../triage/record_excel_for_web_manual.py)) before `release_candidate` is true.
+
+## internal_admin_log profile
+
+Reserved for a future standalone internal admin log exporter. Today use **admin billing Internal variant** workbooks; do not treat `internal_admin_log.json` as wired to a generator.
 
 ## Related modules
 

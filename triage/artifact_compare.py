@@ -36,7 +36,26 @@ def _load_approved_delta(path: Optional[str]) -> Dict[str, Any]:
         return {}
 
 
+def _delta_is_valid(delta: Dict[str, Any]) -> tuple[bool, List[str]]:
+    """Approved delta must document human intent before allowing semantic drift."""
+    if not delta:
+        return False, []
+    problems: List[str] = []
+    if not str(delta.get("reason") or "").strip():
+        problems.append("approved_delta_missing_reason")
+    if not str(delta.get("approved_utc") or "").strip():
+        problems.append("approved_delta_missing_approved_utc")
+    allowed = delta.get("allow_candidate_semantic_sha256")
+    allowlist = delta.get("semantic_sha256_allowlist") or []
+    if not allowed and not allowlist:
+        problems.append("approved_delta_missing_hash_allowlist")
+    return (len(problems) == 0), problems
+
+
 def _delta_allows_semantic(candidate_semantic: str, delta: Dict[str, Any]) -> bool:
+    ok, _ = _delta_is_valid(delta)
+    if not ok:
+        return False
     allowed = delta.get("allow_candidate_semantic_sha256")
     if allowed and candidate_semantic == allowed:
         return True
@@ -116,9 +135,16 @@ def compare_artifacts(
             profile_warnings.append(msg)
 
     semantic_compare = "PASS"
+    delta_valid = False
     if not semantic_match:
+        delta_valid, delta_problems = _delta_is_valid(delta)
+        if delta and not delta_valid:
+            for p in delta_problems:
+                profile_failures.append(p)
         if _delta_allows_semantic(cand_fp.semantic_sha256, delta):
             profile_warnings.append("semantic_sha256_mismatch_approved_delta")
+            if delta.get("scope"):
+                profile_warnings.append(f"approved_delta_scope:{delta['scope']}")
         else:
             semantic_compare = "FAIL"
             profile_failures.append(
@@ -150,7 +176,8 @@ def compare_artifacts(
         "profile_failures": profile_failures,
         "profile_warnings": profile_warnings,
         "compare_pass": compare_pass,
-        "approved_delta_applied": bool(delta) and not semantic_match,
+        "approved_delta_applied": bool(delta) and delta_valid and not semantic_match,
+        "approved_delta_valid": delta_valid if delta else None,
         "fingerprints": {
             "reference": ref_fp.to_dict(),
             "candidate": cand_fp.to_dict(),

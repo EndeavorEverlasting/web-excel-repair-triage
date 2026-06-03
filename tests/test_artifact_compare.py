@@ -168,7 +168,9 @@ def test_approved_delta_allows_semantic_drift(april_workbook, tmp_path):
     delta_path = tmp_path / "delta.json"
     delta_path.write_text(json.dumps({
         "allow_candidate_semantic_sha256": cand_fp.semantic_sha256,
-        "reason": "test",
+        "reason": "test approved neuron net correction",
+        "approved_utc": "2026-06-03T12:00:00Z",
+        "scope": "test_fixture",
     }), encoding="utf-8")
     report = compare_artifacts(
         str(ref_path), str(cand_path), "admin_billing_summary",
@@ -192,3 +194,99 @@ def test_load_profiles():
     for name in ("admin_billing_summary", "bonita_neuron_track_hours", "internal_admin_log"):
         prof = load_profile(name)
         assert prof.profile == name
+
+
+def test_delta_missing_audit_fields_fails_semantic_compare(april_workbook, tmp_path):
+    ref_path, neuron_tab = april_workbook
+    cand_path = tmp_path / "tweaked2.xlsx"
+    import shutil
+    shutil.copy2(ref_path, cand_path)
+    wb = openpyxl.load_workbook(str(cand_path))
+    ws = wb["Executive Dashboard"]
+    for row in ws.iter_rows(min_row=1, max_row=30):
+        if row[0].value and str(row[0].value).strip() == "Neuron Net":
+            row[1].value = 888.0
+            break
+    wb.save(str(cand_path))
+    wb.close()
+    cand_fp = fingerprint_file(cand_path)
+    delta_path = tmp_path / "bad_delta.json"
+    delta_path.write_text(json.dumps({
+        "allow_candidate_semantic_sha256": cand_fp.semantic_sha256,
+    }), encoding="utf-8")
+    report = compare_artifacts(
+        str(ref_path), str(cand_path), "admin_billing_summary",
+        approved_delta=str(delta_path),
+        expect_neuron_tab=neuron_tab,
+    )
+    assert report["semantic_compare"] == "FAIL"
+    assert any("approved_delta_missing" in f for f in report["profile_failures"])
+
+
+def test_forbidden_confidence_in_shared_strings_fails(generated_bonita_workbook):
+    path = Path(generated_bonita_workbook)
+    wb = openpyxl.load_workbook(str(path))
+    wb["Apr 26"].cell(row=3, column=7, value="confidence heuristic leak")
+    wb.save(str(path))
+    wb.close()
+    prof = load_profile("bonita_neuron_track_hours")
+    res = run_profile_checks(str(path), prof)
+    assert any(
+        "forbidden_shared_string" in f or "forbidden_cell_text" in f
+        for f in res.failures
+    )
+
+
+def test_required_nonblank_column_empty_fails(generated_bonita_workbook):
+    """Row with hours but blank PROJECT must fail profile checks."""
+    path = Path(generated_bonita_workbook)
+    import shutil
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        bad = Path(td) / path.name
+        shutil.copy2(path, bad)
+        wb = openpyxl.load_workbook(str(bad))
+        ws = wb["Apr 26"]
+        col_proj = None
+        col_total = None
+        for c in range(1, (ws.max_column or 1) + 1):
+            h = str(ws.cell(row=1, column=c).value or "").strip().upper()
+            if h == "PROJECT":
+                col_proj = c
+            if h == "TOTAL":
+                col_total = c
+        assert col_proj and col_total
+        for row in range(3, (ws.max_row or 3) + 1):
+            if isinstance(ws.cell(row=row, column=col_total).value, (int, float)):
+                ws.cell(row=row, column=col_proj).value = None
+                break
+        wb.save(str(bad))
+        wb.close()
+        prof = load_profile("bonita_neuron_track_hours")
+        res = run_profile_checks(str(bad), prof)
+        assert any("required_nonblank_column_empty" in f for f in res.failures)
+
+
+@pytest.fixture(scope="module")
+def generated_bonita_workbook(fixtures_bonita, tmp_path_factory):
+    from tests.fixtures.nw_prj_neuron_track_hours.bonita_fixtures import build_bonita_fixtures
+    from triage.nw_prj_neuron_track_hours.bonita_cli import run as bonita_run
+
+    FIX = Path(__file__).resolve().parent / "fixtures" / "nw_prj_neuron_track_hours"
+    fx = build_bonita_fixtures(FIX)
+    out = tmp_path_factory.mktemp("bonita_nb")
+    manifest = bonita_run(
+        roster_log=str(fx["roster"]),
+        out_dir=str(out),
+        months=["2026-04", "2026-05"],
+        websafe=True,
+        repo_root=REPO_ROOT,
+    )
+    return manifest["outputs"]["workbook"]
+
+
+@pytest.fixture(scope="module")
+def fixtures_bonita():
+    from tests.fixtures.nw_prj_neuron_track_hours.bonita_fixtures import build_bonita_fixtures
+    FIX = Path(__file__).resolve().parent / "fixtures" / "nw_prj_neuron_track_hours"
+    return build_bonita_fixtures(FIX)

@@ -23,6 +23,10 @@ _GATE_PROFILE_ALIAS = {
     "internal_admin_log": "admin_billing",
 }
 
+_BONITA_META_TABS = frozenset({
+    "CF Dictionary", "CF_Dictionary", "WebExcel QC", "Review Flags",
+})
+
 
 @dataclass
 class ArtifactProfile:
@@ -36,6 +40,7 @@ class ArtifactProfile:
     totals: Dict[str, Any] = field(default_factory=dict)
     fail_on_canonical_mismatch: bool = False
     variant: Optional[str] = None
+    submission_safe: bool = True
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ArtifactProfile":
@@ -50,6 +55,7 @@ class ArtifactProfile:
             totals=dict(data.get("totals") or {}),
             fail_on_canonical_mismatch=bool(data.get("fail_on_canonical_mismatch")),
             variant=data.get("variant"),
+            submission_safe=bool(data.get("submission_safe", True)),
         )
 
 
@@ -99,6 +105,7 @@ def _workbook_tabs(path: str) -> List[str]:
 
 def _check_forbidden_strings(path: str, forbidden: List[str]) -> List[str]:
     failures: List[str] = []
+    seen: set[str] = set()
     try:
         with zipfile.ZipFile(path, "r") as z:
             if "xl/sharedStrings.xml" in z.namelist():
@@ -106,11 +113,37 @@ def _check_forbidden_strings(path: str, forbidden: List[str]) -> List[str]:
                 for s in strings:
                     for bad in forbidden:
                         if bad.lower() in s.lower():
-                            failures.append(f"forbidden_shared_string:{bad!r}")
+                            key = f"forbidden_shared_string:{bad!r}"
+                            if key not in seen:
+                                seen.add(key)
+                                failures.append(key)
                     if _GENERIC_RE.match(s.strip()):
                         failures.append(f"generic_column_string:{s}")
     except zipfile.BadZipFile:
         failures.append("bad_zip")
+        return failures
+
+    if forbidden:
+        try:
+            import openpyxl
+        except ImportError:
+            return failures
+        wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
+        try:
+            for ws in wb.worksheets:
+                for row in ws.iter_rows(values_only=True):
+                    for cell in row:
+                        if cell is None:
+                            continue
+                        text = str(cell)
+                        for bad in forbidden:
+                            if bad.lower() in text.lower():
+                                key = f"forbidden_cell_text:{ws.title}:{bad!r}"
+                                if key not in seen:
+                                    seen.add(key)
+                                    failures.append(key)
+        finally:
+            wb.close()
     return failures
 
 
@@ -174,6 +207,78 @@ def _check_semantic_cells(path: str, cells: List[Dict[str, Any]]) -> List[str]:
             else:
                 if expected and str(expected).lower() not in str(val or "").lower():
                     failures.append(f"{sheet}!{cell} does not contain {expected!r}")
+    finally:
+        wb.close()
+    return failures
+
+
+def _header_col_map(ws, max_header_row: int = 10) -> Dict[str, int]:
+    """Map uppercase header label -> 1-based column index (first match per row scan)."""
+    found: Dict[str, int] = {}
+    for row in ws.iter_rows(min_row=1, max_row=max_header_row):
+        for cell in row:
+            if cell.value is None:
+                continue
+            key = str(cell.value).strip().upper()
+            if key and key not in found:
+                found[key] = cell.column
+    return found
+
+
+def _check_required_nonblank_columns(
+    path: str,
+    columns: List[str],
+    *,
+    data_tabs: Optional[List[str]] = None,
+    profile_name: str = "",
+) -> List[str]:
+    if not columns:
+        return []
+    try:
+        import openpyxl
+    except ImportError:
+        return ["openpyxl_not_installed"]
+
+    failures: List[str] = []
+    want = {c.strip().upper() for c in columns}
+    wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
+    try:
+        tabs = data_tabs or wb.sheetnames
+        for tab in tabs:
+            if tab not in wb.sheetnames:
+                continue
+            ws = wb[tab]
+            col_map = _header_col_map(ws)
+            hours_col = col_map.get("TOTAL")
+            for col_name in want:
+                if col_name not in col_map:
+                    failures.append(f"missing_header_for_nonblank:{tab}:{col_name}")
+            if not hours_col:
+                continue
+            for row_idx, row in enumerate(
+                ws.iter_rows(min_row=3, values_only=True), start=3
+            ):
+                if len(row) < hours_col:
+                    continue
+                hours_val = row[hours_col - 1]
+                if not isinstance(hours_val, (int, float)) or float(hours_val) <= 0:
+                    continue
+                for col_name in want:
+                    if col_name == "TOTAL":
+                        continue
+                    cidx = col_map.get(col_name)
+                    if cidx is None:
+                        continue
+                    if len(row) < cidx:
+                        failures.append(
+                            f"required_nonblank_column_empty:{tab}:{col_name}:row{row_idx}"
+                        )
+                        continue
+                    cell_val = row[cidx - 1]
+                    if cell_val is None or str(cell_val).strip() == "":
+                        failures.append(
+                            f"required_nonblank_column_empty:{tab}:{col_name}:row{row_idx}"
+                        )
     finally:
         wb.close()
     return failures
@@ -275,13 +380,32 @@ def run_profile_checks(
     if gate.get("generic_column_strings_only"):
         res.failures.append("generic_column_strings_only")
 
-    res.failures.extend(_check_forbidden_strings(str(p), profile.forbidden_values))
+    if profile.submission_safe and profile.forbidden_values:
+        res.failures.extend(_check_forbidden_strings(str(p), profile.forbidden_values))
     if profile.required_headers:
-        meta = {"CF Dictionary", "CF_Dictionary", "WebExcel QC", "Review Flags"}
-        data_tabs = [t for t in tabs if t not in meta] if profile.profile == "bonita_neuron_track_hours" else None
+        data_tabs = (
+            [t for t in tabs if t not in _BONITA_META_TABS]
+            if profile.profile == "bonita_neuron_track_hours"
+            else None
+        )
         res.failures.extend(_check_required_headers(str(p), profile.required_headers, data_tabs))
 
     res.failures.extend(_check_semantic_cells(str(p), profile.required_semantic_cells))
+
+    if profile.required_nonblank_columns:
+        data_tabs = (
+            [t for t in tabs if t not in _BONITA_META_TABS]
+            if profile.profile == "bonita_neuron_track_hours"
+            else None
+        )
+        res.failures.extend(
+            _check_required_nonblank_columns(
+                str(p),
+                profile.required_nonblank_columns,
+                data_tabs=data_tabs,
+                profile_name=profile.profile,
+            )
+        )
 
     res.totals = extract_profile_totals(str(p), profile)
     if profile.compare_totals and reference_totals:

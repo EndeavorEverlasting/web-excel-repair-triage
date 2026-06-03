@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from triage.artifact_compare import compare_artifacts
+from triage.release_status import compute_release_status
 from triage.webexcel_semantic_gate import run_semantic_gate
 from triage.nw_prj_neuron_track_hours.bonita_exporter import (
     build_bonita_workbook,
@@ -189,6 +190,8 @@ def run(
     delta_path = _resolve(approved_delta, root)
     artifact_compare_json = ""
     artifact_compare_pass = None
+    artifact_compare_status = "NOT_RUN"
+    artifact_compare_reason = "no reference supplied"
     if reference_path and reference_path.is_file():
         cmp_path = out / "Bonita_Neuron_Track_Hours_artifact_compare.json"
         cmp_report = compare_artifacts(
@@ -200,6 +203,8 @@ def run(
         cmp_path.write_text(json.dumps(cmp_report, indent=2, default=str), encoding="utf-8")
         artifact_compare_json = str(cmp_path)
         artifact_compare_pass = bool(cmp_report.get("compare_pass"))
+        artifact_compare_status = "PASS" if artifact_compare_pass else "FAIL"
+        artifact_compare_reason = ""
 
     per_month: Dict[str, Dict[str, Any]] = {}
     for mk in months:
@@ -240,8 +245,23 @@ def run(
             "preflight_json": str(preflight_path),
             "artifact_compare_json": artifact_compare_json,
             "artifact_compare_pass": artifact_compare_pass,
+            "artifact_compare_status": artifact_compare_status,
+            "artifact_compare_reason": artifact_compare_reason,
+            "semantic_integrity": preflight.get("semantic_integrity", "FAIL") if websafe else "NOT_RUN",
+            "excel_for_web_manual_check": preflight.get(
+                "excel_for_web_manual_check", "NOT_PROVEN"
+            ) if websafe else "NOT_PROVEN",
         },
     }
+    release = compute_release_status(
+        delivery_artifact=True,
+        websafe_preflight_pass=manifest.get("websafe_preflight_pass"),
+        semantic_integrity=manifest["outputs"]["semantic_integrity"],
+        excel_for_web_manual_check=manifest["outputs"]["excel_for_web_manual_check"],
+        artifact_compare_status=artifact_compare_status,
+        artifact_compare_pass=artifact_compare_pass,
+    )
+    manifest.update(release)
     manifest_path = out / MANIFEST_NAME
     manifest_path.write_text(json.dumps(manifest, indent=2, default=str), encoding="utf-8")
     manifest["manifest_path"] = str(manifest_path)

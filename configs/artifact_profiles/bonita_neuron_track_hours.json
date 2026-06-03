@@ -1,13 +1,19 @@
 {
   "profile": "bonita_neuron_track_hours",
+  "submission_safe": true,
   "required_sheets": ["Apr 26", "May 26"],
   "required_headers": ["DATE", "TECH", "START", "END", "TOTAL", "PROJECT", "ASSIGNMENT"],
   "required_semantic_cells": [
     {"sheet": "Apr 26", "cell": "B1", "check": "contains", "contains": "TECH"},
     {"sheet": "May 26", "cell": "G1", "check": "contains", "contains": "ASSIGNMENT"}
   ],
-  "required_nonblank_columns": ["TECH", "PROJECT", "ASSIGNMENT"],
-  "forbidden_values": ["Bonita-friendly", "Column1", "Column2", "Column3", "Column4", "Column5"],
+  "required_nonblank_columns": ["TECH", "PROJECT", "ASSIGNMENT", "TOTAL"],
+  "forbidden_values": [
+    "Bonita-friendly", "Column1", "Column2", "Column3", "Column4", "Column5",
+    "confidence", "heuristic", "raw note", "private note",
+    "exception machinery", "AI generated", "review queue",
+    "assignment_rule", "assignment_confidence", "internal audit"
+  ],
   "compare_totals": true,
   "totals": {
     "keys": ["grand_total_hours", "per_tab_hours"]

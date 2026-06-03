@@ -20,6 +20,7 @@ from triage.admin_billing_summary.models import MonthSummary
 from triage.admin_billing_summary.preflight import preflight_billing_summary
 from triage.nw_prj_neuron_track_hours.bonita_exporter import tab_name_for_month_key
 from triage.artifact_compare import compare_artifacts
+from triage.release_status import enrich_variant_output
 from triage.sidecar_html.adapters import admin_billing_sections
 from triage.sidecar_html.portal import build_run_portal
 
@@ -145,6 +146,8 @@ def run(
     websafe: bool = True,
     repo_root: Optional[Path] = None,
     reference: Optional[str] = None,
+    reference_client: Optional[str] = None,
+    reference_internal: Optional[str] = None,
     artifact_profile: str = "admin_billing_summary",
     approved_delta: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -156,8 +159,10 @@ def run(
     out = _resolve(out_dir, root) or (root / "Outputs")
     out.mkdir(parents=True, exist_ok=True)
     prior_path = _resolve(prior, root)
-    reference_path = _resolve(reference, root)
+    ref_client = _resolve(reference_client or reference, root)
+    ref_internal = _resolve(reference_internal, root)
     delta_path = _resolve(approved_delta, root)
+    ref_by_variant = {"client": ref_client, "internal": ref_internal}
     generated_utc = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d %H:%M")
 
     months_out: Dict[str, Any] = {}
@@ -192,16 +197,18 @@ def run(
                 "workbook": str(xlsx_path),
                 "preflight_json": str(preflight_path),
                 "websafe_preflight_pass": bool(preflight.get("preflight_pass")) if websafe else None,
+                "semantic_integrity": preflight.get("semantic_integrity", "FAIL"),
+                "excel_for_web_manual_check": preflight.get(
+                    "excel_for_web_manual_check", "NOT_PROVEN"
+                ),
                 "native_table_count": preflight.get("native_table_count"),
             }
-            if (
-                reference_path
-                and reference_path.is_file()
-                and variant == "client"
-            ):
+            ref_path = ref_by_variant.get(variant)
+            ref_supplied = bool(ref_path and ref_path.is_file())
+            if ref_supplied:
                 cmp_path = out / f"{xlsx_path.stem}_artifact_compare.json"
                 cmp_report = compare_artifacts(
-                    str(reference_path),
+                    str(ref_path),
                     str(xlsx_path),
                     artifact_profile,
                     approved_delta=str(delta_path) if delta_path else None,
@@ -213,6 +220,13 @@ def run(
                 )
                 variant_out["artifact_compare_json"] = str(cmp_path)
                 variant_out["artifact_compare_pass"] = bool(cmp_report.get("compare_pass"))
+                variant_out["reference_used"] = str(ref_path)
+            enrich_variant_output(
+                variant_out,
+                delivery_artifact=(variant == "client"),
+                variant=variant,
+                reference_supplied=ref_supplied,
+            )
             outputs[variant] = variant_out
 
         review_path = out / f"{_month_stem(mk)}_Billing_Summary_review_queue.csv"
@@ -246,11 +260,20 @@ def run(
         "generated_utc": _dt.datetime.now(_dt.timezone.utc).isoformat(),
         "roster_log": str(roster_path),
         "prior": str(prior_path) if prior_path else "",
-        "reference": str(reference_path) if reference_path else "",
-        "artifact_profile": artifact_profile if reference_path else "",
+        "reference_client": str(ref_client) if ref_client else "",
+        "reference_internal": str(ref_internal) if ref_internal else "",
+        "artifact_profile": artifact_profile,
         "months": months,
         "per_month": months_out,
     }
+    delivery_ok = all(
+        mo.get("outputs", {}).get("client", {}).get("release_candidate") is True
+        for mo in months_out.values()
+    )
+    manifest["release_candidate"] = delivery_ok
+    manifest["release_blockers"] = [] if delivery_ok else [
+        "one_or_more_client_variants_not_release_ready"
+    ]
     manifest_path = out / "admin_billing_summary_manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2, default=str), encoding="utf-8")
     manifest["manifest_path"] = str(manifest_path)
@@ -274,8 +297,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--prior")
     ap.add_argument(
         "--reference",
-        help="Approved reference Client workbook for artifact_compare",
+        help="Alias for --reference-client (approved Client workbook)",
     )
+    ap.add_argument("--reference-client", help="Approved Client workbook for compare")
+    ap.add_argument("--reference-internal", help="Approved Internal workbook for compare")
     ap.add_argument(
         "--artifact-profile",
         default="admin_billing_summary",
@@ -292,6 +317,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         prior=args.prior,
         websafe=args.websafe,
         reference=args.reference,
+        reference_client=args.reference_client,
+        reference_internal=args.reference_internal,
         artifact_profile=args.artifact_profile,
         approved_delta=args.approved_delta,
     )
