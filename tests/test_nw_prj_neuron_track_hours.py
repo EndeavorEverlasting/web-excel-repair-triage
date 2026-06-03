@@ -1,12 +1,16 @@
 """NW PRJ Neuron Track Hours engine tests — real implementation, no xfails."""
 from __future__ import annotations
 
+import io
+import shutil
 import zipfile
 from datetime import date
 from pathlib import Path
 
 import openpyxl
 import pytest
+
+from triage.webexcel_semantic_gate import run_semantic_gate
 
 from triage.nw_prj_neuron_track_hours.classifier import (
     flag_missing_roster,
@@ -166,3 +170,63 @@ def test_neuron_track_totals_match_reference_targets(tmp_path):
     assert abs(report.grand_total() - REFERENCE_TARGETS["total"]) <= 0.05
     assert len(report.go_live_rows()) == REFERENCE_TARGETS["go_live_rows"]
     assert abs(report.go_live_hours() - REFERENCE_TARGETS["go_live_hours"]) <= 0.05
+
+
+# ── sharedStrings invariant (Web Excel repair guard) ───────────────
+
+def test_missing_sharedstrings_with_live_refs_fails_preflight(tmp_path):
+    """Worksheet t="s" refs with no sharedStrings.xml must fail preflight.
+
+    This is the exact signature that triggers Excel-for-Web "repair", which
+    silently strips text. The count guard must catch the missing part rather
+    than passing it through.
+    """
+    from triage.xlsx_utils import fix_inlinestr
+
+    src = tmp_path / "with_ss.xlsx"
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Sheet1"
+    ws["A1"] = "RealNeuronText"
+    ws["B1"] = "AnotherRealString"
+    wb.save(str(src))
+    # openpyxl writes inlineStr; convert to shared-string t="s" refs + a real
+    # sharedStrings.xml so that dropping the part leaves live refs behind.
+    fix_inlinestr(str(src))
+
+    raw = src.read_bytes()
+    stripped = tmp_path / "no_ss.xlsx"
+    buf = io.BytesIO()
+    with zipfile.ZipFile(io.BytesIO(raw), "r") as zin, \
+            zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zout:
+        for name in zin.namelist():
+            if name == "xl/sharedStrings.xml":
+                continue  # drop the table while leaving t="s" refs behind
+            zout.writestr(name, zin.read(name))
+    stripped.write_bytes(buf.getvalue())
+
+    pf = run_preflight(str(stripped))
+    assert pf.sharedstrings_count_ok is False
+    assert pf.preflight_pass is False
+
+
+# ── neuron_track dashboard structural sentinels ────────────────────
+
+def test_neuron_track_dashboard_passes_sentinels(generated):
+    gate = run_semantic_gate(generated["outputs"]["workbook"], profile="neuron_track")
+    assert gate["semantic_integrity"] == "PASS"
+    assert gate["sentinel_failures"] == []
+
+
+def test_neuron_track_blank_start_here_fails_sentinels(generated, tmp_path):
+    damaged = tmp_path / "blank_start.xlsx"
+    shutil.copy(generated["outputs"]["workbook"], damaged)
+    wb = openpyxl.load_workbook(str(damaged))
+    start = next(n for n in wb.sheetnames if "start here" in n.lower())
+    wb[start]["A1"].value = None
+    wb.save(str(damaged))
+    wb.close()
+
+    gate = run_semantic_gate(str(damaged), profile="neuron_track")
+    assert gate["semantic_integrity"] == "FAIL"
+    assert any("Start Here" in f and "blank" in f for f in gate["sentinel_failures"])

@@ -85,18 +85,21 @@ def preflight_billing_summary(
             if expect_neuron_tab not in res["tabs"]:
                 res["token_failures"].append(f"missing_tab:{expect_neuron_tab}")
 
+            refs = sum(
+                z.read(n).decode("utf-8", errors="ignore").count('t="s"')
+                for n in names
+                if n.startswith("xl/worksheets/sheet") and n.endswith(".xml")
+            )
+            res["sharedstrings_actual_refs"] = refs
             if "xl/sharedStrings.xml" in names:
                 ss = z.read("xl/sharedStrings.xml").decode("utf-8", errors="ignore")
                 m = re.search(r'\bcount="(\d+)"', ss)
                 declared = int(m.group(1)) if m else -1
-                refs = sum(
-                    z.read(n).decode("utf-8", errors="ignore").count('t="s"')
-                    for n in names
-                    if n.startswith("xl/worksheets/sheet") and n.endswith(".xml")
-                )
                 res["sharedstrings_declared_count"] = declared
-                res["sharedstrings_actual_refs"] = refs
                 res["sharedstrings_count_ok"] = declared == refs
+            elif refs > 0:
+                # Live shared-string refs but no sharedStrings.xml → Web Excel repair.
+                res["sharedstrings_count_ok"] = False
 
             min_tables = 6 if variant == "client" else 9
             if res["native_table_count"] < min_tables:

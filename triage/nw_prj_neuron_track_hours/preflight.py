@@ -118,13 +118,16 @@ def run_preflight(path: str, expected_sheets: Optional[List[str]] = None) -> Tra
 
             # sharedStrings invariant: declared count must equal total t="s"
             # references; a mismatch triggers Excel-for-Web repair.
+            refs = sum(z.read(p).decode("utf-8", errors="ignore").count('t="s"')
+                       for p in ws_parts)
             if "xl/sharedStrings.xml" in names:
                 ss = z.read("xl/sharedStrings.xml").decode("utf-8", errors="ignore")
                 m = re.search(r'\bcount="(\d+)"', ss)
                 declared = int(m.group(1)) if m else -1
-                refs = sum(z.read(p).decode("utf-8", errors="ignore").count('t="s"')
-                           for p in ws_parts)
                 res.sharedstrings_count_ok = (declared == refs)
+            elif refs > 0:
+                # Live shared-string refs but no sharedStrings.xml → Web Excel repair.
+                res.sharedstrings_count_ok = False
 
             if expected_sheets:
                 present = set(re.findall(r'<sheet[^>]*name="([^"]+)"', wb_xml))
@@ -135,8 +138,9 @@ def run_preflight(path: str, expected_sheets: Optional[List[str]] = None) -> Tra
         res.errors.append("bad_zip")
         return res
 
-    # Semantic integrity gate — "neuron_track" runs density checks only;
-    # structural sentinels for the full dashboard format are not yet defined.
+    # Semantic integrity gate — "neuron_track" runs density checks plus the
+    # full-dashboard structural sentinels (Start Here title, Neuron Hours tab,
+    # row-4 Month/Tech headers).
     gate = run_semantic_gate(path, profile="neuron_track")
     res.semantic_integrity = gate["semantic_integrity"]
     res.sentinel_failures = gate["sentinel_failures"]
