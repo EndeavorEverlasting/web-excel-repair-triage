@@ -2,6 +2,8 @@
 
 Generated submission workbooks are compared to **manually blessed** references under `References/approved/` (gitignored). Profiles live in `configs/artifact_profiles/`.
 
+**PR #35 private proof checklist:** [`PR35_CHECKPOINT_AND_PROOF_GUIDE.md`](PR35_CHECKPOINT_AND_PROOF_GUIDE.md)
+
 ## Three layers
 
 | Layer | Field | Fails build by default? |
