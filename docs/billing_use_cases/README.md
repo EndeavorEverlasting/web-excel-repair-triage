@@ -7,7 +7,7 @@ These notes preserve billing, roster, dashboard, and attendance-validation use c
 ## Use cases
 
 1. [Compare like-family roster logs](./01-roster-log-like-artifact-comparison.md)
-2. [Choose leadership/admin share tabs](./02-leadership-admin-share-tab-boundary.md)
+2. [Choose share-ready versus internal tabs](./02-share-tab-boundary.md)
 3. [Keep billing dashboard graphs primary](./03-dashboard-chart-first-billing-summaries.md)
 4. [Avoid fragile external-link billing outputs](./04-values-only-no-external-link-submit-artifacts.md)
 5. [Preserve the April 2 Cyen Bonita punch correction](./05-april-2-cyen-bonita-punch-correction.md)
