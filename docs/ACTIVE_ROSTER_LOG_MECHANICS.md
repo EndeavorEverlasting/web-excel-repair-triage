@@ -12,9 +12,9 @@ For each month the workbook carries a family of tabs, named `{Kind} - {Month YYY
 
 | Tab | Role |
 | --- | --- |
-| `Live - {Month}` | Raw attendance. Row 1 title, row 2 headers: `Staff Name | Project | <Mon DD - Clock In> | <Mon DD - Clock Out> | ...`. Clock cells hold times (`9:00 AM`) and may carry trailing notes (`9:28:00 AM/ Bonita`) or non-work markers (`PTO`). |
-| `Worked Projects - {Month}` | Per-day worked-project classification. Row 2: `Staff Name | Default Project | <date columns>`. Each cell is the project actually worked that day (blank = use default). |
-| `Assignments - {Month}` | Per-day project assignment. A main auto-fill table (`Staff Name | Default Project | <date columns>`) PLUS an **Overrides** sub-table lower down. |
+| `Live - {Month}` | Raw attendance. Row 1 title, row 2 headers: `Staff Name \| Project \| <Mon DD - Clock In> \| <Mon DD - Clock Out> \| ...`. Clock cells hold times (`9:00 AM`) and may carry trailing notes (`9:28:00 AM/ Bonita`) or non-work markers (`PTO`). |
+| `Worked Projects - {Month}` | Per-day worked-project classification. Row 2: `Staff Name \| Default Project \| <date columns>`. Each cell is the project actually worked that day (blank = use default). |
+| `Assignments - {Month}` | Per-day project assignment. A main auto-fill table (`Staff Name \| Default Project \| <date columns>`) PLUS an **Overrides** sub-table lower down. |
 | `Automated - {Month}` | Machine-maintained scratch/derivation (not an input to billing). |
 
 Supporting tabs: `Projects` (the project catalog / list), `Roster`, `Summary`,
