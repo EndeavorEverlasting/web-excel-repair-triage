@@ -1,0 +1,27 @@
+{
+  "name": "admin_billing_summary",
+  "submission_safe": true,
+  "sheets": [
+    "Start Here",
+    "Executive Dashboard",
+    "Monthly Summary",
+    "Project Summary",
+    "Tech Summary",
+    "Tech Project Summary"
+  ],
+  "required_headers": ["Month", "Tech", "Project", "Hours", "Net Hours"],
+  "forbidden_text": [
+    "Column1",
+    "Column2",
+    "confidence",
+    "heuristic",
+    "raw note",
+    "private note",
+    "exception machinery",
+    "AI generated"
+  ],
+  "frozen_panes": "A5",
+  "autofilter": true,
+  "title_row_height": 26,
+  "header_row_height": 22
+}
