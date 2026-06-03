@@ -1,0 +1,56 @@
+{
+  "schema_version": "inventory_visual_aid_chart_v1",
+  "name": "Inventory quantity visual aid chart",
+  "intent": "Preserve a Web Excel-safe visual stock summary in inventory workbooks without relying on native pivot-chart refresh behavior.",
+  "rules": {
+    "chart_is_required_for_inventory_rollups": true,
+    "chart_is_presentation_aid_not_calculation_authority": true,
+    "do_not_remove_existing_valid_chart_during_restyle": true,
+    "avoid_pivot_chart_dependency": true,
+    "use_helper_range_instead_of_direct_large_source_range": true,
+    "prefer_horizontal_bar_for_many_part_numbers": true,
+    "max_categories_default": 15,
+    "sort_descending_by_quantity": true
+  },
+  "chart_defaults": {
+    "chart_type": "barChart",
+    "orientation": "horizontal",
+    "title": "Top stock quantities by part number",
+    "category_axis": "PartKeyDisplay",
+    "value_axis": "Qty",
+    "source_sheet": "1M Recon Pivot Module",
+    "helper_table_name": "TopStockChartSource",
+    "helper_range_columns": [
+      "Rank",
+      "PartKeyDisplay",
+      "Item Type",
+      "Qty"
+    ],
+    "recommended_anchor": "J13",
+    "recommended_size": {
+      "width_cells": 8,
+      "height_rows": 18
+    }
+  },
+  "label_rules": {
+    "category_label_format": "part key plus short item type when available",
+    "avoid_raw_part_numbers_on_bottom_axis": true,
+    "truncate_long_labels_after": 42,
+    "keep_quantity_axis_numeric": true
+  },
+  "web_excel_safety": {
+    "allowed": [
+      "standard bar chart",
+      "bounded helper range",
+      "solid fills from spreadsheet_style_v1",
+      "plain worksheet formulas feeding helper rows"
+    ],
+    "avoid": [
+      "pivot charts",
+      "slicers",
+      "chart formulas pointing at entire columns",
+      "charts dependent on volatile formulas",
+      "charts whose absence breaks workbook logic"
+    ]
+  }
+}
