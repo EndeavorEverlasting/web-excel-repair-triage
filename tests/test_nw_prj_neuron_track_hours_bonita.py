@@ -185,3 +185,44 @@ def test_tracker_time_values_and_number_formats(generated):
     assert isinstance(ws.cell(3, 5).value, (int, float))
     assert ws.cell(3, 2).font.bold is True
     wb.close()
+
+
+# 16 ─ Approved Overrides sub-table beats a non-Neuron worked project ─
+def test_override_beats_worked_project_in_bonita_resolver(tmp_path):
+    """A reviewed Assignments *Overrides* entry must outrank Worked Projects.
+
+    Zulu defaults to Delivery and the Worked Projects sheet also says Delivery
+    (non-Neuron -> would be excluded). A reviewed override to Neuron Deployments
+    must win, so the shift is counted.
+    """
+    from datetime import datetime
+
+    roster = tmp_path / "override_roster.xlsx"
+    wb = openpyxl.Workbook()
+    wb.remove(wb.active)
+
+    live = wb.create_sheet("Live - April 2026")
+    live.append(["April 2026 - Attendance"])
+    live.append(["Staff Name", "Project",
+                 "Apr 02 - Clock In", "Apr 02 - Clock Out"])
+    live.append(["Zulu Tech", "Delivery / Transport", "8:00 AM", "4:00 PM"])
+
+    worked = wb.create_sheet("Worked Projects - April 2026")
+    worked.append(["April 2026 - Worked Projects"])
+    worked.append(["Staff Name", "Default Project", datetime(2026, 4, 2)])
+    worked.append(["Zulu Tech", "Delivery / Transport", "Delivery / Transport"])
+
+    assign = wb.create_sheet("Assignments - April 2026")
+    assign.append(["April 2026 - Project Assignments"])
+    assign.append(["Staff Name", "Default Project", datetime(2026, 4, 2)])
+    assign.append(["Overrides (only if different from Default Project)"])
+    assign.append(["Override Staff Name", "Override Date", "Override Project", "Notes"])
+    assign.append(["Zulu Tech", datetime(2026, 4, 2), "Neuron Deployments",
+                   "Reviewed: neuron confirmed"])
+    wb.save(str(roster))
+
+    resolution = resolve_bonita_shifts(str(roster), ["2026-04"])
+    zulu = [s for s in resolution.shifts if s.tech == "Zulu Tech"]
+    assert len(zulu) == 1
+    assert zulu[0].total_hours == 8.0
+    assert zulu[0].project_name == "Northwell - Neurons"

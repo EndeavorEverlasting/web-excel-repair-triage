@@ -189,9 +189,16 @@ def _resolve_month(wb, month_key: str, resolution: BonitaResolution) -> None:
     worked = _worked_project_lookup(worked_ws)
 
     assignments: Dict[tuple[date, str], str] = {}
+    overrides: Dict[tuple[date, str], str] = {}
     try:
-        from triage.roster_parser import _find_assignments_sheet, _load_assignments
-        assignments = _load_assignments(_find_assignments_sheet(wb, label))
+        from triage.roster_parser import (
+            _find_assignments_sheet,
+            _load_assignments,
+            _load_overrides_only,
+        )
+        assignments_sheet = _find_assignments_sheet(wb, label)
+        assignments = _load_assignments(assignments_sheet)
+        overrides = _load_overrides_only(assignments_sheet)
     except Exception as exc:  # pragma: no cover - assignments are optional
         resolution.warnings.append(f"assignments_unavailable:{label}:{exc}")
 
@@ -258,7 +265,8 @@ def _resolve_month(wb, month_key: str, resolution: BonitaResolution) -> None:
 
             worked_label = worked.get((staff, d), "")
             assign_label = assignments.get((d, staff), "")
-            resolved = worked_label or assign_label or default_proj
+            override_label = overrides.get((d, staff), "")
+            resolved = override_label or worked_label or assign_label or default_proj
 
             if _excluded_name(staff):
                 if _is_neuron(resolved):
