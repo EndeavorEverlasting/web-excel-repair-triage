@@ -6,6 +6,7 @@ Used by gate_checks, dv_engine, cf_engine, and other triage modules.
 """
 from __future__ import annotations
 
+import html as _html
 import io
 import re
 import zipfile
@@ -213,7 +214,7 @@ def fix_inlinestr(path: str) -> None:
         if "xl/sharedStrings.xml" in names:
             ss_xml = zin.read("xl/sharedStrings.xml").decode("utf-8", errors="ignore")
             for m in re.finditer(r"<t[^>]*?>(.*?)</t>", ss_xml, re.DOTALL):
-                s = m.group(1)
+                s = _html.unescape(m.group(1))
                 if s not in str_index:
                     str_index[s] = len(str_table)
                     str_table.append(s)
@@ -234,7 +235,7 @@ def fix_inlinestr(path: str) -> None:
 
             def _replace_full(m: re.Match) -> bytes:
                 prefix = m.group(1) + m.group(2)
-                value = m.group(4).decode("utf-8", errors="ignore")
+                value = _html.unescape(m.group(4).decode("utf-8", errors="ignore"))
                 idx = _get_or_add(value)
                 return prefix + b' t="s"><v>' + str(idx).encode() + b"</v></c>"
 
