@@ -168,6 +168,14 @@ def run(
 ) -> Dict[str, Any]:
     root = repo_root or Path(__file__).resolve().parent.parent.parent
     months = months or DEFAULT_MONTHS
+    from triage.month_validation import validate_month_key
+    allowed = frozenset(DEFAULT_MONTHS)
+    for mk in months:
+        validate_month_key(mk)
+        if mk not in allowed:
+            raise ValueError(
+                f"Bonita CLI supports only {sorted(allowed)}; got {mk!r}"
+            )
     roster_path = _resolve(roster_log, root)
     if roster_path is None or not roster_path.exists():
         raise FileNotFoundError(f"roster-log not found: {roster_path}")

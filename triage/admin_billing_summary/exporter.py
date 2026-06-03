@@ -24,6 +24,7 @@ from triage.nw_prj_neuron_track_hours.bonita_resolver import (
     BonitaShift,
     NEURON_DISPLAY_NAME,
 )
+from triage.websafe_cell import websafe_cell_value
 from triage.xlsx_utils import fix_inlinestr
 
 _TITLE_FILL = "1F365C"
@@ -98,7 +99,7 @@ def _add_table(ws, table_name: str, headers: List[str], rows: List[Dict[str, Any
         cell.alignment = Alignment(horizontal="center")
     for ri, row in enumerate(rows, header_row + 1):
         for ci, h in enumerate(headers, start_col):
-            cell = ws.cell(row=ri, column=ci, value=row.get(h, ""))
+            cell = ws.cell(row=ri, column=ci, value=websafe_cell_value(row.get(h, "")))
             fmt = _num_format(h)
             if fmt != "General":
                 cell.number_format = fmt

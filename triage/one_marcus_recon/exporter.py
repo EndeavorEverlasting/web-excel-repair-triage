@@ -212,6 +212,8 @@ def run_recon(
     }
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
+    _write_review_queue(review_path, report, pre)
+
     from triage.sidecar_html.adapters import one_marcus_sections
     from triage.sidecar_html.portal import build_run_portal
 
@@ -223,8 +225,6 @@ def run_recon(
     )
     manifest["html_portal"] = str(portal_path)
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-
-    _write_review_queue(review_path, report, pre)
     _write_carryover(carry_path, report, pre)
 
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:

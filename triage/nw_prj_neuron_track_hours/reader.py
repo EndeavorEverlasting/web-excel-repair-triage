@@ -115,11 +115,11 @@ def _compute_gross(clock_in: Optional[float], clock_out: Optional[float]) -> flo
 
 def _month_label(month_key: str) -> Tuple[str, int, int]:
     """'2026-04' -> ('April 2026', 2026, 4)."""
-    m = re.match(r"^(\d{4})-(\d{1,2})$", month_key.strip())
-    if not m:
-        raise RosterReadError(f"Invalid month key (expected YYYY-MM): {month_key}")
-    year = int(m.group(1))
-    mon = int(m.group(2))
+    from triage.month_validation import validate_month_key
+    try:
+        year, mon = validate_month_key(month_key)
+    except ValueError as exc:
+        raise RosterReadError(str(exc)) from exc
     return f"{month_name[mon]} {year}", year, mon
 
 

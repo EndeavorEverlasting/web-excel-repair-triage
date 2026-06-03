@@ -21,6 +21,16 @@ ENV/
 Candidates/**
 !Candidates/
 !Candidates/.gitkeep
+ArtifactIntake/**
+!ArtifactIntake/
+!ArtifactIntake/.gitkeep
+artifacts/**
+!artifacts/
+!artifacts/.gitkeep
+outputs/**
+!outputs/
+!outputs/admin-ready/
+!outputs/admin-ready/.gitkeep
 Repaired/**
 !Repaired/
 !Repaired/.gitkeep

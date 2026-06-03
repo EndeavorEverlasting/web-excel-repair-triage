@@ -304,7 +304,7 @@ def _repair_inlinestr(path: str) -> None:
 
             def _replace_full(m: "re.Match") -> bytes:
                 prefix = m.group(1) + m.group(2)
-                value = m.group(4).decode("utf-8", errors="ignore")
+                value = _xml_unescape(m.group(4).decode("utf-8", errors="ignore"))
                 idx = _get_or_add(value)
                 return prefix + b' t="s"><v>' + str(idx).encode() + b"</v></c>"
 
@@ -382,5 +382,7 @@ def _xml_escape(s: str) -> str:
 
 
 def _xml_unescape(s: str) -> str:
-    return (s.replace("&lt;", "<").replace("&gt;", ">")
-            .replace("&quot;", '"').replace("&apos;", "'").replace("&amp;", "&"))
+    import html as _html
+    s = (s.replace("&lt;", "<").replace("&gt;", ">")
+         .replace("&quot;", '"').replace("&apos;", "'").replace("&amp;", "&"))
+    return _html.unescape(s)

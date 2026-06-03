@@ -34,11 +34,12 @@ flowchart TD
   preflight[Package preflight PASS]
   semantic[semantic_integrity PASS]
   compare[artifact_compare PASS or audited delta]
+  samefamily[same_family_compare PASS + submission_readiness]
   browser[Excel for Web manual open]
   record[record_excel_for_web_manual PROVEN]
   manifest[manifest release_candidate true]
   merge[Merge PR35 to main]
-  gen --> preflight --> semantic --> compare --> browser --> record --> manifest --> merge
+  gen --> preflight --> semantic --> compare --> samefamily --> browser --> record --> manifest --> merge
 ```
 
 ---

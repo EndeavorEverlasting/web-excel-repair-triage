@@ -103,6 +103,13 @@ Generate the monthly admin billing summary in the April "My Preferred Format" (w
 
 - Docs: [`docs/ADMIN_BILLING_SUMMARY_PREFERRED_FORMAT_CONTRACT.md`](docs/ADMIN_BILLING_SUMMARY_PREFERRED_FORMAT_CONTRACT.md) and roster mechanics in [`docs/ACTIVE_ROSTER_LOG_MECHANICS.md`](docs/ACTIVE_ROSTER_LOG_MECHANICS.md)
 - Run: `python -m triage.admin_billing_summary.cli --roster-log "<roster>.xlsx" --months 2026-04 2026-05 --out-dir Outputs/admin_billing_summary_2026_06_02 --prior "<April preferred-format copy>.xlsx" --websafe`
+
+### Same-family compare and roster log compare (internal)
+
+- Docs: [`docs/SAME_FAMILY_COMPARE.md`](docs/SAME_FAMILY_COMPARE.md), [`docs/ROSTER_LOG_COMPARE.md`](docs/ROSTER_LOG_COMPARE.md)
+- Scan intake: `python -m triage.same_family_compare --intake-root ArtifactIntake/2026-06-03 --scan-only --out-dir artifacts/intake_scan`
+- Compare roster candidates: `python -m triage.roster_log_compare.compare --left <older.xlsx> --right <newer.xlsx> --out artifacts/roster_log_comparison.xlsx --json-out artifacts/roster_log_comparison.json`
+- Submit delivery artifacts only from `outputs/admin-ready/`
 - Optional approved-reference gate: `--reference References/approved/<blessed Client xlsx>` — see [`docs/ARTIFACT_FINGERPRINT_AND_COMPARE.md`](docs/ARTIFACT_FINGERPRINT_AND_COMPARE.md)
 - Multi-project, override-aware per-day resolution (Assignments Override > Worked Projects > Assignments main > Live default); net = gross − lunch. Produces Executive/Project/Tech/Tech-by-Project summaries with two native bar charts, internal QA/detail tabs, and an embedded `Mon YY` Neuron Track Hours tracker tab. `--prior` emits a delta report for the refreshed month.
 

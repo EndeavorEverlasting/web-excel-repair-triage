@@ -50,11 +50,11 @@ def _clean_project(value: Any) -> str:
 
 
 def _month_label(month_key: str) -> Tuple[str, int, int]:
-    import re
-    m = re.match(r"^(\d{4})-(\d{1,2})$", month_key.strip())
-    if not m:
-        raise RosterParseError(f"Invalid month key (expected YYYY-MM): {month_key}")
-    year, mon = int(m.group(1)), int(m.group(2))
+    from triage.month_validation import validate_month_key
+    try:
+        year, mon = validate_month_key(month_key)
+    except ValueError as exc:
+        raise RosterParseError(str(exc)) from exc
     return f"{_month_name[mon]} {year}", year, mon
 
 
@@ -91,9 +91,17 @@ def _load_overrides(ws) -> Dict[Tuple[date, str], Tuple[str, str]]:
     hdr: Optional[int] = None
     for r in range(overrides_start, min(overrides_start + 5, max_row + 1)):
         v = ws.cell(r, 1).value
-        if v and "override staff" in str(v).strip().lower():
+        if not v:
+            continue
+        s = str(v).strip().lower()
+        if "override staff" in s:
             hdr = r
             break
+        if s in ("staff name", "staff") and r > 1:
+            prev = ws.cell(r - 1, 1).value
+            if prev and "override" in str(prev).strip().lower():
+                hdr = r
+                break
     if hdr is None:
         return out
     for r in range(hdr + 1, max_row + 1):
