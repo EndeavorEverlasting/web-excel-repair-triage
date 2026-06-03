@@ -10,7 +10,7 @@ import openpyxl
 import pytest
 
 from triage.admin_billing_summary.aggregator import build_month_summary
-from triage.admin_billing_summary.cli import run
+from triage.admin_billing_summary.cli import _read_prior_project_net, run
 from triage.admin_billing_summary.exporter import build_workbook
 from triage.admin_billing_summary.preflight import preflight_billing_summary
 from tests.fixtures.admin_billing_summary.builders import build
@@ -354,3 +354,29 @@ def test_repair_snapshot_detects_text_loss(tmp_path):
     good = tmp_path / "good_snap.xlsx"
     wb.save(str(good))
     assert check_repair_preservation(str(good), "admin_billing") is False
+
+
+def test_embedded_bonita_tracker_uses_net_hours(generated):
+    """The embedded "Apr 26" tracker tab must report net hours, not gross span.
+
+    Solo Vant's single Apr 02 shift spans 17h gross with a 1h lunch -> 16h net.
+    The Total column (index 4) must equal the net figure.
+    """
+    wb = openpyxl.load_workbook(
+        generated["per_month"]["2026-04"]["outputs"]["internal"]["workbook"],
+        read_only=True,
+    )
+    ws = wb["Apr 26"]
+    rows = [r for r in ws.iter_rows(min_row=3, values_only=True) if r[1] == "Solo Vant"]
+    wb.close()
+    assert len(rows) == 1
+    assert rows[0][4] == 16.0
+    assert rows[0][4] != 17.0
+
+
+def test_delta_raises_on_unreadable_prior(tmp_path):
+    """An unreadable prior workbook must raise RuntimeError, not silently return {}."""
+    bad = tmp_path / "not_a_workbook.xlsx"
+    bad.write_bytes(b"this is not a valid zip/xlsx payload")
+    with pytest.raises(RuntimeError):
+        _read_prior_project_net(bad)

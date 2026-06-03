@@ -19,10 +19,10 @@ from triage.nw_prj_neuron_track_hours.bonita_exporter import (
     _write_month_tab,
     tab_name_for_month_key,
 )
+from triage.neuron_work_context_rules import classify_neuron_work_context
 from triage.nw_prj_neuron_track_hours.bonita_resolver import (
     BonitaShift,
     NEURON_DISPLAY_NAME,
-    _classify_assignment,
 )
 from triage.xlsx_utils import fix_inlinestr
 
@@ -154,12 +154,25 @@ def _review_records(summary: MonthSummary) -> List[DailyRecord]:
     return out
 
 
+def _time_to_float(t) -> Optional[float]:
+    if t is None:
+        return None
+    return t.hour + t.minute / 60.0
+
+
 def _neuron_shifts(summary: MonthSummary) -> List[BonitaShift]:
     _, _, mon = _parse_key(summary.month_key)
     short = _month_name[mon]
     shifts: List[BonitaShift] = []
     for r in summary.neuron_records():
-        assignment_type, _ = _classify_assignment(r.note, r.worked_label)
+        decision = classify_neuron_work_context(
+            work_date=r.date,
+            start_hour=_time_to_float(r.start_time),
+            end_hour=_time_to_float(r.end_time),
+            notes=r.note,
+            worked_label=r.worked_label,
+            resolved_project=r.project,
+        )
         shifts.append(BonitaShift(
             month_key=summary.month_key,
             month_name=short,
@@ -168,9 +181,9 @@ def _neuron_shifts(summary: MonthSummary) -> List[BonitaShift]:
             tech=r.tech,
             clock_in=r.clock_in,
             clock_out=r.clock_out,
-            total_hours=r.gross_span,
+            total_hours=r.net_hours,
             project_name=NEURON_DISPLAY_NAME,
-            assignment_type=assignment_type,
+            assignment_type=decision.assignment_type,
             note=r.note,
             long_shift=r.long_shift,
             start_time=r.start_time,
@@ -178,6 +191,7 @@ def _neuron_shifts(summary: MonthSummary) -> List[BonitaShift]:
         ))
     shifts.sort(key=lambda s: (s.date, s.tech))
     return shifts
+
 
 
 def _parse_key(month_key: str):
