@@ -39,7 +39,7 @@ python -m triage.admin_billing_summary.cli `
   --websafe
 ```
 
-`--reference` remains an alias for `--reference-client`. Internal compare is `NOT_RUN` when no internal reference is supplied (manifest records reason).
+`--reference` remains an alias for `--reference-client` (**single-month runs only**). For April and May together use `--reference-client-april` and `--reference-client-may` (and internal `-april`/`-may` if comparing Internal). Internal compare is `NOT_RUN` when no internal reference is supplied (manifest records reason).
 
 **Bonita**:
 

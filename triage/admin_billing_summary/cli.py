@@ -107,6 +107,64 @@ def _delta(summary: MonthSummary, prior_path: Path) -> Dict[str, Any]:
     }
 
 
+def _validate_reference_args(
+    months: List[str],
+    *,
+    reference_client: Optional[Path],
+    reference_client_april: Optional[Path],
+    reference_client_may: Optional[Path],
+    reference_internal: Optional[Path],
+    reference_internal_april: Optional[Path],
+    reference_internal_may: Optional[Path],
+) -> None:
+    """Reject legacy single client/internal refs when multiple months are requested."""
+    if len(months) <= 1:
+        return
+    if reference_client and not reference_client_april and not reference_client_may:
+        raise SystemExit(
+            "Cannot use --reference-client or --reference for multiple months. "
+            "Supply --reference-client-april and --reference-client-may (one blessed "
+            "workbook per month; reusing one Client reference for April and May is not allowed)."
+        )
+    if reference_internal and not reference_internal_april and not reference_internal_may:
+        raise SystemExit(
+            "Cannot use --reference-internal for multiple months. "
+            "Supply --reference-internal-april and --reference-internal-may."
+        )
+
+
+def _reference_path_for_month(
+    month_key: str,
+    variant: str,
+    months: List[str],
+    *,
+    reference_client: Optional[Path],
+    reference_client_april: Optional[Path],
+    reference_client_may: Optional[Path],
+    reference_internal: Optional[Path],
+    reference_internal_april: Optional[Path],
+    reference_internal_may: Optional[Path],
+) -> Optional[Path]:
+    """Resolve approved reference for one month/variant."""
+    if variant == "client":
+        if month_key == "2026-04" and reference_client_april:
+            return reference_client_april
+        if month_key == "2026-05" and reference_client_may:
+            return reference_client_may
+        if len(months) == 1 and reference_client:
+            return reference_client
+        return None
+    if variant == "internal":
+        if month_key == "2026-04" and reference_internal_april:
+            return reference_internal_april
+        if month_key == "2026-05" and reference_internal_may:
+            return reference_internal_may
+        if len(months) == 1 and reference_internal:
+            return reference_internal
+        return None
+    return None
+
+
 def _write_review_csv(path: Path, summary: MonthSummary) -> None:
     cols = ["Category", "Date", "Day", "Tech", "Project", "Project Source",
             "Clock In", "Clock Out", "Gross Span", "Net Hours", "Note"]
@@ -147,7 +205,11 @@ def run(
     repo_root: Optional[Path] = None,
     reference: Optional[str] = None,
     reference_client: Optional[str] = None,
+    reference_client_april: Optional[str] = None,
+    reference_client_may: Optional[str] = None,
     reference_internal: Optional[str] = None,
+    reference_internal_april: Optional[str] = None,
+    reference_internal_may: Optional[str] = None,
     artifact_profile: str = "admin_billing_summary",
     approved_delta: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -160,9 +222,21 @@ def run(
     out.mkdir(parents=True, exist_ok=True)
     prior_path = _resolve(prior, root)
     ref_client = _resolve(reference_client or reference, root)
+    ref_client_april = _resolve(reference_client_april, root)
+    ref_client_may = _resolve(reference_client_may, root)
     ref_internal = _resolve(reference_internal, root)
+    ref_internal_april = _resolve(reference_internal_april, root)
+    ref_internal_may = _resolve(reference_internal_may, root)
     delta_path = _resolve(approved_delta, root)
-    ref_by_variant = {"client": ref_client, "internal": ref_internal}
+    _validate_reference_args(
+        months,
+        reference_client=ref_client,
+        reference_client_april=ref_client_april,
+        reference_client_may=ref_client_may,
+        reference_internal=ref_internal,
+        reference_internal_april=ref_internal_april,
+        reference_internal_may=ref_internal_may,
+    )
     generated_utc = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d %H:%M")
 
     months_out: Dict[str, Any] = {}
@@ -203,7 +277,17 @@ def run(
                 ),
                 "native_table_count": preflight.get("native_table_count"),
             }
-            ref_path = ref_by_variant.get(variant)
+            ref_path = _reference_path_for_month(
+                mk,
+                variant,
+                months,
+                reference_client=ref_client,
+                reference_client_april=ref_client_april,
+                reference_client_may=ref_client_may,
+                reference_internal=ref_internal,
+                reference_internal_april=ref_internal_april,
+                reference_internal_may=ref_internal_may,
+            )
             ref_supplied = bool(ref_path and ref_path.is_file())
             if ref_supplied:
                 cmp_path = out / f"{xlsx_path.stem}_artifact_compare.json"
@@ -261,7 +345,11 @@ def run(
         "roster_log": str(roster_path),
         "prior": str(prior_path) if prior_path else "",
         "reference_client": str(ref_client) if ref_client else "",
+        "reference_client_april": str(ref_client_april) if ref_client_april else "",
+        "reference_client_may": str(ref_client_may) if ref_client_may else "",
         "reference_internal": str(ref_internal) if ref_internal else "",
+        "reference_internal_april": str(ref_internal_april) if ref_internal_april else "",
+        "reference_internal_may": str(ref_internal_may) if ref_internal_may else "",
         "artifact_profile": artifact_profile,
         "months": months,
         "per_month": months_out,
@@ -299,8 +387,18 @@ def main(argv: Optional[List[str]] = None) -> int:
         "--reference",
         help="Alias for --reference-client (approved Client workbook)",
     )
-    ap.add_argument("--reference-client", help="Approved Client workbook for compare")
-    ap.add_argument("--reference-internal", help="Approved Internal workbook for compare")
+    ap.add_argument(
+        "--reference-client",
+        help="Approved Client workbook (single-month runs only; use -april/-may for both months)",
+    )
+    ap.add_argument("--reference-client-april", help="Approved Client workbook for 2026-04")
+    ap.add_argument("--reference-client-may", help="Approved Client workbook for 2026-05")
+    ap.add_argument(
+        "--reference-internal",
+        help="Approved Internal workbook (single-month runs only)",
+    )
+    ap.add_argument("--reference-internal-april", help="Approved Internal workbook for 2026-04")
+    ap.add_argument("--reference-internal-may", help="Approved Internal workbook for 2026-05")
     ap.add_argument(
         "--artifact-profile",
         default="admin_billing_summary",
@@ -318,7 +416,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         websafe=args.websafe,
         reference=args.reference,
         reference_client=args.reference_client,
+        reference_client_april=args.reference_client_april,
+        reference_client_may=args.reference_client_may,
         reference_internal=args.reference_internal,
+        reference_internal_april=args.reference_internal_april,
+        reference_internal_may=args.reference_internal_may,
         artifact_profile=args.artifact_profile,
         approved_delta=args.approved_delta,
     )

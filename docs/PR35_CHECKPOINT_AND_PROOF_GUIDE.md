@@ -103,9 +103,12 @@ python -m triage.admin_billing_summary.cli `
   --roster-log $Roster `
   --months 2026-04 2026-05 `
   --out-dir Outputs/proof_pr35_admin_billing `
-  --reference-client "References/approved/<APPROVED_CLIENT>.xlsx" `
-  --reference-internal "References/approved/<APPROVED_INTERNAL>.xlsx" `
+  --reference-client-april "References/approved/April_2026_Billing_Summary_Client_APPROVED.xlsx" `
+  --reference-client-may "References/approved/May_2026_Billing_Summary_Client_APPROVED.xlsx" `
   --websafe
+```
+
+Do **not** pass a single `--reference-client` for both months — the CLI exits with an error.
 ```
 
 **Inspect under `Outputs/proof_pr35_*`:**

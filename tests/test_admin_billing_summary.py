@@ -380,3 +380,16 @@ def test_delta_raises_on_unreadable_prior(tmp_path):
     bad.write_bytes(b"this is not a valid zip/xlsx payload")
     with pytest.raises(RuntimeError):
         _read_prior_project_net(bad)
+
+
+def test_multi_month_rejects_legacy_client_reference(fixtures):
+    """One --reference-client must not silently cover April and May."""
+    with pytest.raises(SystemExit):
+        run(
+            roster_log=str(fixtures["roster"]),
+            out_dir=str(fixtures["roster"].parent / "out_should_not_run"),
+            months=["2026-04", "2026-05"],
+            websafe=False,
+            reference_client=str(fixtures["roster"]),
+            repo_root=REPO_ROOT,
+        )
