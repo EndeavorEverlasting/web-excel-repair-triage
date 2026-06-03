@@ -51,7 +51,28 @@ def test_build_portal_from_fixture_csv_json(tmp_path):
     assert "Test Portal" in html
     assert "long_shift" in html
     assert "preflight_pass" in html
-    assert "<\\/script>" not in html or "</script>" in html  # escaped payload
+
+
+def test_portal_escapes_closing_script_in_payload(tmp_path):
+    """A </script> payload in section data must be neutralised, not emitted raw.
+
+    The embedded JSON lives inside a <script> block; an unescaped </script> in
+    any value would close that block early and allow injected markup to run.
+    """
+    payload = PortalSection(
+        id="xss",
+        title="XSS test",
+        tab="overview",
+        kind="kpis",
+        items=[{"label": "attack", "value": "</script><script>alert(1)</script>"}],
+    )
+    html = build_run_portal(
+        tmp_path, "Payload Portal", sections=[payload]
+    ).read_text(encoding="utf-8")
+    # Raw closing-tag payload must not appear verbatim (it would break the embed).
+    assert "</script><script>alert(1)</script>" not in html
+    # The dangerous "</" sequence is neutralised to "<\/".
+    assert "<\\/script>" in html
 
 
 def test_portal_surfaces_semantic_failure(tmp_path):
