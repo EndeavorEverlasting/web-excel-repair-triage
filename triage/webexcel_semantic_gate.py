@@ -44,6 +44,14 @@ ADMIN_BILLING_SENTINELS: List = [
 # Bonita sentinels are checked dynamically (see _check_bonita_sentinels).
 BONITA_SENTINELS: List = []
 
+# Neuron Track Hours dashboard sentinels are checked dynamically
+# (see _check_neuron_track_sentinels). The "* Neuron Hours" tabs carry their
+# real headers on row 4 (APRIL_MAY_COLUMNS), so "Month"/"Tech" survival proves
+# the sharedStrings did not collapse to ColumnN.
+NEURON_TRACK_SENTINELS: List = [
+    ("Start Here", 1, 1, "nonblank", None),
+]
+
 _META_TABS = frozenset({"CF Dictionary", "CF_Dictionary", "WebExcel QC", "Review Flags"})
 
 
@@ -202,6 +210,57 @@ def _check_bonita_sentinels(path: str, tabs: List[str]) -> List[str]:
     return failures
 
 
+def _check_neuron_track_sentinels(path: str, tabs: List[str]) -> List[str]:
+    """Return sentinel failures for the full NTH dashboard workbook.
+
+    Structural proof that the dashboard kept real content after any Web Excel
+    round-trip (rather than only scoring string density):
+
+      * "Start Here" title cell (A1) is non-blank.
+      * At least one "* Neuron Hours" month tab is present.
+      * The Neuron Hours header row (row 4) still carries the real "Month" and
+        "Tech" headers (not collapsed to ColumnN).
+    """
+    try:
+        import openpyxl
+    except ImportError:
+        return ["openpyxl_not_installed"]
+
+    failures: List[str] = []
+    try:
+        wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
+    except Exception as exc:
+        return [f"workbook_load_error:{exc}"]
+
+    try:
+        start = next((n for n in wb.sheetnames if "start here" in n.lower()), None)
+        if start is None:
+            failures.append("missing_sheet:Start Here")
+        else:
+            val = wb[start].cell(row=1, column=1).value
+            if val is None or str(val).strip() == "":
+                failures.append(f"{start}!A1 is blank")
+
+        neuron_tabs = [n for n in wb.sheetnames if "neuron hours" in n.lower()]
+        if not neuron_tabs:
+            failures.append("missing_tab:* Neuron Hours")
+        else:
+            ws = wb[neuron_tabs[0]]
+            header = [
+                str(ws.cell(row=4, column=c).value or "").strip()
+                for c in range(1, ws.max_column + 1)
+            ]
+            for required in ("Month", "Tech"):
+                if required not in header:
+                    failures.append(
+                        f"{neuron_tabs[0]}!row4 header missing '{required}'"
+                    )
+    finally:
+        wb.close()
+
+    return failures
+
+
 # ───────────────────────── repair preservation ────────────────────────────────
 
 
@@ -351,11 +410,12 @@ def run_semantic_gate(path: str, profile: str = "admin_billing") -> Dict[str, An
         base["sentinel_failures"].append(f"sharedstrings_read_error:{exc}")
 
     # 2. Sentinel cell checks
-    # "neuron_track" skips structural sentinels (multi-tab dashboard format; sentinels TBD).
     if profile == "admin_billing":
         sentinel_failures = _check_admin_billing_sentinels(path, tabs)
     elif profile == "bonita":
         sentinel_failures = _check_bonita_sentinels(path, tabs)
+    elif profile == "neuron_track":
+        sentinel_failures = _check_neuron_track_sentinels(path, tabs)
     else:
         sentinel_failures = []
 
