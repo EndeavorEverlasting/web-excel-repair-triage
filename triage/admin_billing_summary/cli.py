@@ -47,8 +47,10 @@ def _read_prior_project_net(prior_path: Path) -> Dict[str, float]:
     out: Dict[str, float] = {}
     try:
         wb = openpyxl.load_workbook(str(prior_path), data_only=True, read_only=True)
-    except Exception:
-        return out
+    except Exception as exc:
+        raise RuntimeError(
+            f"Cannot read prior workbook for delta: {prior_path} — {exc}"
+        ) from exc
     try:
         if "Project Summary" not in wb.sheetnames:
             return out
