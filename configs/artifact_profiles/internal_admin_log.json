@@ -1,0 +1,9 @@
+{
+  "profile": "internal_admin_log",
+  "required_sheets": ["Start Here"],
+  "required_semantic_cells": [
+    {"sheet": "Start Here", "cell": "A1", "check": "nonblank"}
+  ],
+  "forbidden_values": ["Column1", "Column2", "Column3"],
+  "compare_totals": false
+}

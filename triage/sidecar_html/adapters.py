@@ -2,9 +2,71 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from triage.sidecar_html.portal import PortalSection
+
+
+def artifact_compare_sections(
+    compare_json: Optional[str],
+    *,
+    section_id: str = "artifact-compare",
+    title: str = "Approved reference compare",
+) -> List[PortalSection]:
+    """Portal KPIs + JSON tab for ``artifact_compare`` sidecar output."""
+    if not compare_json:
+        return []
+    import json as _json
+
+    data: Dict[str, Any] = {}
+    try:
+        data = _json.loads(Path(compare_json).read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    sc = data.get("semantic_compare", "NOT_RUN")
+    sections: List[PortalSection] = [
+        PortalSection(
+            id=f"{section_id}-kpi",
+            title=title,
+            tab="preflight",
+            kind="kpis",
+            items=[
+                {
+                    "label": "Compare pass",
+                    "value": "PASS" if data.get("compare_pass") else "FAIL",
+                    "tone": "pass" if data.get("compare_pass") else "fail",
+                },
+                {
+                    "label": "Semantic compare",
+                    "value": sc,
+                    "tone": "pass" if sc == "PASS" else "fail",
+                },
+                {
+                    "label": "Raw SHA match",
+                    "value": str(data.get("raw_sha_match", "—")),
+                    "tone": "warn" if data.get("raw_sha_match") is False else "pass",
+                },
+                {
+                    "label": "Canonical package match",
+                    "value": str(data.get("canonical_package_match", "—")),
+                    "tone": "pass" if data.get("canonical_package_match") else "warn",
+                },
+                {
+                    "label": "Semantic SHA match",
+                    "value": str(data.get("semantic_sha_match", "—")),
+                    "tone": "pass" if data.get("semantic_sha_match") else "warn",
+                },
+            ],
+        ),
+        PortalSection(
+            id=section_id,
+            title=f"{title} (JSON)",
+            tab="preflight",
+            kind="json",
+            json_path=compare_json,
+        ),
+    ]
+    return sections
 
 
 def admin_billing_sections(manifest: Dict[str, Any], out_dir: Path) -> List[PortalSection]:
@@ -106,6 +168,14 @@ def admin_billing_sections(manifest: Dict[str, Any], out_dir: Path) -> List[Port
                     kind="preflight",
                     json_path=pf,
                 ))
+            cmp_json = vo.get("artifact_compare_json")
+            sections.extend(
+                artifact_compare_sections(
+                    cmp_json,
+                    section_id=f"artifact-{mk}-{variant}",
+                    title=f"Reference compare — {mo.get('month_name')} {variant}",
+                )
+            )
         delta = mo.get("delta_vs_prior")
         if delta:
             delta_path = out_dir / f"{_month_stem_from_key(mk)}_Billing_Summary_Internal_delta.json"
@@ -194,6 +264,12 @@ def bonita_sections(manifest: Dict[str, Any]) -> List[PortalSection]:
             kind="preflight",
             json_path=outs["preflight_json"],
         ))
+    sections.extend(
+        artifact_compare_sections(
+            outs.get("artifact_compare_json"),
+            title="Reference compare — Bonita workbook",
+        )
+    )
     return sections
 
 

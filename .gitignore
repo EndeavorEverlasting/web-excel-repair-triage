@@ -1,5 +1,6 @@
 # ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
+.pytest_cache/
 *.py[cod]
 *.pyo
 *.pyd
@@ -79,3 +80,9 @@ scripts/artifacts/*.local
 # Local payload drop zone and decode output — never commit raw internal workbooks
 Workbook Payload Artifacts/
 RecoveredArtifacts/
+
+# Approved reference workbooks (may contain private data)
+References/**/*.xlsx
+!References/
+!References/approved/
+!References/approved/.gitkeep

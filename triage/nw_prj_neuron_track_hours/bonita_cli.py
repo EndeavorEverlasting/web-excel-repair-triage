@@ -22,6 +22,7 @@ import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from triage.artifact_compare import compare_artifacts
 from triage.webexcel_semantic_gate import run_semantic_gate
 from triage.nw_prj_neuron_track_hours.bonita_exporter import (
     build_bonita_workbook,
@@ -160,6 +161,9 @@ def run(
     template: Optional[str] = None,
     websafe: bool = True,
     repo_root: Optional[Path] = None,
+    reference: Optional[str] = None,
+    artifact_profile: str = "bonita_neuron_track_hours",
+    approved_delta: Optional[str] = None,
 ) -> Dict[str, Any]:
     root = repo_root or Path(__file__).resolve().parent.parent.parent
     months = months or DEFAULT_MONTHS
@@ -180,6 +184,22 @@ def run(
     preflight = preflight_bonita(str(xlsx_path)) if websafe else {}
     preflight_path = out / PREFLIGHT_NAME
     preflight_path.write_text(json.dumps(preflight, indent=2, default=str), encoding="utf-8")
+
+    reference_path = _resolve(reference, root)
+    delta_path = _resolve(approved_delta, root)
+    artifact_compare_json = ""
+    artifact_compare_pass = None
+    if reference_path and reference_path.is_file():
+        cmp_path = out / "Bonita_Neuron_Track_Hours_artifact_compare.json"
+        cmp_report = compare_artifacts(
+            str(reference_path),
+            str(xlsx_path),
+            artifact_profile,
+            approved_delta=str(delta_path) if delta_path else None,
+        )
+        cmp_path.write_text(json.dumps(cmp_report, indent=2, default=str), encoding="utf-8")
+        artifact_compare_json = str(cmp_path)
+        artifact_compare_pass = bool(cmp_report.get("compare_pass"))
 
     per_month: Dict[str, Dict[str, Any]] = {}
     for mk in months:
@@ -210,11 +230,16 @@ def run(
         "review_item_count": len(resolution.review),
         "review_by_category": _count_categories(resolution),
         "websafe_preflight_pass": bool(preflight.get("preflight_pass")) if websafe else None,
+        "preflight_data": preflight if websafe else {},
+        "reference": str(reference_path) if reference_path else "",
+        "artifact_profile": artifact_profile if reference_path else "",
         "warnings": resolution.warnings,
         "outputs": {
             "workbook": str(xlsx_path),
             "review_queue_csv": str(review_path),
             "preflight_json": str(preflight_path),
+            "artifact_compare_json": artifact_compare_json,
+            "artifact_compare_pass": artifact_compare_pass,
         },
     }
     manifest_path = out / MANIFEST_NAME
@@ -248,6 +273,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--template")
     ap.add_argument("--months", nargs="+", default=DEFAULT_MONTHS)
     ap.add_argument("--out-dir", default="Outputs/neuron_track_hours_2026_06_02")
+    ap.add_argument("--reference", help="Approved reference workbook for artifact_compare")
+    ap.add_argument(
+        "--artifact-profile",
+        default="bonita_neuron_track_hours",
+    )
+    ap.add_argument("--approved-delta", help="JSON allowlist for semantic hash drift")
     ap.add_argument("--websafe", action="store_true", default=True)
     ap.add_argument("--no-websafe", action="store_false", dest="websafe")
     args = ap.parse_args(argv)
@@ -259,6 +290,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         admin_log=args.admin_log,
         template=args.template,
         websafe=args.websafe,
+        reference=args.reference,
+        artifact_profile=args.artifact_profile,
+        approved_delta=args.approved_delta,
     )
     print(json.dumps(manifest, indent=2, default=str))
     return 0

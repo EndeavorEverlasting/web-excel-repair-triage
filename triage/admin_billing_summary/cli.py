@@ -19,6 +19,7 @@ from triage.admin_billing_summary.exporter import build_workbook
 from triage.admin_billing_summary.models import MonthSummary
 from triage.admin_billing_summary.preflight import preflight_billing_summary
 from triage.nw_prj_neuron_track_hours.bonita_exporter import tab_name_for_month_key
+from triage.artifact_compare import compare_artifacts
 from triage.sidecar_html.adapters import admin_billing_sections
 from triage.sidecar_html.portal import build_run_portal
 
@@ -143,6 +144,9 @@ def run(
     prior: Optional[str] = None,
     websafe: bool = True,
     repo_root: Optional[Path] = None,
+    reference: Optional[str] = None,
+    artifact_profile: str = "admin_billing_summary",
+    approved_delta: Optional[str] = None,
 ) -> Dict[str, Any]:
     root = repo_root or Path(__file__).resolve().parent.parent.parent
     months = months or DEFAULT_MONTHS
@@ -152,6 +156,8 @@ def run(
     out = _resolve(out_dir, root) or (root / "Outputs")
     out.mkdir(parents=True, exist_ok=True)
     prior_path = _resolve(prior, root)
+    reference_path = _resolve(reference, root)
+    delta_path = _resolve(approved_delta, root)
     generated_utc = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d %H:%M")
 
     months_out: Dict[str, Any] = {}
@@ -182,12 +188,32 @@ def run(
             preflight_path.write_text(
                 json.dumps(preflight, indent=2, default=str), encoding="utf-8"
             )
-            outputs[variant] = {
+            variant_out: Dict[str, Any] = {
                 "workbook": str(xlsx_path),
                 "preflight_json": str(preflight_path),
                 "websafe_preflight_pass": bool(preflight.get("preflight_pass")) if websafe else None,
                 "native_table_count": preflight.get("native_table_count"),
             }
+            if (
+                reference_path
+                and reference_path.is_file()
+                and variant == "client"
+            ):
+                cmp_path = out / f"{xlsx_path.stem}_artifact_compare.json"
+                cmp_report = compare_artifacts(
+                    str(reference_path),
+                    str(xlsx_path),
+                    artifact_profile,
+                    approved_delta=str(delta_path) if delta_path else None,
+                    expect_neuron_tab=bonita_tab,
+                    variant=variant,
+                )
+                cmp_path.write_text(
+                    json.dumps(cmp_report, indent=2, default=str), encoding="utf-8"
+                )
+                variant_out["artifact_compare_json"] = str(cmp_path)
+                variant_out["artifact_compare_pass"] = bool(cmp_report.get("compare_pass"))
+            outputs[variant] = variant_out
 
         review_path = out / f"{_month_stem(mk)}_Billing_Summary_review_queue.csv"
         _write_review_csv(review_path, summary)
@@ -220,6 +246,8 @@ def run(
         "generated_utc": _dt.datetime.now(_dt.timezone.utc).isoformat(),
         "roster_log": str(roster_path),
         "prior": str(prior_path) if prior_path else "",
+        "reference": str(reference_path) if reference_path else "",
+        "artifact_profile": artifact_profile if reference_path else "",
         "months": months,
         "per_month": months_out,
     }
@@ -244,6 +272,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--months", nargs="+", default=DEFAULT_MONTHS)
     ap.add_argument("--out-dir", default="Outputs/admin_billing_summary_2026_06_02")
     ap.add_argument("--prior")
+    ap.add_argument(
+        "--reference",
+        help="Approved reference Client workbook for artifact_compare",
+    )
+    ap.add_argument(
+        "--artifact-profile",
+        default="admin_billing_summary",
+        help="configs/artifact_profiles/<name>.json",
+    )
+    ap.add_argument("--approved-delta", help="JSON allowlist for semantic hash drift")
     ap.add_argument("--websafe", action="store_true", default=True)
     ap.add_argument("--no-websafe", action="store_false", dest="websafe")
     args = ap.parse_args(argv)
@@ -253,6 +291,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         months=args.months,
         prior=args.prior,
         websafe=args.websafe,
+        reference=args.reference,
+        artifact_profile=args.artifact_profile,
+        approved_delta=args.approved_delta,
     )
     print(json.dumps(manifest, indent=2, default=str))
     return 0

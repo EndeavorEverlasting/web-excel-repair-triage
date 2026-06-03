@@ -103,6 +103,7 @@ Generate the monthly admin billing summary in the April "My Preferred Format" (w
 
 - Docs: [`docs/ADMIN_BILLING_SUMMARY_PREFERRED_FORMAT_CONTRACT.md`](docs/ADMIN_BILLING_SUMMARY_PREFERRED_FORMAT_CONTRACT.md) and roster mechanics in [`docs/ACTIVE_ROSTER_LOG_MECHANICS.md`](docs/ACTIVE_ROSTER_LOG_MECHANICS.md)
 - Run: `python -m triage.admin_billing_summary.cli --roster-log "<roster>.xlsx" --months 2026-04 2026-05 --out-dir Outputs/admin_billing_summary_2026_06_02 --prior "<April preferred-format copy>.xlsx" --websafe`
+- Optional approved-reference gate: `--reference References/approved/<blessed Client xlsx>` — see [`docs/ARTIFACT_FINGERPRINT_AND_COMPARE.md`](docs/ARTIFACT_FINGERPRINT_AND_COMPARE.md)
 - Multi-project, override-aware per-day resolution (Assignments Override > Worked Projects > Assignments main > Live default); net = gross − lunch. Produces Executive/Project/Tech/Tech-by-Project summaries with two native bar charts, internal QA/detail tabs, and an embedded `Mon YY` Neuron Track Hours tracker tab. `--prior` emits a delta report for the refreshed month.
 
 ### 1 Marcus inventory recon (part-number relink)

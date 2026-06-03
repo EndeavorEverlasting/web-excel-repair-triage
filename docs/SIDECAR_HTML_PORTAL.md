@@ -25,3 +25,5 @@ Reads the newest `*manifest*.json` in that folder and rewrites `index.html`.
 ## Usage
 
 Open `index.html` in a browser. Tabs: **Overview**, **Review queue**, **Preflight**, **Data**. Tables support search and category filters. JSON/CSV files remain on disk for scripts and diff tools.
+
+When runs pass `--reference` to admin billing or Bonita CLIs, the **Preflight** tab also shows **Approved reference compare** KPIs (`raw_sha_match`, `semantic_compare`, etc.) and links to `*_artifact_compare.json`. See [ARTIFACT_FINGERPRINT_AND_COMPARE.md](ARTIFACT_FINGERPRINT_AND_COMPARE.md).
