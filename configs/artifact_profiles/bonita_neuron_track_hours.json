@@ -1,0 +1,21 @@
+{
+  "name": "bonita_neuron_track_hours",
+  "submission_safe": true,
+  "sheets": ["Apr 26", "May 26"],
+  "required_headers": ["DATE", "TECH", "START", "END", "TOTAL", "PROJECT", "ASSIGNMENT"],
+  "forbidden_text": [
+    "Bonita-friendly",
+    "confidence",
+    "heuristic",
+    "review queue",
+    "assignment_rule",
+    "assignment_confidence",
+    "internal audit",
+    "Column1",
+    "Column2"
+  ],
+  "frozen_panes": "A3",
+  "autofilter": true,
+  "title_row_height": 24,
+  "header_row_height": 22
+}
