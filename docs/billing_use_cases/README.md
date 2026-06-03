@@ -16,6 +16,7 @@ These notes preserve billing, roster, dashboard, and attendance-validation use c
 8. [Require latest source tracker for regenerated summaries](./08-latest-source-tracker-intake-for-regeneration.md)
 9. [Keep project correction tables functional and reviewable](./09-project-correction-table-doctrine.md)
 10. [Protect monthly headers and conditional formatting improvements](./10-monthly-header-and-cf-regression-guard.md)
+11. [Use timestamped artifact output names](./11-timestamped-artifact-output-naming.md)
 
 ## Non-negotiable theme
 
