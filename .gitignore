@@ -39,6 +39,8 @@ Repaired/**
 # Outputs/ is runtime-generated. Keep only curated reference JSONs tracked.
 Outputs/**
 !Outputs/
+!Outputs/admin-ready/
+!Outputs/admin-ready/.gitkeep
 !Outputs/cf_dict_deprecated.json
 !Outputs/dv_spec_deprecated.json
 
