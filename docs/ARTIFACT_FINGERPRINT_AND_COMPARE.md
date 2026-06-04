@@ -17,6 +17,8 @@ Raw SHA proves byte identity. Canonical package SHA removes volatile OOXML noise
 
 Visible semantic SHA proves visible sheet names, cell values, formulas, number formats, tables, chart count, frozen panes, and autofilter refs — without filesystem path noise. Use the all-sheet semantic hash only when hidden-sheet drift is itself the thing you want to compare.
 
+Operational/required-field comparison remains separate from hashing: profiles, package preflight, and semantic integrity gates enforce required tabs, native tables, sentinel fields, Web Excel stop-ship tokens, and manual proof requirements.
+
 ## CLI
 
 ```powershell
