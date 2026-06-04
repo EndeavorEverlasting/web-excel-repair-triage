@@ -26,6 +26,12 @@ from triage.cybernet_targets.resolver import resolve_sprint_targets
 from triage.nw_prj_config import is_repair_filename
 from triage.webexcel_preflight import run_preflight
 from triage.sidecar_html.adapters import cybernet_sections
+from triage.output_policy import (
+    allocate_run_dir,
+    assert_out_dir_allowed,
+    run_id_from_dir,
+    source_manifest_fields,
+)
 from triage.sidecar_html.portal import build_run_portal
 
 
@@ -54,7 +60,7 @@ def run(
 
     aw_path = _resolve(all_wave, root)
     dash_path = _resolve(existing_dashboard, root)
-    out = _resolve(out_dir, root) or root / "Outputs"
+    out = assert_out_dir_allowed(_resolve(out_dir, root) or root / "Outputs")
     deploy_path = _resolve(deployment_tracker, root) if deployment_tracker else None
 
     for label, p in [("all_wave", aw_path), ("existing_dashboard", dash_path)]:
@@ -124,6 +130,8 @@ def run(
 
     manifest = {
         "as_of": as_of,
+        "run_id": run_id_from_dir(out),
+        **source_manifest_fields(aw_path, dash_path),
         "total_active_targets": total,
         "site_counts": site_counts,
         "amb_counts": {
@@ -165,18 +173,20 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--existing-dashboard", required=True)
     ap.add_argument("--scope", default="configs/cybernet_sprint_scope_2026_06.json")
     ap.add_argument("--deployment-tracker")
-    ap.add_argument("--out-dir", default="Outputs")
+    ap.add_argument("--out-dir", default=None, help="Run dir under Outputs/cybernet_targets/")
     ap.add_argument("--as-of", default="2026-06-01")
     ap.add_argument("--websafe", action="store_true", default=True)
     ap.add_argument("--no-websafe", action="store_false", dest="websafe")
     args = ap.parse_args(argv)
 
+    slug = args.as_of.replace("-", "")
+    out_dir = args.out_dir or str(allocate_run_dir("cybernet_targets", slug))
     manifest = run(
         all_wave=args.all_wave,
         existing_dashboard=args.existing_dashboard,
         scope_path=args.scope,
         deployment_tracker=args.deployment_tracker,
-        out_dir=args.out_dir,
+        out_dir=out_dir,
         as_of=args.as_of,
         websafe=args.websafe,
     )

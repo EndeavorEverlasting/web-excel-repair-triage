@@ -12,6 +12,8 @@ from .package_io import Package, remove_calc_chain, remove_external_links
 from .preflight import run_preflight
 from .provenance import build_provenance
 from .queue_builder import build_review_queue
+from triage.output_policy import assert_output_path_allowed
+
 from .workbook_graft import graft_review_layer
 
 
@@ -42,6 +44,12 @@ def run(
 
     if not input_path:
         raise ValueError("--input is required for this mode")
+
+    assert_output_path_allowed(input_path, output_path=output_path)
+    if provenance_out:
+        assert_output_path_allowed(input_path, output_path=provenance_out)
+    if zip_out:
+        assert_output_path_allowed(input_path, output_path=zip_out)
 
     input_name = Path(input_path).name
     out = Path(output_path)

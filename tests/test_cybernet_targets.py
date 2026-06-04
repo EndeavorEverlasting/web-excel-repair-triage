@@ -116,11 +116,13 @@ def test_ssuh_replaces_placeholder_locations(fixture_paths):
 
 
 def test_cli_on_fixtures(fixture_paths, tmp_path):
+    out = tmp_path / "Outputs" / "cybernet_targets" / "test_run"
+    out.mkdir(parents=True)
     manifest = run(
         all_wave=str(fixture_paths["all_wave"]),
         existing_dashboard=str(fixture_paths["sprint_dashboard"]),
         deployment_tracker=str(fixture_paths["deployment_tracker"]),
-        out_dir=str(tmp_path),
+        out_dir=str(out),
         as_of="2026-06-01-test",
         websafe=True,
         repo_root=REPO_ROOT,
@@ -132,11 +134,13 @@ def test_cli_on_fixtures(fixture_paths, tmp_path):
 
 @pytest.mark.skipif(not REAL_ALL_WAVE.exists(), reason="Real Candidates workbooks not present")
 def test_real_workbook_93_targets(tmp_path):
+    out = tmp_path / "Outputs" / "cybernet_targets" / "real_run"
+    out.mkdir(parents=True)
     manifest = run(
         all_wave=str(REAL_ALL_WAVE),
         existing_dashboard=str(REAL_DASH),
         deployment_tracker=str(REAL_DEPLOY) if REAL_DEPLOY.exists() else None,
-        out_dir=str(tmp_path),
+        out_dir=str(out),
         as_of="2026-06-01",
         websafe=True,
         repo_root=REPO_ROOT,

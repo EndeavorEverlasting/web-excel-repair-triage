@@ -16,6 +16,7 @@ from triage.artifact_profiles import (
     load_profile,
     run_profile_checks,
 )
+from triage.output_policy import assert_output_path_allowed, assert_out_dir_allowed
 from triage.webexcel_semantic_gate import run_semantic_gate
 
 try:
@@ -207,6 +208,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     ap.add_argument("--variant", default="client", choices=("internal", "client"))
     args = ap.parse_args(argv)
 
+    assert_output_path_allowed(
+        args.reference, args.candidate, output_path=args.candidate,
+    )
     report = compare_artifacts(
         args.reference,
         args.candidate,
@@ -217,9 +221,13 @@ def main(argv: Optional[list[str]] = None) -> int:
     )
     text = json.dumps(report, indent=2, default=str)
     if args.out:
-        out = Path(args.out)
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(text, encoding="utf-8")
+        assert_output_path_allowed(
+            args.reference, args.candidate, output_path=args.out,
+        )
+        assert_out_dir_allowed(Path(args.out).parent)
+        out_path = Path(args.out)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(text, encoding="utf-8")
     print(text)
     return 0 if report.get("compare_pass") else 1
 

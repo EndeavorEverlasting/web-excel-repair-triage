@@ -69,7 +69,7 @@ def run_recon(
     dry_run: bool = False,
     strict: bool = False,
 ) -> ReconResult:
-    assert_output_path_allowed(input_path, output_path)
+    assert_output_path_allowed(input_path, output_path=output_path)
     report = ReconReport(input_workbook=str(Path(input_path).resolve()), dry_run=dry_run, mode="relink")
 
     pkg = Package.from_path(input_path)
@@ -283,7 +283,7 @@ def run_generate(
     strict: bool = False,
 ) -> ReconResult:
     """Clean-render a full recon workbook from an integrated source spreadsheet."""
-    assert_output_path_allowed(input_path, output_path)
+    assert_output_path_allowed(input_path, output_path=output_path)
     assert_generate_allowed(input_path)
     report = ReconReport(
         input_workbook=str(Path(input_path).resolve()),

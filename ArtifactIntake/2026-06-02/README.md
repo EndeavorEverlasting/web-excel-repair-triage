@@ -4,6 +4,11 @@ Use this dated folder for the 2026-06-02 billing/admin comparison cycle.
 
 Real workbooks stay local. Do not commit private artifacts.
 
+**Emulator rule:** folders under `admin/`, `internal/`, and sibling raw trees are
+read-only inputs for engines. Generators write only under `Outputs/` or
+`artifacts/` (or manually promote into `outputs/admin-ready/` after review). See
+[`docs/OPERATOR_SOURCE_IMMUTABILITY.md`](../../docs/OPERATOR_SOURCE_IMMUTABILITY.md).
+
 ## Put files here
 
 ```text

@@ -28,13 +28,15 @@ def resolution(fixtures):
 
 @pytest.fixture(scope="module")
 def generated(fixtures, tmp_path_factory):
-    out = tmp_path_factory.mktemp("bonita_out")
+    root = tmp_path_factory.mktemp("bonita_repo")
+    out = root / "Outputs" / "nw_prj_neuron_track_hours" / "test_run"
+    out.mkdir(parents=True)
     return run(
         roster_log=str(fixtures["roster"]),
         out_dir=str(out),
         months=MONTHS,
         websafe=True,
-        repo_root=REPO_ROOT,
+        repo_root=root,
     )
 
 
