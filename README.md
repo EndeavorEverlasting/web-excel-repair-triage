@@ -137,16 +137,34 @@ Design configs (distinct roles):
 
 Repo hygiene: `python -m triage.gitignore_hygiene` fails if private binaries are tracked outside sanitized fixture paths.
 
-### 1 Marcus inventory recon (part-number relink)
+### 1 Marcus inventory recon (generate + relink)
 
-Surgically relink the dated Part Numbers tab and produce a Web Excel-safe recon candidate from a private workbook:
+Clean-render a full recon workbook from an integrated source spreadsheet, or surgically relink an existing workbook's dated Part Numbers tab:
 
 - Contract: [`docs/1MARCUS_RECON_PARTNUMBER_RELINK_CONTRACT.md`](docs/1MARCUS_RECON_PARTNUMBER_RELINK_CONTRACT.md)
 - Failure analysis: [`docs/ONE_MARCUS_RECON_FAILURE_ANALYSIS_2026_06_03.md`](docs/ONE_MARCUS_RECON_FAILURE_ANALYSIS_2026_06_03.md)
 - Success checkpoint: [`docs/ONE_MARCUS_RECON_SUCCESS_CHECKPOINT_2026_06_03.md`](docs/ONE_MARCUS_RECON_SUCCESS_CHECKPOINT_2026_06_03.md)
 - Executive protection (later lane): [`docs/ONE_MARCUS_EXECUTIVE_VISUAL_PANEL_PROTECTION.md`](docs/ONE_MARCUS_EXECUTIVE_VISUAL_PANEL_PROTECTION.md)
-- Run: `python -m triage.one_marcus_recon.cli --input "Candidates/inventory recon/<workbook>.xlsx" --date auto --output Outputs/one_marcus_recon_2026_06_01/1_Marcus_Recon_2026-05-28_WEBSAFE.xlsx`
-- Patches the OOXML package in place (renames the `M-D-YYYY Part Numbers` tab, repoints formulas, localizes external refs, drops `calcChain.xml`, strips unused `xl/externalLinks/*`) instead of reserializing; preserves tables, drawings, styles, and sheet order. Use `--dry-run` to report without writing, `--strict` to fail on ambiguous dates.
+- Artifact profile: [`configs/artifact_profiles/one_marcus_recon.json`](configs/artifact_profiles/one_marcus_recon.json)
+
+**Generate** (default delivery path — builds `Part Numbers` + `1M Recon Pivot Module` with executive `Visual` column):
+
+```powershell
+python -m triage.one_marcus_recon.cli generate `
+  --input "Candidates/inventory recon/1M_Recon_READY.xlsx" `
+  --output "Outputs/one_marcus_recon/1M_Recon_READY.xlsx"
+```
+
+**Relink** (OOXML patch — renames any dated Part Numbers tab to stable `Part Numbers`, repoints formulas, localizes external refs, drops `calcChain.xml`, strips unused `xl/externalLinks/*`; preserves tables, drawings, styles, and sheet order):
+
+```powershell
+python -m triage.one_marcus_recon.cli relink `
+  --input "Candidates/inventory recon/<workbook>.xlsx" `
+  --date auto `
+  --output "Outputs/one_marcus_recon/<workbook>_WEBSAFE.xlsx"
+```
+
+Use `--dry-run` to report without writing, `--strict` to fail on ambiguous dates. Generate mode exits non-zero when package preflight or operational checks fail.
 
 ### Lifecycle folder rules (quick reference)
 

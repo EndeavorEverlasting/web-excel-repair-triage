@@ -14,11 +14,19 @@ Related issue: #30
 
 The operator updates the 1 Marcus recon workbook and pivots after physical or spreadsheet reconciliation work.
 
-The updated workbook needs a dated consolidated part-number reference tab, usually named like:
+The updated workbook may contain a dated consolidated part-number reference tab from manual iteration, usually named like:
 
 ```text
 5-28-2026 Part Numbers
 ```
+
+Delivery workbooks must use the stable tab name:
+
+```text
+Part Numbers
+```
+
+Put dates in filenames, manifests, and visible pivot titles — not in the Part Numbers sheet tab name.
 
 The operator may remember to rename the workbook and tab title. If they forget, the repo should infer the intended date and repair the mismatch before client delivery.
 
@@ -65,28 +73,24 @@ If the date is not supplied, infer it in this order:
 The generated tab name must use:
 
 ```text
-M-D-YYYY Part Numbers
+Part Numbers
 ```
 
-Example:
-
-```text
-5-28-2026 Part Numbers
-```
+Dated tab names (e.g. `5-28-2026 Part Numbers`) are source-only candidates detected during date inference. Relink and generate modes rename or emit the stable `Part Numbers` tab.
 
 ## Required behavior
 
 ### Tab handling
 
-- Detect existing Part Numbers candidate tabs.
-- Rename the chosen source tab to the target dated tab.
+- Detect existing Part Numbers candidate tabs (dated or undated).
+- Rename the chosen source tab to the stable `Part Numbers` tab.
 - Preserve all unrelated tabs, sheet order, visibility, tab colors, tables, drawings, styles, filters, validation, conditional formatting, print settings, and workbook metadata unless explicitly changed.
 - Never delete old tabs unless a cleanup flag explicitly says to do so.
 
 ### Formula rewiring
 
 - Find formulas referencing older dated Part Numbers tabs.
-- Repoint them to the target dated tab.
+- Repoint them to the stable `Part Numbers` tab.
 - Correctly quote sheet names with spaces and hyphens.
 - Localize formulas that point to stale external workbook references when the target tab exists locally.
 - Report formulas that still reference old dates after rewrite.

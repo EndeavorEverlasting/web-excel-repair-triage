@@ -15,13 +15,18 @@ from triage.xlsx_utils import fix_inlinestr
 from . import date_inference as di
 from . import formula_relink as fr
 from . import preflight as pf
+from .config import PART_NUMBERS_SHEET
+from .generator import build_workbook, load_snapshot
 from .models import ReconChange, ReconReport
+from .operational_checks import run_operational_checks
 from .package_cleanup import (
     Package,
     broken_relationship_targets,
     remove_calc_chain,
     remove_external_links,
 )
+
+from .style_pass import apply_style_pass
 
 _DATED_PN = re.compile(r"^\s*\d{1,2}-\d{1,2}-\d{4}\s+part\s+numbers\s*$", re.IGNORECASE)
 
@@ -50,7 +55,7 @@ def run_recon(
     dry_run: bool = False,
     strict: bool = False,
 ) -> ReconResult:
-    report = ReconReport(input_workbook=str(Path(input_path).resolve()), dry_run=dry_run)
+    report = ReconReport(input_workbook=str(Path(input_path).resolve()), dry_run=dry_run, mode="relink")
 
     pkg = Package.from_path(input_path)
     wb_xml = pkg.text("xl/workbook.xml")
@@ -67,7 +72,7 @@ def run_recon(
         {"date": c.date_iso, "source": c.source, "raw": c.raw} for c in candidates
     ]
     report.warnings.extend(warnings)
-    target_label = chosen.tab_label
+    target_label = PART_NUMBERS_SHEET
     report.final_part_number_tab = target_label
 
     # --- pick + rename the source Part Numbers tab ---
@@ -245,6 +250,180 @@ def run_recon(
         "html_portal": str(portal_path.resolve()),
     }
     return result
+
+
+def run_generate(
+    input_path: str,
+    *,
+    output_path: str,
+    cli_date: str = "auto",
+    part_number_tab: Optional[str] = None,
+    dry_run: bool = False,
+    strict: bool = False,
+) -> ReconResult:
+    """Clean-render a full recon workbook from an integrated source spreadsheet."""
+    report = ReconReport(
+        input_workbook=str(Path(input_path).resolve()),
+        dry_run=dry_run,
+        mode="generate",
+        pivot_tab="1M Recon Pivot Module",
+    )
+    snapshot = load_snapshot(
+        input_path,
+        cli_date=cli_date,
+        part_number_tab=part_number_tab,
+        strict=strict,
+    )
+    report.inferred_update_date = snapshot.inferred_date
+    report.date_source = snapshot.date_source
+    report.final_part_number_tab = "Part Numbers"
+    report.rollup_key_count = len(snapshot.rollup_keys)
+    report.warnings.extend(snapshot.warnings)
+    if not snapshot.rollup_keys:
+        report.warnings.append("no rollup keys found in included Part Numbers rows")
+
+    if dry_run:
+        report.add_change(
+            ReconChange(
+                "generate",
+                f"would render {len(snapshot.rollup_keys)} rollup keys to {output_path}",
+                count=len(snapshot.rollup_keys),
+            )
+        )
+        return ReconResult(report=report)
+
+    build_workbook(snapshot, output_path, source_path=input_path)
+    apply_style_pass(output_path)
+    fix_inlinestr(output_path)
+    report.output_workbook = str(Path(output_path).resolve())
+
+    pre = pf.run_preflight(output_path, target_part_number_tab="Part Numbers")
+    report.webexcel_preflight_pass = pre.preflight_pass
+    report.formula_error_scan = pre.error_value_failures
+    report.remaining_stale_tab_references = pre.stale_dated_refs
+
+    ops = run_operational_checks(output_path)
+    report.operational_pass = ops.operational_pass
+    report.operational_failures = list(ops.failures)
+
+    result = ReconResult(report=report)
+    base = _sidecar_base(output_path)
+    out_dir = base.parent
+    out_dir.mkdir(parents=True, exist_ok=True)
+    pre_path = out_dir / f"{base.name}_preflight.json"
+    manifest_path = out_dir / f"{base.name}_manifest.json"
+    review_path = out_dir / f"{base.name}_review_queue.csv"
+    carry_path = out_dir / f"{base.name}_carryover.md"
+    zip_path = out_dir / f"{base.name}_DELIVERY.zip"
+    ops_path = out_dir / f"{base.name}_operational.json"
+
+    pre_payload = pre.to_dict()
+    pre_payload["operational"] = ops.to_dict()
+    pre_path.write_text(json.dumps(pre_payload, indent=2), encoding="utf-8")
+    ops_path.write_text(json.dumps(ops.to_dict(), indent=2), encoding="utf-8")
+
+    manifest = {
+        "mode": "generate",
+        "input_workbook": report.input_workbook,
+        "output_workbook": report.output_workbook,
+        "inferred_update_date": report.inferred_update_date,
+        "date_source": report.date_source,
+        "final_part_number_tab": report.final_part_number_tab,
+        "pivot_tab": report.pivot_tab,
+        "rollup_key_count": len(snapshot.rollup_keys),
+        "webexcel_preflight_pass": report.webexcel_preflight_pass,
+        "operational_pass": report.operational_pass,
+        "operational_failures": report.operational_failures,
+        "sidecars": {
+            "preflight": str(pre_path.resolve()),
+            "operational": str(ops_path.resolve()),
+            "review_queue": str(review_path.resolve()),
+            "carryover": str(carry_path.resolve()),
+            "delivery_zip": str(zip_path.resolve()),
+        },
+    }
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+
+    _write_review_queue_generate(review_path, report, pre, ops)
+    _write_carryover_generate(carry_path, report, pre, ops)
+
+    from triage.sidecar_html.adapters import one_marcus_sections
+    from triage.sidecar_html.portal import build_run_portal
+
+    portal_path = build_run_portal(
+        out_dir,
+        title="1 Marcus Recon — Generate Review",
+        subtitle=report.input_workbook,
+        sections=one_marcus_sections(manifest),
+    )
+    manifest["html_portal"] = str(portal_path)
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+        z.write(output_path, Path(output_path).name)
+        z.write(pre_path, pre_path.name)
+        z.write(ops_path, ops_path.name)
+        z.write(manifest_path, manifest_path.name)
+        z.write(review_path, review_path.name)
+        z.write(carry_path, carry_path.name)
+        z.write(portal_path, portal_path.name)
+
+    result.outputs = {
+        "workbook": str(Path(output_path).resolve()),
+        "preflight": str(pre_path.resolve()),
+        "operational": str(ops_path.resolve()),
+        "manifest": str(manifest_path.resolve()),
+        "review_queue": str(review_path.resolve()),
+        "carryover": str(carry_path.resolve()),
+        "delivery_zip": str(zip_path.resolve()),
+        "html_portal": str(portal_path.resolve()),
+    }
+    return result
+
+
+def _write_review_queue_generate(
+    path: Path,
+    report: ReconReport,
+    pre: pf.ReconPreflight,
+    ops,
+) -> None:
+    with path.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        w.writerow(["category", "detail"])
+        for fail in ops.failures:
+            w.writerow(["operational_failure", fail])
+        for err in report.formula_error_scan:
+            w.writerow(["formula_error", err])
+        for tok in pre.token_failures:
+            w.writerow(["stop_ship_token", tok])
+        for warn in report.warnings:
+            w.writerow(["warning", warn])
+
+
+def _write_carryover_generate(
+    path: Path,
+    report: ReconReport,
+    pre: pf.ReconPreflight,
+    ops,
+) -> None:
+    lines = [
+        f"# 1 Marcus Recon Generate — {report.inferred_update_date}",
+        "",
+        f"- Input: `{Path(report.input_workbook).name}`",
+        f"- Output: `{Path(report.output_workbook).name}`",
+        f"- Part Numbers tab: `{report.final_part_number_tab}`",
+        f"- Package preflight: **{report.webexcel_preflight_pass}**",
+        f"- Operational pass: **{report.operational_pass}**",
+        "",
+        "## Operational failures",
+        "",
+    ]
+    if ops.failures:
+        lines.extend(f"- {f}" for f in ops.failures)
+    else:
+        lines.append("- none")
+    lines.append("")
+    path.write_text("\n".join(lines), encoding="utf-8")
 
 
 def _write_review_queue(path: Path, report: ReconReport, pre: pf.ReconPreflight) -> None:

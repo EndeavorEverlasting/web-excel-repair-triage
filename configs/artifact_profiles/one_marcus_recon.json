@@ -1,0 +1,12 @@
+{
+  "name": "one_marcus_recon",
+  "description": "One Marcus inventory recon generator with executive Visual column",
+  "submission_safe": true,
+  "expected_sheets": ["Part Numbers", "1M Recon Pivot Module"],
+  "required_headers_by_sheet": {
+    "1M Recon Pivot Module": ["Inventory Rollup by Item", "Total Qty", "Visual"]
+  },
+  "forbidden_text": ["%20", "web excel-safe", "webexcel-safe"],
+  "compare_totals": false,
+  "fail_on_canonical_mismatch": false
+}
