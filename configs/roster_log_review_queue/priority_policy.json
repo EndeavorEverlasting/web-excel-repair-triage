@@ -1,0 +1,4 @@
+{
+  "priority_policy": "Operator CF priorities are allocated sequentially across Live tabs in workbook order. First patch starts at 1 unless operator markers already exist (then max marker priority + 1). Legacy month-specific CF may use high priorities (e.g. 10000+) and is preserved.",
+  "data_row_end": 202
+}

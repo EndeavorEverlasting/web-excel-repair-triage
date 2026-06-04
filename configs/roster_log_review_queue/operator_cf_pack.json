@@ -1,0 +1,35 @@
+{
+  "source": "Live - June 2026 appended blocks 64-65",
+  "data_row_start": 3,
+  "data_row_end": 202,
+  "project_column_block": {
+    "sqref_template": "B3:B{end_row}",
+    "raw_xml": "<conditionalFormatting sqref=\"B3:B202\"><cfRule type=\"expression\" dxfId=\"1576\" priority=\"1099\" stopIfTrue=\"1\"><formula>AND($A3&lt;&gt;\"\",$B3=\"\")</formula></cfRule></conditionalFormatting>",
+    "rules_count": 1
+  },
+  "clock_pair_block": {
+    "sqref_template": "{in_col}3:{out_col}{end_row}",
+    "raw_xml": "<conditionalFormatting sqref=\"C3:D202\"><cfRule type=\"expression\" dxfId=\"1574\" priority=\"1100\" stopIfTrue=\"1\"><formula>AND(C3&lt;&gt;\"\",ISTEXT(C3),OR(ISNUMBER(SEARCH(\"PTO\",UPPER(C3))),ISNUMBER(SEARCH(\"OUT SICK\",UPPER(C3))),ISNUMBER(SEARCH(\"N/A\",UPPER(C3))),ISNUMBER(SEARCH(\"CASR\",UPPER(C3))),ISNUMBER(SEARCH(\"CAR ISSUE\",UPPER(C3))),ISNUMBER(SEARCH(\"DAY OFF\",UPPER(C3))),ISNUMBER(SEARCH(\"OFF DAY\",UPPER(C3)))))</formula></cfRule><cfRule type=\"expression\" dxfId=\"1570\" priority=\"1101\" stopIfTrue=\"1\"><formula>AND($A3&lt;&gt;\"\",OR($C3=\"\",$D3=\"\"),$C3&lt;&gt;$D3,NOT(OR(ISNUMBER(SEARCH(\"PTO\",UPPER($C3&amp;$D3))),ISNUMBER(SEARCH(\"OUT SICK\",UPPER($C3&amp;$D3))),ISNUMBER(SEARCH(\"N/A\",UPPER($C3&amp;$D3))),ISNUMBER(SEARCH(\"CASR\",UPPER($C3&amp;$D3))),ISNUMBER(SEARCH(\"CAR ISSUE\",UPPER($C3&amp;$D3))),ISNUMBER(SEARCH(\"DAY OFF\",UPPER($C3&amp;$D3))),ISNUMBER(SEARCH(\"OFF DAY\",UPPER($C3&amp;$D3))))))</formula></cfRule><cfRule type=\"expression\" dxfId=\"1573\" priority=\"1102\" stopIfTrue=\"1\"><formula>AND(ISNUMBER($C3),ISNUMBER($D3),MOD($D3-$C3,1)*24&gt;=12)</formula></cfRule><cfRule type=\"expression\" dxfId=\"1572\" priority=\"1103\" stopIfTrue=\"1\"><formula>AND(ISNUMBER($C3),ISNUMBER($D3),MOD($D3-$C3,1)*24&gt;8,MOD($D3-$C3,1)*24&lt;12)</formula></cfRule><cfRule type=\"expression\" dxfId=\"1571\" priority=\"1104\" stopIfTrue=\"1\"><formula>AND(ISNUMBER($C3),ISNUMBER($D3),MOD($D3-$C3,1)*24&gt;0,MOD($D3-$C3,1)*24&lt;8)</formula></cfRule><cfRule type=\"expression\" dxfId=\"1575\" priority=\"1105\"><formula>AND(C3&lt;&gt;\"\",ISTEXT(C3),OR(ISNUMBER(SEARCH(\"/\",C3)),ISNUMBER(SEARCH(\" - \",C3)),ISNUMBER(SEARCH(\"|\",C3)),ISNUMBER(SEARCH(\";\",C3))))</formula></cfRule></conditionalFormatting>",
+    "rules_count": 6,
+    "reference_in_col": "C",
+    "reference_out_col": "D"
+  },
+  "dxf_styles": [
+    "<dxf><font><b/><color rgb=\"FF7F1D1D\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFF6666\"/><bgColor indexed=\"64\"/></patternFill></fill><border><left style=\"thin\"><color rgb=\"FF7F1D1D\"/></left><right style=\"thin\"><color rgb=\"FF7F1D1D\"/></right><top style=\"thin\"><color rgb=\"FF7F1D1D\"/></top><bottom style=\"thin\"><color rgb=\"FF7F1D1D\"/></bottom></border></dxf>",
+    "<dxf><font><b/><color rgb=\"FF7C2D12\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC000\"/><bgColor indexed=\"64\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF351C75\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFB4A7D6\"/><bgColor indexed=\"64\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF17365D\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FF8EA9DB\"/><bgColor indexed=\"64\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF274E13\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFE2F0D9\"/><bgColor indexed=\"64\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF1F4E78\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FF9DC3E6\"/><bgColor indexed=\"64\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF7F1D1D\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFF6666\"/><bgColor indexed=\"64\"/></patternFill></fill><border><left style=\"thin\"><color rgb=\"FF7F1D1D\"/></left><right style=\"thin\"><color rgb=\"FF7F1D1D\"/></right><top style=\"thin\"><color rgb=\"FF7F1D1D\"/></top><bottom style=\"thin\"><color rgb=\"FF7F1D1D\"/></bottom></border></dxf>"
+  ],
+  "dxf_id_map": {
+    "1570": 0,
+    "1571": 1,
+    "1572": 2,
+    "1573": 3,
+    "1574": 4,
+    "1575": 5,
+    "1576": 6
+  }
+}
