@@ -158,7 +158,7 @@ def make_integrated_source(path: str) -> str:
     pivot["B12"] = "Total Qty"
     # Deliberately missing Visual column on input.
 
-    pn = wb.create_sheet("5-28-2026 Part Numbers")
+    pn = wb.create_sheet("Part Numbers")
     pn.append(
         [
             "Date Added",

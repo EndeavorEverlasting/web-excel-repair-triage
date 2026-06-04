@@ -1,14 +1,13 @@
 """CLI for the 1 Marcus recon engine (generate + relink modes).
 
 Examples:
-    python -m triage.one_marcus_recon.cli generate \\
-        --input "Candidates/inventory recon/1M_Recon_READY.xlsx" \\
-        --output "Outputs/one_marcus_recon/1M_Recon_READY.xlsx"
-
     python -m triage.one_marcus_recon.cli relink \\
-        --input "Candidates/inventory recon/...CANDIDATE_v2.xlsx" \\
-        --date auto \\
-        --output "Outputs/1_Marcus_Recon_2026-05-28_WEBSAFE.xlsx"
+        --input "Candidates/inventory recon/Try Again Asshole - 1M_Recon_READY.xlsx" \\
+        --output "Outputs/one_marcus_recon/1M_Recon_READY_relink.xlsx"
+
+    python -m triage.one_marcus_recon.cli generate \\
+        --input "tests/fixtures/.../integrated_source.xlsx" \\
+        --output "Outputs/one_marcus_recon/generated.xlsx"
 """
 from __future__ import annotations
 
@@ -19,6 +18,8 @@ from pathlib import Path
 
 from .date_inference import AmbiguousDateError
 from .exporter import run_generate, run_recon
+from .integrated_guard import IntegratedWorkbookError
+from .path_guard import SourcePathWriteForbiddenError
 
 
 def _add_shared_args(p: argparse.ArgumentParser) -> None:
@@ -40,7 +41,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     gen = sub.add_parser(
         "generate",
-        help="Clean-render Part Numbers + executive pivot with Visual column (default path).",
+        help="Clean-render for sanitized 2-sheet fixtures only (not integrated READY workbooks).",
     )
     _add_shared_args(gen)
 
@@ -54,19 +55,19 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _default_generate_output(_input_path: str) -> str:
-    return str(Path("Outputs") / "one_marcus_recon" / "1M_Recon_READY.xlsx")
+    return str(Path("Outputs") / "one_marcus_recon" / "1M_Recon_generated.xlsx")
 
 
 def _default_relink_output(_input_path: str) -> str:
-    return str(Path("Outputs") / "1_Marcus_Recon_WEBSAFE.xlsx")
+    return str(Path("Outputs") / "one_marcus_recon" / "1M_Recon_relink.xlsx")
 
 
 def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
 
-    if args.command == "generate":
-        output = args.output or _default_generate_output(args.input)
-        try:
+    try:
+        if args.command == "generate":
+            output = args.output or _default_generate_output(args.input)
             result = run_generate(
                 args.input,
                 output_path=output,
@@ -75,12 +76,8 @@ def main(argv=None) -> int:
                 dry_run=args.dry_run,
                 strict=args.strict,
             )
-        except AmbiguousDateError as exc:
-            print(json.dumps({"error": "ambiguous_date", "detail": str(exc)}, indent=2))
-            return 2
-    else:
-        output = args.output or _default_relink_output(args.input)
-        try:
+        else:
+            output = args.output or _default_relink_output(args.input)
             result = run_recon(
                 args.input,
                 output_path=output,
@@ -90,9 +87,15 @@ def main(argv=None) -> int:
                 dry_run=args.dry_run,
                 strict=args.strict,
             )
-        except AmbiguousDateError as exc:
-            print(json.dumps({"error": "ambiguous_date", "detail": str(exc)}, indent=2))
-            return 2
+    except AmbiguousDateError as exc:
+        print(json.dumps({"error": "ambiguous_date", "detail": str(exc)}, indent=2))
+        return 2
+    except SourcePathWriteForbiddenError as exc:
+        print(json.dumps({"error": "source_path_write_forbidden", "detail": str(exc)}, indent=2))
+        return 2
+    except IntegratedWorkbookError as exc:
+        print(json.dumps({"error": "integrated_workbook_use_relink_not_generate", "detail": str(exc)}, indent=2))
+        return 2
 
     report = result.report.to_dict()
     print(json.dumps(report, indent=2))
@@ -102,11 +105,15 @@ def main(argv=None) -> int:
         Path(args.report_json).write_text(json.dumps(report, indent=2), encoding="utf-8")
 
     if args.command == "generate":
-        if not result.report.webexcel_preflight_pass or not result.report.operational_pass:
+        if (
+            not result.report.webexcel_preflight_pass
+            or not result.report.operational_pass
+            or not result.report.baseline_compare_pass
+        ):
             return 1
         return 0
 
-    if not result.report.webexcel_preflight_pass:
+    if not result.report.webexcel_preflight_pass or not result.report.baseline_compare_pass:
         return 1
     return 0
 

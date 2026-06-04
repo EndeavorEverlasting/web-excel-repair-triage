@@ -8,5 +8,6 @@
   },
   "forbidden_text": ["%20", "web excel-safe", "webexcel-safe"],
   "compare_totals": false,
-  "fail_on_canonical_mismatch": false
+  "fail_on_canonical_mismatch": false,
+  "require_sheet_preservation": true
 }

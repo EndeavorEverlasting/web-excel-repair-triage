@@ -60,6 +60,10 @@ class ReconReport:
     operational_pass: bool = False
     operational_failures: List[str] = field(default_factory=list)
     rollup_key_count: int = 0
+    baseline_compare_pass: bool = False
+    baseline_compare_failures: List[str] = field(default_factory=list)
+    baseline_raw_sha256: str = ""
+    baseline_semantic_sha256: str = ""
 
     def add_change(self, change: ReconChange) -> None:
         self.changes.append(dataclasses.asdict(change))

@@ -16,9 +16,12 @@ from . import date_inference as di
 from . import formula_relink as fr
 from . import preflight as pf
 from .config import PART_NUMBERS_SHEET
+from .baseline_gate import run_baseline_gate
 from .generator import build_workbook, load_snapshot
+from .integrated_guard import assert_generate_allowed
 from .models import ReconChange, ReconReport
 from .operational_checks import run_operational_checks
+from .path_guard import assert_output_path_allowed
 from .package_cleanup import (
     Package,
     broken_relationship_targets,
@@ -45,6 +48,17 @@ def _sidecar_base(output_path: str) -> Path:
     return out.with_name(stem)
 
 
+def _apply_baseline_gate(report: ReconReport, input_path: str, output_path: str):
+    gate = run_baseline_gate(input_path, output_path)
+    report.baseline_compare_pass = gate.baseline_compare_pass
+    report.baseline_compare_failures = list(gate.failures)
+    report.baseline_raw_sha256 = gate.baseline_raw_sha256
+    report.baseline_semantic_sha256 = gate.baseline_semantic_sha256
+    if not gate.baseline_compare_pass:
+        report.warnings.extend(gate.failures)
+    return gate
+
+
 def run_recon(
     input_path: str,
     *,
@@ -55,6 +69,7 @@ def run_recon(
     dry_run: bool = False,
     strict: bool = False,
 ) -> ReconResult:
+    assert_output_path_allowed(input_path, output_path)
     report = ReconReport(input_workbook=str(Path(input_path).resolve()), dry_run=dry_run, mode="relink")
 
     pkg = Package.from_path(input_path)
@@ -180,6 +195,8 @@ def run_recon(
         set(report.remaining_external_links) | set(pre.external_link_parts)
     )
 
+    _apply_baseline_gate(report, input_path, scan_path)
+
     result = ReconResult(report=report)
     if dry_run:
         if cleanup_tmp:
@@ -208,6 +225,10 @@ def run_recon(
         "external_link_parts_removed": report.external_link_parts_removed,
         "calc_chain_removed": report.calc_chain_removed,
         "webexcel_preflight_pass": report.webexcel_preflight_pass,
+        "baseline_compare_pass": report.baseline_compare_pass,
+        "baseline_compare_failures": report.baseline_compare_failures,
+        "baseline_raw_sha256": report.baseline_raw_sha256,
+        "baseline_semantic_sha256": report.baseline_semantic_sha256,
         "sidecars": {
             "preflight": str(pre_path.resolve()),
             "review_queue": str(review_path.resolve()),
@@ -262,6 +283,8 @@ def run_generate(
     strict: bool = False,
 ) -> ReconResult:
     """Clean-render a full recon workbook from an integrated source spreadsheet."""
+    assert_output_path_allowed(input_path, output_path)
+    assert_generate_allowed(input_path)
     report = ReconReport(
         input_workbook=str(Path(input_path).resolve()),
         dry_run=dry_run,
@@ -306,6 +329,8 @@ def run_generate(
     report.operational_pass = ops.operational_pass
     report.operational_failures = list(ops.failures)
 
+    _apply_baseline_gate(report, input_path, output_path)
+
     result = ReconResult(report=report)
     base = _sidecar_base(output_path)
     out_dir = base.parent
@@ -334,6 +359,10 @@ def run_generate(
         "webexcel_preflight_pass": report.webexcel_preflight_pass,
         "operational_pass": report.operational_pass,
         "operational_failures": report.operational_failures,
+        "baseline_compare_pass": report.baseline_compare_pass,
+        "baseline_compare_failures": report.baseline_compare_failures,
+        "baseline_raw_sha256": report.baseline_raw_sha256,
+        "baseline_semantic_sha256": report.baseline_semantic_sha256,
         "sidecars": {
             "preflight": str(pre_path.resolve()),
             "operational": str(ops_path.resolve()),
