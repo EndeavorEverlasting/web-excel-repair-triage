@@ -15,6 +15,11 @@ venv/
 env/
 ENV/
 
+# ── Local attachment drop (Replit / IDE uploads; never commit binaries) ───────
+attached_assets/**
+!attached_assets/
+!attached_assets/.gitkeep
+
 # ── Input folders ────────────────────────────────────────────────────────────
 # Candidates/ and Repaired/ are user drop-zones. Keep the folders tracked via
 # .gitkeep so users see them, but ignore all actual workbook contents.

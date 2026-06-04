@@ -113,11 +113,38 @@ Generate the monthly admin billing summary in the April "My Preferred Format" (w
 - Optional approved-reference gate: `--reference References/approved/<blessed Client xlsx>` — see [`docs/ARTIFACT_FINGERPRINT_AND_COMPARE.md`](docs/ARTIFACT_FINGERPRINT_AND_COMPARE.md)
 - Multi-project, override-aware per-day resolution (Assignments Override > Worked Projects > Assignments main > Live default); net = gross − lunch. Produces Executive/Project/Tech/Tech-by-Project summaries with two native bar charts, internal QA/detail tabs, and an embedded `Mon YY` Neuron Track Hours tracker tab. `--prior` emits a delta report for the refreshed month.
 
+### Artifact acceptance doctrine
+
+Generated workbooks pass through distinct gates. Do not treat one gate as proof of the others.
+
+| Term | Meaning |
+|------|---------|
+| **Package validity** | Workbook opens; OOXML preflight passes (no calc chain hazards, sharedStrings invariants, etc.). |
+| **Semantic correctness** | Required operational surfaces exist — sheet names, headers, formulas, profile checks. |
+| **Presentation quality** | Calm styling and hierarchy match design configs without rewriting logic. |
+| **Web Excel acceptance** | Opens in Excel for Web without repair banner or silent corruption. |
+| **Operator acceptance** | Human validated in the real target environment — **field judge**. |
+
+**Valid** means the workbook opens. **Correct** means the requested operational surface exists and behaves. **Accepted** means the operator validated it in Excel for Web (or the stated target).
+
+Design configs (distinct roles):
+
+| Config | Role |
+|--------|------|
+| [`configs/spreadsheet_style_v1.json`](configs/spreadsheet_style_v1.json) | Palette and style primitives ([`docs/SPREADSHEET_STYLE_SYSTEM.md`](docs/SPREADSHEET_STYLE_SYSTEM.md)) |
+| [`configs/workbook_visual_design_v1.json`](configs/workbook_visual_design_v1.json) | Visual hierarchy and design doctrine ([`docs/WORKBOOK_VISUAL_DESIGN_SYSTEM.md`](docs/WORKBOOK_VISUAL_DESIGN_SYSTEM.md)) |
+| [`configs/inventory_visual_aid_chart_v1.json`](configs/inventory_visual_aid_chart_v1.json) | Inventory executive `Visual` field and optional chart doctrine ([`docs/INVENTORY_VISUAL_AID_CHART_SYSTEM.md`](docs/INVENTORY_VISUAL_AID_CHART_SYSTEM.md)) |
+
+Repo hygiene: `python -m triage.gitignore_hygiene` fails if private binaries are tracked outside sanitized fixture paths.
+
 ### 1 Marcus inventory recon (part-number relink)
 
 Surgically relink the dated Part Numbers tab and produce a Web Excel-safe recon candidate from a private workbook:
 
-- Docs: [`docs/1MARCUS_RECON_PARTNUMBER_RELINK_CONTRACT.md`](docs/1MARCUS_RECON_PARTNUMBER_RELINK_CONTRACT.md)
+- Contract: [`docs/1MARCUS_RECON_PARTNUMBER_RELINK_CONTRACT.md`](docs/1MARCUS_RECON_PARTNUMBER_RELINK_CONTRACT.md)
+- Failure analysis: [`docs/ONE_MARCUS_RECON_FAILURE_ANALYSIS_2026_06_03.md`](docs/ONE_MARCUS_RECON_FAILURE_ANALYSIS_2026_06_03.md)
+- Success checkpoint: [`docs/ONE_MARCUS_RECON_SUCCESS_CHECKPOINT_2026_06_03.md`](docs/ONE_MARCUS_RECON_SUCCESS_CHECKPOINT_2026_06_03.md)
+- Executive protection (later lane): [`docs/ONE_MARCUS_EXECUTIVE_VISUAL_PANEL_PROTECTION.md`](docs/ONE_MARCUS_EXECUTIVE_VISUAL_PANEL_PROTECTION.md)
 - Run: `python -m triage.one_marcus_recon.cli --input "Candidates/inventory recon/<workbook>.xlsx" --date auto --output Outputs/one_marcus_recon_2026_06_01/1_Marcus_Recon_2026-05-28_WEBSAFE.xlsx`
 - Patches the OOXML package in place (renames the `M-D-YYYY Part Numbers` tab, repoints formulas, localizes external refs, drops `calcChain.xml`, strips unused `xl/externalLinks/*`) instead of reserializing; preserves tables, drawings, styles, and sheet order. Use `--dry-run` to report without writing, `--strict` to fail on ambiguous dates.
 
