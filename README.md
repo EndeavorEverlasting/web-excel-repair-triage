@@ -97,6 +97,23 @@ Surgically relink the dated Part Numbers tab and produce a Web Excel-safe recon 
 - Run: `python -m triage.one_marcus_recon.cli --input "Candidates/inventory recon/<workbook>.xlsx" --date auto --output Outputs/one_marcus_recon_2026_06_01/1_Marcus_Recon_2026-05-28_WEBSAFE.xlsx`
 - Patches the OOXML package in place (renames the `M-D-YYYY Part Numbers` tab, repoints formulas, localizes external refs, drops `calcChain.xml`, strips unused `xl/externalLinks/*`) instead of reserializing; preserves tables, drawings, styles, and sheet order. Use `--dry-run` to report without writing, `--strict` to fail on ambiguous dates.
 
+### NW PRJ April/May billing summary engine
+
+Generate a combined April + May billing summary (`NW_PRJ_Billing_Summary_April_May_2026_WEBSAFE.xlsx`) from the private roster log, with optional invoice rollups:
+
+- Docs: [`docs/NW_PRJ_BILLING_SUMMARY_CONTRACT.md`](docs/NW_PRJ_BILLING_SUMMARY_CONTRACT.md)
+- Run: `python -m triage.nw_prj_billing_summary.cli --roster-log "<roster>.xlsx" --months 2026-04 2026-05 --out-dir Outputs/nw_prj_billing_summary_2026_06_02 --websafe --zip`
+- Direction is Roster Log to Admin Sheet: admin tabs (Dashboard, per-month detail, Friday Batches, By Project, Invoice Pivot) stay clean. Raw punch notes, partial-hour rows, excluded non-member names, and mismatches go only to the internal `review_queue.csv`. Friday is the reporting batch marker; weekend work rolls to the next Friday. Worked-Project/override resolution beats default assignment. Reuses the roster parser, Neuron note-aware punch parsing, and the proven preflight + manifest + ZIP pattern.
+
+### May roster Web Excel CF preflight & repair-free QA
+
+Forensic + (gated) repair-free patch workflow for the May 2026 roster workbook. Diagnoses Excel-for-Web repair triggers, Sunday/Monday conditional-formatting bleed, overnight-punch misclassification, and unassigned hours that name names:
+
+- Docs: [`docs/MAY_ROSTER_WEBEXCEL_CF_PREFLIGHT_CONTRACT.md`](docs/MAY_ROSTER_WEBEXCEL_CF_PREFLIGHT_CONTRACT.md)
+- Inspect: `python -m triage.may_roster_webexcel.cli inspect --candidate "Repaired/<bad>.xlsx" --reference "Repaired/<reference>.xlsx" --out-dir Outputs/may_roster_webexcel_2026_06_02`
+- Patch (gated): `python -m triage.may_roster_webexcel.cli patch --base "<safe>.xlsx" --reference "<good>.xlsx" --out-dir Outputs/may_roster_webexcel_2026_06_02 --as-of 2026-06-02`
+- A workbook that opens only because Excel repaired it is evidence, not success. The month-aware Sunday/Monday checker derives every weekend boundary from the live-sheet date headers (no hardcoded column pair). `patch` writes a workbook only when every package gate passes; otherwise it refuses with a report and writes no fake-success workbook. Reports never claim Web Excel opened cleanly without a real Graph/manual check.
+
 ### Lifecycle folder rules (quick reference)
 
 This repo uses lifecycle folders so the engine can keep artifacts organized:
