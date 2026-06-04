@@ -307,6 +307,65 @@ def _load_assignments(ws) -> Dict[Tuple[date, str], str]:
     return lookup
 
 
+def _load_overrides_only(ws) -> Dict[Tuple[date, str], str]:
+    """Parse only the Overrides sub-table of an Assignments sheet.
+
+    Returns ``{(date, staff_name): override_project}`` for reviewed overrides,
+    ignoring the main auto-fill table. Used where a reviewed override must
+    outrank a resolved worked-project value.
+    """
+    import datetime as dt
+
+    lookup: Dict[Tuple[date, str], str] = {}
+    if ws is None:
+        return lookup
+
+    max_row = ws.max_row
+
+    overrides_start: Optional[int] = None
+    for r in range(1, max_row + 1):
+        val = ws.cell(r, 1).value
+        if val is None:
+            continue
+        if "override" in str(val).strip().lower():
+            overrides_start = r
+            break
+
+    if overrides_start is None:
+        return lookup
+
+    override_hdr: Optional[int] = None
+    for r in range(overrides_start, min(overrides_start + 5, max_row + 1)):
+        val = ws.cell(r, 1).value
+        if val and "override staff" in str(val).strip().lower():
+            override_hdr = r
+            break
+        if val and "staff" in str(val).strip().lower() and r != overrides_start:
+            override_hdr = r
+            break
+
+    if override_hdr is None:
+        return lookup
+
+    for r in range(override_hdr + 1, max_row + 1):
+        staff_val   = ws.cell(r, 1).value
+        date_val    = ws.cell(r, 2).value
+        project_val = ws.cell(r, 3).value
+        if not staff_val or not date_val or not project_val:
+            continue
+        staff_name = str(staff_val).strip()
+        project    = str(project_val).strip()
+        if isinstance(date_val, dt.datetime):
+            override_date = date_val.date()
+        elif isinstance(date_val, dt.date):
+            override_date = date_val
+        else:
+            continue
+        lookup[(override_date, staff_name)] = project
+
+    return lookup
+
+
 def _find_live_sheet(wb, target_month: Optional[str] = None):
     """
     Locate the 'Live - {Month YYYY}' worksheet.

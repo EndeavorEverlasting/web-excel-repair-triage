@@ -3,7 +3,9 @@ from __future__ import annotations
 import io
 import zipfile
 
-from triage.xlsx_utils import sheet_name_map, sheet_index_map
+import openpyxl
+
+from triage.xlsx_utils import fix_inlinestr, sheet_name_map, sheet_index_map
 
 
 def _make_xlsx_with_absolute_rels_targets() -> bytes:
@@ -52,3 +54,28 @@ def test_sheet_index_map_handles_absolute_rels_targets():
         m = sheet_index_map(z)
     assert m["xl/worksheets/sheet1.xml"] == 0
     assert m["xl/worksheets/sheet2.xml"] == 1
+
+
+def test_fix_inlinestr_no_double_escape(tmp_path):
+    """Re-running fix_inlinestr must not double-escape XML entities.
+
+    A value containing ``&``, ``<`` and ``>`` is stored as escaped entities in
+    sharedStrings.xml. When fix_inlinestr re-reads that table it must unescape
+    before re-indexing, otherwise a second pass turns ``&amp;`` into
+    ``&amp;amp;`` and the round-tripped cell value drifts from the original.
+    """
+    original = "R&D <Imaging> \"baseline\" & sign-off"
+    p = tmp_path / "entities.xlsx"
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Sheet1"
+    ws["A1"] = original
+    wb.save(str(p))
+
+    fix_inlinestr(str(p))
+    fix_inlinestr(str(p))  # second pass must be idempotent
+
+    wb2 = openpyxl.load_workbook(str(p))
+    value = wb2["Sheet1"]["A1"].value
+    wb2.close()
+    assert value == original

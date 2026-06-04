@@ -1,0 +1,31 @@
+{
+  "profile": "admin_billing_summary",
+  "submission_safe": true,
+  "variant": "client",
+  "required_sheets": [
+    "Start Here",
+    "Executive Dashboard",
+    "Monthly Summary",
+    "Project Summary",
+    "Tech Summary",
+    "Tech Project Summary",
+    "{{expect_neuron_tab}}"
+  ],
+  "required_semantic_cells": [
+    {"sheet": "Start Here", "cell": "A1", "check": "nonblank"},
+    {"sheet": "Executive Dashboard", "cell": "A1", "check": "nonblank"},
+    {"sheet": "Monthly Summary", "cell": "A5", "check": "equals", "expected": "Month"},
+    {"sheet": "Project Summary", "cell": "A5", "check": "equals", "expected": "Month"}
+  ],
+  "forbidden_values": [
+    "Column1", "Column2", "Column3", "Column4", "Column5",
+    "Column6", "Column7", "Column8", "Column9", "Column10", "Column11",
+    "confidence", "heuristic", "raw note", "private note",
+    "exception machinery", "AI generated", "review queue",
+    "assignment_rule", "assignment_confidence", "internal audit"
+  ],
+  "compare_totals": true,
+  "totals": {
+    "keys": ["total_net", "neuron_net"]
+  }
+}

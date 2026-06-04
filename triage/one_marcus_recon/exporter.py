@@ -213,6 +213,18 @@ def run_recon(
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
     _write_review_queue(review_path, report, pre)
+
+    from triage.sidecar_html.adapters import one_marcus_sections
+    from triage.sidecar_html.portal import build_run_portal
+
+    portal_path = build_run_portal(
+        out_dir,
+        title="1 Marcus Recon — Run Review",
+        subtitle=report.input_workbook,
+        sections=one_marcus_sections(manifest),
+    )
+    manifest["html_portal"] = str(portal_path)
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     _write_carryover(carry_path, report, pre)
 
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
@@ -221,6 +233,7 @@ def run_recon(
         z.write(manifest_path, manifest_path.name)
         z.write(review_path, review_path.name)
         z.write(carry_path, carry_path.name)
+        z.write(portal_path, portal_path.name)
 
     result.outputs = {
         "workbook": str(Path(output_path).resolve()),
@@ -229,6 +242,7 @@ def run_recon(
         "review_queue": str(review_path.resolve()),
         "carryover": str(carry_path.resolve()),
         "delivery_zip": str(zip_path.resolve()),
+        "html_portal": str(portal_path.resolve()),
     }
     return result
 

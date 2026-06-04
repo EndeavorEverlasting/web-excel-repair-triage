@@ -89,6 +89,30 @@ Generate `Neuron_Track_Hours_April_May_2026_WEBSAFE.xlsx` locally from the priva
 - Run: `python -m triage.nw_prj_neuron_track_hours.cli --roster-log "<roster>.xlsx" --out-dir Outputs/nw_prj_neuron_track_hours_2026_06_01 --months 2026-04 2026-05 --websafe --zip`
 - Neuron scope uses Worked-Project per-date classification (not default team membership); totals: April 1048.19, May 697.83, total 1746.02, Go Live weekend 2 rows / 22h.
 
+#### Bonita submission workbook (clean two-tab)
+
+Generate the admin-facing Bonita submission workbook from the same package:
+
+- Docs: [`docs/BONITA_NEURON_TRACK_HOURS_CONTRACT.md`](docs/BONITA_NEURON_TRACK_HOURS_CONTRACT.md)
+- Run: `python -m triage.nw_prj_neuron_track_hours.bonita_cli --roster-log "<roster>.xlsx" --months 2026-04 2026-05 --out-dir Outputs/neuron_track_hours_2026_06_02 --websafe`
+- Output: exactly two tabs (`Apr 26` / `May 26`), two-line headers, one values-only row per Neuron shift; off-project (`/ Bonita`), non-work markers, excluded names and long shifts go to a gitignored review-queue sidecar. `PROJECT NAME` is the `Neuron Deployments → Northwell - Neurons` display alias; `ASSIGNMENT TYPE` defaults to `Neuron Installation`.
+
+### Admin Billing Summary (My Preferred Format)
+
+Generate the monthly admin billing summary in the April "My Preferred Format" (with charts) for any month, with an embedded Neuron Track Hours tracker tab:
+
+- Docs: [`docs/ADMIN_BILLING_SUMMARY_PREFERRED_FORMAT_CONTRACT.md`](docs/ADMIN_BILLING_SUMMARY_PREFERRED_FORMAT_CONTRACT.md) and roster mechanics in [`docs/ACTIVE_ROSTER_LOG_MECHANICS.md`](docs/ACTIVE_ROSTER_LOG_MECHANICS.md)
+- Run: `python -m triage.admin_billing_summary.cli --roster-log "<roster>.xlsx" --months 2026-04 2026-05 --out-dir Outputs/admin_billing_summary_2026_06_02 --prior "<April preferred-format copy>.xlsx" --websafe`
+
+### Same-family compare and roster log compare (internal)
+
+- Docs: [`docs/SAME_FAMILY_COMPARE.md`](docs/SAME_FAMILY_COMPARE.md), [`docs/ROSTER_LOG_COMPARE.md`](docs/ROSTER_LOG_COMPARE.md)
+- Scan intake: `python -m triage.same_family_compare --intake-root ArtifactIntake/2026-06-03 --scan-only --out-dir artifacts/intake_scan`
+- Compare roster candidates: `python -m triage.roster_log_compare.compare --left <older.xlsx> --right <newer.xlsx> --out artifacts/roster_log_comparison.xlsx --json-out artifacts/roster_log_comparison.json`
+- Submit delivery artifacts only from `outputs/admin-ready/`
+- Optional approved-reference gate: `--reference References/approved/<blessed Client xlsx>` — see [`docs/ARTIFACT_FINGERPRINT_AND_COMPARE.md`](docs/ARTIFACT_FINGERPRINT_AND_COMPARE.md)
+- Multi-project, override-aware per-day resolution (Assignments Override > Worked Projects > Assignments main > Live default); net = gross − lunch. Produces Executive/Project/Tech/Tech-by-Project summaries with two native bar charts, internal QA/detail tabs, and an embedded `Mon YY` Neuron Track Hours tracker tab. `--prior` emits a delta report for the refreshed month.
+
 ### 1 Marcus inventory recon (part-number relink)
 
 Surgically relink the dated Part Numbers tab and produce a Web Excel-safe recon candidate from a private workbook:

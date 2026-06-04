@@ -25,6 +25,8 @@ from triage.cybernet_targets.models import rows_to_dicts
 from triage.cybernet_targets.resolver import resolve_sprint_targets
 from triage.nw_prj_config import is_repair_filename
 from triage.webexcel_preflight import run_preflight
+from triage.sidecar_html.adapters import cybernet_sections
+from triage.sidecar_html.portal import build_run_portal
 
 
 def _resolve(p: Optional[str], base: Path) -> Optional[Path]:
@@ -144,6 +146,16 @@ def run(
     manifest_path = out / f"cybernet_targets_manifest_{as_of}.json"
     write_sidecar_json(manifest_path, manifest)
     manifest["manifest_path"] = str(manifest_path)
+
+    portal_path = build_run_portal(
+        out,
+        title="Cybernet Targets Sprint — Run Review",
+        subtitle=f"As of {as_of}",
+        sections=cybernet_sections(manifest),
+    )
+    manifest["html_portal"] = str(portal_path)
+    manifest["outputs"]["html_portal"] = str(portal_path)
+    write_sidecar_json(manifest_path, manifest)
     return manifest
 
 

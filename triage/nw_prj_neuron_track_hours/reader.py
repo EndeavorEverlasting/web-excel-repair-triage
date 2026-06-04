@@ -96,6 +96,14 @@ def _format_clock(decimal_hours: Optional[float]) -> str:
     return f"{hour12}:{minute:02d} {ampm}"
 
 
+def _decimal_to_time(decimal_hours: Optional[float]) -> Optional[time]:
+    """Decimal hours (e.g. 9.5) -> a real ``datetime.time`` for true time cells."""
+    if decimal_hours is None:
+        return None
+    total_min = int(round(decimal_hours * 60)) % (24 * 60)
+    return time(total_min // 60, total_min % 60)
+
+
 def _compute_gross(clock_in: Optional[float], clock_out: Optional[float]) -> float:
     if clock_in is None or clock_out is None:
         return 0.0
@@ -107,11 +115,11 @@ def _compute_gross(clock_in: Optional[float], clock_out: Optional[float]) -> flo
 
 def _month_label(month_key: str) -> Tuple[str, int, int]:
     """'2026-04' -> ('April 2026', 2026, 4)."""
-    m = re.match(r"^(\d{4})-(\d{1,2})$", month_key.strip())
-    if not m:
-        raise RosterReadError(f"Invalid month key (expected YYYY-MM): {month_key}")
-    year = int(m.group(1))
-    mon = int(m.group(2))
+    from triage.month_validation import validate_month_key
+    try:
+        year, mon = validate_month_key(month_key)
+    except ValueError as exc:
+        raise RosterReadError(str(exc)) from exc
     return f"{month_name[mon]} {year}", year, mon
 
 
