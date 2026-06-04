@@ -146,3 +146,37 @@ def make_ambiguous(path: str) -> str:
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     Path(path).write_bytes(data)
     return path
+
+
+def make_integrated_source(path: str) -> str:
+    """Integrated workbook with Part Numbers helpers but no executive Visual column."""
+    wb = Workbook()
+    pivot = wb.active
+    pivot.title = "1M Recon Pivot Module"
+    pivot["A1"] = "Placeholder executive tab"
+    pivot["A12"] = "Inventory Rollup by Item"
+    pivot["B12"] = "Total Qty"
+    # Deliberately missing Visual column on input.
+
+    pn = wb.create_sheet("5-28-2026 Part Numbers")
+    pn.append(
+        [
+            "Date Added",
+            "Item Type",
+            "Item Model/Brand",
+            "Part / Model Number",
+            "Category",
+            "Description",
+            "Quantity",
+        ]
+        + [None] * 11
+        + ["PivotPartKey", "QtyNum", None, None, None, None, None, "IncludeFlag"]
+    )
+    pn.append([None, "TypeA", None, "PN-001", None, None, 5] + [None] * 11 + ["Alpha", 5, None, None, None, None, None, "Include"])
+    pn.append([None, "TypeB", None, "PN-002", None, None, 3] + [None] * 11 + ["Beta", 3, None, None, None, None, None, "Include"])
+    pn.append([None, "TypeA", None, "PN-003", None, None, 2] + [None] * 11 + ["Alpha", 2, None, None, None, None, None, "Include"])
+
+    out = Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    wb.save(str(out))
+    return str(out)

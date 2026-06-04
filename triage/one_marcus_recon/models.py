@@ -56,6 +56,10 @@ class ReconReport:
     warnings: List[str] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
     dry_run: bool = False
+    mode: str = "relink"  # "relink" | "generate"
+    operational_pass: bool = False
+    operational_failures: List[str] = field(default_factory=list)
+    rollup_key_count: int = 0
 
     def add_change(self, change: ReconChange) -> None:
         self.changes.append(dataclasses.asdict(change))
