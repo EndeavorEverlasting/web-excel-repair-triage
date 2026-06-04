@@ -147,22 +147,24 @@ Clean-render a full recon workbook from an integrated source spreadsheet, or sur
 - Executive protection (later lane): [`docs/ONE_MARCUS_EXECUTIVE_VISUAL_PANEL_PROTECTION.md`](docs/ONE_MARCUS_EXECUTIVE_VISUAL_PANEL_PROTECTION.md)
 - Artifact profile: [`configs/artifact_profiles/one_marcus_recon.json`](configs/artifact_profiles/one_marcus_recon.json)
 
-**Generate** (default delivery path — builds `Part Numbers` + `1M Recon Pivot Module` with executive `Visual` column):
+**Generate** (sanitized 2-sheet fixtures only — **not** integrated READY workbooks with multiple tabs):
 
 ```powershell
 python -m triage.one_marcus_recon.cli generate `
-  --input "Candidates/inventory recon/1M_Recon_READY.xlsx" `
-  --output "Outputs/one_marcus_recon/1M_Recon_READY.xlsx"
+  --input "tests/fixtures/.../integrated_source.xlsx" `
+  --output "Outputs/one_marcus_recon/generated.xlsx"
 ```
 
-**Relink** (OOXML patch — renames any dated Part Numbers tab to stable `Part Numbers`, repoints formulas, localizes external refs, drops `calcChain.xml`, strips unused `xl/externalLinks/*`; preserves tables, drawings, styles, and sheet order):
+**Relink** (correct path for operator integrated workbooks — renames dated Part Numbers tab to stable `Part Numbers`, repoints formulas, **preserves all other sheets**):
 
 ```powershell
 python -m triage.one_marcus_recon.cli relink `
-  --input "Candidates/inventory recon/<workbook>.xlsx" `
-  --date auto `
-  --output "Outputs/one_marcus_recon/<workbook>_WEBSAFE.xlsx"
+  --input "Candidates/inventory recon/<baseline>.xlsx" `
+  --output "Outputs/one_marcus_recon/1M_Recon_READY_relink.xlsx" `
+  --date auto
 ```
+
+Do **not** write output into `Candidates/` or overwrite the source file. See [`docs/ONE_MARCUS_SOURCE_OVERWRITE_INCIDENT_2026_06_04.md`](docs/ONE_MARCUS_SOURCE_OVERWRITE_INCIDENT_2026_06_04.md).
 
 Use `--dry-run` to report without writing, `--strict` to fail on ambiguous dates. Generate mode exits non-zero when package preflight or operational checks fail.
 

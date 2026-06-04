@@ -76,3 +76,15 @@ Friday is the reporting batch marker. Work performed Monday through Friday maps 
 - Admin-facing output stays narrow and clean.
 - Internal task-tracker context may be richer, but it must not leak into admin submission artifacts.
 - Backfill into the roster log must be proposed, reviewed, and approved before mutation.
+
+## Operator source immutability
+
+**Candidates/** and **Active/** are read-only operator inputs (backup/emulator files).
+
+- Never write, overwrite, or copy engine output into these paths.
+- Never set `--output` equal to `--input`.
+- All generated workbooks, sidecars, and forensic reports go under **Outputs/**.
+- Overwrites elsewhere require timestamped backup under `Outputs/backups/`.
+- Delivery requires baseline fingerprint compare against the declared source; fail if sheets are deleted.
+
+See [`docs/ONE_MARCUS_SOURCE_OVERWRITE_INCIDENT_2026_06_04.md`](docs/ONE_MARCUS_SOURCE_OVERWRITE_INCIDENT_2026_06_04.md) for the incident that motivated this rule.

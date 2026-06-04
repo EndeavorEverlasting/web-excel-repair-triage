@@ -44,6 +44,7 @@ jobs:
             tests/test_admin_billing_summary.py \
             tests/test_one_marcus_recon.py \
             tests/test_one_marcus_generate.py \
+            tests/test_one_marcus_immutability.py \
             tests/test_sidecar_html_portal.py \
             tests/test_artifact_compare.py \
             tests/test_roster_log_compare.py \

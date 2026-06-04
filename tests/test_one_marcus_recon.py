@@ -65,6 +65,7 @@ def test_infers_recon_update_date_from_filename(stale_input):
 def test_renames_part_number_tab_to_stable_name(stale_input, output_path):
     result = run_recon(stale_input, output_path=output_path, cli_date="auto")
     assert result.report.final_part_number_tab == STABLE_TAB
+    assert result.report.baseline_compare_pass is True
     assert result.report.renamed_tabs == [f"5-07-2026 Part Numbers -> {STABLE_TAB}"]
     with zipfile.ZipFile(output_path) as z:
         wb = z.read("xl/workbook.xml").decode("utf-8")

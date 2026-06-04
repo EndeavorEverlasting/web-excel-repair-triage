@@ -133,6 +133,12 @@ Excel artifacts fail across multiple layers:
 
 The app should model those layers separately. Passing one layer must not imply the others passed.
 
+### 7. Source overwrite / sheet amputation
+
+An agent copied **generate-mode** output (a new 2-sheet openpyxl workbook) over the operator handoff file in `Candidates/`. The integrated source had **7 sheets**; the generator **deleted 5** and gutted pivot content while still passing narrow package preflight.
+
+**Never write engine output into `Candidates/` or `Active/`.** Never use `generate` on integrated READY workbooks. See [`ONE_MARCUS_SOURCE_OVERWRITE_INCIDENT_2026_06_04.md`](ONE_MARCUS_SOURCE_OVERWRITE_INCIDENT_2026_06_04.md).
+
 ## Doctrine
 
 Do not call an artifact successful because it is merely valid.
