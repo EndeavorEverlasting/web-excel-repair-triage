@@ -12,15 +12,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+import posixpath
 import re
 import zipfile
 from dataclasses import dataclass, field
 from datetime import date, datetime, time
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
-from triage.xlsx_utils import read_bytes, read_text, sheet_name_map, table_parts
+from triage.xlsx_utils import get_attr, read_bytes, read_text, sheet_name_map, table_parts
 
 _VOLATILE_PARTS = frozenset({
     "docProps/core.xml",
@@ -95,9 +96,62 @@ def _sheet_xml_features(z: zipfile.ZipFile, sheet_part: str) -> Dict[str, Any]:
     }
 
 
-def _table_features(z: zipfile.ZipFile) -> List[Dict[str, str]]:
+def _rels_part_for(source_part: str) -> str:
+    return posixpath.join(
+        posixpath.dirname(source_part),
+        "_rels",
+        posixpath.basename(source_part) + ".rels",
+    )
+
+
+def _resolve_rel_target(source_part: str, target: str) -> str:
+    t = (target or "").strip().replace("\\", "/")
+    while t.startswith("/"):
+        t = t[1:]
+    if t.startswith("xl/"):
+        return t
+    return posixpath.normpath(posixpath.join(posixpath.dirname(source_part), t))
+
+
+def _related_parts(
+    z: zipfile.ZipFile,
+    source_part: str,
+    *,
+    rel_type_tail: str = "",
+    target_prefix: str = "",
+) -> List[str]:
+    try:
+        rels = read_text(z, _rels_part_for(source_part))
+    except KeyError:
+        return []
+
+    found: set[str] = set()
+    for m in re.finditer(r"<Relationship\b[^>]*>", rels):
+        frag = m.group(0)
+        rel_type = get_attr(frag, "Type") or ""
+        target = get_attr(frag, "Target") or ""
+        resolved = _resolve_rel_target(source_part, target)
+        if rel_type_tail and not rel_type.endswith(rel_type_tail):
+            continue
+        if target_prefix and not resolved.startswith(target_prefix):
+            continue
+        found.add(resolved)
+    return sorted(found)
+
+
+def _table_features(z: zipfile.ZipFile, sheet_parts: List[str] | None = None) -> List[Dict[str, str]]:
     out: List[Dict[str, str]] = []
-    for part in table_parts(z):
+    table_part_names = table_parts(z) if sheet_parts is None else sorted({
+        table_part
+        for sheet_part in sheet_parts
+        for table_part in _related_parts(
+            z,
+            sheet_part,
+            rel_type_tail="/table",
+            target_prefix="xl/tables/",
+        )
+    })
+    for part in table_part_names:
         try:
             text = read_text(z, part)
         except KeyError:
@@ -112,27 +166,40 @@ def _table_features(z: zipfile.ZipFile) -> List[Dict[str, str]]:
     return sorted(out, key=lambda x: (x["name"], x["ref"]))
 
 
-def _chart_count(z: zipfile.ZipFile) -> int:
-    return sum(1 for n in z.namelist() if n.startswith("xl/charts/chart") and n.endswith(".xml"))
+def _chart_count(z: zipfile.ZipFile, sheet_parts: List[str] | None = None) -> int:
+    if sheet_parts is None:
+        return sum(1 for n in z.namelist() if n.startswith("xl/charts/chart") and n.endswith(".xml"))
+
+    drawing_parts = {
+        drawing_part
+        for sheet_part in sheet_parts
+        for drawing_part in _related_parts(
+            z,
+            sheet_part,
+            rel_type_tail="/drawing",
+            target_prefix="xl/drawings/",
+        )
+    }
+    chart_parts = {
+        chart_part
+        for drawing_part in drawing_parts
+        for chart_part in _related_parts(
+            z,
+            drawing_part,
+            rel_type_tail="/chart",
+            target_prefix="xl/charts/",
+        )
+    }
+    return len(chart_parts)
 
 
-def _semantic_workbook_model(path: str | Path) -> Dict[str, Any]:
+def _semantic_workbook_model(path: str | Path, *, include_hidden: bool = False) -> Dict[str, Any]:
     """Build canonical semantic document (before hashing).
 
     Omits filesystem path so copies and metadata-only ZIP edits hash identically.
     """
     p = Path(path)
     model: Dict[str, Any] = {"sheets": []}
-
-    with zipfile.ZipFile(p, "r") as z:
-        part_to_name = sheet_name_map(z)
-        sheet_parts_sorted = sorted(
-            part_to_name.items(),
-            key=lambda kv: kv[1],
-        )
-        model["sheet_order"] = [name for _, name in sheet_parts_sorted]
-        model["table_features"] = _table_features(z)
-        model["chart_count"] = _chart_count(z)
 
     try:
         import openpyxl
@@ -142,11 +209,31 @@ def _semantic_workbook_model(path: str | Path) -> Dict[str, Any]:
 
     wb = openpyxl.load_workbook(str(p), data_only=False, read_only=True)
     try:
+        included_sheet_names: List[str] = []
+        for sheet_name in wb.sheetnames:
+            ws = wb[sheet_name]
+            if not include_hidden and getattr(ws, "sheet_state", "visible") in {"hidden", "veryHidden"}:
+                continue
+            included_sheet_names.append(sheet_name)
+        included_name_set = set(included_sheet_names)
+
         sheets_out: List[Dict[str, Any]] = []
         with zipfile.ZipFile(p, "r") as z:
             part_to_name = sheet_name_map(z)
+            sheet_parts_sorted = sorted(
+                (
+                    (part, name)
+                    for part, name in part_to_name.items()
+                    if name in included_name_set
+                ),
+                key=lambda kv: kv[1],
+            )
+            included_sheet_parts = [part for part, _ in sheet_parts_sorted]
+            model["sheet_order"] = [name for _, name in sheet_parts_sorted]
+            model["table_features"] = _table_features(z, included_sheet_parts)
+            model["chart_count"] = _chart_count(z, included_sheet_parts)
             name_to_part = {v: k for k, v in part_to_name.items()}
-            for sheet_name in wb.sheetnames:
+            for sheet_name in included_sheet_names:
                 ws = wb[sheet_name]
                 cells: Dict[str, Any] = {}
                 for row in ws.iter_rows(
@@ -183,16 +270,23 @@ def _semantic_workbook_model(path: str | Path) -> Dict[str, Any]:
     return model
 
 
-def semantic_sha256(path: str | Path) -> str:
-    """Hash canonical semantic workbook JSON."""
-    model = _semantic_workbook_model(path)
+def _semantic_model_sha256(model: Dict[str, Any]) -> str:
     payload = json.dumps(model, sort_keys=True, separators=(",", ":"), default=str)
     return _sha256_bytes(payload.encode("utf-8"))
 
 
-def per_sheet_semantic_detail(path: str | Path) -> Dict[str, Any]:
+def semantic_sha256(path: str | Path, *, include_hidden: bool = False) -> str:
+    """Hash canonical semantic workbook JSON.
+
+    By default only visible worksheets contribute to the semantic hash.
+    Set ``include_hidden=True`` for an explicit all-sheets semantic hash.
+    """
+    return _semantic_model_sha256(_semantic_workbook_model(path, include_hidden=include_hidden))
+
+
+def per_sheet_semantic_detail(path: str | Path, *, include_hidden: bool = False) -> Dict[str, Any]:
     """Per-sheet breakdown for compare reports (not used for pass/fail hash)."""
-    model = _semantic_workbook_model(path)
+    model = _semantic_workbook_model(path, include_hidden=include_hidden)
     sheets: Dict[str, Any] = {}
     for sh in model.get("sheets") or []:
         name = sh.get("name", "")
@@ -214,6 +308,7 @@ class ArtifactFingerprint:
     raw_sha256: str
     canonical_package_sha256: str
     semantic_sha256: str
+    all_sheets_semantic_sha256: str
     sheet_order: List[str] = field(default_factory=list)
     sheets: Dict[str, Any] = field(default_factory=dict)
     chart_count: int = 0
@@ -225,6 +320,7 @@ class ArtifactFingerprint:
             "raw_sha256": self.raw_sha256,
             "canonical_package_sha256": self.canonical_package_sha256,
             "semantic_sha256": self.semantic_sha256,
+            "all_sheets_semantic_sha256": self.all_sheets_semantic_sha256,
             "sheet_order": list(self.sheet_order),
             "chart_count": self.chart_count,
             "table_count": self.table_count,
@@ -235,9 +331,10 @@ class ArtifactFingerprint:
 def fingerprint_file(path: str | Path) -> ArtifactFingerprint:
     """Compute all three fingerprint layers for one workbook."""
     p = Path(path)
-    model = _semantic_workbook_model(p)
-    sem_payload = json.dumps(model, sort_keys=True, separators=(",", ":"), default=str)
-    sem_hash = _sha256_bytes(sem_payload.encode("utf-8"))
+    model = _semantic_workbook_model(p, include_hidden=False)
+    all_sheets_model = _semantic_workbook_model(p, include_hidden=True)
+    sem_hash = _semantic_model_sha256(model)
+    all_sheets_sem_hash = _semantic_model_sha256(all_sheets_model)
     sheets_detail: Dict[str, Any] = {}
     for sh in model.get("sheets") or []:
         name = sh.get("name", "")
@@ -254,6 +351,7 @@ def fingerprint_file(path: str | Path) -> ArtifactFingerprint:
         raw_sha256=raw_sha256(p),
         canonical_package_sha256=canonical_package_sha256(p),
         semantic_sha256=sem_hash,
+        all_sheets_semantic_sha256=all_sheets_sem_hash,
         sheet_order=list(model.get("sheet_order") or []),
         sheets=sheets_detail,
         chart_count=int(model.get("chart_count") or 0),

@@ -10,9 +10,14 @@ Generated submission workbooks are compared to **manually blessed** references u
 |-------|--------|-------------------------|
 | Raw file | `raw_sha256` | No (warning only) |
 | Canonical package | `canonical_package_sha256` | No (warning; profile may opt in) |
-| Semantic workbook | `semantic_sha256` | Yes, unless approved delta |
+| Visible semantic workbook | `semantic_sha256` | Yes, unless approved delta |
+| All-sheet semantic workbook | `all_sheets_semantic_sha256` | No (diagnostic / explicit-use only) |
 
-Raw SHA proves byte identity. Semantic SHA proves sheet names, cell values, formulas, number formats, tables, chart count, frozen panes, and autofilter refs — without filesystem path noise.
+Raw SHA proves byte identity. Canonical package SHA removes volatile OOXML noise. The default semantic SHA now covers only **visible** worksheets so hidden/reference scratch tabs do not poison user-visible artifact comparison. `all_sheets_semantic_sha256` is still exposed for explicit investigations when you intentionally want hidden sheets to count.
+
+Visible semantic SHA proves visible sheet names, cell values, formulas, number formats, tables, chart count, frozen panes, and autofilter refs — without filesystem path noise. Use the all-sheet semantic hash only when hidden-sheet drift is itself the thing you want to compare.
+
+Operational/required-field comparison remains separate from hashing: profiles, package preflight, and semantic integrity gates enforce required tabs, native tables, sentinel fields, Web Excel stop-ship tokens, and manual proof requirements.
 
 ## CLI
 
