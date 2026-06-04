@@ -1,0 +1,50 @@
+{
+  "profile": "neuron_track_hours_repairfree_golden",
+  "submission_safe": true,
+  "required_sheets": ["Apr 26", "May 26", "Rules & Legend"],
+  "month_sheet_names": ["Apr 26", "May 26"],
+  "legend_sheet": "Rules & Legend",
+  "header_row1": ["", "TECH", "START", "END", "TOTAL", "PROJECT", "ASSIGNMENT"],
+  "header_row2": ["DATE", "NAME", "TIME", "TIME", "HOURS", "NAME", "TYPE"],
+  "column_widths": [12, 22, 12, 12, 10, 22, 32],
+  "freeze_panes": "A3",
+  "header_fill_row1": "1F4E78",
+  "header_fill_row2": "5B9BD5",
+  "assignment_fills": {
+    "Inventory Management": "D9EAD3",
+    "Configurations": "D9EAF7",
+    "Ticket Forwarding": "FFF2CC",
+    "Client Coordination": "EADCF8",
+    "Documentation": "E7E6E6",
+    "Deployments": "FCE4D6",
+    "Logistics": "DDEBF7",
+    "Troubleshooting / Incident Response": "F4CCCC"
+  },
+  "allowed_assignment_types": [
+    "Inventory Management",
+    "Configurations",
+    "Ticket Forwarding",
+    "Client Coordination",
+    "Documentation",
+    "Deployments",
+    "Logistics",
+    "Troubleshooting / Incident Response"
+  ],
+  "package_stop_ship": {
+    "no_calc_chain": true,
+    "no_external_links": true,
+    "no_vba": true,
+    "no_formula_error_tokens": true,
+    "no_inline_str": true,
+    "no_formulas_in_month_sheets": true,
+    "no_conditional_formatting_in_month_sheets": true,
+    "no_merged_cells_in_month_sheets": true
+  },
+  "legend_rows": [
+    ["Neuron Track Hours — Rules & Legend", ""],
+    ["", ""],
+    ["Assignment types and fill colors match the Neuron Track Hours submission workbook.", ""],
+    ["Client Coordination is limited to approved coordinators (see resolver allowlist).", ""],
+    ["Review issues are recorded in sidecars only, not on month sheets.", ""]
+  ]
+}

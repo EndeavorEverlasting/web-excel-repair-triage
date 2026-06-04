@@ -33,7 +33,9 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from triage.neuron_work_context_rules import (
+    CLIENT_COORDINATION,
     CONFIGURATIONS,
+    INVENTORY_MANAGEMENT,
     LOGISTICS,
     classify_neuron_work_context,
 )
@@ -71,9 +73,153 @@ EXCLUDED_NAMES = {"yostinn minaya", "steven marques", "inventory"}
 # Non-work markers (whole-cell text instead of a punch time).
 _NON_WORK_MARKER = re.compile(
     r"^\s*(pto|non[\s-]*pto|n/?a|out\s*sick|sick|vacation|off\b.*|holiday|"
-    r"unpaid|leave|absent)\s*$",
+    r"unpaid|leave|absent|car\s*issue|off\s*/\s*car\s*issue)\s*$",
     re.IGNORECASE,
 )
+
+# Client Coordination may appear on the submission sheet only for approved coordinators.
+CLIENT_COORDINATION_ALLOWLIST = frozenset({
+    "richard perez",
+    "rich perez",
+    "khadejah harrison",
+    "alejandro perales",
+})
+
+TECH_DISPLAY_ALIASES: Dict[str, str] = {
+    "rich perez": "Richard Perez",
+    "eman": "Emmanuel Perales",
+    "emmanuel perales": "Emmanuel Perales",
+    "suhan": "Md Suhan Newaz",
+    "md suhan newaz": "Md Suhan Newaz",
+    "val": "Valentin Nikoliuch",
+    "valentin nikoliuch": "Valentin Nikoliuch",
+}
+
+_MIXED_INV_CONFIG_NOTE = re.compile(
+    r"(inventory|stock|warehouse|recon).*(config|configuration|image|baseline)|"
+    r"(config|configuration|image|baseline).*(inventory|stock|warehouse|recon)",
+    re.IGNORECASE,
+)
+
+
+def normalize_tech_display(name: str) -> str:
+    key = name.strip().lower()
+    return TECH_DISPLAY_ALIASES.get(key, name.strip())
+
+
+def _client_coordination_allowed(tech: str) -> bool:
+    return tech.strip().lower() in CLIENT_COORDINATION_ALLOWLIST
+
+
+def _notes_indicate_mixed_inv_config(note: str) -> bool:
+    return bool(note and _MIXED_INV_CONFIG_NOTE.search(note))
+
+
+def _append_shift_or_split(
+    resolution: BonitaResolution,
+    *,
+    month_key: str,
+    short: str,
+    d: date,
+    day: str,
+    staff: str,
+    ci,
+    co,
+    gross: float,
+    note: str,
+    cell_ref: str,
+    worked_label: str,
+    assign_label: str,
+    resolved: str,
+    decision,
+) -> None:
+    """Include shift row(s), applying mixed inventory/configuration split when needed."""
+    long_shift = gross >= LONG_SHIFT_HOURS
+    base_kwargs = dict(
+        month_key=month_key,
+        month_name=short,
+        date=d,
+        day=day,
+        tech=staff,
+        clock_in=_format_clock(ci),
+        clock_out=_format_clock(co),
+        project_name=NEURON_DISPLAY_NAME,
+        note=note,
+        long_shift=long_shift,
+        start_time=_decimal_to_time(ci),
+        end_time=_decimal_to_time(co),
+        assignment_rule=decision.rule,
+        assignment_confidence=decision.confidence,
+    )
+
+    if _notes_indicate_mixed_inv_config(note):
+        half = round(gross / 2, 2)
+        remainder = round(gross - half, 2)
+        resolution.shifts.append(BonitaShift(
+            **base_kwargs,
+            total_hours=half,
+            assignment_type=INVENTORY_MANAGEMENT,
+        ))
+        resolution.shifts.append(BonitaShift(
+            **base_kwargs,
+            total_hours=remainder,
+            assignment_type=CONFIGURATIONS,
+        ))
+        resolution.review.append(BonitaReviewItem(
+            category="mixed_assignment_split",
+            month_name=short,
+            date=d,
+            day=day,
+            tech=staff,
+            clock_in=_format_clock(ci),
+            clock_out=_format_clock(co),
+            total_hours=gross,
+            project=NEURON_DISPLAY_NAME,
+            note=note,
+            source_cell=cell_ref,
+            detail=(
+                f"split {gross:g}h -> {half:g}h Inventory Management + "
+                f"{remainder:g}h Configurations"
+            ),
+        ))
+        return
+
+    resolution.shifts.append(BonitaShift(
+        **base_kwargs,
+        total_hours=gross,
+        assignment_type=decision.assignment_type,
+    ))
+
+    if long_shift:
+        resolution.review.append(BonitaReviewItem(
+            category="long_shift",
+            month_name=short,
+            date=d,
+            day=day,
+            tech=staff,
+            clock_in=_format_clock(ci),
+            clock_out=_format_clock(co),
+            total_hours=gross,
+            project=NEURON_DISPLAY_NAME,
+            note=note,
+            source_cell=cell_ref,
+            detail=f"long shift {gross:g}h included; verify",
+        ))
+    if decision.confidence == "low":
+        resolution.review.append(BonitaReviewItem(
+            category="assignment_heuristic_low_confidence",
+            month_name=short,
+            date=d,
+            day=day,
+            tech=staff,
+            clock_in=_format_clock(ci),
+            clock_out=_format_clock(co),
+            total_hours=gross,
+            project=NEURON_DISPLAY_NAME,
+            note="",
+            source_cell=cell_ref,
+            detail=f"assignment resolved by heuristic rule: {decision.rule}",
+        ))
 
 
 @dataclass
@@ -231,7 +377,7 @@ def _resolve_month(wb, month_key: str, resolution: BonitaResolution) -> None:
             continue
         if isinstance(staff_val, (int, float)):
             continue
-        staff = str(staff_val).strip()
+        staff = normalize_tech_display(str(staff_val).strip())
         default_proj = str(live_ws.cell(r, 2).value or "").strip()
         if default_proj == "0":
             default_proj = ""
@@ -315,58 +461,44 @@ def _resolve_month(wb, month_key: str, resolution: BonitaResolution) -> None:
                 worked_label=worked_label or assign_label,
                 resolved_project=resolved,
             )
-            long_shift = gross >= LONG_SHIFT_HOURS
 
-            shift = BonitaShift(
-                month_key=month_key,
-                month_name=short,
-                date=d,
-                day=day,
-                tech=staff,
-                clock_in=_format_clock(ci),
-                clock_out=_format_clock(co),
-                total_hours=gross,
-                project_name=NEURON_DISPLAY_NAME,
-                assignment_type=decision.assignment_type,
-                note=note,
-                long_shift=long_shift,
-                start_time=_decimal_to_time(ci),
-                end_time=_decimal_to_time(co),
-                assignment_rule=decision.rule,
-                assignment_confidence=decision.confidence,
-            )
-            resolution.shifts.append(shift)
-
-            if long_shift:
+            if (
+                decision.assignment_type == CLIENT_COORDINATION
+                and not _client_coordination_allowed(staff)
+            ):
                 resolution.review.append(BonitaReviewItem(
-                    category="long_shift",
+                    category="client_coordination_outside_allowlist",
                     month_name=short,
                     date=d,
                     day=day,
                     tech=staff,
-                    clock_in=shift.clock_in,
-                    clock_out=shift.clock_out,
+                    clock_in=_format_clock(ci),
+                    clock_out=_format_clock(co),
                     total_hours=gross,
                     project=NEURON_DISPLAY_NAME,
                     note=note,
                     source_cell=cell_ref,
-                    detail=f"long shift {gross:g}h included; verify",
+                    detail="Client Coordination not allowed for this tech; excluded from workbook",
                 ))
-            if decision.confidence == "low":
-                resolution.review.append(BonitaReviewItem(
-                    category="assignment_heuristic_low_confidence",
-                    month_name=short,
-                    date=d,
-                    day=day,
-                    tech=staff,
-                    clock_in=shift.clock_in,
-                    clock_out=shift.clock_out,
-                    total_hours=gross,
-                    project=NEURON_DISPLAY_NAME,
-                    note="",
-                    source_cell=cell_ref,
-                    detail=f"assignment resolved by heuristic rule: {decision.rule}",
-                ))
+                continue
+
+            _append_shift_or_split(
+                resolution,
+                month_key=month_key,
+                short=short,
+                d=d,
+                day=day,
+                staff=staff,
+                ci=ci,
+                co=co,
+                gross=gross,
+                note=note,
+                cell_ref=cell_ref,
+                worked_label=worked_label,
+                assign_label=assign_label,
+                resolved=resolved,
+                decision=decision,
+            )
 
 
 def resolve_bonita_shifts(
