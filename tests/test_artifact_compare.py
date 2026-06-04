@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import io
 import json
+import shutil
 import zipfile
 from pathlib import Path
 
@@ -78,6 +79,19 @@ def _make_corpse_xlsx(path: Path) -> None:
     path.write_bytes(buf.getvalue())
 
 
+def _add_hidden_reference_sheet(path: Path, marker: str, *, state: str = "hidden") -> None:
+    from triage.xlsx_utils import fix_inlinestr
+
+    wb = openpyxl.load_workbook(str(path))
+    ws = wb.create_sheet("Reference Scratch")
+    ws.sheet_state = state
+    ws["A1"] = "Reference Scratch"
+    ws["B2"] = marker
+    wb.save(str(path))
+    wb.close()
+    fix_inlinestr(str(path))
+
+
 def test_raw_differs_semantic_matches(april_workbook, tmp_path):
     ref_path, neuron_tab = april_workbook
     cand_path = tmp_path / "meta_mutated.xlsx"
@@ -92,6 +106,37 @@ def test_raw_differs_semantic_matches(april_workbook, tmp_path):
     assert report["semantic_sha_match"] is True
     assert report["compare_pass"] is True
     assert "raw_sha256_mismatch" in report["profile_warnings"]
+
+
+def test_hidden_sheet_diff_does_not_poison_visible_semantic_hash(april_workbook, tmp_path):
+    ref_path, neuron_tab = april_workbook
+    ref_with_hidden = tmp_path / "ref_hidden.xlsx"
+    cand_with_hidden = tmp_path / "cand_hidden.xlsx"
+    shutil.copy2(ref_path, ref_with_hidden)
+    shutil.copy2(ref_path, cand_with_hidden)
+
+    _add_hidden_reference_sheet(ref_with_hidden, "alpha")
+    _add_hidden_reference_sheet(cand_with_hidden, "bravo")
+
+    assert semantic_sha256(ref_with_hidden) == semantic_sha256(cand_with_hidden)
+    assert semantic_sha256(ref_with_hidden, include_hidden=True) != semantic_sha256(
+        cand_with_hidden,
+        include_hidden=True,
+    )
+
+    ref_fp = fingerprint_file(ref_with_hidden)
+    cand_fp = fingerprint_file(cand_with_hidden)
+    assert ref_fp.semantic_sha256 == cand_fp.semantic_sha256
+    assert ref_fp.all_sheets_semantic_sha256 != cand_fp.all_sheets_semantic_sha256
+
+    report = compare_artifacts(
+        str(ref_with_hidden), str(cand_with_hidden), "admin_billing_summary",
+        expect_neuron_tab=neuron_tab,
+    )
+    assert report["semantic_sha_match"] is True
+    assert report["all_sheets_semantic_sha_match"] is False
+    assert report["semantic_compare"] == "PASS"
+    assert report["compare_pass"] is True
 
 
 def test_column_corpse_fails_semantic_compare(april_workbook, tmp_path):
@@ -188,6 +233,7 @@ def test_fingerprint_roundtrip_keys(april_workbook):
     fp = fingerprint_file(ref_path)
     d = fp.to_dict()
     assert "raw_sha256" in d and "canonical_package_sha256" in d and "semantic_sha256" in d
+    assert "all_sheets_semantic_sha256" in d
 
 
 def test_load_profiles():

@@ -121,6 +121,9 @@ def compare_artifacts(
     raw_match = ref_fp.raw_sha256 == cand_fp.raw_sha256
     canonical_match = ref_fp.canonical_package_sha256 == cand_fp.canonical_package_sha256
     semantic_match = ref_fp.semantic_sha256 == cand_fp.semantic_sha256
+    all_sheets_semantic_match = (
+        ref_fp.all_sheets_semantic_sha256 == cand_fp.all_sheets_semantic_sha256
+    )
 
     profile_failures = list(cand_checks.failures)
     profile_warnings: list[str] = list(cand_checks.warnings)
@@ -170,6 +173,7 @@ def compare_artifacts(
         "raw_sha_match": raw_match,
         "canonical_package_match": canonical_match,
         "semantic_sha_match": semantic_match,
+        "all_sheets_semantic_sha_match": all_sheets_semantic_match,
         "excel_for_web_manual_check": preflight.get(
             "excel_for_web_manual_check", "NOT_PROVEN"
         ),
