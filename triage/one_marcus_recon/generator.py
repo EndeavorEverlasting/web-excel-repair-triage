@@ -10,6 +10,7 @@ from openpyxl.styles import Font
 
 from triage.xlsx_utils import fix_inlinestr
 
+from . import formula_relink as fr
 from .config import (
     PART_NUMBERS_SHEET,
     PN_DATA_END,
@@ -35,8 +36,11 @@ def _copy_part_numbers_sheet(source_path: str, source_tab: str, target_ws, outpu
                 dst = target_ws.cell(r, c, src.value)
                 if src.number_format and src.number_format != "General":
                     dst.number_format = src.number_format
-                if src.data_type == "f" and isinstance(dst.value, str) and source_tab != output_tab:
-                    dst.value = dst.value.replace(f"'{source_tab}'!", f"'{output_tab}'!")
+                if src.data_type == "f" and isinstance(dst.value, str):
+                    new_val, _patched, _loc, _ext = fr._rewrite_refs_in_text(
+                        dst.value, output_tab, source_tab if source_tab != output_tab else None
+                    )
+                    dst.value = new_val
         return max_row
     finally:
         wb.close()

@@ -1,6 +1,7 @@
 """Tests for the One Marcus clean-render generator."""
 from __future__ import annotations
 
+import re
 import zipfile
 from pathlib import Path
 
@@ -8,11 +9,13 @@ import openpyxl
 import pytest
 
 from tests.fixtures.one_marcus_recon import fixtures as fx
+from triage.one_marcus_recon.config import PART_NUMBERS_SHEET
 from triage.one_marcus_recon.exporter import run_generate
 from triage.one_marcus_recon.operational_checks import run_operational_checks
 from triage.one_marcus_recon.style_pass import apply_style_pass
 
 READY_WB = Path("Candidates/inventory recon/1M_Recon_READY.xlsx")
+_DATED_PN_SHEET = re.compile(r"^\d{1,2}-\d{1,2}-\d{4} Part Numbers$")
 
 
 @pytest.fixture
@@ -33,11 +36,13 @@ def test_generate_creates_required_sheets(integrated_source, tmp_path):
     out = tmp_path / "out.xlsx"
     result = run_generate(integrated_source, output_path=str(out))
     assert result.report.mode == "generate"
+    assert result.report.final_part_number_tab == PART_NUMBERS_SHEET
     assert result.report.operational_pass
     with zipfile.ZipFile(out) as z:
         wb = z.read("xl/workbook.xml").decode("utf-8")
-    assert "Part Numbers" in wb
+    assert f'name="{PART_NUMBERS_SHEET}"' in wb or 'name="Part Numbers"' in wb
     assert "1M Recon Pivot Module" in wb
+    assert not re.search(r'\d{1,2}-\d{1,2}-\d{4} Part Numbers', wb)
 
 
 def test_visual_column_after_total_qty(generated_output):
@@ -80,10 +85,25 @@ def test_operational_checks_fail_without_visual(tmp_path, integrated_source):
     assert not ops.operational_pass
 
 
+def test_generate_has_no_dated_part_numbers_tab(generated_output):
+    wb = openpyxl.load_workbook(generated_output, read_only=True)
+    try:
+        assert PART_NUMBERS_SHEET in wb.sheetnames
+        assert not any(_DATED_PN_SHEET.match(n) for n in wb.sheetnames)
+    finally:
+        wb.close()
+
+
 @pytest.mark.skipif(not READY_WB.exists(), reason="private operator reference workbook not present")
 def test_generate_from_operator_reference(tmp_path):
     out = tmp_path / "1M_Recon_READY_generated.xlsx"
     result = run_generate(str(READY_WB), output_path=str(out))
     assert result.report.webexcel_preflight_pass
     assert result.report.operational_pass
+    assert result.report.final_part_number_tab == PART_NUMBERS_SHEET
     assert result.report.rollup_key_count >= 1
+    wb = openpyxl.load_workbook(out, read_only=True)
+    try:
+        assert not any(_DATED_PN_SHEET.match(n) for n in wb.sheetnames)
+    finally:
+        wb.close()

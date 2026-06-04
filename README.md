@@ -155,7 +155,7 @@ python -m triage.one_marcus_recon.cli generate `
   --output "Outputs/one_marcus_recon/1M_Recon_READY.xlsx"
 ```
 
-**Relink** (OOXML patch — renames the `M-D-YYYY Part Numbers` tab, repoints formulas, localizes external refs, drops `calcChain.xml`, strips unused `xl/externalLinks/*`; preserves tables, drawings, styles, and sheet order):
+**Relink** (OOXML patch — renames any dated Part Numbers tab to stable `Part Numbers`, repoints formulas, localizes external refs, drops `calcChain.xml`, strips unused `xl/externalLinks/*`; preserves tables, drawings, styles, and sheet order):
 
 ```powershell
 python -m triage.one_marcus_recon.cli relink `

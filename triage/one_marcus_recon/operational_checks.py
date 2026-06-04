@@ -45,6 +45,11 @@ def _scan_forbidden_text(path: str) -> List[str]:
     return hits
 
 
+_DATED_PN_TAB = re.compile(
+    r"^\s*\d{1,2}-\d{1,2}-\d{4}\s+part\s+numbers\s*$", re.IGNORECASE
+)
+
+
 def run_operational_checks(path: str, *, min_visual_rows: int = 1) -> OperationalCheckResult:
     """Validate executive operational surface per success checkpoint + visual config."""
     res = OperationalCheckResult(path=str(Path(path).resolve()))
@@ -64,6 +69,10 @@ def run_operational_checks(path: str, *, min_visual_rows: int = 1) -> Operationa
         for sheet in EXPECTED_SHEETS:
             if sheet not in wb.sheetnames:
                 res.failures.append(f"missing_sheet:{sheet}")
+
+        for name in wb.sheetnames:
+            if _DATED_PN_TAB.match(name):
+                res.failures.append(f"dated_part_numbers_tab:{name}")
 
         if PIVOT_SHEET not in wb.sheetnames or PART_NUMBERS_SHEET not in wb.sheetnames:
             res.operational_pass = False

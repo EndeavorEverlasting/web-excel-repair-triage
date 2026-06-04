@@ -15,6 +15,7 @@ from triage.xlsx_utils import fix_inlinestr
 from . import date_inference as di
 from . import formula_relink as fr
 from . import preflight as pf
+from .config import PART_NUMBERS_SHEET
 from .generator import build_workbook, load_snapshot
 from .models import ReconChange, ReconReport
 from .operational_checks import run_operational_checks
@@ -71,7 +72,7 @@ def run_recon(
         {"date": c.date_iso, "source": c.source, "raw": c.raw} for c in candidates
     ]
     report.warnings.extend(warnings)
-    target_label = chosen.tab_label
+    target_label = PART_NUMBERS_SHEET
     report.final_part_number_tab = target_label
 
     # --- pick + rename the source Part Numbers tab ---
