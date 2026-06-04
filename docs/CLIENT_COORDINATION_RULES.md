@@ -9,6 +9,7 @@ Only the following people should be classified as handling **Client Coordination
 - Richard Perez / Rich Perez
 - Khadejah Harrison
 - Alejandro Perales
+- Geoff Gerber
 
 No other technician should be auto-classified as `Client Coordination` without explicit manual review and written supporting evidence.
 
@@ -18,18 +19,18 @@ Client coordination is not a generic midday support bucket. It represents client
 
 For artifact generation, this means:
 
-- Client Coordination rows for Richard/Rich Perez, Khadejah Harrison, or Alejandro Perales may remain as `Client Coordination` when supported by source evidence.
-- Client Coordination rows for any other technician must be routed to review instead of silently accepted.
+- Client Coordination rows for Richard/Rich Perez, Khadejah Harrison, Alejandro Perales, or Geoff Gerber may remain as `Client Coordination` when supported by source evidence.
+- Client Coordination rows for any other technician must be removed from clean admin-ready time sheets or routed to an internal review artifact, depending on the artifact type.
 - Generators should not infer Client Coordination from time-of-day slots alone.
-- Existing historical rows outside the approved coordination group should be flagged as review targets, not silently relabeled.
+- Existing historical rows outside the approved coordination group should not remain in submission-ready Neuron Track Hours rows.
 
 ## Engine behavior
 
 Artifact engines should apply this rule as follows:
 
-1. Preserve the original source evidence.
-2. If `assignment_type == "Client Coordination"` and the technician is not in the approved coordination group, emit a review item.
-3. Do not include unauthorized Client Coordination as clean admin-ready classification unless the review is resolved.
+1. Preserve the original source evidence in internal sidecars when available.
+2. If `assignment_type == "Client Coordination"` and the technician is not in the approved coordination group, remove the row from clean admin-ready Neuron Track Hours output.
+3. For internal workbooks or sidecars, route the removed row to a review/audit artifact instead of silently accepting it.
 4. If a replacement classification is required, it must come from source evidence or an explicit correction map.
 5. Do not guess between Inventory Management, Configurations, Ticket Forwarding, or Deployment when the source only says Client Coordination.
 
@@ -43,6 +44,7 @@ APPROVED_CLIENT_COORDINATORS = {
     "Rich Perez",
     "Khadejah Harrison",
     "Alejandro Perales",
+    "Geoff Gerber",
 }
 ```
 
@@ -50,9 +52,9 @@ APPROVED_CLIENT_COORDINATORS = {
 
 Neuron Track Hours and billing workbooks should make this visible:
 
-- unauthorized Client Coordination rows should be highlighted or listed in a Review Queue;
-- clean admin-ready outputs should not hide the review condition;
-- review notes should explain that only Richard/Rich Perez, Khadejah Harrison, and Alejandro Perales handle client coordination.
+- unauthorized Client Coordination rows should not remain in clean admin-ready time sheets;
+- internal review outputs may list removed rows for audit, but submission workbooks should not preserve unauthorized coordination rows as visible work rows;
+- review notes should explain that only Richard/Rich Perez, Khadejah Harrison, Alejandro Perales, and Geoff Gerber handle client coordination.
 
 ## Related Rezaul classification note
 
