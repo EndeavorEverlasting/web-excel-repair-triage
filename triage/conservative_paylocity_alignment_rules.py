@@ -12,4 +12,10 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Literal
 
-AlignmentPosture = Literal["conservative_paylocity_match", "claim_roster_hours", "needs_evidence_review
+AlignmentPosture = Literal[
+    "conservative_paylocity_match",
+    "claim_roster_hours",
+    "needs_evidence_review",
+]
+
+LUNCH
