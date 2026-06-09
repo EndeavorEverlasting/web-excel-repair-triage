@@ -1,5 +1,12 @@
 """Resolve the Active Roster Log into multi-project daily records.
 
+Worker/project tracing doctrine:
+
+    A worker's hours are traceable by project because the Active Roster Log is
+    not a one-project-per-worker ledger. The Live sheet provides attendance;
+    project classification is resolved per worker and per date from the
+    companion Worked Projects and Assignments tabs.
+
 Project resolution precedence (matches the documented hierarchy and the
 April "My Preferred Format" build, which extracted from Worked Projects):
 
@@ -7,6 +14,11 @@ April "My Preferred Format" build, which extracted from Worked Projects):
     > Worked Projects - {Month} cell
     > Assignments - {Month} main-table cell
     > Live default Project column
+
+The Assignments override sub-table lives below the main assignments grid and is
+intentional operator control, not stray notes. Paylocity/payroll evidence may
+flag dates for review, but billing and Neuron Track Hours must derive from this
+resolved roster record.
 
 Reuses proven helpers: time/lunch math from ``roster_parser`` and the
 Worked-Projects lookup + clock formatting from the Neuron engine.
