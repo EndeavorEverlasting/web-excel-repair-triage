@@ -18,6 +18,12 @@ from .exporters import (
     scan_workbook_errors,
 )
 from .html_dashboard import export_html_dashboard
+from triage.output_policy import (
+    allocate_run_dir,
+    assert_out_dir_allowed,
+    run_id_from_dir,
+    source_manifest_fields,
+)
 from .reconcile import (
     build_task_context_index,
     extract_track_hours,
@@ -34,14 +40,20 @@ def main() -> None:
     parser.add_argument("--roster-log")
     parser.add_argument("--admin-copy")
     parser.add_argument("--dashboard")
-    parser.add_argument("--out-dir", default="Outputs")
+    parser.add_argument(
+        "--out-dir",
+        default=None,
+        help="Run directory under Outputs/billing_context/ (default: dated run folder)",
+    )
     parser.add_argument("--html", action="store_true")
     parser.add_argument("--include-tracker-import", action="store_true")
     parser.add_argument("--internal-xlsx", action="store_true")
     parser.add_argument("--zip", action="store_true", help="Bundle all outputs into a single ZIP")
     args = parser.parse_args()
 
-    out_dir = Path(args.out_dir)
+    out_dir = assert_out_dir_allowed(
+        Path(args.out_dir) if args.out_dir else allocate_run_dir("billing_context", "run")
+    )
     out_dir.mkdir(parents=True, exist_ok=True)
 
     task_index = build_task_context_index(args.april_context)
@@ -121,6 +133,12 @@ def main() -> None:
     print(
         json.dumps(
             {
+                "run_id": run_id_from_dir(out_dir),
+                **source_manifest_fields(
+                    args.track_hours,
+                    args.april_context,
+                    args.roster_log,
+                ),
                 "outputs": outputs,
                 "manifest": manifest,
                 "entry_count": len(entries),

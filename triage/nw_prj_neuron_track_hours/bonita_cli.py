@@ -6,7 +6,7 @@ log, plus gitignored manifest / review-queue / preflight sidecars.
     python -m triage.nw_prj_neuron_track_hours.bonita_cli \
         --roster-log <x> --admin-log <y> [--template <t>] \
         --months 2026-04 2026-05 \
-        --out-dir Outputs/neuron_track_hours_2026_06_02 --websafe
+        --out-dir Outputs/nw_prj_neuron_track_hours/<YYYY-MM-DD>_run/ --websafe
 
 The admin log is used for reconciliation context only (manifest / review),
 never as workbook truth. The template is style-only and optional.
@@ -32,6 +32,12 @@ from triage.nw_prj_neuron_track_hours.bonita_exporter import (
 from triage.nw_prj_neuron_track_hours.bonita_resolver import resolve_bonita_shifts
 from triage.nw_prj_neuron_track_hours.reader import _month_label
 from triage.sidecar_html.adapters import bonita_sections
+from triage.output_policy import (
+    allocate_run_dir,
+    assert_out_dir_allowed,
+    run_id_from_dir,
+    source_manifest_fields,
+)
 from triage.sidecar_html.portal import build_run_portal
 
 DEFAULT_MONTHS = ["2026-04", "2026-05"]
@@ -179,7 +185,7 @@ def run(
     roster_path = _resolve(roster_log, root)
     if roster_path is None or not roster_path.exists():
         raise FileNotFoundError(f"roster-log not found: {roster_path}")
-    out = _resolve(out_dir, root) or (root / "Outputs")
+    out = assert_out_dir_allowed(_resolve(out_dir, root) or (root / "Outputs"))
     out.mkdir(parents=True, exist_ok=True)
 
     resolution = resolve_bonita_shifts(str(roster_path), months)
@@ -231,6 +237,8 @@ def run(
     manifest = {
         "engine": "triage.nw_prj_neuron_track_hours.bonita_cli",
         "generated_utc": _dt.datetime.now(_dt.timezone.utc).isoformat(),
+        "run_id": run_id_from_dir(out),
+        **source_manifest_fields(roster_path),
         "roster_log": str(roster_path),
         "admin_log": str(_resolve(admin_log, root)) if admin_log else "",
         "template": str(_resolve(template, root)) if template else "",
@@ -300,7 +308,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--admin-log")
     ap.add_argument("--template")
     ap.add_argument("--months", nargs="+", default=DEFAULT_MONTHS)
-    ap.add_argument("--out-dir", default="Outputs/neuron_track_hours_2026_06_02")
+    ap.add_argument("--out-dir", default=None, help="Run dir under Outputs/nw_prj_neuron_track_hours/")
     ap.add_argument("--reference", help="Approved reference workbook for artifact_compare")
     ap.add_argument(
         "--artifact-profile",
@@ -311,9 +319,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--no-websafe", action="store_false", dest="websafe")
     args = ap.parse_args(argv)
 
+    out_dir = args.out_dir or str(allocate_run_dir("nw_prj_neuron_track_hours", "bonita"))
     manifest = run(
         roster_log=args.roster_log,
-        out_dir=args.out_dir,
+        out_dir=out_dir,
         months=args.months,
         admin_log=args.admin_log,
         template=args.template,

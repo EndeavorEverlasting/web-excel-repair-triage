@@ -8,6 +8,7 @@ from typing import Optional
 
 from triage.same_family_compare.compare import CompareError, run_same_family_compare, write_compare_outputs
 from triage.same_family_compare.readiness import build_submission_readiness, write_submission_readiness
+from triage.output_policy import allocate_run_dir, assert_out_dir_allowed
 from triage.same_family_compare.scan import scan_intake, write_scan_outputs
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -27,13 +28,19 @@ def main(argv: Optional[list[str]] = None) -> int:
     ap.add_argument("--candidate", default=None)
     ap.add_argument("--family", default=None)
     ap.add_argument("--months", nargs="*", default=None)
-    ap.add_argument("--out-dir", default="artifacts/same_family_compare")
+    ap.add_argument("--out-dir", default=None, help="Run dir under artifacts/same_family_compare/")
     ap.add_argument("--expect-neuron-tab", default=None)
     ap.add_argument("--browser-excel-status", default="UNKNOWN")
     args = ap.parse_args(argv)
 
     root = Path(args.repo_root).resolve() if args.repo_root else _REPO_ROOT
-    out_dir = _resolve(args.out_dir, root)
+    if args.out_dir:
+        out_dir = assert_out_dir_allowed(_resolve(args.out_dir, root))
+    else:
+        slug = "scan" if args.scan_only else "compare"
+        out_dir = allocate_run_dir(
+            "same_family_compare", slug, root=root, writable_root="artifacts"
+        )
 
     if args.scan_only:
         if not args.intake_root:

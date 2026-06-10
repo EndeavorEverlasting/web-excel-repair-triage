@@ -40,14 +40,16 @@ def fixtures():
 
 @pytest.fixture(scope="module")
 def generated(fixtures, tmp_path_factory):
-    out = tmp_path_factory.mktemp("nth_out")
+    root = tmp_path_factory.mktemp("nth_repo")
+    out = root / "Outputs" / "nw_prj_neuron_track_hours" / "test_run"
+    out.mkdir(parents=True)
     manifest = run(
         roster_log=str(fixtures["roster"]),
         out_dir=str(out),
         months=["2026-04", "2026-05"],
         websafe=True,
         zip_output=True,
-        repo_root=REPO_ROOT,
+        repo_root=root,
     )
     return manifest
 
