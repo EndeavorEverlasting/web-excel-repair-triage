@@ -14,6 +14,8 @@ TICKET_FORWARDING = "Ticket Forwarding"
 TROUBLESHOOTING = "Troubleshooting / Incident Response"
 WAREHOUSE_MAINTENANCE = "Warehouse Maintenance"
 SURVEY = "Survey"
+PROJECT_SUPPORT = "Project Support"
 
-# Conservative default: weekday Neuron support is not deployment-heavy.
-# The public repo must not infer
+APRIL_DEPLOYMENT_DATES = {date(2026, 4, 4), date(2026, 4, 11)}
+APRIL_LOOSE_DEPLOYMENT_WEEKDAYS = {0, 2}  # Monday, Wednesday
+AFTER
