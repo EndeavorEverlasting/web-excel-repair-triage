@@ -15,6 +15,5 @@ TROUBLESHOOTING = "Troubleshooting / Incident Response"
 WAREHOUSE_MAINTENANCE = "Warehouse Maintenance"
 SURVEY = "Survey"
 
-# Conservative default: weekday support is not deployment-heavy.
-GENERAL_NEURON_SUPPORT_DAY = {
-    CONFIGUR
+# Conservative default: weekday Neuron support is not deployment-heavy.
+# The public repo must not infer
