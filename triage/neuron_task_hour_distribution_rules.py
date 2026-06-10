@@ -1,8 +1,14 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import date
+from typing import Mapping
 
-CONFIGURATIONS='Configurations'; DEPLOYMENTS='Deployments'; LOGISTICS='Logistics'; INVENTORY_MANAGEMENT='Inventory Management'; DOCUMENTATION='Documentation'; CLIENT_COORDINATION='Client Coordination'; TICKET_FORWARDING='Ticket Forwarding'
-GENERAL_NEURON_SUPPORT_DAY={CONFIGURATIONS:55.0,LOGISTICS:20.0,INVENTORY_MANAGEMENT:10.0,CLIENT_COORDINATION:10.0,TICKET_FORWARDING:5.0}
-DEPLOYMENT_PLUS_DOCUMENTATION_DAY={DEPLOYMENTS:80.0,DOCUMENTATION:20.0}
-MAY_DEP
+CONFIGURATIONS = "Configurations"
+DEPLOYMENTS = "Deployments"
+LOGISTICS = "Logistics"
+INVENTORY_MANAGEMENT = "Inventory Management"
+DOCUMENTATION = "Documentation"
+CLIENT_COORDINATION = "Client Coordination"
+TICKET_FORWARDING = "Ticket Forwarding"
+TROUBLESHOOTING = "Trou
