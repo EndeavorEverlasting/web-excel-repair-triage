@@ -5,6 +5,8 @@ would imply an implausibly early clock-out. Those cases are likely payroll
 cutoff / missed clock-out / unpaid-hours shortages unless the operator confirms
 that the roster should be reduced.
 """
+from __future__ import annotations
 
-PAYROLL_DELTA_TOLERANCE_MINUTES = 6
-EARLY_CUTOFF_HOUR_
+from dataclasses import dataclass
+from datetime import time
+from
