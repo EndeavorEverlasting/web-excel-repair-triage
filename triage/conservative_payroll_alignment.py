@@ -1,15 +1,10 @@
-"""Conservative payroll alignment rules."""
-from __future__ import annotations
+"""Conservative payroll alignment rules.
 
-from dataclasses import dataclass
-from typing import Literal
+Do not blindly cut roster hours to match a lower Paylocity value when the result
+would imply an implausibly early clock-out. Those cases are likely payroll
+cutoff / missed clock-out / unpaid-hours shortages unless the operator confirms
+that the roster should be reduced.
+"""
 
-AlignmentClass = Literal[
-    "aligned",
-    "rounding_noise",
-    "raise_roster_to_paylocity",
-    "likely_payroll_cutoff_shortage",
-    "conscious_cut_review",
-]
-
-PAYROLL_DELTA_TOLERANCE_HOURS = 0.
+PAYROLL_DELTA_TOLERANCE_MINUTES = 6
+EARLY_CUTOFF_HOUR_
