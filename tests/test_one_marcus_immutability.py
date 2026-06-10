@@ -20,14 +20,14 @@ def test_rejects_output_under_candidates():
     inp = str(repo / "Candidates" / "inventory recon" / "in.xlsx")
     out = str(repo / "Candidates" / "inventory recon" / "out.xlsx")
     with pytest.raises(SourcePathWriteForbiddenError):
-        assert_output_path_allowed(inp, out)
+        assert_output_path_allowed(inp, output_path=out)
 
 
 def test_rejects_output_equals_input(tmp_path):
     p = tmp_path / "book.xlsx"
     p.write_bytes(b"x")
     with pytest.raises(SourcePathWriteForbiddenError):
-        assert_output_path_allowed(str(p), str(p))
+        assert_output_path_allowed(str(p), output_path=str(p))
 
 
 def test_generate_refuses_multi_sheet_integrated(tmp_path):

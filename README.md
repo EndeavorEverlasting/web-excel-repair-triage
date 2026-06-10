@@ -86,7 +86,7 @@ Scope-filtered sprint target workbook from All-Wave upstream + live sprint dashb
 Generate `Neuron_Track_Hours_April_May_2026_WEBSAFE.xlsx` locally from the private roster log:
 
 - Docs: [`docs/NW_PRJ_NEURON_TRACK_HOURS_CONTRACT.md`](docs/NW_PRJ_NEURON_TRACK_HOURS_CONTRACT.md)
-- Run: `python -m triage.nw_prj_neuron_track_hours.cli --roster-log "<roster>.xlsx" --out-dir Outputs/nw_prj_neuron_track_hours_2026_06_01 --months 2026-04 2026-05 --websafe --zip`
+- Run: `python -m triage.nw_prj_neuron_track_hours.cli --roster-log "<roster>.xlsx" --months 2026-04 2026-05 --websafe --zip` (default: `Outputs/nw_prj_neuron_track_hours/<YYYY-MM-DD>_track_hours/`)
 - Neuron scope uses Worked-Project per-date classification (not default team membership); totals: April 1048.19, May 697.83, total 1746.02, Go Live weekend 2 rows / 22h.
 
 #### Bonita submission workbook (clean two-tab)
@@ -94,7 +94,7 @@ Generate `Neuron_Track_Hours_April_May_2026_WEBSAFE.xlsx` locally from the priva
 Generate the admin-facing Bonita submission workbook from the same package:
 
 - Docs: [`docs/BONITA_NEURON_TRACK_HOURS_CONTRACT.md`](docs/BONITA_NEURON_TRACK_HOURS_CONTRACT.md)
-- Run: `python -m triage.nw_prj_neuron_track_hours.bonita_cli --roster-log "<roster>.xlsx" --months 2026-04 2026-05 --out-dir Outputs/neuron_track_hours_2026_06_02 --websafe`
+- Run: `python -m triage.nw_prj_neuron_track_hours.bonita_cli --roster-log "<roster>.xlsx" --months 2026-04 2026-05 --websafe` (default: `Outputs/nw_prj_neuron_track_hours/<YYYY-MM-DD>_bonita/`)
 - Output: exactly two tabs (`Apr 26` / `May 26`), two-line headers, one values-only row per Neuron shift; off-project (`/ Bonita`), non-work markers, excluded names and long shifts go to a gitignored review-queue sidecar. `PROJECT NAME` is the `Neuron Deployments → Northwell - Neurons` display alias; `ASSIGNMENT TYPE` defaults to `Neuron Installation`.
 
 ### Admin Billing Summary (My Preferred Format)
@@ -102,7 +102,7 @@ Generate the admin-facing Bonita submission workbook from the same package:
 Generate the monthly admin billing summary in the April "My Preferred Format" (with charts) for any month, with an embedded Neuron Track Hours tracker tab:
 
 - Docs: [`docs/ADMIN_BILLING_SUMMARY_PREFERRED_FORMAT_CONTRACT.md`](docs/ADMIN_BILLING_SUMMARY_PREFERRED_FORMAT_CONTRACT.md) and roster mechanics in [`docs/ACTIVE_ROSTER_LOG_MECHANICS.md`](docs/ACTIVE_ROSTER_LOG_MECHANICS.md)
-- Run: `python -m triage.admin_billing_summary.cli --roster-log "<roster>.xlsx" --months 2026-04 2026-05 --out-dir Outputs/admin_billing_summary_2026_06_02 --prior "<April preferred-format copy>.xlsx" --websafe`
+- Run: `python -m triage.admin_billing_summary.cli --roster-log "<roster>.xlsx" --months 2026-04 2026-05 --prior "<April preferred-format copy>.xlsx" --websafe` (default: `Outputs/admin_billing_summary/<YYYY-MM-DD>_run/`). Source immutability: [`docs/OPERATOR_SOURCE_IMMUTABILITY.md`](docs/OPERATOR_SOURCE_IMMUTABILITY.md).
 
 ### Same-family compare and roster log compare (internal)
 
@@ -124,6 +124,7 @@ Generated workbooks pass through distinct gates. Do not treat one gate as proof 
 | **Presentation quality** | Calm styling and hierarchy match design configs without rewriting logic. |
 | **Web Excel acceptance** | Opens in Excel for Web without repair banner or silent corruption. |
 | **Operator acceptance** | Human validated in the real target environment — **field judge**. |
+| **Source preservation** | Emulator input SHA unchanged at run time; sheet count non-decreasing for graft/relink lanes. |
 
 **Valid** means the workbook opens. **Correct** means the requested operational surface exists and behaves. **Accepted** means the operator validated it in Excel for Web (or the stated target).
 
@@ -176,7 +177,8 @@ This repo uses lifecycle folders so the engine can keep artifacts organized:
 - `Deprecated/` — **work area**. Iteration/repair/experiments happen here.
 - `Candidates/` — inputs you want to triage (often uploaded as the Candidate).
 - `Repaired/` — “repaired by Excel” variants (web-exported or desktop SaveCopyAs).
-- `Outputs/` — all generated artifacts (reports, recipes, patched workbooks, probe runs, backups).
+- `Outputs/<engine>/<YYYY-MM-DD>_<run>/` — artifact engine runs (delivery, sidecars, compare). See [`docs/OPERATOR_SOURCE_IMMUTABILITY.md`](docs/OPERATOR_SOURCE_IMMUTABILITY.md).
+- `Outputs/` — also reports, recipes, patched workbooks, probe runs, backups.
 
 Tiny lifecycle flow:
 

@@ -77,14 +77,16 @@ Friday is the reporting batch marker. Work performed Monday through Friday maps 
 - Internal task-tracker context may be richer, but it must not leak into admin submission artifacts.
 - Backfill into the roster log must be proposed, reviewed, and approved before mutation.
 
-## Operator source immutability
+## Operator source immutability (repo-wide)
 
-**Candidates/** and **Active/** are read-only operator inputs (backup/emulator files).
+Emulator roots (`Candidates/`, `Active/`, `ArtifactIntake/`, `References/`, and related
+read-only folders) are **inputs only**. All artifact engines write under
+`Outputs/<engine>/<YYYY-MM-DD>_<run>/` or `artifacts/` via [`triage/output_policy.py`](triage/output_policy.py).
 
-- Never write, overwrite, or copy engine output into these paths.
-- Never set `--output` equal to `--input`.
-- All generated workbooks, sidecars, and forensic reports go under **Outputs/**.
-- Overwrites elsewhere require timestamped backup under `Outputs/backups/`.
-- Delivery requires baseline fingerprint compare against the declared source; fail if sheets are deleted.
+- Never write engine output into emulator paths; never set `--output` equal to `--input`.
+- Record `source_emulator_path` + `source_raw_sha256` in run manifests.
+- Delivery requires baseline fingerprint compare; fail if sheets are deleted.
+- Overwrites outside Outputs require timestamped backup under `Outputs/backups/`.
 
-See [`docs/ONE_MARCUS_SOURCE_OVERWRITE_INCIDENT_2026_06_04.md`](docs/ONE_MARCUS_SOURCE_OVERWRITE_INCIDENT_2026_06_04.md) for the incident that motivated this rule.
+Canonical doctrine: [`docs/OPERATOR_SOURCE_IMMUTABILITY.md`](docs/OPERATOR_SOURCE_IMMUTABILITY.md).
+Incident case study: [`docs/ONE_MARCUS_SOURCE_OVERWRITE_INCIDENT_2026_06_04.md`](docs/ONE_MARCUS_SOURCE_OVERWRITE_INCIDENT_2026_06_04.md).

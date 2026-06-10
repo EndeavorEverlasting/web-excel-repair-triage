@@ -3,6 +3,11 @@
 Committed JSON profiles drive stop-ship checks and approved-reference comparison.
 Private blessed workbooks live under `References/approved/` (gitignored).
 
+`one_marcus_recon.json` sets `require_sheet_preservation` — baseline compare must not
+delete sheets vs the emulator. Other engines may adopt the same flag when integrated
+multi-tab sources need relink-not-regenerate protection. See
+[`docs/OPERATOR_SOURCE_IMMUTABILITY.md`](../../docs/OPERATOR_SOURCE_IMMUTABILITY.md).
+
 ## Approved delta file
 
 When a semantic change is intentional, provide a sidecar JSON:
