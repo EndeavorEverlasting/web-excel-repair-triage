@@ -11,4 +11,10 @@ INVENTORY_MANAGEMENT = "Inventory Management"
 DOCUMENTATION = "Documentation"
 CLIENT_COORDINATION = "Client Coordination"
 TICKET_FORWARDING = "Ticket Forwarding"
-TROUBLESHOOTING = "Trou
+TROUBLESHOOTING = "Troubleshooting / Incident Response"
+WAREHOUSE_MAINTENANCE = "Warehouse Maintenance"
+SURVEY = "Survey"
+
+# Conservative default: weekday support is not deployment-heavy.
+GENERAL_NEURON_SUPPORT_DAY = {
+    CONFIGUR
