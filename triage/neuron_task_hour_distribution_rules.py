@@ -1,14 +1,8 @@
-"""Neuron task-hour distribution rules.
-
-Roster-backed Neuron hours are support work by default. Deployment is only used
-when explicit evidence or a local override proves field deployment work.
-Client-facing outputs must not expose internal distributed-hour helper columns.
-"""
 from __future__ import annotations
-
 from dataclasses import dataclass
 from datetime import date
-from typing import Dict, Mapping, Optional
 
-CONFIGURATIONS = "Configurations"
-DEPLOYMENTS = "Deploy
+CONFIGURATIONS='Configurations'; DEPLOYMENTS='Deployments'; LOGISTICS='Logistics'; INVENTORY_MANAGEMENT='Inventory Management'; DOCUMENTATION='Documentation'; CLIENT_COORDINATION='Client Coordination'; TICKET_FORWARDING='Ticket Forwarding'
+GENERAL_NEURON_SUPPORT_DAY={CONFIGURATIONS:55.0,LOGISTICS:20.0,INVENTORY_MANAGEMENT:10.0,CLIENT_COORDINATION:10.0,TICKET_FORWARDING:5.0}
+DEPLOYMENT_PLUS_DOCUMENTATION_DAY={DEPLOYMENTS:80.0,DOCUMENTATION:20.0}
+MAY_DEP
