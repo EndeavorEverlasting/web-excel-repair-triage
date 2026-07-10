@@ -35,6 +35,9 @@ jobs:
       - name: Gitignore hygiene
         run: python -m triage.gitignore_hygiene
 
+      - name: Run workbook package hygiene tests
+        run: python -m pytest tests/test_workbook_package_hygiene.py -q
+
       - name: Run artifact engine tests
         run: |
           python -m pytest \
@@ -51,5 +54,4 @@ jobs:
             tests/test_same_family_compare.py \
             tests/test_gitignore_hygiene.py \
             tests/test_roster_log_review_queue.py \
-            tests/test_workbook_package_hygiene.py \
             -q
