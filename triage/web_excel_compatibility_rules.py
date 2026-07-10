@@ -7,9 +7,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List
+from typing import List
+import posixpath
 import re
 import zipfile
+import xml.etree.ElementTree as ET
 
 
 @dataclass(frozen=True)
@@ -21,6 +23,40 @@ class WebExcelIssue:
 
 def _read_text(zf: zipfile.ZipFile, name: str) -> str:
     return zf.read(name).decode("utf-8", errors="ignore")
+
+
+def _relationship_base(rel_name: str) -> str:
+    if rel_name == "_rels/.rels":
+        return ""
+    if "/_rels/" not in rel_name or not rel_name.endswith(".rels"):
+        return ""
+    prefix, rel_file = rel_name.split("/_rels/", 1)
+    source_part = f"{prefix}/{rel_file[:-5]}"
+    return posixpath.dirname(source_part)
+
+
+def _relationship_targets(zf: zipfile.ZipFile, rel_name: str) -> List[tuple[str, str]]:
+    try:
+        root = ET.fromstring(zf.read(rel_name))
+    except ET.ParseError:
+        return []
+
+    rels = list(root.findall("{http://schemas.openxmlformats.org/package/2006/relationships}Relationship"))
+    rels.extend(root.findall("Relationship"))
+
+    targets: List[tuple[str, str]] = []
+    for rel in rels:
+        target = rel.attrib.get("Target", "")
+        if not target or rel.attrib.get("TargetMode", "").lower() == "external":
+            continue
+        targets.append((target, rel.attrib.get("Id", "")))
+    return targets
+
+
+def _resolve_target(rel_name: str, target: str) -> str:
+    if target.startswith("/"):
+        return posixpath.normpath(target.lstrip("/"))
+    return posixpath.normpath(posixpath.join(_relationship_base(rel_name), target)).lstrip("/")
 
 
 def inspect_web_excel_package(path: str | Path) -> List[WebExcelIssue]:
@@ -39,6 +75,14 @@ def inspect_web_excel_package(path: str | Path) -> List[WebExcelIssue]:
     with zf:
         names = set(zf.namelist())
 
+        for name in names:
+            if not (name.endswith(".xml") or name.endswith(".rels")):
+                continue
+            try:
+                ET.fromstring(zf.read(name))
+            except ET.ParseError as exc:
+                issues.append(WebExcelIssue("xml_parse_error", f"XML part failed to parse: {exc}.", name))
+
         if "[Content_Types].xml" not in names:
             issues.append(WebExcelIssue("missing_content_types", "Missing [Content_Types].xml."))
         else:
@@ -55,6 +99,30 @@ def inspect_web_excel_package(path: str | Path) -> List[WebExcelIssue]:
                     "Workbook part must have an explicit spreadsheetml.sheet.main+xml override.",
                     "[Content_Types].xml",
                 ))
+
+        for rel_name in [name for name in names if name.endswith(".rels")]:
+            for target, rel_id in _relationship_targets(zf, rel_name):
+                issue_part = f"{rel_name}#{rel_id}" if rel_id else rel_name
+                if target.startswith("/"):
+                    issues.append(WebExcelIssue(
+                        "absolute_internal_relationship_target",
+                        "Unexpected absolute internal relationship target.",
+                        issue_part,
+                    ))
+                resolved = _resolve_target(rel_name, target)
+                if resolved.startswith("../") or resolved == "..":
+                    issues.append(WebExcelIssue(
+                        "relationship_target_escapes_package",
+                        f"Relationship target escapes package root: {target}.",
+                        issue_part,
+                    ))
+                    continue
+                if resolved not in names:
+                    issues.append(WebExcelIssue(
+                        "missing_relationship_target",
+                        f"Relationship target does not resolve in package: {target} -> {resolved}.",
+                        issue_part,
+                    ))
 
         if any(name.startswith("xl/drawings/charts/") for name in names):
             issues.append(WebExcelIssue(
