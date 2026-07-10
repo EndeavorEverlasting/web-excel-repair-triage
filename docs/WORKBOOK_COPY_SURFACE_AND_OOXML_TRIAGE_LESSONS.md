@@ -15,6 +15,18 @@ These lessons belong in this repo because they sit at the intersection of:
 
 The point is not to make workbooks prettier. The point is to keep generated artifacts healthy, easy to operate, and honest about what has actually been proven.
 
+Latest artifact-specific evidence is recorded in:
+
+```text
+docs/AI_PROMPT_KIT_V10_XML_AND_CLIPBOARD_RECORD.md
+```
+
+The executable package diagnostic is:
+
+```text
+python -m triage.workbook_package_hygiene <workbook.xlsx>
+```
+
 ## Background
 
 A generated prompt-library workbook went through multiple iterations. The visible workbook looked increasingly polished, but two classes of failures emerged:
@@ -257,41 +269,45 @@ Use precise claims:
 
 Do not collapse these gates into `done`.
 
-## Suggested validator additions
+## Executable validator
 
-Future validator work can add a package check that inspects `.xlsx` internals directly:
+The read-only package validator now lives at:
+
+```text
+triage/workbook_package_hygiene.py
+```
+
+Run it with:
 
 ```text
 python -m triage.workbook_package_hygiene <workbook.xlsx>
 ```
 
-Suggested checks:
-
-- parse ZIP parts,
-- parse workbook relationships,
-- parse worksheet dimensions,
-- detect overlapping merge ranges,
-- inspect table XML refs,
-- ensure table IDs are unique,
-- compare table column names against visible header cells,
-- inspect freeze-pane nodes,
-- scan formulas/errors if available,
-- emit JSON plus human-readable matrix.
-
-Suggested output:
+Optional evidence expectations:
 
 ```text
-WORKBOOK PACKAGE HYGIENE
-[PASS] ZIP integrity
-[PASS] table ids unique
-[PASS] table refs match visible ranges
-[PASS] merge ranges non-overlapping
-[PASS] freeze panes present where claimed
-[PASS] formula/error scan
-[WARN] clipboard acceptance requires manual test
-
-Result: package-valid, manual clipboard acceptance pending
+--expect-freeze <sheet>
+--copy-surface <sheet>
+--json
 ```
+
+It inspects the OOXML ZIP directly and does not rewrite the workbook.
+
+Checks include:
+
+- ZIP integrity,
+- XML well-formedness,
+- table IDs and names,
+- table refs and autoFilter refs,
+- table column counts,
+- visible table headers,
+- overlapping merge ranges,
+- expected freeze panes,
+- missing worksheet dimensions as metadata warnings,
+- formula/error literal markers,
+- copy-surface package shape.
+
+The copy-surface check is deliberately limited. It can identify a risky shape, but only the operator's actual Ctrl+A/Ctrl+C workflow proves clipboard acceptance.
 
 ## Practical rule
 
