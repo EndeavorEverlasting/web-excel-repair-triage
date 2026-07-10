@@ -117,6 +117,12 @@ def inspect_web_excel_package(path: str | Path) -> List[WebExcelIssue]:
                         issue_part,
                     ))
                     continue
+                if resolved.startswith("xl/drawings/charts/"):
+                    issues.append(WebExcelIssue(
+                        "drawing_rel_targets_chart_under_drawings",
+                        "Drawing chart relationship resolves under xl/drawings/charts/.",
+                        issue_part,
+                    ))
                 if resolved not in names:
                     issues.append(WebExcelIssue(
                         "missing_relationship_target",
