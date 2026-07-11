@@ -6,6 +6,30 @@ on:
     branches: [main]
 
 jobs:
+  workbook-package-hygiene:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependency
+        run: python -m pip install pytest
+
+      - name: Import workbook package hygiene validator
+        run: python -c "import triage.workbook_package_hygiene; print('workbook package hygiene import ok')"
+
+      - name: Run workbook package hygiene tests
+        run: python -m pytest tests/test_workbook_package_hygiene.py -q
+
+      - name: Verify workbook package hygiene CLI
+        run: python -m triage.workbook_package_hygiene --help
+
   artifact-engines:
     runs-on: ubuntu-latest
 
@@ -30,13 +54,10 @@ jobs:
 
       - name: Import artifact engines
         run: |
-          python -c "import triage.cybernet_targets.cli; import triage.nw_prj_neuron_track_hours.cli; import triage.nw_prj_neuron_track_hours.bonita_cli; import triage.admin_billing_summary.cli; import triage.one_marcus_recon.cli; import triage.sidecar_html; import triage.artifact_fingerprint; import triage.artifact_profiles; import triage.artifact_compare; import triage.same_family_compare; import triage.roster_log_compare.compare; import triage.roster_log_review_queue.cli; import triage.gitignore_hygiene; import triage.workbook_package_hygiene; print('imports ok')"
+          python -c "import triage.cybernet_targets.cli; import triage.nw_prj_neuron_track_hours.cli; import triage.nw_prj_neuron_track_hours.bonita_cli; import triage.admin_billing_summary.cli; import triage.one_marcus_recon.cli; import triage.sidecar_html; import triage.artifact_fingerprint; import triage.artifact_profiles; import triage.artifact_compare; import triage.same_family_compare; import triage.roster_log_compare.compare; import triage.roster_log_review_queue.cli; import triage.gitignore_hygiene; print('imports ok')"
 
       - name: Gitignore hygiene
         run: python -m triage.gitignore_hygiene
-
-      - name: Run workbook package hygiene tests
-        run: python -m pytest tests/test_workbook_package_hygiene.py -q
 
       - name: Run artifact engine tests
         run: |
