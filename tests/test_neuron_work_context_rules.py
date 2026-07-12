@@ -21,7 +21,7 @@ from triage.neuron_work_context_rules import (
 )
 
 
-def _c(work_date, start, end, notes="", worked_label="", resolved_project=""):
+def _c(work_date, start, end, notes="", worked_label="", resolved_project="", tech_name=""):
     return classify_neuron_work_context(
         work_date=work_date,
         start_hour=start,
@@ -29,10 +29,9 @@ def _c(work_date, start, end, notes="", worked_label="", resolved_project=""):
         notes=notes,
         worked_label=worked_label,
         resolved_project=resolved_project,
+        tech_name=tech_name,
     )
 
-
-# ── explicit text signals (highest precedence) ─────────────────────────────────
 
 def test_daytime_logistics_signal():
     d = _c(date(2026, 3, 3), 8.0, 16.0, notes="logistics relay")
@@ -57,13 +56,10 @@ def test_explicit_documentation_signal():
 
 
 def test_explicit_deploy_note_beats_time_heuristic():
-    # Wednesday morning would otherwise be ticket forwarding.
     d = _c(date(2026, 3, 4), 10.0, 14.0, notes="go-live cutover")
     assert d.assignment_type == DEPLOYMENTS
     assert d.rule == "explicit-deployment"
 
-
-# ── April month rules ──────────────────────────────────────────────────────────
 
 def test_april_saturday_is_deployments():
     d = _c(date(2026, 4, 4), 9.0, 17.0)
@@ -82,13 +78,23 @@ def test_april_wednesday_evening_is_deployments():
     assert d.assignment_type == DEPLOYMENTS
 
 
-def test_april_tuesday_evening_is_configurations():
+def test_april_tuesday_evening_is_deployment_dominant():
     d = _c(date(2026, 4, 7), 17.0, 21.0)
-    assert d.assignment_type == CONFIGURATIONS
-    assert d.rule == "april-evening-configuration"
+    assert d.assignment_type == DEPLOYMENTS
+    assert d.rule == "april-evening-deployment-dominant"
 
 
-# ── May month rules ──────────────────────────────────────────────────────────
+def test_april_geoff_can_receive_client_coordination():
+    d = _c(
+        date(2026, 4, 23),
+        12.0,
+        16.0,
+        notes="client coordination status updates",
+        tech_name="Geoff Gerber",
+    )
+    assert d.assignment_type == CLIENT_COORDINATION
+    assert d.rule == "explicit-client-coordination"
+
 
 def test_may_weekend_morning_is_inventory():
     d = _c(date(2026, 5, 2), 8.0, 12.0)
@@ -108,7 +114,43 @@ def test_may_weekday_evening_is_configurations():
     assert d.rule == "may-evening-configuration"
 
 
-# ── time-of-day fallback (non-April/May) ───────────────────────────────────────
+def test_may_authorized_lead_can_receive_client_coordination():
+    d = _c(
+        date(2026, 5, 12),
+        12.0,
+        16.0,
+        notes="client coordination and email updates",
+        tech_name="Khadejah Harrison",
+    )
+    assert d.assignment_type == CLIENT_COORDINATION
+    assert d.rule == "explicit-client-coordination"
+
+
+def test_may_unauthorized_client_coordination_falls_back_to_reviewable_config():
+    d = _c(
+        date(2026, 5, 12),
+        12.0,
+        16.0,
+        notes="client coordination and email updates",
+        tech_name="Geoff Gerber",
+    )
+    assert d.assignment_type == CONFIGURATIONS
+    assert d.confidence == "low"
+    assert d.rule.startswith("restricted-client-coordination-fallback")
+
+
+def test_may_unauthorized_ticket_forwarding_falls_back_to_inventory():
+    d = _c(
+        date(2026, 5, 12),
+        8.0,
+        9.5,
+        notes="ticket forwarding queue",
+        tech_name="Patricia Marrero",
+    )
+    assert d.assignment_type == INVENTORY_MANAGEMENT
+    assert d.confidence == "low"
+    assert d.rule.startswith("restricted-ticket-forwarding-fallback")
+
 
 def test_weekday_morning_is_ticket_forwarding():
     d = _c(date(2026, 3, 3), 8.0, 9.5)
