@@ -6,22 +6,19 @@ Assignments loader from ``roster_parser``; it adds project resolution,
 classification (include / off-project / non-work-marker / excluded-name) and a
 review trail so nothing is silently dropped.
 
-Inclusion rule (project-driven):
-  A tech/date shift enters the Bonita workbook only when the resolved project
-  for that date is the Neuron project. Resolution precedence:
-      Worked Projects cell  >  Assignments override  >  Live default project.
-  The default project counts unless that day is overwritten to a non-Neuron
-  project; a default non-Neuron day counts only when overwritten to Neuron.
+Final submitted-artifact source hierarchy:
+  1. ``Live - {Month}`` provides clock truth only.
+  2. Monthly Assignments override table is the highest-priority project fix.
+  3. ``Worked Projects - {Month}`` provides per-tech/per-date project scope.
+  4. Assignments main grid fills behind Worked Projects.
+  5. Live default project is a last-resort fallback only.
+  6. Punch-note tags such as ``/ Neha``, ``/ Bonita``, and ``/ Josh`` are
+     off-Neuron conflict evidence unless an explicit Assignments override
+     confirms Neuron work.
 
-Work-context rule:
-  Included Neuron shifts are classified through ``triage.neuron_work_context_rules``.
-  The submission workbook receives the resulting task lane only. Rule reasons and
-  confidence belong in the internal review/audit sidecars, not the clean tracker.
-
-Exclusions (parsed, recorded in review, never counted):
-  - ``/ Bonita`` and other off-project coverage punches.
-  - Non-work markers: PTO / NON-PTO / N/A / out sick / vacation / off ...
-  - Excluded names: Yostinn Minaya, Steven Marques / Inventory.
+A tech/date shift enters the Bonita workbook only when that resolved source
+hierarchy says the work belongs to Neurons. This prevents stale/default Neuron
+labels from pulling in off-project days such as Patricia / Neha work.
 """
 from __future__ import annotations
 
@@ -51,24 +48,14 @@ from triage.nw_prj_neuron_track_hours.reader import (
     split_note_bearing_punch,
 )
 
-# ── Project display + classification config ─────────────────────────────────
 NEURON_INTERNAL_PROJECT = "Neuron Deployments"
-# Client-facing rename of the internal project (display alias).
 NEURON_DISPLAY_NAME = "Northwell - Neurons"
-
-# Backward-compatible constant name. This is no longer a universal default.
 DEFAULT_ASSIGNMENT_TYPE = CONFIGURATIONS
 DELIVERY_ASSIGNMENT_TYPE = LOGISTICS
-
 LONG_SHIFT_HOURS = 12.0
 
-# Off-project coverage signals seen in punch notes (parsed but not counted).
-_OFF_PROJECT_NOTE = re.compile(r"\bbonita\b", re.IGNORECASE)
-
-# Excluded names (never counted, recorded in review).
+_OFF_PROJECT_NOTE = re.compile(r"\b(bonita|neha|josh)\b", re.IGNORECASE)
 EXCLUDED_NAMES = {"yostinn minaya", "steven marques", "inventory"}
-
-# Non-work markers (whole-cell text instead of a punch time).
 _NON_WORK_MARKER = re.compile(
     r"^\s*(pto|non[\s-]*pto|n/?a|out\s*sick|sick|vacation|off\b.*|holiday|"
     r"unpaid|leave|absent)\s*$",
@@ -78,21 +65,19 @@ _NON_WORK_MARKER = re.compile(
 
 @dataclass
 class BonitaShift:
-    """One included Neuron shift destined for the clean workbook."""
-
-    month_key: str            # "2026-04"
-    month_name: str           # "April"
+    month_key: str
+    month_name: str
     date: date
-    day: str                  # "Tue"
+    day: str
     tech: str
-    clock_in: str             # display, e.g. "9:00 AM"
+    clock_in: str
     clock_out: str
     total_hours: float
     project_name: str = NEURON_DISPLAY_NAME
     assignment_type: str = DEFAULT_ASSIGNMENT_TYPE
     note: str = ""
     long_shift: bool = False
-    start_time: Optional[time] = None   # real time for h:mm AM/PM cells
+    start_time: Optional[time] = None
     end_time: Optional[time] = None
     assignment_rule: str = ""
     assignment_confidence: str = ""
@@ -100,10 +85,7 @@ class BonitaShift:
 
 @dataclass
 class BonitaReviewItem:
-    """A parsed-but-not-counted observation (or a counted-but-flagged one)."""
-
-    category: str             # off_project | non_work_marker | excluded_name
-                              # | long_shift | unparsed | assignment_ambiguous
+    category: str
     month_name: str
     date: Optional[date]
     day: str
@@ -143,9 +125,7 @@ class BonitaResolution:
         return [s for s in self.shifts if s.month_name == month_name_]
 
     def month_total(self, month_name_: str) -> float:
-        return round(
-            sum(round(s.total_hours, 2) for s in self.shifts_for_month(month_name_)), 2
-        )
+        return round(sum(round(s.total_hours, 2) for s in self.shifts_for_month(month_name_)), 2)
 
     def grand_total(self) -> float:
         return round(sum(round(s.total_hours, 2) for s in self.shifts), 2)
@@ -163,14 +143,44 @@ def _is_non_work_marker(text: str) -> bool:
 
 
 def _col_letter(idx0: int) -> str:
-    """0-based column index -> spreadsheet letter (for review source cell refs)."""
-
     idx = idx0 + 1
     out = ""
     while idx:
         idx, rem = divmod(idx - 1, 26)
         out = chr(65 + rem) + out
     return out
+
+
+def _add_review(
+    resolution: BonitaResolution,
+    *,
+    category: str,
+    month_name: str,
+    work_date: Optional[date],
+    day: str,
+    tech: str,
+    clock_in: str = "",
+    clock_out: str = "",
+    total_hours: float = 0.0,
+    project: str = "",
+    note: str = "",
+    source_cell: str = "",
+    detail: str = "",
+) -> None:
+    resolution.review.append(BonitaReviewItem(
+        category=category,
+        month_name=month_name,
+        date=work_date,
+        day=day,
+        tech=tech,
+        clock_in=clock_in,
+        clock_out=clock_out,
+        total_hours=total_hours,
+        project=project,
+        note=note,
+        source_cell=source_cell,
+        detail=detail,
+    ))
 
 
 def _resolve_month(wb, month_key: str, resolution: BonitaResolution) -> None:
@@ -183,19 +193,13 @@ def _resolve_month(wb, month_key: str, resolution: BonitaResolution) -> None:
 
     worked_ws = _find_sheet(wb, "Worked Projects", label)
     if worked_ws is None:
-        resolution.warnings.append(
-            f"worked_projects_missing:{label}:falling_back_to_default_and_assignments"
-        )
+        resolution.warnings.append(f"worked_projects_missing:{label}:falling_back_to_default_and_assignments")
     worked = _worked_project_lookup(worked_ws)
 
     assignments: Dict[tuple[date, str], str] = {}
     overrides: Dict[tuple[date, str], str] = {}
     try:
-        from triage.roster_parser import (
-            _find_assignments_sheet,
-            _load_assignments,
-            _load_overrides_only,
-        )
+        from triage.roster_parser import _find_assignments_sheet, _load_assignments, _load_overrides_only
         assignments_sheet = _find_assignments_sheet(wb, label)
         assignments = _load_assignments(assignments_sheet)
         overrides = _load_overrides_only(assignments_sheet)
@@ -246,17 +250,18 @@ def _resolve_month(wb, month_key: str, resolution: BonitaResolution) -> None:
             if ci is None and co is None:
                 marker = (note_in or note_out or "").strip()
                 if _is_non_work_marker(marker):
-                    resolution.review.append(BonitaReviewItem(
+                    _add_review(
+                        resolution,
                         category="non_work_marker",
                         month_name=short,
-                        date=d,
+                        work_date=d,
                         day=d.strftime("%a"),
                         tech=staff,
                         project=default_proj,
                         note=marker,
                         source_cell=f"{_col_letter(in_idx or out_idx or 0)}{r}",
                         detail="non-work marker, not counted",
-                    ))
+                    )
                 continue
 
             note = " ".join(n for n in (note_in, note_out) if n).strip()
@@ -267,13 +272,15 @@ def _resolve_month(wb, month_key: str, resolution: BonitaResolution) -> None:
             assign_label = assignments.get((d, staff), "")
             override_label = overrides.get((d, staff), "")
             resolved = override_label or worked_label or assign_label or default_proj
+            explicit_neuron_override = bool(override_label and _is_neuron(override_label))
 
             if _excluded_name(staff):
                 if _is_neuron(resolved):
-                    resolution.review.append(BonitaReviewItem(
+                    _add_review(
+                        resolution,
                         category="excluded_name",
                         month_name=short,
-                        date=d,
+                        work_date=d,
                         day=day,
                         tech=staff,
                         clock_in=_format_clock(ci),
@@ -283,14 +290,15 @@ def _resolve_month(wb, month_key: str, resolution: BonitaResolution) -> None:
                         note=note,
                         source_cell=cell_ref,
                         detail="excluded name, not counted",
-                    ))
+                    )
                 continue
 
-            if _OFF_PROJECT_NOTE.search(note):
-                resolution.review.append(BonitaReviewItem(
+            if _OFF_PROJECT_NOTE.search(note) and not explicit_neuron_override:
+                _add_review(
+                    resolution,
                     category="off_project",
                     month_name=short,
-                    date=d,
+                    work_date=d,
                     day=day,
                     tech=staff,
                     clock_in=_format_clock(ci),
@@ -299,8 +307,8 @@ def _resolve_month(wb, month_key: str, resolution: BonitaResolution) -> None:
                     project=resolved,
                     note=note,
                     source_cell=cell_ref,
-                    detail="off-project coverage punch, excluded from totals",
-                ))
+                    detail="off-project punch note, excluded from Neuron totals",
+                )
                 continue
 
             if not _is_neuron(resolved):
@@ -314,6 +322,7 @@ def _resolve_month(wb, month_key: str, resolution: BonitaResolution) -> None:
                 notes=note,
                 worked_label=worked_label or assign_label,
                 resolved_project=resolved,
+                tech_name=staff,
             )
             long_shift = gross >= LONG_SHIFT_HOURS
 
@@ -338,10 +347,11 @@ def _resolve_month(wb, month_key: str, resolution: BonitaResolution) -> None:
             resolution.shifts.append(shift)
 
             if long_shift:
-                resolution.review.append(BonitaReviewItem(
+                _add_review(
+                    resolution,
                     category="long_shift",
                     month_name=short,
-                    date=d,
+                    work_date=d,
                     day=day,
                     tech=staff,
                     clock_in=shift.clock_in,
@@ -351,12 +361,13 @@ def _resolve_month(wb, month_key: str, resolution: BonitaResolution) -> None:
                     note=note,
                     source_cell=cell_ref,
                     detail=f"long shift {gross:g}h included; verify",
-                ))
+                )
             if decision.confidence == "low":
-                resolution.review.append(BonitaReviewItem(
+                _add_review(
+                    resolution,
                     category="assignment_heuristic_low_confidence",
                     month_name=short,
-                    date=d,
+                    work_date=d,
                     day=day,
                     tech=staff,
                     clock_in=shift.clock_in,
@@ -366,13 +377,10 @@ def _resolve_month(wb, month_key: str, resolution: BonitaResolution) -> None:
                     note="",
                     source_cell=cell_ref,
                     detail=f"assignment resolved by heuristic rule: {decision.rule}",
-                ))
+                )
 
 
-def resolve_bonita_shifts(
-    roster_path: str | Path,
-    months: List[str],
-) -> BonitaResolution:
+def resolve_bonita_shifts(roster_path: str | Path, months: List[str]) -> BonitaResolution:
     try:
         import openpyxl
     except ImportError as e:  # pragma: no cover
@@ -388,7 +396,5 @@ def resolve_bonita_shifts(
     finally:
         wb.close()
     resolution.shifts.sort(key=lambda s: (s.month_key, s.date, s.tech))
-    resolution.review.sort(
-        key=lambda x: (x.category, x.date or date.min, x.tech)
-    )
+    resolution.review.sort(key=lambda x: (x.category, x.date or date.min, x.tech))
     return resolution
