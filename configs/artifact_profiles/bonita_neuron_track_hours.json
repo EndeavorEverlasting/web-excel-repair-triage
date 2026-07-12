@@ -7,7 +7,7 @@
     {"sheet": "Apr 26", "cell": "B1", "check": "contains", "contains": "TECH"},
     {"sheet": "May 26", "cell": "G1", "check": "contains", "contains": "ASSIGNMENT"}
   ],
-  "required_nonblank_columns": ["TECH", "PROJECT", "ASSIGNMENT", "TOTAL"],
+  "required_nonblank_columns": ["TECH", "START", "END", "PROJECT", "ASSIGNMENT", "TOTAL"],
   "forbidden_values": [
     "Bonita-friendly", "Column1", "Column2", "Column3", "Column4", "Column5",
     "confidence", "heuristic", "raw note", "private note",
