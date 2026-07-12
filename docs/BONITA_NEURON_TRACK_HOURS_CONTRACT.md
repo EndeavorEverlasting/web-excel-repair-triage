@@ -2,58 +2,119 @@
 
 ## Purpose
 
-Produce a clean, **submission-grade** Bonita workbook from the Active Roster
-Log: exactly two tabs (`Apr 26` / `May 26`), two-line headers, one row per
-included Neuron shift, values only. This is the **Roster Log → Admin Sheet**
-one-shot output path — admin-facing, narrow, and clean. No private notes, no
-confidence fields, no internal exception machinery leak into the workbook.
+Produce a clean, **submission-grade** Bonita workbook from the Active Roster Log:
+exactly two tabs (`Apr 26` / `May 26`), two-line headers, one row per included
+Neuron shift, values only. This is the **Roster Log → Admin Sheet** one-shot
+output path. No private notes, confidence fields, or internal review machinery
+may leak into the workbook.
 
-The generator lives in-package at `triage/nw_prj_neuron_track_hours/` and reuses
-the proven reader (note-aware punch parsing, clock helpers) and the private
-inlineStr repair, adding three new modules:
+This contract reflects the submitted April/May 2026 color-coded candidate. The
+hard lesson is: **attendance and assignment are separate facts**.
 
-| Module | Role |
-| --- | --- |
-| `bonita_resolver.py` | Per-date Neuron-project resolver + classification + review trail |
-| `bonita_exporter.py` | Clean two-tab `Apr 26` / `May 26` workbook (values only) |
-| `bonita_cli.py` | CLI + manifest / review-queue / preflight sidecars |
+- Live tabs prove clock-in / clock-out truth.
+- Worked Projects and Assignments prove whether that day belonged to Neurons.
+- Assignment classification rules map included Neuron time into Bonita umbrella
+  categories.
 
-## Inclusion rule (project-driven)
+## Final source hierarchy
 
-A tech/date shift enters the workbook **only** when the resolved project for
-that date is the Neuron project. Resolution precedence:
+A tech/date shift enters the workbook **only** when the final source hierarchy
+says that specific person/date belongs to the Neuron project.
 
 ```text
-Worked Projects cell  >  Assignments override  >  Live default project
+1. Live - {Month}
+   Source of clock truth only.
+   Use it for start/end times and gross hours.
+   Do not use the Live default project as proof when better assignment data exists.
+
+2. Assignments - {Month} override table
+   Highest-priority reviewed correction.
+   This can include a day that Worked Projects/default would exclude, or exclude
+   a day that a default project would otherwise pull into Neurons.
+
+3. Worked Projects - {Month}
+   Primary per-tech/per-date project assignment when no override exists.
+   This is what prevents stale broad-team/default labels from becoming Neuron hours.
+
+4. Assignments - {Month} main grid
+   Fallback project context behind Worked Projects.
+
+5. Live default project column
+   Last-resort fallback only.
+   Never enough by itself when Worked Projects or an override exists.
+
+6. Punch-note project tags
+   Conflict evidence. Tags like / Neha, / Bonita, or / Josh exclude the row from
+   Neuron submission unless the Assignments override table explicitly confirms
+   Neuron work.
 ```
 
-- The default project counts unless that day is overwritten to a non-Neuron
-  project; a default non-Neuron day counts only when overwritten to Neuron.
-- `ASSIGNMENT TYPE` (e.g. `Neuron Installation`, `Delivery / Transport /
-  Disposal`) is an activity sub-label **within** the Neuron project and still
-  counts.
-- April spans the full month (Apr 1–30) and May spans the roster-supported
-  range, derived from the `Live - {Month}` date headers — never a stale tracker
-  tab.
+### Canonical failure this prevents
 
-## Exclusions (parsed, recorded in review, never counted)
+A person can have valid punches on a date and still be off-Neuron. Patricia
+Marrero on 2026-04-23 had roster punches, but the day was Neha work, not Neuron
+work. A generator that trusts the Live/default Neuron label produces a false
+Bonita row. The correct generator excludes the row and keeps the reason in the
+review sidecar.
+
+## Exclusions
+
+Parsed, recorded in review where useful, never counted in the submitted month
+tabs:
 
 | Case | Behavior |
 | --- | --- |
-| `/ Bonita` and other off-project coverage punches | Parse time, keep note in review sidecar, do not count |
+| `/ Neha`, `/ Bonita`, `/ Josh` and similar off-project punch tags | Parse time, keep note in review sidecar, do not count unless explicit Neuron override exists |
 | Non-work markers (`PTO` / `NON-PTO` / `N/A` / `out sick` / `vacation` / `off …`) | Skipped to review |
-| Excluded names (`Yostinn Minaya`, `Steven Marques` / `Inventory`) | Never counted; recorded for traceability |
+| Excluded names (`Yostinn Minaya`, `Steven Marques` / `Inventory`) | Never counted; recorded for traceability when they otherwise resolve to Neuron |
 
 ## Project + assignment classification
 
-- `PROJECT NAME` is a **display alias**: internal `Neuron Deployments` →
-  client-facing `Northwell - Neurons`.
-- `ASSIGNMENT TYPE` is **operator-classified** and is *not* reliably encoded in
-  the per-date tabs. The engine defaults to `Neuron Installation`, accepts an
-  explicit `Delivery / Transport / Disposal` signal from worked-project activity
-  text or a punch note, and routes anything ambiguous to the review sidecar
-  rather than fabricating a Delivery/Transport label. This is the main fidelity
-  gap vs the hand-made tracker.
+`PROJECT NAME` is a display alias:
+
+```text
+internal: Neuron Deployments
+client-facing: Northwell - Neurons
+```
+
+`ASSIGNMENT TYPE` is derived after a row is already included as Neuron work. It
+must not decide Neuron eligibility.
+
+Use only the agreed Bonita umbrella labels:
+
+- Configurations
+- Inventory Management
+- Logistics
+- Deployments
+- Ticket Forwarding
+- Client Coordination
+- Documentation
+- Troubleshooting / Incident Response
+
+### April / May distribution rules
+
+These rules fill classification gaps when the activity sample timing does not
+line up cleanly with roster punches.
+
+| Context | Classification rule |
+| --- | --- |
+| April evening hours | Most often Deployments, secondarily Logistics |
+| April weekend hours | Deployments, occasionally Logistics |
+| May weekend hours | Mostly Configurations and Inventory Management |
+| May evening hours | Mostly Configurations; occasionally Inventory Management; least often Deployments or Logistics, with May 6 as a known exception pattern |
+| Daily hours | Generally Configurations, Inventory Management, Ticket Forwarding, Client Coordination, and Logistics, in that practical order unless stronger evidence exists |
+
+### Client Coordination and Ticket Forwarding restrictions
+
+- Geoff Gerber may receive Client Coordination in April.
+- Geoff was pulled to another project in May.
+- In May, only these people may receive Client Coordination or Ticket Forwarding:
+  - Khadejah Harrison
+  - Alejandro Perales
+  - Rich Perez / Richard Perez
+- Other May Client Coordination or Ticket Forwarding evidence routes to a safer
+  operational fallback and low-confidence review, unless an approved override
+  explicitly says otherwise.
 
 ## Workbook layout
 
@@ -66,15 +127,21 @@ DATE  | TECH | START | END  | TOTAL | PROJECT | ASSIGNMENT
 ```
 
 - Values only — no formulas, no notes/commentary in cells.
-- inlineStr repair applied for Web Excel safety.
+- Start and End are real Excel time values with `h:mm AM/PM` formatting.
+- Total Hours is numeric.
+- No populated row may have blank TECH, START, END, TOTAL, PROJECT, or ASSIGNMENT.
+- No `########` time overflow and no negative time serials.
+- inlineStr repair is applied for Web Excel safety.
 
-## Sidecars (next to the workbook, all gitignored)
+## Sidecars
+
+Sidecars live next to the workbook under `Outputs/` and are gitignored.
 
 ```text
 Bonita_Neuron_Track_Hours_April_May_2026.xlsx
-Neuron_Track_Hours_April_May_2026_manifest.json     # inputs, sheets used, per-month rows+totals, timestamp
-Neuron_Track_Hours_April_May_2026_review_queue.csv  # off-project, markers, excluded names, long shifts, source cells
-Neuron_Track_Hours_April_May_2026_preflight.json    # zip/package + Web Excel checks
+Neuron_Track_Hours_April_May_2026_manifest.json
+Neuron_Track_Hours_April_May_2026_review_queue.csv
+Neuron_Track_Hours_April_May_2026_preflight.json
 ```
 
 ## CLI
@@ -89,24 +156,27 @@ python -m triage.nw_prj_neuron_track_hours.bonita_cli `
   --websafe
 ```
 
-## Preflight pass criteria (Bonita)
+## Protected tests
 
-The Bonita workbook is intentionally minimal (values-only), so its preflight is
-focused rather than the richer dashboard preflight:
+Protected fixture-only coverage includes:
 
-- Valid zip package
-- No `inlineStr`, no `ns0:` / `xmlns:ns0`
-- No `calcChain.xml`
-- No external links
+- `tests/test_nw_prj_neuron_track_hours_bonita.py`
+- `tests/test_bonita_source_hierarchy.py`
+- `tests/test_neuron_work_context_rules.py`
 
-## Tests
+Required behavior:
 
-`tests/test_nw_prj_neuron_track_hours_bonita.py` — 13 fixture-only cases
-covering both tabs, full-month April span, note-bearing punches, non-work
-markers, worked-project and Assignments overrides, long shift, excluded names,
-populated-row completeness, manifest counts/totals, preflight, and `/ Bonita`
-off-project exclusion.
+- April spans full month, not Apr 1-4.
+- Note-bearing punches parse start/end but do not leak notes into the workbook.
+- Non-work markers route to review.
+- Assignments override table can include a reviewed Neuron correction.
+- Worked Projects can exclude a stale Live/default Neuron label.
+- Off-project punch tags exclude unless an explicit Neuron override exists.
+- Long shifts are included and review-flagged.
+- Excluded names never count.
+- Start/end/total/project/assignment cannot be blank on populated rows.
+- Start/end cells are real time values.
 
 ```powershell
-python -m pytest tests/test_nw_prj_neuron_track_hours_bonita.py -q
+python -m pytest tests/test_nw_prj_neuron_track_hours_bonita.py tests/test_bonita_source_hierarchy.py tests/test_neuron_work_context_rules.py -q
 ```
