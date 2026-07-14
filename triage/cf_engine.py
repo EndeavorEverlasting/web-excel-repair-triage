@@ -390,9 +390,23 @@ def _patch_styles_dxf(styles_bytes: bytes, merged_dxf_styles: List[str]) -> byte
     if re.search(pattern, xml, re.DOTALL):
         xml = re.sub(pattern, dxf_block, xml, count=1, flags=re.DOTALL)
     else:
-        idx = xml.find("</styleSheet>")
-        if idx != -1:
-            xml = xml[:idx] + dxf_block + xml[idx:]
+        # OOXML schema order: ... cellStyles, dxfs, tableStyles, colors, extLst ...
+        # Insert between </cellStyles> and <tableStyles> (or <colors> if no tableStyles)
+        inserted = False
+        for anchor in ("</cellStyles>", "</cellStyle>"):
+            idx = xml.find(anchor)
+            if idx != -1:
+                insert_at = idx + len(anchor)
+                # Skip whitespace after anchor
+                while insert_at < len(xml) and xml[insert_at] in " \t\n\r":
+                    insert_at += 1
+                xml = xml[:insert_at] + "\n" + dxf_block + "\n" + xml[insert_at:]
+                inserted = True
+                break
+        if not inserted:
+            idx = xml.find("</styleSheet>")
+            if idx != -1:
+                xml = xml[:idx] + dxf_block + xml[idx:]
 
     return xml.encode("utf-8")
 

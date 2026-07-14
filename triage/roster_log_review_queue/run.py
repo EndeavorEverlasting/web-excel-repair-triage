@@ -14,6 +14,7 @@ from .preflight import run_preflight
 from .provenance import build_provenance
 from .queue_builder import build_review_queue
 from .workbook_graft import graft_review_layer
+from triage.xlsx_utils import fix_inlinestr
 
 
 def _write_zip(xlsx_path: Path, provenance: dict, zip_path: Path) -> None:
@@ -58,6 +59,8 @@ def run(
         remove_calc_chain(pkg)
         remove_external_links(pkg)
         pkg.write(str(out))
+
+        fix_inlinestr(str(out))
 
         data = out.read_bytes()
         try:
