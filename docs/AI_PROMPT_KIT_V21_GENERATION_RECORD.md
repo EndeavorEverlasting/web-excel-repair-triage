@@ -55,6 +55,19 @@ The exact output SHA passed:
 - repository validator runs against the production artifact: all five validators passed;
 - `artifact_tool` import, key-range inspection, formula/error scan, drawing inspection, and four PNG renders passed.
 
+## CI result
+
+The PR-local `AI Prompt Kit contracts` workflow passed on GitHub for the V21 branch.
+
+The broader `Artifact engine tests` workflow remains blocked by the known `main`-baseline One Marcus fixture defect documented on PR #56:
+
+```text
+lxml.etree.XMLSyntaxError:
+Namespace prefix r for id on externalReference is not defined
+```
+
+The 11 affected tests are under `tests/test_one_marcus_recon.py` and `tests/test_one_marcus_immutability.py`. PR #55 owns the `tests/fixtures/one_marcus_recon/fixtures.py` namespace repair. The V21 branch does not duplicate that unrelated fix.
+
 ## Field acceptance
 
 Status: `NOT_RUN`.
