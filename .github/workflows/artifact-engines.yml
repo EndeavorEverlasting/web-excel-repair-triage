@@ -61,4 +61,11 @@ jobs:
             tests/test_same_family_compare.py \
             tests/test_gitignore_hygiene.py \
             tests/test_roster_log_review_queue.py \
-            -q
+            -q --junitxml=artifact-engine-junit.xml
+
+      - name: Upload artifact suite diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-engine-junit
+          path: artifact-engine-junit.xml
