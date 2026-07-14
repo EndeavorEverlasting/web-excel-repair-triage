@@ -1,11 +1,19 @@
 """Build a new roster review workbook shell for ``--mode blank``."""
 from __future__ import annotations
 
+import json
 from calendar import month_abbr, month_name, monthrange
 from pathlib import Path
 from typing import Dict, Iterable, List, Tuple
 
 from triage.month_validation import validate_month_key
+
+_REVIEW_RULES_SEED = (
+    Path(__file__).resolve().parents[2]
+    / "configs"
+    / "roster_log_review_queue"
+    / "review_rules_seed.json"
+)
 
 REVIEW_QUEUE_HEADERS = [
     "Review ID",
@@ -27,24 +35,60 @@ REVIEW_QUEUE_HEADERS = [
     "Notes",
 ]
 
-REVIEW_RULES: List[Tuple[str, str, str, str]] = [
-    ("MISSING_PROJECT", "Red", "Staff row has no project", "Assign or confirm the project."),
-    ("INCOMPLETE_PUNCH", "Red", "Only one punch is present", "Confirm the missing clock value."),
-    ("NON_WORK_MARKER", "Green", "Punch contains PTO, sick, N/A, or day-off text", "Confirm the non-work marker."),
-    ("LONG_SHIFT_12_PLUS", "Blue", "Gross punch span is at least 12 hours", "Review the shift and confirm the hours."),
-    ("EXTENDED_SHIFT_8_TO_12", "Purple", "Gross punch span is over 8 and under 12 hours", "Review for lunch or split-shift context."),
-    ("SHORT_SHIFT_UNDER_8", "Amber", "Gross punch span is over 0 and under 8 hours", "Confirm the partial shift."),
-    ("NOTE_BEARING_PUNCH", "Light Blue", "Punch contains a note delimiter", "Review and preserve the note as evidence."),
+CF_DICTIONARY: List[Tuple[str, str, str]] = [
+    (
+        "Red",
+        "Missing project or invalid punch pair",
+        "MISSING_PROJECT_CORRECTION, INVALID_PUNCH_PAIR",
+    ),
+    (
+        "Green",
+        "Documented non-work marker",
+        "PTO_ACCEPTED, OFF_DAY_ACCEPTED, DAY_OFF_EVIDENCE_ACCEPTED, "
+        "CASR_DAY_OFF_ACCEPTED",
+    ),
+    ("Blue", "Shift is 12 hours or longer", "LONG_SHIFT_REVIEW"),
+    ("Purple", "Potential overtime or extended shift", "OT_REVIEW"),
+    ("Amber", "Partial shift requires review", "PARTIAL_HOURS_REVIEW"),
+    (
+        "Light Blue",
+        "Punch contains reviewable note text",
+        "NOTE_BEARING_PUNCH",
+    ),
 ]
 
-CF_DICTIONARY: List[Tuple[str, str, str]] = [
-    ("Red", "Missing project or incomplete punch", "MISSING_PROJECT, INCOMPLETE_PUNCH"),
-    ("Green", "Documented non-work marker", "NON_WORK_MARKER"),
-    ("Blue", "Shift is 12 hours or longer", "LONG_SHIFT_12_PLUS"),
-    ("Purple", "Shift is over 8 and under 12 hours", "EXTENDED_SHIFT_8_TO_12"),
-    ("Amber", "Shift is under 8 hours", "SHORT_SHIFT_UNDER_8"),
-    ("Light Blue", "Punch contains reviewable note text", "NOTE_BEARING_PUNCH"),
-]
+
+def _load_review_rules() -> List[Tuple[str, str, str, str]]:
+    """Load the canonical review-rule contract without inventing rule codes."""
+    payload = json.loads(_REVIEW_RULES_SEED.read_text(encoding="utf-8"))
+    codes = [str(code).strip() for code in payload.get("rule_codes", []) if str(code).strip()]
+    if not codes:
+        raise ValueError(f"review rule seed has no rule_codes: {_REVIEW_RULES_SEED}")
+
+    rows_by_code: Dict[str, dict] = {}
+    for row in payload.get("rows", []):
+        if not isinstance(row, dict):
+            continue
+        code = str(row.get("rule_code") or row.get("Rule Code") or "").strip()
+        if code:
+            rows_by_code[code] = row
+
+    rules: List[Tuple[str, str, str, str]] = []
+    for code in codes:
+        row = rows_by_code.get(code, {})
+        rules.append(
+            (
+                code,
+                str(row.get("severity") or row.get("Severity") or ""),
+                str(row.get("trigger") or row.get("Trigger") or ""),
+                str(
+                    row.get("suggested_resolution")
+                    or row.get("Suggested Resolution")
+                    or ""
+                ),
+            )
+        )
+    return rules
 
 
 def _normalize_months(months: Iterable[str]) -> List[Tuple[str, int, int, str]]:
@@ -84,6 +128,7 @@ def build_blank_roster(path: str | Path, months: Iterable[str]) -> Dict[str, obj
     from openpyxl.utils import get_column_letter
 
     month_specs = _normalize_months(months)
+    review_rules = _load_review_rules()
     out = Path(path)
     out.parent.mkdir(parents=True, exist_ok=True)
 
@@ -103,10 +148,13 @@ def build_blank_roster(path: str | Path, months: Iterable[str]) -> Dict[str, obj
     dashboard.append(["Workbook State", "Blank operator shell"])
     dashboard.append(["Months", ", ".join(spec[0] for spec in month_specs)])
     dashboard.append(["Review Queue", "No source rows loaded"])
-    dashboard.append([
-        "Instructions",
-        "Enter staff, project, and punches on the Live tabs. Run full or review-only mode against a populated roster to build review evidence.",
-    ])
+    dashboard.append(
+        [
+            "Instructions",
+            "Enter staff, project, and punches on the Live tabs. Run full or "
+            "review-only mode against a populated roster to build review evidence.",
+        ]
+    )
     dashboard.column_dimensions["A"].width = 22
     dashboard.column_dimensions["B"].width = 92
     dashboard.freeze_panes = "A3"
@@ -116,25 +164,28 @@ def build_blank_roster(path: str | Path, months: Iterable[str]) -> Dict[str, obj
     _style_header(queue, 1, fill=header_fill, font=header_font, alignment=header_alignment)
     queue.freeze_panes = "A2"
     queue.auto_filter.ref = f"A1:{get_column_letter(len(REVIEW_QUEUE_HEADERS))}1"
-    for idx, width in enumerate([16, 14, 14, 24, 24, 18, 24, 12, 16, 24, 24, 34, 24, 24, 20, 18, 40], 1):
+    widths = [16, 14, 14, 24, 24, 18, 24, 12, 16, 24, 24, 34, 24, 24, 20, 18, 40]
+    for idx, width in enumerate(widths, 1):
         queue.column_dimensions[get_column_letter(idx)].width = width
 
     rules = wb.create_sheet("Review Rules")
     rules.append(["Rule Code", "Severity", "Trigger", "Suggested Resolution"])
-    for row in REVIEW_RULES:
+    for row in review_rules:
         rules.append(row)
     _style_header(rules, 1, fill=header_fill, font=header_font, alignment=header_alignment)
     rules.freeze_panes = "A2"
-    for col, width in zip("ABCD", [28, 14, 52, 52]):
+    for col, width in zip("ABCD", [34, 14, 52, 52]):
         rules.column_dimensions[col].width = width
 
     dictionary = wb.create_sheet("CF Dictionary")
     dictionary.append(["Color", "Meaning", "Rule Codes"])
     for row in CF_DICTIONARY:
         dictionary.append(row)
-    _style_header(dictionary, 1, fill=header_fill, font=header_font, alignment=header_alignment)
+    _style_header(
+        dictionary, 1, fill=header_fill, font=header_font, alignment=header_alignment
+    )
     dictionary.freeze_panes = "A2"
-    for col, width in zip("ABC", [18, 44, 48]):
+    for col, width in zip("ABC", [18, 44, 72]):
         dictionary.column_dimensions[col].width = width
 
     live_sheets: List[str] = []
@@ -161,6 +212,6 @@ def build_blank_roster(path: str | Path, months: Iterable[str]) -> Dict[str, obj
     return {
         "months": [spec[0] for spec in month_specs],
         "live_sheets": live_sheets,
-        "review_rules_rows": len(REVIEW_RULES),
+        "review_rules_rows": len(review_rules),
         "cf_dictionary_rows": len(CF_DICTIONARY),
     }
