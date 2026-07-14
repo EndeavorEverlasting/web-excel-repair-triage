@@ -354,7 +354,8 @@ def render_markdown(report: dict) -> str:
         lines.append("| Part | Error |")
         lines.append("|---|---|")
         for failure in failures:
-            lines.append(f"| `{failure['part']}` | {failure['error'].replace('|', '\\|')} |")
+            escaped_error = failure["error"].replace("|", "\\|")
+            lines.append(f"| `{failure['part']}` | {escaped_error} |")
     else:
         lines.append("- No XML parse failures detected by this static inspection.")
     lines.extend(["", "## Root-cause candidates", ""])
