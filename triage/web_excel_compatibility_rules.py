@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import List, Optional, Sequence
 from xml.etree import ElementTree as ET
 
-from triage.prompt_kit_common import NS, resolve_relationship_target, workbook_sheet_map, workbook_sheet_order, xml_root
+from triage.prompt_kit_common import NS, resolve_relationship_target, workbook_sheet_map, xml_root
 
 
 @dataclass(frozen=True)
@@ -38,6 +38,58 @@ def _relationship_targets(zf: zipfile.ZipFile, rel_name: str):
     return result
 
 
+_XML_PREFIX = r"[A-Za-z_][\w.-]*"
+_NAMESPACE_DECL_RE = re.compile(rf"\bxmlns:({_XML_PREFIX})\s*=\s*(['\"]).*?\2", re.DOTALL)
+_MC_PREFIX_LIST_RE = re.compile(
+    rf"(?:\b{_XML_PREFIX}:)?(?:Ignorable|MustUnderstand)\s*=\s*(['\"])(.*?)\1",
+    re.DOTALL,
+)
+_MC_QNAME_LIST_RE = re.compile(
+    rf"(?:\b{_XML_PREFIX}:)?(?:ProcessContent|PreserveAttributes|PreserveElements)\s*=\s*(['\"])(.*?)\1",
+    re.DOTALL,
+)
+_MC_CHOICE_REQUIRES_RE = re.compile(
+    rf"<(?:{_XML_PREFIX}:)?Choice\b[^>]*?\bRequires\s*=\s*(['\"])(.*?)\1",
+    re.DOTALL,
+)
+
+
+def _markup_compatibility_prefix_issues(zf: zipfile.ZipFile) -> List[WebExcelIssue]:
+    """Reject lexical QName prefixes used by Office MC attributes but undeclared in the XML part.
+
+    XML parsers do not validate namespace prefixes stored inside attribute values such as
+    ``mc:Ignorable=\"x15 xr\"`` or ``mc:Choice Requires=\"x15\"``. A serializer can
+    therefore rename namespace declarations to ``ns1``/``ns2`` while leaving those
+    strings untouched, producing well-formed XML that Office cannot process.
+    """
+    issues: List[WebExcelIssue] = []
+    for name in sorted(n for n in zf.namelist() if n.endswith(".xml")):
+        text = _read_text(zf, name)
+        declared = {match.group(1) for match in _NAMESPACE_DECL_RE.finditer(text)}
+        declared.add("xml")
+        referenced: list[tuple[str, str]] = []
+        for match in _MC_PREFIX_LIST_RE.finditer(text):
+            referenced.extend(("markup-compatibility prefix list", token) for token in match.group(2).split())
+        for match in _MC_CHOICE_REQUIRES_RE.finditer(text):
+            referenced.extend(("AlternateContent Choice Requires", token) for token in match.group(2).split())
+        for match in _MC_QNAME_LIST_RE.finditer(text):
+            for token in match.group(2).split():
+                if ":" in token:
+                    referenced.append(("markup-compatibility QName list", token.split(":", 1)[0]))
+        seen = set()
+        for source, prefix in referenced:
+            key = (source, prefix)
+            if not prefix or prefix in declared or key in seen:
+                continue
+            seen.add(key)
+            issues.append(WebExcelIssue(
+                "undeclared_markup_compatibility_prefix",
+                f"{source} references undeclared namespace prefix {prefix!r}; XML may parse while Excel refuses the package.",
+                name,
+            ))
+    return issues
+
+
 def _formula_cells(zf: zipfile.ZipFile) -> set[tuple[str, str]]:
     result: set[tuple[str, str]] = set()
     for sheet, part in workbook_sheet_map(zf).items():
@@ -51,22 +103,25 @@ def _formula_cells(zf: zipfile.ZipFile) -> set[tuple[str, str]]:
 def _calc_chain_issues(zf: zipfile.ZipFile) -> List[WebExcelIssue]:
     if "xl/calcChain.xml" not in zf.namelist():
         return []
-    order = workbook_sheet_order(zf)
+    workbook = xml_root(zf, "xl/workbook.xml")
+    sheet_names_by_id = {
+        sheet.attrib.get("sheetId", ""): sheet.attrib.get("name", "")
+        for sheet in workbook.findall("m:sheets/m:sheet", NS)
+        if sheet.attrib.get("sheetId")
+    }
     formulas = _formula_cells(zf)
     issues: List[WebExcelIssue] = []
     root = xml_root(zf, "xl/calcChain.xml")
     for entry in root.findall("m:c", NS):
-        raw_index = entry.attrib.get("i", "")
+        sheet_id = entry.attrib.get("i", "")
         ref = entry.attrib.get("r", "")
-        try:
-            one_based_index = int(raw_index)
-        except ValueError:
-            issues.append(WebExcelIssue("invalid_calc_chain_sheet_index", f"Invalid calcChain index {raw_index!r}.", "xl/calcChain.xml"))
+        if not sheet_id.isdigit():
+            issues.append(WebExcelIssue("invalid_calc_chain_sheet_id", f"Invalid calcChain sheetId {sheet_id!r}.", "xl/calcChain.xml"))
             continue
-        if one_based_index < 1 or one_based_index > len(order):
-            issues.append(WebExcelIssue("calc_chain_sheet_index_out_of_range", f"calcChain index {one_based_index} is outside workbook sheet order.", "xl/calcChain.xml"))
+        sheet = sheet_names_by_id.get(sheet_id)
+        if not sheet:
+            issues.append(WebExcelIssue("calc_chain_sheet_id_not_found", f"calcChain sheetId {sheet_id} is not present in xl/workbook.xml.", "xl/calcChain.xml"))
             continue
-        sheet = order[one_based_index - 1]
         if (sheet, ref) not in formulas:
             issues.append(WebExcelIssue("stale_calc_chain_entry", f"calcChain entry {sheet}!{ref} does not point to a formula cell.", "xl/calcChain.xml"))
     return issues
@@ -91,6 +146,8 @@ def inspect_web_excel_package(path: str | Path) -> List[WebExcelIssue]:
             except ET.ParseError as exc:
                 issues.append(WebExcelIssue("xml_parse_error", f"XML part failed to parse: {exc}.", name))
 
+        issues.extend(_markup_compatibility_prefix_issues(zf))
+
         if "[Content_Types].xml" not in names:
             issues.append(WebExcelIssue("missing_content_types", "Missing [Content_Types].xml."))
         else:
@@ -103,6 +160,8 @@ def inspect_web_excel_package(path: str | Path) -> List[WebExcelIssue]:
         for rel_name in sorted(name for name in names if name.endswith(".rels")):
             for rel_id, target in _relationship_targets(zf, rel_name):
                 issue_part = f"{rel_name}#{rel_id}" if rel_id else rel_name
+                if target.startswith("#"):
+                    continue
                 if target.startswith("/"):
                     issues.append(WebExcelIssue("absolute_internal_relationship_target", "Unexpected absolute internal relationship target.", issue_part))
                 resolved = resolve_relationship_target(rel_name, target)

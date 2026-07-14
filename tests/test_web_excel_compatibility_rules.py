@@ -62,3 +62,52 @@ def test_synchronized_calc_chain_is_allowed_and_stale_entry_fails(tmp_path):
     parts["xl/calcChain.xml"] = parts["xl/calcChain.xml"].replace(b'r="A1"', b'r="A99"')
     _write_parts(path, parts)
     assert "stale_calc_chain_entry" in {issue.code for issue in inspect_web_excel_package(path)}
+
+
+def test_rejects_undeclared_markup_compatibility_prefix_values(tmp_path):
+    path = build_prompt_kit(tmp_path / "mc_prefix_corruption.xlsx", 21, require_backlinks=False)
+    parts = _read_parts(path)
+    workbook = parts["xl/workbook.xml"]
+    workbook = workbook.replace(
+        b'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"',
+        b'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+        b'xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" '
+        b'xmlns:ns2="http://schemas.microsoft.com/office/spreadsheetml/2010/11/main" '
+        b'mc:Ignorable="x15"',
+    )
+    workbook = workbook.replace(
+        b'<sheets>',
+        b'<mc:AlternateContent><mc:Choice Requires="x15"><ns2:absPath url="C:\\temp\\"/></mc:Choice></mc:AlternateContent><sheets>',
+    )
+    parts["xl/workbook.xml"] = workbook
+    _write_parts(path, parts)
+
+    issues = inspect_web_excel_package(path)
+    assert "xml_parse_error" not in {issue.code for issue in issues}
+    mc_issues = [issue for issue in issues if issue.code == "undeclared_markup_compatibility_prefix"]
+    assert mc_issues
+    assert {issue.part for issue in mc_issues} == {"xl/workbook.xml"}
+    assert any("'x15'" in issue.message for issue in mc_issues)
+
+
+def test_accepts_declared_markup_compatibility_prefix_values(tmp_path):
+    path = build_prompt_kit(tmp_path / "mc_prefix_valid.xlsx", 21, require_backlinks=False)
+    parts = _read_parts(path)
+    workbook = parts["xl/workbook.xml"]
+    workbook = workbook.replace(
+        b'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"',
+        b'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+        b'xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" '
+        b'xmlns:x15="http://schemas.microsoft.com/office/spreadsheetml/2010/11/main" '
+        b'mc:Ignorable="x15"',
+    )
+    workbook = workbook.replace(
+        b'<sheets>',
+        b'<mc:AlternateContent><mc:Choice Requires="x15"><x15:absPath url="C:\\temp\\"/></mc:Choice></mc:AlternateContent><sheets>',
+    )
+    parts["xl/workbook.xml"] = workbook
+    _write_parts(path, parts)
+
+    assert "undeclared_markup_compatibility_prefix" not in {
+        issue.code for issue in inspect_web_excel_package(path)
+    }
