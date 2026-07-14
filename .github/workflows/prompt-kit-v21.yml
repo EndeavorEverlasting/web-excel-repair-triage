@@ -29,6 +29,8 @@ jobs:
             tests/test_worksheet_cell_integrity.py \
             tests/test_web_excel_compatibility_rules.py \
             tests/test_prompt_kit_v21.py \
+            tests/test_prompt_kit_v21_generator.py \
+            tests/test_prompt_kit_v21_repair_regressions.py \
             -q
       - name: Verify CLIs
         run: |
