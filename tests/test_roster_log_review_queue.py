@@ -14,6 +14,8 @@ from tests.fixtures.roster_log_review_queue.builders import (
     build_mini_roster,
     build_roster_with_legacy_cf,
 )
+from triage.one_marcus_recon import path_guard
+from triage.one_marcus_recon.path_guard import SourcePathWriteForbiddenError
 from triage.roster_log_review_queue.priority_allocator import (
     count_cf_groups,
     load_cf_markers,
@@ -53,7 +55,15 @@ def test_blank_mode_builds_review_first_shell(tmp_path: Path) -> None:
     ]
     assert wb.sheetnames[4:] == ["Live - April 2026", "Live - May 2026"]
     assert wb["Review Queue"]["A1"].value == "Review ID"
-    assert wb["Review Rules"].max_row == 8
+    assert wb["Review Rules"].max_row == 18
+    review_rule_codes = [
+        wb["Review Rules"].cell(row=row, column=1).value
+        for row in range(2, wb["Review Rules"].max_row + 1)
+    ]
+    assert review_rule_codes[0] == "MISSING_PROJECT_CORRECTION"
+    assert "PROJECT_CONFLICT" in review_rule_codes
+    assert "UNASSIGNED_WORKED_HOURS" in review_rule_codes
+    assert review_rule_codes[-1] == "MISSING_REZAUL_NEURON_ATTRIBUTION"
     assert wb["CF Dictionary"].max_row == 7
     assert wb["Live - April 2026"]["C2"].value == "Apr 01 - Clock In"
     assert wb["Live - April 2026"]["D2"].value == "Apr 01 - Clock Out"
@@ -73,6 +83,19 @@ def test_blank_mode_builds_review_first_shell(tmp_path: Path) -> None:
 def test_blank_mode_requires_months(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="--months is required for blank mode"):
         run(mode="blank", output_path=str(tmp_path / "blank.xlsx"))
+
+
+@pytest.mark.parametrize("readonly_root", ["Candidates", "Active"])
+def test_blank_mode_refuses_operator_input_folders(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, readonly_root: str
+) -> None:
+    monkeypatch.setattr(path_guard, "_REPO_ROOT", tmp_path)
+    out = tmp_path / readonly_root / "blank.xlsx"
+
+    with pytest.raises(SourcePathWriteForbiddenError):
+        run(mode="blank", output_path=str(out), months=["2026-04"])
+
+    assert not out.exists()
 
 
 def test_live_cf_patcher_adds_markers(tmp_path: Path) -> None:
