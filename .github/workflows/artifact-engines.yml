@@ -35,6 +35,16 @@ jobs:
       - name: Gitignore hygiene
         run: python -m triage.gitignore_hygiene
 
+      - name: Run focused roster review tests
+        run: python -m pytest tests/test_roster_log_review_queue.py -q --junitxml=roster-review-junit.xml
+
+      - name: Upload roster review diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roster-review-junit
+          path: roster-review-junit.xml
+
       - name: Run artifact engine tests
         run: |
           python -m pytest \
