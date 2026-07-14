@@ -70,6 +70,36 @@ def test_rejects_chart_parts_under_drawings(tmp_path):
     assert "drawing_rel_targets_chart_under_drawings" in codes
 
 
+def test_rejects_missing_and_absolute_relationship_targets(tmp_path):
+    path = tmp_path / "bad_relationships.xlsx"
+    parts = _minimal_parts()
+    parts["xl/drawings/_rels/drawing1.xml.rels"] = (
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart" Target="../charts/missing.xml"/>'
+        '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart" Target="/xl/charts/chart1.xml"/>'
+        '</Relationships>'
+    )
+    _write_xlsx(path, parts)
+
+    codes = {issue.code for issue in inspect_web_excel_package(path)}
+    assert "missing_relationship_target" in codes
+    assert "absolute_internal_relationship_target" in codes
+
+
+def test_rejects_relationship_targets_that_escape_package_root(tmp_path):
+    path = tmp_path / "escaping_relationship.xlsx"
+    parts = _minimal_parts()
+    parts["_rels/.rels"] = (
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="../xl/workbook.xml"/>'
+        '</Relationships>'
+    )
+    _write_xlsx(path, parts)
+
+    codes = {issue.code for issue in inspect_web_excel_package(path)}
+    assert "relationship_target_escapes_package" in codes
+
+
 def test_rejects_calc_chain_external_links_inline_strings_and_ns0(tmp_path):
     path = tmp_path / "bad_misc.xlsx"
     parts = _minimal_parts()
