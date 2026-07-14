@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RunContext",
+  "type": "object",
+  "properties": {
+    "run_id": { "type": "string" },
+    "workflow": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "operator": { "type": "string" },
+    "git": {
+      "type": "object",
+      "properties": {
+        "commit": { "type": "string" },
+        "branch": { "type": "string" },
+        "dirty": { "type": "boolean" }
+      },
+      "required": ["commit", "branch", "dirty"]
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "required": ["run_id", "workflow", "timestamp", "git", "inputs", "outputs"]
+}

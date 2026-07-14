@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HandoffMetadata",
+  "type": "object",
+  "properties": {
+    "run_id": { "type": "string" },
+    "workflow": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "git": {
+      "type": "object",
+      "properties": {
+        "commit": { "type": "string" },
+        "branch": { "type": "string" }
+      },
+      "required": ["commit", "branch"]
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string" },
+          "sha256": { "type": "string" },
+          "type": { "type": "string", "enum": ["input", "output", "provenance", "report"] }
+        },
+        "required": ["path", "sha256", "type"]
+      }
+    },
+    "proof_level": { "type": "string" },
+    "handoff_summary": { "type": "string" },
+    "next_steps": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": ["run_id", "workflow", "timestamp", "git", "artifacts", "proof_level", "handoff_summary", "next_steps"]
+}

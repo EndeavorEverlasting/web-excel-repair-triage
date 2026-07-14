@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OperatorReportMetadata",
+  "type": "object",
+  "properties": {
+    "run_id": { "type": "string" },
+    "workflow": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "git_commit": { "type": "string" },
+    "git_branch": { "type": "string" },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string" },
+          "sha256": { "type": "string" }
+        },
+        "required": ["path", "sha256"]
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string" },
+          "sha256": { "type": "string" }
+        },
+        "required": ["path", "sha256"]
+      }
+    },
+    "command_executed": { "type": "string" },
+    "validation_summary": {
+      "type": "object",
+      "properties": {
+        "passed": { "type": "boolean" },
+        "issue_count": { "type": "integer" }
+      },
+      "required": ["passed", "issue_count"]
+    },
+    "proof_ceiling": { "type": "string" },
+    "handoff_state": { "type": "string" }
+  },
+  "required": ["run_id", "workflow", "timestamp", "inputs", "outputs", "command_executed", "validation_summary", "proof_ceiling", "handoff_state"]
+}

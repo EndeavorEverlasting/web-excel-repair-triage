@@ -1,0 +1,22 @@
+{
+  "codebase": {
+    "triage/": {
+      "purpose": "Core Python package containing workbook engines, validators, and operators."
+    },
+    "triage/harness/": {
+      "purpose": "Repo-local AI harness CLI, registry-driven runner, and doctor commands."
+    },
+    "triage/one_marcus_recon/": {
+      "purpose": "One Marcus inventory reconciliation generator and relink engine."
+    },
+    "triage/roster_log_review_queue/": {
+      "purpose": "Blank shell builder and queue graft engine for roster logs."
+    },
+    "configs/": {
+      "purpose": "YAML and JSON configurations including artifact profiles and validation rule parameters."
+    },
+    ".ai/": {
+      "purpose": "Metadata, registries, schemas, and workflows defining the agent runtime context."
+    }
+  }
+}

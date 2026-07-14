@@ -1,0 +1,17 @@
+{
+  "artifacts": [
+    {
+      "id": "roster-review-workbook",
+      "name": "Roster Review Workbook",
+      "description": "Workbook containing Dashboard, Queue, Rules, and Live month sheets with patched CF.",
+      "expected_path_pattern": "Outputs/roster_review_*.xlsx"
+    },
+    {
+      "id": "bonita-neuron-track-hours",
+      "name": "Bonita Neuron Track Hours Sheet",
+      "description": "Neuron track hours billing sheet tailored for Bonita format.",
+      "expected_path_pattern": "Outputs/nw_prj_neuron_track_hours/bonita_*.xlsx",
+      "profile": "bonita_neuron_track_hours"
+    }
+  ]
+}

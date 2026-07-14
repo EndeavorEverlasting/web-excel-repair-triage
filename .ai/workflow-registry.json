@@ -1,0 +1,29 @@
+{
+  "workflows": [
+    {
+      "id": "roster-review-blank",
+      "name": "Roster Review Blank Shell Generation",
+      "description": "Generates a blank-shell roster review workbook with Dashboard, Queue, Rules, CF Dictionary, and Live month tabs, complete with standard conditional formatting package.",
+      "command_template": "python -m triage.roster_log_review_queue --mode blank --months {months} --output {output}",
+      "inputs": {
+        "months": {
+          "type": "array",
+          "description": "Months to generate sheets for (e.g., 2026-04 2026-05)",
+          "required": true
+        }
+      },
+      "outputs": {
+        "output": {
+          "type": "string",
+          "description": "Output path for the generated workbook",
+          "required": true,
+          "default": "Outputs/roster_review_blank.xlsx"
+        }
+      },
+      "validators": [
+        "web-excel-compatibility"
+      ],
+      "proof_ceiling": "Fixture-level generation and package preflight pass. Does not guarantee manual browser or operator acceptance."
+    }
+  ]
+}
