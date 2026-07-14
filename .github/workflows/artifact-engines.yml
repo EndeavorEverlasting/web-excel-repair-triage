@@ -63,7 +63,56 @@ jobs:
 
       - name: Import artifact engines
         run: |
-          python -c "import triage.cybernet_targets.cli; import triage.nw_prj_neuron_track_hours.cli; import triage.nw_prj_neuron_track_hours.bonita_cli; import triage.admin_billing_summary.cli; import triage.one_marcus_recon.cli; import triage.sidecar_html; import triage.artifact_fingerprint; import triage.artifact_profiles; import triage.artifact_compare; import triage.same_family_compare; import triage.roster_log_compare.compare; import triage.roster_log_review_queue.cli; import triage.gitignore_hygiene; print('imports ok')"
+          python -c "
+          import triage.cybernet_targets.cli
+          import triage.nw_prj_neuron_track_hours.cli
+          import triage.nw_prj_neuron_track_hours.bonita_cli
+          import triage.admin_billing_summary.cli
+          import triage.one_marcus_recon.cli
+          import triage.sidecar_html
+          import triage.artifact_fingerprint
+          import triage.artifact_profiles
+          import triage.artifact_compare
+          import triage.same_family_compare
+          import triage.roster_log_compare.compare
+          import triage.roster_log_review_queue.cli
+          import triage.gitignore_hygiene
+          import triage.admin_billing_context_rules
+          import triage.attendance_report
+          import triage.billing_bridge_validator
+          import triage.billing_context.cli
+          import triage.billing_context.context_rules
+          import triage.billing_context.exporters
+          import triage.billing_context.html_dashboard
+          import triage.billing_context.models
+          import triage.billing_context.reconcile
+          import triage.billing_rules
+          import triage.billing_summary_generator
+          import triage.cf_engine
+          import triage.cf_policy_deploymenttracker
+          import triage.dv_engine
+          import triage.gate_checks
+          import triage.hours_basis_policy
+          import triage.insight_ingest
+          import triage.nw_prj_artifact_compare
+          import triage.nw_prj_config
+          import triage.nw_prj_dashboard_generator
+          import triage.nw_prj_dashboard_validator
+          import triage.patcher
+          import triage.payable_hours_corrections
+          import triage.promote
+          import triage.refactor_engine
+          import triage.repo_apply
+          import triage.repo_engine
+          import triage.roster_parser
+          import triage.storage_policy
+          import triage.tech_hours_parser
+          import triage.tutorial
+          import triage.web_excel_browser
+          import triage.web_excel_compatibility_rules
+          import triage.xlsx_utils
+          print('imports ok')
+          "
 
       - name: Gitignore hygiene
         run: python -m triage.gitignore_hygiene
@@ -84,4 +133,33 @@ jobs:
             tests/test_same_family_compare.py \
             tests/test_gitignore_hygiene.py \
             tests/test_roster_log_review_queue.py \
+            tests/test_admin_billing_context_rules.py \
+            tests/test_attendance_report.py \
+            tests/test_billing_bridge_validator.py \
+            tests/test_billing_context_rules.py \
+            tests/test_billing_context_cli_e2e.py \
+            tests/test_billing_context_html.py \
+            tests/test_billing_context_reconcile.py \
+            tests/test_billing_regression.py \
+            tests/test_billing_rules.py \
+            tests/test_billing_summary_generator.py \
+            tests/test_cf_engine.py \
+            tests/test_cf_policy_deploymenttracker.py \
+            tests/test_dv_engine.py \
+            tests/test_hours_basis_policy.py \
+            tests/test_insight_ingest.py \
+            tests/test_nw_prj_dashboard.py \
+            tests/test_patcher.py \
+            tests/test_payable_hours_corrections.py \
+            tests/test_promote.py \
+            tests/test_refactor_engine.py \
+            tests/test_repo_apply.py \
+            tests/test_repo_engine.py \
+            tests/test_roster_parser.py \
+            tests/test_storage_policy.py \
+            tests/test_tutorial.py \
+            tests/test_web_excel_browser.py \
+            tests/test_web_excel_compatibility_rules.py \
+            tests/test_worker_project_hours_trace_doctrine.py \
+            tests/test_xlsx_utils.py \
             -q

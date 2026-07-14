@@ -67,7 +67,15 @@ def inspect_web_excel_package(path: str | Path) -> List[WebExcelIssue]:
         drawing_chart_rels = [name for name in names if name.startswith("xl/drawings/_rels/") and name.endswith(".rels")]
         for rel_name in drawing_chart_rels:
             rel_text = _read_text(zf, rel_name)
-            if "/xl/drawings/charts/" in rel_text or "drawings/charts/" in rel_text:
+            rel_parent = "/".join(rel_name.split("/")[:-2]) + "/"
+            targets_under_drawings = False
+            for tm in re.finditer(r'Target="([^"]+)"', rel_text):
+                target = tm.group(1)
+                resolved = target if target.startswith("/") else rel_parent + target
+                if "drawings/charts/" in resolved:
+                    targets_under_drawings = True
+                    break
+            if targets_under_drawings or "/xl/drawings/charts/" in rel_text or "drawings/charts/" in rel_text:
                 issues.append(WebExcelIssue(
                     "drawing_rel_targets_chart_under_drawings",
                     "Drawing chart relationships must target ../charts/chartN.xml or /xl/charts/chartN.xml.",
