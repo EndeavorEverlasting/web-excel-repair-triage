@@ -47,12 +47,14 @@ Scan all XML parts (see `configs/web_excel_stop_ship_tokens.json`):
 | Chart part topology | Chart part lives under an unexpected drawing subpath instead of the accepted chart path |
 | Chart relationship integrity | Drawing relationship points to a chart part that is absent or misplaced |
 | Duplicate table names | Two `table` parts share `displayName` or `name` |
-| Stale calc chain | `xl/calcChain.xml` survives programmatic edits |
+| Stale calc chain | A `calcChain.xml` entry does not resolve to an actual formula cell, or its one-based worksheet index is invalid |
 | External workbook links | `xl/externalLinks/` exists in a delivery artifact |
 | Serializer namespace pollution | XML contains `ns0:` or `xmlns:ns0` leakage |
 | R1C1 CF leakage | `RC\d` in `<f>` inside conditional formatting |
 | Missing `CF_Dictionary` | NW PRJ dashboard profile detected, sheet absent |
 | Column A override | Done row still matches queue-amber CF only |
+
+A calculation chain is workbook-profile evidence, not an automatic failure. Remove it when the generator contract requires removal. Preserve and synchronize it when the accepted structural fixture uses one.
 
 ## Package-shape drift rule
 
@@ -83,7 +85,7 @@ Do not hide structural churn behind a screenshot.
 - Charts disappear or detach from source ranges
 - CF behaves but workbook structure is poisoned
 
-**Likely causes:** duplicate tables, broken worksheet relationships, table relationship mismatch, inherited cruft, unsupported formulas/names, bad CF references, bad content-type defaults/overrides, bad drawing/chart topology, stale calc chain, or package-shape drift from full regeneration.
+**Likely causes:** duplicate tables, broken worksheet relationships, table relationship mismatch, inherited cruft, unsupported formulas/names, bad CF references, bad content-type defaults/overrides, bad drawing/chart topology, stale calculation metadata, or package-shape drift from full regeneration.
 
 ## Minimum acceptance ladder
 
@@ -95,7 +97,7 @@ A workbook candidate must pass these checks before delivery:
 4. Content types are sane.
 5. Relationship targets resolve inside the package.
 6. Stop-ship formula/name/error tokens are absent.
-7. `calcChain.xml` is absent after programmatic edits.
+7. Calculation metadata matches the selected workbook profile and every retained chain entry resolves to an actual formula cell.
 8. Tables/charts/drawings remain in the known-good topology.
 9. Target sheets render correctly.
 10. Non-target sheets remain stable.
