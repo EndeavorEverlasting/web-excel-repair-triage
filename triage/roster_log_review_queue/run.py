@@ -6,6 +6,8 @@ import zipfile
 from pathlib import Path
 from typing import Optional
 
+from triage.one_marcus_recon.path_guard import assert_output_path_allowed
+
 from .blank_builder import build_blank_roster
 from .live_cf_patcher import patch_live_cf
 from .models import GraftResult
@@ -48,9 +50,12 @@ def run(
     """Run graft pipeline for *mode* (blank|full|graft|review-only|live-cf-only)."""
     mode = mode.replace("graft", "full") if mode == "graft" else mode
     out = Path(output_path)
-    out.parent.mkdir(parents=True, exist_ok=True)
 
     if mode == "blank":
+        # Blank mode has no source workbook, but it still must obey the repo's
+        # Candidates/ and Active/ source-immutability contract before any mkdir/save.
+        assert_output_path_allowed(__file__, str(out))
+        out.parent.mkdir(parents=True, exist_ok=True)
         shell = build_blank_roster(out, months or [])
         data = out.read_bytes()
         data, live_stats = patch_live_cf(data, scan_path=str(out))
@@ -75,7 +80,10 @@ def run(
         provenance = build_provenance(
             input_workbook="<generated blank roster shell>",
             output_workbook=out.name,
-            method="new workbook generation: openpyxl shell + package/XML conditional-formatting append",
+            method=(
+                "new workbook generation: openpyxl shell + package/XML "
+                "conditional-formatting append"
+            ),
             live_cf_stats=live_stats,
             verification=verification,
             output_zip=Path(zip_out).name if zip_out else None,
@@ -103,7 +111,6 @@ def run(
         raise ValueError("--input is required for this mode")
 
     input_name = Path(input_path).name
-    out = Path(output_path)
     out.parent.mkdir(parents=True, exist_ok=True)
 
     pkg = Package.from_path(input_path)
@@ -112,7 +119,9 @@ def run(
     if mode in ("full", "review-only"):
         pkg = graft_review_layer(pkg, input_path)
 
-    queue_rows = build_review_queue(input_path) if mode in ("full", "review-only") else []
+    queue_rows = (
+        build_review_queue(input_path) if mode in ("full", "review-only") else []
+    )
 
     data = pkg.to_bytes()
     if mode in ("full", "live-cf-only"):
@@ -140,9 +149,14 @@ def run(
         )
 
     method = {
-        "full": "zip/xml surgical patch: review graft + append standard CF to every Live month tab",
+        "full": (
+            "zip/xml surgical patch: review graft + append standard CF "
+            "to every Live month tab"
+        ),
         "review-only": "zip/xml surgical patch: review layer graft only",
-        "live-cf-only": "zip/xml surgical patch: append standard CF to every Live month tab",
+        "live-cf-only": (
+            "zip/xml surgical patch: append standard CF to every Live month tab"
+        ),
     }.get(mode, mode)
 
     provenance = build_provenance(
@@ -155,12 +169,12 @@ def run(
         review_queue_rows=len(queue_rows),
         mode=mode,
     )
-
-    prov_path = provenance_out or str(out.with_suffix(".provenance.json"))
-    Path(prov_path).write_text(json.dumps(provenance, indent=2), encoding="utf-8")
-
-    if zip_out:
-        _write_zip(out, provenance, Path(zip_out))
+    _write_provenance_and_zip(
+        out=out,
+        provenance=provenance,
+        provenance_out=provenance_out,
+        zip_out=zip_out,
+    )
 
     return GraftResult(
         output_path=str(out),
