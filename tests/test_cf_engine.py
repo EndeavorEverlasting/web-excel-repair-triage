@@ -261,3 +261,68 @@ def test_t10_dxf_reference_integrity():
                 assert rule.dxf_id < n, \
                     f"dxf_id {rule.dxf_id} out of range (have {n} DXF styles)"
 
+
+# ─────────────────────────── T11 OOXML schema order ───────────────────────
+# Excel rejects styles.xml when <dxfs> appears after </colors> (end of file).
+# The OOXML schema mandates: cellStyles → dxfs → tableStyles → colors → extLst.
+# _patch_styles_dxf must insert between </cellStyles> and <tableStyles>.
+
+_STYLES_OPENPYXL_LIKE = b"""\
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="0" />
+<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b val="1"/><color rgb="00FFFFFF"/><sz val="16"/><name val="Calibri"/></font></fonts>
+<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>
+<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="1" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs>
+<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+<tableStyles count="0" defaultTableStyle="TableStyleMedium9" defaultPivotStyle="PivotStyleLight16" />
+<colors><indexedColors><rgbColor rgb="00000000" /><rgbColor rgb="00FFFFFF" /></indexedColors></colors>
+</styleSheet>"""
+
+
+def test_t11_dxf_schema_order_no_existing():
+    """When no <dxfs> exists, insert between </cellStyles> and <tableStyles>."""
+    from triage.cf_engine import _patch_styles_dxf
+
+    dxf_styles = ['<dxf><fill><patternFill><bgColor rgb="FFFFC7CE"/></patternFill></fill></dxf>']
+    result = _patch_styles_dxf(_STYLES_OPENPYXL_LIKE, dxf_styles)
+    xml = result.decode("utf-8")
+
+    idx_cellstyles = xml.find("</cellStyles>")
+    idx_dxfs = xml.find("<dxfs")
+    idx_tablestyles = xml.find("<tableStyles")
+
+    assert idx_cellstyles >= 0, "</cellStyles> not found"
+    assert idx_dxfs >= 0, "<dxfs> not found"
+    assert idx_tablestyles >= 0, "<tableStyles> not found"
+    assert idx_cellstyles < idx_dxfs < idx_tablestyles, (
+        f"OOXML schema order violated: </cellStyles>={idx_cellstyles}, "
+        f"<dxfs>={idx_dxfs}, <tableStyles>={idx_tablestyles}"
+    )
+
+
+def test_t12_dxf_schema_order_replaces_existing():
+    """When <dxfs> already exists, replace it in-place (preserving position)."""
+    from triage.cf_engine import _patch_styles_dxf
+
+    styles_with_dxfs = b"""\
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+<dxfs count="1"><dxf><fill><patternFill><bgColor rgb="FFFFFFFF"/></patternFill></fill></dxf></dxfs>
+<tableStyles count="0" defaultTableStyle="TableStyleMedium9" defaultPivotStyle="PivotStyleLight16" />
+</styleSheet>"""
+
+    new_dxf = '<dxf><fill><patternFill><bgColor rgb="FFFFC7CE"/></patternFill></fill></dxf>'
+    result = _patch_styles_dxf(styles_with_dxfs, [new_dxf])
+    xml = result.decode("utf-8")
+
+    idx_cellstyles = xml.find("</cellStyles>")
+    idx_dxfs = xml.find("<dxfs")
+    idx_tablestyles = xml.find("<tableStyles")
+    assert idx_cellstyles < idx_dxfs < idx_tablestyles
+    assert "FFFFC7CE" in xml
+    assert "FFFFFFFF" not in xml
+
