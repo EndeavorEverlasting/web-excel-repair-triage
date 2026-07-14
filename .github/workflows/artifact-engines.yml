@@ -22,21 +22,18 @@ jobs:
         run: python -m pip install pytest
 
       - name: Import workbook package validators
-        run: |
-          python -c "import triage.workbook_package_hygiene; import triage.copy_surface_bounds; import triage.prompt_kit_contract; print('workbook package validators import ok')"
+        run: python -c "import triage.workbook_package_hygiene; import triage.prompt_kit_contract; print('workbook validators import ok')"
 
       - name: Run workbook package hygiene tests
         run: |
           python -m pytest \
             tests/test_workbook_package_hygiene.py \
-            tests/test_copy_surface_bounds.py \
             tests/test_prompt_kit_contract.py \
             -q
 
       - name: Verify workbook package validator CLIs
         run: |
           python -m triage.workbook_package_hygiene --help
-          python -m triage.copy_surface_bounds --help
           python -m triage.prompt_kit_contract --help
 
   artifact-engines:

@@ -1,502 +1,638 @@
-"""Read-only OOXML validator for the AI Prompt Kit V19 contract."""
+"""Read-only V19 prompt-kit contract validator for AI Harness Prompt Kit workbooks.
+
+This module inspects the OOXML package and verifies the structural contract
+that the V19 acceptance definition requires.  It does not load or rewrite the
+workbook with Excel, openpyxl, or another serializer.
+
+Contract scope:
+* required sheets (21 prompt tabs, Prompt_Library, Prompt_Class_Legend);
+* approved visible fonts (Aptos family);
+* Prompt Library column layout and data integrity;
+* Aptos Bold for the H header, regular 12-point Aptos for H body cells;
+* copy-surface bounds: contiguous column-A payload, first row, final row,
+  internal blank count, package endpoint, populated columns;
+* hyperlink endpoints calculated from the actual compacted payload;
+* both B and N links target the exact expected range;
+* one authoritative nonempty legend meaning for every library color.
+
+Package-valid is not the same as clipboard-accepted or operator-accepted.
+"""
 from __future__ import annotations
 
 import argparse
 import json
 import re
 import zipfile
-from dataclasses import asdict, dataclass, field
-from pathlib import Path, PurePosixPath
-from typing import Iterable, Optional, Sequence
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 from xml.etree import ElementTree as ET
 
-MAIN = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
-REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-NS = {"m": MAIN, "r": REL}
+MAIN_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+PKG_REL_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
+NS = {"m": MAIN_NS, "r": REL_NS, "pr": PKG_REL_NS}
+
 CELL_RE = re.compile(r"^([A-Z]+)(\d+)$")
 RANGE_RE = re.compile(r"^([A-Z]+)(\d+):([A-Z]+)(\d+)$")
-DEFAULT_PROMPT_IDS = tuple(f"P{i:02d}" for i in range(21))
+
+REQUIRED_PROMPT_COUNT = 21
+PROMPT_IDS = [f"P{i:02d}" for i in range(REQUIRED_PROMPT_COUNT)]
+EXPECTED_COPY_SHEETS = [f"P{i:02d}_COPY_SAFE" for i in range(REQUIRED_PROMPT_COUNT)]
+
+APPROVED_FONTS = {"Aptos", "Aptos Display"}
+APPROVED_HEADING_FONTS = {"Aptos"}
+
+LIBRARY_HEADERS = [
+    "Seq", "Prompt ID", "Prompt Type", "Prompt Class", "Sprint Path Role",
+    "Use For Progress?", "Prompt Name", "Use This When", "Inspect First",
+    "Expected Output", "Next Step", "Proof / Acceptance Gate",
+    "Color Meaning", "Copy-Safe Sheet",
+]
+
+LEGEND_REQUIRED_HEADERS = {"Prompt Type", "Prompt Class", "Color"}
+
+
+def _col_num(col: str) -> int:
+    out = 0
+    for ch in col:
+        out = out * 26 + ord(ch) - 64
+    return out
+
+
+def _num_to_col(n: int) -> str:
+    s = ""
+    while n:
+        n, r = divmod(n - 1, 26)
+        s = chr(65 + r) + s
+    return s
+
+
+def _parse_range(ref: str) -> Optional[Tuple[int, int, int, int]]:
+    m = RANGE_RE.fullmatch(ref or "")
+    if not m:
+        return None
+    c1, r1, c2, r2 = m.groups()
+    return _col_num(c1), int(r1), _col_num(c2), int(r2)
 
 
 def _xml(z: zipfile.ZipFile, part: str) -> ET.Element:
     return ET.fromstring(z.read(part))
 
 
-def _resolve(owner: str, target: str) -> str:
-    if target.startswith("/"):
-        return target.lstrip("/")
-    parts: list[str] = []
-    for piece in (PurePosixPath(owner).parent / target).parts:
-        if piece in ("", "."):
-            continue
-        if piece == "..":
-            if parts:
-                parts.pop()
-        else:
-            parts.append(piece)
-    return "/".join(parts)
+def _shared_strings(z: zipfile.ZipFile) -> List[str]:
+    if "xl/sharedStrings.xml" not in z.namelist():
+        return []
+    root = _xml(z, "xl/sharedStrings.xml")
+    return [
+        "".join(t.text or "" for t in si.iter(f"{{{MAIN_NS}}}t"))
+        for si in root.findall("m:si", NS)
+    ]
 
 
-def _sheets(z: zipfile.ZipFile) -> dict[str, str]:
-    wb = _xml(z, "xl/workbook.xml")
+def _cell_value(cell: ET.Element, shared: Sequence[str]) -> str:
+    cell_type = cell.attrib.get("t")
+    if cell_type == "inlineStr":
+        return "".join(t.text or "" for t in cell.iter(f"{{{MAIN_NS}}}t"))
+    value = cell.find("m:v", NS)
+    if value is None or value.text is None:
+        return ""
+    if cell_type == "s":
+        try:
+            return shared[int(value.text)]
+        except (ValueError, IndexError):
+            return ""
+    return value.text
+
+
+def _workbook_sheets(z: zipfile.ZipFile) -> Dict[str, str]:
+    workbook = _xml(z, "xl/workbook.xml")
     rels = _xml(z, "xl/_rels/workbook.xml.rels")
     targets = {r.attrib["Id"]: r.attrib["Target"] for r in rels}
-    out: dict[str, str] = {}
-    for sheet in wb.findall("m:sheets/m:sheet", NS):
-        rid = sheet.attrib.get(f"{{{REL}}}id")
-        if rid in targets:
-            out[sheet.attrib["name"]] = _resolve("xl/workbook.xml", targets[rid])
+    out: Dict[str, str] = {}
+    for sheet in workbook.findall("m:sheets/m:sheet", NS):
+        rid = sheet.attrib.get(f"{{{REL_NS}}}id")
+        if rid and rid in targets:
+            target = targets[rid]
+            if not target.startswith("xl/"):
+                target = "xl/" + target
+            out[sheet.attrib["name"]] = target
     return out
 
 
-def _shared(z: zipfile.ZipFile) -> list[str]:
-    if "xl/sharedStrings.xml" not in z.namelist():
-        return []
-    return [
-        "".join(t.text or "" for t in item.iter(f"{{{MAIN}}}t"))
-        for item in _xml(z, "xl/sharedStrings.xml").findall("m:si", NS)
-    ]
-
-
-def _value(cell: ET.Element, shared: Sequence[str]) -> str:
-    if cell.attrib.get("t") == "inlineStr":
-        return "".join(t.text or "" for t in cell.iter(f"{{{MAIN}}}t"))
-    node = cell.find("m:v", NS)
-    if node is None or node.text is None:
-        return ""
-    if cell.attrib.get("t") == "s":
-        try:
-            return shared[int(node.text)]
-        except (ValueError, IndexError):
-            return ""
-    return node.text
-
-
-def _position(ref: str) -> Optional[tuple[str, int]]:
-    match = CELL_RE.fullmatch(ref or "")
-    return (match.group(1), int(match.group(2))) if match else None
-
-
-def _dimension_end(ref: Optional[str]) -> int:
-    if not ref:
-        return 0
-    match = RANGE_RE.fullmatch(ref)
-    if match:
-        return int(match.group(4))
-    pos = _position(ref)
-    return pos[1] if pos else 0
-
-
-def _fonts(z: zipfile.ZipFile) -> tuple[list[dict], list[int]]:
+def _styles_font_map(z: zipfile.ZipFile) -> Dict[int, Dict[str, Any]]:
+    if "xl/styles.xml" not in z.namelist():
+        return {}
     root = _xml(z, "xl/styles.xml")
-    fonts: list[dict] = []
-    for font in root.findall("m:fonts/m:font", NS):
-        name = font.find("m:name", NS)
-        size = font.find("m:sz", NS)
-        fonts.append(
-            {
-                "family": name.attrib.get("val", "") if name is not None else "",
-                "size": float(size.attrib["val"])
-                if size is not None and size.attrib.get("val")
-                else None,
-                "bold": font.find("m:b", NS) is not None,
-            }
-        )
-    xfs: list[int] = []
-    for xf in root.findall("m:cellXfs/m:xf", NS):
-        try:
-            xfs.append(int(xf.attrib.get("fontId", "0")))
-        except ValueError:
-            xfs.append(0)
-    return fonts, xfs
+    fonts_node = root.find("m:fonts", NS)
+    if fonts_node is None:
+        return {}
+    out: Dict[int, Dict[str, Any]] = {}
+    for i, font in enumerate(fonts_node.findall("m:font", NS)):
+        name_el = font.find("m:name", NS)
+        sz_el = font.find("m:sz", NS)
+        b_el = font.find("m:b", NS)
+        i_el = font.find("m:i", NS)
+        out[i] = {
+            "name": name_el.attrib.get("val", "") if name_el is not None else "",
+            "size": float(sz_el.attrib.get("val", "0")) if sz_el is not None else 0,
+            "bold": b_el is not None,
+            "italic": i_el is not None,
+        }
+    return out
 
 
-def _font(cell: ET.Element, fonts: Sequence[dict], xfs: Sequence[int]) -> dict:
+def _cell_font_info(
+    cell: ET.Element,
+    font_map: Dict[int, Dict[str, Any]],
+) -> Optional[Dict[str, Any]]:
+    style_idx = cell.attrib.get("s")
+    if style_idx is None:
+        return None
     try:
-        style = int(cell.attrib.get("s", "0"))
+        si = int(style_idx)
     except ValueError:
-        style = 0
-    font_id = xfs[style] if 0 <= style < len(xfs) else 0
-    return (
-        fonts[font_id]
-        if 0 <= font_id < len(fonts)
-        else {"family": "", "size": None, "bold": False}
-    )
+        return None
+    return font_map.get(si)
 
 
-def _surface(root: ET.Element, shared: Sequence[str], name: str) -> dict:
-    populated: list[tuple[str, int]] = []
-    cell_rows: list[int] = []
-    for cell in root.findall(".//m:c", NS):
-        pos = _position(cell.attrib.get("r", ""))
-        if not pos:
-            continue
-        column, row = pos
-        cell_rows.append(row)
-        if _value(cell, shared):
-            populated.append((column, row))
-    rows = sorted({row for _, row in populated})
-    first = rows[0] if rows else 0
-    last = rows[-1] if rows else 0
-    dim = root.find("m:dimension", NS)
-    row_nodes = [
-        int(r.attrib["r"])
-        for r in root.findall("m:sheetData/m:row", NS)
-        if r.attrib.get("r", "").isdigit()
-    ]
-    end = max(
-        _dimension_end(dim.attrib.get("ref") if dim is not None else None),
-        max(row_nodes, default=0),
-        max(cell_rows, default=0),
-    )
-    return {
-        "sheet": name,
-        "first_payload_row": first,
-        "last_payload_row": last,
-        "populated_rows": len(rows),
-        "internal_blank_rows": max(0, last - first + 1 - len(rows)) if rows else 0,
-        "package_end_row": end,
-        "trailing_rows": max(0, end - last),
-        "populated_columns": sorted({column for column, _ in populated}),
-    }
+def _sheet_hyperlinks(z: zipfile.ZipFile, sheet_part: str) -> Dict[str, str]:
+    parent = sheet_part.rsplit("/", 1)[0] if "/" in sheet_part else ""
+    base_name = sheet_part.rsplit("/", 1)[-1] if "/" in sheet_part else sheet_part
+    rels_name = f"{parent}/_rels/{base_name}.rels" if parent else f"_rels/{base_name}.rels"
+    rid_target: Dict[str, str] = {}
+    if rels_name in z.namelist():
+        rels = _xml(z, rels_name)
+        for r in rels:
+            rid_target[r.attrib["Id"]] = r.attrib.get("Target", "")
+    root = _xml(z, sheet_part)
+    out: Dict[str, str] = {}
+    for hl in root.findall(".//m:hyperlinks/m:hyperlink", NS):
+        ref = hl.attrib.get("ref", "")
+        rid = hl.attrib.get(f"{{{REL_NS}}}id", "")
+        if ref and rid:
+            out[ref] = rid_target.get(rid, "")
+        elif ref:
+            out[ref] = ""
+    return out
 
 
-@dataclass(frozen=True)
+@dataclass
 class Check:
     name: str
     status: str
-    findings: list[dict] = field(default_factory=list)
+    findings: List[Dict[str, Any]] = field(default_factory=list)
     summary: str = ""
 
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "status": self.status,
+            "summary": self.summary,
+            "findings": self.findings,
+        }
 
-@dataclass(frozen=True)
-class Report:
+
+@dataclass
+class PromptKitContractReport:
     path: str
-    passed: bool
-    checks: list[Check]
-    copy_surfaces: list[dict]
-    field_acceptance: str = "manual_web_excel_test_required"
+    checks: List[Check] = field(default_factory=list)
+    contract_valid: bool = False
 
     @property
-    def pass_all(self) -> bool:
-        return self.passed
+    def failures(self) -> List[Check]:
+        return [c for c in self.checks if c.status == "FAIL"]
 
-    def to_dict(self) -> dict:
+    @property
+    def warnings(self) -> List[Check]:
+        return [c for c in self.checks if c.status == "WARN"]
+
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "path": self.path,
-            "pass": self.passed,
-            "field_acceptance": self.field_acceptance,
-            "checks": [asdict(c) for c in self.checks],
-            "copy_surfaces": self.copy_surfaces,
+            "contract_valid": self.contract_valid,
+            "counts": {
+                "pass": sum(c.status == "PASS" for c in self.checks),
+                "warn": len(self.warnings),
+                "fail": len(self.failures),
+            },
+            "checks": [c.to_dict() for c in self.checks],
         }
 
     def render_text(self) -> str:
         lines = ["PROMPT KIT V19 CONTRACT"]
-        lines.extend(
-            f"[{c.status}] {c.name}{': ' + c.summary if c.summary else ''}"
-            for c in self.checks
-        )
-        lines.extend(
-            [
-                "",
-                f"Result: pass={str(self.passed).lower()}, "
-                f"field_acceptance={self.field_acceptance}",
-            ]
-        )
+        for check in self.checks:
+            suffix = f": {check.summary}" if check.summary else ""
+            lines.append(f"[{check.status}] {check.name}{suffix}")
+        lines.append("")
+        lines.append(f"Result: contract_valid={str(self.contract_valid).lower()}")
         return "\n".join(lines)
 
 
-def validate_prompt_kit_contract(
-    path: str,
-    *,
-    prompt_ids: Iterable[str] = DEFAULT_PROMPT_IDS,
-    allowed_font_families: Iterable[str] = ("Aptos",),
-) -> Report:
-    expected = tuple(dict.fromkeys(prompt_ids))
-    allowed = set(allowed_font_families)
-    checks: list[Check] = []
-    surfaces: list[dict] = []
-    with zipfile.ZipFile(path, "r") as z:
-        sheets, shared, (fonts, xfs) = _sheets(z), _shared(z), _fonts(z)
-        required = {
-            "Prompt_Library",
-            "Prompt_Class_Legend",
-            *(f"{p}_COPY_SAFE" for p in expected),
-        }
-        missing = sorted(required - set(sheets))
-        checks.append(
-            Check(
-                "required sheets",
-                "FAIL" if missing else "PASS",
-                [{"sheet": s} for s in missing],
-            )
-        )
+def validate_prompt_kit_contract(path: str) -> PromptKitContractReport:
+    workbook_path = Path(path)
+    report = PromptKitContractReport(path=str(workbook_path.resolve()))
 
-        bad_fonts: list[dict] = []
-        for sheet, part in sheets.items():
-            for cell in _xml(z, part).findall(".//m:c", NS):
-                if _value(cell, shared):
-                    spec = _font(cell, fonts, xfs)
-                    if spec["family"] not in allowed:
-                        bad_fonts.append(
-                            {"sheet": sheet, "cell": cell.attrib.get("r"), **spec}
-                        )
-        checks.append(
-            Check(
-                "visible fonts approved",
-                "FAIL" if bad_fonts else "PASS",
-                bad_fonts[:50],
-                f"allowed: {', '.join(sorted(allowed))}",
-            )
-        )
+    if not workbook_path.exists():
+        report.checks.append(Check("file exists", "FAIL", [{"path": str(workbook_path)}]))
+        return report
 
-        rows: dict[str, int] = {}
-        lib_cells: dict[str, ET.Element] = {}
-        lib_values: dict[str, str] = {}
-        links: dict[str, str] = {}
-        colors: list[str] = []
-        structure: list[dict] = []
-        typography: list[dict] = []
-        if "Prompt_Library" in sheets:
-            root = _xml(z, sheets["Prompt_Library"])
-            for cell in root.findall(".//m:c", NS):
-                ref = cell.attrib.get("r", "")
-                lib_cells[ref], lib_values[ref] = cell, _value(cell, shared)
-            for link in root.findall("m:hyperlinks/m:hyperlink", NS):
-                if link.attrib.get("location"):
-                    links[link.attrib.get("ref", "")] = (
-                        link.attrib["location"]
-                        .lstrip("#")
-                        .replace("'", "")
-                        .replace("$", "")
-                    )
-            for ref, wanted in {
-                "B1": "Prompt ID",
-                "H1": "Use This When",
-                "M1": "Color",
-                "N1": "Copy-Safe Sheet",
-            }.items():
-                if lib_values.get(ref, "") != wanted:
-                    structure.append(
-                        {
-                            "cell": ref,
-                            "expected": wanted,
-                            "actual": lib_values.get(ref, ""),
-                        }
-                    )
-            for ref, value in lib_values.items():
-                pos = _position(ref)
-                if pos and pos[0] == "B" and value in expected:
-                    rows[value] = pos[1]
-            for prompt_id in expected:
-                row = rows.get(prompt_id)
-                if row is None:
-                    structure.append(
-                        {"prompt_id": prompt_id, "issue": "prompt_id_missing"}
-                    )
-                    continue
-                sheet = f"{prompt_id}_COPY_SAFE"
-                if lib_values.get(f"N{row}", "") != sheet:
-                    structure.append(
-                        {
-                            "cell": f"N{row}",
-                            "expected": sheet,
-                            "actual": lib_values.get(f"N{row}", ""),
-                        }
-                    )
-                color = lib_values.get(f"M{row}", "")
-                colors.append(color)
-                if not color:
-                    structure.append(
-                        {"cell": f"M{row}", "issue": "color_missing"}
-                    )
-            if "H1" in lib_cells:
-                spec = _font(lib_cells["H1"], fonts, xfs)
-                if spec["family"] != "Aptos" or not spec["bold"]:
-                    typography.append(
-                        {"cell": "H1", "expected": "Aptos bold", "actual": spec}
-                    )
-            for prompt_id, row in rows.items():
-                cell = lib_cells.get(f"H{row}")
-                spec = _font(cell, fonts, xfs) if cell is not None else None
-                if (
-                    spec is None
-                    or spec["family"] != "Aptos"
-                    or spec["size"] != 12.0
-                    or spec["bold"]
-                ):
-                    typography.append(
-                        {
-                            "cell": f"H{row}",
-                            "prompt_id": prompt_id,
-                            "expected": "Aptos regular 12pt",
-                            "actual": spec,
-                        }
-                    )
-        checks.append(
-            Check(
-                "Prompt Library contract columns",
-                "FAIL" if structure else "PASS",
-                structure[:50],
-            )
-        )
-        checks.append(
-            Check(
-                "Prompt Library column H typography",
-                "FAIL" if typography else "PASS",
-                typography[:50],
-            )
-        )
+    try:
+        with zipfile.ZipFile(workbook_path, "r") as z:
+            shared = _shared_strings(z)
+            sheets = _workbook_sheets(z)
+            font_map = _styles_font_map(z)
 
-        surface_issues: list[dict] = []
-        by_sheet: dict[str, dict] = {}
-        for prompt_id in expected:
-            name = f"{prompt_id}_COPY_SAFE"
-            if name not in sheets:
-                continue
-            surface = _surface(_xml(z, sheets[name]), shared, name)
-            surfaces.append(surface)
-            by_sheet[name] = surface
-            if surface["first_payload_row"] != 1:
-                surface_issues.append(
-                    {
-                        "sheet": name,
-                        "issue": "payload_does_not_start_at_row_1",
-                        "actual": surface["first_payload_row"],
-                    }
-                )
-            if surface["populated_columns"] != ["A"]:
-                surface_issues.append(
-                    {
-                        "sheet": name,
-                        "issue": "payload_not_single_column_A",
-                        "columns": surface["populated_columns"],
-                    }
-                )
-            if surface["internal_blank_rows"]:
-                surface_issues.append(
-                    {
-                        "sheet": name,
-                        "issue": "internal_blank_rows",
-                        "count": surface["internal_blank_rows"],
-                    }
-                )
-            if surface["trailing_rows"]:
-                surface_issues.append(
-                    {
-                        "sheet": name,
-                        "issue": "trailing_package_rows",
-                        "count": surface["trailing_rows"],
-                    }
-                )
-        checks.append(
-            Check(
-                "copy surfaces dense and bounded",
-                "FAIL" if surface_issues else "PASS",
-                surface_issues[:50],
-            )
-        )
+            # --- Required sheets ---
+            missing_sheets = [s for s in EXPECTED_COPY_SHEETS if s not in sheets]
+            has_library = "Prompt_Library" in sheets
+            has_legend = "Prompt_Class_Legend" in sheets
 
-        link_issues: list[dict] = []
-        for prompt_id in expected:
-            row, name = rows.get(prompt_id), f"{prompt_id}_COPY_SAFE"
-            surface = by_sheet.get(name)
-            if row is None or not surface or not surface["last_payload_row"]:
-                continue
-            wanted = f"{name}!A1:A{surface['last_payload_row']}"
-            for column in ("B", "N"):
-                ref = f"{column}{row}"
-                if links.get(ref) != wanted:
-                    link_issues.append(
-                        {
-                            "prompt_id": prompt_id,
-                            "cell": ref,
-                            "expected": wanted,
-                            "actual": links.get(ref),
-                        }
-                    )
-        checks.append(
-            Check(
-                "Prompt Library links select exact payload ranges",
-                "FAIL" if link_issues else "PASS",
-                link_issues[:50],
-                "package proof only; browser selection remains a field gate",
-            )
-        )
+            report.checks.append(Check(
+                "required prompt tabs",
+                "FAIL" if missing_sheets else "PASS",
+                [{"missing": s} for s in missing_sheets],
+                f"{len(EXPECTED_COPY_SHEETS) - len(missing_sheets)}/{len(EXPECTED_COPY_SHEETS)} present",
+            ))
+            report.checks.append(Check(
+                "Prompt_Library present",
+                "FAIL" if not has_library else "PASS",
+            ))
+            report.checks.append(Check(
+                "Prompt_Class_Legend present",
+                "FAIL" if not has_legend else "PASS",
+            ))
 
-        legend_issues: list[dict] = []
-        if "Prompt_Class_Legend" in sheets:
-            legend_rows: dict[int, dict[str, str]] = {}
-            for cell in _xml(z, sheets["Prompt_Class_Legend"]).findall(
-                ".//m:c", NS
-            ):
-                pos = _position(cell.attrib.get("r", ""))
-                if pos:
-                    legend_rows.setdefault(pos[1], {})[pos[0]] = _value(
-                        cell, shared
-                    )
-            header_row, color_col, meaning_col = 0, "", ""
-            for number in sorted(legend_rows)[:10]:
-                for column, text in legend_rows[number].items():
-                    normalized = text.strip().lower()
-                    if normalized == "color":
-                        color_col = column
-                    if "meaning" in normalized or "operational" in normalized:
-                        meaning_col = column
-                if color_col and meaning_col:
-                    header_row = number
+            # --- Font inventory ---
+            font_names = {v["name"] for v in font_map.values() if v["name"]}
+            disallowed = font_names - APPROVED_FONTS
+            report.checks.append(Check(
+                "approved visible fonts",
+                "WARN" if disallowed else "PASS",
+                [{"font": f} for f in sorted(disallowed)],
+                f"non-Aptos fonts detected" if disallowed else "all fonts approved",
+            ))
+
+            if not has_library:
+                report.contract_valid = not report.failures
+                return report
+
+            # --- Prompt Library structure ---
+            lib_part = sheets["Prompt_Library"]
+            lib_root = _xml(z, lib_part)
+            lib_cells = {}
+            for c in lib_root.findall(".//m:c", NS):
+                ref = c.attrib.get("r", "")
+                lib_cells[ref] = _cell_value(c, shared)
+
+            # Parse library into rows
+            lib_rows: Dict[int, Dict[str, str]] = {}
+            for ref, val in lib_cells.items():
+                m = CELL_RE.match(ref)
+                if m:
+                    col = m.group(1)
+                    row = int(m.group(2))
+                    lib_rows.setdefault(row, {})[col] = val
+
+            # Check header row
+            header_row = lib_rows.get(1, {})
+            header_vals = [header_row.get(_num_to_col(i + 1), "") for i in range(len(LIBRARY_HEADERS))]
+            header_issues = []
+            for i, expected in enumerate(LIBRARY_HEADERS):
+                actual = header_vals[i] if i < len(header_vals) else ""
+                if actual != expected:
+                    header_issues.append({
+                        "column": _num_to_col(i + 1),
+                        "expected": expected,
+                        "actual": actual,
+                    })
+            report.checks.append(Check(
+                "Prompt Library headers",
+                "FAIL" if header_issues else "PASS",
+                header_issues[:10],
+            ))
+
+            # Extract prompt data rows (rows 2-22 for P00-P20)
+            lib_data: Dict[str, Dict[str, str]] = {}
+            for row_num in range(2, 2 + REQUIRED_PROMPT_COUNT):
+                row = lib_rows.get(row_num, {})
+                pid = row.get("B", "")
+                lib_data[pid] = row
+
+            # Check prompt IDs
+            pid_issues = []
+            for i, expected_pid in enumerate(PROMPT_IDS):
+                actual = lib_data.get(expected_pid, {}).get("B", "")
+                if actual != expected_pid:
+                    pid_issues.append({"row": i + 2, "expected": expected_pid, "actual": actual})
+            report.checks.append(Check(
+                "Prompt Library prompt IDs",
+                "FAIL" if pid_issues else "PASS",
+                pid_issues[:10],
+            ))
+
+            # Check copy-safe sheet references
+            copy_ref_issues = []
+            for i, expected_pid in enumerate(PROMPT_IDS):
+                row = lib_data.get(expected_pid, {})
+                expected_sheet = f"{expected_pid}_COPY_SAFE"
+                actual_sheet = row.get("N", "")
+                if actual_sheet != expected_sheet:
+                    copy_ref_issues.append({
+                        "row": i + 2,
+                        "expected": expected_sheet,
+                        "actual": actual_sheet,
+                    })
+            report.checks.append(Check(
+                "copy-safe sheet references",
+                "FAIL" if copy_ref_issues else "PASS",
+                copy_ref_issues[:10],
+            ))
+
+            # --- Column H font check (Aptos Bold header, 12pt regular body) ---
+            h_font_issues: List[Dict[str, Any]] = []
+            # Check header H1
+            h1_cell = None
+            for c in lib_root.findall(".//m:c", NS):
+                if c.attrib.get("r") == "H1":
+                    h1_cell = c
                     break
-            if not header_row:
-                legend_issues.append({"issue": "legend_headers_missing"})
-            else:
-                mappings: dict[str, list[str]] = {}
-                for number, values in legend_rows.items():
-                    if number > header_row and values.get(color_col, "").strip():
-                        mappings.setdefault(values[color_col].strip(), []).append(
-                            values.get(meaning_col, "").strip()
-                        )
-                for color in sorted(set(colors)):
-                    entries = mappings.get(color, [])
-                    if len(entries) != 1 or not entries[0]:
-                        legend_issues.append(
-                            {
-                                "color": color,
-                                "issue": "color_requires_exactly_one_nonempty_meaning",
-                                "entries": entries,
-                            }
-                        )
-        checks.append(
-            Check(
-                "Prompt Class Legend covers every library color",
-                "FAIL" if legend_issues else "PASS",
-                legend_issues[:50],
-            )
-        )
+            if h1_cell is not None:
+                fi = _cell_font_info(h1_cell, font_map)
+                if fi:
+                    if not fi["bold"]:
+                        h_font_issues.append({"cell": "H1", "issue": "header_not_bold", "font": fi["name"]})
+                    if fi["name"] not in APPROVED_HEADING_FONTS:
+                        h_font_issues.append({"cell": "H1", "issue": "header_font_not_aptos", "font": fi["name"]})
 
-    passed = all(check.status == "PASS" for check in checks)
-    return Report(str(Path(path).resolve()), passed, checks, surfaces)
+            # Check body cells H2-H22
+            body_font_issues: List[Dict[str, Any]] = []
+            for row_num in range(2, 2 + REQUIRED_PROMPT_COUNT):
+                cell_ref = f"H{row_num}"
+                for c in lib_root.findall(".//m:c", NS):
+                    if c.attrib.get("r") == cell_ref:
+                        fi = _cell_font_info(c, font_map)
+                        if fi:
+                            if fi["bold"]:
+                                body_font_issues.append({"cell": cell_ref, "issue": "body_cell_is_bold"})
+                            if fi["name"] not in APPROVED_FONTS:
+                                body_font_issues.append({"cell": cell_ref, "issue": "body_font_not_aptos", "font": fi["name"]})
+                            if fi["size"] != 12:
+                                body_font_issues.append({"cell": cell_ref, "issue": "body_font_not_12pt", "size": fi["size"]})
+                        break
+
+            all_h_issues = h_font_issues + body_font_issues
+            report.checks.append(Check(
+                "Prompt Library column H typography",
+                "FAIL" if all_h_issues else "PASS",
+                all_h_issues[:10],
+            ))
+
+            # --- Copy-surface bounds ---
+            surface_findings: List[Dict[str, Any]] = []
+            surface_details: Dict[str, Dict[str, Any]] = {}
+
+            for sheet_name in EXPECTED_COPY_SHEETS:
+                if sheet_name not in sheets:
+                    continue
+                sheet_part = sheets[sheet_name]
+                sheet_root = _xml(z, sheet_part)
+                populated: Dict[int, str] = {}
+                for c in sheet_root.findall(".//m:c", NS):
+                    ref = c.attrib.get("r", "")
+                    m = CELL_RE.match(ref)
+                    if m:
+                        row_num = int(m.group(2))
+                        col = m.group(1)
+                        val = _cell_value(c, shared)
+                        if col == "A" and val:
+                            populated[row_num] = val
+
+                if not populated:
+                    surface_findings.append({"sheet": sheet_name, "issue": "empty_copy_surface"})
+                    surface_details[sheet_name] = {"populated_rows": 0, "first_row": 0, "last_row": 0, "blanks": 0}
+                    continue
+
+                rows = sorted(populated.keys())
+                first_row = rows[0]
+                last_row = rows[-1]
+                expected_count = last_row - first_row + 1
+                actual_count = len(rows)
+                blanks = expected_count - actual_count
+
+                # Check all populated cells are in column A
+                non_a_cells: List[str] = []
+                for c in sheet_root.findall(".//m:c", NS):
+                    ref = c.attrib.get("r", "")
+                    cm = CELL_RE.match(ref)
+                    if cm and cm.group(1) != "A" and _cell_value(c, shared):
+                        non_a_cells.append(ref)
+
+                # Check contiguous from A1
+                if first_row != 1:
+                    surface_findings.append({
+                        "sheet": sheet_name,
+                        "issue": "payload_does_not_start_at_A1",
+                        "first_row": first_row,
+                    })
+                if blanks > 0:
+                    # Identify internal blanks
+                    internal_blanks = [r for r in range(first_row, last_row + 1) if r not in populated]
+                    surface_findings.append({
+                        "sheet": sheet_name,
+                        "issue": "internal_blank_rows",
+                        "blank_rows": internal_blanks[:10],
+                        "blank_count": blanks,
+                    })
+                if non_a_cells:
+                    surface_findings.append({
+                        "sheet": sheet_name,
+                        "issue": "non_column_a_populated_cells",
+                        "cells": non_a_cells[:10],
+                    })
+
+                # Check for trailing rows (rows beyond payload that have data in any column)
+                trailing_findings: List[str] = []
+                for c in sheet_root.findall(".//m:c", NS):
+                    ref = c.attrib.get("r", "")
+                    cm = CELL_RE.match(ref)
+                    if cm:
+                        r_num = int(cm.group(2))
+                        if r_num > last_row and _cell_value(c, shared):
+                            trailing_findings.append(ref)
+                if trailing_findings:
+                    surface_findings.append({
+                        "sheet": sheet_name,
+                        "issue": "trailing_rows_after_payload",
+                        "cells": trailing_findings[:10],
+                    })
+
+                surface_details[sheet_name] = {
+                    "populated_rows": actual_count,
+                    "first_row": first_row,
+                    "last_row": last_row,
+                    "blanks": blanks,
+                    "endpoint": f"A{last_row}",
+                }
+
+            report.checks.append(Check(
+                "copy-surface bounds",
+                "FAIL" if surface_findings else "PASS",
+                surface_findings[:25],
+                f"{len(surface_details)} surfaces measured",
+            ))
+
+            # --- Hyperlink endpoint checks ---
+            lib_hyperlinks = _sheet_hyperlinks(z, lib_part)
+            link_issues: List[Dict[str, Any]] = []
+
+            for i, expected_pid in enumerate(PROMPT_IDS):
+                row_num = i + 2
+                row = lib_data.get(expected_pid, {})
+                expected_sheet = f"{expected_pid}_COPY_SAFE"
+                surface = surface_details.get(expected_sheet, {})
+                last_row = surface.get("last_row", 0)
+                expected_endpoint = f"{expected_sheet}!A1:A{last_row}" if last_row else ""
+
+                # Check N column link
+                n_ref = f"N{row_num}"
+                n_link = lib_hyperlinks.get(n_ref, "")
+                if expected_endpoint and n_link != expected_endpoint:
+                    link_issues.append({
+                        "cell": n_ref,
+                        "expected": expected_endpoint,
+                        "actual": n_link or "(no hyperlink)",
+                        "column": "N",
+                    })
+
+                # Check B column link
+                b_ref = f"B{row_num}"
+                b_link = lib_hyperlinks.get(b_ref, "")
+                if expected_endpoint and b_link != expected_endpoint:
+                    link_issues.append({
+                        "cell": b_ref,
+                        "expected": expected_endpoint,
+                        "actual": b_link or "(no hyperlink)",
+                        "column": "B",
+                    })
+
+            report.checks.append(Check(
+                "hyperlink endpoints",
+                "FAIL" if link_issues else "PASS",
+                link_issues[:20],
+            ))
+
+            # --- Color legend coverage ---
+            if has_legend:
+                legend_part = sheets["Prompt_Class_Legend"]
+                legend_root = _xml(z, legend_part)
+                legend_cells: Dict[str, str] = {}
+                for c in legend_root.findall(".//m:c", NS):
+                    ref = c.attrib.get("r", "")
+                    legend_cells[ref] = _cell_value(c, shared)
+
+                # Find header row (look for "Color" in column H or "Prompt Type" in column A)
+                legend_header_row = 0
+                for ref, val in legend_cells.items():
+                    m = CELL_RE.match(ref)
+                    if m and m.group(1) == "H" and val == "Color":
+                        legend_header_row = int(m.group(2))
+                        break
+                if legend_header_row == 0:
+                    for ref, val in legend_cells.items():
+                        m = CELL_RE.match(ref)
+                        if m and m.group(1) == "A" and val == "Prompt Type":
+                            legend_header_row = int(m.group(2))
+                            break
+
+                # Collect legend colors (column H below header)
+                legend_colors: Dict[str, List[str]] = {}
+                if legend_header_row:
+                    for ref, val in legend_cells.items():
+                        m = CELL_RE.match(ref)
+                        if m and m.group(1) == "H" and int(m.group(2)) > legend_header_row and val:
+                            row_num = int(m.group(2))
+                            prompt_type = legend_cells.get(f"A{row_num}", "")
+                            legend_colors.setdefault(val, []).append(prompt_type)
+
+                # Collect library colors (column M below header)
+                lib_colors: Dict[str, List[str]] = {}
+                for i, pid in enumerate(PROMPT_IDS):
+                    row_num = i + 2
+                    color = lib_data.get(pid, {}).get("M", "")
+                    if color:
+                        lib_colors.setdefault(color, []).append(pid)
+
+                legend_issues: List[Dict[str, Any]] = []
+                for color, pids in lib_colors.items():
+                    meanings = legend_colors.get(color, [])
+                    if not meanings:
+                        legend_issues.append({
+                            "color": color,
+                            "issue": "color_missing_from_legend",
+                            "used_by": pids,
+                        })
+                    elif len(meanings) > 1:
+                        legend_issues.append({
+                            "color": color,
+                            "issue": "color_has_multiple_legend_entries",
+                            "meanings": meanings,
+                        })
+                    else:
+                        # Check meaning is non-empty
+                        meaning_row = 0
+                        for ref, val in legend_cells.items():
+                            m2 = CELL_RE.match(ref)
+                            if m2 and m2.group(1) == "H" and val == color:
+                                meaning_row = int(m2.group(2))
+                                break
+                        if meaning_row:
+                            # Check if the "When to Use" or similar field is non-empty
+                            when_cell = legend_cells.get(f"D{meaning_row}", "")
+                            if not when_cell:
+                                legend_issues.append({
+                                    "color": color,
+                                    "issue": "legend_meaning_empty",
+                                    "row": meaning_row,
+                                })
+
+                report.checks.append(Check(
+                    "color legend coverage",
+                    "FAIL" if legend_issues else "PASS",
+                    legend_issues[:15],
+                ))
+            else:
+                report.checks.append(Check(
+                    "color legend coverage",
+                    "SKIP",
+                    summary="Prompt_Class_Legend sheet not present",
+                ))
+
+    except (zipfile.BadZipFile, KeyError, ET.ParseError) as exc:
+        report.checks.append(Check(
+            "package readable",
+            "FAIL",
+            [{"error": f"{type(exc).__name__}: {exc}"}],
+        ))
+
+    report.contract_valid = not report.failures
+    return report
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Validate the prompt-kit V19 contract without rewriting the workbook"
+        description="Validate a prompt-kit workbook against the V19 contract",
     )
     parser.add_argument("workbook")
-    parser.add_argument("--prompt-id", action="append", dest="prompt_ids")
-    parser.add_argument("--allow-font", action="append", dest="fonts")
-    parser.add_argument("--json", action="store_true", dest="as_json")
+    parser.add_argument(
+        "--json", action="store_true", dest="as_json",
+        help="emit JSON instead of the English matrix",
+    )
     args = parser.parse_args()
-    report = validate_prompt_kit_contract(
-        args.workbook,
-        prompt_ids=args.prompt_ids or DEFAULT_PROMPT_IDS,
-        allowed_font_families=args.fonts or ("Aptos",),
-    )
-    print(
-        json.dumps(report.to_dict(), indent=2)
-        if args.as_json
-        else report.render_text()
-    )
-    raise SystemExit(0 if report.passed else 1)
+
+    report = validate_prompt_kit_contract(args.workbook)
+    print(json.dumps(report.to_dict(), indent=2) if args.as_json else report.render_text())
+    raise SystemExit(0 if report.contract_valid else 1)
 
 
 if __name__ == "__main__":
