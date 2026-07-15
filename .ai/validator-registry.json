@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "validation_statuses": ["PASS", "FAIL", "NOT_RUN", "NOT_APPLICABLE", "BLOCKED"],
+  "proof_levels": [
+    "contract",
+    "harness",
+    "static_test",
+    "build",
+    "package",
+    "render",
+    "launcher",
+    "command_ack",
+    "behavior_observed",
+    "browser",
+    "live_runtime",
+    "operator_acceptance"
+  ],
+  "composition_order": [
+    "workbook_package_hygiene",
+    "web_excel_compatibility",
+    "worksheet_cell_integrity",
+    "copy_surface_bounds",
+    "prompt_kit_operability",
+    "excel_desktop_recovery_triage"
+  ],
+  "validators": {
+    "workbook_package_hygiene": {
+      "canonical_module": "triage.workbook_package_hygiene",
+      "owner_pr": 51,
+      "scope": ["zip_integrity", "xml_well_formedness", "tables", "merges", "freeze_metadata", "formula_error_literals"],
+      "proof_ceiling": "package",
+      "read_only": true
+    },
+    "web_excel_compatibility": {
+      "canonical_module": "triage.web_excel_compatibility_rules",
+      "owner_pr": 57,
+      "absorbs_prs": [53],
+      "scope": ["relationship_targets", "internal_fragments", "markup_compatibility", "calc_chain_sheet_ids", "content_types", "stop_ship_tokens"],
+      "proof_ceiling": "package",
+      "read_only": true
+    },
+    "worksheet_cell_integrity": {
+      "canonical_module": "triage.worksheet_cell_integrity",
+      "owner_pr": 57,
+      "scope": ["worksheet_row_order", "duplicate_rows", "duplicate_cells", "cell_reference_order"],
+      "proof_ceiling": "package",
+      "read_only": true
+    },
+    "copy_surface_bounds": {
+      "canonical_module": "triage.copy_surface_bounds",
+      "owner_pr": 57,
+      "scope": ["declared_copy_ranges", "trailing_content", "styled_blank_extent"],
+      "proof_ceiling": "package",
+      "read_only": true
+    },
+    "prompt_kit_operability": {
+      "canonical_module": "triage.prompt_kit_operability_contract",
+      "owner_pr": 61,
+      "scope": ["prompt_ids", "gnhf_command_shape", "navigation_rails", "semantic_styles", "protection", "exact_internal_hyperlinks"],
+      "proof_ceiling": "package",
+      "read_only": true
+    },
+    "excel_desktop_recovery_triage": {
+      "canonical_module": "triage.excel_recovery_triage",
+      "owner_pr": 60,
+      "scope": ["recovery_log", "desktop_window_context", "xml_part_fingerprints", "styles_dxf_correlation"],
+      "proof_ceiling": "launcher",
+      "read_only": true,
+      "must_emit_validation_report": true
+    }
+  },
+  "rules": {
+    "no_duplicate_authority": true,
+    "no_proof_promotion": true,
+    "runtime_gates_must_be_explicit": true,
+    "generated_workbooks_must_remain_untracked": true
+  }
+}
