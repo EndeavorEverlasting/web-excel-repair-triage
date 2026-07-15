@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Workflow registry: defines every known harness workflow, its inputs, outputs, artifacts, and proof ceiling.",
   "workflows": {
     "roster-review-blank": {
@@ -49,6 +49,54 @@
       "minimum_proof_level": "harness",
       "proof_ceiling": "harness",
       "validation_profile": "json_schema"
+    },
+    "prompt-kit-package-validation": {
+      "name": "Prompt Kit Package Validation",
+      "description": "Compose the canonical read-only prompt-kit package validators in registry order.",
+      "direction": "analysis",
+      "inputs": {
+        "workbook_path": { "required": true, "type": "path" },
+        "profile_id": { "required": true, "type": "string" }
+      },
+      "outputs": ["validation_report", "prompt_kit_acceptance_state"],
+      "artifact_id": "prompt_kit_acceptance_state",
+      "engine": "triage.harness.cli",
+      "minimum_proof_level": "package",
+      "proof_ceiling": "package",
+      "validation_profile": "prompt_kit",
+      "validator_registry": ".ai/validator-registry.json"
+    },
+    "excel-desktop-recovery-triage": {
+      "name": "Excel Desktop Recovery Triage",
+      "description": "Open a workbook read-only in Desktop Excel, bind to the exact Excel PID/HWND, collect recovery evidence, and emit canonical validation states.",
+      "direction": "analysis",
+      "inputs": {
+        "workbook_path": { "required": true, "type": "path" },
+        "recovery_log": { "required": false, "type": "path" }
+      },
+      "outputs": ["excel_recovery_triage_report", "validation_report"],
+      "artifact_id": "excel_recovery_triage_report",
+      "engine": "triage.excel_recovery_triage",
+      "engine_source_pr": 60,
+      "minimum_proof_level": "package",
+      "proof_ceiling": "launcher",
+      "validation_profile": "desktop_recovery"
+    },
+    "prompt-kit-field-acceptance": {
+      "name": "Prompt Kit Field Acceptance",
+      "description": "Record one environment-specific Desktop, Web, clipboard, mouse, PowerShell, or operator result without promoting missing gates.",
+      "direction": "acceptance",
+      "inputs": {
+        "artifact_sha256": { "required": true, "type": "string" },
+        "environment": { "required": true, "type": "string" },
+        "evidence_path": { "required": false, "type": "path" }
+      },
+      "outputs": ["prompt_kit_field_acceptance_record", "prompt_kit_acceptance_state"],
+      "artifact_id": "prompt_kit_field_acceptance_record",
+      "engine": "triage.harness.cli",
+      "minimum_proof_level": "behavior_observed",
+      "proof_ceiling": "operator_acceptance",
+      "validation_profile": "field_acceptance"
     }
   }
 }
