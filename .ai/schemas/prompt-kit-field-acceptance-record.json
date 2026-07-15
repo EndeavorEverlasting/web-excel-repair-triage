@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "prompt-kit-field-acceptance-record",
+  "title": "Prompt Kit Field Acceptance Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_sha256",
+    "recorded_at",
+    "environment",
+    "checks",
+    "decision"
+  ],
+  "properties": {
+    "artifact_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "environment": {
+      "type": "string",
+      "enum": ["desktop_excel", "excel_for_web", "windows_powershell_7", "operator_review"]
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "status"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "status": {
+            "type": "string",
+            "enum": ["PASS", "FAIL", "NOT_RUN", "NOT_APPLICABLE", "BLOCKED"]
+          },
+          "message": { "type": "string" },
+          "evidence_path": { "type": "string" }
+        }
+      }
+    },
+    "decision": {
+      "type": "string",
+      "enum": ["ACCEPT", "HOLD", "REJECT"]
+    },
+    "operator": {
+      "type": ["string", "null"],
+      "description": "Optional local operator identifier. Do not commit personal data in public records."
+    },
+    "notes": { "type": "string" }
+  }
+}
