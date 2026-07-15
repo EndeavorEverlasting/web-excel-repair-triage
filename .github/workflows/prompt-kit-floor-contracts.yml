@@ -1,0 +1,47 @@
+name: Prompt kit floor contracts
+
+on:
+  pull_request:
+    paths:
+      - ".ai/validator-registry.json"
+      - ".ai/artifact-registry.json"
+      - ".ai/workflow-registry.json"
+      - ".ai/schemas/prompt-kit-acceptance-state.json"
+      - ".ai/schemas/prompt-kit-field-acceptance-record.json"
+      - "tests/test_prompt_kit_floor_contracts.py"
+      - ".github/workflows/prompt-kit-floor-contracts.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".ai/validator-registry.json"
+      - ".ai/artifact-registry.json"
+      - ".ai/workflow-registry.json"
+      - ".ai/schemas/prompt-kit-acceptance-state.json"
+      - ".ai/schemas/prompt-kit-field-acceptance-record.json"
+      - "tests/test_prompt_kit_floor_contracts.py"
+
+jobs:
+  floor-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependency
+        run: python -m pip install pytest
+
+      - name: Parse JSON contracts
+        run: |
+          python -m json.tool .ai/validator-registry.json > /dev/null
+          python -m json.tool .ai/artifact-registry.json > /dev/null
+          python -m json.tool .ai/workflow-registry.json > /dev/null
+          python -m json.tool .ai/schemas/prompt-kit-acceptance-state.json > /dev/null
+          python -m json.tool .ai/schemas/prompt-kit-field-acceptance-record.json > /dev/null
+
+      - name: Run floor contract tests
+        run: python -m pytest tests/test_prompt_kit_floor_contracts.py -q
