@@ -1,0 +1,52 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "AGENTS.md",
+    ".ai/codebase_map.json",
+    ".ai/known_traps.json"
+  ],
+  "references": {
+    "docs": {
+      "path": "./docs",
+      "description": "Use for pipeline contracts, stop-ship rules, structure preservation, and artifact specs"
+    },
+    "configs": {
+      "path": "./configs",
+      "description": "Use for CF rules, stop-ship tokens, artifact profiles, and review queue configs"
+    }
+  },
+  "skills": {
+    "paths": [".opencode/skills"]
+  },
+  "agent": {
+    "codebase": {
+      "description": "Codebase map and architecture inspector. Use to understand module layout, find files, trace call chains.",
+      "mode": "subagent",
+      "permission": {
+        "edit": "deny",
+        "bash": { "git log *": "allow", "git status": "allow", "git diff *": "allow", "git show *": "allow", "*": "deny" }
+      }
+    },
+    "validate": {
+      "description": "Runs validators against a workbook or the full suite. Use to verify OOXML structure, stop-ship tokens, and web Excel compatibility.",
+      "mode": "subagent",
+      "permission": {
+        "edit": "deny",
+        "bash": { "python -m pytest *": "allow", "python -m triage.gitignore_hygiene": "allow", "python *excel_recovery_check*": "allow", "python *verify*": "allow", "python *gate_checks*": "allow", "*": "ask" }
+      }
+    }
+  },
+  "command": {
+    "validate": {
+      "description": "Run validators: full suite, or specific test file/gate check",
+      "agent": "build"
+    },
+    "harness-inspect": {
+      "description": "Inspect the repo harness: codebase map, validators, known traps, workflow specs",
+      "agent": "build"
+    }
+  },
+  "permission": {
+    "bash": { "git *": "ask", "python *": "ask", "*": "ask" }
+  }
+}

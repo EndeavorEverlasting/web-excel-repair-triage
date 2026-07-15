@@ -1,0 +1,63 @@
+{
+  "schema_version": "harness_validators_v1",
+  "validators": {
+    "static_tests": {
+      "description": "Pure Python unit tests, no Excel dependency",
+      "command": "python -m pytest tests/test_cf_engine.py tests/test_roster_log_review_queue.py tests/test_patcher.py tests/test_xlsx_utils.py tests/test_dv_engine.py tests/test_roster_parser.py -q",
+      "when": "always safe, run on every change"
+    },
+    "ci_gate": {
+      "description": "Full CI artifact engine tests (matches GitHub Actions workflow)",
+      "command": "python -m pytest tests/test_cybernet_targets.py tests/test_nw_prj_neuron_track_hours.py tests/test_nw_prj_neuron_track_hours_bonita.py tests/test_admin_billing_summary.py tests/test_one_marcus_recon.py tests/test_one_marcus_generate.py tests/test_one_marcus_immutability.py tests/test_sidecar_html_portal.py tests/test_artifact_compare.py tests/test_roster_log_compare.py tests/test_same_family_compare.py tests/test_gitignore_hygiene.py tests/test_roster_log_review_queue.py -q",
+      "when": "before push, before PR"
+    },
+    "gitignore_hygiene": {
+      "description": "Verify .gitignore covers all generated outputs",
+      "command": "python -m triage.gitignore_hygiene",
+      "when": "before commit"
+    },
+    "imports_check": {
+      "description": "Verify all artifact engine modules import cleanly",
+      "command": "python -c \"import triage.cybernet_targets.cli; import triage.nw_prj_neuron_track_hours.cli; import triage.nw_prj_neuron_track_hours.bonita_cli; import triage.admin_billing_summary.cli; import triage.one_marcus_recon.cli; import triage.sidecar_html; import triage.artifact_fingerprint; import triage.artifact_profiles; import triage.artifact_compare; import triage.same_family_compare; import triage.roster_log_compare.compare; import triage.roster_log_review_queue.cli; import triage.gitignore_hygiene; print('imports ok')\"",
+      "when": "before push"
+    },
+    "ooxml_gate_checks": {
+      "description": "Run gate_checks on a specific xlsx to detect structural hazards",
+      "command": "python -c \"from triage.gate_checks import run_gate_checks; import json; print(json.dumps(run_gate_checks('PATH_TO_XLSX'), indent=2))\"",
+      "when": "after generating or repairing a workbook"
+    },
+    "excel_recovery_check": {
+      "description": "Detect if Excel shows repair dialog (uses PowerShell Get-Process)",
+      "command": "python triage/excel_recovery_check.py",
+      "when": "after opening xlsx in Excel Desktop"
+    },
+    "web_excel_compatibility": {
+      "description": "Run web Excel compatibility rules check",
+      "command": "python -c \"from triage.web_excel_compatibility_rules import inspect_web_excel_package; import json; print(json.dumps(inspect_web_excel_package('PATH_TO_XLSX'), indent=2))\"",
+      "when": "after generating a workbook, before delivery"
+    },
+    "stop_ship_scan": {
+      "description": "Scan xlsx for stop-ship tokens in XML parts",
+      "command": "python -c \"from triage.gate_checks import _scan_stop_ship_tokens; print(_scan_stop_ship_tokens('PATH_TO_XLSX'))\"",
+      "when": "after generating a workbook"
+    },
+    "dxf_schema_order": {
+      "description": "Verify OOXML dxfs schema order in styles.xml",
+      "command": "python -c \"from triage.cf_engine import _patch_styles_dxf; from pathlib import Path; import zipfile; zf=zipfile.ZipFile('PATH_TO_XLSX'); styles=zf.read('xl/styles.xml').decode(); result=_patch_styles_dxf(styles, []); print('dxfs' in result and 'cellStyles' in result)\"",
+      "when": "after CF patching"
+    },
+    "artifact_fingerprint": {
+      "description": "Generate artifact fingerprint for compare",
+      "command": "python -c \"from triage.artifact_fingerprint import fingerprint; import json; print(json.dumps(fingerprint('PATH_TO_XLSX'), indent=2))\"",
+      "when": "before/after delivery for baseline compare"
+    }
+  },
+  "test_fixtures": {
+    "tests/fixtures/cybernet_targets/mini_sprint_dashboard.xlsx": "Known-good fixture for comparison testing",
+    "tests/fixtures/roster_log_review_queue/": "Roster log review queue test fixtures"
+  },
+  "known_test_failures": {
+    "tests/test_billing_regression.py": "TEST_STACK_UNDOCUMENTED - requires attached_assets/ reference xlsx paths not shipped",
+    "tests/test_invoice_parser.py": "Environment - needs python-docx from requirements.txt"
+  }
+}
