@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Artifact registry: defines every known artifact type, its expected location, validator profile, and proof ceiling.",
   "artifacts": {
     "bonita_neuron_track_hours": {
@@ -8,11 +8,7 @@
       "expected_location": "Outputs/neuron_track_hours_<batch>/",
       "delivery": true,
       "validator_profile": "bonita",
-      "required_sidecars": [
-        "manifest.json",
-        "review_queue.csv",
-        "preflight.json"
-      ],
+      "required_sidecars": ["manifest.json", "review_queue.csv", "preflight.json"],
       "privacy_class": "internal",
       "proof_ceiling": "operator_acceptance",
       "description": "Two-tab (Apr/May) Neuron Track Hours submission workbook from roster log."
@@ -22,10 +18,7 @@
       "expected_location": "Outputs/blank_shell_<batch>/",
       "delivery": true,
       "validator_profile": "blank_shell",
-      "required_sidecars": [
-        "manifest.json",
-        "preflight.json"
-      ],
+      "required_sidecars": ["manifest.json", "preflight.json"],
       "privacy_class": "internal",
       "proof_ceiling": "package",
       "description": "Blank-shell workbook for roster review scaffolding."
@@ -35,13 +28,55 @@
       "expected_location": "Outputs/billing_summary_<batch>/",
       "delivery": true,
       "validator_profile": "billing_summary",
-      "required_sidecars": [
-        "manifest.json",
-        "preflight.json"
-      ],
+      "required_sidecars": ["manifest.json", "preflight.json"],
       "privacy_class": "confidential",
       "proof_ceiling": "operator_acceptance",
       "description": "Admin-facing billing summary workbook."
+    },
+    "prompt_kit_workbook": {
+      "type": "workbook",
+      "expected_location": "Outputs/prompt_kit_<version>/<run_id>/",
+      "delivery": true,
+      "validator_profile": "prompt_kit",
+      "required_sidecars": [
+        "manifest.json",
+        "validation-report.json",
+        "package-delta.json",
+        "acceptance-state.json"
+      ],
+      "privacy_class": "internal",
+      "proof_ceiling": "operator_acceptance",
+      "description": "Generated prompt-kit workbook. Workbook binaries remain untracked."
+    },
+    "prompt_kit_acceptance_state": {
+      "type": "report",
+      "expected_location": "Outputs/prompt_kit_<version>/<run_id>/",
+      "delivery": false,
+      "validator_profile": "prompt-kit-acceptance-state",
+      "required_sidecars": [],
+      "privacy_class": "internal",
+      "proof_ceiling": "operator_acceptance",
+      "description": "Aggregates static and field gates without promoting missing evidence."
+    },
+    "prompt_kit_field_acceptance_record": {
+      "type": "report",
+      "expected_location": "Outputs/prompt_kit_<version>/<run_id>/field-evidence/",
+      "delivery": false,
+      "validator_profile": "prompt-kit-field-acceptance-record",
+      "required_sidecars": [],
+      "privacy_class": "confidential",
+      "proof_ceiling": "operator_acceptance",
+      "description": "One environment-specific Desktop, Web, PowerShell, or operator acceptance record."
+    },
+    "excel_recovery_triage_report": {
+      "type": "report",
+      "expected_location": "Outputs/runs/<run_id>/desktop-excel/",
+      "delivery": false,
+      "validator_profile": "validation-report",
+      "required_sidecars": ["window-selection.json"],
+      "privacy_class": "confidential",
+      "proof_ceiling": "launcher",
+      "description": "Read-only Desktop Excel recovery and OOXML correlation evidence."
     },
     "roster_diagnostic_report": {
       "type": "report",
