@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "prompt-kit-acceptance-state",
+  "title": "Prompt Kit Acceptance State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_sha256",
+    "profile_id",
+    "generated_at",
+    "overall_status",
+    "proof_ceiling",
+    "gates"
+  ],
+  "properties": {
+    "artifact_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "profile_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "overall_status": {
+      "type": "string",
+      "enum": ["PASS", "FAIL", "NOT_RUN", "NOT_APPLICABLE", "BLOCKED"]
+    },
+    "proof_ceiling": {
+      "$ref": "run-context.json#/$defs/proof_level"
+    },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "static_package",
+        "deterministic_generation",
+        "desktop_excel",
+        "excel_for_web",
+        "mouse_navigation",
+        "clipboard",
+        "operator_acceptance"
+      ],
+      "properties": {
+        "static_package": { "$ref": "#/$defs/gate" },
+        "deterministic_generation": { "$ref": "#/$defs/gate" },
+        "desktop_excel": { "$ref": "#/$defs/gate" },
+        "excel_for_web": { "$ref": "#/$defs/gate" },
+        "mouse_navigation": { "$ref": "#/$defs/gate" },
+        "clipboard": { "$ref": "#/$defs/gate" },
+        "operator_acceptance": { "$ref": "#/$defs/gate" }
+      }
+    },
+    "evidence_paths": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "notes": { "type": "string" }
+  },
+  "$defs": {
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "proof_level"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["PASS", "FAIL", "NOT_RUN", "NOT_APPLICABLE", "BLOCKED"]
+        },
+        "proof_level": {
+          "$ref": "run-context.json#/$defs/proof_level"
+        },
+        "message": { "type": "string" },
+        "evidence": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}
