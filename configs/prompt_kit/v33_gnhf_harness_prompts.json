@@ -1,15 +1,123 @@
 {
   "schema_version": 1,
-  "cream_tab_color": "FFF2CC",
-  "cream_tabs": [
+  "layout_authority": {
+    "artifact_name": "AI_Harness_Prompt_Kit_v33 - Locked Tabs - Need Link to the Prompt Range in each Prompt Tab.xlsx",
+    "sha256": "3fff03bf70047af50fd1ed43a349f47b8d34cfbda405e798440cf9c36a4e0299",
+    "observed_sheet_count": 78,
+    "policy": "Preserve the manual V33 order/colors/protection, insert P45-P47 after P44, and add prompt-range recovery links."
+  },
+  "sheet_order": [
     "Prompt_Library",
     "Opportunity_Discovery",
+    "START_HERE",
+    "Prompt_Sequence",
+    "P00_COPY_SAFE",
+    "P01_COPY_SAFE",
+    "P02_COPY_SAFE",
+    "P03_COPY_SAFE",
+    "P04_COPY_SAFE",
+    "P05_COPY_SAFE",
+    "P06_COPY_SAFE",
     "P07_COPY_SAFE",
-    "P46_COPY_SAFE"
+    "P08_COPY_SAFE",
+    "P09_COPY_SAFE",
+    "P10_COPY_SAFE",
+    "P11_COPY_SAFE",
+    "P12_COPY_SAFE",
+    "P13_COPY_SAFE",
+    "P14_COPY_SAFE",
+    "P15_COPY_SAFE",
+    "P16_COPY_SAFE",
+    "P17_COPY_SAFE",
+    "P18_COPY_SAFE",
+    "P19_COPY_SAFE",
+    "P20_COPY_SAFE",
+    "P21_COPY_SAFE",
+    "P22_COPY_SAFE",
+    "P23_COPY_SAFE",
+    "P24_COPY_SAFE",
+    "P25_COPY_SAFE",
+    "P26_COPY_SAFE",
+    "P27_COPY_SAFE",
+    "P28_COPY_SAFE",
+    "P29_COPY_SAFE",
+    "P30_COPY_SAFE",
+    "P31_COPY_SAFE",
+    "P32_COPY_SAFE",
+    "P33_COPY_SAFE",
+    "P34_COPY_SAFE",
+    "P35_COPY_SAFE",
+    "P36_COPY_SAFE",
+    "GNHF_Workflow_Map",
+    "Copy_Mode_Rules",
+    "Prompt_Class_Legend",
+    "Opportunity_Lists",
+    "Foundry_Continuum_Routing",
+    "Engineering_Philosophy",
+    "TBG_Abstracted_Insights",
+    "Proof_Taxonomy",
+    "Launch_Order_Model",
+    "Dependency_Model",
+    "Repo_Kit_Template",
+    "Validator_Checklist_v4",
+    "Import_Checklist",
+    "Variables",
+    "Sources",
+    "Decision_Log",
+    "V5_Diagnosis",
+    "Acceptance_Gates_v6",
+    "Visual_System_v6",
+    "V7_Commit_Execution_Fix",
+    "V8_Work_Is_Deliverable",
+    "V9_Copy_Safe_Fix",
+    "V10_PasteOnly_Fix",
+    "Repo_Evidence_Model",
+    "V12_Repo_First_Engine",
+    "Registry_Architecture",
+    "WebExcel_Compatibility",
+    "P37_COPY_SAFE",
+    "P38_COPY_SAFE",
+    "P39_COPY_SAFE",
+    "P40_COPY_SAFE",
+    "P41_COPY_SAFE",
+    "P42_COPY_SAFE",
+    "P43_COPY_SAFE",
+    "P44_COPY_SAFE",
+    "P45_COPY_SAFE",
+    "P46_COPY_SAFE",
+    "P47_COPY_SAFE",
+    "Night_Shift_Runbook",
+    "V33_Overnight_Reliability"
   ],
-  "editable_ranges": {
-    "Opportunity_Discovery": "A1:R100"
+  "tab_colors": {
+    "Prompt_Library": {
+      "theme": 9,
+      "tint": 0.7999816888943144
+    },
+    "Opportunity_Discovery": {
+      "theme": 6,
+      "tint": 0.7999816888943144
+    },
+    "P07_COPY_SAFE": {
+      "theme": 9,
+      "tint": 0.7998901333658864
+    },
+    "P12_COPY_SAFE": {
+      "theme": 9,
+      "tint": 0.7998901333658864
+    },
+    "P46_COPY_SAFE": {
+      "theme": 9,
+      "tint": 0.7998901333658864
+    }
   },
+  "unprotected_sheets": [
+    "Opportunity_Discovery"
+  ],
+  "prompt_range_link_cells": [
+    "C1",
+    "C{last_row}"
+  ],
   "prompts": [
     {
       "seq": "45",
