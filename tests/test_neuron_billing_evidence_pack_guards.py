@@ -73,3 +73,23 @@ def test_visual_summary_charts_reference_correct_tables(tmp_path: Path) -> None:
     assert task.series[0].val.numRef.f.startswith("'Visual Summary'!$F$8")
     assert task.series[0].cat.numRef.f.startswith("'Visual Summary'!$E$8")
     wb.close()
+
+
+def test_allocation_policy_cannot_collide_with_sidecar_output(tmp_path: Path) -> None:
+    roster = _roster(tmp_path)
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    policy = out_dir / "Neuron_Track_Hours_April_May_2026_Evidence_Pack_preflight.json"
+    original = '{"policies": {}}'
+    policy.write_text(original, encoding="utf-8")
+
+    with pytest.raises(ValueError, match="allocation policy may not be overwritten"):
+        run(
+            roster_log=str(roster),
+            allocation_policy=str(policy),
+            out_dir=str(out_dir),
+            months=MONTHS,
+            repo_root=Path(__file__).resolve().parents[1],
+        )
+
+    assert policy.read_text(encoding="utf-8") == original
