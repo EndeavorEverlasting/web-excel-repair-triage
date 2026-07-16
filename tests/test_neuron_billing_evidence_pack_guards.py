@@ -70,6 +70,6 @@ def test_visual_summary_charts_reference_correct_tables(tmp_path: Path) -> None:
     tech, task = charts
     assert tech.series[0].val.numRef.f.startswith("'Visual Summary'!$B$8:$B$")
     assert tech.series[0].cat.numRef.f.startswith("'Visual Summary'!$A$8:$A$")
-    assert task.series[0].val.numRef.f.startswith("'Visual Summary'!$F$8:$F$")
-    assert task.series[0].cat.numRef.f.startswith("'Visual Summary'!$E$8:$E$")
+    assert task.series[0].val.numRef.f.startswith("'Visual Summary'!$F$8")
+    assert task.series[0].cat.numRef.f.startswith("'Visual Summary'!$E$8")
     wb.close()
