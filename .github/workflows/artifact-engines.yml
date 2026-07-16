@@ -42,6 +42,7 @@ jobs:
             tests/test_nw_prj_neuron_track_hours.py \
             tests/test_nw_prj_neuron_track_hours_bonita.py \
             tests/test_neuron_billing_evidence_pack.py \
+            tests/test_neuron_billing_evidence_pack_guards.py \
             tests/test_neuron_billing_monthly_allocation.py \
             tests/test_admin_billing_summary.py \
             tests/test_one_marcus_recon.py \
