@@ -21,7 +21,7 @@ def _make_pre_layout_artifact(path: Path) -> None:
     library.title = "Prompt_Library"
     library.append(["↓ Bottom", "Seq", "Prompt ID"] + [None] * 11 + ["Copy-Safe Sheet", "↓ Bottom"])
 
-    for number in range(48):
+    for number in range(50):
         prompt_id = f"P{number:02d}"
         sheet_name = f"{prompt_id}_COPY_SAFE"
         row = number + 2
@@ -32,13 +32,13 @@ def _make_pre_layout_artifact(path: Path) -> None:
             prompt_cell.value = f'=HYPERLINK("#\'{sheet_name}\'!A1:A3","{prompt_id}")'
         else:
             prompt_cell.hyperlink = f"#'{sheet_name}'!A1:A3"
-        if number >= 45:
+        if number == 2 or number >= 45:
             fill = PatternFill("solid", fgColor="FFF2CC")
             for column in range(1, 17):
                 library.cell(row=row, column=column).fill = fill
             prompt_cell.font = Font(bold=True, underline="single")
 
-    footer_row = 50
+    footer_row = 52
     library.append(["↑ Top", "End of Prompt Library"] + [None] * 13 + ["↑ Top"])
     library["A1"].hyperlink = f"#'Prompt_Library'!A{footer_row}"
     library["P1"].hyperlink = f"#'Prompt_Library'!P{footer_row}"
@@ -49,7 +49,7 @@ def _make_pre_layout_artifact(path: Path) -> None:
     for sheet_name in reversed([name for name in order if name != "Prompt_Library"]):
         wb.create_sheet(sheet_name)
 
-    for number in range(48):
+    for number in range(50):
         prompt_id = f"P{number:02d}"
         sheet_name = f"{prompt_id}_COPY_SAFE"
         row = number + 2
@@ -68,6 +68,7 @@ def _make_pre_layout_artifact(path: Path) -> None:
     # Seed manual drift that must be overwritten.
     wb["START_HERE"].sheet_properties.tabColor = "FF0000"
     wb["Opportunity_Discovery"].protection.sheet = True
+    wb["Opportunity_Discovery"]["S101"] = "locked"
     wb["START_HERE"]["A1"].protection = Protection(locked=False)
     wb.save(path)
 
@@ -96,7 +97,7 @@ def test_layout_finalizer_codifies_range_links_order_colors_and_protection(tmp_p
     assert wb.sheetnames == spec["sheet_order"]
     assert wb.sheetnames.index("P45_COPY_SAFE") == wb.sheetnames.index("P44_COPY_SAFE") + 1
     assert result.prompt_ranges["P00"] == "A1:A3"
-    assert result.prompt_ranges["P47"] == "A1:A3"
+    assert result.prompt_ranges["P49"] == "A1:A3"
 
     for prompt_id, prompt_range in result.prompt_ranges.items():
         ws = wb[f"{prompt_id}_COPY_SAFE"]
@@ -113,12 +114,18 @@ def test_layout_finalizer_codifies_range_links_order_colors_and_protection(tmp_p
         if ws.title not in spec["tab_colors"]:
             assert ws.sheet_properties.tabColor is None
 
-    assert wb["Opportunity_Discovery"].protection.sheet is False
+    assert wb.security.lockStructure is True
+    assert wb["Opportunity_Discovery"].protection.sheet is True
+    assert wb["Opportunity_Discovery"]["A1"].protection.locked is False
+    assert wb["Opportunity_Discovery"]["R100"].protection.locked is False
+    assert wb["Opportunity_Discovery"]["S101"].protection.locked is True
     for ws in wb.worksheets:
-        if ws.title != "Opportunity_Discovery":
-            assert ws.protection.sheet is True
-            for row in ws.iter_rows():
-                for cell in row:
+        assert ws.protection.sheet is True
+        for row in ws.iter_rows():
+            for cell in row:
+                if ws.title != "Opportunity_Discovery" or not (
+                    1 <= cell.column <= 18 and 1 <= cell.row <= 100
+                ):
                     assert cell.protection.locked is True
 
 
@@ -130,3 +137,4 @@ def test_layout_finalizer_is_idempotent(tmp_path: Path) -> None:
     assert first.prompt_ranges == second.prompt_ranges
     assert first.sheet_order == second.sheet_order
     assert first.colored_tabs == second.colored_tabs
+    assert first.editable_ranges == second.editable_ranges

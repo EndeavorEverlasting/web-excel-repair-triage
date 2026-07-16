@@ -5,7 +5,6 @@ if "%~1"=="" (
   exit /b 2
 )
 set "SCRIPT_DIR=%~dp0"
-set "OUT_DIR=%~2"
-if "%OUT_DIR%"=="" set "OUT_DIR=Outputs\prompt-kit-v33"
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%Finalize-AIPromptKitV33.ps1" -SourceWorkbook "%~1" -OutDir "%OUT_DIR%"
+echo Finalize-AIPromptKitV33.cmd is a compatibility alias for the canonical generator.
+call "%SCRIPT_DIR%Generate-AIPromptKitV33.cmd" "%~1" "%~2" "%~3"
 exit /b %ERRORLEVEL%

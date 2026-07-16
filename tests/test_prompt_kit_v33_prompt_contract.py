@@ -45,6 +45,7 @@ def test_compile_run_and_configure_semantics_are_distinct() -> None:
     assert prompts["P46"]["lines"][0] == "gnhf `"
     assert prompts["P47"]["lines"][0] == "gnhf `"
     assert prompts["P48"]["prompt_type"] == "DESKTOP + EXECUTE"
+    assert "Do not promise unconditional failed-worktree preservation" in "\n".join(prompts["P48"]["lines"])
     assert prompts["P49"]["prompt_type"] == "ENVIRONMENT + CONFIGURE"
 
 

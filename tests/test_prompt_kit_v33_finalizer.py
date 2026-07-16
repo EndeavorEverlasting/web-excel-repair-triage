@@ -76,15 +76,15 @@ def test_finalizer_adds_gnhf_prompts_range_links_colors_and_protection(tmp_path:
 
     wb = load_workbook(output)
     library = wb["Prompt_Library"]
-    assert result.prompt_ids == ("P45", "P46", "P47")
-    assert result.prompt_ranges["P45"].startswith("A1:A")
-    assert result.prompt_ranges["P46"].startswith("A1:A")
-    assert result.prompt_ranges["P47"].startswith("A1:A")
+    assert result.prompt_ids == ("P02", "P45", "P46", "P47", "P48", "P49")
 
     for prompt_id, expected_sheet in {
+        "P02": "P02_COPY_SAFE",
         "P45": "P45_COPY_SAFE",
         "P46": "P46_COPY_SAFE",
         "P47": "P47_COPY_SAFE",
+        "P48": "P48_COPY_SAFE",
+        "P49": "P49_COPY_SAFE",
     }.items():
         row = result.library_rows[prompt_id]
         prompt_range = result.prompt_ranges[prompt_id]
@@ -117,13 +117,21 @@ def test_finalizer_adds_gnhf_prompts_range_links_colors_and_protection(tmp_path:
     assert discovery["A1"].protection.locked is False
     assert discovery["R100"].protection.locked is False
     assert discovery["S101"].protection.locked is True
+    assert wb.security.lockStructure is True
+
+    p02_text = "\n".join(
+        wb["P02_COPY_SAFE"].cell(row=row, column=1).value or ""
+        for row in range(1, int(result.prompt_ranges["P02"].split(":A", 1)[1]) + 1)
+    )
+    assert "Modify tracked files" in p02_text
+    assert "Open or update the intended pull request" in p02_text
 
     p45_text = "\n".join(
         wb["P45_COPY_SAFE"].cell(row=row, column=1).value or ""
         for row in range(1, int(result.prompt_ranges["P45"].split(":A", 1)[1]) + 1)
     )
-    assert "Generate one paste-ready Goodnight Have Fun prompt" in p45_text
-    assert "Do not execute the sprint" in p45_text
+    assert "compiled-gnhf-prompt-result v1" in p45_text
+    assert "DO NOT EXECUTE THE SPRINT" in p45_text
 
     p46_text = "\n".join(
         wb["P46_COPY_SAFE"].cell(row=row, column=1).value or ""
@@ -143,6 +151,21 @@ def test_finalizer_adds_gnhf_prompts_range_links_colors_and_protection(tmp_path:
     assert "Execute one repo-local harness workflow" in p47_text
     assert "A successful process exit without the required artifact and commit is failure" in p47_text
 
+    p48_text = "\n".join(
+        wb["P48_COPY_SAFE"].cell(row=row, column=1).value or ""
+        for row in range(1, int(result.prompt_ranges["P48"].split(":A", 1)[1]) + 1)
+    )
+    assert "Invoke-ChatGPTDesktopGnhfSprint.ps1" in p48_text
+    assert "Do not promise unconditional failed-worktree preservation" in p48_text
+
+    p49_text = "\n".join(
+        wb["P49_COPY_SAFE"].cell(row=row, column=1).value or ""
+        for row in range(1, int(result.prompt_ranges["P49"].split(":A", 1)[1]) + 1)
+    )
+    assert "Start-TmuxGnhfWorkspaceSetup.ps1" in p49_text
+    assert "-Mode Plan" in p49_text
+    assert "-Mode Apply" in p49_text
+
 
 def test_finalizer_is_idempotent_for_prompt_rows(tmp_path: Path) -> None:
     source = tmp_path / "source.xlsx"
@@ -155,21 +178,22 @@ def test_finalizer_is_idempotent_for_prompt_rows(tmp_path: Path) -> None:
     wb = load_workbook(second)
     library = wb["Prompt_Library"]
     ids = [library.cell(row=row, column=3).value for row in range(2, library.max_row)]
-    assert ids.count("P45") == 1
-    assert ids.count("P46") == 1
-    assert ids.count("P47") == 1
+    for prompt_id in ("P02", "P45", "P46", "P47", "P48", "P49"):
+        assert ids.count(prompt_id) == 1
 
 
 def test_self_service_wrappers_remain_bounded() -> None:
     repo_root = Path(__file__).resolve().parents[1]
-    ps1 = (repo_root / "scripts" / "Finalize-AIPromptKitV33.ps1").read_text(encoding="utf-8")
-    cmd = (repo_root / "scripts" / "Finalize-AIPromptKitV33.cmd").read_text(encoding="utf-8")
-    assert "triage.prompt_kit_v33_finalizer" in ps1
-    assert "triage.prompt_kit_v33_layout_finalizer" in ps1
-    assert "layout-report.json" in ps1
-    assert "prompt_kit_operability_contract" in ps1
-    assert "workbook_package_hygiene" in ps1
-    assert "web_excel_compatibility_rules" in ps1
-    assert "Output must not overwrite the source workbook" in ps1
-    assert "pwsh -NoLogo -NoProfile" in cmd
-    assert "Finalize-AIPromptKitV33.ps1" in cmd
+    generate_ps1 = (repo_root / "scripts" / "Generate-AIPromptKitV33.ps1").read_text(encoding="utf-8")
+    generate_cmd = (repo_root / "scripts" / "Generate-AIPromptKitV33.cmd").read_text(encoding="utf-8")
+    finalize_ps1 = (repo_root / "scripts" / "Finalize-AIPromptKitV33.ps1").read_text(encoding="utf-8")
+    finalize_cmd = (repo_root / "scripts" / "Finalize-AIPromptKitV33.cmd").read_text(encoding="utf-8")
+    assert "triage.prompt_kit_v33_generator" in generate_ps1
+    assert '".xlsx", ".zip"' in generate_ps1
+    assert "Output must not overwrite the source workbook" in generate_ps1
+    assert "pwsh -NoLogo -NoProfile" in generate_cmd
+    assert "Generate-AIPromptKitV33.ps1" in generate_cmd
+    assert "pause" in generate_cmd
+    assert "Generate-AIPromptKitV33.ps1" in finalize_ps1
+    assert "compatibility shim" in finalize_ps1
+    assert "Generate-AIPromptKitV33.cmd" in finalize_cmd

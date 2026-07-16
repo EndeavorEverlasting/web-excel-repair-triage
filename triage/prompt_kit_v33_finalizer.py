@@ -20,7 +20,10 @@ from openpyxl import load_workbook
 from openpyxl.cell import Cell
 from openpyxl.styles import Alignment, Font, PatternFill, Protection
 from openpyxl.utils import range_boundaries
+from openpyxl.workbook.protection import WorkbookProtection
 from openpyxl.worksheet.worksheet import Worksheet
+
+from triage.prompt_kit_v33_prompt_contract import validate_prompt_contract_data
 
 DEFAULT_SPEC_PATH = (
     Path(__file__).resolve().parents[1]
@@ -106,6 +109,9 @@ def load_spec(path: Path = DEFAULT_SPEC_PATH) -> dict:
     data = json.loads(path.read_text(encoding="utf-8"))
     if data.get("schema_version") != 1:
         raise ValueError("unsupported prompt extension schema_version")
+    contract = validate_prompt_contract_data(data, spec=str(path))
+    if not contract.passed:
+        raise ValueError("prompt source contract failed: " + "; ".join(contract.findings))
     prompts = data.get("prompts")
     if not isinstance(prompts, list) or not prompts:
         raise ValueError("prompt extension spec must contain prompts")
@@ -169,13 +175,13 @@ def _write_library_row(ws: Worksheet, row: int, prompt: Mapping[str, object]) ->
         size = 10
         bold = column in {2, 3, 4, 5, 7, 8, 14, 15}
         if column == 3:
-            size = 16
+            size = 28
         elif column == 8:
-            size = 11
+            size = 12
         cell.font = Font(name="Aptos", size=size, bold=bold, color=font_color)
         cell.protection = Protection(locked=True)
     ws.cell(row=row, column=3).font = Font(
-        name="Aptos", size=16, bold=True, underline="single", color=font_color
+        name="Aptos", size=28, bold=True, underline="single", color=font_color
     )
 
 
@@ -262,12 +268,14 @@ def _apply_protection(workbook, editable_ranges: Mapping[str, str]) -> None:
     for ws in workbook.worksheets:
         for row in ws.iter_rows():
             for cell in row:
-                if ws.title not in editable_ranges:
-                    cell.protection = Protection(locked=True)
+                cell.protection = Protection(locked=True)
         if ws.title in editable_ranges:
             _unlock_range(ws, editable_ranges[ws.title])
         ws.protection.sheet = True
         ws.protection.enable()
+    if workbook.security is None:
+        workbook.security = WorkbookProtection()
+    workbook.security.lockStructure = True
 
 
 def validate_finalized_workbook(path: Path, spec_path: Path = DEFAULT_SPEC_PATH) -> List[str]:
@@ -275,6 +283,8 @@ def validate_finalized_workbook(path: Path, spec_path: Path = DEFAULT_SPEC_PATH)
     spec = load_spec(spec_path)
     workbook = load_workbook(path, keep_links=True)
     findings: List[str] = []
+    if workbook.security is None or not workbook.security.lockStructure:
+        findings.append("workbook structure is not locked")
     if LIBRARY_SHEET not in workbook.sheetnames:
         return [f"missing required sheet: {LIBRARY_SHEET}"]
     library = workbook[LIBRARY_SHEET]
@@ -333,6 +343,23 @@ def validate_finalized_workbook(path: Path, spec_path: Path = DEFAULT_SPEC_PATH)
     for ws in workbook.worksheets:
         if not ws.protection.sheet:
             findings.append(f"worksheet is not protected: {ws.title}")
+        allowed = editable.get(ws.title)
+        bounds = range_boundaries(str(allowed)) if allowed else None
+        for row in ws.iter_rows():
+            for cell in row:
+                is_editable = bool(
+                    bounds
+                    and bounds[0] <= cell.column <= bounds[2]
+                    and bounds[1] <= cell.row <= bounds[3]
+                )
+                if is_editable and cell.protection.locked:
+                    findings.append(f"editable cell remained locked: {ws.title}!{cell.coordinate}")
+                    break
+                if not is_editable and not cell.protection.locked:
+                    findings.append(f"unexpected editable cell: {ws.title}!{cell.coordinate}")
+                    break
+            if findings and findings[-1].startswith(("editable cell", "unexpected editable")):
+                break
     for sheet_name, cell_range in editable.items():
         if sheet_name not in workbook.sheetnames:
             findings.append(f"missing editable-range sheet: {sheet_name}")
@@ -381,10 +408,20 @@ def finalize_workbook(source: Path, output: Path, spec_path: Path = DEFAULT_SPEC
         prompt_range = _ensure_prompt_sheet(workbook, prompt, library_row)
         prompt_ranges[prompt_id] = prompt_range
         target_sheet = str(prompt["sheet_name"])
-        _set_internal_link(
-            library.cell(row=library_row, column=3),
-            f"#'{target_sheet}'!{prompt_range}",
-            prompt_id,
+        target = f"#'{target_sheet}'!{prompt_range}"
+        color_name = str(prompt["color"])
+        _, font_color = PALETTE.get(color_name, PALETTE["Slate"])
+        prompt_cell = library.cell(row=library_row, column=3)
+        prompt_cell.value = prompt_id
+        prompt_cell.hyperlink = target
+        prompt_cell.font = Font(
+            name="Aptos", size=28, bold=True, underline="single", color=font_color
+        )
+        sheet_cell = library.cell(row=library_row, column=15)
+        sheet_cell.value = target_sheet
+        sheet_cell.hyperlink = target
+        sheet_cell.font = Font(
+            name="Aptos", size=10, bold=True, underline="single", color=font_color
         )
     _apply_library_navigation(library, footer_row)
     cream_color = str(spec.get("cream_tab_color", "FFF2CC"))

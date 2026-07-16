@@ -337,7 +337,7 @@
         "6. Require the entrypoint to print the entire compiled prompt in the visible PowerShell or WezTerm terminal before GNHF begins. A script does not control the ChatGPT Desktop UI; this desktop Codex thread is the initiating agent.",
         "7. Observe the AgentSwitchboard start acknowledgement and bounded progress. Treat spawn, authentication, quota, dirty-target, detached-target, or workstation-plan failures as exact blockers.",
         "8. Require an artifact at the contracted repository-relative path and a commit ahead of base. Process exit alone is failure.",
-        "9. Run the repository validation order, inspect the resulting branch and worktree, and preserve failed worktrees for review.",
+        "9. Run the repository validation order, inspect the resulting branch and worktree, preserve returned failed-work references or the failed branch where available, and report any upstream preservation gap. Do not promise unconditional failed-worktree preservation.",
         "10. Push or open or update the intended PR only when the operator granted that authority; never force-push, merge, deploy, or write the default branch.",
         "11. Report request and compiled-prompt paths, local AgentSwitchboard evidence directory, branch, worktree, commit SHA, artifacts, exact validation, blockers, proof achieved, proof ceiling, final Git state, and one exact next command.",
         "",

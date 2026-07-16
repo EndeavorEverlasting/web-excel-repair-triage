@@ -20,9 +20,9 @@ def test_valid_artifact_passes(tmp_path: Path) -> None:
     _make_valid_artifact(artifact)
     result = validate_artifact(artifact)
     assert result.passed is True
-    assert result.prompt_count == 48
+    assert result.prompt_count == 50
     assert result.prompt_ids[0] == "P00"
-    assert result.prompt_ids[-1] == "P47"
+    assert result.prompt_ids[-1] == "P49"
     assert result.findings == ()
     assert len(result.sha256) == 64
 
@@ -34,8 +34,9 @@ def test_contract_rejects_range_link_order_color_and_protection_drift(tmp_path: 
     workbook["P07_COPY_SAFE"]["C1"].hyperlink = None
     workbook["P07_COPY_SAFE"]["C1"] = "Copy A1:A3 only"
     workbook["P46_COPY_SAFE"].sheet_properties.tabColor = "FF0000"
-    workbook["Opportunity_Discovery"].protection.sheet = True
+    workbook["Opportunity_Discovery"]["A1"].protection = Protection(locked=True)
     workbook["START_HERE"].protection.sheet = False
+    workbook.security.lockStructure = False
     workbook._sheets[2], workbook._sheets[3] = workbook._sheets[3], workbook._sheets[2]
     workbook.save(artifact)
 
@@ -43,8 +44,9 @@ def test_contract_rejects_range_link_order_color_and_protection_drift(tmp_path: 
     assert any("worksheet order does not match" in item for item in findings)
     assert any("P07_COPY_SAFE!C1 range-recovery target" in item for item in findings)
     assert any("P46_COPY_SAFE tab color" in item for item in findings)
-    assert any("excluded worksheet is protected: Opportunity_Discovery" in item for item in findings)
+    assert any("editable cell remained locked: Opportunity_Discovery!A1" in item for item in findings)
     assert any("worksheet is not protected: START_HERE" in item for item in findings)
+    assert "workbook structure is not locked" in findings
 
 
 def test_contract_rejects_unexpected_color_unlocked_cell_and_missing_prompt(tmp_path: Path) -> None:
@@ -62,5 +64,5 @@ def test_contract_rejects_unexpected_color_unlocked_cell_and_missing_prompt(tmp_
 
     findings = validate_artifact(artifact).findings
     assert any("unexpected tab color: START_HERE" in item for item in findings)
-    assert any("protected worksheet contains unlocked cell: Prompt_Library!C2" in item for item in findings)
+    assert any("unexpected editable cell: Prompt_Library!C2" in item for item in findings)
     assert "missing required prompt: P47" in findings

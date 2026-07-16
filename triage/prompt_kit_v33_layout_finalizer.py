@@ -1,9 +1,10 @@
 """Canonicalize the accepted V33 prompt-kit workbook layout in place.
 
-This is the layout stage after ``prompt_kit_v33_finalizer`` has added P45-P47.
+This is the layout stage after ``prompt_kit_v33_finalizer`` has repaired P02 and
+added P45-P49.
 It does not generate prompt content. It makes both range labels clickable,
 enforces the accepted tab order and theme colors, and protects every sheet except
-the explicitly excluded operator sheet.
+for the exact operator-edit range declared in the source contract.
 """
 from __future__ import annotations
 
@@ -17,6 +18,8 @@ from typing import Dict, Mapping, Sequence
 from openpyxl import load_workbook
 from openpyxl.cell import Cell
 from openpyxl.styles import Alignment, Color, Font, Protection
+from openpyxl.utils import range_boundaries
+from openpyxl.workbook.protection import WorkbookProtection
 
 from triage.prompt_kit_v33_artifact_contract import validate_artifact
 
@@ -40,7 +43,7 @@ class LayoutResult:
     prompt_ranges: Mapping[str, str]
     sheet_order: tuple[str, ...]
     colored_tabs: tuple[str, ...]
-    unprotected_sheets: tuple[str, ...]
+    editable_ranges: Mapping[str, str]
 
     def to_dict(self) -> dict:
         return {
@@ -48,7 +51,8 @@ class LayoutResult:
             "prompt_ranges": dict(self.prompt_ranges),
             "sheet_order": list(self.sheet_order),
             "colored_tabs": list(self.colored_tabs),
-            "unprotected_sheets": list(self.unprotected_sheets),
+            "editable_ranges": dict(self.editable_ranges),
+            "unprotected_sheets": [],
             "validation_passed": True,
             "proof_ceiling": (
                 "exact internal range links, accepted sheet order, tab colors, and "
@@ -68,9 +72,9 @@ def _load_spec(path: Path) -> dict:
     colors = data.get("tab_colors")
     if not isinstance(colors, dict):
         raise ValueError("tab_colors must be an object")
-    exclusions = data.get("unprotected_sheets")
-    if not isinstance(exclusions, list):
-        raise ValueError("unprotected_sheets must be a list")
+    editable = data.get("editable_ranges")
+    if not isinstance(editable, dict) or editable != {"Opportunity_Discovery": "A1:R100"}:
+        raise ValueError("editable_ranges must declare only Opportunity_Discovery!A1:R100")
     return data
 
 
@@ -158,18 +162,32 @@ def _apply_colors(workbook, colors: Mapping[str, Mapping[str, object]]) -> tuple
     return tuple(colors)
 
 
-def _apply_protection(workbook, exclusions: Sequence[str]) -> tuple[str, ...]:
-    unprotected = set(exclusions)
+def _apply_protection(workbook, editable_ranges: Mapping[str, str]) -> dict[str, str]:
     for ws in workbook.worksheets:
-        if ws.title in unprotected:
-            ws.protection.sheet = False
-            continue
         for row in ws.iter_rows():
             for cell in row:
                 cell.protection = Protection(locked=True)
+        editable_range = editable_ranges.get(ws.title)
+        if editable_range:
+            min_col, min_row, max_col, max_row = range_boundaries(editable_range)
+            for row in ws.iter_rows(
+                min_row=min_row,
+                max_row=max_row,
+                min_col=min_col,
+                max_col=max_col,
+            ):
+                for cell in row:
+                    cell.protection = Protection(locked=False)
         ws.protection.sheet = True
         ws.protection.enable()
-    return tuple(name for name in workbook.sheetnames if name in unprotected)
+    if workbook.security is None:
+        workbook.security = WorkbookProtection()
+    workbook.security.lockStructure = True
+    return {
+        name: cell_range
+        for name, cell_range in editable_ranges.items()
+        if name in workbook.sheetnames
+    }
 
 
 def canonicalize_layout(workbook_path: Path, spec_path: Path = DEFAULT_SPEC_PATH) -> LayoutResult:
@@ -180,7 +198,10 @@ def canonicalize_layout(workbook_path: Path, spec_path: Path = DEFAULT_SPEC_PATH
     prompt_ranges = _apply_range_links(workbook)
     _apply_order(workbook, [str(name) for name in spec["sheet_order"]])
     colored_tabs = _apply_colors(workbook, spec["tab_colors"])
-    unprotected = _apply_protection(workbook, [str(name) for name in spec["unprotected_sheets"]])
+    editable_ranges = _apply_protection(
+        workbook,
+        {str(name): str(cell_range) for name, cell_range in spec["editable_ranges"].items()},
+    )
     workbook.save(workbook_path)
 
     result = validate_artifact(workbook_path, spec_path)
@@ -191,7 +212,7 @@ def canonicalize_layout(workbook_path: Path, spec_path: Path = DEFAULT_SPEC_PATH
         prompt_ranges=prompt_ranges,
         sheet_order=tuple(spec["sheet_order"]),
         colored_tabs=colored_tabs,
-        unprotected_sheets=unprotected,
+        editable_ranges=editable_ranges,
     )
 
 

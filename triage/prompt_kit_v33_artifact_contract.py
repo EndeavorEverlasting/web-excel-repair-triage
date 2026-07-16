@@ -2,7 +2,7 @@
 
 This module is read-only and independent from the finalizer implementation. The
 shared JSON file is the product contract: accepted tab order/colors/protection,
-required prompt tabs, and the P45-P47 declarative payloads.
+required prompt tabs, and the repaired P02 plus P45-P49 declarative payloads.
 """
 from __future__ import annotations
 
@@ -16,6 +16,7 @@ from typing import Mapping, Sequence
 
 from openpyxl import load_workbook
 from openpyxl.cell import Cell
+from openpyxl.utils import range_boundaries
 
 DEFAULT_SPEC_PATH = (
     Path(__file__).resolve().parents[1]
@@ -137,21 +138,37 @@ def _color_matches(color, expected: Mapping[str, object]) -> bool:
     return abs(float(color.tint or 0.0) - float(expected.get("tint", 0.0))) < 1e-12
 
 
-def _validate_protection(workbook, unprotected_sheets: Sequence[str], findings: list[str]) -> None:
-    exclusions = set(unprotected_sheets)
+def _validate_protection(
+    workbook,
+    editable_ranges: Mapping[str, str],
+    findings: list[str],
+) -> None:
+    if workbook.security is None or not workbook.security.lockStructure:
+        findings.append("workbook structure is not locked")
     for ws in workbook.worksheets:
-        if ws.title in exclusions:
-            if ws.protection.sheet:
-                findings.append(f"excluded worksheet is protected: {ws.title}")
-            continue
         if not ws.protection.sheet:
             findings.append(f"worksheet is not protected: {ws.title}")
             continue
+        editable = editable_ranges.get(ws.title)
+        bounds = range_boundaries(editable) if editable else None
+        sheet_failed = False
         for row in ws.iter_rows():
             for cell in row:
-                if not cell.protection.locked:
-                    findings.append(f"protected worksheet contains unlocked cell: {ws.title}!{cell.coordinate}")
-                    return
+                allowed = bool(
+                    bounds
+                    and bounds[0] <= cell.column <= bounds[2]
+                    and bounds[1] <= cell.row <= bounds[3]
+                )
+                if allowed and cell.protection.locked:
+                    findings.append(f"editable cell remained locked: {ws.title}!{cell.coordinate}")
+                    sheet_failed = True
+                    break
+                if not allowed and not cell.protection.locked:
+                    findings.append(f"unexpected editable cell: {ws.title}!{cell.coordinate}")
+                    sheet_failed = True
+                    break
+            if sheet_failed:
+                break
 
 
 def validate_artifact(path: Path, spec_path: Path = DEFAULT_SPEC_PATH) -> ArtifactContractResult:
@@ -255,7 +272,11 @@ def validate_artifact(path: Path, spec_path: Path = DEFAULT_SPEC_PATH) -> Artifa
         elif expected is not None and not _color_matches(actual, expected):
             findings.append(f"{ws.title} tab color does not match the accepted contract")
 
-    _validate_protection(workbook, [str(name) for name in spec["unprotected_sheets"]], findings)
+    _validate_protection(
+        workbook,
+        {str(name): str(cell_range) for name, cell_range in spec["editable_ranges"].items()},
+        findings,
+    )
     prompt_ids = tuple(sorted(prompts))
     return ArtifactContractResult(
         workbook=str(path),

@@ -23,7 +23,7 @@ NS = {"m": MAIN_NS, "r": REL_NS, "pr": PKG_REL_NS}
 CELL_RE = re.compile(r"^([A-Z]+)(\d+)$")
 RANGE_RE = re.compile(r"^'?([^']+)'?!A1:A(\d+)$")
 
-PROMPT_IDS = tuple(f"P{index:02d}" for index in range(37))
+BASE_PROMPT_IDS = tuple(f"P{index:02d}" for index in range(37))
 GNHF_PROMPT_IDS = tuple(f"P{index:02d}" for index in range(26, 37))
 LIBRARY_HEADERS = (
     "Seq",
@@ -59,6 +59,7 @@ PALETTE: Mapping[str, Tuple[str, str]] = {
     "Blue-Green": ("CCFBF1", "0F766E"),
     "Gold": ("FEF3C7", "92400E"),
     "Sand": ("FDE68A", "854D0E"),
+    "Cream": ("FFF2CC", "7C5C00"),
     "Orange": ("FED7AA", "9A3412"),
     "Emerald": ("D1FAE5", "047857"),
     "Coral": ("FFE4E6", "BE123C"),
@@ -187,12 +188,32 @@ def _workbook_sheet_map(zf: zipfile.ZipFile) -> Dict[str, str]:
     return result
 
 
-def _sheet_hyperlinks(root: ET.Element) -> Dict[str, str]:
-    return {
-        link.attrib.get("ref", ""): link.attrib.get("location", "")
-        for link in root.findall(".//m:hyperlinks/m:hyperlink", NS)
-        if link.attrib.get("ref")
-    }
+def _sheet_hyperlinks(
+    root: ET.Element,
+    zf: zipfile.ZipFile | None = None,
+    sheet_part: str | None = None,
+) -> Dict[str, str]:
+    relationships: Dict[str, str] = {}
+    if zf is not None and sheet_part is not None:
+        directory, filename = posixpath.split(sheet_part)
+        relationship_part = posixpath.join(directory, "_rels", filename + ".rels")
+        if relationship_part in zf.namelist():
+            rel_root = _xml_root(zf, relationship_part)
+            relationships = {
+                rel.attrib.get("Id", ""): rel.attrib.get("Target", "").lstrip("#")
+                for rel in rel_root
+            }
+    result: Dict[str, str] = {}
+    for link in root.findall(".//m:hyperlinks/m:hyperlink", NS):
+        ref = link.attrib.get("ref", "")
+        if not ref:
+            continue
+        location = link.attrib.get("location", "")
+        if not location:
+            rid = link.attrib.get(f"{{{REL_NS}}}id", "")
+            location = relationships.get(rid, "")
+        result[ref] = location
+    return result
 
 
 def _rgb(value: str) -> str:
@@ -322,12 +343,27 @@ def validate_prompt_kit_operability(path: str | Path) -> PromptKitOperabilityRep
             shared = _shared_strings(zf)
             fonts, fills, xfs = _styles(zf)
 
+            library_root = _xml_root(zf, sheets["Prompt_Library"])
+            library_cells = _worksheet_cells(library_root, shared)
+            library_links = _sheet_hyperlinks(
+                library_root,
+                zf,
+                sheets["Prompt_Library"],
+            )
+            prompt_numbers = sorted(
+                int(value[1:])
+                for ref, (_, value) in library_cells.items()
+                if ref.startswith("C") and re.fullmatch(r"P\d{2}", value)
+            )
+            max_prompt = max(prompt_numbers, default=36)
+            prompt_ids = tuple(f"P{index:02d}" for index in range(max(36, max_prompt) + 1))
+
             required = {
                 "Prompt_Library",
                 "Prompt_Sequence",
                 "Opportunity_Discovery",
                 "GNHF_Workflow_Map",
-                *{f"{prompt_id}_COPY_SAFE" for prompt_id in PROMPT_IDS},
+                *{f"{prompt_id}_COPY_SAFE" for prompt_id in prompt_ids},
             }
             missing = sorted(required - set(sheets))
             report.checks.append(Check("required operability sheets", "FAIL" if missing else "PASS", [{"missing": item} for item in missing]))
@@ -384,10 +420,6 @@ def validate_prompt_kit_operability(path: str | Path) -> PromptKitOperabilityRep
                 )
             )
 
-            library_root = _xml_root(zf, sheets["Prompt_Library"])
-            library_cells = _worksheet_cells(library_root, shared)
-            library_links = _sheet_hyperlinks(library_root)
-
             header_findings = []
             for index, expected in enumerate(LIBRARY_HEADERS, start=2):
                 number = index
@@ -400,11 +432,12 @@ def validate_prompt_kit_operability(path: str | Path) -> PromptKitOperabilityRep
                     header_findings.append({"cell": f"{column}1", "expected": expected, "actual": actual})
             report.checks.append(Check("Prompt Library B:O headers", "FAIL" if header_findings else "PASS", header_findings))
 
+            footer_row = len(prompt_ids) + 2
             nav_expected = {
-                "A1": ("↓ Bottom", "'Prompt_Library'!A39"),
-                "P1": ("↓ Bottom", "'Prompt_Library'!P39"),
-                "A39": ("↑ Top", "'Prompt_Library'!A1"),
-                "P39": ("↑ Top", "'Prompt_Library'!P1"),
+                "A1": ("↓ Bottom", f"'Prompt_Library'!A{footer_row}"),
+                "P1": ("↓ Bottom", f"'Prompt_Library'!P{footer_row}"),
+                f"A{footer_row}": ("↑ Top", "'Prompt_Library'!A1"),
+                f"P{footer_row}": ("↑ Top", "'Prompt_Library'!P1"),
             }
             nav_findings = []
             for ref, (label, location) in nav_expected.items():
@@ -421,7 +454,7 @@ def validate_prompt_kit_operability(path: str | Path) -> PromptKitOperabilityRep
             forward_findings = []
             backlink_findings = []
             command_findings = []
-            for index, prompt_id in enumerate(PROMPT_IDS):
+            for index, prompt_id in enumerate(prompt_ids):
                 row = index + 2
                 copy_sheet = f"{prompt_id}_COPY_SAFE"
                 actual_id = library_cells.get(f"C{row}", (None, ""))[1]
@@ -493,11 +526,22 @@ def validate_prompt_kit_operability(path: str | Path) -> PromptKitOperabilityRep
                         {"sheet": copy_sheet, "payload_endpoints_nonempty": not endpoint_missing, "nonempty_after_payload": after_payload}
                     )
 
-                copy_links = _sheet_hyperlinks(copy_root)
-                expected_backlink = "'Prompt_Library'!A1"
-                for ref in ("C1", f"C{last_row}"):
-                    if copy_links.get(ref) != expected_backlink:
-                        backlink_findings.append({"sheet": copy_sheet, "cell": ref, "expected": expected_backlink, "actual": copy_links.get(ref)})
+                copy_links = _sheet_hyperlinks(copy_root, zf, sheets[copy_sheet])
+                self_target = f"'{copy_sheet}'!A1:A{last_row}"
+                legacy_target = "'Prompt_Library'!A1"
+                uses_range_recovery = copy_links.get("C1") == self_target
+                if uses_range_recovery:
+                    for ref in ("C1", f"C{last_row}"):
+                        if copy_links.get(ref) != self_target:
+                            backlink_findings.append({"sheet": copy_sheet, "cell": ref, "expected": self_target, "actual": copy_links.get(ref)})
+                    expected_backlink = f"'Prompt_Library'!A{row}:P{row}"
+                    for ref in ("B1", "E1", f"B{last_row}", f"E{last_row}"):
+                        if copy_links.get(ref) != expected_backlink:
+                            backlink_findings.append({"sheet": copy_sheet, "cell": ref, "expected": expected_backlink, "actual": copy_links.get(ref)})
+                else:
+                    for ref in ("C1", f"C{last_row}"):
+                        if copy_links.get(ref) != legacy_target:
+                            backlink_findings.append({"sheet": copy_sheet, "cell": ref, "expected": legacy_target, "actual": copy_links.get(ref)})
 
                 if prompt_id in GNHF_PROMPT_IDS:
                     findings = validate_gnhf_launch_command("\n".join(payload))
