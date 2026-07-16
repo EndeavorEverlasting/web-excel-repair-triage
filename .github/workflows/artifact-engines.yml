@@ -54,4 +54,12 @@ jobs:
             tests/test_same_family_compare.py \
             tests/test_gitignore_hygiene.py \
             tests/test_roster_log_review_queue.py \
-            -q --tb=short
+            -q --tb=short --junitxml=artifact-engine-junit.xml
+
+      - name: Upload artifact-engine test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-engine-junit
+          path: artifact-engine-junit.xml
+          if-no-files-found: warn
