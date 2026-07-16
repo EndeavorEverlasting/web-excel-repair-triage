@@ -107,3 +107,29 @@ def test_policy_rejects_high_confidence_reallocation(tmp_path) -> None:
             ["2026-07"],
             policy_path=str(policy),
         )
+
+
+def test_explicit_only_policy_rejects_deployment_weight(tmp_path) -> None:
+    policy = tmp_path / "unsafe-deployment-weight.json"
+    policy.write_text(json.dumps({
+        "version": 1,
+        "policies": {
+            "2026-07": {
+                "allocation_weights": {
+                    "Configurations": 4,
+                    "Deployments": 1,
+                },
+                "reallocate_confidence": ["medium"],
+                "deployment": {
+                    "explicit_only": True,
+                    "max_shift_count": 1,
+                },
+            }
+        },
+    }), encoding="utf-8")
+    with pytest.raises(ValueError, match="explicit-only Deployments cannot appear"):
+        apply_monthly_allocation_policies(
+            _shifts(explicit_deployment=False),
+            ["2026-07"],
+            policy_path=str(policy),
+        )
