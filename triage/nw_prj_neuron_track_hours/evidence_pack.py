@@ -196,10 +196,8 @@ def apply_allocation_source(
 ) -> Tuple[BonitaResolution, AllocationOverlayStats]:
     records = read_allocation_records(allocation_path, months)
     exact: Dict[Tuple[date, str, float], List[int]] = defaultdict(list)
-    loose: Dict[Tuple[date, str], List[int]] = defaultdict(list)
     for idx, record in enumerate(records):
         exact[(record.work_date, _name(record.tech), record.hours)].append(idx)
-        loose[(record.work_date, _name(record.tech))].append(idx)
     used: set[int] = set()
     unmatched: List[str] = []
     updated: List[BonitaShift] = []
@@ -213,8 +211,6 @@ def apply_allocation_source(
 
     for shift in resolution.shifts:
         idx = take(exact.get((shift.date, _name(shift.tech), round(shift.total_hours, 2)), ()))
-        if idx is None:
-            idx = take(loose.get((shift.date, _name(shift.tech)), ()))
         if idx is None:
             unmatched.append(f"{shift.date}|{shift.tech}|{shift.total_hours:.2f}")
             updated.append(shift)
