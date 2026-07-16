@@ -75,6 +75,10 @@ def _validate_policy(month_key: str, policy: Dict[str, Any]) -> Tuple[List[Tuple
         str(value).strip().casefold()
         for value in policy.get("reallocate_confidence", ["low", "medium"])
     }
+    if "high" in confidence:
+        raise ValueError(
+            f"{month_key}: high-confidence assignments are authoritative and may not be reallocated"
+        )
     deployment = policy.get("deployment") or {}
     if not isinstance(deployment, dict):
         raise ValueError(f"{month_key}: deployment must be an object")
