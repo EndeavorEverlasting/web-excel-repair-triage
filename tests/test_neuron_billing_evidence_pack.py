@@ -91,6 +91,14 @@ def test_generates_expected_evidence_pack_from_roster(roster: Path, tmp_path: Pa
     ]
     assert "Task Summary" not in wb.sheetnames
 
+    for sheet_name in ("April 2026", "May 2026"):
+        for row in wb[sheet_name].iter_rows(min_row=5, values_only=True):
+            if row[2]:
+                assert row[8] == (
+                    f"Assignment classification: {row[7]}. "
+                    "No additional operational detail is asserted."
+                )
+
     event = wb["Event Log"]
     actual_hours = [
         row[19]
