@@ -5,12 +5,12 @@ Example:
     python -m triage.nw_prj_neuron_track_hours.evidence_pack_cli \
         --roster-log "Candidates/Active Roster Log.xlsx" \
         --months 2026-07 \
-        --allocation-source "Candidates/Neuron Track Hours - July 2026.xlsx" \
         --out-dir "Outputs/neuron_billing_evidence_pack/2026-07"
 
-The roster log is always clock/hour truth.  ``--allocation-source`` is optional
-and may override only the task/assignment classification after exact shift
-reconciliation.  Real operator workbooks remain local and gitignored.
+The roster log is always clock/hour truth. Repo month policies distribute only
+heuristic assignments. ``--allocation-source`` is optional and may override only
+the task label after exact shift reconciliation. Real operator workbooks remain
+local and gitignored.
 """
 from __future__ import annotations
 
@@ -30,6 +30,9 @@ from triage.nw_prj_neuron_track_hours.evidence_pack import (
     apply_allocation_source,
     build_evidence_pack,
     preflight_evidence_pack,
+)
+from triage.nw_prj_neuron_track_hours.monthly_allocation import (
+    apply_monthly_allocation_policies,
 )
 
 DEFAULT_OUT_DIR = "Outputs/neuron_billing_evidence_pack"
@@ -88,6 +91,8 @@ def run(
     months: Optional[Sequence[str]] = None,
     *,
     allocation_source: Optional[str] = None,
+    allocation_policy: Optional[str] = None,
+    apply_monthly_policy: bool = True,
     strict_allocation_source: bool = True,
     repo_root: Optional[Path] = None,
 ) -> Dict[str, Any]:
@@ -98,8 +103,11 @@ def run(
     if roster_path is None or not roster_path.is_file():
         raise FileNotFoundError(f"roster-log not found: {roster_path}")
     allocation_path = _resolve(allocation_source, root)
+    policy_path = _resolve(allocation_policy, root)
     if allocation_source and (allocation_path is None or not allocation_path.is_file()):
         raise FileNotFoundError(f"allocation-source not found: {allocation_path}")
+    if allocation_policy and (policy_path is None or not policy_path.is_file()):
+        raise FileNotFoundError(f"allocation-policy not found: {policy_path}")
     output_dir = _resolve(out_dir, root) or (root / DEFAULT_OUT_DIR)
     output_dir.mkdir(parents=True, exist_ok=True)
     workbook_path = output_dir / _artifact_name(month_keys)
@@ -109,6 +117,13 @@ def run(
         _assert_source_safe(allocation_path, workbook_path, "allocation source")
 
     resolution = resolve_bonita_shifts(str(roster_path), month_keys)
+    policy_stats = []
+    if apply_monthly_policy:
+        resolution, policy_stats = apply_monthly_allocation_policies(
+            resolution,
+            month_keys,
+            policy_path=str(policy_path) if policy_path else None,
+        )
     overlay = AllocationOverlayStats(strict=strict_allocation_source)
     if allocation_path:
         resolution, overlay = apply_allocation_source(
@@ -150,8 +165,10 @@ def run(
         "generated_utc": _dt.datetime.now(_dt.timezone.utc).isoformat(),
         "roster_log": str(roster_path),
         "allocation_source": str(allocation_path) if allocation_path else "",
+        "allocation_policy": str(policy_path) if policy_path else "repo default",
         "source_hierarchy": [
             "roster log clock/date/hour truth",
+            "repo or local monthly policy for heuristic task allocation",
             "local allocation workbook task label override when supplied",
             "deterministic audit-safe narrative with no invented specifics",
         ],
@@ -162,6 +179,7 @@ def run(
         "grand_total_hours": expected_total,
         "daily_narrative_rows": preflight.get("daily_narrative_rows"),
         "event_rows": preflight.get("event_rows"),
+        "monthly_allocation_policies": [item.to_dict() for item in policy_stats],
         "allocation_overlay": overlay.to_dict(),
         "review_item_count": len(resolution.review),
         "warnings": resolution.warnings,
@@ -189,6 +207,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--months", nargs="+", required=True)
     parser.add_argument("--allocation-source")
     parser.add_argument(
+        "--allocation-policy",
+        help="Optional local monthly allocation policy JSON",
+    )
+    parser.add_argument(
+        "--no-monthly-policy",
+        action="store_true",
+        help="Disable repo/default month allocation policy and use classifier labels only.",
+    )
+    parser.add_argument(
         "--allow-unmatched-allocation",
         action="store_true",
         help="Keep roster-rule assignments for unmatched shifts instead of failing.",
@@ -200,6 +227,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         out_dir=args.out_dir,
         months=args.months,
         allocation_source=args.allocation_source,
+        allocation_policy=args.allocation_policy,
+        apply_monthly_policy=not args.no_monthly_policy,
         strict_allocation_source=not args.allow_unmatched_allocation,
     )
     print(json.dumps(manifest, indent=2, default=str))
