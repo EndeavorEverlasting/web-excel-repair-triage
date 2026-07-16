@@ -37,7 +37,8 @@ def validate_allocation_source_exact(
             for (day, tech, hours), count in list(extra.items())[:5]
         )
         raise ValueError(
-            "allocation source must reconcile exactly by Date + Tech + Hours; "
+            "allocation source did not reconcile every roster-derived shift "
+            "exactly by Date + Tech + Hours; "
             f"missing=[{missing_text}] extra=[{extra_text}]"
         )
 
