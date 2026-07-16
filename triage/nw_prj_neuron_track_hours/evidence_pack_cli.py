@@ -113,12 +113,12 @@ def run(
     if allocation_policy and (policy_path is None or not policy_path.is_file()):
         raise FileNotFoundError(f"allocation-policy not found: {policy_path}")
     output_dir = _resolve(out_dir, root) or (root / DEFAULT_OUT_DIR)
-    output_dir.mkdir(parents=True, exist_ok=True)
     workbook_path = output_dir / _artifact_name(month_keys)
     assert_output_path_allowed(str(roster_path), str(workbook_path))
     _assert_source_safe(roster_path, workbook_path, "roster log")
     if allocation_path:
         _assert_source_safe(allocation_path, workbook_path, "allocation source")
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     resolution = resolve_bonita_shifts(str(roster_path), month_keys)
     overlay = AllocationOverlayStats(strict=strict_allocation_source)
