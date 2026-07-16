@@ -6,6 +6,44 @@ on:
     branches: [main]
 
 jobs:
+  neuron-billing-evidence-pack:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --quiet --upgrade pip
+          python -m pip install --quiet -r requirements.txt pytest
+
+      - name: Import evidence-pack engine
+        run: |
+          python -c "import triage.nw_prj_neuron_track_hours.evidence_pack_cli; import triage.nw_prj_neuron_track_hours.monthly_allocation; print('evidence-pack imports ok')"
+
+      - name: Run evidence-pack tests
+        run: |
+          python -m pytest \
+            tests/test_nw_prj_neuron_track_hours_bonita.py \
+            tests/test_neuron_billing_evidence_pack.py \
+            tests/test_neuron_billing_evidence_pack_guards.py \
+            tests/test_neuron_billing_monthly_allocation.py \
+            -q --tb=short --junitxml=neuron-billing-evidence-pack-junit.xml
+
+      - name: Upload evidence-pack test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neuron-billing-evidence-pack-junit
+          path: neuron-billing-evidence-pack-junit.xml
+          if-no-files-found: warn
+
   artifact-engines:
     runs-on: ubuntu-latest
 
