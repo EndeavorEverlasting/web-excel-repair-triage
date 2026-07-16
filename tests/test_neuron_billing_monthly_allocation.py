@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import date, time, timedelta
+import json
 
 import pytest
 
@@ -86,3 +87,23 @@ def test_july_policy_fails_when_explicit_deployment_cap_is_exceeded() -> None:
     )
     with pytest.raises(ValueError, match="exceed policy maximum"):
         apply_monthly_allocation_policies(resolution, ["2026-07"])
+
+
+def test_policy_rejects_high_confidence_reallocation(tmp_path) -> None:
+    policy = tmp_path / "unsafe-policy.json"
+    policy.write_text(json.dumps({
+        "version": 1,
+        "policies": {
+            "2026-07": {
+                "allocation_weights": {"Configurations": 1},
+                "reallocate_confidence": ["medium", "high"],
+                "deployment": {"max_shift_count": 1},
+            }
+        },
+    }), encoding="utf-8")
+    with pytest.raises(ValueError, match="high-confidence assignments are authoritative"):
+        apply_monthly_allocation_policies(
+            _shifts(explicit_deployment=True),
+            ["2026-07"],
+            policy_path=str(policy),
+        )
