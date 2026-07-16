@@ -78,3 +78,38 @@ def test_acceptance_schemas_use_canonical_statuses() -> None:
     assert field_statuses == STATUSES
     required_gates = set(acceptance["properties"]["gates"]["required"])
     assert {"desktop_excel", "excel_for_web", "mouse_navigation", "clipboard", "operator_acceptance"} <= required_gates
+
+
+def test_inherited_artifact_engine_failure_is_exact_and_non_waiving() -> None:
+    registry = load(AI / "ci-failure-registry.json")
+    canonical_statuses = set(load(AI / "validator-registry.json")["validation_statuses"])
+    record = registry["classifications"]["artifact-engines-pr59-invalid-external-reference-namespace"]
+
+    expected_tests = {
+        "tests/test_one_marcus_recon.py::test_renames_part_number_tab_to_stable_name",
+        "tests/test_one_marcus_recon.py::test_rewrites_formulas_from_old_part_number_tab",
+        "tests/test_one_marcus_recon.py::test_localizes_external_part_number_formulas",
+        "tests/test_one_marcus_recon.py::test_removes_external_link_parts_after_localization",
+        "tests/test_one_marcus_recon.py::test_removes_calc_chain_after_formula_patch",
+        "tests/test_one_marcus_recon.py::test_preserves_unrelated_tabs_and_sheet_order",
+        "tests/test_one_marcus_recon.py::test_dry_run_reports_without_output_write",
+        "tests/test_one_marcus_recon.py::test_webexcel_preflight_rejects_stale_refs_and_stopship_tokens",
+        "tests/test_one_marcus_immutability.py::test_generate_refuses_multi_sheet_integrated",
+        "tests/test_one_marcus_immutability.py::test_relink_preserves_sheet_count",
+        "tests/test_one_marcus_immutability.py::test_baseline_gate_fails_when_sheets_deleted",
+    }
+
+    assert set(registry["validation_statuses"]) == canonical_statuses
+    assert record["status"] == "FAIL"
+    assert record["inherited_from_pr"] == 59
+    assert record["failure_phase"] == "fixture_parse"
+    assert set(record["affected_tests"]) == expected_tests
+    assert len(record["affected_tests"]) == len(expected_tests) == 11
+    assert record["evidence_runs"]["base"]["head_sha"] == "f9c8ed8975cf6e3bbf88ac2d7171be39ce387225"
+    assert record["evidence_runs"]["base"]["summary"]["failed"] == len(expected_tests)
+    assert record["evidence_runs"]["confirming"]["summary"]["failed"] == len(expected_tests)
+    assert record["disposition"]["blocking"] is True
+    assert record["disposition"]["outside_prompt_kit_floor_scope"] is True
+    assert registry["rules"]["records_do_not_waive_required_checks"] is True
+    assert registry["rules"]["records_do_not_promote_failures"] is True
+    assert registry["rules"]["resolution_requires_a_green_rerun"] is True

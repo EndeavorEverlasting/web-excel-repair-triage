@@ -20,6 +20,7 @@ The V32 workbook remains operator evidence, not a tracked source binary. Its ver
 | Validation result vocabulary | `.ai/schemas/validation-report.json` | PR #59 |
 | Artifact types and locations | `.ai/artifact-registry.json` | PR #59 plus this floor PR |
 | Workflow registration | `.ai/workflow-registry.json` | PR #59 plus this floor PR |
+| Inherited CI failure classification | `.ai/ci-failure-registry.json` | This floor PR |
 | Validator authority | `.ai/validator-registry.json` | This floor PR |
 | Prompt-kit aggregate acceptance | `.ai/schemas/prompt-kit-acceptance-state.json` | This floor PR |
 | Environment-specific acceptance | `.ai/schemas/prompt-kit-field-acceptance-record.json` | This floor PR |
@@ -70,6 +71,14 @@ No later sprint may introduce another validator for one of these surfaces withou
 ### PR #59
 
 **Disposition:** canonical harness floor. This PR is stacked on it because run context, registries, proof levels, and validation states must land before V32 generation.
+
+Its inherited `Artifact engine tests` failure is classified in `.ai/ci-failure-registry.json` as
+`artifact-engines-pr59-invalid-external-reference-namespace`. Base run
+[#186](https://github.com/EndeavorEverlasting/web-excel-repair-triage/actions/runs/29379460918) and confirming
+run [#188](https://github.com/EndeavorEverlasting/web-excel-repair-triage/actions/runs/29458166275) fail the same
+11 tests before their assertions. The synthetic stale-recon fixture adds `externalReference r:id="rIdExt1"` without
+declaring the `r` namespace in `xl/workbook.xml`; the CI `lxml` parser rejects that markup. This classification is
+blocking and non-waiving. Resolution belongs to #59 and requires a green rerun of the complete workflow.
 
 ### PR #60
 

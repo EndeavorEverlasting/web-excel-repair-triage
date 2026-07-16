@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "description": "Evidence-backed classifications for inherited CI failures. A record documents a failure; it never waives or promotes the failing check.",
+  "validation_statuses": ["PASS", "FAIL", "NOT_RUN", "NOT_APPLICABLE", "BLOCKED"],
+  "classifications": {
+    "artifact-engines-pr59-invalid-external-reference-namespace": {
+      "status": "FAIL",
+      "classification": "INVALID_SYNTHETIC_FIXTURE_XML",
+      "inherited_from_pr": 59,
+      "workflow": "Artifact engine tests",
+      "job": "artifact-engines",
+      "failure_phase": "fixture_parse",
+      "fixture": {
+        "path": "tests/fixtures/one_marcus_recon/fixtures.py",
+        "function": "_inject_defects",
+        "invalid_markup": "<externalReference r:id=\"rIdExt1\"/>",
+        "defect": "The synthetic workbook uses the r prefix without declaring the relationships namespace in xl/workbook.xml.",
+        "environment_condition": "The failure is exposed when openpyxl parses XML through lxml; the stdlib XML parser accepts the undeclared prefix."
+      },
+      "error": "lxml.etree.XMLSyntaxError: Namespace prefix r for id on externalReference is not defined, line 1, column 993",
+      "evidence_runs": {
+        "base": {
+          "run_id": 29379460918,
+          "run_number": 186,
+          "head_sha": "f9c8ed8975cf6e3bbf88ac2d7171be39ce387225",
+          "url": "https://github.com/EndeavorEverlasting/web-excel-repair-triage/actions/runs/29379460918",
+          "summary": {
+            "failed": 11,
+            "passed": 118,
+            "skipped": 4
+          }
+        },
+        "confirming": {
+          "run_id": 29458166275,
+          "run_number": 188,
+          "head_sha": "2f2ab48c9a3d5d2336dec0941b627a0fb0cf3d27",
+          "url": "https://github.com/EndeavorEverlasting/web-excel-repair-triage/actions/runs/29458166275",
+          "summary": {
+            "failed": 11,
+            "passed": 114,
+            "skipped": 4
+          }
+        }
+      },
+      "affected_tests": [
+        "tests/test_one_marcus_recon.py::test_renames_part_number_tab_to_stable_name",
+        "tests/test_one_marcus_recon.py::test_rewrites_formulas_from_old_part_number_tab",
+        "tests/test_one_marcus_recon.py::test_localizes_external_part_number_formulas",
+        "tests/test_one_marcus_recon.py::test_removes_external_link_parts_after_localization",
+        "tests/test_one_marcus_recon.py::test_removes_calc_chain_after_formula_patch",
+        "tests/test_one_marcus_recon.py::test_preserves_unrelated_tabs_and_sheet_order",
+        "tests/test_one_marcus_recon.py::test_dry_run_reports_without_output_write",
+        "tests/test_one_marcus_recon.py::test_webexcel_preflight_rejects_stale_refs_and_stopship_tokens",
+        "tests/test_one_marcus_immutability.py::test_generate_refuses_multi_sheet_integrated",
+        "tests/test_one_marcus_immutability.py::test_relink_preserves_sheet_count",
+        "tests/test_one_marcus_immutability.py::test_baseline_gate_fails_when_sheets_deleted"
+      ],
+      "disposition": {
+        "blocking": true,
+        "resolution_owner_pr": 59,
+        "required_resolution": "Make the synthetic externalReference namespace-valid and rerun the complete Artifact engine tests workflow.",
+        "outside_prompt_kit_floor_scope": true
+      }
+    }
+  },
+  "rules": {
+    "records_do_not_waive_required_checks": true,
+    "records_do_not_promote_failures": true,
+    "affected_tests_must_be_exact": true,
+    "resolution_requires_a_green_rerun": true
+  }
+}

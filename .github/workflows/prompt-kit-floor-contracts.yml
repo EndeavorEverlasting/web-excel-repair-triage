@@ -6,9 +6,11 @@ on:
       - ".ai/validator-registry.json"
       - ".ai/artifact-registry.json"
       - ".ai/workflow-registry.json"
+      - ".ai/ci-failure-registry.json"
       - ".ai/schemas/prompt-kit-acceptance-state.json"
       - ".ai/schemas/prompt-kit-field-acceptance-record.json"
       - "tests/test_prompt_kit_floor_contracts.py"
+      - "docs/PROMPT_KIT_V32_REPOSITORY_FLOOR.md"
       - ".github/workflows/prompt-kit-floor-contracts.yml"
   push:
     branches: [main]
@@ -16,9 +18,11 @@ on:
       - ".ai/validator-registry.json"
       - ".ai/artifact-registry.json"
       - ".ai/workflow-registry.json"
+      - ".ai/ci-failure-registry.json"
       - ".ai/schemas/prompt-kit-acceptance-state.json"
       - ".ai/schemas/prompt-kit-field-acceptance-record.json"
       - "tests/test_prompt_kit_floor_contracts.py"
+      - "docs/PROMPT_KIT_V32_REPOSITORY_FLOOR.md"
 
 jobs:
   floor-contracts:
@@ -40,6 +44,7 @@ jobs:
           python -m json.tool .ai/validator-registry.json > /dev/null
           python -m json.tool .ai/artifact-registry.json > /dev/null
           python -m json.tool .ai/workflow-registry.json > /dev/null
+          python -m json.tool .ai/ci-failure-registry.json > /dev/null
           python -m json.tool .ai/schemas/prompt-kit-acceptance-state.json > /dev/null
           python -m json.tool .ai/schemas/prompt-kit-field-acceptance-record.json > /dev/null
 
