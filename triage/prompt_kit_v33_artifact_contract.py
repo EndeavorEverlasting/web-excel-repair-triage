@@ -1,8 +1,8 @@
 """Validate the generated AI Harness Prompt Kit V33 workbook UX contract.
 
-This module is intentionally read-only. It validates the final workbook artifact
-independently from the generator so a regression in generation and its internal
-self-check cannot silently agree on the same broken output.
+This module is read-only and independent from the finalizer implementation. The
+shared JSON file is the product contract: accepted tab order/colors/protection,
+required prompt tabs, and the P45-P47 declarative payloads.
 """
 from __future__ import annotations
 
@@ -16,22 +16,19 @@ from typing import Mapping, Sequence
 
 from openpyxl import load_workbook
 from openpyxl.cell import Cell
-from openpyxl.utils import range_boundaries
 
+DEFAULT_SPEC_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "configs"
+    / "prompt_kit"
+    / "v33_gnhf_harness_prompts.json"
+)
 LIBRARY_SHEET = "Prompt_Library"
 LIBRARY_PROMPT_ID_COLUMN = 3
 LIBRARY_SHEET_NAME_COLUMN = 15
 LIBRARY_LAST_COLUMN = 16
-CREAM_RGB = "FFF2CC"
-CREAM_TABS = (
-    "Prompt_Library",
-    "Opportunity_Discovery",
-    "P07_COPY_SAFE",
-    "P46_COPY_SAFE",
-)
-EDITABLE_RANGES: Mapping[str, str] = {"Opportunity_Discovery": "A1:R100"}
-REQUIRED_PROMPT_IDS = ("P45", "P46", "P47")
 PROMPT_ID_RE = re.compile(r"^P\d{2,}$")
+PROMPT_SHEET_RE = re.compile(r"^(P\d{2,})_COPY_SAFE$")
 PROMPT_RANGE_RE = re.compile(r"^A1:A([1-9]\d*)$")
 HYPERLINK_FORMULA_RE = re.compile(r'^=HYPERLINK\("((?:[^"]|"")*)"\s*,', re.IGNORECASE)
 
@@ -57,9 +54,9 @@ class ArtifactContractResult:
             "prompt_ids": list(self.prompt_ids),
             "findings": list(self.findings),
             "proof_ceiling": (
-                "OOXML workbook structure, internal range links, coordinated prompt-row "
-                "formatting, required cream tab colors, prompt presence, and worksheet "
-                "protection. Excel Desktop/Web open, clipboard behavior, and operator "
+                "OOXML workbook structure, exact range links, accepted sheet order, "
+                "theme/RGB tab colors, prompt presence, and worksheet protection. Excel "
+                "Desktop/Web click-selection behavior, clipboard behavior, and operator "
                 "acceptance remain runtime gates."
             ),
         }
@@ -71,6 +68,13 @@ def _sha256(path: Path) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _load_spec(path: Path) -> dict:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if data.get("schema_version") != 1:
+        raise ValueError("unsupported prompt extension schema_version")
+    return data
 
 
 def _target(cell: Cell) -> str:
@@ -114,71 +118,58 @@ def _prompt_rows(library, footer_row: int) -> dict[str, tuple[int, str]]:
     return prompts
 
 
-def _color_token(color) -> str:
+def _expected_prompt_ids(sheet_order: Sequence[str]) -> tuple[str, ...]:
+    result = []
+    for sheet_name in sheet_order:
+        match = PROMPT_SHEET_RE.fullmatch(sheet_name)
+        if match:
+            result.append(match.group(1))
+    return tuple(result)
+
+
+def _color_matches(color, expected: Mapping[str, object]) -> bool:
     if color is None:
-        return ""
-    color_type = str(getattr(color, "type", "") or "")
-    value = getattr(color, color_type, "") if color_type else ""
-    tint = getattr(color, "tint", 0)
-    return f"{color_type}:{value}:{tint}".upper()
+        return False
+    if "rgb" in expected:
+        return color.type == "rgb" and str(color.rgb).upper()[-6:] == str(expected["rgb"]).upper()[-6:]
+    if color.type != "theme" or int(color.theme) != int(expected["theme"]):
+        return False
+    return abs(float(color.tint or 0.0) - float(expected.get("tint", 0.0))) < 1e-12
 
 
-def _normalize_rgb(color) -> str:
-    if color is None or getattr(color, "type", None) != "rgb":
-        return _color_token(color)
-    value = getattr(color, "rgb", "")
-    return str(value).upper()[-6:]
-
-
-def _inside(bounds: tuple[int, int, int, int], row: int, column: int) -> bool:
-    min_col, min_row, max_col, max_row = bounds
-    return min_row <= row <= max_row and min_col <= column <= max_col
-
-
-def _validate_protection(workbook, findings: list[str]) -> None:
-    editable_bounds = {
-        sheet_name: range_boundaries(cell_range)
-        for sheet_name, cell_range in EDITABLE_RANGES.items()
-    }
+def _validate_protection(workbook, unprotected_sheets: Sequence[str], findings: list[str]) -> None:
+    exclusions = set(unprotected_sheets)
     for ws in workbook.worksheets:
+        if ws.title in exclusions:
+            if ws.protection.sheet:
+                findings.append(f"excluded worksheet is protected: {ws.title}")
+            continue
         if not ws.protection.sheet:
             findings.append(f"worksheet is not protected: {ws.title}")
-        bounds = editable_bounds.get(ws.title)
+            continue
         for row in ws.iter_rows():
             for cell in row:
-                allowed = bounds is not None and _inside(bounds, cell.row, cell.column)
-                if allowed and cell.protection.locked:
-                    findings.append(f"editable cell is locked: {ws.title}!{cell.coordinate}")
+                if not cell.protection.locked:
+                    findings.append(f"protected worksheet contains unlocked cell: {ws.title}!{cell.coordinate}")
                     return
-                if not allowed and not cell.protection.locked:
-                    findings.append(f"cell outside editable range is unlocked: {ws.title}!{cell.coordinate}")
-                    return
-        if bounds is not None:
-            min_col, min_row, max_col, max_row = bounds
-            for row in ws.iter_rows(
-                min_row=min_row,
-                max_row=max_row,
-                min_col=min_col,
-                max_col=max_col,
-            ):
-                for cell in row:
-                    if cell.protection.locked:
-                        findings.append(f"editable cell is locked: {ws.title}!{cell.coordinate}")
-                        return
 
 
-def validate_artifact(path: Path) -> ArtifactContractResult:
+def validate_artifact(path: Path, spec_path: Path = DEFAULT_SPEC_PATH) -> ArtifactContractResult:
     if not path.exists():
         raise FileNotFoundError(path)
+    spec = _load_spec(spec_path)
     workbook = load_workbook(path, keep_links=True, data_only=False)
     findings: list[str] = []
+    expected_order = tuple(str(name) for name in spec["sheet_order"])
+    if tuple(workbook.sheetnames) != expected_order:
+        findings.append("worksheet order does not match the accepted V33 layout contract")
     if LIBRARY_SHEET not in workbook.sheetnames:
         return ArtifactContractResult(
             workbook=str(path),
             sha256=_sha256(path),
             prompt_count=0,
             prompt_ids=(),
-            findings=(f"missing required sheet: {LIBRARY_SHEET}",),
+            findings=tuple(findings + [f"missing required sheet: {LIBRARY_SHEET}"]),
         )
 
     library = workbook[LIBRARY_SHEET]
@@ -200,10 +191,12 @@ def validate_artifact(path: Path) -> ArtifactContractResult:
         if actual != expected:
             findings.append(f"{LIBRARY_SHEET}!{coordinate} target {actual!r} != {expected!r}")
 
-    for required in REQUIRED_PROMPT_IDS:
+    required_prompt_ids = _expected_prompt_ids(expected_order)
+    for required in required_prompt_ids:
         if required not in prompts:
             findings.append(f"missing required prompt: {required}")
 
+    generated_prompt_ids = {str(prompt["prompt_id"]) for prompt in spec.get("prompts", [])}
     for prompt_id, (row, sheet_name) in sorted(prompts.items()):
         if not sheet_name:
             findings.append(f"{prompt_id} has no copy-safe sheet name")
@@ -230,11 +223,18 @@ def validate_artifact(path: Path) -> ArtifactContractResult:
             actual = _target(ws[coordinate])
             if actual != expected_back:
                 findings.append(f"{sheet_name}!{coordinate} target {actual!r} != {expected_back!r}")
-        if prompt_id in REQUIRED_PROMPT_IDS:
+        expected_self = f"#'{sheet_name}'!{prompt_range}"
+        for coordinate in ("C1", f"C{last_row}"):
+            actual = _target(ws[coordinate])
+            if actual != expected_self:
+                findings.append(f"{sheet_name}!{coordinate} range-recovery target {actual!r} != {expected_self!r}")
+            if ws[coordinate].value != f"Copy {prompt_range} only":
+                findings.append(f"{sheet_name}!{coordinate} range label is not canonical")
+        if prompt_id in generated_prompt_ids:
             row_fills = {
                 (
                     library.cell(row=row, column=column).fill.fill_type,
-                    _normalize_rgb(library.cell(row=row, column=column).fill.fgColor),
+                    str(library.cell(row=row, column=column).fill.fgColor.rgb or "").upper()[-6:],
                 )
                 for column in range(1, 17)
             }
@@ -246,15 +246,16 @@ def validate_artifact(path: Path) -> ArtifactContractResult:
         if (ws.column_dimensions["A"].width or 0) < 60:
             findings.append(f"{sheet_name} copy-safe column A is too narrow")
 
-    for sheet_name in CREAM_TABS:
-        if sheet_name not in workbook.sheetnames:
-            findings.append(f"missing cream-tab sheet: {sheet_name}")
-            continue
-        actual = _normalize_rgb(workbook[sheet_name].sheet_properties.tabColor)
-        if actual != CREAM_RGB:
-            findings.append(f"{sheet_name} tab color {actual!r} != {CREAM_RGB!r}")
+    expected_colors = {str(name): dict(value) for name, value in spec["tab_colors"].items()}
+    for ws in workbook.worksheets:
+        expected = expected_colors.get(ws.title)
+        actual = ws.sheet_properties.tabColor
+        if expected is None and actual is not None:
+            findings.append(f"unexpected tab color: {ws.title}")
+        elif expected is not None and not _color_matches(actual, expected):
+            findings.append(f"{ws.title} tab color does not match the accepted contract")
 
-    _validate_protection(workbook, findings)
+    _validate_protection(workbook, [str(name) for name in spec["unprotected_sheets"]], findings)
     prompt_ids = tuple(sorted(prompts))
     return ArtifactContractResult(
         workbook=str(path),
@@ -267,12 +268,13 @@ def validate_artifact(path: Path) -> ArtifactContractResult:
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Validate AI Harness Prompt Kit V33 links, ranges, formatting, tabs, prompts, and protection."
+        description="Validate AI Harness Prompt Kit V33 range recovery, order, colors, prompts, and protection."
     )
     parser.add_argument("workbook", type=Path)
+    parser.add_argument("--spec", type=Path, default=DEFAULT_SPEC_PATH)
     parser.add_argument("--report", type=Path)
     args = parser.parse_args(argv)
-    result = validate_artifact(args.workbook)
+    result = validate_artifact(args.workbook, args.spec)
     payload = result.to_dict()
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
