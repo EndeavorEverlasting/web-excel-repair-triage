@@ -165,6 +165,8 @@ def test_self_service_wrappers_remain_bounded() -> None:
     ps1 = (repo_root / "scripts" / "Finalize-AIPromptKitV33.ps1").read_text(encoding="utf-8")
     cmd = (repo_root / "scripts" / "Finalize-AIPromptKitV33.cmd").read_text(encoding="utf-8")
     assert "triage.prompt_kit_v33_finalizer" in ps1
+    assert "triage.prompt_kit_v33_layout_finalizer" in ps1
+    assert "layout-report.json" in ps1
     assert "prompt_kit_operability_contract" in ps1
     assert "workbook_package_hygiene" in ps1
     assert "web_excel_compatibility_rules" in ps1
