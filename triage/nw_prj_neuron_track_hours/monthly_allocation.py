@@ -82,6 +82,15 @@ def _validate_policy(month_key: str, policy: Dict[str, Any]) -> Tuple[List[Tuple
     deployment = policy.get("deployment") or {}
     if not isinstance(deployment, dict):
         raise ValueError(f"{month_key}: deployment must be an object")
+    explicit_only = deployment.get("explicit_only", False)
+    if not isinstance(explicit_only, bool):
+        raise ValueError(f"{month_key}: deployment.explicit_only must be a boolean")
+    if explicit_only and any(
+        _normal_name(category) == "deployments" for category, _ in weights
+    ):
+        raise ValueError(
+            f"{month_key}: explicit-only Deployments cannot appear in allocation_weights"
+        )
     return weights, confidence, deployment
 
 
