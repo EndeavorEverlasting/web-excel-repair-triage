@@ -31,6 +31,10 @@ from triage.nw_prj_neuron_track_hours.evidence_pack import (
     build_evidence_pack,
     preflight_evidence_pack,
 )
+from triage.nw_prj_neuron_track_hours.evidence_pack_finalize import (
+    repair_visual_summary_charts,
+    validate_allocation_source_exact,
+)
 from triage.nw_prj_neuron_track_hours.monthly_allocation import (
     apply_monthly_allocation_policies,
 )
@@ -117,6 +121,16 @@ def run(
         _assert_source_safe(allocation_path, workbook_path, "allocation source")
 
     resolution = resolve_bonita_shifts(str(roster_path), month_keys)
+    overlay = AllocationOverlayStats(strict=strict_allocation_source)
+    if allocation_path:
+        if strict_allocation_source:
+            validate_allocation_source_exact(resolution, str(allocation_path), month_keys)
+        resolution, overlay = apply_allocation_source(
+            resolution,
+            str(allocation_path),
+            month_keys,
+            strict=strict_allocation_source,
+        )
     policy_stats = []
     if apply_monthly_policy:
         resolution, policy_stats = apply_monthly_allocation_policies(
@@ -124,16 +138,9 @@ def run(
             month_keys,
             policy_path=str(policy_path) if policy_path else None,
         )
-    overlay = AllocationOverlayStats(strict=strict_allocation_source)
-    if allocation_path:
-        resolution, overlay = apply_allocation_source(
-            resolution,
-            str(allocation_path),
-            month_keys,
-            strict=strict_allocation_source,
-        )
 
     _, tabs = build_evidence_pack(resolution, month_keys, str(workbook_path))
+    repair_visual_summary_charts(str(workbook_path))
     expected_total = resolution.grand_total()
     preflight = preflight_evidence_pack(
         str(workbook_path),
@@ -168,8 +175,8 @@ def run(
         "allocation_policy": str(policy_path) if policy_path else "repo default",
         "source_hierarchy": [
             "roster log clock/date/hour truth",
-            "repo or local monthly policy for heuristic task allocation",
             "local allocation workbook task label override when supplied",
+            "repo or local monthly policy for remaining heuristic task allocation",
             "deterministic audit-safe narrative with no invented specifics",
         ],
         "months": month_keys,
