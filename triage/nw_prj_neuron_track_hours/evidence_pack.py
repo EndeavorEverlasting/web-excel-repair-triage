@@ -249,11 +249,13 @@ def _sorted(shifts: Iterable[BonitaShift]) -> List[BonitaShift]:
 
 
 def _supporting(shift: BonitaShift) -> str:
-    primary = shift.assignment_type or "Configurations"
-    lanes = [primary, "Configurations", "Inventory Management", "Survey", "Ticket Forwarding"]
-    if primary == "Deployments":
-        lanes.append("Deployments")
-    return "; ".join(dict.fromkeys(lane for lane in lanes if lane))
+    assignment = str(shift.assignment_type or "").strip()
+    if not assignment:
+        return "No assignment classification recorded."
+    return (
+        f"Assignment classification: {assignment}. "
+        "No additional operational detail is asserted."
+    )
 
 
 def _narrative(shift: BonitaShift) -> str:
