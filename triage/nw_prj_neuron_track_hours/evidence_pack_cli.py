@@ -114,10 +114,17 @@ def run(
         raise FileNotFoundError(f"allocation-policy not found: {policy_path}")
     output_dir = _resolve(out_dir, root) or (root / DEFAULT_OUT_DIR)
     workbook_path = output_dir / _artifact_name(month_keys)
-    assert_output_path_allowed(str(roster_path), str(workbook_path))
-    _assert_source_safe(roster_path, workbook_path, "roster log")
+    preflight_path = output_dir / f"{workbook_path.stem}_preflight.json"
+    manifest_path = output_dir / f"{workbook_path.stem}_manifest.json"
+    sources = [(roster_path, "roster log")]
     if allocation_path:
-        _assert_source_safe(allocation_path, workbook_path, "allocation source")
+        sources.append((allocation_path, "allocation source"))
+    if policy_path:
+        sources.append((policy_path, "allocation policy"))
+    for output_path in (workbook_path, preflight_path, manifest_path):
+        assert_output_path_allowed(str(roster_path), str(output_path))
+        for source_path, label in sources:
+            _assert_source_safe(source_path, output_path, label)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     resolution = resolve_bonita_shifts(str(roster_path), month_keys)
@@ -148,7 +155,6 @@ def run(
         expected_shift_count=len(resolution.shifts),
         expected_total_hours=expected_total,
     )
-    preflight_path = output_dir / f"{workbook_path.stem}_preflight.json"
     preflight_path.write_text(
         json.dumps(preflight, indent=2, default=str), encoding="utf-8"
     )
@@ -198,7 +204,6 @@ def run(
         "preflight": preflight,
         "proof_level": "fixture/package-level; Excel for Web manual acceptance not proven",
     }
-    manifest_path = output_dir / f"{workbook_path.stem}_manifest.json"
     manifest["outputs"]["manifest_json"] = str(manifest_path)
     manifest_path.write_text(
         json.dumps(manifest, indent=2, default=str), encoding="utf-8"
@@ -213,10 +218,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--roster-log", required=True)
     parser.add_argument("--months", nargs="+", required=True)
     parser.add_argument("--allocation-source")
-    parser.add_argument(
-        "--allocation-policy",
-        help="Optional local monthly allocation policy JSON",
-    )
+    parser.add_argument("--allocation-policy", help="Optional local monthly allocation policy JSON")
     parser.add_argument(
         "--no-monthly-policy",
         action="store_true",
