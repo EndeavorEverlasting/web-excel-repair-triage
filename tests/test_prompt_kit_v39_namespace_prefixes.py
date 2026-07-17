@@ -15,7 +15,9 @@ XR6_NS = "http://schemas.microsoft.com/office/spreadsheetml/2016/revision6"
 XR10_NS = "http://schemas.microsoft.com/office/spreadsheetml/2016/revision10"
 
 
-def test_v39_preserves_excel_prefixes_referenced_by_mc_ignorable() -> None:
+def test_v39_declares_unused_excel_prefixes_referenced_by_mc_ignorable() -> None:
+    # Only xr is structurally used. x14ac/xr2/xr3 must still be declared because
+    # Excel references them semantically through mc:Ignorable.
     worksheet = ET.Element(
         f"{{{ooxml.MAIN_NS}}}worksheet",
         {
@@ -23,9 +25,6 @@ def test_v39_preserves_excel_prefixes_referenced_by_mc_ignorable() -> None:
             f"{{{XR_NS}}}uid": "{00000000-0001-0000-0100-000000000000}",
         },
     )
-    ET.SubElement(worksheet, f"{{{X14AC_NS}}}ignoredError")
-    ET.SubElement(worksheet, f"{{{XR2_NS}}}revision")
-    ET.SubElement(worksheet, f"{{{XR3_NS}}}revision")
 
     serialized = ooxml._xml(worksheet).decode("utf-8")
 
@@ -39,16 +38,15 @@ def test_v39_preserves_excel_prefixes_referenced_by_mc_ignorable() -> None:
     assert "ns0:" not in serialized
 
 
-def test_v39_preserves_workbook_revision_prefixes() -> None:
+def test_v39_declares_unused_workbook_revision_prefixes() -> None:
+    # xr is used, while x15/xr6/xr10/xr2 are represented only by Ignorable.
     workbook = ET.Element(
         f"{{{ooxml.MAIN_NS}}}workbook",
-        {f"{{{MC_NS}}}Ignorable": "x15 xr xr6 xr10 xr2"},
+        {
+            f"{{{MC_NS}}}Ignorable": "x15 xr xr6 xr10 xr2",
+            f"{{{XR_NS}}}uid": "{00000000-0000-0000-0000-000000000000}",
+        },
     )
-    ET.SubElement(workbook, f"{{{X15_NS}}}workbookPr")
-    ET.SubElement(workbook, f"{{{XR_NS}}}revisionPtr")
-    ET.SubElement(workbook, f"{{{XR6_NS}}}revision")
-    ET.SubElement(workbook, f"{{{XR10_NS}}}revision")
-    ET.SubElement(workbook, f"{{{XR2_NS}}}revision")
 
     serialized = ooxml._xml(workbook).decode("utf-8")
 
@@ -62,3 +60,16 @@ def test_v39_preserves_workbook_revision_prefixes() -> None:
         assert f'xmlns:{prefix}="{uri}"' in serialized
     assert 'mc:Ignorable="x15 xr xr6 xr10 xr2"' in serialized
     assert "ns0:" not in serialized
+
+
+def test_v39_uses_default_namespaces_for_package_roots() -> None:
+    content_types = ET.Element(f"{{{ooxml.CONTENT_TYPES_NS}}}Types")
+    relationships = ET.Element(f"{{{ooxml.PKG_REL_NS}}}Relationships")
+
+    content_types_xml = ooxml._xml(content_types).decode("utf-8")
+    relationships_xml = ooxml._xml(relationships).decode("utf-8")
+
+    assert f'<Types xmlns="{ooxml.CONTENT_TYPES_NS}"' in content_types_xml
+    assert f'<Relationships xmlns="{ooxml.PKG_REL_NS}"' in relationships_xml
+    assert "ns0:" not in content_types_xml
+    assert "ns0:" not in relationships_xml
