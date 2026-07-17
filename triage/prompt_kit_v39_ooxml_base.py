@@ -11,6 +11,7 @@ are not authority and must not be invoked.
 """
 from __future__ import annotations
 
+import re
 from typing import Mapping, Sequence
 from xml.etree import ElementTree as ET
 
@@ -48,18 +49,12 @@ from ._prompt_kit_v39_package_primitives_impl import (
     _source_workbook,
     _update_app_properties,
     _write_package,
-    _xml,
 )
 
-# ElementTree preserves namespace URIs but otherwise rewrites Excel's named
-# prefixes to ns0/ns1. That breaks the semantic references in mc:Ignorable and
-# can make an otherwise parseable workbook fail strict Excel-compatible readers.
-# Register every prefix used by the accepted V38 workbook before any package
-# primitive serializes workbook or worksheet XML.
+MC_NS = "http://schemas.openxmlformats.org/markup-compatibility/2006"
 _PREFIXES = {
-    "": MAIN_NS,
     "r": REL_NS,
-    "mc": "http://schemas.openxmlformats.org/markup-compatibility/2006",
+    "mc": MC_NS,
     "x14ac": "http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac",
     "x15": "http://schemas.microsoft.com/office/spreadsheetml/2010/11/main",
     "xr": "http://schemas.microsoft.com/office/spreadsheetml/2014/revision",
@@ -70,6 +65,58 @@ _PREFIXES = {
 }
 for _prefix, _uri in _PREFIXES.items():
     ET.register_namespace(_prefix, _uri)
+
+
+def _namespace_uri(tag: str) -> str | None:
+    if not tag.startswith("{"):
+        return None
+    return tag[1:].split("}", 1)[0]
+
+
+def _xml(root: ET.Element) -> bytes:
+    """Serialize one OOXML part with Excel-compatible namespace declarations.
+
+    ElementTree normally rewrites package roots to ``ns0`` and omits named
+    namespaces that are referenced only by the value of ``mc:Ignorable``.
+    Strict Excel-compatible readers reject that shape even though a generic XML
+    parser accepts it. Set the root namespace as the default for each part and
+    inject any otherwise-unused ignorable prefix into the root start tag.
+    """
+    root_namespace = _namespace_uri(root.tag)
+    if root_namespace:
+        ET.register_namespace("", root_namespace)
+    for prefix, uri in _PREFIXES.items():
+        ET.register_namespace(prefix, uri)
+
+    serialized = ET.tostring(root, encoding="utf-8", xml_declaration=True)
+    ignorable = root.attrib.get(f"{{{MC_NS}}}Ignorable")
+    if not ignorable:
+        return serialized
+
+    text = serialized.decode("utf-8")
+    declaration_end = text.find("?>")
+    root_start = text.find("<", declaration_end + 2)
+    root_end = text.find(">", root_start)
+    if root_start < 0 or root_end < 0:
+        raise ValueError("serialized OOXML part has no root start tag")
+    opening_tag = text[root_start:root_end]
+    missing = []
+    for prefix in ignorable.split():
+        uri = _PREFIXES.get(prefix)
+        if uri is None:
+            raise ValueError(f"mc:Ignorable references unknown namespace prefix: {prefix}")
+        if not re.search(rf"\bxmlns:{re.escape(prefix)}=", opening_tag):
+            missing.append(f' xmlns:{prefix}="{uri}"')
+    if missing:
+        text = text[:root_end] + "".join(missing) + text[root_end:]
+    return text.encode("utf-8")
+
+
+# The quarantined implementation resolves its module-global serializer at call
+# time. Replace it with the narrow compatibility serializer so all workbook,
+# worksheet, relationship, content-type, and calculation-chain writes use the
+# same package rule.
+_impl._xml = _xml
 
 
 def _append_library_rows(
@@ -170,6 +217,7 @@ __all__ = [
     "LIBRARY_FIELDS",
     "LIBRARY_FORMULA_RE",
     "MAIN_NS",
+    "MC_NS",
     "NS",
     "PKG_REL_NS",
     "PROMPT_SHEET_RE",
