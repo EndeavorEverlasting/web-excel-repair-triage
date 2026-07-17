@@ -26,54 +26,55 @@ jobs:
         run: python -m pytest tests/test_prompt_kit_v33_generator.py::test_finalize_codifies_navigation_ranges_cream_tabs_and_protection -q
       - name: Run V33 P02 ownership contract
         run: python -m pytest tests/test_prompt_kit_v33_generator.py::test_p02_must_assign_harness_build_work -q
-      - name: Generate V33 bundle fixture
+      - name: Build V33 diagnostic fixture
         run: |
           python - <<'PY'
-          import json
           import runpy
           import zipfile
           from pathlib import Path
-          from triage.prompt_kit_v33_generator import generate_v33
-
           namespace = runpy.run_path('tests/test_prompt_kit_v33_generator.py')
-          build_source = namespace['_build_source']
-          root = Path('Outputs/ci-v33-bundle')
+          root = Path('Outputs/ci-v33-stages')
           root.mkdir(parents=True, exist_ok=True)
           source = root / 'source.xlsx'
-          build_source(source)
-          source_bundle = root / 'source_bundle.zip'
-          with zipfile.ZipFile(source_bundle, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+          namespace['_build_source'](source)
+          with zipfile.ZipFile(root / 'source_bundle.zip', 'w', compression=zipfile.ZIP_DEFLATED) as archive:
               archive.write(source, 'AI_Harness_Prompt_Kit_v33.xlsx')
               archive.writestr('AI_Harness_Prompt_Kit_v33_Night_Shift_Quickstart.md', 'quickstart')
-          result = generate_v33(source_bundle, root / 'out')
-          (root / 'result.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
           PY
-      - name: Validate V33 bundle manifest
+      - name: Finalize V33 diagnostic workbook
+        run: |
+          python - <<'PY'
+          import json
+          from dataclasses import asdict
+          from pathlib import Path
+          from triage.prompt_kit_v33_ooxml import finalize_workbook
+          root = Path('Outputs/ci-v33-stages')
+          ranges = finalize_workbook(root / 'source.xlsx', root / 'finalized.xlsx')
+          (root / 'ranges.json').write_text(json.dumps([asdict(item) for item in ranges]), encoding='utf-8')
+          PY
+      - name: Materialize V33 copy-range cells
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          root = Path('Outputs/ci-v33-bundle')
-          manifest = json.loads((root / 'out' / 'AI_Harness_Prompt_Kit_v33_manifest.json').read_text())
-          assert manifest['gnhf_build_prompt'] == 'P39'
-          assert manifest['editable_range'] == 'Opportunity_Discovery!A1:R100'
-          assert len(manifest['prompt_ranges']) == 45
-          assert manifest['copy_range_links']['prompt_count'] == 45
-          assert manifest['copy_range_links']['links_written'] == 90
+          from triage.prompt_kit_v33_generator import _materialize_copy_range_formula_cells
+          from triage.prompt_kit_v33_ooxml import PromptRange
+          root = Path('Outputs/ci-v33-stages')
+          ranges = [PromptRange(**item) for item in json.loads((root / 'ranges.json').read_text())]
+          _materialize_copy_range_formula_cells(root / 'finalized.xlsx', ranges)
           PY
-      - name: Validate V33 bundle contents
+      - name: Patch V33 copy-range links and calc chain
         run: |
           python - <<'PY'
           import json
-          import zipfile
           from pathlib import Path
-          root = Path('Outputs/ci-v33-bundle')
-          result = json.loads((root / 'result.json').read_text())
-          with zipfile.ZipFile(result['bundle']) as archive:
-              names = set(archive.namelist())
-          assert 'AI_Harness_Prompt_Kit_v33.xlsx' in names
-          assert 'AI_Harness_Prompt_Kit_v33_manifest.json' in names
-          assert 'AI_Harness_Prompt_Kit_v33_Night_Shift_Quickstart.md' in names
+          from triage.prompt_kit_copy_range_links import apply_copy_range_links
+          from triage.prompt_kit_v33_ooxml import PromptRange
+          root = Path('Outputs/ci-v33-stages')
+          ranges = [PromptRange(**item) for item in json.loads((root / 'ranges.json').read_text())]
+          result = apply_copy_range_links(root / 'finalized.xlsx', root / 'linked.xlsx', ranges)
+          assert result.prompt_count == 45
+          assert result.links_written == 90
           PY
       - name: Run V33 bundle regression test
         run: python -m pytest tests/test_prompt_kit_v33_generator.py::test_generate_bundle_preserves_support_files_and_writes_manifest -q
