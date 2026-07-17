@@ -33,13 +33,15 @@ else {
 Write-Host "Repository root: $RepoRoot"
 Write-Host "Source V38: $SourcePath"
 Write-Host "Output directory: $OutputPath"
+Write-Host "Prompt floor: P45-P50, including GitHub CLI repository bootstrap"
 
-& $Python -m triage.prompt_kit_v39_generator `
+& $Python -m triage.prompt_kit_v39_composed_generator `
     --source $SourcePath `
     --out-dir $OutputPath `
-    --spec (Join-Path $RepoRoot "configs\prompt_kit\v39_local_first_prompts.json") `
+    --base-spec (Join-Path $RepoRoot "configs\prompt_kit\v39_local_first_prompts.json") `
+    --repo-prompt-spec (Join-Path $RepoRoot "configs\prompt_kit\v39_github_repo_creation_prompt.json") `
     --json
 
 if ($LASTEXITCODE -ne 0) {
-    throw "V39 generation failed with exit code $LASTEXITCODE."
+    throw "Complete V39 generation failed with exit code $LASTEXITCODE."
 }
