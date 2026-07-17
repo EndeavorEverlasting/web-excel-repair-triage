@@ -2,7 +2,9 @@
 
 V38 is derived from the field-open V37 package. The generator delegates the
 only workbook mutation to :mod:`triage.prompt_kit_copy_range_links`, which may
-change prompt worksheet parts and the existing calculation chain only.
+change prompt worksheet parts and the existing calculation chain only. Local
+coding-agent prompts are emitted as delivery-bundle support files so workbook
+topology and field-open package lineage remain unchanged.
 """
 from __future__ import annotations
 
@@ -15,6 +17,7 @@ from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
 from .prompt_kit_copy_range_links import apply_copy_range_links
+from .prompt_kit_v38_prompt_assets import materialize_prompt_assets
 
 ARTIFACT_NAME = "AI_Harness_Prompt_Kit_v38"
 DEFAULT_OUTPUT_DIR = "Outputs/prompt_kit_v38"
@@ -94,6 +97,7 @@ def generate_v38(
         if second.changed_parts:
             raise ValueError(f"idempotent V38 pass unexpectedly changed parts: {second.changed_parts}")
 
+        prompt_assets = materialize_prompt_assets(output_dir)
         manifest_path = output_dir / f"{ARTIFACT_NAME}_manifest.json"
         bundle_path = output_dir / f"{ARTIFACT_NAME}_bundle.zip"
         manifest = {
@@ -109,6 +113,7 @@ def generate_v38(
             "bundle": str(bundle_path),
             "expected_prompt_count": expected_prompt_count,
             "copy_range_links": result.to_dict(),
+            "prompt_assets": [asset.to_dict() for asset in prompt_assets],
             "package_contract": {
                 "allowed_changed_parts": [
                     "xl/worksheets/<prompt-sheet>.xml",
@@ -118,22 +123,29 @@ def generate_v38(
                 "zip_member_order_preserved": True,
                 "unrelated_parts_byte_identical": True,
                 "whole_workbook_serializer_forbidden": True,
+                "new_prompts_are_bundle_support_files": True,
             },
             "byte_idempotent": True,
             "proof_level": "static_package_validation",
             "proof_ceiling": (
                 "V38 generation, exact copy-range formulas, calculation-chain integrity, "
-                "package-boundary preservation, and byte idempotence. Excel for Web opening "
-                "and click-selection remain operator field gates."
+                "package-boundary preservation, prompt-asset validation, and byte idempotence. "
+                "Excel for Web opening, click-selection, and execution by a local coding agent "
+                "remain operator runtime and field gates."
             ),
         }
         manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
+        generated_names = {workbook.name, manifest_path.name}
+        generated_names.update(Path(asset.output).name for asset in prompt_assets)
         with zipfile.ZipFile(bundle_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
             archive.write(workbook, workbook.name)
             archive.write(manifest_path, manifest_path.name)
+            for asset in prompt_assets:
+                asset_path = Path(asset.output)
+                archive.write(asset_path, asset_path.name)
             for name, data in sorted(extras.items()):
-                if not name.lower().endswith(".xlsx") and Path(name).name != manifest_path.name:
+                if not name.lower().endswith(".xlsx") and Path(name).name not in generated_names:
                     archive.writestr(name, data)
 
     return manifest
