@@ -9,6 +9,7 @@ import pytest
 
 from triage.prompt_kit_copy_range_links import MAIN_NS
 from triage.prompt_kit_v38_generator import ARTIFACT_NAME, generate_v38
+from triage.prompt_kit_v38_prompt_assets import OUTPUT_FILENAME, PROMPT_ID
 
 REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 PKG_REL_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
@@ -117,19 +118,29 @@ def test_v38_generator_names_artifacts_and_preserves_package_contract(tmp_path: 
 
     workbook = output / f"{ARTIFACT_NAME}.xlsx"
     manifest_path = output / f"{ARTIFACT_NAME}_manifest.json"
+    prompt_asset = output / OUTPUT_FILENAME
     bundle = output / f"{ARTIFACT_NAME}_bundle.zip"
     assert workbook.exists()
     assert manifest_path.exists()
+    assert prompt_asset.exists()
     assert bundle.exists()
     assert manifest["artifact"] == ARTIFACT_NAME
     assert manifest["generator"] == "triage.prompt_kit_v38_generator"
     assert manifest["copy_range_links"]["prompt_count"] == 2
     assert manifest["copy_range_links"]["links_written"] == 4
     assert manifest["byte_idempotent"] is True
+    assert manifest["prompt_assets"][0]["prompt_id"] == PROMPT_ID
+    assert manifest["prompt_assets"][0]["validation_passed"] is True
+    assert "Cosmos by Augment" in manifest["prompt_assets"][0]["supported_agents"]
+    assert "Cursor" in manifest["prompt_assets"][0]["supported_agents"]
     assert json.loads(manifest_path.read_text(encoding="utf-8"))["artifact"] == ARTIFACT_NAME
     with zipfile.ZipFile(bundle) as archive:
         assert workbook.name in archive.namelist()
         assert manifest_path.name in archive.namelist()
+        assert prompt_asset.name in archive.namelist()
+        bundled_prompt = archive.read(prompt_asset.name).decode("utf-8")
+        assert "Build the local runtime surface" in bundled_prompt
+        assert "Do not merely factor" in bundled_prompt
 
 
 def test_v38_generator_fails_closed_on_wrong_prompt_count(tmp_path: Path) -> None:
