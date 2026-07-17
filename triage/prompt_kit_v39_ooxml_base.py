@@ -51,6 +51,26 @@ from ._prompt_kit_v39_package_primitives_impl import (
     _xml,
 )
 
+# ElementTree preserves namespace URIs but otherwise rewrites Excel's named
+# prefixes to ns0/ns1. That breaks the semantic references in mc:Ignorable and
+# can make an otherwise parseable workbook fail strict Excel-compatible readers.
+# Register every prefix used by the accepted V38 workbook before any package
+# primitive serializes workbook or worksheet XML.
+_PREFIXES = {
+    "": MAIN_NS,
+    "r": REL_NS,
+    "mc": "http://schemas.openxmlformats.org/markup-compatibility/2006",
+    "x14ac": "http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac",
+    "x15": "http://schemas.microsoft.com/office/spreadsheetml/2010/11/main",
+    "xr": "http://schemas.microsoft.com/office/spreadsheetml/2014/revision",
+    "xr2": "http://schemas.microsoft.com/office/spreadsheetml/2015/revision2",
+    "xr3": "http://schemas.microsoft.com/office/spreadsheetml/2016/revision3",
+    "xr6": "http://schemas.microsoft.com/office/spreadsheetml/2016/revision6",
+    "xr10": "http://schemas.microsoft.com/office/spreadsheetml/2016/revision10",
+}
+for _prefix, _uri in _PREFIXES.items():
+    ET.register_namespace(_prefix, _uri)
+
 
 def _append_library_rows(
     root: ET.Element,
