@@ -44,7 +44,6 @@ FORBIDDEN_MARKERS = (
     "wait for me",
     "sit tight",
     "I will do this later",
-    "force-push",
 )
 
 
@@ -81,6 +80,8 @@ def validate_prompt_text(text: str) -> None:
         raise ValueError("local runtime prompt must require execution after implementation")
     if "unknown or incorrect directory" not in text:
         raise ValueError("local runtime prompt must enforce correct-directory discipline")
+    if "Do not force-push" not in text:
+        raise ValueError("local runtime prompt must forbid force-push")
 
 
 def load_prompt(source: Path = DEFAULT_SOURCE) -> str:
