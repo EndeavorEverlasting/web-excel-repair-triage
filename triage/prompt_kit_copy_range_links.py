@@ -86,12 +86,13 @@ def _root(data: bytes, part: str) -> ET.Element:
         raise ValueError(f"invalid XML part {part}: {exc}") from exc
 
 
-def _sheet_map(parts: Mapping[str, bytes]) -> tuple[list[str], dict[str, str]]:
+def _sheet_map(parts: Mapping[str, bytes]) -> tuple[list[str], dict[str, str], dict[str, int]]:
     workbook = _root(parts["xl/workbook.xml"], "xl/workbook.xml")
     rels = _root(parts["xl/_rels/workbook.xml.rels"], "xl/_rels/workbook.xml.rels")
     targets = {rel.attrib["Id"]: rel.attrib.get("Target", "") for rel in rels}
     order: list[str] = []
     mapping: dict[str, str] = {}
+    sheet_ids: dict[str, int] = {}
     for sheet in workbook.findall("m:sheets/m:sheet", NS):
         name = sheet.attrib["name"]
         rid = sheet.attrib.get(f"{{{REL_NS}}}id", "")
@@ -108,7 +109,8 @@ def _sheet_map(parts: Mapping[str, bytes]) -> tuple[list[str], dict[str, str]]:
             raise ValueError(f"worksheet part missing for {name}: {part}")
         order.append(name)
         mapping[name] = part
-    return order, mapping
+        sheet_ids[name] = int(sheet.attrib["sheetId"])
+    return order, mapping, sheet_ids
 
 
 def _shared_strings(parts: Mapping[str, bytes]) -> tuple[str, ...]:
@@ -140,7 +142,7 @@ def _cell_text(cell: ET.Element, shared: Sequence[str]) -> str:
 
 
 def discover_copy_range_links(parts: Mapping[str, bytes]) -> tuple[CopyRangeLink, ...]:
-    _, sheets = _sheet_map(parts)
+    _, sheets, _ = _sheet_map(parts)
     if PROMPT_LIBRARY not in sheets:
         raise ValueError(f"missing required sheet: {PROMPT_LIBRARY}")
     library = _root(parts[sheets[PROMPT_LIBRARY]], sheets[PROMPT_LIBRARY])
@@ -172,9 +174,7 @@ def discover_copy_range_links(parts: Mapping[str, bytes]) -> tuple[CopyRangeLink
         if range_match is None:
             raise ValueError(f"invalid Prompt Library range for {prompt_id}: {prompt_range}")
         last_row = int(range_match.group(1))
-        links.append(
-            CopyRangeLink(prompt_id, sheet, prompt_range, last_row, "C1", f"C{last_row}")
-        )
+        links.append(CopyRangeLink(prompt_id, sheet, prompt_range, last_row, "C1", f"C{last_row}"))
     if not links:
         raise ValueError("Prompt Library contains no exact P##_COPY_SAFE full-range links")
     return tuple(sorted(links, key=lambda item: int(item.prompt_id[1:])))
@@ -240,14 +240,19 @@ def _patch_cell_xml(data: bytes, ref: str, formula: str, cached_value: str) -> t
     return data[: match.start()] + replacement + data[match.end() :], True
 
 
-def _formula_cells(parts: Mapping[str, bytes], order: Sequence[str], sheets: Mapping[str, str]) -> set[tuple[int, str]]:
+def _formula_cells(
+    parts: Mapping[str, bytes],
+    order: Sequence[str],
+    sheets: Mapping[str, str],
+    sheet_ids: Mapping[str, int],
+) -> set[tuple[int, str]]:
     result: set[tuple[int, str]] = set()
-    for sheet_index, name in enumerate(order):
+    for name in order:
         root = _root(parts[sheets[name]], sheets[name])
         for cell in root.findall(".//m:c", NS):
             formula = cell.find("m:f", NS)
             if formula is not None and formula.text:
-                result.add((sheet_index, cell.attrib["r"]))
+                result.add((sheet_ids[name], cell.attrib["r"]))
     return result
 
 
@@ -262,6 +267,9 @@ def _sync_calc_chain(parts: dict[str, bytes], formulas: set[tuple[int, str]]) ->
         if "i" in cell.attrib:
             current_sheet = int(cell.attrib["i"])
         existing.add((current_sheet, cell.attrib["r"]))
+    stale = existing - formulas
+    if stale:
+        raise ValueError(f"calc chain contains stale formula cells: {sorted(stale)[:10]}")
     missing = sorted(formulas - existing, key=lambda item: (-item[0], item[1]))
     if not missing:
         return False
@@ -269,7 +277,7 @@ def _sync_calc_chain(parts: dict[str, bytes], formulas: set[tuple[int, str]]) ->
     location = parts[part].rfind(closing)
     if location < 0:
         raise ValueError("calcChain.xml has no closing calcChain element")
-    additions = b"".join(f'<c r="{ref}" i="{sheet_index}"/>'.encode("ascii") for sheet_index, ref in missing)
+    additions = b"".join(f'<c r="{ref}" i="{sheet_id}"/>'.encode("ascii") for sheet_id, ref in missing)
     parts[part] = parts[part][:location] + additions + parts[part][location:]
     return True
 
@@ -307,10 +315,10 @@ def apply_copy_range_links(source: Path, output: Path, prompt_ranges: Iterable[o
             raise ValueError(f"invalid ZIP member: {bad_member}")
         original_order = [info.filename for info in archive.infolist()]
         parts = {name: archive.read(name) for name in original_order}
-    order, sheets = _sheet_map(parts)
+    order, sheets, sheet_ids = _sheet_map(parts)
     links = _coerce_links(prompt_ranges) if prompt_ranges is not None else discover_copy_range_links(parts)
     _validate_label_cells(parts, sheets, links)
-    formula_before = len(_formula_cells(parts, order, sheets))
+    formula_before = len(_formula_cells(parts, order, sheets, sheet_ids))
     changed: set[str] = set()
     for link in links:
         part = sheets[link.sheet]
@@ -321,7 +329,7 @@ def apply_copy_range_links(source: Path, output: Path, prompt_ranges: Iterable[o
             if did_change:
                 changed.add(part)
         parts[part] = data
-    formulas = _formula_cells(parts, order, sheets)
+    formulas = _formula_cells(parts, order, sheets, sheet_ids)
     calc_changed = _sync_calc_chain(parts, formulas)
     if calc_changed:
         changed.add("xl/calcChain.xml")
@@ -337,8 +345,8 @@ def apply_copy_range_links(source: Path, output: Path, prompt_ranges: Iterable[o
         if [info.filename for info in archive.infolist()] != original_order:
             raise ValueError("ZIP member order changed")
         final_parts = {name: archive.read(name) for name in original_order}
-    final_order, final_sheets = _sheet_map(final_parts)
-    final_formulas = _formula_cells(final_parts, final_order, final_sheets)
+    final_order, final_sheets, final_sheet_ids = _sheet_map(final_parts)
+    final_formulas = _formula_cells(final_parts, final_order, final_sheets, final_sheet_ids)
     for link in links:
         root = _root(final_parts[final_sheets[link.sheet]], final_sheets[link.sheet])
         expected = f'HYPERLINK("#\'{link.sheet}\'!{link.prompt_range}","Copy {link.prompt_range} only")'
@@ -358,9 +366,12 @@ def apply_copy_range_links(source: Path, output: Path, prompt_ranges: Iterable[o
             if "i" in cell.attrib:
                 current_sheet = int(cell.attrib["i"])
             chain_entries.add((current_sheet, cell.attrib["r"]))
-        missing = final_formulas - chain_entries
-        if missing:
-            raise ValueError(f"calc chain is missing formula cells: {sorted(missing)[:10]}")
+        if chain_entries != final_formulas:
+            missing = final_formulas - chain_entries
+            stale = chain_entries - final_formulas
+            raise ValueError(
+                f"calc chain does not exactly match formula cells; missing={sorted(missing)[:10]}, stale={sorted(stale)[:10]}"
+            )
 
     return CopyRangeLinkResult(
         source=str(source),
