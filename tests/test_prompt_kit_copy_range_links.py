@@ -46,45 +46,59 @@ def _build_fixture(path: Path) -> None:
     rels = ET.Element(f"{{{PKG_REL_NS}}}Relationships")
     for index, name in enumerate(names, start=1):
         rid = f"rId{index}"
-        ET.SubElement(sheets, f"{{{MAIN_NS}}}sheet", {
-            "name": name,
-            "sheetId": str(index),
-            f"{{{REL_NS}}}id": rid,
-        })
-        ET.SubElement(rels, f"{{{PKG_REL_NS}}}Relationship", {
-            "Id": rid,
-            "Type": "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet",
-            "Target": f"worksheets/sheet{index}.xml",
-        })
+        ET.SubElement(
+            sheets,
+            f"{{{MAIN_NS}}}sheet",
+            {"name": name, "sheetId": str(index), f"{{{REL_NS}}}id": rid},
+        )
+        ET.SubElement(
+            rels,
+            f"{{{PKG_REL_NS}}}Relationship",
+            {
+                "Id": rid,
+                "Type": "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet",
+                "Target": f"worksheets/sheet{index}.xml",
+            },
+        )
 
     shared = ET.Element(f"{{{MAIN_NS}}}sst", {"count": "2", "uniqueCount": "2"})
     for text in ("Copy A1:A3 only", "Copy A1:A2 only"):
         item = ET.SubElement(shared, f"{{{MAIN_NS}}}si")
         ET.SubElement(item, f"{{{MAIN_NS}}}t").text = text
 
-    library = _sheet([
-        ("C2", "formula", 'HYPERLINK("#\'P00_COPY_SAFE\'!A1:A3","P00")'),
-        ("C3", "formula", 'HYPERLINK("#\'P01_COPY_SAFE\'!A1:A2","P01")'),
-    ])
-    p00 = _sheet([
-        ("A1", "text", "first"), ("A3", "text", "last"),
-        ("B1", "formula", 'HYPERLINK("#\'Prompt_Library\'!A2:P2","back")'),
-        ("C1", "shared", "0"), ("C3", "shared", "0"),
-        ("E1", "formula", 'HYPERLINK("#\'Prompt_Library\'!A2:P2","back")'),
-    ])
-    p01 = _sheet([
-        ("A1", "text", "first"), ("A2", "text", "last"),
-        ("B1", "formula", 'HYPERLINK("#\'Prompt_Library\'!A3:P3","back")'),
-        ("C1", "shared", "1"), ("C2", "shared", "1"),
-        ("E1", "formula", 'HYPERLINK("#\'Prompt_Library\'!A3:P3","back")'),
-    ])
+    library = _sheet(
+        [
+            ("C2", "formula", 'HYPERLINK("#\'P00_COPY_SAFE\'!A1:A3","P00")'),
+            ("C3", "formula", 'HYPERLINK("#\'P01_COPY_SAFE\'!A1:A2","P01")'),
+        ]
+    )
+    p00 = _sheet(
+        [
+            ("A1", "text", "first"),
+            ("A3", "text", "last"),
+            ("B1", "formula", 'HYPERLINK("#\'Prompt_Library\'!A2:P2","back")'),
+            ("C1", "shared", "0"),
+            ("C3", "shared", "0"),
+            ("E1", "formula", 'HYPERLINK("#\'Prompt_Library\'!A2:P2","back")'),
+        ]
+    )
+    p01 = _sheet(
+        [
+            ("A1", "text", "first"),
+            ("A2", "text", "last"),
+            ("B1", "formula", 'HYPERLINK("#\'Prompt_Library\'!A3:P3","back")'),
+            ("C1", "shared", "1"),
+            ("C2", "shared", "1"),
+            ("E1", "formula", 'HYPERLINK("#\'Prompt_Library\'!A3:P3","back")'),
+        ]
+    )
     chain = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         f'<calcChain xmlns="{MAIN_NS}">'
-        '<c r="C2" i="0"/><c r="C3" i="0"/>'
-        '<c r="B1" i="1"/><c r="E1" i="1"/>'
+        '<c r="C2" i="1"/><c r="C3" i="1"/>'
+        '<c r="B1" i="3"/><c r="E1" i="3"/>'
         '<c r="B1" i="2"/><c r="E1" i="2"/>'
-        '</calcChain>'
+        "</calcChain>"
     ).encode()
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("xl/workbook.xml", ET.tostring(workbook, encoding="utf-8", xml_declaration=True))
@@ -139,7 +153,7 @@ def test_copy_range_links_are_package_preserving_calc_chain_aware_and_idempotent
                 assert before.read(name) == after.read(name), name
         chain = ET.fromstring(after.read("xl/calcChain.xml"))
         entries = {(int(cell.attrib["i"]), cell.attrib["r"]) for cell in chain.findall("m:c", NS)}
-        assert {(1, "C1"), (1, "C3"), (2, "C1"), (2, "C2")} <= entries
+        assert {(2, "C1"), (2, "C3"), (3, "C1"), (3, "C2")} <= entries
 
     apply_copy_range_links(output, second)
     assert _sha(output) == _sha(second)
