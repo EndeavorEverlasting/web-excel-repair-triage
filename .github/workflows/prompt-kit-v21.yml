@@ -21,7 +21,14 @@ jobs:
         run: |
           python -c "import triage.workbook_package_hygiene; import triage.copy_surface_bounds; import triage.prompt_kit_contract; import triage.prompt_kit_operability_contract; import triage.prompt_kit_copy_range_links; import triage.prompt_kit_v39_ooxml_base; import triage.prompt_kit_v39_generator; import triage.prompt_kit_v38_prompt_assets; import triage.prompt_kit_v38_generator; import triage.prompt_kit_v33_generator; import triage.prompt_kit_v33_ooxml; import triage.worksheet_cell_integrity; import triage.web_excel_compatibility_rules; print('prompt kit validators and generators import ok')"
       - name: Run segmented V39 prompt and package contract
-        run: python -m pytest tests/test_prompt_kit_v39_generator.py -q
+        run: python -m pytest tests/test_prompt_kit_v39_generator.py -q --junitxml=v39-segmented-junit.xml
+      - name: Upload segmented V39 JUnit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v39-segmented-junit
+          path: v39-segmented-junit.xml
+          if-no-files-found: error
       - name: Run copy-range link contract
         run: python -m pytest tests/test_prompt_kit_copy_range_links.py -q
       - name: Run V38 local runtime prompt contract
