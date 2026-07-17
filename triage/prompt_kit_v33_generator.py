@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import tempfile
 import zipfile
 from dataclasses import asdict
@@ -11,7 +12,16 @@ from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
 from .prompt_kit_copy_range_links import apply_copy_range_links
-from .prompt_kit_v33_ooxml import OPPORTUNITY_DISCOVERY, PROMPT_SUFFIX, PromptRange, finalize_workbook
+from .prompt_kit_v33_ooxml import (
+    OPPORTUNITY_DISCOVERY,
+    PROMPT_SUFFIX,
+    PromptRange,
+    _root,
+    _set_formula,
+    _sheet_map,
+    _xml,
+    finalize_workbook,
+)
 
 
 def _sha256(path: Path) -> str:
@@ -37,6 +47,49 @@ def _source_workbook(source: Path, temp_dir: Path) -> Tuple[Path, Dict[str, byte
     return workbook, extras
 
 
+def _materialize_copy_range_formula_cells(
+    workbook_path: Path,
+    prompt_ranges: Sequence[PromptRange],
+) -> None:
+    """Create the two canonical copy-range cells before strict link validation.
+
+    Real accepted prompt-kit sources already contain these label cells. Synthetic
+    and older generator inputs may not. The generator owns materializing them;
+    the standalone package patcher remains fail-closed when a source omits the
+    required copy surface.
+    """
+    with zipfile.ZipFile(workbook_path, "r") as source:
+        infos = source.infolist()
+        parts = {info.filename: source.read(info.filename) for info in infos}
+    _, sheets = _sheet_map(parts)
+    replacements: dict[str, bytes] = {}
+    for item in prompt_ranges:
+        part = sheets.get(item.sheet)
+        if not part:
+            raise ValueError(f"prompt worksheet part missing: {item.sheet}")
+        root = _root(parts[part], part)
+        target = f"'{item.sheet}'!{item.range}"
+        label = f"Copy {item.range} only"
+        _set_formula(root, "C1", target, label)
+        _set_formula(root, f"C{item.last_row}", target, label)
+        replacements[part] = _xml(root)
+
+    fd, temporary_name = tempfile.mkstemp(
+        prefix=workbook_path.stem + "-copy-range-",
+        suffix=".xlsx",
+        dir=str(workbook_path.parent),
+    )
+    os.close(fd)
+    temporary = Path(temporary_name)
+    try:
+        with zipfile.ZipFile(workbook_path, "r") as source, zipfile.ZipFile(temporary, "w") as target:
+            for info in source.infolist():
+                target.writestr(info, replacements.get(info.filename, source.read(info.filename)))
+        os.replace(temporary, workbook_path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def generate_v33(source: Path, output_dir: Path, gnhf_build_prompt: str = "P39") -> dict:
     source = source.resolve()
     output_dir = output_dir.resolve()
@@ -45,6 +98,7 @@ def generate_v33(source: Path, output_dir: Path, gnhf_build_prompt: str = "P39")
         source_workbook, extras = _source_workbook(source, Path(temp))
         workbook = output_dir / "AI_Harness_Prompt_Kit_v33.xlsx"
         prompt_ranges = finalize_workbook(source_workbook, workbook, gnhf_build_prompt)
+        _materialize_copy_range_formula_cells(workbook, prompt_ranges)
         copy_range_links = apply_copy_range_links(workbook, workbook, prompt_ranges)
         manifest_path = output_dir / "AI_Harness_Prompt_Kit_v33_manifest.json"
         bundle = output_dir / "AI_Harness_Prompt_Kit_v33_bundle.zip"
