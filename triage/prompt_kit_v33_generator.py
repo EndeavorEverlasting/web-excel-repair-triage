@@ -67,7 +67,7 @@ def _materialize_copy_range_formula_cells(
         part = sheets.get(item.sheet)
         if not part:
             raise ValueError(f"prompt worksheet part missing: {item.sheet}")
-        root = _root(parts[part], part)
+        root = _root(parts, part)
         target = f"'{item.sheet}'!{item.range}"
         label = f"Copy {item.range} only"
         _set_formula(root, "C1", target, label)
