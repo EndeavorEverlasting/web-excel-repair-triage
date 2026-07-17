@@ -10,6 +10,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
+from .prompt_kit_copy_range_links import apply_copy_range_links
 from .prompt_kit_v33_ooxml import OPPORTUNITY_DISCOVERY, PROMPT_SUFFIX, PromptRange, finalize_workbook
 
 
@@ -44,6 +45,7 @@ def generate_v33(source: Path, output_dir: Path, gnhf_build_prompt: str = "P39")
         source_workbook, extras = _source_workbook(source, Path(temp))
         workbook = output_dir / "AI_Harness_Prompt_Kit_v33.xlsx"
         prompt_ranges = finalize_workbook(source_workbook, workbook, gnhf_build_prompt)
+        copy_range_links = apply_copy_range_links(workbook, workbook, prompt_ranges)
         manifest_path = output_dir / "AI_Harness_Prompt_Kit_v33_manifest.json"
         bundle = output_dir / "AI_Harness_Prompt_Kit_v33_bundle.zip"
         manifest = {
@@ -55,6 +57,14 @@ def generate_v33(source: Path, output_dir: Path, gnhf_build_prompt: str = "P39")
             "workbook_sha256": _sha256(workbook),
             "bundle": str(bundle),
             "prompt_ranges": [asdict(item) for item in prompt_ranges],
+            "copy_range_links": copy_range_links.to_dict(),
+            "copy_range_link_contract": {
+                "cells_per_prompt": 2,
+                "top_cell": "C1",
+                "bottom_cell": "C<last_prompt_row>",
+                "target": "same prompt sheet full A1:A<last_prompt_row> range",
+                "implementation": "package-preserving OOXML cell patch with calc-chain synchronization",
+            },
             "cream_tab_sheets": ["Prompt_Library", OPPORTUNITY_DISCOVERY, "P07_COPY_SAFE", f"{gnhf_build_prompt}{PROMPT_SUFFIX}"],
             "protected_sheets": "all",
             "editable_range": f"{OPPORTUNITY_DISCOVERY}!A1:R100",
