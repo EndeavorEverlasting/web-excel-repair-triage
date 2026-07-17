@@ -206,20 +206,22 @@ def test_v39_generation_is_byte_deterministic(tmp_path: Path) -> None:
     assert (tmp_path / "one" / f"{ARTIFACT_NAME}.xlsx").read_bytes() == (tmp_path / "two" / f"{ARTIFACT_NAME}.xlsx").read_bytes()
 
 
-def test_v39_fails_closed_when_source_is_not_exact_v38_floor(tmp_path: Path) -> None:
+def test_v39_fails_closed_when_source_has_orphan_worksheet(tmp_path: Path) -> None:
     source = tmp_path / "AI_Harness_Prompt_Kit_v38.xlsx"
     _build_v38(source)
     with zipfile.ZipFile(source, "a") as archive:
         archive.writestr("xl/worksheets/sheet47.xml", _prompt_sheet("P50", "unexpected"))
-    with pytest.raises(ValueError, match="exact P00-P44 V38 prompt floor"):
+    with pytest.raises(ValueError, match="unreferenced worksheet parts"):
         generate_v39(source, tmp_path / "out", standard_ai_spec=STANDARD_SPEC, gnhf_spec=GNHF_SPEC)
 
 
 def test_standard_ai_contract_cannot_take_reserved_p45_slot(tmp_path: Path) -> None:
+    source = tmp_path / "AI_Harness_Prompt_Kit_v38.xlsx"
+    _build_v38(source)
     payload = json.loads(STANDARD_SPEC.read_text(encoding="utf-8"))
     payload["section"]["prompt_ids"][0] = "P45"
     payload["prompts"][0]["prompt_id"] = "P45"
     bad = tmp_path / "bad-standard.json"
     bad.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(ValueError, match="standard-AI extension must define"):
-        generate_v39(tmp_path / "missing.xlsx", tmp_path / "out", standard_ai_spec=bad, gnhf_spec=GNHF_SPEC)
+        generate_v39(source, tmp_path / "out", standard_ai_spec=bad, gnhf_spec=GNHF_SPEC)
