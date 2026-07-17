@@ -20,15 +20,17 @@ jobs:
       - name: Import validators
         run: |
           python -c "import triage.workbook_package_hygiene; import triage.copy_surface_bounds; import triage.prompt_kit_contract; import triage.prompt_kit_operability_contract; import triage.prompt_kit_copy_range_links; import triage.prompt_kit_v33_generator; import triage.prompt_kit_v33_ooxml; import triage.worksheet_cell_integrity; import triage.web_excel_compatibility_rules; print('prompt kit validators import ok')"
-      - name: Run prompt-kit contract suite
+      - name: Run copy-range link contract
+        run: python -m pytest tests/test_prompt_kit_copy_range_links.py -q
+      - name: Run V33 generator contract
+        run: python -m pytest tests/test_prompt_kit_v33_generator.py -q
+      - name: Run remaining prompt-kit contract suite
         run: |
           python -m pytest \
             tests/test_workbook_package_hygiene.py \
             tests/test_copy_surface_bounds.py \
             tests/test_prompt_kit_contract.py \
             tests/test_prompt_kit_operability_contract.py \
-            tests/test_prompt_kit_copy_range_links.py \
-            tests/test_prompt_kit_v33_generator.py \
             tests/test_worksheet_cell_integrity.py \
             tests/test_web_excel_compatibility_rules.py \
             tests/test_prompt_kit_v21.py \
