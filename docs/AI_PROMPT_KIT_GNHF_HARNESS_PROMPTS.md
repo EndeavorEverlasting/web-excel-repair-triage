@@ -8,7 +8,8 @@ The prompt source is pinned to `EndeavorEverlasting/AgentSwitchboard` PR #17 hea
 
 - `tooling/gnhf/schemas/regular-sprint-request.v1.schema.json`;
 - `tooling/gnhf/schemas/compiled-gnhf-prompt-result.v1.schema.json`;
-- `tooling/gnhf/Invoke-ChatGPTDesktopGnhfSprint.ps1`;
+- `tooling/gnhf/Invoke-CursorGnhfSprint.ps1`;
+- `tooling/gnhf/Invoke-ChatGPTDesktopGnhfSprint.ps1` (shared canonical engine alias);
 - `tooling/wsl/Start-TmuxGnhfWorkspaceSetup.ps1`.
 
 Web Excel projects these contracts into the workbook. It does not copy or fork AgentSwitchboard runtime code.
@@ -21,10 +22,10 @@ Web Excel projects these contracts into the workbook. It does not copy or fork A
 | P45 | Compile only | A regular AI prompt converts one `regular-sprint-request` v1 object into exactly one `compiled-gnhf-prompt-result` v1 object. It must not execute. |
 | P46 | Direct GNHF build | GNHF builds or repairs a repository harness. A plan-only response fails. |
 | P47 | Direct GNHF run | GNHF executes one registered harness workflow. Process exit without the required artifact and commit fails. |
-| P48 | Desktop local execute | ChatGPT Desktop Codex writes request and compiled-prompt evidence, invokes the AgentSwitchboard desktop entrypoint with explicit `-Run`, requires visible full-prompt emission, and reports proof and preservation gaps. |
+| P48 | Cursor local execute | Cursor writes request and compiled-prompt evidence, invokes `Invoke-CursorGnhfSprint.ps1` with explicit `-Run`, requires visible full-prompt emission, and reports proof and preservation gaps. |
 | P49 | Environment configure | A local coding agent invokes AgentSwitchboard workstation setup in `-Mode Plan`, and uses `-Mode Apply` only after explicit operator authorization. Authentication remains operator-owned. |
 
-P48 does not claim that PowerShell controls the ChatGPT Desktop UI. The desktop Codex task initiates the chain. Failed runtime work is reported using returned references or the failed branch where available; unconditional failed-worktree preservation is outside the current upstream proof ceiling.
+P48 does not claim that PowerShell controls the Cursor UI. The Cursor agent initiates the chain. Failed runtime work is reported using returned references or the failed branch where available; unconditional failed-worktree preservation is outside the current upstream proof ceiling.
 
 ## Workbook behavior
 

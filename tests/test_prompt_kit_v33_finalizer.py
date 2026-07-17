@@ -155,7 +155,7 @@ def test_finalizer_adds_gnhf_prompts_range_links_colors_and_protection(tmp_path:
         wb["P48_COPY_SAFE"].cell(row=row, column=1).value or ""
         for row in range(1, int(result.prompt_ranges["P48"].split(":A", 1)[1]) + 1)
     )
-    assert "Invoke-ChatGPTDesktopGnhfSprint.ps1" in p48_text
+    assert "Invoke-CursorGnhfSprint.ps1" in p48_text
     assert "Do not promise unconditional failed-worktree preservation" in p48_text
 
     p49_text = "\n".join(
