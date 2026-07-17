@@ -19,7 +19,7 @@ jobs:
         run: python -m pip install pytest
       - name: Import validators
         run: |
-          python -c "import triage.workbook_package_hygiene; import triage.copy_surface_bounds; import triage.prompt_kit_contract; import triage.prompt_kit_operability_contract; import triage.prompt_kit_v33_generator; import triage.prompt_kit_v33_ooxml; import triage.worksheet_cell_integrity; import triage.web_excel_compatibility_rules; print('prompt kit validators import ok')"
+          python -c "import triage.workbook_package_hygiene; import triage.copy_surface_bounds; import triage.prompt_kit_contract; import triage.prompt_kit_operability_contract; import triage.prompt_kit_copy_range_links; import triage.prompt_kit_v33_generator; import triage.prompt_kit_v33_ooxml; import triage.worksheet_cell_integrity; import triage.web_excel_compatibility_rules; print('prompt kit validators import ok')"
       - name: Run prompt-kit contract suite
         run: |
           python -m pytest \
@@ -27,6 +27,7 @@ jobs:
             tests/test_copy_surface_bounds.py \
             tests/test_prompt_kit_contract.py \
             tests/test_prompt_kit_operability_contract.py \
+            tests/test_prompt_kit_copy_range_links.py \
             tests/test_prompt_kit_v33_generator.py \
             tests/test_worksheet_cell_integrity.py \
             tests/test_web_excel_compatibility_rules.py \
@@ -40,6 +41,7 @@ jobs:
           python -m triage.copy_surface_bounds --help
           python -m triage.prompt_kit_contract --help
           python -m triage.prompt_kit_operability_contract --help
+          python -m triage.prompt_kit_copy_range_links --help
           python -m triage.prompt_kit_v33_generator --help
           python -m triage.worksheet_cell_integrity --help
           python -m triage.web_excel_compatibility_rules --help
