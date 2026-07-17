@@ -22,8 +22,12 @@ jobs:
           python -c "import triage.workbook_package_hygiene; import triage.copy_surface_bounds; import triage.prompt_kit_contract; import triage.prompt_kit_operability_contract; import triage.prompt_kit_copy_range_links; import triage.prompt_kit_v33_generator; import triage.prompt_kit_v33_ooxml; import triage.worksheet_cell_integrity; import triage.web_excel_compatibility_rules; print('prompt kit validators import ok')"
       - name: Run copy-range link contract
         run: python -m pytest tests/test_prompt_kit_copy_range_links.py -q
-      - name: Run V33 generator contract
-        run: python -m pytest tests/test_prompt_kit_v33_generator.py -q
+      - name: Run V33 finalizer contract
+        run: python -m pytest tests/test_prompt_kit_v33_generator.py::test_finalize_codifies_navigation_ranges_cream_tabs_and_protection -q
+      - name: Run V33 P02 ownership contract
+        run: python -m pytest tests/test_prompt_kit_v33_generator.py::test_p02_must_assign_harness_build_work -q
+      - name: Run V33 bundle contract
+        run: python -m pytest tests/test_prompt_kit_v33_generator.py::test_generate_bundle_preserves_support_files_and_writes_manifest -q
       - name: Run remaining prompt-kit contract suite
         run: |
           python -m pytest \
