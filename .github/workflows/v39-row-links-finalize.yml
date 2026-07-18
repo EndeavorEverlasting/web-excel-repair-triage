@@ -72,18 +72,16 @@ jobs:
           if [ "$status" -eq 0 ]; then
             tar -czf /tmp/v39-runtime-source.tar.gz \
               triage configs tests scripts docs .github/workflows/prompt-kit-v21.yml
-            rm -f \
-              .github/apply_v39_sprint.py \
+            rm -f .github/apply_v39_sprint.py
+            git rm -f --ignore-unmatch \
               .github/V39_ROW_LINKS_TRIGGER.md \
               .github/V39_ROW_LINKS_DIAGNOSTIC_TRIGGER.md \
               .github/V39_ROW_LINKS_FINALIZE_TRIGGER.md \
               .github/V39_ROW_LINKS_FINALIZE_LOG_TRIGGER.md \
-              .github/workflows/v39-row-links-harness-sprint.yml \
-              .github/workflows/v39-row-links-diagnostic.yml \
-              .github/workflows/v39-row-links-finalize.yml
+              .github/V39_ROW_LINKS_VALIDATED_TRIGGER.md
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add -A
+            git add triage configs tests scripts docs
             git commit -m 'feat(prompt-kit): link full library rows and add artifact harness prompts'
             git push origin HEAD:feat/prompt-kit-v39-segmented
           fi
