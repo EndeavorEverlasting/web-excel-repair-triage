@@ -1,0 +1,1 @@
+Bounded synchronization marker for the EOF-normalized final V39 harness implementation.
