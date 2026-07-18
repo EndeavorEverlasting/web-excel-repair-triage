@@ -16,6 +16,37 @@
       "P"
     ]
   },
+  "prompt_body_range": {
+    "description": "Every prompt tab exposes one deterministic interior range between its top and bottom navigation rows.",
+    "navigation_link_detection": {
+      "formula_pattern": "HYPERLINK[^)']*'Prompt_Library'",
+      "navigation_hyperlink_location_contains": "Prompt_Library",
+      "columns_that_may_contain_navigation": ["B", "C"]
+    },
+    "scaffold_fill": {
+      "rgb": "F8FAFC",
+      "description": "Neutral configurable scaffold to prove complete interior body-range ownership without claiming a final dark palette."
+    },
+    "range_rules": {
+      "top_nav_row": "lowest row containing a HYPERLINK formula whose location references Prompt_Library",
+      "bottom_nav_row": "highest row containing a HYPERLINK formula whose location references Prompt_Library",
+      "columns": "all columns present in the sheet's dimension",
+      "include_top_nav_row": true,
+      "include_bottom_nav_row": true
+    },
+    "fail_closed_on": [
+      "no_hyperlink_to_prompt_library",
+      "single_navigation_row_ambiguous_range",
+      "sheet_has_no_dimension",
+      "hyperlinked_formula_references_different_target"
+    ]
+  },
+  "technician_view_profile": {
+    "description": "Hidden-column profile that preserves developer-facing data while reducing technician-facing visual noise.",
+    "hidden_columns": [],
+    "hidden_columns_note": "Default is empty (show all columns). The operator-modified workbook contains the preferred set; inspect it to populate this profile. Columns are hidden never deleted.",
+    "preservation_rule": "Hidden columns remain addressable by formulas links agents and developer tooling. Column data must never be deleted."
+  },
   "palette": {
     "Slate": {
       "fill": "F1F5F9",

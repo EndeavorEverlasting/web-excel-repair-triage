@@ -11,8 +11,10 @@ are not authority and must not be invoked.
 """
 from __future__ import annotations
 
+import json
 import re
 from copy import deepcopy
+from pathlib import Path
 from typing import Iterable, Mapping, Sequence
 from xml.etree import ElementTree as ET
 
@@ -680,6 +682,266 @@ def _validate_prompt_placeholder_ergonomics(parts: Mapping[str, bytes]) -> tuple
     return tuple(findings)
 
 
+TECHNICIAN_VIEW_PROFILE_PATH = Path(__file__).parents[1] / "configs/harness/technician_view_profile_v1.json"
+
+
+_NAV_HYPERLINK_TARGET_RE = re.compile(r"'Prompt_Library'", re.IGNORECASE)
+
+
+def _detect_prompt_tab_navigation_rows(root: ET.Element) -> tuple[int, int]:
+    formula_rows: list[int] = []
+    hyperlink_rows: list[int] = []
+    for cell in root.findall(".//m:c", NS):
+        formula = _formula(cell)
+        if not formula:
+            continue
+        if "HYPERLINK" not in formula.upper():
+            continue
+        if not _NAV_HYPERLINK_TARGET_RE.search(formula):
+            continue
+        ref = cell.attrib.get("r", "")
+        if not ref:
+            continue
+        _, row = _cell_parts(ref)
+        formula_rows.append(row)
+    for item in root.findall("m:hyperlinks/m:hyperlink", NS):
+        location = item.attrib.get("location", "")
+        if "Prompt_Library" not in location:
+            continue
+        ref = item.attrib.get("ref", "")
+        if not ref:
+            continue
+        _, row = _cell_parts(ref)
+        hyperlink_rows.append(row)
+    nav_rows = sorted(set(formula_rows) & set(hyperlink_rows))
+    if not nav_rows:
+        raise ValueError("prompt tab has no navigation row hyperlinking to Prompt_Library")
+    if len(nav_rows) == 1:
+        raise ValueError("prompt tab has only one navigation row; cannot determine body range")
+    top_nav = min(nav_rows)
+    bottom_nav = max(nav_rows)
+    return top_nav, bottom_nav
+
+
+def _prompt_body_range(root: ET.Element, sheet_name: str) -> tuple[int, int, list[str], str]:
+    top_nav, bottom_nav = _detect_prompt_tab_navigation_rows(root)
+    dimension = root.find("m:dimension", NS)
+    if dimension is None:
+        raise ValueError(f"prompt tab {sheet_name} has no dimension element")
+    dim_ref = dimension.attrib.get("ref", "")
+    if ":" not in dim_ref:
+        raise ValueError(f"prompt tab {sheet_name} has malformed dimension {dim_ref!r}")
+    end_ref = dim_ref.split(":", 1)[-1]
+    end_col, _ = _cell_parts(end_ref)
+    columns = [_impl._column_name(n) for n in range(1, _impl._column_number(end_col) + 1) if _impl._column_name(n) <= end_col]
+    range_str = f"A{top_nav}:{end_col}{bottom_nav}"
+    return top_nav, bottom_nav, columns, range_str
+
+
+def _apply_prompt_body_scaffold(parts: MutableMapping[str, bytes] | dict[str, bytes]) -> tuple[set[str], dict[str, object]]:
+    mutable = parts
+    _, mapping, _, _ = _sheet_map(mutable)
+    if "xl/styles.xml" not in mutable:
+        return set(), {"prompt_count": 0, "skipped": "source package has no styles.xml"}
+    policy = visual_contract.load_policy()
+    scaffold_rgb = policy.get("prompt_body_range", {}).get("scaffold_fill", {}).get("rgb", "F8FAFC")
+    styles = _root(mutable["xl/styles.xml"], "xl/styles.xml")
+    scaffold_fill_id = _ensure_fill(styles, scaffold_rgb)
+    changed: set[str] = {"xl/styles.xml"}
+    prompts: list[dict[str, object]] = []
+    for sheet_name, part in mapping.items():
+        if not PROMPT_SHEET_RE.fullmatch(sheet_name):
+            continue
+        prompt_root = _root(mutable[part], part)
+        try:
+            top_nav, bottom_nav, columns, range_str = _prompt_body_range(prompt_root, sheet_name)
+        except ValueError as exc:
+            prompts.append({"sheet": sheet_name, "error": str(exc)})
+            continue
+        rows = _row_lookup(prompt_root)
+        filled = 0
+        for row_number in range(top_nav, bottom_nav + 1):
+            row = rows.get(row_number)
+            if row is None:
+                continue
+            for col in columns:
+                ref = f"{col}{row_number}"
+                cell = next((c for c in row.findall("m:c", NS) if c.attrib.get("r") == ref), None)
+                if cell is None:
+                    continue
+                base_style = int(cell.attrib.get("s", "0"))
+                xfs_element = _ensure_collection(styles, "cellXfs")
+                xfs = list(xfs_element)
+                base_xf = xfs[base_style]
+                base_fill_id = int(base_xf.attrib.get("fillId", "0"))
+                if base_fill_id == scaffold_fill_id:
+                    continue
+                new_xf = deepcopy(base_xf)
+                new_xf.attrib["fillId"] = str(scaffold_fill_id)
+                new_xf.attrib["applyFill"] = "1"
+                new_style_id = _ensure_style_child(xfs_element, new_xf)
+                cell.attrib["s"] = str(new_style_id)
+                filled += 1
+        mutable[part] = _xml(prompt_root)
+        changed.add(part)
+        prompts.append({"sheet": sheet_name, "range": range_str, "top_nav_row": top_nav, "bottom_nav_row": bottom_nav, "columns": columns, "cells_filled": filled})
+    mutable["xl/styles.xml"] = _xml(styles)
+    return changed, {"prompt_count": len(prompts), "scaffold_rgb": scaffold_rgb, "prompts": prompts}
+
+
+def _validate_prompt_body_scaffold(parts: Mapping[str, bytes]) -> tuple[dict[str, object], ...]:
+    _, mapping, _, _ = _sheet_map(parts)
+    if "xl/styles.xml" not in parts:
+        return ()
+    policy = visual_contract.load_policy()
+    scaffold_rgb = policy.get("prompt_body_range", {}).get("scaffold_fill", {}).get("rgb", "F8FAFC")
+    styles = _root(parts["xl/styles.xml"], "xl/styles.xml")
+    scaffold_fill_ids: set[int] = set()
+    fills = list(_ensure_collection(styles, "fills"))
+    for idx, fill in enumerate(fills):
+        fg = fill.find("m:patternFill/m:fgColor", NS)
+        if fg is not None:
+            fill_rgb = fg.attrib.get("rgb", "")[-6:].upper()
+            if fill_rgb == scaffold_rgb:
+                scaffold_fill_ids.add(idx)
+    findings: list[dict[str, object]] = []
+    for sheet_name, part in mapping.items():
+        if not PROMPT_SHEET_RE.fullmatch(sheet_name):
+            continue
+        prompt_root = _root(parts[part], part)
+        try:
+            top_nav, bottom_nav, columns, range_str = _prompt_body_range(prompt_root, sheet_name)
+        except ValueError as exc:
+            findings.append({"rule": "prompt body range detection", "sheet": sheet_name, "error": str(exc)})
+            continue
+        rows = _row_lookup(prompt_root)
+        uncovered: list[str] = []
+        for row_number in range(top_nav, bottom_nav + 1):
+            row = rows.get(row_number)
+            if row is None:
+                continue
+            for col in columns:
+                ref = f"{col}{row_number}"
+                cell = next((c for c in row.findall("m:c", NS) if c.attrib.get("r") == ref), None)
+                if cell is None:
+                    continue
+                style_id = int(cell.attrib.get("s", "0"))
+                fill_id = int(list(_ensure_collection(styles, "cellXfs"))[style_id].attrib.get("fillId", "0"))
+                if fill_id not in scaffold_fill_ids:
+                    uncovered.append(ref)
+        if uncovered:
+            findings.append({"rule": "prompt body scaffold fill coverage", "sheet": sheet_name, "range": range_str, "uncovered_cells": uncovered, "uncovered_count": len(uncovered)})
+    return tuple(findings)
+
+
+def _load_technician_view_profile(path: str | Path = TECHNICIAN_VIEW_PROFILE_PATH) -> dict:
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("technician view profile must be one JSON object")
+    if payload.get("schema_version") != 1:
+        raise ValueError("technician view profile requires schema_version 1")
+    return payload
+
+
+def _apply_technician_column_visibility(
+    parts: MutableMapping[str, bytes] | dict[str, bytes],
+    profile: Mapping[str, object] | None = None,
+) -> tuple[set[str], dict[str, object]]:
+    if profile is None:
+        profile = _load_technician_view_profile()
+    hidden_columns = profile.get("hidden_columns")
+    if not isinstance(hidden_columns, list) or not hidden_columns:
+        return set(), {"hidden_count": 0, "skipped": "no columns configured for hiding"}
+    target_sheet = profile.get("target_sheet", "Prompt_Library")
+    mutable = parts
+    _, mapping, _, _ = _sheet_map(mutable)
+    library_part = mapping.get(target_sheet)
+    if not library_part:
+        raise ValueError(f"technician view target sheet {target_sheet} not found in workbook")
+    library_root = _root(mutable[library_part], library_part)
+    all_cells = _cells(library_root)
+    for col in hidden_columns:
+        col_cells = {ref: cell for ref, cell in all_cells.items() if _cell_parts(ref)[0] == col}
+        if not col_cells:
+            raise ValueError(f"column {col} has no cells in {target_sheet}; cannot hide an empty column without data loss detection")
+    cols = library_root.find("m:cols", NS)
+    if cols is None:
+        cols = ET.Element(f"{{{MAIN_NS}}}cols")
+        library_root.insert(0, cols)
+    existing_cols = {(col.attrib.get("min"), col.attrib.get("max")): col for col in cols.findall("m:col", NS)}
+    for col_letter in hidden_columns:
+        col_number = _impl._column_number(col_letter)
+        for (min_val, max_val), col_elem in existing_cols.items():
+            mn = int(min_val) if min_val else 0
+            mx = int(max_val) if max_val else 0
+            if mn <= col_number <= mx:
+                col_elem.attrib["hidden"] = "1"
+                col_elem.attrib["customWidth"] = "0"
+                break
+        else:
+            ET.SubElement(
+                cols,
+                f"{{{MAIN_NS}}}col",
+                {"min": str(col_number), "max": str(col_number), "hidden": "1", "customWidth": "0", "width": "0"},
+            )
+    mutable[library_part] = _xml(library_root)
+    return {library_part}, {"hidden_count": len(hidden_columns), "hidden_columns": hidden_columns, "target_sheet": target_sheet}
+
+
+def _validate_technician_column_visibility(parts: Mapping[str, bytes]) -> tuple[dict[str, object], ...]:
+    profile = _load_technician_view_profile()
+    hidden_columns = profile.get("hidden_columns")
+    if not isinstance(hidden_columns, list) or not hidden_columns:
+        return ()
+    target_sheet = profile.get("target_sheet", "Prompt_Library")
+    _, mapping, _, _ = _sheet_map(parts)
+    library_part = mapping.get(target_sheet)
+    if not library_part:
+        return ({"rule": "technician view target sheet", "sheet": target_sheet, "error": "not found"},)
+    library_root = _root(parts[library_part], library_part)
+    findings: list[dict[str, object]] = []
+    cols = library_root.find("m:cols", NS)
+    hidden_by_profile: dict[str, int] = {}
+    for col in hidden_columns:
+        col_number = _impl._column_number(col)
+        hidden_by_profile[col] = col_number
+    if cols is not None:
+        for col_elem in cols.findall("m:col", NS):
+            mn = int(col_elem.attrib.get("min", "0"))
+            mx = int(col_elem.attrib.get("max", "0"))
+            is_hidden = col_elem.attrib.get("hidden") == "1"
+            for col_letter, col_number in hidden_by_profile.items():
+                if mn <= col_number <= mx:
+                    if not is_hidden:
+                        findings.append({"rule": "technician column hidden", "column": col_letter, "actual": "visible"})
+                    break
+            else:
+                if is_hidden:
+                    col_name = _impl._column_name(mn)
+                    if col_name not in hidden_columns:
+                        findings.append({"rule": "technician column hidden unexpected", "column": col_name})
+    rows = _row_lookup(library_root)
+    for col in hidden_columns:
+        cells_found = any(
+            any(cell.attrib.get("r", "").startswith(col) for cell in list(row.findall("m:c", NS)))
+            for row in rows.values()
+        )
+        if not cells_found:
+            findings.append({"rule": "technician column data preserved", "column": col, "reason": "no cells found — possible deletion"})
+    for col in hidden_columns:
+        has_links = any(
+            col in item.attrib.get("ref", "") or col in item.attrib.get("location", "")
+            for item in library_root.findall("m:hyperlinks/m:hyperlink", NS)
+        )
+        formulae_with_col = any(
+            col in (_formula(cell))
+            for cell in library_root.findall(".//m:c", NS)
+        )
+        if has_links or formulae_with_col:
+            continue
+    return tuple(findings)
+
+
 def _validate_prompt_visual_coordination(parts: Mapping[str, bytes]) -> tuple[dict[str, object], ...]:
     _, mapping, _, _ = _sheet_map(parts)
     library_part = mapping.get("Prompt_Library")
@@ -743,11 +1005,17 @@ __all__ = [
     "_append_library_rows",
     "_append_workbook_sheets",
     "_validate_prompt_visual_coordination",
+    "_validate_prompt_body_scaffold",
     "_validate_prompt_placeholder_ergonomics",
     "_normalize_prompt_placeholders",
     "_apply_prompt_visual_coordination",
     "_apply_prompt_library_navigation",
     "_apply_prompt_library_row_links",
+    "_apply_prompt_body_scaffold",
+    "_detect_prompt_tab_navigation_rows",
+    "_prompt_body_range",
+    "_apply_technician_column_visibility",
+    "_validate_technician_column_visibility",
     "_cell_display",
     "_cell_parts",
     "_cells",
