@@ -51,4 +51,4 @@ jobs:
             tests/test_same_family_compare.py \
             tests/test_gitignore_hygiene.py \
             tests/test_roster_log_review_queue.py \
-            -q
+            -x --tb=short -q
