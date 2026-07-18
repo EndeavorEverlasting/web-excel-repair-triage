@@ -16,9 +16,9 @@ def test_v39_public_ooxml_surface_contains_no_prompt_taxonomy_or_generator() -> 
 
 
 def test_v39_semantic_ownership_lives_in_canonical_generator() -> None:
-    assert generator.STANDARD_AI_EXTENSION_IDS == ("P50", "P51", "P52", "P53", "P54", "P55")
+    assert generator.STANDARD_AI_EXTENSION_IDS == ("P50", "P51", "P52", "P53", "P54", "P55", "P56", "P57")
     assert generator.GNHF_HARNESS_IDS == ("P45", "P46", "P47", "P48", "P49")
     assert generator.APPEND_ORDER == (
-        "P50", "P51", "P52", "P53", "P54", "P55",
+        "P50", "P51", "P52", "P53", "P54", "P55", "P56", "P57",
         "P45", "P46", "P47", "P48", "P49",
     )

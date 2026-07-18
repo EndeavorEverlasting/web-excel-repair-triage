@@ -157,7 +157,7 @@ def _build_v38(path: Path) -> None:
         archive.writestr("docProps/core.xml", b"unchanged")
 
 
-def test_v39_preserves_semantic_sections_and_adds_p55(tmp_path: Path) -> None:
+def test_v39_preserves_semantic_sections_and_adds_artifact_and_harness_prompts(tmp_path: Path) -> None:
     source = tmp_path / "AI_Harness_Prompt_Kit_v38.xlsx"
     output = tmp_path / "out"
     _build_v38(source)
@@ -167,7 +167,7 @@ def test_v39_preserves_semantic_sections_and_adds_p55(tmp_path: Path) -> None:
     workbook = output / f"{ARTIFACT_NAME}.xlsx"
     report = validate_v39(workbook, standard_ai_spec=STANDARD_SPEC, gnhf_spec=GNHF_SPEC)
     assert report.valid, report.findings
-    assert report.prompt_count == 56
+    assert report.prompt_count == 58
     assert report.standard_ai_extension == STANDARD_AI_EXTENSION_IDS
     assert report.gnhf_harness_section == GNHF_HARNESS_IDS
     assert report.append_order == APPEND_ORDER
@@ -189,6 +189,15 @@ def test_v39_preserves_semantic_sections_and_adds_p55(tmp_path: Path) -> None:
     assert "gh repo create" in p55
     assert "--clone" in p55 and "--source" in p55
     assert not p55.startswith("gnhf `")
+    p56_last = int(ranges["P56"].rsplit("A", 1)[-1])
+    p56 = "\n".join(ooxml._prompt_payload(package.parts, mapping["P56_COPY_SAFE"], p56_last))
+    assert "GENERATE THE ACTUAL ARTIFACT" in p56
+    assert "ARTIFACT EXECUTION CONTRACT" in p56
+    p57_last = int(ranges["P57"].rsplit("A", 1)[-1])
+    p57 = "\n".join(ooxml._prompt_payload(package.parts, mapping["P57_COPY_SAFE"], p57_last))
+    assert "connected GitHub branch as the mutation surface" in p57
+    assert "columns B:O" in p57
+    assert "largest divisor among 10, 5, and 2" in p57
     p45_last = int(ranges["P45"].rsplit("A", 1)[-1])
     p45 = "\n".join(ooxml._prompt_payload(package.parts, mapping["P45_COPY_SAFE"], p45_last))
     assert p45.startswith("COMPILE ONLY")

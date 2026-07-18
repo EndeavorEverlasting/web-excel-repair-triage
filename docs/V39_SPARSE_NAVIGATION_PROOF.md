@@ -15,3 +15,7 @@ The Prompt Library navigation contract is enforced by executable tests and the V
 - Footer label: current prompt count.
 
 The generated-workbook regression validates formulas, internal hyperlink metadata, direction, spacing, footer position, and footer text after an actual V38-to-V39 generation pass.
+
+## Whole-row companion rule
+
+Sparse navigation remains exclusively in A/P. Every prompt row cell in B:O preserves its display value and links to the associated prompt tab's exact copy range.

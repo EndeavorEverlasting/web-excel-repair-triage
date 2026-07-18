@@ -3,7 +3,7 @@
 V39 extends the operator-accepted V38 workbook without a whole-workbook
 serializer. Section ownership is semantic and explicit:
 
-* P50-P55 extend the standard-AI advanced section.
+* P50-P57 extend the standard-AI advanced section.
 * P45-P49 retain the established GNHF harness/runtime meanings.
 * The standard-AI extension is physically inserted before the GNHF block.
 
@@ -29,7 +29,7 @@ DEFAULT_OUTPUT_DIR = Path("Outputs") / "prompt_kit_v39"
 DEFAULT_STANDARD_AI_SPEC = Path("configs/prompt_kit/v39_standard_ai_extensions.json")
 DEFAULT_GNHF_SPEC = Path("configs/prompt_kit/v39_gnhf_harness_prompts.json")
 SOURCE_PROMPT_IDS = tuple(f"P{number:02d}" for number in range(45))
-STANDARD_AI_EXTENSION_IDS = tuple(f"P{number:02d}" for number in range(50, 56))
+STANDARD_AI_EXTENSION_IDS = tuple(f"P{number:02d}" for number in range(50, 58))
 GNHF_HARNESS_IDS = tuple(f"P{number:02d}" for number in range(45, 50))
 APPEND_ORDER = STANDARD_AI_EXTENSION_IDS + GNHF_HARNESS_IDS
 EXPECTED_PROMPT_ORDER = SOURCE_PROMPT_IDS + APPEND_ORDER
@@ -135,6 +135,33 @@ def _load_prompt_contracts(standard_path: Path, gnhf_path: Path) -> tuple[dict, 
     missing = [marker for marker in required_github if marker not in github_text]
     if missing:
         raise ValueError(f"P55 GitHub bootstrap contract is missing: {missing}")
+    artifact = next(item for item in standard_prompts if item["prompt_id"] == "P56")
+    artifact_text = "\n".join(artifact["lines"])
+    required_artifact = (
+        "GENERATE THE ACTUAL ARTIFACT",
+        "ARTIFACT EXECUTION CONTRACT",
+        "actual requested file or files",
+        "output path",
+        "proof ceiling",
+    )
+    missing = [marker for marker in required_artifact if marker not in artifact_text]
+    if missing:
+        raise ValueError(f"P56 context-to-artifact contract is missing: {missing}")
+    harness = next(item for item in standard_prompts if item["prompt_id"] == "P57")
+    harness_text = "\n".join(harness["lines"])
+    required_harness = (
+        "INSTALL AND ENFORCE PORTABLE HARNESS DISCIPLINE",
+        "connected GitHub branch as the mutation surface",
+        "request -> evidence review -> bounded decision -> repo/Git/GitHub mutation -> artifacts -> validation -> report -> next decision",
+        "columns B:O",
+        "largest divisor among 10, 5, and 2",
+        "Use P03",
+        "P12 for closeout",
+        "Acknowledgment-only completion is invalid",
+    )
+    missing = [marker for marker in required_harness if marker not in harness_text]
+    if missing:
+        raise ValueError(f"P57 portable harness contract is missing: {missing}")
     return standard, gnhf, [*standard_prompts, *gnhf_prompts]
 
 
@@ -329,7 +356,7 @@ def _build_candidate(
         prompts,
         inherited_color,
     )
-    ooxml._append_hyperlinks(library_root, links)
+    ooxml._append_hyperlinks(library_root, links, ooxml._shared_strings(parts))
     parts[library_part] = ooxml._xml(library_root)
     prompt_xml = {
         prompt["prompt_id"]: ooxml._make_prompt_sheet(

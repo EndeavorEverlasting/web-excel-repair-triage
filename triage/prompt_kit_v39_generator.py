@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Mapping, MutableMapping, Optional, Sequence
 
 from . import _prompt_kit_v39_generator_legacy as _legacy
+from . import harness_operational_discipline as harness_discipline
 from . import prompt_kit_v39_ooxml_base as ooxml
 
 ARTIFACT_NAME = _legacy.ARTIFACT_NAME
@@ -194,6 +195,7 @@ def _apply_core_action_overrides(parts: MutableMapping[str, bytes], contract: Ma
         parts[sheet_part] = ooxml._make_prompt_sheet(parts[sheet_part], prompt, prompt_rows[prompt_id])
         changed.add(sheet_part)
         _replace_library_prompt_row(library_root, headers, prompt_rows, prompt)
+    ooxml._apply_prompt_library_row_links(library_root, ooxml._shared_strings(parts))
     parts[library_part] = ooxml._xml(library_root)
     changed.add(library_part)
     changed.update(_apply_reference_repairs(parts, mapping))
@@ -245,6 +247,10 @@ def validate_v39(workbook: str | Path, *, standard_ai_spec: str | Path = DEFAULT
         library_root = ooxml._root(parts[library_part], library_part)
         library_cells = ooxml._cells(library_root)
         shared = ooxml._shared_strings(parts)
+        findings.extend(ooxml._validate_prompt_library_row_links(library_root, shared))
+        policy = harness_discipline.load_policy()
+        for issue in harness_discipline.validate_policy(policy):
+            findings.append({"rule": "portable harness operational discipline", "error": issue})
         headers = {ooxml._cell_display(cell, shared): ooxml._impl._column_number(ooxml._cell_parts(ref)[0]) for ref, cell in library_cells.items() if ooxml._cell_parts(ref)[1] == 1}
         for prompt in contract["prompts"]:
             prompt_id = str(prompt["prompt_id"])
@@ -305,6 +311,10 @@ def _rewrite_bundle(bundle_path: Path, replacements: Mapping[str, bytes]) -> Non
 
 def generate_v39(source: Path, output_dir: Path = DEFAULT_OUTPUT_DIR, *, standard_ai_spec: Path = DEFAULT_STANDARD_AI_SPEC, gnhf_spec: Path = DEFAULT_GNHF_SPEC, core_action_spec: Path = DEFAULT_CORE_ACTION_SPEC) -> dict:
     contract = _load_core_action_contract(Path(core_action_spec))
+    policy = harness_discipline.load_policy()
+    policy_issues = harness_discipline.validate_policy(policy)
+    if policy_issues:
+        raise ValueError(f"portable harness policy failed: {list(policy_issues)[:8]}")
     manifest = _legacy.generate_v39(source, output_dir, standard_ai_spec=standard_ai_spec, gnhf_spec=gnhf_spec)
     workbook = Path(manifest["workbook"])
     action_changed = _rewrite_workbook(workbook, contract)
@@ -315,6 +325,21 @@ def generate_v39(source: Path, output_dir: Path = DEFAULT_OUTPUT_DIR, *, standar
     manifest["workbook_sha256"] = _legacy._sha256(workbook)
     manifest["changed_parts"] = list(changed_parts)
     manifest["validation"] = report.to_dict()
+    manifest["context_to_artifact_prompt"] = "P56"
+    manifest["portable_harness_discipline_prompt"] = "P57"
+    manifest["prompt_library_row_links"] = {
+        "columns": "B:O",
+        "target": "associated prompt tab exact copy range",
+        "display_values_preserved": True,
+        "sparse_navigation_columns": ["A", "P"],
+        "allowed_sparse_cadences": [10, 5, 2],
+    }
+    manifest["harness_operational_discipline"] = {
+        "policy_id": policy["policy_id"],
+        "schema_version": policy["schema_version"],
+        "source": str(harness_discipline.DEFAULT_POLICY_PATH),
+        "portable": True,
+    }
     manifest["core_prompt_action_overrides"] = {
         "prompt_ids": [item["prompt_id"] for item in contract["prompts"]],
         "source": str(Path(core_action_spec).resolve()),

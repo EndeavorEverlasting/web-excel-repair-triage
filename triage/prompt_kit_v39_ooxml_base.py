@@ -67,6 +67,7 @@ for _prefix, _uri in _PREFIXES.items():
 
 PROMPT_LIBRARY_NAVIGATION_CADENCES = (10, 5, 2)
 _PROMPT_LIBRARY_EDGE_COLUMNS = ("A", "P")
+_PROMPT_LIBRARY_ROW_COLUMNS = tuple(_impl._column_name(number) for number in range(2, 16))
 
 
 def _namespace_uri(tag: str) -> str | None:
@@ -195,6 +196,90 @@ def _replace_navigation_metadata(
         )
 
 
+
+def _prompt_library_row_formula(sheet_name: str, prompt_range: str, display: str) -> str:
+    escaped = display.replace('"', '""')
+    return f'HYPERLINK("#\'{sheet_name}\'!{prompt_range}","{escaped}")'
+
+
+def _prompt_library_row_entries(root: ET.Element) -> list[tuple[int, str, str]]:
+    entries: list[tuple[int, str, str]] = []
+    for cell in root.findall(".//m:c", NS):
+        ref = cell.attrib.get("r", "")
+        if not ref.startswith("C"):
+            continue
+        match = LIBRARY_FORMULA_RE.fullmatch(_formula(cell))
+        if match:
+            entries.append((_cell_parts(ref)[1], match.group("sheet"), match.group("range").upper()))
+    return sorted(set(entries))
+
+
+def _apply_prompt_library_row_links(
+    root: ET.Element,
+    shared_strings: Sequence[str] = (),
+) -> dict[str, object]:
+    """Make every Prompt Library data cell B:O open its exact prompt range.
+
+    Display values and cell styles are preserved. Columns A and P are excluded
+    because they are the dedicated sparse top/bottom navigation surfaces.
+    """
+    entries = _prompt_library_row_entries(root)
+    rows = _row_lookup(root)
+    metadata: dict[str, tuple[str, str]] = {}
+    linked_cells: list[str] = []
+    for row_number, sheet_name, prompt_range in entries:
+        row = rows.get(row_number)
+        if row is None:
+            raise ValueError(f"Prompt Library is missing prompt row {row_number}")
+        cells = {cell.attrib.get("r", ""): cell for cell in row.findall("m:c", NS)}
+        location = f"'{sheet_name}'!{prompt_range}"
+        for column in _PROMPT_LIBRARY_ROW_COLUMNS:
+            ref = f"{column}{row_number}"
+            display = _cell_display(cells.get(ref), shared_strings)
+            _replace_row_cell(
+                row,
+                ref,
+                formula=_prompt_library_row_formula(sheet_name, prompt_range, display),
+                cached=display,
+            )
+            metadata[ref] = (location, display)
+            linked_cells.append(ref)
+    _replace_navigation_metadata(root, metadata)
+    return {
+        "prompt_count": len(entries),
+        "columns": _PROMPT_LIBRARY_ROW_COLUMNS,
+        "linked_cell_count": len(linked_cells),
+        "linked_cells": linked_cells,
+    }
+
+
+def _validate_prompt_library_row_links(
+    root: ET.Element,
+    shared_strings: Sequence[str] = (),
+) -> tuple[dict[str, object], ...]:
+    findings: list[dict[str, object]] = []
+    cells = _cells(root)
+    hyperlinks = {
+        item.attrib.get("ref", ""): (item.attrib.get("location", ""), item.attrib.get("display", ""))
+        for item in root.findall("m:hyperlinks/m:hyperlink", NS)
+    }
+    for row_number, sheet_name, prompt_range in _prompt_library_row_entries(root):
+        location = f"'{sheet_name}'!{prompt_range}"
+        for column in _PROMPT_LIBRARY_ROW_COLUMNS:
+            ref = f"{column}{row_number}"
+            display = _cell_display(cells.get(ref), shared_strings)
+            expected_formula = _prompt_library_row_formula(sheet_name, prompt_range, display)
+            if _formula(cells.get(ref)) != expected_formula:
+                findings.append({"rule": "Prompt Library whole-row formula", "cell": ref, "expected": expected_formula})
+            if hyperlinks.get(ref) != (location, display):
+                findings.append({
+                    "rule": "Prompt Library whole-row hyperlink metadata",
+                    "cell": ref,
+                    "expected": (location, display),
+                    "actual": hyperlinks.get(ref),
+                })
+    return tuple(findings)
+
 def _apply_prompt_library_navigation(root: ET.Element) -> dict[str, object]:
     """Apply deterministic sparse top/bottom links to Prompt Library edges.
 
@@ -289,9 +374,14 @@ def _apply_prompt_library_navigation(root: ET.Element) -> dict[str, object]:
     }
 
 
-def _append_hyperlinks(root: ET.Element, links: Iterable[tuple[str, str, str]]) -> None:
-    """Append prompt links, then enforce Prompt Library sparse navigation."""
+def _append_hyperlinks(
+    root: ET.Element,
+    links: Iterable[tuple[str, str, str]],
+    shared_strings: Sequence[str] = (),
+) -> None:
+    """Append exact prompt links, whole-row links, then sparse edge navigation."""
     _impl._append_hyperlinks(root, links)
+    _apply_prompt_library_row_links(root, shared_strings)
     _apply_prompt_library_navigation(root)
 
 
@@ -404,6 +494,7 @@ __all__ = [
     "_append_library_rows",
     "_append_workbook_sheets",
     "_apply_prompt_library_navigation",
+    "_apply_prompt_library_row_links",
     "_cell_display",
     "_cell_parts",
     "_cells",
@@ -412,6 +503,7 @@ __all__ = [
     "_formula_cells",
     "_make_prompt_sheet",
     "_navigation_cadence",
+    "_prompt_library_row_formula",
     "_prompt_payload",
     "_prompt_rows_and_ranges",
     "_read_workbook",
@@ -421,6 +513,7 @@ __all__ = [
     "_sheet_map",
     "_source_workbook",
     "_update_app_properties",
+    "_validate_prompt_library_row_links",
     "_write_package",
     "_xml",
 ]

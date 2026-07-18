@@ -29,9 +29,9 @@ def test_generated_v39_enforces_sparse_bidirectional_library_navigation(tmp_path
         if int(row.attrib["r"]) > prompt_rows[-1]
     )
 
-    assert len(prompt_rows) == 56
+    assert len(prompt_rows) == 58
     assert ooxml._navigation_cadence(len(prompt_rows)) == 2
-    assert footer_row == 58
+    assert footer_row == 60
 
     linked_rows = prompt_rows[::2]
     midpoint = len(prompt_rows) / 2
@@ -68,10 +68,10 @@ def test_generated_v39_enforces_sparse_bidirectional_library_navigation(tmp_path
         f"P{footer_row}",
     }
     assert expected_navigation_refs <= hyperlinks.keys()
-    assert hyperlinks["A2"] == ("'Prompt_Library'!A58", "↓ Bottom")
-    assert hyperlinks["P56"] == ("'Prompt_Library'!P1", "↑ Top")
+    assert hyperlinks["A2"] == ("'Prompt_Library'!A60", "↓ Bottom")
+    assert hyperlinks["P58"] == ("'Prompt_Library'!P1", "↑ Top")
 
     shared = ooxml._shared_strings(package.parts)
     assert ooxml._cell_display(cells[f"B{footer_row}"], shared) == (
-        "End of Prompt Library · 56 prompts"
+        "End of Prompt Library · 58 prompts"
     )

@@ -22,6 +22,8 @@ V39 adds these standard-AI prompts:
 - P53 — Repository Factoring Builder
 - P54 — Local-Only Validation and Closeout
 - P55 — GitHub CLI Repository Bootstrapper
+- P56 — Context-to-Artifact Generator
+- P57 — Portable Harness Discipline Executor
 
 These prompts are physically contiguous and are inserted after P44.
 
@@ -61,7 +63,7 @@ The allowed cadences are every 10, 5, or 2 prompt rows. The generator chooses th
 3. otherwise use every 2nd prompt row when divisible by 2;
 4. fail closed when none of those cadences divides the prompt count.
 
-V39 contains 56 prompts, so it uses a cadence of 2. The selected rows in the upper half of the Prompt Library link to the bottom footer. Selected rows in the lower half link to the top header. The header always links to the bottom and the footer always links to the top. Column A targets column A, and column P targets column P.
+V39 contains 58 prompts, so it uses a cadence of 2. The selected rows in the upper half of the Prompt Library link to the bottom footer. Selected rows in the lower half link to the top header. The header always links to the bottom and the footer always links to the top. Column A targets column A, and column P targets column P.
 
 Formula links and internal hyperlink metadata must agree. Rows outside the selected cadence remain blank in columns A and P. The footer label must state the current prompt count rather than retaining a stale version range.
 
@@ -89,7 +91,7 @@ Artifact generation does not itself create any GitHub repository.
 
 ## Directory-first contract
 
-Every P50–P55 prompt contains a directory gate. Repository commands must follow a verified `Set-Location` or `cd` command and `git rev-parse --show-toplevel` evidence.
+Every P50–P57 prompt contains a directory gate. Repository commands must follow a verified `Set-Location` or `cd` command and `git rev-parse --show-toplevel` evidence.
 
 When no Git repository exists yet, P55 verifies the parent directory for clone mode. For publish-existing mode, it verifies the exact existing root, history, worktree, and remotes.
 
@@ -112,9 +114,9 @@ Generated outputs:
 
 1. Parse both prompt contracts.
 2. Confirm the source has the exact P00–P44 V38 prompt floor.
-3. Validate standard-AI P50–P55 ownership and directory gates.
+3. Validate standard-AI P50–P57 ownership and directory gates.
 4. Validate GNHF P45–P49 ownership and execution shapes.
-5. Append P50–P55 before P45–P49.
+5. Append P50–P57 before P45–P49.
 6. Validate Prompt Library order, metadata, exact-range links, backlinks, protection, and sparse edge navigation.
 7. Validate workbook relationships, content types, app metadata, formula inventory, and calculation-chain equality.
 8. Repeat generation and require byte-identical output.
@@ -132,3 +134,14 @@ They do not prove:
 - actual GitHub repository creation;
 - clone or push success;
 - operator acceptance.
+
+
+## Whole-row Prompt Library links
+
+Every prompt row uses columns **B:O** as one coherent navigation surface. Each cell preserves its displayed value while linking to the associated `P##_COPY_SAFE` tab and exact `A1:A<n>` copy range. Formula targets and worksheet hyperlink metadata must agree. Columns **A** and **P** remain reserved for deterministic sparse top/bottom navigation.
+
+## Portable artifact and harness prompts
+
+P56 generates the actual requested artifact from supplied context and repository evidence; outline-only, plan-only, and sample-only responses are invalid. P57 installs portable operational harness discipline, including the connected-GitHub mutation fallback, required run context, evidence-before-confidence, artifact proof, sequential prompt routing, and repository commit/PR evidence.
+
+The machine-readable authority is `configs/harness/operational_discipline_v1.json`; `triage.harness_operational_discipline` and CI fail policy drift so external agents and other repositories can adopt the same contract.
