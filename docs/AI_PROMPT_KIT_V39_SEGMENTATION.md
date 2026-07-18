@@ -50,6 +50,21 @@ standard AI extension   | GNHF harness/runtime
 
 Numeric sorting is not allowed to interleave the sections. Prompt IDs are stable contract identifiers, not a command to disregard semantic placement.
 
+## Prompt Library sparse-navigation rule
+
+The Prompt Library must provide navigation links in both the leftmost and rightmost columns without filling every row.
+
+The allowed cadences are every 10, 5, or 2 prompt rows. The generator chooses the **largest cadence that evenly divides the prompt count**, producing the fewest links while keeping a deterministic distribution:
+
+1. use every 10th prompt row when the prompt count is divisible by 10;
+2. otherwise use every 5th prompt row when divisible by 5;
+3. otherwise use every 2nd prompt row when divisible by 2;
+4. fail closed when none of those cadences divides the prompt count.
+
+V39 contains 56 prompts, so it uses a cadence of 2. The selected rows in the upper half of the Prompt Library link to the bottom footer. Selected rows in the lower half link to the top header. The header always links to the bottom and the footer always links to the top. Column A targets column A, and column P targets column P.
+
+Formula links and internal hyperlink metadata must agree. Rows outside the selected cadence remain blank in columns A and P. The footer label must state the current prompt count rather than retaining a stale version range.
+
 ## P55 GitHub CLI repository bootstrap
 
 P55 is standard AI because it reasons about and returns or executes reviewed local Git and GitHub CLI commands; it does not launch GNHF.
@@ -100,15 +115,15 @@ Generated outputs:
 3. Validate standard-AI P50–P55 ownership and directory gates.
 4. Validate GNHF P45–P49 ownership and execution shapes.
 5. Append P50–P55 before P45–P49.
-6. Validate Prompt Library order, metadata, exact-range links, backlinks, and protection.
+6. Validate Prompt Library order, metadata, exact-range links, backlinks, protection, and sparse edge navigation.
 7. Validate workbook relationships, content types, app metadata, formula inventory, and calculation-chain equality.
 8. Repeat generation and require byte-identical output.
 9. Run focused repository tests and existing prompt-kit compatibility suites.
-10. Perform a new Excel for Web field gate because V39 adds worksheets.
+10. Perform a new Excel for Web field gate because V39 adds worksheets and navigation links.
 
 ## Proof ceiling
 
-Repository tests can prove prompt content, family ownership, section placement, directory discipline, GitHub CLI safety, package topology, formulas, calculation-chain integrity, source immutability, and deterministic generation.
+Repository tests can prove prompt content, family ownership, section placement, directory discipline, GitHub CLI safety, sparse navigation cadence, package topology, formulas, calculation-chain integrity, source immutability, and deterministic generation.
 
 They do not prove:
 
