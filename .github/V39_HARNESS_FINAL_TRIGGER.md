@@ -1,0 +1,1 @@
+Bounded synchronization marker for the SHA-256-verified final V39 harness implementation run.
