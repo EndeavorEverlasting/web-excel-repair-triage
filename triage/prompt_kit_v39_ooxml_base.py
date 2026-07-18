@@ -12,7 +12,7 @@ are not authority and must not be invoked.
 from __future__ import annotations
 
 import re
-from typing import Mapping, Sequence
+from typing import Iterable, Mapping, Sequence
 from xml.etree import ElementTree as ET
 
 from . import _prompt_kit_v39_package_primitives_impl as _impl
@@ -30,7 +30,6 @@ from ._prompt_kit_v39_package_primitives_impl import (
     SHEET_PART_RE,
     VT_NS,
     WorkbookParts,
-    _append_hyperlinks,
     _append_workbook_sheets,
     _cell_display,
     _cell_parts,
@@ -65,6 +64,9 @@ _PREFIXES = {
 }
 for _prefix, _uri in _PREFIXES.items():
     ET.register_namespace(_prefix, _uri)
+
+PROMPT_LIBRARY_NAVIGATION_CADENCES = (10, 5, 2)
+_PROMPT_LIBRARY_EDGE_COLUMNS = ("A", "P")
 
 
 def _namespace_uri(tag: str) -> str | None:
@@ -112,11 +114,159 @@ def _xml(root: ET.Element) -> bytes:
     return text.encode("utf-8")
 
 
-# The quarantined implementation resolves its module-global serializer at call
-# time. Replace it with the narrow compatibility serializer so all workbook,
-# worksheet, relationship, content-type, and calculation-chain writes use the
-# same package rule.
 _impl._xml = _xml
+
+
+def _navigation_cadence(prompt_count: int) -> int:
+    """Choose the sparsest allowed cadence that evenly divides the prompt count."""
+    if prompt_count < 1:
+        raise ValueError("Prompt Library navigation requires at least one prompt")
+    for cadence in PROMPT_LIBRARY_NAVIGATION_CADENCES:
+        if prompt_count % cadence == 0:
+            return cadence
+    raise ValueError(
+        "Prompt Library prompt count must be divisible by one of "
+        f"{PROMPT_LIBRARY_NAVIGATION_CADENCES}; found {prompt_count}"
+    )
+
+
+def _row_lookup(root: ET.Element) -> dict[int, ET.Element]:
+    return {
+        int(row.attrib.get("r", "0")): row
+        for row in root.findall("m:sheetData/m:row", NS)
+        if int(row.attrib.get("r", "0")) > 0
+    }
+
+
+def _replace_row_cell(
+    row: ET.Element,
+    ref: str,
+    *,
+    formula: str | None,
+    cached: str,
+) -> None:
+    cells = list(row.findall("m:c", NS))
+    existing = next((cell for cell in cells if cell.attrib.get("r") == ref), None)
+    style = existing.attrib.get("s") if existing is not None else None
+    if existing is not None:
+        row.remove(existing)
+    if formula is None:
+        replacement = _impl._new_text_cell(ref, style, cached)
+    else:
+        replacement = _impl._new_formula_cell(ref, style, formula, cached)
+    target_column = _impl._column_number(_cell_parts(ref)[0])
+    insertion = len(list(row))
+    for index, cell in enumerate(list(row)):
+        cell_ref = cell.attrib.get("r")
+        if cell_ref and _impl._column_number(_cell_parts(cell_ref)[0]) > target_column:
+            insertion = index
+            break
+    row.insert(insertion, replacement)
+
+
+def _prompt_library_prompt_rows(root: ET.Element) -> list[int]:
+    rows = []
+    for cell in root.findall(".//m:c", NS):
+        ref = cell.attrib.get("r", "")
+        if not ref.startswith("C"):
+            continue
+        if LIBRARY_FORMULA_RE.fullmatch(_formula(cell)):
+            rows.append(_cell_parts(ref)[1])
+    return sorted(set(rows))
+
+
+def _navigation_formula(column: str, target_row: int, label: str) -> str:
+    return f'HYPERLINK("#\'Prompt_Library\'!{column}{target_row}","{label}")'
+
+
+def _replace_navigation_metadata(
+    root: ET.Element,
+    navigation: Mapping[str, tuple[str, str]],
+) -> None:
+    container = _impl._hyperlinks_element(root)
+    for item in list(container.findall("m:hyperlink", NS)):
+        if item.attrib.get("ref") in navigation:
+            container.remove(item)
+    for ref, (location, display) in navigation.items():
+        ET.SubElement(
+            container,
+            f"{{{MAIN_NS}}}hyperlink",
+            {"ref": ref, "location": location, "display": display},
+        )
+
+
+def _apply_prompt_library_navigation(root: ET.Element) -> dict[str, object]:
+    """Apply deterministic sparse top/bottom links to Prompt Library edges.
+
+    The cadence is the largest member of ``(10, 5, 2)`` that evenly divides the
+    current prompt count, which yields the fewest navigation links. Linked prompt
+    rows in the upper half point to the footer; linked prompt rows in the lower
+    half point to the header. Both left and right edge columns receive links.
+    """
+    prompt_rows = _prompt_library_prompt_rows(root)
+    if not prompt_rows:
+        return {"prompt_count": 0, "cadence": None, "linked_rows": []}
+    rows = _row_lookup(root)
+    footer_candidates = [row for row in rows if row > prompt_rows[-1]]
+    if not footer_candidates:
+        raise ValueError("Prompt Library navigation requires a footer row after the prompts")
+    footer_row = max(footer_candidates)
+    if 1 not in rows or footer_row not in rows:
+        raise ValueError("Prompt Library navigation requires header and footer rows")
+
+    cadence = _navigation_cadence(len(prompt_rows))
+    linked_rows = prompt_rows[::cadence]
+    prompt_position = {row: index for index, row in enumerate(prompt_rows)}
+
+    for row_number in prompt_rows:
+        row = rows[row_number]
+        for column in _PROMPT_LIBRARY_EDGE_COLUMNS:
+            _replace_row_cell(row, f"{column}{row_number}", formula=None, cached="")
+
+    navigation: dict[str, tuple[str, str]] = {}
+
+    def set_link(row_number: int, column: str, target_row: int, label: str) -> None:
+        ref = f"{column}{row_number}"
+        _replace_row_cell(
+            rows[row_number],
+            ref,
+            formula=_navigation_formula(column, target_row, label),
+            cached=label,
+        )
+        navigation[ref] = (f"'Prompt_Library'!{column}{target_row}", label)
+
+    for column in _PROMPT_LIBRARY_EDGE_COLUMNS:
+        set_link(1, column, footer_row, "↓ Bottom")
+        set_link(footer_row, column, 1, "↑ Top")
+
+    midpoint = len(prompt_rows) / 2
+    for row_number in linked_rows:
+        if prompt_position[row_number] < midpoint:
+            target_row, label = footer_row, "↓ Bottom"
+        else:
+            target_row, label = 1, "↑ Top"
+        for column in _PROMPT_LIBRARY_EDGE_COLUMNS:
+            set_link(row_number, column, target_row, label)
+
+    _replace_row_cell(
+        rows[footer_row],
+        f"B{footer_row}",
+        formula=None,
+        cached=f"End of Prompt Library · {len(prompt_rows)} prompts",
+    )
+    _replace_navigation_metadata(root, navigation)
+    return {
+        "prompt_count": len(prompt_rows),
+        "cadence": cadence,
+        "linked_rows": linked_rows,
+        "footer_row": footer_row,
+    }
+
+
+def _append_hyperlinks(root: ET.Element, links: Iterable[tuple[str, str, str]]) -> None:
+    """Append prompt links, then enforce Prompt Library sparse navigation."""
+    _impl._append_hyperlinks(root, links)
+    _apply_prompt_library_navigation(root)
 
 
 def _append_library_rows(
@@ -136,7 +286,7 @@ def _append_library_rows(
     shifts all later rows, and then delegates row construction to the generic
     primitive. Prompt-specific color labels are preserved when supplied.
     """
-    del start_row  # The semantic insertion boundary is the last registered prompt.
+    del start_row
     if "P44" not in prompt_rows:
         raise ValueError("Prompt Library does not contain the P44 insertion boundary")
     sheet_data = root.find("m:sheetData", NS)
@@ -173,8 +323,6 @@ def _append_library_rows(
             cell.attrib["r"] = f"{column}{shifted_row}"
         sheet_data.append(row)
 
-    # The generic primitive intentionally falls back to the P44 color. Restore
-    # explicit semantic colors from the V39 prompt contracts where provided.
     color_column_number = header_columns.get("Color")
     if color_column_number:
         color_column = _impl._column_name(color_column_number)
@@ -220,6 +368,7 @@ __all__ = [
     "MC_NS",
     "NS",
     "PKG_REL_NS",
+    "PROMPT_LIBRARY_NAVIGATION_CADENCES",
     "PROMPT_SHEET_RE",
     "REL_NS",
     "SHEET_PART_RE",
@@ -228,6 +377,7 @@ __all__ = [
     "_append_hyperlinks",
     "_append_library_rows",
     "_append_workbook_sheets",
+    "_apply_prompt_library_navigation",
     "_cell_display",
     "_cell_parts",
     "_cells",
@@ -235,6 +385,7 @@ __all__ = [
     "_formula",
     "_formula_cells",
     "_make_prompt_sheet",
+    "_navigation_cadence",
     "_prompt_payload",
     "_prompt_rows_and_ranges",
     "_read_workbook",
