@@ -759,32 +759,84 @@ def _apply_prompt_body_scaffold(parts: MutableMapping[str, bytes] | dict[str, by
             prompts.append({"sheet": sheet_name, "error": str(exc)})
             continue
         rows = _row_lookup(prompt_root)
-        filled = 0
-        for row_number in range(top_nav, bottom_nav + 1):
-            row = rows.get(row_number)
-            if row is None:
-                continue
-            for col in columns:
-                ref = f"{col}{row_number}"
-                cell = next((c for c in row.findall("m:c", NS) if c.attrib.get("r") == ref), None)
-                if cell is None:
-                    continue
-                base_style = int(cell.attrib.get("s", "0"))
-                xfs_element = _ensure_collection(styles, "cellXfs")
-                xfs = list(xfs_element)
-                base_xf = xfs[base_style]
-                base_fill_id = int(base_xf.attrib.get("fillId", "0"))
-                if base_fill_id == scaffold_fill_id:
-                    continue
-                new_xf = deepcopy(base_xf)
-                new_xf.attrib["fillId"] = str(scaffold_fill_id)
-                new_xf.attrib["applyFill"] = "1"
-                new_style_id = _ensure_style_child(xfs_element, new_xf)
-                cell.attrib["s"] = str(new_style_id)
-                filled += 1
-        mutable[part] = _xml(prompt_root)
-        changed.add(part)
-        prompts.append({"sheet": sheet_name, "range": range_str, "top_nav_row": top_nav, "bottom_nav_row": bottom_nav, "columns": columns, "cells_filled": filled})
+sheet_data = prompt_root.find("m:sheetData", NS)
+if sheet_data is None:
+    raise ValueError(f"prompt tab {sheet_name} has no sheetData element")
+xfs_element = _ensure_collection(styles, "cellXfs")
+scaffold_style_cache: dict[int, int] = {}
+
+def scaffold_style_for(base_style: int) -> int:
+    cached = scaffold_style_cache.get(base_style)
+    if cached is not None:
+        return cached
+    xfs = list(xfs_element)
+    if base_style < 0 or base_style >= len(xfs):
+        raise ValueError(
+            f"prompt tab {sheet_name} cell style {base_style} is outside cellXfs"
+        )
+    base_xf = xfs[base_style]
+    base_fill_id = int(base_xf.attrib.get("fillId", "0"))
+    if base_fill_id == scaffold_fill_id:
+        scaffold_style_cache[base_style] = base_style
+        return base_style
+    new_xf = deepcopy(base_xf)
+    new_xf.attrib["fillId"] = str(scaffold_fill_id)
+    new_xf.attrib["applyFill"] = "1"
+    style_id = _ensure_style_child(xfs_element, new_xf)
+    scaffold_style_cache[base_style] = style_id
+    return style_id
+
+def ensure_row(row_number: int) -> ET.Element:
+    existing = rows.get(row_number)
+    if existing is not None:
+        return existing
+    row = ET.Element(f"{{{MAIN_NS}}}row", {"r": str(row_number)})
+    insertion = len(list(sheet_data))
+    for index, candidate in enumerate(list(sheet_data)):
+        candidate_number = int(candidate.attrib.get("r", "0"))
+        if candidate_number > row_number:
+            insertion = index
+            break
+    sheet_data.insert(insertion, row)
+    rows[row_number]] = row
+    return row
+
+def insert_cell(row: ET.Element, cell: ET.Element, ref: str) -> None:
+    target_column = _impl._column_number(_cell_parts(ref)[0])
+    insertion = len(list(row))
+    for index, candidate in enumerate(list(row)):
+        candidate_ref = candidate.attrib.get("r", "")
+        if candidate_ref and _impl._column_number(_cell_parts(candidate_ref)[0]) > target_column:
+            insertion = index
+            break
+    row.insert(insertion, cell)
+
+filled = 0
+materialized = 0
+for row_number in range(top_nav, bottom_nav + 1):
+    row = ensure_row(row_number)
+    for col in columns:
+        ref = f"{col}{row_number}"
+        cell = next((c for c in row.findall("m:c", NS) if c.attrib.get("r") == ref), None)
+        if cell is None:
+            style_id = scaffold_style_for(0)
+            cell = ET.Element(
+                f"{{{MAIN_NS}}}c",
+                {"r": ref, "s": str(style_id)},
+            )
+            insert_cell(row, cell, ref)
+            filled += 1
+            materialized += 1
+            continue
+        base_style = int(cell.attrib.get("s", "0"))
+        style_id = scaffold_style_for(base_style)
+        if style_id == base_style:
+            continue
+        cell.attrib["s"] = str(style_id)
+        filled += 1
+mutable[part] = _xml(prompt_root)
+changed.add(part)
+prompts.append({"sheet": sheet_name, "range": range_str, "top_nav_row": top_nav, "bottom_nav_row": bottom_nav, "columns": columns, "cells_filled": filled, "cells_materialized": materialized})
     mutable["xl/styles.xml"] = _xml(styles)
     return changed, {"prompt_count": len(prompts), "scaffold_rgb": scaffold_rgb, "prompts": prompts}
 
@@ -817,15 +869,17 @@ def _validate_prompt_body_scaffold(parts: Mapping[str, bytes]) -> tuple[dict[str
         rows = _row_lookup(prompt_root)
         uncovered: list[str] = []
         for row_number in range(top_nav, bottom_nav + 1):
-            row = rows.get(row_number)
-            if row is None:
-                continue
-            for col in columns:
-                ref = f"{col}{row_number}"
-                cell = next((c for c in row.findall("m:c", NS) if c.attrib.get("r") == ref), None)
-                if cell is None:
-                    continue
-                style_id = int(cell.attrib.get("s", "0"))
+    row = rows.get(row_number)
+    if row is None:
+        uncovered.extend(f"{col}{row_number}" for col in columns)
+        continue
+    for col in columns:
+        ref = f"{col}{row_number}"
+        cell = next((c for c in row.findall("m:c", NS) if c.attrib.get("r") == ref), None)
+        if cell is None:
+            uncovered.append(ref)
+            continue
+        style_id = int(cell.attrib.get("s", "0"))
                 fill_id = int(list(_ensure_collection(styles, "cellXfs"))[style_id].attrib.get("fillId", "0"))
                 if fill_id not in scaffold_fill_ids:
                     uncovered.append(ref)

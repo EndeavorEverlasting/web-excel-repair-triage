@@ -227,6 +227,24 @@ class TestScaffoldFill:
         findings = ooxml._validate_prompt_body_scaffold(parts)
         assert findings == (), f"scaffold validation found uncovered cells: {findings}"
 
+    def test_scaffold_materializes_blank_cells_across_claimed_range(self):
+    prompts = [("P00", "P00 Test", "Cream", _medium_prompt())]
+    parts = _multi_prompt_parts(prompts)
+    before = ooxml._root(parts["xl/worksheets/sheet2.xml"], "prompt")
+    before_cells = ooxml._cells(before)
+    assert before_cells.get("B2") is None
+    assert before_cells.get("C4") is None
+
+    _, report = ooxml._apply_prompt_body_scaffold(parts)
+
+    after = ooxml._root(parts["xl/worksheets/sheet2.xml"], "prompt")
+    after_cells = ooxml._cells(after)
+    for row_number in range(1, 6):
+        for column in ("A", "B", "C"):
+            assert after_cells.get(f"{column}{row_number}") is not None
+    assert report["prompts"][0]["cells_materialized"] == 6
+    assert ooxml._validate_prompt_body_scaffold(parts) == ()
+
     def test_scaffold_preserves_formulas_and_text(self):
         prompts = [("P00", "P00 Test", "Cream", _medium_prompt())]
         parts = _multi_prompt_parts(prompts)
