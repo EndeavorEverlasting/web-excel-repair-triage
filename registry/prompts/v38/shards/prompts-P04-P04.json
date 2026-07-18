@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "ai-harness-prompt-record-shard/v1",
+  "kitVersion": "v38",
+  "promptRange": "P04-P04",
+  "prompts": [
+    {
+      "id": "P04",
+      "sequence": 4,
+      "name": "Repo-Aware Ordered Sprint + Harness Factoring Distributor",
+      "moment": "Repo-Aware Ordered Sprint + Harness Factoring Distributor",
+      "promptType": "PLAN",
+      "promptClass": "PLAN / DISTRIBUTE",
+      "executionSurface": "regular_ai_prompt",
+      "sprintPathRole": "Divide remaining work into bounded lanes",
+      "useForProgress": "No",
+      "useThisWhen": "Repo state is known but harness, agent, and application work need explicit factoring and ownership.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "inspectFirst": "P03 evidence or current repo state.",
+      "expectedOutput": "Launch order first, ordered copy-panel sprint candidates, plus harness, skill, capability, trigger, and app-logic factoring ledgers.",
+      "nextStep": "Use P05 or P07.",
+      "acceptanceGate": "Dependencies, collision ownership, and exact panel sequence are explicit.",
+      "mutatesRepository": "No",
+      "authority": "Advisory or bounded support scope",
+      "proofCeiling": "Dependencies and collision risks are explicit.",
+      "color": "Amber",
+      "copySafeSheet": "P04_COPY_SAFE",
+      "copyRange": "A1:A107",
+      "requiredVariables": [
+        "xyz_plan_directory",
+        "xyz_repo_or_path"
+      ],
+      "textSha256": "4408752893717d077fbdd5efefe4b7f4d8cb85e4a45c50eb2ae4d0960596cb94",
+      "text": "You are entering an existing repository with prior chat context and need to factor the remaining work into bounded sprints.\nRepo:\n`xyz_repo_or_path`\nPlan or context path if available:\n`xyz_plan_directory`\nIf the plan path is missing, stale, blank, or placeholder, do not stall.\nInspect the repository, current branch, recent commits, open PRs, worktrees, status docs, handoffs, plans, tests, validators, workflows, artifacts, skills, capabilities, triggers, and current git state.\nPrefer current repository evidence over remembered context.\nCOMPACT PREFLIGHT\nRecord:\n- repo\n- primary local path if known\n- branch\n- head\n- status\n- worktrees\n- open PRs\n- recent center of gravity\n- likely active sprint\n- stale or missing context\nInspect before distributing work:\n- recent commits and changed files\n- open PR diffs, checks, reviews, and dependencies\n- docs, plans, handoffs, and codebase maps\n- schemas, run context, artifact registry, validators, and fixtures\n- workflows, launchers, and runtime evidence\n- agent skills, capabilities, triggers, routing, manifests, MCP/tools, and hooks\n- application services, state machines, adapters, persistence, UI, launchers, and deployment logic\nFACTORING PASS\nClassify each topic into one primary ownership surface:\n- floor or cleanup\n- harness spine\n- agent harness\n- conventional application logic\n- integration seam\n- validation\n- docs/reporting\n- runtime proof\n- research/design\n- unsafe or blocked\nFor agent-harness surfaces, inventory every relevant skill, capability, and trigger.\nFor each, determine whether to keep, create, split, merge, retire, or rewire it.\nRequire deterministic activation conditions, explicit inputs and outputs, preconditions, guardrails, owner, tests, and proof ceiling.\nUse these boundaries:\n- skills are reusable workflow guidance\n- capabilities are reusable operations or tool-backed actions\n- triggers route deterministic conditions to a skill, capability, or workflow\n- product and domain behavior belongs in application code and contracts\n- prompts must not become the only implementation of application logic\nSeparate harness factoring from application-logic factoring when they own different files or proof gates.\nDetect shared-file, shared-schema, shared-workflow, skill, capability, trigger, and PR-stacking collisions before recommending parallel work.\nOUTPUT ORDER — LAUNCH ORDER FIRST\nAnalyze fully, then output in this order:\n1. LAUNCH ORDER\nPut the launch order at the very top.\nName the first chat, proof gate, parallel groups, waiting lanes, and final convergence.\nNumber and title the panels exactly as they will appear.\nDisplay the panels below in that exact order.\nNever use a different display order, category order, or convenience order.\nKeep every parallel group contiguous.\nState: one prompt panel goes into one new chat.\n2. COMPACT COORDINATION PREAMBLE\nInclude repo floor, waves, hard dependencies, safe parallel lanes, collision owners, safety boundary, and proof ceiling.\nThe preamble is not a separately copied prompt fragment.\nDo not output a shared preamble that the operator must paste above each sprint.\n3. NEXT-CHAT SPRINT PANELS\nEmit each complete next-chat prompt in its own separate writing block or copyable panel.\nEach panel must have its own copy control.\nPanels must appear in the exact launch order listed above.\nDo not place all prompts in one code fence.\nDo not place two prompts in one panel.\nDo not make the operator copy global rules from another section.\nEach panel must be self-contained and include:\n- banner and sprint name\n- repo, local path if known, branch, PR, wave, and lane\n- hard dependencies and safe parallel work\n- owned scope and forbidden scope\n- expected artifacts\n- mission\n- read-first files\n- compact preflight\n- numbered tasks\n- safety\n- validation order\n- commit, push, and PR contract when mutation is intended\n- proof level and proof ceiling\n- exact final response contract\n- exact next command\nPut only a short sprint title above each panel and no commentary between panels.\n4. SUPPORTING FACTORING LEDGER\nAfter the panels, provide:\nTOPICS FOUND\nClassify feature, harness, agent harness, application logic, integration, cleanup, validation, docs/reporting, runtime proof, release/PR hygiene, research/design, and blocked topics.\nHARNESS FACTORING\nList run context, artifact registry, schemas, validators, fixtures, workflows, skills, capabilities, triggers, routing, instruction surfaces, manifests, MCP/tools, hooks, and ownership.\nAPPLICATION LOGIC FACTORING\nList domain services, state machines, adapters, persistence, UI, launchers, jobs, deployment orchestration, and ownership.\nSPRINT CANDIDATES\nFor each include title, goal, why now, owned scope, forbidden scope, files to inspect, files likely to change, expected outputs, validation, dependencies, parallel safety, risk level, and proof ceiling.\nRECOMMENDED EXECUTION ORDER\nRepeat only a compact confirmation that the panel sequence matched the launch order.\nDo not introduce a new or different order here.\nPut floor and shared contracts before reports, dashboards, MCP, agents, or UI consumers.\nQUALITY RULES\nBe ambitious but practical.\nAvoid permission theater, duplicate ownership, giant prompts, and trivial-only progress.\nDo not claim higher proof from lower proof."
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+name: Prompt Kit V38 Registry
+
+on:
+  pull_request:
+    paths:
+      - "configs/prompt_kit/v38_registry_variable_overrides.json"
+      - "docs/AI_PROMPT_KIT_V38_MACHINE_REGISTRY.md"
+      - "registry/prompts/**"
+      - "tests/test_prompt_kit_registry.py"
+      - "triage/prompt_kit_registry.py"
+      - "triage/prompt_kit_registry_store.py"
+      - ".github/workflows/prompt-kit-v38-registry.yml"
+  push:
+    branches:
+      - feat/v38-machine-readable-prompt-registry
+    paths:
+      - "configs/prompt_kit/v38_registry_variable_overrides.json"
+      - "docs/AI_PROMPT_KIT_V38_MACHINE_REGISTRY.md"
+      - "registry/prompts/**"
+      - "tests/test_prompt_kit_registry.py"
+      - "triage/prompt_kit_registry.py"
+      - "triage/prompt_kit_registry_store.py"
+      - ".github/workflows/prompt-kit-v38-registry.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  registry-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+
+      - name: Compile registry code
+        run: >-
+          python -m py_compile
+          triage/prompt_kit_registry.py
+          triage/prompt_kit_registry_store.py
+          tests/test_prompt_kit_registry.py
+
+      - name: Validate tracked registry
+        run: >-
+          python -m triage.prompt_kit_registry_store validate
+          registry/prompts/v38/prompt-registry.v1.json
+
+      - name: Run prompt registry tests
+        run: python -m pytest tests/test_prompt_kit_registry.py -q
+
+      - name: Parse tracked JSON
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+
+          paths = [
+              Path("configs/prompt_kit/v38_registry_variable_overrides.json"),
+              Path("registry/prompts/prompt-registry.v1.schema.json"),
+              Path("registry/prompts/prompt-record-shard.v1.schema.json"),
+              Path("registry/prompts/v38/prompt-registry.v1.json"),
+              *sorted(Path("registry/prompts/v38/shards").glob("*.json")),
+          ]
+          for path in paths:
+              json.loads(path.read_text(encoding="utf-8"))
+          print(f"Parsed {len(paths)} JSON files")
+
+      - name: Repository hygiene
+        run: |
+          git diff --check
+          test -z "$(git status --short)"

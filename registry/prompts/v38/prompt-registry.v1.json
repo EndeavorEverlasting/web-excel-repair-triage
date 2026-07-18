@@ -1,0 +1,542 @@
+{
+  "schemaVersion": "ai-harness-prompt-registry/v1",
+  "kitVersion": "v38",
+  "source": {
+    "artifact": "AI_Harness_Prompt_Kit_v38.xlsx",
+    "sha256": "a9fc45b05669afc94e154f53759a723a5bf5827862fb1e38194926cc8ab3ef5a",
+    "promptLibrarySheet": "Prompt_Library",
+    "promptSequenceSheet": "Prompt_Sequence",
+    "variablesSheet": "Variables",
+    "promptCount": 45,
+    "promptIdRange": "P00-P44"
+  },
+  "ownership": {
+    "canonicalProducer": "EndeavorEverlasting/web-excel-repair-triage",
+    "consumer": "EndeavorEverlasting/AgentSwitchboard",
+    "boundary": "The triage repository owns extraction and validation. AgentSwitchboard may vendor a pinned snapshot and render prompts but must not silently rewrite prompt IDs or execution-surface doctrine."
+  },
+  "executionSurfaces": [
+    {
+      "id": "regular_ai_prompt",
+      "description": "Instructions pasted into an interactive AI chat or coding-agent conversation."
+    },
+    {
+      "id": "gnhf_launch_artifact",
+      "description": "Executable shell or PowerShell launch content that invokes GNHF with explicit bounds and an embedded or referenced objective."
+    }
+  ],
+  "variables": [
+    {
+      "name": "proof level",
+      "meaning": "highest evidence category reached",
+      "example": "harness proof",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_actionable_insights",
+      "meaning": "actionable insights or reusable findings to route",
+      "example": "prompt-kit registry extraction and selector logic",
+      "origin": "registry override inferred from V38 prompt usage"
+    },
+    {
+      "name": "xyz_agent_command",
+      "meaning": "base executable GNHF or ACP will spawn",
+      "example": "goose",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_agent_probe_args",
+      "meaning": "bounded noninteractive command arguments",
+      "example": "--version",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_app_context",
+      "meaning": "current application context, repository state, and operator constraints",
+      "example": "Windows-first AgentSwitchboard with connected GitHub",
+      "origin": "registry override inferred from V38 prompt usage"
+    },
+    {
+      "name": "xyz_app_name",
+      "meaning": "application or tool being taught",
+      "example": "AgentSwitchboard",
+      "origin": "registry override inferred from V38 prompt usage"
+    },
+    {
+      "name": "xyz_artifact_root",
+      "meaning": "approved ignored output root for generated evidence",
+      "example": "survey/output or artifacts/runtime",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_audience",
+      "meaning": "documentation audience",
+      "example": "field technicians",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_audiences",
+      "meaning": "target learner or operator audiences",
+      "example": "technicians, project managers, repository maintainers",
+      "origin": "registry override inferred from V38 prompt usage"
+    },
+    {
+      "name": "xyz_available_evidence",
+      "meaning": "available docs, screenshots, repositories, logs, or runtime proof",
+      "example": "README, current main, launcher logs",
+      "origin": "registry override inferred from V38 prompt usage"
+    },
+    {
+      "name": "xyz_bounded_queue",
+      "meaning": "finite ordered list of no more than five GNHF mutation items",
+      "example": "1. schema parity; 2. stale-artifact guard; 3. technician launcher",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_branch",
+      "meaning": "target branch",
+      "example": "cleanup/pr-floor",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_branch_pr_sprint",
+      "meaning": "known branch, pull request, or sprint identifier",
+      "example": "feat/v38-prompt-registry-consumer / PR #24",
+      "origin": "registry override inferred from V38 prompt usage"
+    },
+    {
+      "name": "xyz_candidate_repositories_or_org",
+      "meaning": "candidate repositories or organization to prioritize",
+      "example": "EndeavorEverlasting/AgentSwitchboard, EndeavorEverlasting/web-excel-repair-triage",
+      "origin": "registry override inferred from V38 prompt usage"
+    },
+    {
+      "name": "xyz_canonical_proof",
+      "meaning": "one canonical validation command",
+      "example": "pwsh -File scripts/validate-sysadmin-harness.ps1",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_constraints",
+      "meaning": "material safety, time, tooling, platform, or scope constraints",
+      "example": "no secrets; Windows-first; no workbook binaries in Git",
+      "origin": "registry override inferred from V38 prompt usage"
+    },
+    {
+      "name": "xyz_consumer_repos",
+      "meaning": "cross-repo consumers",
+      "example": "EndeavorEverlasting/foundry, EndeavorEverlasting/Continuum",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_context_path",
+      "meaning": "path to a context, plan, or handoff artifact",
+      "example": "docs/handoff/current-sprint.md",
+      "origin": "registry override inferred from V38 prompt usage"
+    },
+    {
+      "name": "xyz_current_circumstances",
+      "meaning": "current blockers, urgency, available tools, and operator circumstances",
+      "example": "limited provider quota; clean main; overnight run desired",
+      "origin": "registry override inferred from V38 prompt usage"
+    },
+    {
+      "name": "xyz_dependency_scope",
+      "meaning": "packages/toolchain to upgrade",
+      "example": "Python runtime + lockfile",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_device_os_access",
+      "meaning": "devices, operating systems, and access available to the operator",
+      "example": "Windows 11 workstation with PowerShell 7 and WSL Ubuntu",
+      "origin": "registry override inferred from V38 prompt usage"
+    },
+    {
+      "name": "xyz_environment",
+      "meaning": "deployment environment",
+      "example": "Windows workstation / admin box",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_evidence",
+      "meaning": "known commit, PR, report, or blocker",
+      "example": "PR #167; local commit 127b6002",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_execution_environment",
+      "meaning": "terminal or shell domain",
+      "example": "WINDOWS POWERSHELL 7 / WEZTERM-TMUX BASH",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_expected_artifacts",
+      "meaning": "files or outputs to produce",
+      "example": "artifacts/latest/harness-validation.result.json",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_experience_level",
+      "meaning": "operator experience level for the tutorial",
+      "example": "intermediate IT project manager and repository operator",
+      "origin": "registry override inferred from V38 prompt usage"
+    },
+    {
+      "name": "xyz_failure_command",
+      "meaning": "exact failing test, validator, CI check, or workflow",
+      "example": "pwsh -File scripts/Test-Harness.ps1",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_forbidden_scope",
+      "meaning": "what this chat must not touch",
+      "example": "runtime mutation, unrelated feature work",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_gnhf_agent",
+      "meaning": "selected GNHF agent",
+      "example": "opencode",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_gnhf_agent_spec",
+      "meaning": "exact GNHF agent specification proven by P37",
+      "example": "acp:goose acp",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_gnhf_run_id",
+      "meaning": "specific .gnhf run directory or ID when resuming",
+      "example": "20260715-overnight-harness",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_gnhf_worktree_or_branch",
+      "meaning": "known isolated run location",
+      "example": "C:\\dev\\Repo-gnhf-worktrees\\repo-abc123",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_interruption_reason",
+      "meaning": "known or suspected reason a GNHF run stopped",
+      "example": "Windows update restart / provider timeout / commit failure",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_issue_sources",
+      "meaning": "read-only issue sources used to compile the queue",
+      "example": "gh issue list; failing tests; TODO.md",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_lane",
+      "meaning": "agent lane",
+      "example": "coordinator / cleanup",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_local_path",
+      "meaning": "verified local application or repository path",
+      "example": "C:\\Users\\Cheex\\Desktop\\dev\\AgentSwitchboard",
+      "origin": "registry override inferred from V38 prompt usage"
+    },
+    {
+      "name": "xyz_night_closeout_path",
+      "meaning": "tracked morning closeout report",
+      "example": "docs/ops/night-shift-closeout.md",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_night_queue_path",
+      "meaning": "tracked finite queue file",
+      "example": "docs/ops/night-shift-queue.md",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_night_report_path",
+      "meaning": "tracked checkpoint and disposition report",
+      "example": "docs/ops/night-shift-report.md",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_opencode_session",
+      "meaning": "OpenCode session title or ID",
+      "example": "ses_xxx / overnight harness hardening",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_opportunity_id",
+      "meaning": "Opportunity_Discovery row ID",
+      "example": "17",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_opportunity_status",
+      "meaning": "current implementation status",
+      "example": "Ready now",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_owned_scope",
+      "meaning": "what this chat owns",
+      "example": "branches, PR repair, merges, closures",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_package",
+      "meaning": "package/service/agent",
+      "example": "goose",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_plan_directory",
+      "meaning": "plan/handoff/context path",
+      "example": "docs/handoff/repo-cleanup-map.md",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_pr_number",
+      "meaning": "single PR number",
+      "example": "167",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_pr_numbers",
+      "meaning": "PRs or branches to integrate",
+      "example": "167, 168, 170",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_primary_owner",
+      "meaning": "repo or platform owner",
+      "example": "Continuum",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_recommended_prompt",
+      "meaning": "selected executor",
+      "example": "P06",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_release_version",
+      "meaning": "version/tag when releasing",
+      "example": "v0.5.0",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_repo_or_path",
+      "meaning": "repo full name or local path",
+      "example": "EndeavorEverlasting/SysAdminSuite",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_required_checks",
+      "meaning": "required checks that may not be downgraded to SKIP",
+      "example": "PowerShell parser; JSON schema; fixture E2E",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_run_evidence",
+      "meaning": "screenshot, transcript, log, or artifact path",
+      "example": "gnhf.log / iteration-1.jsonl",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_run_profile",
+      "meaning": "bounded autonomy profile",
+      "example": "smoke / nap / overnight / extended",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_run_symptom",
+      "meaning": "observed GNHF problem",
+      "example": "slow / interrupted / no commits",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_runtime_sprint",
+      "meaning": "runtime-proof sprint name and exact behavior under test",
+      "example": "bounded DeepSeek-through-OpenCode disposable-repository proof",
+      "origin": "registry override inferred from V38 prompt usage"
+    },
+    {
+      "name": "xyz_source_material",
+      "meaning": "source prompts, notes, handoffs, or requirements to consolidate",
+      "example": "P01, P07, and current sprint handoff",
+      "origin": "registry override inferred from V38 prompt usage"
+    },
+    {
+      "name": "xyz_source_prompt_or_path",
+      "meaning": "detailed sprint prompt, plan, or file path",
+      "example": "docs/sprints/offline-harness.md",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_spawn_evidence_path",
+      "meaning": "external or ignored spawn-readiness evidence path",
+      "example": "$env:TEMP\\gnhf-spawn-readiness.json",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_sprint_name",
+      "meaning": "current sprint label",
+      "example": "repo-pr-floor-cleanup",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_stateful_runtime_boundary",
+      "meaning": "forbidden personal or live state",
+      "example": "saves, accounts, inventory, production services",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_target_artifact",
+      "meaning": "actual artifact or deliverable that must be produced",
+      "example": "versioned prompt-registry JSON and selector CLI",
+      "origin": "registry override inferred from V38 prompt usage"
+    },
+    {
+      "name": "xyz_target_base",
+      "meaning": "canonical or release base",
+      "example": "main",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_target_versions",
+      "meaning": "target versions or advisory",
+      "example": "Node 22, pnpm 10",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_targets",
+      "meaning": "deployment targets",
+      "example": "test workstation group",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_user_goal",
+      "meaning": "concrete outcome the user wants from the application",
+      "example": "select and render the correct prompt without manually browsing the workbook",
+      "origin": "registry override inferred from V38 prompt usage"
+    },
+    {
+      "name": "xyz_validation_order",
+      "meaning": "explicit test order or deferred checks",
+      "example": "targeted checks first; Pester and survey last",
+      "origin": "Variables!A:C"
+    },
+    {
+      "name": "xyz_workflow",
+      "meaning": "documented workflow",
+      "example": "install software from admin server",
+      "origin": "Variables!A:C"
+    }
+  ],
+  "promptShards": [
+    {
+      "range": "P00-P01",
+      "path": "shards/prompts-P00-P01.json",
+      "sha256": "18ef7853c44d0e7379aabcfcde2fd6f08792670f1c2e4865111c115b4dc6c23a",
+      "promptCount": 2
+    },
+    {
+      "range": "P02-P02",
+      "path": "shards/prompts-P02-P02.json",
+      "sha256": "34f0f51f97470f40db4d0d0a0a47074e59de0a1499e552461d4b8b86b1d445f0",
+      "promptCount": 1
+    },
+    {
+      "range": "P03-P03",
+      "path": "shards/prompts-P03-P03.json",
+      "sha256": "9d4a533669724ff1f26deb6fc628f622e43a063646d5ce81faa857ec5a451cc5",
+      "promptCount": 1
+    },
+    {
+      "range": "P04-P04",
+      "path": "shards/prompts-P04-P04.json",
+      "sha256": "3b9b1baae530bb3748b356155cecdcbc6ac4c12880004723df780bd1075cdd08",
+      "promptCount": 1
+    },
+    {
+      "range": "P05-P05",
+      "path": "shards/prompts-P05-P05.json",
+      "sha256": "cfd9e641ffc95a4cde132e64409a09956d5167aa1a5baea2a16f519372b3b9bd",
+      "promptCount": 1
+    },
+    {
+      "range": "P06-P07",
+      "path": "shards/prompts-P06-P07.json",
+      "sha256": "e870935b8fe30f66cfdd75b734134ba29c86f7cd60bd59b0aa1363228e6c23ae",
+      "promptCount": 2
+    },
+    {
+      "range": "P08-P12",
+      "path": "shards/prompts-P08-P12.json",
+      "sha256": "c7ed0c7e82d26fa3bf38370ad5490a9de247866bb203858ea3f273e4f1c7df99",
+      "promptCount": 5
+    },
+    {
+      "range": "P13-P16",
+      "path": "shards/prompts-P13-P16.json",
+      "sha256": "654f90160a3a5b733e7306be2701191afe106a481121b28e736dc792f8975885",
+      "promptCount": 4
+    },
+    {
+      "range": "P17-P20",
+      "path": "shards/prompts-P17-P20.json",
+      "sha256": "12eb1535aaa9c004067246bac592fbd201e1988b07d9c9f2ce9fb8118cd87473",
+      "promptCount": 4
+    },
+    {
+      "range": "P21-P22",
+      "path": "shards/prompts-P21-P22.json",
+      "sha256": "d775280c2ff753fc0b2ae16a99829da8c8c0f41d09c0a3c9bac9225c0d75ea8a",
+      "promptCount": 2
+    },
+    {
+      "range": "P23-P24",
+      "path": "shards/prompts-P23-P24.json",
+      "sha256": "f54fba9bb08b101d91880bb49e86247bac8c572b107f9939f3b1a662b7c70eef",
+      "promptCount": 2
+    },
+    {
+      "range": "P25-P26",
+      "path": "shards/prompts-P25-P26.json",
+      "sha256": "111c75223747ea9de3efec665bd2a59d58afbe6c8ba68a84a6ebe0f0007d037c",
+      "promptCount": 2
+    },
+    {
+      "range": "P27-P31",
+      "path": "shards/prompts-P27-P31.json",
+      "sha256": "c8c6049a88cc46a9b413c9fe467125e16899f3417875019bd031c5a101f76a59",
+      "promptCount": 5
+    },
+    {
+      "range": "P32-P36",
+      "path": "shards/prompts-P32-P36.json",
+      "sha256": "c48e5cdc948602d0d012c3dbf26def92d577e2ffd3a80ceb7169eb6332fffd5c",
+      "promptCount": 5
+    },
+    {
+      "range": "P37-P39",
+      "path": "shards/prompts-P37-P39.json",
+      "sha256": "a6a7cd5f5e6be336346f574f34bf79df2b925f6911fc95cef3101f74b67e6d86",
+      "promptCount": 3
+    },
+    {
+      "range": "P40-P42",
+      "path": "shards/prompts-P40-P42.json",
+      "sha256": "5e05f91ce2aea939631d0424721ce8dc6a0c0aa06471a9a31650031c5b1c51f5",
+      "promptCount": 3
+    },
+    {
+      "range": "P43-P44",
+      "path": "shards/prompts-P43-P44.json",
+      "sha256": "b5b0ea86f1478a49013d0ccff2cc576ce270b11735d9113c63cbefa473ddcff1",
+      "promptCount": 2
+    }
+  ]
+}

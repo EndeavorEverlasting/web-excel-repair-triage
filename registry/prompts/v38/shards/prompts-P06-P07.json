@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "ai-harness-prompt-record-shard/v1",
+  "kitVersion": "v38",
+  "promptRange": "P06-P07",
+  "prompts": [
+    {
+      "id": "P06",
+      "sequence": 6,
+      "name": "Repo / PR Cleanup Executor",
+      "moment": "Repo / PR Cleanup Executor",
+      "promptType": "CLEANUP",
+      "promptClass": "REPO / PR CLEANUP",
+      "executionSurface": "regular_ai_prompt",
+      "sprintPathRole": "Clean repo and PR state with preservation-first authority",
+      "useForProgress": "YES",
+      "useThisWhen": "The user wants cherry-picks, repairs, merges, comments, branch mutations, and PR closure.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "inspectFirst": "Branches, worktrees, open PRs, unique commits, checks, dependencies.",
+      "expectedOutput": "Preserved useful work, repaired/merged/closed PRs, clean base.",
+      "nextStep": "Use P07 for remaining feature work or P12 to close.",
+      "acceptanceGate": "Actual Git/GitHub mutations and disposition proof.",
+      "mutatesRepository": "YES",
+      "authority": "Full cleanup authority inside scope; preservation-first",
+      "proofCeiling": "Actual Git/GitHub mutations and disposition proof.",
+      "color": "Blue",
+      "copySafeSheet": "P06_COPY_SAFE",
+      "copyRange": "A1:A113",
+      "requiredVariables": [
+        "xyz_forbidden_scope",
+        "xyz_owned_scope",
+        "xyz_plan_directory",
+        "xyz_repo_or_path",
+        "xyz_sprint_name",
+        "xyz_validation_order"
+      ],
+      "textSha256": "df2e4f40e1a17a6f749ff77a9003ce494dee6173c3ac78c2481cd1375447c94e",
+      "text": "CLEAN THE REPOSITORY AND PR FLOOR. CHERRY-PICK FIRST; REPAIR, MERGE, COMMENT, AND CLOSE. DO NOT STOP AT ANALYSIS.\nRepo: xyz_repo_or_path\nSprint: xyz_sprint_name\nOwned scope: xyz_owned_scope\nForbidden scope: xyz_forbidden_scope\nContext or plan path: xyz_plan_directory\nValidation order: xyz_validation_order\nMISSION\nLeave the repository, branches, worktrees, and pull requests cleaner than you found them.\nYou have full authority inside owned scope to preserve useful work, create safe branches or worktrees, cherry-pick commits, repair PR branches, commit, push, update PR metadata, comment, label, retarget, mark draft or ready, merge, and close superseded PRs.\nThe default posture is preservation-first, not deletion-first.\nCherry-pick unique useful work before closing or abandoning its source PR.\nRespect explicit validation order. When the user says to save Pester, survey, integration, or other expensive checks for last, do that.\nDO NOT ANSWER WITH\n- a repo or PR inventory only\n- a cleanup plan only\n- a list of commands the user should run\n- a request for permission when authority and scope are already explicit\n- a destructive cleanup proposal that has not preserved unique work\n- a handoff instead of repository or PR mutations\nCOMPACT PREFLIGHT\nRun what is available:\ngit status --short\ngit branch --show-current\ngit log --oneline --decorate -8\ngit worktree list\ngit fetch --all --prune\ngh pr list --state open --limit 50\ngh pr status\nIf the primary worktree is dirty, conflicted, stale, or owned by another lane:\n- preserve it\n- use an existing safe worktree or create an isolated cleanup worktree\n- never discard uncommitted work merely to obtain a clean base\nPR DISPOSITION MAP\nClassify every in-scope PR or branch:\n- merge-ready\n- repairable in place\n- unique commits to cherry-pick\n- superseded after preservation\n- duplicate with no unique value\n- blocked by CI, review, credentials, or base divergence\n- intentionally deferred until later validation\nPRESERVATION-FIRST RULES\n- inspect commit and file deltas before deciding\n- preserve unique commits on an integration or destination branch\n- prefer cherry-pick, revert, restore, or bounded branch repair over deletion\n- merge clean green predecessors in dependency order\n- close a PR only after its useful work is merged, cherry-picked, replaced, or proven unnecessary\n- leave a concise closing comment naming where useful work went\n- do not delete remote branches unless explicitly requested or clearly allowed by repo policy after preservation proof\n- do not force-push unless explicitly authorized and no safer repair exists\nEXECUTION\nPerform useful repo or PR mutations immediately.\nValid movement includes:\n- creating a branch or worktree\n- cherry-picking or reverting commits\n- restoring unrelated file drift\n- resolving conflicts\n- committing and pushing cleanup\n- updating PR title, body, base, labels, reviewers, draft state, or comments\n- merging a PR\n- closing a superseded or duplicate PR after preservation\n- proving that an already-complete cleanup requires no further mutation\nDo not require a tracked-file edit when the sprint deliverable is a valid Git or GitHub mutation.\nVALIDATION\nValidate in the user-declared order.\nUse the strongest practical checks appropriate to changed behavior.\nAlways review:\ngit diff --check\ngit status --short\ngit log --oneline --decorate -12\ngit branch -vv\nFor PR work, also inspect:\ngh pr checks <number>\ngh pr view <number>\ngh pr diff <number>\nFINAL RESPONSE\nCONTEXT\n- repo:\n- branch/worktree:\n- sprint:\n- owned scope:\n- forbidden scope:\n- validation order honored:\nOPERATIONS COMPLETED\n- branches/worktrees created or reused:\n- commits cherry-picked/reverted/restored:\n- code/doctrine/docs changed:\n- pushes:\n- PR comments/labels/base/draft/review mutations:\n- PRs merged:\n- PRs closed:\n- useful work preservation destination:\nPR DISPOSITION\n- PR:\n- prior state:\n- action:\n- resulting state:\n- evidence:\nVALIDATION\n- command:\n- result:\n- deferred checks run last:\n- skipped checks and exact reason:\nFINAL GIT / PR STATE\n- git status --short:\n- open PRs remaining:\n- blocked PRs:\n- clean base for next sprint:\nNEXT COMMAND\n- one exact command, or `none; cleanup complete`\nA final answer without actual repo/PR mutations, preservation proof, an exact blocker, or proof that cleanup was already complete is invalid.\nClean the repo. Preserve useful work. Merge and close what is ready. Then stop."
+    },
+    {
+      "id": "P07",
+      "sequence": 7,
+      "name": "Repo Sprint Executor",
+      "moment": "Repo Sprint Executor",
+      "promptType": "BUILD",
+      "promptClass": "SPRINT / BUILD + MUTATE",
+      "executionSurface": "regular_ai_prompt",
+      "sprintPathRole": "Execute any bounded repo change",
+      "useForProgress": "YES",
+      "useThisWhen": "The sprint is known and must change code, doctrine, docs, branches, comments, PRs, contracts, or releases.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "inspectFirst": "Repo patterns, branch state, tests, validators, diff, mutation capability.",
+      "expectedOutput": "Committed or remotely mutated repo progress with validation.",
+      "nextStep": "Use P11 or P12.",
+      "acceptanceGate": "Commit or concrete Git/GitHub mutation evidence.",
+      "mutatesRepository": "YES",
+      "authority": "Full bounded repo/Git/GitHub mutation authority",
+      "proofCeiling": "Commit or concrete Git/GitHub mutation evidence.",
+      "color": "Green",
+      "copySafeSheet": "P07_COPY_SAFE",
+      "copyRange": "A1:A88",
+      "requiredVariables": [
+        "xyz_forbidden_scope",
+        "xyz_owned_scope",
+        "xyz_plan_directory",
+        "xyz_repo_or_path",
+        "xyz_sprint_name"
+      ],
+      "textSha256": "45327722b4e392dc003dd90d5c8e3740a7135ebe283454479c69266d183ed145",
+      "text": "EXECUTE THE REPO SPRINT. DO NOT REWRITE THIS PROMPT.\nRepo: xyz_repo_or_path\nSprint: xyz_sprint_name\nOwned scope: xyz_owned_scope\nForbidden scope: xyz_forbidden_scope\nContext or plan path: xyz_plan_directory\nYour job is to change the repository, validate the change, commit it, and push or open/update a PR when the environment allows.\nDo not answer with:\n- a corrected prompt\n- a plan only\n- a handoff only\n- a summary of what should be done\n- a request for permission when the task is scoped and safe\n- preflight notes without repo changes\nIf you respond by writing a better prompt instead of committing repo work, you failed.\nStart with only enough preflight to avoid damaging existing work:\ngit status --short\ngit branch --show-current\ngit log --oneline --decorate -5\nIf the worktree is dirty or conflicted:\n- if this sprint owns cleanup, repair it safely\n- otherwise create or use an isolated worktree\n- if neither is possible, stop with the exact blocker and the safest next command\nIf the plan path is missing, stale, blank, or placeholder, do not stall.\nInspect repo evidence: recent commits, open PRs, handoff docs, plan docs, validators, tests, scripts, artifacts, and current branch state.\nProceed from the clearest current context.\nImplementation rule:\nAfter preflight, immediately do one of these:\n1. Modify tracked repo files within owned scope.\n2. Prove the sprint is already complete with existing committed files and passing checks.\n3. Stop with an exact blocker plus the smallest patch, diff, or file content that should be applied.\nDefault to option 1.\nMinimum movement:\nAt least one useful repository mutation must occur unless the sprint is already complete or blocked. Valid movement includes tracked-file changes, commits, branch or worktree creation, cherry-picks, merges, pushes, PR comments, labels, base or draft changes, PR closure, or other owned Git/GitHub mutations.\nWork rules:\n- reuse existing repo patterns before inventing\n- keep changes bounded\n- avoid unrelated rewrites\n- prefer tests, validators, scripts, docs, or manifests that enforce behavior\n- when run context, artifact registry, schemas, shared output contracts, or their validators are in owned scope, implement them here\n- do not turn real behavior into stubs just to pass tests\n- do not commit secrets, personal data, huge logs, crash dumps, generated runtime evidence, or machine-local junk\n- do not hide behind missing context when repo evidence can answer the question\n- repository work may include code, doctrine, docs, comments, branches, worktrees, cherry-picks, merges, PR mutations, and releases when those actions are inside owned scope\nValidation:\nRun the strongest practical checks available:\n1. targeted tests for changed behavior\n2. relevant validators or static checks\n3. build checks\n4. broader checks when practical\nIf a check is skipped, say why and name the exact command that should be run later.\nCommit and push contract:\ngit diff --check\ngit status --short\ngit diff --stat\ngit diff\ngit add <changed tracked files>\ngit commit -m \"<useful message>\"\ngit push -u origin <branch>\nOpen or update a PR when appropriate.\nFinal response must not include a next-agent prompt.\nFinal response format:\nCONTEXT\n- repo:\n- branch:\n- sprint:\n- scope:\n- forbidden scope:\nWORK COMMITTED\n- summary:\n- files changed:\n- commit SHA:\n- pushed: yes/no\n- PR: URL or not opened\nVALIDATION\n- command:\n- result:\n- skipped checks:\nBLOCKERS / GAPS\n- blocker:\n- gap:\n- risk:\nFINAL GIT STATE\n- git status --short:\nNEXT COMMAND\n- one exact command:\nA final response without a commit SHA, concrete Git/GitHub mutation evidence, patch/diff, exact blocker, or proof that the work was already complete is invalid.\nDo the repo work. Commit it. Then stop."
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "ai-harness-prompt-record-shard/v1",
+  "kitVersion": "v38",
+  "promptRange": "P25-P26",
+  "prompts": [
+    {
+      "id": "P25",
+      "sequence": 25,
+      "name": "Repo Tutorial Opportunity Planner",
+      "moment": "Repo Tutorial Opportunity Planner",
+      "promptType": "TUTORIAL PLAN",
+      "promptClass": "TUTORIAL / OPPORTUNITY",
+      "executionSurface": "regular_ai_prompt",
+      "sprintPathRole": "Rank repository tutorial paths worth sprinting",
+      "useForProgress": "No",
+      "useThisWhen": "The repository contains workflows or features, but the highest-value tutorial paths and prerequisites are unclear.",
+      "doNotUseWhen": "The user only needs immediate coaching, or an already-selected tutorial must be implemented now.",
+      "inspectFirst": "Current UI, launchers, commands, docs, help, tests, fixtures, releases, support friction, and runtime evidence.",
+      "expectedOutput": "Ranked tutorial portfolio, readiness and disposition ledger, exact launch order, and one self-contained panel per selected tutorial or prerequisite sprint.",
+      "nextStep": "Launch the first P18/P07/P08 panel.",
+      "acceptanceGate": "The first tutorial is evidence-backed, teachable, verifiable, and distinguished from reference-only documentation.",
+      "mutatesRepository": "No",
+      "authority": "Advisory tutorial-portfolio planning authority",
+      "proofCeiling": "Tutorial ranking proof only; no tutorial implementation or operator acceptance proof.",
+      "color": "Mint",
+      "copySafeSheet": "P25_COPY_SAFE",
+      "copyRange": "A1:A197",
+      "requiredVariables": [
+        "xyz_app_context",
+        "xyz_audiences",
+        "xyz_local_path",
+        "xyz_repo_or_path"
+      ],
+      "textSha256": "244ac7522b4eb3b9cff4b107f533f4c51e57c525cd05be3362464314477c9335",
+      "text": "ANALYZE THE REPOSITORY AND RANK TUTORIAL PATHS WORTH SPRINTING.\nDo not write every tutorial yet. First determine which user journeys deserve tutorial investment and which are not ready.\nRepo:\n`xyz_repo_or_path`\nPrimary local path if known:\n`xyz_local_path`\nKnown app, product, or workflow context:\n`xyz_app_context`\nPrimary audiences if known:\n`xyz_audiences`\nMISSION\nRecover the current user-facing truth from the repository, identify tutorial opportunities, rank them, and produce bounded tutorial sprint panels in the exact recommended launch order.\nPrefer tutorial paths that reduce real user friction, prevent expensive mistakes, improve adoption, or make implemented workflows independently usable.\nDo not confuse a documentation gap with a tutorial opportunity.\nDo not recommend a tutorial for behavior that is unimplemented, unstable, unsafe to demonstrate, or unsupported by current evidence.\nSOURCE OF TRUTH\nTreat the current repository, shipped UI, help text, launchers, commands, tests, fixtures, screenshots, release state, and current PRs as the source of truth.\nPrefer implemented behavior over roadmap prose, stale handoffs, mockups, or remembered chat context.\nMark planned, partial, deprecated, hidden, admin-only, and live-runtime-only behavior explicitly.\nCOMPACT PREFLIGHT\nRun what is available and record exact skips:\ngit rev-parse --show-toplevel\ngit status --short\ngit branch --show-current\ngit log --oneline --decorate -12\ngit worktree list\ngit remote -v\ngit fetch --all --prune\ngh pr list --state open --limit 50\ngh pr status\nInspect current releases, launchers, docs indexes, help surfaces, screenshots, examples, tests, fixtures, schemas, validators, support notes, issue patterns, and known runtime evidence.\nWHAT COUNTS AS A TUTORIAL CANDIDATE\nA tutorial candidate is a repeatable user journey that can be taught from a clear starting state to a verifiable useful result.\nExamples include:\n- first-run or onboarding path\n- core task walkthrough\n- technician or operator workflow\n- administrator configuration path\n- troubleshooting and recovery path\n- import, export, migration, or upgrade path\n- deployment or acceptance workflow\n- developer or contributor setup\n- integration path between two implemented features\n- safe live-proof or field-validation procedure\nA static reference page, field dictionary, architecture note, release note, or API inventory is not automatically a tutorial.\nTUTORIAL READINESS CLASSIFICATIONS\nClassify every candidate as one of:\n- READY_NOW: implemented, evidenced, safe to teach, and independently verifiable\n- READY_AFTER_DOC_FIX: behavior is stable but help, naming, examples, or navigation must be repaired first\n- READY_AFTER_PRODUCT_FIX: the user path has a product or app-logic defect that should be fixed before teaching it\n- READY_AFTER_HARNESS_FIX: tests, fixtures, launchers, sample data, or evidence contracts are missing\n- READY_AFTER_RUNTIME_PROOF: static evidence exists but the real workflow has not been observed\n- BLOCKED_BY_ACCESS_OR_ENVIRONMENT: the required target, credentials, package, device, or service is unavailable\n- REFERENCE_ONLY: useful documentation, but not a step-by-step tutorial\n- REJECTED: too speculative, unsafe, obsolete, duplicate, or low value\nREPOSITORY TUTORIAL INVENTORY\nInspect and map:\n- product entry points and launchers\n- visible UI routes, menus, panels, commands, and settings\n- user roles and permission boundaries\n- common task sequences\n- examples, sample data, fixtures, and demo environments\n- errors, support burden, failure modes, and recovery paths\n- current docs, tutorials, READMEs, help text, tooltips, and screenshots\n- tests that prove the steps and expected results\n- gaps between implemented behavior and current instructions\n- workflows implemented across several files or repos that users cannot currently discover\nFACTOR THE CANDIDATES\nFor each candidate identify:\n- audience\n- starting state\n- desired useful result\n- exact implemented path\n- required environment, data, permissions, and prerequisites\n- risk and destructive actions\n- existing evidence\n- missing product, harness, runtime, or documentation work\n- likely tutorial format\n- canonical owner\n- files and surfaces likely to change\nKeep tutorial planning separate from:\n- product implementation\n- harness or fixture creation\n- runtime proof\n- app-at-hand coaching\n- reference documentation\nWhen those are prerequisites, create separate prerequisite sprints and name the dependency.\nRANKING MODEL\nRank candidates using evidence, not enthusiasm.\nConsider:\n- user value and frequency\n- severity and cost of common mistakes\n- current support or rediscovery burden\n- adoption and onboarding leverage\n- workflow completeness\n- evidence and test maturity\n- availability of a safe reproducible demo path\n- audience size and clarity\n- dependency readiness\n- maintenance cost and likely drift\n- ability to verify success\n- ability to unblock later tutorials or product work\nDo not use false numerical precision when evidence is weak.\nExplain why the top tutorial is the best first sprint, not merely the largest documentation gap.\nTUTORIAL ARTIFACT EXPECTATIONS\nA serious tutorial sprint may include:\n- concise tutorial or walkthrough\n- verified quick start\n- sample or sanitized fixture\n- runnable commands or launcher path\n- screenshots or diagrams when they materially help\n- expected-result and failure-state examples\n- troubleshooting and recovery section\n- safety and permission boundaries\n- help or navigation links from the app and docs index\n- executable validation for commands, links, examples, and fixtures\n- proof ceiling and field-acceptance notes\nDo not commit private screenshots, credentials, live hostnames, client data, proprietary installers, raw runtime logs, or unsafe example values.\nOUTPUT ORDER\n1. LAUNCH ORDER\nPut the recommended tutorial sprint order at the very top.\nDisplay every later sprint panel in exactly this order.\nKeep safe parallel candidates together as one clearly labeled group.\nDo not provide an alternate ordering.\n2. IMMEDIATE MOVE\nName the first tutorial path worth sprinting and the exact evidence supporting that choice.\nState any prerequisite sprint that must occur before tutorial writing.\n3. RANKED TUTORIAL PORTFOLIO\nFor each candidate include:\n- rank\n- tutorial path\n- audience\n- readiness classification\n- user value\n- evidence maturity\n- principal gap\n- dependencies\n- risk\n- recommended tutorial format\n- recommended executor prompt\n- proof ceiling\n4. CANDIDATE DISPOSITION LEDGER\nDisposition every meaningful candidate as ready, prerequisite-first, deferred, reference-only, merged with another path, or rejected-with-reason.\nNo candidate may disappear silently.\n5. COPYABLE TUTORIAL SPRINT PANELS\nImmediately after the ranking, emit one complete self-contained writing panel for each selected sprint.\nOne panel goes into one new AI chat.\nEach panel must have its own copy control.\nPanels must appear in the exact launch order stated at the top.\nDo not use one giant code fence.\nDo not require a separately copied shared preamble.\nEach panel must include:\n- banner and sprint name\n- repo, path, branch, PR, wave, and lane\n- audience and tutorial path\n- dependencies and safe parallel work\n- owned scope and forbidden scope\n- expected artifacts\n- mission\n- read-first files and user-facing surfaces\n- compact preflight\n- numbered tasks\n- safety and data handling\n- tutorial validation\n- commit, push, and PR contract\n- proof level and proof ceiling\n- final response contract\n- exact next command\nUse P18 when the sprint primarily creates durable tutorials and repo help.\nUse P07 when product or harness implementation must precede the tutorial.\nUse P08 when live behavior must be observed before instructions can be trusted.\nUse P24 only for immediate coaching of the app currently in front of the user; it does not replace durable tutorial work.\nTUTORIAL VALIDATION\nRequire applicable evidence:\n- every step matches current implemented behavior\n- commands and examples execute against sanitized fixtures\n- links and navigation routes resolve\n- screenshots match the current version\n- prerequisites and permissions are accurate\n- success and failure outcomes are independently checkable\n- destructive steps include backup, preview, confirmation, or recovery guidance\n- planned or unmerged behavior is not presented as current\n- skipped checks are named with exact later commands\nQUALITY RULES\nBe practical, audience-specific, and repository-grounded.\nPrefer a smaller number of high-value tutorial sprints over a large backlog of vague documentation ideas.\nDo not recommend tutorials merely because a feature exists.\nDo not create tutorial theater around unstable, unsafe, or unverified behavior.\nDo not claim operator acceptance from static tests or screenshots.\nFINAL RESPONSE\nEnd with:\n- first tutorial sprint to launch\n- safe parallel tutorial or prerequisite sprints\n- blocked candidates\n- exact repository evidence used\n- proof ceiling\n- one exact next command"
+    },
+    {
+      "id": "P26",
+      "sequence": 26,
+      "name": "GNHF Proof Floor Reproducer",
+      "moment": "GNHF Proof Floor Reproducer",
+      "promptType": "AUTONOMY + VALIDATE",
+      "promptClass": "GNHF / PROOF FLOOR",
+      "executionSurface": "gnhf_launch_artifact",
+      "sprintPathRole": "Reproduce the canonical proof floor and repair at most one required failure",
+      "useForProgress": "YES",
+      "useThisWhen": "The validation floor must be established before a larger autonomous lane.",
+      "doNotUseWhen": "A larger implementation lane should begin before its proof floor is known.",
+      "inspectFirst": "Canonical proof, repo rules, directly controlling plan and validator.",
+      "expectedOutput": "Current matrix plus one focused repair commit when necessary.",
+      "nextStep": "Use P28/P30/P32/P33 next.",
+      "acceptanceGate": "Proof is reproduced; required failures are repaired or explained.",
+      "mutatesRepository": "Yes",
+      "authority": "Validation floor and one focused repair commit",
+      "proofCeiling": "Proof is reproduced; required failures are repaired or explained.",
+      "color": "Night",
+      "copySafeSheet": "P26_COPY_SAFE",
+      "copyRange": "A1:A38",
+      "requiredVariables": [
+        "xyz_canonical_proof",
+        "xyz_owned_scope",
+        "xyz_plan_directory",
+        "xyz_repo_or_path"
+      ],
+      "textSha256": "0bfccb245488d299f59704645bcd1aa8a5005eed32f92f5c5d20f556e1135fc8",
+      "text": "gnhf `\n--agent opencode `\n--worktree `\n--max-iterations 2 `\n--max-tokens 180000 `\n--prevent-sleep on `\n--stop-when \"The canonical proof floor is reproduced, one owned repair is committed if required, and every remaining failure is either explained or external.\" `\n\"Repo: xyz_repo_or_path\n\nSprint: Proof floor reproduction\nLane: canonical validation and one repair\n\nObjective:\nRun xyz_canonical_proof, establish the current PASS SKIP FAIL floor, and repair only the highest-value owned required failure.\n\nOwned scope:\n- xyz_owned_scope\n\nRead first:\n- AGENTS.md\n- xyz_plan_directory\n- the canonical proof entry point\n\nRules:\n- Make at most one coherent repair.\n- Add focused regression proof.\n- Optional missing tools may SKIP with a specific reason.\n- Do not downgrade required failures.\n- Do not push, authenticate, contact live targets, install tools, or commit generated evidence.\n- Stop without a commit when the proof floor is already correct.\n\nReport:\n- proof matrix\n- repair and commit if any\n- commands and results\n- proof ceiling\n- blockers\n- git status\""
+    }
+  ]
+}

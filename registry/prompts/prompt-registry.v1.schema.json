@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/web-excel-repair-triage/registry/prompts/prompt-registry.v1.schema.json",
+  "title": "AI Harness Prompt Registry Catalog v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kitVersion",
+    "source",
+    "ownership",
+    "executionSurfaces",
+    "variables",
+    "promptShards"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "ai-harness-prompt-registry/v1"
+    },
+    "kitVersion": {
+      "type": "string",
+      "pattern": "^v[0-9]+$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact",
+        "sha256",
+        "promptLibrarySheet",
+        "promptSequenceSheet",
+        "variablesSheet",
+        "promptCount",
+        "promptIdRange"
+      ],
+      "properties": {
+        "artifact": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "promptLibrarySheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "promptSequenceSheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "variablesSheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "promptCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "promptIdRange": {
+          "type": "string",
+          "pattern": "^P[0-9]{2}-P[0-9]{2}$"
+        }
+      }
+    },
+    "ownership": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonicalProducer",
+        "consumer",
+        "boundary"
+      ],
+      "properties": {
+        "canonicalProducer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "consumer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "boundary": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "executionSurfaces": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "description"
+        ],
+        "properties": {
+          "id": {
+            "enum": [
+              "regular_ai_prompt",
+              "gnhf_launch_artifact"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "variables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "meaning",
+          "example",
+          "origin"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^xyz_[a-z0-9_]+$"
+          },
+          "meaning": {
+            "type": "string"
+          },
+          "example": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "promptShards": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "range",
+          "path",
+          "sha256",
+          "promptCount"
+        ],
+        "properties": {
+          "range": {
+            "type": "string",
+            "pattern": "^P[0-9]{2}-P[0-9]{2}$"
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^shards/prompts-P[0-9]{2}-P[0-9]{2}\\.json$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "promptCount": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  }
+}

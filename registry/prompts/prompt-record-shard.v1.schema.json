@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/web-excel-repair-triage/registry/prompts/prompt-record-shard.v1.schema.json",
+  "title": "AI Harness Prompt Record Shard v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kitVersion",
+    "promptRange",
+    "prompts"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "ai-harness-prompt-record-shard/v1"
+    },
+    "kitVersion": {
+      "type": "string",
+      "pattern": "^v[0-9]+$"
+    },
+    "promptRange": {
+      "type": "string",
+      "pattern": "^P[0-9]{2}-P[0-9]{2}$"
+    },
+    "prompts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "sequence",
+          "name",
+          "moment",
+          "promptType",
+          "promptClass",
+          "executionSurface",
+          "sprintPathRole",
+          "useForProgress",
+          "useThisWhen",
+          "doNotUseWhen",
+          "inspectFirst",
+          "expectedOutput",
+          "nextStep",
+          "acceptanceGate",
+          "mutatesRepository",
+          "authority",
+          "proofCeiling",
+          "color",
+          "copySafeSheet",
+          "copyRange",
+          "requiredVariables",
+          "textSha256",
+          "text"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^P[0-9]{2}$"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "moment": {
+            "type": "string"
+          },
+          "promptType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "promptClass": {
+            "type": "string",
+            "minLength": 1
+          },
+          "executionSurface": {
+            "enum": [
+              "regular_ai_prompt",
+              "gnhf_launch_artifact"
+            ]
+          },
+          "sprintPathRole": {
+            "type": "string"
+          },
+          "useForProgress": {
+            "type": "string"
+          },
+          "useThisWhen": {
+            "type": "string"
+          },
+          "doNotUseWhen": {
+            "type": "string"
+          },
+          "inspectFirst": {
+            "type": "string"
+          },
+          "expectedOutput": {
+            "type": "string"
+          },
+          "nextStep": {
+            "type": "string"
+          },
+          "acceptanceGate": {
+            "type": "string"
+          },
+          "mutatesRepository": {
+            "type": "string"
+          },
+          "authority": {
+            "type": "string"
+          },
+          "proofCeiling": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "copySafeSheet": {
+            "type": "string",
+            "pattern": "^P[0-9]{2}_COPY_SAFE$"
+          },
+          "copyRange": {
+            "type": "string",
+            "pattern": "^A1:A[0-9]+$"
+          },
+          "requiredVariables": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^xyz_[a-z0-9_]+$"
+            }
+          },
+          "textSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
