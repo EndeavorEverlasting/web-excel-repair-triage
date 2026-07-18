@@ -11,9 +11,9 @@ cd /d "%REPO_ROOT%" || (
 )
 
 git rev-parse --show-toplevel >nul 2>&1
-if errorlevel 1 (
+set "EXIT_CODE=%ERRORLEVEL%"
+if not "%EXIT_CODE%"=="0" (
   echo ERROR: This launcher is not inside a Git repository.
-  set "EXIT_CODE=1"
   goto :finish
 )
 
@@ -28,24 +28,18 @@ if defined DIRTY_STATE (
 
 echo Fetching origin...
 git fetch origin
-if errorlevel 1 (
-  set "EXIT_CODE=%ERRORLEVEL%"
-  goto :finish
-)
+set "EXIT_CODE=%ERRORLEVEL%"
+if not "%EXIT_CODE%"=="0" goto :finish
 
 echo Switching to %TARGET_BRANCH%...
 git switch "%TARGET_BRANCH%"
-if errorlevel 1 (
-  set "EXIT_CODE=%ERRORLEVEL%"
-  goto :finish
-)
+set "EXIT_CODE=%ERRORLEVEL%"
+if not "%EXIT_CODE%"=="0" goto :finish
 
 echo Fast-forwarding from origin...
 git pull --ff-only origin "%TARGET_BRANCH%"
-if errorlevel 1 (
-  set "EXIT_CODE=%ERRORLEVEL%"
-  goto :finish
-)
+set "EXIT_CODE=%ERRORLEVEL%"
+if not "%EXIT_CODE%"=="0" goto :finish
 
 echo Running focused V38 validation...
 python -m pytest tests/test_prompt_kit_v38_prompt_assets.py tests/test_prompt_kit_v38_generator.py tests/test_prompt_kit_v38_cmd_launchers.py -q
