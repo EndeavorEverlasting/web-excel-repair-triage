@@ -53,6 +53,9 @@ jobs:
       - name: Test One Marcus stable tab rename
         run: python -m pytest tests/test_one_marcus_recon.py::test_renames_part_number_tab_to_stable_name --tb=short -q
 
+      - name: Test One Marcus baseline comparison
+        run: python -m pytest tests/test_one_marcus_recon.py::test_relinked_workbook_passes_baseline_compare --tb=short -q
+
       - name: Test One Marcus formula relink
         run: python -m pytest tests/test_one_marcus_recon.py::test_rewrites_formulas_from_old_part_number_tab --tb=short -q
 
