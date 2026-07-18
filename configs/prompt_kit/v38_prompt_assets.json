@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "prompt_assets": [
+    {
+      "id": "LOCAL_RUNTIME_BUILD",
+      "title": "Local Runtime Build Converter",
+      "class": "local_coding_agent_runtime",
+      "execution_mode": "local_runtime_build",
+      "source": "prompts/v38/local-runtime-build.md",
+      "output": "AI_Harness_Prompt_Kit_v38_local_runtime_build.md",
+      "supported_agents": [
+        "Cosmos by Augment",
+        "Cursor",
+        "Codex",
+        "other local coding agents"
+      ],
+      "distinct_from": [
+        "harness_factoring",
+        "prompt_authoring"
+      ],
+      "requires_local_access": true,
+      "requires_runtime_execution": true
+    }
+  ]
+}
