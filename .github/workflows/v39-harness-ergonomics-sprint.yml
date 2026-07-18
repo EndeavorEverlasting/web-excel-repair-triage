@@ -46,6 +46,15 @@ jobs:
             base64 -d /tmp/v39-harness-patch.b64 > /tmp/v39-harness-patch.tar.xz
             echo '6d16a9910e8c64dab26603087534f2fab815ad8c52992211e54e2784f4dfa79b  /tmp/v39-harness-patch.tar.xz' | sha256sum -c -
             tar -xJf /tmp/v39-harness-patch.tar.xz -C .
+            python - <<'PY'
+          from pathlib import Path
+          for name in (
+              'docs/AI_PROMPT_KIT_V39_SEGMENTATION.md',
+              'docs/HARNESS_OPERATIONAL_DISCIPLINE.md',
+          ):
+              path = Path(name)
+              path.write_text(path.read_text(encoding='utf-8').rstrip() + '\n', encoding='utf-8')
+          PY
 
             python -m json.tool configs/harness/harness_manifest_v1.json >/dev/null
             python -m json.tool configs/harness/workflows_v1.json >/dev/null
@@ -98,7 +107,14 @@ jobs:
               configs/prompt_kit/v39_standard_ai_extensions.json triage docs/HARNESS_OPERATIONAL_DISCIPLINE.md \
               docs/AI_PROMPT_KIT_V39_SEGMENTATION.md docs/harness skills .githooks scripts/Install-HarnessHooks.ps1 tests
 
-            rm -f .github/V39_HARNESS_ERGONOMICS_TRIGGER.md .github/V39_HARNESS_PAYLOAD_DIAGNOSTIC_TRIGGER.md
+            rm -f \
+              .github/V39_HARNESS_ERGONOMICS_TRIGGER.md \
+              .github/V39_HARNESS_PAYLOAD_DIAGNOSTIC_TRIGGER.md \
+              .github/V39_HARNESS_EVIDENCE_TRIGGER.md \
+              .github/V39_PAYLOAD_EXPORT_TRIGGER.md \
+              .github/V39_PAYLOAD_REPAIR_TRIGGER.md \
+              .github/V39_PAYLOAD_REPAIR_EVIDENCE_TRIGGER.md \
+              .github/V39_HARNESS_FINAL_TRIGGER.md
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git add \
@@ -119,9 +135,8 @@ jobs:
               tests/test_prompt_kit_visual_contract.py \
               tests/test_repo_harness_manifest.py \
               tests/test_prompt_kit_v39_visual_coordination.py \
-              tests/test_harness_operational_discipline.py \
-              .github/V39_HARNESS_ERGONOMICS_TRIGGER.md \
-              .github/V39_HARNESS_PAYLOAD_DIAGNOSTIC_TRIGGER.md
+              tests/test_harness_operational_discipline.py
+            git add -A .github
             git commit -m 'feat(harness): enforce prompt ergonomics and semantic tab colors'
             git push origin HEAD:feat/prompt-kit-v39-segmented
           ) > /tmp/v39-harness-sprint.log 2>&1
