@@ -1,0 +1,243 @@
+name: Repair V39 scaffold materialization
+
+on:
+  push:
+    branches:
+      - repair/v39-structural-visual-contract
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, 'materialize scaffold cells across prompt ranges') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: repair/v39-structural-visual-contract
+          fetch-depth: 0
+
+      - name: Apply bounded scaffold repair
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          source_path = Path('triage/prompt_kit_v39_ooxml_base.py')
+          source = source_path.read_text(encoding='utf-8')
+          old_apply = '''        rows = _row_lookup(prompt_root)
+          filled = 0
+          for row_number in range(top_nav, bottom_nav + 1):
+              row = rows.get(row_number)
+              if row is None:
+                  continue
+              for col in columns:
+                  ref = f"{col}{row_number}"
+                  cell = next((c for c in row.findall("m:c", NS) if c.attrib.get("r") == ref), None)
+                  if cell is None:
+                      continue
+                  base_style = int(cell.attrib.get("s", "0"))
+                  xfs_element = _ensure_collection(styles, "cellXfs")
+                  xfs = list(xfs_element)
+                  base_xf = xfs[base_style]
+                  base_fill_id = int(base_xf.attrib.get("fillId", "0"))
+                  if base_fill_id == scaffold_fill_id:
+                      continue
+                  new_xf = deepcopy(base_xf)
+                  new_xf.attrib["fillId"] = str(scaffold_fill_id)
+                  new_xf.attrib["applyFill"] = "1"
+                  new_style_id = _ensure_style_child(xfs_element, new_xf)
+                  cell.attrib["s"] = str(new_style_id)
+                  filled += 1
+          mutable[part] = _xml(prompt_root)
+          changed.add(part)
+          prompts.append({"sheet": sheet_name, "range": range_str, "top_nav_row": top_nav, "bottom_nav_row": bottom_nav, "columns": columns, "cells_filled": filled})
+          '''
+          new_apply = '''        rows = _row_lookup(prompt_root)
+          sheet_data = prompt_root.find("m:sheetData", NS)
+          if sheet_data is None:
+              raise ValueError(f"prompt tab {sheet_name} has no sheetData element")
+          xfs_element = _ensure_collection(styles, "cellXfs")
+          scaffold_style_cache: dict[int, int] = {}
+
+          def scaffold_style_for(base_style: int) -> int:
+              cached = scaffold_style_cache.get(base_style)
+              if cached is not None:
+                  return cached
+              xfs = list(xfs_element)
+              if base_style < 0 or base_style >= len(xfs):
+                  raise ValueError(
+                      f"prompt tab {sheet_name} cell style {base_style} is outside cellXfs"
+                  )
+              base_xf = xfs[base_style]
+              base_fill_id = int(base_xf.attrib.get("fillId", "0"))
+              if base_fill_id == scaffold_fill_id:
+                  scaffold_style_cache[base_style] = base_style
+                  return base_style
+              new_xf = deepcopy(base_xf)
+              new_xf.attrib["fillId"] = str(scaffold_fill_id)
+              new_xf.attrib["applyFill"] = "1"
+              style_id = _ensure_style_child(xfs_element, new_xf)
+              scaffold_style_cache[base_style] = style_id
+              return style_id
+
+          def ensure_row(row_number: int) -> ET.Element:
+              existing = rows.get(row_number)
+              if existing is not None:
+                  return existing
+              row = ET.Element(f"{{{MAIN_NS}}}row", {"r": str(row_number)})
+              insertion = len(list(sheet_data))
+              for index, candidate in enumerate(list(sheet_data)):
+                  candidate_number = int(candidate.attrib.get("r", "0"))
+                  if candidate_number > row_number:
+                      insertion = index
+                      break
+              sheet_data.insert(insertion, row)
+              rows[row_number] = row
+              return row
+
+          def insert_cell(row: ET.Element, cell: ET.Element, ref: str) -> None:
+              target_column = _impl._column_number(_cell_parts(ref)[0])
+              insertion = len(list(row))
+              for index, candidate in enumerate(list(row)):
+                  candidate_ref = candidate.attrib.get("r", "")
+                  if candidate_ref and _impl._column_number(_cell_parts(candidate_ref)[0]) > target_column:
+                      insertion = index
+                      break
+              row.insert(insertion, cell)
+
+          filled = 0
+          materialized = 0
+          for row_number in range(top_nav, bottom_nav + 1):
+              row = ensure_row(row_number)
+              for col in columns:
+                  ref = f"{col}{row_number}"
+                  cell = next((c for c in row.findall("m:c", NS) if c.attrib.get("r") == ref), None)
+                  if cell is None:
+                      style_id = scaffold_style_for(0)
+                      cell = ET.Element(
+                          f"{{{MAIN_NS}}}c",
+                          {"r": ref, "s": str(style_id)},
+                      )
+                      insert_cell(row, cell, ref)
+                      filled += 1
+                      materialized += 1
+                      continue
+                  base_style = int(cell.attrib.get("s", "0"))
+                  style_id = scaffold_style_for(base_style)
+                  if style_id == base_style:
+                      continue
+                  cell.attrib["s"] = str(style_id)
+                  filled += 1
+          mutable[part] = _xml(prompt_root)
+          changed.add(part)
+          prompts.append({"sheet": sheet_name, "range": range_str, "top_nav_row": top_nav, "bottom_nav_row": bottom_nav, "columns": columns, "cells_filled": filled, "cells_materialized": materialized})
+          '''
+          if old_apply not in source:
+              raise SystemExit('apply scaffold target block not found')
+          source = source.replace(old_apply, new_apply, 1)
+
+          old_validate = '''        for row_number in range(top_nav, bottom_nav + 1):
+              row = rows.get(row_number)
+              if row is None:
+                  continue
+              for col in columns:
+                  ref = f"{col}{row_number}"
+                  cell = next((c for c in row.findall("m:c", NS) if c.attrib.get("r") == ref), None)
+                  if cell is None:
+                      continue
+                  style_id = int(cell.attrib.get("s", "0"))
+          '''
+          new_validate = '''        for row_number in range(top_nav, bottom_nav + 1):
+              row = rows.get(row_number)
+              if row is None:
+                  uncovered.extend(f"{col}{row_number}" for col in columns)
+                  continue
+              for col in columns:
+                  ref = f"{col}{row_number}"
+                  cell = next((c for c in row.findall("m:c", NS) if c.attrib.get("r") == ref), None)
+                  if cell is None:
+                      uncovered.append(ref)
+                      continue
+                  style_id = int(cell.attrib.get("s", "0"))
+          '''
+          if old_validate not in source:
+              raise SystemExit('validate scaffold target block not found')
+          source = source.replace(old_validate, new_validate, 1)
+          source_path.write_text(source, encoding='utf-8')
+
+          test_path = Path('tests/test_prompt_kit_v39_visual_coordination.py')
+          tests = test_path.read_text(encoding='utf-8')
+          marker = '''    def test_scaffold_preserves_formulas_and_text(self):
+          '''
+          added_test = '''    def test_scaffold_materializes_blank_cells_across_claimed_range(self):
+              prompts = [("P00", "P00 Test", "Cream", _medium_prompt())]
+              parts = _multi_prompt_parts(prompts)
+              before = ooxml._root(parts["xl/worksheets/sheet2.xml"], "prompt")
+              before_cells = ooxml._cells(before)
+              assert before_cells.get("B2") is None
+              assert before_cells.get("C4") is None
+
+              _, report = ooxml._apply_prompt_body_scaffold(parts)
+
+              after = ooxml._root(parts["xl/worksheets/sheet2.xml"], "prompt")
+              after_cells = ooxml._cells(after)
+              for row_number in range(1, 6):
+                  for column in ("A", "B", "C"):
+                      assert after_cells.get(f"{column}{row_number}") is not None
+              assert report["prompts"][0]["cells_materialized"] == 6
+              assert ooxml._validate_prompt_body_scaffold(parts) == ()
+
+          ''' + marker
+          if marker not in tests:
+              raise SystemExit('test insertion marker not found')
+          tests = tests.replace(marker, added_test, 1)
+
+          old_count = '''            existing_count = 0
+              for row_number in range(top, bottom + 1):
+                  row = rows.get(row_number)
+                  if row is None:
+                      continue
+                  for col in cols:
+                      cell = next((c for c in row.findall("m:c", ooxml.NS) if c.attrib.get("r") == f"{col}{row_number}"), None)
+                      if cell is not None:
+                          existing_count += 1
+              assert existing_count > 0, f"no cells found in scaffold range for sheet {sid}"
+          '''
+          new_count = '''            expected_refs = {
+                  f"{col}{row_number}"
+                  for row_number in range(top, bottom + 1)
+                  for col in cols
+              }
+              actual_refs = {
+                  cell.attrib.get("r", "")
+                  for row in rows.values()
+                  for cell in row.findall("m:c", ooxml.NS)
+              }
+              assert expected_refs <= actual_refs, (
+                  f"missing scaffold cells for sheet {sid}: {sorted(expected_refs - actual_refs)}"
+              )
+          '''
+          if old_count not in tests:
+              raise SystemExit('variable-length coverage block not found')
+          tests = tests.replace(old_count, new_count, 1)
+          test_path.write_text(tests, encoding='utf-8')
+          PY
+
+      - name: Validate focused and full V39 contracts
+        run: |
+          python -m pytest tests/test_prompt_kit_v39_visual_coordination.py -q
+          python -m pytest tests/test_prompt_kit_v39_*.py tests/test_prompt_kit_visual_contract.py -q
+          python -m triage.prompt_kit_visual_contract --json
+          git diff --check
+
+      - name: Commit repair and remove trigger
+        shell: bash
+        run: |
+          rm .github/workflows/repair-v39-scaffold-materialization.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add triage/prompt_kit_v39_ooxml_base.py tests/test_prompt_kit_v39_visual_coordination.py .github/workflows/repair-v39-scaffold-materialization.yml
+          git commit -m "fix(visual): materialize scaffold cells across prompt ranges"
+          git push origin HEAD:repair/v39-structural-visual-contract
