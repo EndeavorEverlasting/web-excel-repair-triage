@@ -8,16 +8,12 @@ on:
       - opened
       - synchronize
       - reopened
-  push:
-    branches:
-      - repair/v39-structural-visual-contract
 
 permissions:
   contents: write
 
 jobs:
   repair:
-    if: ${{ github.event_name == 'pull_request' || !contains(github.event.head_commit.message, 'materialize scaffold cells across prompt ranges') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,37 +26,17 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
           source_path = Path('triage/prompt_kit_v39_ooxml_base.py')
           source = source_path.read_text(encoding='utf-8')
-          old_apply = '''        rows = _row_lookup(prompt_root)
-          filled = 0
-          for row_number in range(top_nav, bottom_nav + 1):
-              row = rows.get(row_number)
-              if row is None:
-                  continue
-              for col in columns:
-                  ref = f"{col}{row_number}"
-                  cell = next((c for c in row.findall("m:c", NS) if c.attrib.get("r") == ref), None)
-                  if cell is None:
-                      continue
-                  base_style = int(cell.attrib.get("s", "0"))
-                  xfs_element = _ensure_collection(styles, "cellXfs")
-                  xfs = list(xfs_element)
-                  base_xf = xfs[base_style]
-                  base_fill_id = int(base_xf.attrib.get("fillId", "0"))
-                  if base_fill_id == scaffold_fill_id:
-                      continue
-                  new_xf = deepcopy(base_xf)
-                  new_xf.attrib["fillId"] = str(scaffold_fill_id)
-                  new_xf.attrib["applyFill"] = "1"
-                  new_style_id = _ensure_style_child(xfs_element, new_xf)
-                  cell.attrib["s"] = str(new_style_id)
-                  filled += 1
-          mutable[part] = _xml(prompt_root)
-          changed.add(part)
-          prompts.append({"sheet": sheet_name, "range": range_str, "top_nav_row": top_nav, "bottom_nav_row": bottom_nav, "columns": columns, "cells_filled": filled})
-          '''
+          apply_pattern = re.compile(
+              r'''        rows = _row_lookup\(prompt_root\)\n'''
+              r'''        filled = 0\n'''
+              r'''.*?'''
+              r'''        prompts\.append\(\{"sheet": sheet_name, "range": range_str, "top_nav_row": top_nav, "bottom_nav_row": bottom_nav, "columns": columns, "cells_filled": filled\}\)\n''',
+              re.DOTALL,
+          )
           new_apply = '''        rows = _row_lookup(prompt_root)
           sheet_data = prompt_root.find("m:sheetData", NS)
           if sheet_data is None:
@@ -141,21 +117,22 @@ jobs:
           changed.add(part)
           prompts.append({"sheet": sheet_name, "range": range_str, "top_nav_row": top_nav, "bottom_nav_row": bottom_nav, "columns": columns, "cells_filled": filled, "cells_materialized": materialized})
           '''
-          if old_apply not in source:
-              raise SystemExit('apply scaffold target block not found')
-          source = source.replace(old_apply, new_apply, 1)
+          source, apply_count = apply_pattern.subn(new_apply, source, count=1)
+          if apply_count != 1:
+              raise SystemExit(f'apply scaffold replacement count was {apply_count}, expected 1')
 
-          old_validate = '''        for row_number in range(top_nav, bottom_nav + 1):
-              row = rows.get(row_number)
-              if row is None:
-                  continue
-              for col in columns:
-                  ref = f"{col}{row_number}"
-                  cell = next((c for c in row.findall("m:c", NS) if c.attrib.get("r") == ref), None)
-                  if cell is None:
-                      continue
-                  style_id = int(cell.attrib.get("s", "0"))
-          '''
+          validate_pattern = re.compile(
+              r'''        for row_number in range\(top_nav, bottom_nav \+ 1\):\n'''
+              r'''            row = rows\.get\(row_number\)\n'''
+              r'''            if row is None:\n'''
+              r'''                continue\n'''
+              r'''            for col in columns:\n'''
+              r'''                ref = f"\{col\}\{row_number\}"\n'''
+              r'''                cell = next\(\(c for c in row\.findall\("m:c", NS\) if c\.attrib\.get\("r"\) == ref\), None\)\n'''
+              r'''                if cell is None:\n'''
+              r'''                    continue\n'''
+              r'''                style_id = int\(cell\.attrib\.get\("s", "0"\)\)\n'''
+          )
           new_validate = '''        for row_number in range(top_nav, bottom_nav + 1):
               row = rows.get(row_number)
               if row is None:
@@ -169,16 +146,15 @@ jobs:
                       continue
                   style_id = int(cell.attrib.get("s", "0"))
           '''
-          if old_validate not in source:
-              raise SystemExit('validate scaffold target block not found')
-          source = source.replace(old_validate, new_validate, 1)
+          source, validate_count = validate_pattern.subn(new_validate, source, count=1)
+          if validate_count != 1:
+              raise SystemExit(f'validate scaffold replacement count was {validate_count}, expected 1')
           source_path.write_text(source, encoding='utf-8')
 
           test_path = Path('tests/test_prompt_kit_v39_visual_coordination.py')
           tests = test_path.read_text(encoding='utf-8')
-          marker = '''    def test_scaffold_preserves_formulas_and_text(self):
-          '''
-          added_test = '''    def test_scaffold_materializes_blank_cells_across_claimed_range(self):
+          marker = '    def test_scaffold_preserves_formulas_and_text(self):\n'
+          regression = '''    def test_scaffold_materializes_blank_cells_across_claimed_range(self):
               prompts = [("P00", "P00 Test", "Cream", _medium_prompt())]
               parts = _multi_prompt_parts(prompts)
               before = ooxml._root(parts["xl/worksheets/sheet2.xml"], "prompt")
@@ -196,39 +172,10 @@ jobs:
               assert report["prompts"][0]["cells_materialized"] == 6
               assert ooxml._validate_prompt_body_scaffold(parts) == ()
 
-          ''' + marker
-          if marker not in tests:
-              raise SystemExit('test insertion marker not found')
-          tests = tests.replace(marker, added_test, 1)
-
-          old_count = '''            existing_count = 0
-              for row_number in range(top, bottom + 1):
-                  row = rows.get(row_number)
-                  if row is None:
-                      continue
-                  for col in cols:
-                      cell = next((c for c in row.findall("m:c", ooxml.NS) if c.attrib.get("r") == f"{col}{row_number}"), None)
-                      if cell is not None:
-                          existing_count += 1
-              assert existing_count > 0, f"no cells found in scaffold range for sheet {sid}"
-          '''.replace('              for row_number', '            for row_number').replace('                  row =', '                row =').replace('                  if row is None:', '                if row is None:').replace('                      continue', '                    continue').replace('                  for col in cols:', '                for col in cols:').replace('                      cell =', '                    cell =').replace('                      if cell is not None:', '                    if cell is not None:').replace('                          existing_count += 1', '                        existing_count += 1').replace('              assert existing_count', '            assert existing_count')
-          new_count = '''            expected_refs = {
-                  f"{col}{row_number}"
-                  for row_number in range(top, bottom + 1)
-                  for col in cols
-              }
-              actual_refs = {
-                  cell.attrib.get("r", "")
-                  for row in rows.values()
-                  for cell in row.findall("m:c", ooxml.NS)
-              }
-              assert expected_refs <= actual_refs, (
-                  f"missing scaffold cells for sheet {sid}: {sorted(expected_refs - actual_refs)}"
-              )
           '''
-          if old_count not in tests:
-              raise SystemExit('variable-length coverage block not found')
-          tests = tests.replace(old_count, new_count, 1)
+          if marker not in tests:
+              raise SystemExit('scaffold regression insertion marker not found')
+          tests = tests.replace(marker, regression + marker, 1)
           test_path.write_text(tests, encoding='utf-8')
           PY
 
