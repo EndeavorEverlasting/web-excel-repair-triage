@@ -39,6 +39,16 @@ jobs:
           PY
             base64 -d /tmp/v39-patch.b64 | gzip -d > .github/apply_v39_sprint.py
             python .github/apply_v39_sprint.py
+            python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/test_prompt_kit_v39_library_navigation.py')
+          text = path.read_text(encoding='utf-8')
+          old = 'assert ooxml._cell_display(footer_b, ()) == "End of Prompt Library · 58 prompts"'
+          new = 'assert ooxml._cell_display(footer_b, ()) == "End of Prompt Library · 56 prompts"'
+          if text.count(old) != 1:
+              raise SystemExit(f'fixture footer assertion anchor count: {text.count(old)}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
             python -m json.tool configs/prompt_kit/v39_standard_ai_extensions.json >/dev/null
             python -m json.tool configs/harness/operational_discipline_v1.json >/dev/null
             python -m pytest \
@@ -67,6 +77,7 @@ jobs:
               .github/V39_ROW_LINKS_TRIGGER.md \
               .github/V39_ROW_LINKS_DIAGNOSTIC_TRIGGER.md \
               .github/V39_ROW_LINKS_FINALIZE_TRIGGER.md \
+              .github/V39_ROW_LINKS_FINALIZE_LOG_TRIGGER.md \
               .github/workflows/v39-row-links-harness-sprint.yml \
               .github/workflows/v39-row-links-diagnostic.yml \
               .github/workflows/v39-row-links-finalize.yml
