@@ -28,7 +28,7 @@ def write_store(
     *,
     kit_version: str = DEFAULT_KIT_VERSION,
     variable_overrides_path: Optional[Path] = None,
-    max_shard_bytes: int = 24000,
+    max_shard_bytes: int = 14000,
 ) -> dict[str, Any]:
     """Extract the workbook and write a compact catalog plus full-record shards."""
     if max_shard_bytes < 4096:
@@ -146,7 +146,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     extract.add_argument("--out", required=True)
     extract.add_argument("--kit-version", default=DEFAULT_KIT_VERSION)
     extract.add_argument("--variable-overrides")
-    extract.add_argument("--max-shard-bytes", type=int, default=24000)
+    extract.add_argument("--max-shard-bytes", type=int, default=14000)
 
     validate = subcommands.add_parser("validate", help="validate a stored registry")
     validate.add_argument("registry")
