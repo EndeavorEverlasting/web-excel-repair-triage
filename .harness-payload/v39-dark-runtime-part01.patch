@@ -1,0 +1,127 @@
++      "process_exit_only",
++      "disposable_harness_only",
++      "simulated_provider_or_agent",
++      "uncommitted_runtime_action"
++    ]
++  }
+ }
+diff --git a/configs/harness/prompt_library_visual_policy_v1.json b/configs/harness/prompt_library_visual_policy_v1.json
+index 76a5660..b9215bf 100644
+--- a/configs/harness/prompt_library_visual_policy_v1.json
++++ b/configs/harness/prompt_library_visual_policy_v1.json
+@@ -113,5 +113,15 @@
+       "fill": "F7E6C4",
+       "text": "7C5A10"
+     }
++  },
++  "worksheet_canvas": {
++    "mode": "forced_dark",
++    "background_fill": "111827",
++    "foreground_text": "E5E7EB",
++    "apply_scope": "all_worksheets",
++    "implementation": "full-column inherited style across columns 1:16384",
++    "hide_gridlines": true,
++    "preserve_explicit_cell_styles": true,
++    "reason": "Excel for Web commonly lacks a usable dark worksheet canvas; dark negative space reduces late-night glare."
+   }
+ }
+diff --git a/configs/harness/runtime_certification_v1.json b/configs/harness/runtime_certification_v1.json
+index e69de29..7c13e6e 100644
+--- a/configs/harness/runtime_certification_v1.json
++++ b/configs/harness/runtime_certification_v1.json
+@@ -0,0 +1,55 @@
++{
++  "schema_version": 1,
++  "policy_id": "live-runtime-certification",
++  "prompt_owner": "P48",
++  "workflow_id": "live-runtime-certification",
++  "distinction": "Live runtime certification is stronger than static, unit, build, CI, plan, spawn-only, process-exit, disposable-harness, or simulated proof and therefore remains an explicit execution contract inside the existing runtime prompt.",
++  "required_execution": {
++    "explicit_operator_authority": true,
++    "actual_provider_backed_agent_route": true,
++    "actual_gnhf_runtime_entrypoint": true,
++    "run_switch_required": true,
++    "target": "non-default branch or isolated worktree in the intended repository",
++    "bounded_owned_scope": true,
++    "observable_repository_action": true,
++    "focused_and_repository_validators": true,
++    "commit_ahead_of_floor": true,
++    "push_or_pr_evidence_when_authorized": true,
++    "runtime_certification_report": true
++  },
++  "forbidden_substitutions": [
++    "plan_mode_only",
++    "dry_run_only",
++    "static_checks_only",
++    "unit_or_ci_only",
++    "agent_spawn_only",
++    "process_exit_only",
++    "disposable_harness_only",
++    "simulated_provider_or_agent",
++    "uncommitted_runtime_action"
++  ],
++  "report": {
++    "artifact_id": "live-runtime-certification-report",
++    "default_ignored_path": ".agent-evidence/runtime-certifications/xyz_run_id/runtime-certification.json",
++    "required_fields": [
++      "run_id",
++      "repository",
++      "branch_or_worktree",
++      "base_sha",
++      "agent_route",
++      "provider",
++      "runtime_entrypoint",
++      "started_at",
++      "finished_at",
++      "performed_actions",
++      "validators",
++      "commit_sha",
++      "push_or_pr_state",
++      "blockers",
++      "proof_level",
++      "proof_ceiling"
++    ]
++  },
++  "success_gate": "A real provider-backed agent performed the bounded runtime action in the intended repository, required validators passed, a coherent commit exists ahead of the recorded floor, and the certification report records exact evidence.",
++  "failure_rule": "Authentication, quota, network, unsupported adapter, dirty target, detached target, missing authority, failed spawn, missing action, failed validation, or missing commit is a blocker and never a certification pass."
++}
+diff --git a/configs/harness/workflows_v1.json b/configs/harness/workflows_v1.json
+index 7ba7e3f..53bc48c 100644
+--- a/configs/harness/workflows_v1.json
++++ b/configs/harness/workflows_v1.json
+@@ -54,6 +54,12 @@
+       "prompt": "P57",
+       "entry": "repo-local harness surfaces are missing or incomplete",
+       "exit": "discoverable manifest, enforcement, commit and PR evidence"
++    },
++    {
++      "id": "live-runtime-certification",
++      "prompt": "P48",
++      "entry": "the operator explicitly requests real provider-backed end-to-end runtime certification",
++      "exit": "actual bounded action, validators, commit ahead of floor, authorized push or PR evidence, and runtime-certification report"
+     }
+   ]
+ }
+diff --git a/configs/prompt_kit/v39_gnhf_harness_prompts.json b/configs/prompt_kit/v39_gnhf_harness_prompts.json
+index c7d830c..c6e2711 100644
+--- a/configs/prompt_kit/v39_gnhf_harness_prompts.json
++++ b/configs/prompt_kit/v39_gnhf_harness_prompts.json
+@@ -119,10 +119,10 @@
+       "use_for_progress": "YES",
+       "prompt_name": "GNHF Harness Workflow Executor",
+       "use_this_when": "The repo-local harness exists and one registered workflow should perform a bounded product or repair sprint.",
+-      "inspect_first": "Harness registries, selected workflow, run context, artifact contract, owned files, validators, current Git floor, and prior run evidence.",
++      "inspect_first": "Harness registries, selected workflow, run context, artifact contract, runtime-certification policy when required, owned files, validators, current Git floor, and prior run evidence.",
+       "expected_output": "One bounded workflow execution with registered artifacts, checkpoint commits, validation evidence, updated run context, and an exact blocker when completion is unsafe.",
+       "next_step": "Review the artifact and commit proof, then push or update the PR only when authorized.",
+-      "proof_gate": "The workflow is registered, every completed item has artifact or code proof, canonical validators run, and the required commit exists ahead of base.",
++      "proof_gate": "The workflow is registered, every completed item has artifact or code proof, canonical validators run, live-runtime-certified workflows use a real provider-backed entrypoint, and the required commit exists ahead of base.",
+       "color": "Night",
+       "sheet_name": "P47_COPY_SAFE",
+       "lines": [
+@@ -143,6 +143,7 @@
+         "Do not return a plan only. Read the repo law, run context schema, workflow registry, artifact registry, selected workflow, capability and trigger contracts, current branch and worktrees, recent commits, tests, validators, and prior evidence.",
+         "Refuse unregistered workflows, missing inputs, unknown partial work, absent mutation authority, or a failed exact agent spawn preflight.",
+         "Execute through repository code and contracts. Use checkpoint commits for coherent completed items and do not repeat an identical deterministic failure without a changed condition.",
++        "When the selected workflow requires live_runtime_certified proof, invoke the registered real runtime entrypoint and perform the actual provider-backed action. Static, CI, spawn-only, process-exit, simulated, or disposable-harness evidence cannot satisfy that proof level.",
+         "Register every required artifact with run ID, inputs and hashes where allowed, producing workflow, validator profile, privacy class, proof level, and proof ceiling.",
