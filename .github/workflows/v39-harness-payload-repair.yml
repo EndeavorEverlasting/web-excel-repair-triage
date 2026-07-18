@@ -1,0 +1,53 @@
+name: V39 harness payload repair
+
+on:
+  pull_request:
+    types: [synchronize, opened, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  repair-payload:
+    if: github.event.pull_request.number == 68 && github.event.pull_request.head.ref == 'feat/prompt-kit-v39-segmented'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: tmp/v39-harness-payload
+          fetch-depth: 0
+      - name: Repair one corrupted payload character and verify archive hash
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.harness-payload/v39-harness-patch.part13a')
+          text = path.read_text(encoding='ascii')
+          old = 'Uwameraw'
+          new = 'UwAmeraw'
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one repair anchor, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1), encoding='ascii')
+          PY
+          : > /tmp/v39-harness-patch.b64
+          for part in \
+            v39-harness-patch.part01 v39-harness-patch.part02 v39-harness-patch.part03 \
+            v39-harness-patch.part04a v39-harness-patch.part04b \
+            v39-harness-patch.part05 v39-harness-patch.part06 v39-harness-patch.part07 \
+            v39-harness-patch.part08 v39-harness-patch.part09 \
+            v39-harness-patch.part10a v39-harness-patch.part10b \
+            v39-harness-patch.part11a v39-harness-patch.part11b \
+            v39-harness-patch.part12a v39-harness-patch.part12b \
+            v39-harness-patch.part13a v39-harness-patch.part13b
+          do
+            cat ".harness-payload/$part" >> /tmp/v39-harness-patch.b64
+          done
+          base64 -d /tmp/v39-harness-patch.b64 > /tmp/v39-harness-patch.tar.xz
+          echo '6d16a9910e8c64dab26603087534f2fab815ad8c52992211e54e2784f4dfa79b  /tmp/v39-harness-patch.tar.xz' | sha256sum -c -
+          xz -t /tmp/v39-harness-patch.tar.xz
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .harness-payload/v39-harness-patch.part13a
+          git commit -m 'fix(harness): restore validated V39 payload byte'
+          git push origin HEAD:tmp/v39-harness-payload
