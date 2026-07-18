@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "ai-harness-prompt-record-shard/v1",
+  "kitVersion": "v38",
+  "promptRange": "P23-P24",
+  "prompts": [
+    {
+      "id": "P23",
+      "sequence": 23,
+      "name": "Circumstance-Aware Repo Priority Planner",
+      "moment": "Circumstance-Aware Repo Priority Planner",
+      "promptType": "PORTFOLIO PLAN",
+      "promptClass": "PORTFOLIO / CIRCUMSTANCE PRIORITY",
+      "executionSurface": "regular_ai_prompt",
+      "sprintPathRole": "Rank repositories by current operating circumstances",
+      "useForProgress": "No",
+      "useThisWhen": "Urgency, access, active PRs, environment, risk, deadlines, or readiness should determine which repo moves first.",
+      "doNotUseWhen": "The decision should be based mainly on structural gaps rather than the operating situation.",
+      "inspectFirst": "Current commitments, blockers, environment, branch/PR state, time windows, dependencies, risk.",
+      "expectedOutput": "Circumstance-ranked repo order, changed-ranking explanation, exact launch order, and self-contained repo panels.",
+      "nextStep": "Launch the first panel or reassess when circumstances change.",
+      "acceptanceGate": "Ranking is timestamped, evidence-backed, and separate from gap severity.",
+      "mutatesRepository": "No",
+      "authority": "Advisory circumstance-planning authority",
+      "proofCeiling": "Circumstance-ranking proof only; no implementation proof.",
+      "color": "Ocean",
+      "copySafeSheet": "P23_COPY_SAFE",
+      "copyRange": "A1:A110",
+      "requiredVariables": [
+        "xyz_actionable_insights",
+        "xyz_candidate_repositories_or_org",
+        "xyz_constraints",
+        "xyz_current_circumstances"
+      ],
+      "textSha256": "872b454d414aa833996b7dd5ee7cf2cb7cef9b6400b5b359f2ab60c6b8c24129",
+      "text": "PRIORITIZE WHICH REPOSITORY SHOULD MOVE FIRST GIVEN THE CURRENT CIRCUMSTANCES.\nUse this prompt when timing, access, urgency, active work, environment, or risk should outweigh the largest structural gap.\nCandidate repositories:\n`xyz_candidate_repositories_or_org`\nCurrent circumstances:\n`xyz_current_circumstances`\nActionable insights or work themes:\n`xyz_actionable_insights`\nKnown constraints or excluded repositories:\n`xyz_constraints`\nMISSION\nChoose the repository order that best fits the present operating situation.\nKeep circumstance priority separate from gap severity.\nA repository may rank first because its window is open, its dependency is ready, its PR is active, its environment is available, or delay is costly.\nCIRCUMSTANCE INTAKE\nVerify when evidence is available:\n- deadlines, client or operator commitments, incidents, field windows, and release windows\n- available time, hardware, credentials, admin access, VM access, connected tools, and target environments\n- active PRs, pending reviews, CI windows, branch freshness, mergeability, and expiring momentum\n- blocked dependencies, external vendors, missing packages, unavailable targets, and safety gates\n- current user energy, desired mode, interruption cost, and whether work must be local, remote, static, or live\n- strategic dependencies between repositories\n- whether one repository can unblock several others\n- consequence of delay\nDo not treat urgency language as evidence when repository or calendar state contradicts it.\nCIRCUMSTANCE FACTORING\nClassify each circumstance as:\n- deadline or time-window pressure\n- incident or operational risk\n- environment availability\n- dependency readiness\n- PR or review opportunity\n- momentum and context preservation\n- safety or authorization constraint\n- resource limitation\n- strategic unblocker\n- low-cost quick win\n- external blocker\nSCORING MODEL\nScore each repository from 0 to 5 on:\n- urgency\n- consequence of delay\n- environment availability\n- dependency readiness\n- active-PR leverage\n- ability to unblock other work\n- boundedness\n- validation availability\n- safety readiness\n- context-switch cost\nAlso record a separate gap score without allowing it to dominate the circumstance score.\nExplain the weights and timestamp the assessment.\nApply penalties for:\n- unavailable environment\n- missing authorization\n- destructive or live-risk work without proof gates\n- stale/conflicted branch floor\n- another lane already owning the shared surface\n- high interruption cost with little near-term payoff\nOUTPUT ORDER — LAUNCH ORDER FIRST\n1. LAUNCH ORDER\nPut the circumstance-ranked repository order at the very top.\nName the first repository, the circumstance that makes it first, the trigger for reassessment, the proof gate for the next repository, and parallel-safe groups.\nNumber and title panels exactly as they will appear.\nDisplay panels in this exact order.\nDo not output a different panel order.\n2. COMPACT CIRCUMSTANCE PREAMBLE\nSummarize the timestamp, operating situation, constraints, available environments, top blockers, and proof ceiling.\nDo not output a shared prompt fragment that must be copied separately.\n3. REPOSITORY PANELS\nCreate one self-contained copyable writing panel per selected repository.\nEach panel must include:\n- repo and local path if known\n- current branch, active PR, or proposed branch\n- circumstance rank\n- reason to act now\n- reassessment trigger\n- dependencies and parallel safety\n- owned and forbidden scope\n- read-first files\n- exact tasks and artifacts\n- safety\n- validation\n- commit, push, and PR contract when implementation is intended\n- proof level and proof ceiling\n- exact final response contract\n- exact next command\nPanels must appear in the same order as LAUNCH ORDER.\n4. CIRCUMSTANCE MATRIX\nAfter the panels, show every candidate repository with circumstance score, separate gap score, confidence, time horizon, blocker, opportunity window, and disposition.\nUse dispositions:\n- act now\n- act after named gate\n- parallel safe\n- preserve context only\n- defer until circumstance changes\n- blocked\n- insufficient evidence\n5. WHAT CHANGED THE RANKING\nState:\n- which current circumstance changed the order\n- what future event would reorder the repositories\n- where the circumstance choice differs from the gap-priority choice\n- what work should be preserved now even when implementation waits\n- collision and ownership risks\nQUALITY RULES\nMake a time-aware operational decision, not a generic roadmap.\nDo not invent deadlines, access, approvals, or environment readiness.\nDo not claim a higher proof level than the evidence supports.\nDo not bury the launch order below the analysis."
+    },
+    {
+      "id": "P24",
+      "sequence": 24,
+      "name": "App-at-Hand Usage Coach",
+      "moment": "App-at-Hand Usage Coach",
+      "promptType": "ENABLEMENT",
+      "promptClass": "ENABLEMENT / APP USAGE",
+      "executionSurface": "regular_ai_prompt",
+      "sprintPathRole": "Teach the user how to operate the app at hand",
+      "useForProgress": "Support",
+      "useThisWhen": "The user has an app, screen, file, or workflow in front of them and needs grounded operating instructions.",
+      "doNotUseWhen": "Repository documentation must be changed or the app itself must be implemented or repaired.",
+      "inspectFirst": "Current screen or screenshots, app/version, OS, built-in help, official docs, and implemented repo behavior when available.",
+      "expectedOutput": "Exact first action, quick start, interface map, task recipes, safety boundaries, troubleshooting, shortcuts, and next step.",
+      "nextStep": "Use the app; use P18 when durable repository documentation should be created or repaired.",
+      "acceptanceGate": "Instructions use current evidence, exact visible terminology, explicit uncertainty, and no invented controls or shortcuts.",
+      "mutatesRepository": "No",
+      "authority": "Advisory user-enablement authority",
+      "proofCeiling": "Grounded guidance only; no runtime or operator-success proof.",
+      "color": "Sand",
+      "copySafeSheet": "P24_COPY_SAFE",
+      "copyRange": "A1:A96",
+      "requiredVariables": [
+        "xyz_app_name",
+        "xyz_available_evidence",
+        "xyz_device_os_access",
+        "xyz_experience_level",
+        "xyz_user_goal"
+      ],
+      "textSha256": "9cdf617f137595ecb36a61d8a0dff70325ff5a8ddf3f785da2d3f4cebd7c9dbd",
+      "text": "TEACH ME HOW TO USE THE APP AT HAND.\nGround the guide in the actual app, version, screen, files, help text, documentation, or repository evidence available.\nApp or product:\n`xyz_app_name`\nWhat I am trying to accomplish:\n`xyz_user_goal`\nDevice, operating system, and access level if known:\n`xyz_device_os_access`\nAvailable evidence such as screenshots, files, docs, links, or repo:\n`xyz_available_evidence`\nExperience level or preferred depth:\n`xyz_experience_level`\nMISSION\nHelp me perform useful work in the app now.\nProduce practical operating instructions, not a product description, marketing summary, or speculative feature list.\nStart from the screen, file, project, or workflow currently in front of me when that evidence is available.\nDo not redesign the app or modify its repository unless I explicitly ask for implementation work.\nSOURCE OF TRUTH\nUse evidence in this order when available:\n- the current screen or screenshot\n- the installed app version and visible labels\n- uploaded files, built-in help, tooltips, menus, and settings\n- official current documentation\n- repository help strings, commands, routes, tests, examples, and implemented behavior\n- clearly labeled inference\nDo not invent buttons, menu names, keyboard shortcuts, settings, permissions, or workflows.\nWhen sources conflict, prefer the behavior matching the current version and operating environment.\nMark version-specific differences and uncertainty explicitly.\nCLARIFICATION RULE\nAsk no more than three focused questions, and only when the missing answer blocks safe or useful guidance.\nOtherwise state reasonable assumptions briefly and proceed.\nDo not make me restate information already visible in the conversation or supplied evidence.\nOUTPUT ORDER\n1. DO THIS FIRST\nGive the exact first action I should take from the current state.\n2. QUICK START\nGive the shortest safe path to the first useful result.\nUse numbered steps with exact clicks, menu paths, fields, commands, or gestures.\nInclude prerequisites immediately before the step that needs them.\n3. INTERFACE MAP\nExplain the important visible regions, controls, navigation areas, status indicators, and terminology.\nDescribe where each item is and what it is for.\nSkip areas unrelated to my goal.\n4. TASK RECIPES\nProvide compact recipes for the main task and the most likely adjacent tasks.\nFor each recipe include:\n- starting state\n- exact actions\n- expected result\n- how to confirm success\n- how to undo or recover when applicable\n5. USER, ADMIN, AND DEVELOPER BOUNDARIES\nSeparate ordinary user actions from administrator, developer, or repository-maintainer actions.\nCall out steps that change files, accounts, permissions, services, devices, network state, billing, publishing, or shared data.\nDo not recommend elevated or destructive actions when a normal user path exists.\n6. SAFETY AND DATA HANDLING\nIdentify destructive, irreversible, privacy-sensitive, security-sensitive, or externally visible actions before the relevant step.\nExplain what will be changed, saved, uploaded, shared, overwritten, deleted, installed, or sent.\nUse preview, duplicate, export, backup, dry-run, or confirmation paths when the app supports them.\n7. TROUBLESHOOTING\nList the most likely failure symptoms for this workflow.\nFor each symptom provide:\n- what it usually means\n- the safest first check\n- the next bounded fix\n- when to stop and seek administrator, vendor, or developer help\nDo not treat restarting, reinstalling, clearing data, or resetting settings as the default first step.\n8. SHORTCUTS AND SPEED\nInclude only verified keyboard shortcuts, gestures, templates, automations, or faster paths relevant to my goal.\nState platform differences.\nDo not invent shortcuts.\n9. WHAT TO DO NEXT\nRecommend the next useful workflow after I complete the immediate task.\nKeep it to one or two options.\n10. EVIDENCE AND CONFIDENCE\nName the evidence used.\nSeparate verified instructions from inference.\nState any missing version, permission, environment, or runtime evidence that could change the guide.\nGUIDANCE QUALITY RULES\nWrite for the user operating the app, not for a developer reading architecture notes.\nUse the app's exact visible terminology.\nPrefer short numbered procedures over long prose.\nKeep each step independently checkable.\nExplain why only when it prevents an error or improves judgment.\nDo not claim that an action succeeded unless I report or show the result.\nWhen the app is inaccessible, give the exact evidence I should capture next, such as a screenshot, version number, error text, menu path, or sample file.\nWHEN REPOSITORY ACCESS EXISTS\nInspect current implemented behavior before relying on stale documentation.\nUse command help, launchers, UI routes, tests, schemas, fixtures, and examples to verify user-facing instructions.\nDo not expose secrets, private identifiers, internal endpoints, or unsafe developer-only commands.\nDistinguish current implementation from planned or unmerged behavior.\nFINAL RESPONSE\nEnd with:\n- Do this now: one exact action\n- Expected result\n- Tell me or show me: the smallest result needed to guide the next step"
+    }
+  ]
+}
