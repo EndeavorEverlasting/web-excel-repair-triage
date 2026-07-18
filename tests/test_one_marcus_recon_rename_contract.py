@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import zipfile
 
+from openpyxl import load_workbook
+
 from tests.fixtures.one_marcus_recon import fixtures as fx
 from triage.one_marcus_recon import formula_relink as fr
 from triage.one_marcus_recon.config import PART_NUMBERS_SHEET
@@ -22,6 +24,16 @@ def _run(tmp_path):
 def _workbook_xml(path: str) -> str:
     with zipfile.ZipFile(path) as archive:
         return archive.read("xl/workbook.xml").decode("utf-8")
+
+
+def test_stale_fixture_is_loadable_ooxml(tmp_path) -> None:
+    source = fx.make_stale_recon(str(tmp_path / "1 Marcus Recon Integrated 5-28-2026.xlsx"))
+
+    workbook = load_workbook(source, read_only=True, data_only=False)
+    try:
+        assert STALE_TAB in workbook.sheetnames
+    finally:
+        workbook.close()
 
 
 def test_source_tab_selection_prefers_only_dated_candidate(tmp_path) -> None:
