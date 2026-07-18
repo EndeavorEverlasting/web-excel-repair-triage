@@ -56,6 +56,50 @@ jobs:
       - name: Test One Marcus XML rename function
         run: python -m pytest tests/test_one_marcus_recon_rename_contract.py::test_xml_rename_function_changes_source_tab --tb=short -q
 
+      - name: Capture One Marcus run exception
+        run: |
+          mkdir -p Outputs/ci
+          python - <<'PY'
+          import json
+          import tempfile
+          import traceback
+          from pathlib import Path
+
+          from tests.fixtures.one_marcus_recon import fixtures as fx
+          from triage.one_marcus_recon.exporter import run_recon
+
+          with tempfile.TemporaryDirectory() as tmp:
+              root = Path(tmp)
+              source = fx.make_stale_recon(str(root / "1 Marcus Recon Integrated 5-28-2026.xlsx"))
+              output = str(root / "out" / "1_Marcus_Recon_2026-05-28_WEBSAFE.xlsx")
+              try:
+                  result = run_recon(source, output_path=output, cli_date="auto")
+              except Exception:
+                  payload = {
+                      "status": "exception",
+                      "traceback": traceback.format_exc(),
+                  }
+              else:
+                  payload = {
+                      "status": "completed",
+                      "final_part_number_tab": result.report.final_part_number_tab,
+                      "renamed_tabs": result.report.renamed_tabs,
+                      "baseline_compare_pass": result.report.baseline_compare_pass,
+                      "baseline_compare_failures": result.report.baseline_compare_failures,
+                  }
+          Path("Outputs/ci/one_marcus_recon_diagnostic.json").write_text(
+              json.dumps(payload, indent=2), encoding="utf-8"
+          )
+          PY
+
+      - name: Upload One Marcus diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: one-marcus-recon-diagnostic
+          path: Outputs/ci/one_marcus_recon_diagnostic.json
+          if-no-files-found: error
+          retention-days: 3
+
       - name: Test One Marcus final tab report
         run: python -m pytest tests/test_one_marcus_recon_rename_contract.py::test_run_recon_sets_final_stable_tab --tb=short -q
 
