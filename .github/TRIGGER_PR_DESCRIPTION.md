@@ -1,0 +1,1 @@
+Bounded trigger for PR #68 harness ergonomics runner. This file is removed by the validated implementation commit.
