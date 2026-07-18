@@ -1,0 +1,58 @@
++        "7. The live run must perform the stated bounded repository action through the real agent route. Starting GNHF, spawning an agent, or exiting successfully without the action is failure.",
++        "8. Inspect the resulting files and artifacts. Run the specified focused validators, then repository validators, build or static checks, git diff --check, secret and generated-output hygiene, and final Git status.",
++        "9. Commit the coherent validated action. The commit must be ahead of the recorded floor and must include required code, contract, test, validator, or documentation changes. Uncommitted runtime behavior is not certified.",
++        "10. Push normally and open or update the intended PR only when authorized. Never force-push, merge, deploy, release, expose secrets, or write the default branch.",
++        "11. Write .agent-evidence/runtime-certifications/xyz_run_id/runtime-certification.json with repository, branch or worktree, base SHA, agent route, provider, runtime entrypoint, timestamps, performed actions, validators, commit SHA, push or PR state, blockers, proof level, and proof ceiling.",
++        "12. Authentication, quota, network, unsupported adapter, failed spawn, dirty target, missing action, failed validator, missing commit, or missing evidence report is an exact blocker and never a live-certification pass.",
+         "",
+-        "Plan mode is the entrypoint default. This prompt requests local execution, so -Run must be explicit after contracts and clean-target gates pass."
++        "Final response must include run ID, request and compiled-prompt paths, certification-report path, evidence directory, provider and agent route, branch or worktree, base and commit SHA, performed actions, files, artifacts, validations, push or PR state, blockers, proof achieved, proof ceiling, final Git status, and one exact next command."
+       ]
+     },
+     {
+diff --git a/docs/AI_PROMPT_KIT_V39_SEGMENTATION.md b/docs/AI_PROMPT_KIT_V39_SEGMENTATION.md
+index 7013d95..e878c83 100644
+--- a/docs/AI_PROMPT_KIT_V39_SEGMENTATION.md
++++ b/docs/AI_PROMPT_KIT_V39_SEGMENTATION.md
+@@ -156,3 +156,10 @@ The Prompt Library Color column is authoritative. Columns B:O of each prompt row
+ 
+ The palette and tab-color rule are machine-readable in `configs/harness/prompt_library_visual_policy_v1.json` and are enforced by `triage.prompt_kit_visual_contract`, `triage.prompt_kit_v39_generator`, and CI.
+ 
++### Forced dark worksheet canvas
++
++All worksheets use a fixed inherited canvas of `111827` with `E5E7EB` foreground text across Excel columns 1:16384. Gridlines are hidden. Explicit cell styles, semantic Prompt Library row colors, and prompt tab colors remain authoritative. This is a workbook-level accessibility rule for Excel for Web and other interfaces that lack a usable dark worksheet mode; it prevents white negative space from dominating the screen during late-night use.
++
++### P48 live runtime certification
++
++P48 remains the runtime owner rather than adding a new prompt ID. It now requires a real provider-backed GNHF execution, an actual bounded repository action, validators, a commit ahead of floor, and a certification report. This preserves the 58-prompt navigation divisor contract while making live certification fail closed.
+diff --git a/docs/HARNESS_OPERATIONAL_DISCIPLINE.md b/docs/HARNESS_OPERATIONAL_DISCIPLINE.md
+index fbbcaa9..7f09146 100644
+--- a/docs/HARNESS_OPERATIONAL_DISCIPLINE.md
++++ b/docs/HARNESS_OPERATIONAL_DISCIPLINE.md
+@@ -40,5 +40,10 @@ Task-specific prompt rules override generic closeout. Rewritten prompts, plan-on
+ 
+ ## Prompt placeholder and color doctrine
+ 
+-Prompt placeholders are bare underscore-delimited `xyz_...` tokens. ASCII and smart quotes immediately surrounding a placeholder are forbidden because they disrupt double-click replacement. Prompt Library B:O row fills derive from the semantic Color label. Every associated prompt tab uses the same RGB fill where Excel supports RGB tab colors. The machine-readable authority is `configs/harness/prompt_library_visual_policy_v1.json`; `triage.prompt_kit_visual_contract` and generated-workbook validation fail drift.
++Prompt placeholders are bare underscore-delimited `xyz_...` tokens. ASCII and smart quotes immediately surrounding a placeholder are forbidden because they disrupt double-click replacement. Prompt Library B:O row fills derive from the semantic Color label. Every associated prompt tab uses the same RGB fill where Excel supports RGB tab colors. Every worksheet also receives a fixed dark inherited canvas (`111827` background, `E5E7EB` text) across columns 1:16384 with gridlines hidden; explicit cell styles remain authoritative. The machine-readable authority is `configs/harness/prompt_library_visual_policy_v1.json`; `triage.prompt_kit_visual_contract` and generated-workbook validation fail drift.
+ 
++## Live runtime certification
++
++P48 owns end-to-end live certification. The distinction is operationally significant because provider authentication, quota, agent routing, the GNHF entrypoint, repository mutation, validation, Git state, and evidence registration can each fail independently after static checks pass.
++
++A certificate requires the real provider-backed route, explicit `-Run`, an actual bounded repository action, focused and broad validators, a coherent commit ahead of the recorded floor, authorized push or PR evidence when applicable, and `.agent-evidence/runtime-certifications/<run_id>/runtime-certification.json`. Anything weaker is a blocker, not partial certification.
+diff --git a/docs/harness/CODEBASE_MAP.md b/docs/harness/CODEBASE_MAP.md
+index fe4e6d3..a96e522 100644
+--- a/docs/harness/CODEBASE_MAP.md
++++ b/docs/harness/CODEBASE_MAP.md
+@@ -5,10 +5,11 @@
+ | Agent rules | `AGENTS.md` | Non-negotiable repository and artifact safety rules |
+ | Harness entry | `HARNESS.md` | Fresh-agent execution order |
+ | Harness manifest | `configs/harness/harness_manifest_v1.json` | Machine-readable discovery index |
+-| Workflow routing | `configs/harness/workflows_v1.json` | Selects P03/P06/P07/P14/P15/P20/P12/P56/P57 |
++| Workflow routing | `configs/harness/workflows_v1.json` | Selects P03/P06/P07/P14/P15/P20/P12/P56/P57 and P48 live certification |
+ | Run context | `configs/harness/run_context.schema.json` | Names repo, branch/worktree, sprint, lane, scopes, artifacts, and validation order |
+ | Artifact registry | `configs/harness/artifact_registry_v1.json` | Generator/output/validator/field-gate ownership |
+ | Prompt Kit | `triage/prompt_kit_v39_generator.py`, `triage/prompt_kit_v39_ooxml_base.py` | Package-preserving V39 generation and enforcement |
++| Runtime certification | `configs/harness/runtime_certification_v1.json`, `triage/runtime_certification_contract.py` | Real provider-backed action, validation, commit, and certification evidence |
+ | Visual policy | `configs/harness/prompt_library_visual_policy_v1.json` | Bare placeholders and semantic row/tab colors |
