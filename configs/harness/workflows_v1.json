@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "workflows": [
+    {
+      "id": "unknown-repo-intake",
+      "prompt": "P03",
+      "entry": "repository identity or state is unknown",
+      "exit": "verified root and first safe mutation"
+    },
+    {
+      "id": "repo-pr-cleanup",
+      "prompt": "P06",
+      "entry": "cleanup or stale Git/PR state is selected",
+      "exit": "useful work preserved and bounded cleanup proven"
+    },
+    {
+      "id": "general-implementation",
+      "prompt": "P07",
+      "entry": "owned implementation scope is known",
+      "exit": "tracked change, validators, commit, push or PR evidence"
+    },
+    {
+      "id": "broken-pr-repair",
+      "prompt": "P14",
+      "entry": "an existing PR is broken or conflicting",
+      "exit": "repair evidence and mergeable PR state"
+    },
+    {
+      "id": "merge-release",
+      "prompt": "P15",
+      "entry": "all merge or release gates pass",
+      "exit": "merge, tag, release, or deployment evidence"
+    },
+    {
+      "id": "opportunity-row",
+      "prompt": "P20",
+      "entry": "one Opportunity_Discovery row is selected",
+      "exit": "bounded implementation and evidence"
+    },
+    {
+      "id": "closeout",
+      "prompt": "P12",
+      "entry": "task-specific completion gates pass",
+      "exit": "compressed evidence-backed handoff"
+    },
+    {
+      "id": "artifact-generation",
+      "prompt": "P56",
+      "entry": "an actual artifact is requested",
+      "exit": "artifact, manifest/registry evidence, validators, path/hash and proof ceiling"
+    },
+    {
+      "id": "harness-installation",
+      "prompt": "P57",
+      "entry": "repo-local harness surfaces are missing or incomplete",
+      "exit": "discoverable manifest, enforcement, commit and PR evidence"
+    }
+  ]
+}

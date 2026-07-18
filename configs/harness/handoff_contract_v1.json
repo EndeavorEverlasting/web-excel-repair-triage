@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "required_sections": [
+    "CONTEXT",
+    "WORK COMMITTED",
+    "VALIDATION",
+    "BLOCKERS / GAPS",
+    "FINAL GIT STATE",
+    "NEXT COMMAND"
+  ],
+  "compression_rules": [
+    "preserve only context that prevents rework",
+    "prefer exact paths, hashes, run IDs, commit SHAs, and PR state",
+    "mark skipped field gates and proof ceiling",
+    "do not include a next-agent prompt unless explicitly requested"
+  ]
+}

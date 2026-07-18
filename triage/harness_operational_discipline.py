@@ -7,6 +7,17 @@ from pathlib import Path
 from typing import Mapping, Optional, Sequence
 
 DEFAULT_POLICY_PATH = Path(__file__).parents[1] / "configs/harness/operational_discipline_v1.json"
+DEFAULT_MANIFEST_PATH = Path(__file__).parents[1] / "configs/harness/harness_manifest_v1.json"
+_REQUIRED_HARNESS_COMPONENTS = (
+    "repo_agent_rules", "codebase_map", "workflow_specs", "run_context", "artifact_registry",
+    "validators", "local_hooks_where_useful", "scoped_skills", "read_only_code_intelligence_where_useful",
+    "english_operator_reports", "final_handoff_compression",
+)
+_REQUIRED_MANIFEST_FIELDS = (
+    "entrypoint", "agent_rules", "codebase_map", "workflow_specs", "run_context", "artifact_registry",
+    "validators", "local_hooks", "scoped_skills", "read_only_code_intelligence", "operator_reports",
+    "final_handoff_compression", "generated_output_policy",
+)
 _REQUIRED_CONTEXT = (
     "repo", "branch_or_worktree", "pr_or_sprint", "lane", "owned_scope", "forbidden_scope", "expected_artifacts"
 )
@@ -48,6 +59,8 @@ def validate_policy(policy: Mapping[str, object]) -> tuple[str, ...]:
         issues.append("executable operational loop drift")
     if policy.get("evidence_before_confidence") is not True:
         issues.append("evidence-before-confidence must be true")
+    if tuple(policy.get("required_harness_components", ())) != _REQUIRED_HARNESS_COMPONENTS:
+        issues.append("required harness component inventory drift")
     fallback = policy.get("connected_mutation_fallback")
     if not isinstance(fallback, Mapping):
         issues.append("connected mutation fallback missing")
@@ -80,6 +93,49 @@ def validate_policy(policy: Mapping[str, object]) -> tuple[str, ...]:
     return tuple(issues)
 
 
+
+def load_manifest(path: str | Path = DEFAULT_MANIFEST_PATH) -> dict:
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("harness manifest must be one JSON object")
+    return payload
+
+
+def _manifest_paths(value: object) -> tuple[str, ...]:
+    if isinstance(value, str):
+        return (value,)
+    if isinstance(value, list) and all(isinstance(item, str) for item in value):
+        return tuple(value)
+    return ()
+
+
+def validate_repository(repo_root: str | Path, manifest_path: str | Path | None = None) -> tuple[str, ...]:
+    root = Path(repo_root).resolve()
+    path = Path(manifest_path).resolve() if manifest_path else root / "configs/harness/harness_manifest_v1.json"
+    issues: list[str] = []
+    try:
+        manifest = load_manifest(path)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        return (f"harness manifest unreadable: {exc}",)
+    if manifest.get("schema_version") != 1:
+        issues.append("harness manifest schema_version must be 1")
+    if manifest.get("harness_id") != "web-excel-repair-triage-repo-harness":
+        issues.append("harness manifest id drift")
+    for field in _REQUIRED_MANIFEST_FIELDS:
+        paths = _manifest_paths(manifest.get(field))
+        if not paths:
+            issues.append(f"harness manifest field missing or invalid: {field}")
+            continue
+        for relative in paths:
+            if not (root / relative).exists():
+                issues.append(f"harness surface missing: {relative}")
+    sequence = manifest.get("required_fresh_agent_sequence")
+    if not isinstance(sequence, list) or sequence[:4] != [
+        "read_agent_rules", "read_harness_manifest", "load_run_context", "select_workflow"
+    ]:
+        issues.append("fresh-agent entry sequence drift")
+    return tuple(issues)
+
 def validate_run_context(context: Mapping[str, object], *, validation_order_specified: bool = False) -> tuple[str, ...]:
     issues = [f"missing or blank context field: {field}" for field in _REQUIRED_CONTEXT if not str(context.get(field, "")).strip()]
     if validation_order_specified and not str(context.get("validation_order", "")).strip():
@@ -91,12 +147,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--policy", type=Path, default=DEFAULT_POLICY_PATH)
     parser.add_argument("--context", type=Path)
+    parser.add_argument("--repo-root", type=Path)
+    parser.add_argument("--manifest", type=Path)
     parser.add_argument("--validation-order-specified", action="store_true")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
     try:
         policy = load_policy(args.policy)
         issues = list(validate_policy(policy))
+        if args.repo_root:
+            issues.extend(validate_repository(args.repo_root, args.manifest))
         if args.context:
             context = json.loads(args.context.read_text(encoding="utf-8"))
             if not isinstance(context, dict):

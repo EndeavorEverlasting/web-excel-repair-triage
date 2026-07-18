@@ -1,1 +1,0 @@
-Bounded synchronization marker for the V39 harness validation runner.

@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "artifacts": [
+    {
+      "id": "ai-harness-prompt-kit-v39",
+      "family": "prompt-kit-workbook",
+      "generator": "python -m triage.prompt_kit_v39_generator",
+      "outputs": [
+        "AI_Harness_Prompt_Kit_v39.xlsx",
+        "AI_Harness_Prompt_Kit_v39_manifest.json",
+        "AI_Harness_Prompt_Kit_v39_bundle.zip"
+      ],
+      "validators": [
+        "triage.prompt_kit_v39_generator --validate-only",
+        "triage.prompt_kit_visual_contract",
+        "artifact_tool import and formula scan"
+      ],
+      "source_policy": "accepted V38 source remains immutable",
+      "field_gates": [
+        "Excel for Web open",
+        "Prompt Library row and tab link clicks"
+      ]
+    },
+    {
+      "id": "repo-harness-operator-report",
+      "family": "operator-report",
+      "generator": "python -m triage.harness_operator_report",
+      "outputs": [
+        "Markdown or JSON operator report"
+      ],
+      "validators": [
+        "triage.harness_operational_discipline"
+      ]
+    },
+    {
+      "id": "repo-harness-final-handoff",
+      "family": "handoff",
+      "generator": "python -m triage.harness_handoff",
+      "outputs": [
+        "compressed Markdown handoff"
+      ],
+      "validators": [
+        "run-context validation",
+        "handoff contract validation"
+      ]
+    }
+  ]
+}

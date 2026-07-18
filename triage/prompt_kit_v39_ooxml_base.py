@@ -12,10 +12,12 @@ are not authority and must not be invoked.
 from __future__ import annotations
 
 import re
+from copy import deepcopy
 from typing import Iterable, Mapping, Sequence
 from xml.etree import ElementTree as ET
 
 from . import _prompt_kit_v39_package_primitives_impl as _impl
+from . import prompt_kit_visual_contract as visual_contract
 from ._prompt_kit_v39_package_primitives_impl import (
     APP_NS,
     CELL_RE,
@@ -56,6 +58,7 @@ _PREFIXES = {
     "mc": MC_NS,
     "x14ac": "http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac",
     "x15": "http://schemas.microsoft.com/office/spreadsheetml/2010/11/main",
+    "x16r2": "http://schemas.microsoft.com/office/spreadsheetml/2015/02/main",
     "xr": "http://schemas.microsoft.com/office/spreadsheetml/2014/revision",
     "xr2": "http://schemas.microsoft.com/office/spreadsheetml/2015/revision2",
     "xr3": "http://schemas.microsoft.com/office/spreadsheetml/2016/revision3",
@@ -474,6 +477,252 @@ def _append_library_rows(
     return new_rows, links
 
 
+
+def _ensure_collection(root: ET.Element, tag: str) -> ET.Element:
+    collection = root.find(f"m:{tag}", NS)
+    if collection is None:
+        raise ValueError(f"styles.xml is missing {tag}")
+    return collection
+
+
+def _element_key(element: ET.Element) -> bytes:
+    return ET.tostring(element, encoding="utf-8")
+
+
+def _ensure_style_child(collection: ET.Element, candidate: ET.Element) -> int:
+    key = _element_key(candidate)
+    for index, existing in enumerate(list(collection)):
+        if _element_key(existing) == key:
+            return index
+    collection.append(candidate)
+    collection.attrib["count"] = str(len(list(collection)))
+    return len(list(collection)) - 1
+
+
+def _ensure_fill(styles: ET.Element, rgb: str) -> int:
+    fills = _ensure_collection(styles, "fills")
+    fill = ET.Element(f"{{{MAIN_NS}}}fill")
+    pattern = ET.SubElement(fill, f"{{{MAIN_NS}}}patternFill", {"patternType": "solid"})
+    ET.SubElement(pattern, f"{{{MAIN_NS}}}fgColor", {"rgb": f"FF{rgb}"})
+    ET.SubElement(pattern, f"{{{MAIN_NS}}}bgColor", {"indexed": "64"})
+    return _ensure_style_child(fills, fill)
+
+
+def _ensure_font(styles: ET.Element, base_font_id: int, rgb: str) -> int:
+    fonts = _ensure_collection(styles, "fonts")
+    font_items = list(fonts)
+    if base_font_id >= len(font_items):
+        raise ValueError(f"fontId {base_font_id} is outside styles.xml")
+    font = deepcopy(font_items[base_font_id])
+    color = font.find("m:color", NS)
+    if color is None:
+        color = ET.Element(f"{{{MAIN_NS}}}color")
+        size = font.find("m:sz", NS)
+        if size is not None:
+            font.insert(list(font).index(size), color)
+        else:
+            font.append(color)
+    color.attrib.clear()
+    color.attrib["rgb"] = f"FF{rgb}"
+    return _ensure_style_child(fonts, font)
+
+
+def _ensure_cell_xf(styles: ET.Element, base_style_id: int, font_id: int, fill_id: int) -> int:
+    xfs = _ensure_collection(styles, "cellXfs")
+    xf_items = list(xfs)
+    if base_style_id >= len(xf_items):
+        raise ValueError(f"style id {base_style_id} is outside styles.xml")
+    xf = deepcopy(xf_items[base_style_id])
+    xf.attrib.update({"fontId": str(font_id), "fillId": str(fill_id), "applyFont": "1", "applyFill": "1"})
+    return _ensure_style_child(xfs, xf)
+
+
+def _style_colors(styles: ET.Element, style_id: int) -> tuple[str, str]:
+    xfs = list(_ensure_collection(styles, "cellXfs"))
+    if style_id >= len(xfs):
+        return "", ""
+    xf = xfs[style_id]
+    fill_id = int(xf.attrib.get("fillId", "0"))
+    font_id = int(xf.attrib.get("fontId", "0"))
+    fills = list(_ensure_collection(styles, "fills"))
+    fonts = list(_ensure_collection(styles, "fonts"))
+    fill_rgb = ""
+    font_rgb = ""
+    if fill_id < len(fills):
+        fg = fills[fill_id].find("m:patternFill/m:fgColor", NS)
+        if fg is not None:
+            fill_rgb = fg.attrib.get("rgb", "")[-6:].upper()
+    if font_id < len(fonts):
+        color = fonts[font_id].find("m:color", NS)
+        if color is not None:
+            font_rgb = color.attrib.get("rgb", "")[-6:].upper()
+    return fill_rgb, font_rgb
+
+
+def _set_tab_color(root: ET.Element, rgb: str) -> None:
+    sheet_pr = root.find("m:sheetPr", NS)
+    if sheet_pr is None:
+        sheet_pr = ET.Element(f"{{{MAIN_NS}}}sheetPr")
+        root.insert(0, sheet_pr)
+    tab_color = sheet_pr.find("m:tabColor", NS)
+    if tab_color is None:
+        tab_color = ET.Element(f"{{{MAIN_NS}}}tabColor")
+        sheet_pr.insert(0, tab_color)
+    tab_color.attrib.clear()
+    tab_color.attrib["rgb"] = f"FF{rgb}"
+
+
+def _apply_prompt_visual_coordination(parts: Mapping[str, bytes] | dict[str, bytes]) -> tuple[set[str], dict[str, object]]:
+    """Apply semantic Prompt Library row colors and matching prompt-tab colors."""
+    mutable = parts
+    _, mapping, _, _ = _sheet_map(mutable)
+    library_part = mapping.get("Prompt_Library")
+    if not library_part:
+        raise ValueError("missing Prompt_Library while applying prompt visual coordination")
+    if "xl/styles.xml" not in mutable:
+        return set(), {"prompt_count": 0, "skipped": "source package has no styles.xml"}
+    palette = visual_contract.palette()
+    shared = _shared_strings(mutable)
+    library_root = _root(mutable[library_part], library_part)
+    styles = _root(mutable["xl/styles.xml"], "xl/styles.xml")
+    rows = _row_lookup(library_root)
+    changed: set[str] = {library_part, "xl/styles.xml"}
+    prompts: list[dict[str, object]] = []
+    fill_cache: dict[str, int] = {}
+    font_cache: dict[tuple[int, str], int] = {}
+    xf_cache: dict[tuple[int, int, int], int] = {}
+    for row_number, sheet_name, _ in _prompt_library_row_entries(library_root):
+        row = rows[row_number]
+        cells = {cell.attrib.get("r", ""): cell for cell in row.findall("m:c", NS)}
+        label = _cell_display(cells.get(f"N{row_number}"), shared)
+        if label not in palette:
+            raise ValueError(f"Prompt Library row {row_number} has unknown semantic Color label {label!r}")
+        fill_rgb, text_rgb = palette[label]
+        for column in _PROMPT_LIBRARY_ROW_COLUMNS:
+            ref = f"{column}{row_number}"
+            cell = cells.get(ref)
+            if cell is None:
+                raise ValueError(f"Prompt Library row color contract is missing {ref}")
+            base_style = int(cell.attrib.get("s", "0"))
+            if _style_colors(styles, base_style) == (fill_rgb, text_rgb):
+                continue
+            xfs = list(_ensure_collection(styles, "cellXfs"))
+            base_xf = xfs[base_style]
+            base_font_id = int(base_xf.attrib.get("fontId", "0"))
+            font_key = (base_font_id, text_rgb)
+            if font_key not in font_cache:
+                font_cache[font_key] = _ensure_font(styles, base_font_id, text_rgb)
+            if fill_rgb not in fill_cache:
+                fill_cache[fill_rgb] = _ensure_fill(styles, fill_rgb)
+            style_key = (base_style, font_cache[font_key], fill_cache[fill_rgb])
+            if style_key not in xf_cache:
+                xf_cache[style_key] = _ensure_cell_xf(styles, *style_key)
+            cell.attrib["s"] = str(xf_cache[style_key])
+        part = mapping.get(sheet_name)
+        if not part:
+            raise ValueError(f"Prompt Library points to missing prompt sheet {sheet_name}")
+        prompt_root = _root(mutable[part], part)
+        _set_tab_color(prompt_root, fill_rgb)
+        mutable[part] = _xml(prompt_root)
+        changed.add(part)
+        prompts.append({"row": row_number, "sheet": sheet_name, "color": label, "rgb": fill_rgb})
+    mutable[library_part] = _xml(library_root)
+    mutable["xl/styles.xml"] = _xml(styles)
+    return changed, {"prompt_count": len(prompts), "prompts": prompts}
+
+
+def _normalize_prompt_placeholders(parts: Mapping[str, bytes] | dict[str, bytes]) -> tuple[set[str], dict[str, object]]:
+    """Remove ASCII or smart quotes immediately surrounding xyz_ placeholders."""
+    mutable = parts
+    _, mapping, _, _ = _sheet_map(mutable)
+    shared = _shared_strings(mutable)
+    changed: set[str] = set()
+    replacements: list[dict[str, str]] = []
+    for sheet_name, part in mapping.items():
+        if not PROMPT_SHEET_RE.fullmatch(sheet_name):
+            continue
+        root = _root(mutable[part], part)
+        rows = _row_lookup(root)
+        sheet_changed = False
+        for row_number, row in rows.items():
+            for cell in list(row.findall("m:c", NS)):
+                if cell.find("m:f", NS) is not None:
+                    continue
+                ref = cell.attrib.get("r", "")
+                display = _cell_display(cell, shared)
+                normalized = visual_contract.unquote_placeholders(display)
+                if normalized == display:
+                    continue
+                _replace_row_cell(row, ref, formula=None, cached=normalized)
+                replacements.append({"sheet": sheet_name, "cell": ref, "before": display, "after": normalized})
+                sheet_changed = True
+        if sheet_changed:
+            mutable[part] = _xml(root)
+            changed.add(part)
+    return changed, {"replacement_count": len(replacements), "replacements": replacements}
+
+
+def _validate_prompt_placeholder_ergonomics(parts: Mapping[str, bytes]) -> tuple[dict[str, object], ...]:
+    _, mapping, _, _ = _sheet_map(parts)
+    shared = _shared_strings(parts)
+    findings: list[dict[str, object]] = []
+    for sheet_name, part in mapping.items():
+        if not PROMPT_SHEET_RE.fullmatch(sheet_name):
+            continue
+        root = _root(parts[part], part)
+        for cell in root.findall(".//m:c", NS):
+            if cell.find("m:f", NS) is not None:
+                continue
+            display = _cell_display(cell, shared)
+            quoted = visual_contract.quoted_placeholders(display)
+            if quoted:
+                findings.append({"rule": "bare prompt placeholder", "sheet": sheet_name, "cell": cell.attrib.get("r"), "quoted": list(quoted), "value": display})
+    return tuple(findings)
+
+
+def _validate_prompt_visual_coordination(parts: Mapping[str, bytes]) -> tuple[dict[str, object], ...]:
+    _, mapping, _, _ = _sheet_map(parts)
+    library_part = mapping.get("Prompt_Library")
+    if not library_part:
+        return ({"rule": "prompt visual coordination", "error": "missing Prompt_Library"},)
+    if "xl/styles.xml" not in parts:
+        return ()
+    palette = visual_contract.palette()
+    shared = _shared_strings(parts)
+    library_root = _root(parts[library_part], library_part)
+    styles = _root(parts["xl/styles.xml"], "xl/styles.xml")
+    rows = _row_lookup(library_root)
+    findings: list[dict[str, object]] = []
+    for row_number, sheet_name, _ in _prompt_library_row_entries(library_root):
+        row = rows[row_number]
+        cells = {cell.attrib.get("r", ""): cell for cell in row.findall("m:c", NS)}
+        label = _cell_display(cells.get(f"N{row_number}"), shared)
+        expected = palette.get(label)
+        if expected is None:
+            findings.append({"rule": "semantic prompt color label", "row": row_number, "actual": label})
+            continue
+        fill_rgb, text_rgb = expected
+        for column in _PROMPT_LIBRARY_ROW_COLUMNS:
+            ref = f"{column}{row_number}"
+            cell = cells.get(ref)
+            if cell is None:
+                findings.append({"rule": "semantic prompt row cell", "cell": ref, "reason": "missing"})
+                continue
+            actual_fill, actual_text = _style_colors(styles, int(cell.attrib.get("s", "0")))
+            if (actual_fill, actual_text) != (fill_rgb, text_rgb):
+                findings.append({"rule": "semantic prompt row color", "cell": ref, "label": label, "expected": [fill_rgb, text_rgb], "actual": [actual_fill, actual_text]})
+        part = mapping.get(sheet_name)
+        if not part:
+            findings.append({"rule": "semantic prompt tab color", "sheet": sheet_name, "reason": "missing sheet"})
+            continue
+        prompt_root = _root(parts[part], part)
+        tab = prompt_root.find("m:sheetPr/m:tabColor", NS)
+        actual_tab = tab.attrib.get("rgb", "")[-6:].upper() if tab is not None else ""
+        if actual_tab != fill_rgb:
+            findings.append({"rule": "semantic prompt tab color", "sheet": sheet_name, "label": label, "expected": fill_rgb, "actual": actual_tab})
+    return tuple(findings)
+
+
 __all__ = [
     "APP_NS",
     "CELL_RE",
@@ -493,6 +742,10 @@ __all__ = [
     "_append_hyperlinks",
     "_append_library_rows",
     "_append_workbook_sheets",
+    "_validate_prompt_visual_coordination",
+    "_validate_prompt_placeholder_ergonomics",
+    "_normalize_prompt_placeholders",
+    "_apply_prompt_visual_coordination",
     "_apply_prompt_library_navigation",
     "_apply_prompt_library_row_links",
     "_cell_display",

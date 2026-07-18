@@ -208,6 +208,12 @@ def _rewrite_workbook(workbook: Path, contract: Mapping[str, object]) -> tuple[s
     package = ooxml._read_workbook(workbook)
     parts = dict(package.parts)
     changed = _apply_core_action_overrides(parts, contract)
+    placeholder_changed, _ = ooxml._normalize_prompt_placeholders(parts)
+    visual_changed, _ = ooxml._apply_prompt_visual_coordination(parts)
+    changed.update(placeholder_changed)
+    changed.update(visual_changed)
+    if ooxml._rebuild_calc_chain(parts):
+        changed.add("xl/calcChain.xml")
     with tempfile.NamedTemporaryFile(prefix="v39-action-", suffix=".xlsx", delete=False) as stream:
         temporary = Path(stream.name)
     try:
@@ -248,6 +254,8 @@ def validate_v39(workbook: str | Path, *, standard_ai_spec: str | Path = DEFAULT
         library_cells = ooxml._cells(library_root)
         shared = ooxml._shared_strings(parts)
         findings.extend(ooxml._validate_prompt_library_row_links(library_root, shared))
+        findings.extend(ooxml._validate_prompt_placeholder_ergonomics(parts))
+        findings.extend(ooxml._validate_prompt_visual_coordination(parts))
         policy = harness_discipline.load_policy()
         for issue in harness_discipline.validate_policy(policy):
             findings.append({"rule": "portable harness operational discipline", "error": issue})
@@ -327,6 +335,16 @@ def generate_v39(source: Path, output_dir: Path = DEFAULT_OUTPUT_DIR, *, standar
     manifest["validation"] = report.to_dict()
     manifest["context_to_artifact_prompt"] = "P56"
     manifest["portable_harness_discipline_prompt"] = "P57"
+    manifest["prompt_placeholder_ergonomics"] = {
+        "quote_wrapped_xyz_placeholders_allowed": False,
+        "replacement_shape": "bare underscore-delimited xyz token",
+    }
+    manifest["prompt_visual_coordination"] = {
+        "row_color_columns": "B:O",
+        "semantic_source": "Prompt Library Color label",
+        "prompt_tab_color": "matching semantic RGB fill",
+        "policy": "configs/harness/prompt_library_visual_policy_v1.json",
+    }
     manifest["prompt_library_row_links"] = {
         "columns": "B:O",
         "target": "associated prompt tab exact copy range",

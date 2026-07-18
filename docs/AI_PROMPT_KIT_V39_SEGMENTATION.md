@@ -145,3 +145,13 @@ Every prompt row uses columns **B:O** as one coherent navigation surface. Each c
 P56 generates the actual requested artifact from supplied context and repository evidence; outline-only, plan-only, and sample-only responses are invalid. P57 installs portable operational harness discipline, including the connected-GitHub mutation fallback, required run context, evidence-before-confidence, artifact proof, sequential prompt routing, and repository commit/PR evidence.
 
 The machine-readable authority is `configs/harness/operational_discipline_v1.json`; `triage.harness_operational_discipline` and CI fail policy drift so external agents and other repositories can adopt the same contract.
+
+## Placeholder ergonomics
+
+All `xyz_...` replacement tokens in prompt tabs are bare underscore-delimited text. The generator removes ASCII or smart quotes immediately surrounding those tokens and the validator rejects any quoted placeholder that survives packaging. Literal non-placeholder command arguments retain their required quoting.
+
+## Semantic row and tab colors
+
+The Prompt Library Color column is authoritative. Columns B:O of each prompt row receive the registered semantic fill and text colors. The associated `P##_COPY_SAFE` worksheet tab receives the same fill RGB, including the repository cream value `F7E6C4`. Columns A and P remain reserved for sparse navigation and do not inherit the row-color contract.
+
+The palette and tab-color rule are machine-readable in `configs/harness/prompt_library_visual_policy_v1.json` and are enforced by `triage.prompt_kit_visual_contract`, `triage.prompt_kit_v39_generator`, and CI.

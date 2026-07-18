@@ -90,7 +90,11 @@
         2
       ],
       "cadence_selection": "largest evenly dividing cadence",
-      "fail_closed_without_allowed_divisor": true
+      "fail_closed_without_allowed_divisor": true,
+      "placeholder_format": "bare underscore-delimited xyz tokens without surrounding ASCII or smart quotes",
+      "semantic_row_color_columns": "B:O",
+      "prompt_tab_color_source": "Prompt Library semantic Color label",
+      "prompt_tab_color_match": "exact semantic row fill RGB where supported"
     }
   },
   "sequential_prompt_suite": {
@@ -108,5 +112,18 @@
     "plan_only_for_requested_repo_work",
     "handoff_only_for_requested_repo_work",
     "acknowledgment_only_completion"
+  ],
+  "required_harness_components": [
+    "repo_agent_rules",
+    "codebase_map",
+    "workflow_specs",
+    "run_context",
+    "artifact_registry",
+    "validators",
+    "local_hooks_where_useful",
+    "scoped_skills",
+    "read_only_code_intelligence_where_useful",
+    "english_operator_reports",
+    "final_handoff_compression"
   ]
 }

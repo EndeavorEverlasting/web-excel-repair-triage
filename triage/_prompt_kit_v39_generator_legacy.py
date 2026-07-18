@@ -367,6 +367,8 @@ def _build_candidate(
         for prompt in prompts
     }
     created_parts, _ = ooxml._append_workbook_sheets(parts, prompts, prompt_xml)
+    placeholder_changed, _ = ooxml._normalize_prompt_placeholders(parts)
+    visual_changed, _ = ooxml._apply_prompt_visual_coordination(parts)
     app_changed = ooxml._update_app_properties(parts, list(created_parts))
     calc_changed = ooxml._rebuild_calc_chain(parts)
     changed = {
@@ -375,6 +377,8 @@ def _build_candidate(
         "xl/_rels/workbook.xml.rels",
         library_part,
         *created_parts.values(),
+        *placeholder_changed,
+        *visual_changed,
     }
     if app_changed:
         changed.add("docProps/app.xml")

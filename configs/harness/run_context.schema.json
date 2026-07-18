@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "configs/harness/run_context.schema.json",
+  "title": "Repository Harness Run Context",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "repo",
+    "branch_or_worktree",
+    "pr_or_sprint",
+    "lane",
+    "owned_scope",
+    "forbidden_scope",
+    "expected_artifacts"
+  ],
+  "properties": {
+    "repo": {
+      "type": "string",
+      "minLength": 1
+    },
+    "branch_or_worktree": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pr_or_sprint": {
+      "type": "string",
+      "minLength": 1
+    },
+    "lane": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owned_scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "forbidden_scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected_artifacts": {
+      "type": "string",
+      "minLength": 1
+    },
+    "validation_order": {
+      "type": "string"
+    },
+    "proof_ceiling": {
+      "type": "string"
+    }
+  }
+}

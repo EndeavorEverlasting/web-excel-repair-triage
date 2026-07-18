@@ -11,6 +11,14 @@ def test_portable_harness_policy_is_valid_and_complete() -> None:
     assert prompt_library["whole_row_link_columns"] == "B:O"
     assert prompt_library["sparse_navigation_columns"] == ["A", "P"]
     assert prompt_library["allowed_sparse_cadences"] == [10, 5, 2]
+    assert prompt_library["placeholder_format"].startswith("bare underscore-delimited")
+    assert prompt_library["semantic_row_color_columns"] == "B:O"
+    assert prompt_library["prompt_tab_color_source"] == "Prompt Library semantic Color label"
+    assert policy["required_harness_components"] == [
+        "repo_agent_rules", "codebase_map", "workflow_specs", "run_context", "artifact_registry",
+        "validators", "local_hooks_where_useful", "scoped_skills", "read_only_code_intelligence_where_useful",
+        "english_operator_reports", "final_handoff_compression",
+    ]
 
 
 def test_run_context_requires_named_operational_surfaces() -> None:

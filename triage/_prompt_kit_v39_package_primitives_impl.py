@@ -490,7 +490,8 @@ def _replace_sheet_data(root: ET.Element, new_sheet_data: ET.Element) -> None:
 def _make_prompt_sheet(template: bytes, prompt: Mapping[str, object], library_row: int) -> bytes:
     root = _root(template, "P44 template worksheet")
     styles, row_attrs, _ = _template_styles(root)
-    lines = [str(line) for line in prompt["lines"]]
+    from . import prompt_kit_visual_contract as visual_contract
+    lines = [visual_contract.unquote_placeholders(str(line)) for line in prompt["lines"]]
     last_row = len(lines)
     if last_row < 2:
         raise ValueError(f"{prompt['prompt_id']} must contain at least two prompt rows")

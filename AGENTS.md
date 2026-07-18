@@ -88,3 +88,21 @@ Friday is the reporting batch marker. Work performed Monday through Friday maps 
 - Delivery requires baseline fingerprint compare against the declared source; fail if sheets are deleted.
 
 See [`docs/ONE_MARCUS_SOURCE_OVERWRITE_INCIDENT_2026_06_04.md`](docs/ONE_MARCUS_SOURCE_OVERWRITE_INCIDENT_2026_06_04.md) for the incident that motivated this rule.
+
+## Repo-local AI harness
+
+Every serious application in this repository uses the repo-local harness indexed by [`HARNESS.md`](HARNESS.md) and [`configs/harness/harness_manifest_v1.json`](configs/harness/harness_manifest_v1.json).
+
+Prompts are artifacts inside the harness; they are not the harness itself. A fresh agent must inspect the registered agent rules, codebase map, workflow specs, run context, artifact registry, validators, hooks, scoped skills, read-only code-intelligence map, operator reports, and final handoff contract before inventing a replacement surface.
+
+Required execution posture:
+
+- select the registered task-specific workflow;
+- inspect existing rules, test runners, validators, docs, scripts, manifests, generated-output policy, and branch/PR conventions;
+- name repo, branch/worktree, PR/sprint, lane, owned scope, forbidden scope, expected artifacts, and user-specified validation order;
+- generate the actual requested artifact rather than a plan or prompt pack;
+- validate the artifact and repository changes;
+- commit and push coherent contributions and update the intended PR;
+- report exact evidence and the remaining proof ceiling.
+
+Prompt Kit ergonomics are enforced: `xyz_under_score_placeholders` remain bare rather than surrounded by ASCII or smart quotes; Prompt Library B:O rows and associated prompt tabs use the semantic Color label; A/P remain dedicated sparse navigation.

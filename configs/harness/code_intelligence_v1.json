@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "mode": "read-only",
+  "queries": [
+    {
+      "name": "prompt-kit-generator",
+      "paths": [
+        "triage/prompt_kit_v39_generator.py",
+        "triage/prompt_kit_v39_ooxml_base.py"
+      ],
+      "purpose": "generation and package mutation"
+    },
+    {
+      "name": "prompt-contracts",
+      "paths": [
+        "configs/prompt_kit",
+        "tests/test_prompt_kit_v39_*"
+      ],
+      "purpose": "prompt registry and fail-closed contracts"
+    },
+    {
+      "name": "artifact-engines",
+      "paths": [
+        "triage",
+        "configs/artifact_profiles",
+        "docs"
+      ],
+      "purpose": "existing generators, validators, profiles, and output patterns"
+    },
+    {
+      "name": "repo-conventions",
+      "paths": [
+        "AGENTS.md",
+        ".github/workflows",
+        ".gitignore",
+        "README.md"
+      ],
+      "purpose": "rules, CI, generated-output policy, and operator entrypoints"
+    }
+  ],
+  "forbidden": [
+    "mutation",
+    "network_probe",
+    "secret_read",
+    "generated_binary_commit"
+  ]
+}

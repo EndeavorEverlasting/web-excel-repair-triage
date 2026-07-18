@@ -33,3 +33,11 @@ Generate the actual artifact, inspect it, run artifact-family validators, record
 - P12: closeout
 
 Task-specific prompt rules override generic closeout. Rewritten prompts, plan-only responses, handoff-only responses, and acknowledgment-only completion cannot substitute for requested repository work.
+
+## Complete repo-local harness
+
+`HARNESS.md` and `configs/harness/harness_manifest_v1.json` are the discovery spine. The harness includes repo agent rules, a codebase map, workflow specifications, a run-context schema, an artifact registry, fail-closed validators, an opt-in repo-local pre-commit hook, scoped skills, read-only code-intelligence queries, English operator reports, and final-handoff compression. `python -m triage.harness_operational_discipline --repo-root . --json` fails when a registered surface is missing.
+
+## Prompt placeholder and color doctrine
+
+Prompt placeholders are bare underscore-delimited `xyz_...` tokens. ASCII and smart quotes immediately surrounding a placeholder are forbidden because they disrupt double-click replacement. Prompt Library B:O row fills derive from the semantic Color label. Every associated prompt tab uses the same RGB fill where Excel supports RGB tab colors. The machine-readable authority is `configs/harness/prompt_library_visual_policy_v1.json`; `triage.prompt_kit_visual_contract` and generated-workbook validation fail drift.

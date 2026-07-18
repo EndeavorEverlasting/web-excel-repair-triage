@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "harness_id": "web-excel-repair-triage-repo-harness",
+  "entrypoint": "HARNESS.md",
+  "agent_rules": [
+    "AGENTS.md"
+  ],
+  "codebase_map": "docs/harness/CODEBASE_MAP.md",
+  "workflow_specs": [
+    "configs/harness/workflows_v1.json",
+    "docs/harness/WORKFLOWS.md"
+  ],
+  "run_context": [
+    "configs/harness/run_context.schema.json",
+    "docs/harness/RUN_CONTEXT.md"
+  ],
+  "artifact_registry": "configs/harness/artifact_registry_v1.json",
+  "validators": [
+    "triage/harness_operational_discipline.py",
+    "triage/prompt_kit_visual_contract.py",
+    "triage/prompt_kit_v39_generator.py"
+  ],
+  "local_hooks": [
+    ".githooks/pre-commit",
+    "scripts/Install-HarnessHooks.ps1"
+  ],
+  "scoped_skills": [
+    "skills/repository-harness/skill.md",
+    "skills/artifact-generation/skill.md",
+    "skills/prompt-kit/skill.md"
+  ],
+  "read_only_code_intelligence": "configs/harness/code_intelligence_v1.json",
+  "operator_reports": [
+    "triage/harness_operator_report.py",
+    "docs/harness/OPERATOR_REPORTS.md"
+  ],
+  "final_handoff_compression": [
+    "triage/harness_handoff.py",
+    "configs/harness/handoff_contract_v1.json",
+    "docs/harness/FINAL_HANDOFF.md"
+  ],
+  "generated_output_policy": [
+    "AGENTS.md",
+    ".gitignore"
+  ],
+  "required_fresh_agent_sequence": [
+    "read_agent_rules",
+    "read_harness_manifest",
+    "load_run_context",
+    "select_workflow",
+    "inspect_existing_surfaces",
+    "run_focused_validators",
+    "mutate_owned_scope",
+    "generate_and_inspect_artifacts",
+    "run_broad_validation",
+    "commit_and_push",
+    "emit_operator_report_and_compressed_handoff"
+  ]
+}

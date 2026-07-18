@@ -10,7 +10,13 @@
     "id": "gnhf_harness_runtime",
     "surface_family": "gnhf",
     "placement": "after the standard-AI advanced extension block",
-    "prompt_ids": ["P45", "P46", "P47", "P48", "P49"]
+    "prompt_ids": [
+      "P45",
+      "P46",
+      "P47",
+      "P48",
+      "P49"
+    ]
   },
   "prompts": [
     {
@@ -73,7 +79,7 @@
       "sheet_name": "P46_COPY_SAFE",
       "lines": [
         "gnhf `",
-        "  --agent \"xyz_proven_gnhf_agent_spec\" `",
+        "  --agent xyz_proven_gnhf_agent_spec `",
         "  --worktree `",
         "  --max-iterations 8 `",
         "  --max-tokens 800000 `",
@@ -121,7 +127,7 @@
       "sheet_name": "P47_COPY_SAFE",
       "lines": [
         "gnhf `",
-        "  --agent \"xyz_proven_gnhf_agent_spec\" `",
+        "  --agent xyz_proven_gnhf_agent_spec `",
         "  --worktree `",
         "  --max-iterations 10 `",
         "  --max-tokens 1000000 `",
