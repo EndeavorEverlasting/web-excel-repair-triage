@@ -6,6 +6,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RUN_LAUNCHER = REPO_ROOT / "Run-AIPromptKitV38.cmd"
 SYNC_LAUNCHER = REPO_ROOT / "Sync-Validate-AIPromptKitV38.cmd"
+CANONICAL_BRANCH = "feat/prompt-kit-v38-self-service-generator"
+LEGACY_BRANCH = "feat/prompt-kit-v33-self-service-generator"
 
 
 def _text(path: Path) -> str:
@@ -32,6 +34,8 @@ def test_v38_asset_launcher_is_click_ready_and_prints_artifacts() -> None:
 def test_v38_sync_launcher_replaces_manual_next_command() -> None:
     text = _text(SYNC_LAUNCHER)
 
+    assert f'set "TARGET_BRANCH={CANONICAL_BRANCH}"' in text
+    assert LEGACY_BRANCH not in text
     assert "%~dp0" in text
     assert 'cd /d "%REPO_ROOT%"' in text
     assert "git status --porcelain" in text
