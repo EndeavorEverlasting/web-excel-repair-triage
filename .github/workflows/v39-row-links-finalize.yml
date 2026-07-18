@@ -22,10 +22,14 @@ jobs:
       - name: Install focused test dependency
         run: python -m pip install pytest
       - name: Apply validated patch from repository root
+        id: sprint
+        continue-on-error: true
         shell: bash
         run: |
-          set -euo pipefail
-          python - <<'PY'
+          set +e
+          (
+            set -euo pipefail
+            python - <<'PY'
           from pathlib import Path
           source = Path('.github/workflows/v39-row-links-harness-sprint.yml').read_text(encoding='utf-8')
           marker = '      PATCH_B64: >-\n        '
@@ -33,41 +37,60 @@ jobs:
           payload = source[start:source.index('\n    steps:', start)].strip()
           Path('/tmp/v39-patch.b64').write_text(payload, encoding='ascii')
           PY
-          base64 -d /tmp/v39-patch.b64 | gzip -d > .github/apply_v39_sprint.py
-          python .github/apply_v39_sprint.py
-          python -m json.tool configs/prompt_kit/v39_standard_ai_extensions.json >/dev/null
-          python -m json.tool configs/harness/operational_discipline_v1.json >/dev/null
-          python -m pytest \
-            tests/test_prompt_kit_v39_generator.py \
-            tests/test_prompt_kit_v39_action_commitment.py \
-            tests/test_prompt_kit_v39_generated_navigation.py \
-            tests/test_prompt_kit_v39_generated_row_links.py \
-            tests/test_prompt_kit_v39_library_footer.py \
-            tests/test_prompt_kit_v39_library_navigation.py \
-            tests/test_prompt_kit_v39_library_row_links.py \
-            tests/test_prompt_kit_v39_namespace_prefixes.py \
-            tests/test_prompt_kit_v39_public_surface.py \
-            tests/test_harness_operational_discipline.py \
-            -q
-          python -m triage.harness_operational_discipline --json
-          git diff --check
-          tar -czf /tmp/v39-runtime-source.tar.gz \
-            triage configs tests scripts docs .github/workflows/prompt-kit-v21.yml
-          rm -f \
-            .github/apply_v39_sprint.py \
-            .github/V39_ROW_LINKS_TRIGGER.md \
-            .github/V39_ROW_LINKS_DIAGNOSTIC_TRIGGER.md \
-            .github/workflows/v39-row-links-harness-sprint.yml \
-            .github/workflows/v39-row-links-diagnostic.yml \
-            .github/workflows/v39-row-links-finalize.yml
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git commit -m 'feat(prompt-kit): link full library rows and add artifact harness prompts'
-          git push origin HEAD:feat/prompt-kit-v39-segmented
+            base64 -d /tmp/v39-patch.b64 | gzip -d > .github/apply_v39_sprint.py
+            python .github/apply_v39_sprint.py
+            python -m json.tool configs/prompt_kit/v39_standard_ai_extensions.json >/dev/null
+            python -m json.tool configs/harness/operational_discipline_v1.json >/dev/null
+            python -m pytest \
+              tests/test_prompt_kit_v39_generator.py \
+              tests/test_prompt_kit_v39_action_commitment.py \
+              tests/test_prompt_kit_v39_generated_navigation.py \
+              tests/test_prompt_kit_v39_generated_row_links.py \
+              tests/test_prompt_kit_v39_library_footer.py \
+              tests/test_prompt_kit_v39_library_navigation.py \
+              tests/test_prompt_kit_v39_library_row_links.py \
+              tests/test_prompt_kit_v39_namespace_prefixes.py \
+              tests/test_prompt_kit_v39_public_surface.py \
+              tests/test_harness_operational_discipline.py \
+              -q
+            python -m triage.harness_operational_discipline --json
+            git diff --check
+          ) > /tmp/v39-finalize.log 2>&1
+          status=$?
+          cat /tmp/v39-finalize.log
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          if [ "$status" -eq 0 ]; then
+            tar -czf /tmp/v39-runtime-source.tar.gz \
+              triage configs tests scripts docs .github/workflows/prompt-kit-v21.yml
+            rm -f \
+              .github/apply_v39_sprint.py \
+              .github/V39_ROW_LINKS_TRIGGER.md \
+              .github/V39_ROW_LINKS_DIAGNOSTIC_TRIGGER.md \
+              .github/V39_ROW_LINKS_FINALIZE_TRIGGER.md \
+              .github/workflows/v39-row-links-harness-sprint.yml \
+              .github/workflows/v39-row-links-diagnostic.yml \
+              .github/workflows/v39-row-links-finalize.yml
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add -A
+            git commit -m 'feat(prompt-kit): link full library rows and add artifact harness prompts'
+            git push origin HEAD:feat/prompt-kit-v39-segmented
+          fi
+          exit 0
+      - name: Upload corrected sprint log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v39-row-links-finalize-log
+          path: /tmp/v39-finalize.log
+          if-no-files-found: error
       - name: Upload patched runtime source
+        if: steps.sprint.outputs.status == '0'
         uses: actions/upload-artifact@v4
         with:
           name: v39-row-links-runtime-source
           path: /tmp/v39-runtime-source.tar.gz
           if-no-files-found: error
+      - name: Fail when corrected sprint failed
+        if: steps.sprint.outputs.status != '0'
+        run: exit 1
