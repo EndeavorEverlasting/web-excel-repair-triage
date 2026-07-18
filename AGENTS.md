@@ -1,5 +1,35 @@
 # Agent Instructions
 
+## Prompt execution-surface directional contract
+
+Before generating a prompt-kit artifact, classify the requested execution surface:
+
+1. `regular_ai_prompt` — instructions pasted into an interactive AI chat.
+2. `gnhf_runtime_objective` — compact repository objective supplied to GNHF.
+3. `gnhf_launch_artifact` — executable shell content that enters the repository, selects the route, applies bounds, and supplies or references the runtime objective.
+
+A literal request for a Good Night Have Fun prompt or GNHF prompt means `gnhf_launch_artifact` unless the operator explicitly requests only the inner objective.
+
+Do not substitute a regular AI sprint prompt or objective-only prose for a GNHF launch artifact.
+
+GNHF launch artifacts must:
+
+- resolve and enter the intended repository before Git, installation, validation, provider, or GNHF logic;
+- use variable-based user and repository paths rather than a machine-specific username;
+- use the reviewed AgentSwitchboard provider route when an exact provider/model is requested;
+- keep the provider/model distinct from the GNHF agent adapter;
+- include worktree posture, iteration and token caps, bounded provider preflight, positive stop condition, tracked deliverable, validation, and proof ceiling;
+- disable push by default;
+- reject process completion as repository-delivery proof.
+
+Run:
+
+```text
+python -m triage.prompt_execution_surface_contract <artifact-path>
+```
+
+The deterministic validator is the acceptance gate. Follow `.ai/skills/prompt-surface-routing/SKILL.md` for the scoped procedure.
+
 ## Billing Pipeline Directional Contract
 
 This repository supports Web Excel-safe repair and triage workflows for roster, billing, admin-sheet, and task-tracker artifacts.
