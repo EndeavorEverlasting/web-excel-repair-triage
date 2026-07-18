@@ -6,6 +6,8 @@ This file records reproducible failures that remain outside the active artifact-
 
 The canonical `Artifact engine tests` workflow is green on the V38 branch. The former aggregate failure was not a valid legacy waiver: it came from malformed OOXML in the sanitized One Marcus fixture. The fixture injected `<externalReference r:id="rIdExt1"/>` without declaring the Office document relationships namespace, so `openpyxl` failed before reconciliation began. The fixture now declares the namespace and a regression loads it before mutation.
 
+Validated on commit `2a8334359f688a0e0cbd889fd772294bc52af3c3` by workflow run `29624116595`, and again after documentation cleanup on commit `558ea144c79d81fef513c68fd90ba825fff94a13` by workflow run `29624170576`.
+
 The workflow keeps each artifact family in a separately named step so future red checks identify the affected lane directly.
 
 ## Outside the artifact-engine merge gate
