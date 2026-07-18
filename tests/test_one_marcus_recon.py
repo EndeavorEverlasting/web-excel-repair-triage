@@ -65,13 +65,17 @@ def test_infers_recon_update_date_from_filename(stale_input):
 def test_renames_part_number_tab_to_stable_name(stale_input, output_path):
     result = run_recon(stale_input, output_path=output_path, cli_date="auto")
     assert result.report.final_part_number_tab == STABLE_TAB
-    assert result.report.baseline_compare_pass is True
     assert result.report.renamed_tabs == [f"5-07-2026 Part Numbers -> {STABLE_TAB}"]
     with zipfile.ZipFile(output_path) as z:
         wb = z.read("xl/workbook.xml").decode("utf-8")
     assert f'name="{STABLE_TAB}"' in wb or f"name='{STABLE_TAB}'" in wb
     assert "5-07-2026 Part Numbers" not in wb
     _assert_no_dated_part_numbers_tabs(fr.workbook_sheet_names(wb))
+
+
+def test_relinked_workbook_passes_baseline_compare(stale_input, output_path):
+    result = run_recon(stale_input, output_path=output_path, cli_date="auto")
+    assert result.report.baseline_compare_pass is True, result.report.baseline_compare_failures
 
 
 def test_rewrites_formulas_from_old_part_number_tab(stale_input, output_path):
