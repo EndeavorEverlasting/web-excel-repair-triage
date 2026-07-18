@@ -207,7 +207,25 @@ jobs:
             tests/test_prompt_kit_v39_visual_coordination.py
 
       - name: Run focused scaffold regression
-        run: python -m pytest tests/test_prompt_kit_v39_visual_coordination.py -q
+        id: focused
+        continue-on-error: true
+        shell: bash
+        run: python -m pytest tests/test_prompt_kit_v39_visual_coordination.py -q --tb=short > focused-scaffold.log 2>&1
+
+      - name: Upload focused failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: focused-scaffold-output
+          path: focused-scaffold.log
+          if-no-files-found: error
+
+      - name: Enforce focused scaffold result
+        if: steps.focused.outcome != 'success'
+        shell: bash
+        run: |
+          cat focused-scaffold.log
+          exit 1
 
       - name: Run full V39 contracts
         run: python -m pytest tests/test_prompt_kit_v39_*.py tests/test_prompt_kit_visual_contract.py -q
