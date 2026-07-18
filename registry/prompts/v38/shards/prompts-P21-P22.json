@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "ai-harness-prompt-record-shard/v1",
+  "kitVersion": "v38",
+  "promptRange": "P21-P22",
+  "prompts": [
+    {
+      "id": "P21",
+      "sequence": 21,
+      "name": "Many-to-One Prompt Consolidator",
+      "moment": "Many-to-One Prompt Consolidation",
+      "promptType": "CONSOLIDATE + EXECUTE",
+      "promptClass": "PLAN + BUILD / CONSOLIDATE",
+      "executionSurface": "regular_ai_prompt",
+      "sprintPathRole": "Consolidate many prompts into one bounded executable mission",
+      "useForProgress": "YES",
+      "useThisWhen": "Several prompts, handoffs, sprint candidates, or artifact requirements must become one executable mission.",
+      "doNotUseWhen": "Only one already-bounded prompt is needed.",
+      "inspectFirst": "Source requirements, repo evidence, conflicts, dependencies, branch conventions, proof gates.",
+      "expectedOutput": "Disposition ledger, one bounded execution prompt, and immediate execution when safe.",
+      "nextStep": "Use P11/P12 after execution.",
+      "acceptanceGate": "Every source requirement is dispositioned and the immediate mission is evidence-backed.",
+      "mutatesRepository": "YES",
+      "authority": "Source requirements + repo evidence + bounded execution authority",
+      "proofCeiling": "Evidence-backed consolidated mission and execution proof.",
+      "color": "Amber",
+      "copySafeSheet": "P21_COPY_SAFE",
+      "copyRange": "A1:A79",
+      "requiredVariables": [
+        "xyz_branch_pr_sprint",
+        "xyz_context_path",
+        "xyz_forbidden_scope",
+        "xyz_owned_scope",
+        "xyz_repo_or_path",
+        "xyz_source_material",
+        "xyz_target_artifact"
+      ],
+      "textSha256": "08d40d9b3ae3a11b233be4ec24765a014b03c6d1b355a8acf06a5350c281112d",
+      "text": "CONSOLIDATE THE SOURCE PROMPTS INTO ONE BOUNDED EXECUTION PROMPT AND EXECUTE THE IMMEDIATE MISSION WHEN THE ENVIRONMENT ALLOWS. DO NOT CONCATENATE OR STOP AT A PLAN.\nTarget repo: xyz_repo_or_path\nBranch / PR / sprint if known: xyz_branch_pr_sprint\nSource prompts, instructions, handoffs, or candidates: xyz_source_material\nContext or plan path if available: xyz_context_path\nTarget artifact or deliverable if applicable: xyz_target_artifact\nOwned scope: xyz_owned_scope\nForbidden scope: xyz_forbidden_scope\nMISSION\nAnalyze the source material and current repository evidence, then produce one strong, bounded, actionable execution prompt.\nThis is synthesis, conflict resolution, and execution planning, not concatenation.\nIdentify the immediate executable mission and keep unrelated future work out of the immediate sprint.\nWhen the environment permits safe bounded work, execute the consolidated mission in the same chat rather than returning only another prompt.\nSOURCE PROMPT DISPOSITION\nCreate a source-requirement ledger before writing the consolidated prompt.\nAssign every source requirement exactly one disposition:\n- included\n- merged\n- deferred-to-docs\n- superseded\n- rejected-with-reason\n- unresolved-blocker\nNo source requirement may disappear silently.\nFor merged or superseded requirements, name the surviving requirement.\nFor rejected or blocked requirements, state the evidence-backed reason.\nCONFLICT RESOLUTION\nIdentify direct conflicts, hidden scope collisions, incompatible acceptance rules, and stale assumptions.\nPrefer current repository evidence over remembered chat context.\nApply the strongest compatible safety, proof, source-immutability, rollback, and acceptance rules.\nPreserve explicit user constraints unless they are impossible, unsafe, or contradicted by newer authoritative evidence.\nDo not solve conflicts by duplicating both instructions into a giant prompt.\nIMMEDIATE OWNED SCOPE\nSelect the smallest coherent mission that produces real progress now.\nName repo, branch or worktree, PR or sprint, lane, owned scope, forbidden scope, expected artifacts, and validation order.\nPreserve dependencies and prerequisites.\nSeparate the immediate feature or artifact sprint from documentation or cleanup that can safely wait.\nFORBIDDEN SCOPE\nCarry forward every compatible forbidden-scope rule.\nAdd collision boundaries discovered from repository evidence.\nDo not broaden authority merely because several prompts were supplied.\nREPOSITORY EVIDENCE REQUIRED\nInspect current branch, status, recent commits, open PRs, changed files, repo rules, plans, validators, tests, logs, and generated artifacts as applicable.\nReuse existing contracts, helpers, naming patterns, branch conventions, output layouts, and proof formats before inventing new ones.\nEvidence must precede confidence.\nEXECUTION CONTRACT\nThe consolidated prompt must require action, artifacts, validation, reporting, and a final next decision.\nAvoid permission theater when a safe bounded sprint is available.\nDo not stop at a plan, outline, prompt rewrite, or repo summary when implementation is possible.\nDo not create another multi-sprint mega-prompt.\nKeep deferred work in a separate documentation lane.\nARTIFACT EXECUTION MODE\nWhen the source material describes a workbook, document, slide deck, archive, report, image, or other artifact, the immediate mission must require generation of the actual artifact now.\nExtract and preserve source fixture names, hashes, required outputs, exact filenames, package constraints, compatibility gates, previews, field acceptance, and artifact links.\nDo not answer with an artifact-generation prompt instead of the artifact when the current chat has the required tools and source material.\nDo not regenerate from a blank artifact when an accepted structural fixture is authoritative.\nVALIDATION\nPreserve all compatible static, runtime, package, field, CI, and acceptance gates.\nOrder checks from cheapest and safest to strongest and most environment-dependent.\nDo not report skipped checks as passes or static checks as field acceptance.\nRequire final diff, artifact, log, report, git-state, and remote-state evidence appropriate to the mission.\nDEFERRED DOCUMENTATION BRANCH\nFor useful documentation that should not enter the immediate sprint, define a separate feature or PR lane.\nDerive the branch name from the target repository existing conventions; do not hard-code one universal naming pattern.\nThe deferred lane must include proposed branch or PR lane, mission, owned scope, forbidden scope, target files, evidence sources, expected artifacts, validation, dependency on the immediate feature sprint, and parallel-safety statement.\nDo not use deferred documentation as a dumping ground for unresolved feature requirements.\nFINAL HANDOFF\nThe generated consolidated prompt must contain these headings exactly:\nMISSION\nSOURCE PROMPT DISPOSITION\nCONFLICT RESOLUTION\nIMMEDIATE OWNED SCOPE\nFORBIDDEN SCOPE\nREPOSITORY EVIDENCE REQUIRED\nEXECUTION CONTRACT\nVALIDATION\nDEFERRED DOCUMENTATION BRANCH\nFINAL HANDOFF\nEnd with completed work, files and artifacts, validation, skipped checks, gaps and risks, git state, remote or PR state, exact next command, and a copy-paste next-agent handoff.\nReturn one bounded execution prompt plus the source-requirement disposition ledger. If execution is available, perform the immediate mission and report the evidence instead of stopping at the prompt."
+    },
+    {
+      "id": "P22",
+      "sequence": 22,
+      "name": "Cross-Repo Gap Priority Planner",
+      "moment": "Cross-Repo Gap Priority Planner",
+      "promptType": "PORTFOLIO PLAN",
+      "promptClass": "PORTFOLIO / GAP PRIORITY",
+      "executionSurface": "regular_ai_prompt",
+      "sprintPathRole": "Rank repositories by actionable gap and leverage",
+      "useForProgress": "No",
+      "useThisWhen": "The same insight could improve several repos and the first target should be chosen by missing contracts, proof, harness, or product capability.",
+      "doNotUseWhen": "Current circumstances rather than structural gaps should dominate the choice.",
+      "inspectFirst": "Repo inventory, current gaps, shared contracts, recent PRs, tests, validators, roadmaps.",
+      "expectedOutput": "Ranked repo portfolio, evidence-backed first target, exact launch order, and one self-contained panel per selected repo.",
+      "nextStep": "Launch top-ranked panel or use P16/P07.",
+      "acceptanceGate": "Ranking distinguishes the largest gap from the best first move and cites repo evidence.",
+      "mutatesRepository": "No",
+      "authority": "Advisory portfolio-planning authority",
+      "proofCeiling": "Portfolio ranking proof only; no implementation proof.",
+      "color": "Coral",
+      "copySafeSheet": "P22_COPY_SAFE",
+      "copyRange": "A1:A108",
+      "requiredVariables": [
+        "xyz_actionable_insights",
+        "xyz_candidate_repositories_or_org",
+        "xyz_constraints"
+      ],
+      "textSha256": "86ed0969025bab7e0e039ce3c9e37d94779b70728c494a1800bbd09d3c3c62f0",
+      "text": "PRIORITIZE WHICH REPOSITORY SHOULD RECEIVE THE ACTIONABLE INSIGHTS FIRST BY COMPARING VERIFIED GAPS.\nDo not choose the repository with the biggest-sounding problem by intuition alone.\nUse repository evidence, connected GitHub state when available, and current chat context.\nCandidate repositories:\n`xyz_candidate_repositories_or_org`\nActionable insights to route:\n`xyz_actionable_insights`\nKnown constraints or excluded repositories:\n`xyz_constraints`\nMISSION\nRank the candidate repositories by where the supplied insights can close the most important verified gap with the strongest bounded payoff.\nDistinguish the largest gap from the best first move.\nPrefer evidence-backed, tractable, reusable work over vague strategic importance.\nREPOSITORY INTAKE\nFor each candidate repository inspect when access exists:\n- purpose and domain authority\n- current main branch and recent commits\n- open PRs, reviews, checks, and stale branches\n- plans, handoffs, roadmaps, issue queues, and release posture\n- run context, artifact registry, schemas, validators, fixtures, workflows, and proof gates\n- skills, capabilities, triggers, routing, manifests, MCP/tools, and hooks\n- conventional application services, state machines, adapters, persistence, UI, launchers, and deployment logic\n- documentation, operator surfaces, runtime proof, and known blockers\nDo not infer repository health from stars, age, filenames, or prose alone.\nGAP FACTORING\nClassify every relevant gap into one primary surface:\n- harness spine gap\n- agent harness gap\n- conventional application logic gap\n- integration seam gap\n- validation or proof gap\n- documentation or operator gap\n- runtime acceptance gap\n- cleanup or release-hygiene gap\n- research or design gap\nFor skills, capabilities, and triggers record the missing owner, activation condition, inputs, outputs, guardrails, tests, and proof ceiling.\nSCORING MODEL\nScore each repository from 0 to 5 on:\n- gap severity\n- user or product impact\n- leverage across future work\n- fit of the supplied insight\n- implementation tractability\n- evidence readiness\n- reusable contract value\n- collision and duplication risk\n- dependency readiness\n- proof attainability\nExplain the weights used.\nApply penalties for:\n- unclear authority\n- duplicate implementation risk\n- blocked environment\n- stale or conflicted branch floor\n- missing source evidence\n- unsafe runtime dependency\n- work already owned by another active lane\nOUTPUT ORDER — LAUNCH ORDER FIRST\n1. LAUNCH ORDER\nPut the recommended repository order at the very top.\nName the first repository, why it wins, the proof gate that unlocks the next repository, and any parallel-safe repository group.\nNumber the repo-specific panels exactly as they will appear.\nDisplay all panels in this exact order.\nDo not output a different panel order.\n2. COMPACT PORTFOLIO PREAMBLE\nSummarize the insight being routed, candidate repositories, excluded scope, scoring basis, and proof ceiling.\nDo not output a shared prompt fragment that must be copied separately.\n3. REPOSITORY PANELS\nCreate one self-contained copyable writing panel per selected repository.\nEach panel must have its own copy control.\nEach panel must include:\n- repository and local path if known\n- branch or proposed branch\n- priority rank and gap being closed\n- why this repository is now\n- owned and forbidden scope\n- read-first files\n- exact expected artifacts\n- harness, agent-harness, application-logic, and integration ownership\n- numbered tasks\n- safety and proof boundary\n- targeted validation\n- commit, push, and PR contract when implementation is intended\n- final response contract\n- exact next command\nPanels must appear in the same order as LAUNCH ORDER.\nDo not combine repositories into one implementation panel unless one cross-repo contract requires synchronized changes.\n4. PORTFOLIO RANKING TABLE\nAfter the panels, provide every candidate repository, scores, weighted total, confidence, blocker, best-fit insight, and disposition.\nUse dispositions:\n- launch first\n- launch after gate\n- parallel safe\n- defer\n- reject for this insight\n- insufficient evidence\n5. DECISION EXPLANATION\nState:\n- why the top repository outranks the largest raw gap when those differ\n- which evidence could change the ranking\n- which insight should not be copied across repositories\n- canonical donor and consumer ownership\n- collision risks and shared surfaces\nQUALITY RULES\nPrefer a defensible first move over a broad portfolio essay.\nDo not fabricate repository facts.\nDo not let prompts become the only implementation of product logic.\nDo not claim implementation or runtime proof from portfolio analysis."
+    }
+  ]
+}
