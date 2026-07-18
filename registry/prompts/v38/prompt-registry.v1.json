@@ -437,52 +437,100 @@
   ],
   "promptShards": [
     {
-      "range": "P00-P03",
-      "path": "shards/prompts-P00-P03.json",
-      "sha256": "3b167d7c9c5e6350407d9ee9a67021eb5ffe5f58ecda1442a7a40d06caac1e97",
+      "range": "P00-P01",
+      "path": "shards/prompts-P00-P01.json",
+      "sha256": "18ef7853c44d0e7379aabcfcde2fd6f08792670f1c2e4865111c115b4dc6c23a",
+      "promptCount": 2
+    },
+    {
+      "range": "P02-P02",
+      "path": "shards/prompts-P02-P02.json",
+      "sha256": "34f0f51f97470f40db4d0d0a0a47074e59de0a1499e552461d4b8b86b1d445f0",
+      "promptCount": 1
+    },
+    {
+      "range": "P03-P03",
+      "path": "shards/prompts-P03-P03.json",
+      "sha256": "9d4a533669724ff1f26deb6fc628f622e43a063646d5ce81faa857ec5a451cc5",
+      "promptCount": 1
+    },
+    {
+      "range": "P04-P04",
+      "path": "shards/prompts-P04-P04.json",
+      "sha256": "3b9b1baae530bb3748b356155cecdcbc6ac4c12880004723df780bd1075cdd08",
+      "promptCount": 1
+    },
+    {
+      "range": "P05-P05",
+      "path": "shards/prompts-P05-P05.json",
+      "sha256": "cfd9e641ffc95a4cde132e64409a09956d5167aa1a5baea2a16f519372b3b9bd",
+      "promptCount": 1
+    },
+    {
+      "range": "P06-P07",
+      "path": "shards/prompts-P06-P07.json",
+      "sha256": "e870935b8fe30f66cfdd75b734134ba29c86f7cd60bd59b0aa1363228e6c23ae",
+      "promptCount": 2
+    },
+    {
+      "range": "P08-P12",
+      "path": "shards/prompts-P08-P12.json",
+      "sha256": "c7ed0c7e82d26fa3bf38370ad5490a9de247866bb203858ea3f273e4f1c7df99",
+      "promptCount": 5
+    },
+    {
+      "range": "P13-P16",
+      "path": "shards/prompts-P13-P16.json",
+      "sha256": "654f90160a3a5b733e7306be2701191afe106a481121b28e736dc792f8975885",
       "promptCount": 4
     },
     {
-      "range": "P04-P06",
-      "path": "shards/prompts-P04-P06.json",
-      "sha256": "17f9eafea85832b686227ba756dfe3a3cfd54b0907e402046c9d23d51b8e04cd",
-      "promptCount": 3
-    },
-    {
-      "range": "P07-P13",
-      "path": "shards/prompts-P07-P13.json",
-      "sha256": "afc1343f4b87d5634d68f77b7c9644cad46428cce4f983694bbe0e66072151a2",
-      "promptCount": 7
-    },
-    {
-      "range": "P14-P20",
-      "path": "shards/prompts-P14-P20.json",
-      "sha256": "1aaa4e0380fd2c7c688bd456feed933811e57754b0e1a3d4bd79cfe86a22c729",
-      "promptCount": 7
-    },
-    {
-      "range": "P21-P23",
-      "path": "shards/prompts-P21-P23.json",
-      "sha256": "61f490c7540104ea67e7b67ac8aa3a15aeea09672188c04d68c3185e214ca27c",
-      "promptCount": 3
-    },
-    {
-      "range": "P24-P27",
-      "path": "shards/prompts-P24-P27.json",
-      "sha256": "c4c3edca2717c72c54c59dab4edd9462803e09db0a212cef3ac7734e6599eef8",
+      "range": "P17-P20",
+      "path": "shards/prompts-P17-P20.json",
+      "sha256": "12eb1535aaa9c004067246bac592fbd201e1988b07d9c9f2ce9fb8118cd87473",
       "promptCount": 4
     },
     {
-      "range": "P28-P36",
-      "path": "shards/prompts-P28-P36.json",
-      "sha256": "689fc9668d52bb6ab212f4e3f59da668567c4ef1b7e3727b3c29948e3c7706c8",
-      "promptCount": 9
+      "range": "P21-P22",
+      "path": "shards/prompts-P21-P22.json",
+      "sha256": "d775280c2ff753fc0b2ae16a99829da8c8c0f41d09c0a3c9bac9225c0d75ea8a",
+      "promptCount": 2
     },
     {
-      "range": "P37-P42",
-      "path": "shards/prompts-P37-P42.json",
-      "sha256": "97f326e140bca5c04ffdff795fa9d9c173bd301d36e316cdb1876ccc6c80da42",
-      "promptCount": 6
+      "range": "P23-P24",
+      "path": "shards/prompts-P23-P24.json",
+      "sha256": "f54fba9bb08b101d91880bb49e86247bac8c572b107f9939f3b1a662b7c70eef",
+      "promptCount": 2
+    },
+    {
+      "range": "P25-P26",
+      "path": "shards/prompts-P25-P26.json",
+      "sha256": "111c75223747ea9de3efec665bd2a59d58afbe6c8ba68a84a6ebe0f0007d037c",
+      "promptCount": 2
+    },
+    {
+      "range": "P27-P31",
+      "path": "shards/prompts-P27-P31.json",
+      "sha256": "c8c6049a88cc46a9b413c9fe467125e16899f3417875019bd031c5a101f76a59",
+      "promptCount": 5
+    },
+    {
+      "range": "P32-P36",
+      "path": "shards/prompts-P32-P36.json",
+      "sha256": "c48e5cdc948602d0d012c3dbf26def92d577e2ffd3a80ceb7169eb6332fffd5c",
+      "promptCount": 5
+    },
+    {
+      "range": "P37-P39",
+      "path": "shards/prompts-P37-P39.json",
+      "sha256": "a6a7cd5f5e6be336346f574f34bf79df2b925f6911fc95cef3101f74b67e6d86",
+      "promptCount": 3
+    },
+    {
+      "range": "P40-P42",
+      "path": "shards/prompts-P40-P42.json",
+      "sha256": "5e05f91ce2aea939631d0424721ce8dc6a0c0aa06471a9a31650031c5b1c51f5",
+      "promptCount": 3
     },
     {
       "range": "P43-P44",
