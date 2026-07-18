@@ -207,12 +207,38 @@ def _apply_prompt_library_navigation(root: ET.Element) -> dict[str, object]:
     if not prompt_rows:
         return {"prompt_count": 0, "cadence": None, "linked_rows": []}
     rows = _row_lookup(root)
+    if 1 not in rows:
+        raise ValueError("Prompt Library navigation requires a header row")
     footer_candidates = [row for row in rows if row > prompt_rows[-1]]
-    if not footer_candidates:
-        raise ValueError("Prompt Library navigation requires a footer row after the prompts")
-    footer_row = max(footer_candidates)
-    if 1 not in rows or footer_row not in rows:
-        raise ValueError("Prompt Library navigation requires header and footer rows")
+    if footer_candidates:
+        footer_row = max(footer_candidates)
+    else:
+        footer_row = prompt_rows[-1] + 1
+        template = rows[prompt_rows[-1]]
+        attrs = dict(template.attrib)
+        attrs["r"] = str(footer_row)
+        footer = ET.Element(f"{{{MAIN_NS}}}row", attrs)
+        template_cells = {
+            _cell_parts(cell.attrib["r"])[0]: cell
+            for cell in template.findall("m:c", NS)
+            if cell.attrib.get("r")
+        }
+        for column in _PROMPT_LIBRARY_EDGE_COLUMNS:
+            style = template_cells.get(column).attrib.get("s") if template_cells.get(column) is not None else None
+            footer.append(_impl._new_text_cell(f"{column}{footer_row}", style, ""))
+        b_style = template_cells.get("B").attrib.get("s") if template_cells.get("B") is not None else None
+        footer.insert(1, _impl._new_text_cell(f"B{footer_row}", b_style, ""))
+        sheet_data = root.find("m:sheetData", NS)
+        if sheet_data is None:
+            raise ValueError("Prompt Library has no sheetData")
+        sheet_data.append(footer)
+        rows[footer_row] = footer
+        dimension = root.find("m:dimension", NS)
+        if dimension is not None:
+            original_ref = dimension.attrib.get("ref", "A1:P1")
+            end_ref = original_ref.split(":", 1)[-1]
+            end_column, _ = _cell_parts(end_ref)
+            dimension.attrib["ref"] = f"A1:{end_column}{footer_row}"
 
     cadence = _navigation_cadence(len(prompt_rows))
     linked_rows = prompt_rows[::cadence]
