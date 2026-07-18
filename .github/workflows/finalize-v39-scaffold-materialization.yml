@@ -200,17 +200,23 @@ jobs:
           test_path.write_text(tests, encoding='utf-8')
           PY
 
-      - name: Validate repair
-        shell: bash
+      - name: Compile repaired Python
         run: |
-          set -euo pipefail
           python -m py_compile \
             triage/prompt_kit_v39_ooxml_base.py \
             tests/test_prompt_kit_v39_visual_coordination.py
-          python -m pytest tests/test_prompt_kit_v39_visual_coordination.py -q
-          python -m pytest tests/test_prompt_kit_v39_*.py tests/test_prompt_kit_visual_contract.py -q
-          python -m triage.prompt_kit_visual_contract --json
-          git diff --check
+
+      - name: Run focused scaffold regression
+        run: python -m pytest tests/test_prompt_kit_v39_visual_coordination.py -q
+
+      - name: Run full V39 contracts
+        run: python -m pytest tests/test_prompt_kit_v39_*.py tests/test_prompt_kit_visual_contract.py -q
+
+      - name: Validate visual policy
+        run: python -m triage.prompt_kit_visual_contract --json
+
+      - name: Check diff hygiene
+        run: git diff --check
 
       - name: Commit repair and remove trigger
         shell: bash
