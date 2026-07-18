@@ -50,7 +50,19 @@ jobs:
       - name: Test One Marcus filename date inference
         run: python -m pytest tests/test_one_marcus_recon.py::test_infers_recon_update_date_from_filename --tb=short -q
 
-      - name: Test One Marcus stable tab rename
+      - name: Test One Marcus source tab selection
+        run: python -m pytest tests/test_one_marcus_recon_rename_contract.py::test_source_tab_selection_prefers_only_dated_candidate --tb=short -q
+
+      - name: Test One Marcus rename report
+        run: python -m pytest tests/test_one_marcus_recon_rename_contract.py::test_run_recon_reports_stable_tab_rename --tb=short -q
+
+      - name: Test One Marcus stable tab output
+        run: python -m pytest tests/test_one_marcus_recon_rename_contract.py::test_output_workbook_contains_stable_tab --tb=short -q
+
+      - name: Test One Marcus stale tab removal
+        run: python -m pytest tests/test_one_marcus_recon_rename_contract.py::test_output_workbook_removes_stale_tab --tb=short -q
+
+      - name: Test One Marcus stable tab rename aggregate
         run: python -m pytest tests/test_one_marcus_recon.py::test_renames_part_number_tab_to_stable_name --tb=short -q
 
       - name: Test One Marcus baseline comparison
