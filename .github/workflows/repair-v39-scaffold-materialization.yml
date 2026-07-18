@@ -211,7 +211,7 @@ jobs:
                       if cell is not None:
                           existing_count += 1
               assert existing_count > 0, f"no cells found in scaffold range for sheet {sid}"
-          '''
+          '''.replace('              for row_number', '            for row_number').replace('                  row =', '                row =').replace('                  if row is None:', '                if row is None:').replace('                      continue', '                    continue').replace('                  for col in cols:', '                for col in cols:').replace('                      cell =', '                    cell =').replace('                      if cell is not None:', '                    if cell is not None:').replace('                          existing_count += 1', '                        existing_count += 1').replace('              assert existing_count', '            assert existing_count')
           new_count = '''            expected_refs = {
                   f"{col}{row_number}"
                   for row_number in range(top, bottom + 1)
