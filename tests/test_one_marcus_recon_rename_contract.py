@@ -9,6 +9,7 @@ from triage.one_marcus_recon.exporter import run_recon
 from triage.one_marcus_recon.package_cleanup import Package
 
 STALE_TAB = "5-07-2026 Part Numbers"
+EXPECTED_RENAME = f"{STALE_TAB} -> {PART_NUMBERS_SHEET}"
 
 
 def _run(tmp_path):
@@ -37,11 +38,39 @@ def test_source_tab_selection_prefers_only_dated_candidate(tmp_path) -> None:
     ) == STALE_TAB
 
 
-def test_run_recon_reports_stable_tab_rename(tmp_path) -> None:
+def test_xml_rename_function_changes_source_tab(tmp_path) -> None:
+    source = fx.make_stale_recon(str(tmp_path / "1 Marcus Recon Integrated 5-28-2026.xlsx"))
+    workbook_xml = Package.from_path(source).text("xl/workbook.xml")
+
+    renamed_xml, changed = fr.rename_tab(workbook_xml, STALE_TAB, PART_NUMBERS_SHEET)
+
+    assert changed is True
+    assert PART_NUMBERS_SHEET in fr.workbook_sheet_names(renamed_xml)
+    assert STALE_TAB not in fr.workbook_sheet_names(renamed_xml)
+
+
+def test_run_recon_sets_final_stable_tab(tmp_path) -> None:
     _source, _output, result = _run(tmp_path)
 
     assert result.report.final_part_number_tab == PART_NUMBERS_SHEET
-    assert result.report.renamed_tabs == [f"{STALE_TAB} -> {PART_NUMBERS_SHEET}"]
+
+
+def test_run_recon_records_a_rename(tmp_path) -> None:
+    _source, _output, result = _run(tmp_path)
+
+    assert result.report.renamed_tabs
+
+
+def test_run_recon_records_expected_rename(tmp_path) -> None:
+    _source, _output, result = _run(tmp_path)
+
+    assert EXPECTED_RENAME in result.report.renamed_tabs
+
+
+def test_run_recon_records_only_expected_rename(tmp_path) -> None:
+    _source, _output, result = _run(tmp_path)
+
+    assert result.report.renamed_tabs == [EXPECTED_RENAME]
 
 
 def test_output_workbook_contains_stable_tab(tmp_path) -> None:
