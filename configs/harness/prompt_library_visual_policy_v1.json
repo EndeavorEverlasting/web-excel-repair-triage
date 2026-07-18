@@ -25,7 +25,9 @@
     },
     "scaffold_fill": {
       "rgb": "F8FAFC",
-      "description": "Neutral configurable scaffold to prove complete interior body-range ownership without claiming a final dark palette."
+      "description": "Neutral configurable scaffold to prove complete interior body-range ownership without claiming a final dark palette.",
+      "materialize_missing_cells": true,
+      "validation_requires_materialized_cells": true
     },
     "range_rules": {
       "top_nav_row": "lowest row containing a HYPERLINK formula whose location references Prompt_Library",
@@ -38,7 +40,8 @@
       "no_hyperlink_to_prompt_library",
       "single_navigation_row_ambiguous_range",
       "sheet_has_no_dimension",
-      "hyperlinked_formula_references_different_target"
+      "hyperlinked_formula_references_different_target",
+      "missing_cell_inside_claimed_scaffold_range"
     ]
   },
   "technician_view_profile": {
@@ -138,7 +141,7 @@
     },
     "Violet": {
       "fill": "F3E8FF",
-      "text": "6B21A8"
+      "text": "6B21B6"
     },
     "Cream": {
       "fill": "F7E6C4",
