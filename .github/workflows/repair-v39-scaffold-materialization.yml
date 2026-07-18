@@ -1,6 +1,13 @@
 name: Repair V39 scaffold materialization
 
 on:
+  pull_request:
+    branches:
+      - feat/prompt-kit-v39-segmented
+    types:
+      - opened
+      - synchronize
+      - reopened
   push:
     branches:
       - repair/v39-structural-visual-contract
@@ -10,7 +17,7 @@ permissions:
 
 jobs:
   repair:
-    if: ${{ !contains(github.event.head_commit.message, 'materialize scaffold cells across prompt ranges') }}
+    if: ${{ github.event_name == 'pull_request' || !contains(github.event.head_commit.message, 'materialize scaffold cells across prompt ranges') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
