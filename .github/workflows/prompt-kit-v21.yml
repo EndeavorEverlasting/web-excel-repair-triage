@@ -25,6 +25,7 @@ jobs:
           python -m pytest \
             tests/test_prompt_kit_v39_generator.py \
             tests/test_prompt_kit_v39_library_footer.py \
+            tests/test_prompt_kit_v39_library_navigation.py \
             tests/test_prompt_kit_v39_namespace_prefixes.py \
             tests/test_prompt_kit_v39_public_surface.py \
             -q --junitxml=v39-segmented-junit.xml
