@@ -20,13 +20,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip --quiet
           if [ -f requirements.txt ]; then
-            python -m pip install -r requirements.txt
+            python -m pip install -r requirements.txt --quiet
           else
-            python -m pip install openpyxl
+            python -m pip install openpyxl --quiet
           fi
-          python -m pip install pytest
+          python -m pip install pytest --quiet
 
       - name: Import artifact engines
         run: |
@@ -35,20 +35,45 @@ jobs:
       - name: Gitignore hygiene
         run: python -m triage.gitignore_hygiene
 
-      - name: Run artifact engine tests
+      - name: Test Cybernet targets
+        run: python -m pytest tests/test_cybernet_targets.py --tb=short -q
+
+      - name: Test Neuron track hours
+        run: python -m pytest tests/test_nw_prj_neuron_track_hours.py --tb=short -q
+
+      - name: Test Neuron track hours Bonita
+        run: python -m pytest tests/test_nw_prj_neuron_track_hours_bonita.py --tb=short -q
+
+      - name: Test admin billing summary
+        run: python -m pytest tests/test_admin_billing_summary.py --tb=short -q
+
+      - name: Test One Marcus reconciliation
         run: |
           python -m pytest \
-            tests/test_cybernet_targets.py \
-            tests/test_nw_prj_neuron_track_hours.py \
-            tests/test_nw_prj_neuron_track_hours_bonita.py \
-            tests/test_admin_billing_summary.py \
             tests/test_one_marcus_recon.py \
-            tests/test_one_marcus_generate.py \
-            tests/test_one_marcus_immutability.py \
-            tests/test_sidecar_html_portal.py \
-            tests/test_artifact_compare.py \
-            tests/test_roster_log_compare.py \
-            tests/test_same_family_compare.py \
-            tests/test_gitignore_hygiene.py \
-            tests/test_roster_log_review_queue.py \
-            -q
+            tests/test_one_marcus_recon_rename_contract.py \
+            --tb=short -q
+
+      - name: Test One Marcus generation
+        run: python -m pytest tests/test_one_marcus_generate.py --tb=short -q
+
+      - name: Test One Marcus immutability
+        run: python -m pytest tests/test_one_marcus_immutability.py --tb=short -q
+
+      - name: Test sidecar HTML portal
+        run: python -m pytest tests/test_sidecar_html_portal.py --tb=short -q
+
+      - name: Test artifact compare
+        run: python -m pytest tests/test_artifact_compare.py --tb=short -q
+
+      - name: Test roster log compare
+        run: python -m pytest tests/test_roster_log_compare.py --tb=short -q
+
+      - name: Test same-family compare
+        run: python -m pytest tests/test_same_family_compare.py --tb=short -q
+
+      - name: Test Gitignore hygiene contracts
+        run: python -m pytest tests/test_gitignore_hygiene.py --tb=short -q
+
+      - name: Test roster log review queue
+        run: python -m pytest tests/test_roster_log_review_queue.py --tb=short -q

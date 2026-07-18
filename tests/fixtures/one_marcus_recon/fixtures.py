@@ -29,6 +29,7 @@ _CALC_CHAIN = (
     '<calcChain xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
     '<c r="A1" i="1"/></calcChain>'
 )
+_REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 
 
 def _build_base(part_numbers_titles, *, with_external_formula: bool) -> bytes:
@@ -66,7 +67,7 @@ def _build_base(part_numbers_titles, *, with_external_formula: bool) -> bytes:
 
 
 def _inject_defects(data: bytes, *, add_external: bool, add_calc_chain: bool) -> bytes:
-    """Add external-link parts and/or calcChain to an openpyxl workbook."""
+    """Add valid external-link parts and/or calcChain to an openpyxl workbook."""
     with zipfile.ZipFile(io.BytesIO(data), "r") as zin:
         names = zin.namelist()
         parts = {n: zin.read(n) for n in names}
@@ -95,8 +96,8 @@ def _inject_defects(data: bytes, *, add_external: bool, add_calc_chain: bool) ->
         if "<externalReferences" not in wb:
             wb = wb.replace(
                 "</sheets>",
-                '</sheets><externalReferences><externalReference r:id="rIdExt1"/>'
-                "</externalReferences>",
+                f'</sheets><externalReferences xmlns:r="{_REL_NS}">'
+                '<externalReference r:id="rIdExt1"/></externalReferences>',
             )
             parts["xl/workbook.xml"] = wb.encode("utf-8")
 

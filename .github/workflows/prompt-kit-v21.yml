@@ -17,10 +17,24 @@ jobs:
           python-version: "3.11"
       - name: Install test dependency
         run: python -m pip install pytest
-      - name: Import validators
+      - name: Validate V38 prompt registry
+        run: python -m json.tool configs/prompt_kit/v38_prompt_assets.json
+      - name: Import validators and generators
         run: |
-          python -c "import triage.workbook_package_hygiene; import triage.copy_surface_bounds; import triage.prompt_kit_contract; import triage.prompt_kit_operability_contract; import triage.worksheet_cell_integrity; import triage.web_excel_compatibility_rules; print('prompt kit validators import ok')"
-      - name: Run prompt-kit contract suite
+          python -c "import triage.workbook_package_hygiene; import triage.copy_surface_bounds; import triage.prompt_kit_contract; import triage.prompt_kit_operability_contract; import triage.prompt_kit_copy_range_links; import triage.prompt_kit_v38_prompt_assets; import triage.prompt_kit_v38_generator; import triage.prompt_kit_v33_generator; import triage.prompt_kit_v33_ooxml; import triage.prompt_execution_surface_contract; import triage.worksheet_cell_integrity; import triage.web_excel_compatibility_rules; print('prompt kit validators and generators import ok')"
+      - name: Run prompt execution-surface contract
+        run: python -m pytest tests/test_prompt_execution_surface_contract.py -q
+      - name: Run V38 CMD launcher contracts
+        run: python -m pytest tests/test_prompt_kit_v38_cmd_launchers.py -q
+      - name: Run copy-range link contract
+        run: python -m pytest tests/test_prompt_kit_copy_range_links.py -q
+      - name: Run V38 local runtime prompt contract
+        run: python -m pytest tests/test_prompt_kit_v38_prompt_assets.py -q
+      - name: Run canonical V38 generator contract
+        run: python -m pytest tests/test_prompt_kit_v38_generator.py -q
+      - name: Run V33 compatibility generator contract
+        run: python -m pytest tests/test_prompt_kit_v33_generator.py -q
+      - name: Run remaining prompt-kit contract suite
         run: |
           python -m pytest \
             tests/test_workbook_package_hygiene.py \
@@ -39,5 +53,10 @@ jobs:
           python -m triage.copy_surface_bounds --help
           python -m triage.prompt_kit_contract --help
           python -m triage.prompt_kit_operability_contract --help
+          python -m triage.prompt_kit_copy_range_links --help
+          python -m triage.prompt_kit_v38_prompt_assets --help
+          python -m triage.prompt_kit_v38_generator --help
+          python -m triage.prompt_kit_v33_generator --help
+          python -m triage.prompt_execution_surface_contract --help
           python -m triage.worksheet_cell_integrity --help
           python -m triage.web_excel_compatibility_rules --help
