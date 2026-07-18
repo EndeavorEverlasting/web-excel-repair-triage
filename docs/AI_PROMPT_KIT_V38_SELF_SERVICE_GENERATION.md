@@ -8,38 +8,46 @@ V38 owns one bounded workbook repair: every `P##_COPY_SAFE` tab receives clickab
 
 V38 also generates a separately validated local-agent prompt support file for converting a sprint into an executable local runtime build. The prompt is geared toward Cosmos by Augment, Cursor, Codex, and comparable coding agents with local filesystem and terminal access.
 
-## Canonical commands
+## Operator launchers
 
-PowerShell:
+Users should not need to request commandlets or terminal snippets from an AI to generate or validate V38 assets.
 
-```powershell
-.\scripts\Generate-AIPromptKitV38.ps1 `
-  -Source "C:\Artifacts\AI_Harness_Prompt_Kit_v37.xlsx"
-```
+### Generate the V38 assets
 
-Double-click-compatible CMD:
+Double-click the repository-root launcher:
 
 ```text
-scripts\Generate-AIPromptKitV38.cmd "C:\Artifacts\AI_Harness_Prompt_Kit_v37.xlsx"
+Run-AIPromptKitV38.cmd
 ```
 
-Direct Python:
+The launcher:
 
-```powershell
-python -m triage.prompt_kit_v38_generator `
-  --source "C:\Artifacts\AI_Harness_Prompt_Kit_v37.xlsx" `
-  --out-dir "Outputs\prompt_kit_v38" `
-  --expected-prompt-count 45 `
-  --json
+- resolves the repository from its own `%~dp0` location;
+- accepts a V37 workbook or bundle by drag-and-drop, command-line argument, or interactive path prompt;
+- invokes the committed V38 generator;
+- preserves the generator exit code;
+- prints the exact workbook, prompt, manifest, and bundle paths;
+- pauses for Explorer users unless `WEB_EXCEL_NO_PAUSE` is set.
+
+### Sync and validate the V38 implementation
+
+Double-click:
+
+```text
+Sync-Validate-AIPromptKitV38.cmd
 ```
 
-Prompt asset only:
+The launcher refuses a dirty worktree, fetches origin, switches to the canonical V38 branch, fast-forwards only, and runs the focused V38 contract suite. This replaces the former multi-command PowerShell handoff.
 
-```powershell
-python -m triage.prompt_kit_v38_prompt_assets `
-  --out-dir "Outputs\prompt_kit_v38" `
-  --json
+### Automation and advanced use
+
+The root asset launcher also accepts optional arguments:
+
+```text
+Run-AIPromptKitV38.cmd <V37-workbook-or-bundle> [output-directory] [expected-prompt-count]
 ```
+
+The implementation-level entrypoints remain available under `scripts/` and `triage/`, but they are not the normal operator path.
 
 ## Source contract
 
@@ -50,13 +58,14 @@ The workbook source may be:
 
 The workbook source is never overwritten. The default output root is `Outputs/prompt_kit_v38/`.
 
-The local-runtime prompt source is tracked at:
+The local-runtime prompt source and declarative registry are tracked at:
 
 ```text
 prompts/v38/local-runtime-build.md
+configs/prompt_kit/v38_prompt_assets.json
 ```
 
-The source prompt is validated before it is copied into the generated delivery artifacts.
+The registry and source prompt are validated before generated delivery artifacts are written.
 
 ## Generated artifacts
 
@@ -67,7 +76,7 @@ AI_Harness_Prompt_Kit_v38_manifest.json
 AI_Harness_Prompt_Kit_v38_bundle.zip
 ```
 
-Support files from an input bundle are preserved in the output bundle unless their names collide with canonical generated artifacts. Workbook binaries and operator-local reports remain generated outputs and must not be committed.
+Support files from an input bundle are preserved unless their names collide with canonical generated artifacts. Workbook binaries and operator-local reports remain generated outputs and must not be committed.
 
 ## Local runtime build prompt contract
 
@@ -101,7 +110,7 @@ Forbidden workbook changes include workbook metadata, relationships, content typ
 
 Excel automation, LibreOffice, `openpyxl`, and any other whole-workbook serializer are forbidden for this conversion.
 
-The new local-runtime prompt is a delivery-bundle support file. It does not add a worksheet, change workbook topology, or weaken the accepted V37-to-V38 package boundary.
+The local-runtime prompt is a delivery-bundle support file. It does not add a worksheet, change workbook topology, or weaken the accepted V37-to-V38 package boundary.
 
 ## Fail-closed gates
 
@@ -115,32 +124,24 @@ Generation fails when:
 - a non-prompt worksheet part changes;
 - calculation-chain identities are stale or incomplete;
 - a second workbook generation pass is not byte-identical;
+- the declarative prompt registry is malformed or inconsistent;
 - the local-runtime prompt omits correct-directory discipline;
 - the local-runtime prompt does not distinguish runtime construction from factoring;
 - the local-runtime prompt does not require local execution after script creation;
 - required commit, push, validation, safety, or proof-ceiling language is absent;
 - deferred-work language such as `sit tight` is introduced.
 
+The sync launcher also fails closed before fetching when the worktree contains local changes.
+
 ## Validation
 
-```powershell
-python -m py_compile `
-  triage/prompt_kit_v38_prompt_assets.py `
-  triage/prompt_kit_v38_generator.py `
-  tests/test_prompt_kit_v38_prompt_assets.py `
-  tests/test_prompt_kit_v38_generator.py
+The normal Windows validation surface is:
 
-python -m pytest `
-  tests/test_prompt_kit_copy_range_links.py `
-  tests/test_prompt_kit_v38_prompt_assets.py `
-  tests/test_prompt_kit_v38_generator.py `
-  -q
-
-python -m triage.prompt_kit_v38_prompt_assets --help
-python -m triage.prompt_kit_v38_generator --help
+```text
+Sync-Validate-AIPromptKitV38.cmd
 ```
 
-Then run the existing package, worksheet, copy-surface, operability, and Web Excel compatibility validators against the generated workbook.
+CI additionally runs the prompt registry, CMD launcher contracts, copy-range links, V38 prompt assets, V38 generator, V33 compatibility, remaining prompt-kit validators, and CLI smoke checks.
 
 ## Compatibility posture
 
@@ -150,4 +151,4 @@ The V38 runtime prompt is emitted outside the workbook because the field-open V3
 
 ## Proof ceiling
 
-Repository tests and the V38 manifest may prove exact formula generation, package boundaries, calculation-chain integrity, output naming, bundle construction, local-runtime prompt validation, and byte idempotence. They do not prove that Cosmos by Augment, Cursor, Codex, or another local agent successfully executed a real repository sprint. Local agent execution, Excel for Web opening, and click-selection behavior remain separate runtime and field gates.
+Repository tests and the V38 manifest may prove exact formula generation, package boundaries, calculation-chain integrity, output naming, bundle construction, prompt-registry validation, CMD launcher contracts, local-runtime prompt validation, and byte idempotence. They do not prove that Cosmos by Augment, Cursor, Codex, or another local agent successfully executed a real repository sprint. Local agent execution, Excel for Web opening, and click-selection behavior remain separate runtime and field gates.
