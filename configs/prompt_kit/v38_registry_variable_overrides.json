@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "ai-harness-prompt-variable-overrides/v1",
+  "kitVersion": "v38",
+  "variables": [
+    {
+      "name": "xyz_actionable_insights",
+      "meaning": "actionable insights or reusable findings to route",
+      "example": "prompt-kit registry extraction and selector logic"
+    },
+    {
+      "name": "xyz_app_context",
+      "meaning": "current application context, repository state, and operator constraints",
+      "example": "Windows-first AgentSwitchboard with connected GitHub"
+    },
+    {
+      "name": "xyz_app_name",
+      "meaning": "application or tool being taught",
+      "example": "AgentSwitchboard"
+    },
+    {
+      "name": "xyz_audiences",
+      "meaning": "target learner or operator audiences",
+      "example": "technicians, project managers, repository maintainers"
+    },
+    {
+      "name": "xyz_available_evidence",
+      "meaning": "available docs, screenshots, repositories, logs, or runtime proof",
+      "example": "README, current main, launcher logs"
+    },
+    {
+      "name": "xyz_branch_pr_sprint",
+      "meaning": "known branch, pull request, or sprint identifier",
+      "example": "feat/v38-prompt-registry-consumer / PR #24"
+    },
+    {
+      "name": "xyz_candidate_repositories_or_org",
+      "meaning": "candidate repositories or organization to prioritize",
+      "example": "EndeavorEverlasting/AgentSwitchboard, EndeavorEverlasting/web-excel-repair-triage"
+    },
+    {
+      "name": "xyz_constraints",
+      "meaning": "material safety, time, tooling, platform, or scope constraints",
+      "example": "no secrets; Windows-first; no workbook binaries in Git"
+    },
+    {
+      "name": "xyz_context_path",
+      "meaning": "path to a context, plan, or handoff artifact",
+      "example": "docs/handoff/current-sprint.md"
+    },
+    {
+      "name": "xyz_current_circumstances",
+      "meaning": "current blockers, urgency, available tools, and operator circumstances",
+      "example": "limited provider quota; clean main; overnight run desired"
+    },
+    {
+      "name": "xyz_device_os_access",
+      "meaning": "devices, operating systems, and access available to the operator",
+      "example": "Windows 11 workstation with PowerShell 7 and WSL Ubuntu"
+    },
+    {
+      "name": "xyz_experience_level",
+      "meaning": "operator experience level for the tutorial",
+      "example": "intermediate IT project manager and repository operator"
+    },
+    {
+      "name": "xyz_local_path",
+      "meaning": "verified local application or repository path",
+      "example": "C:\\Users\\Cheex\\Desktop\\dev\\AgentSwitchboard"
+    },
+    {
+      "name": "xyz_runtime_sprint",
+      "meaning": "runtime-proof sprint name and exact behavior under test",
+      "example": "bounded DeepSeek-through-OpenCode disposable-repository proof"
+    },
+    {
+      "name": "xyz_source_material",
+      "meaning": "source prompts, notes, handoffs, or requirements to consolidate",
+      "example": "P01, P07, and current sprint handoff"
+    },
+    {
+      "name": "xyz_target_artifact",
+      "meaning": "actual artifact or deliverable that must be produced",
+      "example": "versioned prompt-registry JSON and selector CLI"
+    },
+    {
+      "name": "xyz_user_goal",
+      "meaning": "concrete outcome the user wants from the application",
+      "example": "select and render the correct prompt without manually browsing the workbook"
+    }
+  ]
+}
