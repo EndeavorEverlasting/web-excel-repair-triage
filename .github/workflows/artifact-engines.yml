@@ -47,8 +47,38 @@ jobs:
       - name: Test admin billing summary
         run: python -m pytest tests/test_admin_billing_summary.py --tb=short -q
 
-      - name: Test One Marcus reconciliation
-        run: python -m pytest tests/test_one_marcus_recon.py --tb=short -q
+      - name: Test One Marcus filename date inference
+        run: python -m pytest tests/test_one_marcus_recon.py::test_infers_recon_update_date_from_filename --tb=short -q
+
+      - name: Test One Marcus stable tab rename
+        run: python -m pytest tests/test_one_marcus_recon.py::test_renames_part_number_tab_to_stable_name --tb=short -q
+
+      - name: Test One Marcus formula relink
+        run: python -m pytest tests/test_one_marcus_recon.py::test_rewrites_formulas_from_old_part_number_tab --tb=short -q
+
+      - name: Test One Marcus external formula localization
+        run: python -m pytest tests/test_one_marcus_recon.py::test_localizes_external_part_number_formulas --tb=short -q
+
+      - name: Test One Marcus external link cleanup
+        run: python -m pytest tests/test_one_marcus_recon.py::test_removes_external_link_parts_after_localization --tb=short -q
+
+      - name: Test One Marcus calc chain cleanup
+        run: python -m pytest tests/test_one_marcus_recon.py::test_removes_calc_chain_after_formula_patch --tb=short -q
+
+      - name: Test One Marcus sheet order preservation
+        run: python -m pytest tests/test_one_marcus_recon.py::test_preserves_unrelated_tabs_and_sheet_order --tb=short -q
+
+      - name: Test One Marcus dry run
+        run: python -m pytest tests/test_one_marcus_recon.py::test_dry_run_reports_without_output_write --tb=short -q
+
+      - name: Test One Marcus ambiguous date handling
+        run: python -m pytest tests/test_one_marcus_recon.py::test_warns_on_ambiguous_date_candidates --tb=short -q
+
+      - name: Test One Marcus Web Excel preflight
+        run: python -m pytest tests/test_one_marcus_recon.py::test_webexcel_preflight_rejects_stale_refs_and_stopship_tokens --tb=short -q
+
+      - name: Test One Marcus real workbook regression
+        run: python -m pytest tests/test_one_marcus_recon.py::test_real_workbook_idempotent_regression --tb=short -q
 
       - name: Test One Marcus generation
         run: python -m pytest tests/test_one_marcus_generate.py --tb=short -q
