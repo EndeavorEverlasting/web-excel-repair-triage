@@ -49,12 +49,15 @@ jobs:
           cat /tmp/v39-harness-payload-diagnostic.log
           echo "status=$status" >> "$GITHUB_OUTPUT"
           exit 0
-      - name: Upload diagnostic log
+      - name: Upload diagnostic payload and log
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: v39-harness-payload-diagnostic
-          path: /tmp/v39-harness-payload-diagnostic.log
+          path: |
+            /tmp/v39-harness-payload-diagnostic.log
+            /tmp/v39-harness-patch.b64
+            /tmp/v39-harness-patch.tar.xz
           if-no-files-found: error
       - name: Fail when payload is invalid
         if: steps.diagnostic.outputs.status != '0'
