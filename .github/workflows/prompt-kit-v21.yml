@@ -24,6 +24,7 @@ jobs:
         run: |
           python -m pytest \
             tests/test_prompt_kit_v39_generator.py \
+            tests/test_prompt_kit_v39_generated_navigation.py \
             tests/test_prompt_kit_v39_library_footer.py \
             tests/test_prompt_kit_v39_library_navigation.py \
             tests/test_prompt_kit_v39_namespace_prefixes.py \
