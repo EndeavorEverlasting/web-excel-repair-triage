@@ -22,6 +22,8 @@ jobs:
       - name: Import validators and generators
         run: |
           python -c "import triage.workbook_package_hygiene; import triage.copy_surface_bounds; import triage.prompt_kit_contract; import triage.prompt_kit_operability_contract; import triage.prompt_kit_copy_range_links; import triage.prompt_kit_v38_prompt_assets; import triage.prompt_kit_v38_generator; import triage.prompt_kit_v33_generator; import triage.prompt_kit_v33_ooxml; import triage.worksheet_cell_integrity; import triage.web_excel_compatibility_rules; print('prompt kit validators and generators import ok')"
+      - name: Run V38 CMD launcher contracts
+        run: python -m pytest tests/test_prompt_kit_v38_cmd_launchers.py -q
       - name: Run copy-range link contract
         run: python -m pytest tests/test_prompt_kit_copy_range_links.py -q
       - name: Run V38 local runtime prompt contract
