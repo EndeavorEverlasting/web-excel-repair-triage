@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "ai-harness-prompt-record-shard/v1",
+  "kitVersion": "v38",
+  "promptRange": "P43-P44",
+  "prompts": [
+    {
+      "id": "P43",
+      "sequence": 43,
+      "name": "GNHF Night Run Recovery",
+      "moment": "GNHF Night Run Recovery",
+      "promptType": "RECOVER + BUILD",
+      "promptClass": "GNHF / NO-PROGRESS RECOVERY",
+      "executionSurface": "gnhf_launch_artifact",
+      "sprintPathRole": "Recover a failed or interrupted night run without repeating the same failure",
+      "useForProgress": "YES",
+      "useThisWhen": "A run stopped on spawn ENOENT, quota, authentication, timeout, no-diff iterations, failed validation, or commit finalization.",
+      "doNotUseWhen": "No preserved worktree or run evidence exists.",
+      "inspectFirst": "Exact worktree, gnhf.log, notes, launcher summary, branch refs, diff, queue, report, and agent command evidence.",
+      "expectedOutput": "A committed recovery report and at most one safe continuation or finalization commit.",
+      "nextStep": "Resume with a proven agent or use P44 to close the preserved state.",
+      "acceptanceGate": "No reset, clean, branch deletion, or blind rerun; the original failure is classified before continuation.",
+      "mutatesRepository": "Yes",
+      "authority": "Exact preserved worktree and recovery artifacts",
+      "proofCeiling": "Recovery and preserved-state proof; no claim beyond observed continuation.",
+      "color": "Violet",
+      "copySafeSheet": "P43_COPY_SAFE",
+      "copyRange": "A1:A55",
+      "requiredVariables": [
+        "xyz_gnhf_agent_spec",
+        "xyz_gnhf_worktree_or_branch",
+        "xyz_night_report_path",
+        "xyz_run_evidence",
+        "xyz_run_symptom"
+      ],
+      "textSha256": "54754635200b137043998b6a8b64c6af083b08808ffc328aed7439dde6da4ec5",
+      "text": "gnhf `\n--agent \"xyz_gnhf_agent_spec\" `\n--current-branch `\n--max-iterations 4 `\n--max-tokens 320000 `\n--prevent-sleep on `\n--stop-when \"The failed night run is classified and preserved, a recovery report is committed, at most one safe continuation or finalization commit is made, and the worktree reaches a known state.\" `\n\"Run from: xyz_gnhf_worktree_or_branch\n\nSprint: Night run recovery\nLane: spawn, quota, auth, timeout, no-diff, validation, or finalization failure\n\nRun evidence:\n- xyz_run_evidence\n\nKnown symptom:\n- xyz_run_symptom\n\nObjective:\nInspect the exact preserved worktree and classify the failure before any retry. Preserve useful changes, commit a recovery report, and make at most one safe continuation or commit-finalization repair.\n\nInspect first:\n- git status, branch, log, diff, and worktree registry\n- .gnhf run notes and gnhf.log\n- launcher summary and route evidence when present\n- queue and night report\n- exact agent command and spawn evidence\n\nFailure classes:\n- agent command ENOENT or unsupported shim\n- authentication required\n- explicit quota exhaustion\n- rate limit or network failure\n- bounded timeout or test hang\n- no tracked diff or no commit\n- validation failure\n- commit finalization failure\n- unknown partial mutation\n\nRules:\n- Do not rerun the same agent after ENOENT without new spawn proof.\n- Do not treat quota, auth, rate limit, or network failure as code failure.\n- Do not reset, clean, delete branches, remove worktrees, or discard changes.\n- Do not start a new feature.\n- If code is safe and nearly complete, make one continuation or finalization commit.\n- Otherwise commit only xyz_night_report_path with exact evidence and next command.\n\nReport:\n- timeline and failure class\n- preserved diff and commits\n- action taken\n- remaining blocker\n- exact next agent and prompt\n- proof ceiling\n- git status\""
+    },
+    {
+      "id": "P44",
+      "sequence": 44,
+      "name": "GNHF Morning Closeout",
+      "moment": "GNHF Morning Closeout",
+      "promptType": "CLOSEOUT + VALIDATE",
+      "promptClass": "GNHF / MORNING CLOSEOUT",
+      "executionSurface": "gnhf_launch_artifact",
+      "sprintPathRole": "Reconcile overnight commits, queue state, proof, and the exact next command",
+      "useForProgress": "YES",
+      "useThisWhen": "An overnight worktree has commits, blockers, or partial progress that must be made reviewable.",
+      "doNotUseWhen": "New feature implementation is still required.",
+      "inspectFirst": "Git log and diff, queue and night report, canonical validation, worktree status, artifacts, and proof ceiling.",
+      "expectedOutput": "Committed closeout report, final validation state, clean worktree, and exact next human command.",
+      "nextStep": "Review, push, open/update a PR, or launch the next bounded queue.",
+      "acceptanceGate": "No new feature begins; all overnight work is dispositioned and process exit code is not used as success proof.",
+      "mutatesRepository": "Yes",
+      "authority": "Validation, report, and finalization of existing overnight work",
+      "proofCeiling": "Closeout and local proof only; no push, merge, or release proof.",
+      "color": "Gray",
+      "copySafeSheet": "P44_COPY_SAFE",
+      "copyRange": "A1:A48",
+      "requiredVariables": [
+        "xyz_canonical_proof",
+        "xyz_gnhf_agent_spec",
+        "xyz_gnhf_worktree_or_branch",
+        "xyz_night_closeout_path",
+        "xyz_night_queue_path",
+        "xyz_night_report_path"
+      ],
+      "textSha256": "151f89cfee1f8177661a89659f1cc4445a8cdb2c7b1178599d9b8be398b34ca8",
+      "text": "gnhf `\n--agent \"xyz_gnhf_agent_spec\" `\n--current-branch `\n--max-iterations 3 `\n--max-tokens 240000 `\n--prevent-sleep on `\n--stop-when \"All overnight commits and queue items are dispositioned, the required validation state is recorded, the closeout report is committed, and the worktree is clean.\" `\n\"Run from: xyz_gnhf_worktree_or_branch\n\nSprint: Morning closeout\nLane: existing overnight work only\n\nInputs:\n- Queue: xyz_night_queue_path\n- Night report: xyz_night_report_path\n- Closeout: xyz_night_closeout_path\n- Canonical proof: xyz_canonical_proof\n\nObjective:\nReconcile existing overnight work into a reviewable state. Do not begin another feature.\n\nTasks:\n1. Inspect git log, diff, status, queue, night report, and run evidence.\n2. Map every queue item to completed, blocked, superseded, rejected, or not attempted.\n3. Run targeted validation for changed surfaces.\n4. Run xyz_canonical_proof when required and record PASS, SKIP, or FAIL honestly.\n5. Confirm generated artifacts and secrets are not staged.\n6. Create or update xyz_night_closeout_path.\n7. Commit the closeout report and any required final queue/report corrections.\n8. End with a clean worktree.\n\nRules:\n- No new feature or broad repair begins.\n- Do not push, merge, close PRs, delete branches, release, deploy, authenticate, or mutate live targets.\n- Do not report process exit code as delivery proof.\n- Do not report skipped or unavailable checks as passes.\n- Preserve exact worktree and branch paths for human review.\n\nCloseout report:\n- starting and final HEAD\n- ordered overnight commits\n- files and queue dispositions\n- validation commands and exact results\n- artifacts and logs\n- blockers and proof ceiling\n- recommended push or PR action\n- exact next command\n- git status\""
+    }
+  ]
+}
