@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
-set "TARGET_BRANCH=feat/prompt-kit-v33-self-service-generator"
+set "TARGET_BRANCH=feat/prompt-kit-v38-self-service-generator"
 set "REPO_ROOT=%~dp0"
 for %%I in ("%REPO_ROOT%.") do set "REPO_ROOT=%%~fI"
 cd /d "%REPO_ROOT%" || (
