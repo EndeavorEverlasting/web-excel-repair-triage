@@ -47,6 +47,70 @@
     "hidden_columns_note": "Default is empty (show all columns). The operator-modified workbook contains the preferred set; inspect it to populate this profile. Columns are hidden never deleted.",
     "preservation_rule": "Hidden columns remain addressable by formulas links agents and developer tooling. Column data must never be deleted."
   },
+  "dark_theme": {
+    "schema_version": 1,
+    "description": "Accessible dark rendition for Excel-for-the-web interfaces. Canvas and content surfaces are darkened coherently with WCAG AA contrast compliance.",
+    "canvas": {
+      "fill": "1E1E2E",
+      "text": "E0E0F0",
+      "description": "Primary canvas background and default text for dark rendition."
+    },
+    "surface": {
+      "fill": "282840",
+      "text": "CCCCDD",
+      "description": "Raised surface fill for non-canvas sheet areas."
+    },
+    "link": {
+      "fill": "7EB8FF",
+      "text": "1E1E2E",
+      "description": "Hyperlink color in dark mode. Must remain visually distinct from body text."
+    },
+    "navigation": {
+      "fill": "2D2D44",
+      "text": "B0B0CC",
+      "description": "Navigation row fill and text for top/bottom prompt-tab navigation."
+    },
+    "border": {
+      "color": "4A4A66",
+      "description": "Separator and border color for dark surfaces."
+    },
+    "scaffold_fill": {
+      "rgb": "252530",
+      "description": "Dark variant of the neutral scaffold fill for body-range ownership proof."
+    },
+    "contrast_gates": {
+      "normal_text_minimum": 4.5,
+      "large_text_minimum": 3.0,
+      "fail_closed": true,
+      "description": "WCAG AA contrast thresholds. Fail closed when any registered foreground/background pair misses its required threshold."
+    },
+    "semantic_dark_palette": {
+      "Slate": { "fill": "1E293B", "text": "94A3B8" },
+      "Gray": { "fill": "2D364A", "text": "B8BFC9" },
+      "Sky": { "fill": "0C4A6E", "text": "7DD3FC" },
+      "Amber": { "fill": "78350F", "text": "FDE68A" },
+      "Blue": { "fill": "1E3A5F", "text": "93C5FD" },
+      "Green": { "fill": "14532D", "text": "86EFAC" },
+      "Rose": { "fill": "881337", "text": "FDA4AF" },
+      "Purple": { "fill": "581C87", "text": "D8B4FE" },
+      "Peach": { "fill": "7C2D12", "text": "FED7AA" },
+      "Teal": { "fill": "115E59", "text": "5EEAD4" },
+      "Lavender": { "fill": "4C1D95", "text": "C4B5FD" },
+      "Cyan": { "fill": "155E75", "text": "67E8F9" },
+      "Indigo": { "fill": "312E81", "text": "A5B4FC" },
+      "Blue-Green": { "fill": "115E59", "text": "5EEAD4" },
+      "Gold": { "fill": "78350F", "text": "FDE68A" },
+      "Sand": { "fill": "713F12", "text": "FCD34D" },
+      "Orange": { "fill": "7C2D12", "text": "FDBA74" },
+      "Emerald": { "fill": "064E3B", "text": "6EE7B7" },
+      "Coral": { "fill": "9F1239", "text": "FDA4AF" },
+      "Ocean": { "fill": "1E3A5F", "text": "93C5FD" },
+      "Mint": { "fill": "064E3B", "text": "6EE7B7" },
+      "Night": { "fill": "312E81", "text": "A5B4FC" },
+      "Violet": { "fill": "581C87", "text": "D8B4FE" },
+      "Cream": { "fill": "5C4315", "text": "FDE68A" }
+    }
+  },
   "palette": {
     "Slate": {
       "fill": "F1F5F9",

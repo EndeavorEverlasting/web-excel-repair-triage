@@ -397,3 +397,119 @@ class TestTechnicianColumnVisibility:
             assert False, "should have raised"
         except ValueError as exc:
             assert "has no cells" in str(exc).lower()
+
+
+_DARK_PALETTE_FILLS = {
+    "Cream": "5C4315",
+    "Slate": "1E293B",
+    "Sky": "0C4A6E",
+    "Amber": "78350F",
+    "Blue": "1E3A5F",
+    "Green": "14532D",
+}
+
+
+class TestWCAGContrast:
+    def test_black_white_ratio(self):
+        ratio = ooxml._wcag_contrast_ratio("000000", "FFFFFF")
+        assert 20.9 <= ratio <= 21.1, f"black/white contrast expected ~21, got {ratio}"
+
+    def test_dark_canvas_on_light_text(self):
+        ratio = ooxml._wcag_contrast_ratio("1E1E2E", "E0E0F0")
+        assert ratio >= 4.5, f"dark canvas on text contrast {ratio} < 4.5"
+
+    def test_semantic_dark_variants_pass_contrast(self):
+        pairs = [
+            ("1E293B", "94A3B8"),
+            ("2D364A", "B8BFC9"),
+            ("0C4A6E", "7DD3FC"),
+            ("78350F", "FDE68A"),
+            ("1E3A5F", "93C5FD"),
+            ("14532D", "86EFAC"),
+            ("881337", "FDA4AF"),
+            ("581C87", "D8B4FE"),
+            ("5C4315", "FDE68A"),
+        ]
+        for fill, text in pairs:
+            ratio = ooxml._wcag_contrast_ratio(fill, text)
+            assert ratio >= 4.5, f"dark semantic {fill}/{text} contrast {ratio:.2f} < 4.5"
+
+
+class TestDarkTheme:
+    def test_applies_to_all_prompt_rows(self):
+        prompts = [
+            ("P00", "P00 Cream", "Cream", _medium_prompt()),
+            ("P01", "P01 Slate", "Slate", _long_prompt()),
+            ("P02", "P02 Sky", "Sky", _short_prompt()),
+            ("P03", "P03 Amber", "Amber", _medium_prompt()),
+        ]
+        parts = _multi_prompt_parts(prompts)
+        changed, report = ooxml._apply_dark_theme(parts)
+        assert report["prompt_count"] == 4
+        for entry in report["prompts"]:
+            assert "dark_fill" in entry, f"no dark fill for {entry['sheet']}"
+            assert "dark_text" in entry, f"no dark text for {entry['sheet']}"
+
+    def test_applies_dark_tab_colors(self):
+        prompts = [
+            ("P00", "P00 Cream", "Cream", _short_prompt()),
+            ("P01", "P01 Slate", "Slate", _short_prompt()),
+        ]
+        parts = _multi_prompt_parts(prompts)
+        ooxml._apply_dark_theme(parts)
+        for sid, color in [(2, "Cream"), (3, "Slate")]:
+            root = ooxml._root(parts[f"xl/worksheets/sheet{sid}.xml"], "prompt")
+            tab = root.find("m:sheetPr/m:tabColor", ooxml.NS)
+            assert tab is not None
+            expected = _DARK_PALETTE_FILLS[color]
+            assert tab.attrib["rgb"] == f"FF{expected}", f"dark tab expected FF{expected}, got {tab.attrib['rgb']}"
+
+    def test_preserves_formulas_and_text(self):
+        prompts = [("P00", "P00 Test", "Cream", _medium_prompt())]
+        parts = _multi_prompt_parts(prompts)
+        before_root = ooxml._root(parts["xl/worksheets/sheet2.xml"], "prompt")
+        before_cells = ooxml._cells(before_root)
+        before_a1 = ooxml._cell_display(before_cells.get("A1"), ())
+        before_b1_formula = ooxml._formula(before_cells.get("B1"))
+        ooxml._apply_dark_theme(parts)
+        after_root = ooxml._root(parts["xl/worksheets/sheet2.xml"], "prompt")
+        after_cells = ooxml._cells(after_root)
+        assert ooxml._cell_display(after_cells.get("A1"), ()) == before_a1
+        assert ooxml._formula(after_cells.get("B1")) == before_b1_formula
+
+    def test_dark_theme_contrast_validator_passes(self):
+        prompts = [
+            ("P00", "P00 Cream", "Cream", _medium_prompt()),
+            ("P01", "P01 Slate", "Slate", _short_prompt()),
+        ]
+        parts = _multi_prompt_parts(prompts)
+        ooxml._apply_dark_theme(parts)
+        findings = ooxml._validate_dark_theme_contrast(parts)
+        assert findings == (), f"dark theme contrast findings: {findings}"
+
+    def test_dark_theme_all_semantic_colors(self):
+        color_labels = ["Cream", "Slate", "Sky", "Amber", "Blue", "Green", "Rose", "Purple"]
+        prompts = [(f"P{i:02d}", f"P{i:02d} {label}", label, _short_prompt()) for i, label in enumerate(color_labels)]
+        parts = _multi_prompt_parts(prompts)
+        changed, report = ooxml._apply_dark_theme(parts)
+        assert report["prompt_count"] == len(color_labels)
+        labels_seen = {entry["color"] for entry in report["prompts"]}
+        assert labels_seen == set(color_labels)
+
+    def test_contrast_validator_rejects_low_contrast(self):
+        prompts = [("P00", "P00 Test", "Cream", _short_prompt())]
+        parts = _multi_prompt_parts(prompts)
+        ooxml._apply_dark_theme(parts)
+        styles = ooxml._root(parts["xl/styles.xml"], "xl/styles.xml")
+        bad_fill = ooxml._ensure_fill(styles, "111111")
+        bad_font = ooxml._ensure_font(styles, 0, "222222")
+        bad_xf = ooxml._ensure_cell_xf(styles, 0, bad_font, bad_fill)
+        prompt_root = ooxml._root(parts["xl/worksheets/sheet2.xml"], "prompt")
+        prompt_cells = prompt_root.findall(".//m:c", ooxml.NS)
+        assert len(prompt_cells) > 0, "no cells to corrupt"
+        cell = prompt_cells[0]
+        cell.attrib["s"] = str(bad_xf)
+        parts["xl/worksheets/sheet2.xml"] = ooxml._xml(prompt_root)
+        parts["xl/styles.xml"] = ooxml._xml(styles)
+        findings = ooxml._validate_dark_theme_contrast(parts)
+        assert len(findings) > 0, f"should have found low contrast on prompt sheet, got {findings}"

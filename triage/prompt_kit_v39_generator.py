@@ -212,9 +212,11 @@ def _rewrite_workbook(workbook: Path, contract: Mapping[str, object]) -> tuple[s
     placeholder_changed, _ = ooxml._normalize_prompt_placeholders(parts)
     visual_changed, _ = ooxml._apply_prompt_visual_coordination(parts)
     scaffold_changed, scaffold_report = ooxml._apply_prompt_body_scaffold(parts)
+    dark_changed, dark_report = ooxml._apply_dark_theme(parts)
     changed.update(placeholder_changed)
     changed.update(visual_changed)
     changed.update(scaffold_changed)
+    changed.update(dark_changed)
     if ooxml._rebuild_calc_chain(parts):
         changed.add("xl/calcChain.xml")
     with tempfile.NamedTemporaryFile(prefix="v39-action-", suffix=".xlsx", delete=False) as stream:
@@ -260,6 +262,7 @@ def validate_v39(workbook: str | Path, *, standard_ai_spec: str | Path = DEFAULT
         findings.extend(ooxml._validate_prompt_placeholder_ergonomics(parts))
         findings.extend(ooxml._validate_prompt_visual_coordination(parts))
         findings.extend(ooxml._validate_prompt_body_scaffold(parts))
+        findings.extend(ooxml._validate_dark_theme_contrast(parts))
         policy = harness_discipline.load_policy()
         for issue in harness_discipline.validate_policy(policy):
             findings.append({"rule": "portable harness operational discipline", "error": issue})
@@ -355,6 +358,16 @@ def generate_v39(source: Path, output_dir: Path = DEFAULT_OUTPUT_DIR, *, standar
         "scaffold_rgb": scaffold_rgb,
         "description": "configurable neutral scaffold fill applied to complete interior body range of every prompt tab",
         "range_detection": "top and bottom navigation rows detected from HYPERLINK formulas referencing Prompt_Library",
+        "policy": "configs/harness/prompt_library_visual_policy_v1.json",
+    }
+    dark_policy = visual_policy.get("dark_theme", {})
+    manifest["dark_theme"] = {
+        "applied": True,
+        "canvas_fill": dark_policy.get("canvas", {}).get("fill", "1E1E2E"),
+        "scaffold_fill": dark_policy.get("scaffold_fill", {}).get("rgb", "252530"),
+        "semantic_palette_entries": len(dark_policy.get("semantic_dark_palette", {})),
+        "contrast_gate_normal_text": dark_policy.get("contrast_gates", {}).get("normal_text_minimum", 4.5),
+        "contrast_gate_large_text": dark_policy.get("contrast_gates", {}).get("large_text_minimum", 3.0),
         "policy": "configs/harness/prompt_library_visual_policy_v1.json",
     }
     manifest["prompt_library_row_links"] = {
