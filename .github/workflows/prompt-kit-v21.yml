@@ -17,6 +17,8 @@ jobs:
           python-version: "3.11"
       - name: Install test dependency
         run: python -m pip install pytest
+      - name: Validate V38 prompt registry
+        run: python -m json.tool configs/prompt_kit/v38_prompt_assets.json
       - name: Import validators and generators
         run: |
           python -c "import triage.workbook_package_hygiene; import triage.copy_surface_bounds; import triage.prompt_kit_contract; import triage.prompt_kit_operability_contract; import triage.prompt_kit_copy_range_links; import triage.prompt_kit_v38_prompt_assets; import triage.prompt_kit_v38_generator; import triage.prompt_kit_v33_generator; import triage.prompt_kit_v33_ooxml; import triage.worksheet_cell_integrity; import triage.web_excel_compatibility_rules; print('prompt kit validators and generators import ok')"
