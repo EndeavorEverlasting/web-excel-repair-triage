@@ -1,0 +1,133 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index 5956fc0..c2c4a27 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -105,4 +105,8 @@ Required execution posture:
+ - commit and push coherent contributions and update the intended PR;
+ - report exact evidence and the remaining proof ceiling.
+ 
+-Prompt Kit ergonomics are enforced: `xyz_under_score_placeholders` remain bare rather than surrounded by ASCII or smart quotes; Prompt Library B:O rows and associated prompt tabs use the semantic Color label; A/P remain dedicated sparse navigation.
++Prompt Kit ergonomics are enforced: `xyz_under_score_placeholders` remain bare rather than surrounded by ASCII or smart quotes; Prompt Library B:O rows and associated prompt tabs use the semantic Color label; A/P remain dedicated sparse navigation. Every worksheet also uses a fixed dark inherited canvas (`111827` with `E5E7EB` text), hidden gridlines, and preserved explicit cell styles so Excel for Web does not leave high-glare white negative space.
++
++### Live runtime certification
++
++Live runtime certification is owned by P48 and `configs/harness/runtime_certification_v1.json`. Use it only with explicit execution authority on a clean non-default branch or isolated worktree. A real provider-backed agent and GNHF entrypoint must perform the bounded action, validators must pass, and the result must be committed ahead of the recorded floor. Plan, dry-run, static, CI, spawn-only, process-exit, simulated, disposable-harness-only, or uncommitted evidence must fail closed.
+diff --git a/HARNESS.md b/HARNESS.md
+index 66a544b..01a53f7 100644
+--- a/HARNESS.md
++++ b/HARNESS.md
+@@ -23,3 +23,11 @@ Prompts are artifacts inside this harness; they are not the harness itself.
+ - Prompt placeholders use bare `xyz_under_score_tokens`; surrounding ASCII or smart quotes are forbidden.
+ - Prompt Library B:O cells point to the associated exact prompt range. A/P are reserved for deterministic sparse navigation.
+ - Prompt tab colors and Prompt Library B:O row colors derive from the row's semantic Color label and must match as closely as Excel RGB tab colors permit.
++- All worksheets use the fixed dark inherited canvas registered in `configs/harness/prompt_library_visual_policy_v1.json`; gridlines stay hidden and explicit content styles remain authoritative.
++
++## Live runtime certification
++
++- Use the registered `live-runtime-certification` workflow and P48 when end-to-end runtime proof is requested.
++- A plan, dry run, static test, CI pass, spawn, process exit, simulation, or disposable harness is not a live certificate.
++- The real provider-backed route must perform the bounded repository action, run validators, create a commit ahead of the recorded floor, and write the registered certification report.
++- Authentication, quota, network, unsupported adapter, dirty target, failed action, validation failure, or missing commit is an exact blocker.
+diff --git a/configs/harness/artifact_registry_v1.json b/configs/harness/artifact_registry_v1.json
+index 48224bd..5346e10 100644
+--- a/configs/harness/artifact_registry_v1.json
++++ b/configs/harness/artifact_registry_v1.json
+@@ -43,6 +43,27 @@
+         "run-context validation",
+         "handoff contract validation"
+       ]
++    },
++    {
++      "id": "live-runtime-certification-report",
++      "family": "runtime-certification",
++      "generator": "P48 through AgentSwitchboard tooling/gnhf/Invoke-CursorGnhfSprint.ps1 -Run",
++      "outputs": [
++        ".agent-evidence/runtime-certifications/<run_id>/runtime-certification.json"
++      ],
++      "validators": [
++        "triage.runtime_certification_contract",
++        "focused repository validators",
++        "git diff --check",
++        "commit ahead of recorded floor"
++      ],
++      "source_policy": "real provider-backed runtime only; ignored evidence path; no credentials or private data",
++      "field_gates": [
++        "provider authentication and quota",
++        "real agent spawn",
++        "actual bounded repository action",
++        "authorized push or PR update"
++      ]
+     }
+   ]
+ }
+diff --git a/configs/harness/code_intelligence_v1.json b/configs/harness/code_intelligence_v1.json
+index ea02fa8..6162975 100644
+--- a/configs/harness/code_intelligence_v1.json
++++ b/configs/harness/code_intelligence_v1.json
+@@ -18,6 +18,16 @@
+       ],
+       "purpose": "prompt registry and fail-closed contracts"
+     },
++    {
++      "name": "runtime-certification",
++      "paths": [
++        "configs/harness/runtime_certification_v1.json",
++        "configs/prompt_kit/v39_gnhf_harness_prompts.json",
++        "triage/runtime_certification_contract.py",
++        "tests/test_runtime_certification_contract.py"
++      ],
++      "purpose": "live provider-backed execution, validation, commit, and certification evidence"
++    },
+     {
+       "name": "artifact-engines",
+       "paths": [
+diff --git a/configs/harness/harness_manifest_v1.json b/configs/harness/harness_manifest_v1.json
+index 37845ce..c5a2c47 100644
+--- a/configs/harness/harness_manifest_v1.json
++++ b/configs/harness/harness_manifest_v1.json
+@@ -18,7 +18,8 @@
+   "validators": [
+     "triage/harness_operational_discipline.py",
+     "triage/prompt_kit_visual_contract.py",
+-    "triage/prompt_kit_v39_generator.py"
++    "triage/prompt_kit_v39_generator.py",
++    "triage/runtime_certification_contract.py"
+   ],
+   "local_hooks": [
+     ".githooks/pre-commit",
+diff --git a/configs/harness/operational_discipline_v1.json b/configs/harness/operational_discipline_v1.json
+index d563852..d8f408a 100644
+--- a/configs/harness/operational_discipline_v1.json
++++ b/configs/harness/operational_discipline_v1.json
+@@ -94,7 +94,13 @@
+       "placeholder_format": "bare underscore-delimited xyz tokens without surrounding ASCII or smart quotes",
+       "semantic_row_color_columns": "B:O",
+       "prompt_tab_color_source": "Prompt Library semantic Color label",
+-      "prompt_tab_color_match": "exact semantic row fill RGB where supported"
++      "prompt_tab_color_match": "exact semantic row fill RGB where supported",
++      "worksheet_canvas_mode": "forced_dark",
++      "worksheet_canvas_background": "111827",
++      "worksheet_canvas_foreground": "E5E7EB",
++      "worksheet_canvas_scope": "all worksheets",
++      "worksheet_canvas_gridlines_hidden": true,
++      "worksheet_canvas_preserve_explicit_cell_styles": true
+     }
+   },
+   "sequential_prompt_suite": {
+@@ -125,5 +131,23 @@
+     "read_only_code_intelligence_where_useful",
+     "english_operator_reports",
+     "final_handoff_compression"
+-  ]
++  ],
++  "live_runtime_certification": {
++    "policy": "configs/harness/runtime_certification_v1.json",
++    "prompt_owner": "P48",
++    "real_provider_backed_execution_required": true,
++    "validated_repository_action_required": true,
++    "commit_ahead_of_floor_required": true,
++    "forbidden_substitutions": [
++      "plan_mode_only",
++      "dry_run_only",
++      "static_checks_only",
++      "unit_or_ci_only",
