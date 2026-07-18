@@ -228,22 +228,22 @@ class TestScaffoldFill:
         assert findings == (), f"scaffold validation found uncovered cells: {findings}"
 
     def test_scaffold_materializes_blank_cells_across_claimed_range(self):
-    prompts = [("P00", "P00 Test", "Cream", _medium_prompt())]
-    parts = _multi_prompt_parts(prompts)
-    before = ooxml._root(parts["xl/worksheets/sheet2.xml"], "prompt")
-    before_cells = ooxml._cells(before)
-    assert before_cells.get("B2") is None
-    assert before_cells.get("C4") is None
+        prompts = [("P00", "P00 Test", "Cream", _medium_prompt())]
+        parts = _multi_prompt_parts(prompts)
+        before = ooxml._root(parts["xl/worksheets/sheet2.xml"], "prompt")
+        before_cells = ooxml._cells(before)
+        assert before_cells.get("B2") is None
+        assert before_cells.get("C4") is None
 
-    _, report = ooxml._apply_prompt_body_scaffold(parts)
+        _, report = ooxml._apply_prompt_body_scaffold(parts)
 
-    after = ooxml._root(parts["xl/worksheets/sheet2.xml"], "prompt")
-    after_cells = ooxml._cells(after)
-    for row_number in range(1, 6):
-        for column in ("A", "B", "C"):
-            assert after_cells.get(f"{column}{row_number}") is not None
-    assert report["prompts"][0]["cells_materialized"] == 6
-    assert ooxml._validate_prompt_body_scaffold(parts) == ()
+        after = ooxml._root(parts["xl/worksheets/sheet2.xml"], "prompt")
+        after_cells = ooxml._cells(after)
+        for row_number in range(1, 6):
+            for column in ("A", "B", "C"):
+                assert after_cells.get(f"{column}{row_number}") is not None
+        assert report["prompts"][0]["cells_materialized"] == 6
+        assert ooxml._validate_prompt_body_scaffold(parts) == ()
 
     def test_scaffold_preserves_formulas_and_text(self):
         prompts = [("P00", "P00 Test", "Cream", _medium_prompt())]
@@ -278,16 +278,21 @@ class TestScaffoldFill:
             prompt_root = ooxml._root(parts[f"xl/worksheets/sheet{sid}.xml"], "prompt")
             top, bottom, cols, _ = ooxml._prompt_body_range(prompt_root, f"P{sid - 2:02d}_COPY_SAFE")
             rows = {int(row.attrib.get("r", "0")): row for row in prompt_root.findall("m:sheetData/m:row", ooxml.NS)}
-            existing_count = 0
-            for row_number in range(top, bottom + 1):
-                row = rows.get(row_number)
-                if row is None:
-                    continue
-                for col in cols:
-                    cell = next((c for c in row.findall("m:c", ooxml.NS) if c.attrib.get("r") == f"{col}{row_number}"), None)
-                    if cell is not None:
-                        existing_count += 1
-            assert existing_count > 0, f"no cells found in scaffold range for sheet {sid}"
+            expected_refs = {
+                f"{col}{row_number}"
+                for row_number in range(top, bottom + 1)
+                for col in cols
+            }
+            actual_refs = {
+                cell.attrib.get("r", "")
+                for row in rows.values()
+                for cell in row.findall("m:c", ooxml.NS)
+            }
+            assert expected_refs <= actual_refs, (
+                f"missing scaffold cells for sheet {sid}: "
+                f"{sorted(expected_refs - actual_refs)}"
+            )
+
 
 
 class TestSemanticTabColorCoverage:
