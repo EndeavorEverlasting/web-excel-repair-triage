@@ -9,6 +9,7 @@ from typing import Mapping, Optional, Sequence
 
 DEFAULT_POLICY_PATH = Path(__file__).parents[1] / "configs/harness/operational_discipline_v1.json"
 DEFAULT_PROMPT_PATH = Path(__file__).parents[1] / "configs/prompt_kit/v39_p54_troubleshooting_prompt.json"
+DEFAULT_ARTIFACT_REGISTRY_PATH = Path(__file__).parents[1] / "configs/harness/artifact_registry_v1.json"
 
 _REQUIRED_CONTEXT_PRECEDENCE = (
     "validated_local_runtime",
@@ -59,6 +60,11 @@ _ABSOLUTE_PATH_PATTERNS = (
     re.compile(r"[A-Za-z]:\\"),
     re.compile(r"/(?:home|Users|mnt|tmp)/"),
 )
+_EXPECTED_ARTIFACT_GENERATOR = "python -m triage.prompt_kit_v39_live_context_generator"
+_REQUIRED_ARTIFACT_VALIDATORS = {
+    "triage.harness_troubleshooting_contract",
+    "triage.prompt_kit_v39_live_context_generator --validate-only",
+}
 
 
 def _load_object(path: str | Path, *, label: str) -> dict:
@@ -74,6 +80,10 @@ def load_policy(path: str | Path = DEFAULT_POLICY_PATH) -> dict:
 
 def load_prompt_contract(path: str | Path = DEFAULT_PROMPT_PATH) -> dict:
     return _load_object(path, label="troubleshooting prompt contract")
+
+
+def load_artifact_registry(path: str | Path = DEFAULT_ARTIFACT_REGISTRY_PATH) -> dict:
+    return _load_object(path, label="artifact registry")
 
 
 def validate_policy_contract(policy: Mapping[str, object]) -> tuple[str, ...]:
@@ -173,14 +183,40 @@ def validate_prompt_contract(contract: Mapping[str, object]) -> tuple[str, ...]:
     return tuple(issues)
 
 
+def validate_artifact_registry(registry: Mapping[str, object]) -> tuple[str, ...]:
+    issues: list[str] = []
+    artifacts = registry.get("artifacts")
+    if not isinstance(artifacts, list):
+        return ("artifact registry requires an artifacts list",)
+    matches = [item for item in artifacts if isinstance(item, Mapping) and item.get("id") == "ai-harness-prompt-kit-v39"]
+    if len(matches) != 1:
+        return (f"artifact registry requires exactly one ai-harness-prompt-kit-v39 record; found {len(matches)}",)
+    record = matches[0]
+    if record.get("generator") != _EXPECTED_ARTIFACT_GENERATOR:
+        issues.append("V39 artifact registry must use the live-context generator")
+    validators = record.get("validators")
+    if not isinstance(validators, list):
+        issues.append("V39 artifact registry validators must be a list")
+    else:
+        missing = sorted(_REQUIRED_ARTIFACT_VALIDATORS - set(validators))
+        for validator in missing:
+            issues.append(f"V39 artifact registry validator missing: {validator}")
+    source_policy = str(record.get("source_policy", ""))
+    if "current repository and runtime contracts" not in source_policy:
+        issues.append("V39 artifact source policy must require current repository and runtime contracts")
+    return tuple(issues)
+
+
 def validate_all(
     policy_path: str | Path = DEFAULT_POLICY_PATH,
     prompt_path: str | Path = DEFAULT_PROMPT_PATH,
+    artifact_registry_path: str | Path = DEFAULT_ARTIFACT_REGISTRY_PATH,
 ) -> tuple[str, ...]:
     issues: list[str] = []
     try:
         issues.extend(validate_policy_contract(load_policy(policy_path)))
         issues.extend(validate_prompt_contract(load_prompt_contract(prompt_path)))
+        issues.extend(validate_artifact_registry(load_artifact_registry(artifact_registry_path)))
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         issues.append(str(exc))
     return tuple(issues)
@@ -190,13 +226,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--policy", type=Path, default=DEFAULT_POLICY_PATH)
     parser.add_argument("--prompt", type=Path, default=DEFAULT_PROMPT_PATH)
+    parser.add_argument("--artifact-registry", type=Path, default=DEFAULT_ARTIFACT_REGISTRY_PATH)
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
-    issues = validate_all(args.policy, args.prompt)
+    issues = validate_all(args.policy, args.prompt, args.artifact_registry)
     result = {
         "valid": not issues,
         "policy": str(args.policy),
         "prompt": str(args.prompt),
+        "artifact_registry": str(args.artifact_registry),
         "issues": list(issues),
     }
     print(json.dumps(result, indent=2) if args.json or issues else "live-evidence troubleshooting contract: PASS")
