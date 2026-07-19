@@ -4,21 +4,23 @@
     {
       "id": "ai-harness-prompt-kit-v39",
       "family": "prompt-kit-workbook",
-      "generator": "python -m triage.prompt_kit_v39_generator",
+      "generator": "python -m triage.prompt_kit_v39_live_context_generator",
       "outputs": [
         "AI_Harness_Prompt_Kit_v39.xlsx",
         "AI_Harness_Prompt_Kit_v39_manifest.json",
         "AI_Harness_Prompt_Kit_v39_bundle.zip"
       ],
       "validators": [
-        "triage.prompt_kit_v39_generator --validate-only",
+        "triage.harness_troubleshooting_contract",
+        "triage.prompt_kit_v39_live_context_generator --validate-only",
         "triage.prompt_kit_visual_contract",
         "artifact_tool import and formula scan"
       ],
-      "source_policy": "accepted V38 source remains immutable",
+      "source_policy": "accepted V38 source remains immutable; P54 derives commands, paths, validators, and evidence from current repository and runtime contracts",
       "field_gates": [
         "Excel for Web open",
-        "Prompt Library row and tab link clicks"
+        "Prompt Library row and tab link clicks",
+        "execution against a real failing repository or validated local runtime"
       ]
     },
     {
