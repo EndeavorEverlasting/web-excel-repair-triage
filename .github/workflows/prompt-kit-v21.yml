@@ -21,6 +21,7 @@ jobs:
         run: |
           python -m json.tool configs/prompt_kit/v38_prompt_assets.json
           python -m json.tool configs/prompt_kit/v39_core_prompt_action_overrides.json
+          python -m json.tool configs/prompt_kit/v39_p54_troubleshooting_prompt.json
           python -m json.tool configs/harness/operational_discipline_v1.json
           python -m json.tool configs/harness/harness_manifest_v1.json
           python -m json.tool configs/harness/workflows_v1.json
@@ -31,7 +32,7 @@ jobs:
           python -m json.tool configs/harness/prompt_library_visual_policy_v1.json
       - name: Import validators and generators
         run: |
-          python -c "import triage.workbook_package_hygiene; import triage.copy_surface_bounds; import triage.prompt_kit_contract; import triage.prompt_kit_operability_contract; import triage.prompt_kit_copy_range_links; import triage.harness_operational_discipline; import triage.harness_operator_report; import triage.harness_handoff; import triage.prompt_kit_visual_contract; import triage.prompt_kit_v39_ooxml_base; import triage.prompt_kit_v39_generator; import triage.prompt_kit_v38_prompt_assets; import triage.prompt_kit_v38_generator; import triage.prompt_kit_v33_generator; import triage.prompt_kit_v33_ooxml; import triage.worksheet_cell_integrity; import triage.web_excel_compatibility_rules; print('prompt kit validators and generators import ok')"
+          python -c "import triage.workbook_package_hygiene; import triage.copy_surface_bounds; import triage.prompt_kit_contract; import triage.prompt_kit_operability_contract; import triage.prompt_kit_copy_range_links; import triage.harness_operational_discipline; import triage.harness_troubleshooting_contract; import triage.harness_operator_report; import triage.harness_handoff; import triage.prompt_kit_visual_contract; import triage.prompt_kit_v39_ooxml_base; import triage.prompt_kit_v39_generator; import triage.prompt_kit_v39_live_context_generator; import triage.prompt_kit_v38_prompt_assets; import triage.prompt_kit_v38_generator; import triage.prompt_kit_v33_generator; import triage.prompt_kit_v33_ooxml; import triage.worksheet_cell_integrity; import triage.web_excel_compatibility_rules; print('prompt kit validators and generators import ok')"
       - name: Run segmented V39 prompt and package contract
         run: |
           python -m pytest \
@@ -45,6 +46,7 @@ jobs:
             tests/test_prompt_kit_v39_visual_coordination.py \
             tests/test_prompt_kit_visual_contract.py \
             tests/test_harness_operational_discipline.py \
+            tests/test_harness_troubleshooting_contract.py \
             tests/test_repo_harness_manifest.py \
             tests/test_prompt_kit_v39_namespace_prefixes.py \
             tests/test_prompt_kit_v39_public_surface.py \
@@ -87,8 +89,11 @@ jobs:
           python -m triage.prompt_kit_operability_contract --help
           python -m triage.prompt_kit_copy_range_links --help
           python -m triage.prompt_kit_v39_generator --help
+          python -m triage.prompt_kit_v39_live_context_generator --help
           python -m triage.harness_operational_discipline --repo-root . --json
           python -m triage.harness_operational_discipline --help
+          python -m triage.harness_troubleshooting_contract --json
+          python -m triage.harness_troubleshooting_contract --help
           python -m triage.harness_operator_report --repo-root . --json
           python -m triage.harness_handoff --help
           python -m triage.prompt_kit_visual_contract --json
