@@ -18,7 +18,7 @@
     "use_for_progress": "YES",
     "prompt_name": "Live-Evidence Troubleshooter",
     "use_this_when": "A repository-backed workflow is failing, regressing, behaving differently at runtime, or producing conflicting local, CI, artifact, or remembered evidence.",
-    "inspect_first": "Verified repository root or connected branch, current Git and PR state, repository-owned rules and workflow contracts, recent diffs, tests, validators, generated artifacts, logs, screenshots, and locally validated runtime evidence.",
+    "inspect_first": "Verified repository root or connected branch, current Git and PR state, repository-owned rules and workflow contracts, recent diffs, tests, validators, generated artifacts, logs, screenshots, and validated local runtime evidence.",
     "expected_output": "A labeled current-state reconstruction, expected-versus-observed trace, first confirmed divergence, ranked hypotheses, smallest discriminating checks, bounded repair and validation when requested, exact artifacts and Git evidence, proof ceiling, and next decision.",
     "next_step": "Route to the task-specific repair, cleanup, broken-PR, merge/release, or closeout workflow only after the evidence establishes its entry condition.",
     "proof_gate": "Claims follow the evidence precedence; repository-specific commands and paths are derived from current contracts; requested repair work includes mutation and proof; no resolution is claimed without validation or equivalent runtime evidence.",
@@ -27,7 +27,7 @@
     "lines": [
       "PROMPT SURFACE: STANDARD AI. THIS IS NOT A GOODNIGHT, HAVE FUN (GNHF) PROMPT.",
       "",
-      "TROUBLESHOOT THE REPORTED PROBLEM USING THE LATEST TRUSTWORTHY CONTEXT AVAILABLE FROM THE REPOSITORY AND LOCALLY VALIDATED RUNTIME EVIDENCE.",
+      "TROUBLESHOOT THE REPORTED PROBLEM USING THE LATEST TRUSTWORTHY CONTEXT AVAILABLE FROM THE REPOSITORY AND VALIDATED LOCAL RUNTIME EVIDENCE.",
       "",
       "Repository: xyz_repo_url_or_name",
       "Verified root or connected branch evidence: xyz_path_branch_or_evidence",
