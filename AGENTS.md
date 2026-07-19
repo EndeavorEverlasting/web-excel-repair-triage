@@ -1,5 +1,11 @@
 # Agent Instructions
 
+## Harness Doctrine
+
+This repository follows the AgentSwitchboard harness doctrine. Read `HARNESS.md` for mandatory sprint declaration, executable loop, operating discipline, action-commitment rules, capability authority, completion standard, and forbidden responses.
+
+Product-specific billing pipeline rules follow below. When product rules and harness doctrine conflict, the harness doctrine wins.
+
 ## Billing Pipeline Directional Contract
 
 This repository supports Web Excel-safe repair and triage workflows for roster, billing, admin-sheet, and task-tracker artifacts.
