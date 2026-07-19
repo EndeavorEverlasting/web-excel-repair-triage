@@ -17,8 +17,10 @@
   "artifact_registry": "configs/harness/artifact_registry_v1.json",
   "validators": [
     "triage/harness_operational_discipline.py",
+    "triage/harness_troubleshooting_contract.py",
     "triage/prompt_kit_visual_contract.py",
-    "triage/prompt_kit_v39_generator.py"
+    "triage/prompt_kit_v39_generator.py",
+    "triage/prompt_kit_v39_live_context_generator.py"
   ],
   "local_hooks": [
     ".githooks/pre-commit",
