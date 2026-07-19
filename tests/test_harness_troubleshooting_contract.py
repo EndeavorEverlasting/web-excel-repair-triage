@@ -57,3 +57,11 @@ def test_policy_rejects_conversation_memory_over_current_evidence() -> None:
     ] = False
     issues = contract.validate_policy_contract(payload)
     assert any("conversation_memory_cannot_override_newer_evidence" in issue for issue in issues)
+
+
+def test_artifact_registry_rejects_the_legacy_v39_generator() -> None:
+    payload = copy.deepcopy(contract.load_artifact_registry())
+    artifact = next(item for item in payload["artifacts"] if item["id"] == "ai-harness-prompt-kit-v39")
+    artifact["generator"] = "python -m triage.prompt_kit_v39_generator"
+    issues = contract.validate_artifact_registry(payload)
+    assert "V39 artifact registry must use the live-context generator" in issues
