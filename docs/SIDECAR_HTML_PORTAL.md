@@ -27,3 +27,13 @@ Reads the newest `*manifest*.json` in that folder and rewrites `index.html`.
 Open `index.html` in a browser. Tabs: **Overview**, **Review queue**, **Preflight**, **Data**. Tables support search and category filters. JSON/CSV files remain on disk for scripts and diff tools.
 
 When runs pass `--reference` to admin billing or Bonita CLIs, the **Preflight** tab also shows **Approved reference compare** KPIs (`raw_sha_match`, `semantic_compare`, etc.) and links to `*_artifact_compare.json`. See [ARTIFACT_FINGERPRINT_AND_COMPARE.md](ARTIFACT_FINGERPRINT_AND_COMPARE.md).
+
+## Bidirectional conversion boundary
+
+The current implementation is one-way: registered manifests, CSV, and JSON are rendered into a self-contained website. It does not currently reconstruct a workbook from HTML.
+
+Generated portals embed a structured `const PORTAL = ...` JSON payload. The bidirectional conversion doctrine treats that payload as the first and most reliable website-to-spreadsheet source, ahead of DOM inference and far ahead of screenshot reconstruction or OCR.
+
+Use `python -m triage.harness_bidirectional_conversion_contract --analyze-input <local-index.html> --out <approved-output>/conversion_analysis.json --json` before designing or running a converter. Both website-to-spreadsheet and spreadsheet-to-website must normalize through `configs/harness/web_spreadsheet_ir_v1.schema.json`.
+
+See [HARNESS_BIDIRECTIONAL_WEB_SPREADSHEET.md](HARNESS_BIDIRECTIONAL_WEB_SPREADSHEET.md). Input analysis is not conversion; an actual workbook or website plus direction-specific validation is required before claiming success.
