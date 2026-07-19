@@ -12,6 +12,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Bounded Git preflight
+        run: |
+          git status --short
+          git branch --show-current
+          git log --oneline --decorate -5
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -103,3 +108,9 @@ jobs:
           python -m triage.prompt_kit_v33_generator --help
           python -m triage.worksheet_cell_integrity --help
           python -m triage.web_excel_compatibility_rules --help
+      - name: Final Git review
+        run: |
+          git diff --check HEAD^ HEAD
+          git status --short
+          git diff --stat HEAD^ HEAD
+          git diff --name-only HEAD^ HEAD
