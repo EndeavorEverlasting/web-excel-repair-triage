@@ -1054,6 +1054,196 @@ def _validate_prompt_visual_coordination(parts: Mapping[str, bytes]) -> tuple[di
     return tuple(findings)
 
 
+def _wcag_relative_luminance(hex_rgb: str) -> float:
+    hex_rgb = hex_rgb.lstrip("#").upper()
+    if len(hex_rgb) != 6 or not all(c in "0123456789ABCDEF" for c in hex_rgb):
+        raise ValueError(f"invalid hex color: {hex_rgb!r}")
+    r = int(hex_rgb[0:2], 16) / 255.0
+    g = int(hex_rgb[2:4], 16) / 255.0
+    b = int(hex_rgb[4:6], 16) / 255.0
+    def linearize(c: float) -> float:
+        if c <= 0.04045:
+            return c / 12.92
+        return ((c + 0.055) / 1.055) ** 2.4
+    return 0.2126 * linearize(r) + 0.7152 * linearize(g) + 0.0722 * linearize(b)
+
+
+def _wcag_contrast_ratio(hex1: str, hex2: str) -> float:
+    l1 = _wcag_relative_luminance(hex1)
+    l2 = _wcag_relative_luminance(hex2)
+    lighter = max(l1, l2)
+    darker = min(l1, l2)
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def _apply_dark_theme(parts: MutableMapping[str, bytes] | dict[str, bytes]) -> tuple[set[str], dict[str, object]]:
+    mutable = parts
+    _, mapping, _, _ = _sheet_map(mutable)
+    if "xl/styles.xml" not in mutable:
+        return set(), {"prompt_count": 0, "skipped": "source package has no styles.xml"}
+    policy = visual_contract.load_policy()
+    dark = policy.get("dark_theme", {})
+    semantic = dark.get("semantic_dark_palette", {})
+    scaffold_rgb = dark.get("scaffold_fill", {}).get("rgb", "252530")
+    palette = visual_contract.palette()
+    styles = _root(mutable["xl/styles.xml"], "xl/styles.xml")
+    shared = _shared_strings(mutable)
+    fill_cache: dict[str, int] = {}
+    font_cache: dict[tuple[int, str], int] = {}
+    xf_cache: dict[tuple[int, int, int], int] = {}
+    changed: set[str] = {"xl/styles.xml"}
+    prompts: list[dict[str, object]] = []
+    library_part = mapping.get("Prompt_Library")
+    if not library_part:
+        return set(), {"prompt_count": 0, "skipped": "no Prompt_Library"}
+    library_root = _root(mutable[library_part], library_part)
+    rows = _row_lookup(library_root)
+    for row_number, sheet_name, _ in _prompt_library_row_entries(library_root):
+        row = rows[row_number]
+        cells = {cell.attrib.get("r", ""): cell for cell in row.findall("m:c", NS)}
+        label = _cell_display(cells.get(f"N{row_number}"), shared)
+        dark_entry = semantic.get(label)
+        if dark_entry is None:
+            dark_entry = {"fill": "2D2D44", "text": "CCCCDD"}
+        fill_rgb = dark_entry["fill"]
+        text_rgb = dark_entry["text"]
+        for column in _PROMPT_LIBRARY_ROW_COLUMNS:
+            ref = f"{column}{row_number}"
+            cell = cells.get(ref)
+            if cell is None:
+                raise ValueError(f"Prompt Library dark-theme row color is missing {ref}")
+            base_style = int(cell.attrib.get("s", "0"))
+            xfs_element = _ensure_collection(styles, "cellXfs")
+            xfs = list(xfs_element)
+            base_xf = xfs[base_style]
+            base_font_id = int(base_xf.attrib.get("fontId", "0"))
+            base_fill_id = int(base_xf.attrib.get("fillId", "0"))
+            font_key = (base_font_id, text_rgb)
+            if font_key not in font_cache:
+                font_cache[font_key] = _ensure_font(styles, base_font_id, text_rgb)
+            if fill_rgb not in fill_cache:
+                fill_cache[fill_rgb] = _ensure_fill(styles, fill_rgb)
+            style_key = (base_style, font_cache[font_key], fill_cache[fill_rgb])
+            if style_key not in xf_cache:
+                xf_cache[style_key] = _ensure_cell_xf(styles, *style_key)
+            cell.attrib["s"] = str(xf_cache[style_key])
+        part = mapping.get(sheet_name)
+        if part:
+            prompt_root = _root(mutable[part], part)
+            _set_tab_color(prompt_root, fill_rgb)
+            mutable[part] = _xml(prompt_root)
+            changed.add(part)
+        prompts.append({"row": row_number, "sheet": sheet_name, "color": label, "dark_fill": fill_rgb, "dark_text": text_rgb})
+    for sheet_name, part in mapping.items():
+        if not PROMPT_SHEET_RE.fullmatch(sheet_name):
+            continue
+        prompt_root = _root(mutable[part], part)
+        try:
+            top_nav, bottom_nav, columns, _ = _prompt_body_range(prompt_root, sheet_name)
+        except ValueError:
+            continue
+        sheet_rows = _row_lookup(prompt_root)
+        for row_number in range(top_nav, bottom_nav + 1):
+            row = sheet_rows.get(row_number)
+            if row is None:
+                continue
+            for col in columns:
+                ref = f"{col}{row_number}"
+                cell = next((c for c in row.findall("m:c", NS) if c.attrib.get("r") == ref), None)
+                if cell is None:
+                    continue
+                base_style = int(cell.attrib.get("s", "0"))
+                xfs_element = _ensure_collection(styles, "cellXfs")
+                xfs = list(xfs_element)
+                base_xf = xfs[base_style]
+                current_fill_id = int(base_xf.attrib.get("fillId", "0"))
+                current_font_id = int(base_xf.attrib.get("fontId", "0"))
+                if current_fill_id == fill_cache.get(scaffold_rgb, -1):
+                    continue
+                if scaffold_rgb not in fill_cache:
+                    fill_cache[scaffold_rgb] = _ensure_fill(styles, scaffold_rgb)
+                new_fill_id = fill_cache[scaffold_rgb]
+                dark_text_rgb = dark.get("canvas", {}).get("text", "E0E0F0")
+                font_key = (current_font_id, dark_text_rgb)
+                if font_key not in font_cache:
+                    font_cache[font_key] = _ensure_font(styles, current_font_id, dark_text_rgb)
+                style_key = (base_style, font_cache[font_key], new_fill_id)
+                if style_key not in xf_cache:
+                    xf_cache[style_key] = _ensure_cell_xf(styles, *style_key)
+                cell.attrib["s"] = str(xf_cache[style_key])
+        mutable[part] = _xml(prompt_root)
+    mutable[library_part] = _xml(library_root)
+    mutable["xl/styles.xml"] = _xml(styles)
+    return changed, {"prompt_count": len(prompts), "prompts": prompts, "scaffold_fill": scaffold_rgb}
+
+
+def _validate_dark_theme_contrast(parts: Mapping[str, bytes]) -> tuple[dict[str, object], ...]:
+    _, mapping, _, _ = _sheet_map(parts)
+    if "xl/styles.xml" not in parts:
+        return ()
+    policy = visual_contract.load_policy()
+    dark = policy.get("dark_theme", {})
+    gates = dark.get("contrast_gates", {})
+    normal_min = float(gates.get("normal_text_minimum", 4.5))
+    large_min = float(gates.get("large_text_minimum", 3.0))
+    styles = _root(parts["xl/styles.xml"], "xl/styles.xml")
+    shared = _shared_strings(parts)
+    findings: list[dict[str, object]] = []
+    library_part = mapping.get("Prompt_Library")
+    if library_part:
+        library_root = _root(parts[library_part], library_part)
+        rows = _row_lookup(library_root)
+        for row_number, sheet_name, _ in _prompt_library_row_entries(library_root):
+            row = rows[row_number]
+            cells = {cell.attrib.get("r", ""): cell for cell in row.findall("m:c", NS)}
+            for column in _PROMPT_LIBRARY_ROW_COLUMNS:
+                ref = f"{column}{row_number}"
+                cell = cells.get(ref)
+                if cell is None:
+                    continue
+                fill_rgb, text_rgb = _style_colors(styles, int(cell.attrib.get("s", "0")))
+                if not fill_rgb or not text_rgb:
+                    continue
+                try:
+                    ratio = _wcag_contrast_ratio(fill_rgb, text_rgb)
+                except ValueError:
+                    continue
+                if ratio < normal_min:
+                    findings.append({
+                        "rule": "dark theme contrast normal text",
+                        "cell": ref,
+                        "sheet": "Prompt_Library",
+                        "fill": fill_rgb,
+                        "text": text_rgb,
+                        "contrast_ratio": round(ratio, 2),
+                        "minimum": normal_min,
+                    })
+    for sheet_name, part in mapping.items():
+        if not PROMPT_SHEET_RE.fullmatch(sheet_name):
+            continue
+        prompt_root = _root(parts[part], part)
+        for cell in prompt_root.findall(".//m:c", NS):
+            fill_rgb, text_rgb = _style_colors(styles, int(cell.attrib.get("s", "0")))
+            if not fill_rgb or not text_rgb:
+                continue
+            try:
+                ratio = _wcag_contrast_ratio(fill_rgb, text_rgb)
+            except ValueError:
+                continue
+            ref = cell.attrib.get("r", "?")
+            if ratio < large_min:
+                findings.append({
+                    "rule": "dark theme contrast large text minimum",
+                    "cell": ref,
+                    "sheet": sheet_name,
+                    "fill": fill_rgb,
+                    "text": text_rgb,
+                    "contrast_ratio": round(ratio, 2),
+                    "minimum": large_min,
+                })
+    return tuple(findings)
+
+
 __all__ = [
     "APP_NS",
     "CELL_RE",
@@ -1085,6 +1275,9 @@ __all__ = [
     "_prompt_body_range",
     "_apply_technician_column_visibility",
     "_validate_technician_column_visibility",
+    "_apply_dark_theme",
+    "_validate_dark_theme_contrast",
+    "_wcag_contrast_ratio",
     "_cell_display",
     "_cell_parts",
     "_cells",
