@@ -333,6 +333,13 @@ body{font-family:'Inter','SF Pro Display',-apple-system,BlinkMacSystemFont,'Sego
 .prompt-card:hover .prompt-copy-btn{opacity:1}
 .prompt-copy-btn:hover{border-color:var(--accent);color:var(--accent)}
 .prompt-copy-btn.copied{border-color:var(--success);color:var(--success)}
+.prompt-card.gnhf{background:linear-gradient(135deg,#1a1510 0%,#1f1a12 50%,#1a1510 100%);border-color:rgba(245,158,11,0.25)}
+.prompt-card.gnhf:hover{border-color:#f59e0b;box-shadow:0 8px 32px rgba(0,0,0,0.4),0 0 20px rgba(245,158,11,0.15)}
+.prompt-card.gnhf .glow-bar{background:linear-gradient(90deg,#f59e0b,#fbbf24,#f59e0b) !important}
+.prompt-card.gnhf .prompt-id{background:rgba(245,158,11,0.1);color:#f59e0b;border-color:rgba(245,158,11,0.3)}
+.prompt-card.gnhf .gnhf-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.25);margin-left:6px;font-weight:600}
+.prompt-card:not(.gnhf) .gnhf-badge{display:none}
+.gnhf-badge{display:none}
 .ref-toggle{position:fixed;bottom:24px;right:24px;background:var(--accent);color:#fff;border:none;border-radius:50%;width:48px;height:48px;font-size:20px;cursor:pointer;box-shadow:0 4px 20px rgba(59,130,246,0.4);z-index:200;transition:transform 0.2s}
 .ref-toggle:hover{transform:scale(1.1)}
 .ref-sidebar{position:fixed;top:0;right:-400px;width:380px;height:100vh;background:var(--bg-secondary);border-left:1px solid var(--border);z-index:150;transition:right 0.3s;overflow-y:auto;padding:20px}
@@ -397,8 +404,6 @@ body{font-family:'Inter','SF Pro Display',-apple-system,BlinkMacSystemFont,'Sego
 .cat-tab[data-cat="all"].active{background:linear-gradient(135deg,#64748b,#94a3b8);box-shadow:0 0 12px rgba(100,116,139,0.4)}
 .cat-tab[data-cat="standard"]{border:1px solid rgba(14,165,233,0.15)}
 .cat-tab[data-cat="standard"].active{background:linear-gradient(135deg,#0ea5e9,#38bdf8);box-shadow:0 0 12px rgba(14,165,233,0.4)}
-.cat-tab[data-cat="gnhf"]{border:1px solid rgba(245,158,11,0.15)}
-.cat-tab[data-cat="gnhf"].active{background:linear-gradient(135deg,#f59e0b,#fbbf24);box-shadow:0 0 12px rgba(245,158,11,0.4)}
 .cat-tab[data-cat="doctrine"]{border:1px solid rgba(139,92,246,0.15)}
 .cat-tab[data-cat="doctrine"].active{background:linear-gradient(135deg,#8b5cf6,#a78bfa);box-shadow:0 0 12px rgba(139,92,246,0.4)}
 .ref-toggle .ref-icon{font-size:18px}
@@ -442,13 +447,13 @@ def build_html(prompts, ref):
     html.append('      <div class="cat-tabs">')
     html.append('        <button class="cat-tab active" data-cat="all"><span class="tab-icon">&#128203;</span>All<span class="kbd">1</span></button>')
     html.append('        <button class="cat-tab" data-cat="standard"><span class="tab-icon">&#128196;</span>Standard<span class="kbd">2</span></button>')
-    html.append('        <button class="cat-tab" data-cat="gnhf"><span class="tab-icon">&#127769;</span>GNHF<span class="kbd">3</span></button>')
-    html.append('        <button class="cat-tab" data-cat="doctrine"><span class="tab-icon">&#128220;</span>Doctrine<span class="kbd">4</span></button>')
+    html.append('        <button class="cat-tab" data-cat="doctrine"><span class="tab-icon">&#128220;</span>Doctrine<span class="kbd">3</span></button>')
     html.append('      </div>')
     html.append('      <button class="add-prompt-btn" id="addPromptBtn">+ Add Prompt</button>')
     html.append('      <div class="stats">')
     html.append('        <div class="stat"><div class="stat-num" id="showing">0</div><div class="stat-label">Showing</div></div>')
     html.append('        <div class="stat"><div class="stat-num" id="total">0</div><div class="stat-label">Total</div></div>')
+    html.append('        <div class="stat"><div class="stat-label" style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:linear-gradient(135deg,#f59e0b,#fbbf24)"></span> GNHF</div></div>')
     html.append('      </div>')
     html.append('    </div>')
     html.append('  </div>')
