@@ -98,7 +98,8 @@ Use [`HARNESS.md`](HARNESS.md) and [`configs/harness/harness_manifest_v1.json`](
 - Execute `request -> evidence review -> bounded decision -> repo/Git/GitHub mutation -> artifacts -> validation -> report -> next decision`.
 - Generate the requested artifact or mutation; a rewritten prompt, plan, handoff, or acknowledgment is not completion.
 - Preserve useful work, validate focused then broad, commit and push coherent contributions, update the intended PR, and report exact proof and ceiling.
-- For troubleshooting, use the P54 contract: prefer validated runtime and current repository evidence, identify the first confirmed divergence, derive commands and paths from live contracts, and mutate only when repair is requested.
+- For troubleshooting, use P54: prefer validated runtime and current repository evidence, identify the first confirmed divergence, derive commands and paths from live contracts, and mutate only when repair is requested.
+- For website/spreadsheet work, run the registered input analyzer first; implement website-to-spreadsheet before the reverse lane, route both through the shared IR, and never call analysis or a plan a converted artifact.
 - Task-specific execution rules override generic closeout behavior.
 
 Prompt Kit ergonomics remain enforced: bare `xyz_under_score_placeholders`; Prompt Library B:O exact-range links and semantic row colors; A/P sparse navigation; matching prompt-tab RGB colors.
