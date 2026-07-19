@@ -33,6 +33,47 @@
     "next_decision"
   ],
   "evidence_before_confidence": true,
+  "troubleshooting_contract": {
+    "prompt_id": "P54",
+    "canonical_prompt_source": "configs/prompt_kit/v39_p54_troubleshooting_prompt.json",
+    "generator_entrypoint": "triage.prompt_kit_v39_live_context_generator",
+    "context_precedence": [
+      "validated_local_runtime",
+      "current_repository",
+      "tests_validators_ci_artifacts_logs",
+      "git_pr_history",
+      "operational_documentation",
+      "conversation_memory"
+    ],
+    "claim_labels": [
+      "CONFIRMED",
+      "STALE OR UNVERIFIED",
+      "HYPOTHESIS",
+      "MISSING EVIDENCE",
+      "BLOCKED"
+    ],
+    "diagnostic_loop": [
+      "reconstruct_current_state",
+      "trace_expected_to_terminal_state",
+      "identify_first_confirmed_divergence",
+      "rank_root_cause_hypotheses",
+      "run_smallest_discriminating_check",
+      "apply_bounded_repair_when_requested",
+      "validate_and_compare"
+    ],
+    "live_contract_resolution": {
+      "derive_paths_commands_and_validators_from_current_repository": true,
+      "allow_frozen_repository_specific_paths_or_commands": false,
+      "prefer_validated_local_runtime_evidence_when_available": true,
+      "conversation_memory_cannot_override_newer_evidence": true
+    },
+    "action_commitment": {
+      "mutation_required_when_repair_requested": true,
+      "proof_required_after_mutation": true,
+      "diagnosis_only_stops_before_mutation": true,
+      "task_specific_rules_override_generic_closeout": true
+    }
+  },
   "completion_evidence": [
     "passing_checks",
     "validator_output",
