@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 set -eu
 python -m triage.harness_operational_discipline --repo-root .
+python -m triage.harness_troubleshooting_contract
 python -m triage.prompt_kit_visual_contract
-python -m pytest tests/test_repo_harness_manifest.py tests/test_prompt_kit_visual_contract.py -q
+python -m pytest tests/test_repo_harness_manifest.py tests/test_harness_troubleshooting_contract.py tests/test_prompt_kit_visual_contract.py -q
