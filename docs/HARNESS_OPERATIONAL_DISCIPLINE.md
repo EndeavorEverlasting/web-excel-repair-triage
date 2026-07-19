@@ -2,7 +2,7 @@
 
 ## Authority
 
-`configs/harness/operational_discipline_v1.json` is the portable machine-readable policy. `triage.harness_operational_discipline` validates both the policy and concrete run contexts.
+`configs/harness/operational_discipline_v1.json` is the portable machine-readable policy. `triage.harness_operational_discipline` validates the policy and concrete run contexts. `triage.harness_troubleshooting_contract` validates the canonical P54 live-evidence prompt and its generator contract.
 
 ## Required run context
 
@@ -13,6 +13,14 @@ Always name repository, branch or worktree, PR or sprint, lane, owned scope, for
 `request -> evidence review -> bounded decision -> repo/Git/GitHub mutation -> artifacts -> validation -> report -> next decision`
 
 Evidence precedes confidence. Completion requires the strongest applicable check, artifact, commit, branch, push, PR, merge, release, deployment, or runtime proof.
+
+## Evidence-grounded troubleshooting
+
+P54 is the canonical troubleshooting surface. It reconstructs the latest trustworthy state from validated local runtime evidence, current repository contents, tests and validators, CI and generated artifacts, Git and PR history, operational doctrine, then conversation context. Material claims are labeled `CONFIRMED`, `STALE OR UNVERIFIED`, `HYPOTHESIS`, `MISSING EVIDENCE`, or `BLOCKED`.
+
+Troubleshooting identifies the first confirmed divergence, ranks hypotheses, and selects the smallest discriminating check before repair. Repository-specific filenames, commands, paths, and validators are derived from current repository contracts at execution time; they are not frozen into the workbook prompt. When repair is requested, mutation and proof are required. Diagnosis-only work stops before mutation.
+
+The canonical source is `configs/prompt_kit/v39_p54_troubleshooting_prompt.json`. The supported V39 launcher calls `triage.prompt_kit_v39_live_context_generator`, which merges P54 into the standard-AI prompt source and fails closed on contract drift.
 
 ## Connected GitHub fallback
 
