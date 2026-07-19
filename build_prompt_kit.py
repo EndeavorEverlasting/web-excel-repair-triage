@@ -14,6 +14,7 @@ REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(REPO_ROOT, "docs")
 PROMPTS_PATH = os.path.join(DATA_DIR, "prompts.json")
 REFERENCE_PATH = os.path.join(DATA_DIR, "reference.json")
+JS_PATH = os.path.join(DATA_DIR, "prompt-kit.js")
 
 
 def load_json(path):
@@ -368,6 +369,42 @@ body{font-family:'Inter','SF Pro Display',-apple-system,BlinkMacSystemFont,'Sego
 .doctrine-section th{background:var(--bg-surface);color:var(--text-primary);font-weight:600}
 .doctrine-section td{color:var(--text-primary)}
 .doctrine-list{display:grid;gap:0.75rem}
+.prompt-detail-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:250;display:none;align-items:center;justify-content:center;padding:20px}
+.prompt-detail-overlay.open{display:flex}
+.prompt-detail{background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;max-width:720px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.prompt-detail-close{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all 0.2s}
+.prompt-detail-close:hover{background:var(--bg-card);color:var(--text-primary)}
+.prompt-detail .pd-glow{height:4px;border-radius:2px;margin-bottom:16px;animation:glow-pulse 2s ease-in-out infinite}
+.prompt-detail .pd-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.prompt-detail .pd-id{font-size:14px;font-weight:700;font-family:monospace;padding:4px 10px;border-radius:6px;background:var(--bg-surface);color:var(--text-muted);border:1px solid var(--border)}
+.prompt-detail .pd-name{font-size:18px;font-weight:700;color:var(--text-primary)}
+.prompt-detail .pd-type{font-size:12px;color:var(--text-muted);margin-bottom:4px}
+.prompt-detail .pd-badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.prompt-detail .pd-badge{font-size:11px;padding:3px 8px;border-radius:4px;background:var(--bg-surface);color:var(--text-secondary);border:1px solid var(--border)}
+.prompt-detail .pd-section{margin-bottom:16px}
+.prompt-detail .pd-section h4{font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.prompt-detail .pd-section pre{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:12px;line-height:1.6;white-space:pre-wrap;overflow-x:auto;color:var(--text-primary);font-family:'SF Mono','Fira Code',monospace}
+.prompt-detail .pd-copy{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;margin-top:8px}
+.prompt-detail .pd-copy:hover{background:var(--accent-hover);transform:translateY(-1px)}
+.prompt-detail .pd-copy.copied{background:var(--success)}
+.section-divider{grid-column:1/-1;padding:20px 0 8px;display:flex;align-items:center;gap:12px}
+.section-divider .sd-line{flex:1;height:1px;background:var(--border)}
+.section-divider .sd-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.section-divider .sd-icon{font-size:16px}
+.section-divider .sd-count{font-size:10px;color:var(--text-muted);font-weight:400}
+.cat-tab .tab-icon{margin-right:4px;font-size:12px}
+.cat-tab[data-cat="all"]{border:1px solid rgba(226,232,240,0.2)}
+.cat-tab[data-cat="all"].active{background:linear-gradient(135deg,#64748b,#94a3b8);box-shadow:0 0 12px rgba(100,116,139,0.4)}
+.cat-tab[data-cat="standard"]{border:1px solid rgba(14,165,233,0.15)}
+.cat-tab[data-cat="standard"].active{background:linear-gradient(135deg,#0ea5e9,#38bdf8);box-shadow:0 0 12px rgba(14,165,233,0.4)}
+.cat-tab[data-cat="gnhf"]{border:1px solid rgba(245,158,11,0.15)}
+.cat-tab[data-cat="gnhf"].active{background:linear-gradient(135deg,#f59e0b,#fbbf24);box-shadow:0 0 12px rgba(245,158,11,0.4)}
+.cat-tab[data-cat="doctrine"]{border:1px solid rgba(139,92,246,0.15)}
+.cat-tab[data-cat="doctrine"].active{background:linear-gradient(135deg,#8b5cf6,#a78bfa);box-shadow:0 0 12px rgba(139,92,246,0.4)}
+.ref-toggle .ref-icon{font-size:18px}
+.version-badge{position:fixed;bottom:24px;left:24px;font-size:10px;color:var(--text-muted);background:var(--bg-card);padding:4px 8px;border-radius:4px;border:1px solid var(--border);z-index:200;font-family:monospace}
+.add-prompt-btn{background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:4px}
+.add-prompt-btn:hover{background:var(--accent-hover);transform:translateY(-1px);box-shadow:0 4px 12px rgba(59,130,246,0.3)}
 """
 
 
@@ -403,11 +440,12 @@ def build_html(prompts, ref):
     html.append('    </div>')
     html.append('    <div class="header-controls">')
     html.append('      <div class="cat-tabs">')
-    html.append('        <button class="cat-tab active" data-cat="all">All<span class="kbd">1</span></button>')
-    html.append('        <button class="cat-tab" data-cat="standard">Standard<span class="kbd">2</span></button>')
-    html.append('        <button class="cat-tab" data-cat="gnhf">GNHF<span class="kbd">3</span></button>')
-    html.append('        <button class="cat-tab" data-cat="doctrine">Doctrine<span class="kbd">4</span></button>')
+    html.append('        <button class="cat-tab active" data-cat="all"><span class="tab-icon">&#128203;</span>All<span class="kbd">1</span></button>')
+    html.append('        <button class="cat-tab" data-cat="standard"><span class="tab-icon">&#128196;</span>Standard<span class="kbd">2</span></button>')
+    html.append('        <button class="cat-tab" data-cat="gnhf"><span class="tab-icon">&#127769;</span>GNHF<span class="kbd">3</span></button>')
+    html.append('        <button class="cat-tab" data-cat="doctrine"><span class="tab-icon">&#128220;</span>Doctrine<span class="kbd">4</span></button>')
     html.append('      </div>')
+    html.append('      <button class="add-prompt-btn" id="addPromptBtn">+ Add Prompt</button>')
     html.append('      <div class="stats">')
     html.append('        <div class="stat"><div class="stat-num" id="showing">0</div><div class="stat-label">Showing</div></div>')
     html.append('        <div class="stat"><div class="stat-num" id="total">0</div><div class="stat-label">Total</div></div>')
@@ -427,12 +465,16 @@ def build_html(prompts, ref):
     html.append('</div>')
     html.append('<div class="ref-overlay" id="refOverlay"></div>')
     html.append('<div class="ref-sidebar" id="refSidebar">')
-    html.append('  <h2 style="font-size:14px;margin-bottom:16px;color:var(--accent)">Reference Panel</h2>')
+    html.append('  <h2 style="font-size:14px;margin-bottom:16px;color:var(--accent)">&#128218; Reference Panel</h2>')
     html.append('  <div id="refContent"></div>')
     html.append('  <button id="refClose" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer">&times;</button>')
     html.append('</div>')
-    html.append('<button class="ref-toggle" id="refBtn" title="Reference Panel (R)">&#9776;</button>')
+    html.append('<button class="ref-toggle" id="refBtn" title="Reference Panel (R)"><span class="ref-icon">&#9776;</span></button>')
     html.append('<div class="toast" id="toast"></div>')
+    html.append('<div class="prompt-detail-overlay" id="promptDetailOverlay">')
+    html.append('  <div class="prompt-detail" id="promptDetail"></div>')
+    html.append('</div>')
+    html.append('<div class="version-badge" id="versionBadge">v39</div>')
 
     html.append('<script>')
     html.append('var PROMPTS=' + prompt_json + ';')
@@ -442,23 +484,10 @@ def build_html(prompts, ref):
     html.append('var DOCTRINE=' + doctrine_json + ';')
     html.append('var SYNONYMS=' + synonyms_json + ';')
 
-    html.append(r"""var activeCat='all',activeSection=null,activeType=null,activeColor=null;
-function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2000)}
-function toggleRef(){var s=document.getElementById('refSidebar'),o=document.getElementById('refOverlay');s.classList.toggle('open');o.classList.toggle('open')}
-function copyPrompt(id){var p=PROMPTS.find(function(x){return x.id===id});if(p&&p.copyContent){navigator.clipboard.writeText(p.copyContent).then(function(){showToast('Copied '+id+' to clipboard')})}}
-function renderSections(){var nav=document.getElementById('sectionsNav');nav.innerHTML='<button class="section-tab'+(activeSection===null?' active':'')+'" data-section="__all__">All Sections</button>';SECTIONS.forEach(function(s){nav.innerHTML+='<button class="section-tab'+(activeSection===s.name?' active':'')+'" data-section="'+s.name+'">'+s.name+'</button>'})}
-function renderTypes(){var nav=document.getElementById('typeNav');var types={};PROMPTS.forEach(function(p){if(!types[p.type])types[p.type]={count:0,color:p.color};types[p.type].count++});nav.innerHTML='<div class="type-chip'+(activeType===null?' active':'')+'" data-type="__all__">All Types</div>';Object.keys(types).sort().forEach(function(t){var hex=COLORS[types[t].color.toLowerCase()]||'#64748b';nav.innerHTML+='<div class="type-chip'+(activeType===t?' active':'')+'" data-type="'+t+'"><span class="dot" style="background:'+hex+'"></span>'+t+' ('+types[t].count+')</div>'})}
-function render(){var q=document.getElementById('search').value.toLowerCase().trim();var f=PROMPTS;if(activeCat!=='all'&&activeCat!=='doctrine')f=f.filter(function(p){return p.category===activeCat});if(activeSection){var secTypes=[];for(var i=0;i<SECTIONS.length;i++){if(SECTIONS[i].name===activeSection){secTypes=SECTIONS[i].types;break}}f=f.filter(function(p){return secTypes.indexOf(p.type)!==-1})}if(activeType)f=f.filter(function(p){return p.type===activeType});if(activeColor)f=f.filter(function(p){return p.color&&p.color.toLowerCase()===activeColor.toLowerCase()});if(q){var synIds={};var qWords=q.split(/\s+/);Object.keys(SYNONYMS).forEach(function(key){if(q.indexOf(key)!==-1){SYNONYMS[key].split(' ').forEach(function(id){synIds[id.toUpperCase()]=1})}else if(qWords.length<=3&&key.split(' ').length<=3){var allMatch=qWords.every(function(w){var kw=key.split(/\s+/);return kw.some(function(k){return k.indexOf(w)!==-1||w.indexOf(k)!==-1})});if(allMatch)SYNONYMS[key].split(' ').forEach(function(id){synIds[id.toUpperCase()]=1})}});f=f.filter(function(p){if(synIds[p.id])return true;if(p.keywords){for(var ki=0;ki<p.keywords.length;ki++){if(p.keywords[ki].indexOf(q)!==-1)return true}}return p.id.toLowerCase().indexOf(q)!==-1||p.name.toLowerCase().indexOf(q)!==-1||p.type.toLowerCase().indexOf(q)!==-1||p.class.toLowerCase().indexOf(q)!==-1||p.useWhen.toLowerCase().indexOf(q)!==-1||p.sprintRole.toLowerCase().indexOf(q)!==-1||p.proofGate.toLowerCase().indexOf(q)!==-1||p.copyContent.toLowerCase().indexOf(q)!==-1})}var grid=document.getElementById('grid');var dv=document.getElementById('doctrineView');if(activeCat==='doctrine'){grid.style.display='none';dv.classList.add('active');renderDoctrineList()}else{grid.style.display='grid';dv.classList.remove('active')}grid.innerHTML='';f.forEach(function(p){var hex=COLORS[p.color.toLowerCase()]||'#64748b';var card=document.createElement('div');card.className='prompt-card';card.innerHTML='<div class="glow-bar" style="background:'+hex+'"></div><div class="prompt-header"><span class="prompt-id">'+p.id+'</span><span class="prompt-name">'+p.name+'</span></div><div class="prompt-type">'+p.type+' &middot; '+p.color+'</div><div class="prompt-desc">'+p.useWhen+'</div><div class="prompt-meta"><span class="prompt-badge">'+p.sprintRole+'</span><span class="prompt-badge">'+p.proofGate+'</span></div>';var btn=document.createElement('button');btn.className='prompt-copy-btn';btn.textContent='Copy';btn.onclick=function(e){e.stopPropagation();copyPrompt(p.id);btn.classList.add('copied');btn.textContent='Copied!';setTimeout(function(){btn.classList.remove('copied');btn.textContent='Copy'},1500)};card.appendChild(btn);grid.appendChild(card)});document.getElementById('showing').textContent=f.length;document.getElementById('total').textContent=PROMPTS.length}
-function renderDoctrineList(){var el=document.getElementById('doctrineList');document.getElementById('doctrineDetail').classList.remove('active');el.style.display='grid';el.innerHTML='';Object.keys(DOCTRINE).forEach(function(key){var d=DOCTRINE[key];var card=document.createElement('div');card.className='doctrine-card';card.onclick=function(){document.getElementById('doctrineDetail').classList.add('active');el.style.display='none';var html='<h2 style="color:var(--accent);margin-bottom:0.25rem">'+d.title+'</h2><div style="color:var(--text-muted);margin-bottom:1.5rem">'+d.subtitle+'</div>';d.sections.forEach(function(s){html+='<div class="doctrine-section"><h4>'+s.heading+'</h4>';var lines=s.content.split('\n');var inTable=false;var tbl='';lines.forEach(function(line){if(line.match(/^\|.*\|$/)){if(!inTable){inTable=true;tbl='<table>'}if(line.match(/^\|[-\s|]+$/)){return}var cells=line.split('|').filter(function(c){return c.trim()!==''});var tag=tbl.indexOf('<th>')===-1?'th':'td';tbl+='<tr>'+cells.map(function(c){return '<'+tag+'>'+c.trim()+'</'+tag+'>'}).join('')+'</tr>'}else{if(inTable){tbl+='</table>';html+=tbl;inTable=false;tbl=''}html+='<p>'+line+'</p>'}});if(inTable){tbl+='</table>';html+=tbl}html+='</div>'});document.getElementById('doctrineContent').innerHTML=html};card.innerHTML='<h3>'+d.title+'</h3><div class="subtitle">'+d.subtitle+'</div><div class="count">'+d.sections.length+' sections &rarr;</div>';el.appendChild(card)})}
-document.getElementById('doctrineBack').onclick=function(){renderDoctrineList()};
-document.addEventListener('click',function(e){var ct=e.target.closest('.cat-tab');if(ct){activeCat=ct.dataset.cat;document.querySelectorAll('.cat-tab').forEach(function(b){b.classList.remove('active')});ct.classList.add('active');render();return}var st=e.target.closest('.section-tab');if(st){var sn=st.dataset.section;activeSection=sn==='__all__'?null:sn;document.querySelectorAll('.section-tab').forEach(function(b){b.classList.remove('active')});st.classList.add('active');render();return}var tc=e.target.closest('.type-chip');if(tc){var tn=tc.dataset.type;activeType=tn==='__all__'?null:tn;document.querySelectorAll('.type-chip').forEach(function(b){b.classList.remove('active')});tc.classList.add('active');render();return}});
-document.getElementById('search').addEventListener('input',render);
-document.getElementById('refBtn').addEventListener('click',toggleRef);
-document.getElementById('refOverlay').addEventListener('click',toggleRef);
-document.getElementById('refClose').addEventListener('click',toggleRef);
-document.addEventListener('keydown',function(e){if(e.target.tagName==='INPUT')return;switch(e.key){case'1':activeCat='all';break;case'2':activeCat='standard';break;case'3':activeCat='gnhf';break;case'4':activeCat='doctrine';break;case'r':case'R':toggleRef();return;case'/':e.preventDefault();document.getElementById('search').focus();return;case'Escape':if(document.getElementById('refSidebar').classList.contains('open')){toggleRef();return}if(document.getElementById('search').value){document.getElementById('search').value='';render();return}if(activeType){activeType=null;render();return}if(activeSection){activeSection=null;render();return}if(activeCat!=='all'){activeCat='all';render();return}return}document.querySelectorAll('.cat-tab').forEach(function(b){b.classList.remove('active');if(b.dataset.cat===activeCat)b.classList.add('active')});render()});""")
-    html.append(r"""(function buildRef(){var el=document.getElementById('refContent');var html='';if(REF.gnhfWorkflow){html+='<div class="ref-section"><h3>GNHF Workflow</h3>';REF.gnhfWorkflow.forEach(function(w){var pid=w.prompt||'';html+='<div class="ref-item'+(pid?' data-prompt="'+pid+'"':'')+'"><span class="label">'+pid+'</span> '+(w.useCase||w.moment||'')+'</div>'});html+='</div>'}if(REF.nightShiftRunbook){html+='<div class="ref-section"><h3>Night Shift Runbook</h3>';REF.nightShiftRunbook.forEach(function(r){if(r.scenario==='Scenario')return;html+='<div class="ref-item"><span class="label">'+r.scenario+'</span> '+r.purpose+'</div>'});html+='</div>'}if(REF.variables){html+='<div class="ref-section"><h3>Variables</h3>';REF.variables.forEach(function(v){html+='<div class="ref-item"><span class="label">'+v.name+'</span> '+v.description+'</div>'});html+='</div>'}if(REF.promptSequence){html+='<div class="ref-section"><h3>Prompt Sequence</h3>';REF.promptSequence.forEach(function(s){html+='<div class="ref-item" data-prompt="'+s.promptId+'"><span class="label">'+s.seq+'</span> '+s.promptId+': '+s.useItFor+'</div>'});html+='</div>'}el.innerHTML=html;el.querySelectorAll('.ref-item[data-prompt]').forEach(function(item){item.addEventListener('click',function(){var pid=item.getAttribute('data-prompt');if(!pid)return;document.getElementById('search').value='';activeCat='all';activeSection=null;activeType=null;activeColor=null;document.querySelectorAll('.cat-tab').forEach(function(b){b.classList.remove('active');if(b.dataset.cat==='all')b.classList.add('active')});document.querySelectorAll('.section-tab').forEach(function(b){b.classList.remove('active')});document.querySelectorAll('.type-chip').forEach(function(b){b.classList.remove('active')});var match=PROMPTS.find(function(p){return p.id===pid});if(match){var synKey=pid.toLowerCase();var synHit=Object.keys(SYNONYMS).find(function(k){return SYNONYMS[k].indexOf(pid)!==-1});if(synHit)document.getElementById('search').value=synHit;else document.getElementById('search').value=pid;render();if(document.getElementById('refSidebar').classList.contains('open'))toggleRef();setTimeout(function(){var card=document.querySelector('.prompt-card');if(card)card.scrollIntoView({behavior:'smooth',block:'center'})},100)}})})})();""")
-    html.append('render();')
+    with open(JS_PATH, "r", encoding="utf-8") as f:
+        js_text = f.read()
+    html.append(js_text)
+
     html.append('</script>\n</body>\n</html>')
 
     return '\n'.join(html)
