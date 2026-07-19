@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/web-excel-repair-triage/configs/harness/web_spreadsheet_ir_v1.schema.json",
+  "title": "Web Spreadsheet Intermediate Representation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "direction",
+    "source",
+    "document",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "direction": {
+      "enum": [
+        "website_to_spreadsheet",
+        "spreadsheet_to_website"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "sha256"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "sidecar_portal_html",
+            "generic_html",
+            "xlsx_workbook",
+            "workbook_bundle"
+          ]
+        },
+        "path": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "mapping_profile": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "sections"
+      ],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/section"
+          }
+        }
+      }
+    },
+    "presentation": {
+      "type": "object",
+      "description": "Optional projection hints. Semantic data remains authoritative when presentation differs.",
+      "additionalProperties": true
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "extractor",
+        "semantic_sha256",
+        "warnings"
+      ],
+      "properties": {
+        "extractor": {
+          "type": "string"
+        },
+        "semantic_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "supporting_files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "kind",
+        "payload"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "table",
+            "kpis",
+            "links",
+            "json",
+            "preflight",
+            "delta",
+            "text"
+          ]
+        },
+        "payload": {},
+        "web_projection": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "spreadsheet_projection": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}
