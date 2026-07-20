@@ -105,6 +105,8 @@ SYNONYMS = {
     "local validation": "P54", "bootstrap": "P55", "github cli": "P55",
     "portable discipline": "P57", "harness discipline": "P57",
     "troubleshoot": "P58", "diagnose": "P58", "debug": "P58", "root cause": "P58",
+    "parallel sprint": "P59", "multi-agent plan": "P59", "parallel lanes": "P59", "distributed sprint": "P59",
+    "sequential sprint": "P60", "serialized plan": "P60", "chat handoff": "P60", "step by step plan": "P60",
     "artifact": "P56", "build artifact": "P56", "generate artifact": "P56",
     "context to artifact": "P56", "create artifact": "P56",
 }

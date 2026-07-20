@@ -117,7 +117,7 @@
   {
     "id": "P04",
     "seq": "04",
-    "name": "Repo-Aware Ordered Sprint + Harness Factoring Distributor",
+    "name": "[PARALLEL] Repo-Aware Sprint + Harness Factoring Distributor",
     "type": "PLAN",
     "class": "PLAN / DISTRIBUTE",
     "sprintRole": "Divide remaining work into bounded lanes",
@@ -139,13 +139,16 @@
       "work lanes",
       "harness factoring",
       "ordering",
-      "dependencies"
+      "dependencies",
+      "parallel lanes",
+      "distributed",
+      "concurrent agents"
     ]
   },
   {
     "id": "P05",
     "seq": "05",
-    "name": "Ordered Copy-Panel Sprint Plan Pack Generator",
+    "name": "[SERIALIZED] Ordered Sprint Plan Pack Generator",
     "type": "PLAN",
     "class": "PLAN / PACK",
     "sprintRole": "Generate a multi-chat launch pack",
@@ -166,7 +169,10 @@
       "copy panel",
       "one click",
       "writing panel",
-      "parallel lanes"
+      "parallel lanes",
+      "sequential",
+      "serialized",
+      "ordered steps"
     ]
   },
   {
@@ -1509,6 +1515,60 @@
       "investigate",
       "symptoms",
       "repair plan"
+    ]
+  },
+  {
+    "id": "P59",
+    "seq": "59",
+    "name": "[PARALLEL] Multi-Agent Sprint Planner",
+    "type": "PLAN",
+    "class": "PLAN / PARALLEL SPRINT ORCHESTRATION",
+    "sprintRole": "Plan a sprint that distributes work across parallel agent lanes with isolated worktrees",
+    "progress": "YES",
+    "useWhen": "You need to execute a large sprint by splitting work into independent parallel tracks that multiple agents can work on simultaneously without collision. Each track gets its own branch, worktree, and commit sequence.",
+    "inspectFirst": "Repository structure, file ownership, dependency graph between changes, existing branches, open PRs, and collision risks between proposed work items.",
+    "expectedOutput": "A parallel sprint plan with: (1) list of independent work lanes, (2) files owned by each lane, (3) branch names for each lane, (4) dependency order (what must merge first), (5) integration strategy, (6) validation per lane and at integration.",
+    "nextStep": "Spawn one agent per lane with the lane-specific bounded sprint prompt (P07). Coordinate integration after all lanes complete.",
+    "proofGate": "Each lane has isolated branch, owned files listed, no cross-lane uncommitted state, integration plan specified, validators pass per lane.",
+    "color": "Indigo",
+    "copySheet": "P59_COPY_SAFE",
+    "category": "standard",
+    "copyContent": "PLAN A PARALLEL MULTI-AGENT SPRINT NOW. EACH LANE MUST BE FULLY ISOLATED.\n\nRepo: resolve the current repository from the environment when no explicit repo is supplied.\nScope: the set of changes that need to happen, described by the user or extracted from context.\n\nSTEP 1: ANALYZE THE WORK\n- List every file that needs to change\n- Group changes by dependency: which changes are independent of each other?\n- Identify collision points: files or modules that multiple changes touch\n- Determine the minimum number of independent lanes\n\nSTEP 2: DEFINE PARALLEL LANES\nFor each lane, specify:\n- Lane name and mission\n- Branch name (format: sprint/<lane-name>)\n- Owned files (exact paths, no ambiguity)\n- Forbidden files (files owned by other lanes)\n- Expected commits and their messages\n- Validation commands for this lane\n\nSTEP 3: ESTABLISH DEPENDENCY ORDER\n- Which lanes can start immediately?\n- Which lanes must wait for others to merge first?\n- What is the integration sequence?\n\nSTEP 4: INTEGRATION STRATEGY\n- How will lanes be merged? (order, conflict resolution)\n- What validation runs after each merge?\n- What is the final integration validation?\n\nSTEP 5: OUTPUT FORMAT\nFor each lane, output a self-contained sprint card:\n  LANE: <name>\n  BRANCH: <branch>\n  MISSION: <one-line goal>\n  OWNED: <file list>\n  FORBIDDEN: <file list>\n  COMMITS: <ordered list>\n  VALIDATE: <commands>\n  DEPENDS ON: <other lanes or NONE>\n\nThen output the integration sequence.\n\nCONSTRAINTS:\n- No two lanes may own the same file\n- Each lane must be independently committable\n- Lanes must not share uncommitted state\n- If a dependency exists, it must be explicit and ordered\n- Use isolated worktrees for each lane when possible\n\nFINAL REPORT\nLane count, branch list, file ownership matrix, dependency graph, integration sequence, validation per lane, and one exact next command to start the first lane.",
+    "keywords": [
+      "parallel",
+      "multi-agent",
+      "sprint plan",
+      "parallel lanes",
+      "isolated worktrees",
+      "distributed work",
+      "concurrent"
+    ]
+  },
+  {
+    "id": "P60",
+    "seq": "60",
+    "name": "[SERIALIZED] Sequential Chat Sprint Planner",
+    "type": "PLAN",
+    "class": "PLAN / SEQUENTIAL CHAT EXECUTION",
+    "sprintRole": "Plan a sprint as a sequence of dependent steps, each executed in a separate chat session",
+    "progress": "YES",
+    "useWhen": "You need to execute a sprint as a strict sequence of dependent steps where each step builds on the previous one. Each step runs in its own chat session with a handoff between steps.",
+    "inspectFirst": "Repository state, current branch, open PRs, existing validators, and the logical dependency chain between changes.",
+    "expectedOutput": "A serialized sprint plan with: (1) ordered step list, (2) input/output for each step, (3) handoff format between steps, (4) validation per step, (5) rollback strategy if any step fails.",
+    "nextStep": "Execute step 1 in the current chat. At completion, hand off the output (commit SHA, branch state, validation results) to the next chat session running step 2.",
+    "proofGate": "Each step has explicit input requirements, output artifacts, validation commands, and handoff content. Steps are strictly ordered with no parallel execution.",
+    "color": "Teal",
+    "copySheet": "P60_COPY_SAFE",
+    "category": "standard",
+    "copyContent": "PLAN A SEQUENTIAL CHAT SPRINT NOW. EACH STEP IS DEPENDENT ON THE PREVIOUS.\n\nRepo: resolve the current repository from the environment when no explicit repo is supplied.\nScope: the set of changes that need to happen, described by the user or extracted from context.\n\nSTEP 1: ANALYZE THE DEPENDENCY CHAIN\n- List every change that needs to happen\n- Order them by dependency: what must exist before the next change can start?\n- Identify which changes are truly dependent vs which could theoretically be parallel\n- For this plan, treat ALL changes as sequential (one at a time)\n\nSTEP 2: DEFINE THE SEQUENCE\nFor each step, specify:\n- Step number and name\n- Chat session purpose (one sentence)\n- Input requirements (what must be true before this step starts)\n- Exact changes to make (files, functions, configs)\n- Output artifacts (commit SHA, changed files, validation results)\n- Validation commands to run before handoff\n- Handoff content: what the next chat session needs to know\n\nSTEP 3: HANDOFF FORMAT\nBetween each step, define the handoff:\n  FROM: step N\n  TO: step N+1\n  BRANCH: current branch state\n  COMMIT: SHA of last commit\n  FILES CHANGED: list\n  VALIDATION: pass/fail\n  CONTEXT: anything the next step needs to know\n\nSTEP 4: ROLLBACK STRATEGY\nIf any step fails:\n- What is the rollback command?\n- Can subsequent steps still proceed?\n- What evidence is needed to diagnose the failure?\n\nSTEP 5: OUTPUT FORMAT\nFor each step, output a step card:\n  STEP <N>: <name>\n  CHAT: <purpose>\n  INPUT: <requirements>\n  DO: <exact changes>\n  VALIDATE: <commands>\n  HANDOFF: <content for next step>\n\nThen output the full sequence as an ordered list.\n\nCONSTRAINTS:\n- Steps are strictly sequential, never parallel\n- Each step must produce a commit before the next step starts\n- Each step must validate before handoff\n- Handoff content must be self-contained (next chat needs no prior context)\n- If a step fails, the sprint stops and rollback is executed\n\nFINAL REPORT\nStep count, sequence list, input/output per step, handoff chain, validation per step, rollback strategy, and one exact next command to start step 1.",
+    "keywords": [
+      "sequential",
+      "serialized",
+      "chat sprint",
+      "handoff",
+      "step by step",
+      "dependent steps",
+      "separate chats"
     ]
   }
 ]
