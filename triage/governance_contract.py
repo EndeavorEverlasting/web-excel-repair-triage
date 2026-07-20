@@ -57,6 +57,7 @@ _REQUIRED_COMPLETION_MARKERS = (
 )
 
 _REQUIRED_FORBIDDEN_MARKERS = (
+    "acknowledgment only",
     "acknowledgment without mutation",
     "plans without execution",
     "summaries without proof",
@@ -89,6 +90,27 @@ def _headings(text: str) -> set[str]:
     }
 
 
+def _section_text(text: str, heading: str) -> str:
+    match = re.search(
+        rf"^##\s+{re.escape(heading)}\s*$\n(?P<body>.*?)(?=^##\s+|\Z)",
+        text,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    return match.group("body") if match else ""
+
+
+def _require_markers(
+    issues: list[str],
+    section: str,
+    markers: Sequence[str],
+    label: str,
+) -> None:
+    lowered = section.lower()
+    for marker in markers:
+        if marker.lower() not in lowered:
+            issues.append(f"{label} marker missing: {marker}")
+
+
 def validate_text(text: str) -> tuple[str, ...]:
     issues: list[str] = []
     lowered = text.lower()
@@ -103,47 +125,64 @@ def validate_text(text: str) -> tuple[str, ...]:
         if section not in headings:
             issues.append(f"governance section missing: {section}")
 
-    for principle in _REQUIRED_PRINCIPLES:
-        if principle not in lowered:
-            issues.append(f"agent operating principle missing: {principle}")
+    principle_section = _section_text(text, "Agent Operating Principles")
+    _require_markers(
+        issues,
+        principle_section,
+        _REQUIRED_PRINCIPLES,
+        "agent operating principle",
+    )
 
+    precedence_section = _section_text(text, "Instruction Precedence")
     positions: list[int] = []
     for item in _PRECEDENCE:
-        position = text.find(item)
+        position = precedence_section.find(item)
         if position < 0:
             issues.append(f"instruction precedence item missing: {item}")
         positions.append(position)
     if all(position >= 0 for position in positions) and positions != sorted(positions):
         issues.append("instruction precedence order is invalid")
 
-    for marker in _REQUIRED_SPRINT_MARKERS:
-        if marker.lower() not in lowered:
-            issues.append(f"mandatory sprint declaration marker missing: {marker}")
+    _require_markers(
+        issues,
+        _section_text(text, "Mandatory Sprint Declaration"),
+        _REQUIRED_SPRINT_MARKERS,
+        "mandatory sprint declaration",
+    )
 
-    if _EXECUTABLE_LOOP not in text:
+    if _EXECUTABLE_LOOP not in _section_text(text, "Executable Loop"):
         issues.append("governance executable loop is missing or malformed")
 
-    for marker in _REQUIRED_ACTION_MARKERS:
-        if marker.lower() not in lowered:
-            issues.append(f"action-commitment marker missing: {marker}")
+    _require_markers(
+        issues,
+        _section_text(text, "Action-Commitment Rule"),
+        _REQUIRED_ACTION_MARKERS,
+        "action-commitment",
+    )
+    _require_markers(
+        issues,
+        _section_text(text, "Completion Standard"),
+        _REQUIRED_COMPLETION_MARKERS,
+        "completion standard",
+    )
+    _require_markers(
+        issues,
+        _section_text(text, "Forbidden Behaviors"),
+        _REQUIRED_FORBIDDEN_MARKERS,
+        "forbidden behavior",
+    )
+    _require_markers(
+        issues,
+        _section_text(text, "Shared Planning Directory Governance"),
+        _REQUIRED_PLANNING_MARKERS,
+        "shared planning governance",
+    )
 
-    for marker in _REQUIRED_COMPLETION_MARKERS:
-        if marker.lower() not in lowered:
-            issues.append(f"completion standard marker missing: {marker}")
-
-    for marker in _REQUIRED_FORBIDDEN_MARKERS:
-        if marker.lower() not in lowered:
-            issues.append(f"forbidden behavior marker missing: {marker}")
-
-    for marker in _REQUIRED_PLANNING_MARKERS:
-        if marker.lower() not in lowered:
-            issues.append(f"shared planning governance marker missing: {marker}")
-
-    if "task-specific rules may refine" not in lowered:
+    if "task-specific rules may refine" not in precedence_section.lower():
         issues.append("governance must preserve task-specific refinement without lowering precedence")
-    if "preservation before cleanup" not in lowered:
+    if "preservation before cleanup" not in principle_section.lower():
         issues.append("governance must require preservation before cleanup")
-    if "capability presence is not authority" not in lowered:
+    if "capability presence is not authority" not in _section_text(text, "Capability and Authority Rule").lower():
         issues.append("governance must distinguish capability from authority")
 
     return tuple(issues)
