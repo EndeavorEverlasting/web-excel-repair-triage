@@ -113,7 +113,7 @@ A task is complete only when all applicable items are reported and agree with re
 
 ## Forbidden Behaviors
 
-- acknowledgment without mutation when mutation was requested and authorized;
+- acknowledgment only, including acknowledgment without mutation when mutation was requested and authorized;
 - plans without execution when implementation was requested;
 - summaries without proof;
 - completion claims without running checks;
