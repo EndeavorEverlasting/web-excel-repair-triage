@@ -17,6 +17,8 @@ _REQUIRED_SECTIONS = (
     "Mandatory Sprint Declaration",
     "Shared Planning Directory Governance",
     "Executable Loop",
+    "Action-Commitment Rule",
+    "Capability and Authority Rule",
     "Completion Standard",
     "Forbidden Behaviors",
 )
@@ -69,6 +71,11 @@ _REQUIRED_PLANNING_MARKERS = (
     "plans and handoffs are coordination artifacts, not execution or completion proof",
 )
 
+_REQUIRED_ACTION_MARKERS = (
+    "claims installation, setup, build, execution, repair, configuration, upgrade, deployment, merge, or release",
+    "permitting acknowledgment, advice, a plan, a rewritten prompt, or a handoff instead is invalid",
+)
+
 _EXECUTABLE_LOOP = (
     "request -> evidence review -> bounded decision -> repo/Git/GitHub mutation "
     "-> artifacts -> validation -> report -> next decision"
@@ -116,6 +123,10 @@ def validate_text(text: str) -> tuple[str, ...]:
     if _EXECUTABLE_LOOP not in text:
         issues.append("governance executable loop is missing or malformed")
 
+    for marker in _REQUIRED_ACTION_MARKERS:
+        if marker.lower() not in lowered:
+            issues.append(f"action-commitment marker missing: {marker}")
+
     for marker in _REQUIRED_COMPLETION_MARKERS:
         if marker.lower() not in lowered:
             issues.append(f"completion standard marker missing: {marker}")
@@ -132,6 +143,8 @@ def validate_text(text: str) -> tuple[str, ...]:
         issues.append("governance must preserve task-specific refinement without lowering precedence")
     if "preservation before cleanup" not in lowered:
         issues.append("governance must require preservation before cleanup")
+    if "capability presence is not authority" not in lowered:
+        issues.append("governance must distinguish capability from authority")
 
     return tuple(issues)
 
