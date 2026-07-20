@@ -70,7 +70,24 @@ Every writing action follows:
 request -> evidence review -> bounded decision -> repo/Git/GitHub mutation -> artifacts -> validation -> report -> next decision
 ```
 
-A request for diagnosis only may stop before mutation when the task-specific contract explicitly requires that boundary. A request that claims installation, setup, build, execution, repair, configuration, upgrade, deployment, merge, or release must perform the corresponding authorized mutation and produce proof.
+A diagnosis-only request may stop before mutation when its task-specific contract explicitly requires that boundary.
+
+## Action-Commitment Rule
+
+Any prompt that claims installation, setup, build, execution, repair, configuration, upgrade, deployment, merge, or release must require the corresponding authorized mutation and proof.
+
+A title or expected output that claims action while permitting acknowledgment, advice, a plan, a rewritten prompt, or a handoff instead is invalid.
+
+## Capability and Authority Rule
+
+A tool may perform an action only when all four conditions are true:
+
+1. the environment exposes the capability;
+2. the capability has been verified in the current environment;
+3. the task authorizes the action;
+4. repository policy does not forbid it.
+
+Capability presence is not authority.
 
 ## Reuse and Evidence Discipline
 
