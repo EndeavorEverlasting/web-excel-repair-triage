@@ -34,6 +34,13 @@ jobs:
           python -m triage.governance_contract --repo-root . --json
           python -m pytest tests/test_harness_doctrine.py tests/test_governance_contract.py -q
 
+      - name: Governance Git review
+        run: |
+          git diff --check HEAD^ HEAD
+          git status --short
+          git diff --stat HEAD^ HEAD
+          git diff --name-only HEAD^ HEAD
+
       - name: Import artifact engines
         run: |
           python -c "import triage.governance_contract; import triage.cybernet_targets.cli; import triage.nw_prj_neuron_track_hours.cli; import triage.nw_prj_neuron_track_hours.bonita_cli; import triage.admin_billing_summary.cli; import triage.one_marcus_recon.cli; import triage.sidecar_html; import triage.artifact_fingerprint; import triage.artifact_profiles; import triage.artifact_compare; import triage.same_family_compare; import triage.roster_log_compare.compare; import triage.roster_log_review_queue.cli; import triage.gitignore_hygiene; print('imports ok')"
@@ -58,10 +65,3 @@ jobs:
             tests/test_gitignore_hygiene.py \
             tests/test_roster_log_review_queue.py \
             -q
-
-      - name: Final governance Git review
-        run: |
-          git diff --check HEAD^ HEAD
-          git status --short
-          git diff --stat HEAD^ HEAD
-          git diff --name-only HEAD^ HEAD
