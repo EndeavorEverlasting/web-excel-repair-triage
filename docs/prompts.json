@@ -1479,5 +1479,36 @@
       "agent config",
       "dev environment"
     ]
+  },
+  {
+    "id": "P58",
+    "seq": "58",
+    "name": "Context-Aware Troubleshooter",
+    "type": "ANALYZE + TEST",
+    "class": "DIAGNOSTIC / REPO AND CHAT TROUBLESHOOT",
+    "sprintRole": "Diagnose failures from repo state or conversation context and produce a bounded repair plan",
+    "progress": "YES",
+    "useWhen": "Something is broken, failing, or behaving unexpectedly and you need to identify the root cause from repo evidence, CI output, error logs, or chat context before attempting repair.",
+    "inspectFirst": "Repository state, recent commits, CI/test output, error messages, open PRs, relevant validators, and conversation context if the issue was discussed in chat.",
+    "expectedOutput": "A structured diagnosis with: (1) symptoms observed, (2) evidence cited, (3) root cause identified or narrowed, (4) bounded repair plan with owned scope, (5) validation steps to confirm the fix.",
+    "nextStep": "Execute the repair plan using the appropriate sprint prompt (P07 for code changes, P32 for CI repair, etc.).",
+    "proofGate": "Diagnosis references specific file paths, line numbers, error output, or commit SHAs. Repair plan is bounded and names forbidden scope. Validation commands are specified.",
+    "color": "Amber",
+    "copySheet": "P58_COPY_SAFE",
+    "category": "standard",
+    "copyContent": "TROUBLESHOOT FROM CONTEXT NOW. DO NOT GUESS, ASSUME, OR SKIP EVIDENCE.\n\nRepo: resolve the current repository from the environment when no explicit repo is supplied.\nSource of symptoms: describe whether the issue comes from repo state (files, tests, CI), runtime behavior, or conversation context.\n\nSTEP 1: COLLECT EVIDENCE\n- If repo-based: run git status, git log --oneline -5, relevant test/validator commands, check CI output\n- If chat-based: review the conversation for error messages, screenshots, failing commands, and user-reported symptoms\n- Capture exact error text, file paths, line numbers, and command output\n\nSTEP 2: NARROW THE CAUSE\n- Map symptoms to likely causes\n- Identify which files, functions, configs, or workflows are involved\n- Check for recent changes that correlate with the failure\n- Rule out environment issues (missing deps, wrong branch, stale build)\n\nSTEP 3: STRUCTURE THE DIAGNOSIS\nReport:\n- Symptoms: what is observed\n- Evidence: exact errors, file paths, commit SHAs, test names\n- Root cause: most likely explanation with supporting evidence\n- Confidence: high / medium / low (and what would increase it)\n\nSTEP 4: BOUNDED REPAIR PLAN\n- Name the specific files to change\n- Describe the minimal fix\n- State forbidden scope (what NOT to touch)\n- Specify validation commands to run after the fix\n- If the fix requires a different prompt (e.g., P07 for code sprint, P32 for CI repair), cite it\n\nSTEP 5: VALIDATE\n- Run the validators, tests, or checks that confirm the diagnosis\n- If validation passes, commit and report\n- If validation fails, revisit step 2\n\nFINAL REPORT\nRepo, branch, symptoms, evidence, root cause, confidence, repair plan, validation results, commit SHA if applicable, and next command.",
+    "keywords": [
+      "troubleshoot",
+      "diagnose",
+      "debug",
+      "failure",
+      "error",
+      "broken",
+      "failing",
+      "root cause",
+      "investigate",
+      "symptoms",
+      "repair plan"
+    ]
   }
 ]

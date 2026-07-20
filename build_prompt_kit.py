@@ -104,6 +104,7 @@ SYNONYMS = {
     "factoring analyzer": "P52", "factoring builder": "P53",
     "local validation": "P54", "bootstrap": "P55", "github cli": "P55",
     "portable discipline": "P57", "harness discipline": "P57",
+    "troubleshoot": "P58", "diagnose": "P58", "debug": "P58", "root cause": "P58",
     "artifact": "P56", "build artifact": "P56", "generate artifact": "P56",
     "context to artifact": "P56", "create artifact": "P56",
 }
@@ -293,6 +294,8 @@ body{font-family:'Inter','SF Pro Display',-apple-system,BlinkMacSystemFont,'Sego
 .search-container input::placeholder{color:var(--text-muted)}
 .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none}
 .search-kbd{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text-muted);background:var(--bg-card);padding:2px 5px;border-radius:3px;font-family:monospace;border:1px solid var(--border)}
+.search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text-muted);cursor:pointer;display:none;z-index:2;width:20px;height:20px;text-align:center;line-height:20px;border-radius:50%;transition:all 0.2s}
+.search-clear:hover{color:var(--text-primary);background:var(--bg-card)}
 .header-controls{display:flex;gap:12px;align-items:center}
 .cat-tabs{display:flex;gap:3px;background:var(--bg-surface);padding:3px;border-radius:var(--radius)}
 .cat-tab{padding:6px 14px;border-radius:5px;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s;color:var(--text-secondary);border:none;background:none;white-space:nowrap}
@@ -333,11 +336,14 @@ body{font-family:'Inter','SF Pro Display',-apple-system,BlinkMacSystemFont,'Sego
 .prompt-card:hover .prompt-copy-btn{opacity:1}
 .prompt-copy-btn:hover{border-color:var(--accent);color:var(--accent)}
 .prompt-copy-btn.copied{border-color:var(--success);color:var(--success)}
-.prompt-card.gnhf{background:linear-gradient(135deg,#1a1510 0%,#1f1a12 50%,#1a1510 100%);border-color:rgba(245,158,11,0.25)}
-.prompt-card.gnhf:hover{border-color:#f59e0b;box-shadow:0 8px 32px rgba(0,0,0,0.4),0 0 20px rgba(245,158,11,0.15)}
-.prompt-card.gnhf .glow-bar{background:linear-gradient(90deg,#f59e0b,#fbbf24,#f59e0b) !important}
-.prompt-card.gnhf .prompt-id{background:rgba(245,158,11,0.1);color:#f59e0b;border-color:rgba(245,158,11,0.3)}
-.prompt-card.gnhf .gnhf-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.25);margin-left:6px;font-weight:600}
+.prompt-card.gnhf{background:linear-gradient(145deg,#1c1710 0%,#211c13 40%,#1a1510 100%);border-color:rgba(245,158,11,0.3);box-shadow:inset 0 0 30px rgba(245,158,11,0.03)}
+.prompt-card.gnhf:hover{border-color:#f59e0b;box-shadow:0 8px 32px rgba(0,0,0,0.4),0 0 24px rgba(245,158,11,0.2),inset 0 0 30px rgba(245,158,11,0.05)}
+.prompt-card.gnhf .glow-bar{background:linear-gradient(90deg,#f59e0b,#fbbf24,#f59e0b) !important;box-shadow:0 0 8px rgba(245,158,11,0.6),0 0 16px rgba(245,158,11,0.3) !important}
+.prompt-card.gnhf .prompt-id{background:rgba(245,158,11,0.15);color:#fbbf24;border-color:rgba(245,158,11,0.35)}
+.prompt-card.gnhf .prompt-name{color:#fef3c7}
+.prompt-card.gnhf .prompt-type{color:rgba(251,191,36,0.6)}
+.prompt-card.gnhf .prompt-badge{border-color:rgba(245,158,11,0.2);color:rgba(251,191,36,0.7)}
+.prompt-card.gnhf .gnhf-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);margin-left:6px;font-weight:600}
 .prompt-card:not(.gnhf) .gnhf-badge{display:none}
 .gnhf-badge{display:none}
 .ref-toggle{position:fixed;bottom:24px;right:24px;background:var(--accent);color:#fff;border:none;border-radius:50%;width:48px;height:48px;font-size:20px;cursor:pointer;box-shadow:0 4px 20px rgba(59,130,246,0.4);z-index:200;transition:transform 0.2s}
@@ -441,6 +447,7 @@ def build_html(prompts, ref):
     html.append('    <div class="search-container">')
     html.append('      <span class="search-icon">&#128269;</span>')
     html.append('      <input type="text" id="search" placeholder="Search prompts, types, keywords..." autocomplete="off">')
+    html.append('      <span class="search-clear" id="searchClear">&times;</span>')
     html.append('      <span class="search-kbd">/</span>')
     html.append('    </div>')
     html.append('    <div class="header-controls">')
