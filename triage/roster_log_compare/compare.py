@@ -17,6 +17,7 @@ from triage.roster_log_compare.models import ComparisonResult
 from triage.roster_log_compare.override_check import compare_override_tables
 from triage.roster_log_compare.report import write_comparison_workbook
 from triage.roster_log_compare.structure import compare_structure
+from triage.output_policy import assert_output_path_allowed, assert_out_dir_allowed
 from triage.roster_log_compare.verdict import compute_verdict
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -77,6 +78,9 @@ def run(
     root = repo_root or _REPO_ROOT
     left_p = resolve_path(left, root)
     right_p = resolve_path(right, root)
+    assert_output_path_allowed(left_p, right_p, output_path=out_xlsx)
+    assert_output_path_allowed(left_p, right_p, output_path=json_out)
+    assert_out_dir_allowed(resolve_path(json_out, root).parent)
     payload = run_comparison(
         left_p, right_p, live_include_formatting=live_include_formatting,
     )

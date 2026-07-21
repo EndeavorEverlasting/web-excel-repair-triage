@@ -19,7 +19,12 @@ from pathlib import Path
 from .date_inference import AmbiguousDateError
 from .exporter import run_generate, run_recon
 from .integrated_guard import IntegratedWorkbookError
-from .path_guard import SourcePathWriteForbiddenError
+from triage.output_policy import (
+    SourcePathWriteForbiddenError,
+    allocate_run_dir,
+    assert_output_path_allowed,
+    ensure_run_subdirs,
+)
 
 
 def _add_shared_args(p: argparse.ArgumentParser) -> None:
@@ -55,11 +60,15 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _default_generate_output(_input_path: str) -> str:
-    return str(Path("Outputs") / "one_marcus_recon" / "1M_Recon_generated.xlsx")
+    run = allocate_run_dir("one_marcus_recon", "generate")
+    ensure_run_subdirs(run, ("delivery",))
+    return str(run / "delivery" / "1M_Recon_generated.xlsx")
 
 
 def _default_relink_output(_input_path: str) -> str:
-    return str(Path("Outputs") / "one_marcus_recon" / "1M_Recon_relink.xlsx")
+    run = allocate_run_dir("one_marcus_recon", "relink")
+    ensure_run_subdirs(run, ("delivery",))
+    return str(run / "delivery" / "1M_Recon_relink.xlsx")
 
 
 def main(argv=None) -> int:
@@ -68,6 +77,7 @@ def main(argv=None) -> int:
     try:
         if args.command == "generate":
             output = args.output or _default_generate_output(args.input)
+            assert_output_path_allowed(args.input, output_path=output)
             result = run_generate(
                 args.input,
                 output_path=output,
@@ -78,6 +88,7 @@ def main(argv=None) -> int:
             )
         else:
             output = args.output or _default_relink_output(args.input)
+            assert_output_path_allowed(args.input, output_path=output)
             result = run_recon(
                 args.input,
                 output_path=output,

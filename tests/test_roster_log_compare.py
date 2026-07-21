@@ -38,8 +38,10 @@ def test_verdict_scenarios(roster_base, builder, expected):
 
 def test_cli_outputs_json_and_xlsx(roster_base, tmp_path):
     paths = b.build_punch_diff(roster_base)
-    out_xlsx = tmp_path / "comparison.xlsx"
-    out_json = tmp_path / "comparison.json"
+    out_root = tmp_path / "artifacts" / "roster_log_compare" / "test_run"
+    out_root.mkdir(parents=True)
+    out_xlsx = out_root / "comparison.xlsx"
+    out_json = out_root / "comparison.json"
     code = main([
         "--left", str(paths["left"]),
         "--right", str(paths["right"]),
