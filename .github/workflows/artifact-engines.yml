@@ -72,10 +72,12 @@ jobs:
           python-version: "3.12"
 
       - name: Repair canonical sources and regenerate deployed prompt kit
-        run: python .github/temp-fix-prompt-kit-header.py
+        run: |
+          python .github/temp-fix-prompt-kit-header.py
+          python .github/temp-correct-prompt-kit-test.py
 
       - name: Restore one-shot staging surfaces
-        run: git restore -- .github/workflows/artifact-engines.yml .github/temp-fix-prompt-kit-header.py
+        run: git restore -- .github/workflows/artifact-engines.yml .github/temp-fix-prompt-kit-header.py .github/temp-correct-prompt-kit-test.py
 
       - name: Validate exact operator-opened artifact
         run: |
