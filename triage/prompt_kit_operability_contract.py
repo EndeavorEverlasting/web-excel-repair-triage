@@ -73,8 +73,14 @@ FONT_RULES: Mapping[str, Tuple[float, bool]] = {
     "C": (28.0, True),
     "D": (10.0, True),
     "E": (10.0, True),
+    "F": (10.0, False),
     "G": (10.0, True),
     "H": (12.0, True),
+    "I": (10.0, False),
+    "J": (10.0, False),
+    "K": (10.0, False),
+    "L": (10.0, False),
+    "M": (10.0, False),
     "N": (10.0, True),
     "O": (10.0, True),
 }
@@ -159,7 +165,9 @@ def _cell_value(cell: ET.Element, shared: Sequence[str]) -> str:
     return value.text
 
 
-def _worksheet_cells(root: ET.Element, shared: Sequence[str]) -> Dict[str, Tuple[ET.Element, str]]:
+def _worksheet_cells(
+    root: ET.Element, shared: Sequence[str]
+) -> Dict[str, Tuple[ET.Element, str]]:
     return {
         cell.attrib.get("r", ""): (cell, _cell_value(cell, shared))
         for cell in root.findall(".//m:c", NS)
@@ -200,7 +208,9 @@ def _rgb(value: str) -> str:
     return raw[-6:] if len(raw) >= 6 else raw
 
 
-def _styles(zf: zipfile.ZipFile) -> Tuple[List[dict], List[dict], List[dict]]:
+def _styles(
+    zf: zipfile.ZipFile,
+) -> Tuple[List[dict], List[dict], List[dict]]:
     root = _xml_root(zf, "xl/styles.xml")
     fonts: List[dict] = []
     for font in root.findall("m:fonts/m:font", NS):
@@ -219,7 +229,9 @@ def _styles(zf: zipfile.ZipFile) -> Tuple[List[dict], List[dict], List[dict]]:
     fills: List[dict] = []
     for fill in root.findall("m:fills/m:fill", NS):
         fg = fill.find("m:patternFill/m:fgColor", NS)
-        fills.append({"color": _rgb(fg.attrib.get("rgb", "")) if fg is not None else ""})
+        fills.append(
+            {"color": _rgb(fg.attrib.get("rgb", "")) if fg is not None else ""}
+        )
     xfs: List[dict] = []
     for xf in root.findall("m:cellXfs/m:xf", NS):
         protection = xf.find("m:protection", NS)
@@ -227,13 +239,19 @@ def _styles(zf: zipfile.ZipFile) -> Tuple[List[dict], List[dict], List[dict]]:
             {
                 "font_id": int(xf.attrib.get("fontId", "0")),
                 "fill_id": int(xf.attrib.get("fillId", "0")),
-                "locked": protection is None or protection.attrib.get("locked", "1") != "0",
+                "locked": protection is None
+                or protection.attrib.get("locked", "1") != "0",
             }
         )
     return fonts, fills, xfs
 
 
-def _style_for_cell(cell: ET.Element, fonts: Sequence[dict], fills: Sequence[dict], xfs: Sequence[dict]) -> dict:
+def _style_for_cell(
+    cell: ET.Element,
+    fonts: Sequence[dict],
+    fills: Sequence[dict],
+    xfs: Sequence[dict],
+) -> dict:
     style_id = int(cell.attrib.get("s", "0"))
     xf = xfs[style_id]
     return {
@@ -244,8 +262,31 @@ def _style_for_cell(cell: ET.Element, fonts: Sequence[dict], fills: Sequence[dic
     }
 
 
-def _payload_lines(cells: Mapping[str, Tuple[ET.Element, str]], last_row: int) -> List[str]:
+def _payload_lines(
+    cells: Mapping[str, Tuple[ET.Element, str]], last_row: int
+) -> List[str]:
     return [cells.get(f"A{row}", (None, ""))[1] for row in range(1, last_row + 1)]
+
+
+def _column_name(number: int) -> str:
+    column = ""
+    while number:
+        number, remainder = divmod(number - 1, 26)
+        column = chr(65 + remainder) + column
+    return column
+
+
+def _is_operator_edit_cell(sheet: str, ref: str) -> bool:
+    if sheet != "Opportunity_Discovery":
+        return False
+    match = CELL_RE.fullmatch(ref)
+    if not match:
+        return False
+    column_name, row_text = match.groups()
+    column_number = 0
+    for char in column_name:
+        column_number = column_number * 26 + (ord(char) - 64)
+    return 1 <= column_number <= 18 and 1 <= int(row_text) <= 100
 
 
 def validate_gnhf_launch_command(text: str) -> List[dict]:
@@ -254,7 +295,12 @@ def validate_gnhf_launch_command(text: str) -> List[dict]:
     normalized = text.replace("\r\n", "\n").strip()
     lines = normalized.split("\n") if normalized else []
     if not lines or lines[0].strip() != "gnhf `":
-        findings.append({"rule": "command starts with PowerShell gnhf continuation", "expected": "gnhf `"})
+        findings.append(
+            {
+                "rule": "command starts with PowerShell gnhf continuation",
+                "expected": "gnhf `",
+            }
+        )
         return findings
 
     required_patterns = {
@@ -275,20 +321,41 @@ def validate_gnhf_launch_command(text: str) -> List[dict]:
     has_worktree = bool(re.search(r"(?m)^\s*--worktree\s+`$", normalized))
     has_current = bool(re.search(r"(?m)^\s*--current-branch\s+`$", normalized))
     if has_worktree == has_current:
-        findings.append({"rule": "exactly one Git execution mode", "worktree": has_worktree, "current_branch": has_current})
+        findings.append(
+            {
+                "rule": "exactly one Git execution mode",
+                "worktree": has_worktree,
+                "current_branch": has_current,
+            }
+        )
     if re.search(r"(?m)^\s*--push\b", normalized):
         findings.append({"rule": "automatic push forbidden"})
 
     if "max_iterations" in matches:
         value = int(matches["max_iterations"].group(1))
         if not 1 <= value <= 10:
-            findings.append({"rule": "bounded iterations", "actual": value, "allowed": "1-10"})
+            findings.append(
+                {"rule": "bounded iterations", "actual": value, "allowed": "1-10"}
+            )
     if "max_tokens" in matches:
         value = int(matches["max_tokens"].group(1))
         if not 50_000 <= value <= 1_500_000:
-            findings.append({"rule": "bounded tokens", "actual": value, "allowed": "50000-1500000"})
+            findings.append(
+                {
+                    "rule": "bounded tokens",
+                    "actual": value,
+                    "allowed": "50000-1500000",
+                }
+            )
 
-    objective_index = next((index for index, line in enumerate(lines) if line.lstrip().startswith('"Repo:')), None)
+    objective_index = next(
+        (
+            index
+            for index, line in enumerate(lines)
+            if line.lstrip().startswith('"Repo:')
+        ),
+        None,
+    )
     if objective_index is None:
         findings.append({"rule": "quoted objective begins with Repo placeholder"})
     else:
@@ -298,23 +365,37 @@ def validate_gnhf_launch_command(text: str) -> List[dict]:
         if "xyz_repo_or_path" not in objective:
             findings.append({"rule": "generalized repo placeholder"})
         if len(objective.split()) > 650:
-            findings.append({"rule": "atomic objective length", "words": len(objective.split()), "maximum": 650})
+            findings.append(
+                {
+                    "rule": "atomic objective length",
+                    "words": len(objective.split()),
+                    "maximum": 650,
+                }
+            )
 
-    for index, line in enumerate(lines[:objective_index] if objective_index is not None else lines, start=1):
+    for index, line in enumerate(
+        lines[:objective_index] if objective_index is not None else lines, start=1
+    ):
         if index == 1:
             continue
         if line.strip() and not line.rstrip().endswith("`"):
-            findings.append({"rule": "PowerShell continuation", "line": index, "text": line})
+            findings.append(
+                {"rule": "PowerShell continuation", "line": index, "text": line}
+            )
     if any(line.rstrip() != line for line in lines):
         findings.append({"rule": "no trailing spaces after PowerShell continuation"})
     return findings
 
 
-def validate_prompt_kit_operability(path: str | Path) -> PromptKitOperabilityReport:
+def validate_prompt_kit_operability(
+    path: str | Path,
+) -> PromptKitOperabilityReport:
     workbook = Path(path)
     report = PromptKitOperabilityReport(str(workbook.resolve()))
     if not workbook.exists():
-        report.checks.append(Check("file exists", "FAIL", [{"path": str(workbook)}]))
+        report.checks.append(
+            Check("file exists", "FAIL", [{"path": str(workbook)}])
+        )
         return report
     try:
         with zipfile.ZipFile(workbook) as zf:
@@ -330,7 +411,13 @@ def validate_prompt_kit_operability(path: str | Path) -> PromptKitOperabilityRep
                 *{f"{prompt_id}_COPY_SAFE" for prompt_id in PROMPT_IDS},
             }
             missing = sorted(required - set(sheets))
-            report.checks.append(Check("required operability sheets", "FAIL" if missing else "PASS", [{"missing": item} for item in missing]))
+            report.checks.append(
+                Check(
+                    "required operability sheets",
+                    "FAIL" if missing else "PASS",
+                    [{"missing": item} for item in missing],
+                )
+            )
             if missing:
                 return report
 
@@ -339,15 +426,22 @@ def validate_prompt_kit_operability(path: str | Path) -> PromptKitOperabilityRep
             report.checks.append(
                 Check(
                     "workbook structure locked",
-                    "PASS" if structure is not None and structure.attrib.get("lockStructure") == "1" else "FAIL",
+                    "PASS"
+                    if structure is not None
+                    and structure.attrib.get("lockStructure") == "1"
+                    else "FAIL",
                 )
             )
 
             protection_findings = []
+            sheet_cells: Dict[str, Dict[str, Tuple[ET.Element, str]]] = {}
             for name, part in sheets.items():
                 root = _xml_root(zf, part)
+                sheet_cells[name] = _worksheet_cells(root, shared)
                 if root.find("m:sheetProtection", NS) is None:
-                    protection_findings.append({"sheet": name, "reason": "missing sheetProtection"})
+                    protection_findings.append(
+                        {"sheet": name, "reason": "missing sheetProtection"}
+                    )
             report.checks.append(
                 Check(
                     "all worksheets protected",
@@ -357,20 +451,16 @@ def validate_prompt_kit_operability(path: str | Path) -> PromptKitOperabilityRep
                 )
             )
 
-            opportunity_root = _xml_root(zf, sheets["Opportunity_Discovery"])
-            opportunity_cells = _worksheet_cells(opportunity_root, shared)
+            opportunity_cells = sheet_cells["Opportunity_Discovery"]
             unlock_findings = []
             for row in range(1, 101):
                 for column_number in range(1, 19):
-                    number = column_number
-                    column = ""
-                    while number:
-                        number, remainder = divmod(number - 1, 26)
-                        column = chr(65 + remainder) + column
-                    ref = f"{column}{row}"
+                    ref = f"{_column_name(column_number)}{row}"
                     cell = opportunity_cells.get(ref, (None, ""))[0]
                     if cell is None:
-                        unlock_findings.append({"cell": ref, "reason": "not materialized"})
+                        unlock_findings.append(
+                            {"cell": ref, "reason": "not materialized"}
+                        )
                         continue
                     style = _style_for_cell(cell, fonts, fills, xfs)
                     if style["locked"]:
@@ -384,21 +474,51 @@ def validate_prompt_kit_operability(path: str | Path) -> PromptKitOperabilityRep
                 )
             )
 
+            outside_unlock_findings = []
+            for sheet_name, cells in sheet_cells.items():
+                for ref, (cell, _) in cells.items():
+                    style = _style_for_cell(cell, fonts, fills, xfs)
+                    if not style["locked"] and not _is_operator_edit_cell(
+                        sheet_name, ref
+                    ):
+                        outside_unlock_findings.append(
+                            {
+                                "sheet": sheet_name,
+                                "cell": ref,
+                                "reason": "unlocked outside Opportunity_Discovery!A1:R100",
+                            }
+                        )
+            report.checks.append(
+                Check(
+                    "no unlocked cells outside sole edit range",
+                    "FAIL" if outside_unlock_findings else "PASS",
+                    outside_unlock_findings[:100],
+                )
+            )
+
             library_root = _xml_root(zf, sheets["Prompt_Library"])
-            library_cells = _worksheet_cells(library_root, shared)
+            library_cells = sheet_cells["Prompt_Library"]
             library_links = _sheet_hyperlinks(library_root)
 
             header_findings = []
             for index, expected in enumerate(LIBRARY_HEADERS, start=2):
-                number = index
-                column = ""
-                while number:
-                    number, remainder = divmod(number - 1, 26)
-                    column = chr(65 + remainder) + column
+                column = _column_name(index)
                 actual = library_cells.get(f"{column}1", (None, ""))[1]
                 if actual != expected:
-                    header_findings.append({"cell": f"{column}1", "expected": expected, "actual": actual})
-            report.checks.append(Check("Prompt Library B:O headers", "FAIL" if header_findings else "PASS", header_findings))
+                    header_findings.append(
+                        {
+                            "cell": f"{column}1",
+                            "expected": expected,
+                            "actual": actual,
+                        }
+                    )
+            report.checks.append(
+                Check(
+                    "Prompt Library B:O headers",
+                    "FAIL" if header_findings else "PASS",
+                    header_findings,
+                )
+            )
 
             nav_expected = {
                 "A1": ("↓ Bottom", "'Prompt_Library'!A39"),
@@ -412,9 +532,21 @@ def validate_prompt_kit_operability(path: str | Path) -> PromptKitOperabilityRep
                 actual_location = library_links.get(ref, "")
                 if actual_label != label or actual_location != location:
                     nav_findings.append(
-                        {"cell": ref, "expected_label": label, "actual_label": actual_label, "expected_location": location, "actual_location": actual_location}
+                        {
+                            "cell": ref,
+                            "expected_label": label,
+                            "actual_label": actual_label,
+                            "expected_location": location,
+                            "actual_location": actual_location,
+                        }
                     )
-            report.checks.append(Check("Prompt Library left-right top-bottom navigation", "FAIL" if nav_findings else "PASS", nav_findings))
+            report.checks.append(
+                Check(
+                    "Prompt Library left-right top-bottom navigation",
+                    "FAIL" if nav_findings else "PASS",
+                    nav_findings,
+                )
+            )
 
             row_findings = []
             style_findings = []
@@ -427,28 +559,47 @@ def validate_prompt_kit_operability(path: str | Path) -> PromptKitOperabilityRep
                 actual_id = library_cells.get(f"C{row}", (None, ""))[1]
                 actual_copy = library_cells.get(f"O{row}", (None, ""))[1]
                 if actual_id != prompt_id:
-                    row_findings.append({"cell": f"C{row}", "expected": prompt_id, "actual": actual_id})
+                    row_findings.append(
+                        {
+                            "cell": f"C{row}",
+                            "expected": prompt_id,
+                            "actual": actual_id,
+                        }
+                    )
                 if actual_copy != copy_sheet:
-                    row_findings.append({"cell": f"O{row}", "expected": copy_sheet, "actual": actual_copy})
+                    row_findings.append(
+                        {
+                            "cell": f"O{row}",
+                            "expected": copy_sheet,
+                            "actual": actual_copy,
+                        }
+                    )
 
                 color_label = library_cells.get(f"N{row}", (None, ""))[1]
                 expected_palette = PALETTE.get(color_label)
                 if expected_palette is None:
-                    style_findings.append({"row": row, "color": color_label, "reason": "unknown palette label"})
+                    style_findings.append(
+                        {
+                            "row": row,
+                            "color": color_label,
+                            "reason": "unknown palette label",
+                        }
+                    )
                 for column in range(2, 16):
-                    number = column
-                    col = ""
-                    while number:
-                        number, remainder = divmod(number - 1, 26)
-                        col = chr(65 + remainder) + col
+                    col = _column_name(column)
                     cell = library_cells.get(f"{col}{row}", (None, ""))[0]
                     if cell is None:
-                        style_findings.append({"cell": f"{col}{row}", "reason": "missing cell"})
+                        style_findings.append(
+                            {"cell": f"{col}{row}", "reason": "missing cell"}
+                        )
                         continue
                     info = _style_for_cell(cell, fonts, fills, xfs)
                     if expected_palette:
                         expected_fill, expected_text = expected_palette
-                        if info["fill"]["color"] != expected_fill or info["font"]["color"] != expected_text:
+                        if (
+                            info["fill"]["color"] != expected_fill
+                            or info["font"]["color"] != expected_text
+                        ):
                             style_findings.append(
                                 {
                                     "cell": f"{col}{row}",
@@ -462,55 +613,136 @@ def validate_prompt_kit_operability(path: str | Path) -> PromptKitOperabilityRep
                 for col, (size, bold) in FONT_RULES.items():
                     cell = library_cells.get(f"{col}{row}", (None, ""))[0]
                     if cell is None:
+                        style_findings.append(
+                            {"cell": f"{col}{row}", "reason": "missing font cell"}
+                        )
                         continue
                     font = _style_for_cell(cell, fonts, fills, xfs)["font"]
-                    if font["name"] != "Aptos" or font["size"] != size or font["bold"] != bold:
+                    if (
+                        font["name"] != "Aptos"
+                        or font["size"] != size
+                        or font["bold"] != bold
+                    ):
                         style_findings.append(
-                            {"cell": f"{col}{row}", "expected": {"name": "Aptos", "size": size, "bold": bold}, "actual": font}
+                            {
+                                "cell": f"{col}{row}",
+                                "expected": {
+                                    "name": "Aptos",
+                                    "size": size,
+                                    "bold": bold,
+                                },
+                                "actual": font,
+                            }
                         )
 
                 target = library_links.get(f"C{row}", "")
                 copy_target = library_links.get(f"O{row}", "")
                 match = RANGE_RE.fullmatch(target)
                 if match is None or match.group(1) != copy_sheet:
-                    forward_findings.append({"cell": f"C{row}", "expected_sheet": copy_sheet, "actual": target})
+                    forward_findings.append(
+                        {
+                            "cell": f"C{row}",
+                            "expected_sheet": copy_sheet,
+                            "actual": target,
+                        }
+                    )
                     continue
                 last_row = int(match.group(2))
                 if copy_target != target:
-                    forward_findings.append({"cell": f"O{row}", "expected": target, "actual": copy_target})
+                    forward_findings.append(
+                        {
+                            "cell": f"O{row}",
+                            "expected": target,
+                            "actual": copy_target,
+                        }
+                    )
 
                 copy_root = _xml_root(zf, sheets[copy_sheet])
-                copy_cells = _worksheet_cells(copy_root, shared)
+                copy_cells = sheet_cells[copy_sheet]
                 payload = _payload_lines(copy_cells, last_row)
                 endpoint_missing = not payload or not payload[0] or not payload[-1]
                 after_payload = [
                     ref
                     for ref, (_, value) in copy_cells.items()
-                    if value and (match_ref := CELL_RE.fullmatch(ref)) and match_ref.group(1) == "A" and int(match_ref.group(2)) > last_row
+                    if value
+                    and (match_ref := CELL_RE.fullmatch(ref))
+                    and match_ref.group(1) == "A"
+                    and int(match_ref.group(2)) > last_row
                 ]
                 if endpoint_missing or after_payload:
                     forward_findings.append(
-                        {"sheet": copy_sheet, "payload_endpoints_nonempty": not endpoint_missing, "nonempty_after_payload": after_payload}
+                        {
+                            "sheet": copy_sheet,
+                            "payload_endpoints_nonempty": not endpoint_missing,
+                            "nonempty_after_payload": after_payload,
+                        }
                     )
 
                 copy_links = _sheet_hyperlinks(copy_root)
                 expected_backlink = "'Prompt_Library'!A1"
                 for ref in ("C1", f"C{last_row}"):
                     if copy_links.get(ref) != expected_backlink:
-                        backlink_findings.append({"sheet": copy_sheet, "cell": ref, "expected": expected_backlink, "actual": copy_links.get(ref)})
+                        backlink_findings.append(
+                            {
+                                "sheet": copy_sheet,
+                                "cell": ref,
+                                "expected": expected_backlink,
+                                "actual": copy_links.get(ref),
+                            }
+                        )
 
                 if prompt_id in GNHF_PROMPT_IDS:
                     findings = validate_gnhf_launch_command("\n".join(payload))
                     if findings:
-                        command_findings.append({"prompt": prompt_id, "findings": findings})
+                        command_findings.append(
+                            {"prompt": prompt_id, "findings": findings}
+                        )
 
-            report.checks.append(Check("Prompt Library prompt rows", "FAIL" if row_findings else "PASS", row_findings))
-            report.checks.append(Check("Prompt Library semantic fonts and color coordination", "FAIL" if style_findings else "PASS", style_findings[:200]))
-            report.checks.append(Check("forward links select exact column-A payloads", "FAIL" if forward_findings else "PASS", forward_findings))
-            report.checks.append(Check("top and bottom Prompt Library backlinks", "FAIL" if backlink_findings else "PASS", backlink_findings))
-            report.checks.append(Check("P26-P36 atomic PowerShell GNHF commands", "FAIL" if command_findings else "PASS", command_findings))
-    except (zipfile.BadZipFile, ET.ParseError, KeyError, IndexError, ValueError) as exc:
-        report.checks.append(Check("package readable", "FAIL", [{"error": str(exc)}]))
+            report.checks.append(
+                Check(
+                    "Prompt Library prompt rows",
+                    "FAIL" if row_findings else "PASS",
+                    row_findings,
+                )
+            )
+            report.checks.append(
+                Check(
+                    "Prompt Library semantic fonts and color coordination",
+                    "FAIL" if style_findings else "PASS",
+                    style_findings[:200],
+                )
+            )
+            report.checks.append(
+                Check(
+                    "forward links select exact column-A payloads",
+                    "FAIL" if forward_findings else "PASS",
+                    forward_findings,
+                )
+            )
+            report.checks.append(
+                Check(
+                    "top and bottom Prompt Library backlinks",
+                    "FAIL" if backlink_findings else "PASS",
+                    backlink_findings,
+                )
+            )
+            report.checks.append(
+                Check(
+                    "P26-P36 atomic PowerShell GNHF commands",
+                    "FAIL" if command_findings else "PASS",
+                    command_findings,
+                )
+            )
+    except (
+        zipfile.BadZipFile,
+        ET.ParseError,
+        KeyError,
+        IndexError,
+        ValueError,
+    ) as exc:
+        report.checks.append(
+            Check("package readable", "FAIL", [{"error": str(exc)}])
+        )
     return report
 
 
@@ -519,6 +751,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("workbook")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
+
     report = validate_prompt_kit_operability(args.workbook)
     print(json.dumps(report.to_dict(), indent=2) if args.json else report.render_text())
     return 0 if report.valid else 1
