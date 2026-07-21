@@ -1,13 +1,25 @@
 #!/usr/bin/env python3
-"""Correct the generated builder-source assertion before publication."""
+"""Correct generated builder-source assertions before publication."""
 from pathlib import Path
 
 path = Path("tests/test_prompt_kit_header_contract.py")
 text = path.read_text(encoding="utf-8")
-old_marker = "        marker = f'data-cat=\\\\\"{category}\\\\\"'\n"
-new_marker = "        marker = f'data-cat=\"{category}\"'\n"
-old_kbd = "        assert f'>{label}<span class=\\\\\"kbd\\\\\">{key}</span>' in source\n"
-new_kbd = "        assert f'>{label}<span class=\"kbd\">{key}</span>' in source\n"
-if text.count(old_marker) != 1 or text.count(old_kbd) != 1:
-    raise SystemExit("unexpected generated builder assertion shape")
-path.write_text(text.replace(old_marker, new_marker).replace(old_kbd, new_kbd), encoding="utf-8")
+replacements = {
+    "        marker = f'data-cat=\\\\\"{category}\\\\\"'\n": "        marker = f'data-cat=\"{category}\"'\n",
+    "        position = source.find(marker)\n": "        position = header_source.find(marker)\n",
+    "        assert f'>{label}<span class=\\\\\"kbd\\\\\">{key}</span>' in source\n": "        assert f'>{label}<span class=\"kbd\">{key}</span>' in header_source\n",
+}
+source_line = "    source = BUILDER.read_text(encoding=\"utf-8\")\n"
+header_line = (
+    source_line
+    + "    header_source = source.split(\"html.append('      <div class=\\\"cat-tabs\\\">')\", 1)[1]"
+      ".split(\"html.append('      </div>')\", 1)[0]\n"
+)
+if text.count(source_line) != 1:
+    raise SystemExit("unexpected builder source-loading shape")
+text = text.replace(source_line, header_line)
+for old, new in replacements.items():
+    if text.count(old) != 1:
+        raise SystemExit(f"unexpected generated assertion shape: {old!r}")
+    text = text.replace(old, new)
+path.write_text(text, encoding="utf-8")
