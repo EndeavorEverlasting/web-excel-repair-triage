@@ -10,6 +10,7 @@ from pathlib import Path
 
 from openpyxl import Workbook
 
+_REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 _EXT_LINK_XML = (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
     '<externalLink xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
@@ -42,7 +43,6 @@ def _build_base(part_numbers_titles, *, with_external_formula: bool) -> bytes:
     pivot["A2"] = f"=SUMIFS('{first_pn}'!$T$2:$T$10,'{first_pn}'!$Z$2:$Z$10,\"Include\")"
     pivot["A3"] = f"=COUNTIFS('{first_pn}'!$Z$2:$Z$10,\"Include\")"
     if with_external_formula:
-        # Stored external-indexed reference Excel uses for external workbooks.
         pivot["A4"] = f"=[1]'{first_pn}'!$A$1"
 
     notes = wb.create_sheet("Notes")
@@ -93,6 +93,12 @@ def _inject_defects(data: bytes, *, add_external: bool, add_calc_chain: bool) ->
         parts["xl/_rels/workbook.xml.rels"] = rels.encode("utf-8")
         wb = parts["xl/workbook.xml"].decode("utf-8")
         if "<externalReferences" not in wb:
+            workbook_start = wb.find("<workbook")
+            workbook_end = wb.find(">", workbook_start)
+            if workbook_start < 0 or workbook_end < 0:
+                raise ValueError("generated workbook.xml is missing its workbook root")
+            if "xmlns:r=" not in wb[workbook_start:workbook_end]:
+                wb = wb[:workbook_end] + f' xmlns:r="{_REL_NS}"' + wb[workbook_end:]
             wb = wb.replace(
                 "</sheets>",
                 '</sheets><externalReferences><externalReference r:id="rIdExt1"/>'
@@ -130,7 +136,6 @@ def _inject_defects(data: bytes, *, add_external: bool, add_calc_chain: bool) ->
 
 
 def make_stale_recon(path: str) -> str:
-    """A recon workbook with a stale dated tab, external link, and calcChain."""
     data = _build_base(["5-07-2026 Part Numbers"], with_external_formula=True)
     data = _inject_defects(data, add_external=True, add_calc_chain=True)
     Path(path).parent.mkdir(parents=True, exist_ok=True)
@@ -139,39 +144,25 @@ def make_stale_recon(path: str) -> str:
 
 
 def make_ambiguous(path: str) -> str:
-    """A recon workbook with two dated Part Numbers tabs (no filename date)."""
-    data = _build_base(
-        ["5-07-2026 Part Numbers", "5-21-2026 Part Numbers"], with_external_formula=False
-    )
+    data = _build_base(["5-07-2026 Part Numbers", "5-21-2026 Part Numbers"], with_external_formula=False)
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     Path(path).write_bytes(data)
     return path
 
 
 def make_integrated_source(path: str) -> str:
-    """Integrated workbook with Part Numbers helpers but no executive Visual column."""
     wb = Workbook()
     pivot = wb.active
     pivot.title = "1M Recon Pivot Module"
     pivot["A1"] = "Placeholder executive tab"
     pivot["A12"] = "Inventory Rollup by Item"
     pivot["B12"] = "Total Qty"
-    # Deliberately missing Visual column on input.
 
     pn = wb.create_sheet("Part Numbers")
-    pn.append(
-        [
-            "Date Added",
-            "Item Type",
-            "Item Model/Brand",
-            "Part / Model Number",
-            "Category",
-            "Description",
-            "Quantity",
-        ]
-        + [None] * 11
-        + ["PivotPartKey", "QtyNum", None, None, None, None, None, "IncludeFlag"]
-    )
+    pn.append([
+        "Date Added", "Item Type", "Item Model/Brand", "Part / Model Number",
+        "Category", "Description", "Quantity",
+    ] + [None] * 11 + ["PivotPartKey", "QtyNum", None, None, None, None, None, "IncludeFlag"])
     pn.append([None, "TypeA", None, "PN-001", None, None, 5] + [None] * 11 + ["Alpha", 5, None, None, None, None, None, "Include"])
     pn.append([None, "TypeB", None, "PN-002", None, None, 3] + [None] * 11 + ["Beta", 3, None, None, None, None, None, "Include"])
     pn.append([None, "TypeA", None, "PN-003", None, None, 2] + [None] * 11 + ["Alpha", 2, None, None, None, None, None, "Include"])
