@@ -19,6 +19,18 @@
       "purpose": "prompt registry and fail-closed contracts"
     },
     {
+      "name": "bidirectional-web-spreadsheet",
+      "paths": [
+        "configs/harness/bidirectional_web_spreadsheet_v1.json",
+        "configs/harness/web_spreadsheet_ir_v1.schema.json",
+        "triage/harness_bidirectional_conversion_contract.py",
+        "triage/sidecar_html",
+        "tests/test_harness_bidirectional_conversion_contract.py",
+        "docs/HARNESS_BIDIRECTIONAL_WEB_SPREADSHEET.md"
+      ],
+      "purpose": "input analysis, shared semantic IR, current website renderer, direction order, validators, and implementation boundaries"
+    },
+    {
       "name": "artifact-engines",
       "paths": [
         "triage",

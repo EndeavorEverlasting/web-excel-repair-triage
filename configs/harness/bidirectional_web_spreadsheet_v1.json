@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "contract_id": "bidirectional-web-spreadsheet-generator",
+  "purpose": "Analyze an input artifact, select a conversion direction, normalize semantics through one shared intermediate representation, and require an actual validated output before claiming conversion.",
+  "current_repository_evidence": {
+    "website_surface": "triage/sidecar_html/portal.py",
+    "website_rebuild_surface": "triage/sidecar_html/rebuild.py",
+    "website_adapter_surface": "triage/sidecar_html/adapters.py",
+    "website_contract_doc": "docs/SIDECAR_HTML_PORTAL.md",
+    "structured_payload_marker": "const PORTAL =",
+    "current_direction": "manifest_csv_json_to_self_contained_html",
+    "inverse_converter_exists": false
+  },
+  "required_context_fields": [
+    "repo",
+    "branch_or_worktree",
+    "pr_or_sprint",
+    "lane",
+    "owned_scope",
+    "forbidden_scope",
+    "expected_artifacts"
+  ],
+  "conditional_context_fields": {
+    "validation_order": "required when the user specifies one"
+  },
+  "input_analysis": {
+    "required_before_conversion": true,
+    "output_artifact": "conversion_analysis.json",
+    "source_kinds": [
+      "sidecar_portal_html",
+      "generic_html",
+      "xlsx_workbook",
+      "workbook_bundle",
+      "unsupported"
+    ],
+    "required_findings": [
+      "source_kind",
+      "source_sha256",
+      "recommended_direction",
+      "structured_payload_available",
+      "extraction_strategy",
+      "mapping_profile",
+      "blockers",
+      "proof_ceiling"
+    ],
+    "network_fetch_requires_explicit_scope": true,
+    "execute_remote_javascript": false,
+    "use_cookies_or_credentials": false
+  },
+  "shared_intermediate_representation": {
+    "id": "web-spreadsheet-ir-v1",
+    "schema": "configs/harness/web_spreadsheet_ir_v1.schema.json",
+    "required_for_both_directions": true,
+    "semantic_hash_required": true,
+    "presentation_is_separate_from_semantics": true
+  },
+  "directions": [
+    {
+      "id": "website_to_spreadsheet",
+      "implementation_priority": 1,
+      "entry": "input analysis classifies a supported HTML source",
+      "extraction_precedence": [
+        "embedded_portal_json",
+        "linked_local_json_csv_or_manifest",
+        "semantic_dom_tables_and_labels",
+        "operator_approved_mapping_profile"
+      ],
+      "forbidden_primary_extraction": [
+        "screenshot_reconstruction",
+        "ocr",
+        "pixel_matching",
+        "remote_javascript_execution"
+      ],
+      "output_authority": "existing package-preserving workbook and Web Excel contracts",
+      "exit": "actual workbook, conversion manifest, IR semantic hash, workbook validators, source fingerprint, and explicit field gates",
+      "rationale": "The repository already emits structured PORTAL JSON and has mature spreadsheet generation and validation contracts, so this direction has the lowest uncertainty and should be implemented first."
+    },
+    {
+      "id": "spreadsheet_to_website",
+      "implementation_priority": 2,
+      "entry": "input analysis classifies a supported workbook and a website projection is requested",
+      "extraction_precedence": [
+        "package_preserving_workbook_reader",
+        "registered workbook semantics and manifests",
+        "approved sheet and range mapping profile"
+      ],
+      "rendering_authority": "triage.sidecar_html.portal and registered sidecar adapters",
+      "exit": "actual self-contained website, conversion manifest, IR semantic hash, HTML safety checks, browser field gate, and source fingerprint",
+      "rationale": "The reverse direction must reuse the same IR and existing sidecar renderer after website-to-spreadsheet mapping semantics are proven."
+    }
+  ],
+  "implementation_sequence": [
+    "install_contract_and_input_analyzer",
+    "implement_website_to_spreadsheet_for_sidecar_portal_html",
+    "extend_website_to_spreadsheet_with_operator_approved_generic_html_profiles",
+    "implement_spreadsheet_to_website_through_shared_ir",
+    "prove_bidirectional_semantic_round_trip"
+  ],
+  "action_commitment": {
+    "analysis_claim_requires_analysis_artifact": true,
+    "conversion_claim_requires_output_artifact": true,
+    "generation_claim_requires_mutation_and_validation": true,
+    "plan_prompt_handoff_or_acknowledgment_is_not_conversion": true,
+    "task_specific_rules_override_generic_closeout": true
+  },
+  "preservation_and_safety": {
+    "source_immutable": true,
+    "outputs_under_approved_output_paths": true,
+    "preserve_existing_contracts_before_invention": true,
+    "no_whole_workbook_serializer_when_package_preserving_path_exists": true,
+    "no_untrusted_html_execution": true,
+    "sanitize_generated_html": true,
+    "do_not_claim_visual_or_round_trip_fidelity_from_static_structure_only": true
+  },
+  "validation_order": [
+    "input_analysis_contract",
+    "shared_ir_schema",
+    "direction_specific_semantic_mapping",
+    "artifact_specific_structure_and_safety",
+    "round_trip_semantic_compare_when_in_scope",
+    "field_acceptance"
+  ],
+  "proof_levels": [
+    "contract",
+    "input_analysis",
+    "static_artifact",
+    "semantic_compare",
+    "browser_or_excel_field_acceptance"
+  ]
+}
