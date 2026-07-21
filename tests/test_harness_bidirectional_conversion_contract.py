@@ -76,14 +76,31 @@ def test_network_urls_are_not_silently_fetched() -> None:
         contract.analyze_input("https://example.com")
 
 
-def test_cli_writes_analysis_artifact(tmp_path: Path) -> None:
+def test_cli_writes_analysis_artifact_under_outputs(tmp_path: Path) -> None:
     source = tmp_path / "index.html"
     source.write_text('<script>const PORTAL = {"title":"Portal","sections":[]};</script>', encoding="utf-8")
-    output = tmp_path / "conversion_analysis.json"
+    output = tmp_path / "Outputs" / "conversion_analysis.json"
     assert contract.main(["--analyze-input", str(source), "--out", str(output), "--json"]) == 0
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert payload["valid"] is True
     assert payload["analysis"]["recommended_direction"] == "website_to_spreadsheet"
+
+
+def test_cli_rejects_analysis_output_outside_outputs(tmp_path: Path) -> None:
+    source = tmp_path / "index.html"
+    source.write_text('<script>const PORTAL = {"title":"Portal","sections":[]};</script>', encoding="utf-8")
+    output = tmp_path / "conversion_analysis.json"
+    assert contract.main(["--analyze-input", str(source), "--out", str(output), "--json"]) == 1
+    assert not output.exists()
+
+
+def test_cli_refuses_to_overwrite_analyzed_source(tmp_path: Path) -> None:
+    source = tmp_path / "Outputs" / "index.html"
+    source.parent.mkdir(parents=True)
+    original = '<script>const PORTAL = {"title":"Portal","sections":[]};</script>'
+    source.write_text(original, encoding="utf-8")
+    assert contract.main(["--analyze-input", str(source), "--out", str(source), "--json"]) == 1
+    assert source.read_text(encoding="utf-8") == original
 
 
 def test_repository_validator_rejects_stale_artifact_routing(tmp_path: Path) -> None:
