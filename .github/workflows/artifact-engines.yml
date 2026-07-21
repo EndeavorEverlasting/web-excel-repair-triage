@@ -41,6 +41,8 @@ jobs:
             tests/test_cybernet_targets.py \
             tests/test_nw_prj_neuron_track_hours.py \
             tests/test_nw_prj_neuron_track_hours_bonita.py \
+            tests/test_bonita_source_hierarchy.py \
+            tests/test_neuron_work_context_rules.py \
             tests/test_admin_billing_summary.py \
             tests/test_one_marcus_recon.py \
             tests/test_one_marcus_generate.py \

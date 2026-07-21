@@ -1,9 +1,9 @@
 """Rule-based Neuron work-context classification.
 
 These rules preserve the operational memory behind Neuron Track Hours artifacts so
-future generators do not flatten every included Neuron shift into
-``Neuron Installation``. The classifier is intentionally deterministic and
-explainable: it uses explicit text signals first, then month/day/time rules.
+future generators do not flatten every included Neuron shift into a generic label.
+The classifier is intentionally deterministic and explainable: it uses explicit
+text signals first, then month/day/time rules.
 
 Submission workbooks should receive the resulting assignment/task label only.
 Rule explanations and uncertainty belong in internal audit sidecars, not in the
@@ -52,6 +52,17 @@ EVENING_START_HOUR = 16.0
 DAYTIME_LOGISTICS_START = 7.0
 DAYTIME_LOGISTICS_END = 17.5
 
+# May coordination / ticket-forwarding became a named lead/coordinator lane.
+_MAY_COORDINATION_NAMES = {
+    "khadejah harrison",
+    "alejandro perales",
+    "rich perez",
+    "richard perez",
+}
+_APRIL_COORDINATION_EXTRA_NAMES = {
+    "geoff gerber",
+}
+
 
 @dataclass(frozen=True)
 class WorkContextDecision:
@@ -60,6 +71,40 @@ class WorkContextDecision:
     assignment_type: str
     rule: str
     confidence: str = "medium"
+
+
+def _normalize_name(name: str) -> str:
+    return re.sub(r"\s+", " ", str(name or "").strip().lower())
+
+
+def can_use_coordination_lane(work_date: date, tech_name: str, assignment_type: str) -> bool:
+    """Return True when *tech_name* may receive a coordination/ticket lane."""
+
+    name = _normalize_name(tech_name)
+    if assignment_type == TICKET_FORWARDING and work_date.month == 5:
+        return name in _MAY_COORDINATION_NAMES
+    if assignment_type == CLIENT_COORDINATION:
+        if work_date.month == 5:
+            return name in _MAY_COORDINATION_NAMES
+        if work_date.month == 4:
+            return name in _MAY_COORDINATION_NAMES or name in _APRIL_COORDINATION_EXTRA_NAMES
+    return True
+
+
+def _restricted_coordination_fallback(
+    work_date: date,
+    tech_name: str,
+    assignment_type: str,
+    rule: str,
+) -> Optional[WorkContextDecision]:
+    if can_use_coordination_lane(work_date, tech_name, assignment_type):
+        return None
+    safe = INVENTORY_MANAGEMENT if assignment_type == TICKET_FORWARDING else CONFIGURATIONS
+    return WorkContextDecision(
+        safe,
+        f"restricted-{assignment_type.lower().replace(' ', '-')}-fallback:{rule}",
+        "low",
+    )
 
 
 def _normalize_hour(value: Optional[float]) -> Optional[float]:
@@ -122,6 +167,19 @@ def _explicit_signal(text: str) -> Optional[str]:
     return None
 
 
+def _decision_with_person_gate(
+    work_date: date,
+    tech_name: str,
+    assignment_type: str,
+    rule: str,
+    confidence: str = "medium",
+) -> WorkContextDecision:
+    blocked = _restricted_coordination_fallback(work_date, tech_name, assignment_type, rule)
+    if blocked is not None:
+        return blocked
+    return WorkContextDecision(assignment_type, rule, confidence)
+
+
 def classify_neuron_work_context(
     work_date: date,
     start_hour: Optional[float],
@@ -129,16 +187,9 @@ def classify_neuron_work_context(
     notes: str = "",
     worked_label: str = "",
     resolved_project: str = "",
+    tech_name: str = "",
 ) -> WorkContextDecision:
-    """Classify a Neuron shift into a realistic task lane.
-
-    Precedence:
-    1. Explicit text signals from notes/worked label/resolved project.
-    2. Logistics is allowed only during daytime material movement / cleanup.
-    3. April-specific deployment windows.
-    4. May weekend configuration/inventory behavior.
-    5. Time-of-day fallback with configurations as the dominant default.
-    """
+    """Classify a Neuron shift into a realistic task lane."""
 
     text = " ".join(x for x in (notes, worked_label, resolved_project) if x).strip()
     explicit = _explicit_signal(text)
@@ -149,7 +200,13 @@ def classify_neuron_work_context(
         return WorkContextDecision(CONFIGURATIONS, "logistics-signal-outside-daytime-config-fallback", "medium")
 
     if explicit and explicit != DEPLOYMENTS:
-        return WorkContextDecision(explicit, f"explicit-{explicit.lower().replace(' ', '-')}", "high")
+        return _decision_with_person_gate(
+            work_date,
+            tech_name,
+            explicit,
+            f"explicit-{explicit.lower().replace(' ', '-')}",
+            "high",
+        )
 
     month = work_date.month
     weekday = work_date.weekday()  # Mon=0, Sat=5
@@ -163,10 +220,12 @@ def classify_neuron_work_context(
     if month == 4:
         if weekday == 5:  # April Saturdays.
             return WorkContextDecision(DEPLOYMENTS, "april-saturday-deployment", "high")
-        if weekday in (0, 2) and evening:  # April Monday/Wednesday evening windows.
+        if weekday >= 5:
+            return WorkContextDecision(DEPLOYMENTS, "april-weekend-deployment", "medium")
+        if weekday in (0, 2) and evening:
             return WorkContextDecision(DEPLOYMENTS, "april-mon-wed-evening-deployment", "medium")
         if evening:
-            return WorkContextDecision(CONFIGURATIONS, "april-evening-configuration", "high")
+            return WorkContextDecision(DEPLOYMENTS, "april-evening-deployment-dominant", "medium")
 
     if month == 5:
         if weekday >= 5:
@@ -176,17 +235,27 @@ def classify_neuron_work_context(
         if evening:
             return WorkContextDecision(CONFIGURATIONS, "may-evening-configuration", "high")
 
-    # A full weekday shift usually includes configuration work and should not be
-    # reduced to logistics or a narrow admin activity without explicit evidence.
     if span >= 7.0 and evening:
         return WorkContextDecision(CONFIGURATIONS, "full-shift-overlaps-configuration-window", "medium")
 
     if mid is not None:
         if mid < 10.0:
-            return WorkContextDecision(TICKET_FORWARDING, "morning-ticket-forwarding", "medium")
+            return _decision_with_person_gate(
+                work_date,
+                tech_name,
+                TICKET_FORWARDING,
+                "morning-ticket-forwarding",
+                "medium",
+            )
         if mid < 14.0:
             return WorkContextDecision(INVENTORY_MANAGEMENT, "daytime-inventory-management", "medium")
         if mid < EVENING_START_HOUR:
-            return WorkContextDecision(CLIENT_COORDINATION, "afternoon-client-coordination", "medium")
+            return _decision_with_person_gate(
+                work_date,
+                tech_name,
+                CLIENT_COORDINATION,
+                "afternoon-client-coordination",
+                "medium",
+            )
 
     return WorkContextDecision(CONFIGURATIONS, "default-configuration-dominant", "low")

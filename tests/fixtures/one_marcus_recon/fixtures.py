@@ -5,10 +5,13 @@ No real client data. Workbooks are generated at test time and gitignored.
 from __future__ import annotations
 
 import io
+import re
 import zipfile
 from pathlib import Path
 
 from openpyxl import Workbook
+
+_R_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 
 _EXT_LINK_XML = (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
@@ -98,7 +101,9 @@ def _inject_defects(data: bytes, *, add_external: bool, add_calc_chain: bool) ->
                 '</sheets><externalReferences><externalReference r:id="rIdExt1"/>'
                 "</externalReferences>",
             )
-            parts["xl/workbook.xml"] = wb.encode("utf-8")
+        if not re.search(r"<workbook\s[^>]*xmlns:r\s*=", wb):
+            wb = wb.replace("<workbook ", f'<workbook xmlns:r="{_R_NS}" ', 1)
+        parts["xl/workbook.xml"] = wb.encode("utf-8")
 
     if add_calc_chain:
         parts["xl/calcChain.xml"] = _CALC_CHAIN.encode("utf-8")
