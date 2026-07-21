@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
 
@@ -51,6 +52,12 @@ def stale_input(tmp_path):
 @pytest.fixture
 def output_path(tmp_path):
     return str(tmp_path / "out" / "1_Marcus_Recon_2026-05-28_WEBSAFE.xlsx")
+
+
+def test_stale_fixture_workbook_xml_is_namespace_valid(stale_input):
+    with zipfile.ZipFile(stale_input) as archive:
+        workbook_xml = archive.read("xl/workbook.xml")
+    ET.fromstring(workbook_xml)
 
 
 def test_infers_recon_update_date_from_filename(stale_input):
