@@ -18,6 +18,7 @@ from typing import Mapping, MutableMapping, Optional, Sequence
 from . import _prompt_kit_v39_generator_legacy as _legacy
 from . import harness_operational_discipline as harness_discipline
 from . import prompt_kit_v39_ooxml_base as ooxml
+from . import prompt_kit_visual_contract as visual_contract
 
 ARTIFACT_NAME = _legacy.ARTIFACT_NAME
 DEFAULT_OUTPUT_DIR = _legacy.DEFAULT_OUTPUT_DIR
@@ -210,8 +211,10 @@ def _rewrite_workbook(workbook: Path, contract: Mapping[str, object]) -> tuple[s
     changed = _apply_core_action_overrides(parts, contract)
     placeholder_changed, _ = ooxml._normalize_prompt_placeholders(parts)
     visual_changed, _ = ooxml._apply_prompt_visual_coordination(parts)
+    scaffold_changed, scaffold_report = ooxml._apply_prompt_body_scaffold(parts)
     changed.update(placeholder_changed)
     changed.update(visual_changed)
+    changed.update(scaffold_changed)
     if ooxml._rebuild_calc_chain(parts):
         changed.add("xl/calcChain.xml")
     with tempfile.NamedTemporaryFile(prefix="v39-action-", suffix=".xlsx", delete=False) as stream:
@@ -256,6 +259,7 @@ def validate_v39(workbook: str | Path, *, standard_ai_spec: str | Path = DEFAULT
         findings.extend(ooxml._validate_prompt_library_row_links(library_root, shared))
         findings.extend(ooxml._validate_prompt_placeholder_ergonomics(parts))
         findings.extend(ooxml._validate_prompt_visual_coordination(parts))
+        findings.extend(ooxml._validate_prompt_body_scaffold(parts))
         policy = harness_discipline.load_policy()
         for issue in harness_discipline.validate_policy(policy):
             findings.append({"rule": "portable harness operational discipline", "error": issue})
@@ -343,6 +347,14 @@ def generate_v39(source: Path, output_dir: Path = DEFAULT_OUTPUT_DIR, *, standar
         "row_color_columns": "B:O",
         "semantic_source": "Prompt Library Color label",
         "prompt_tab_color": "matching semantic RGB fill",
+        "policy": "configs/harness/prompt_library_visual_policy_v1.json",
+    }
+    visual_policy = visual_contract.load_policy()
+    scaffold_rgb = visual_policy.get("prompt_body_range", {}).get("scaffold_fill", {}).get("rgb", "F8FAFC")
+    manifest["prompt_body_scaffold"] = {
+        "scaffold_rgb": scaffold_rgb,
+        "description": "configurable neutral scaffold fill applied to complete interior body range of every prompt tab",
+        "range_detection": "top and bottom navigation rows detected from HYPERLINK formulas referencing Prompt_Library",
         "policy": "configs/harness/prompt_library_visual_policy_v1.json",
     }
     manifest["prompt_library_row_links"] = {
