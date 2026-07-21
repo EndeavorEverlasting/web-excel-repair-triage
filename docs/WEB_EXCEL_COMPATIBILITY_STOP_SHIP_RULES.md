@@ -50,9 +50,9 @@ Scan all XML parts (see `configs/web_excel_stop_ship_tokens.json`):
 | Chart part topology | Chart part lives under an unexpected drawing subpath instead of the accepted chart path |
 | Chart relationship integrity | Drawing relationship points to a chart part that is absent or misplaced |
 | Duplicate table names | Two `table` parts share `displayName` or `name` |
-| Stale calc chain | A `calcChain.xml` entry references a worksheet `sheetId` that is absent or does not resolve to an actual formula cell |
+| Stale calc chain | A `calcChain.xml` entry references a worksheet `sheetId` that is absent or does not resolve to an actual formula cell; omitted `i` values inherit the previous entry's `sheetId` |
 | External workbook links | `xl/externalLinks/` exists in a delivery artifact |
-| Serializer namespace pollution | XML contains `ns0:` leakage, or a serializer renames namespace declarations while leaving literal MC prefix lists unchanged |
+| Serializer namespace pollution | A serializer renames declarations while leaving literal markup-compatibility prefix lists or QName lists unchanged; a declared prefix such as `ns0` is not a failure by itself |
 | R1C1 CF leakage | `RC\d` in `<f>` inside conditional formatting |
 | Missing `CF_Dictionary` | NW PRJ dashboard profile detected, sheet absent |
 | Column A override | Done row still matches queue-amber CF only |
@@ -123,8 +123,11 @@ A workbook candidate must pass these checks before delivery:
 11. Non-target sheets remain stable.
 12. Desktop Excel opens without repair or refusal.
 13. Excel for Web opens without repair.
+14. Required navigation links are clicked in the Office host and land on the exact intended sheet and range.
+15. Required copy surfaces are copied and pasted through the operator workflow without truncation, extra cells, or formatting corruption.
+16. The downloaded artifact is hashed, compared with the uploaded candidate, and revalidated.
 
-Static package and rendering checks are necessary but do not prove Office-host acceptance. When desktop or Web Excel is unavailable, the proof ceiling must remain below delivery acceptance.
+Static package and rendering checks are necessary but do not prove Office-host acceptance. This ladder does not substitute for operator-acceptance evidence. When desktop or Web Excel is unavailable, the proof ceiling must remain below delivery acceptance.
 
 ## Integration
 
