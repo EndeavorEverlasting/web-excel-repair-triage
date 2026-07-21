@@ -8,7 +8,7 @@ Date: 2026-07-14
 Source: AI_Harness_Prompt_Kit_v20.xlsx
 Source SHA-256: 9b0934ef7bca9b308bf605c9be0c98f75f420c92d5a3f6e1995df1465747c076
 Output: AI_Harness_Prompt_Kit_v21.xlsx
-Output SHA-256: 57462922b2bace621ae663d4ba03b5a40f9b130ef5098cdd8c04b9eae30033a0
+Output SHA-256: 47cfe3ca37f5ebba4ac056ee001d2dad69bd4dee81d7b7be0f7cf83affe4ba9b
 ```
 
 The workbook was produced by bounded OOXML part and unique-cell replacement against the exact accepted V20 package. No production save through openpyxl or another general serializer occurred.
