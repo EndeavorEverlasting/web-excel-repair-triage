@@ -57,16 +57,17 @@ The exact output SHA passed:
 
 ## CI result
 
-The PR-local `AI Prompt Kit contracts` workflow passed on GitHub for the V21 branch.
+The branch-added workflows are not available on PR #57's `main` base, so GitHub cannot execute them directly on that root pull request. A disposable child validation PR against the repaired feature branch is the executable CI gate.
 
-The broader `Artifact engine tests` workflow remains blocked by the known `main`-baseline One Marcus fixture defect documented on PR #56:
+That gate proves:
 
-```text
-lxml.etree.XMLSyntaxError:
-Namespace prefix r for id on externalReference is not defined
-```
+- `AI Prompt Kit contracts` passes;
+- Prompt Kit header navigation and governance checks pass;
+- artifact-engine imports and Git-ignore hygiene pass;
+- the broad artifact-engine test batch passes;
+- the former One Marcus namespace defect is repaired by declaring the Office relationship prefix before injecting `externalReference r:id` and by parsing the generated fixture in regression coverage.
 
-The 11 affected tests are under `tests/test_one_marcus_recon.py` and `tests/test_one_marcus_immutability.py`. PR #55 owns the `tests/fixtures/one_marcus_recon/fixtures.py` namespace repair. The V21 branch does not duplicate that unrelated fix.
+The temporary validation marker is never merged and is closed after its exact-head results are recorded on PR #57.
 
 ## Field acceptance
 
