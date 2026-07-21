@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
 
@@ -18,10 +19,7 @@ from triage.one_marcus_recon.package_cleanup import Package
 STABLE_TAB = PART_NUMBERS_SHEET
 DATED_INFERRED_TAB = "5-28-2026 Part Numbers"
 _DATED_PN_SHEET = re.compile(r"^\d{1,2}-\d{1,2}-\d{4} Part Numbers$")
-REAL_WB = Path(
-    "Candidates/inventory recon/"
-    "WEBSAFE_Tab-Linked_1_Marcus_Compiled_Recon_Integrated_5-28-2026_PARTNUMBERS_LINKED_CANDIDATE_v2.xlsx"
-)
+REAL_WB = Path("Candidates/inventory recon/WEBSAFE_Tab-Linked_1_Marcus_Compiled_Recon_Integrated_5-28-2026_PARTNUMBERS_LINKED_CANDIDATE_v2.xlsx")
 
 
 def _names(path: str):
@@ -44,13 +42,17 @@ def _assert_no_dated_part_numbers_tabs(sheet_names: list[str]) -> None:
 
 @pytest.fixture
 def stale_input(tmp_path):
-    src = tmp_path / "1 Marcus Recon Integrated 5-28-2026.xlsx"
-    return fx.make_stale_recon(str(src))
+    return fx.make_stale_recon(str(tmp_path / "1 Marcus Recon Integrated 5-28-2026.xlsx"))
 
 
 @pytest.fixture
 def output_path(tmp_path):
     return str(tmp_path / "out" / "1_Marcus_Recon_2026-05-28_WEBSAFE.xlsx")
+
+
+def test_stale_fixture_workbook_xml_is_namespace_valid(stale_input):
+    with zipfile.ZipFile(stale_input) as archive:
+        ET.fromstring(archive.read("xl/workbook.xml"))
 
 
 def test_infers_recon_update_date_from_filename(stale_input):
@@ -85,7 +87,6 @@ def test_rewrites_formulas_from_old_part_number_tab(stale_input, output_path):
 def test_localizes_external_part_number_formulas(stale_input, output_path):
     run_recon(stale_input, output_path=output_path, cli_date="auto")
     text = _all_text(output_path)
-    # The [1]'...'! external-indexed reference must be localized (prefix dropped).
     assert "[1]'" not in text
     assert f"'{STABLE_TAB}'!$A$1" in text
 
@@ -122,10 +123,8 @@ def test_dry_run_reports_without_output_write(stale_input, output_path):
 
 def test_warns_on_ambiguous_date_candidates(tmp_path):
     src = fx.make_ambiguous(str(tmp_path / "1 Marcus Recon Integrated.xlsx"))
-    out = str(tmp_path / "amb_WEBSAFE.xlsx")
-    result = run_recon(src, output_path=out, cli_date="auto")
+    result = run_recon(src, output_path=str(tmp_path / "amb_WEBSAFE.xlsx"), cli_date="auto")
     assert any("ambiguous" in w for w in result.report.warnings)
-    # Strict mode must hard-fail on the same ambiguity.
     pkg = Package.from_path(src)
     names = fr.workbook_sheet_names(pkg.text("xl/workbook.xml"))
     with pytest.raises(di.AmbiguousDateError):
@@ -133,11 +132,9 @@ def test_warns_on_ambiguous_date_candidates(tmp_path):
 
 
 def test_webexcel_preflight_rejects_stale_refs_and_stopship_tokens(stale_input, output_path):
-    # The stale INPUT must fail preflight (calcChain + external links + stale refs).
     pre_in = pf.run_preflight(stale_input, target_part_number_tab=STABLE_TAB)
     assert pre_in.preflight_pass is False
     assert pre_in.has_calc_chain and pre_in.external_link_parts
-    # The repaired OUTPUT must pass.
     result = run_recon(stale_input, output_path=output_path, cli_date="auto")
     assert result.report.webexcel_preflight_pass is True
     pre_out = pf.run_preflight(output_path, target_part_number_tab=STABLE_TAB)
@@ -155,7 +152,6 @@ def test_real_workbook_idempotent_regression(tmp_path):
     assert after == expected
     assert STABLE_TAB in after
     _assert_no_dated_part_numbers_tabs(after)
-    # Tables and drawing survive the surgical patch.
     names = _names(out)
     assert any(n.startswith("xl/tables/table") for n in names)
     assert any(n.startswith("xl/drawings/drawing") for n in names)
