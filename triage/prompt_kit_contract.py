@@ -12,6 +12,7 @@ import zipfile
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Sequence
+from xml.etree import ElementTree as ET
 
 from triage.prompt_kit_common import (
     NS,
@@ -266,7 +267,7 @@ def validate_prompt_kit_contract(path: str | Path, profile: str = "auto") -> Pro
                 p21_lines = [
                     cell_value(cell, shared)
                     for cell in p21_root.findall(".//m:c", NS)
-                    if cell.attrib.get("r", "").startswith("A")
+                    if re.fullmatch(r"A\d+", cell.attrib.get("r", ""))
                 ]
                 p21_text = "\n".join(p21_lines)
                 p21_findings = []
@@ -286,7 +287,7 @@ def validate_prompt_kit_contract(path: str | Path, profile: str = "auto") -> Pro
                 report.checks.append(Check("P21 consolidation contract", "FAIL" if p21_findings else "PASS", p21_findings))
     except KeyError:
         report.checks.append(Check("profile", "FAIL", [{"requested": requested, "allowed": ["auto", *PROFILES]}]))
-    except (zipfile.BadZipFile, ValueError) as exc:
+    except (zipfile.BadZipFile, ValueError, ET.ParseError) as exc:
         report.checks.append(Check("package readable", "FAIL", [{"error": str(exc)}]))
     return report
 
