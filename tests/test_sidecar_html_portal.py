@@ -112,10 +112,13 @@ def test_admin_billing_manifest_portal(tmp_path_factory):
     from triage.admin_billing_summary.cli import run
 
     fx = build(Path(__file__).resolve().parent / "fixtures" / "admin_billing_summary")
-    out = tmp_path_factory.mktemp("portal_out")
+    root = tmp_path_factory.mktemp("portal_repo")
+    out = root / "Outputs" / "admin_billing_summary" / "portal_run"
+    out.mkdir(parents=True)
     manifest = run(
         roster_log=str(fx["roster"]),
         out_dir=str(out),
+        repo_root=root,
         months=["2026-04"],
         websafe=True,
     )

@@ -320,13 +320,15 @@ def generated_bonita_workbook(fixtures_bonita, tmp_path_factory):
 
     FIX = Path(__file__).resolve().parent / "fixtures" / "nw_prj_neuron_track_hours"
     fx = build_bonita_fixtures(FIX)
-    out = tmp_path_factory.mktemp("bonita_nb")
+    root = tmp_path_factory.mktemp("bonita_nb_repo")
+    out = root / "Outputs" / "nw_prj_neuron_track_hours" / "compare_run"
+    out.mkdir(parents=True)
     manifest = bonita_run(
         roster_log=str(fx["roster"]),
         out_dir=str(out),
         months=["2026-04", "2026-05"],
         websafe=True,
-        repo_root=REPO_ROOT,
+        repo_root=root,
     )
     return manifest["outputs"]["workbook"]
 

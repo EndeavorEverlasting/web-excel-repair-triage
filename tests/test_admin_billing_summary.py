@@ -31,14 +31,16 @@ def april(fixtures):
 
 @pytest.fixture(scope="module")
 def generated(fixtures, tmp_path_factory):
-    out = tmp_path_factory.mktemp("abs_out")
+    root = tmp_path_factory.mktemp("abs_repo")
+    out = root / "Outputs" / "admin_billing_summary" / "test_run"
+    out.mkdir(parents=True)
     return run(
         roster_log=str(fixtures["roster"]),
         out_dir=str(out),
         months=["2026-04", "2026-05"],
         prior=str(fixtures["prior"]),
         websafe=True,
-        repo_root=REPO_ROOT,
+        repo_root=root,
     )
 
 
@@ -387,7 +389,7 @@ def test_multi_month_rejects_legacy_client_reference(fixtures):
     with pytest.raises(SystemExit):
         run(
             roster_log=str(fixtures["roster"]),
-            out_dir=str(fixtures["roster"].parent / "out_should_not_run"),
+            out_dir=str(REPO_ROOT / "Outputs" / "_test_should_not_run"),
             months=["2026-04", "2026-05"],
             websafe=False,
             reference_client=str(fixtures["roster"]),

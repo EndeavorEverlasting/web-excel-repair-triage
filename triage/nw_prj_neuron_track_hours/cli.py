@@ -14,6 +14,12 @@ from triage.nw_prj_neuron_track_hours.classifier import (
 )
 from triage.nw_prj_neuron_track_hours.exporter import EXPECTED_SHEETS, build_workbook
 from triage.sidecar_html.adapters import neuron_track_sections
+from triage.output_policy import (
+    allocate_run_dir,
+    assert_out_dir_allowed,
+    run_id_from_dir,
+    source_manifest_fields,
+)
 from triage.sidecar_html.portal import build_run_portal
 from triage.nw_prj_neuron_track_hours.models import TrackHoursReport
 from triage.nw_prj_neuron_track_hours.preflight import run_preflight
@@ -145,7 +151,7 @@ def run(
     roster_path = _resolve(roster_log, root)
     if roster_path is None or not roster_path.exists():
         raise FileNotFoundError(f"roster-log not found: {roster_path}")
-    out = _resolve(out_dir, root) or (root / "Outputs")
+    out = assert_out_dir_allowed(_resolve(out_dir, root) or (root / "Outputs"))
     out.mkdir(parents=True, exist_ok=True)
 
     report = build_report(str(roster_path), months, pinned_techs=pinned_techs)
@@ -190,6 +196,8 @@ def run(
 
     manifest = {
         "engine": "triage.nw_prj_neuron_track_hours.cli",
+        "run_id": run_id_from_dir(out),
+        **source_manifest_fields(roster_path),
         "roster_log": str(roster_path),
         "admin_control": str(_resolve(admin_control, root)) if admin_control else "",
         "reference": str(_resolve(reference, root)) if reference else "",
@@ -230,7 +238,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--roster-log", required=True)
     ap.add_argument("--admin-control")
     ap.add_argument("--reference")
-    ap.add_argument("--out-dir", default="Outputs/nw_prj_neuron_track_hours_2026_06_01")
+    ap.add_argument("--out-dir", default=None, help="Run dir under Outputs/nw_prj_neuron_track_hours/")
     ap.add_argument("--months", nargs="+", default=DEFAULT_MONTHS)
     ap.add_argument("--pinned", nargs="*", default=[])
     ap.add_argument("--websafe", action="store_true", default=True)
@@ -238,9 +246,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--zip", action="store_true", default=False, dest="zip_output")
     args = ap.parse_args(argv)
 
+    out_dir = args.out_dir or str(allocate_run_dir("nw_prj_neuron_track_hours", "track_hours"))
     manifest = run(
         roster_log=args.roster_log,
-        out_dir=args.out_dir,
+        out_dir=out_dir,
         months=args.months,
         admin_control=args.admin_control,
         reference=args.reference,

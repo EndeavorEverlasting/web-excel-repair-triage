@@ -2,7 +2,7 @@
 
     python -m triage.admin_billing_summary.cli \\
         --roster-log <roster.xlsx> --months 2026-04 2026-05 \\
-        --out-dir Outputs/admin_billing_summary_2026_06_02 \\
+        --out-dir Outputs/admin_billing_summary/<YYYY-MM-DD>_run/ \\
         --prior "<April copy>.xlsx" --websafe
 """
 from __future__ import annotations
@@ -22,6 +22,12 @@ from triage.nw_prj_neuron_track_hours.bonita_exporter import tab_name_for_month_
 from triage.artifact_compare import compare_artifacts
 from triage.release_status import enrich_variant_output
 from triage.sidecar_html.adapters import admin_billing_sections
+from triage.output_policy import (
+    allocate_run_dir,
+    assert_out_dir_allowed,
+    run_id_from_dir,
+    source_manifest_fields,
+)
 from triage.sidecar_html.portal import build_run_portal
 
 DEFAULT_MONTHS = ["2026-04", "2026-05"]
@@ -218,7 +224,7 @@ def run(
     roster_path = _resolve(roster_log, root)
     if roster_path is None or not roster_path.exists():
         raise FileNotFoundError(f"roster-log not found: {roster_path}")
-    out = _resolve(out_dir, root) or (root / "Outputs")
+    out = assert_out_dir_allowed(_resolve(out_dir, root) or (root / "Outputs"))
     out.mkdir(parents=True, exist_ok=True)
     prior_path = _resolve(prior, root)
     ref_client = _resolve(reference_client or reference, root)
@@ -342,6 +348,8 @@ def run(
         "engine": "triage.admin_billing_summary.cli",
         "format": "openai_native_tables_v1",
         "generated_utc": _dt.datetime.now(_dt.timezone.utc).isoformat(),
+        "run_id": run_id_from_dir(out),
+        **source_manifest_fields(roster_path),
         "roster_log": str(roster_path),
         "prior": str(prior_path) if prior_path else "",
         "reference_client": str(ref_client) if ref_client else "",
@@ -381,7 +389,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(prog="triage.admin_billing_summary.cli")
     ap.add_argument("--roster-log", required=True)
     ap.add_argument("--months", nargs="+", default=DEFAULT_MONTHS)
-    ap.add_argument("--out-dir", default="Outputs/admin_billing_summary_2026_06_02")
+    ap.add_argument(
+        "--out-dir",
+        default=None,
+        help="Run directory under Outputs/admin_billing_summary/ (default: dated run folder)",
+    )
     ap.add_argument("--prior")
     ap.add_argument(
         "--reference",
@@ -408,9 +420,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--websafe", action="store_true", default=True)
     ap.add_argument("--no-websafe", action="store_false", dest="websafe")
     args = ap.parse_args(argv)
+    out_dir = args.out_dir or str(allocate_run_dir("admin_billing_summary", "run"))
     manifest = run(
         roster_log=args.roster_log,
-        out_dir=args.out_dir,
+        out_dir=out_dir,
         months=args.months,
         prior=args.prior,
         websafe=args.websafe,
