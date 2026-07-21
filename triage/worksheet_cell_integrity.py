@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import zipfile
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
 
@@ -28,6 +28,8 @@ def inspect_worksheet_cell_integrity(path: str | Path) -> List[WorksheetIntegrit
         for sheet, part in workbook_sheet_map(zf).items():
             root = xml_root(zf, part)
             seen = set()
+            min_col: Optional[int] = None
+            min_row: Optional[int] = None
             max_col = 0
             max_row = 0
             for cell in root.findall(".//m:c", NS):
@@ -42,16 +44,33 @@ def inspect_worksheet_cell_integrity(path: str | Path) -> List[WorksheetIntegrit
                 col_num = 0
                 for char in match.group(1):
                     col_num = col_num * 26 + ord(char) - 64
+                row_num = int(match.group(2))
+                min_col = col_num if min_col is None else min(min_col, col_num)
+                min_row = row_num if min_row is None else min(min_row, row_num)
                 max_col = max(max_col, col_num)
-                max_row = max(max_row, int(match.group(2)))
+                max_row = max(max_row, row_num)
             dimension = root.find("m:dimension", NS)
-            parsed_dimension = parse_ref(dimension.attrib.get("ref", "") if dimension is not None else "")
-            if seen and (parsed_dimension is None or parsed_dimension[2] < max_col or parsed_dimension[3] < max_row):
-                issues.append(WorksheetIntegrityIssue(
-                    "dimension_excludes_explicit_cells",
-                    sheet,
-                    f"dimension={dimension.attrib.get('ref', '') if dimension is not None else ''}; max_col={max_col}; max_row={max_row}",
-                ))
+            dimension_ref = dimension.attrib.get("ref", "") if dimension is not None else ""
+            parsed_dimension = parse_ref(dimension_ref)
+            if seen and (
+                parsed_dimension is None
+                or min_col is None
+                or min_row is None
+                or parsed_dimension[0] > min_col
+                or parsed_dimension[1] > min_row
+                or parsed_dimension[2] < max_col
+                or parsed_dimension[3] < max_row
+            ):
+                issues.append(
+                    WorksheetIntegrityIssue(
+                        "dimension_excludes_explicit_cells",
+                        sheet,
+                        (
+                            f"dimension={dimension_ref}; min_col={min_col}; min_row={min_row}; "
+                            f"max_col={max_col}; max_row={max_row}"
+                        ),
+                    )
+                )
             merge_node = root.find("m:mergeCells", NS)
             merges: List[Tuple[str, Tuple[int, int, int, int]]] = []
             if merge_node is not None:
@@ -61,9 +80,15 @@ def inspect_worksheet_cell_integrity(path: str | Path) -> List[WorksheetIntegrit
                     if parsed is not None:
                         merges.append((ref, parsed))
                 for index, (left_ref, left) in enumerate(merges):
-                    for right_ref, right in merges[index + 1:]:
+                    for right_ref, right in merges[index + 1 :]:
                         if _rectangles_overlap(left, right):
-                            issues.append(WorksheetIntegrityIssue("overlapping_merge_rectangles", sheet, f"{left_ref} overlaps {right_ref}"))
+                            issues.append(
+                                WorksheetIntegrityIssue(
+                                    "overlapping_merge_rectangles",
+                                    sheet,
+                                    f"{left_ref} overlaps {right_ref}",
+                                )
+                            )
     return issues
 
 
@@ -78,7 +103,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(json.dumps({"valid": False, "error": str(exc)}) if args.json else f"FAIL: {exc}")
         return 1
     payload = {"valid": not issues, "issues": [asdict(issue) for issue in issues]}
-    print(json.dumps(payload, indent=2) if args.json else ("PASS" if not issues else "\n".join(f"FAIL {i.code} {i.sheet}: {i.detail}" for i in issues)))
+    print(
+        json.dumps(payload, indent=2)
+        if args.json
+        else (
+            "PASS"
+            if not issues
+            else "\n".join(f"FAIL {i.code} {i.sheet}: {i.detail}" for i in issues)
+        )
+    )
     return 0 if not issues else 1
 
 
