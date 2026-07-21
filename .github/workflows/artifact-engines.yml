@@ -1,5 +1,8 @@
 name: Artifact engine tests
 
+permissions:
+  contents: write
+
 on:
   pull_request:
   push:
@@ -52,3 +55,42 @@ jobs:
             tests/test_gitignore_hygiene.py \
             tests/test_roster_log_review_queue.py \
             -q
+
+  repair-prompt-kit-header:
+    if: github.event_name == 'pull_request' && github.head_ref == 'fix/prompt-kit-header-navigation-contract'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Repair canonical sources and regenerate deployed prompt kit
+        run: python .github/temp-fix-prompt-kit-header.py
+
+      - name: Restore one-shot staging surfaces
+        run: git restore -- .github/workflows/artifact-engines.yml .github/temp-fix-prompt-kit-header.py
+
+      - name: Validate exact operator-opened artifact
+        run: |
+          python -m py_compile build_prompt_kit.py tests/test_prompt_kit_header_contract.py
+          python tests/test_prompt_kit_header_contract.py
+          python -m pytest tests/test_prompt_kit_header_contract.py tests/test_harness_doctrine.py -q
+          git diff --check
+          git status --short
+          git diff --stat
+          git diff --name-only
+
+      - name: Commit and push repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add build_prompt_kit.py docs/prompt-kit.js web/prompt-kit/index.html web/README.md tests/test_prompt_kit_header_contract.py
+          git commit -m 'fix(prompt-kit): lock header navigation contract'
+          git push origin HEAD:fix/prompt-kit-header-navigation-contract
