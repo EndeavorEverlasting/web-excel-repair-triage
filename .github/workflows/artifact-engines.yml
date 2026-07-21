@@ -65,7 +65,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
+          fetch-depth: 1
 
       - uses: actions/setup-python@v5
         with:
@@ -80,16 +80,35 @@ jobs:
         run: git restore -- .github/workflows/artifact-engines.yml .github/temp-fix-prompt-kit-header.py .github/temp-correct-prompt-kit-test.py
 
       - name: Validate exact operator-opened artifact
+        id: validate
+        continue-on-error: true
+        shell: bash
         run: |
-          python -m py_compile build_prompt_kit.py tests/test_prompt_kit_header_contract.py
-          python tests/test_prompt_kit_header_contract.py
-          python -m pytest tests/test_prompt_kit_header_contract.py tests/test_harness_doctrine.py -q
-          git diff --check
-          git status --short
-          git diff --stat
-          git diff --name-only
+          set -o pipefail
+          {
+            python -m py_compile build_prompt_kit.py tests/test_prompt_kit_header_contract.py
+            python tests/test_prompt_kit_header_contract.py
+            python -m pytest tests/test_prompt_kit_header_contract.py tests/test_harness_doctrine.py -q
+            git diff --check
+            git status --short
+            git diff --stat
+            git diff --name-only
+          } 2>&1 | tee prompt-kit-header-validation.log
+
+      - name: Upload focused validation transcript
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-header-validation
+          path: prompt-kit-header-validation.log
+          if-no-files-found: error
+
+      - name: Fail when focused validation failed
+        if: steps.validate.outcome == 'failure'
+        run: exit 1
 
       - name: Commit and push repair
+        if: steps.validate.outcome == 'success'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
