@@ -12,16 +12,61 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
+      - name: Bounded Git preflight
+        run: |
+          git status --short
+          git branch --show-current
+          git log --oneline --decorate -5
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install test dependency
         run: python -m pip install pytest
-      - name: Validate V38 prompt registry
-        run: python -m json.tool configs/prompt_kit/v38_prompt_assets.json
+      - name: Validate prompt and harness registries
+        run: |
+          python -m json.tool configs/prompt_kit/v38_prompt_assets.json
+          python -m json.tool configs/prompt_kit/v39_core_prompt_action_overrides.json
+          python -m json.tool configs/prompt_kit/v39_p54_troubleshooting_prompt.json
+          python -m json.tool configs/harness/operational_discipline_v1.json
+          python -m json.tool configs/harness/bidirectional_web_spreadsheet_v1.json
+          python -m json.tool configs/harness/web_spreadsheet_ir_v1.schema.json
+          python -m json.tool configs/harness/harness_manifest_v1.json
+          python -m json.tool configs/harness/workflows_v1.json
+          python -m json.tool configs/harness/run_context.schema.json
+          python -m json.tool configs/harness/artifact_registry_v1.json
+          python -m json.tool configs/harness/code_intelligence_v1.json
+          python -m json.tool configs/harness/handoff_contract_v1.json
+          python -m json.tool configs/harness/prompt_library_visual_policy_v1.json
       - name: Import validators and generators
         run: |
-          python -c "import triage.workbook_package_hygiene; import triage.copy_surface_bounds; import triage.prompt_kit_contract; import triage.prompt_kit_operability_contract; import triage.prompt_kit_copy_range_links; import triage.prompt_kit_v38_prompt_assets; import triage.prompt_kit_v38_generator; import triage.prompt_kit_v33_generator; import triage.prompt_kit_v33_ooxml; import triage.worksheet_cell_integrity; import triage.web_excel_compatibility_rules; print('prompt kit validators and generators import ok')"
+          python -c "import triage.workbook_package_hygiene; import triage.copy_surface_bounds; import triage.prompt_kit_contract; import triage.prompt_kit_operability_contract; import triage.prompt_kit_copy_range_links; import triage.harness_operational_discipline; import triage.harness_troubleshooting_contract; import triage.harness_bidirectional_conversion_contract; import triage.harness_operator_report; import triage.harness_handoff; import triage.prompt_kit_visual_contract; import triage.prompt_kit_v39_ooxml_base; import triage.prompt_kit_v39_generator; import triage.prompt_kit_v39_live_context_generator; import triage.prompt_kit_v38_prompt_assets; import triage.prompt_kit_v38_generator; import triage.prompt_kit_v33_generator; import triage.prompt_kit_v33_ooxml; import triage.worksheet_cell_integrity; import triage.web_excel_compatibility_rules; print('prompt kit validators and generators import ok')"
+      - name: Run segmented V39 and harness contracts
+        run: |
+          python -m pytest \
+            tests/test_prompt_kit_v39_generator.py \
+            tests/test_prompt_kit_v39_action_commitment.py \
+            tests/test_prompt_kit_v39_generated_navigation.py \
+            tests/test_prompt_kit_v39_generated_row_links.py \
+            tests/test_prompt_kit_v39_library_footer.py \
+            tests/test_prompt_kit_v39_library_navigation.py \
+            tests/test_prompt_kit_v39_library_row_links.py \
+            tests/test_prompt_kit_v39_visual_coordination.py \
+            tests/test_prompt_kit_visual_contract.py \
+            tests/test_harness_operational_discipline.py \
+            tests/test_harness_troubleshooting_contract.py \
+            tests/test_harness_bidirectional_conversion_contract.py \
+            tests/test_repo_harness_manifest.py \
+            tests/test_prompt_kit_v39_namespace_prefixes.py \
+            tests/test_prompt_kit_v39_public_surface.py \
+            -q --junitxml=v39-segmented-junit.xml
+      - name: Upload segmented V39 JUnit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v39-segmented-junit
+          path: v39-segmented-junit.xml
+          if-no-files-found: error
       - name: Run V38 CMD launcher contracts
         run: python -m pytest tests/test_prompt_kit_v38_cmd_launchers.py -q
       - name: Run copy-range link contract
@@ -52,8 +97,32 @@ jobs:
           python -m triage.prompt_kit_contract --help
           python -m triage.prompt_kit_operability_contract --help
           python -m triage.prompt_kit_copy_range_links --help
+          python -m triage.prompt_kit_v39_generator --help
+          python -m triage.prompt_kit_v39_live_context_generator --help
+          python -m triage.harness_operational_discipline --repo-root . --json
+          python -m triage.harness_operational_discipline --help
+          python -m triage.harness_troubleshooting_contract --json
+          python -m triage.harness_troubleshooting_contract --help
+          python -m triage.harness_bidirectional_conversion_contract --repo-root . --json
+          python -m triage.harness_bidirectional_conversion_contract --help
+          python -m triage.harness_operator_report --repo-root . --json
+          python -m triage.harness_handoff --help
+          python -m triage.prompt_kit_visual_contract --json
+          python -m triage.prompt_kit_visual_contract --help
           python -m triage.prompt_kit_v38_prompt_assets --help
           python -m triage.prompt_kit_v38_generator --help
           python -m triage.prompt_kit_v33_generator --help
           python -m triage.worksheet_cell_integrity --help
           python -m triage.web_excel_compatibility_rules --help
+      - name: Final Git review
+        shell: bash
+        run: |
+          if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
+            BASE="origin/${GITHUB_BASE_REF}"
+          else
+            BASE="HEAD^"
+          fi
+          git diff --check "$BASE"...HEAD
+          git status --short
+          git diff --stat "$BASE"...HEAD
+          git diff --name-only "$BASE"...HEAD

@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "artifacts": [
+    {
+      "id": "ai-harness-prompt-kit-v39",
+      "family": "prompt-kit-workbook",
+      "generator": "python -m triage.prompt_kit_v39_live_context_generator",
+      "outputs": [
+        "AI_Harness_Prompt_Kit_v39.xlsx",
+        "AI_Harness_Prompt_Kit_v39_manifest.json",
+        "AI_Harness_Prompt_Kit_v39_bundle.zip"
+      ],
+      "validators": [
+        "triage.harness_troubleshooting_contract",
+        "triage.prompt_kit_v39_live_context_generator --validate-only",
+        "triage.prompt_kit_visual_contract",
+        "artifact_tool import and formula scan"
+      ],
+      "source_policy": "accepted V38 source remains immutable; P54 derives commands, paths, validators, and evidence from current repository and runtime contracts",
+      "field_gates": [
+        "Excel for Web open",
+        "Prompt Library row and tab link clicks",
+        "execution against a real failing repository or validated local runtime"
+      ]
+    },
+    {
+      "id": "web-spreadsheet-input-analysis",
+      "family": "bidirectional-conversion-analysis",
+      "generator": "python -m triage.harness_bidirectional_conversion_contract --analyze-input <local-source> --out <approved-output>/conversion_analysis.json --json",
+      "outputs": [
+        "conversion_analysis.json"
+      ],
+      "validators": [
+        "triage.harness_bidirectional_conversion_contract",
+        "source SHA-256 fingerprint",
+        "source-kind and direction classification",
+        "explicit blockers and proof ceiling"
+      ],
+      "source_policy": "local source remains immutable; network fetching, cookies, credentials, and remote JavaScript execution require separate explicit scope and are not performed by this analyzer",
+      "field_gates": [
+        "generic website mapping-profile approval",
+        "Excel for Web acceptance for generated workbook outputs",
+        "browser and accessibility acceptance for generated website outputs",
+        "semantic IR hash comparison before round-trip fidelity claims"
+      ]
+    },
+    {
+      "id": "repo-harness-operator-report",
+      "family": "operator-report",
+      "generator": "python -m triage.harness_operator_report",
+      "outputs": [
+        "Markdown or JSON operator report"
+      ],
+      "validators": [
+        "triage.harness_operational_discipline"
+      ]
+    },
+    {
+      "id": "repo-harness-final-handoff",
+      "family": "handoff",
+      "generator": "python -m triage.harness_handoff",
+      "outputs": [
+        "compressed Markdown handoff"
+      ],
+      "validators": [
+        "run-context validation",
+        "handoff contract validation"
+      ]
+    }
+  ]
+}

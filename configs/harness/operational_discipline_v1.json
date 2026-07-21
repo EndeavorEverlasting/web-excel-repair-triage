@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "policy_id": "portable-operational-harness-discipline",
+  "portable": true,
+  "applies_to": [
+    "software",
+    "repository",
+    "automation",
+    "deployment",
+    "agent_work",
+    "artifact_generation"
+  ],
+  "required_context_fields": [
+    "repo",
+    "branch_or_worktree",
+    "pr_or_sprint",
+    "lane",
+    "owned_scope",
+    "forbidden_scope",
+    "expected_artifacts"
+  ],
+  "conditional_context_fields": {
+    "validation_order": "required when the user specifies one"
+  },
+  "operational_loop": [
+    "request",
+    "evidence_review",
+    "bounded_decision",
+    "repo_git_github_mutation",
+    "artifacts",
+    "validation",
+    "report",
+    "next_decision"
+  ],
+  "evidence_before_confidence": true,
+  "troubleshooting_contract": {
+    "prompt_id": "P54",
+    "canonical_prompt_source": "configs/prompt_kit/v39_p54_troubleshooting_prompt.json",
+    "generator_entrypoint": "triage.prompt_kit_v39_live_context_generator",
+    "context_precedence": [
+      "validated_local_runtime",
+      "current_repository",
+      "tests_validators_ci_artifacts_logs",
+      "git_pr_history",
+      "operational_documentation",
+      "conversation_memory"
+    ],
+    "claim_labels": [
+      "CONFIRMED",
+      "STALE OR UNVERIFIED",
+      "HYPOTHESIS",
+      "MISSING EVIDENCE",
+      "BLOCKED"
+    ],
+    "diagnostic_loop": [
+      "reconstruct_current_state",
+      "trace_expected_to_terminal_state",
+      "identify_first_confirmed_divergence",
+      "rank_root_cause_hypotheses",
+      "run_smallest_discriminating_check",
+      "apply_bounded_repair_when_requested",
+      "validate_and_compare"
+    ],
+    "live_contract_resolution": {
+      "derive_paths_commands_and_validators_from_current_repository": true,
+      "allow_frozen_repository_specific_paths_or_commands": false,
+      "prefer_validated_local_runtime_evidence_when_available": true,
+      "conversation_memory_cannot_override_newer_evidence": true
+    },
+    "action_commitment": {
+      "mutation_required_when_repair_requested": true,
+      "proof_required_after_mutation": true,
+      "diagnosis_only_stops_before_mutation": true,
+      "task_specific_rules_override_generic_closeout": true
+    }
+  },
+  "completion_evidence": [
+    "passing_checks",
+    "validator_output",
+    "logs_or_generated_artifacts",
+    "commit_sha",
+    "branch_or_worktree_state",
+    "push_confirmation",
+    "pr_mutation",
+    "merge_or_closure",
+    "tag_release_deployment_or_runtime_evidence_when_in_scope"
+  ],
+  "repository_mutation_surfaces": [
+    "code",
+    "doctrine",
+    "documentation",
+    "comments_and_review_replies",
+    "branches_and_worktrees",
+    "cherry_picks_reverts_restores_merges_and_conflict_repair",
+    "pr_metadata",
+    "releases_installs_and_deployments_when_explicitly_in_scope"
+  ],
+  "preservation": {
+    "preserve_useful_work_before_destructive_cleanup": true,
+    "search_existing_contracts_helpers_validators_scripts_names_and_output_patterns_before_inventing": true,
+    "bounded_changes_only": true,
+    "avoid_unrelated_rewrites": true
+  },
+  "connected_mutation_fallback": {
+    "condition": "repository is not network-clonable from the execution container",
+    "mutation_surface": "connected GitHub branch",
+    "local_reconstruction": "only relevant generator, validator, and test files",
+    "required_proof": [
+      "commit_sha",
+      "branch_state",
+      "push_or_pr_mutation",
+      "explicit_proof_ceiling"
+    ]
+  },
+  "artifact_policy": {
+    "generate_actual_artifact": true,
+    "plan_or_sample_only_is_failure": true,
+    "inspect_generated_artifact": true,
+    "record_path_and_hash_when_practical": true,
+    "prompt_library": {
+      "whole_row_link_columns": "B:O",
+      "whole_row_target": "associated prompt tab exact copy range",
+      "preserve_display_values": true,
+      "sparse_navigation_columns": [
+        "A",
+        "P"
+      ],
+      "allowed_sparse_cadences": [
+        10,
+        5,
+        2
+      ],
+      "cadence_selection": "largest evenly dividing cadence",
+      "fail_closed_without_allowed_divisor": true,
+      "placeholder_format": "bare underscore-delimited xyz tokens without surrounding ASCII or smart quotes",
+      "semantic_row_color_columns": "B:O",
+      "prompt_tab_color_source": "Prompt Library semantic Color label",
+      "prompt_tab_color_match": "exact semantic row fill RGB where supported"
+    }
+  },
+  "sequential_prompt_suite": {
+    "P03": "unknown repo intake and first action",
+    "P06": "repo and PR cleanup",
+    "P07": "general implementation",
+    "P14": "broken PR",
+    "P15": "merge or release",
+    "P20": "selected Opportunity_Discovery row",
+    "P12": "closeout"
+  },
+  "task_specific_rules_override_generic_closeout": true,
+  "forbidden_substitutions": [
+    "rewritten_prompt_for_requested_repo_work",
+    "plan_only_for_requested_repo_work",
+    "handoff_only_for_requested_repo_work",
+    "acknowledgment_only_completion"
+  ],
+  "required_harness_components": [
+    "repo_agent_rules",
+    "codebase_map",
+    "workflow_specs",
+    "run_context",
+    "artifact_registry",
+    "validators",
+    "local_hooks_where_useful",
+    "scoped_skills",
+    "read_only_code_intelligence_where_useful",
+    "english_operator_reports",
+    "final_handoff_compression"
+  ]
+}

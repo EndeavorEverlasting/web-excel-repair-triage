@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "policy_id": "prompt-library-visual-and-placeholder-policy",
+  "placeholder_ergonomics": {
+    "token_pattern": "xyz_[A-Za-z0-9_]+(?:/xyz_[A-Za-z0-9_]+)*",
+    "quote_wrapped_placeholders_forbidden": true,
+    "reason": "Bare underscore-delimited placeholders are double-click selectable without punctuation cleanup."
+  },
+  "prompt_library": {
+    "semantic_color_column": "N",
+    "row_color_columns": "B:O",
+    "prompt_tab_color_source": "Prompt Library semantic Color label",
+    "prompt_tab_color_match": "exact semantic row fill RGB where Excel supports RGB tab colors",
+    "sparse_navigation_columns": [
+      "A",
+      "P"
+    ]
+  },
+  "prompt_body_range": {
+    "description": "Every prompt tab exposes one deterministic interior range between its top and bottom navigation rows.",
+    "navigation_link_detection": {
+      "formula_pattern": "HYPERLINK[^)']*'Prompt_Library'",
+      "navigation_hyperlink_location_contains": "Prompt_Library",
+      "columns_that_may_contain_navigation": ["B", "C"]
+    },
+    "scaffold_fill": {
+      "rgb": "F8FAFC",
+      "description": "Neutral configurable scaffold to prove complete interior body-range ownership without claiming a final dark palette.",
+      "materialize_missing_cells": true,
+      "validation_requires_materialized_cells": true
+    },
+    "range_rules": {
+      "top_nav_row": "lowest row containing a HYPERLINK formula whose location references Prompt_Library",
+      "bottom_nav_row": "highest row containing a HYPERLINK formula whose location references Prompt_Library",
+      "columns": "all columns present in the sheet's dimension",
+      "include_top_nav_row": true,
+      "include_bottom_nav_row": true
+    },
+    "fail_closed_on": [
+      "no_hyperlink_to_prompt_library",
+      "single_navigation_row_ambiguous_range",
+      "sheet_has_no_dimension",
+      "hyperlinked_formula_references_different_target",
+      "missing_cell_inside_claimed_scaffold_range"
+    ]
+  },
+  "technician_view_profile": {
+    "description": "Hidden-column profile that preserves developer-facing data while reducing technician-facing visual noise.",
+    "hidden_columns": [],
+    "hidden_columns_note": "Default is empty (show all columns). The operator-modified workbook contains the preferred set; inspect it to populate this profile. Columns are hidden never deleted.",
+    "preservation_rule": "Hidden columns remain addressable by formulas links agents and developer tooling. Column data must never be deleted."
+  },
+  "palette": {
+    "Slate": {
+      "fill": "F1F5F9",
+      "text": "334155"
+    },
+    "Gray": {
+      "fill": "E5E7EB",
+      "text": "374151"
+    },
+    "Sky": {
+      "fill": "E0F2FE",
+      "text": "075985"
+    },
+    "Amber": {
+      "fill": "FEF3C7",
+      "text": "92400E"
+    },
+    "Blue": {
+      "fill": "DBEAFE",
+      "text": "1D4ED8"
+    },
+    "Green": {
+      "fill": "DCFCE7",
+      "text": "166534"
+    },
+    "Rose": {
+      "fill": "FFE4E6",
+      "text": "9F1239"
+    },
+    "Purple": {
+      "fill": "F3E8FF",
+      "text": "6B21A8"
+    },
+    "Peach": {
+      "fill": "FFEDD5",
+      "text": "9A3412"
+    },
+    "Teal": {
+      "fill": "CCFBF1",
+      "text": "0F766E"
+    },
+    "Lavender": {
+      "fill": "EDE9FE",
+      "text": "5B21B6"
+    },
+    "Cyan": {
+      "fill": "CFFAFE",
+      "text": "0E7490"
+    },
+    "Indigo": {
+      "fill": "E0E7FF",
+      "text": "3730A3"
+    },
+    "Blue-Green": {
+      "fill": "CCFBF1",
+      "text": "0F766E"
+    },
+    "Gold": {
+      "fill": "FEF3C7",
+      "text": "92400E"
+    },
+    "Sand": {
+      "fill": "FDE68A",
+      "text": "854D0E"
+    },
+    "Orange": {
+      "fill": "FED7AA",
+      "text": "9A3412"
+    },
+    "Emerald": {
+      "fill": "D1FAE5",
+      "text": "047857"
+    },
+    "Coral": {
+      "fill": "FFE4E6",
+      "text": "BE123C"
+    },
+    "Ocean": {
+      "fill": "DBEAFE",
+      "text": "1D4ED8"
+    },
+    "Mint": {
+      "fill": "D1FAE5",
+      "text": "047857"
+    },
+    "Night": {
+      "fill": "E0E7FF",
+      "text": "3730A3"
+    },
+    "Violet": {
+      "fill": "F3E8FF",
+      "text": "6B21B6"
+    },
+    "Cream": {
+      "fill": "F7E6C4",
+      "text": "7C5A10"
+    }
+  }
+}

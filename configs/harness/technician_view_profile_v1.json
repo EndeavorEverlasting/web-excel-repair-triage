@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "profile_id": "technician-prompt-library-view-v1",
+  "description": "Column-visibility profile that hides developer-facing Prompt Library columns from the technician view without deleting data.",
+  "policy": "Hidden columns remain present, addressable by formulas, links, agents, and developer tooling. Column data must never be deleted.",
+  "target_sheet": "Prompt_Library",
+  "hidden_columns": [],
+  "hidden_columns_note": "Default is empty (show all columns). The operator-modified workbook contains the preferred set; inspect it to populate this profile. Once populated, the generator will hide these columns during generation.",
+  "column_identities": {
+    "A": {"label": "SeqEdge", "role": "sparse_top_bottom_navigation"},
+    "B": {"label": "Seq", "role": "sequence_number"},
+    "C": {"label": "Prompt ID", "role": "unique_hyperlink"},
+    "D": {"label": "Prompt Type", "role": "type_classification"},
+    "E": {"label": "Prompt Class", "role": "class_classification"},
+    "F": {"label": "Sprint Path Role", "role": "sprint_role"},
+    "G": {"label": "Use For Progress?", "role": "progress_flag"},
+    "H": {"label": "Prompt Name", "role": "display_name"},
+    "I": {"label": "Use This When", "role": "usage_trigger"},
+    "J": {"label": "Inspect First", "role": "dependency_hint"},
+    "K": {"label": "Expected Output", "role": "expected_artifact"},
+    "L": {"label": "Next Step", "role": "next_action"},
+    "M": {"label": "Proof / Acceptance Gate", "role": "proof_gate"},
+    "N": {"label": "Color", "role": "semantic_color_label"},
+    "O": {"label": "Copy-Safe Sheet", "role": "target_sheet_name"},
+    "P": {"label": "SeqEdge", "role": "sparse_top_bottom_navigation"}
+  },
+  "operational_notes": [
+    "Developer-facing columns (F through N) contain critical data for agents and developer workflows.",
+    "Technicians may prefer to hide some of these columns for readability.",
+    "Do not delete any column; hidden columns remain fully functional.",
+    "The operator-modified workbook is the canonical source for the preferred hidden-column set."
+  ]
+}

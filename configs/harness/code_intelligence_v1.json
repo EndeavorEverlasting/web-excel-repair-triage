@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "mode": "read-only",
+  "queries": [
+    {
+      "name": "prompt-kit-generator",
+      "paths": [
+        "triage/prompt_kit_v39_generator.py",
+        "triage/prompt_kit_v39_ooxml_base.py"
+      ],
+      "purpose": "generation and package mutation"
+    },
+    {
+      "name": "prompt-contracts",
+      "paths": [
+        "configs/prompt_kit",
+        "tests/test_prompt_kit_v39_*"
+      ],
+      "purpose": "prompt registry and fail-closed contracts"
+    },
+    {
+      "name": "bidirectional-web-spreadsheet",
+      "paths": [
+        "configs/harness/bidirectional_web_spreadsheet_v1.json",
+        "configs/harness/web_spreadsheet_ir_v1.schema.json",
+        "triage/harness_bidirectional_conversion_contract.py",
+        "triage/sidecar_html",
+        "tests/test_harness_bidirectional_conversion_contract.py",
+        "docs/HARNESS_BIDIRECTIONAL_WEB_SPREADSHEET.md"
+      ],
+      "purpose": "input analysis, shared semantic IR, current website renderer, direction order, validators, and implementation boundaries"
+    },
+    {
+      "name": "artifact-engines",
+      "paths": [
+        "triage",
+        "configs/artifact_profiles",
+        "docs"
+      ],
+      "purpose": "existing generators, validators, profiles, and output patterns"
+    },
+    {
+      "name": "repo-conventions",
+      "paths": [
+        "AGENTS.md",
+        ".github/workflows",
+        ".gitignore",
+        "README.md"
+      ],
+      "purpose": "rules, CI, generated-output policy, and operator entrypoints"
+    }
+  ],
+  "forbidden": [
+    "mutation",
+    "network_probe",
+    "secret_read",
+    "generated_binary_commit"
+  ]
+}
