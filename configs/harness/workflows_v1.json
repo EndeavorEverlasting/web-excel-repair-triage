@@ -50,6 +50,17 @@
       "exit": "artifact, manifest/registry evidence, validators, path/hash and proof ceiling"
     },
     {
+      "id": "bidirectional-web-spreadsheet-conversion",
+      "prompt": "P56",
+      "entry": "a local website snapshot, workbook, or workbook bundle must be analyzed or converted",
+      "first_action": "run the registered input analyzer and emit conversion_analysis.json",
+      "direction_order": [
+        "website_to_spreadsheet",
+        "spreadsheet_to_website"
+      ],
+      "exit": "analysis artifact for planning, or an actual direction-specific artifact with shared-IR hash, validators, source fingerprint, proof ceiling, and field gates"
+    },
+    {
       "id": "harness-installation",
       "prompt": "P57",
       "entry": "repo-local harness surfaces are missing or incomplete",

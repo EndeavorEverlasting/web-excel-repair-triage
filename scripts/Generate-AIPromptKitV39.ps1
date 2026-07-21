@@ -36,18 +36,21 @@ try {
     Write-Host "Repository root: $RepoRoot"
     Write-Host "Source V38: $ResolvedSource"
     Write-Host "Output directory: $ResolvedOutDir"
-    Write-Host "Standard-AI extension: P50-P55"
+    Write-Host "Standard-AI extension: P50-P57"
+    Write-Host "Live-evidence troubleshooting contract: P54"
     Write-Host "GNHF harness/runtime section: P45-P49"
 
-    & $Python -m triage.prompt_kit_v39_generator `
+    & $Python -m triage.prompt_kit_v39_live_context_generator `
         --source $ResolvedSource `
         --out-dir $ResolvedOutDir `
-        --standard-ai-spec (Join-Path $RepoRoot "configs/prompt_kit/v39_standard_ai_extensions.json") `
+        --base-standard-ai-spec (Join-Path $RepoRoot "configs/prompt_kit/v39_standard_ai_extensions.json") `
+        --troubleshooting-spec (Join-Path $RepoRoot "configs/prompt_kit/v39_p54_troubleshooting_prompt.json") `
+        --policy (Join-Path $RepoRoot "configs/harness/operational_discipline_v1.json") `
         --gnhf-spec (Join-Path $RepoRoot "configs/prompt_kit/v39_gnhf_harness_prompts.json") `
         --json
 
     if ($LASTEXITCODE -ne 0) {
-        throw "AI Harness Prompt Kit V39 generation failed with exit code $LASTEXITCODE."
+        throw "AI Harness Prompt Kit V39 live-context generation failed with exit code $LASTEXITCODE."
     }
 }
 finally {

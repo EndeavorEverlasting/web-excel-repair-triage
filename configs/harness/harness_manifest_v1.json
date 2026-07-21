@@ -15,10 +15,19 @@
     "docs/harness/RUN_CONTEXT.md"
   ],
   "artifact_registry": "configs/harness/artifact_registry_v1.json",
+  "conversion_contracts": [
+    "configs/harness/bidirectional_web_spreadsheet_v1.json",
+    "configs/harness/web_spreadsheet_ir_v1.schema.json",
+    "triage/harness_bidirectional_conversion_contract.py",
+    "docs/HARNESS_BIDIRECTIONAL_WEB_SPREADSHEET.md"
+  ],
   "validators": [
     "triage/harness_operational_discipline.py",
+    "triage/harness_troubleshooting_contract.py",
+    "triage/harness_bidirectional_conversion_contract.py",
     "triage/prompt_kit_visual_contract.py",
-    "triage/prompt_kit_v39_generator.py"
+    "triage/prompt_kit_v39_generator.py",
+    "triage/prompt_kit_v39_live_context_generator.py"
   ],
   "local_hooks": [
     ".githooks/pre-commit",

@@ -91,18 +91,15 @@ See [`docs/ONE_MARCUS_SOURCE_OVERWRITE_INCIDENT_2026_06_04.md`](docs/ONE_MARCUS_
 
 ## Repo-local AI harness
 
-Every serious application in this repository uses the repo-local harness indexed by [`HARNESS.md`](HARNESS.md) and [`configs/harness/harness_manifest_v1.json`](configs/harness/harness_manifest_v1.json).
+Use [`HARNESS.md`](HARNESS.md) and [`configs/harness/harness_manifest_v1.json`](configs/harness/harness_manifest_v1.json). Prompts are artifacts inside the harness, not the harness itself.
 
-Prompts are artifacts inside the harness; they are not the harness itself. A fresh agent must inspect the registered agent rules, codebase map, workflow specs, run context, artifact registry, validators, hooks, scoped skills, read-only code-intelligence map, operator reports, and final handoff contract before inventing a replacement surface.
+- Inspect registered rules, maps, workflows, run context, artifact registry, validators, hooks, skills, code intelligence, reports, generated-output policy, and branch/PR conventions before inventing.
+- Name repo, branch/worktree, PR/sprint, lane, owned scope, forbidden scope, expected artifacts, and user-specified validation order.
+- Execute `request -> evidence review -> bounded decision -> repo/Git/GitHub mutation -> artifacts -> validation -> report -> next decision`.
+- Generate the requested artifact or mutation; a rewritten prompt, plan, handoff, or acknowledgment is not completion.
+- Preserve useful work, validate focused then broad, commit and push coherent contributions, update the intended PR, and report exact proof and ceiling.
+- For troubleshooting, use P54: prefer validated runtime and current repository evidence, identify the first confirmed divergence, derive commands and paths from live contracts, and mutate only when repair is requested.
+- For website/spreadsheet work, run the registered input analyzer first; implement website-to-spreadsheet before the reverse lane, route both through the shared IR, and never call analysis or a plan a converted artifact.
+- Task-specific execution rules override generic closeout behavior.
 
-Required execution posture:
-
-- select the registered task-specific workflow;
-- inspect existing rules, test runners, validators, docs, scripts, manifests, generated-output policy, and branch/PR conventions;
-- name repo, branch/worktree, PR/sprint, lane, owned scope, forbidden scope, expected artifacts, and user-specified validation order;
-- generate the actual requested artifact rather than a plan or prompt pack;
-- validate the artifact and repository changes;
-- commit and push coherent contributions and update the intended PR;
-- report exact evidence and the remaining proof ceiling.
-
-Prompt Kit ergonomics are enforced: `xyz_under_score_placeholders` remain bare rather than surrounded by ASCII or smart quotes; Prompt Library B:O rows and associated prompt tabs use the semantic Color label; A/P remain dedicated sparse navigation.
+Prompt Kit ergonomics remain enforced: bare `xyz_under_score_placeholders`; Prompt Library B:O exact-range links and semantic row colors; A/P sparse navigation; matching prompt-tab RGB colors.
