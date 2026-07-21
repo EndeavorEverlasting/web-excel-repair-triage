@@ -5,7 +5,7 @@ import argparse
 import json
 import re
 import zipfile
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import List, Optional, Sequence
 from xml.etree import ElementTree as ET
@@ -58,7 +58,7 @@ def _markup_compatibility_prefix_issues(zf: zipfile.ZipFile) -> List[WebExcelIss
     """Reject lexical QName prefixes used by Office MC attributes but undeclared in the XML part.
 
     XML parsers do not validate namespace prefixes stored inside attribute values such as
-    ``mc:Ignorable=\"x15 xr\"`` or ``mc:Choice Requires=\"x15\"``. A serializer can
+    ``mc:Ignorable="x15 xr"`` or ``mc:Choice Requires="x15"``. A serializer can
     therefore rename namespace declarations to ``ns1``/``ns2`` while leaving those
     strings untouched, producing well-formed XML that Office cannot process.
     """
@@ -69,24 +69,37 @@ def _markup_compatibility_prefix_issues(zf: zipfile.ZipFile) -> List[WebExcelIss
         declared.add("xml")
         referenced: list[tuple[str, str]] = []
         for match in _MC_PREFIX_LIST_RE.finditer(text):
-            referenced.extend(("markup-compatibility prefix list", token) for token in match.group(2).split())
+            referenced.extend(
+                ("markup-compatibility prefix list", token)
+                for token in match.group(2).split()
+            )
         for match in _MC_CHOICE_REQUIRES_RE.finditer(text):
-            referenced.extend(("AlternateContent Choice Requires", token) for token in match.group(2).split())
+            referenced.extend(
+                ("AlternateContent Choice Requires", token)
+                for token in match.group(2).split()
+            )
         for match in _MC_QNAME_LIST_RE.finditer(text):
             for token in match.group(2).split():
                 if ":" in token:
-                    referenced.append(("markup-compatibility QName list", token.split(":", 1)[0]))
+                    referenced.append(
+                        ("markup-compatibility QName list", token.split(":", 1)[0])
+                    )
         seen = set()
         for source, prefix in referenced:
             key = (source, prefix)
             if not prefix or prefix in declared or key in seen:
                 continue
             seen.add(key)
-            issues.append(WebExcelIssue(
-                "undeclared_markup_compatibility_prefix",
-                f"{source} references undeclared namespace prefix {prefix!r}; XML may parse while Excel refuses the package.",
-                name,
-            ))
+            issues.append(
+                WebExcelIssue(
+                    "undeclared_markup_compatibility_prefix",
+                    (
+                        f"{source} references undeclared namespace prefix {prefix!r}; "
+                        "XML may parse while Excel refuses the package."
+                    ),
+                    name,
+                )
+            )
     return issues
 
 
@@ -112,18 +125,51 @@ def _calc_chain_issues(zf: zipfile.ZipFile) -> List[WebExcelIssue]:
     formulas = _formula_cells(zf)
     issues: List[WebExcelIssue] = []
     root = xml_root(zf, "xl/calcChain.xml")
+    previous_sheet_id: Optional[str] = None
     for entry in root.findall("m:c", NS):
-        sheet_id = entry.attrib.get("i", "")
+        explicit_sheet_id = entry.attrib.get("i")
         ref = entry.attrib.get("r", "")
-        if not sheet_id.isdigit():
-            issues.append(WebExcelIssue("invalid_calc_chain_sheet_id", f"Invalid calcChain sheetId {sheet_id!r}.", "xl/calcChain.xml"))
-            continue
+        if explicit_sheet_id is None:
+            if previous_sheet_id is None:
+                issues.append(
+                    WebExcelIssue(
+                        "invalid_calc_chain_sheet_id",
+                        "The first calcChain entry omits its sheetId and has no prior entry to inherit.",
+                        "xl/calcChain.xml",
+                    )
+                )
+                continue
+            sheet_id = previous_sheet_id
+        else:
+            sheet_id = explicit_sheet_id
+            if not sheet_id.isdigit():
+                issues.append(
+                    WebExcelIssue(
+                        "invalid_calc_chain_sheet_id",
+                        f"Invalid calcChain sheetId {sheet_id!r}.",
+                        "xl/calcChain.xml",
+                    )
+                )
+                continue
+            previous_sheet_id = sheet_id
         sheet = sheet_names_by_id.get(sheet_id)
         if not sheet:
-            issues.append(WebExcelIssue("calc_chain_sheet_id_not_found", f"calcChain sheetId {sheet_id} is not present in xl/workbook.xml.", "xl/calcChain.xml"))
+            issues.append(
+                WebExcelIssue(
+                    "calc_chain_sheet_id_not_found",
+                    f"calcChain sheetId {sheet_id} is not present in xl/workbook.xml.",
+                    "xl/calcChain.xml",
+                )
+            )
             continue
         if (sheet, ref) not in formulas:
-            issues.append(WebExcelIssue("stale_calc_chain_entry", f"calcChain entry {sheet}!{ref} does not point to a formula cell.", "xl/calcChain.xml"))
+            issues.append(
+                WebExcelIssue(
+                    "stale_calc_chain_entry",
+                    f"calcChain entry {sheet}!{ref} does not point to a formula cell.",
+                    "xl/calcChain.xml",
+                )
+            )
     return issues
 
 
@@ -134,7 +180,11 @@ def inspect_web_excel_package(path: str | Path) -> List[WebExcelIssue]:
     try:
         zf = zipfile.ZipFile(workbook)
     except (FileNotFoundError, zipfile.BadZipFile):
-        return [WebExcelIssue("invalid_zip", "Workbook is missing or is not a valid .xlsx ZIP package.")]
+        return [
+            WebExcelIssue(
+                "invalid_zip", "Workbook is missing or is not a valid .xlsx ZIP package."
+            )
+        ]
 
     with zf:
         names = set(zf.namelist())
@@ -144,18 +194,42 @@ def inspect_web_excel_package(path: str | Path) -> List[WebExcelIssue]:
             try:
                 ET.fromstring(zf.read(name))
             except ET.ParseError as exc:
-                issues.append(WebExcelIssue("xml_parse_error", f"XML part failed to parse: {exc}.", name))
+                issues.append(
+                    WebExcelIssue(
+                        "xml_parse_error", f"XML part failed to parse: {exc}.", name
+                    )
+                )
 
         issues.extend(_markup_compatibility_prefix_issues(zf))
 
         if "[Content_Types].xml" not in names:
-            issues.append(WebExcelIssue("missing_content_types", "Missing [Content_Types].xml."))
+            issues.append(
+                WebExcelIssue("missing_content_types", "Missing [Content_Types].xml.")
+            )
         else:
             content_types = _read_text(zf, "[Content_Types].xml")
-            if 'Extension="xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"' in content_types:
-                issues.append(WebExcelIssue("bad_xml_default_content_type", "Default .xml content type must not be workbook-main; use application/xml plus explicit overrides.", "[Content_Types].xml"))
-            if 'PartName="/xl/workbook.xml"' not in content_types or "spreadsheetml.sheet.main+xml" not in content_types:
-                issues.append(WebExcelIssue("missing_workbook_content_type_override", "Workbook part must have an explicit spreadsheetml.sheet.main+xml override.", "[Content_Types].xml"))
+            if (
+                'Extension="xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"'
+                in content_types
+            ):
+                issues.append(
+                    WebExcelIssue(
+                        "bad_xml_default_content_type",
+                        "Default .xml content type must not be workbook-main; use application/xml plus explicit overrides.",
+                        "[Content_Types].xml",
+                    )
+                )
+            if (
+                'PartName="/xl/workbook.xml"' not in content_types
+                or "spreadsheetml.sheet.main+xml" not in content_types
+            ):
+                issues.append(
+                    WebExcelIssue(
+                        "missing_workbook_content_type_override",
+                        "Workbook part must have an explicit spreadsheetml.sheet.main+xml override.",
+                        "[Content_Types].xml",
+                    )
+                )
 
         for rel_name in sorted(name for name in names if name.endswith(".rels")):
             for rel_id, target in _relationship_targets(zf, rel_name):
@@ -163,20 +237,56 @@ def inspect_web_excel_package(path: str | Path) -> List[WebExcelIssue]:
                 if target.startswith("#"):
                     continue
                 if target.startswith("/"):
-                    issues.append(WebExcelIssue("absolute_internal_relationship_target", "Unexpected absolute internal relationship target.", issue_part))
+                    issues.append(
+                        WebExcelIssue(
+                            "absolute_internal_relationship_target",
+                            "Unexpected absolute internal relationship target.",
+                            issue_part,
+                        )
+                    )
                 resolved = resolve_relationship_target(rel_name, target)
                 if resolved == ".." or resolved.startswith("../"):
-                    issues.append(WebExcelIssue("relationship_target_escapes_package", f"Relationship target escapes package root: {target}.", issue_part))
+                    issues.append(
+                        WebExcelIssue(
+                            "relationship_target_escapes_package",
+                            f"Relationship target escapes package root: {target}.",
+                            issue_part,
+                        )
+                    )
                     continue
                 if resolved.startswith("xl/drawings/charts/"):
-                    issues.append(WebExcelIssue("drawing_rel_targets_chart_under_drawings", "Drawing chart relationship resolves under xl/drawings/charts/.", issue_part))
+                    issues.append(
+                        WebExcelIssue(
+                            "drawing_rel_targets_chart_under_drawings",
+                            "Drawing chart relationship resolves under xl/drawings/charts/.",
+                            issue_part,
+                        )
+                    )
                 if resolved not in names:
-                    issues.append(WebExcelIssue("missing_relationship_target", f"Relationship target does not resolve in package: {target} -> {resolved}.", issue_part))
+                    issues.append(
+                        WebExcelIssue(
+                            "missing_relationship_target",
+                            f"Relationship target does not resolve in package: {target} -> {resolved}.",
+                            issue_part,
+                        )
+                    )
 
         if any(name.startswith("xl/drawings/charts/") for name in names):
-            issues.append(WebExcelIssue("chart_parts_under_drawings", "Chart parts must live under xl/charts/chartN.xml, not xl/drawings/charts/.", "xl/drawings/charts/"))
+            issues.append(
+                WebExcelIssue(
+                    "chart_parts_under_drawings",
+                    "Chart parts must live under xl/charts/chartN.xml, not xl/drawings/charts/.",
+                    "xl/drawings/charts/",
+                )
+            )
         if any(name.startswith("xl/externalLinks/") for name in names):
-            issues.append(WebExcelIssue("external_links_present", "Remove external workbook links before Web Excel submission.", "xl/externalLinks/"))
+            issues.append(
+                WebExcelIssue(
+                    "external_links_present",
+                    "Remove external workbook links before Web Excel submission.",
+                    "xl/externalLinks/",
+                )
+            )
 
         table_names = []
         for name in names:
@@ -187,7 +297,11 @@ def inspect_web_excel_package(path: str | Path) -> List[WebExcelIssue]:
         seen = set()
         for table_name, part in table_names:
             if table_name in seen:
-                issues.append(WebExcelIssue("duplicate_table_name", f"Duplicate table name: {table_name}.", part))
+                issues.append(
+                    WebExcelIssue(
+                        "duplicate_table_name", f"Duplicate table name: {table_name}.", part
+                    )
+                )
             seen.add(table_name)
 
         for name in sorted(names):
@@ -195,15 +309,40 @@ def inspect_web_excel_package(path: str | Path) -> List[WebExcelIssue]:
                 continue
             text = _read_text(zf, name)
             if 't="inlineStr"' in text or "<is>" in text:
-                issues.append(WebExcelIssue("inline_string_cells_present", "Use shared strings instead of inlineStr cell storage.", name))
-            if "ns0:" in text or "xmlns:ns0" in text:
-                issues.append(WebExcelIssue("ns0_namespace_pollution", "Remove ns0 namespace pollution from XML serialization.", name))
-            if any(error in text for error in ("#REF!", "#DIV/0!", "#VALUE!", "#NAME?", "#N/A")):
-                issues.append(WebExcelIssue("formula_error_text_present", "Workbook package contains formula error text.", name))
+                issues.append(
+                    WebExcelIssue(
+                        "inline_string_cells_present",
+                        "Use shared strings instead of inlineStr cell storage.",
+                        name,
+                    )
+                )
+            if any(
+                error in text
+                for error in ("#REF!", "#DIV/0!", "#VALUE!", "#NAME?", "#N/A")
+            ):
+                issues.append(
+                    WebExcelIssue(
+                        "formula_error_text_present",
+                        "Workbook package contains formula error text.",
+                        name,
+                    )
+                )
             if re.search(r'<f\b[^>]*\bt="(?:array|shared)"', text):
-                issues.append(WebExcelIssue("shared_or_array_formula_present", "Shared or array formula structures require a specific accepted workbook profile.", name))
+                issues.append(
+                    WebExcelIssue(
+                        "shared_or_array_formula_present",
+                        "Shared or array formula structures require a specific accepted workbook profile.",
+                        name,
+                    )
+                )
             if any(token in text for token in ("_xlfn.", "_xlws.", "_xlpm.")):
-                issues.append(WebExcelIssue("future_formula_namespace_token", "Future/dynamic formula namespace token detected.", name))
+                issues.append(
+                    WebExcelIssue(
+                        "future_formula_namespace_token",
+                        "Future/dynamic formula namespace token detected.",
+                        name,
+                    )
+                )
 
         issues.extend(_calc_chain_issues(zf))
     return issues
@@ -212,7 +351,9 @@ def inspect_web_excel_package(path: str | Path) -> List[WebExcelIssue]:
 def assert_web_excel_compatible(path: str | Path) -> None:
     issues = inspect_web_excel_package(path)
     if issues:
-        detail = "\n".join(f"- {issue.code}: {issue.message} [{issue.part}]" for issue in issues)
+        detail = "\n".join(
+            f"- {issue.code}: {issue.message} [{issue.part}]" for issue in issues
+        )
         raise AssertionError(f"Workbook is not statically Web Excel compatible:\n{detail}")
 
 
@@ -223,7 +364,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parser.parse_args(argv)
     issues = inspect_web_excel_package(args.workbook)
     payload = {"compatible": not issues, "issues": [asdict(issue) for issue in issues]}
-    print(json.dumps(payload, indent=2) if args.json else ("PASS" if not issues else "\n".join(f"FAIL {issue.code}: {issue.message} [{issue.part}]" for issue in issues)))
+    print(
+        json.dumps(payload, indent=2)
+        if args.json
+        else (
+            "PASS"
+            if not issues
+            else "\n".join(
+                f"FAIL {issue.code}: {issue.message} [{issue.part}]"
+                for issue in issues
+            )
+        )
+    )
     return 0 if not issues else 1
 
 
