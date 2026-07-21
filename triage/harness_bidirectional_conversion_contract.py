@@ -113,13 +113,24 @@ def validate_policy(policy: Mapping[str, object]) -> tuple[str, ...]:
             issues.append("shared IR id drift")
         if shared.get("schema") != "configs/harness/web_spreadsheet_ir_v1.schema.json":
             issues.append("shared IR schema path drift")
-        for field in ("required_for_both_directions", "semantic_hash_required", "presentation_is_separate_from_semantics"):
+        for field in (
+            "required_for_both_directions",
+            "semantic_hash_required",
+            "presentation_is_separate_from_semantics",
+        ):
             if shared.get(field) is not True:
                 issues.append(f"shared IR rule must be true: {field}")
 
     directions = policy.get("directions")
-    if not isinstance(directions, list) or tuple(item.get("id") for item in directions if isinstance(item, Mapping)) != _DIRECTION_ORDER:
-        issues.append("conversion direction order must be website_to_spreadsheet then spreadsheet_to_website")
+    direction_ids = (
+        tuple(item.get("id") for item in directions if isinstance(item, Mapping))
+        if isinstance(directions, list)
+        else ()
+    )
+    if direction_ids != _DIRECTION_ORDER:
+        issues.append(
+            "conversion direction order must be website_to_spreadsheet then spreadsheet_to_website"
+        )
     elif len(directions) == 2:
         website, workbook = directions
         if website.get("implementation_priority") != 1:
@@ -130,11 +141,20 @@ def validate_policy(policy: Mapping[str, object]) -> tuple[str, ...]:
         if not extraction or extraction[0] != "embedded_portal_json":
             issues.append("website extraction must prefer embedded PORTAL JSON")
         forbidden = set(website.get("forbidden_primary_extraction", ()))
-        for item in ("screenshot_reconstruction", "ocr", "pixel_matching", "remote_javascript_execution"):
+        for item in (
+            "screenshot_reconstruction",
+            "ocr",
+            "pixel_matching",
+            "remote_javascript_execution",
+        ):
             if item not in forbidden:
                 issues.append(f"website primary extraction must forbid: {item}")
-        if "triage.sidecar_html.portal" not in str(workbook.get("rendering_authority", "")):
-            issues.append("spreadsheet-to-website must reuse the sidecar portal renderer")
+        if "triage.sidecar_html.portal" not in str(
+            workbook.get("rendering_authority", "")
+        ):
+            issues.append(
+                "spreadsheet-to-website must reuse the sidecar portal renderer"
+            )
 
     if tuple(policy.get("implementation_sequence", ())) != _IMPLEMENTATION_SEQUENCE:
         issues.append("bidirectional implementation sequence drift")
@@ -151,7 +171,9 @@ def validate_policy(policy: Mapping[str, object]) -> tuple[str, ...]:
             "task_specific_rules_override_generic_closeout",
         ):
             if action.get(field) is not True:
-                issues.append(f"bidirectional action commitment must be true: {field}")
+                issues.append(
+                    f"bidirectional action commitment must be true: {field}"
+                )
 
     safety = policy.get("preservation_and_safety")
     if not isinstance(safety, Mapping):
@@ -213,7 +235,10 @@ def validate_repository(repo_root: str | Path = ROOT) -> tuple[str, ...]:
         if not (root / relative).exists():
             issues.append(f"bidirectional harness surface missing: {relative}")
 
-    manifest = _load_object(root / "configs/harness/harness_manifest_v1.json", label="harness manifest")
+    manifest = _load_object(
+        root / "configs/harness/harness_manifest_v1.json",
+        label="harness manifest",
+    )
     contracts = manifest.get("conversion_contracts")
     expected_contracts = [
         "configs/harness/bidirectional_web_spreadsheet_v1.json",
@@ -222,26 +247,53 @@ def validate_repository(repo_root: str | Path = ROOT) -> tuple[str, ...]:
         "docs/HARNESS_BIDIRECTIONAL_WEB_SPREADSHEET.md",
     ]
     if contracts != expected_contracts:
-        issues.append("harness manifest bidirectional conversion contract registration drift")
+        issues.append(
+            "harness manifest bidirectional conversion contract registration drift"
+        )
 
-    workflows = _load_object(root / "configs/harness/workflows_v1.json", label="workflow registry")
-    matches = [item for item in workflows.get("workflows", []) if item.get("id") == "bidirectional-web-spreadsheet-conversion"]
+    workflows = _load_object(
+        root / "configs/harness/workflows_v1.json",
+        label="workflow registry",
+    )
+    matches = [
+        item
+        for item in workflows.get("workflows", [])
+        if item.get("id") == "bidirectional-web-spreadsheet-conversion"
+    ]
     if len(matches) != 1:
-        issues.append("bidirectional conversion workflow registration missing or duplicated")
+        issues.append(
+            "bidirectional conversion workflow registration missing or duplicated"
+        )
     elif matches[0].get("prompt") != "P56":
         issues.append("bidirectional conversion workflow must route through P56")
 
-    artifacts = _load_object(root / "configs/harness/artifact_registry_v1.json", label="artifact registry")
-    matches = [item for item in artifacts.get("artifacts", []) if item.get("id") == "web-spreadsheet-input-analysis"]
+    artifacts = _load_object(
+        root / "configs/harness/artifact_registry_v1.json",
+        label="artifact registry",
+    )
+    matches = [
+        item
+        for item in artifacts.get("artifacts", [])
+        if item.get("id") == "web-spreadsheet-input-analysis"
+    ]
     if len(matches) != 1:
-        issues.append("web spreadsheet input-analysis artifact registration missing or duplicated")
+        issues.append(
+            "web spreadsheet input-analysis artifact registration missing or duplicated"
+        )
     else:
         generator = str(matches[0].get("generator", ""))
-        if "triage.harness_bidirectional_conversion_contract" not in generator or "--analyze-input" not in generator:
-            issues.append("input-analysis artifact must route through the bidirectional analyzer")
+        if (
+            "triage.harness_bidirectional_conversion_contract" not in generator
+            or "--analyze-input" not in generator
+        ):
+            issues.append(
+                "input-analysis artifact must route through the bidirectional analyzer"
+            )
         validators = set(matches[0].get("validators", ()))
         if "triage.harness_bidirectional_conversion_contract" not in validators:
-            issues.append("input-analysis artifact must include the bidirectional validator")
+            issues.append(
+                "input-analysis artifact must include the bidirectional validator"
+            )
     return tuple(issues)
 
 
@@ -260,7 +312,10 @@ def _portal_payload(text: str) -> Optional[dict]:
 def analyze_input(path: str | Path) -> dict:
     raw = str(path)
     if raw.startswith(("http://", "https://")):
-        raise ValueError("network website fetch requires explicit implementation scope; provide a local HTML snapshot")
+        raise ValueError(
+            "network website fetch requires explicit implementation scope; "
+            "provide a local HTML snapshot"
+        )
     source = Path(path).resolve()
     if not source.exists() or not source.is_file():
         raise FileNotFoundError(source)
@@ -275,32 +330,51 @@ def analyze_input(path: str | Path) -> dict:
         "mapping_profile": None,
         "blockers": [],
         "implementation_priority": None,
-        "proof_ceiling": "Input classification only; no conversion artifact or field acceptance is proven.",
+        "proof_ceiling": (
+            "Input classification only; no conversion artifact or field "
+            "acceptance is proven."
+        ),
     }
     suffix = source.suffix.lower()
     if suffix in {".html", ".htm"}:
         text = source.read_text(encoding="utf-8", errors="replace")
         portal = _portal_payload(text)
         if portal is not None and isinstance(portal.get("sections"), list):
-            result.update({
-                "source_kind": "sidecar_portal_html",
-                "recommended_direction": "website_to_spreadsheet",
-                "structured_payload_available": True,
-                "extraction_strategy": "embedded_portal_json",
-                "mapping_profile": "sidecar_portal_v1",
-                "implementation_priority": 1,
-                "portal_title": str(portal.get("title", "")),
-                "portal_section_count": len(portal["sections"]),
-            })
+            result.update(
+                {
+                    "source_kind": "sidecar_portal_html",
+                    "recommended_direction": "website_to_spreadsheet",
+                    "structured_payload_available": True,
+                    "extraction_strategy": "embedded_portal_json",
+                    "mapping_profile": "sidecar_portal_v1",
+                    "implementation_priority": 1,
+                    "portal_title": str(portal.get("title", "")),
+                    "portal_section_count": len(portal["sections"]),
+                }
+            )
         else:
-            has_semantic_html = bool(re.search(r"<(?:table|section|article|dl|ul|ol)\b", text, re.IGNORECASE))
-            result.update({
-                "source_kind": "generic_html",
-                "recommended_direction": "website_to_spreadsheet",
-                "extraction_strategy": "semantic_dom_tables_and_labels" if has_semantic_html else "operator_approved_mapping_profile",
-                "implementation_priority": 1,
-                "blockers": ["operator_approved_mapping_profile_required"],
-            })
+            has_semantic_html = bool(
+                re.search(
+                    r"<(?:table|section|article|dl|ul|ol)\b",
+                    text,
+                    re.IGNORECASE,
+                )
+            )
+            result.update(
+                {
+                    "source_kind": "generic_html",
+                    "recommended_direction": "website_to_spreadsheet",
+                    "extraction_strategy": (
+                        "semantic_dom_tables_and_labels"
+                        if has_semantic_html
+                        else "operator_approved_mapping_profile"
+                    ),
+                    "implementation_priority": 1,
+                    "blockers": [
+                        "operator_approved_mapping_profile_required"
+                    ],
+                }
+            )
         return result
 
     if suffix in {".xlsx", ".xlsm"}:
@@ -312,42 +386,77 @@ def analyze_input(path: str | Path) -> dict:
             return result
         required = {"[Content_Types].xml", "xl/workbook.xml"}
         if required.issubset(names):
-            result.update({
-                "source_kind": "xlsx_workbook",
-                "recommended_direction": "spreadsheet_to_website",
-                "structured_payload_available": True,
-                "extraction_strategy": "package_preserving_workbook_reader",
-                "mapping_profile": "registered_workbook_contract_or_operator_profile",
-                "implementation_priority": 2,
-                "blockers": ["approved_sheet_and_range_mapping_profile_required"],
-            })
+            result.update(
+                {
+                    "source_kind": "xlsx_workbook",
+                    "recommended_direction": "spreadsheet_to_website",
+                    "structured_payload_available": True,
+                    "extraction_strategy": "package_preserving_workbook_reader",
+                    "mapping_profile": (
+                        "registered_workbook_contract_or_operator_profile"
+                    ),
+                    "implementation_priority": 2,
+                    "blockers": [
+                        "approved_sheet_and_range_mapping_profile_required"
+                    ],
+                }
+            )
         else:
-            result["blockers"] = ["missing_required_workbook_package_parts"]
+            result["blockers"] = [
+                "missing_required_workbook_package_parts"
+            ]
         return result
 
     if suffix == ".zip":
         try:
             with zipfile.ZipFile(source) as archive:
-                workbook_members = [name for name in archive.namelist() if name.lower().endswith((".xlsx", ".xlsm"))]
+                workbook_members = [
+                    name
+                    for name in archive.namelist()
+                    if name.lower().endswith((".xlsx", ".xlsm"))
+                ]
         except zipfile.BadZipFile as exc:
             result["blockers"] = [f"invalid_zip_package: {exc}"]
             return result
         if workbook_members:
-            result.update({
-                "source_kind": "workbook_bundle",
-                "recommended_direction": "spreadsheet_to_website",
-                "structured_payload_available": True,
-                "extraction_strategy": "extract_registered_workbook_then_package_preserving_reader",
-                "mapping_profile": "bundle_manifest_and_workbook_contract",
-                "implementation_priority": 2,
-                "blockers": ["bundle_member_selection_and_mapping_approval_required"],
-            })
+            result.update(
+                {
+                    "source_kind": "workbook_bundle",
+                    "recommended_direction": "spreadsheet_to_website",
+                    "structured_payload_available": True,
+                    "extraction_strategy": (
+                        "extract_registered_workbook_then_"
+                        "package_preserving_reader"
+                    ),
+                    "mapping_profile": "bundle_manifest_and_workbook_contract",
+                    "implementation_priority": 2,
+                    "blockers": [
+                        "bundle_member_selection_and_mapping_approval_required"
+                    ],
+                }
+            )
         else:
             result["blockers"] = ["no_workbook_member_in_bundle"]
         return result
 
     result["blockers"] = ["unsupported_input_type"]
     return result
+
+
+def _validated_output_path(
+    output_path: str | Path,
+    *,
+    source_path: str | Path | None = None,
+) -> Path:
+    """Resolve an analysis output and enforce the source/output safety boundary."""
+    output = Path(output_path).resolve()
+    if not any(part.casefold() == "outputs" for part in output.parts):
+        raise ValueError(
+            "analysis output must be written under an approved Outputs/ path"
+        )
+    if source_path is not None and output == Path(source_path).resolve():
+        raise ValueError("analysis output must not overwrite the analyzed source")
+    return output
 
 
 def validate_all(
@@ -374,6 +483,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--out", type=Path)
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
+
     issues = validate_all(args.policy, args.schema, args.repo_root)
     result: dict[str, object] = {
         "valid": not issues,
@@ -381,16 +491,35 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         "schema": str(args.schema),
         "issues": list(issues),
     }
+
     if args.analyze_input:
         try:
             result["analysis"] = analyze_input(args.analyze_input)
         except (OSError, ValueError, zipfile.BadZipFile) as exc:
             result["valid"] = False
             result["issues"] = [*result["issues"], str(exc)]
+
     if args.out:
-        args.out.parent.mkdir(parents=True, exist_ok=True)
-        args.out.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(result, indent=2) if args.json or args.out or not result["valid"] else "bidirectional web/spreadsheet contract: PASS")
+        try:
+            output = _validated_output_path(
+                args.out,
+                source_path=args.analyze_input,
+            )
+        except ValueError as exc:
+            result["valid"] = False
+            result["issues"] = [*result["issues"], str(exc)]
+        else:
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(
+                json.dumps(result, indent=2) + "\n",
+                encoding="utf-8",
+            )
+
+    print(
+        json.dumps(result, indent=2)
+        if args.json or args.out or not result["valid"]
+        else "bidirectional web/spreadsheet contract: PASS"
+    )
     return 0 if result["valid"] else 1
 
 
