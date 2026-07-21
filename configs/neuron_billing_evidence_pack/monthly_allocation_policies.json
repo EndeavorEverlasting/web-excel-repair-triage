@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "policies": {
+    "2026-07": {
+      "name": "July 2026 Neuron operational allocation",
+      "allocation_weights": {
+        "Configurations": 16,
+        "Inventory Management": 9,
+        "Survey": 7,
+        "Ticket Forwarding": 3
+      },
+      "reallocate_confidence": ["low", "medium"],
+      "deployment": {
+        "explicit_only": true,
+        "max_shift_count": 1
+      },
+      "evidence_boundary": "Deployment is never created by the ratio allocator. It must already be explicit in roster evidence or arrive through a reconciled local allocation workbook."
+    }
+  }
+}

@@ -6,6 +6,44 @@ on:
     branches: [main]
 
 jobs:
+  neuron-billing-evidence-pack:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --quiet --upgrade pip
+          python -m pip install --quiet -r requirements.txt pytest
+
+      - name: Import evidence-pack engine
+        run: |
+          python -c "import triage.nw_prj_neuron_track_hours.evidence_pack_cli; import triage.nw_prj_neuron_track_hours.monthly_allocation; print('evidence-pack imports ok')"
+
+      - name: Run evidence-pack tests
+        run: |
+          python -m pytest \
+            tests/test_nw_prj_neuron_track_hours_bonita.py \
+            tests/test_neuron_billing_evidence_pack.py \
+            tests/test_neuron_billing_evidence_pack_guards.py \
+            tests/test_neuron_billing_monthly_allocation.py \
+            -q --tb=short --junitxml=neuron-billing-evidence-pack-junit.xml
+
+      - name: Upload evidence-pack test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neuron-billing-evidence-pack-junit
+          path: neuron-billing-evidence-pack-junit.xml
+          if-no-files-found: warn
+
   artifact-engines:
     runs-on: ubuntu-latest
 
@@ -20,17 +58,17 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --quiet --upgrade pip
           if [ -f requirements.txt ]; then
-            python -m pip install -r requirements.txt
+            python -m pip install --quiet -r requirements.txt
           else
-            python -m pip install openpyxl
+            python -m pip install --quiet openpyxl
           fi
-          python -m pip install pytest
+          python -m pip install --quiet pytest
 
       - name: Import artifact engines
         run: |
-          python -c "import triage.cybernet_targets.cli; import triage.nw_prj_neuron_track_hours.cli; import triage.nw_prj_neuron_track_hours.bonita_cli; import triage.admin_billing_summary.cli; import triage.one_marcus_recon.cli; import triage.sidecar_html; import triage.artifact_fingerprint; import triage.artifact_profiles; import triage.artifact_compare; import triage.same_family_compare; import triage.roster_log_compare.compare; import triage.roster_log_review_queue.cli; import triage.gitignore_hygiene; print('imports ok')"
+          python -c "import triage.cybernet_targets.cli; import triage.nw_prj_neuron_track_hours.cli; import triage.nw_prj_neuron_track_hours.bonita_cli; import triage.nw_prj_neuron_track_hours.evidence_pack_cli; import triage.nw_prj_neuron_track_hours.monthly_allocation; import triage.admin_billing_summary.cli; import triage.one_marcus_recon.cli; import triage.sidecar_html; import triage.artifact_fingerprint; import triage.artifact_profiles; import triage.artifact_compare; import triage.same_family_compare; import triage.roster_log_compare.compare; import triage.roster_log_review_queue.cli; import triage.gitignore_hygiene; print('imports ok')"
 
       - name: Gitignore hygiene
         run: python -m triage.gitignore_hygiene
@@ -41,6 +79,9 @@ jobs:
             tests/test_cybernet_targets.py \
             tests/test_nw_prj_neuron_track_hours.py \
             tests/test_nw_prj_neuron_track_hours_bonita.py \
+            tests/test_neuron_billing_evidence_pack.py \
+            tests/test_neuron_billing_evidence_pack_guards.py \
+            tests/test_neuron_billing_monthly_allocation.py \
             tests/test_admin_billing_summary.py \
             tests/test_one_marcus_recon.py \
             tests/test_one_marcus_generate.py \
@@ -51,4 +92,12 @@ jobs:
             tests/test_same_family_compare.py \
             tests/test_gitignore_hygiene.py \
             tests/test_roster_log_review_queue.py \
-            -q
+            -q --tb=short --junitxml=artifact-engine-junit.xml
+
+      - name: Upload artifact-engine test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-engine-junit
+          path: artifact-engine-junit.xml
+          if-no-files-found: warn
