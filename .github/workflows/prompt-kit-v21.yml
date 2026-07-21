@@ -1,0 +1,41 @@
+name: AI Prompt Kit contracts
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  prompt-kit-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependency
+        run: python -m pip install pytest
+      - name: Import validators
+        run: |
+          python -c "import triage.workbook_package_hygiene; import triage.copy_surface_bounds; import triage.prompt_kit_contract; import triage.worksheet_cell_integrity; import triage.web_excel_compatibility_rules; print('prompt kit validators import ok')"
+      - name: Run prompt-kit contract suite
+        run: |
+          python -m pytest \
+            tests/test_workbook_package_hygiene.py \
+            tests/test_copy_surface_bounds.py \
+            tests/test_prompt_kit_contract.py \
+            tests/test_worksheet_cell_integrity.py \
+            tests/test_web_excel_compatibility_rules.py \
+            tests/test_prompt_kit_v21.py \
+            tests/test_prompt_kit_v21_generator.py \
+            tests/test_prompt_kit_v21_repair_regressions.py \
+            -q
+      - name: Verify CLIs
+        run: |
+          python -m triage.workbook_package_hygiene --help
+          python -m triage.copy_surface_bounds --help
+          python -m triage.prompt_kit_contract --help
+          python -m triage.worksheet_cell_integrity --help
+          python -m triage.web_excel_compatibility_rules --help
