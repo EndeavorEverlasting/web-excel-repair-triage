@@ -71,6 +71,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install focused test dependency
+        run: python -m pip install pytest
+
       - name: Repair canonical sources and regenerate deployed prompt kit
         run: |
           python .github/temp-fix-prompt-kit-header.py
