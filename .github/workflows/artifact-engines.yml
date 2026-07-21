@@ -1,5 +1,8 @@
 name: Artifact engine tests
 
+permissions:
+  contents: read
+
 on:
   pull_request:
   push:
@@ -17,6 +20,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Prompt kit header navigation contract
+        run: python tests/test_prompt_kit_header_contract.py
 
       - name: Install dependencies
         run: |
