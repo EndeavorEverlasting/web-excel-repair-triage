@@ -1,126 +1,115 @@
 # Codebase Map
 
-## Repository Structure
+This map is the harness entry point for `EndeavorEverlasting/web-excel-repair-triage`. It is intentionally focused on verified control-plane, Prompt Kit, validation, and artifact surfaces rather than attempting to enumerate every historical workbook workflow.
 
-```
+## Reading order for a fresh agent
+
+1. `AGENTS.md` — canonical repository governance and safety law.
+2. `CODEBASE_MAP.md` — current repository navigation.
+3. `WORKFLOW.md` — task pickup, validation, failure routing, and handoff.
+4. `ARTIFACT_REGISTRY.md` — generated and tracked artifact contracts.
+5. `SKILLS.md` and `.ai/skills/` — repeatable scoped procedures.
+6. `harness/manifest.v1.json` — machine-readable harness component registry.
+7. `harness/reports/CURRENT_STATE.md` — English-language state, gaps, and proof ceiling.
+
+## Repository structure
+
+```text
 web-excel-repair-triage/
-├── AGENTS.md                    # Agent operating contract
-├── README.md                    # Project documentation
-├── app.py                       # Main Streamlit application
-├── requirements.txt             # Python dependencies
-├── .gitignore                   # Git ignore rules
-│
-├── ArtifactIntake/              # Input artifact handling
-├── Candidates/                  # Read-only operator inputs (backup/emulator files)
-├── configs/                     # Configuration files
-├── Deprecated/                  # Deprecated code
-├── docs/                        # Documentation and prompt kit
-│   ├── prompt-kit.html          # AI Harness Prompt Kit web interface
-│   ├── prompt-kit.js            # Prompt Kit JavaScript
-│   ├── prompts.json             # Prompt definitions
-│   ├── reference.json           # Reference data for prompt kit
-│   └── architecture/            # Architecture documentation
-│
-├── notes/                       # Working notes
-├── Outputs/                     # Generated workbooks, sidecars, forensic reports
-│   └── backups/                 # Timestamped backups
-├── References/                  # Reference materials
-├── Repaired/                    # Repaired workbook outputs
-├── scripts/                     # Utility scripts
-│   ├── admin_context_to_billing.py
-│   ├── billing_to_admin_context.py
-│   ├── extract_roster_operator_pack.py
-│   ├── github-credential-helper.sh
-│   ├── post-merge.sh
-│   ├── run_april_2026_attendance.py
-│   └── verify_pr35_release_proof.py
-│
-├── tests/                       # Test suite
-│   ├── fixtures/                # Test fixtures
-│   └── test_*.py                # Test files
-│
-├── triage/                      # Triage engine modules
-├── web/                         # Web interface components
-│
-├── autofix_loop.py              # Auto-fix loop logic
-├── mcp_server.py                # MCP server implementation
-├── refactor_spec.json           # Refactoring specification
-├── replit.md                    # Replit configuration
-└── tracker_tooling.py           # Tracker tooling
+├── AGENTS.md                         canonical governance contract
+├── CODEBASE_MAP.md                   this navigation map
+├── WORKFLOW.md                       repository workflow specification
+├── ARTIFACT_REGISTRY.md              artifact ownership and generation rules
+├── SKILLS.md                         skill index
+├── Acquire-Latest-PromptKit.cmd      technician clone/update/open entry point
+├── Run-PromptKitGenerator.cmd        generator GUI entry point
+├── Build-PromptKitWebsite.cmd        one-click default website build
+├── build_prompt_kit.py               canonical HTML renderer
+├── configs/
+│   └── prompt_kit/generators.v1.json generator and GUI option contract
+├── docs/
+│   ├── prompts.json                  base Prompt Kit registry
+│   ├── reference.json                Prompt Kit reference-panel data
+│   ├── prompt-kit.js                 Prompt Kit client behavior
+│   └── PROMPT_KIT_GENERATOR_OPERATOR_GUIDE.md
+├── harness/
+│   ├── manifest.v1.json              required harness components and commands
+│   └── reports/CURRENT_STATE.md       operator-readable harness status
+├── registry/prompts/
+│   └── skill-development-prompts.v1.json
+├── scripts/
+│   ├── Acquire-LatestPromptKit.ps1   safe technician acquisition GUI
+│   ├── build_prompt_kit_registry.py  combined prompt-registry builder
+│   └── validate_harness.py           fail-closed harness validator
+├── .ai/skills/
+│   ├── skill-factoring/SKILL.md
+│   └── technician-prompt-kit-acquisition/SKILL.md
+├── .githooks/pre-commit              optional focused harness hook
+├── tests/
+│   ├── test_governance_contract.py
+│   ├── test_harness_contract.py
+│   ├── test_prompt_kit_header_contract.py
+│   └── test_skill_prompt_registry.py
+├── triage/                            workbook and artifact engines
+├── web/prompt-kit/index.html          checked-in technician website
+├── Candidates/                        protected read-only operator inputs
+├── Active/                            protected read-only golden inputs
+└── Outputs/                           generated reports and work products
 ```
 
-## Key Directories
+## Primary entry points
 
-| Directory | Purpose |
-|-----------|---------|
-| `ArtifactIntake/` | Handles input artifact parsing and validation |
-| `Candidates/` | Read-only operator inputs (NEVER write here) |
-| `configs/` | Configuration files for various workflows |
-| `docs/` | Documentation, prompt kit, architecture docs |
-| `Outputs/` | Generated workbooks, sidecars, forensic reports |
-| `Outputs/backups/` | Timestamped backups before mutations |
-| `References/` | Reference materials and schemas |
-| `Repaired/` | Repaired workbook outputs |
-| `scripts/` | Utility scripts for billing, roster, verification |
-| `tests/` | Test suite with fixtures |
-| `triage/` | Core triage engine modules |
-| `web/` | Web interface components |
+| Entry point | Audience | Purpose |
+|---|---|---|
+| `Acquire-Latest-PromptKit.cmd` | Technician | Clone the canonical repo when absent, fast-forward clean `main` when present, validate, then open the selected surface. |
+| `Run-PromptKitGenerator.cmd` | Technician/operator | Open the tracked generator selection GUI. |
+| `Build-PromptKitWebsite.cmd` | Technician/operator | Build, validate, and open the default Prompt Kit website without choices. |
+| `web/prompt-kit/index.html` | Technician/operator | Open the checked-in current Prompt Kit directly. |
+| `scripts/build_prompt_kit_registry.py` | Developer/CI | Merge base and extension prompt registries and render deterministic HTML. |
+| `scripts/validate_harness.py` | Agent/developer/CI | Validate harness files, manifests, skills, launchers, hooks, and safety contracts. |
+| `triage.*` modules | Developer/operator | Workbook, billing, comparison, and artifact engines documented in `README.md` and focused contract docs. |
 
-## Entry Points
+## Configuration and registries
 
-| File | Purpose |
-|------|---------|
-| `app.py` | Main Streamlit application entry point |
-| `mcp_server.py` | MCP server for Augment Code integration |
-| `autofix_loop.py` | Auto-fix loop for workbook repairs |
-| `scripts/*.py` | Utility scripts for specific workflows |
+| Path | Contract |
+|---|---|
+| `harness/manifest.v1.json` | Single machine-readable inventory of harness components, acquisition requirements, and validation order. |
+| `configs/prompt_kit/generators.v1.json` | Allowed generators, direct launchers, defaults, and GUI options. |
+| `docs/prompts.json` | Canonical base prompt registry. |
+| `registry/prompts/skill-development-prompts.v1.json` | Versioned prompt extension containing skill factoring and skill eval prompts. |
+| `docs/reference.json` | Prompt Kit reference data. |
+| `.github/workflows/*.yml` | Governance, Prompt Kit, harness, and artifact-engine CI gates. |
 
-## Configuration Files
+## Build and validation commands
 
-| File | Purpose |
-|------|---------|
-| `requirements.txt` | Python dependencies |
-| `.gitignore` | Git ignore rules |
-| `refactor_spec.json` | Refactoring specification |
-| `configs/` | Workflow-specific configurations |
+Run focused harness checks first:
 
-## Build/Test/Deploy Commands
-
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the application
-streamlit run app.py
-
-# Run tests
-pytest tests/
-
-# Run specific test
-pytest tests/test_billing_rules.py
-
-# Run with coverage
-pytest tests/ --cov=triage --cov-report=html
+```powershell
+python scripts\validate_harness.py
+python -m unittest tests.test_harness_contract -v
 ```
 
-## Workflow Directions
+Validate Prompt Kit registry and exact checked-in site:
 
-1. **Roster Log to Admin Sheet** (High Priority)
-   - Script: `scripts/roster_to_admin_submission.py`
-   - Output: Admin-facing Project Team sheet
+```powershell
+python -m unittest tests.test_skill_prompt_registry -v
+python tests\test_prompt_kit_header_contract.py
+python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
+```
 
-2. **Roster Log to Task Tracker** (Medium Priority)
-   - Script: `scripts/roster_to_task_context.py`
-   - Output: Task tracker context
+Run repository hygiene and broader tests last:
 
-3. **Task Tracker to Roster Log** (Low Priority)
-   - Script: `scripts/task_tracker_to_roster_backfill.py`
-   - Output: Proposed roster updates (requires review)
+```powershell
+python -m triage.gitignore_hygiene
+python -m pytest
 
-## Safety Rules
+git diff --check
+```
 
-- **Candidates/** and **Active/** are read-only operator inputs
-- Never write engine output into read-only paths
-- All generated workbooks go under **Outputs/**
-- Overwrites require timestamped backup under `Outputs/backups/`
-- Delivery requires baseline fingerprint compare
+## Safety boundaries and known traps
+
+- `Candidates/` and `Active/` are read-only operator-input surfaces. Generated output belongs under `Outputs/` unless a focused contract explicitly defines another safe tracked artifact.
+- Do not infer that a passing static or CI check proves Excel for Web, Windows GUI, network, credential, or production acceptance.
+- Do not update an existing technician checkout with reset, clean, forced branch changes, or overwrite behavior. The acquisition launcher permits clone or clean fast-forward only.
+- `README.md` covers many product engines and may retain historical sections; verify current files, tests, and focused contracts before acting on an older section.
+- The checked-in Prompt Kit site must remain byte-identical to the combined-registry builder output.
