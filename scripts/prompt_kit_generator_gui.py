@@ -130,6 +130,11 @@ class GeneratorApp:
         if output.suffix.lower() not in {".html", ".htm"}:
             messagebox.showerror("Invalid output", "Choose an .html or .htm output file.")
             return
+        try:
+            output = build_prompt_kit_registry.validate_output_path(output)
+        except ValueError as exc:
+            messagebox.showerror("Protected output path", str(exc))
+            return
         self.run_button.configure(state="disabled")
         self.status.set("Building...")
         self._append_log(f"Building {self._selected_generator()['display_name']} -> {output}")
