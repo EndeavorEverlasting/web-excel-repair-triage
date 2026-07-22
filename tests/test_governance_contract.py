@@ -115,6 +115,23 @@ class GovernanceContractTests(unittest.TestCase):
         ):
             self.assertIn(phrase, section)
 
+    def test_prompt_panels_and_chats_share_parallel_execution_contract(self) -> None:
+        section = self._section(
+            "## 10. Prompt panels, chats, and parallel execution", "## 11."
+        )
+        for phrase in (
+            "A prompt panel is a copyable transport container",
+            "A chat is the execution instance",
+            "functionally equivalent to one independently schedulable execution unit",
+            "Parallelism may be expressed as multiple panels in one parallel group",
+            "one panel goes into one new chat",
+            "The same dependencies, proof gates, lane ownership, branch and worktree isolation",
+            "different panel titles do not prove that concurrent writes are safe",
+            "General build prompts, including P07",
+            "final convergence unit",
+        ):
+            self.assertIn(phrase, section)
+
     def test_existing_domain_and_source_rules_remain_present(self) -> None:
         for phrase in (
             "Roster Log to Admin Sheet",
@@ -127,7 +144,7 @@ class GovernanceContractTests(unittest.TestCase):
 
     def test_numbered_governance_sections_are_unique(self) -> None:
         numbers = re.findall(r"^## (\d+)\.", self.text, flags=re.MULTILINE)
-        self.assertEqual(numbers, [str(number) for number in range(1, 12)])
+        self.assertEqual(numbers, [str(number) for number in range(1, 13)])
 
     def _section(self, start: str, next_prefix: str) -> str:
         self.assertIn(start, self.text)
