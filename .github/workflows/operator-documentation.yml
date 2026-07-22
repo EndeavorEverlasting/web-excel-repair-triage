@@ -1,0 +1,68 @@
+name: Operator documentation contracts
+
+on:
+  pull_request:
+    paths:
+      - docs/README.md
+      - docs/PROMPT_KIT_GENERATOR_OPERATOR_GUIDE.md
+      - docs/TECHNICIAN_PROMPT_KIT_ACQUISITION_TUTORIAL.md
+      - docs/PROMPT_KIT_GENERATOR_TUTORIAL.md
+      - docs/PROMPT_KIT_ADMIN_VERIFICATION.md
+      - Acquire-Latest-PromptKit.cmd
+      - scripts/Acquire-LatestPromptKit.ps1
+      - Run-PromptKitGenerator.cmd
+      - Build-PromptKitWebsite.cmd
+      - scripts/prompt_kit_generator_gui.py
+      - scripts/build_prompt_kit_registry.py
+      - configs/prompt_kit/generators.v1.json
+      - tests/test_operator_documentation.py
+      - .github/workflows/operator-documentation.yml
+  push:
+    branches: [main]
+    paths:
+      - docs/README.md
+      - docs/PROMPT_KIT_GENERATOR_OPERATOR_GUIDE.md
+      - docs/TECHNICIAN_PROMPT_KIT_ACQUISITION_TUTORIAL.md
+      - docs/PROMPT_KIT_GENERATOR_TUTORIAL.md
+      - docs/PROMPT_KIT_ADMIN_VERIFICATION.md
+      - Acquire-Latest-PromptKit.cmd
+      - scripts/Acquire-LatestPromptKit.ps1
+      - Run-PromptKitGenerator.cmd
+      - Build-PromptKitWebsite.cmd
+      - scripts/prompt_kit_generator_gui.py
+      - scripts/build_prompt_kit_registry.py
+      - configs/prompt_kit/generators.v1.json
+      - tests/test_operator_documentation.py
+      - .github/workflows/operator-documentation.yml
+
+permissions:
+  contents: read
+
+jobs:
+  operator-documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile documentation contracts
+        run: python -m py_compile tests/test_operator_documentation.py
+      - name: Validate documentation, links, controls, and examples
+        run: python -m unittest tests.test_operator_documentation -v
+      - name: Validate connected harness contracts
+        run: |
+          python scripts/validate_harness.py
+          python -m unittest tests.test_harness_contract -v
+      - name: Smoke-check current Prompt Kit examples
+        run: |
+          python -m unittest tests.test_skill_prompt_registry -v
+          python tests/test_prompt_kit_header_contract.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Validate artifact hygiene
+        run: python -m triage.gitignore_hygiene
+      - name: Check patch hygiene
+        run: git diff --check origin/main...HEAD
