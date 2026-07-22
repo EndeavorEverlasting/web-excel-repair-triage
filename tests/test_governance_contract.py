@@ -63,6 +63,29 @@ class GovernanceContractTests(unittest.TestCase):
         ):
             self.assertIn(item, completion)
 
+    def test_next_command_consumes_the_canonical_latest_artifact(self) -> None:
+        section = self._section("## 4. Completion standard", "## 5.")
+        for phrase in (
+            "advance the operator from reported evidence to the next useful, unproven state",
+            "consume, validate, launch, open, or otherwise exercise the work product",
+            "merely reopens a PR",
+            "not a valid next command",
+            "fetch without force and identify the exact branch and commit",
+            "preserve a dirty or separately owned primary checkout",
+            "isolated worktree",
+            "run the exact validation, build, or launcher",
+            "open or print the canonical latest artifact",
+            "artifact registry, manifest, builder, workflow, or operator documentation",
+            "Do not guess from a generic filename",
+            "search for an arbitrary `index.html`",
+            "propagate failures and the final exit code",
+            "must not execute production by default",
+            "website, workbook, report, package, installer, binary, launcher, rendered documentation, test report",
+            "`none; cleanup complete`",
+            "PR review or merge is the actual blocking gate",
+        ):
+            self.assertIn(phrase, section)
+
     def test_forbidden_behaviors_are_enforced(self) -> None:
         section = self._section("## 5. Forbidden behaviors", "## 6.")
         for phrase in (
@@ -72,6 +95,8 @@ class GovernanceContractTests(unittest.TestCase):
             "expose secrets",
             "force-push",
             "delete branches, worktrees, PRs, or unique commits before preservation proof",
+            "offer a PR-opening, status-only, branch-listing, or log-view command as the sole next action",
+            "guess the latest artifact from a generic filename",
         ):
             self.assertIn(phrase, section)
 
