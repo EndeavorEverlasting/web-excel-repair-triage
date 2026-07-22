@@ -1,0 +1,58 @@
+name: Skill prompt registry and generator UX
+
+on:
+  pull_request:
+    paths:
+      - registry/prompts/skill-development-prompts.v1.json
+      - .ai/skills/skill-factoring/SKILL.md
+      - configs/prompt_kit/generators.v1.json
+      - scripts/build_prompt_kit_registry.py
+      - scripts/prompt_kit_generator_gui.py
+      - Run-PromptKitGenerator.cmd
+      - Build-PromptKitWebsite.cmd
+      - tests/test_skill_prompt_registry.py
+      - docs/PROMPT_KIT_GENERATOR_OPERATOR_GUIDE.md
+      - .github/workflows/skill-prompt-registry.yml
+  push:
+    branches: [main]
+    paths:
+      - registry/prompts/skill-development-prompts.v1.json
+      - .ai/skills/skill-factoring/SKILL.md
+      - configs/prompt_kit/generators.v1.json
+      - scripts/build_prompt_kit_registry.py
+      - scripts/prompt_kit_generator_gui.py
+      - Run-PromptKitGenerator.cmd
+      - Build-PromptKitWebsite.cmd
+      - tests/test_skill_prompt_registry.py
+      - docs/PROMPT_KIT_GENERATOR_OPERATOR_GUIDE.md
+      - .github/workflows/skill-prompt-registry.yml
+
+permissions:
+  contents: read
+
+jobs:
+  skill-prompts-and-generators:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile registry builder, GUI, and tests
+        run: |
+          python -m py_compile \
+            scripts/build_prompt_kit_registry.py \
+            scripts/prompt_kit_generator_gui.py \
+            tests/test_skill_prompt_registry.py
+      - name: Run skill prompt and launcher contracts
+        run: python -m unittest tests.test_skill_prompt_registry -v
+      - name: Build combined Prompt Kit website
+        run: |
+          python scripts/build_prompt_kit_registry.py --output /tmp/prompt-kit.html
+          python scripts/build_prompt_kit_registry.py --output /tmp/prompt-kit.html --check
+      - name: Prove new prompt IDs are present
+        run: |
+          grep -F '"id": "P61"' /tmp/prompt-kit.html
+          grep -F '"id": "P62"' /tmp/prompt-kit.html
