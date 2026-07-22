@@ -58,6 +58,23 @@ class SkillPromptRegistryTests(unittest.TestCase):
         self.assertIn('ALLOWED_RUNNER = "scripts/build_prompt_kit_registry.py"', source)
         self.assertNotIn("subprocess", source)
         self.assertIn("build_prompt_kit_registry.build(output)", source)
+        validation = source.index("build_prompt_kit_registry.validate_output_path(output)")
+        thread_start = source.index("threading.Thread(")
+        self.assertLess(validation, thread_start)
+
+    def test_protected_operator_inputs_are_rejected_before_write(self) -> None:
+        for root_name in ("Candidates", "Active"):
+            output = REPO_ROOT / root_name / "nested" / "prompt-kit.html"
+            with self.assertRaisesRegex(ValueError, "protected operator input"):
+                build_prompt_kit_registry.validate_output_path(output)
+            self.assertFalse(output.exists())
+
+    def test_non_protected_output_is_allowed(self) -> None:
+        output = REPO_ROOT / "Outputs" / "prompt-kit-preview.html"
+        self.assertEqual(
+            build_prompt_kit_registry.validate_output_path(output),
+            output.resolve(),
+        )
 
     def test_cmd_launchers_resolve_repository_root(self) -> None:
         for name in ("Run-PromptKitGenerator.cmd", "Build-PromptKitWebsite.cmd"):
@@ -81,6 +98,14 @@ class SkillPromptRegistryTests(unittest.TestCase):
             self.assertIn('"id": "P62"', html)
             self.assertIn("Skill Factoring and Boundary Refactorer", html)
             self.assertIn("Skill Evaluation Harness Implementer", html)
+
+    def test_checked_in_operator_site_is_exact_combined_build(self) -> None:
+        deployed = REPO_ROOT / "web" / "prompt-kit" / "index.html"
+        actual = deployed.read_text(encoding="utf-8")
+        expected = build_prompt_kit_registry.render()
+        self.assertEqual(actual, expected)
+        self.assertIn('"id": "P61"', actual)
+        self.assertIn('"id": "P62"', actual)
 
 
 if __name__ == "__main__":
