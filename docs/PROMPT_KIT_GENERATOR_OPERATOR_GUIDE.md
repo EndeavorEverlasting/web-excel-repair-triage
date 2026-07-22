@@ -1,10 +1,17 @@
-# Prompt Kit Generator Operator Guide
+# Prompt Kit Operator Guide
 
-## Operator entry points
+This is the compact reference for the current Windows acquisition and generator workflow. Use the detailed tutorials when training a new technician or certifying a workstation.
 
-The repository provides three Windows double-click entry points.
+## Detailed tutorials
 
-### Get the latest repository, website, and generators
+- [Technician acquisition tutorial](TECHNICIAN_PROMPT_KIT_ACQUISITION_TUTORIAL.md)
+- [Generator tutorial](PROMPT_KIT_GENERATOR_TUTORIAL.md)
+- [Administrator verification runbook](PROMPT_KIT_ADMIN_VERIFICATION.md)
+- [Operator documentation index](README.md)
+
+## Current entry points
+
+### Get or update everything, then open it
 
 Double-click or download and double-click:
 
@@ -12,109 +19,156 @@ Double-click or download and double-click:
 Acquire-Latest-PromptKit.cmd
 ```
 
-This is the technician acquisition surface. It opens a Windows GUI where the operator chooses:
+The Windows GUI lets the operator choose:
 
-- the parent destination folder;
-- whether to open the Prompt Kit website or the generator selection GUI after validation.
+- destination folder;
+- **Open Prompt Kit website**; or
+- **Open generator selection GUI**.
 
-When the repository is absent, it clones canonical `main`. When the repository exists, it verifies canonical origin, clean status, and current branch `main`, then fetches and fast-forwards only. It refuses dirty worktrees, wrong origins, wrong branches, local-only commits, and divergence. It never resets, cleans, force-pushes, or discards local work.
+When the repository is absent, it clones canonical `main`. When the repository exists, it verifies canonical origin, a clean status, and branch `main`, then fetches and fast-forwards only. It refuses dirty worktrees, wrong origins, wrong branches, local-only commits, and divergence. It never resets, cleans, force-pushes, rewrites the origin, deletes branches, or discards local work.
 
-After clone or update, it validates required site and generator files and runs the exact combined-registry website check. It opens the selected surface only after validation succeeds.
+After clone or update, it verifies required site and generator files and runs exact combined-registry output validation. It opens the selected surface only after validation succeeds.
 
-The CMD is self-bootstrapping: when run outside the repository, it downloads the current tracked PowerShell GUI from canonical `main` into a temporary cache and launches it. It does not download or store credentials.
+The standalone CMD downloads the tracked PowerShell GUI from canonical `main` into `%TEMP%\WebExcelPromptKit` when the companion script is not beside it. It does not download or store credentials.
 
-### Generator with options
+### Open the generator-selection GUI
 
-From the repository root, double-click:
+From a current repository root, double-click:
 
 ```text
 Run-PromptKitGenerator.cmd
 ```
 
-This opens a Tkinter GUI. Generator choices and options come from the tracked manifest at `configs/prompt_kit/generators.v1.json`; operators do not type command-line flags.
+Generator choices and options come from `configs/prompt_kit/generators.v1.json`. Operators do not type free-form commands.
 
-Current GUI options:
+Current Prompt Kit Website options:
 
-- generated HTML output path;
-- validate the exact generated output after the build;
-- open the website after the build.
+- output HTML path;
+- validate exact generated output after build;
+- open website after build.
 
-The GUI is deliberately bounded to `scripts/build_prompt_kit_registry.py`. The manifest cannot launch arbitrary commands.
+### Rebuild the canonical site with safe defaults
 
-### Default one-click build
-
-From the repository root, double-click:
+From a current repository root, double-click:
 
 ```text
 Build-PromptKitWebsite.cmd
 ```
 
-This has no choices. It builds `web/prompt-kit/index.html`, validates that the written file exactly matches the combined registry build, and opens the result.
+This launcher has no choices. It builds `web\prompt-kit\index.html`, validates exact output, and opens it after success.
+
+### Open the checked-in site without rebuilding
+
+Open:
+
+```text
+web\prompt-kit\index.html
+```
+
+The Prompt Kit is static HTML. A local web server is not required for normal use.
 
 ## Technician prerequisites
 
 - Windows PowerShell 5.1 or newer;
 - Git for Windows;
-- Python 3 with `py -3` or `python` available on `PATH`;
-- network and GitHub repository access for clone or update.
+- Python 3 available as `py -3` or `python`;
+- Tkinter for the generator-selection GUI;
+- browser or Git access to the canonical GitHub repository;
+- repository permission when authentication is required.
 
-The acquisition GUI reports missing prerequisites, authentication failures, network failures, wrong origins, local modifications, branch mismatch, divergence, missing required files, and generated-site drift without mutating local work destructively.
+The launchers never automate GitHub or provider authentication.
 
-## Output safety
+## Safe defaults
 
-`Candidates/` and `Active/` are read-only operator-input directories. Both the generator GUI and registry builder reject output paths inside either directory before creating folders or writing files.
+| Surface | Safe default |
+|---|---|
+| Acquisition destination | `%USERPROFILE%\Desktop\dev\web-excel-repair-triage` |
+| Acquisition branch | `main` |
+| Acquisition update method | `git fetch` followed by `git merge --ff-only` |
+| Acquisition open choice | Prompt Kit website |
+| Generator output | `web\prompt-kit\index.html` |
+| Alternate preview output | A file under `Outputs\` |
+| Validation | Enabled |
+| Open after build | Enabled |
 
-Use the checked-in `web/prompt-kit/index.html` destination for the canonical operator site. Use `Outputs/` for previews, comparisons, or alternate generated copies.
+## Protected paths
+
+Never write generator output under:
+
+```text
+Candidates\
+Active\
+```
+
+Those are read-only operator-input locations. The generator GUI and builder reject them before creating folders or writing files.
 
 ## Registry composition
 
 The website builder combines:
 
-1. `docs/prompts.json` — canonical base prompt registry;
-2. `registry/prompts/skill-development-prompts.v1.json` — versioned skill-development registry extension;
-3. `docs/reference.json` — reference-panel data.
+1. `docs/prompts.json` — canonical base registry;
+2. `registry/prompts/skill-development-prompts.v1.json` — tracked skill-development extension;
+3. `docs/reference.json` — reference-panel data;
+4. the tracked website shell and scripts.
 
-The extension currently adds:
+The current extension includes:
 
 - `P61` — Skill Factoring and Boundary Refactorer;
 - `P62` — Skill Evaluation Harness Implementer.
 
-The P61 prompt is backed by `.ai/skills/skill-factoring/SKILL.md`. Technician acquisition is backed by `.ai/skills/technician-prompt-kit-acquisition/SKILL.md`.
+Related repository skills:
 
-## Adding another generator
+- `.ai/skills/skill-factoring/SKILL.md`;
+- `.ai/skills/technician-prompt-kit-acquisition/SKILL.md`.
 
-A generator with operator-selectable options must be registered in `configs/prompt_kit/generators.v1.json` and exposed through the GUI. Do not add another CMD that asks operators to type or choose command-line arguments.
+## Common failures
 
-A direct CMD is appropriate only when the action has one safe default behavior and no operator choices. Direct launchers should:
+| Message or condition | Meaning | Safe response |
+|---|---|---|
+| Git or Python not found | Required local prerequisite is unavailable | Install through the approved software process; reopen the launcher. |
+| Destination exists but is not a Git repository | The selected folder cannot be safely cloned over | Choose another destination or preserve/move the unrelated folder. |
+| Unexpected origin | The selected checkout is not canonical | Stop; inspect with a developer. Do not rewrite the origin automatically. |
+| Local modifications or untracked files | Work exists in the checkout | Preserve or commit it. Do not reset or clean. |
+| Branch is not `main` | Another lane owns the checkout | Ask the branch owner to finish and return safely to `main`. |
+| Local `main` has commits absent from `origin/main` | Reset would lose work | Stop and escalate; preserve the commits. |
+| Required file missing | Checkout is incomplete or repository floor is broken | Report a repository defect; do not distribute the site. |
+| Exact-output validation failed | The site does not match current tracked registries | Repair through a normal developer branch and PR. |
 
-1. resolve the repository from `%~dp0` when repository-local;
-2. fail clearly when required tools are unavailable;
-3. validate after generation or acquisition;
-4. avoid machine-specific paths;
-5. never embed credentials or private artifact paths;
-6. never reset, clean, or overwrite unknown local work.
+See the [technician tutorial](TECHNICIAN_PROMPT_KIT_ACQUISITION_TUTORIAL.md) for exact messages and step-by-step recovery.
 
-## Validation
+## Verification commands
 
-Run:
+From the repository root:
 
 ```powershell
 python scripts\validate_harness.py
 python -m unittest tests.test_harness_contract -v
+python -m unittest tests.test_operator_documentation -v
 python -m unittest tests.test_skill_prompt_registry -v
-python scripts\build_prompt_kit_registry.py --output Outputs\prompt-kit-preview.html
-python scripts\build_prompt_kit_registry.py --output Outputs\prompt-kit-preview.html --check
+python tests\test_prompt_kit_header_contract.py
 python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
+python -m triage.gitignore_hygiene
+git diff --check
 ```
 
 CI workflows:
 
 ```text
+Operator documentation contracts
 Operational harness contracts
 Skill prompt registry and generator UX
 Prompt Kit web contracts
+Artifact engine tests
 ```
+
+## Rollback and escalation
+
+- Closing the GUI before **Get Latest and Open** makes no repository change.
+- A refused checkout is a safety success; resolve the named condition instead of bypassing it.
+- Delete a failed fresh-clone folder only after confirming it contains no operator-created work.
+- Do not use `git reset`, `git clean`, force checkout, force-push, or branch deletion as technician recovery steps.
+- For an unexpected fast-forward result, record the commit and escalate to a developer-owned recovery lane.
 
 ## Proof ceiling
 
-Repository tests prove registry composition, prompt uniqueness, required skill sections, bounded generator routing, protected-path refusal, acquisition command boundaries, dirty/divergent checkout refusal, checked-in-site parity, and deterministic HTML generation. Native Windows mouse behavior, network access, GitHub authentication, and operator usability on a specific technician desktop remain field acceptance checks.
+Documentation and CI prove tracked controls, messages, links, command boundaries, registry composition, protected-path refusal, and exact-output contracts. They do not prove Windows GUI rendering, mouse behavior, clipboard behavior, network access, authentication, or operator usability on a specific technician workstation. Record those through a real Windows field acceptance run.
