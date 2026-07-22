@@ -93,6 +93,12 @@ def _inject_defects(data: bytes, *, add_external: bool, add_calc_chain: bool) ->
         )
         parts["xl/_rels/workbook.xml.rels"] = rels.encode("utf-8")
         wb = parts["xl/workbook.xml"].decode("utf-8")
+        if 'xmlns:r="' not in wb.split(">")[0]:
+            wb = wb.replace(
+                "<workbook ",
+                '<workbook xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ',
+                1,
+            )
         if "<externalReferences" not in wb:
             workbook_start = wb.find("<workbook")
             workbook_end = wb.find(">", workbook_start)
@@ -106,7 +112,7 @@ def _inject_defects(data: bytes, *, add_external: bool, add_calc_chain: bool) ->
                 )
             wb = wb.replace(
                 "</sheets>",
-                '</sheets><externalReferences><externalReference r:id="rIdExt1"/>'
+                '</sheets><externalReferences xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><externalReference r:id="rIdExt1"/>'
                 "</externalReferences>",
             )
             parts["xl/workbook.xml"] = wb.encode("utf-8")
