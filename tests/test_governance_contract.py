@@ -87,6 +87,34 @@ class GovernanceContractTests(unittest.TestCase):
         ):
             self.assertIn(phrase, section)
 
+    def test_local_and_remote_live_cert_topologies_are_governed(self) -> None:
+        section = self._section("## 8. Live certification execution topology", "## 9.")
+        for phrase in (
+            "Local live certification remains a supported execution topology",
+            "Remote-branch live certification remains a supported execution topology",
+            "copy-paste pull-and-test snippet",
+            "pin the exact commit SHA",
+            "preserve a dirty primary checkout",
+            "must not execute production by default",
+            "Remote branch proof is not local or target-runtime proof",
+        ):
+            self.assertIn(phrase, section)
+
+    def test_collaborator_prompt_contribution_is_governed(self) -> None:
+        section = self._section("## 9. Collaborator prompt contribution governance", "## 10.")
+        for phrase in (
+            "canonical prompt registry source",
+            "never by editing generated HTML directly",
+            "reusable prompt-contribution skill",
+            "prompt-contribution capability",
+            "deterministic trigger",
+            "skills describe reusable workflow guidance",
+            "capabilities expose reusable operations",
+            "triggers route deterministic conditions",
+            "The live-cert prompt must support both local and remote-branch",
+        ):
+            self.assertIn(phrase, section)
+
     def test_existing_domain_and_source_rules_remain_present(self) -> None:
         for phrase in (
             "Roster Log to Admin Sheet",
@@ -99,7 +127,7 @@ class GovernanceContractTests(unittest.TestCase):
 
     def test_numbered_governance_sections_are_unique(self) -> None:
         numbers = re.findall(r"^## (\d+)\.", self.text, flags=re.MULTILINE)
-        self.assertEqual(numbers, [str(number) for number in range(1, 10)])
+        self.assertEqual(numbers, [str(number) for number in range(1, 12)])
 
     def _section(self, start: str, next_prefix: str) -> str:
         self.assertIn(start, self.text)
