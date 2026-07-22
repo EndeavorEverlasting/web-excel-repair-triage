@@ -95,7 +95,76 @@ If destination or behavior choices are required, they must be presented through 
 
 This section is a governance requirement. Its implementation belongs in a separately declared launcher or operator-enablement sprint, not in a governance-only sprint.
 
-## 8. Billing pipeline directional contract
+## 8. Live certification execution topology
+
+The Prompt Kit must retain a live-certification prompt because live certification is not confined to one execution location. The prompt and its downstream workflow must select a topology from repository and runtime evidence rather than assuming that every certification is local or remote.
+
+### Local topology
+
+Local live certification remains a supported execution topology when proof depends on the operator workstation, a locally attached device, local network reachability, a desktop or browser surface, private inputs that may not be published, or a runtime unavailable to the remote branch environment.
+
+A local live-cert workflow must:
+
+- use a repository-owned launcher, script, validator, or exact bounded command rather than asking a technician to reconstruct a workflow from fragments;
+- identify the repository, commit, target, phase, expected artifacts, and proof ceiling before execution;
+- run a dry run first when the operation can mutate a target, unless the repository contract proves that the requested action is read-only;
+- propagate nonzero exit codes and name the failed phase;
+- write only non-sensitive logs, receipts, and reports to repository-approved output locations;
+- distinguish process start, command acknowledgment, observed behavior, local runtime proof, and production proof.
+
+### Remote-branch topology
+
+Remote-branch live certification remains a supported execution topology when the implementation, generated output, and deterministic validation can be produced safely on an isolated remote branch without access to a protected local or production-only runtime.
+
+A remote-branch live-cert workflow must:
+
+- create or reuse one isolated branch owned by the cert lane;
+- commit the implementation, generated output, validators, and safe evidence required for the user to consume the result;
+- push normally and report the exact branch and commit SHA;
+- provide one copy-paste pull-and-test snippet in the final response so the user can retrieve the exact remote output and run its verification automatically;
+- make that snippet set the repository location, fetch without force, pin the exact commit SHA, preserve a dirty primary checkout by using a clean worktree or other non-destructive mechanism, run the exact validator or test, propagate its exit code, and print or open the resulting artifact path;
+- ensure the pull-and-test snippet must not execute production by default and cannot silently promote a dry run into a production action;
+- refuse to publish secrets, credentials, private evidence, protected inputs, or unsafe production artifacts on the branch.
+
+Remote branch proof is not local or target-runtime proof. A green remote branch may prove source, build, generated-output, schema, fixture, CI, or bounded remote-runtime behavior only. The final report must name every local, target, provider, GUI, device, network, or production gate that remains unproven.
+
+When both topologies are viable, prefer the topology that produces the strongest safe evidence with the least operator reconstruction. Use remote production of deterministic artifacts plus a pinned pull-and-test snippet when that reduces technician steps; use local certification when the proof genuinely depends on the local or target runtime.
+
+This section governs the future live-cert prompt, skill, capability, trigger, workflow, validators, and result artifacts. Their implementation belongs in separately declared harness and prompt-registry sprints, not in a governance-only sprint.
+
+## 9. Collaborator prompt contribution governance
+
+Collaborators must add or repair prompts through the canonical prompt registry source and its registered builder, never by editing generated HTML directly or by pasting an untracked prompt into documentation as the only implementation.
+
+Before adding a prompt, the contributor must inspect existing governance, prompt IDs and sequences, registry extensions, builders, schemas, skills, capabilities, triggers, validators, generated-output policy, open PRs, and recent history. Existing prompt ownership must be reused, split, merged, retired, or rewired deliberately rather than duplicated.
+
+Every committed prompt must define:
+
+- a unique identifier and sequence;
+- a clear name, type, class, deterministic use condition, and keywords;
+- the files, contracts, or evidence to inspect first;
+- owned scope, forbidden scope, expected artifacts, validation order, and proof ceiling;
+- complete copy-safe prompt content;
+- the next workflow or proof gate;
+- focused tests that reject duplicate identity, incomplete records, stale generated output, and ownership drift.
+
+The repository must provide a reusable prompt-contribution skill for collaborator guidance, a machine-readable prompt-contribution capability for the reusable operation, and a deterministic trigger that routes prompt-addition or prompt-repair requests to that skill, capability, and workflow. Collaborator self-service is not complete while those surfaces exist only as prose or while contributors must guess which registry, builder, or validator owns the change.
+
+The factoring boundary is mandatory:
+
+- skills describe reusable workflow guidance and judgment;
+- capabilities expose reusable operations with explicit inputs and outputs;
+- triggers route deterministic conditions to the correct skill, capability, or workflow;
+- application and generator behavior remains in code, schemas, registries, services, and domain contracts;
+- prompts orchestrate work but may not become the only implementation of product behavior.
+
+The live-cert prompt must support both local and remote-branch certification topologies, including the pinned copy-paste pull-and-test snippet required by section 8. It must not collapse those topologies into a local-only command or a remote-only artifact workflow.
+
+A prompt contribution is complete only after canonical source changes, focused validation, deterministic regeneration, Git diff review, commit, push, and PR evidence are reported. Generated website or workbook artifacts must be rebuilt from the canonical source and validated for exact parity.
+
+This section is a governance requirement. The prompt-contribution skill, capability, trigger, prompt records, schemas, validators, fixtures, workflows, and generated surfaces must be implemented in a separately declared harness or prompt-registry sprint.
+
+## 10. Billing pipeline directional contract
 
 This repository supports Web Excel-safe repair and triage workflows for roster, billing, admin-sheet, and task-tracker artifacts.
 
@@ -172,7 +241,7 @@ Friday is the reporting batch marker. Work performed Monday through Friday maps 
 - Internal task-tracker context may be richer, but it must not leak into admin submission artifacts.
 - Backfill into the roster log must be proposed, reviewed, and approved before mutation.
 
-## 9. Operator source immutability
+## 11. Operator source immutability
 
 `Candidates/` and `Active/` are read-only operator inputs and backup/emulator files.
 
