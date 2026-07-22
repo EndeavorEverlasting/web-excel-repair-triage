@@ -52,6 +52,24 @@ A sprint is complete only when all applicable items are reported:
 
 Static validation proves only static behavior. CI proves only the exercised CI surface. Neither may be represented as live operator, provider, Windows GUI, or production-runtime proof.
 
+### Actionable next-command contract
+
+The exact next command must advance the operator from reported evidence to the next useful, unproven state. It must consume, validate, launch, open, or otherwise exercise the work product. A command that merely reopens a PR, displays a PR page, repeats status already reported, lists branches, or shows logs is not a valid next command when a safe artifact-consumption or validation action is available.
+
+When the completed work exists on a remote branch or unmerged commit, the next command must:
+
+- set the repository location or safe destination explicitly;
+- fetch without force and identify the exact branch and commit;
+- preserve a dirty or separately owned primary checkout by using an isolated worktree or another non-destructive mechanism;
+- run the exact validation, build, or launcher required to prove or consume the result;
+- open or print the canonical latest artifact defined by the repository's artifact registry, manifest, builder, workflow, or operator documentation;
+- propagate failures and the final exit code;
+- must not execute production by default or silently promote a dry run into production.
+
+The canonical artifact is the primary user-consumable output appropriate to the repository, such as a website, workbook, report, package, installer, binary, launcher, rendered documentation, test report, or another declared artifact. Do not guess from a generic filename, search for an arbitrary `index.html`, or open an unrelated build or dependency artifact. Resolve the artifact from tracked repository evidence.
+
+If no renderable or launchable artifact exists, the next command must run the highest-value remaining validator or launcher and print the resulting evidence path. Use `none; cleanup complete` only when no safe and useful action remains. A PR-opening or PR-review command is acceptable only when PR review or merge is the actual blocking gate and the final report names that gate explicitly.
+
 ## 5. Forbidden behaviors
 
 Agents must not:
@@ -64,7 +82,9 @@ Agents must not:
 - delete branches, worktrees, PRs, or unique commits before preservation proof;
 - hide deterministic application behavior exclusively in prompts or skills;
 - weaken validators, fixtures, or proof requirements merely to make a check pass;
-- write generated outputs into protected operator-input directories.
+- write generated outputs into protected operator-input directories;
+- offer a PR-opening, status-only, branch-listing, or log-view command as the sole next action when artifact retrieval, validation, build, launch, or opening is safely available;
+- instruct the operator to guess the latest artifact from a generic filename instead of using the repository's canonical artifact contract.
 
 ## 6. Repository mutation discipline
 
