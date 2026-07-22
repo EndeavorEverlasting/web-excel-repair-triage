@@ -1,0 +1,63 @@
+{
+  "schema_version": "prompt-registry-extension/v1",
+  "registry_id": "skill-development-prompts",
+  "prompts": [
+    {
+      "id": "P61",
+      "seq": "61",
+      "name": "Skill Factoring and Boundary Refactorer",
+      "type": "ANALYZE + FACTOR",
+      "class": "AGENT HARNESS / SKILL FACTORING",
+      "sprintRole": "Factor oversized, overlapping, or prompt-only skills into deterministic reusable skill boundaries",
+      "progress": "YES",
+      "useWhen": "A repository has one or more skills that are too broad, duplicate other skills, hide application behavior in prose, lack deterministic triggers, or cannot be validated independently.",
+      "inspectFirst": "AGENTS.md, HARNESS.md, SKILLS.md, CAPABILITIES.md, TRIGGERS.md, .ai/skills, skill manifests, routing tables, application code, validators, fixtures, open PRs, and recent commits.",
+      "expectedOutput": "A committed skill-factoring change that classifies each inspected skill as keep, split, merge, retire, or rewire; preserves reusable guidance; moves deterministic behavior into code/contracts; updates triggers and manifests; and adds focused validation.",
+      "nextStep": "Run P62 when the factored skill boundaries need executable quality, routing, and regression evals.",
+      "proofGate": "Every changed skill has a deterministic activation condition, explicit inputs and outputs, forbidden conditions, owning files, tests or fixtures, and a commit ahead of the recorded floor.",
+      "color": "Lavender",
+      "copySheet": "P61_COPY_SAFE",
+      "category": "standard",
+      "copyContent": "FACTOR THE REPOSITORY SKILLS NOW. DO NOT STOP AT A TAXONOMY, INVENTORY, OR PLAN.\n\nRepo: resolve the current repository from the environment.\nBranch: preserve existing work and use an isolated branch or worktree.\nSprint: Skill Factoring and Boundary Refactor.\nOwned scope: skill files, skill manifests, deterministic triggers, capability references, routing contracts, focused validators, fixtures, and directly related docs.\nForbidden scope: unrelated product behavior, secret handling, provider authentication, destructive cleanup, force-push, and moving application logic into prompts.\n\n1. Inspect repository law, skill files, capabilities, triggers, routing, application code, validators, fixtures, open PRs, and recent history.\n2. Build a disposition table for every in-scope skill: KEEP, SPLIT, MERGE, RETIRE, or REWIRE.\n3. For every retained or created skill, define one deterministic trigger, required inputs, produced outputs, preconditions, forbidden conditions, guardrails, owning files, and proof ceiling.\n4. Split skills when one file mixes unrelated domains, multiple activation conditions, or application behavior with procedural guidance.\n5. Merge skills only when their triggers, inputs, outputs, and validation are materially identical.\n6. Move deterministic behavior into scripts, modules, schemas, registries, or workflows. Skills may explain judgment and procedure but must not be the only implementation of product behavior.\n7. Update skill manifests, trigger routing, capability references, and operator documentation so a fresh agent can select the correct skill without guessing.\n8. Add positive trigger fixtures, negative trigger fixtures, boundary tests, and a validator that rejects duplicate ownership or ambiguous activation.\n9. Run focused skill and routing checks, existing repository validators, build/static checks, secret and generated-output hygiene, and git diff --check.\n10. Commit the coherent factoring change and push or open/update a PR when allowed.\n\nFINAL REPORT\nRepo, branch, skill disposition table, files, trigger and capability changes, validators, fixtures, commit SHA, push or PR state, proof achieved, proof ceiling, final Git status, and one exact next command.",
+      "keywords": [
+        "skill factoring",
+        "factor skills",
+        "split skill",
+        "merge skills",
+        "retire skill",
+        "skill boundaries",
+        "skill routing",
+        "agent harness factoring"
+      ],
+      "skillPath": ".ai/skills/skill-factoring/SKILL.md"
+    },
+    {
+      "id": "P62",
+      "seq": "62",
+      "name": "Skill Evaluation Harness Implementer",
+      "type": "VALIDATE",
+      "class": "AGENT HARNESS / SKILL EVALS",
+      "sprintRole": "Implement executable evals that prove skill selection, boundaries, outputs, and failure behavior",
+      "progress": "YES",
+      "useWhen": "A skill exists or has been factored, but its activation, quality, boundary behavior, or regression safety is not proven by executable evals.",
+      "inspectFirst": "The target skill, trigger and capability contracts, existing tests and eval runners, representative tasks, known failures, output schemas, proof vocabulary, and CI conventions.",
+      "expectedOutput": "A committed skill-eval harness with versioned cases, deterministic assertions, positive and negative routing examples, scored rubric where judgment is required, machine-readable results, and CI integration.",
+      "nextStep": "Run the eval suite against the target skill, repair failing behavior without weakening the rubric, and record the achieved proof ceiling.",
+      "proofGate": "Eval cases are versioned and reproducible; required positive, negative, boundary, malformed-input, and regression cases run; results are machine-readable; failures block CI; and no static check is mislabeled as model or runtime quality proof.",
+      "color": "Teal",
+      "copySheet": "P62_COPY_SAFE",
+      "category": "standard",
+      "copyContent": "IMPLEMENT EVALS FOR THE TARGET SKILL NOW. DO NOT RETURN A RUBRIC-ONLY DOCUMENT OR A LIST OF EXAMPLE PROMPTS.\n\nRepo: resolve the current repository from the environment.\nTarget skill: xyz_skill_id_or_path\nOwned scope: eval cases, fixtures, runner, result schema, scoring contract, focused CI, and directly related target-skill repairs.\nForbidden scope: unrelated skills, production deployment, provider credentials, hidden benchmark data, validator weakening, and unbounded prompt rewriting.\n\n1. Read the target skill, its trigger and capability contracts, existing tests, proof vocabulary, output schemas, known failures, and repository CI patterns.\n2. Define the eval contract before changing behavior: case ID, purpose, input, expected route, expected artifacts or response properties, forbidden outcomes, scoring rule, and proof ceiling.\n3. Add positive activation cases proving the skill is selected when its trigger is satisfied.\n4. Add negative and near-miss cases proving the skill is not selected outside its boundary.\n5. Add malformed-input, missing-precondition, forbidden-condition, and regression cases from real failures.\n6. Separate deterministic contract assertions from judgment-based scoring. Deterministic failures must fail closed. Judgment scores require an explicit rubric, threshold, and recorded evaluator/model metadata when a model is actually used.\n7. Write a reproducible runner that emits machine-readable results with case IDs, pass/fail or score, evidence, timestamps, implementation version, and proof ceiling.\n8. Add CI that runs offline deterministic evals on every relevant change. Keep provider-backed or live-runtime evals in an explicitly separate optional lane with honest authentication and cost blockers.\n9. Run the eval suite, repair the target skill or routing when cases reveal a defect, and never weaken expectations merely to make the suite green.\n10. Run repository validators, build/static checks, secret and generated-output hygiene, git diff --check, then commit and push or open/update a PR.\n\nFINAL REPORT\nRepo, branch, target skill, eval case matrix, runner and schema paths, deterministic results, optional model/runtime results, repaired files, commit SHA, push or PR state, proof achieved, proof ceiling, final Git status, and one exact next command.",
+      "keywords": [
+        "skill evals",
+        "evaluate skill",
+        "skill tests",
+        "routing eval",
+        "agent skill benchmark",
+        "skill regression",
+        "eval harness",
+        "skill quality"
+      ]
+    }
+  ]
+}
