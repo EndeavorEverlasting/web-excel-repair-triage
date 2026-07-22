@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import posixpath
 import re
 import zipfile
 from dataclasses import asdict, dataclass, field
@@ -16,10 +15,21 @@ from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 from xml.etree import ElementTree as ET
 
-MAIN_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
-REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-PKG_REL_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
-NS = {"m": MAIN_NS, "r": REL_NS, "pr": PKG_REL_NS}
+from triage.prompt_kit_common import (
+    MAIN_NS,
+    REL_NS,
+    NS,
+    column_name,
+    payload_lines,
+    shared_strings,
+    sheet_hyperlinks,
+    style_for_cell,
+    styles_detailed,
+    workbook_sheet_map,
+    worksheet_cells,
+    xml_root,
+)
+
 CELL_RE = re.compile(r"^([A-Z]+)(\d+)$")
 RANGE_RE = re.compile(r"^'?([^']+)'?!A1:A(\d+)$")
 
@@ -136,157 +146,17 @@ class PromptKitOperabilityReport:
         return "\n".join(lines)
 
 
-def _xml_root(zf: zipfile.ZipFile, part: str) -> ET.Element:
-    return ET.fromstring(zf.read(part))
-
-
-def _shared_strings(zf: zipfile.ZipFile) -> List[str]:
-    if "xl/sharedStrings.xml" not in zf.namelist():
-        return []
-    root = _xml_root(zf, "xl/sharedStrings.xml")
-    return [
-        "".join(node.text or "" for node in item.iter(f"{{{MAIN_NS}}}t"))
-        for item in root.findall("m:si", NS)
-    ]
-
-
-def _cell_value(cell: ET.Element, shared: Sequence[str]) -> str:
-    cell_type = cell.attrib.get("t")
-    if cell_type == "inlineStr":
-        return "".join(node.text or "" for node in cell.iter(f"{{{MAIN_NS}}}t"))
-    value = cell.find("m:v", NS)
-    if value is None or value.text is None:
-        return ""
-    if cell_type == "s":
-        try:
-            return shared[int(value.text)]
-        except (ValueError, IndexError):
-            return ""
-    return value.text
-
-
-def _worksheet_cells(
-    root: ET.Element, shared: Sequence[str]
-) -> Dict[str, Tuple[ET.Element, str]]:
-    return {
-        cell.attrib.get("r", ""): (cell, _cell_value(cell, shared))
-        for cell in root.findall(".//m:c", NS)
-        if cell.attrib.get("r")
-    }
-
-
-def _workbook_sheet_map(zf: zipfile.ZipFile) -> Dict[str, str]:
-    workbook = _xml_root(zf, "xl/workbook.xml")
-    rels = _xml_root(zf, "xl/_rels/workbook.xml.rels")
-    targets = {rel.attrib["Id"]: rel.attrib.get("Target", "") for rel in rels}
-    result: Dict[str, str] = {}
-    for sheet in workbook.findall("m:sheets/m:sheet", NS):
-        rid = sheet.attrib.get(f"{{{REL_NS}}}id", "")
-        target = targets.get(rid, "")
-        if not target:
-            continue
-        if target.startswith("/"):
-            part = target.lstrip("/")
-        elif target.startswith("xl/"):
-            part = target
-        else:
-            part = posixpath.normpath(posixpath.join("xl", target))
-        result[sheet.attrib["name"]] = part
-    return result
-
-
-def _sheet_hyperlinks(root: ET.Element) -> Dict[str, str]:
-    return {
-        link.attrib.get("ref", ""): link.attrib.get("location", "")
-        for link in root.findall(".//m:hyperlinks/m:hyperlink", NS)
-        if link.attrib.get("ref")
-    }
-
-
-def _rgb(value: str) -> str:
-    raw = (value or "").upper()
-    return raw[-6:] if len(raw) >= 6 else raw
-
-
-def _styles(
-    zf: zipfile.ZipFile,
-) -> Tuple[List[dict], List[dict], List[dict]]:
-    root = _xml_root(zf, "xl/styles.xml")
-    fonts: List[dict] = []
-    for font in root.findall("m:fonts/m:font", NS):
-        name = font.find("m:name", NS)
-        size = font.find("m:sz", NS)
-        color = font.find("m:color", NS)
-        fonts.append(
-            {
-                "name": name.attrib.get("val", "") if name is not None else "",
-                "size": float(size.attrib.get("val", "0")) if size is not None else 0.0,
-                "bold": font.find("m:b", NS) is not None,
-                "italic": font.find("m:i", NS) is not None,
-                "color": _rgb(color.attrib.get("rgb", "")) if color is not None else "",
-            }
-        )
-    fills: List[dict] = []
-    for fill in root.findall("m:fills/m:fill", NS):
-        fg = fill.find("m:patternFill/m:fgColor", NS)
-        fills.append(
-            {"color": _rgb(fg.attrib.get("rgb", "")) if fg is not None else ""}
-        )
-    xfs: List[dict] = []
-    for xf in root.findall("m:cellXfs/m:xf", NS):
-        protection = xf.find("m:protection", NS)
-        xfs.append(
-            {
-                "font_id": int(xf.attrib.get("fontId", "0")),
-                "fill_id": int(xf.attrib.get("fillId", "0")),
-                "locked": protection is None
-                or protection.attrib.get("locked", "1") != "0",
-            }
-        )
-    return fonts, fills, xfs
-
-
-def _style_for_cell(
-    cell: ET.Element,
-    fonts: Sequence[dict],
-    fills: Sequence[dict],
-    xfs: Sequence[dict],
-) -> dict:
-    style_id = int(cell.attrib.get("s", "0"))
-    xf = xfs[style_id]
-    return {
-        "font": fonts[xf["font_id"]],
-        "fill": fills[xf["fill_id"]],
-        "locked": xf["locked"],
-        "style_id": style_id,
-    }
-
-
-def _payload_lines(
-    cells: Mapping[str, Tuple[ET.Element, str]], last_row: int
-) -> List[str]:
-    return [cells.get(f"A{row}", (None, ""))[1] for row in range(1, last_row + 1)]
-
-
-def _column_name(number: int) -> str:
-    column = ""
-    while number:
-        number, remainder = divmod(number - 1, 26)
-        column = chr(65 + remainder) + column
-    return column
-
-
 def _is_operator_edit_cell(sheet: str, ref: str) -> bool:
     if sheet != "Opportunity_Discovery":
         return False
     match = CELL_RE.fullmatch(ref)
     if not match:
         return False
-    column_name, row_text = match.groups()
-    column_number = 0
-    for char in column_name:
-        column_number = column_number * 26 + (ord(char) - 64)
-    return 1 <= column_number <= 18 and 1 <= int(row_text) <= 100
+    col_name, row_text = match.groups()
+    col_num = 0
+    for char in col_name:
+        col_num = col_num * 26 + (ord(char) - 64)
+    return 1 <= col_num <= 18 and 1 <= int(row_text) <= 100
 
 
 def validate_gnhf_launch_command(text: str) -> List[dict]:
@@ -399,9 +269,9 @@ def validate_prompt_kit_operability(
         return report
     try:
         with zipfile.ZipFile(workbook) as zf:
-            sheets = _workbook_sheet_map(zf)
-            shared = _shared_strings(zf)
-            fonts, fills, xfs = _styles(zf)
+            sheets = workbook_sheet_map(zf)
+            shared = shared_strings(zf)
+            fonts, fills, xfs = styles_detailed(zf)
 
             required = {
                 "Prompt_Library",
@@ -421,7 +291,7 @@ def validate_prompt_kit_operability(
             if missing:
                 return report
 
-            workbook_root = _xml_root(zf, "xl/workbook.xml")
+            workbook_root = xml_root(zf, "xl/workbook.xml")
             structure = workbook_root.find("m:workbookProtection", NS)
             report.checks.append(
                 Check(
@@ -436,8 +306,8 @@ def validate_prompt_kit_operability(
             protection_findings = []
             sheet_cells: Dict[str, Dict[str, Tuple[ET.Element, str]]] = {}
             for name, part in sheets.items():
-                root = _xml_root(zf, part)
-                sheet_cells[name] = _worksheet_cells(root, shared)
+                root = xml_root(zf, part)
+                sheet_cells[name] = worksheet_cells(root, shared)
                 if root.find("m:sheetProtection", NS) is None:
                     protection_findings.append(
                         {"sheet": name, "reason": "missing sheetProtection"}
@@ -455,14 +325,14 @@ def validate_prompt_kit_operability(
             unlock_findings = []
             for row in range(1, 101):
                 for column_number in range(1, 19):
-                    ref = f"{_column_name(column_number)}{row}"
+                    ref = f"{column_name(column_number)}{row}"
                     cell = opportunity_cells.get(ref, (None, ""))[0]
                     if cell is None:
                         unlock_findings.append(
                             {"cell": ref, "reason": "not materialized"}
                         )
                         continue
-                    style = _style_for_cell(cell, fonts, fills, xfs)
+                    style = style_for_cell(cell, fonts, fills, xfs)
                     if style["locked"]:
                         unlock_findings.append({"cell": ref, "reason": "locked"})
             report.checks.append(
@@ -477,7 +347,7 @@ def validate_prompt_kit_operability(
             outside_unlock_findings = []
             for sheet_name, cells in sheet_cells.items():
                 for ref, (cell, _) in cells.items():
-                    style = _style_for_cell(cell, fonts, fills, xfs)
+                    style = style_for_cell(cell, fonts, fills, xfs)
                     if not style["locked"] and not _is_operator_edit_cell(
                         sheet_name, ref
                     ):
@@ -496,13 +366,13 @@ def validate_prompt_kit_operability(
                 )
             )
 
-            library_root = _xml_root(zf, sheets["Prompt_Library"])
+            library_root = xml_root(zf, sheets["Prompt_Library"])
             library_cells = sheet_cells["Prompt_Library"]
-            library_links = _sheet_hyperlinks(library_root)
+            library_links = sheet_hyperlinks(zf, sheets["Prompt_Library"])
 
             header_findings = []
             for index, expected in enumerate(LIBRARY_HEADERS, start=2):
-                column = _column_name(index)
+                column = column_name(index)
                 actual = library_cells.get(f"{column}1", (None, ""))[1]
                 if actual != expected:
                     header_findings.append(
@@ -586,14 +456,14 @@ def validate_prompt_kit_operability(
                         }
                     )
                 for column in range(2, 16):
-                    col = _column_name(column)
+                    col = column_name(column)
                     cell = library_cells.get(f"{col}{row}", (None, ""))[0]
                     if cell is None:
                         style_findings.append(
                             {"cell": f"{col}{row}", "reason": "missing cell"}
                         )
                         continue
-                    info = _style_for_cell(cell, fonts, fills, xfs)
+                    info = style_for_cell(cell, fonts, fills, xfs)
                     if expected_palette:
                         expected_fill, expected_text = expected_palette
                         if (
@@ -617,7 +487,7 @@ def validate_prompt_kit_operability(
                             {"cell": f"{col}{row}", "reason": "missing font cell"}
                         )
                         continue
-                    font = _style_for_cell(cell, fonts, fills, xfs)["font"]
+                    font = style_for_cell(cell, fonts, fills, xfs)["font"]
                     if (
                         font["name"] != "Aptos"
                         or font["size"] != size
@@ -657,9 +527,9 @@ def validate_prompt_kit_operability(
                         }
                     )
 
-                copy_root = _xml_root(zf, sheets[copy_sheet])
+                copy_root = xml_root(zf, sheets[copy_sheet])
                 copy_cells = sheet_cells[copy_sheet]
-                payload = _payload_lines(copy_cells, last_row)
+                payload = payload_lines(copy_cells, last_row)
                 endpoint_missing = not payload or not payload[0] or not payload[-1]
                 after_payload = [
                     ref
@@ -678,7 +548,7 @@ def validate_prompt_kit_operability(
                         }
                     )
 
-                copy_links = _sheet_hyperlinks(copy_root)
+                copy_links = sheet_hyperlinks(zf, sheets[copy_sheet])
                 expected_backlink = "'Prompt_Library'!A1"
                 for ref in ("C1", f"C{last_row}"):
                     if copy_links.get(ref) != expected_backlink:

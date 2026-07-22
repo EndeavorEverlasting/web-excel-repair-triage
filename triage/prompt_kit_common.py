@@ -4,7 +4,7 @@ from __future__ import annotations
 import posixpath
 import re
 import zipfile
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 from xml.etree import ElementTree as ET
 
 MAIN_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
@@ -204,6 +204,81 @@ def font_for_cell(cell: ET.Element, fonts: Sequence[dict], xfs: Sequence[dict]) 
         return fonts[font_id]
     except (ValueError, IndexError, KeyError):
         return None
+
+
+def rgb(value: str) -> str:
+    """Normalize an ARGB or RGB hex string to its last 6 characters (RGB)."""
+    raw = (value or "").upper()
+    return raw[-6:] if len(raw) >= 6 else raw
+
+
+def styles_detailed(zf: zipfile.ZipFile) -> Tuple[List[dict], List[dict], List[dict]]:
+    """Return (fonts, fills, cellXfs) with fill color and protection status.
+
+    Each font dict: name, size, bold, italic, color.
+    Each fill dict: color (RGB).
+    Each xf dict: font_id, fill_id, locked.
+    """
+    root = xml_root(zf, "xl/styles.xml")
+    fonts: List[dict] = []
+    for font in root.findall("m:fonts/m:font", NS):
+        name = font.find("m:name", NS)
+        size = font.find("m:sz", NS)
+        color = font.find("m:color", NS)
+        fonts.append({
+            "name": name.attrib.get("val", "") if name is not None else "",
+            "size": float(size.attrib.get("val", "0")) if size is not None else 0.0,
+            "bold": font.find("m:b", NS) is not None,
+            "italic": font.find("m:i", NS) is not None,
+            "color": rgb(color.attrib.get("rgb", "")) if color is not None else "",
+        })
+    fills: List[dict] = []
+    for fill in root.findall("m:fills/m:fill", NS):
+        fg = fill.find("m:patternFill/m:fgColor", NS)
+        fills.append({"color": rgb(fg.attrib.get("rgb", "")) if fg is not None else ""})
+    xfs: List[dict] = []
+    for xf in root.findall("m:cellXfs/m:xf", NS):
+        protection = xf.find("m:protection", NS)
+        xfs.append({
+            "font_id": int(xf.attrib.get("fontId", "0")),
+            "fill_id": int(xf.attrib.get("fillId", "0")),
+            "locked": protection is None or protection.attrib.get("locked", "1") != "0",
+        })
+    return fonts, fills, xfs
+
+
+def style_for_cell(
+    cell: ET.Element,
+    fonts: Sequence[dict],
+    fills: Sequence[dict],
+    xfs: Sequence[dict],
+) -> dict:
+    """Return the resolved font, fill, and protection info for a cell."""
+    try:
+        style_id = int(cell.attrib.get("s", "0"))
+        xf = xfs[style_id]
+        return {
+            "font": fonts[xf["font_id"]],
+            "fill": fills[xf["fill_id"]],
+            "locked": xf["locked"],
+            "style_id": style_id,
+        }
+    except (ValueError, IndexError, KeyError):
+        return {"font": {}, "fill": {}, "locked": True, "style_id": -1}
+
+
+def column_name(number: int) -> str:
+    """Convert a 1-based column number to an Excel column letter (1 -> 'A')."""
+    result = ""
+    while number:
+        number, remainder = divmod(number - 1, 26)
+        result = chr(65 + remainder) + result
+    return result
+
+
+def payload_lines(cells: Mapping[str, Tuple[ET.Element, str]], last_row: int) -> List[str]:
+    """Extract column-A text from row 1 through last_row."""
+    return [cells.get(f"A{row}", (None, ""))[1] for row in range(1, last_row + 1)]
 
 
 def prompt_surface(root: ET.Element, shared: Sequence[str]) -> dict:
