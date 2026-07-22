@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+
+python scripts/validate_harness.py
+python -m unittest tests.test_harness_contract -v
+git diff --cached --check

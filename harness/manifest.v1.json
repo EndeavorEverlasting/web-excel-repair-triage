@@ -1,0 +1,45 @@
+{
+  "schema_version": "web-excel-harness/v1",
+  "repository": "EndeavorEverlasting/web-excel-repair-triage",
+  "default_branch": "main",
+  "governance": "AGENTS.md",
+  "components": {
+    "codebase_map": "CODEBASE_MAP.md",
+    "workflow_spec": "WORKFLOW.md",
+    "artifact_registry": "ARTIFACT_REGISTRY.md",
+    "skill_index": "SKILLS.md",
+    "validator": "scripts/validate_harness.py",
+    "contract_tests": "tests/test_harness_contract.py",
+    "hook": ".githooks/pre-commit",
+    "operator_report": "harness/reports/CURRENT_STATE.md"
+  },
+  "technician_acquisition": {
+    "launcher": "Acquire-Latest-PromptKit.cmd",
+    "gui": "scripts/Acquire-LatestPromptKit.ps1",
+    "repository_url": "https://github.com/EndeavorEverlasting/web-excel-repair-triage.git",
+    "required_files": [
+      "web/prompt-kit/index.html",
+      "Run-PromptKitGenerator.cmd",
+      "Build-PromptKitWebsite.cmd",
+      "configs/prompt_kit/generators.v1.json",
+      "scripts/build_prompt_kit_registry.py"
+    ],
+    "safety": {
+      "clone_when_absent": true,
+      "fast_forward_only": true,
+      "refuse_dirty_worktree": true,
+      "refuse_divergence": true,
+      "force_push": false,
+      "destructive_reset": false,
+      "embedded_credentials": false
+    }
+  },
+  "validation_order": [
+    "python scripts/validate_harness.py",
+    "python -m unittest tests.test_harness_contract -v",
+    "python -m unittest tests.test_skill_prompt_registry -v",
+    "python tests/test_prompt_kit_header_contract.py",
+    "python -m triage.gitignore_hygiene",
+    "git diff --check"
+  ]
+}

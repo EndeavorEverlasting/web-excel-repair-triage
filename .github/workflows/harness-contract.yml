@@ -1,0 +1,65 @@
+name: Operational harness contracts
+
+on:
+  pull_request:
+    paths:
+      - CODEBASE_MAP.md
+      - WORKFLOW.md
+      - ARTIFACT_REGISTRY.md
+      - SKILLS.md
+      - Acquire-Latest-PromptKit.cmd
+      - harness/**
+      - .ai/skills/**
+      - .githooks/**
+      - scripts/Acquire-LatestPromptKit.ps1
+      - scripts/validate_harness.py
+      - tests/test_harness_contract.py
+      - .github/workflows/harness-contract.yml
+  push:
+    branches: [main]
+    paths:
+      - CODEBASE_MAP.md
+      - WORKFLOW.md
+      - ARTIFACT_REGISTRY.md
+      - SKILLS.md
+      - Acquire-Latest-PromptKit.cmd
+      - harness/**
+      - .ai/skills/**
+      - .githooks/**
+      - scripts/Acquire-LatestPromptKit.ps1
+      - scripts/validate_harness.py
+      - tests/test_harness_contract.py
+      - .github/workflows/harness-contract.yml
+
+permissions:
+  contents: read
+
+jobs:
+  operational-harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile harness validator and contracts
+        run: |
+          python -m py_compile \
+            scripts/validate_harness.py \
+            tests/test_harness_contract.py
+      - name: Validate harness completeness
+        run: python scripts/validate_harness.py
+      - name: Run harness contracts
+        run: python -m unittest tests.test_harness_contract -v
+      - name: Validate connected Prompt Kit contracts
+        run: |
+          python -m unittest tests.test_skill_prompt_registry -v
+          python tests/test_prompt_kit_header_contract.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Validate repository artifact hygiene
+        run: python -m triage.gitignore_hygiene
+      - name: Check patch hygiene
+        run: git diff --check origin/main...HEAD
