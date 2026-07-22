@@ -127,7 +127,7 @@ class GovernanceContractTests(unittest.TestCase):
             "one panel goes into one new chat",
             "The same dependencies, proof gates, lane ownership, branch and worktree isolation",
             "Different panel titles do not prove that concurrent writes are safe",
-            "General build prompts, including `P07`",
+            "General build prompts, including P07",
             "final convergence unit",
         ):
             self.assertIn(phrase, section)
