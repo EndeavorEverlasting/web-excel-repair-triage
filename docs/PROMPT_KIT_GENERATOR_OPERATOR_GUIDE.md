@@ -32,6 +32,12 @@ Build-PromptKitWebsite.cmd
 
 This has no choices. It builds `web/prompt-kit/index.html`, validates that the written file exactly matches the combined registry build, and opens the result.
 
+## Output safety
+
+`Candidates/` and `Active/` are read-only operator-input directories. Both the GUI and the registry builder reject output paths inside either directory before creating folders or writing files.
+
+Use the checked-in `web/prompt-kit/index.html` destination for the canonical operator site. Use `Outputs/` for previews, comparisons, or alternate generated copies.
+
 ## Registry composition
 
 The website builder combines:
@@ -68,16 +74,18 @@ Run:
 python -m unittest tests.test_skill_prompt_registry -v
 python scripts\build_prompt_kit_registry.py --output Outputs\prompt-kit-preview.html
 python scripts\build_prompt_kit_registry.py --output Outputs\prompt-kit-preview.html --check
+python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
 ```
 
-CI workflow:
+CI workflows:
 
 ```text
 Skill prompt registry and generator UX
+Prompt Kit web contracts
 ```
 
-The workflow compiles the builder, GUI, and tests; validates registry uniqueness and skill contracts; builds a combined website; and proves P61 and P62 are present.
+The workflows compile the builders, GUI, and tests; validate registry uniqueness, skill contracts, output safety, exact deployed-site parity, and the presence of P61 and P62.
 
 ## Proof ceiling
 
-Repository tests prove registry composition, prompt uniqueness, required skill sections, bounded GUI routing, launcher structure, and deterministic HTML generation. Native double-click appearance and operator usability on a specific Windows desktop remain a field acceptance check.
+Repository tests prove registry composition, prompt uniqueness, required skill sections, bounded GUI routing, protected-path refusal, launcher structure, checked-in-site parity, and deterministic HTML generation. Native double-click appearance and operator usability on a specific Windows desktop remain a field acceptance check.
