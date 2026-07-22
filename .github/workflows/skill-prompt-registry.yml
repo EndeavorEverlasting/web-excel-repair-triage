@@ -56,3 +56,5 @@ jobs:
         run: |
           grep -F '"id": "P61"' /tmp/prompt-kit.html
           grep -F '"id": "P62"' /tmp/prompt-kit.html
+      - name: Check patch hygiene
+        run: git diff --check origin/main...HEAD
