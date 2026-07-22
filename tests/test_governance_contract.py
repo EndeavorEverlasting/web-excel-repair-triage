@@ -126,8 +126,8 @@ class GovernanceContractTests(unittest.TestCase):
             "Parallelism may be expressed as multiple panels in one parallel group",
             "one panel goes into one new chat",
             "The same dependencies, proof gates, lane ownership, branch and worktree isolation",
-            "different panel titles do not prove that concurrent writes are safe",
-            "General build prompts, including P07",
+            "Different panel titles do not prove that concurrent writes are safe",
+            "General build prompts, including `P07`",
             "final convergence unit",
         ):
             self.assertIn(phrase, section)
