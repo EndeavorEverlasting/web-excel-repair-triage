@@ -11,6 +11,7 @@ on:
       - Run-PromptKitGenerator.cmd
       - Build-PromptKitWebsite.cmd
       - tests/test_skill_prompt_registry.py
+      - web/prompt-kit/index.html
       - docs/PROMPT_KIT_GENERATOR_OPERATOR_GUIDE.md
       - .github/workflows/skill-prompt-registry.yml
   push:
@@ -24,6 +25,7 @@ on:
       - Run-PromptKitGenerator.cmd
       - Build-PromptKitWebsite.cmd
       - tests/test_skill_prompt_registry.py
+      - web/prompt-kit/index.html
       - docs/PROMPT_KIT_GENERATOR_OPERATOR_GUIDE.md
       - .github/workflows/skill-prompt-registry.yml
 
@@ -47,15 +49,22 @@ jobs:
             scripts/build_prompt_kit_registry.py \
             scripts/prompt_kit_generator_gui.py \
             tests/test_skill_prompt_registry.py
+      - name: Build combined Prompt Kit website proof
+        run: |
+          mkdir -p /tmp/prompt-kit-proof
+          python scripts/build_prompt_kit_registry.py --output /tmp/prompt-kit-proof/index.html
+          python scripts/build_prompt_kit_registry.py --output /tmp/prompt-kit-proof/index.html --check
+      - name: Upload combined Prompt Kit website proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-prompt-kit-site
+          path: /tmp/prompt-kit-proof/index.html
+          if-no-files-found: error
       - name: Run skill prompt and launcher contracts
         run: python -m unittest tests.test_skill_prompt_registry -v
-      - name: Build combined Prompt Kit website
-        run: |
-          python scripts/build_prompt_kit_registry.py --output /tmp/prompt-kit.html
-          python scripts/build_prompt_kit_registry.py --output /tmp/prompt-kit.html --check
       - name: Prove new prompt IDs are present
         run: |
-          grep -F '"id": "P61"' /tmp/prompt-kit.html
-          grep -F '"id": "P62"' /tmp/prompt-kit.html
+          grep -F '"id": "P61"' /tmp/prompt-kit-proof/index.html
+          grep -F '"id": "P62"' /tmp/prompt-kit-proof/index.html
       - name: Check patch hygiene
         run: git diff --check origin/main...HEAD
