@@ -25,7 +25,9 @@ class OperatorDocumentationTests(unittest.TestCase):
             for name, path in DOCS.items()
         }
         cls.all_docs = "\n".join(cls.text.values())
+        cls.acquisition_cmd = ACQUISITION_CMD.read_text(encoding="utf-8")
         cls.acquisition_ps1 = ACQUISITION_PS1.read_text(encoding="utf-8")
+        cls.acquisition_implementation = cls.acquisition_cmd + "\n" + cls.acquisition_ps1
 
     def test_required_documents_exist_and_are_substantial(self) -> None:
         for name, path in DOCS.items():
@@ -100,7 +102,7 @@ class OperatorDocumentationTests(unittest.TestCase):
             "Prompt Kit exact-output validation failed.",
         )
         for message in messages:
-            self.assertIn(message, self.acquisition_ps1)
+            self.assertIn(message, self.acquisition_implementation)
             self.assertIn(message, technician)
 
     def test_safety_and_rollback_are_explicit(self) -> None:
