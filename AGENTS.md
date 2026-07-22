@@ -164,7 +164,32 @@ A prompt contribution is complete only after canonical source changes, focused v
 
 This section is a governance requirement. The prompt-contribution skill, capability, trigger, prompt records, schemas, validators, fixtures, workflows, and generated surfaces must be implemented in a separately declared harness or prompt-registry sprint.
 
-## 10. Billing pipeline directional contract
+## 10. Prompt panels, chats, and parallel execution
+
+A prompt panel is a copyable transport container for one complete executable prompt. A chat is the execution instance created when that prompt is submitted. When one panel is mapped to one new chat, the panel and chat are functionally equivalent to one independently schedulable execution unit for launch order, ownership, dependency, collision, validation, and proof planning.
+
+Panels and chats are not competing orchestration mechanisms. Parallelism may be expressed as multiple panels in one parallel group, as multiple chats launched concurrently from those panels, or as directly created chats that carry the same complete sprint contracts. The same dependencies, proof gates, lane ownership, branch and worktree isolation, forbidden scope, validation duties, and convergence requirements apply in every representation.
+
+A multi-sprint launch pack must state that one panel goes into one new chat. Every panel must be self-contained; the operator may not be required to combine it with a separately copied shared preamble. A chat created without a visible panel must still receive the same complete repository, lane, scope, dependency, safety, validation, commit, proof, and final-response contract.
+
+Parallel execution is permitted only when repository evidence proves that the units are independent. Different panel titles do not prove that concurrent writes are safe. Before declaring panels or chats parallel-safe, the planner must identify:
+
+- the branch or worktree owned by each unit;
+- the files, schemas, manifests, workflows, registries, generated outputs, PRs, and runtime resources each unit may write;
+- hard dependencies and proof gates;
+- waiting lanes;
+- collision risks and the single owner for every shared surface;
+- the final convergence unit that validates the combined result.
+
+Units that write the same file, shared schema, workflow, registry, generated artifact, branch, PR, deployment target, or mutable runtime must be serialized or assigned to one explicit writer. Read-only evidence collection may run in parallel with mutation only when it cannot change shared state or invalidate the writer's floor.
+
+General build prompts, including P07, must accept work delivered either as a copyable panel or directly in a chat and must apply the same parallelism rules to both. They must not assume that “panel” means planning-only or that “chat” means serial-only. When a bounded build is one member of a parallel group, its sprint declaration must name its lane, branch or worktree, owned and forbidden scope, dependencies, safe parallel work, collision boundaries, validation, proof ceiling, and final convergence owner.
+
+Each parallel unit must independently produce its required artifacts, validation evidence, commit or remote mutation proof, and handoff. Parallel execution does not lower proof requirements. Completion of individual units is not completion of the whole effort until the declared final convergence unit validates integration and reports the combined repository and PR state.
+
+This section governs the future repair of P07 and any launch-pack, build, cleanup, validation, or closeout prompt that dispatches work through panels or chats. Updating those prompt records, registries, generated surfaces, skills, capabilities, triggers, or application behavior belongs in a separately declared prompt-registry or harness sprint, not in a governance-only sprint.
+
+## 11. Billing pipeline directional contract
 
 This repository supports Web Excel-safe repair and triage workflows for roster, billing, admin-sheet, and task-tracker artifacts.
 
@@ -241,7 +266,7 @@ Friday is the reporting batch marker. Work performed Monday through Friday maps 
 - Internal task-tracker context may be richer, but it must not leak into admin submission artifacts.
 - Backfill into the roster log must be proposed, reviewed, and approved before mutation.
 
-## 11. Operator source immutability
+## 12. Operator source immutability
 
 `Candidates/` and `Active/` are read-only operator inputs and backup/emulator files.
 
