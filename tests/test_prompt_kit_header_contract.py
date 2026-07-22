@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEPLOYED = ROOT / "web" / "prompt-kit" / "index.html"
 README = ROOT / "web" / "README.md"
 BUILDER = ROOT / "build_prompt_kit.py"
+COMBINED_BUILDER = ROOT / "scripts" / "build_prompt_kit_registry.py"
 JS = ROOT / "docs" / "prompt-kit.js"
 EXPECTED = [
     ("all", "All", "1"),
@@ -93,18 +94,18 @@ def test_readme_records_exact_deployed_surface() -> None:
         assert f"| `{key}` | {label} |" in text
 
 
-def test_deployed_artifact_is_current_builder_output() -> None:
+def test_deployed_artifact_is_current_combined_registry_output() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         rebuilt = Path(tmp) / "index.html"
         subprocess.run(
-            [sys.executable, str(BUILDER), "--output", str(rebuilt)],
+            [sys.executable, str(COMBINED_BUILDER), "--output", str(rebuilt)],
             cwd=ROOT,
             check=True,
             capture_output=True,
             text=True,
         )
         assert rebuilt.read_bytes() == DEPLOYED.read_bytes(), (
-            "web/prompt-kit/index.html is stale; regenerate the exact operator-opened artifact"
+            "web/prompt-kit/index.html is stale; regenerate it from the combined prompt registry"
         )
 
 
@@ -115,7 +116,7 @@ def main() -> None:
         test_keyboard_routes_match_visible_contract,
         test_builder_owns_the_same_fixed_header,
         test_readme_records_exact_deployed_surface,
-        test_deployed_artifact_is_current_builder_output,
+        test_deployed_artifact_is_current_combined_registry_output,
     ]
     for test in tests:
         test()

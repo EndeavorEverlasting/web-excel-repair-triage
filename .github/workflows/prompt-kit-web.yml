@@ -4,23 +4,29 @@ on:
   pull_request:
     paths:
       - build_prompt_kit.py
+      - scripts/build_prompt_kit_registry.py
+      - registry/prompts/skill-development-prompts.v1.json
       - docs/prompt-kit.js
       - docs/prompts.json
       - docs/reference.json
       - web/prompt-kit/index.html
       - web/README.md
       - tests/test_prompt_kit_header_contract.py
+      - tests/test_skill_prompt_registry.py
       - .github/workflows/prompt-kit-web.yml
   push:
     branches: [main]
     paths:
       - build_prompt_kit.py
+      - scripts/build_prompt_kit_registry.py
+      - registry/prompts/skill-development-prompts.v1.json
       - docs/prompt-kit.js
       - docs/prompts.json
       - docs/reference.json
       - web/prompt-kit/index.html
       - web/README.md
       - tests/test_prompt_kit_header_contract.py
+      - tests/test_skill_prompt_registry.py
       - .github/workflows/prompt-kit-web.yml
 
 permissions:
@@ -36,7 +42,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Compile website builder and contract
-        run: python -m py_compile build_prompt_kit.py tests/test_prompt_kit_header_contract.py
+      - name: Compile website builders and contracts
+        run: |
+          python -m py_compile \
+            build_prompt_kit.py \
+            scripts/build_prompt_kit_registry.py \
+            tests/test_prompt_kit_header_contract.py \
+            tests/test_skill_prompt_registry.py
       - name: Validate exact deployed website
-        run: python tests/test_prompt_kit_header_contract.py
+        run: |
+          python tests/test_prompt_kit_header_contract.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check

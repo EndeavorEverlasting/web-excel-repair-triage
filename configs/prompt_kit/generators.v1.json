@@ -1,0 +1,35 @@
+{
+  "schema_version": "prompt-kit-generators/v1",
+  "default_generator_id": "prompt-kit-website",
+  "gui_launcher": "Run-PromptKitGenerator.cmd",
+  "generators": [
+    {
+      "id": "prompt-kit-website",
+      "display_name": "Prompt Kit Website",
+      "description": "Build the operator website from the base prompt registry plus tracked extensions.",
+      "runner": "scripts/build_prompt_kit_registry.py",
+      "default_output": "web/prompt-kit/index.html",
+      "direct_launcher": "Build-PromptKitWebsite.cmd",
+      "options": [
+        {
+          "id": "output_path",
+          "label": "Output HTML",
+          "type": "file-save",
+          "default": "web/prompt-kit/index.html"
+        },
+        {
+          "id": "validate_after_build",
+          "label": "Validate exact generated output",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "id": "open_after_build",
+          "label": "Open website after build",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    }
+  ]
+}
