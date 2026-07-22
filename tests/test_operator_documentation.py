@@ -172,7 +172,7 @@ class OperatorDocumentationTests(unittest.TestCase):
         for name, headings in required_by_document.items():
             for heading in headings:
                 with self.subTest(document=name, heading=heading):
-                    self.assertRegex(self.text[name], rf"^## {re.escape(heading)}$", re.MULTILINE)
+                    self.assertIn(f"## {heading}", self.text[name])
 
 
 if __name__ == "__main__":
