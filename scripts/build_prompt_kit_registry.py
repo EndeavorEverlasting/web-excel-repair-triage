@@ -21,6 +21,10 @@ EXTENSION_REGISTRIES = (
 )
 REFERENCE = REPO_ROOT / "docs" / "reference.json"
 DEFAULT_OUTPUT = REPO_ROOT / "web" / "prompt-kit" / "index.html"
+PROTECTED_OUTPUT_ROOTS = (
+    REPO_ROOT / "Candidates",
+    REPO_ROOT / "Active",
+)
 REQUIRED_PROMPT_FIELDS = {
     "id",
     "seq",
@@ -49,6 +53,21 @@ def _load_json(path: Path) -> Any:
         raise SystemExit(f"Required registry file is missing: {path}") from exc
     except json.JSONDecodeError as exc:
         raise SystemExit(f"Invalid JSON in {path}: {exc}") from exc
+
+
+def validate_output_path(output: Path) -> Path:
+    """Return a resolved output path or reject read-only operator input roots."""
+    resolved = output.expanduser().resolve()
+    for protected_root in PROTECTED_OUTPUT_ROOTS:
+        try:
+            resolved.relative_to(protected_root.resolve())
+        except ValueError:
+            continue
+        raise ValueError(
+            "Output path is inside a protected operator input directory: "
+            f"{protected_root}"
+        )
+    return resolved
 
 
 def load_prompt_registry() -> list[dict[str, Any]]:
@@ -87,10 +106,16 @@ def load_prompt_registry() -> list[dict[str, Any]]:
     return sorted(prompts, key=lambda prompt: int(str(prompt["seq"])))
 
 
-def build(output: Path) -> str:
+def render() -> str:
+    """Return the exact combined Prompt Kit HTML without writing it."""
     prompts = load_prompt_registry()
     reference = _load_json(REFERENCE)
-    html = build_prompt_kit.build_html(prompts, reference)
+    return build_prompt_kit.build_html(prompts, reference)
+
+
+def build(output: Path) -> str:
+    output = validate_output_path(output)
+    html = render()
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(html, encoding="utf-8")
     return html
@@ -109,10 +134,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--open", action="store_true", dest="open_after_build")
     args = parser.parse_args(argv)
 
-    output = args.output.expanduser().resolve()
+    try:
+        output = validate_output_path(args.output)
+    except ValueError as exc:
+        print(f"Prompt Kit output rejected: {exc}", file=sys.stderr)
+        return 2
+
     prompts = load_prompt_registry()
-    reference = _load_json(REFERENCE)
-    expected = build_prompt_kit.build_html(prompts, reference)
+    expected = render()
 
     if args.check:
         if not output.exists():
