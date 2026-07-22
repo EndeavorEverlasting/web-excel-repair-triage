@@ -1,154 +1,195 @@
 # Workflow Specifications
 
-## How to Pick Up a Task
+This file defines how agents and operators enter, validate, recover, and hand off work in this repository. Product-specific workflows remain documented in `README.md` and focused contract documents; this file owns repository operating flow.
 
-1. **Read AGENTS.md** - Understand the agent operating contract
-2. **Read CODEBASE_MAP.md** - Understand repository structure
-3. **Check current state** - Run `git status` and `git log --oneline -5`
-4. **Identify workflow direction** - Determine which workflow applies
-5. **Select appropriate prompt** - Use the prompt kit to choose the right prompt
+## 1. Pick up a task
 
-## Workflow Directions
+1. Read `AGENTS.md` and the nearest nested instruction file, if any.
+2. Read `CODEBASE_MAP.md`, `harness/manifest.v1.json`, and `harness/reports/CURRENT_STATE.md`.
+3. Record the compact Git floor:
 
-### 1. Roster Log to Admin Sheet (High Priority)
-
-**Trigger:** User needs admin-facing Project Team sheet for Friday billing
-
-**Steps:**
-1. Input: Roster log file
-2. Validate input format
-3. Run `scripts/roster_to_admin_submission.py`
-4. Output: Clean admin-facing Project Team sheet
-5. Validate output meets admin requirements
-
-**Validation:**
-- Output contains only admin-facing data
-- No internal exception machinery exposed
-- No confidence fields exposed
-- No private notes exposed
-
-### 2. Roster Log to Task Tracker (Medium Priority)
-
-**Trigger:** User needs task tracker context for hours
-
-**Steps:**
-1. Input: Roster log file
-2. Validate input format
-3. Run `scripts/roster_to_task_context.py`
-4. Output: Task tracker context
-5. Validate output preserves contribution evidence
-
-**Validation:**
-- Staff, date, hours, project assignment mapped
-- Override logic preserved
-- Contribution evidence preserved
-
-### 3. Task Tracker to Roster Log (Low Priority)
-
-**Trigger:** User needs proposed roster updates from task tracker
-
-**Steps:**
-1. Input: Task tracker file
-2. Validate input format
-3. Run `scripts/task_tracker_to_roster_backfill.py`
-4. Output: Proposed roster updates
-5. **REVIEW REQUIRED** - Updates must be reviewed before mutation
-
-**Validation:**
-- Updates are proposed, not applied
-- Rejected updates stay as tracker-only context
-- No silent roster mutation
-
-## How to Validate Before Committing
-
-1. **Run existing tests:**
    ```bash
-   pytest tests/
+   git status --short
+   git branch --show-current
+   git log --oneline --decorate -5
    ```
 
-2. **Run specific test for changed area:**
-   ```bash
-   pytest tests/test_billing_rules.py
-   ```
+4. Inspect open PRs, current workflows, affected validators, and recent commits.
+5. Declare repository, branch/worktree, lane, mission, owned scope, forbidden scope, expected artifacts, validation order, proof ceiling, and push/PR authority.
+6. Preserve a dirty or occupied worktree. Use an isolated branch or worktree instead of resetting unknown work.
+7. Choose the smallest workflow below that fully owns the requested result.
 
-3. **Check for linting issues:**
-   ```bash
-   # If configured
-   flake8 triage/
-   black --check triage/
-   ```
+## 2. Workflow selection
 
-4. **Verify no secrets or credentials:**
-   ```bash
-   git diff --check
-   ```
+### A. Technician acquisition or update
 
-5. **Run harness completeness check:**
-   ```bash
-   python scripts/validate_harness.py
-   ```
+**Trigger:** A technician needs the latest website and generators without typing Git commands.
 
-## How to Handle Failures
+**Entry point:** Double-click `Acquire-Latest-PromptKit.cmd`.
 
-1. **Test failures:**
-   - Read the test output carefully
-   - Identify the root cause
-   - Fix the issue, not the test
-   - Re-run tests to verify
+**Flow:**
 
-2. **Validation failures:**
-   - Check input data format
-   - Verify configuration
-   - Check for missing dependencies
+1. Present destination and post-validation action choices in the Windows GUI.
+2. Clone canonical `main` when the destination is absent.
+3. For an existing checkout, verify canonical origin, clean status, and current branch `main`.
+4. Fetch `origin/main` and reject local-only commits or divergence.
+5. Fast-forward with `git merge --ff-only` only.
+6. Validate required website, generator, manifest, and builder files.
+7. Run exact combined-registry website validation.
+8. Open the selected website or generator GUI only after success.
 
-3. **Build failures:**
-   - Check `requirements.txt` for missing packages
-   - Verify Python version compatibility
-   - Check for syntax errors
+**Failure routing:** Preserve the repository unchanged and report the exact missing tool, authentication/network error, wrong origin, dirty state, wrong branch, divergence, missing file, or stale generated site.
 
-## How to Hand Off to the Next Agent or Chat
+### B. Prompt registry or website change
 
-1. **Commit your changes:**
-   ```bash
-   git add <changed files>
-   git commit -m "feat: descriptive commit message"
-   ```
+**Trigger:** Prompts, prompt extensions, reference data, website behavior, generator options, or checked-in HTML change.
 
-2. **Push if appropriate:**
-   ```bash
-   git push origin <branch>
-   ```
+**Flow:**
 
-3. **Document what you did:**
-   - Files changed
-   - Validation results
-   - Any skipped checks
-   - Remaining blockers
+1. Change canonical source data or code, not only generated HTML.
+2. Update focused contracts.
+3. Build the combined registry site.
+4. Verify the checked-in site is exact output.
+5. Run Prompt Kit and harness checks before the broad artifact suite.
 
-4. **Provide next command:**
-   - Exact command to continue
-   - Or "None" if work is complete
+**Commands:**
 
-5. **Use P12 (Final Handoff Compressor) if needed:**
-   - Compress context for next agent
-   - Include exact state, gaps, and next command
+```powershell
+python -m unittest tests.test_skill_prompt_registry -v
+python tests\test_prompt_kit_header_contract.py
+python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
+```
 
-## Error Recovery
+### C. Harness infrastructure change
 
-### Interrupted Run
-- Check `git status` for uncommitted changes
-- Check `git stash` for stashed work
-- Review recent commits with `git log --oneline -10`
-- Use P27 (GNHF Interrupted Run Recovery) if needed
+**Trigger:** Maps, workflow specs, registries, validators, hooks, skills, operator reports, or acquisition surfaces change.
 
-### Failed Validation
-- Identify the failing test or validator
-- Read the error message carefully
-- Fix the root cause, not the symptom
-- Re-run validation
+**Flow:**
 
-### Merge Conflicts
-- Identify conflicting files
-- Resolve conflicts manually
-- Test after resolution
-- Commit the merge
+1. Repair existing canonical harness components before adding competing files.
+2. Update `harness/manifest.v1.json` atomically with path or command changes.
+3. Add or repair contract tests.
+4. Run harness validation and `git diff --check`.
+5. Run affected Prompt Kit checks.
+6. Run broader artifact tests last.
+
+**Commands:**
+
+```powershell
+python scripts\validate_harness.py
+python -m unittest tests.test_harness_contract -v
+git diff --check
+```
+
+### D. Workbook or artifact engine change
+
+**Trigger:** A `triage/` engine, workbook contract, schema, fixture, or generated artifact behavior changes.
+
+**Flow:**
+
+1. Identify the exact engine and focused contract from `README.md`, `docs/`, configs, and tests.
+2. Keep `Candidates/` and `Active/` read-only.
+3. Use sanitized fixtures for tests; do not commit private workbooks.
+4. Generate outputs under `Outputs/` or the path defined by the focused contract.
+5. Run focused engine tests and artifact hygiene.
+6. Treat real Excel for Web or operator acceptance as a separate runtime proof gate.
+
+### E. PR-floor cleanup and integration
+
+**Trigger:** Work is split across stacked, divergent, superseded, or blocked PRs.
+
+**Flow:**
+
+1. Inspect commit and file deltas.
+2. Preserve unique useful work before closing a source PR.
+3. Prefer cherry-pick, bounded repair, restore, or clean integration branches.
+4. Resolve review findings and required checks.
+5. Merge green predecessors in dependency order.
+6. Comment where preserved work landed before closing superseded PRs.
+7. Do not delete branches or force-push unless separately authorized.
+
+## 3. Validate before committing
+
+Use the strongest practical checks in this order:
+
+1. Focused tests for changed behavior.
+2. Contract validators and static compilation.
+3. Exact generated-output checks.
+4. Repository hygiene.
+5. Broader tests and runtime checks when practical.
+
+Baseline harness sequence:
+
+```powershell
+python -m py_compile scripts\validate_harness.py tests\test_harness_contract.py
+python scripts\validate_harness.py
+python -m unittest tests.test_harness_contract -v
+python -m unittest tests.test_skill_prompt_registry -v
+python tests\test_prompt_kit_header_contract.py
+python -m triage.gitignore_hygiene
+git diff --check
+```
+
+Never claim skipped checks passed. Name the exact skipped command and reason.
+
+## 4. Handle failures
+
+### Focused test or validator failure
+
+- Read the first actionable failure and reproduce it directly.
+- Repair implementation or contract drift; do not weaken expectations merely to turn CI green.
+- Add a regression fixture when the failure exposed an untested boundary.
+- Re-run the focused gate before broad checks.
+
+### Dirty worktree or branch collision
+
+- Do not reset, clean, or discard files.
+- Identify the owner and use an isolated branch/worktree.
+- Preserve coherent local changes with a commit or explicit handoff when authorized.
+
+### Generated-output drift
+
+- Regenerate from canonical source using the registered builder.
+- Commit source and deterministic generated output together when the repository tracks both.
+- Keep workflows read-only after any one-time repair transaction.
+
+### Network, authentication, or provider failure
+
+- Preserve local state.
+- Report the exact command and error.
+- Do not embed or solicit secrets in tracked files.
+- Do not substitute a static pass for live external proof.
+
+### Divergent technician checkout
+
+- Stop before mutation.
+- Report local-ahead and remote-ahead counts.
+- Do not reset or overwrite. Route recovery to a developer who can preserve local commits.
+
+## 5. Commit and PR contract
+
+```bash
+git diff --check
+git status --short
+git diff --stat
+git diff
+git add <owned tracked files>
+git commit -m "<useful message>"
+git push -u origin <branch>
+```
+
+Open or update a PR when appropriate. Resolve review findings and required checks before merge.
+
+## 6. Handoff contract
+
+A handoff must state:
+
+- repository, branch/worktree, sprint, lane, owned and forbidden scope;
+- files changed and why;
+- validation commands and exact results;
+- commit SHA, push state, and PR state;
+- blockers, skipped checks, proof achieved, and proof ceiling;
+- final Git status;
+- one exact next command or `none; cleanup complete`.
+
+For interrupted work, include the last coherent commit and uncommitted file list. Never require the next agent to reconstruct state from narrative alone.
