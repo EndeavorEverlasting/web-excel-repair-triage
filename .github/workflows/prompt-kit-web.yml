@@ -1,0 +1,42 @@
+name: Prompt Kit web contracts
+
+on:
+  pull_request:
+    paths:
+      - build_prompt_kit.py
+      - docs/prompt-kit.js
+      - docs/prompts.json
+      - docs/reference.json
+      - web/prompt-kit/index.html
+      - web/README.md
+      - tests/test_prompt_kit_header_contract.py
+      - .github/workflows/prompt-kit-web.yml
+  push:
+    branches: [main]
+    paths:
+      - build_prompt_kit.py
+      - docs/prompt-kit.js
+      - docs/prompts.json
+      - docs/reference.json
+      - web/prompt-kit/index.html
+      - web/README.md
+      - tests/test_prompt_kit_header_contract.py
+      - .github/workflows/prompt-kit-web.yml
+
+permissions:
+  contents: read
+
+jobs:
+  prompt-kit-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile website builder and contract
+        run: python -m py_compile build_prompt_kit.py tests/test_prompt_kit_header_contract.py
+      - name: Validate exact deployed website
+        run: python tests/test_prompt_kit_header_contract.py
