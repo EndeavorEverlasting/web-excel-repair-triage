@@ -7,13 +7,17 @@ on:
       - WORKFLOW.md
       - ARTIFACT_REGISTRY.md
       - SKILLS.md
+      - CAPABILITIES.md
+      - TRIGGERS.md
       - Acquire-Latest-PromptKit.cmd
       - harness/**
       - .ai/skills/**
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
+      - scripts/evaluate_prompt_language.py
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
+      - tests/test_prompt_language_audit.py
       - .github/workflows/harness-contract.yml
   push:
     branches: [main]
@@ -22,13 +26,17 @@ on:
       - WORKFLOW.md
       - ARTIFACT_REGISTRY.md
       - SKILLS.md
+      - CAPABILITIES.md
+      - TRIGGERS.md
       - Acquire-Latest-PromptKit.cmd
       - harness/**
       - .ai/skills/**
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
+      - scripts/evaluate_prompt_language.py
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
+      - tests/test_prompt_language_audit.py
       - .github/workflows/harness-contract.yml
 
 permissions:
@@ -45,15 +53,27 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Compile harness validator and contracts
+      - name: Compile harness validators, eval runner, and contracts
         run: |
           python -m py_compile \
             scripts/validate_harness.py \
-            tests/test_harness_contract.py
+            scripts/evaluate_prompt_language.py \
+            tests/test_harness_contract.py \
+            tests/test_prompt_language_audit.py
       - name: Validate harness completeness
         run: python scripts/validate_harness.py
       - name: Run harness contracts
-        run: python -m unittest tests.test_harness_contract -v
+        run: |
+          python -m unittest tests.test_harness_contract -v
+          python -m unittest tests.test_prompt_language_audit -v
+      - name: Run exhaustive prompt-language audit
+        run: python scripts/evaluate_prompt_language.py --output "$RUNNER_TEMP/prompt-language-audit.json" --summary
+      - name: Upload prompt-language audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-language-audit-report
+          path: ${{ runner.temp }}/prompt-language-audit.json
+          if-no-files-found: error
       - name: Validate connected Prompt Kit contracts
         run: |
           python -m unittest tests.test_skill_prompt_registry -v
