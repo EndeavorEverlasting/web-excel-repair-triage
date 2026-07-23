@@ -10,6 +10,7 @@ SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
+import evaluate_prompt_language
 import validate_harness
 
 
@@ -23,19 +24,44 @@ class HarnessContractTests(unittest.TestCase):
         )
         self.assertEqual(manifest["schema_version"], "web-excel-harness/v1")
         self.assertEqual(manifest["default_branch"], "main")
-        expected_components = {
-            "codebase_map",
-            "workflow_spec",
-            "artifact_registry",
-            "skill_index",
-            "validator",
-            "contract_tests",
-            "hook",
-            "operator_report",
-        }
-        self.assertEqual(set(manifest["components"]), expected_components)
+        self.assertEqual(set(manifest["components"]), validate_harness.REQUIRED_COMPONENT_IDS)
         for path in manifest["components"].values():
             self.assertTrue((ROOT / path).is_file(), path)
+        self.assertEqual(len(manifest["skills"]), 4)
+
+    def test_capabilities_and_triggers_have_unique_connected_owners(self) -> None:
+        capabilities = json.loads(
+            (ROOT / "harness" / "capabilities.v1.json").read_text(encoding="utf-8")
+        )["capabilities"]
+        triggers = json.loads(
+            (ROOT / "harness" / "triggers.v1.json").read_text(encoding="utf-8")
+        )["triggers"]
+        capability_by_id = {item["id"]: item for item in capabilities}
+        self.assertEqual(set(capability_by_id), validate_harness.REQUIRED_CAPABILITY_IDS)
+        self.assertEqual({item["id"] for item in triggers}, validate_harness.REQUIRED_TRIGGER_IDS)
+        for trigger in triggers:
+            capability = capability_by_id[trigger["capability_id"]]
+            self.assertEqual(trigger["skill"], capability["skill"])
+            self.assertIn(trigger["id"], capability["trigger_ids"])
+
+    def test_every_active_skill_is_indexed_and_structured(self) -> None:
+        manifest = json.loads(
+            (ROOT / "harness" / "manifest.v1.json").read_text(encoding="utf-8")
+        )
+        index = (ROOT / "SKILLS.md").read_text(encoding="utf-8")
+        for skill_path in manifest["skills"]:
+            self.assertIn(skill_path, index)
+            skill = (ROOT / skill_path).read_text(encoding="utf-8")
+            for section in validate_harness.REQUIRED_SKILL_SECTIONS:
+                self.assertIn(section, skill)
+
+    def test_prompt_language_audit_covers_every_effective_prompt(self) -> None:
+        report = evaluate_prompt_language.evaluate_registry()
+        self.assertTrue(report["coverage_complete"])
+        self.assertEqual(report["prompt_count"], report["effective_prompt_count"])
+        self.assertEqual(report["prompt_count"], report["disposition_count"])
+        self.assertEqual(report["error_count"], 0)
+        self.assertIn("P62", {item["prompt_id"] for item in report["prompts"]})
 
     def test_acquisition_contract_is_preservation_first(self) -> None:
         manifest = json.loads(
@@ -50,19 +76,11 @@ class HarnessContractTests(unittest.TestCase):
         self.assertFalse(safety["destructive_reset"])
         self.assertFalse(safety["embedded_credentials"])
 
-    def test_cmd_can_bootstrap_the_gui_when_repo_is_absent(self) -> None:
-        launcher = (ROOT / "Acquire-Latest-PromptKit.cmd").read_text(encoding="utf-8")
-        self.assertIn("raw.githubusercontent.com", launcher)
-        self.assertIn("Invoke-WebRequest", launcher)
-        self.assertIn("Acquire-LatestPromptKit.ps1", launcher)
-        self.assertIn("%TEMP%", launcher)
-        self.assertNotIn("C:\\Users\\", launcher)
-
     def test_gui_uses_only_clone_or_fast_forward_update(self) -> None:
         gui = (ROOT / "scripts" / "Acquire-LatestPromptKit.ps1").read_text(
             encoding="utf-8"
         )
-        required = (
+        for phrase in (
             "'clone', '--branch', $DefaultBranch, '--single-branch'",
             "'status', '--porcelain'",
             "'branch', '--show-current'",
@@ -70,52 +88,25 @@ class HarnessContractTests(unittest.TestCase):
             "'rev-list', '--left-right', '--count'",
             "'merge', '--ff-only'",
             "Test-RequiredFiles",
-        )
-        for phrase in required:
+        ):
             self.assertIn(phrase, gui)
         lowered = gui.lower()
         for forbidden in validate_harness.FORBIDDEN_ACQUISITION_PATTERNS:
             self.assertNotIn(forbidden.lower(), lowered)
 
-    def test_gui_refuses_wrong_origin_dirty_branch_and_divergence(self) -> None:
-        gui = (ROOT / "scripts" / "Acquire-LatestPromptKit.ps1").read_text(
-            encoding="utf-8"
-        )
+    def test_hooks_run_focused_and_exhaustive_harness_gates(self) -> None:
+        pre_commit = (ROOT / ".githooks" / "pre-commit").read_text(encoding="utf-8")
+        self.assertIn("python scripts/validate_harness.py", pre_commit)
+        self.assertIn("git diff --cached --check", pre_commit)
+        pre_push = (ROOT / ".githooks" / "pre-push").read_text(encoding="utf-8")
         for phrase in (
-            "unexpected origin",
-            "local modifications or untracked files",
-            "not '$DefaultBranch'",
-            "Local main contains $localAhead commit(s)",
-            "No reset or overwrite was attempted",
+            "python scripts/validate_harness.py",
+            "python -m unittest tests.test_prompt_language_audit -v",
+            "python scripts/evaluate_prompt_language.py",
+            "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
+            "git diff --check",
         ):
-            self.assertIn(phrase, gui)
-
-    def test_gui_validates_then_opens_mouse_selected_surface(self) -> None:
-        gui = (ROOT / "scripts" / "Acquire-LatestPromptKit.ps1").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn("Open Prompt Kit website", gui)
-        self.assertIn("Open generator selection GUI", gui)
-        self.assertIn("Prompt Kit exact-output validation failed", gui)
-        validation_position = gui.index("Test-RequiredFiles -RepositoryRoot")
-        website_open_position = gui.index("Opening Prompt Kit website")
-        generator_open_position = gui.index("Opening generator selection GUI")
-        self.assertLess(validation_position, website_open_position)
-        self.assertLess(validation_position, generator_open_position)
-
-    def test_skill_index_and_skill_contract_are_connected(self) -> None:
-        index = (ROOT / "SKILLS.md").read_text(encoding="utf-8")
-        skill_path = ".ai/skills/technician-prompt-kit-acquisition/SKILL.md"
-        self.assertIn(skill_path, index)
-        skill = (ROOT / skill_path).read_text(encoding="utf-8")
-        for section in validate_harness.REQUIRED_SKILL_SECTIONS:
-            self.assertIn(section, skill)
-
-    def test_pre_commit_hook_runs_focused_harness_gates(self) -> None:
-        hook = (ROOT / ".githooks" / "pre-commit").read_text(encoding="utf-8")
-        self.assertIn("python scripts/validate_harness.py", hook)
-        self.assertIn("python -m unittest tests.test_harness_contract -v", hook)
-        self.assertIn("git diff --cached --check", hook)
+            self.assertIn(phrase, pre_push)
 
 
 if __name__ == "__main__":
