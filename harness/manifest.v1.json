@@ -8,11 +8,26 @@
     "workflow_spec": "WORKFLOW.md",
     "artifact_registry": "ARTIFACT_REGISTRY.md",
     "skill_index": "SKILLS.md",
+    "capability_index": "CAPABILITIES.md",
+    "trigger_index": "TRIGGERS.md",
+    "capability_registry": "harness/capabilities.v1.json",
+    "trigger_registry": "harness/triggers.v1.json",
+    "prompt_language_eval_policy": "harness/evals/prompt-language-audit.v1.json",
+    "prompt_language_eval_fixtures": "harness/evals/fixtures/prompt-language-cases.v1.json",
+    "prompt_language_eval_runner": "scripts/evaluate_prompt_language.py",
+    "prompt_language_eval_tests": "tests/test_prompt_language_audit.py",
     "validator": "scripts/validate_harness.py",
     "contract_tests": "tests/test_harness_contract.py",
-    "hook": ".githooks/pre-commit",
+    "pre_commit_hook": ".githooks/pre-commit",
+    "pre_push_hook": ".githooks/pre-push",
     "operator_report": "harness/reports/CURRENT_STATE.md"
   },
+  "skills": [
+    ".ai/skills/prompt-language-audit/SKILL.md",
+    ".ai/skills/skill-evaluation/SKILL.md",
+    ".ai/skills/skill-factoring/SKILL.md",
+    ".ai/skills/technician-prompt-kit-acquisition/SKILL.md"
+  ],
   "technician_acquisition": {
     "launcher": "Acquire-Latest-PromptKit.cmd",
     "gui": "scripts/Acquire-LatestPromptKit.ps1",
@@ -37,8 +52,11 @@
   "validation_order": [
     "python scripts/validate_harness.py",
     "python -m unittest tests.test_harness_contract -v",
+    "python -m unittest tests.test_prompt_language_audit -v",
+    "python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary",
     "python -m unittest tests.test_skill_prompt_registry -v",
     "python tests/test_prompt_kit_header_contract.py",
+    "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
     "python -m triage.gitignore_hygiene",
     "git diff --check"
   ]
