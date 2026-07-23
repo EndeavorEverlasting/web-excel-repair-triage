@@ -36,7 +36,7 @@ on:
       - .github/workflows/skill-prompt-registry.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   skill-prompts-and-generators:
@@ -44,23 +44,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: true
+          persist-credentials: false
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Regenerate tracked Prompt Kit website on the owned branch
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        run: |
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
-          if ! git diff --quiet -- web/prompt-kit/index.html; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add web/prompt-kit/index.html
-            git commit -m "chore(prompt-kit): regenerate actionable registry website"
-            git push origin "HEAD:${GITHUB_HEAD_REF}"
-          fi
       - name: Compile registry builder, GUI, and tests
         run: |
           python -m py_compile \
