@@ -2,57 +2,52 @@
 
 ## Status
 
-The repository has a tracked operational harness for agent entry, Prompt Kit delivery, safe technician acquisition, validation, and handoff.
+The repository has a tracked operational harness for agent entry, workflow selection, Prompt Kit delivery, safe technician acquisition, exhaustive prompt-language auditing, skill-eval routing, validation, artifacts, hooks, and handoff.
 
 ## Working surfaces
 
-- `AGENTS.md` is the canonical governance contract and is enforced by focused CI.
-- `CODEBASE_MAP.md`, `WORKFLOW.md`, `ARTIFACT_REGISTRY.md`, and `SKILLS.md` provide the human-readable harness spine.
-- `harness/manifest.v1.json` provides the machine-readable component inventory and validation order.
-- The Prompt Kit website is tracked at `web/prompt-kit/index.html` and must match the combined-registry builder exactly.
-- `Run-PromptKitGenerator.cmd` opens the registered generator GUI.
-- `Build-PromptKitWebsite.cmd` performs the safe one-click website build.
-- `Acquire-Latest-PromptKit.cmd` provides the technician clone/update/open entry point.
-- `scripts/Acquire-LatestPromptKit.ps1` implements destination selection, clean fast-forward update, validation, and post-success launch.
-- `scripts/validate_harness.py` and `tests/test_harness_contract.py` enforce component, registry, skill, hook, and launcher contracts.
-- `.githooks/pre-commit` provides an optional focused local gate.
+- `CODEBASE_MAP.md`, `WORKFLOW.md`, `ARTIFACT_REGISTRY.md`, `SKILLS.md`, `CAPABILITIES.md`, and `TRIGGERS.md` form the human-readable harness spine.
+- `harness/manifest.v1.json`, `harness/capabilities.v1.json`, and `harness/triggers.v1.json` provide machine-readable component and routing ownership.
+- `.ai/skills/prompt-language-audit/SKILL.md` governs exhaustive canonical/effective prompt review.
+- `.ai/skills/skill-evaluation/SKILL.md` governs correctness, regression, profiling, cost, and token-efficiency eval construction.
+- `harness/evals/prompt-language-audit.v1.json` and fixtures define stable prompt-language rules and mutation cases.
+- `scripts/evaluate_prompt_language.py` emits one disposition per prompt and fails coverage or error-level defects.
+- `scripts/validate_harness.py` and contract tests enforce component, registry, skill, eval, hook, launcher, and report contracts.
+- `.githooks/pre-commit` provides a focused gate; `.githooks/pre-push` adds exhaustive audit and exact Prompt Kit parity.
+- `Acquire-Latest-PromptKit.cmd` and its GUI preserve local work, validate the canonical site, and open only after success.
 
 ## Technician acquisition behavior
 
-The acquisition GUI:
+The acquisition GUI clones canonical `main` when absent; otherwise verifies canonical origin, clean `main`, no local-only commits or divergence, fetches and fast-forwards only, validates required files and exact Prompt Kit parity, and opens the selected surface after success. It does not reset, clean, delete branches, force-push, stash, or automate credentials.
 
-1. clones canonical `main` when the selected destination is absent;
-2. verifies canonical origin for existing repositories;
-3. refuses dirty or non-`main` worktrees;
-4. fetches `origin/main`;
-5. refuses local-only commits or divergence;
-6. fast-forwards with `git merge --ff-only` only;
-7. verifies required website, generator, manifest, and builder files;
-8. runs the exact combined-registry website check;
-9. opens the selected website or generator GUI only after success.
+## Prompt-language audit behavior
 
-It does not reset, clean, delete branches, force-push, stash, or automate credentials.
+Audit mode covers every raw and effective prompt, requires equal canonical/effective/disposition counts, emits stable findings and dispositions, and fails duplicate IDs, coverage gaps, empty required fields, or missing effective actionability. Warning-level lazy canonical metadata remains visible as repair debt. Strict mode fails warnings and is the completion gate for a bounded prompt-repair sprint.
 
 ## Known gaps
 
-- Native Windows visual and mouse acceptance remains a field proof. Linux CI can validate source contracts but cannot prove Windows Forms rendering or local desktop policy.
-- The technician machine still needs Git for Windows, Windows PowerShell, Python 3, network access, and repository authorization.
-- `README.md` documents many historical and current workbook engines. Agents must verify focused files and tests before relying on an older README section.
-- The optional pre-commit hook is tracked but is not installed automatically; use `git config core.hooksPath .githooks` per worktree when desired.
+- Warning-level canonical prompt metadata may remain until a strict prompt-repair sprint resolves it; effective prompts remain protected by the shared actionability policy.
+- Provider/model compliance is not proven by static prompt language.
+- Native Windows visual/mouse acquisition and browser behavior remain field proof.
+- Technician machines still require Git for Windows, Windows PowerShell, Python 3, network access, and repository authorization.
+- Generic P62 capability installs target-repository eval infrastructure; it does not pre-prove every future skill.
+- Tracked hooks are optional and must be enabled per worktree with `git config core.hooksPath .githooks`.
 
 ## Validation order
 
 ```powershell
 python scripts\validate_harness.py
 python -m unittest tests.test_harness_contract -v
+python -m unittest tests.test_prompt_language_audit -v
+python scripts\evaluate_prompt_language.py --output Outputs\prompt-language-audit.json --summary
 python -m unittest tests.test_skill_prompt_registry -v
 python tests\test_prompt_kit_header_contract.py
 python -m triage.gitignore_hygiene
 git diff --check
 ```
 
-Run broader repository tests after these focused gates.
+Run broader repository tests after focused gates.
 
 ## Proof ceiling
 
-Current repository proof covers tracked component presence, manifest/schema integrity, required skill sections, launcher command boundaries, protected-path rules, generated-site parity, and CI integration. It does not prove a particular technician's credentials, network, Git installation, Python installation, Windows GUI rendering, or operator acceptance.
+Current proof covers tracked component presence, schema integrity, unique capability/trigger ownership, required skill sections, exhaustive canonical/effective prompt pairing, error-level language rules, fixture mutation detection, acquisition command boundaries, protected paths, deterministic Prompt Kit parity, and CI integration. It does not prove provider obedience, model judgment quality, Windows GUI rendering, credentials/network availability, protected target runtime behavior, technician acceptance, or production success.
