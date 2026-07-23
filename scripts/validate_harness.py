@@ -9,7 +9,15 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = ROOT / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
+import evaluate_prompt_language
+
 MANIFEST_PATH = ROOT / "harness" / "manifest.v1.json"
+CAPABILITIES_PATH = ROOT / "harness" / "capabilities.v1.json"
+TRIGGERS_PATH = ROOT / "harness" / "triggers.v1.json"
 REQUIRED_SKILL_SECTIONS = (
     "## Trigger",
     "## Required inputs",
@@ -30,6 +38,38 @@ FORBIDDEN_ACQUISITION_PATTERNS = (
     "stash drop",
     "credential.helper store",
 )
+REQUIRED_COMPONENT_IDS = {
+    "codebase_map",
+    "workflow_spec",
+    "artifact_registry",
+    "skill_index",
+    "capability_index",
+    "trigger_index",
+    "capability_registry",
+    "trigger_registry",
+    "prompt_language_eval_policy",
+    "prompt_language_eval_fixtures",
+    "prompt_language_eval_runner",
+    "prompt_language_eval_tests",
+    "validator",
+    "contract_tests",
+    "pre_commit_hook",
+    "pre_push_hook",
+    "operator_report",
+}
+REQUIRED_CAPABILITY_IDS = {
+    "prompt-language-audit",
+    "skill-evaluation",
+    "skill-factoring",
+    "technician-prompt-kit-acquisition",
+}
+REQUIRED_TRIGGER_IDS = {
+    "prompt-language-change",
+    "lazy-next-action-report",
+    "skill-quality-unproven",
+    "skill-boundary-defect",
+    "technician-needs-latest-prompt-kit",
+}
 
 
 class HarnessValidationError(RuntimeError):
@@ -91,20 +131,22 @@ def validate_manifest() -> dict[str, Any]:
     components = payload.get("components")
     if not isinstance(components, dict):
         raise HarnessValidationError("harness manifest components must be an object")
-    required_component_ids = {
-        "codebase_map",
-        "workflow_spec",
-        "artifact_registry",
-        "skill_index",
-        "validator",
-        "contract_tests",
-        "hook",
-        "operator_report",
-    }
-    missing = sorted(required_component_ids - set(components))
-    if missing:
-        raise HarnessValidationError(f"harness manifest is missing components: {missing}")
+    missing = sorted(REQUIRED_COMPONENT_IDS - set(components))
+    extra = sorted(set(components) - REQUIRED_COMPONENT_IDS)
+    if missing or extra:
+        raise HarnessValidationError(
+            f"harness component registry drifted; missing={missing} extra={extra}"
+        )
     for relative_path in components.values():
+        require_file(str(relative_path))
+        require_tracked(str(relative_path))
+
+    skills = payload.get("skills")
+    if not isinstance(skills, list) or len(skills) < 4:
+        raise HarnessValidationError("harness manifest must register all active skills")
+    if len(skills) != len(set(skills)):
+        raise HarnessValidationError("harness manifest contains duplicate skill paths")
+    for relative_path in skills:
         require_file(str(relative_path))
         require_tracked(str(relative_path))
 
@@ -138,10 +180,17 @@ def validate_manifest() -> dict[str, Any]:
         raise HarnessValidationError("technician acquisition safety contract drifted")
 
     validation_order = payload.get("validation_order")
-    if not isinstance(validation_order, list) or len(validation_order) < 5:
+    if not isinstance(validation_order, list) or len(validation_order) < 8:
         raise HarnessValidationError("validation_order must contain focused and broad gates")
     if validation_order[0] != "python scripts/validate_harness.py":
         raise HarnessValidationError("harness validator must be the first validation command")
+    for required in (
+        "python -m unittest tests.test_prompt_language_audit -v",
+        "python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary",
+        "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
+    ):
+        if required not in validation_order:
+            raise HarnessValidationError(f"validation_order is missing: {required}")
     if validation_order[-1] != "git diff --check":
         raise HarnessValidationError("git diff --check must close the validation order")
     return payload
@@ -153,7 +202,9 @@ def validate_human_contracts() -> None:
         (
             "## Reading order for a fresh agent",
             "## Primary entry points",
-            "Acquire-Latest-PromptKit.cmd",
+            "CAPABILITIES.md",
+            "TRIGGERS.md",
+            "scripts/evaluate_prompt_language.py",
             "## Safety boundaries and known traps",
         ),
     )
@@ -162,6 +213,9 @@ def validate_human_contracts() -> None:
         (
             "## 1. Pick up a task",
             "### A. Technician acquisition or update",
+            "### C. Harness infrastructure change",
+            "### F. Prompt-language audit or repair",
+            "### G. Skill-evaluation build",
             "## 3. Validate before committing",
             "## 4. Handle failures",
             "## 6. Handoff contract",
@@ -171,9 +225,28 @@ def validate_human_contracts() -> None:
         "ARTIFACT_REGISTRY.md",
         (
             "## Tracked control-plane artifacts",
-            "## Generated runtime artifacts",
+            "Capability registry",
+            "Prompt-language audit report",
             "## Protected inputs",
             "## Proof boundaries",
+        ),
+    )
+    require_text(
+        "CAPABILITIES.md",
+        (
+            "## Active capabilities",
+            "`prompt-language-audit`",
+            "`skill-evaluation`",
+            "## Proof boundaries",
+        ),
+    )
+    require_text(
+        "TRIGGERS.md",
+        (
+            "## Routing table",
+            "`prompt-language-change`",
+            "`skill-quality-unproven`",
+            "## Collision rule",
         ),
     )
     require_text(
@@ -181,19 +254,95 @@ def validate_human_contracts() -> None:
         (
             "## Working surfaces",
             "## Technician acquisition behavior",
+            "## Prompt-language audit behavior",
             "## Known gaps",
             "## Proof ceiling",
         ),
     )
 
 
-def validate_skills() -> None:
+def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]]:
+    capability_payload = load_json(CAPABILITIES_PATH)
+    if capability_payload.get("schema_version") != "web-excel-capabilities/v1":
+        raise HarnessValidationError("unsupported capability registry schema")
+    capabilities = capability_payload.get("capabilities")
+    if not isinstance(capabilities, list) or not capabilities:
+        raise HarnessValidationError("capability registry contains no capabilities")
+    capability_by_id: dict[str, dict[str, Any]] = {}
+    for capability in capabilities:
+        capability_id = str(capability.get("id", ""))
+        if not capability_id or capability_id in capability_by_id:
+            raise HarnessValidationError(f"duplicate or empty capability ID: {capability_id}")
+        capability_by_id[capability_id] = capability
+        skill = str(capability.get("skill", ""))
+        require_file(skill)
+        require_tracked(skill)
+        if not capability.get("inputs") or not capability.get("outputs"):
+            raise HarnessValidationError(f"capability lacks inputs or outputs: {capability_id}")
+        implementation = capability.get("implementation")
+        if not isinstance(implementation, dict):
+            raise HarnessValidationError(f"capability lacks implementation: {capability_id}")
+        kind = implementation.get("kind")
+        if kind in {"script", "launcher"}:
+            require_file(str(implementation.get("path", "")))
+        elif kind == "prompt":
+            if not str(implementation.get("prompt_id", "")).startswith("P"):
+                raise HarnessValidationError(f"prompt capability lacks prompt ID: {capability_id}")
+        else:
+            raise HarnessValidationError(f"unsupported capability implementation kind: {kind}")
+    if set(capability_by_id) != REQUIRED_CAPABILITY_IDS:
+        raise HarnessValidationError(
+            f"capability IDs drifted: {sorted(capability_by_id)}"
+        )
+
+    trigger_payload = load_json(TRIGGERS_PATH)
+    if trigger_payload.get("schema_version") != "web-excel-triggers/v1":
+        raise HarnessValidationError("unsupported trigger registry schema")
+    triggers = trigger_payload.get("triggers")
+    if not isinstance(triggers, list) or not triggers:
+        raise HarnessValidationError("trigger registry contains no triggers")
+    trigger_ids: set[str] = set()
+    for trigger in triggers:
+        trigger_id = str(trigger.get("id", ""))
+        if not trigger_id or trigger_id in trigger_ids:
+            raise HarnessValidationError(f"duplicate or empty trigger ID: {trigger_id}")
+        trigger_ids.add(trigger_id)
+        capability_id = str(trigger.get("capability_id", ""))
+        if capability_id not in capability_by_id:
+            raise HarnessValidationError(
+                f"trigger references unknown capability: {trigger_id} -> {capability_id}"
+            )
+        skill = str(trigger.get("skill", ""))
+        if skill != capability_by_id[capability_id]["skill"]:
+            raise HarnessValidationError(f"trigger skill owner drifted: {trigger_id}")
+        if not trigger.get("conditions") or not isinstance(trigger.get("forbidden_conditions"), list):
+            raise HarnessValidationError(f"trigger conditions are incomplete: {trigger_id}")
+    if trigger_ids != REQUIRED_TRIGGER_IDS:
+        raise HarnessValidationError(f"trigger IDs drifted: {sorted(trigger_ids)}")
+
+    for capability_id, capability in capability_by_id.items():
+        registered = set(capability.get("trigger_ids", []))
+        actual = {
+            str(trigger["id"])
+            for trigger in triggers
+            if trigger.get("capability_id") == capability_id
+        }
+        if registered != actual:
+            raise HarnessValidationError(
+                f"capability trigger list drifted: {capability_id} registered={sorted(registered)} actual={sorted(actual)}"
+            )
+    return capability_payload, trigger_payload
+
+
+def validate_skills(manifest: dict[str, Any], capabilities: dict[str, Any]) -> None:
     index = require_file("SKILLS.md").read_text(encoding="utf-8")
-    skill_paths = (
-        ".ai/skills/skill-factoring/SKILL.md",
-        ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
-    )
-    for relative_path in skill_paths:
+    capability_skill_paths = {
+        str(capability["skill"]) for capability in capabilities["capabilities"]
+    }
+    manifest_skill_paths = {str(path) for path in manifest["skills"]}
+    if capability_skill_paths != manifest_skill_paths:
+        raise HarnessValidationError("skill ownership differs between manifest and capability registry")
+    for relative_path in sorted(manifest_skill_paths):
         if relative_path not in index:
             raise HarnessValidationError(f"SKILLS.md does not index {relative_path}")
         text = require_file(relative_path).read_text(encoding="utf-8")
@@ -203,11 +352,41 @@ def validate_skills() -> None:
         require_tracked(relative_path)
 
 
+def validate_prompt_language_eval() -> None:
+    policy = evaluate_prompt_language.load_policy()
+    if policy.get("capability_id") != "prompt-language-audit":
+        raise HarnessValidationError("prompt-language eval capability ID drifted")
+    fixture_payload = load_json(
+        ROOT / "harness" / "evals" / "fixtures" / "prompt-language-cases.v1.json"
+    )
+    if fixture_payload.get("schema_version") != "prompt-language-fixtures/v1":
+        raise HarnessValidationError("prompt-language fixture schema is invalid")
+    cases = fixture_payload.get("cases")
+    if not isinstance(cases, list) or len(cases) < 4:
+        raise HarnessValidationError("prompt-language fixtures are incomplete")
+    case_ids = [str(case.get("id", "")) for case in cases]
+    if len(case_ids) != len(set(case_ids)) or any(not case_id for case_id in case_ids):
+        raise HarnessValidationError("prompt-language fixture IDs are duplicate or empty")
+
+    report = evaluate_prompt_language.evaluate_registry(policy=policy)
+    if not report["coverage_complete"]:
+        raise HarnessValidationError("prompt-language audit coverage is incomplete")
+    if report["prompt_count"] != report["disposition_count"]:
+        raise HarnessValidationError("prompt-language disposition count differs from prompt count")
+    if report["prompt_count"] != report["effective_prompt_count"]:
+        raise HarnessValidationError("canonical and effective prompt counts differ")
+    if report["error_count"] != 0:
+        raise HarnessValidationError(
+            f"prompt-language audit has error findings: {report['error_count']}"
+        )
+    if "P62" not in {item["prompt_id"] for item in report["prompts"]}:
+        raise HarnessValidationError("prompt-language audit did not evaluate P62")
+
+
 def validate_acquisition_surface() -> None:
     launcher = require_file("Acquire-Latest-PromptKit.cmd").read_text(encoding="utf-8")
     gui = require_file("scripts/Acquire-LatestPromptKit.ps1").read_text(encoding="utf-8")
     combined = f"{launcher}\n{gui}".lower()
-
     for phrase in (
         "raw.githubusercontent.com/endeavoreverlasting/web-excel-repair-triage/main/",
         "scripts\\acquire-latestpromptkit.ps1",
@@ -215,7 +394,6 @@ def validate_acquisition_surface() -> None:
     ):
         if phrase not in launcher.lower():
             raise HarnessValidationError(f"acquisition CMD is missing required behavior: {phrase}")
-
     for phrase in (
         "git @arguments",
         "'clone', '--branch', $defaultbranch, '--single-branch'",
@@ -230,7 +408,6 @@ def validate_acquisition_surface() -> None:
     ):
         if phrase not in gui.lower():
             raise HarnessValidationError(f"acquisition GUI is missing required behavior: {phrase}")
-
     for pattern in FORBIDDEN_ACQUISITION_PATTERNS:
         if pattern.lower() in combined:
             raise HarnessValidationError(
@@ -240,15 +417,26 @@ def validate_acquisition_surface() -> None:
         raise HarnessValidationError("acquisition surface embeds a machine-specific user path")
 
 
-def validate_hook() -> None:
-    hook = require_file(".githooks/pre-commit").read_text(encoding="utf-8")
+def validate_hooks() -> None:
+    pre_commit = require_file(".githooks/pre-commit").read_text(encoding="utf-8")
     for phrase in (
         "python scripts/validate_harness.py",
         "python -m unittest tests.test_harness_contract -v",
         "git diff --cached --check",
     ):
-        if phrase not in hook:
+        if phrase not in pre_commit:
             raise HarnessValidationError(f"pre-commit hook is missing: {phrase}")
+    pre_push = require_file(".githooks/pre-push").read_text(encoding="utf-8")
+    for phrase in (
+        "python scripts/validate_harness.py",
+        "python -m unittest tests.test_harness_contract -v",
+        "python -m unittest tests.test_prompt_language_audit -v",
+        "python scripts/evaluate_prompt_language.py",
+        "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
+        "git diff --check",
+    ):
+        if phrase not in pre_push:
+            raise HarnessValidationError(f"pre-push hook is missing: {phrase}")
 
 
 def validate_generator_manifest() -> None:
@@ -266,25 +454,42 @@ def validate_generator_manifest() -> None:
 
 
 def main() -> int:
-    checks = (
-        ("manifest", validate_manifest),
-        ("human contracts", validate_human_contracts),
-        ("skills", validate_skills),
-        ("technician acquisition", validate_acquisition_surface),
-        ("pre-commit hook", validate_hook),
-        ("generator manifest", validate_generator_manifest),
-    )
     failures: list[str] = []
-    print("Operational Harness Validation")
-    print("=" * 38)
-    for name, check in checks:
+    manifest: dict[str, Any] = {}
+    capabilities: dict[str, Any] = {}
+
+    def run(name: str, check: Any) -> None:
         try:
             check()
-        except (HarnessValidationError, KeyError, TypeError, ValueError) as exc:
+        except (HarnessValidationError, evaluate_prompt_language.PromptLanguageAuditError, KeyError, TypeError, ValueError) as exc:
             failures.append(f"{name}: {exc}")
             print(f"[FAIL] {name}: {exc}")
         else:
             print(f"[PASS] {name}")
+
+    print("Operational Harness Validation")
+    print("=" * 38)
+
+    def manifest_check() -> None:
+        nonlocal manifest
+        manifest = validate_manifest()
+
+    def registry_check() -> None:
+        nonlocal capabilities
+        capabilities, _ = validate_capabilities_and_triggers()
+
+    run("manifest", manifest_check)
+    run("human contracts", validate_human_contracts)
+    run("capabilities and triggers", registry_check)
+    if manifest and capabilities:
+        run("skills", lambda: validate_skills(manifest, capabilities))
+    else:
+        failures.append("skills: prerequisite manifest or capability validation failed")
+        print("[FAIL] skills: prerequisite manifest or capability validation failed")
+    run("prompt-language eval", validate_prompt_language_eval)
+    run("technician acquisition", validate_acquisition_surface)
+    run("hooks", validate_hooks)
+    run("generator manifest", validate_generator_manifest)
 
     if failures:
         print("\nHarness validation failed:")
