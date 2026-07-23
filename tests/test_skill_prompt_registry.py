@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -106,6 +107,138 @@ class SkillPromptRegistryTests(unittest.TestCase):
         self.assertEqual(actual, expected)
         self.assertIn('"id": "P61"', actual)
         self.assertIn('"id": "P62"', actual)
+
+    def test_prompt_nextstep_is_actionable_when_artifact_exists(self) -> None:
+        """Prompts that produce artifacts must have an actionable nextStep that consumes the artifact."""
+        prompts = build_prompt_kit_registry.load_prompt_registry()
+
+        # Only flag truly passive patterns like PR viewing, status checking
+        # "Use P" transitions are legitimate pipeline handoffs
+        passive_patterns = [
+            r"gh pr view.*--web",
+            r"gh pr checks",
+            r"git status",
+            r"git branch",
+            r"git log",
+            r"show workflow logs",
+            r"open.*pr page",
+            r"view.*pr",
+            r"check status",
+        ]
+
+        actionable_pattern = re.compile(r"git worktree add|git clone|python.*-m unittest|python scripts/|start .*\.html|start .*\.json|cat .*\.txt|Open.*artifact|open.*website|launch.*generator|validate.*output|run.*validator", re.IGNORECASE)
+
+        for prompt in prompts:
+            prompt_type = prompt.get("type", "")
+            next_step = prompt.get("nextStep", "")
+
+            if prompt_type in {"BUILD", "REPAIR", "BUILD + MUTATE", "BUILD + ARTIFACT",
+                               "BUILD + FACTOR", "BUILD + BOOTSTRAP", "BUILD + SAFETY",
+                               "BUILD + ARTIFACT", "REVIEW + BUILD",
+                               "ANALYZE + FACTOR", "ANALYZE + TEST",
+                               "ENABLEMENT + BUILD", "OPERATE",
+                               "AUTONOMY + VALIDATE", "AUTONOMY + BUILD", "AUTONOMY + PLAN",
+                               "AUTONOMY + PREFLIGHT", "AUTONOMY + QUEUE", "RECOVER + BUILD",
+                               "RECOVER + COMMIT", "HARNESS + BUILD", "HARNESS + EXECUTE",
+                               "CURSOR + LIVE CERT", "ENVIRONMENT + CONFIGURE",
+                               "CONTEXT-TO-ARTIFACT", "SPRINT / BUILD + MUTATE"}:
+                has_passive = any(re.search(pattern, next_step, re.IGNORECASE) for pattern in passive_patterns)
+                has_actionable = bool(actionable_pattern.search(next_step))
+                # Fail only if there's a passive pattern AND no actionable pattern
+                if has_passive and not has_actionable:
+                    self.fail(f"Prompt {prompt['id']} ({prompt['name']}) has passive nextStep: {next_step[:200]}")
+
+    def test_prompt_nextstep_contains_artifact_consumption_pattern(self) -> None:
+        """Actionable prompts should contain artifact consumption patterns in nextStep."""
+        prompts = build_prompt_kit_registry.load_prompt_registry()
+
+        must_have_artifact_consumption = {"P03", "P07", "P26", "P28", "P29", "P30", "P32", "P33",
+                                          "P35", "P37", "P38", "P39", "P40", "P41", "P47", "P48",
+                                          "P52", "P53", "P55", "P56", "P58", "P59", "P60"}
+
+        artifact_patterns = [
+            r"git worktree add",
+            r"git clone",
+            r"python.*-m unittest",
+            r"python scripts/",
+            r"start .*\\.html",
+            r"start .*\\.json",
+            r"cat .*\\.txt",
+            r"open.*artifact",
+            r"launch.*generator",
+            r"validate.*output",
+            r"run.*validator",
+            r"tee .*\\.txt",
+        ]
+
+        for prompt in prompts:
+            if prompt["id"] in must_have_artifact_consumption:
+                next_step = prompt.get("nextStep", "")
+                has_pattern = any(re.search(pattern, next_step, re.IGNORECASE) for pattern in artifact_patterns)
+                self.assertTrue(has_pattern,
+                    f"Prompt {prompt['id']} ({prompt['name']}) lacks artifact consumption pattern in nextStep")
+
+    def test_prompt_nextstep_preserves_dirty_work(self) -> None:
+        """Actionable prompts should preserve dirty work through worktree isolation."""
+        prompts = build_prompt_kit_registry.load_prompt_registry()
+
+        must_preserve_dirty = {"P03", "P07", "P26", "P28", "P29", "P30", "P32", "P33",
+                               "P35", "P37", "P38", "P39", "P40", "P41", "P47", "P48",
+                               "P52", "P53", "P55", "P56", "P58", "P59", "P60"}
+
+        for prompt in prompts:
+            if prompt["id"] in must_preserve_dirty:
+                next_step = prompt.get("nextStep", "")
+                self.assertIn("git worktree add", next_step,
+                    f"Prompt {prompt['id']} should use worktree for isolation")
+                self.assertNotIn("git reset --hard", next_step)
+                self.assertNotIn("git clean -fd", next_step)
+                self.assertNotIn("git push --force", next_step)
+                self.assertNotIn("git checkout -f", next_step)
+
+    def test_prompt_nextstep_propagates_exit_code(self) -> None:
+        """Actionable prompts should propagate command failures and exit codes."""
+        prompts = build_prompt_kit_registry.load_prompt_registry()
+
+        must_propagate = {"P03", "P07", "P26", "P28", "P29", "P30", "P32", "P33",
+                          "P35", "P37", "P38", "P39", "P40", "P41", "P47", "P48",
+                          "P52", "P53", "P55", "P56", "P58", "P59", "P60"}
+
+        for prompt in prompts:
+            if prompt["id"] in must_propagate:
+                next_step = prompt.get("nextStep", "")
+                self.assertNotIn("|| true", next_step)
+                self.assertNotIn("2>nul", next_step.lower())
+                self.assertNotIn("2>/dev/null", next_step)
+
+    def test_prompt_registry_no_gh_pr_view_as_sole_nextstep(self) -> None:
+        """No prompt should have 'gh pr view --web' as its only actionable nextStep."""
+        prompts = build_prompt_kit_registry.load_prompt_registry()
+
+        for prompt in prompts:
+            next_step = prompt.get("nextStep", "")
+            if "gh pr view" in next_step and "--web" in next_step:
+                has_artifact = bool(re.search(r"git worktree add|python.*-m unittest|start .*\\.html|cat .*\\.txt|tee .*\\.txt", next_step))
+                self.assertTrue(has_artifact,
+                    f"Prompt {prompt['id']} uses 'gh pr view --web' without artifact consumption")
+
+    def test_prompt_registry_validates_panel_chat_equivalence(self) -> None:
+        """Verify panel/chat contract is preserved in prompt metadata."""
+        prompts = build_prompt_kit_registry.load_prompt_registry()
+
+        parallel_prompts = {"P59"}
+        for prompt in prompts:
+            if prompt["id"] in parallel_prompts:
+                next_step = prompt.get("nextStep", "")
+                self.assertTrue("parallel" in next_step.lower() or "worktree" in next_step.lower(),
+                    f"Parallel prompt {prompt['id']} should mention parallel/worktree execution")
+
+        serialized_prompts = {"P60"}
+        for prompt in prompts:
+            if prompt["id"] in serialized_prompts:
+                next_step = prompt.get("nextStep", "")
+                self.assertTrue("handoff" in next_step.lower() or "step" in next_step.lower(),
+                    f"Serialized prompt {prompt['id']} should mention handoff/step")
 
 
 if __name__ == "__main__":
