@@ -48,6 +48,12 @@ git diff --check
 
 Run broader repository tests after focused gates.
 
+## Build provenance
+
+- Harness build branch: `feat/operational-harness-prompt-audit`.
+- Dependency branch: `feat/actionable-next-step-prompt-contract` (P62 and effective actionability policy).
+- Merge order: governance PR, prompt-registry PR, then this harness PR.
+
 ## Proof ceiling
 
 Current proof covers tracked component presence, schema integrity, unique capability/trigger ownership, required skill sections, exhaustive canonical/effective prompt pairing, error-level language rules, fixture mutation detection, acquisition command boundaries, protected paths, deterministic Prompt Kit parity, and CI integration. It does not prove provider obedience, model judgment quality, Windows GUI rendering, credentials/network availability, protected target runtime behavior, technician acceptance, or production success.
