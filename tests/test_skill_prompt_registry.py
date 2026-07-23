@@ -25,6 +25,50 @@ class SkillPromptRegistryTests(unittest.TestCase):
         self.assertEqual(by_id["P62"]["class"], "AGENT HARNESS / SKILL EVALS")
         self.assertNotEqual(by_id["P61"]["copyContent"], by_id["P62"]["copyContent"])
 
+    def test_skill_eval_prompt_requires_correctness_weakness_and_efficiency_proof(self) -> None:
+        prompts = build_prompt_kit_registry.load_prompt_registry()
+        prompt = {item["id"]: item for item in prompts}["P62"]
+        content = prompt["copyContent"]
+
+        self.assertEqual(
+            prompt["name"],
+            "Skill Correctness and Efficiency Eval Implementer",
+        )
+        self.assertIn("bugs, missing functionality", prompt["useWhen"])
+        self.assertIn("performance and token instrumentation", prompt["expectedOutput"])
+        self.assertIn("open or print the canonical machine-readable report", prompt["nextStep"])
+        self.assertIn("measured token/latency/cost improvements preserve quality", prompt["proofGate"])
+
+        for phrase in (
+            "IDENTIFY WEAKNESSES, NOT JUST FAILURES",
+            "functional bugs and incorrect outputs",
+            "missing functionality or unhandled conditions",
+            "false-positive and false-negative skill selection",
+            "unit tests for deterministic helpers",
+            "integration tests across skill + trigger + capability + workflow + artifact",
+            "test-driven development",
+            "profiling or execution traces",
+            "prompt, completion, cached, and total token usage",
+            "context files/bytes loaded",
+            "OPTIMIZE WITH SOUND FACTORING PRINCIPLES",
+            "move deterministic work into code, schemas, registries, validators, and workflows",
+            "load only the skill instructions and repository context required",
+            "remove duplicate calls, unnecessary intermediate summaries",
+            "performance or token change passes only when",
+            "baseline/candidate deltas",
+            "finding-to-repair ledger",
+            "unit and integration tests",
+            "one exact next command that runs the eval",
+        ):
+            self.assertIn(phrase, content)
+
+        for forbidden_shortcut in (
+            "DO NOT RETURN ONLY A RUBRIC",
+            "Never weaken an assertion",
+            "do not optimize a proxy while degrading the real task",
+        ):
+            self.assertIn(forbidden_shortcut, content)
+
     def test_skill_factoring_file_has_required_contract_sections(self) -> None:
         path = REPO_ROOT / ".ai" / "skills" / "skill-factoring" / "SKILL.md"
         content = path.read_text(encoding="utf-8")
@@ -97,7 +141,7 @@ class SkillPromptRegistryTests(unittest.TestCase):
             self.assertIn('"id": "P61"', html)
             self.assertIn('"id": "P62"', html)
             self.assertIn("Skill Factoring and Boundary Refactorer", html)
-            self.assertIn("Skill Evaluation Harness Implementer", html)
+            self.assertIn("Skill Correctness and Efficiency Eval Implementer", html)
 
     def test_checked_in_operator_site_is_exact_combined_build(self) -> None:
         deployed = REPO_ROOT / "web" / "prompt-kit" / "index.html"
@@ -106,6 +150,7 @@ class SkillPromptRegistryTests(unittest.TestCase):
         self.assertEqual(actual, expected)
         self.assertIn('"id": "P61"', actual)
         self.assertIn('"id": "P62"', actual)
+        self.assertIn("Skill Correctness and Efficiency Eval Implementer", actual)
 
 
 if __name__ == "__main__":
