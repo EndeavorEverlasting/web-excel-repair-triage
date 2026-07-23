@@ -170,6 +170,29 @@ Every committed prompt must define:
 
 The repository must provide a reusable prompt-contribution skill for collaborator guidance, a machine-readable prompt-contribution capability for the reusable operation, and a deterministic trigger that routes prompt-addition or prompt-repair requests to that skill, capability, and workflow. Collaborator self-service is not complete while those surfaces exist only as prose or while contributors must guess which registry, builder, or validator owns the change.
 
+### Prompt language quality audit
+
+The repository must also provide one canonical prompt-language-audit skill, one machine-readable prompt-language-audit capability, and one evaluation harness that passes through every prompt in the combined canonical base and extension registries. A sampled review, policy-marker check, or audit of selected prompts is insufficient. Every registered prompt must receive an explicit `pass`, `repair`, `defer`, or `not_applicable` disposition, and a skipped prompt must fail the audit.
+
+The prompt-language-audit skill must define the reusable judgment and repair procedure for examining prompt metadata and complete copy-safe content. It must inspect at minimum the prompt identity, use condition, expected output, next step, proof gate, final-response contract, next commands, next-step lists, artifact references, validation language, ownership language, dependency language, and proof ceiling. It must preserve legitimate prompt-specific behavior while repairing language that permits non-action, ambiguity, operator reconstruction, or inflated proof.
+
+The prompt-language-audit capability must expose explicit machine-readable inputs and outputs. Inputs must include the registry sources, policy version, builder, generated surface, and optional bounded prompt identifiers. Outputs must include the complete prompt inventory, one disposition per prompt, stable rule identifiers, severity, exact field or section, concise evidence, proposed or applied canonical-source repair, validation result, generated-artifact parity result, and aggregate pass or fail. Audit-only and repair modes must be distinct; repair mode must mutate canonical sources rather than generated HTML.
+
+The evaluation harness must include positive fixtures, negative fixtures, and mutation tests that fail on at least these defects:
+
+- empty, placeholder, optional-only, or non-executable next commands and next steps;
+- PR-opening, status-only, branch-listing, log-viewing, waiting, monitoring, or permission-seeking as the sole action while safe executable work remains;
+- generic verbs or nouns such as `test`, `review`, `merge`, `deploy`, `document`, `monitor`, `follow up`, or `continue` without an owner, exact target, dependency, command or operation, and completion gate;
+- missing repository, branch or commit retrieval when the work is remote or unmerged;
+- missing dirty-worktree preservation, validator, builder, launcher, artifact resolution, artifact opening or path output, failure propagation, or proof ceiling;
+- instructions that require the operator or technician to reconstruct a workflow from command fragments;
+- contradictions between owned scope, forbidden scope, expected artifacts, validation, proof claims, and the proposed next action;
+- stale generated output, incomplete registry coverage, duplicate policy application, and non-idempotent regeneration.
+
+The eval must report the total prompt count and prove that the disposition count equals that total. A prompt-language audit is complete only after all findings are repaired or explicitly deferred with an owner and blocking reason, focused evals pass, the canonical generated surface is rebuilt, exact parity passes, patch hygiene passes, and commit, push, and PR evidence are reported.
+
+The skill, capability, schemas, fixtures, eval runner, registry integration, reports, and generated-surface wiring belong in a separately declared agent-harness and prompt-registry sprint. They may not exist only as prose inside a prompt, and this governance-only sprint must not implement them.
+
 The factoring boundary is mandatory:
 
 - skills describe reusable workflow guidance and judgment;
