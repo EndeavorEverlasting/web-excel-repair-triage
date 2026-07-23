@@ -1,0 +1,45 @@
+{
+  "schema_version": "web-excel-triggers/v1",
+  "triggers": [
+    {
+      "id": "prompt-language-change",
+      "capability_id": "prompt-language-audit",
+      "skill": ".ai/skills/prompt-language-audit/SKILL.md",
+      "workflow": "WORKFLOW.md#f-prompt-language-audit-or-repair",
+      "conditions": ["prompt registry changes", "actionability policy changes", "Prompt Kit builder changes", "generated Prompt Kit language changes", "full prompt-language pass requested"],
+      "forbidden_conditions": ["no canonical registry source", "generated HTML is the only proposed mutation target"]
+    },
+    {
+      "id": "lazy-next-action-report",
+      "capability_id": "prompt-language-audit",
+      "skill": ".ai/skills/prompt-language-audit/SKILL.md",
+      "workflow": "WORKFLOW.md#f-prompt-language-audit-or-repair",
+      "conditions": ["empty next action", "placeholder next action", "PR/status/log-only next action", "generic next steps", "optional-only next action"],
+      "forbidden_conditions": ["request is only to display an existing validated audit report"]
+    },
+    {
+      "id": "skill-quality-unproven",
+      "capability_id": "skill-evaluation",
+      "skill": ".ai/skills/skill-evaluation/SKILL.md",
+      "workflow": "WORKFLOW.md#g-skill-evaluation-build",
+      "conditions": ["skill correctness is unproven", "routing quality is unproven", "regression safety is unproven", "performance or token use is unmeasured", "known skill weakness lacks a reproducer"],
+      "forbidden_conditions": ["request is only cosmetic skill wording", "target skill or owning repository is unknown"]
+    },
+    {
+      "id": "skill-boundary-defect",
+      "capability_id": "skill-factoring",
+      "skill": ".ai/skills/skill-factoring/SKILL.md",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "conditions": ["oversized skill", "overlapping skill ownership", "ambiguous trigger", "deterministic behavior hidden in prose"],
+      "forbidden_conditions": ["healthy boundary with cosmetic-only change"]
+    },
+    {
+      "id": "technician-needs-latest-prompt-kit",
+      "capability_id": "technician-prompt-kit-acquisition",
+      "skill": ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
+      "workflow": "WORKFLOW.md#a-technician-acquisition-or-update",
+      "conditions": ["technician requests latest main Prompt Kit", "mouse-accessible acquisition requested"],
+      "forbidden_conditions": ["dirty checkout", "wrong origin", "non-main checkout", "local-only commits", "divergence"]
+    }
+  ]
+}
