@@ -161,6 +161,39 @@ class GovernanceContractTests(unittest.TestCase):
         ):
             self.assertIn(phrase, section)
 
+    def test_prompt_language_audit_skill_capability_and_evals_are_governed(self) -> None:
+        section = self._section("## 9. Collaborator prompt contribution governance", "## 10.")
+        for phrase in (
+            "one canonical prompt-language-audit skill",
+            "one machine-readable prompt-language-audit capability",
+            "one evaluation harness that passes through every prompt",
+            "combined canonical base and extension registries",
+            "A sampled review, policy-marker check, or audit of selected prompts is insufficient",
+            "Every registered prompt must receive an explicit `pass`, `repair`, `defer`, or `not_applicable` disposition",
+            "a skipped prompt must fail the audit",
+            "reusable judgment and repair procedure",
+            "prompt metadata and complete copy-safe content",
+            "next commands, next-step lists, artifact references, validation language, ownership language, dependency language, and proof ceiling",
+            "explicit machine-readable inputs and outputs",
+            "complete prompt inventory, one disposition per prompt, stable rule identifiers, severity",
+            "Audit-only and repair modes must be distinct",
+            "repair mode must mutate canonical sources rather than generated HTML",
+            "positive fixtures, negative fixtures, and mutation tests",
+            "empty, placeholder, optional-only, or non-executable next commands and next steps",
+            "PR-opening, status-only, branch-listing, log-viewing, waiting, monitoring, or permission-seeking",
+            "without an owner, exact target, dependency, command or operation, and completion gate",
+            "missing dirty-worktree preservation, validator, builder, launcher, artifact resolution",
+            "require the operator or technician to reconstruct a workflow from command fragments",
+            "contradictions between owned scope, forbidden scope, expected artifacts, validation, proof claims, and the proposed next action",
+            "stale generated output, incomplete registry coverage, duplicate policy application, and non-idempotent regeneration",
+            "disposition count equals that total",
+            "all findings are repaired or explicitly deferred with an owner and blocking reason",
+            "canonical generated surface is rebuilt, exact parity passes, patch hygiene passes",
+            "They may not exist only as prose inside a prompt",
+            "this governance-only sprint must not implement them",
+        ):
+            self.assertIn(phrase, section)
+
     def test_prompt_panels_and_chats_share_parallel_execution_contract(self) -> None:
         section = self._section(
             "## 10. Prompt panels, chats, and parallel execution", "## 11."
