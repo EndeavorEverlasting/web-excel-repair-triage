@@ -1,0 +1,59 @@
+{
+  "schema_version": "web-excel-capabilities/v1",
+  "capabilities": [
+    {
+      "id": "prompt-language-audit",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/prompt-language-audit/SKILL.md",
+      "trigger_ids": ["prompt-language-change", "lazy-next-action-report"],
+      "operation": "Evaluate every canonical and effective Prompt Kit prompt for complete, actionable, non-lazy language and emit one disposition per prompt.",
+      "inputs": [
+        "docs/prompts.json",
+        "registry/prompts/*.json",
+        "registry/prompts/actionable-next-step-policy.v1.json",
+        "scripts/build_prompt_kit_registry.py",
+        "harness/evals/prompt-language-audit.v1.json"
+      ],
+      "outputs": ["prompt-language-audit-result/v1 report", "per-prompt disposition", "finding-to-repair ledger"],
+      "implementation": {"kind": "script", "path": "scripts/evaluate_prompt_language.py"},
+      "proof_ceiling": "Exhaustive static registry and effective-prompt language proof; no provider compliance proof."
+    },
+    {
+      "id": "skill-evaluation",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/skill-evaluation/SKILL.md",
+      "trigger_ids": ["skill-quality-unproven"],
+      "operation": "Install executable correctness, routing, regression, performance, cost, and token-efficiency evals for a target skill and repair valid weaknesses.",
+      "inputs": ["target skill", "trigger and capability contracts", "known failures", "unit and integration surfaces", "baseline traces"],
+      "outputs": ["versioned eval cases", "runner", "machine-readable results", "finding-to-repair ledger", "before-and-after measurements"],
+      "implementation": {"kind": "prompt", "prompt_id": "P62"},
+      "proof_ceiling": "Depends on the eval lanes actually executed; static, model, runtime, and production proof must remain distinct."
+    },
+    {
+      "id": "skill-factoring",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/skill-factoring/SKILL.md",
+      "trigger_ids": ["skill-boundary-defect"],
+      "operation": "Factor skill ownership into deterministic reusable boundaries without moving application behavior into prose.",
+      "inputs": ["skills", "capabilities", "triggers", "consumers", "tests", "failure evidence"],
+      "outputs": ["KEEP/SPLIT/MERGE/RETIRE/REWIRE dispositions", "repaired skills and routing", "boundary fixtures"],
+      "implementation": {"kind": "prompt", "prompt_id": "P61"},
+      "proof_ceiling": "Static ownership and routing proof until model or runtime evals are executed."
+    },
+    {
+      "id": "technician-prompt-kit-acquisition",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
+      "trigger_ids": ["technician-needs-latest-prompt-kit"],
+      "operation": "Clone or clean-fast-forward main, validate the Prompt Kit, and open the selected technician surface.",
+      "inputs": ["canonical repository URL", "destination", "Git", "Windows PowerShell", "Python 3", "repository access"],
+      "outputs": ["validated main checkout", "opened Prompt Kit website or generator GUI"],
+      "implementation": {"kind": "launcher", "path": "Acquire-Latest-PromptKit.cmd"},
+      "proof_ceiling": "Source and contract proof until native Windows acquisition and browser behavior are observed."
+    }
+  ]
+}
