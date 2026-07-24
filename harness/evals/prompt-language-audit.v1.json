@@ -20,12 +20,13 @@
   "lazy_next_step_patterns": [
     "^\\s*$",
     "^(tbd|todo|later|next|continue|review|test|merge|deploy|document|monitor)[.!]?$",
-    "^(open|view|check|inspect|review)\\s+(the\\s+)?(pr|pull request|status|logs?|branches?|commits?)[.!]?$",
+    "^(open|view|check|inspect|review|update)\\s+(the\\s+)?(pr|pull request|status|logs?|branches?|commits?)[.!]?$",
     "^(wait|continue later|ask the user|request permission)[.!]?$"
   ],
   "generic_step_patterns": [
     "^\\s*[-*]?\\s*(test|review|merge|deploy|document|monitor|continue)\\s*[.!]?\\s*$"
   ],
+  "compound_connectors_pattern": "\\s*(?:,|;|\\b(?:then|and then|and|after that)\\b)\\s*",
   "required_effective_next_step_phrases": [
     "first executable",
     "canonical artifact or proof"
