@@ -5,8 +5,19 @@
   "applies_to": "Every prompt in the combined canonical Prompt Kit registry.",
   "next_step_suffix": "Do not leave the next step empty or generic: identify the first executable, dependency-aware action that advances or consumes the canonical artifact or proof; PR, status, branch, or log inspection alone is invalid when safe executable work remains.",
   "allowed_none_value": "none; no safe actionable work remains",
+  "existing_work_reuse": {
+    "rule": "Before creating a new branch or pull request, inspect current, open, and recent pull requests, branches, worktrees, and commits for the same or overlapping owned scope. Reuse, repair, update, retarget, or extend the existing owner when it can safely carry the work.",
+    "new_pr_allowed_when": [
+      "no suitable existing owner exists",
+      "the existing pull request or branch is unsafe, irreparably stale, or intentionally superseded",
+      "scope isolation requires a distinct writer and collision analysis proves the split is safer"
+    ],
+    "preservation_rule": "Before superseding, closing, or abandoning an existing pull request or branch, preserve every unique useful commit, file, artifact, decision, test, and proof that belongs in the surviving work.",
+    "disposition_evidence": "When a new pull request is created despite related existing work, report the inspected pull requests or branches, why each was reused, repaired, superseded, or rejected, and where any unique useful work was preserved."
+  },
   "forbidden_solo_actions": [
     "open or reopen a pull request",
+    "create a new branch or pull request without first proving that no suitable existing owner can be safely reused, repaired, updated, retargeted, or extended",
     "display already-reported status",
     "list branches or commits",
     "show logs without executing the owning validator or repair",
