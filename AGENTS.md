@@ -52,6 +52,24 @@ A sprint is complete only when all applicable items are reported:
 
 Static validation proves only static behavior. CI proves only the exercised CI surface. Neither may be represented as live operator, provider, Windows GUI, or production-runtime proof.
 
+### Actionable next-command contract
+
+The exact next command must advance the operator from reported evidence to the next useful, unproven state. It must consume, validate, launch, open, or otherwise exercise the work product. A command that merely reopens a PR, displays a PR page, repeats status already reported, lists branches, or shows logs is not a valid next command when a safe artifact-consumption or validation action is available.
+
+When the completed work exists on a remote branch or unmerged commit, the next command must:
+
+- set the repository location or safe destination explicitly;
+- fetch without force and identify the exact branch and commit;
+- preserve a dirty or separately owned primary checkout by using an isolated worktree or another non-destructive mechanism;
+- run the exact validation, build, or launcher required to prove or consume the result;
+- open or print the canonical latest artifact defined by the repository's artifact registry, manifest, builder, workflow, or operator documentation;
+- propagate failures and the final exit code;
+- must not execute production by default or silently promote a dry run into production.
+
+The canonical artifact is the primary user-consumable output appropriate to the repository, such as a website, workbook, report, package, installer, binary, launcher, rendered documentation, test report, or another declared artifact. Do not guess from a generic filename, search for an arbitrary `index.html`, or open an unrelated build or dependency artifact. Resolve the artifact from tracked repository evidence.
+
+If no renderable or launchable artifact exists, the next command must run the highest-value remaining validator or launcher and print the resulting evidence path. Use `none; cleanup complete` only when no safe and useful action remains. A PR-opening or PR-review command is acceptable only when PR review or merge is the actual blocking gate and the final report names that gate explicitly.
+
 ## 5. Forbidden behaviors
 
 Agents must not:
@@ -64,7 +82,9 @@ Agents must not:
 - delete branches, worktrees, PRs, or unique commits before preservation proof;
 - hide deterministic application behavior exclusively in prompts or skills;
 - weaken validators, fixtures, or proof requirements merely to make a check pass;
-- write generated outputs into protected operator-input directories.
+- write generated outputs into protected operator-input directories;
+- offer a PR-opening, status-only, branch-listing, or log-view command as the sole next action when artifact retrieval, validation, build, launch, or opening is safely available;
+- instruct the operator to guess the latest artifact from a generic filename instead of using the repository's canonical artifact contract.
 
 ## 6. Repository mutation discipline
 
@@ -95,7 +115,124 @@ If destination or behavior choices are required, they must be presented through 
 
 This section is a governance requirement. Its implementation belongs in a separately declared launcher or operator-enablement sprint, not in a governance-only sprint.
 
-## 8. Billing pipeline directional contract
+## 8. Live certification execution topology
+
+The Prompt Kit must retain a live-certification prompt because live certification is not confined to one execution location. The prompt and its downstream workflow must select a topology from repository and runtime evidence rather than assuming that every certification is local or remote.
+
+### Local topology
+
+Local live certification remains a supported execution topology when proof depends on the operator workstation, a locally attached device, local network reachability, a desktop or browser surface, private inputs that may not be published, or a runtime unavailable to the remote branch environment.
+
+A local live-cert workflow must:
+
+- use a repository-owned launcher, script, validator, or exact bounded command rather than asking a technician to reconstruct a workflow from fragments;
+- identify the repository, commit, target, phase, expected artifacts, and proof ceiling before execution;
+- run a dry run first when the operation can mutate a target, unless the repository contract proves that the requested action is read-only;
+- propagate nonzero exit codes and name the failed phase;
+- write only non-sensitive logs, receipts, and reports to repository-approved output locations;
+- distinguish process start, command acknowledgment, observed behavior, local runtime proof, and production proof.
+
+### Remote-branch topology
+
+Remote-branch live certification remains a supported execution topology when the implementation, generated output, and deterministic validation can be produced safely on an isolated remote branch without access to a protected local or production-only runtime.
+
+A remote-branch live-cert workflow must:
+
+- create or reuse one isolated branch owned by the cert lane;
+- commit the implementation, generated output, validators, and safe evidence required for the user to consume the result;
+- push normally and report the exact branch and commit SHA;
+- provide one copy-paste pull-and-test snippet in the final response so the user can retrieve the exact remote output and run its verification automatically;
+- make that snippet set the repository location, fetch without force, pin the exact commit SHA, preserve a dirty primary checkout by using a clean worktree or other non-destructive mechanism, run the exact validator or test, propagate its exit code, and print or open the resulting artifact path;
+- ensure the pull-and-test snippet must not execute production by default and cannot silently promote a dry run into a production action;
+- refuse to publish secrets, credentials, private evidence, protected inputs, or unsafe production artifacts on the branch.
+
+Remote branch proof is not local or target-runtime proof. A green remote branch may prove source, build, generated-output, schema, fixture, CI, or bounded remote-runtime behavior only. The final report must name every local, target, provider, GUI, device, network, or production gate that remains unproven.
+
+When both topologies are viable, prefer the topology that produces the strongest safe evidence with the least operator reconstruction. Use remote production of deterministic artifacts plus a pinned pull-and-test snippet when that reduces technician steps; use local certification when the proof genuinely depends on the local or target runtime.
+
+This section governs the future live-cert prompt, skill, capability, trigger, workflow, validators, and result artifacts. Their implementation belongs in separately declared harness and prompt-registry sprints, not in a governance-only sprint.
+
+## 9. Collaborator prompt contribution governance
+
+Collaborators must add or repair prompts through the canonical prompt registry source and its registered builder, never by editing generated HTML directly or by pasting an untracked prompt into documentation as the only implementation.
+
+Before adding a prompt, the contributor must inspect existing governance, prompt IDs and sequences, registry extensions, builders, schemas, skills, capabilities, triggers, validators, generated-output policy, open PRs, and recent history. Existing prompt ownership must be reused, split, merged, retired, or rewired deliberately rather than duplicated.
+
+Every committed prompt must define:
+
+- a unique identifier and sequence;
+- a clear name, type, class, deterministic use condition, and keywords;
+- the files, contracts, or evidence to inspect first;
+- owned scope, forbidden scope, expected artifacts, validation order, and proof ceiling;
+- complete copy-safe prompt content;
+- the next workflow or proof gate;
+- focused tests that reject duplicate identity, incomplete records, stale generated output, and ownership drift.
+
+The repository must provide a reusable prompt-contribution skill for collaborator guidance, a machine-readable prompt-contribution capability for the reusable operation, and a deterministic trigger that routes prompt-addition or prompt-repair requests to that skill, capability, and workflow. Collaborator self-service is not complete while those surfaces exist only as prose or while contributors must guess which registry, builder, or validator owns the change.
+
+### Prompt language quality audit
+
+The repository must also provide one canonical prompt-language-audit skill, one machine-readable prompt-language-audit capability, and one evaluation harness that passes through every prompt in the combined canonical base and extension registries. A sampled review, policy-marker check, or audit of selected prompts is insufficient. Every registered prompt must receive an explicit `pass`, `repair`, `defer`, or `not_applicable` disposition, and a skipped prompt must fail the audit.
+
+The prompt-language-audit skill must define the reusable judgment and repair procedure for examining prompt metadata and complete copy-safe content. It must inspect at minimum the prompt identity, use condition, expected output, next step, proof gate, final-response contract, next commands, next-step lists, artifact references, validation language, ownership language, dependency language, and proof ceiling. It must preserve legitimate prompt-specific behavior while repairing language that permits non-action, ambiguity, operator reconstruction, or inflated proof.
+
+The prompt-language-audit capability must expose explicit machine-readable inputs and outputs. Inputs must include the registry sources, policy version, builder, generated surface, and optional bounded prompt identifiers. Outputs must include the complete prompt inventory, one disposition per prompt, stable rule identifiers, severity, exact field or section, concise evidence, proposed or applied canonical-source repair, validation result, generated-artifact parity result, and aggregate pass or fail. Audit-only and repair modes must be distinct; repair mode must mutate canonical sources rather than generated HTML.
+
+The evaluation harness must include positive fixtures, negative fixtures, and mutation tests that fail on at least these defects:
+
+- empty, placeholder, optional-only, or non-executable next commands and next steps;
+- PR-opening, status-only, branch-listing, log-viewing, waiting, monitoring, or permission-seeking as the sole action while safe executable work remains;
+- generic verbs or nouns such as `test`, `review`, `merge`, `deploy`, `document`, `monitor`, `follow up`, or `continue` without an owner, exact target, dependency, command or operation, and completion gate;
+- missing repository, branch or commit retrieval when the work is remote or unmerged;
+- missing dirty-worktree preservation, validator, builder, launcher, artifact resolution, artifact opening or path output, failure propagation, or proof ceiling;
+- instructions that require the operator or technician to reconstruct a workflow from command fragments;
+- contradictions between owned scope, forbidden scope, expected artifacts, validation, proof claims, and the proposed next action;
+- stale generated output, incomplete registry coverage, duplicate policy application, and non-idempotent regeneration.
+
+The eval must report the total prompt count and prove that the disposition count equals that total. A prompt-language audit is complete only after all findings are repaired or explicitly deferred with an owner and blocking reason, focused evals pass, the canonical generated surface is rebuilt, exact parity passes, patch hygiene passes, and commit, push, and PR evidence are reported.
+
+The skill, capability, schemas, fixtures, eval runner, registry integration, reports, and generated-surface wiring belong in a separately declared agent-harness and prompt-registry sprint. They may not exist only as prose inside a prompt, and this governance-only sprint must not implement them.
+
+The factoring boundary is mandatory:
+
+- skills describe reusable workflow guidance and judgment;
+- capabilities expose reusable operations with explicit inputs and outputs;
+- triggers route deterministic conditions to the correct skill, capability, or workflow;
+- application and generator behavior remains in code, schemas, registries, services, and domain contracts;
+- prompts orchestrate work but may not become the only implementation of product behavior.
+
+The live-cert prompt must support both local and remote-branch certification topologies, including the pinned copy-paste pull-and-test snippet required by section 8. It must not collapse those topologies into a local-only command or a remote-only artifact workflow.
+
+A prompt contribution is complete only after canonical source changes, focused validation, deterministic regeneration, Git diff review, commit, push, and PR evidence are reported. Generated website or workbook artifacts must be rebuilt from the canonical source and validated for exact parity.
+
+This section is a governance requirement. The prompt-contribution skill, capability, trigger, prompt records, schemas, validators, fixtures, workflows, and generated surfaces must be implemented in a separately declared harness or prompt-registry sprint.
+
+## 10. Prompt panels, chats, and parallel execution
+
+A prompt panel is a copyable transport container for one complete executable prompt. A chat is the execution instance created when that prompt is submitted. When one panel is mapped to one new chat, the panel and chat are functionally equivalent to one independently schedulable execution unit for launch order, ownership, dependency, collision, validation, and proof planning.
+
+Panels and chats are not competing orchestration mechanisms. Parallelism may be expressed as multiple panels in one parallel group, as multiple chats launched concurrently from those panels, or as directly created chats that carry the same complete sprint contracts. The same dependencies, proof gates, lane ownership, branch and worktree isolation, forbidden scope, validation duties, and convergence requirements apply in every representation.
+
+A multi-sprint launch pack must state that one panel goes into one new chat. Every panel must be self-contained; the operator may not be required to combine it with a separately copied shared preamble. A chat created without a visible panel must still receive the same complete repository, lane, scope, dependency, safety, validation, commit, proof, and final-response contract.
+
+Parallel execution is permitted only when repository evidence proves that the units are independent. Different panel titles do not prove that concurrent writes are safe. Before declaring panels or chats parallel-safe, the planner must identify:
+
+- the branch or worktree owned by each unit;
+- the files, schemas, manifests, workflows, registries, generated outputs, PRs, and runtime resources each unit may write;
+- hard dependencies and proof gates;
+- waiting lanes;
+- collision risks and the single owner for every shared surface;
+- the final convergence unit that validates the combined result.
+
+Units that write the same file, shared schema, workflow, registry, generated artifact, branch, PR, deployment target, or mutable runtime must be serialized or assigned to one explicit writer. Read-only evidence collection may run in parallel with mutation only when it cannot change shared state or invalidate the writer's floor.
+
+General build prompts, including P07, must accept work delivered either as a copyable panel or directly in a chat and must apply the same parallelism rules to both. They must not assume that “panel” means planning-only or that “chat” means serial-only. When a bounded build is one member of a parallel group, its sprint declaration must name its lane, branch or worktree, owned and forbidden scope, dependencies, safe parallel work, collision boundaries, validation, proof ceiling, and final convergence owner.
+
+Each parallel unit must independently produce its required artifacts, validation evidence, commit or remote mutation proof, and handoff. Parallel execution does not lower proof requirements. Completion of individual units is not completion of the whole effort until the declared final convergence unit validates integration and reports the combined repository and PR state.
+
+This section governs the future repair of P07 and any launch-pack, build, cleanup, validation, or closeout prompt that dispatches work through panels or chats. Updating those prompt records, registries, generated surfaces, skills, capabilities, triggers, or application behavior belongs in a separately declared prompt-registry or harness sprint, not in a governance-only sprint.
+
+## 11. Billing pipeline directional contract
 
 This repository supports Web Excel-safe repair and triage workflows for roster, billing, admin-sheet, and task-tracker artifacts.
 
@@ -172,7 +309,7 @@ Friday is the reporting batch marker. Work performed Monday through Friday maps 
 - Internal task-tracker context may be richer, but it must not leak into admin submission artifacts.
 - Backfill into the roster log must be proposed, reviewed, and approved before mutation.
 
-## 9. Operator source immutability
+## 12. Operator source immutability
 
 `Candidates/` and `Active/` are read-only operator inputs and backup/emulator files.
 
