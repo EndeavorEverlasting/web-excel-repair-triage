@@ -168,16 +168,17 @@ def _check_admin_billing_sentinels(path: str, tabs: List[str]) -> List[str]:
 
 
 def _check_bonita_sentinels(path: str, tabs: List[str]) -> List[str]:
-    """Return list of sentinel failure descriptions for Bonita workbooks."""
+    """Return list of sentinel failure descriptions for Bonita month tabs."""
     try:
         import openpyxl
     except ImportError:
         return ["openpyxl_not_installed"]
 
-    data_tabs = [t for t in tabs if t not in _META_TABS]
+    month_tab_re = re.compile(r"^[A-Za-z]{3} \d{2}$")
+    data_tabs = [t for t in tabs if month_tab_re.match(t)]
     failures: List[str] = []
     if len(data_tabs) < 2:
-        failures.append(f"expected_at_least_2_data_tabs:got_{len(data_tabs)}")
+        failures.append(f"expected_at_least_2_month_tabs:got_{len(data_tabs)}")
 
     try:
         wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
