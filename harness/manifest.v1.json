@@ -28,6 +28,16 @@
     ".ai/skills/skill-factoring/SKILL.md",
     ".ai/skills/technician-prompt-kit-acquisition/SKILL.md"
   ],
+  "domain_overlays": {
+    "neuron_track_hours": {
+      "manifest": "harness/nth/manifest.v1.json",
+      "rule_pack_registry": "harness/nth/monthly-rule-packs.v1.json",
+      "trigger_registry": "harness/nth/triggers.v1.json",
+      "skill": ".ai/skills/neuron-track-hours-monthly-artifact/SKILL.md",
+      "validator": "scripts/validate_nth_harness.py",
+      "tests": "tests/test_nth_harness_contract.py"
+    }
+  },
   "technician_acquisition": {
     "launcher": "Acquire-Latest-PromptKit.cmd",
     "gui": "scripts/Acquire-LatestPromptKit.ps1",
@@ -52,6 +62,8 @@
   "validation_order": [
     "python scripts/validate_harness.py",
     "python -m unittest tests.test_harness_contract -v",
+    "python scripts/validate_nth_harness.py",
+    "python -m unittest tests.test_nth_harness_contract -v",
     "python -m unittest tests.test_prompt_language_audit -v",
     "python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary",
     "python -m unittest tests.test_skill_prompt_registry -v",

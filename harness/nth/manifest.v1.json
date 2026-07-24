@@ -1,0 +1,22 @@
+{
+  "schema_version": "neuron-track-hours-harness/v1",
+  "domain": "Neuron Track Hours",
+  "governance": "AGENTS.md",
+  "rule_pack_registry": "harness/nth/monthly-rule-packs.v1.json",
+  "trigger_registry": "harness/nth/triggers.v1.json",
+  "skill": ".ai/skills/neuron-track-hours-monthly-artifact/SKILL.md",
+  "workflow": "WORKFLOW.md#h-neuron-track-hours-monthly-artifact",
+  "artifact_registry": "ARTIFACT_REGISTRY.md#neuron-track-hours-artifacts",
+  "validator": "scripts/validate_nth_harness.py",
+  "tests": "tests/test_nth_harness_contract.py",
+  "operator_report": "harness/reports/CURRENT_STATE.md",
+  "validation_order": [
+    "python scripts/validate_nth_harness.py",
+    "python -m unittest tests.test_nth_harness_contract -v",
+    "python scripts/validate_harness.py",
+    "python -m unittest tests.test_harness_contract -v",
+    "python -m triage.gitignore_hygiene",
+    "git diff --check"
+  ],
+  "proof_ceiling": "Repository-level NTH rule-pack, routing, skill, artifact-mode, and static contract proof. Workbook generation, Excel for Web behavior, client acceptance, and historical source mutation require separate proof."
+}

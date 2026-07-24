@@ -1,0 +1,38 @@
+{
+  "schema_version": "neuron-track-hours-triggers/v1",
+  "triggers": [
+    {
+      "id": "nth-internal-workbook-request",
+      "workflow": "WORKFLOW.md#h-neuron-track-hours-monthly-artifact",
+      "skill": ".ai/skills/neuron-track-hours-monthly-artifact/SKILL.md",
+      "mode": "internal",
+      "conditions": [
+        "construct, repair, analyze, or audit a Neuron Track Hours workbook",
+        "attribute monthly Neuron Track Hours across task workstreams",
+        "apply or verify a month-specific NTH rule pack",
+        "build the evidence-rich working artifact before management delivery"
+      ],
+      "forbidden_conditions": [
+        "active month cannot be identified and no month-specific confirmation is available",
+        "attendance or roster source of truth is unavailable",
+        "request would mutate a historical source workbook without explicit authorization"
+      ]
+    },
+    {
+      "id": "nth-client-send-copy-request",
+      "workflow": "WORKFLOW.md#h-neuron-track-hours-monthly-artifact",
+      "skill": ".ai/skills/neuron-track-hours-monthly-artifact/SKILL.md",
+      "mode": "client",
+      "conditions": [
+        "management or client-facing Neuron Track Hours send copy is requested",
+        "reduce a validated internal NTH workbook to the active month client tab contract",
+        "prepare a decision-ready NTH package without internal allocation or forensic surfaces"
+      ],
+      "forbidden_conditions": [
+        "no validated internal NTH workbook exists",
+        "active month client-facing tab contract is unknown",
+        "client projection would change attendance totals, dates, or governed task attribution"
+      ]
+    }
+  ]
+}

@@ -5,7 +5,9 @@ REPORT="${TMPDIR:-/tmp}/web-excel-prompt-language-audit.json"
 trap 'rm -f "$REPORT"' EXIT
 
 python scripts/validate_harness.py
+python scripts/validate_nth_harness.py
 python -m unittest tests.test_harness_contract -v
+python -m unittest tests.test_nth_harness_contract -v
 python -m unittest tests.test_prompt_language_audit -v
 python scripts/evaluate_prompt_language.py --output "$REPORT" --summary
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check

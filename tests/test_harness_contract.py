@@ -29,6 +29,30 @@ class HarnessContractTests(unittest.TestCase):
             self.assertTrue((ROOT / path).is_file(), path)
         self.assertEqual(len(manifest["skills"]), 4)
 
+    def test_nth_domain_overlay_is_registered_and_tracked_by_the_root_manifest(self) -> None:
+        manifest = json.loads(
+            (ROOT / "harness" / "manifest.v1.json").read_text(encoding="utf-8")
+        )
+        overlay = manifest["domain_overlays"]["neuron_track_hours"]
+        expected = {
+            "manifest": "harness/nth/manifest.v1.json",
+            "rule_pack_registry": "harness/nth/monthly-rule-packs.v1.json",
+            "trigger_registry": "harness/nth/triggers.v1.json",
+            "skill": ".ai/skills/neuron-track-hours-monthly-artifact/SKILL.md",
+            "validator": "scripts/validate_nth_harness.py",
+            "tests": "tests/test_nth_harness_contract.py",
+        }
+        self.assertEqual(overlay, expected)
+        for path in overlay.values():
+            self.assertTrue((ROOT / path).is_file(), path)
+        self.assertIn(
+            "python scripts/validate_nth_harness.py", manifest["validation_order"]
+        )
+        self.assertIn(
+            "python -m unittest tests.test_nth_harness_contract -v",
+            manifest["validation_order"],
+        )
+
     def test_capabilities_and_triggers_have_unique_connected_owners(self) -> None:
         capabilities = json.loads(
             (ROOT / "harness" / "capabilities.v1.json").read_text(encoding="utf-8")
@@ -97,10 +121,13 @@ class HarnessContractTests(unittest.TestCase):
     def test_hooks_run_focused_and_exhaustive_harness_gates(self) -> None:
         pre_commit = (ROOT / ".githooks" / "pre-commit").read_text(encoding="utf-8")
         self.assertIn("python scripts/validate_harness.py", pre_commit)
+        self.assertIn("python scripts/validate_nth_harness.py", pre_commit)
         self.assertIn("git diff --cached --check", pre_commit)
         pre_push = (ROOT / ".githooks" / "pre-push").read_text(encoding="utf-8")
         for phrase in (
             "python scripts/validate_harness.py",
+            "python scripts/validate_nth_harness.py",
+            "python -m unittest tests.test_nth_harness_contract -v",
             "python -m unittest tests.test_prompt_language_audit -v",
             "python scripts/evaluate_prompt_language.py",
             "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",

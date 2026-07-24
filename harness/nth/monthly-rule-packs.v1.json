@@ -1,0 +1,144 @@
+{
+  "schema_version": "neuron-track-hours-rule-packs/v1",
+  "rule_packs": [
+    {
+      "id": "july-2026",
+      "coverage_month": "2026-07",
+      "effective_start": "2026-06-26",
+      "effective_end": "2026-07-31",
+      "hours_source_of_truth": "roster/attendance",
+      "excluded_hours_policy": "unscheduled, non-billable, holiday, absence, or otherwise excluded support does not enter project MTD unless the attendance source supports it",
+      "evidence_precedence": [
+        "explicit date/person evidence and operator-confirmed facts",
+        "active month rule pack and established role cadence",
+        "aggregate allocation guardrails",
+        "general fallback assumptions"
+      ],
+      "aggregate_guardrail": {
+        "configurations": 0.6,
+        "other_work": 0.4,
+        "mode": "reasonableness_not_quota",
+        "scope": "June 26 forward into the July operating period"
+      },
+      "primary_workstream": {
+        "one_dominant_per_paid_shift": true,
+        "complimentary_work_creates_hours": false,
+        "supporting_notes_may_cross_workstreams": true,
+        "full_day_classification_requires_dominance_or_stronger_evidence": true
+      },
+      "role_cadence": {
+        "Rich Perez": {
+          "full_client_correspondence_days_per_week": 1,
+          "usual_day": "Thursday",
+          "known_anchors": [
+            "2026-07-02",
+            "2026-07-23"
+          ],
+          "non_correspondence_days": "client, PM, ticket, and meeting work may be complimentary but must not create another full correspondence day without evidence"
+        }
+      },
+      "date_person_exceptions": [
+        {
+          "date": "2026-07-03",
+          "person": "core team",
+          "type": "holiday",
+          "project_hours": 0
+        },
+        {
+          "date": "2026-07-24",
+          "person": "Alejandro Perales",
+          "type": "absence",
+          "internal_status": "A",
+          "project_hours": 0
+        },
+        {
+          "date": "2026-07-10",
+          "person": "team",
+          "type": "mixed_operational_day",
+          "required_context": [
+            "Inventory Management",
+            "Configurations / troubleshooting",
+            "Logistics / Staging"
+          ]
+        }
+      ],
+      "called_in_support_policy": "Only hours supported by the roster/attendance source enter project MTD.",
+      "task_semantics": {
+        "configuration_and_deployment_are_distinct": true,
+        "pm_operational_control_is_not_catch_all": true,
+        "role_specific_pm_client_ticket_work": true,
+        "early_july_relocation_inventory_is_not_configuration_by_default": true,
+        "semantic_activity_colors_required": true,
+        "workstreams": [
+          "Configurations",
+          "Deployments",
+          "Inventory Management",
+          "Logistics / Staging",
+          "Survey / Recon",
+          "Cleanup / Disposal",
+          "Client Correspondence / Coordination",
+          "PM / Operational Control",
+          "Ticket Forwarding / Service Management",
+          "Hardware Incident Facilitation",
+          "Documentation"
+        ]
+      },
+      "delivery_modes": {
+        "internal": {
+          "default_during": [
+            "construction",
+            "analysis",
+            "repair",
+            "audit"
+          ],
+          "preserve_complete_supporting_workbook": true,
+          "may_include": [
+            "attendance",
+            "task ledgers",
+            "task summaries",
+            "allocation basis",
+            "methodology",
+            "evidence indexes",
+            "device-capacity context",
+            "validation",
+            "doctrine",
+            "historical audit/review",
+            "source mapping",
+            "exceptions"
+          ]
+        },
+        "client": {
+          "derived_from": "validated internal workbook",
+          "tabs": [
+            "Executive Summary",
+            "July 2026"
+          ],
+          "omit_internal_only_sheets": true,
+          "hidden_internal_sheets_allowed": false,
+          "expose_internal_percentages": false,
+          "expose_confidence_or_evidence_posture": false,
+          "preserve_attendance_totals": true,
+          "preserve_primary_workstream_truth": true,
+          "preserve_task_attribution": true
+        }
+      },
+      "historical_review_boundaries": {
+        "2026-05-26_to_2026-05-29": {
+          "mode": "review_not_correction",
+          "historical_workbook_mutation_authorized": false,
+          "preferred_terms": [
+            "review",
+            "historical review"
+          ],
+          "avoid_terms_without_actual_mutation": [
+            "reconciliation",
+            "correction",
+            "revised tracker",
+            "updated historical workbook"
+          ]
+        }
+      },
+      "carry_forward_policy": "forbidden_without_month_specific_confirmation"
+    }
+  ]
+}

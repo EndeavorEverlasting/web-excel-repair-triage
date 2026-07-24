@@ -2,5 +2,7 @@
 set -eu
 
 python scripts/validate_harness.py
+python scripts/validate_nth_harness.py
 python -m unittest tests.test_harness_contract -v
+python -m unittest tests.test_nth_harness_contract -v
 git diff --cached --check
