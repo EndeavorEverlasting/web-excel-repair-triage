@@ -13,7 +13,7 @@
       "scope isolation requires a distinct writer and collision analysis proves the split is safer"
     ],
     "preservation_rule": "Before superseding, closing, or abandoning an existing pull request or branch, preserve every unique useful commit, file, artifact, decision, test, and proof that belongs in the surviving work.",
-    "disposition_evidence": "When a new pull request is created despite related existing work, report the inspected pull requests or branches, why each was reused, repaired, superseded, or rejected, and where any unique useful work was preserved."
+    "disposition_evidence": "When a new pull request is created despite related existing work, report the disposition of every inspected pull request or branch, why each was reused, repaired, superseded, or rejected, and where any unique useful work was preserved."
   },
   "forbidden_solo_actions": [
     "open or reopen a pull request",
