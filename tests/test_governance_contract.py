@@ -240,8 +240,26 @@ class GovernanceContractTests(unittest.TestCase):
             "July 3 is a holiday",
             "Alejandro Perales has no scheduled project hours on July 24",
             "Historical review language must not imply correction",
-            "Executive Summary and the current NTH main sheet",
             "Semantic colors must correspond to the actual activity type",
+        ):
+            self.assertIn(phrase, section)
+
+    def test_neuron_client_and_internal_workbook_modes_are_enforced(self) -> None:
+        section = self._section(
+            "### Neuron Track Hours monthly task-distribution doctrine", "## 12."
+        )
+        for phrase in (
+            "two governed NTH spreadsheet delivery modes",
+            "Client-facing / management mode",
+            "Internal / working mode",
+            "separate derived send copy",
+            "Internal-only sheets must be omitted from the delivered package, not merely hidden",
+            "same attendance totals, primary-workstream truth, and governed task attribution",
+            "Internal mode is the default during construction, analysis, repair, or audit",
+            "narrowed projection of the validated internal workbook",
+            "workbook delivery mode and the approved client-facing tab contract",
+            "July client-facing mode contains exactly two tabs: `Executive Summary` and `July 2026`",
+            "July internal mode preserves the complete supporting workbook",
         ):
             self.assertIn(phrase, section)
 
