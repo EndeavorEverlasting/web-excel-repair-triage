@@ -2,8 +2,19 @@
 
 This is the compact reference for the current Windows acquisition and generator workflow. Use the detailed tutorials when training a new technician or certifying a workstation.
 
+## Fastest answer: get the latest website
+
+Use the dedicated [Get the Latest Prompt Kit Website](GET_LATEST_PROMPT_KIT_WEBSITE.md) reference.
+
+The instruction to send is:
+
+> Double-click `Acquire-Latest-PromptKit.cmd`, select **Open Prompt Kit website**, and click **Get Latest and Open**. Wait for `Repository and Prompt Kit validation passed.` The tool opens the canonical `web\prompt-kit\index.html` automatically.
+
+Do not tell users to search for `index.html`. Files under `.venv\` and `Outputs\` are not the Prompt Kit website.
+
 ## Detailed tutorials
 
+- [Get the latest Prompt Kit website](GET_LATEST_PROMPT_KIT_WEBSITE.md)
 - [Technician acquisition tutorial](TECHNICIAN_PROMPT_KIT_ACQUISITION_TUTORIAL.md)
 - [Generator tutorial](PROMPT_KIT_GENERATOR_TUTORIAL.md)
 - [Administrator verification runbook](PROMPT_KIT_ADMIN_VERIFICATION.md)

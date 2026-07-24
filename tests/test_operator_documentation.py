@@ -7,6 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = {
     "index": ROOT / "docs" / "README.md",
+    "latest_website": ROOT / "docs" / "GET_LATEST_PROMPT_KIT_WEBSITE.md",
     "quick_reference": ROOT / "docs" / "PROMPT_KIT_GENERATOR_OPERATOR_GUIDE.md",
     "technician": ROOT / "docs" / "TECHNICIAN_PROMPT_KIT_ACQUISITION_TUTORIAL.md",
     "generator": ROOT / "docs" / "PROMPT_KIT_GENERATOR_TUTORIAL.md",
@@ -38,6 +39,7 @@ class OperatorDocumentationTests(unittest.TestCase):
     def test_documentation_index_routes_each_audience(self) -> None:
         index = self.text["index"]
         for phrase in (
+            "Get the latest Prompt Kit website",
             "Technician acquisition tutorial",
             "Generator tutorial",
             "Administrator verification runbook",
@@ -47,6 +49,25 @@ class OperatorDocumentationTests(unittest.TestCase):
             "Target machine",
         ):
             self.assertIn(phrase, index)
+
+    def test_latest_website_reference_is_unambiguous(self) -> None:
+        latest = self.text["latest_website"]
+        for phrase in (
+            "Acquire-Latest-PromptKit.cmd",
+            "Open Prompt Kit website",
+            "Get Latest and Open",
+            "Repository and Prompt Kit validation passed.",
+            r"web\prompt-kit\index.html",
+            r".venv\Lib\site-packages",
+            r"Outputs\...\index.html",
+            "do not need to search the repository for `index.html`",
+            "fetches `origin/main` and fast-forwards only",
+            "It does not reset, clean, overwrite, rebase, force-push, delete branches, or discard work.",
+        ):
+            self.assertIn(phrase, latest)
+
+        for document in ("index", "quick_reference"):
+            self.assertIn("GET_LATEST_PROMPT_KIT_WEBSITE.md", self.text[document])
 
     def test_local_markdown_links_resolve(self) -> None:
         link_re = re.compile(r"\[[^\]]+\]\(([^)]+)\)")

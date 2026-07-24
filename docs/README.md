@@ -6,10 +6,21 @@ Use this page to choose the shortest current-repository guide for the job. These
 
 | Audience | Goal | Guide |
 |---|---|---|
+| Any user | Get or refresh the latest validated Prompt Kit website | [Get the latest Prompt Kit website](GET_LATEST_PROMPT_KIT_WEBSITE.md) |
 | Technician | Use the mouse to clone or safely update the repo and open the Prompt Kit | [Technician acquisition tutorial](TECHNICIAN_PROMPT_KIT_ACQUISITION_TUTORIAL.md) |
 | Prompt author or operator | Build the site, select generator options, and understand output paths | [Generator tutorial](PROMPT_KIT_GENERATOR_TUTORIAL.md) |
 | Developer or administrator | Verify prerequisites, contracts, Git state, CI, and field-proof boundaries | [Administrator verification runbook](PROMPT_KIT_ADMIN_VERIFICATION.md) |
 | Any operator | Use the compact command and safety reference | [Prompt Kit operator guide](PROMPT_KIT_GENERATOR_OPERATOR_GUIDE.md) |
+
+## Canonical website
+
+The only canonical Prompt Kit website is:
+
+```text
+web\prompt-kit\index.html
+```
+
+Do not confuse it with third-party `.venv\...\index.html` files or generated `Outputs\...\index.html` reports. The [latest website quick reference](GET_LATEST_PROMPT_KIT_WEBSITE.md) gives the exact user instruction and safe update behavior.
 
 ## Current Windows entry points
 

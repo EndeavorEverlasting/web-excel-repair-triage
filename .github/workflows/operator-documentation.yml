@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - docs/README.md
+      - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
       - docs/PROMPT_KIT_GENERATOR_OPERATOR_GUIDE.md
       - docs/TECHNICIAN_PROMPT_KIT_ACQUISITION_TUTORIAL.md
       - docs/PROMPT_KIT_GENERATOR_TUTORIAL.md
@@ -21,6 +22,7 @@ on:
     branches: [main]
     paths:
       - docs/README.md
+      - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
       - docs/PROMPT_KIT_GENERATOR_OPERATOR_GUIDE.md
       - docs/TECHNICIAN_PROMPT_KIT_ACQUISITION_TUTORIAL.md
       - docs/PROMPT_KIT_GENERATOR_TUTORIAL.md
