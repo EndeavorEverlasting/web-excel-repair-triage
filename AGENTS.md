@@ -330,6 +330,25 @@ For Neuron Track Hours work, semantic task attribution and source-of-truth corre
 - Historical labor and historical categorization are separate questions. A historical categorization concern does not mean the labor did not occur.
 - **Historical review language must not imply correction.** Do not call a historical review a reconciliation, correction, revised tracker, or updated historical workbook unless the historical source was actually changed. When the old workbook remains untouched, use `review`, `historical review`, or equivalent language.
 
+#### NTH workbook delivery modes
+
+There are exactly **two governed NTH spreadsheet delivery modes**. The mode must be declared before final packaging so an internal working workbook is never confused with a client-facing deliverable.
+
+1. **Client-facing / management mode.**
+   - Produce a separate derived send copy from the validated internal working artifact; do not overwrite, replace, or downgrade the internal workbook to create the client package.
+   - Include only the operator-approved client-facing tabs for the active month. Internal-only sheets must be omitted from the delivered package, not merely hidden.
+   - Keep the surface decision-ready: hours, primary workstream, concise complimentary work, and only the historical-review context needed by the recipient.
+   - Do not expose internal task percentages, allocation mechanics, confidence fields, evidence-posture jargon, source notes, task ledgers, methodology, validator output, audit machinery, doctrine, or forensic detail unless the operator explicitly requests a specific item.
+   - The client-facing copy must preserve the same attendance totals, primary-workstream truth, and governed task attribution as the internal workbook. Reducing detail must not change the math or invent a different operational story.
+
+2. **Internal / working mode.**
+   - Preserve the complete working record used to construct, audit, repair, and validate the NTH artifact.
+   - Internal mode may contain attendance, task ledgers, task summaries, allocation basis, methodology, evidence indexes, device-capacity context, validation, doctrine, historical audit/review, source mapping, exceptions, and other supporting surfaces needed to prove the result.
+   - Internal allocation math, evidence mapping, confidence or exception machinery may exist when useful for review, but it remains internal unless the operator explicitly promotes a specific field or tab into the client-facing contract.
+   - Internal mode is the default during construction, analysis, repair, or audit. Client-facing mode is a derived delivery artifact created when a management/client send copy is requested.
+
+The two modes must share one semantic source of truth. A client-facing workbook is a narrowed projection of the validated internal workbook, not an independently invented spreadsheet with different totals, dates, attendance, or task attribution.
+
 #### Month-specific rule packs
 
 Neuron Track Hours allocation rules are month-scoped. Each active month may have a different operating mix, role cadence, holiday/absence pattern, site phase, and management-delivery requirement.
@@ -342,6 +361,7 @@ Before generating or repairing an NTH artifact, identify the active **month-spec
 - known full-day role cadences;
 - date/person exceptions, holidays, absences, and called-in support;
 - primary-versus-complimentary work rules;
+- workbook delivery mode and the approved client-facing tab contract;
 - management-facing exposure rules;
 - semantic activity-color rules;
 - known historical-review boundaries.
@@ -363,7 +383,8 @@ The following rules govern the July 2026 NTH artifact unless stronger date/perso
 - **July 3 is a holiday** and contributes no scheduled Neuron project hours for the core team.
 - **Alejandro Perales has no scheduled project hours on July 24**. His attendance/status may be represented as `A` on an internal attendance/status surface, but zero project hours must not be added to the NTH MTD total.
 - Called-in support must follow the roster/attendance record. A technician appearing on July 24 or another exception date contributes only the hours actually supported by the attendance source.
-- The July management send copy should remain narrow. Unless explicitly requested otherwise, send only the **Executive Summary and the current NTH main sheet**; internal attendance, task-ledger, allocation-basis, methodology, evidence-index, validation, doctrine, and audit surfaces remain internal.
+- **July client-facing mode contains exactly two tabs: `Executive Summary` and `July 2026`.** Do not include or merely hide internal attendance, task-ledger, task-summary, allocation-basis, methodology, evidence-index, validation, doctrine, device-capacity, historical-audit, or other internal-only sheets in the client delivery workbook unless the operator explicitly changes the July client contract.
+- **July internal mode preserves the complete supporting workbook** and may retain the internal attendance, task ledger, allocation basis, methodology, evidence, validation, doctrine, audit, device-capacity, and other proof surfaces needed to build and verify the two-tab client copy.
 - July management surfaces must not expose internal percentage allocations, confidence machinery, evidence-posture jargon, or forensic mechanics. They should communicate hours, primary workstream, concise supporting work, and the management-relevant historical-review boundary.
 - The May 26–29 question is a historical review of attribution. The historical May workbook remains historical source material unless separately and explicitly authorized for mutation; July work must not be presented as an update to May.
 
