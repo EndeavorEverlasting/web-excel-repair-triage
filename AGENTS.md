@@ -115,6 +115,22 @@ If destination or behavior choices are required, they must be presented through 
 
 This section is a governance requirement. Its implementation belongs in a separately declared launcher or operator-enablement sprint, not in a governance-only sprint.
 
+### Prompt Kit web top/bottom navigation invariant
+
+The operator-facing Prompt Kit website is a long-form browsing surface and must provide distributed page-end navigation inside the prompt results themselves. Endpoint-only navigation, workbook-sheet links, or a one-time control at the top of the page are insufficient.
+
+- On every repeated prompt-group header row or equivalent repeated header marker rendered inside the main prompt results surface, the left-side header/control cluster must expose a `Top` anchor/control on the left side and the right-side header/control cluster must expose a `Bottom` anchor/control on the right side.
+- These controls must be distributed throughout the rendered prompt surface through those repeated headers so the operator can jump to either page endpoint without first scrolling a long distance to find navigation.
+- `Top` must jump directly to one canonical page-top anchor. `Bottom` must jump directly to one canonical page-bottom anchor.
+- The contract applies under `All / Standard / GNHF / Doctrine`, section, type, and search filtering, and any future Reference/Browse panel filtering. Filtering may hide irrelevant header groups, but any header that remains visible must retain both controls.
+- Page-end anchors must use stable, unique same-document targets and must not reload the page, change routes, or lose the active filter state.
+- The controls must support both pointer and keyboard activation and must remain visually associated with the repeated header that exposes them.
+- The canonical builder or generator owns this behavior. The generated HTML must not be hand-edited as the source of truth.
+- Product-level validation must enumerate the repeated headers in the canonical generated page and fail when a rendered header lacks the expected left `Top` or right `Bottom` control, when either canonical endpoint target is missing or duplicated, or when filtering leaves a visible header without both controls.
+- Workbook-only navigation does not satisfy this web-page contract. Historical Prompt Kit workbook links may remain useful, but they are separate from the required website behavior.
+
+This subsection is a governance requirement. Builder, generated-site, browser, and interaction changes belong in a separately declared Prompt Kit product sprint; a governance-only sprint installs and enforces the contract but must not claim that the web behavior is already implemented.
+
 ## 8. Live certification execution topology
 
 The Prompt Kit must retain a live-certification prompt because live certification is not confined to one execution location. The prompt and its downstream workflow must select a topology from repository and runtime evidence rather than assuming that every certification is local or remote.
