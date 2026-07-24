@@ -16,7 +16,9 @@ on:
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
       - scripts/validate_harness.py
+      - scripts/validate_nth_harness.py
       - tests/test_harness_contract.py
+      - tests/test_nth_harness_contract.py
       - tests/test_prompt_language_audit.py
       - .github/workflows/harness-contract.yml
   push:
@@ -35,7 +37,9 @@ on:
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
       - scripts/validate_harness.py
+      - scripts/validate_nth_harness.py
       - tests/test_harness_contract.py
+      - tests/test_nth_harness_contract.py
       - tests/test_prompt_language_audit.py
       - .github/workflows/harness-contract.yml
 
@@ -57,14 +61,19 @@ jobs:
         run: |
           python -m py_compile \
             scripts/validate_harness.py \
+            scripts/validate_nth_harness.py \
             scripts/evaluate_prompt_language.py \
             tests/test_harness_contract.py \
+            tests/test_nth_harness_contract.py \
             tests/test_prompt_language_audit.py
       - name: Validate harness completeness
-        run: python scripts/validate_harness.py
+        run: |
+          python scripts/validate_harness.py
+          python scripts/validate_nth_harness.py
       - name: Run harness contracts
         run: |
           python -m unittest tests.test_harness_contract -v
+          python -m unittest tests.test_nth_harness_contract -v
           python -m unittest tests.test_prompt_language_audit -v
       - name: Run exhaustive prompt-language audit
         run: python scripts/evaluate_prompt_language.py --output "$RUNNER_TEMP/prompt-language-audit.json" --summary
