@@ -1,0 +1,41 @@
+{
+  "schema_version": "prompt-language-audit/v1",
+  "capability_id": "prompt-language-audit",
+  "policy_id": "actionable-next-command/v1",
+  "actionability_marker": "ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT",
+  "required_prompt_fields": [
+    "id",
+    "seq",
+    "name",
+    "type",
+    "class",
+    "useWhen",
+    "expectedOutput",
+    "nextStep",
+    "proofGate",
+    "copyContent"
+  ],
+  "dispositions": ["pass", "repair", "defer", "not_applicable"],
+  "fail_severities": ["error"],
+  "lazy_next_step_patterns": [
+    "^\\s*$",
+    "^(tbd|todo|later|next|continue|review|test|merge|deploy|document|monitor)[.!]?$",
+    "^(open|view|check|inspect|review|update)\\s+(the\\s+)?(pr|pull request|status|logs?|branches?|commits?)[.!]?$",
+    "^(wait|continue later|ask the user|request permission)[.!]?$"
+  ],
+  "generic_step_patterns": [
+    "^\\s*[-*]?\\s*(test|review|merge|deploy|document|monitor|continue)\\s*[.!]?\\s*$"
+  ],
+  "compound_connectors_pattern": "\\s*(?:,|;|\\b(?:then|and then|and|after that)\\b)\\s*",
+  "required_effective_next_step_phrases": [
+    "first executable",
+    "canonical artifact or proof"
+  ],
+  "result_schema": {
+    "prompt_id": "string",
+    "disposition": "pass|repair|defer|not_applicable",
+    "findings": "array",
+    "coverage_complete": "boolean",
+    "verdict": "pass|needs-repair|fail"
+  }
+}
