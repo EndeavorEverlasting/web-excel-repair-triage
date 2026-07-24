@@ -115,6 +115,22 @@ If destination or behavior choices are required, they must be presented through 
 
 This section is a governance requirement. Its implementation belongs in a separately declared launcher or operator-enablement sprint, not in a governance-only sprint.
 
+### Prompt Kit web top/bottom navigation invariant
+
+The operator-facing Prompt Kit website is a long-form browsing surface and must provide distributed page-end navigation inside the prompt results themselves. Endpoint-only navigation, workbook-sheet links, or a one-time control at the top of the page are insufficient.
+
+- On every repeated prompt-group header row or equivalent repeated header marker rendered inside the main prompt results surface, the left-side header/control cluster must expose a `Top` anchor/control on the left side and the right-side header/control cluster must expose a `Bottom` anchor/control on the right side.
+- These controls must be distributed throughout the rendered prompt surface through those repeated headers so the operator can jump to either page endpoint without first scrolling a long distance to find navigation.
+- `Top` must jump directly to one canonical page-top anchor. `Bottom` must jump directly to one canonical page-bottom anchor.
+- The contract applies under `All / Standard / GNHF / Doctrine`, section, type, and search filtering, and any future Reference/Browse panel filtering. Filtering may hide irrelevant header groups, but any header that remains visible must retain both controls.
+- Page-end anchors must use stable, unique same-document targets and must not reload the page, change routes, or lose the active filter state.
+- The controls must support both pointer and keyboard activation and must remain visually associated with the repeated header that exposes them.
+- The canonical builder or generator owns this behavior. The generated HTML must not be hand-edited as the source of truth.
+- Product-level validation must enumerate the repeated headers in the canonical generated page and fail when a rendered header lacks the expected left `Top` or right `Bottom` control, when either canonical endpoint target is missing or duplicated, or when filtering leaves a visible header without both controls.
+- Workbook-only navigation does not satisfy this web-page contract. Historical Prompt Kit workbook links may remain useful, but they are separate from the required website behavior.
+
+This subsection is a governance requirement. Builder, generated-site, browser, and interaction changes belong in a separately declared Prompt Kit product sprint; a governance-only sprint installs and enforces the contract but must not claim that the web behavior is already implemented.
+
 ## 8. Live certification execution topology
 
 The Prompt Kit must retain a live-certification prompt because live certification is not confined to one execution location. The prompt and its downstream workflow must select a topology from repository and runtime evidence rather than assuming that every certification is local or remote.
@@ -308,6 +324,85 @@ Friday is the reporting batch marker. Work performed Monday through Friday maps 
 - Admin-facing output stays narrow and clean.
 - Internal task-tracker context may be richer, but it must not leak into admin submission artifacts.
 - Backfill into the roster log must be proposed, reviewed, and approved before mutation.
+
+### Neuron Track Hours monthly task-distribution doctrine
+
+For Neuron Track Hours work, semantic task attribution and source-of-truth correctness come before presentation polish or package mechanics. Spreadsheet/XML preservation remains important, but it must never substitute for correct hours, task distribution, role-specific work, or month-specific operating rules.
+
+#### Permanent NTH attribution rules
+
+- **Roster/attendance is the hours source of truth.** Scheduled project hours must reconcile to attendance before task allocation is accepted. Unscheduled, non-billable, or otherwise excluded support must not be inserted into schedule/project MTD merely to make a task distribution balance.
+- **Device counts and device capacity are separate from labor hours.** Device throughput, deployed-device counts, configured-device counts, or site capacity may support context, but none of them creates labor hours.
+- **Configuration and Deployment are distinct activities.** Do not treat a device being deployed as proof that the same hours were Configuration, and do not convert Configuration hours into Deployment merely because the work supported a go-live.
+- Each paid shift has **one dominant primary workstream**. The primary assignment represents the dominant purpose of that shift or day.
+- **Complimentary work may describe concurrent work but must not create additional hours.** Supporting notes can include unrelated concurrent work, secondary tasks, coordination, troubleshooting, staging, tickets, PM work, or cleanup without splitting or duplicating the paid shift unless stronger evidence supports a real hour-level split.
+- A full-day primary assignment must not be invented merely because a supporting activity appears in notes. In particular, scattered emails, meetings, client follow-up, or ticket work on a technical day remain complimentary unless the applicable monthly rule pack or date-specific evidence establishes that they dominated the day.
+- **PM / Operational Control is real work but not a catch-all.** Use it for prioritization, blocker resolution, resource/schedule decisions, site/delivery planning, operational control, and comparable PM duties when those duties dominate the period.
+- **PM, client, and ticket work must not be mechanically spread across technicians.** Role-specific work must follow evidence and known role ownership; Rich's coordination/PM/service workload must not be copied onto Khadejah, Alejandro, Cyen, or other technicians without evidence.
+- Evidence precedence for task attribution is: explicit date/person evidence and operator-confirmed facts; then the active month-specific rule pack and established role cadence; then aggregate allocation guardrails; then general fallback assumptions.
+- An aggregate allocation rule is a reasonableness test, not a license to erase stronger evidence. Do not force a day into a category solely to hit a target ratio.
+- **Do not expose internal task percentages** or allocation mechanics on management-facing NTH surfaces unless the operator explicitly requests them. Management-facing artifacts should show hours, primary workstream, and concise supporting-work context rather than internal allocation math.
+- Semantic colors must correspond to the actual activity type, not alternating rows or decorative patterns. Configuration, Inventory Management, Logistics/Staging, Survey/Recon, Cleanup/Disposal, Client Correspondence/Coordination, PM/Operational Control, and other governed workstreams must retain their activity-based color meaning.
+- Historical labor and historical categorization are separate questions. A historical categorization concern does not mean the labor did not occur.
+- **Historical review language must not imply correction.** Do not call a historical review a reconciliation, correction, revised tracker, or updated historical workbook unless the historical source was actually changed. When the old workbook remains untouched, use `review`, `historical review`, or equivalent language.
+
+#### NTH workbook delivery modes
+
+There are exactly **two governed NTH spreadsheet delivery modes**. The mode must be declared before final packaging so an internal working workbook is never confused with a client-facing deliverable.
+
+1. **Client-facing / management mode.**
+   - Produce a separate derived send copy from the validated internal working artifact; do not overwrite, replace, or downgrade the internal workbook to create the client package.
+   - Include only the operator-approved client-facing tabs for the active month. Internal-only sheets must be omitted from the delivered package, not merely hidden.
+   - Keep the surface decision-ready: hours, primary workstream, concise complimentary work, and only the historical-review context needed by the recipient.
+   - Do not expose internal task percentages, allocation mechanics, confidence fields, evidence-posture jargon, source notes, task ledgers, methodology, validator output, audit machinery, doctrine, or forensic detail unless the operator explicitly requests a specific item.
+   - The client-facing copy must preserve the same attendance totals, primary-workstream truth, and governed task attribution as the internal workbook. Reducing detail must not change the math or invent a different operational story.
+
+2. **Internal / working mode.**
+   - Preserve the complete working record used to construct, audit, repair, and validate the NTH artifact.
+   - Internal mode may contain attendance, task ledgers, task summaries, allocation basis, methodology, evidence indexes, device-capacity context, validation, doctrine, historical audit/review, source mapping, exceptions, and other supporting surfaces needed to prove the result.
+   - Internal allocation math, evidence mapping, confidence or exception machinery may exist when useful for review, but it remains internal unless the operator explicitly promotes a specific field or tab into the client-facing contract.
+   - Internal mode is the default during construction, analysis, repair, or audit. Client-facing mode is a derived delivery artifact created when a management/client send copy is requested.
+
+The two modes must share one semantic source of truth. A client-facing workbook is a narrowed projection of the validated internal workbook, not an independently invented spreadsheet with different totals, dates, attendance, or task attribution.
+
+#### Month-specific rule packs
+
+Neuron Track Hours allocation rules are month-scoped. Each active month may have a different operating mix, role cadence, holiday/absence pattern, site phase, and management-delivery requirement.
+
+Before generating or repairing an NTH artifact, identify the active **month-specific rule pack** and record at minimum:
+
+- effective date or covered date range;
+- attendance/roster source;
+- aggregate task-allocation guardrails;
+- known full-day role cadences;
+- date/person exceptions, holidays, absences, and called-in support;
+- primary-versus-complimentary work rules;
+- workbook delivery mode and the approved client-facing tab contract;
+- management-facing exposure rules;
+- semantic activity-color rules;
+- known historical-review boundaries.
+
+A prior month's allocation rule **must not be silently carried into another month**. If the next month has no confirmed rule pack, preserve the current attendance truth, use explicit evidence first, and mark the task allocation as requiring month-specific confirmation rather than importing the prior month by habit.
+
+#### July 2026 rule pack
+
+The following rules govern the July 2026 NTH artifact unless stronger date/person evidence supplied by the operator supersedes them:
+
+- For work from June 26 forward into the July operating period, the **60% Configuration / 40% other-work allocation** is the aggregate planning and reasonableness guardrail. It is not an exact per-person or per-day quota.
+- The 60/40 rule is a **reasonableness guardrail, not permission to overwrite stronger date-specific evidence**. Real inventory relocation, survey/recon, logistics/staging, cleanup/disposal, client coordination, PM/operational control, ticket/service work, or other evidenced work remains distinct even when that makes the measured month land above or below exactly 60% Configuration.
+- Rich Perez has **one full Client Correspondence / Coordination day per week**, usually Thursday. That is the weekly day on which meetings, escalations, client correspondence, status/data analysis, delivery/readiness coordination, and similar client-facing work may legitimately dominate the full scheduled shift.
+- Known July anchors for the weekly correspondence cadence include **July 2** and **July 23**. For other July weeks, use the usual-Thursday cadence only when it is consistent with the available date-specific evidence; do not manufacture an additional full correspondence day elsewhere in the same week.
+- On Rich's non-correspondence days, client follow-up, meetings, ticket/service work, and PM activity may appear as complimentary work when they occurred, but they must not turn an otherwise technical day into an all-day correspondence classification without evidence.
+- A week must not show multiple 8-hour or 11-hour Client Correspondence / Coordination days merely because client work appears in supporting notes. One full correspondence day per week is the default July cadence; exceptions require explicit evidence.
+- Early-July relocation and inventory work is real work, not Configuration by default. Inventory Management, Survey/Recon, Logistics/Staging, Cleanup/Disposal, and limited Configuration support may coexist on those days; the dominant workstream must follow the actual operational purpose and supporting work belongs in complimentary notes.
+- July 10 is a mixed operational day and must not be represented as inventory-only when the evidence supports configuration/troubleshooting and logistics/staging alongside inventory reconciliation.
+- **July 3 is a holiday** and contributes no scheduled Neuron project hours for the core team.
+- **Alejandro Perales has no scheduled project hours on July 24**. His attendance/status may be represented as `A` on an internal attendance/status surface, but zero project hours must not be added to the NTH MTD total.
+- Called-in support must follow the roster/attendance record. A technician appearing on July 24 or another exception date contributes only the hours actually supported by the attendance source.
+- **July client-facing mode contains exactly two tabs: `Executive Summary` and `July 2026`.** Do not include or merely hide internal attendance, task-ledger, task-summary, allocation-basis, methodology, evidence-index, validation, doctrine, device-capacity, historical-audit, or other internal-only sheets in the client delivery workbook unless the operator explicitly changes the July client contract.
+- **July internal mode preserves the complete supporting workbook** and may retain the internal attendance, task ledger, allocation basis, methodology, evidence, validation, doctrine, audit, device-capacity, and other proof surfaces needed to build and verify the two-tab client copy.
+- July management surfaces must not expose internal percentage allocations, confidence machinery, evidence-posture jargon, or forensic mechanics. They should communicate hours, primary workstream, concise supporting work, and the management-relevant historical-review boundary.
+- The May 26–29 question is a historical review of attribution. The historical May workbook remains historical source material unless separately and explicitly authorized for mutation; July work must not be presented as an update to May.
 
 ## 12. Operator source immutability
 

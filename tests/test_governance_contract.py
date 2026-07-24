@@ -215,6 +215,54 @@ class GovernanceContractTests(unittest.TestCase):
         ):
             self.assertIn(phrase, section)
 
+    def test_neuron_monthly_task_distribution_doctrine_is_enforced(self) -> None:
+        section = self._section(
+            "### Neuron Track Hours monthly task-distribution doctrine", "## 12."
+        )
+        for phrase in (
+            "Roster/attendance is the hours source of truth",
+            "Device counts and device capacity are separate from labor hours",
+            "Configuration and Deployment are distinct activities",
+            "one dominant primary workstream",
+            "Complimentary work may describe concurrent work but must not create additional hours",
+            "Do not expose internal task percentages",
+            "month-specific rule pack",
+            "must not be silently carried into another month",
+            "July 2026 rule pack",
+            "60% Configuration / 40% other-work allocation",
+            "reasonableness guardrail, not permission to overwrite stronger date-specific evidence",
+            "one full Client Correspondence / Coordination day per week",
+            "usually Thursday",
+            "July 2",
+            "July 23",
+            "PM / Operational Control is real work but not a catch-all",
+            "PM, client, and ticket work must not be mechanically spread across technicians",
+            "July 3 is a holiday",
+            "Alejandro Perales has no scheduled project hours on July 24",
+            "Historical review language must not imply correction",
+            "Semantic colors must correspond to the actual activity type",
+        ):
+            self.assertIn(phrase, section)
+
+    def test_neuron_client_and_internal_workbook_modes_are_enforced(self) -> None:
+        section = self._section(
+            "### Neuron Track Hours monthly task-distribution doctrine", "## 12."
+        )
+        for phrase in (
+            "two governed NTH spreadsheet delivery modes",
+            "Client-facing / management mode",
+            "Internal / working mode",
+            "separate derived send copy",
+            "Internal-only sheets must be omitted from the delivered package, not merely hidden",
+            "same attendance totals, primary-workstream truth, and governed task attribution",
+            "Internal mode is the default during construction, analysis, repair, or audit",
+            "narrowed projection of the validated internal workbook",
+            "workbook delivery mode and the approved client-facing tab contract",
+            "July client-facing mode contains exactly two tabs: `Executive Summary` and `July 2026`",
+            "July internal mode preserves the complete supporting workbook",
+        ):
+            self.assertIn(phrase, section)
+
     def test_existing_domain_and_source_rules_remain_present(self) -> None:
         for phrase in (
             "Roster Log to Admin Sheet",

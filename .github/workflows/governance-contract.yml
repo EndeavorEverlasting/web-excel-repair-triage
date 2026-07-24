@@ -5,12 +5,14 @@ on:
     paths:
       - AGENTS.md
       - tests/test_governance_contract.py
+      - tests/test_prompt_kit_navigation_governance.py
       - .github/workflows/governance-contract.yml
   push:
     branches: [main]
     paths:
       - AGENTS.md
       - tests/test_governance_contract.py
+      - tests/test_prompt_kit_navigation_governance.py
       - .github/workflows/governance-contract.yml
 
 permissions:
@@ -27,9 +29,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Compile governance validator
-        run: python -m py_compile tests/test_governance_contract.py
+      - name: Compile governance validators
+        run: python -m py_compile tests/test_governance_contract.py tests/test_prompt_kit_navigation_governance.py
       - name: Enforce canonical governance doctrine
-        run: python -m unittest tests.test_governance_contract -v
+        run: python -m unittest tests.test_governance_contract tests.test_prompt_kit_navigation_governance -v
       - name: Check patch hygiene
         run: git diff --check origin/main...HEAD
