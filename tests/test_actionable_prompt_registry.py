@@ -55,6 +55,31 @@ class ActionablePromptRegistryTests(unittest.TestCase):
         ):
             self.assertIn(phrase, self.policy["copy_content_appendix"])
 
+    def test_existing_work_and_pr_reuse_is_global_policy(self) -> None:
+        reuse = self.policy["existing_work_reuse"]
+        self.assertIn(
+            "Before creating a new branch or pull request",
+            reuse["rule"],
+        )
+        self.assertIn(
+            "current, open, and recent pull requests, branches, worktrees, and commits",
+            reuse["rule"],
+        )
+        self.assertIn(
+            "Reuse, repair, update, retarget, or extend the existing owner",
+            reuse["rule"],
+        )
+        allowed = "\n".join(reuse["new_pr_allowed_when"])
+        for phrase in (
+            "no suitable existing owner exists",
+            "unsafe, irreparably stale, or intentionally superseded",
+            "scope isolation requires a distinct writer",
+        ):
+            self.assertIn(phrase, allowed)
+        self.assertIn("preserve every unique useful commit", reuse["preservation_rule"])
+        self.assertIn("disposition", reuse["disposition_evidence"].lower())
+        self.assertIn("where any unique useful work was preserved", reuse["disposition_evidence"])
+
     def test_combined_registry_applies_policy_to_every_prompt(self) -> None:
         marker = self.policy["marker"]
         suffix = self.policy["next_step_suffix"]
@@ -114,6 +139,8 @@ class ActionablePromptRegistryTests(unittest.TestCase):
         joined = "\n".join(self.policy["forbidden_solo_actions"]).lower()
         for phrase in (
             "pull request",
+            "suitable existing owner",
+            "reused, repaired, updated, retargeted, or extended",
             "status",
             "branches or commits",
             "logs",
