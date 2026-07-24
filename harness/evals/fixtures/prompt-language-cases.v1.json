@@ -86,6 +86,62 @@
       }
     },
     {
+      "id": "compound-lazy-only",
+      "expected_rule_ids": ["PLA003"],
+      "raw_prompt": {
+        "id": "PX5",
+        "seq": "905",
+        "name": "Compound lazy",
+        "type": "VALIDATE",
+        "class": "TEST",
+        "useWhen": "Always.",
+        "expectedOutput": "A report.",
+        "nextStep": "Check the logs, then update the PR.",
+        "proofGate": "A report exists.",
+        "copyContent": "Run it."
+      },
+      "effective_prompt": {
+        "id": "PX5",
+        "seq": "905",
+        "name": "Compound lazy",
+        "type": "VALIDATE",
+        "class": "TEST",
+        "useWhen": "Always.",
+        "expectedOutput": "A report.",
+        "nextStep": "Check the logs, then update the PR. Begin with the first executable action that advances the canonical artifact or proof.",
+        "proofGate": "A report exists.",
+        "copyContent": "Run it. ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT"
+      }
+    },
+    {
+      "id": "compound-with-executable-action",
+      "expected_rule_ids": [],
+      "raw_prompt": {
+        "id": "PX6",
+        "seq": "906",
+        "name": "Compound actionable",
+        "type": "VALIDATE",
+        "class": "TEST",
+        "useWhen": "Always.",
+        "expectedOutput": "A report.",
+        "nextStep": "Check the logs, then run the registered validator and open the report artifact.",
+        "proofGate": "The validator produces the report.",
+        "copyContent": "Run it."
+      },
+      "effective_prompt": {
+        "id": "PX6",
+        "seq": "906",
+        "name": "Compound actionable",
+        "type": "VALIDATE",
+        "class": "TEST",
+        "useWhen": "Always.",
+        "expectedOutput": "A report.",
+        "nextStep": "Check the logs, then run the registered validator and open the report artifact. Begin with the first executable action that advances the canonical artifact or proof.",
+        "proofGate": "The validator produces the report.",
+        "copyContent": "Run it. ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT"
+      }
+    },
+    {
       "id": "missing-effective-policy",
       "expected_rule_ids": ["PLA004", "PLA005"],
       "raw_prompt": {
