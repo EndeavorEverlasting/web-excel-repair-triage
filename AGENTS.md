@@ -309,6 +309,64 @@ Friday is the reporting batch marker. Work performed Monday through Friday maps 
 - Internal task-tracker context may be richer, but it must not leak into admin submission artifacts.
 - Backfill into the roster log must be proposed, reviewed, and approved before mutation.
 
+### Neuron Track Hours monthly task-distribution doctrine
+
+For Neuron Track Hours work, semantic task attribution and source-of-truth correctness come before presentation polish or package mechanics. Spreadsheet/XML preservation remains important, but it must never substitute for correct hours, task distribution, role-specific work, or month-specific operating rules.
+
+#### Permanent NTH attribution rules
+
+- **Roster/attendance is the hours source of truth.** Scheduled project hours must reconcile to attendance before task allocation is accepted. Unscheduled, non-billable, or otherwise excluded support must not be inserted into schedule/project MTD merely to make a task distribution balance.
+- **Device counts and device capacity are separate from labor hours.** Device throughput, deployed-device counts, configured-device counts, or site capacity may support context, but none of them creates labor hours.
+- **Configuration and Deployment are distinct activities.** Do not treat a device being deployed as proof that the same hours were Configuration, and do not convert Configuration hours into Deployment merely because the work supported a go-live.
+- Each paid shift has **one dominant primary workstream**. The primary assignment represents the dominant purpose of that shift or day.
+- **Complimentary work may describe concurrent work but must not create additional hours.** Supporting notes can include unrelated concurrent work, secondary tasks, coordination, troubleshooting, staging, tickets, PM work, or cleanup without splitting or duplicating the paid shift unless stronger evidence supports a real hour-level split.
+- A full-day primary assignment must not be invented merely because a supporting activity appears in notes. In particular, scattered emails, meetings, client follow-up, or ticket work on a technical day remain complimentary unless the applicable monthly rule pack or date-specific evidence establishes that they dominated the day.
+- **PM / Operational Control is real work but not a catch-all.** Use it for prioritization, blocker resolution, resource/schedule decisions, site/delivery planning, operational control, and comparable PM duties when those duties dominate the period.
+- **PM, client, and ticket work must not be mechanically spread across technicians.** Role-specific work must follow evidence and known role ownership; Rich's coordination/PM/service workload must not be copied onto Khadejah, Alejandro, Cyen, or other technicians without evidence.
+- Evidence precedence for task attribution is: explicit date/person evidence and operator-confirmed facts; then the active month-specific rule pack and established role cadence; then aggregate allocation guardrails; then general fallback assumptions.
+- An aggregate allocation rule is a reasonableness test, not a license to erase stronger evidence. Do not force a day into a category solely to hit a target ratio.
+- **Do not expose internal task percentages** or allocation mechanics on management-facing NTH surfaces unless the operator explicitly requests them. Management-facing artifacts should show hours, primary workstream, and concise supporting-work context rather than internal allocation math.
+- Semantic colors must correspond to the actual activity type, not alternating rows or decorative patterns. Configuration, Inventory Management, Logistics/Staging, Survey/Recon, Cleanup/Disposal, Client Correspondence/Coordination, PM/Operational Control, and other governed workstreams must retain their activity-based color meaning.
+- Historical labor and historical categorization are separate questions. A historical categorization concern does not mean the labor did not occur.
+- **Historical review language must not imply correction.** Do not call a historical review a reconciliation, correction, revised tracker, or updated historical workbook unless the historical source was actually changed. When the old workbook remains untouched, use `review`, `historical review`, or equivalent language.
+
+#### Month-specific rule packs
+
+Neuron Track Hours allocation rules are month-scoped. Each active month may have a different operating mix, role cadence, holiday/absence pattern, site phase, and management-delivery requirement.
+
+Before generating or repairing an NTH artifact, identify the active **month-specific rule pack** and record at minimum:
+
+- effective date or covered date range;
+- attendance/roster source;
+- aggregate task-allocation guardrails;
+- known full-day role cadences;
+- date/person exceptions, holidays, absences, and called-in support;
+- primary-versus-complimentary work rules;
+- management-facing exposure rules;
+- semantic activity-color rules;
+- known historical-review boundaries.
+
+A prior month's allocation rule **must not be silently carried into another month**. If the next month has no confirmed rule pack, preserve the current attendance truth, use explicit evidence first, and mark the task allocation as requiring month-specific confirmation rather than importing the prior month by habit.
+
+#### July 2026 rule pack
+
+The following rules govern the July 2026 NTH artifact unless stronger date/person evidence supplied by the operator supersedes them:
+
+- For work from June 26 forward into the July operating period, the **60% Configuration / 40% other-work allocation** is the aggregate planning and reasonableness guardrail. It is not an exact per-person or per-day quota.
+- The 60/40 rule is a **reasonableness guardrail, not permission to overwrite stronger date-specific evidence**. Real inventory relocation, survey/recon, logistics/staging, cleanup/disposal, client coordination, PM/operational control, ticket/service work, or other evidenced work remains distinct even when that makes the measured month land above or below exactly 60% Configuration.
+- Rich Perez has **one full Client Correspondence / Coordination day per week**, usually Thursday. That is the weekly day on which meetings, escalations, client correspondence, status/data analysis, delivery/readiness coordination, and similar client-facing work may legitimately dominate the full scheduled shift.
+- Known July anchors for the weekly correspondence cadence include **July 2** and **July 23**. For other July weeks, use the usual-Thursday cadence only when it is consistent with the available date-specific evidence; do not manufacture an additional full correspondence day elsewhere in the same week.
+- On Rich's non-correspondence days, client follow-up, meetings, ticket/service work, and PM activity may appear as complimentary work when they occurred, but they must not turn an otherwise technical day into an all-day correspondence classification without evidence.
+- A week must not show multiple 8-hour or 11-hour Client Correspondence / Coordination days merely because client work appears in supporting notes. One full correspondence day per week is the default July cadence; exceptions require explicit evidence.
+- Early-July relocation and inventory work is real work, not Configuration by default. Inventory Management, Survey/Recon, Logistics/Staging, Cleanup/Disposal, and limited Configuration support may coexist on those days; the dominant workstream must follow the actual operational purpose and supporting work belongs in complimentary notes.
+- July 10 is a mixed operational day and must not be represented as inventory-only when the evidence supports configuration/troubleshooting and logistics/staging alongside inventory reconciliation.
+- **July 3 is a holiday** and contributes no scheduled Neuron project hours for the core team.
+- **Alejandro Perales has no scheduled project hours on July 24**. His attendance/status may be represented as `A` on an internal attendance/status surface, but zero project hours must not be added to the NTH MTD total.
+- Called-in support must follow the roster/attendance record. A technician appearing on July 24 or another exception date contributes only the hours actually supported by the attendance source.
+- The July management send copy should remain narrow. Unless explicitly requested otherwise, send only the **Executive Summary and the current NTH main sheet**; internal attendance, task-ledger, allocation-basis, methodology, evidence-index, validation, doctrine, and audit surfaces remain internal.
+- July management surfaces must not expose internal percentage allocations, confidence machinery, evidence-posture jargon, or forensic mechanics. They should communicate hours, primary workstream, concise supporting work, and the management-relevant historical-review boundary.
+- The May 26–29 question is a historical review of attribution. The historical May workbook remains historical source material unless separately and explicitly authorized for mutation; July work must not be presented as an update to May.
+
 ## 12. Operator source immutability
 
 `Candidates/` and `Active/` are read-only operator inputs and backup/emulator files.
