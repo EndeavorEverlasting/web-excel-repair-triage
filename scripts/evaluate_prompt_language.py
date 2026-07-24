@@ -45,6 +45,8 @@ def load_policy(path: Path = POLICY_PATH) -> dict[str, Any]:
         "dispositions",
         "fail_severities",
         "lazy_next_step_patterns",
+        "generic_step_patterns",
+        "compound_connectors_pattern",
         "required_effective_next_step_phrases",
     }
     missing = sorted(required - set(payload))
@@ -55,11 +57,19 @@ def load_policy(path: Path = POLICY_PATH) -> dict[str, Any]:
         "dispositions",
         "fail_severities",
         "lazy_next_step_patterns",
+        "generic_step_patterns",
         "required_effective_next_step_phrases",
     ):
         value = payload.get(list_field)
         if not isinstance(value, list) or not value:
             raise PromptLanguageAuditError(f"policy field must be a non-empty array: {list_field}")
+    connector_pattern = payload.get("compound_connectors_pattern")
+    if not isinstance(connector_pattern, str) or not connector_pattern.strip():
+        raise PromptLanguageAuditError("compound_connectors_pattern must be a non-empty string")
+    try:
+        re.compile(connector_pattern, flags=re.IGNORECASE)
+    except re.error as exc:
+        raise PromptLanguageAuditError(f"invalid compound_connectors_pattern: {exc}") from exc
     return payload
 
 
@@ -95,6 +105,29 @@ def _finding(rule_id: str, severity: str, field: str, message: str) -> dict[str,
     }
 
 
+def _matches_any(value: str, patterns: Iterable[str]) -> bool:
+    return any(re.fullmatch(pattern, value, flags=re.IGNORECASE) for pattern in patterns)
+
+
+def _is_lazy_next_step(value: str, policy: dict[str, Any]) -> bool:
+    """Return True when every action in a next step is observation/generic only."""
+    normalized = value.strip()
+    patterns = tuple(policy["lazy_next_step_patterns"]) + tuple(policy["generic_step_patterns"])
+    if _matches_any(normalized, patterns):
+        return True
+
+    clauses = [
+        clause.strip(" .\t\r\n")
+        for clause in re.split(
+            str(policy["compound_connectors_pattern"]),
+            normalized,
+            flags=re.IGNORECASE,
+        )
+        if clause.strip(" .\t\r\n")
+    ]
+    return len(clauses) > 1 and all(_matches_any(clause, patterns) for clause in clauses)
+
+
 def evaluate_prompt(
     raw_prompt: dict[str, Any],
     effective_prompt: dict[str, Any],
@@ -113,18 +146,15 @@ def evaluate_prompt(
     raw_next_step = str(raw_prompt.get("nextStep", ""))
     if not raw_next_step.strip():
         findings.append(_finding("PLA002", "error", "nextStep", "canonical nextStep is empty"))
-    else:
-        for pattern in policy["lazy_next_step_patterns"]:
-            if re.fullmatch(pattern, raw_next_step, flags=re.IGNORECASE):
-                findings.append(
-                    _finding(
-                        "PLA003",
-                        "warning",
-                        "nextStep",
-                        "canonical nextStep is placeholder, generic, or observation-only",
-                    )
-                )
-                break
+    elif _is_lazy_next_step(raw_next_step, policy):
+        findings.append(
+            _finding(
+                "PLA003",
+                "warning",
+                "nextStep",
+                "canonical nextStep is placeholder, generic, or observation-only",
+            )
+        )
 
     raw_copy = str(raw_prompt.get("copyContent", ""))
     if not raw_copy.strip():
