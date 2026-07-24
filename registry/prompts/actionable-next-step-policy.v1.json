@@ -1,0 +1,30 @@
+{
+  "schema_version": "prompt-next-action-policy/v1",
+  "policy_id": "actionable-next-command/v1",
+  "marker": "ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT",
+  "applies_to": "Every prompt in the combined canonical Prompt Kit registry.",
+  "next_step_suffix": "Do not leave the next step empty or generic: identify the first executable, dependency-aware action that advances or consumes the canonical artifact or proof; PR, status, branch, or log inspection alone is invalid when safe executable work remains.",
+  "allowed_none_value": "none; no safe actionable work remains",
+  "existing_work_reuse": {
+    "rule": "Before creating a new branch or pull request, inspect current, open, and recent pull requests, branches, worktrees, and commits for the same or overlapping owned scope. Reuse, repair, update, retarget, or extend the existing owner when it can safely carry the work.",
+    "new_pr_allowed_when": [
+      "no suitable existing owner exists",
+      "the existing pull request or branch is unsafe, irreparably stale, or intentionally superseded",
+      "scope isolation requires a distinct writer and collision analysis proves the split is safer"
+    ],
+    "preservation_rule": "Before superseding, closing, or abandoning an existing pull request or branch, preserve every unique useful commit, file, artifact, decision, test, and proof that belongs in the surviving work.",
+    "disposition_evidence": "When a new pull request is created despite related existing work, report the disposition of every inspected pull request or branch, why each was reused, repaired, superseded, or rejected, and where any unique useful work was preserved."
+  },
+  "forbidden_solo_actions": [
+    "open or reopen a pull request",
+    "create a new branch or pull request without first proving that no suitable existing owner can be safely reused, repaired, updated, retargeted, or extended",
+    "display already-reported status",
+    "list branches or commits",
+    "show logs without executing the owning validator or repair",
+    "tell the operator to wait or continue later",
+    "ask for permission when the scoped safe action is already authorized",
+    "repeat an artifact path without validating or consuming it",
+    "offer generic verbs such as test, review, merge, deploy, or monitor without an owner, command, dependency, artifact, and proof gate"
+  ],
+  "copy_content_appendix": "ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT\n- Do not leave NEXT COMMAND, NEXT ACTION, NEXT STEP, or NEXT STEPS blank, placeholder-only, optional-only, observation-only, or as generic future advice.\n- Advance the work into the next useful unproven state. Start with the first executable action, name its owner and dependency, and state the artifact or proof it will produce.\n- When safe executable work remains, do not stop at opening or reopening a PR, displaying already-reported status, listing branches or commits, showing logs, repeating a path, asking the operator to continue, or telling the operator to wait. Those may support diagnosis but are not sufficient next actions.\n- For unmerged remote work, provide one copy-paste command that sets the repository location, fetches without force, verifies the exact branch and commit, preserves dirty or separately owned work through an isolated worktree or another non-destructive mechanism, runs the owning validator, build, or launcher, resolves the canonical artifact from tracked registry, manifest, builder, workflow, or operator documentation, opens or prints that artifact, and propagates every nonzero exit code.\n- When no artifact exists yet, the next action must create or repair the next owned artifact and prove it; do not substitute inspection for implementation.\n- When review, merge, credentials, a protected runtime, a technician workstation, or production access is the real blocker, name that exact blocker and provide the command or operator action that advances that gate without claiming higher proof.\n- A NEXT STEPS list must be ordered, dependency-aware, owner-assigned, executable, and specific. Generic items such as test, review, merge, deploy, document, or monitor are invalid without the exact command or action, target, expected artifact, and completion gate.\n- Use `none; no safe actionable work remains` only after all authorized work is complete, validation has actually run, commit and push or PR state are reported, cleanup or preserved-work state is reported, and no safe unproven action remains."
+}
