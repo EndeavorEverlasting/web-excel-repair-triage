@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "run-context",
+  "title": "Harness Run Context",
+  "description": "Identity and provenance for a single harness workflow execution.",
+  "type": "object",
+  "required": [
+    "run_id",
+    "workflow_id",
+    "started_at",
+    "branch",
+    "commit_sha",
+    "dirty",
+    "input_paths",
+    "output_dir",
+    "requested_proof_level",
+    "achieved_proof_level",
+    "skipped_gates"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{8}$",
+      "description": "8-char hex run identifier, unique per execution."
+    },
+    "workflow_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Workflow key from workflow-registry.json."
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp when the run began."
+    },
+    "completed_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp when the run finished. Null if still running."
+    },
+    "branch": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Git branch name at run start."
+    },
+    "commit_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$",
+      "description": "Git commit SHA at run start."
+    },
+    "dirty": {
+      "type": "boolean",
+      "description": "True if the worktree had uncommitted changes at run start."
+    },
+    "input_paths": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "Relative paths to source inputs consumed by this run."
+    },
+    "input_hashes": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Map of input path -> SHA-256 hex digest."
+    },
+    "output_dir": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Relative path to the run output directory under Outputs/runs/<run_id>/."
+    },
+    "requested_proof_level": {
+      "$ref": "#/$defs/proof_level",
+      "description": "Minimum proof level requested for this run."
+    },
+    "achieved_proof_level": {
+      "$ref": "#/$defs/proof_level",
+      "description": "Highest proof level actually demonstrated."
+    },
+    "skipped_gates": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of proof-level gate names that were skipped."
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Free-form run metadata (months, profile, etc.)."
+    }
+  },
+  "$defs": {
+    "proof_level": {
+      "type": "string",
+      "enum": [
+        "contract",
+        "harness",
+        "static_test",
+        "build",
+        "package",
+        "render",
+        "launcher",
+        "command_ack",
+        "behavior_observed",
+        "browser",
+        "live_runtime",
+        "operator_acceptance"
+      ]
+    }
+  }
+}
