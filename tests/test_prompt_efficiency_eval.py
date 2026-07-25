@@ -166,6 +166,17 @@ class PromptEfficiencyEvalTests(unittest.TestCase):
                     1,
                 )
 
+    def test_repository_output_outside_outputs_is_rejected(self) -> None:
+        with self.assertRaises(efficiency.PromptEfficiencyEvalError):
+            efficiency.validate_output_path(ROOT / "docs" / "prompts.json")
+        allowed = efficiency.validate_output_path(
+            ROOT / "Outputs" / "prompt-efficiency-eval.json"
+        )
+        self.assertEqual(
+            allowed,
+            (ROOT / "Outputs" / "prompt-efficiency-eval.json").resolve(),
+        )
+
     def test_protected_output_roots_are_rejected(self) -> None:
         for protected in efficiency.PROTECTED_OUTPUT_ROOTS:
             with self.assertRaises(efficiency.PromptEfficiencyEvalError):

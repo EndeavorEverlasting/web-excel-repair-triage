@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Contracts and safe I/O for prompt-efficiency evaluation."""
 from __future__ import annotations
+
 import json
+import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -9,9 +12,12 @@ ROOT = Path(__file__).resolve().parents[1]
 POLICY_PATH = ROOT / "harness/prompt-registry/prompt-efficiency-eval.v1.json"
 FIXTURES_PATH = ROOT / "harness/prompt-registry/fixtures/prompt-efficiency-cases.v1.json"
 PROTECTED_OUTPUT_ROOTS = (ROOT / "Candidates", ROOT / "Active")
+APPROVED_REPOSITORY_OUTPUT_ROOT = ROOT / "Outputs"
+
 
 class PromptEfficiencyEvalError(RuntimeError):
     pass
+
 
 def load_json(path: Path) -> Any:
     try:
@@ -21,17 +27,56 @@ def load_json(path: Path) -> Any:
     except json.JSONDecodeError as exc:
         raise PromptEfficiencyEvalError(f"invalid JSON in {path}: {exc}") from exc
 
+
+def _temporary_output_roots() -> tuple[Path, ...]:
+    candidates = [Path(tempfile.gettempdir())]
+    for key in ("RUNNER_TEMP", "TMPDIR", "TEMP", "TMP"):
+        value = os.environ.get(key)
+        if value:
+            candidates.append(Path(value))
+    roots: list[Path] = []
+    for candidate in candidates:
+        resolved = candidate.expanduser().resolve()
+        if resolved not in roots:
+            roots.append(resolved)
+    return tuple(roots)
+
+
+def _is_relative_to(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root.resolve())
+    except ValueError:
+        return False
+    return True
+
+
 def validate_output_path(path: Path) -> Path:
+    """Allow runtime reports only under Outputs/ or recognized temp roots."""
     resolved = path.expanduser().resolve()
     for protected in PROTECTED_OUTPUT_ROOTS:
-        try:
-            resolved.relative_to(protected.resolve())
-        except ValueError:
-            continue
+        if _is_relative_to(resolved, protected):
+            raise PromptEfficiencyEvalError(
+                "output path is inside protected input root: "
+                f"{protected.relative_to(ROOT)}"
+            )
+    if _is_relative_to(resolved, APPROVED_REPOSITORY_OUTPUT_ROOT):
+        return resolved
+    if any(_is_relative_to(resolved, root) for root in _temporary_output_roots()):
+        return resolved
+    try:
+        repository_relative = resolved.relative_to(ROOT.resolve())
+    except ValueError:
+        repository_relative = None
+    if repository_relative is not None:
         raise PromptEfficiencyEvalError(
-            f"output path is inside protected input root: {protected.relative_to(ROOT)}"
+            "repository runtime output must live under Outputs/: "
+            f"{repository_relative}"
         )
-    return resolved
+    raise PromptEfficiencyEvalError(
+        "external runtime output must live under a recognized temporary root: "
+        f"{resolved}"
+    )
+
 
 def load_policy(path: Path = POLICY_PATH) -> dict[str, Any]:
     policy = load_json(path)
@@ -72,6 +117,7 @@ def load_policy(path: Path = POLICY_PATH) -> dict[str, Any]:
         raise PromptEfficiencyEvalError("judge instruction is empty")
     return policy
 
+
 def load_fixtures(path: Path = FIXTURES_PATH) -> dict[str, Any]:
     payload = load_json(path)
     if payload.get("schema_version") != "prompt-efficiency-fixtures/v1":
@@ -83,6 +129,7 @@ def load_fixtures(path: Path = FIXTURES_PATH) -> dict[str, Any]:
     if any(not item for item in ids) or len(ids) != len(set(ids)):
         raise PromptEfficiencyEvalError("prompt-efficiency fixture IDs are duplicate")
     return payload
+
 
 def write_json(payload: dict[str, Any], output: Path) -> Path:
     resolved = validate_output_path(output)

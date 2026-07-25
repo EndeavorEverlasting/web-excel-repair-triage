@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -46,6 +47,12 @@ PLAN_TERMS = (
     "plan", "discovery", "analyze", "opportunity", "directory",
     "compile only",
 )
+NEGATED_PRODUCTION_PATTERNS = (
+    r"\b(?:no|not|never|without)\b[^.\n;]{0,100}\bproduction\b",
+    r"\bproduction\b[^.\n;]{0,100}\b(?:not|never|forbidden|excluded)\b",
+    r"\bmust\s+not\s+be\s+labeled\s+production\s+proof\b",
+    r"\bdoes\s+not\s+(?:constitute|prove|establish|claim)\s+production\b",
+)
 
 
 def prompt_blob(
@@ -75,20 +82,37 @@ def prompt_blob(
     return " ".join(str(value) for value in values).lower()
 
 
-def classify_impact(prompt: dict[str, Any]) -> str:
-    text = prompt_blob(prompt)
-    prompt_type = str(prompt.get("type", "")).lower()
-    if any(term in text or term in prompt_type for term in INTEGRATION_TERMS):
+def primary_operation_blob(prompt: dict[str, Any]) -> str:
+    """Return fields that declare the prompt's primary operation."""
+    return " ".join(
+        str(prompt.get(field, ""))
+        for field in ("type", "name", "class", "sprintRole")
+    ).lower()
+
+
+def _operation_from_text(text: str) -> str | None:
+    if any(term in text for term in INTEGRATION_TERMS):
         return "integrate"
-    if any(term in text or term in prompt_type for term in VALIDATION_TERMS):
-        if any(term in text or term in prompt_type for term in MUTATION_TERMS):
-            return "mixed"
+    validation = any(term in text for term in VALIDATION_TERMS)
+    mutation = any(term in text for term in MUTATION_TERMS)
+    if validation and mutation:
+        return "mixed"
+    if validation:
         return "validate"
-    if any(term in text or term in prompt_type for term in MUTATION_TERMS):
+    if mutation:
         return "mutate"
-    if any(term in text or term in prompt_type for term in PLAN_TERMS):
+    if any(term in text for term in PLAN_TERMS):
         return "plan"
-    return "inspect"
+    return None
+
+
+def classify_impact(prompt: dict[str, Any]) -> str:
+    """Classify primary operation before inspecting incidental workflow text."""
+    primary = _operation_from_text(primary_operation_blob(prompt))
+    if primary is not None:
+        return primary
+    secondary = _operation_from_text(prompt_blob(prompt))
+    return secondary or "inspect"
 
 
 def classify_context(prompt: dict[str, Any]) -> str:
@@ -106,35 +130,46 @@ def classify_context(prompt: dict[str, Any]) -> str:
     return "non-repository"
 
 
-def classify_proof(prompt: dict[str, Any]) -> str:
-    text = str(prompt.get("proofGate", "")).lower() + " " + prompt_blob(prompt)
-    if any(word in text for word in (
+def _strip_negated_production(text: str) -> str:
+    cleaned = text
+    for pattern in NEGATED_PRODUCTION_PATTERNS:
+        cleaned = re.sub(pattern, " ", cleaned, flags=re.IGNORECASE)
+    return cleaned
+
+
+def _classify_proof_text(text: str) -> str:
+    normalized = _strip_negated_production(text.lower())
+    if any(word in normalized for word in (
         "production", "live target", "deployed"
     )):
         return "production"
-    if any(word in text for word in (
+    if any(word in normalized for word in (
         "runtime", "browser", "gui", "live proof", "launch"
     )):
         return "runtime"
-    if any(word in text for word in (
+    if any(word in normalized for word in (
         "test", "validator", "ci", "schema", "lint", "static"
     )):
         return "deterministic"
-    if any(word in text for word in (
+    if any(word in normalized for word in (
         "inspect", "review", "evidence", "diff"
     )):
         return "inspection"
     return "declared"
 
 
+def classify_proof(prompt: dict[str, Any]) -> str:
+    """Use the declared proof gate as authority, including explicit negation."""
+    gate = str(prompt.get("proofGate", "")).strip()
+    if gate:
+        return _classify_proof_text(gate)
+    return _classify_proof_text(prompt_blob(prompt))
+
+
 def canary_present(prompt: dict[str, Any], canary: dict[str, Any]) -> bool:
     content = str(prompt.get("copyContent", ""))
     marker = str(canary["prompt_instruction_marker"])
-    return (
-        marker in content
-        and "OBJECTIVE:" in content
-        and "REPOS:" in content
-    )
+    return marker in content and "OBJECTIVE:" in content and "REPOS:" in content
 
 
 def profile_prompt(
@@ -169,20 +204,14 @@ def profile_prompt(
             "present": canary_present(prompt, canary),
         },
         "shared_instruction_refs": shared_refs,
-        "canonical_source": str(
-            prompt.get("_source", "effective-registry")
-        ),
+        "canonical_source": str(prompt.get("_source", "effective-registry")),
         "token_metrics": {
             "source_copy_content_characters": len(content),
             "compact_profile_characters": 0,
             "shared_reference_count": len(shared_refs),
         },
     }
-    compact = json.dumps(
-        profile,
-        sort_keys=True,
-        separators=(",", ":"),
-    )
+    compact = json.dumps(profile, sort_keys=True, separators=(",", ":"))
     profile["token_metrics"]["compact_profile_characters"] = len(compact)
 
     required = set(profile_schema.get("required_fields", []))
@@ -233,14 +262,10 @@ def build_report(
     if prompt_id:
         wanted = prompt_id.upper()
         profiles = [
-            item
-            for item in profiles
-            if item["prompt_id"].upper() == wanted
+            item for item in profiles if item["prompt_id"].upper() == wanted
         ]
         if not profiles:
-            raise PromptRegistryHarnessError(
-                f"unknown prompt ID: {prompt_id}"
-            )
+            raise PromptRegistryHarnessError(f"unknown prompt ID: {prompt_id}")
 
     canary_missing = [
         item["prompt_id"]
@@ -258,23 +283,17 @@ def build_report(
     capability_counts = Counter(
         item["primary_capability"] for item in profiles
     )
-    coverage_complete = len(profiles) == (
-        1 if prompt_id else len(prompts)
-    )
+    coverage_complete = len(profiles) == (1 if prompt_id else len(prompts))
     findings = (
-        [
-            {
-                "id": "canary-missing",
-                "severity": "error" if strict_canary else "warning",
-                "prompt_ids": canary_missing,
-                "message": (
-                    "Effective prompts missing the objective/repository "
-                    "canary contract."
-                ),
-            }
-        ]
-        if canary_missing
-        else []
+        [{
+            "id": "canary-missing",
+            "severity": "error" if strict_canary else "warning",
+            "prompt_ids": canary_missing,
+            "message": (
+                "Effective prompts missing the objective/repository canary contract."
+            ),
+        }]
+        if canary_missing else []
     )
 
     return {
@@ -293,16 +312,14 @@ def build_report(
             "source_copy_content_characters": source_characters,
             "compact_profile_characters": compact_characters,
             "estimated_passage_character_reduction": max(
-                0,
-                source_characters - compact_characters,
+                0, source_characters - compact_characters
             ),
         },
         "profiles": profiles,
         "findings": findings,
         "proof_ceiling": (
-            "Exhaustive deterministic effective-registry/profile coverage "
-            "and static canary inclusion only; no provider/model adherence "
-            "proof."
+            "Exhaustive deterministic effective-registry/profile coverage and "
+            "static canary inclusion only; no provider/model adherence proof."
         ),
     }
 
@@ -317,18 +334,14 @@ def write_report(report: dict[str, Any], output: Path) -> Path:
     return resolved
 
 
-def print_summary(
-    report: dict[str, Any],
-    output: Path | None = None,
-) -> None:
+def print_summary(report: dict[str, Any], output: Path | None = None) -> None:
     print("Prompt Registry Harness Audit")
     print("=" * 31)
     print(f"Profiles: {report['profile_count']} / {report['prompt_count']}")
     print(f"Coverage complete: {report['coverage_complete']}")
     print(
         "Canary coverage: "
-        f"{report['canary_coverage_count']} / "
-        f"{report['profile_count']}"
+        f"{report['canary_coverage_count']} / {report['profile_count']}"
     )
     print(f"Strict canary: {report['strict_canary']}")
     print(

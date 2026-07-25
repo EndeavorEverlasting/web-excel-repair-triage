@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +19,7 @@ CANARY = ROOT / "harness" / "contracts" / "conversation-canary.v1.json"
 EFFICIENCY_POLICY = DOMAIN_ROOT / "prompt-efficiency-eval.v1.json"
 EFFICIENCY_FIXTURES = DOMAIN_ROOT / "fixtures" / "prompt-efficiency-cases.v1.json"
 PROTECTED_OUTPUT_ROOTS = (ROOT / "Candidates", ROOT / "Active")
+APPROVED_REPOSITORY_OUTPUT_ROOT = ROOT / "Outputs"
 
 REQUIRED_COMPONENT_IDS = {
     "codebase_map", "workflow_spec", "artifact_registry",
@@ -59,18 +62,54 @@ def require_file(relative_path: str) -> Path:
     return path
 
 
+def _temporary_output_roots() -> tuple[Path, ...]:
+    candidates = [Path(tempfile.gettempdir())]
+    for key in ("RUNNER_TEMP", "TMPDIR", "TEMP", "TMP"):
+        value = os.environ.get(key)
+        if value:
+            candidates.append(Path(value))
+    roots: list[Path] = []
+    for candidate in candidates:
+        resolved = candidate.expanduser().resolve()
+        if resolved not in roots:
+            roots.append(resolved)
+    return tuple(roots)
+
+
+def _is_relative_to(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root.resolve())
+    except ValueError:
+        return False
+    return True
+
+
 def validate_output_path(path: Path) -> Path:
+    """Allow runtime reports only under Outputs/ or recognized temp roots."""
     resolved = path.expanduser().resolve()
     for protected in PROTECTED_OUTPUT_ROOTS:
-        try:
-            resolved.relative_to(protected.resolve())
-        except ValueError:
-            continue
+        if _is_relative_to(resolved, protected):
+            raise PromptRegistryHarnessError(
+                "output path is inside protected input root: "
+                f"{protected.relative_to(ROOT)}"
+            )
+    if _is_relative_to(resolved, APPROVED_REPOSITORY_OUTPUT_ROOT):
+        return resolved
+    if any(_is_relative_to(resolved, root) for root in _temporary_output_roots()):
+        return resolved
+    try:
+        repository_relative = resolved.relative_to(ROOT.resolve())
+    except ValueError:
+        repository_relative = None
+    if repository_relative is not None:
         raise PromptRegistryHarnessError(
-            "output path is inside protected input root: "
-            f"{protected.relative_to(ROOT)}"
+            "repository runtime output must live under Outputs/: "
+            f"{repository_relative}"
         )
-    return resolved
+    raise PromptRegistryHarnessError(
+        "external runtime output must live under a recognized temporary root: "
+        f"{resolved}"
+    )
 
 
 def _validate_root_registration() -> None:
