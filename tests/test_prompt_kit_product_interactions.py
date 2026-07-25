@@ -81,12 +81,19 @@ class PromptKitProductInteractionTests(unittest.TestCase):
         self.assertIn("bottom.id='page-bottom'", js)
         self.assertIn("ensurePageNavigation();", js)
 
-    def test_prompt_cards_remain_keyboard_accessible(self) -> None:
+    def test_prompt_cards_remain_keyboard_accessible_without_bubbling_rerenders(self) -> None:
         js = JS.read_text(encoding="utf-8")
         self.assertIn("card.tabIndex=0", js)
         self.assertIn("card.setAttribute('role','button')", js)
         self.assertIn("Double-click or press Enter to expand", js)
-        self.assertIn("else if(e.key===' ')", js)
+        handler = (
+            "card.onkeydown=function(e){if(e.target!==card)return;"
+            "if(e.key==='Enter'){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();"
+            "showPromptDetail(p.id,card)}else if(e.key===' '){cancelPromptCardCopy(card);"
+            "e.preventDefault();e.stopPropagation();copyPrompt(p.id)}};"
+        )
+        self.assertIn(handler, js)
+        self.assertIn("return;default:return}", js)
 
     def test_checked_in_site_contains_current_interaction_and_navigation_source(self) -> None:
         deployed = DEPLOYED.read_text(encoding="utf-8")

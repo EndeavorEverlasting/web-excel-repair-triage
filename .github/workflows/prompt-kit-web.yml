@@ -36,7 +36,7 @@ on:
       - .github/workflows/prompt-kit-web.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   prompt-kit-web:
@@ -70,6 +70,47 @@ jobs:
         with:
           name: prompt-kit-current-preview
           path: ${{ runner.temp }}/prompt-kit/index.html
+          if-no-files-found: error
+      - name: Publish generated website as unattached Git blob
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/prompt-kit-interactions-navigation'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GENERATED_SITE: ${{ runner.temp }}/prompt-kit/index.html
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          import urllib.request
+
+          site_path = os.environ["GENERATED_SITE"]
+          with open(site_path, "rb") as handle:
+              content = base64.b64encode(handle.read()).decode("ascii")
+          payload = json.dumps({"content": content, "encoding": "base64"}).encode("utf-8")
+          request = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/git/blobs",
+              data=payload,
+              method="POST",
+              headers={
+                  "Accept": "application/vnd.github+json",
+                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "Content-Type": "application/json",
+              },
+          )
+          with urllib.request.urlopen(request) as response:
+              result = json.load(response)
+          sha = result["sha"]
+          print(f"Generated site blob SHA: {sha}")
+          with open(os.path.join(os.environ["RUNNER_TEMP"], "generated-site-blob-sha.txt"), "w", encoding="utf-8") as handle:
+              handle.write(sha + "\n")
+          PY
+      - name: Upload generated site blob SHA
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/prompt-kit-interactions-navigation'
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-generated-site-blob-sha
+          path: ${{ runner.temp }}/generated-site-blob-sha.txt
           if-no-files-found: error
       - name: Validate Prompt Kit product interactions and navigation
         run: python -m unittest tests.test_prompt_kit_product_interactions -v
