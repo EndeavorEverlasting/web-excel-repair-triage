@@ -11,6 +11,7 @@ This is the repository skill index. Reusable procedures live under `.ai/skills/<
 5. Update skill, capability, trigger, manifest, tests, and docs atomically when ownership changes.
 6. Prompt Kit card interactions are deterministic product behavior. Their versioned requirements live in `harness/contracts/prompt-kit-interactions.v1.json` and Workflow B; a skill may help design downstream evals but must not become the only implementation of click, double-click, dismissal, clipboard, or focus behavior.
 7. Prompt-registry passage skills are domain-scoped through `harness/prompt-registry/manifest.v1.json`; load only the selected skill and its shared contracts rather than repeating every procedure inside every prompt.
+8. Prompt efficiency must use deterministic checks before LLM judge tokens, and token reduction must not remove structure that weak models need.
 
 ## Active repository skills
 
@@ -60,8 +61,9 @@ The domain manifest `harness/prompt-registry/manifest.v1.json` owns these compac
 | `.ai/skills/validation-proof-routing/SKILL.md` | Select the strongest practical proof class and report its ceiling. |
 | `.ai/skills/integration-handoff/SKILL.md` | Preserve and integrate work in dependency order, then emit an executable handoff. |
 | `.ai/skills/prompt-registry-passage/SKILL.md` | Inventory every effective prompt and derive compact impact/capability profiles. |
+| `.ai/skills/prompt-efficiency-evaluation/SKILL.md` | Run code checks, emit one-case judge packets, validate LLM judge results, and enforce weak-model readiness. |
 
-These skills are intentionally referenced, not embedded, by `prompt-execution-profile/v1` records. The root capability registry remains the authority for repository-wide capabilities; the prompt-registry domain registry owns this focused passage layer.
+These skills are referenced, not embedded, by compact profiles and judge packets. The domain registry owns this focused passage/evaluation layer.
 
 ## Required skill-file sections
 

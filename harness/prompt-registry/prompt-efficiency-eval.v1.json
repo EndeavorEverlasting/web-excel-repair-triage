@@ -1,0 +1,102 @@
+{
+  "schema_version": "prompt-efficiency-eval-policy/v1",
+  "policy_id": "prompt-efficiency-weak-model-readiness",
+  "mission": "Minimize avoidable prompt tokens without removing the explicit structure, scope, failure handling, and proof instructions that weak models need to complete the task.",
+  "target_kinds": [
+    "prompt-registry",
+    "model-response"
+  ],
+  "evaluation_lanes": {
+    "code_based": {
+      "required": true,
+      "purpose": "Measure size, duplication, structural signals, and deterministic response canaries before spending model tokens."
+    },
+    "llm_judge": {
+      "required_for_strict_gate": true,
+      "purpose": "Use an independent model to assess clarity, ambiguity, token economy, and weak-model task completion against a fixed rubric."
+    },
+    "human": {
+      "required_for_release_claim": false,
+      "purpose": "Resolve disputed judge findings and approve intentional exceptions."
+    },
+    "user": {
+      "required_for_production_claim": false,
+      "purpose": "Measure real operator speed, completion, correction rate, and abandonment."
+    }
+  },
+  "deterministic_thresholds": {
+    "max_prompt_characters": 9000,
+    "max_approx_prompt_tokens": 2250,
+    "max_duplicate_line_ratio": 0.12,
+    "max_line_characters": 280,
+    "minimum_weak_model_signal_groups": 5,
+    "max_model_response_characters": 12000
+  },
+  "weak_model_signal_groups": {
+    "objective": ["objective", "mission", "your job", "goal"],
+    "scope": ["owned scope", "forbidden scope", "do not", "must not"],
+    "inputs": ["repo:", "input", "context", "source of truth", "inspect"],
+    "action": ["build", "execute", "implement", "run", "change", "commit"],
+    "validation": ["validate", "test", "proof", "pass"],
+    "output": ["output", "final response", "artifact", "report"],
+    "failure": ["blocker", "stop with", "if a check", "if the worktree", "error"]
+  },
+  "rubrics": {
+    "prompt-registry": {
+      "rubric_id": "prompt-efficiency-prompt-rubric/v1",
+      "dimensions": [
+        "task_goal_clarity",
+        "input_context_resolution",
+        "deterministic_actionability",
+        "scope_guardrails",
+        "validation_proof",
+        "output_handoff",
+        "token_economy",
+        "weak_model_resilience"
+      ],
+      "average_score_minimum": 3.0,
+      "dimension_floor": 2,
+      "required_dimension_floors": {
+        "token_economy": 3,
+        "weak_model_resilience": 3
+      }
+    },
+    "model-response": {
+      "rubric_id": "prompt-efficiency-response-rubric/v1",
+      "dimensions": [
+        "objective_retention",
+        "repository_context_retention",
+        "instruction_adherence",
+        "task_progress",
+        "evidence_quality",
+        "concision"
+      ],
+      "average_score_minimum": 3.0,
+      "dimension_floor": 2,
+      "required_dimension_floors": {
+        "instruction_adherence": 3,
+        "task_progress": 3
+      }
+    }
+  },
+  "judge": {
+    "minimum_judges_per_case": 1,
+    "packet_schema_version": "prompt-efficiency-judge-packet-set/v1",
+    "result_schema_version": "prompt-efficiency-judge-result/v1",
+    "instruction": "Act as an independent evaluation model. Judge only against the supplied rubric. Do not reward length, confidence, or stylistic polish. Penalize hidden assumptions, unnecessary repetition, ambiguous ownership, unbounded judgment, missing failure handling, and proof claims that exceed evidence. Assume the task may be executed by a weak but instruction-following model. Return one JSON result per case with no prose outside JSON.",
+    "score_scale": {
+      "0": "missing or actively harmful",
+      "1": "major weakness likely to prevent completion",
+      "2": "usable only with substantial model judgment or repair",
+      "3": "clear and efficient enough for reliable execution",
+      "4": "exceptionally explicit, compact, and robust"
+    },
+    "allowed_verdicts": ["pass", "repair", "fail"]
+  },
+  "strict_gate": {
+    "requires_no_code_warnings": true,
+    "requires_complete_judge_coverage": true,
+    "requires_judge_pass": true
+  },
+  "proof_ceiling": "Code checks prove measurable structure and size. LLM judge results prove only rubric-scored model opinion for the evaluated inputs. Human and user evidence remain separate."
+}

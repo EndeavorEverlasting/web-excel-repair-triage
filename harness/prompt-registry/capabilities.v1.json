@@ -6,24 +6,11 @@
       "version": "1.0.0",
       "status": "canonical",
       "skill": ".ai/skills/conversation-entry-canary/SKILL.md",
-      "trigger_ids": [
-        "conversation-start-or-response"
-      ],
+      "trigger_ids": ["conversation-start-or-response"],
       "operation": "Emit the objective/repository canary and reload concrete conversation state before substantive work.",
-      "inputs": [
-        "current objective",
-        "relevant repositories",
-        "active branches when known",
-        "conversation-canary contract"
-      ],
-      "outputs": [
-        "two-line response canary",
-        "canary-breach classification"
-      ],
-      "implementation": {
-        "kind": "contract",
-        "path": "harness/contracts/conversation-canary.v1.json"
-      },
+      "inputs": ["current objective", "relevant repositories", "active branches when known", "conversation-canary contract"],
+      "outputs": ["two-line response canary", "canary-breach classification"],
+      "implementation": {"kind": "contract", "path": "harness/contracts/conversation-canary.v1.json"},
       "proof_ceiling": "Static contract and response-shape proof until model responses are observed."
     },
     {
@@ -31,26 +18,11 @@
       "version": "1.0.0",
       "status": "canonical",
       "skill": ".ai/skills/repository-inspection/SKILL.md",
-      "trigger_ids": [
-        "prompt-impact-inspect",
-        "prompt-impact-plan"
-      ],
+      "trigger_ids": ["prompt-impact-inspect", "prompt-impact-plan"],
       "operation": "Inspect repository evidence and produce a bounded factual plan without mutation.",
-      "inputs": [
-        "repository state",
-        "prompt execution profile",
-        "relevant contracts",
-        "read-only evidence"
-      ],
-      "outputs": [
-        "evidence inventory",
-        "bounded plan",
-        "explicit unknowns"
-      ],
-      "implementation": {
-        "kind": "skill",
-        "path": ".ai/skills/repository-inspection/SKILL.md"
-      },
+      "inputs": ["repository state", "prompt execution profile", "relevant contracts", "read-only evidence"],
+      "outputs": ["evidence inventory", "bounded plan", "explicit unknowns"],
+      "implementation": {"kind": "skill", "path": ".ai/skills/repository-inspection/SKILL.md"},
       "proof_ceiling": "Inspection and planning proof only."
     },
     {
@@ -58,26 +30,11 @@
       "version": "1.0.0",
       "status": "canonical",
       "skill": ".ai/skills/bounded-repository-mutation/SKILL.md",
-      "trigger_ids": [
-        "prompt-impact-mutate",
-        "prompt-impact-mixed"
-      ],
+      "trigger_ids": ["prompt-impact-mutate", "prompt-impact-mixed"],
       "operation": "Perform one bounded tracked mutation using declared scope, canonical sources, and preservation-first Git behavior.",
-      "inputs": [
-        "owned scope",
-        "forbidden scope",
-        "canonical implementation surfaces",
-        "validation order"
-      ],
-      "outputs": [
-        "tracked changes",
-        "focused commit",
-        "push or PR evidence"
-      ],
-      "implementation": {
-        "kind": "skill",
-        "path": ".ai/skills/bounded-repository-mutation/SKILL.md"
-      },
+      "inputs": ["owned scope", "forbidden scope", "canonical implementation surfaces", "validation order"],
+      "outputs": ["tracked changes", "focused commit", "push or PR evidence"],
+      "implementation": {"kind": "skill", "path": ".ai/skills/bounded-repository-mutation/SKILL.md"},
       "proof_ceiling": "Committed source and executed validation only."
     },
     {
@@ -85,25 +42,11 @@
       "version": "1.0.0",
       "status": "canonical",
       "skill": ".ai/skills/validation-proof-routing/SKILL.md",
-      "trigger_ids": [
-        "prompt-impact-validate"
-      ],
+      "trigger_ids": ["prompt-impact-validate"],
       "operation": "Select and execute the strongest practical proof lane without inflating static evidence into runtime confidence.",
-      "inputs": [
-        "changed behavior",
-        "available validators",
-        "proof class",
-        "known blockers"
-      ],
-      "outputs": [
-        "ordered validation receipts",
-        "proof level",
-        "explicit skipped gates"
-      ],
-      "implementation": {
-        "kind": "skill",
-        "path": ".ai/skills/validation-proof-routing/SKILL.md"
-      },
+      "inputs": ["changed behavior", "available validators", "proof class", "known blockers"],
+      "outputs": ["ordered validation receipts", "proof level", "explicit skipped gates"],
+      "implementation": {"kind": "skill", "path": ".ai/skills/validation-proof-routing/SKILL.md"},
       "proof_ceiling": "The highest validation lane actually executed."
     },
     {
@@ -111,25 +54,11 @@
       "version": "1.0.0",
       "status": "canonical",
       "skill": ".ai/skills/integration-handoff/SKILL.md",
-      "trigger_ids": [
-        "prompt-impact-integrate"
-      ],
+      "trigger_ids": ["prompt-impact-integrate"],
       "operation": "Preserve unique work, integrate in dependency order, and emit an executable handoff or exact next command.",
-      "inputs": [
-        "branch and PR state",
-        "dependency order",
-        "validation receipts",
-        "artifact registry"
-      ],
-      "outputs": [
-        "integration mutation",
-        "clean handoff",
-        "exact next command"
-      ],
-      "implementation": {
-        "kind": "skill",
-        "path": ".ai/skills/integration-handoff/SKILL.md"
-      },
+      "inputs": ["branch and PR state", "dependency order", "validation receipts", "artifact registry"],
+      "outputs": ["integration mutation", "clean handoff", "exact next command"],
+      "implementation": {"kind": "skill", "path": ".ai/skills/integration-handoff/SKILL.md"},
       "proof_ceiling": "Git and PR state plus executed integration checks."
     },
     {
@@ -137,30 +66,24 @@
       "version": "1.0.0",
       "status": "canonical",
       "skill": ".ai/skills/prompt-registry-passage/SKILL.md",
-      "trigger_ids": [
-        "full-prompt-registry-passage",
-        "conversation-canary-change"
-      ],
+      "trigger_ids": ["full-prompt-registry-passage", "conversation-canary-change"],
       "operation": "Inventory every effective prompt, derive compact execution profiles, audit canary coverage, and produce an ordered passage plan.",
-      "inputs": [
-        "effective prompt registry",
-        "domain manifest",
-        "capability and trigger registries",
-        "execution-profile schema",
-        "conversation-canary contract"
-      ],
-      "outputs": [
-        "prompt-registry-harness-audit-result/v1",
-        "one compact profile per prompt",
-        "capability counts",
-        "canary gap ledger",
-        "passage order"
-      ],
-      "implementation": {
-        "kind": "script",
-        "path": "scripts/audit_prompt_registry_harness.py"
-      },
+      "inputs": ["effective prompt registry", "domain manifest", "capability and trigger registries", "execution-profile schema", "conversation-canary contract"],
+      "outputs": ["prompt-registry-harness-audit-result/v1", "one compact profile per prompt", "capability counts", "canary gap ledger", "passage order"],
+      "implementation": {"kind": "script", "path": "scripts/audit_prompt_registry_harness.py"},
       "proof_ceiling": "Exhaustive deterministic registry/profile coverage and static canary inclusion; not provider adherence."
+    },
+    {
+      "id": "prompt-efficiency-evaluation",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/prompt-efficiency-evaluation/SKILL.md",
+      "trigger_ids": ["prompt-efficiency-unproven", "weak-model-readiness-unproven", "model-response-efficiency-unproven"],
+      "operation": "Run deterministic efficiency checks, emit one-case judge packets, validate independent LLM judge results, and enforce weak-model readiness without rewarding length.",
+      "inputs": ["effective prompt registry or candidate-response JSONL", "prompt-efficiency policy", "optional judge results", "optional prompt filter"],
+      "outputs": ["prompt-efficiency-eval-result/v1", "ordered judge packets", "code findings", "judge aggregation", "strict readiness result"],
+      "implementation": {"kind": "script", "path": "scripts/evaluate_prompt_efficiency.py"},
+      "proof_ceiling": "Deterministic structure and size plus validated rubric-scored judge opinion; not human or user acceptance."
     }
   ]
 }

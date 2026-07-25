@@ -1,15 +1,16 @@
 # Prompt Registry Harness Workflow
 
-## 1. Pick up a passage task
+## 1. Pick up a passage or evaluation task
 
-1. Read `AGENTS.md`, the domain manifest, canary contract, execution-profile schema, capability registry, trigger registry, and operator report.
+1. Read `AGENTS.md`, the domain manifest, canary contract, execution-profile schema, efficiency policy, capability registry, trigger registry, and operator reports.
 2. Record repository and Git state without discarding existing work.
-3. Declare whether the lane is:
-   - **audit-only** — inventory, profiling, routing, and canary-gap reporting;
-   - **harness repair** — domain contracts, skills, validator, tests, hook, CI, and reports;
-   - **prompt product repair** — canonical prompt sources and generated output, which is outside this harness sprint.
-4. Select `prompt-registry-passage` as the primary capability for a full registry pass.
-5. Use the profile-assigned execution capability only when moving from audit into an authorized prompt run.
+3. Declare the lane:
+   - **audit-only** — inventory, profiling, routing, canary, and efficiency findings;
+   - **harness repair** — contracts, skills, validators, tests, hooks, CI, and reports;
+   - **prompt product repair** — canonical prompt sources and generated output, outside this harness sprint;
+   - **model-response eval** — approved candidate-response evidence and independent judge results.
+4. Select `prompt-registry-passage` for full inventory or `prompt-efficiency-evaluation` for token/weak-model proof.
+5. Use the profile-assigned execution capability only when moving into an authorized prompt run.
 
 ## 2. Run a full passage
 
@@ -19,47 +20,82 @@ python scripts\audit_prompt_registry_harness.py `
   --summary
 ```
 
-The report must contain one profile per effective prompt, no embedded full prompt text, deterministic capability/skill ownership, the ordered passage list, and visible canary coverage.
+The report must contain one compact profile per effective prompt, no embedded full prompt text, deterministic capability/skill ownership, ordered passage, and visible canary coverage.
 
-For one prompt:
-
-```powershell
-python scripts\audit_prompt_registry_harness.py --prompt P07 --summary
-```
-
-## 3. Canary gate
-
-Non-strict mode records missing canaries without failing the harness. After a separately authorized prompt-registry product sprint inserts the contract into canonical/effective prompts, run:
+## 3. Run efficiency checks before judge tokens
 
 ```powershell
-python scripts\audit_prompt_registry_harness.py `
-  --strict-canary `
-  --output Outputs\prompt-registry-canary-strict.json `
+python scripts\evaluate_prompt_efficiency.py `
+  --output Outputs\prompt-efficiency-eval.json `
+  --emit-judge-packets Outputs\prompt-efficiency-judge-packets.json `
   --summary
 ```
 
-The strict gate passes only when every effective prompt contains the canary instruction marker and both `OBJECTIVE:` and `REPOS:` labels.
+Code checks measure prompt characters, approximate tokens, duplicate lines, oversized lines, explicit weak-model structure signals, and missing required metadata. They run before any LLM judge.
 
-## 4. Validate before committing
+For a bounded prompt:
 
-1. Compile auditor and tests.
-2. Run domain tests.
-3. Generate the non-strict audit report.
-4. Run the root harness validator/contracts.
-5. Run exact Prompt Kit builder parity to prove the harness did not mutate product output.
+```powershell
+python scripts\evaluate_prompt_efficiency.py --prompt P07 --emit-judge-packets Outputs\P07-judge-packet.json --summary
+```
+
+## 4. LLM-as-judge pass-through
+
+1. Process the packet list in order, one case at a time.
+2. Use an independent model where practical.
+3. Judge only against the registered rubric; do not reward length, confidence, or polish.
+4. Return one `prompt-efficiency-judge-result/v1` JSON object per case.
+5. Store results as JSONL under `Outputs/`.
+6. Ingest and validate:
+
+```powershell
+python scripts\evaluate_prompt_efficiency.py `
+  --judge-results Outputs\prompt-efficiency-judge-results.jsonl `
+  --strict `
+  --output Outputs\prompt-efficiency-eval-strict.json `
+  --summary
+```
+
+Strict mode requires zero code warnings, complete judge coverage, passing verdicts, passing average scores, all dimensions above the general floor, and higher required floors for token economy and weak-model resilience.
+
+## 5. Evaluate one LLM with another LLM
+
+Create candidate-response JSONL with `case_id`, `prompt_id`, `model_id`, and `response`, then run:
+
+```powershell
+python scripts\evaluate_prompt_efficiency.py `
+  --candidate-responses Outputs\candidate-responses.jsonl `
+  --emit-judge-packets Outputs\model-response-judge-packets.json `
+  --summary
+```
+
+This path adds deterministic empty-response, canary, and response-size checks, then emits one prompt/response pair per judge case.
+
+## 6. Canary gate
+
+Non-strict passage mode records missing canaries without failing the harness. After an authorized prompt-product sprint inserts the contract, run the existing strict canary gate. Canary inclusion, efficiency scoring, and model adherence remain separate proof lanes.
+
+## 7. Validate before committing
+
+1. Compile passage and efficiency modules/tests.
+2. Run domain contract tests and efficiency tests.
+3. Generate non-strict passage and efficiency reports plus judge packets.
+4. Run root harness validator/contracts.
+5. Run exact Prompt Kit parity to prove the harness did not mutate product output.
 6. Run artifact hygiene and `git diff --check`.
 7. Run broader suites last.
 
-## 5. Handle failures
+## 8. Handle failures
 
-- **Coverage mismatch:** stop and repair registry loading/profile generation before interpreting findings.
-- **Unknown capability/skill:** repair domain registries atomically; do not ask the model to guess.
-- **Full prompt leaked into a profile:** fail closed and remove the field.
-- **Canary missing in non-strict mode:** report downstream product debt.
-- **Canary missing in strict mode:** fail with the prompt IDs; do not weaken the contract.
-- **Provider/model stops emitting the canary:** leave the chat and preserve the last trustworthy state; static harness proof is not a substitute.
+- **Coverage mismatch:** repair registry loading/profile or case generation before interpreting findings.
+- **Unknown capability/skill:** repair registries atomically; do not ask the model to guess.
+- **Judge result malformed:** reject unknown cases, duplicate judge IDs, wrong rubrics, missing dimensions, or scores outside 0..4.
+- **Judge coverage incomplete:** strict mode fails; do not report an LLM evaluation as passed.
+- **Code warning:** preserve it as prompt-product repair debt; do not lower thresholds merely to turn green.
+- **Token reduction weakens structure:** reject the repair; weak-model readiness outranks raw brevity.
+- **Provider/model stops emitting the canary:** leave the chat and preserve the last trustworthy state.
 - **Dirty or conflicting worktree:** isolate the lane; no reset, clean, or force.
 
-## 6. Handoff
+## 9. Handoff
 
-Report repository, branch, domain capability, prompt count/profile count, canary coverage, capability distribution, artifact path, validation results, commit SHA, PR state, proof ceiling, product gaps, and one exact executable next command.
+Report repository, branch, domain capability, target kind, prompt/case counts, code findings, judge coverage/pass counts, canary coverage, artifact paths, validation, commit SHA, PR state, proof ceiling, product gaps, and one exact executable next command.

@@ -22,7 +22,7 @@ class PromptRegistryHarnessTests(unittest.TestCase):
         manifest = harness["manifest"]
         self.assertEqual(manifest["schema_version"], "prompt-registry-harness/v1")
         self.assertEqual(set(manifest["components"]), contracts.REQUIRED_COMPONENT_IDS)
-        self.assertEqual(len(manifest["skills"]), 6)
+        self.assertEqual(len(manifest["skills"]), 7)
         self.assertEqual(
             set(harness["capabilities"]),
             {
@@ -32,15 +32,20 @@ class PromptRegistryHarnessTests(unittest.TestCase):
                 "validation-proof-routing",
                 "integration-handoff",
                 "prompt-registry-passage",
+                "prompt-efficiency-evaluation",
             },
         )
-        self.assertEqual(len(harness["triggers"]), 9)
+        self.assertEqual(len(harness["triggers"]), 12)
+        self.assertEqual(
+            set(harness["efficiency_policy"]["evaluation_lanes"]),
+            {"code_based", "llm_judge", "human", "user"},
+        )
 
     def test_every_domain_skill_is_small_structured_and_indexed(self) -> None:
         manifest = contracts.load_json(contracts.DOMAIN_MANIFEST)
-        domain_map = (ROOT / "harness" / "prompt-registry" / "CODEBASE_MAP.md").read_text(
-            encoding="utf-8"
-        )
+        domain_map = (
+            ROOT / "harness" / "prompt-registry" / "CODEBASE_MAP.md"
+        ).read_text(encoding="utf-8")
         root_index = (ROOT / "SKILLS.md").read_text(encoding="utf-8")
         for relative_path in manifest["skills"]:
             self.assertIn(relative_path, domain_map)
@@ -93,6 +98,22 @@ class PromptRegistryHarnessTests(unittest.TestCase):
                 profile["primary_skill"],
                 passage.IMPACT_CAPABILITY_SKILL[profile["impact_class"]],
             )
+
+    def test_efficiency_capability_has_three_distinct_triggers(self) -> None:
+        harness = contracts.validate_domain_harness()
+        capability = harness["capabilities"]["prompt-efficiency-evaluation"]
+        self.assertEqual(
+            set(capability["trigger_ids"]),
+            {
+                "prompt-efficiency-unproven",
+                "weak-model-readiness-unproven",
+                "model-response-efficiency-unproven",
+            },
+        )
+        self.assertEqual(
+            set(harness["efficiency_policy"]["rubrics"]),
+            {"prompt-registry", "model-response"},
+        )
 
     def test_impact_routing_is_deterministic_for_representative_prompts(self) -> None:
         def prompt(prompt_type: str, **overrides: object) -> dict[str, object]:

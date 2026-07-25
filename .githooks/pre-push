@@ -4,11 +4,16 @@ set -eu
 PROMPT_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-language-audit.json"
 INTERACTION_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-kit-interaction-audit.json"
 PASSAGE_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-registry-harness-audit.json"
+EFFICIENCY_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-efficiency-eval.json"
+JUDGE_PACKETS="${TMPDIR:-/tmp}/web-excel-prompt-efficiency-judge-packets.json"
+trap 'rm -f "$PROMPT_REPORT" "$INTERACTION_REPORT" "$PASSAGE_REPORT" "$EFFICIENCY_REPORT" "$JUDGE_PACKETS"' EXIT
 
 python scripts/validate_harness.py
 python -m unittest tests.test_harness_contract -v
 python -m unittest tests.test_prompt_registry_harness -v
+python -m unittest tests.test_prompt_efficiency_eval -v
 python scripts/audit_prompt_registry_harness.py --output "$PASSAGE_REPORT" --summary
+python scripts/evaluate_prompt_efficiency.py --output "$EFFICIENCY_REPORT" --emit-judge-packets "$JUDGE_PACKETS" --summary
 python -m unittest tests.test_prompt_kit_interactions_contract -v
 python scripts/validate_prompt_kit_interactions.py --output "$INTERACTION_REPORT" --summary
 python -m unittest tests.test_prompt_language_audit -v

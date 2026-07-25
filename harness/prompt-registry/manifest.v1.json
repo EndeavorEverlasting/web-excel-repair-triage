@@ -12,11 +12,20 @@
     "trigger_registry": "harness/prompt-registry/triggers.v1.json",
     "execution_profile": "harness/prompt-registry/execution-profile.v1.json",
     "conversation_canary_contract": "harness/contracts/conversation-canary.v1.json",
+    "prompt_efficiency_policy": "harness/prompt-registry/prompt-efficiency-eval.v1.json",
+    "prompt_efficiency_fixtures": "harness/prompt-registry/fixtures/prompt-efficiency-cases.v1.json",
     "contract_validator": "scripts/prompt_registry_harness_contracts.py",
     "profile_engine": "scripts/prompt_registry_profiles.py",
     "auditor": "scripts/audit_prompt_registry_harness.py",
+    "prompt_efficiency_contracts": "scripts/prompt_efficiency_contracts.py",
+    "prompt_efficiency_cases": "scripts/prompt_efficiency_cases.py",
+    "prompt_efficiency_judge": "scripts/prompt_efficiency_judge.py",
+    "prompt_efficiency_engine": "scripts/prompt_efficiency_eval.py",
+    "prompt_efficiency_cli": "scripts/evaluate_prompt_efficiency.py",
     "contract_tests": "tests/test_prompt_registry_harness.py",
+    "prompt_efficiency_tests": "tests/test_prompt_efficiency_eval.py",
     "operator_report": "harness/reports/PROMPT_REGISTRY_PASSAGE.md",
+    "prompt_efficiency_operator_report": "harness/reports/PROMPT_EFFICIENCY_EVAL.md",
     "pre_push_hook": ".githooks/pre-push",
     "ci_workflow": ".github/workflows/harness-contract.yml"
   },
@@ -26,7 +35,8 @@
     ".ai/skills/bounded-repository-mutation/SKILL.md",
     ".ai/skills/validation-proof-routing/SKILL.md",
     ".ai/skills/integration-handoff/SKILL.md",
-    ".ai/skills/prompt-registry-passage/SKILL.md"
+    ".ai/skills/prompt-registry-passage/SKILL.md",
+    ".ai/skills/prompt-efficiency-evaluation/SKILL.md"
   ],
   "canonical_prompt_sources": [
     "docs/prompts.json",
@@ -36,12 +46,18 @@
   ],
   "runtime_artifacts": {
     "audit": "Outputs/prompt-registry-harness-audit.json",
-    "strict_canary_audit": "Outputs/prompt-registry-canary-strict.json"
+    "strict_canary_audit": "Outputs/prompt-registry-canary-strict.json",
+    "prompt_efficiency_audit": "Outputs/prompt-efficiency-eval.json",
+    "prompt_efficiency_strict_audit": "Outputs/prompt-efficiency-eval-strict.json",
+    "prompt_efficiency_judge_packets": "Outputs/prompt-efficiency-judge-packets.json",
+    "prompt_efficiency_judge_results": "Outputs/prompt-efficiency-judge-results.jsonl"
   },
   "validation_order": [
-    "python -m py_compile scripts/prompt_registry_harness_contracts.py scripts/prompt_registry_profiles.py scripts/audit_prompt_registry_harness.py tests/test_prompt_registry_harness.py",
+    "python -m py_compile scripts/prompt_registry_harness_contracts.py scripts/prompt_registry_profiles.py scripts/audit_prompt_registry_harness.py scripts/prompt_efficiency_contracts.py scripts/prompt_efficiency_cases.py scripts/prompt_efficiency_judge.py scripts/prompt_efficiency_eval.py scripts/evaluate_prompt_efficiency.py tests/test_prompt_registry_harness.py tests/test_prompt_efficiency_eval.py",
     "python -m unittest tests.test_prompt_registry_harness -v",
+    "python -m unittest tests.test_prompt_efficiency_eval -v",
     "python scripts/audit_prompt_registry_harness.py --output Outputs/prompt-registry-harness-audit.json --summary",
+    "python scripts/evaluate_prompt_efficiency.py --output Outputs/prompt-efficiency-eval.json --emit-judge-packets Outputs/prompt-efficiency-judge-packets.json --summary",
     "python scripts/validate_harness.py",
     "python -m unittest tests.test_harness_contract -v",
     "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
@@ -49,6 +65,7 @@
     "git diff --check"
   ],
   "strict_downstream_gate": "python scripts/audit_prompt_registry_harness.py --strict-canary --output Outputs/prompt-registry-canary-strict.json --summary",
+  "strict_efficiency_gate": "python scripts/evaluate_prompt_efficiency.py --judge-results Outputs/prompt-efficiency-judge-results.jsonl --strict --output Outputs/prompt-efficiency-eval-strict.json --summary",
   "forbidden_scope": [
     "AGENTS.md",
     "docs/prompts.json",
@@ -61,5 +78,5 @@
     "secrets",
     "destructive cleanup"
   ],
-  "proof_ceiling": "Harness/schema/static registry coverage only; prompt mutation and provider/model adherence are downstream product and eval lanes."
+  "proof_ceiling": "Harness/schema/static registry coverage and validated judge evidence only; prompt mutation, provider behavior, and user productivity are downstream product and eval lanes."
 }

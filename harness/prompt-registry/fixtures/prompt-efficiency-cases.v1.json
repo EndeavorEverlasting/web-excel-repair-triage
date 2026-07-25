@@ -1,0 +1,67 @@
+{
+  "schema_version": "prompt-efficiency-fixtures/v1",
+  "cases": [
+    {
+      "id": "compact-explicit-prompt",
+      "target_kind": "prompt-registry",
+      "expected_code_safe": true,
+      "prompt": {
+        "id": "PX1",
+        "seq": "1",
+        "name": "Focused build",
+        "type": "BUILD",
+        "class": "standard",
+        "sprintRole": "builder",
+        "useWhen": "A tracked repair is authorized.",
+        "inspectFirst": "Repository state and owned scope.",
+        "expectedOutput": "Commit, validation receipt, and artifact path.",
+        "nextStep": "Run the owning validator and open the artifact.",
+        "proofGate": "Focused tests and git diff --check pass.",
+        "keywords": ["build", "validate", "artifact"],
+        "copyContent": "OBJECTIVE: Repair the owned behavior.\nREPOS: owner/repo @ branch\n\nMISSION\nInspect the repository, implement the smallest tracked repair, and commit it.\n\nOWNED SCOPE\n- Canonical source and focused tests.\n\nFORBIDDEN SCOPE\n- Do not modify unrelated files or secrets.\n\nVALIDATE\nRun the focused tests and git diff --check.\n\nOUTPUT\nReport files, commit SHA, proof, blocker, and the exact next command.\n\nFAILURE\nStop with the exact blocker when safe mutation is impossible."
+      }
+    },
+    {
+      "id": "duplicate-bloated-prompt",
+      "target_kind": "prompt-registry",
+      "expected_warning_rule": "duplicate-lines",
+      "prompt": {
+        "id": "PX2",
+        "seq": "2",
+        "name": "Bloated",
+        "type": "BUILD",
+        "class": "standard",
+        "sprintRole": "builder",
+        "useWhen": "Build.",
+        "inspectFirst": "Repo.",
+        "expectedOutput": "Output.",
+        "nextStep": "Next.",
+        "proofGate": "Test.",
+        "keywords": ["build"],
+        "copyContent": "Build the change.\nBuild the change.\nBuild the change.\nBuild the change.\nBuild the change.\nBuild the change."
+      }
+    },
+    {
+      "id": "response-with-canary",
+      "target_kind": "model-response",
+      "expected_code_safe": true,
+      "candidate": {
+        "case_id": "PX1:weak-model:1",
+        "prompt_id": "PX1",
+        "model_id": "weak-model",
+        "response": "OBJECTIVE: Repair the owned behavior.\nREPOS: owner/repo @ branch\n\nImplemented the focused repair and ran the validator."
+      }
+    },
+    {
+      "id": "empty-response",
+      "target_kind": "model-response",
+      "expected_error_rule": "empty-model-response",
+      "candidate": {
+        "case_id": "PX1:weak-model:2",
+        "prompt_id": "PX1",
+        "model_id": "weak-model",
+        "response": ""
+      }
+    }
+  ]
+}

@@ -1,150 +1,136 @@
 # Codebase Map
 
-This map is the harness entry point for `EndeavorEverlasting/web-excel-repair-triage`. It focuses on verified governance, Prompt Kit, harness, validation, and artifact surfaces rather than enumerating every historical workbook workflow.
+This map is the harness entry point for `EndeavorEverlasting/web-excel-repair-triage`.
 
 ## Reading order for a fresh agent
 
-1. `AGENTS.md` — canonical repository governance and safety law.
-2. `CODEBASE_MAP.md` — repository navigation and known traps.
-3. `WORKFLOW.md` — task pickup, workflow selection, validation, recovery, and handoff.
+1. `AGENTS.md` — repository governance.
+2. `CODEBASE_MAP.md` — repository navigation.
+3. `WORKFLOW.md` — task selection, validation, recovery, and handoff.
 4. `ARTIFACT_REGISTRY.md` — tracked and runtime artifact contracts.
-5. `SKILLS.md`, `CAPABILITIES.md`, and `TRIGGERS.md` — reusable procedures, operations, and deterministic routing.
-6. `harness/manifest.v1.json` — machine-readable harness component inventory and validation order.
-7. `harness/reports/CURRENT_STATE.md` — operator-readable status, gaps, and proof ceiling.
+5. `SKILLS.md`, `CAPABILITIES.md`, and `TRIGGERS.md` — reusable procedures and deterministic routing.
+6. `harness/manifest.v1.json` — root harness inventory and validation order.
+7. `harness/prompt-registry/manifest.v1.json` — prompt passage, canary, efficiency, and judge-eval domain.
+8. `harness/reports/CURRENT_STATE.md` — current working state and proof ceiling.
 
 ## Repository structure
 
 ```text
 web-excel-repair-triage/
-├── AGENTS.md                              governance contract
-├── CODEBASE_MAP.md                        this navigation map
-├── WORKFLOW.md                            repository workflow specification
-├── ARTIFACT_REGISTRY.md                   artifact ownership and generation rules
-├── SKILLS.md                              scoped skill index
-├── CAPABILITIES.md                        reusable operation index
-├── TRIGGERS.md                            deterministic routing index
-├── Acquire-Latest-PromptKit.cmd           technician clone/update/open entry point
-├── Run-PromptKitGenerator.cmd             generator GUI entry point
-├── Build-PromptKitWebsite.cmd             one-click Prompt Kit build
-├── build_prompt_kit.py                    canonical HTML renderer
-├── configs/prompt_kit/generators.v1.json  bounded generator manifest
-├── docs/
-│   ├── prompts.json                       base Prompt Kit registry
-│   ├── reference.json                     reference-panel data
-│   └── prompt-kit.js                      client behavior
+├── AGENTS.md
+├── CODEBASE_MAP.md
+├── WORKFLOW.md
+├── ARTIFACT_REGISTRY.md
+├── SKILLS.md
+├── CAPABILITIES.md
+├── TRIGGERS.md
+├── docs/prompts.json
 ├── registry/prompts/
-│   ├── skill-development-prompts.v1.json  P61/P62 extension
-│   └── actionable-next-step-policy.v1.json
+├── build_prompt_kit.py
+├── web/prompt-kit/index.html
 ├── harness/
-│   ├── manifest.v1.json                   harness inventory and validation order
-│   ├── capabilities.v1.json               machine-readable capabilities
-│   ├── triggers.v1.json                   machine-readable triggers
+│   ├── manifest.v1.json
+│   ├── capabilities.v1.json
+│   ├── triggers.v1.json
 │   ├── contracts/
-│   │   └── prompt-kit-interactions.v1.json Prompt Kit click/double-click/dismissal contract
+│   │   ├── prompt-kit-interactions.v1.json
+│   │   └── conversation-canary.v1.json
 │   ├── evals/
-│   │   ├── prompt-language-audit.v1.json  audit policy and result contract
-│   │   └── fixtures/prompt-language-cases.v1.json
-│   └── reports/CURRENT_STATE.md            operator report
+│   ├── prompt-registry/
+│   │   ├── manifest.v1.json
+│   │   ├── capabilities.v1.json
+│   │   ├── triggers.v1.json
+│   │   ├── execution-profile.v1.json
+│   │   ├── prompt-efficiency-eval.v1.json
+│   │   ├── fixtures/prompt-efficiency-cases.v1.json
+│   │   ├── CODEBASE_MAP.md
+│   │   ├── WORKFLOW.md
+│   │   └── ARTIFACT_REGISTRY.md
+│   └── reports/
+│       ├── CURRENT_STATE.md
+│       ├── PROMPT_REGISTRY_PASSAGE.md
+│       └── PROMPT_EFFICIENCY_EVAL.md
 ├── scripts/
-│   ├── Acquire-LatestPromptKit.ps1        safe technician acquisition GUI
-│   ├── build_prompt_kit_registry.py       combined registry builder
-│   ├── evaluate_prompt_language.py        exhaustive prompt-language evaluator
-│   ├── validate_prompt_kit_interactions.py Prompt Kit interaction contract/static audit
-│   └── validate_harness.py                fail-closed harness validator
-├── .ai/skills/
-│   ├── prompt-language-audit/SKILL.md
-│   ├── skill-evaluation/SKILL.md
-│   ├── skill-factoring/SKILL.md
-│   └── technician-prompt-kit-acquisition/SKILL.md
-├── .githooks/
-│   ├── pre-commit                          focused local harness gate
-│   └── pre-push                            exhaustive harness and prompt audit gate
+│   ├── build_prompt_kit_registry.py
+│   ├── evaluate_prompt_language.py
+│   ├── audit_prompt_registry_harness.py
+│   ├── prompt_registry_harness_contracts.py
+│   ├── prompt_registry_profiles.py
+│   ├── prompt_efficiency_contracts.py
+│   ├── prompt_efficiency_cases.py
+│   ├── prompt_efficiency_judge.py
+│   ├── prompt_efficiency_eval.py
+│   ├── evaluate_prompt_efficiency.py
+│   ├── validate_prompt_kit_interactions.py
+│   └── validate_harness.py
 ├── tests/
-│   ├── test_governance_contract.py
 │   ├── test_harness_contract.py
+│   ├── test_prompt_registry_harness.py
+│   ├── test_prompt_efficiency_eval.py
 │   ├── test_prompt_kit_interactions_contract.py
-│   ├── test_prompt_language_audit.py
-│   ├── test_skill_prompt_registry.py
-│   └── test_prompt_kit_header_contract.py
-├── triage/                                 workbook and artifact engines
-├── web/prompt-kit/index.html               checked-in canonical Prompt Kit
-├── Candidates/                             protected read-only operator inputs
-├── Active/                                 protected read-only golden inputs
-└── Outputs/                                gitignored runtime reports and work products
+│   └── test_prompt_language_audit.py
+├── .ai/skills/
+├── .githooks/
+├── Candidates/
+├── Active/
+└── Outputs/
 ```
 
 ## Primary entry points
 
-| Entry point | Audience | Purpose |
-|---|---|---|
-| `Acquire-Latest-PromptKit.cmd` | Technician | Clone canonical `main` when absent, clean-fast-forward when present, validate, then open the selected surface. |
-| `Run-PromptKitGenerator.cmd` | Technician/operator | Open the registered generator-selection GUI. |
-| `Build-PromptKitWebsite.cmd` | Technician/operator | Build, validate, and open the default Prompt Kit website. |
-| `web/prompt-kit/index.html` | Technician/operator | Canonical checked-in Prompt Kit website. |
-| `scripts/build_prompt_kit_registry.py` | Developer/CI | Merge prompt registries, apply shared policies, and render deterministic HTML. |
-| `scripts/evaluate_prompt_language.py` | Agent/developer/CI | Evaluate every canonical and effective prompt and emit a machine-readable disposition report. |
-| `scripts/validate_prompt_kit_interactions.py` | Agent/developer/CI | Validate the Prompt Kit interaction contract and report recognizable source markers; strict mode is reserved for the product implementation lane. |
-| `scripts/validate_harness.py` | Agent/developer/CI | Validate maps, workflows, registries, skills, triggers, capabilities, evals, launchers, hooks, and reports. |
-| `triage.*` modules | Developer/operator | Workbook, billing, comparison, and artifact engines documented by focused contracts and tests. |
+| Entry point | Purpose |
+|---|---|
+| `Acquire-Latest-PromptKit.cmd` | Safe technician clone/update/validate/open flow. |
+| `web/prompt-kit/index.html` | Canonical checked-in Prompt Kit website. |
+| `scripts/build_prompt_kit_registry.py` | Build the effective registry and deterministic website. |
+| `scripts/evaluate_prompt_language.py` | Exhaustive prompt-language audit. |
+| `scripts/audit_prompt_registry_harness.py` | Compact profile and canary passage audit. |
+| `scripts/evaluate_prompt_efficiency.py` | Code-based prompt/response checks, judge packets, LLM-result validation, and strict weak-model gate. |
+| `scripts/validate_prompt_kit_interactions.py` | Prompt-card interaction contract audit. |
+| `scripts/validate_harness.py` | Root harness completeness validator. |
 
 ## Configuration and registries
 
 | Path | Contract |
 |---|---|
-| `harness/manifest.v1.json` | Single machine-readable inventory of required harness components, domain contracts, and validation order. |
-| `harness/capabilities.v1.json` | Reusable operation IDs, inputs, outputs, implementations, and proof ceilings. |
-| `harness/triggers.v1.json` | Deterministic conditions and forbidden conditions routing into one capability/skill owner. |
-| `harness/contracts/prompt-kit-interactions.v1.json` | Versioned requirements for prompt-card single-click copy, double-click expansion, outside-click collapse/focus restoration, Escape close, and Copy-control compatibility. |
-| `harness/evals/prompt-language-audit.v1.json` | Prompt-language rules, severities, dispositions, and result schema. |
-| `configs/prompt_kit/generators.v1.json` | Allowed generators, launchers, defaults, and GUI options. |
-| `docs/prompts.json` | Canonical base prompt registry. |
-| `registry/prompts/*.json` | Versioned prompt extensions and shared policies. |
-| `.github/workflows/*.yml` | Governance, Prompt Kit, harness, documentation, and artifact-engine CI gates. |
+| `harness/manifest.v1.json` | Root component and domain-contract inventory. |
+| `harness/prompt-registry/manifest.v1.json` | Prompt passage/evaluation component inventory. |
+| `harness/prompt-registry/execution-profile.v1.json` | Compact routing profile; full prompt text forbidden. |
+| `harness/prompt-registry/prompt-efficiency-eval.v1.json` | Four-lane eval policy, deterministic thresholds, two judge rubrics, and strict gate. |
+| `harness/contracts/conversation-canary.v1.json` | `OBJECTIVE` / `REPOS` response canary. |
+| `docs/prompts.json`, `registry/prompts/*.json` | Canonical prompt sources and shared policies. |
 
 ## Build and validation commands
 
-Run focused harness and interaction checks first:
-
 ```powershell
-python -m py_compile scripts\validate_harness.py scripts\evaluate_prompt_language.py scripts\validate_prompt_kit_interactions.py tests\test_harness_contract.py tests\test_prompt_language_audit.py tests\test_prompt_kit_interactions_contract.py
 python scripts\validate_harness.py
 python -m unittest tests.test_harness_contract -v
+python -m unittest tests.test_prompt_registry_harness -v
+python -m unittest tests.test_prompt_efficiency_eval -v
+python scripts\audit_prompt_registry_harness.py --output Outputs\prompt-registry-harness-audit.json --summary
+python scripts\evaluate_prompt_efficiency.py --output Outputs\prompt-efficiency-eval.json --emit-judge-packets Outputs\prompt-efficiency-judge-packets.json --summary
 python -m unittest tests.test_prompt_kit_interactions_contract -v
 python scripts\validate_prompt_kit_interactions.py --output Outputs\prompt-kit-interaction-audit.json --summary
 python -m unittest tests.test_prompt_language_audit -v
 python scripts\evaluate_prompt_language.py --output Outputs\prompt-language-audit.json --summary
-```
-
-Validate Prompt Kit source and exact checked-in site:
-
-```powershell
-python -m unittest tests.test_skill_prompt_registry -v
-python tests\test_prompt_kit_header_contract.py
 python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
-```
-
-The product implementation lane must additionally run the strict interaction gate before browser proof:
-
-```powershell
-python scripts\validate_prompt_kit_interactions.py --require-implementation --output Outputs\prompt-kit-interaction-audit.json --summary
-```
-
-Run repository hygiene and broader tests last:
-
-```powershell
 python -m triage.gitignore_hygiene
-python -m pytest
 git diff --check
+```
+
+Strict efficiency additionally requires validated independent judge results:
+
+```powershell
+python scripts\evaluate_prompt_efficiency.py --judge-results Outputs\prompt-efficiency-judge-results.jsonl --strict --output Outputs\prompt-efficiency-eval-strict.json --summary
 ```
 
 ## Safety boundaries and known traps
 
-- `Candidates/` and `Active/` are read-only operator-input surfaces. Generated output belongs under `Outputs/` or another focused contract path.
-- Do not edit `web/prompt-kit/index.html` as the source. Repair canonical registries, policies, or builders and regenerate deterministically.
-- Prompt-card interaction requirements are tracked in `harness/contracts/prompt-kit-interactions.v1.json`; the harness lane may update the contract, validator, tests, hooks, CI, and reports but may not mutate `docs/prompt-kit.js`, `build_prompt_kit.py`, or generated HTML as product implementation.
-- A passing non-strict interaction audit proves the contract is present and the current gap is classified; only `--require-implementation` plus browser field proof can close the product behavior gate.
-- A policy marker alone is not full language proof. The prompt-language audit must cover every canonical and effective prompt with one disposition each.
-- Audit mode may report warning-level canonical-source debt while still proving effective prompt safety. Strict mode is the repair completion gate.
-- Static or CI checks do not prove Excel for Web, Windows GUI, browser event ordering, clipboard permissions, focus restoration, network, credential, provider, model, or production acceptance.
-- Do not update technician checkouts with reset, clean, force, or overwrite behavior. Acquisition supports clone or clean fast-forward only.
-- `README.md` contains historical and current product surfaces; verify focused files, tests, and contracts before relying on older text.
+- `Candidates/` and `Active/` are read-only inputs; runtime outputs belong under `Outputs/`.
+- Do not edit generated HTML as the canonical source.
+- Run code-based efficiency checks before judge-model calls.
+- Token reduction must not remove objective, scope, input, action, failure, validation, output, or handoff structure required by weak models.
+- Missing judge evidence is not a passing LLM evaluation; strict mode fails incomplete coverage.
+- LLM judge scores are model opinions under a fixed rubric, not human truth or user acceptance.
+- Candidate responses and judge results may contain private data; do not commit them.
+- Static or CI proof does not establish browser, provider, live-runtime, production, or user-productivity success.
