@@ -8,7 +8,7 @@
     "combined_builder": "scripts/build_prompt_kit_registry.py",
     "main_results_surface": "prompt card grid"
   },
-  "status": "specified_unimplemented",
+  "status": "implemented",
   "owner": {
     "workflow": "WORKFLOW.md#b-prompt-registry-or-website-change",
     "downstream_eval_capability": "skill-evaluation",
