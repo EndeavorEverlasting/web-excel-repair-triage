@@ -3,9 +3,12 @@ set -eu
 
 PROMPT_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-language-audit.json"
 INTERACTION_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-kit-interaction-audit.json"
+PASSAGE_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-registry-harness-audit.json"
 
 python scripts/validate_harness.py
 python -m unittest tests.test_harness_contract -v
+python -m unittest tests.test_prompt_registry_harness -v
+python scripts/audit_prompt_registry_harness.py --output "$PASSAGE_REPORT" --summary
 python -m unittest tests.test_prompt_kit_interactions_contract -v
 python scripts/validate_prompt_kit_interactions.py --output "$INTERACTION_REPORT" --summary
 python -m unittest tests.test_prompt_language_audit -v

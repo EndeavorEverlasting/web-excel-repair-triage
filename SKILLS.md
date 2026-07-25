@@ -10,6 +10,7 @@ This is the repository skill index. Reusable procedures live under `.ai/skills/<
 4. Do not use skills to bypass protected inputs, credentials, validation, or proof boundaries.
 5. Update skill, capability, trigger, manifest, tests, and docs atomically when ownership changes.
 6. Prompt Kit card interactions are deterministic product behavior. Their versioned requirements live in `harness/contracts/prompt-kit-interactions.v1.json` and Workflow B; a skill may help design downstream evals but must not become the only implementation of click, double-click, dismissal, clipboard, or focus behavior.
+7. Prompt-registry passage skills are domain-scoped through `harness/prompt-registry/manifest.v1.json`; load only the selected skill and its shared contracts rather than repeating every procedure inside every prompt.
 
 ## Active repository skills
 
@@ -46,6 +47,21 @@ This is the repository skill index. Reusable procedures live under `.ai/skills/<
 - **Capability:** `technician-prompt-kit-acquisition`
 - **Forbidden conditions:** Dirty worktree, wrong origin, non-main branch, local-only commits, divergence, missing tools/files.
 - **Primary validation:** harness validator/contracts plus native Windows field proof.
+
+## Prompt-registry passage skills
+
+The domain manifest `harness/prompt-registry/manifest.v1.json` owns these compact procedures and their capability/trigger routing:
+
+| Skill | Purpose |
+|---|---|
+| `.ai/skills/conversation-entry-canary/SKILL.md` | Emit and assess the `OBJECTIVE` / `REPOS` response canary without personal identity. |
+| `.ai/skills/repository-inspection/SKILL.md` | Perform bounded repository intake and evidence collection. |
+| `.ai/skills/bounded-repository-mutation/SKILL.md` | Execute one preservation-first tracked mutation lane. |
+| `.ai/skills/validation-proof-routing/SKILL.md` | Select the strongest practical proof class and report its ceiling. |
+| `.ai/skills/integration-handoff/SKILL.md` | Preserve and integrate work in dependency order, then emit an executable handoff. |
+| `.ai/skills/prompt-registry-passage/SKILL.md` | Inventory every effective prompt and derive compact impact/capability profiles. |
+
+These skills are intentionally referenced, not embedded, by `prompt-execution-profile/v1` records. The root capability registry remains the authority for repository-wide capabilities; the prompt-registry domain registry owns this focused passage layer.
 
 ## Required skill-file sections
 

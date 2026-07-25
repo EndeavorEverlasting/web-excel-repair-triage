@@ -8,6 +8,7 @@ This file is the human-readable index for reusable repository operations. The ma
 2. Select a capability only when one registered trigger matches and no forbidden condition is present.
 3. Prefer deterministic scripts or launchers for repeatable operations. Prompts and skills may orchestrate them but are not substitutes for implementation.
 4. Report the capability ID, inputs, produced artifacts, validation, and proof ceiling.
+5. For prompt passage, load `harness/prompt-registry/execution-profile.v1.json` and only the profile-selected domain capability/skill.
 
 ## Active capabilities
 
@@ -17,6 +18,21 @@ This file is the human-readable index for reusable repository operations. The ma
 | `skill-evaluation` | `.ai/skills/skill-evaluation/SKILL.md` | Prompt Kit P62 | A repository-native skill eval harness with cases, runner, results, and repair ledger. |
 | `skill-factoring` | `.ai/skills/skill-factoring/SKILL.md` | Prompt Kit P61 | Skill ownership dispositions and repaired routing boundaries. |
 | `technician-prompt-kit-acquisition` | `.ai/skills/technician-prompt-kit-acquisition/SKILL.md` | `Acquire-Latest-PromptKit.cmd` | Safely acquired or fast-forwarded checkout and validated Prompt Kit surface. |
+
+## Prompt-registry domain capabilities
+
+The focused authority is `harness/prompt-registry/capabilities.v1.json`.
+
+| Capability ID | Selected for | Primary output |
+|---|---|---|
+| `conversation-entry` | Every response and canary-breach recovery. | Two-line `OBJECTIVE` / `REPOS` canary state. |
+| `repository-inspection` | `inspect` or `plan` prompt impact. | Evidence inventory, bounded plan, explicit unknowns. |
+| `bounded-repository-mutation` | `mutate` or `mixed` prompt impact. | Tracked changes, focused commit, push/PR receipt. |
+| `validation-proof-routing` | `validate` prompt impact. | Ordered validation receipts and honest proof ceiling. |
+| `integration-handoff` | `integrate` prompt impact. | Preservation/integration mutation and executable next action. |
+| `prompt-registry-passage` | Full registry passage or canary-contract change. | One compact execution profile per effective prompt and canary-gap ledger. |
+
+The domain auditor performs deterministic impact routing. Agents should not re-decide capability ownership from prose after a valid profile exists.
 
 ## Prompt-language audit modes
 
@@ -41,4 +57,4 @@ P62 must identify functional weaknesses and inefficiencies, reproduce them with 
 
 ## Proof boundaries
 
-Capability registration and static tests prove repository integration and deterministic routing contracts. They do not prove provider behavior, model judgment quality, Windows GUI acceptance, protected runtime access, or production success unless those surfaces are exercised separately and honestly reported.
+Capability registration and static tests prove repository integration and deterministic routing contracts. Prompt execution profiles prove complete static coverage and declared routing, not provider adherence. They do not prove provider behavior, model judgment quality, Windows GUI acceptance, protected runtime access, or production success unless those surfaces are exercised separately and honestly reported.

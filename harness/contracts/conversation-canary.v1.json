@@ -1,0 +1,31 @@
+{
+  "schema_version": "conversation-canary-contract/v1",
+  "contract_id": "objective-repository-response-canary",
+  "version": "1.0.0",
+  "status": "specified",
+  "purpose": "Expose context loss or mission drift without disclosing personal identity.",
+  "required_first_nonempty_lines": [
+    "OBJECTIVE: <the current concrete objective>",
+    "REPOS: <canonical owner/repository names with active branch when known, separated by semicolons; or none>"
+  ],
+  "prompt_instruction_marker": "CONVERSATION CANARY: OBJECTIVE + REPOS",
+  "required_prompt_instruction": "Begin every assistant response with two lines before any other content: OBJECTIVE: <the current concrete objective> and REPOS: <canonical owner/repository names with active branch when known, separated by semicolons; or none>.",
+  "rules": [
+    "Keep OBJECTIVE to one concrete sentence.",
+    "Use canonical owner/repository names when known.",
+    "Include the active branch after a repository when known.",
+    "Separate multiple repositories with semicolons.",
+    "Use REPOS: none only when no repository is relevant.",
+    "Update OBJECTIVE when the active mission or phase materially changes.",
+    "Do not omit the two lines from progress updates, validation reports, failures, or final responses.",
+    "A missing, stale, or materially wrong line is a canary breach and requires reloading the governing conversation state before continuing."
+  ],
+  "breach_signals": {
+    "missing_objective": "instruction or context loss",
+    "wrong_objective": "mission drift",
+    "wrong_repository": "repository-context contamination",
+    "stale_branch": "Git-state loss",
+    "unexpected_none": "repository context may have fallen out of memory"
+  },
+  "proof_ceiling": "Static prompt inclusion and response-shape evaluation only; no provider obedience proof without model-run evidence."
+}
