@@ -22,6 +22,16 @@
     "pre_push_hook": ".githooks/pre-push",
     "operator_report": "harness/reports/CURRENT_STATE.md"
   },
+  "domain_contracts": {
+    "prompt_kit_interactions": {
+      "contract": "harness/contracts/prompt-kit-interactions.v1.json",
+      "validator": "scripts/validate_prompt_kit_interactions.py",
+      "contract_tests": "tests/test_prompt_kit_interactions_contract.py",
+      "workflow": "WORKFLOW.md#b-prompt-registry-or-website-change",
+      "harness_gate": "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
+      "strict_product_gate": "python scripts/validate_prompt_kit_interactions.py --require-implementation --output Outputs/prompt-kit-interaction-audit.json --summary"
+    }
+  },
   "skills": [
     ".ai/skills/prompt-language-audit/SKILL.md",
     ".ai/skills/skill-evaluation/SKILL.md",
@@ -52,6 +62,8 @@
   "validation_order": [
     "python scripts/validate_harness.py",
     "python -m unittest tests.test_harness_contract -v",
+    "python -m unittest tests.test_prompt_kit_interactions_contract -v",
+    "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
     "python -m unittest tests.test_prompt_language_audit -v",
     "python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary",
     "python -m unittest tests.test_skill_prompt_registry -v",

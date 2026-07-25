@@ -33,24 +33,30 @@ This file defines how agents and operators enter, select, validate, recover, and
 
 ### B. Prompt registry or website change
 
-**Trigger:** Canonical prompts, extensions, policies, reference data, builder behavior, generator options, or checked-in HTML change.
+**Trigger:** Canonical prompts, extensions, policies, reference data, builder behavior, generator options, checked-in HTML, or Prompt Kit interaction behavior changes.
 
 1. Change canonical source, never only generated HTML.
-2. Run the prompt-language audit in audit mode before mutation.
-3. Add or repair focused fixtures and tests.
-4. Regenerate the combined Prompt Kit deterministically.
-5. Run strict audit for the owned repaired scope and exact website parity.
-6. Run harness and broad repository checks.
+2. Run the prompt-language audit in audit mode before prompt-language mutation.
+3. For prompt-card behavior, read `harness/contracts/prompt-kit-interactions.v1.json` before planning implementation.
+4. In a harness-only lane, change only the interaction contract, validator, tests, hooks, CI, reports, and harness documentation. Do not mutate `docs/prompt-kit.js`, `build_prompt_kit.py`, or `web/prompt-kit/index.html` as product implementation.
+5. Run `python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary` to classify current interaction implementation without inflating proof.
+6. In an authorized Prompt Kit product lane, reproduce the gap, implement the canonical behavior source, regenerate the site, and require the strict interaction gate `--require-implementation` before browser field proof.
+7. Add or repair focused fixtures and tests.
+8. Regenerate the combined Prompt Kit deterministically when canonical product sources change.
+9. Run strict prompt-language audit for the owned repaired scope when prompt content changes and exact website parity for every product change.
+10. Run harness and broad repository checks.
+
+**Prompt-card interaction contract:** single-click copies the prompt without opening detail; double-click expands detail; clicking the backdrop/main page outside an open detail collapses it, returns the operator to the main prompt surface, restores usable focus, and preserves search/filter state; Escape-to-close remains; explicit Copy controls continue to copy without unintended expansion.
 
 ### C. Harness infrastructure change
 
-**Trigger:** Maps, workflow specs, artifact/capability/trigger registries, validators, hooks, skills, evals, reports, or acquisition surfaces change.
+**Trigger:** Maps, workflow specs, artifact/capability/trigger registries, validators, hooks, skills, evals, reports, acquisition surfaces, or versioned domain contracts change.
 
 1. Repair existing canonical components before adding competing files.
-2. Update `harness/manifest.v1.json` atomically with path or command changes.
+2. Update `harness/manifest.v1.json` atomically with path, domain-contract, or command changes.
 3. Update human indexes when machine-readable ownership changes.
 4. Add or repair contract tests and fixtures.
-5. Run `scripts/validate_harness.py`, focused tests, and `git diff --check`.
+5. Run `scripts/validate_harness.py`, focused domain validators/tests, and `git diff --check`.
 6. Run affected Prompt Kit checks and the broader artifact suite last.
 
 ### D. Workbook or artifact engine change
@@ -107,17 +113,20 @@ Use the strongest practical checks in this order:
 
 1. Focused unit/fixture tests.
 2. Contract validators and static compilation.
-3. Exhaustive prompt-language audit when prompt or skill surfaces are involved.
-4. Exact generated-output checks.
-5. Repository hygiene.
-6. Broader tests and honest runtime checks.
+3. Prompt Kit interaction contract audit when prompt-card behavior is in scope.
+4. Exhaustive prompt-language audit when prompt or skill surfaces are involved.
+5. Exact generated-output checks.
+6. Repository hygiene.
+7. Broader tests and honest runtime checks.
 
 Baseline harness sequence:
 
 ```powershell
-python -m py_compile scripts\validate_harness.py scripts\evaluate_prompt_language.py tests\test_harness_contract.py tests\test_prompt_language_audit.py
+python -m py_compile scripts\validate_harness.py scripts\validate_prompt_kit_interactions.py scripts\evaluate_prompt_language.py tests\test_harness_contract.py tests\test_prompt_kit_interactions_contract.py tests\test_prompt_language_audit.py
 python scripts\validate_harness.py
 python -m unittest tests.test_harness_contract -v
+python -m unittest tests.test_prompt_kit_interactions_contract -v
+python scripts\validate_prompt_kit_interactions.py --output Outputs\prompt-kit-interaction-audit.json --summary
 python -m unittest tests.test_prompt_language_audit -v
 python scripts\evaluate_prompt_language.py --output Outputs\prompt-language-audit.json --summary
 python -m unittest tests.test_skill_prompt_registry -v
@@ -127,6 +136,12 @@ python -m triage.gitignore_hygiene
 git diff --check
 ```
 
+When Prompt Kit interaction implementation is authorized, add before browser testing:
+
+```powershell
+python scripts\validate_prompt_kit_interactions.py --require-implementation --output Outputs\prompt-kit-interaction-audit.json --summary
+```
+
 Never claim skipped checks passed. Name the exact command and reason.
 
 ## 4. Handle failures
@@ -134,6 +149,10 @@ Never claim skipped checks passed. Name the exact command and reason.
 ### Focused test, validator, or eval failure
 
 Read and reproduce the first actionable failure. Repair implementation or contract drift; do not weaken expectations merely to turn CI green. Add a regression fixture and rerun the focused gate before broad checks.
+
+### Prompt Kit interaction implementation gap
+
+A non-strict interaction audit may pass while reporting missing product markers. That is expected in a harness-only lane and must remain a visible gap. The strict `--require-implementation` gate belongs to the authorized product lane; do not “fix” it by weakening the contract or editing generated HTML directly.
 
 ### Dirty worktree or branch collision
 

@@ -15,8 +15,10 @@ on:
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
+      - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
+      - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_language_audit.py
       - .github/workflows/harness-contract.yml
   push:
@@ -34,8 +36,10 @@ on:
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
+      - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
+      - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_language_audit.py
       - .github/workflows/harness-contract.yml
 
@@ -53,19 +57,30 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Compile harness validators, eval runner, and contracts
+      - name: Compile harness validators, eval runners, and contracts
         run: |
           python -m py_compile \
             scripts/validate_harness.py \
+            scripts/validate_prompt_kit_interactions.py \
             scripts/evaluate_prompt_language.py \
             tests/test_harness_contract.py \
+            tests/test_prompt_kit_interactions_contract.py \
             tests/test_prompt_language_audit.py
       - name: Validate harness completeness
         run: python scripts/validate_harness.py
       - name: Run harness contracts
         run: |
           python -m unittest tests.test_harness_contract -v
+          python -m unittest tests.test_prompt_kit_interactions_contract -v
           python -m unittest tests.test_prompt_language_audit -v
+      - name: Audit Prompt Kit interaction contract
+        run: python scripts/validate_prompt_kit_interactions.py --output "$RUNNER_TEMP/prompt-kit-interaction-audit.json" --summary
+      - name: Upload Prompt Kit interaction audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-interaction-audit-report
+          path: ${{ runner.temp }}/prompt-kit-interaction-audit.json
+          if-no-files-found: error
       - name: Run exhaustive prompt-language audit
         run: python scripts/evaluate_prompt_language.py --output "$RUNNER_TEMP/prompt-language-audit.json" --summary
       - name: Upload prompt-language audit report

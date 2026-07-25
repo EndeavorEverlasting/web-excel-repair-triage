@@ -39,6 +39,8 @@ web-excel-repair-triage/
 │   ├── manifest.v1.json                   harness inventory and validation order
 │   ├── capabilities.v1.json               machine-readable capabilities
 │   ├── triggers.v1.json                   machine-readable triggers
+│   ├── contracts/
+│   │   └── prompt-kit-interactions.v1.json Prompt Kit click/double-click/dismissal contract
 │   ├── evals/
 │   │   ├── prompt-language-audit.v1.json  audit policy and result contract
 │   │   └── fixtures/prompt-language-cases.v1.json
@@ -47,6 +49,7 @@ web-excel-repair-triage/
 │   ├── Acquire-LatestPromptKit.ps1        safe technician acquisition GUI
 │   ├── build_prompt_kit_registry.py       combined registry builder
 │   ├── evaluate_prompt_language.py        exhaustive prompt-language evaluator
+│   ├── validate_prompt_kit_interactions.py Prompt Kit interaction contract/static audit
 │   └── validate_harness.py                fail-closed harness validator
 ├── .ai/skills/
 │   ├── prompt-language-audit/SKILL.md
@@ -59,6 +62,7 @@ web-excel-repair-triage/
 ├── tests/
 │   ├── test_governance_contract.py
 │   ├── test_harness_contract.py
+│   ├── test_prompt_kit_interactions_contract.py
 │   ├── test_prompt_language_audit.py
 │   ├── test_skill_prompt_registry.py
 │   └── test_prompt_kit_header_contract.py
@@ -79,6 +83,7 @@ web-excel-repair-triage/
 | `web/prompt-kit/index.html` | Technician/operator | Canonical checked-in Prompt Kit website. |
 | `scripts/build_prompt_kit_registry.py` | Developer/CI | Merge prompt registries, apply shared policies, and render deterministic HTML. |
 | `scripts/evaluate_prompt_language.py` | Agent/developer/CI | Evaluate every canonical and effective prompt and emit a machine-readable disposition report. |
+| `scripts/validate_prompt_kit_interactions.py` | Agent/developer/CI | Validate the Prompt Kit interaction contract and report recognizable source markers; strict mode is reserved for the product implementation lane. |
 | `scripts/validate_harness.py` | Agent/developer/CI | Validate maps, workflows, registries, skills, triggers, capabilities, evals, launchers, hooks, and reports. |
 | `triage.*` modules | Developer/operator | Workbook, billing, comparison, and artifact engines documented by focused contracts and tests. |
 
@@ -86,9 +91,10 @@ web-excel-repair-triage/
 
 | Path | Contract |
 |---|---|
-| `harness/manifest.v1.json` | Single machine-readable inventory of required harness components and validation order. |
+| `harness/manifest.v1.json` | Single machine-readable inventory of required harness components, domain contracts, and validation order. |
 | `harness/capabilities.v1.json` | Reusable operation IDs, inputs, outputs, implementations, and proof ceilings. |
 | `harness/triggers.v1.json` | Deterministic conditions and forbidden conditions routing into one capability/skill owner. |
+| `harness/contracts/prompt-kit-interactions.v1.json` | Versioned requirements for prompt-card single-click copy, double-click expansion, outside-click collapse/focus restoration, Escape close, and Copy-control compatibility. |
 | `harness/evals/prompt-language-audit.v1.json` | Prompt-language rules, severities, dispositions, and result schema. |
 | `configs/prompt_kit/generators.v1.json` | Allowed generators, launchers, defaults, and GUI options. |
 | `docs/prompts.json` | Canonical base prompt registry. |
@@ -97,12 +103,14 @@ web-excel-repair-triage/
 
 ## Build and validation commands
 
-Run focused harness and eval checks first:
+Run focused harness and interaction checks first:
 
 ```powershell
-python -m py_compile scripts\validate_harness.py scripts\evaluate_prompt_language.py tests\test_harness_contract.py tests\test_prompt_language_audit.py
+python -m py_compile scripts\validate_harness.py scripts\evaluate_prompt_language.py scripts\validate_prompt_kit_interactions.py tests\test_harness_contract.py tests\test_prompt_language_audit.py tests\test_prompt_kit_interactions_contract.py
 python scripts\validate_harness.py
 python -m unittest tests.test_harness_contract -v
+python -m unittest tests.test_prompt_kit_interactions_contract -v
+python scripts\validate_prompt_kit_interactions.py --output Outputs\prompt-kit-interaction-audit.json --summary
 python -m unittest tests.test_prompt_language_audit -v
 python scripts\evaluate_prompt_language.py --output Outputs\prompt-language-audit.json --summary
 ```
@@ -113,6 +121,12 @@ Validate Prompt Kit source and exact checked-in site:
 python -m unittest tests.test_skill_prompt_registry -v
 python tests\test_prompt_kit_header_contract.py
 python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
+```
+
+The product implementation lane must additionally run the strict interaction gate before browser proof:
+
+```powershell
+python scripts\validate_prompt_kit_interactions.py --require-implementation --output Outputs\prompt-kit-interaction-audit.json --summary
 ```
 
 Run repository hygiene and broader tests last:
@@ -127,8 +141,10 @@ git diff --check
 
 - `Candidates/` and `Active/` are read-only operator-input surfaces. Generated output belongs under `Outputs/` or another focused contract path.
 - Do not edit `web/prompt-kit/index.html` as the source. Repair canonical registries, policies, or builders and regenerate deterministically.
+- Prompt-card interaction requirements are tracked in `harness/contracts/prompt-kit-interactions.v1.json`; the harness lane may update the contract, validator, tests, hooks, CI, and reports but may not mutate `docs/prompt-kit.js`, `build_prompt_kit.py`, or generated HTML as product implementation.
+- A passing non-strict interaction audit proves the contract is present and the current gap is classified; only `--require-implementation` plus browser field proof can close the product behavior gate.
 - A policy marker alone is not full language proof. The prompt-language audit must cover every canonical and effective prompt with one disposition each.
 - Audit mode may report warning-level canonical-source debt while still proving effective prompt safety. Strict mode is the repair completion gate.
-- Static or CI checks do not prove Excel for Web, Windows GUI, network, credential, provider, model, or production acceptance.
+- Static or CI checks do not prove Excel for Web, Windows GUI, browser event ordering, clipboard permissions, focus restoration, network, credential, provider, model, or production acceptance.
 - Do not update technician checkouts with reset, clean, force, or overwrite behavior. Acquisition supports clone or clean fast-forward only.
 - `README.md` contains historical and current product surfaces; verify focused files, tests, and contracts before relying on older text.
