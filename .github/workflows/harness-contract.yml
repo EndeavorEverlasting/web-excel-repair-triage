@@ -14,10 +14,20 @@ on:
       - .ai/skills/**
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
+      - scripts/audit_prompt_registry_harness.py
+      - scripts/prompt_registry_harness_contracts.py
+      - scripts/prompt_registry_profiles.py
+      - scripts/prompt_efficiency_contracts.py
+      - scripts/prompt_efficiency_cases.py
+      - scripts/prompt_efficiency_judge.py
+      - scripts/prompt_efficiency_eval.py
+      - scripts/evaluate_prompt_efficiency.py
       - scripts/evaluate_prompt_language.py
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
+      - tests/test_prompt_registry_harness.py
+      - tests/test_prompt_efficiency_eval.py
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_language_audit.py
       - .github/workflows/harness-contract.yml
@@ -35,10 +45,20 @@ on:
       - .ai/skills/**
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
+      - scripts/audit_prompt_registry_harness.py
+      - scripts/prompt_registry_harness_contracts.py
+      - scripts/prompt_registry_profiles.py
+      - scripts/prompt_efficiency_contracts.py
+      - scripts/prompt_efficiency_cases.py
+      - scripts/prompt_efficiency_judge.py
+      - scripts/prompt_efficiency_eval.py
+      - scripts/evaluate_prompt_efficiency.py
       - scripts/evaluate_prompt_language.py
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
+      - tests/test_prompt_registry_harness.py
+      - tests/test_prompt_efficiency_eval.py
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_language_audit.py
       - .github/workflows/harness-contract.yml
@@ -61,9 +81,19 @@ jobs:
         run: |
           python -m py_compile \
             scripts/validate_harness.py \
+            scripts/prompt_registry_harness_contracts.py \
+            scripts/prompt_registry_profiles.py \
+            scripts/audit_prompt_registry_harness.py \
+            scripts/prompt_efficiency_contracts.py \
+            scripts/prompt_efficiency_cases.py \
+            scripts/prompt_efficiency_judge.py \
+            scripts/prompt_efficiency_eval.py \
+            scripts/evaluate_prompt_efficiency.py \
             scripts/validate_prompt_kit_interactions.py \
             scripts/evaluate_prompt_language.py \
             tests/test_harness_contract.py \
+            tests/test_prompt_registry_harness.py \
+            tests/test_prompt_efficiency_eval.py \
             tests/test_prompt_kit_interactions_contract.py \
             tests/test_prompt_language_audit.py
       - name: Validate harness completeness
@@ -71,8 +101,32 @@ jobs:
       - name: Run harness contracts
         run: |
           python -m unittest tests.test_harness_contract -v
+          python -m unittest tests.test_prompt_registry_harness -v
+          python -m unittest tests.test_prompt_efficiency_eval -v
           python -m unittest tests.test_prompt_kit_interactions_contract -v
           python -m unittest tests.test_prompt_language_audit -v
+      - name: Audit prompt registry passage and canary coverage
+        run: python scripts/audit_prompt_registry_harness.py --output "$RUNNER_TEMP/prompt-registry-harness-audit.json" --summary
+      - name: Upload prompt registry passage audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-registry-harness-audit-report
+          path: ${{ runner.temp }}/prompt-registry-harness-audit.json
+          if-no-files-found: error
+      - name: Audit prompt efficiency and emit judge packets
+        run: |
+          python scripts/evaluate_prompt_efficiency.py \
+            --output "$RUNNER_TEMP/prompt-efficiency-eval.json" \
+            --emit-judge-packets "$RUNNER_TEMP/prompt-efficiency-judge-packets.json" \
+            --summary
+      - name: Upload prompt efficiency artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-efficiency-eval-report
+          path: |
+            ${{ runner.temp }}/prompt-efficiency-eval.json
+            ${{ runner.temp }}/prompt-efficiency-judge-packets.json
+          if-no-files-found: error
       - name: Audit Prompt Kit interaction contract
         run: python scripts/validate_prompt_kit_interactions.py --output "$RUNNER_TEMP/prompt-kit-interaction-audit.json" --summary
       - name: Upload Prompt Kit interaction audit

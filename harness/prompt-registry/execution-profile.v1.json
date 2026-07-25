@@ -1,0 +1,54 @@
+{
+  "schema_version": "prompt-execution-profile/v1",
+  "profile_id": "prompt-registry-compact-execution-profile",
+  "required_fields": [
+    "prompt_id",
+    "sequence",
+    "name",
+    "prompt_type",
+    "primary_capability",
+    "primary_skill",
+    "impact_class",
+    "context_class",
+    "proof_class",
+    "canary_contract",
+    "shared_instruction_refs",
+    "canonical_source",
+    "token_metrics"
+  ],
+  "forbidden_fields": [
+    "copyContent",
+    "copy_content",
+    "full_prompt",
+    "prompt_text"
+  ],
+  "enums": {
+    "impact_class": [
+      "inspect",
+      "plan",
+      "mutate",
+      "validate",
+      "integrate",
+      "mixed"
+    ],
+    "context_class": [
+      "repository-required",
+      "repository-optional",
+      "non-repository"
+    ],
+    "proof_class": [
+      "inspection",
+      "deterministic",
+      "runtime",
+      "production",
+      "declared"
+    ]
+  },
+  "token_rules": {
+    "embed_full_prompt": false,
+    "reference_shared_instructions": true,
+    "deduplicate_skill_procedure": true,
+    "deduplicate_canary": true
+  },
+  "proof_ceiling": "Compact deterministic metadata and routing proof; not model execution quality."
+}

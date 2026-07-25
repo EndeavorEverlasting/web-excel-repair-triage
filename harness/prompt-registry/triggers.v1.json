@@ -1,0 +1,89 @@
+{
+  "schema_version": "prompt-registry-triggers/v1",
+  "triggers": [
+    {
+      "id": "conversation-start-or-response",
+      "capability_id": "conversation-entry",
+      "skill": ".ai/skills/conversation-entry-canary/SKILL.md",
+      "conditions": ["every assistant response", "conversation state changed", "canary breach suspected"],
+      "forbidden_conditions": []
+    },
+    {
+      "id": "prompt-impact-inspect",
+      "capability_id": "repository-inspection",
+      "skill": ".ai/skills/repository-inspection/SKILL.md",
+      "conditions": ["prompt classified inspect", "read-only discovery", "evidence collection"],
+      "forbidden_conditions": ["mutation explicitly required"]
+    },
+    {
+      "id": "prompt-impact-plan",
+      "capability_id": "repository-inspection",
+      "skill": ".ai/skills/repository-inspection/SKILL.md",
+      "conditions": ["prompt classified plan", "launch-map or workflow design"],
+      "forbidden_conditions": ["implementation is already authorized and safe"]
+    },
+    {
+      "id": "prompt-impact-mutate",
+      "capability_id": "bounded-repository-mutation",
+      "skill": ".ai/skills/bounded-repository-mutation/SKILL.md",
+      "conditions": ["prompt classified mutate", "tracked implementation requested"],
+      "forbidden_conditions": ["owned scope unknown", "destructive authority absent"]
+    },
+    {
+      "id": "prompt-impact-mixed",
+      "capability_id": "bounded-repository-mutation",
+      "skill": ".ai/skills/bounded-repository-mutation/SKILL.md",
+      "conditions": ["prompt combines inspection and mutation"],
+      "forbidden_conditions": ["inspection proves mutation is unsafe"]
+    },
+    {
+      "id": "prompt-impact-validate",
+      "capability_id": "validation-proof-routing",
+      "skill": ".ai/skills/validation-proof-routing/SKILL.md",
+      "conditions": ["prompt classified validate", "proof requested", "validator or runtime gate required"],
+      "forbidden_conditions": ["no target behavior or artifact is identified"]
+    },
+    {
+      "id": "prompt-impact-integrate",
+      "capability_id": "integration-handoff",
+      "skill": ".ai/skills/integration-handoff/SKILL.md",
+      "conditions": ["prompt classified integrate", "commit push PR merge or handoff requested"],
+      "forbidden_conditions": ["unique work preservation is unproven"]
+    },
+    {
+      "id": "full-prompt-registry-passage",
+      "capability_id": "prompt-registry-passage",
+      "skill": ".ai/skills/prompt-registry-passage/SKILL.md",
+      "conditions": ["pass through every prompt", "profile prompt impacts", "reduce repeated prompt instructions", "factor prompt skills and capabilities"],
+      "forbidden_conditions": ["canonical effective registry unavailable"]
+    },
+    {
+      "id": "conversation-canary-change",
+      "capability_id": "prompt-registry-passage",
+      "skill": ".ai/skills/prompt-registry-passage/SKILL.md",
+      "conditions": ["conversation canary changed", "OBJECTIVE or REPOS prefix requested", "canary coverage audit requested"],
+      "forbidden_conditions": ["request is only to observe an existing model response"]
+    },
+    {
+      "id": "prompt-efficiency-unproven",
+      "capability_id": "prompt-efficiency-evaluation",
+      "skill": ".ai/skills/prompt-efficiency-evaluation/SKILL.md",
+      "conditions": ["prompt token use is unmeasured", "prompt duplication is suspected", "prompt efficiency gate requested", "LLM judge should evaluate the prompt registry"],
+      "forbidden_conditions": ["request is only to display an existing validated efficiency report"]
+    },
+    {
+      "id": "weak-model-readiness-unproven",
+      "capability_id": "prompt-efficiency-evaluation",
+      "skill": ".ai/skills/prompt-efficiency-evaluation/SKILL.md",
+      "conditions": ["weak model task completion is unproven", "prompt relies on model judgment", "scope failure validation or output structure may be missing"],
+      "forbidden_conditions": ["no canonical prompt or candidate response is available"]
+    },
+    {
+      "id": "model-response-efficiency-unproven",
+      "capability_id": "prompt-efficiency-evaluation",
+      "skill": ".ai/skills/prompt-efficiency-evaluation/SKILL.md",
+      "conditions": ["one LLM should evaluate another LLM", "candidate-response JSONL is available", "response adherence or concision is unproven"],
+      "forbidden_conditions": ["candidate response contains private data that is not approved for evaluation"]
+    }
+  ]
+}
