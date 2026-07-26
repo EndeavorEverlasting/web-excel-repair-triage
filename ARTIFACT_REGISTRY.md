@@ -16,6 +16,7 @@ This registry defines repository artifacts that agents, CI, and operators may pr
 | Harness manifest | `harness/manifest.v1.json` | edited JSON | `python scripts/validate_harness.py` | Tracked; update atomically. |
 | Capability registry | `harness/capabilities.v1.json` | edited JSON | harness validator/tests | Tracked; unique IDs and implementations. |
 | Trigger registry | `harness/triggers.v1.json` | edited JSON | harness validator/tests | Tracked; one capability/skill owner per trigger. |
+| Prompt Kit interaction contract | `harness/contracts/prompt-kit-interactions.v1.json` | edited versioned JSON | `tests.test_prompt_kit_interactions_contract` and `scripts/validate_prompt_kit_interactions.py` | Tracked; harness lane owns the requirement, not product implementation. |
 | Prompt-language policy | `harness/evals/prompt-language-audit.v1.json` | edited JSON | prompt-language tests | Tracked; rules, severities, dispositions, result schema. |
 | Prompt-language fixtures | `harness/evals/fixtures/prompt-language-cases.v1.json` | edited JSON | `tests.test_prompt_language_audit` | Tracked positive/negative/mutation examples. |
 | Scoped skills | `.ai/skills/*/SKILL.md` | edited Markdown | harness validator and focused tests | Tracked; one reusable boundary each. |
@@ -29,6 +30,7 @@ This registry defines repository artifacts that agents, CI, and operators may pr
 
 | Artifact family | Default location | Naming contract | Tracking policy |
 |---|---|---|---|
+| Prompt Kit interaction audit report | `Outputs/prompt-kit-interaction-audit.json` or CI artifact storage | stable result schema `prompt-kit-interaction-audit-result/v1` | Gitignored runtime evidence; non-strict mode may report a known product gap while the harness remains green. |
 | Prompt-language audit report | `Outputs/prompt-language-audit.json` or CI artifact storage | stable result schema `prompt-language-audit-result/v1` | Gitignored runtime evidence; upload from CI when useful. |
 | Strict prompt-language repair report | `Outputs/prompt-language-audit-strict.json` | include strict flag and per-prompt dispositions | Gitignored. |
 | Skill eval results | Target repository approved output path | stable skill ID/version/run ID | Gitignored unless a sanitized fixture or approved baseline. |
@@ -47,7 +49,7 @@ This registry defines repository artifacts that agents, CI, and operators may pr
 
 ## Artifact lifecycle
 
-1. Declare artifact family, owner capability, source, destination, schema/profile, and proof ceiling.
+1. Declare artifact family, owner capability/workflow, source, destination, schema/profile, and proof ceiling.
 2. Generate through a registered script, module, launcher, prompt workflow, or CI job.
 3. Validate structural, semantic, parity, and safety requirements appropriate to the artifact.
 4. Deliver only from the contract-defined path.
@@ -56,7 +58,7 @@ This registry defines repository artifacts that agents, CI, and operators may pr
 
 ## Naming rules
 
-- Tracked schemas/manifests: `<domain>.<version>.json`.
+- Tracked schemas/manifests/contracts: `<domain>.<version>.json` or a stable kebab-case contract name with explicit schema version.
 - Scoped skills: `.ai/skills/<kebab-case-skill>/SKILL.md`.
 - Operator reports: stable uppercase names under `harness/reports/`.
 - Runtime reports: stable family name plus skill/source and run ID when needed.
@@ -67,6 +69,8 @@ This registry defines repository artifacts that agents, CI, and operators may pr
 ```powershell
 python scripts\validate_harness.py
 python -m unittest tests.test_harness_contract -v
+python -m unittest tests.test_prompt_kit_interactions_contract -v
+python scripts\validate_prompt_kit_interactions.py --output Outputs\prompt-kit-interaction-audit.json --summary
 python -m unittest tests.test_prompt_language_audit -v
 python scripts\evaluate_prompt_language.py --output Outputs\prompt-language-audit.json --summary
 python -m unittest tests.test_skill_prompt_registry -v
@@ -75,6 +79,14 @@ python -m triage.gitignore_hygiene
 git diff --check
 ```
 
+Strict product interaction proof additionally requires:
+
+```powershell
+python scripts\validate_prompt_kit_interactions.py --require-implementation --output Outputs\prompt-kit-interaction-audit.json --summary
+```
+
+followed by browser observation of the canonical Prompt Kit site.
+
 ## Proof boundaries
 
-File/schema presence proves repository integration only. Exhaustive prompt-language audit proves static canonical/effective coverage and findings, not provider obedience. Deterministic builder parity proves tracked-site identity, not browser acceptance. CI proves only exercised commands and fixtures. Excel for Web, Windows GUI, credentials, network, model/provider behavior, protected targets, and production acceptance require separate observed proof.
+File/schema presence proves repository integration only. The non-strict Prompt Kit interaction audit proves the versioned requirement is tracked and classifies recognizable source markers; it may intentionally report missing product markers without failing a harness-only sprint. The strict interaction gate still does not prove browser event ordering, clipboard permissions, focus restoration, or visual acceptance without field observation. Exhaustive prompt-language audit proves static canonical/effective coverage and findings, not provider obedience. Deterministic builder parity proves tracked-site identity, not browser acceptance. CI proves only exercised commands and fixtures. Excel for Web, Windows GUI, credentials, network, model/provider behavior, protected targets, and production acceptance require separate observed proof.

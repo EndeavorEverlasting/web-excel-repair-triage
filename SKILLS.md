@@ -9,6 +9,7 @@ This is the repository skill index. Reusable procedures live under `.ai/skills/<
 3. Prefer one primary skill/capability owner; add a second only for a distinct downstream phase.
 4. Do not use skills to bypass protected inputs, credentials, validation, or proof boundaries.
 5. Update skill, capability, trigger, manifest, tests, and docs atomically when ownership changes.
+6. Prompt Kit card interactions are deterministic product behavior. Their versioned requirements live in `harness/contracts/prompt-kit-interactions.v1.json` and Workflow B; a skill may help design downstream evals but must not become the only implementation of click, double-click, dismissal, clipboard, or focus behavior.
 
 ## Active repository skills
 
@@ -29,6 +30,7 @@ This is the repository skill index. Reusable procedures live under `.ai/skills/<
 - **Inputs:** Target skill/contracts, known failures, representative cases, unit/integration surfaces, and baseline traces.
 - **Outputs:** Versioned eval cases, runner, machine-readable results, finding-to-repair ledger, and before/after measurements.
 - **Primary validation:** Target-repository eval suite plus unit, integration, regression, profiling, and token/cost evidence appropriate to the claim.
+- **Prompt Kit interaction boundary:** P62 may build downstream eval coverage around `harness/contracts/prompt-kit-interactions.v1.json`, but product behavior remains owned by the canonical Prompt Kit source and Workflow B.
 
 ### Skill factoring
 
