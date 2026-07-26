@@ -29,14 +29,15 @@
     },
     {
       "id": "acquisition_discoverability",
-      "expected": "The repository documents one-click acquisition, existing-checkout update, fresh clone, ZIP download, Actions preview, canonical artifact path, and rebuild/parity commands."
+      "expected": "The repository documents zero-dialog one-click acquisition, the advanced acquisition GUI, existing-checkout update, fresh clone, ZIP download, Actions preview, canonical artifact path, and rebuild/parity commands."
     }
   ],
   "validation": [
     "node --check docs/prompt-kit.js",
     "python -m unittest tests.test_prompt_kit_filtering_access -v",
     "python -m unittest tests.test_prompt_kit_product_interactions -v",
+    "python -m unittest tests.test_prompt_kit_mobile -v",
     "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check"
   ],
-  "proof_ceiling": "Source, deterministic grouping tests, generated-site parity, and CI artifact proof; real operator browser acceptance remains a field gate."
+  "proof_ceiling": "Source, deterministic grouping/mobile tests, generated-site parity, and CI artifact proof; real operator browser and physical mobile acceptance remain field gates."
 }
