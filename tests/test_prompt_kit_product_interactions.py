@@ -62,12 +62,12 @@ class PromptKitProductInteractionTests(unittest.TestCase):
 
     def test_repeated_section_headers_have_top_left_and_bottom_right_links(self) -> None:
         js = JS.read_text(encoding="utf-8")
-        self.assertIn("href=\"#page-top\"", js)
-        self.assertIn("href=\"#page-bottom\"", js)
+        self.assertIn('href="#page-top"', js)
+        self.assertIn('href="#page-bottom"', js)
         self.assertIn("page-jump page-jump-top", js)
         self.assertIn("page-jump page-jump-bottom", js)
-        self.assertIn("aria-label=\"Go to top of page\"", js)
-        self.assertIn("aria-label=\"Go to bottom of page\"", js)
+        self.assertIn('aria-label="Go to top of page"', js)
+        self.assertIn('aria-label="Go to bottom of page"', js)
         self.assertLess(js.index("page-jump page-jump-top"), js.index("sd-label"))
         divider_region = js[js.index("divider.innerHTML="):js.index("grid.appendChild(divider)")]
         self.assertLess(divider_region.index("page-jump-top"), divider_region.index("sd-label"))
@@ -81,10 +81,11 @@ class PromptKitProductInteractionTests(unittest.TestCase):
         self.assertIn("bottom.id='page-bottom'", js)
         self.assertIn("ensurePageNavigation();", js)
 
-    def test_prompt_cards_remain_keyboard_accessible_without_bubbling_rerenders(self) -> None:
+    def test_prompt_cards_remain_keyboard_accessible_without_nested_button_semantics(self) -> None:
         js = JS.read_text(encoding="utf-8")
         self.assertIn("card.tabIndex=0", js)
-        self.assertIn("card.setAttribute('role','button')", js)
+        self.assertIn("card.setAttribute('role','group')", js)
+        self.assertNotIn("card.setAttribute('role','button')", js)
         self.assertIn("Double-click or press Enter to expand", js)
         handler = (
             "card.onkeydown=function(e){if(e.target!==card)return;"
@@ -93,7 +94,19 @@ class PromptKitProductInteractionTests(unittest.TestCase):
             "e.preventDefault();e.stopPropagation();copyPrompt(p.id)}};"
         )
         self.assertIn(handler, js)
+        self.assertIn("openBtn.className='prompt-open-btn'", js)
+        self.assertIn("btn.className='prompt-copy-btn'", js)
         self.assertIn("return;default:return}", js)
+
+    def test_prompt_fields_are_escaped_before_card_or_detail_html(self) -> None:
+        js = JS.read_text(encoding="utf-8")
+        self.assertIn("function escapePromptHtml(value)", js)
+        self.assertIn("safeName=escapePromptHtml(p.name)", js)
+        self.assertIn("safeUseWhen=escapePromptHtml(p.useWhen)", js)
+        self.assertIn("safeCopyContent=escapePromptHtml(p.copyContent||'')", js)
+        self.assertIn("safeProofGate=escapePromptHtml(p.proofGate)", js)
+        self.assertIn("safeName+'</span>", js)
+        self.assertIn("safeUseWhen+'</pre>", js)
 
     def test_checked_in_site_contains_current_interaction_and_navigation_source(self) -> None:
         deployed = DEPLOYED.read_text(encoding="utf-8")
@@ -101,8 +114,8 @@ class PromptKitProductInteractionTests(unittest.TestCase):
         self.assertIn(js, deployed, "checked-in Prompt Kit is stale relative to docs/prompt-kit.js")
         for marker in (
             "card.ondblclick=function(e)",
-            "href=\"#page-top\"",
-            "href=\"#page-bottom\"",
+            'href="#page-top"',
+            'href="#page-bottom"',
             "promptDetailOverlay').addEventListener('click'",
         ):
             self.assertIn(marker, deployed)
