@@ -95,11 +95,12 @@ jobs:
           name: prompt-kit-current-preview
           path: ${{ runner.temp }}/prompt-kit/index.html
           if-no-files-found: error
-      - name: Validate Prompt Kit product interactions, filtering, access, and mobile behavior
-        run: |
-          python -m unittest tests.test_prompt_kit_product_interactions -v
-          python -m unittest tests.test_prompt_kit_filtering_access -v
-          python -m unittest tests.test_prompt_kit_mobile -v
+      - name: Validate Prompt Kit product interactions
+        run: python -m unittest tests.test_prompt_kit_product_interactions -v
+      - name: Validate Prompt Kit category and type filtering
+        run: python -m unittest tests.test_prompt_kit_filtering_access -v
+      - name: Validate Prompt Kit mobile and quick-open behavior
+        run: python -m unittest tests.test_prompt_kit_mobile -v
       - name: Validate exact deployed website
         run: |
           python tests/test_prompt_kit_header_contract.py
