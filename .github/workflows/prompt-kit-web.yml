@@ -3,29 +3,41 @@ name: Prompt Kit web contracts
 on:
   pull_request:
     paths:
+      - PROMPT_KIT_ACCESS.md
       - build_prompt_kit.py
       - scripts/build_prompt_kit_registry.py
+      - scripts/validate_prompt_kit_interactions.py
       - registry/prompts/skill-development-prompts.v1.json
       - docs/prompt-kit.js
       - docs/prompts.json
       - docs/reference.json
+      - harness/contracts/prompt-kit-interactions.v1.json
+      - harness/contracts/prompt-kit-filtering.v1.json
       - web/prompt-kit/index.html
       - web/README.md
       - tests/test_prompt_kit_header_contract.py
+      - tests/test_prompt_kit_product_interactions.py
+      - tests/test_prompt_kit_filtering_access.py
       - tests/test_skill_prompt_registry.py
       - .github/workflows/prompt-kit-web.yml
   push:
     branches: [main]
     paths:
+      - PROMPT_KIT_ACCESS.md
       - build_prompt_kit.py
       - scripts/build_prompt_kit_registry.py
+      - scripts/validate_prompt_kit_interactions.py
       - registry/prompts/skill-development-prompts.v1.json
       - docs/prompt-kit.js
       - docs/prompts.json
       - docs/reference.json
+      - harness/contracts/prompt-kit-interactions.v1.json
+      - harness/contracts/prompt-kit-filtering.v1.json
       - web/prompt-kit/index.html
       - web/README.md
       - tests/test_prompt_kit_header_contract.py
+      - tests/test_prompt_kit_product_interactions.py
+      - tests/test_prompt_kit_filtering_access.py
       - tests/test_skill_prompt_registry.py
       - .github/workflows/prompt-kit-web.yml
 
@@ -47,8 +59,29 @@ jobs:
           python -m py_compile \
             build_prompt_kit.py \
             scripts/build_prompt_kit_registry.py \
+            scripts/validate_prompt_kit_interactions.py \
             tests/test_prompt_kit_header_contract.py \
+            tests/test_prompt_kit_product_interactions.py \
+            tests/test_prompt_kit_filtering_access.py \
             tests/test_skill_prompt_registry.py
+      - name: Validate Prompt Kit JavaScript syntax
+        run: node --check docs/prompt-kit.js
+      - name: Validate strict interaction implementation contract
+        run: python scripts/validate_prompt_kit_interactions.py --require-implementation --output "$RUNNER_TEMP/prompt-kit-interaction-audit.json" --summary
+      - name: Build current Prompt Kit preview
+        run: |
+          mkdir -p "$RUNNER_TEMP/prompt-kit"
+          python scripts/build_prompt_kit_registry.py --output "$RUNNER_TEMP/prompt-kit/index.html"
+      - name: Upload current Prompt Kit preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-current-preview
+          path: ${{ runner.temp }}/prompt-kit/index.html
+          if-no-files-found: error
+      - name: Validate Prompt Kit product interactions, filtering, and access
+        run: |
+          python -m unittest tests.test_prompt_kit_product_interactions -v
+          python -m unittest tests.test_prompt_kit_filtering_access -v
       - name: Validate exact deployed website
         run: |
           python tests/test_prompt_kit_header_contract.py
