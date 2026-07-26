@@ -28,7 +28,7 @@ if exist "%LOCAL_SCRIPT%" (
     set "SCRIPT=%CACHED_SCRIPT%"
 )
 
-"%POWERSHELL%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT%"
+"%POWERSHELL%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT%" %*
 set "EXIT_CODE=%ERRORLEVEL%"
 if not "%EXIT_CODE%"=="0" (
     echo.
