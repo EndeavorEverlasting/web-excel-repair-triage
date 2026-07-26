@@ -106,4 +106,3 @@ ensurePageNavigation();
 renderSections();
 renderTypes();
 render();
-
