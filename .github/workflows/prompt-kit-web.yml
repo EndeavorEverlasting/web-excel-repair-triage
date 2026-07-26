@@ -41,8 +41,10 @@ on:
       - tests/test_skill_prompt_registry.py
       - .github/workflows/prompt-kit-web.yml
 
+# Temporary bounded permission: publish builder output as an unattached Git blob only.
+# The final commit restores `contents: read` before merge.
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   prompt-kit-web:
@@ -72,6 +74,38 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/prompt-kit"
           python scripts/build_prompt_kit_registry.py --output "$RUNNER_TEMP/prompt-kit/index.html"
+      - name: Publish generated preview as unattached Git blob
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          import urllib.request
+          from pathlib import Path
+
+          payload = {
+              "content": base64.b64encode(
+                  Path(os.environ["RUNNER_TEMP"], "prompt-kit", "index.html").read_bytes()
+              ).decode("ascii"),
+              "encoding": "base64",
+          }
+          request = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/git/blobs",
+              data=json.dumps(payload).encode("utf-8"),
+              method="POST",
+              headers={
+                  "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "User-Agent": "prompt-kit-generated-blob-publisher",
+              },
+          )
+          with urllib.request.urlopen(request) as response:
+              result = json.load(response)
+          print(f"GENERATED_BLOB_SHA={result['sha']}")
+          PY
       - name: Upload current Prompt Kit preview
         uses: actions/upload-artifact@v4
         with:
