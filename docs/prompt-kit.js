@@ -65,7 +65,7 @@ function appendPromptCard(grid,p){
   card.className='prompt-card'+(isGnhf?' gnhf':'');
   card.tabIndex=0;
   card.setAttribute('role','button');
-  card.setAttribute('aria-label',p.id+' '+p.name+'. Click or tap to copy. Use Open, double-click, or press Enter to expand.');
+  card.setAttribute('aria-label',p.id+' '+p.name+'. Click or tap to copy. Double-click or press Enter to expand. Touch users may use Open.');
   card.innerHTML='<div class="glow-bar" style="background:'+hex+'"></div><div class="prompt-header"><span class="prompt-id">'+p.id+'</span>'+(isGnhf?'<span class="gnhf-badge">☾ GNHF</span>':'')+'<span class="prompt-name">'+p.name+'</span></div><div class="prompt-type">'+p.type+' · '+p.color+'</div><div class="prompt-desc">'+p.useWhen+'</div><div class="prompt-meta"><span class="prompt-badge">'+p.sprintRole+'</span><span class="prompt-badge">'+p.proofGate+'</span></div>';
   card.onclick=function(e){cancelPromptCardCopy(card);card._copyTimer=setTimeout(function(){copyPrompt(p.id);card._copyTimer=null},300)};
   card.ondblclick=function(e){cancelPromptCardCopy(card);e.preventDefault();showPromptDetail(p.id,card)};
