@@ -64,14 +64,31 @@ class PromptKitMobileTests(unittest.TestCase):
         ):
             self.assertIn(marker, js)
 
-    def test_mobile_has_explicit_open_and_copy_controls(self) -> None:
+    def test_mobile_has_explicit_open_copy_and_wide_touch_sizing(self) -> None:
         js = JS.read_text(encoding="utf-8")
+        self.assertIn("card.setAttribute('role','group')", js)
         self.assertIn("openBtn.className='prompt-open-btn'", js)
         self.assertIn("openBtn.textContent='Open'", js)
         self.assertIn("showPromptDetail(p.id,card)", js)
         self.assertIn("btn.className='prompt-copy-btn'", js)
         self.assertIn("@media (hover:none), (pointer:coarse)", js)
-        self.assertIn(".prompt-open-btn,.prompt-copy-btn{opacity:1}", js)
+        self.assertIn(
+            ".prompt-open-btn,.prompt-copy-btn{opacity:1;min-width:64px;min-height:40px;padding:8px 12px;touch-action:manipulation}",
+            js,
+        )
+
+    def test_prompt_display_fields_are_escaped_before_html_rendering(self) -> None:
+        js = JS.read_text(encoding="utf-8")
+        self.assertIn("function escapePromptHtml(value)", js)
+        for marker in (
+            "safeId=escapePromptHtml(p.id)",
+            "safeName=escapePromptHtml(p.name)",
+            "safeType=escapePromptHtml(p.type)",
+            "safeUseWhen=escapePromptHtml(p.useWhen)",
+            "safeSprintRole=escapePromptHtml(p.sprintRole)",
+            "safeProofGate=escapePromptHtml(p.proofGate)",
+        ):
+            self.assertIn(marker, js)
 
     def test_quick_cmd_bootstraps_canonical_main_and_propagates_exit(self) -> None:
         quick = QUICK_CMD.read_text(encoding="utf-8")
