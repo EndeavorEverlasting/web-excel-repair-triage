@@ -33,7 +33,7 @@ It does not reload the browser or create a second filter state.
 
 ### Prompt card interaction contract
 
-- **Single click/tap** a prompt card to copy that prompt to the clipboard.
+- **Single-click/tap** a prompt card to copy that prompt to the clipboard.
 - **Double-click** a prompt card to expand the full prompt detail on desktop.
 - **Open** explicitly expands prompt detail and is always exposed for mobile/coarse-pointer users.
 - **Click outside** an open prompt detail to collapse it and return focus to the originating prompt card without clearing search or filters.
@@ -41,7 +41,7 @@ It does not reload the browser or create a second filter state.
 - Explicit **Copy** controls remain available on cards and inside prompt detail.
 - **Esc** closes an open prompt detail before falling back to broader filter clearing.
 
-A short click-delay continues to distinguish desktop single-click from double-click. Mobile users never need to rely on double-tap timing because **Open** is explicit.
+A short click-delay continues to distinguish desktop single-click from double-click. Mobile users never need to rely on double-tap timing because **Open** is explicit. Prompt cards are semantic groups containing explicit Open/Copy buttons rather than button containers with nested buttons.
 
 ### Category and type filtering
 
@@ -67,11 +67,12 @@ Mobile is a responsive form of the existing Prompt Kit, not a second application
 - The header becomes a compact stacked layout rather than a tall sticky surface.
 - Library, category, and type controls keep their existing semantics and become horizontally scrollable touch rails where needed.
 - Prompt cards render in one column.
-- **Open** and **Copy** are visible, touch-sized actions.
+- **Open** and **Copy** are visible, touch-sized actions on coarse-pointer devices, including wide touch tablets.
 - Prompt detail uses the available mobile viewport and keeps the existing close/copy behavior.
 - The existing reference panel expands to the mobile viewport.
 - Search uses a touch-sized control and avoids mobile browser zoom caused by undersized input text.
 - The floating reference control remains reachable.
+- Prompt display fields are escaped before insertion into rendered card/detail HTML.
 
 ### Distributed page navigation
 
