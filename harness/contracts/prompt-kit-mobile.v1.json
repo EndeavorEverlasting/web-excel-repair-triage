@@ -1,0 +1,57 @@
+{
+  "schema_version": "prompt-kit-mobile-contract/v1",
+  "contract_id": "prompt-kit-mobile-stability",
+  "principle": "Mobile reuses the desktop Prompt Kit data, filters, renderers, and action functions. Responsive behavior may reorganize layout or expose explicit touch controls, but it must not create a second interaction model.",
+  "surface": {
+    "canonical_site": "web/prompt-kit/index.html",
+    "behavior_source": "docs/prompt-kit.js",
+    "quick_launcher": "Open-Latest-PromptKit.cmd",
+    "shared_acquisition": "scripts/Acquire-LatestPromptKit.ps1"
+  },
+  "requirements": [
+    {
+      "id": "title_reset",
+      "expected": "The main Prompt Kit title/logo is a pointer- and keyboard-accessible reset control that restores All prompts, All Categories, All Types, empty search, closed detail/reference surfaces, and the top of the page."
+    },
+    {
+      "id": "explicit_mobile_open",
+      "expected": "Every prompt card exposes an explicit Open action so touch users do not depend on double-click or double-tap timing to inspect prompt detail."
+    },
+    {
+      "id": "touch_copy_preserved",
+      "expected": "The existing Copy action remains visible and touch-sized on coarse-pointer/mobile layouts while desktop single-click copy behavior remains intact."
+    },
+    {
+      "id": "horizontal_filter_rails",
+      "expected": "Library, category, and type filters remain the same controls and semantics; narrow layouts may present them as horizontally scrollable touch rails rather than wrapping into an unstable header."
+    },
+    {
+      "id": "single_column_cards",
+      "expected": "Narrow layouts render prompt cards in one readable column without horizontal page overflow."
+    },
+    {
+      "id": "mobile_detail_surface",
+      "expected": "Prompt detail reuses the existing detail surface and functions but occupies the mobile viewport with an accessible close and full-width Copy action."
+    },
+    {
+      "id": "mobile_reference_surface",
+      "expected": "The existing reference panel remains available and expands to the mobile viewport rather than introducing a separate reference UI."
+    },
+    {
+      "id": "distributed_navigation_preserved",
+      "expected": "Top/Bottom links remain present and touch-usable on every visible prompt category without changing active filters."
+    },
+    {
+      "id": "quick_windows_acquisition",
+      "expected": "Open-Latest-PromptKit.cmd provides a zero-dialog normal-user route that resolves Desktop/OneDrive development roots, preserves unsafe existing work, safely syncs canonical main, validates exact Prompt Kit parity, and opens the canonical website."
+    }
+  ],
+  "validation": [
+    "node --check docs/prompt-kit.js",
+    "python -m unittest tests.test_prompt_kit_mobile -v",
+    "python -m unittest tests.test_prompt_kit_product_interactions -v",
+    "python -m unittest tests.test_prompt_kit_filtering_access -v",
+    "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check"
+  ],
+  "proof_ceiling": "Static source, PowerShell parse, deterministic tests, generated-site parity, and CI prove the tracked responsive/acquisition contract. Physical phone/tablet ergonomics, browser clipboard permissions, touch timing, live OneDrive filesystem state, and Windows process launch remain field acceptance gates."
+}

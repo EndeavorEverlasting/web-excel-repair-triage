@@ -4,7 +4,9 @@
 
 **Canonical access guide:** [`../PROMPT_KIT_ACCESS.md`](../PROMPT_KIT_ACCESS.md)
 
-The fastest Windows path is `Acquire-Latest-PromptKit.cmd`: it clones or safely fast-forwards canonical `main`, validates the exact site, and opens it.
+The fastest normal Windows path is `Open-Latest-PromptKit.cmd`: it finds or creates a safe canonical checkout, syncs `main`, validates exact Prompt Kit parity, and opens the website without a configuration dialog.
+
+`Acquire-Latest-PromptKit.cmd` remains the advanced technician GUI when a destination or generator surface must be selected manually.
 
 From an existing validated checkout, open the deployed operator surface from the repository root:
 
@@ -14,16 +16,32 @@ start web\prompt-kit\index.html
 
 Canonical release artifact: `web/prompt-kit/index.html`.
 
+### Home / reset control
+
+The **AI Harness Prompt Kit** title/logo is the stable return-to-home action on desktop and mobile.
+
+Activating it by pointer, tap, Enter, or Space restores:
+
+- All prompts;
+- All Categories;
+- All Types;
+- empty search;
+- closed prompt detail and reference surfaces;
+- the top of the page.
+
+It does not reload the browser or create a second filter state.
+
 ### Prompt card interaction contract
 
-- **Single click** a prompt card to copy that prompt to the clipboard.
-- **Double-click** a prompt card to expand the full prompt detail.
-- **Click outside** an open prompt detail to collapse it and return focus to the originating prompt card without clearing the current search or filters.
+- **Single-click/tap** a prompt card to copy that prompt to the clipboard.
+- **Double-click** a prompt card to expand the full prompt detail on desktop.
+- **Open** explicitly expands prompt detail and is always exposed for mobile/coarse-pointer users.
+- **Click outside** an open prompt detail to collapse it and return focus to the originating prompt card without clearing search or filters.
 - **Enter** expands a focused prompt card; **Space** copies it.
-- The explicit **Copy** buttons remain available on cards and inside prompt detail.
-- **Esc** closes an open prompt detail before falling back to the broader filter-clearing behavior.
+- Explicit **Copy** controls remain available on cards and inside prompt detail.
+- **Esc** closes an open prompt detail before falling back to broader filter clearing.
 
-A short click-delay distinguishes a single click from a double-click so the double-click gesture does not leave duplicate copy actions behind.
+A short click-delay continues to distinguish desktop single-click from double-click. Mobile users never need to rely on double-tap timing because **Open** is explicit. Prompt cards are semantic groups containing explicit Open/Copy buttons rather than button containers with nested buttons.
 
 ### Category and type filtering
 
@@ -35,21 +53,35 @@ There are three separate browsing layers:
 
 Category behavior is deterministic:
 
-- **All Categories** renders every category that has matching prompts exactly once.
+- **All Categories** renders every category with matching prompts exactly once.
 - Every category contains only prompts mapped to that category.
 - Prompts are sorted by numeric prompt sequence inside the category, even when prompt IDs skip numbers.
-- Selecting one category renders only that category heading and its matching prompts.
-- Selecting a type may further narrow the results; the remaining category heading is still shown.
-- Search, library-view, category, and type filters compose without creating duplicate category headings.
+- Selecting one category renders only that category heading and matching prompts.
+- Selecting a type may further narrow results; the remaining category heading is still shown.
+- Search, library-view, category, and type filters compose without duplicate category headings.
+
+### Mobile layout contract
+
+Mobile is a responsive form of the existing Prompt Kit, not a second application.
+
+- The header becomes a compact stacked layout rather than a tall sticky surface.
+- Library, category, and type controls keep their existing semantics and become horizontally scrollable touch rails where needed.
+- Prompt cards render in one column.
+- **Open** and **Copy** are visible, touch-sized actions on coarse-pointer devices, including wide touch tablets.
+- Prompt detail uses the available mobile viewport and keeps the existing close/copy behavior.
+- The existing reference panel expands to the mobile viewport.
+- Search uses a touch-sized control and avoids mobile browser zoom caused by undersized input text.
+- The floating reference control remains reachable.
+- Prompt display fields are escaped before insertion into rendered card/detail HTML.
 
 ### Distributed page navigation
 
 Every visible prompt category divider exposes:
 
-- **Top** on the left, linked to the canonical `#page-top` target.
-- **Bottom** on the right, linked to the canonical `#page-bottom` target.
+- **Top** on the left, linked to `#page-top`.
+- **Bottom** on the right, linked to `#page-bottom`.
 
-These are same-document anchors. They do not reset the current library view, category, type, or search state.
+These remain touch-usable and do not reset library view, category, type, or search state.
 
 ### Hotkeys
 
@@ -80,6 +112,9 @@ node --check docs\prompt-kit.js
 python tests\test_prompt_kit_header_contract.py
 python -m unittest tests.test_prompt_kit_product_interactions -v
 python -m unittest tests.test_prompt_kit_filtering_access -v
+python -m unittest tests.test_prompt_kit_mobile -v
 python scripts\validate_prompt_kit_interactions.py --require-implementation --output Outputs\prompt-kit-interaction-audit.json --summary
 python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
 ```
+
+Repository validation does not substitute for physical phone/tablet touch acceptance or a Windows field run of the quick launcher.
