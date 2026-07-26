@@ -41,8 +41,10 @@ on:
       - tests/test_skill_prompt_registry.py
       - .github/workflows/prompt-kit-web.yml
 
+# Temporary bounded permission for one exact generated-artifact transaction.
+# Final head restores `contents: read`; no branch push occurs here.
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   prompt-kit-web:
@@ -54,6 +56,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Normalize Prompt Kit JS EOF in working copy
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('docs/prompt-kit.js')
+          path.write_text(path.read_text(encoding='utf-8').rstrip('\n') + '\n', encoding='utf-8')
+          PY
       - name: Compile website builders and contracts
         run: |
           python -m py_compile \
@@ -72,6 +81,40 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/prompt-kit"
           python scripts/build_prompt_kit_registry.py --output "$RUNNER_TEMP/prompt-kit/index.html"
+      - name: Publish corrected source and generated site as unattached Git blobs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          import urllib.request
+          from pathlib import Path
+
+          def publish(label, path):
+              payload = {
+                  'content': base64.b64encode(Path(path).read_bytes()).decode('ascii'),
+                  'encoding': 'base64',
+              }
+              request = urllib.request.Request(
+                  f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/git/blobs",
+                  data=json.dumps(payload).encode('utf-8'),
+                  method='POST',
+                  headers={
+                      'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
+                      'Accept': 'application/vnd.github+json',
+                      'X-GitHub-Api-Version': '2022-11-28',
+                      'User-Agent': 'prompt-kit-generated-blob-publisher',
+                  },
+              )
+              with urllib.request.urlopen(request) as response:
+                  result = json.load(response)
+              print(f"{label}={result['sha']}")
+
+          publish('FINAL_JS_BLOB_SHA', 'docs/prompt-kit.js')
+          publish('FINAL_HTML_BLOB_SHA', Path(os.environ['RUNNER_TEMP'], 'prompt-kit', 'index.html'))
+          PY
       - name: Upload current Prompt Kit preview
         uses: actions/upload-artifact@v4
         with:
