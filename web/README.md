@@ -26,6 +26,7 @@ Activating it by pointer, tap, Enter, or Space restores:
 - All Categories;
 - All Types;
 - empty search;
+- every prompt category expanded;
 - closed prompt detail and reference surfaces;
 - the top of the page.
 
@@ -60,6 +61,20 @@ Category behavior is deterministic:
 - Selecting a type may further narrow results; the remaining category heading is still shown.
 - Search, library-view, category, and type filters compose without duplicate category headings.
 
+### Collapsible category sections
+
+Every rendered category divider is also an independent expand/collapse control, matching the familiar GitHub disclosure pattern.
+
+- Categories start expanded.
+- Select the category name/chevron to collapse or expand only that category.
+- **Top** and **Bottom** remain separate controls and never toggle the category.
+- Collapse state survives search, library, category, and type rerenders during the current page session.
+- The prompt count remains visible while collapsed so the hidden scope is still obvious.
+- The toggle uses a native button with `aria-expanded`, so pointer, touch, Enter, and Space work without custom keyboard logic.
+- Activating the main title/reset expands every category again.
+
+Implementation ownership stays in `docs/prompt-kit.js`; `web/prompt-kit/index.html` is regenerated output and must not be hand-edited.
+
 ### Mobile layout contract
 
 Mobile is a responsive form of the existing Prompt Kit, not a second application.
@@ -67,6 +82,7 @@ Mobile is a responsive form of the existing Prompt Kit, not a second application
 - The header becomes a compact stacked layout rather than a tall sticky surface.
 - Library, category, and type controls keep their existing semantics and become horizontally scrollable touch rails where needed.
 - Prompt cards render in one column.
+- Category expand/collapse remains explicit and touch-sized.
 - **Open** and **Copy** are visible, touch-sized actions on coarse-pointer devices, including wide touch tablets.
 - Prompt detail uses the available mobile viewport and keeps the existing close/copy behavior.
 - The existing reference panel expands to the mobile viewport.
@@ -81,7 +97,7 @@ Every visible prompt category divider exposes:
 - **Top** on the left, linked to `#page-top`.
 - **Bottom** on the right, linked to `#page-bottom`.
 
-These remain touch-usable and do not reset library view, category, type, or search state.
+These remain touch-usable and do not reset library view, category, type, search state, or category collapse state.
 
 ### Hotkeys
 
