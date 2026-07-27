@@ -56,7 +56,7 @@ on:
       - .github/workflows/prompt-kit-web.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   prompt-kit-web:
@@ -109,36 +109,6 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/prompt-kit"
           python scripts/build_prompt_kit_registry.py --output "$RUNNER_TEMP/prompt-kit/index.html"
-      - name: Publish collapsible preview as unattached Git blob
-        if: github.event_name == 'pull_request' && github.head_ref == 'feat/prompt-kit-collapsible-sections' && github.event.pull_request.head.repo.full_name == github.repository
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          python - <<'PY'
-          import base64
-          import json
-          import os
-          import urllib.request
-
-          path = os.path.join(os.environ['RUNNER_TEMP'], 'prompt-kit', 'index.html')
-          with open(path, 'rb') as handle:
-              content = base64.b64encode(handle.read()).decode('ascii')
-          url = f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/git/blobs"
-          request = urllib.request.Request(
-              url,
-              data=json.dumps({'content': content, 'encoding': 'base64'}).encode('utf-8'),
-              headers={
-                  'Accept': 'application/vnd.github+json',
-                  'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
-                  'X-GitHub-Api-Version': '2022-11-28',
-                  'Content-Type': 'application/json',
-              },
-              method='POST',
-          )
-          with urllib.request.urlopen(request) as response:
-              payload = json.load(response)
-          print(f"GENERATED_HTML_BLOB_SHA={payload['sha']}")
-          PY
       - name: Upload current Prompt Kit preview
         uses: actions/upload-artifact@v4
         with:
