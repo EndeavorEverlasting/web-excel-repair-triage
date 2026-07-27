@@ -12,16 +12,16 @@ The release source is the repository's `main` branch. Do not treat an old featur
 
 Download `Open-Latest-PromptKit.cmd` and double-click it.
 
-The quick launcher uses the existing safe acquisition implementation. It:
+The quick launcher uses a deterministic destination derived from the launcher's own folder:
 
-1. resolves the current Windows Desktop through the Windows known-folder API instead of hard-coding a username;
-2. checks bounded development roots under the resolved Desktop and available OneDrive locations, including an existing `OG Laptop Backup\Desktop\dev` tree;
-3. identifies an existing checkout by its canonical Git origin, not by folder name alone;
-4. safely fetches and fast-forwards a clean `main` checkout when one is usable;
-5. preserves dirty, divergent, wrong-branch, or otherwise unsafe checkouts and continues looking for another safe candidate;
-6. creates the selected `dev` root and clones canonical `main` when no usable checkout exists;
-7. validates that `web\prompt-kit\index.html` exactly matches the tracked Prompt Kit builder output;
-8. opens the validated website automatically.
+1. if the launcher is inside a tracked Prompt Kit checkout, that checkout is used;
+2. otherwise a Desktop copy targets `Desktop\dev\web-excel-repair-triage` beside that launcher;
+3. the resolved destination is passed explicitly to the shared safe acquisition implementation, so normal quick-open does not depend on broad path discovery;
+4. an existing destination is verified by canonical Git origin, clean worktree, `main` branch, and fast-forward-only history;
+5. a missing destination is cloned from canonical `main`;
+6. dirty, divergent, wrong-branch, or wrong-origin destinations are preserved and refused rather than reset or overwritten;
+7. `web\prompt-kit\index.html` is validated against the tracked Prompt Kit builder output;
+8. the validated website opens automatically.
 
 A copy of `Open-Latest-PromptKit.cmd` may live outside the repository. When the tracked bootstrap is not beside it, it downloads the current `Acquire-Latest-PromptKit.cmd` from canonical `main`, which in turn downloads the shared PowerShell implementation when necessary.
 
@@ -33,10 +33,12 @@ Use `Acquire-Latest-PromptKit.cmd` when a technician needs to choose a destinati
 
 It opens **Get Latest Prompt Kit**, where the operator can choose **Open Prompt Kit website** or **Open generator selection GUI**, then select **Get Latest and Open**.
 
-The same bootstrap also supports the zero-dialog mode used by the quick launcher:
+The advanced GUI may derive a default development root from the Windows Desktop and available OneDrive locations, including an existing `OG Laptop Backup\Desktop\dev` tree. The path helper is required to accept an initially empty collection, and that condition is covered by CI.
+
+The same bootstrap also supports zero-dialog mode with an explicit destination:
 
 ```text
-Acquire-Latest-PromptKit.cmd -Quick
+Acquire-Latest-PromptKit.cmd -Quick -Destination "C:\path\to\web-excel-repair-triage"
 ```
 
 Both entry points preserve the same safety rules: no reset, clean, force-push, branch deletion, or silent discard of local work.
@@ -52,7 +54,7 @@ python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html -
 start web\prompt-kit\index.html
 ```
 
-If the checkout contains local work, do not reset or clean it. Use `Open-Latest-PromptKit.cmd` so it can select or create a separate safe checkout, or deliberately create a separate worktree.
+If the canonical Desktop checkout contains local work, do not reset or clean it. Preserve that work first, or use the advanced acquisition GUI with a deliberately separate destination.
 
 ## Fresh clone
 
@@ -137,4 +139,4 @@ The desktop and mobile layouts use the same prompts, filters, renderers, and act
 - Prompt detail and the reference panel use the mobile viewport while retaining the same underlying actions.
 - Every visible prompt category heading retains **Top** on the left and **Bottom** on the right without clearing active filters.
 
-Physical phone/tablet ergonomics, clipboard permission behavior, live OneDrive state, and Windows browser launch remain field-acceptance checks after repository validation passes.
+Physical phone/tablet ergonomics, clipboard permission behavior, live filesystem state, and Windows browser launch remain field-acceptance checks after repository validation passes.
