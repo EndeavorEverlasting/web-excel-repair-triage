@@ -20,6 +20,7 @@ on:
       - harness/contracts/prompt-kit-mobile.v1.json
       - web/prompt-kit/index.html
       - web/README.md
+      - tests/Test-PromptKitQuickOpenPathResolution.ps1
       - tests/test_prompt_kit_header_contract.py
       - tests/test_prompt_kit_product_interactions.py
       - tests/test_prompt_kit_filtering_access.py
@@ -46,6 +47,7 @@ on:
       - harness/contracts/prompt-kit-mobile.v1.json
       - web/prompt-kit/index.html
       - web/README.md
+      - tests/Test-PromptKitQuickOpenPathResolution.ps1
       - tests/test_prompt_kit_header_contract.py
       - tests/test_prompt_kit_product_interactions.py
       - tests/test_prompt_kit_filtering_access.py
@@ -83,6 +85,24 @@ jobs:
         shell: pwsh
         run: |
           $null = [scriptblock]::Create((Get-Content -Raw scripts/Acquire-LatestPromptKit.ps1))
+      - name: Reproduce empty-list path insertion
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile('scripts/Acquire-LatestPromptKit.ps1', [ref]$tokens, [ref]$errors)
+          if ($errors.Count) { throw ($errors -join '; ') }
+          $fn = $ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Add-UniquePath' }, $true)
+          if (-not $fn) { throw 'Add-UniquePath not found' }
+          Invoke-Expression $fn.Extent.Text
+          $paths = [System.Collections.Generic.List[string]]::new()
+          $expected = [System.IO.Path]::GetFullPath((Join-Path ([System.IO.Path]::GetTempPath()) 'prompt-kit-dev'))
+          Add-UniquePath -Paths $paths -Path $expected
+          if ($paths.Count -ne 1 -or $paths[0] -ne $expected) { throw 'empty-list path insertion did not resolve correctly' }
+          Write-Host 'Add-UniquePath empty-list regression: PASS'
+      - name: Validate deterministic quick-open path
+        shell: pwsh
+        run: ./tests/Test-PromptKitQuickOpenPathResolution.ps1
       - name: Validate strict interaction implementation contract
         run: python scripts/validate_prompt_kit_interactions.py --require-implementation --output "$RUNNER_TEMP/prompt-kit-interaction-audit.json" --summary
       - name: Build current Prompt Kit preview

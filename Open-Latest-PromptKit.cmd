@@ -6,6 +6,13 @@ set "CACHE_DIR=%TEMP%\WebExcelPromptKit"
 set "CACHED_BOOTSTRAP=%CACHE_DIR%\Acquire-Latest-PromptKit.cmd"
 set "BOOTSTRAP_URL=https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/Acquire-Latest-PromptKit.cmd"
 set "POWERSHELL=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+set "PREFERRED_REPO=%~dp0dev\web-excel-repair-triage"
+
+rem If this launcher is run from inside a tracked checkout, use that checkout.
+if exist "%~dp0.git" if exist "%~dp0web\prompt-kit\index.html" set "PREFERRED_REPO=%~dp0"
+
+rem A Desktop launcher resolves deterministically to Desktop\dev\web-excel-repair-triage.
+if exist "%~dp0dev\web-excel-repair-triage\.git" set "PREFERRED_REPO=%~dp0dev\web-excel-repair-triage"
 
 if exist "%LOCAL_BOOTSTRAP%" (
     set "BOOTSTRAP=%LOCAL_BOOTSTRAP%"
@@ -28,7 +35,8 @@ if exist "%LOCAL_BOOTSTRAP%" (
     set "BOOTSTRAP=%CACHED_BOOTSTRAP%"
 )
 
-call "%BOOTSTRAP%" -Quick
+echo Prompt Kit repository: %PREFERRED_REPO%
+call "%BOOTSTRAP%" -Quick -Destination "%PREFERRED_REPO%"
 set "EXIT_CODE=%ERRORLEVEL%"
 if not "%EXIT_CODE%"=="0" (
     echo.
