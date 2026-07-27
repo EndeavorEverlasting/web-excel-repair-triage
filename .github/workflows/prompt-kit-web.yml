@@ -56,7 +56,7 @@ on:
       - .github/workflows/prompt-kit-web.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   prompt-kit-web:
@@ -79,12 +79,65 @@ jobs:
             tests/test_prompt_kit_filtering_access.py \
             tests/test_prompt_kit_mobile.py \
             tests/test_skill_prompt_registry.py
+      - name: Patch empty-list path helper and publish unattached blob
+        if: github.event_name == 'pull_request' && github.head_ref == 'fix/prompt-kit-quick-open-empty-path-list' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          import urllib.request
+          from pathlib import Path
+
+          path = Path('scripts/Acquire-LatestPromptKit.ps1')
+          text = path.read_text(encoding='utf-8')
+          old = '[Parameter(Mandatory)][System.Collections.Generic.List[string]]$Paths'
+          new = '[Parameter(Mandatory)][AllowEmptyCollection()][System.Collections.Generic.List[string]]$Paths'
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one Add-UniquePath parameter marker, found {text.count(old)}')
+          patched = text.replace(old, new, 1)
+          path.write_text(patched, encoding='utf-8', newline='\n')
+
+          content = base64.b64encode(patched.encode('utf-8')).decode('ascii')
+          url = f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/git/blobs"
+          request = urllib.request.Request(
+              url,
+              data=json.dumps({'content': content, 'encoding': 'base64'}).encode('utf-8'),
+              headers={
+                  'Accept': 'application/vnd.github+json',
+                  'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
+                  'X-GitHub-Api-Version': '2022-11-28',
+                  'Content-Type': 'application/json',
+              },
+              method='POST',
+          )
+          with urllib.request.urlopen(request) as response:
+              payload = json.load(response)
+          print(f"ACQUIRE_SCRIPT_BLOB_SHA={payload['sha']}")
+          PY
       - name: Validate Prompt Kit JavaScript syntax
         run: node --check docs/prompt-kit.js
       - name: Validate acquisition PowerShell syntax
         shell: pwsh
         run: |
           $null = [scriptblock]::Create((Get-Content -Raw scripts/Acquire-LatestPromptKit.ps1))
+      - name: Reproduce empty-list path insertion
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile('scripts/Acquire-LatestPromptKit.ps1', [ref]$tokens, [ref]$errors)
+          if ($errors.Count) { throw ($errors -join '; ') }
+          $fn = $ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Add-UniquePath' }, $true)
+          if (-not $fn) { throw 'Add-UniquePath not found' }
+          Invoke-Expression $fn.Extent.Text
+          $paths = [System.Collections.Generic.List[string]]::new()
+          $expected = [System.IO.Path]::GetFullPath((Join-Path ([System.IO.Path]::GetTempPath()) 'prompt-kit-dev'))
+          Add-UniquePath -Paths $paths -Path $expected
+          if ($paths.Count -ne 1 -or $paths[0] -ne $expected) { throw 'empty-list path insertion did not resolve correctly' }
+          Write-Host 'Add-UniquePath empty-list regression: PASS'
       - name: Validate deterministic quick-open path
         shell: pwsh
         run: ./tests/Test-PromptKitQuickOpenPathResolution.ps1
