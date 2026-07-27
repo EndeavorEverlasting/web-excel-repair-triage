@@ -1,0 +1,37 @@
+{
+  "artifact_family": "device_transfer_signoff",
+  "site": {
+    "name": "Example Hospital",
+    "code": "EXAMPLE",
+    "address": "100 Example Avenue, Example, NY 10000",
+    "poc": "Example Receiver",
+    "delivery_date": "2026-07-28",
+    "delivery_time": "8:00 AM",
+    "origin": "1 Marcus Ave / Staging",
+    "prepared_by": "Example Coordinator",
+    "signoff_id": "EXAMPLE-EDI-STOCK-20260728-001"
+  },
+  "source": {
+    "sheet": null,
+    "device_type_header": "Device Type"
+  },
+  "shipment": [
+    {"item": "DIMs", "qty": 10},
+    {"item": "Grey Cat5 Ethernet", "qty": 20},
+    {"item": "Mice", "qty": 4},
+    {"item": "Keyboards", "qty": 4},
+    {"item": "Tap Badge Scanners", "qty": 4},
+    {
+      "item": "Neurons",
+      "qty": 4,
+      "serial_source": "Neuron",
+      "serial_header": "Neuron S/N"
+    },
+    {
+      "item": "Cybernets",
+      "qty": 4,
+      "serial_source": "Cybernet",
+      "serial_header": "Cybernet Serial"
+    }
+  ]
+}
