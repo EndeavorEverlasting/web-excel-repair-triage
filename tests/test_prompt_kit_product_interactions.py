@@ -73,6 +73,30 @@ class PromptKitProductInteractionTests(unittest.TestCase):
         self.assertLess(divider_region.index("page-jump-top"), divider_region.index("sd-label"))
         self.assertGreater(divider_region.index("page-jump-bottom"), divider_region.index("sd-label"))
 
+    def test_category_dividers_are_accessible_expand_collapse_controls(self) -> None:
+        js = JS.read_text(encoding="utf-8")
+        for marker in (
+            "var collapsedSections={};",
+            "function isSectionCollapsed(name)",
+            "function togglePromptSection(name)",
+            'class="sd-label section-toggle"',
+            'data-collapse-section="',
+            'aria-expanded="',
+            "section-chevron",
+            "togglePromptSection(collapse.getAttribute('data-collapse-section'))",
+        ):
+            self.assertIn(marker, js)
+        self.assertIn(
+            "if(!isSectionCollapsed(group.name)){group.prompts.forEach(function(p){appendPromptCard(grid,p)})}",
+            js,
+        )
+
+    def test_collapse_state_survives_rerenders_and_home_reset_expands_all(self) -> None:
+        js = JS.read_text(encoding="utf-8")
+        self.assertIn("if(isSectionCollapsed(name)){delete collapsedSections[name]}else{collapsedSections[name]=true}render()", js)
+        self.assertIn("activeCat='all';activeSection=null;activeType=null;activeColor=null;collapsedSections={};", js)
+        self.assertNotIn("collapsedSections={};var groups=groupPromptsBySection", js)
+
     def test_page_targets_are_stable_unique_runtime_anchors(self) -> None:
         js = JS.read_text(encoding="utf-8")
         self.assertIn("if(!document.getElementById('page-top'))", js)
@@ -117,6 +141,8 @@ class PromptKitProductInteractionTests(unittest.TestCase):
             'href="#page-top"',
             'href="#page-bottom"',
             "promptDetailOverlay').addEventListener('click'",
+            "section-toggle",
+            "collapsedSections",
         ):
             self.assertIn(marker, deployed)
 

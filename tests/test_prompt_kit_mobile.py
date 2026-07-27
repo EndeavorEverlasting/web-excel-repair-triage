@@ -57,6 +57,7 @@ class PromptKitMobileTests(unittest.TestCase):
             "logo.setAttribute('role','button')",
             "function resetPromptKitView()",
             "activeCat='all';activeSection=null;activeType=null;activeColor=null",
+            "collapsedSections={}",
             "search.value=''",
             "renderSections();renderTypes();render();",
             "homeReset.addEventListener('click',resetPromptKitView)",
@@ -74,6 +75,16 @@ class PromptKitMobileTests(unittest.TestCase):
         self.assertIn("@media (hover:none), (pointer:coarse)", js)
         self.assertIn(
             ".prompt-open-btn,.prompt-copy-btn{opacity:1;min-width:64px;min-height:40px;padding:8px 12px;touch-action:manipulation}",
+            js,
+        )
+
+    def test_category_collapse_control_is_touch_sized_and_native(self) -> None:
+        js = JS.read_text(encoding="utf-8")
+        self.assertIn('class="sd-label section-toggle"', js)
+        self.assertIn('type="button"', js)
+        self.assertIn('aria-expanded="', js)
+        self.assertIn(
+            ".section-divider .section-toggle{min-height:40px;touch-action:manipulation}",
             js,
         )
 
@@ -139,6 +150,7 @@ class PromptKitMobileTests(unittest.TestCase):
         self.assertIn("Acquire-Latest-PromptKit.cmd", readme)
         self.assertIn("mobile", (access + readme).lower())
         self.assertIn("reset", (access + readme).lower())
+        self.assertIn("collapsible", readme.lower())
 
 
 if __name__ == "__main__":
