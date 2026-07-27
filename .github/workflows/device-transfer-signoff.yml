@@ -46,7 +46,7 @@ jobs:
       - name: Focused sign-off tests
         run: python -m unittest tests.test_device_transfer_signoff -v
       - name: Generate sanitized proof artifact
-        run: python scripts/build_device_transfer_signoff_example.py --out-dir Outputs/device_transfer_signoff_example --serial-count 25
+        run: python -m scripts.build_device_transfer_signoff_example --out-dir Outputs/device_transfer_signoff_example --serial-count 25
       - name: Validate generated proof artifact
         run: >-
           python -m triage.device_transfer_signoff_validator
