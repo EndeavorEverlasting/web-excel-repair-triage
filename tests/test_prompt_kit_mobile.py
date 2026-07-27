@@ -119,7 +119,7 @@ class PromptKitMobileTests(unittest.TestCase):
             "[Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)",
             "OneDriveCommercial",
             "OneDriveConsumer",
-            "OG Laptop Backup\Desktop\dev",
+            "OG Laptop Backup\\Desktop\\dev",
             "Get-ExistingPromptKitRepositories",
             "Normalize-RepositoryUrl $origin",
             "Preserving candidate and continuing:",
