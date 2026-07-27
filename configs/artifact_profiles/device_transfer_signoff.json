@@ -1,0 +1,28 @@
+{
+  "profile": "device_transfer_signoff",
+  "required_sheets": [
+    "Sign-Off"
+  ],
+  "required_headers": [
+    "Item Sent",
+    "Qty",
+    "Verification / Notes"
+  ],
+  "required_semantic_cells": [
+    {
+      "sheet": "Sign-Off",
+      "cell": "A1",
+      "check": "equals",
+      "equals": "Device Transfer / Stock Sign-Off"
+    }
+  ],
+  "required_nonblank_columns": [],
+  "forbidden_values": [
+    "%20",
+    "web excel-safe",
+    "webexcel-safe"
+  ],
+  "compare_totals": false,
+  "fail_on_canonical_mismatch": false,
+  "submission_safe": true
+}
