@@ -176,7 +176,7 @@ function Update-RepositorySafely {
 
 function Add-UniquePath {
     param(
-        [Parameter(Mandatory)][System.Collections.Generic.List[string]]$Paths,
+        [Parameter(Mandatory)][AllowEmptyCollection()][System.Collections.Generic.List[string]]$Paths,
         [string]$Path
     )
     if ([string]::IsNullOrWhiteSpace($Path)) {
