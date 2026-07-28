@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import shutil
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -10,6 +12,7 @@ CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-mobile.v1.json"
 QUICK_CMD = ROOT / "Open-Latest-PromptKit.cmd"
 ACQUIRE_CMD = ROOT / "Acquire-Latest-PromptKit.cmd"
 ACQUIRE_PS1 = ROOT / "scripts" / "Acquire-LatestPromptKit.ps1"
+ACQUIRE_QUICK_PS1 = ROOT / "scripts" / "Acquire-LatestPromptKitQuick.ps1"
 ACCESS = ROOT / "PROMPT_KIT_ACCESS.md"
 WEB_README = ROOT / "web" / "README.md"
 
@@ -111,7 +114,59 @@ class PromptKitMobileTests(unittest.TestCase):
         self.assertIn('call "%BOOTSTRAP%" -Quick', quick)
         self.assertIn("exit /b %EXIT_CODE%", quick)
         self.assertIn('-File "%SCRIPT%" %*', acquire)
+        self.assertIn("Acquire-LatestPromptKitQuick.ps1", acquire)
+        self.assertIn(
+            "/main/scripts/Acquire-LatestPromptKitQuick.ps1",
+            acquire,
+        )
         self.assertIn("/main/scripts/Acquire-LatestPromptKit.ps1", acquire)
+
+    def test_quick_acquisition_treats_native_exit_code_as_authority(self) -> None:
+        ps1 = ACQUIRE_QUICK_PS1.read_text(encoding="utf-8")
+        for marker in (
+            "function Invoke-NativeCommandSafely",
+            "$previousErrorActionPreference = $ErrorActionPreference",
+            "$ErrorActionPreference = 'Continue'",
+            "$output = & $FilePath @Arguments 2>&1",
+            "$exitCode = $LASTEXITCODE",
+            "if ($exitCode -ne 0)",
+            "Git writes normal progress",
+            "'clone'",
+            "'merge', '--ff-only'",
+            "Nothing was reset or deleted",
+        ):
+            self.assertIn(marker, ps1)
+        for forbidden in (
+            "git clean",
+            "reset --hard",
+            "Remove-Item -Recurse",
+            "rm -rf",
+        ):
+            self.assertNotIn(forbidden, ps1)
+
+    def test_quick_acquisition_script_parses_when_powershell_is_available(self) -> None:
+        powershell = shutil.which("pwsh") or shutil.which("powershell")
+        if powershell is None:
+            self.skipTest("PowerShell is unavailable for syntax validation")
+
+        escaped = str(ACQUIRE_QUICK_PS1).replace("'", "''")
+        completed = subprocess.run(
+            [
+                powershell,
+                "-NoLogo",
+                "-NoProfile",
+                "-Command",
+                f"$null = [scriptblock]::Create((Get-Content -Raw -LiteralPath '{escaped}'))",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(
+            completed.returncode,
+            0,
+            msg=completed.stdout + completed.stderr,
+        )
 
     def test_quick_acquisition_resolves_desktop_onedrive_and_backup_roots(self) -> None:
         ps1 = ACQUIRE_PS1.read_text(encoding="utf-8")
@@ -131,7 +186,14 @@ class PromptKitMobileTests(unittest.TestCase):
     def test_universal_paths_do_not_embed_person_specific_usernames(self) -> None:
         combined = "\n".join(
             path.read_text(encoding="utf-8")
-            for path in (QUICK_CMD, ACQUIRE_CMD, ACQUIRE_PS1, ACCESS, WEB_README)
+            for path in (
+                QUICK_CMD,
+                ACQUIRE_CMD,
+                ACQUIRE_PS1,
+                ACQUIRE_QUICK_PS1,
+                ACCESS,
+                WEB_README,
+            )
         ).lower()
         for forbidden in (
             r"c:\users\cheex",
