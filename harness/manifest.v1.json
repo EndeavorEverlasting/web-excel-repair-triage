@@ -30,6 +30,14 @@
       "workflow": "WORKFLOW.md#b-prompt-registry-or-website-change",
       "harness_gate": "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
       "strict_product_gate": "python scripts/validate_prompt_kit_interactions.py --require-implementation --output Outputs/prompt-kit-interaction-audit.json --summary"
+    },
+    "prompt_kit_discovery": {
+      "contract": "harness/contracts/prompt-kit-discovery.v1.json",
+      "validator": "scripts/validate_prompt_kit_discovery.py",
+      "contract_tests": "tests/test_prompt_kit_discovery.py",
+      "workflow": "WORKFLOW.md#b-prompt-registry-or-website-change",
+      "harness_gate": "python scripts/validate_prompt_kit_discovery.py --summary",
+      "strict_product_gate": "python -m unittest tests.test_prompt_kit_discovery -v"
     }
   },
   "skills": [
@@ -64,6 +72,8 @@
     "python -m unittest tests.test_harness_contract -v",
     "python -m unittest tests.test_prompt_kit_interactions_contract -v",
     "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
+    "python scripts/validate_prompt_kit_discovery.py --summary",
+    "python -m unittest tests.test_prompt_kit_discovery -v",
     "python -m unittest tests.test_prompt_language_audit -v",
     "python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary",
     "python -m unittest tests.test_skill_prompt_registry -v",
