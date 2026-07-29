@@ -61,6 +61,7 @@ var SECTIONS=[
  {name:'Build & Repair',types:['BUILD','REPAIR'],glow:'#2'},
  {name:'Validate & Protect',types:['VALIDATE'],glow:'#3'}
 ];
+function isFavoritePrompt(id){return false;}
 """ + helpers + r"""
 var prompts=[
  {id:'P10',seq:'10',type:'BUILD'},

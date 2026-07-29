@@ -30,7 +30,7 @@ Activating it by pointer, tap, Enter, or Space restores:
 - closed prompt detail and reference surfaces;
 - the top of the page.
 
-It does not reload the browser or create a second filter state.
+It does not reload the browser or create a second filter state. Saved Favorites are intentionally preserved because they belong to the browser-local user state, not the temporary filter state.
 
 ### Prompt card interaction contract
 
@@ -40,9 +40,10 @@ It does not reload the browser or create a second filter state.
 - **Click outside** an open prompt detail to collapse it and return focus to the originating prompt card without clearing search or filters.
 - **Enter** expands a focused prompt card; **Space** copies it.
 - Explicit **Copy** controls remain available on cards and inside prompt detail.
+- The **star** control saves or removes that prompt from browser-local Favorites without triggering copy/open.
 - **Esc** closes an open prompt detail before falling back to broader filter clearing.
 
-A short click-delay continues to distinguish desktop single-click from double-click. Mobile users never need to rely on double-tap timing because **Open** is explicit. Prompt cards are semantic groups containing explicit Open/Copy buttons rather than button containers with nested buttons.
+A short click-delay continues to distinguish desktop single-click from double-click. Mobile users never need to rely on double-tap timing because **Open** is explicit. Prompt cards are semantic groups containing explicit Favorite/Open/Copy buttons rather than button containers with nested buttons.
 
 ### Category and type filtering
 
@@ -61,6 +62,30 @@ Category behavior is deterministic:
 - Selecting a type may further narrow results; the remaining category heading is still shown.
 - Search, library-view, category, and type filters compose without duplicate category headings.
 
+### Search relevance contract
+
+Search is relevance-ranked rather than a raw full-text dump.
+
+- Prompt ID, prompt name, canonical keywords, `SYNONYMS`, type, and `When To Use` metadata are stronger signals than full prompt-body text.
+- Existing synonym routing remains active. Partial terms may resolve a related canonical synonym key, such as `close` matching `closeout`.
+- Full `copyContent` remains searchable as a low-signal fallback, but copy-body-only matches are suppressed when stronger metadata or synonym matches exist.
+- Within a visible section, stronger search matches sort ahead of weaker matches; numeric prompt sequence remains the tiebreaker.
+- Search still composes with library, category, and type filters.
+
+This specifically prevents common policy words such as `artifact` from making nearly every prompt appear merely because that word exists in shared prompt boilerplate.
+
+### Browser-local Favorites
+
+Favorites are device/browser-local convenience state, not repository data and not a server-side account feature.
+
+- Select the star on any prompt card to save it.
+- Favorites are stored under `promptKit.favoritePromptIds.v1` in browser `localStorage`.
+- Visible favorited prompts are promoted into one **Favorites** section before the normal sections.
+- A favorited prompt appears only once; it is not duplicated again in its original section during that render.
+- Active library/category/type/search filters still apply before Favorites are promoted.
+- Removing the star returns the prompt to its normal section.
+- Clearing browser site data or using another browser/device starts with a separate Favorites state.
+
 ### Collapsible category sections
 
 Every rendered category divider is also an independent expand/collapse control, matching the familiar GitHub disclosure pattern.
@@ -71,6 +96,7 @@ Every rendered category divider is also an independent expand/collapse control, 
 - Collapse state survives search, library, category, and type rerenders during the current page session.
 - The prompt count remains visible while collapsed so the hidden scope is still obvious.
 - The toggle uses a native button with `aria-expanded`, so pointer, touch, Enter, and Space work without custom keyboard logic.
+- Section-toggle foreground color is explicitly defined for the dark surface; browser-default button text color must never leak through.
 - Activating the main title/reset expands every category again.
 
 Implementation ownership stays in `docs/prompt-kit.js`; `web/prompt-kit/index.html` is regenerated output and must not be hand-edited.
@@ -83,7 +109,7 @@ Mobile is a responsive form of the existing Prompt Kit, not a second application
 - Library, category, and type controls keep their existing semantics and become horizontally scrollable touch rails where needed.
 - Prompt cards render in one column.
 - Category expand/collapse remains explicit and touch-sized.
-- **Open** and **Copy** are visible, touch-sized actions on coarse-pointer devices, including wide touch tablets.
+- Favorite, **Open**, and **Copy** actions remain directly reachable on coarse-pointer devices.
 - Prompt detail uses the available mobile viewport and keeps the existing close/copy behavior.
 - The existing reference panel expands to the mobile viewport.
 - Search uses a touch-sized control and avoids mobile browser zoom caused by undersized input text.
@@ -97,7 +123,7 @@ Every visible prompt category divider exposes:
 - **Top** on the left, linked to `#page-top`.
 - **Bottom** on the right, linked to `#page-bottom`.
 
-These remain touch-usable and do not reset library view, category, type, search state, or category collapse state.
+These remain touch-usable and do not reset library view, category, type, search state, Favorites state, or category collapse state.
 
 ### Hotkeys
 
@@ -129,8 +155,10 @@ python tests\test_prompt_kit_header_contract.py
 python -m unittest tests.test_prompt_kit_product_interactions -v
 python -m unittest tests.test_prompt_kit_filtering_access -v
 python -m unittest tests.test_prompt_kit_mobile -v
+python -m unittest tests.test_prompt_kit_discovery -v
 python scripts\validate_prompt_kit_interactions.py --require-implementation --output Outputs\prompt-kit-interaction-audit.json --summary
+python scripts\validate_prompt_kit_discovery.py --summary
 python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
 ```
 
-Repository validation does not substitute for physical phone/tablet touch acceptance or a Windows field run of the quick launcher.
+Repository validation does not substitute for physical phone/tablet touch acceptance, browser storage-policy restrictions, or a Windows field run of the quick launcher.
