@@ -39,7 +39,11 @@ class PromptKitDiscoveryTests(unittest.TestCase):
         start = js.index("function normalizeSearchText")
         end = js.index("function promptSequenceValue")
         helpers = js[start:end]
-        script = "var SYNONYMS={artifact:'P56',closeout:'P12',handoff:'P12'};\n" + helpers + r'''
+        script = (
+            "var SYNONYMS={artifact:'P56',closeout:'P12',handoff:'P12'};\n"
+            "function promptSequenceValue(p){var n=parseInt(String(p.seq||0),10);return isNaN(n)?999999:n}\n"
+            + helpers
+            + r'''
 var prompts=[
  {id:'P56',seq:'56',name:'Context to Artifact Builder',type:'BUILD + ARTIFACT',class:'standard',useWhen:'Generate the actual artifact from supplied context',sprintRole:'implementor',proofGate:'artifact proof',copyContent:'build the file',keywords:['artifact','generate']},
  {id:'P07',seq:'7',name:'Sprint Executor',type:'BUILD',class:'standard',useWhen:'Execute repository work',sprintRole:'implementor',proofGate:'commit proof',copyContent:'report expected artifacts and artifact registry',keywords:['sprint']},
@@ -50,6 +54,7 @@ var artifact=filterPromptsForQuery(prompts,'artifact').map(function(p){return p.
 var close=filterPromptsForQuery(prompts,'close').map(function(p){return p.id});
 process.stdout.write(JSON.stringify({artifact:artifact,close:close}));
 '''
+        )
         completed = subprocess.run(["node", "-e", script], check=True, capture_output=True, text=True)
         result = json.loads(completed.stdout)
         self.assertEqual(result["artifact"][0], "P56")
