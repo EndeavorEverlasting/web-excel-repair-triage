@@ -15,6 +15,8 @@ class PromptKitPagesContractTests(unittest.TestCase):
             "name: Prompt Kit GitHub Pages",
             "branches: [main]",
             "workflow_dispatch:",
+            "fetch-depth: 0",
+            "git diff --check",
             "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
             'python scripts/build_prompt_kit_registry.py --output "$SITE_ROOT/index.html"',
             'cp "$SITE_ROOT/index.html" "$SITE_ROOT/prompt-kit/index.html"',
