@@ -1,12 +1,48 @@
 # Get the Latest Prompt Kit Website
 
-The canonical website is:
+The canonical checked-in website is:
 
 ```text
 web/prompt-kit/index.html
 ```
 
-The release source is the repository's `main` branch. Do not treat an old feature branch, copied HTML file, or preview from an older run as the latest release.
+The canonical public browser URL is:
+
+```text
+https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/
+```
+
+The release source is the repository's `main` branch. GitHub Pages is a deployment surface for that exact release, not a second source of truth. Do not treat an old feature branch, copied HTML file, or preview from an older run as the latest release.
+
+## Phone, tablet, or any browser
+
+After GitHub Pages is enabled for this repository and the `Prompt Kit GitHub Pages` workflow has deployed `main`, open:
+
+```text
+https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/
+```
+
+No repository clone, ZIP extraction, Git client, Python installation, PowerShell, or local web server is required for normal browser use.
+
+To keep the Prompt Kit one tap away:
+
+- iPhone or iPad Safari: open the public URL, use **Share**, choose **Add to Home Screen**, then choose **Add**.
+- Android Chrome: open the public URL, use the browser menu, then choose **Add to Home screen** or **Install app** when that option is offered.
+
+The home-screen shortcut opens the same responsive Prompt Kit used on desktop. It does not create a separate prompt database or bypass the `main` release source.
+
+### One-time repository publishing gate
+
+GitHub Pages must use GitHub Actions as its publishing source:
+
+1. open the repository on GitHub;
+2. choose **Settings**;
+3. under **Code and automation**, choose **Pages**;
+4. under **Build and deployment**, set **Source** to **GitHub Actions**.
+
+After that one-time repository setting is enabled, `.github/workflows/prompt-kit-pages.yml` automatically rebuilds and deploys the canonical Prompt Kit when relevant files land on `main`. Pull requests run the Pages build contract but do not deploy.
+
+The deployment workflow fails closed before publishing if the checked-in release no longer matches `scripts/build_prompt_kit_registry.py`. Its Pages bundle exposes the same generated Prompt Kit at both the project root and `/prompt-kit/`, with `/prompt-kit/` documented as the stable shareable URL.
 
 ## Fastest Windows path — one file, no dialog
 
@@ -25,7 +61,7 @@ The quick launcher uses a deterministic destination derived from the launcher's 
 
 A copy of `Open-Latest-PromptKit.cmd` may live outside the repository. When the tracked bootstrap is not beside it, it downloads the current `Acquire-Latest-PromptKit.cmd` from canonical `main`, which in turn downloads the shared PowerShell implementation when necessary.
 
-This is the recommended normal-user path.
+This remains the recommended normal-user path when a local/offline Windows copy is required.
 
 ## Advanced Windows acquisition GUI
 
@@ -116,12 +152,14 @@ python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html -
 - HTML renderer: `build_prompt_kit.py`
 - Browser behavior and responsive layer: `docs/prompt-kit.js`
 - Checked-in release: `web/prompt-kit/index.html`
+- Public deployment workflow: `.github/workflows/prompt-kit-pages.yml`
+- Public share path: `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`
 - Web usage notes: `web/README.md`
 - Zero-dialog normal-user launcher: `Open-Latest-PromptKit.cmd`
 - Advanced acquisition bootstrap: `Acquire-Latest-PromptKit.cmd`
 - Shared safe acquisition implementation: `scripts/Acquire-LatestPromptKit.ps1`
 
-Generated HTML is not the source of truth. Repair canonical sources, rebuild, validate parity, then commit the generated website.
+Generated HTML is not the source of truth. Repair canonical sources, rebuild, validate parity, then commit the generated website. GitHub Pages must deploy from the same builder output rather than introducing hand-edited web content.
 
 ## Desktop and mobile browsing contract
 
@@ -139,4 +177,4 @@ The desktop and mobile layouts use the same prompts, filters, renderers, and act
 - Prompt detail and the reference panel use the mobile viewport while retaining the same underlying actions.
 - Every visible prompt category heading retains **Top** on the left and **Bottom** on the right without clearing active filters.
 
-Physical phone/tablet ergonomics, clipboard permission behavior, live filesystem state, and Windows browser launch remain field-acceptance checks after repository validation passes.
+Physical phone/tablet ergonomics, clipboard permission behavior, live GitHub Pages publication, live filesystem state, and Windows browser launch remain field-acceptance checks after repository validation passes.
