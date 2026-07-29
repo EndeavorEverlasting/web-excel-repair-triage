@@ -10,6 +10,7 @@ on:
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/build_prompt_kit_registry.py
       - scripts/validate_prompt_kit_interactions.py
+      - scripts/validate_prompt_kit_discovery.py
       - registry/prompts/skill-development-prompts.v1.json
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
       - docs/prompt-kit.js
@@ -18,6 +19,8 @@ on:
       - harness/contracts/prompt-kit-interactions.v1.json
       - harness/contracts/prompt-kit-filtering.v1.json
       - harness/contracts/prompt-kit-mobile.v1.json
+      - harness/contracts/prompt-kit-discovery.v1.json
+      - harness/manifest.v1.json
       - web/prompt-kit/index.html
       - web/README.md
       - tests/Test-PromptKitQuickOpenPathResolution.ps1
@@ -25,6 +28,7 @@ on:
       - tests/test_prompt_kit_product_interactions.py
       - tests/test_prompt_kit_filtering_access.py
       - tests/test_prompt_kit_mobile.py
+      - tests/test_prompt_kit_discovery.py
       - tests/test_skill_prompt_registry.py
       - .github/workflows/prompt-kit-web.yml
   push:
@@ -37,6 +41,7 @@ on:
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/build_prompt_kit_registry.py
       - scripts/validate_prompt_kit_interactions.py
+      - scripts/validate_prompt_kit_discovery.py
       - registry/prompts/skill-development-prompts.v1.json
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
       - docs/prompt-kit.js
@@ -45,6 +50,8 @@ on:
       - harness/contracts/prompt-kit-interactions.v1.json
       - harness/contracts/prompt-kit-filtering.v1.json
       - harness/contracts/prompt-kit-mobile.v1.json
+      - harness/contracts/prompt-kit-discovery.v1.json
+      - harness/manifest.v1.json
       - web/prompt-kit/index.html
       - web/README.md
       - tests/Test-PromptKitQuickOpenPathResolution.ps1
@@ -52,6 +59,7 @@ on:
       - tests/test_prompt_kit_product_interactions.py
       - tests/test_prompt_kit_filtering_access.py
       - tests/test_prompt_kit_mobile.py
+      - tests/test_prompt_kit_discovery.py
       - tests/test_skill_prompt_registry.py
       - .github/workflows/prompt-kit-web.yml
 
@@ -74,10 +82,12 @@ jobs:
             build_prompt_kit.py \
             scripts/build_prompt_kit_registry.py \
             scripts/validate_prompt_kit_interactions.py \
+            scripts/validate_prompt_kit_discovery.py \
             tests/test_prompt_kit_header_contract.py \
             tests/test_prompt_kit_product_interactions.py \
             tests/test_prompt_kit_filtering_access.py \
             tests/test_prompt_kit_mobile.py \
+            tests/test_prompt_kit_discovery.py \
             tests/test_skill_prompt_registry.py
       - name: Validate Prompt Kit JavaScript syntax
         run: node --check docs/prompt-kit.js
@@ -105,6 +115,10 @@ jobs:
         run: ./tests/Test-PromptKitQuickOpenPathResolution.ps1
       - name: Validate strict interaction implementation contract
         run: python scripts/validate_prompt_kit_interactions.py --require-implementation --output "$RUNNER_TEMP/prompt-kit-interaction-audit.json" --summary
+      - name: Validate search favorites and readability contract
+        run: |
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_discovery -v
       - name: Build current Prompt Kit preview
         run: |
           mkdir -p "$RUNNER_TEMP/prompt-kit"
