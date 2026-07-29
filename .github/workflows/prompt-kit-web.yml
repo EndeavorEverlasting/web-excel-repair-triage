@@ -64,7 +64,7 @@ on:
       - .github/workflows/prompt-kit-web.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   prompt-kit-web:
@@ -72,7 +72,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -119,21 +119,6 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/prompt-kit"
           python scripts/build_prompt_kit_registry.py --output "$RUNNER_TEMP/prompt-kit/index.html"
-      - name: Commit exact generated Prompt Kit to same-repo PR branch
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        env:
-          HEAD_REF: ${{ github.head_ref }}
-        run: |
-          cp "$RUNNER_TEMP/prompt-kit/index.html" web/prompt-kit/index.html
-          if git diff --quiet -- web/prompt-kit/index.html; then
-            echo "Generated Prompt Kit already matches the checked-in release."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add web/prompt-kit/index.html
-          git commit -m "chore(prompt-kit): regenerate discovery website"
-          git push origin "HEAD:${HEAD_REF}"
       - name: Upload current Prompt Kit preview
         uses: actions/upload-artifact@v4
         with:
