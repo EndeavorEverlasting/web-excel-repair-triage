@@ -115,10 +115,6 @@ jobs:
         run: ./tests/Test-PromptKitQuickOpenPathResolution.ps1
       - name: Validate strict interaction implementation contract
         run: python scripts/validate_prompt_kit_interactions.py --require-implementation --output "$RUNNER_TEMP/prompt-kit-interaction-audit.json" --summary
-      - name: Validate search favorites and readability contract
-        run: |
-          python scripts/validate_prompt_kit_discovery.py --summary
-          python -m unittest tests.test_prompt_kit_discovery -v
       - name: Build current Prompt Kit preview
         run: |
           mkdir -p "$RUNNER_TEMP/prompt-kit"
@@ -129,6 +125,10 @@ jobs:
           name: prompt-kit-current-preview
           path: ${{ runner.temp }}/prompt-kit/index.html
           if-no-files-found: error
+      - name: Validate search favorites and readability contract
+        run: |
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_discovery -v
       - name: Validate Prompt Kit product interactions
         run: python -m unittest tests.test_prompt_kit_product_interactions -v
       - name: Validate Prompt Kit category and type filtering
