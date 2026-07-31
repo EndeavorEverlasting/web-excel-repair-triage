@@ -91,7 +91,7 @@ Other Neuron-scoped rows on the same date remain standard support unless separat
 
 Generic percentage distributions are a fallback for thin context. They must not override stronger dated evidence.
 
-When workstation/device evidence establishes a bounded Configuration workload for an attendance window, use the evidence-bounded contract in:
+When workstation/device evidence establishes a bounded Configuration workload for a historical labor window, use the evidence-bounded contract in:
 
 ```text
 docs/NTH_EVIDENCE_BOUNDED_ATTRIBUTION.md
@@ -100,16 +100,37 @@ triage/nth_evidence_bounded_allocation.py
 
 Core rules:
 
-1. Attendance remains the labor-hours source of truth and hard ceiling.
-2. Device/workstation counts may establish a Configuration workload envelope, but they do not create attendance hours.
-3. Reserve hours required by stronger dated non-Configuration evidence before assigning the remaining defensible attendance to Configuration.
-4. Configuration may not exceed either the remaining attendance or the workload envelope.
+1. Select the correct historical labor record for the question being answered; do not silently substitute a later reconstruction.
+2. Device/workstation counts may establish a Configuration workload envelope, but they do not create labor hours.
+3. Reserve hours required by stronger dated non-Configuration evidence before assigning the remaining defensible labor to Configuration.
+4. Configuration may not exceed either the remaining selected labor total or the workload envelope.
 5. The resulting maximum is a ceiling, not a quota.
 6. Keep Configuration and Deployment distinct even when both support the same workstation population.
 7. Do not turn target/install counts into same-window completed-device counts without dated device-level proof.
-8. Do not automatically add a failure/rework contingency to NTH; actual rework requires dated evidence within the fixed attendance total.
+8. Do not automatically add a failure/rework contingency; actual rework requires dated evidence within the selected historical labor total.
 
-The canonical arithmetic example is `38 workstations × 2 devices/workstation × 2.0h/device = 152.0h` of full-population direct-Configuration workload capacity. With only `125.0h` of attendance, no reconstruction may exceed `125.0h` total labor, and explicit Deployment/Logistics/support evidence reduces the maximum defensible Configuration allocation further.
+### May 26–29 questioned tracker regression
+
+For the historical tracker/model tied to the approximately 105 Configuration-hour question:
+
+```text
+Historical tracker total: 135.00h
+Configuration:            104.78h
+Inventory Management:      20.65h
+Deployments:                 5.24h
+Logistics:                   4.33h
+```
+
+The corrected workstation scope is:
+
+```text
+38 workstations × 2 devices/workstation × 2.0h/device
+= 152.0h full-population Configuration workload capacity
+```
+
+The three non-Configuration lanes total `30.22h`, leaving `104.78h` of the 135h tracker. Therefore the 152h workload envelope is sufficient to support the old 104.78h Configuration allocation as a capacity-plausible historical model.
+
+Do **not** replace the 135h tracker with the separate later `125.00h / 13 shifts` NTH reconstruction or the separate `147.00 net project hours` June 4 billing-thread record. Preserve those as distinct historical surfaces until an explicit reconciliation selects one for a different purpose.
 
 ## Implementation contract
 
@@ -128,12 +149,13 @@ triage/nth_evidence_bounded_allocation.py
 Generators should:
 
 1. Resolve whether a roster row is in Neuron scope.
-2. Determine whether stronger dated evidence or a private/local day-role override applies.
-3. When stronger bounded workload evidence applies, calculate the attendance/workload ceilings before applying a generic percentage distribution.
-4. Otherwise select the task-hour distribution using `choose_neuron_task_hour_distribution`.
-5. Split hours using `distribute_task_hours` or the bounded allocation result, as appropriate.
-6. Keep rule names, evidence references, workload-envelope inputs, and override flags in an internal audit tab.
-7. Keep the submission tab clean and PM-readable.
+2. Determine which historical labor source governs the requested reconstruction.
+3. Determine whether stronger dated evidence or a private/local day-role override applies.
+4. When stronger bounded workload evidence applies, calculate the labor/workload ceilings before applying a generic percentage distribution.
+5. Otherwise select the task-hour distribution using `choose_neuron_task_hour_distribution`.
+6. Split hours using `distribute_task_hours` or the bounded allocation result, as appropriate.
+7. Keep rule names, evidence references, selected historical authority, workload-envelope inputs, and override flags in an internal audit tab.
+8. Keep the submission tab clean and PM-readable.
 
 ## Non-negotiables
 
@@ -142,6 +164,7 @@ Generators should:
 - Do not turn May support work into deployment by default.
 - Do not fabricate event-level precision where the roster/event log does not contain it.
 - Do not derive labor totals from device/workstation counts.
-- Do not preserve a historical task ratio when stronger evidence supports a different bounded allocation.
+- Do not silently replace one historical hours surface with another.
+- Do not preserve a later historical task ratio when stronger evidence supports a different bounded explanation for the requested artifact.
 - Do use declared distributions when context is thin.
-- Do use attendance-bounded workload attribution when stronger scope evidence exists.
+- Do use evidence-bounded workload attribution when stronger scope evidence exists.
