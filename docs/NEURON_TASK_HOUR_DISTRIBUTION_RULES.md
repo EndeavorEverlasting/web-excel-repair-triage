@@ -87,22 +87,53 @@ Those rows use:
 
 Other Neuron-scoped rows on the same date remain standard support unless separately overridden.
 
+## Stronger-evidence override: bounded workload attribution
+
+Generic percentage distributions are a fallback for thin context. They must not override stronger dated evidence.
+
+When workstation/device evidence establishes a bounded Configuration workload for an attendance window, use the evidence-bounded contract in:
+
+```text
+docs/NTH_EVIDENCE_BOUNDED_ATTRIBUTION.md
+triage/nth_evidence_bounded_allocation.py
+```
+
+Core rules:
+
+1. Attendance remains the labor-hours source of truth and hard ceiling.
+2. Device/workstation counts may establish a Configuration workload envelope, but they do not create attendance hours.
+3. Reserve hours required by stronger dated non-Configuration evidence before assigning the remaining defensible attendance to Configuration.
+4. Configuration may not exceed either the remaining attendance or the workload envelope.
+5. The resulting maximum is a ceiling, not a quota.
+6. Keep Configuration and Deployment distinct even when both support the same workstation population.
+7. Do not turn target/install counts into same-window completed-device counts without dated device-level proof.
+8. Do not automatically add a failure/rework contingency to NTH; actual rework requires dated evidence within the fixed attendance total.
+
+The canonical arithmetic example is `38 workstations × 2 devices/workstation × 2.0h/device = 152.0h` of full-population direct-Configuration workload capacity. With only `125.0h` of attendance, no reconstruction may exceed `125.0h` total labor, and explicit Deployment/Logistics/support evidence reduces the maximum defensible Configuration allocation further.
+
 ## Implementation contract
 
-The shared implementation lives at:
+The shared distribution implementation lives at:
 
 ```text
 triage/neuron_task_hour_distribution_rules.py
 ```
 
+The evidence-bounded calculator lives at:
+
+```text
+triage/nth_evidence_bounded_allocation.py
+```
+
 Generators should:
 
 1. Resolve whether a roster row is in Neuron scope.
-2. Determine whether a private/local day-role override applies.
-3. Select the task-hour distribution using `choose_neuron_task_hour_distribution`.
-4. Split net hours using `distribute_task_hours`.
-5. Keep rule names and override flags in an internal audit tab.
-6. Keep the submission tab clean and PM-readable.
+2. Determine whether stronger dated evidence or a private/local day-role override applies.
+3. When stronger bounded workload evidence applies, calculate the attendance/workload ceilings before applying a generic percentage distribution.
+4. Otherwise select the task-hour distribution using `choose_neuron_task_hour_distribution`.
+5. Split hours using `distribute_task_hours` or the bounded allocation result, as appropriate.
+6. Keep rule names, evidence references, workload-envelope inputs, and override flags in an internal audit tab.
+7. Keep the submission tab clean and PM-readable.
 
 ## Non-negotiables
 
@@ -110,4 +141,7 @@ Generators should:
 - Do not infer technician-specific deployment duty from names in the public repo.
 - Do not turn May support work into deployment by default.
 - Do not fabricate event-level precision where the roster/event log does not contain it.
+- Do not derive labor totals from device/workstation counts.
+- Do not preserve a historical task ratio when stronger evidence supports a different bounded allocation.
 - Do use declared distributions when context is thin.
+- Do use attendance-bounded workload attribution when stronger scope evidence exists.
