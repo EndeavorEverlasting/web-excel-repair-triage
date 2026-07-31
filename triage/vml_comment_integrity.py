@@ -1,18 +1,20 @@
 """Detect legacy-comment VML identity collisions in OOXML workbooks.
 
-Excel legacy comments ("notes") are rendered through VML drawing parts. A
+Excel legacy comments ("notes") are rendered through VML drawing parts.  A
 workbook can be well-formed XML and have every relationship target present,
 while still reusing the same VML shape ids / idmap block in two different note
-drawings. Excel may then repair the workbook and re-index one drawing.
+drawings.  Excel may then repair the workbook and re-index one drawing.
 
-This module is intentionally read-only. It provides a focused gate that can be
-called independently until it is wired into the aggregate gate battery.
+The scanner is read-only.  The optional repair path re-indexes only colliding
+VML drawing identities in a copied workbook and then re-runs the scanner.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import re
+import shutil
+import tempfile
 import zipfile
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
@@ -26,6 +28,10 @@ _SHAPE_ID_RE = re.compile(r'\bid="(_x0000_s(\d+))"')
 _IDMAP_RE = re.compile(r'<(?:\w+:)?idmap\b[^>]*\bdata="([^"]+)"', re.IGNORECASE)
 _REL_RE = re.compile(r'<Relationship\b([^>]*)/?>', re.IGNORECASE)
 _ATTR_RE = re.compile(r'([A-Za-z_:][A-Za-z0-9_.:-]*)="([^"]*)"')
+
+
+class VmlCollisionRepairError(RuntimeError):
+    """Raised when a colliding VML drawing cannot be re-indexed safely."""
 
 
 @dataclass(frozen=True)
@@ -103,11 +109,10 @@ def _relationship_inventory(z: zipfile.ZipFile) -> tuple[set[str], list[dict]]:
     notes: list[dict] = []
     names = set(z.namelist())
 
-    rels_parts = sorted(
+    for rels_path in sorted(
         n for n in names
         if n.startswith("xl/worksheets/_rels/") and n.endswith(".rels")
-    )
-    for rels_path in rels_parts:
+    ):
         xml = _text(z, rels_path)
         for match in _REL_RE.finditer(xml):
             attrs = dict(_ATTR_RE.findall(match.group(1)))
@@ -182,6 +187,131 @@ def _collision_findings(parts: Iterable[VmlPartInventory]) -> list[CollisionFind
     return findings
 
 
+def _next_free_idmap_block(parts: Iterable[VmlPartInventory], reserved: set[str]) -> int:
+    numeric = [int(v) for part in parts for v in part.idmap_data if str(v).isdigit()]
+    candidate = max(numeric, default=0) + 1
+    while str(candidate) in reserved:
+        candidate += 1
+    return candidate
+
+
+def _reindex_vml_xml(xml: str, block: int) -> tuple[str, dict[str, str]]:
+    """Assign one VML drawing to a fresh idmap block and unique shape ids."""
+    idmap_matches = list(_IDMAP_RE.finditer(xml))
+    if len(idmap_matches) != 1:
+        raise VmlCollisionRepairError(
+            f"expected exactly one VML idmap record, found {len(idmap_matches)}"
+        )
+
+    shape_matches = list(_SHAPE_ID_RE.finditer(xml))
+    if not shape_matches:
+        raise VmlCollisionRepairError("colliding VML part has no _x0000_s#### shape ids")
+
+    replacement_map: dict[str, str] = {}
+    next_shape = block * 1024 + 1
+    for match in shape_matches:
+        old = match.group(1)
+        if old not in replacement_map:
+            replacement_map[old] = f"_x0000_s{next_shape}"
+            next_shape += 1
+
+    def replace_shape(match: re.Match[str]) -> str:
+        old = match.group(1)
+        return f'id="{replacement_map[old]}"'
+
+    rewritten = _SHAPE_ID_RE.sub(replace_shape, xml)
+    rewritten = _IDMAP_RE.sub(
+        lambda m: m.group(0).replace(f'data="{m.group(1)}"', f'data="{block}"'),
+        rewritten,
+        count=1,
+    )
+    return rewritten, replacement_map
+
+
+def repair_vml_comment_collisions(source: str | Path, destination: str | Path) -> dict:
+    """Re-index colliding worksheet-linked VML note drawings in a copied workbook.
+
+    The source is never overwritten. Only colliding VML drawing parts are
+    changed. Comment text/cell references and worksheet relationships are left
+    untouched. This is structural repair only; Excel-for-Web acceptance still
+    requires the repo's normal acceptance gates.
+    """
+    source = Path(source)
+    destination = Path(destination)
+    if source.resolve() == destination.resolve():
+        raise ValueError("destination must differ from source")
+
+    pre = scan_vml_comment_integrity(source)
+    if pre.pass_all:
+        shutil.copyfile(source, destination)
+        return {
+            "source": str(source),
+            "destination": str(destination),
+            "reindexed_parts": [],
+            "post_pass": True,
+        }
+
+    # Keep the first owner of each collision stable and re-index later parts.
+    reindex_parts: set[str] = set()
+    for finding in pre.findings:
+        owners = list(finding.parts)
+        if owners:
+            reindex_parts.update(owners[1:])
+
+    if not reindex_parts:
+        raise VmlCollisionRepairError(
+            "collision report did not identify a repairable later VML owner"
+        )
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        prefix=f".{destination.name}.",
+        suffix=".tmp",
+        dir=destination.parent,
+        delete=False,
+    ) as handle:
+        temp_path = Path(handle.name)
+
+    reserved_idmaps = {v for part in pre.vml_parts for v in part.idmap_data}
+    changes: list[dict] = []
+
+    try:
+        with zipfile.ZipFile(source, "r") as zin, zipfile.ZipFile(temp_path, "w") as zout:
+            for info in zin.infolist():
+                data = zin.read(info.filename)
+                if info.filename in reindex_parts:
+                    block = _next_free_idmap_block(pre.vml_parts, reserved_idmaps)
+                    reserved_idmaps.add(str(block))
+                    xml = data.decode("utf-8")
+                    rewritten, shape_map = _reindex_vml_xml(xml, block)
+                    data = rewritten.encode("utf-8")
+                    changes.append({
+                        "part": info.filename,
+                        "new_idmap_data": str(block),
+                        "shape_id_map": shape_map,
+                    })
+                zout.writestr(info, data)
+
+        post = scan_vml_comment_integrity(temp_path)
+        if not post.pass_all:
+            raise VmlCollisionRepairError(
+                "VML repair output still fails integrity checks: "
+                + json.dumps(post.to_dict(), sort_keys=True)
+            )
+        temp_path.replace(destination)
+    except Exception:
+        temp_path.unlink(missing_ok=True)
+        destination.unlink(missing_ok=True)
+        raise
+
+    return {
+        "source": str(source),
+        "destination": str(destination),
+        "reindexed_parts": changes,
+        "post_pass": True,
+    }
+
+
 def scan_vml_comment_integrity(path: str | Path) -> VmlCommentIntegrityReport:
     """Inspect worksheet-linked VML note drawings for package-wide identity collisions."""
     path = str(path)
@@ -209,20 +339,34 @@ def main(argv: list[str] | None = None) -> int:
         description="Check legacy-comment VML drawings for duplicate shape ids / idmap blocks."
     )
     parser.add_argument("workbook", help="Path to .xlsx workbook")
+    parser.add_argument(
+        "--repair-out",
+        help="Write a copy with colliding VML note drawings re-indexed",
+    )
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
     args = parser.parse_args(argv)
 
     report = scan_vml_comment_integrity(args.workbook)
+    payload: dict = {"scan": report.to_dict()}
+    exit_code = 0 if report.pass_all else 1
+    if args.repair_out:
+        payload["repair"] = repair_vml_comment_collisions(args.workbook, args.repair_out)
+        exit_code = 0
+
     if args.json:
-        print(json.dumps(report.to_dict(), indent=2))
+        print(json.dumps(payload, indent=2))
     else:
         state = "PASS" if report.pass_all else "FAIL"
         print(f"{state}: {args.workbook}")
         for item in report.vml_parts:
-            print(f"  {item.part}: idmap={list(item.idmap_data)} shapes={list(item.shape_ids)}")
+            print(
+                f"  {item.part}: idmap={list(item.idmap_data)} shapes={list(item.shape_ids)}"
+            )
         for finding in report.findings:
             print(f"  - {finding.kind}: {finding.value} -> {', '.join(finding.parts)}")
-    return 0 if report.pass_all else 1
+        if "repair" in payload:
+            print(f"  repaired: {payload['repair']['destination']}")
+    return exit_code
 
 
 if __name__ == "__main__":
