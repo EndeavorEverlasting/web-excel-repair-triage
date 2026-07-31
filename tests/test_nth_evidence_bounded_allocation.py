@@ -5,63 +5,60 @@ import pytest
 from triage.nth_evidence_bounded_allocation import EvidenceBoundedAllocation
 
 
-def test_38_workstations_two_devices_two_hours_produces_152_hour_envelope():
+def test_confirmed_workload_envelope_is_bounded_by_historical_labor():
     allocation = EvidenceBoundedAllocation(
-        workstations=38,
+        workstations=4,
         devices_per_workstation=2,
         direct_hours_per_device=2.0,
-        attendance_hours=135.0,
+        attendance_hours=20.0,
     )
 
-    assert allocation.device_count == 76
-    assert allocation.configuration_workload_envelope_hours == 152.0
-    assert allocation.max_defensible_configuration_hours == 135.0
+    assert allocation.device_count == 8
+    assert allocation.configuration_workload_envelope_hours == 16.0
+    assert allocation.max_defensible_configuration_hours == 16.0
 
 
-def test_historical_questioned_week_breakdown_supports_104_78_configuration():
-    non_configuration = 20.65 + 5.24 + 4.33
+def test_non_configuration_hours_are_reserved_before_configuration():
     allocation = EvidenceBoundedAllocation(
-        workstations=38,
+        workstations=4,
         devices_per_workstation=2,
         direct_hours_per_device=2.0,
-        attendance_hours=135.0,
-        explicit_non_configuration_hours=non_configuration,
+        attendance_hours=20.0,
+        explicit_non_configuration_hours=8.0,
     )
 
-    assert allocation.configuration_workload_envelope_hours == 152.0
-    assert allocation.attendance_remaining_after_explicit_non_configuration == pytest.approx(104.78)
-    assert allocation.max_defensible_configuration_hours == pytest.approx(104.78)
+    assert allocation.attendance_remaining_after_explicit_non_configuration == 12.0
+    assert allocation.max_defensible_configuration_hours == 12.0
 
 
-def test_workload_envelope_can_be_tighter_than_attendance():
+def test_workload_envelope_can_be_tighter_than_labor():
     allocation = EvidenceBoundedAllocation(
-        workstations=10,
-        devices_per_workstation=2,
-        direct_hours_per_device=2.0,
-        attendance_hours=80.0,
-        explicit_non_configuration_hours=10.0,
+        workstations=2,
+        devices_per_workstation=1,
+        direct_hours_per_device=1.5,
+        attendance_hours=10.0,
+        explicit_non_configuration_hours=1.0,
     )
 
-    assert allocation.configuration_workload_envelope_hours == 40.0
-    assert allocation.attendance_remaining_after_explicit_non_configuration == 70.0
-    assert allocation.max_defensible_configuration_hours == 40.0
+    assert allocation.configuration_workload_envelope_hours == 3.0
+    assert allocation.attendance_remaining_after_explicit_non_configuration == 9.0
+    assert allocation.max_defensible_configuration_hours == 3.0
 
 
-def test_audit_record_keeps_scope_and_historical_tracker_total_distinct():
+def test_audit_record_keeps_workload_and_labor_distinct():
     allocation = EvidenceBoundedAllocation(
-        workstations=38,
-        devices_per_workstation=2,
-        direct_hours_per_device=2.0,
-        attendance_hours=135.0,
-        explicit_non_configuration_hours=30.22,
+        workstations=3,
+        devices_per_workstation=1,
+        direct_hours_per_device=1.5,
+        attendance_hours=8.0,
+        explicit_non_configuration_hours=2.0,
     )
 
     audit = allocation.audit_record()
-
-    assert audit["device_count"] == 76
-    assert audit["configuration_workload_envelope_hours"] == 152.0
-    assert audit["attendance_hours"] == 135.0
-    assert audit["max_defensible_configuration_hours"] == pytest.approx(104.78)
+    assert audit["device_count"] == 3
+    assert audit["configuration_workload_envelope_hours"] == 4.5
+    assert audit["attendance_hours"] == 8.0
+    assert audit["max_defensible_configuration_hours"] == 4.5
 
 
 @pytest.mark.parametrize(
@@ -77,10 +74,10 @@ def test_audit_record_keeps_scope_and_historical_tracker_total_distinct():
 )
 def test_invalid_allocation_inputs_fail_closed(kwargs):
     values = {
-        "workstations": 38,
-        "devices_per_workstation": 2,
-        "direct_hours_per_device": 2.0,
-        "attendance_hours": 135.0,
+        "workstations": 3,
+        "devices_per_workstation": 1,
+        "direct_hours_per_device": 1.5,
+        "attendance_hours": 8.0,
         "explicit_non_configuration_hours": 0.0,
     }
     values.update(kwargs)
