@@ -2,26 +2,42 @@
 
 ## Purpose
 
-Neuron Track Hours reconstruction sometimes has a known labor total but incomplete intra-day task labels. In those cases, stronger device/workstation evidence can establish how much task workload plausibly existed without becoming a labor-hours source itself.
+Neuron Track Hours reconstruction sometimes has a known labor total but incomplete intra-day task labels. Stronger operational evidence can bound task attribution, but only when the source actually has authority for the quantity being multiplied.
 
-This contract prevents two opposite errors:
+This contract prevents three errors:
 
-1. under-attributing a task lane because an earlier reconstruction lacked enough scope evidence; and
-2. creating labor hours by multiplying device counts by a planning duration.
+1. creating labor by multiplying target/testing counts by a duration;
+2. treating testing / IDT remaining scope as Configuration population;
+3. preserving a historical Configuration ratio merely because an older tracker labeled it that way.
 
-## Core rule
+## Fail-closed Configuration-count rule
 
-The selected historical labor record is the labor-hours ceiling for the reconstruction being performed.
+Configuration timing may only be multiplied by an independently supported **Configuration count**.
 
-Workload evidence is a task-capacity ceiling.
+The following are **not** Configuration counts unless a separate source explicitly resolves them as such:
 
-A reconstructed Configuration allocation may not exceed either ceiling after stronger dated non-Configuration evidence is reserved.
+- device-testing / IDT remaining counts;
+- target counts;
+- installation counts or installation dates;
+- generic remaining-work counts;
+- deployment status percentages.
+
+The reusable calculator requires callers to declare:
+
+```python
+scope_kind="configuration_count"
+```
+
+Any other scope kind fails closed.
+
+## Selected historical labor remains the labor ceiling
+
+A valid Configuration count can establish a task-capacity envelope. It never creates attendance.
 
 ```text
 configuration workload envelope
-  = workstations
-  × devices per workstation
-  × direct configuration hours per device
+  = confirmed configuration population
+  × direct configuration timing
 
 labor remaining for Configuration
   = selected historical labor total
@@ -32,139 +48,178 @@ maximum defensible Configuration allocation
         labor remaining for Configuration)
 ```
 
-The maximum is a **ceiling, not a target**. Stronger dated evidence can require a lower Configuration allocation.
+The maximum is a **ceiling, not a target**. Stronger dated evidence can require a lower allocation.
 
-## Canonical questioned-week example
+## May 26–29 correction
 
-For the historical May 26–29 tracker/model associated with the questioned approximately 105 Configuration hours:
+The historical tracker/model associated with the approximately 105 Configuration-hour question remains preserved as audit state:
 
 - tracker total: **135.00h**;
-- Configuration: **104.78h**;
+- Configuration label: **104.78h**;
 - Inventory Management: **20.65h**;
 - Deployments: **5.24h**;
-- Logistics: **4.33h**;
-- workstation scope: **38 workstations**;
-- configured devices per workstation: **2** (one Cybernet + one Neuron);
-- direct Configuration planning basis: **2.0h/device**.
+- Logistics: **4.33h**.
 
-The scope calculation is:
+The visible All-Wave / Risk Summary total of **38 remaining** is now classified as **device-testing / IDT remaining scope**.
 
-```text
-38 × 2 = 76 devices
-76 × 2.0h = 152.0h Configuration workload envelope
-```
-
-The historical non-Configuration lanes total:
+Therefore both prior calculations are deprecated:
 
 ```text
-20.65 + 5.24 + 4.33 = 30.22h
+38 × 2h = 76h
 ```
 
-Therefore:
+and
 
 ```text
-135.00h historical tracker total
-- 30.22h historical non-Configuration lanes
-= 104.78h remaining for Configuration
-
-min(152.0h workload envelope, 104.78h remaining labor)
-= 104.78h maximum Configuration
+38 workstations × 2 devices × 2h = 152h
 ```
 
-This is the important relationship for the questioned tracker: the corrected workstation/device scope is large enough to make its old **104.78h Configuration** attribution capacity-plausible.
+The 38 must not be passed to the bounded Configuration helper.
 
-It does **not** prove that the old lane split was a minute-level time study. It shows that the earlier 38-device interpretation was not a valid reason to reject a Configuration allocation near 105 hours.
+## Installation chronology
+
+The Risk Summary separately preserves installation chronology across May, including:
+
+- LIJ Forest Hills — 05/06;
+- Glen Cove — 05/11–05/12 installation / IDT activity;
+- LIJ Valley Stream — 05/13;
+- LIJ — 05/22;
+- NSUH / Schwartz — 05/22;
+- CCMC — **05/26**.
+
+The 05/26 anchor reaches the questioned May 26–29 window and supports the statement that configuration production continued ahead of installation.
+
+Boundary: an installation date is chronology evidence, not an exact Configuration timestamp, configured-device count, or labor-hours source.
+
+## Device-specific Configuration timing
+
+### Neuron
+
+Current normalized allocation:
+
+```text
+1.50 technician-hours / 90 minutes per confirmed Neuron configuration
+```
+
+Technician detailed process estimate:
+
+```text
+56–88 minutes
+```
+
+When a separate rename step applies:
+
+```text
++5–10 minutes
+61–98 minutes total detailed range
+```
+
+The normalized 1.50h value is an allocation standard inside the technician process range, not an SLA.
+
+### Cybernet
+
+Technician detailed process estimate:
+
+```text
+118–156 minutes
+= approximately 1.97–2.60 technician-hours per confirmed Cybernet configuration
+```
+
+Do not collapse this to a new single normalized Cybernet value without a separately approved rule.
+
+### Confirmed Cybernet + Neuron pair
+
+For one independently confirmed paired configuration:
+
+```text
+1.50h Neuron
++ 1.97–2.60h Cybernet
+= 3.47–4.10h direct Configuration
+```
+
+Against a 135h historical labor surface, each confirmed pair represents approximately **2.6%–3.0%** of that total.
+
+Scenario examples for audit only:
+
+| Confirmed paired configurations | Direct Configuration range | Share of 135h |
+| ---: | ---: | ---: |
+| 1 | 3.47–4.10h | 2.6%–3.0% |
+| 2 | 6.93–8.20h | 5.1%–6.1% |
+| 4 | 13.87–16.40h | 10.3%–12.1% |
+| 6 | 20.80–24.60h | 15.4%–18.2% |
+| 8 | 27.73–32.80h | 20.5%–24.3% |
+| 10 | 34.67–41.00h | 25.7%–30.4% |
+
+Do not select a scenario row without a supported count.
 
 ## Multiple historical records must not collapse
 
-The May 26–29 evidence family contains distinct historical hour surfaces. A generator or analyst must not silently substitute one for another:
+The May 26–29 evidence family contains distinct historical hour surfaces:
 
-- **135.00h historical tracker/model** — the record paired with the approximately 105h Configuration question;
-- **125.00h / 13 shifts later NTH reconstruction** — a separate retrospective record;
+- **135.00h historical tracker/model** — record paired with the approximately 105h Configuration question;
+- **125.00h / 13 shifts later NTH reconstruction** — separate retrospective record;
 - **147.00 net project hours June 4 billing-thread record** — another separate historical scope.
 
-The evidence-bounded helper accepts a labor total as an input. The caller is responsible for selecting the correct historical authority for the question being answered and recording that provenance in the audit.
+The helper accepts a selected labor total as an input. The caller is responsible for choosing the correct authority for the requested artifact and recording provenance.
 
-For the specific historical `~105h Configuration` tracker question, use **135.00h**, not 125.00h.
+## Current implementation
 
-## Device count is not completion count
-
-A workstation/device population can prove workload scale without proving every device was configured inside the same labor window.
-
-Do not convert a target/install population into a same-week completed-device count unless dated device-level evidence supports that assertion.
-
-When configuration and installation occur in the same week, some devices may have been:
-
-- configured before the window;
-- configured during staging/handout;
-- configured and then deployed;
-- deployed with later rework;
-- still pending configuration.
-
-Keep `Configurations` and `Deployments` as separate task lanes even when they support the same workstation.
-
-## Rework and contingency
-
-Do not automatically add a historical or operator-reported failure/rework percentage to a labor total or task allocation.
-
-A contingency rate may be retained as planning context, but actual NTH rework belongs in Configuration or Troubleshooting only when the selected historical evidence supports it within the chosen labor control.
-
-## Relationship to percentage distributions
-
-Evidence-bounded attribution takes precedence over generic thin-context percentage distributions when stronger evidence establishes a bounded workload and/or explicit non-Configuration activity.
-
-Generic percentage rules remain useful when context is thin. They must not override stronger dated evidence merely to preserve a later historical ratio.
-
-In particular, a later conservative management allocation must not silently overwrite the historical 135h questioned-week tracker when the task is to explain that tracker.
-
-## Implementation
-
-Reusable helper:
+Reusable module:
 
 ```text
 triage/nth_evidence_bounded_allocation.py
 ```
 
-Primary class:
+### Bounded confirmed-population helper
 
 ```python
 EvidenceBoundedAllocation(
     workstations=...,
     devices_per_workstation=...,
     direct_hours_per_device=...,
-    attendance_hours=...,  # selected historical labor control
+    attendance_hours=...,
+    scope_kind="configuration_count",
     explicit_non_configuration_hours=...,
 )
 ```
 
-The field remains named `attendance_hours` for API compatibility; the audit must state which historical labor source supplied that value.
+The field remains named `attendance_hours` for API compatibility; the audit must state which historical labor source supplied it.
 
-Key outputs:
+### Device-specific timing helper
 
-- `device_count`
-- `configuration_workload_envelope_hours`
-- `attendance_remaining_after_explicit_non_configuration`
-- `max_defensible_configuration_hours`
-- `audit_record()`
+```python
+ConfirmedConfigurationTiming(
+    neuron_count=...,
+    cybernet_count=...,
+)
+```
 
-The helper is deliberately a bounded calculator, not an automatic row classifier or historical-authority selector.
+Outputs include:
 
-## Workbook audit requirement
+- normalized Neuron hours;
+- Cybernet minimum / maximum hours;
+- total direct Configuration minimum / maximum;
+- paired-workstation count;
+- audit record with timing inputs.
 
-When this rule is used to construct a Neuron Track Hours workbook, the internal audit surface should preserve:
+## Packet M workbook audit requirement
+
+The internal audit surface must preserve:
 
 - selected historical labor source and total;
 - competing historical records and why they were not selected;
-- workstation count;
-- devices per workstation;
-- direct hours per device planning basis;
-- computed workload envelope;
-- each explicitly reserved non-Configuration amount and evidence reference;
-- resulting maximum defensible Configuration hours;
+- the fact that `38 remaining` is testing/IDT scope;
+- installation chronology as chronology only;
+- confirmed configured-device counts, if recovered;
+- source authority for those counts;
+- Neuron 1.50h normalized allocation;
+- Neuron 56–88 min detailed range and optional 5–10 min rename;
+- Cybernet 118–156 min range;
+- direct Configuration range from confirmed counts;
 - actual chosen Configuration allocation;
-- explanation when actual allocation is below the maximum.
+- explanation when a scenario is shown because the count remains open.
 
-The client/management-facing sheet should show the resulting clean task allocation, not internal allocation mechanics unless specifically requested.
+The management-facing sheet should show the resulting clean allocation without internal mechanics unless specifically requested.
 
 ## Validation
 
@@ -172,4 +227,10 @@ The client/management-facing sheet should show the resulting clean task allocati
 python -m pytest tests/test_nth_evidence_bounded_allocation.py -q
 ```
 
-The tests enforce the corrected historical example: 38 workstations / 76 devices / 152h workload envelope, 135h tracker total, 30.22h non-Configuration, and 104.78h remaining Configuration capacity.
+Regression requirements:
+
+- testing/IDT counts fail closed as Configuration multipliers;
+- installation counts fail closed as Configuration multipliers;
+- one confirmed Cybernet+Neuron pair yields approximately 3.47–4.10h;
+- two confirmed pairs yield approximately 6.93–8.20h;
+- the former 38/76/152 regression is absent from active tests.
