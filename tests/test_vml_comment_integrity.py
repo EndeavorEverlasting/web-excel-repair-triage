@@ -3,7 +3,7 @@ from __future__ import annotations
 import zipfile
 from pathlib import Path
 
-from triage.vml_comment_integrity import scan_vml_comment_integrity
+from triage.vml_comment_integrity import repair_vml_comment_collisions, scan_vml_comment_integrity
 
 
 VML_REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/vmlDrawing"
@@ -96,3 +96,19 @@ def test_absolute_relationship_targets_are_resolved_for_inventory(tmp_path: Path
     assert vml_note["absolute_target"] is True
     assert vml_note["resolved"] == "xl/drawings/commentsDrawing1.vml"
     assert vml_note["exists"] is True
+
+
+def test_bounded_repair_reindexes_later_colliding_vml_part(tmp_path: Path) -> None:
+    candidate = tmp_path / "candidate.xlsx"
+    repaired = tmp_path / "repaired.xlsx"
+    _make_xlsx(candidate, collision=True)
+
+    result = repair_vml_comment_collisions(candidate, repaired)
+    post = scan_vml_comment_integrity(repaired)
+
+    assert result["post_pass"] is True
+    assert len(result["reindexed_parts"]) == 1
+    assert post.pass_all
+    assert post.vml_parts[0].shape_ids == ("_x0000_s1026", "_x0000_s1027", "_x0000_s1028")
+    assert post.vml_parts[1].shape_ids[0] != "_x0000_s1026"
+    assert post.vml_parts[1].idmap_data != ("1",)

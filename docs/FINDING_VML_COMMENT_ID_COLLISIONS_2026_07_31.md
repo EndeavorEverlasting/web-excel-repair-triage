@@ -1,7 +1,7 @@
 # Finding: legacy-comment VML identity collisions can trigger Excel repair
 
 Date: 2026-07-31  
-Status: confirmed from candidate/repaired workbook pair; detector added  
+Status: confirmed from candidate/repaired workbook pair; detector + bounded repair added  
 Scope: Excel legacy comments/notes stored as worksheet-linked VML drawings
 
 ## Executive finding
@@ -57,6 +57,28 @@ python -m triage.vml_comment_integrity path/to/workbook.xlsx --json
 
 Exit code is `0` on pass and `1` when collisions are found.
 
+## Bounded repair
+
+The module can now repair this specific identity collision in a copied workbook:
+
+```bash
+python -m triage.vml_comment_integrity candidate.xlsx \
+  --repair-out output.xlsx \
+  --json
+```
+
+`repair_vml_comment_collisions()` keeps the first owner of each collision stable and re-indexes later colliding worksheet-linked VML drawings into a fresh idmap block with new package-unique `_x0000_s####` ids.
+
+The repair is intentionally narrow:
+
+- the source workbook is never overwritten;
+- comment text and cell references are untouched;
+- worksheet relationship parts are untouched;
+- only the colliding VML drawing XML is rewritten;
+- the output is rescanned before it is accepted.
+
+This repair does **not** claim Excel-for-Web acceptance by itself. Package gates, semantic-preservation checks, and operator acceptance remain separate gates.
+
 ## Repair guidance
 
 Do **not** "fix" this by deleting notes. Preserve note text and cell references.
@@ -67,14 +89,10 @@ For a generated workbook with multiple legacy-comment VML drawings:
 2. renumber `_x0000_s####` ids so they do not collide package-wide;
 3. keep each worksheet's `legacyDrawing` relationship paired with the correct VML drawing;
 4. preserve the comments part and note cell references;
-5. re-run package gates, this VML identity gate, and then Excel-for-Web/operator acceptance.
+5. re-run package gates, this VML identity gate, semantic-preservation checks, and then Excel-for-Web/operator acceptance.
 
 The Excel-repaired field copy also canonicalized comments/VML part names and relationship targets. Treat that path rewrite as **corroborating normalization**, not yet as the proven root cause: the package-wide identity collision has the clearer before/after causal signal.
 
 ## Privacy / fixture policy
 
-The real operational workbook is **not** committed. The regression test synthesizes a tiny OOXML ZIP containing only the relationship/VML identity pattern needed to prove the gate.
-
-## Follow-up integration
-
-Wire this detector into `triage.gate_checks.run_all()` as a stop-ship gate once the aggregate report schema can be extended without disrupting current consumers. Until then, the module is deliberately independent and executable so the finding is immediately reusable.
+The real operational workbook is **not** committed. The regression test synthesizes a tiny OOXML ZIP containing only the relationship/VML identity pattern needed to prove the gate and the bounded re-index repair.
