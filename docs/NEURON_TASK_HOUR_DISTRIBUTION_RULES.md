@@ -2,34 +2,26 @@
 
 ## Purpose
 
-The Active Roster Log proves who worked, when they worked, and whether the work belongs to Neuron scope. It does not always preserve exact intra-day task context.
-
-When event-level context is missing, Neuron Track Hours must use declared task-hour distribution rules instead of pretending the roster knows the exact activity mix.
-
-The goal is repeatable, explainable output without embedding private technician names in the public repo.
+The Active Roster Log proves who worked and when. Exact task attribution must come from task evidence, declared fallback rules, or a bounded configuration-count model.
 
 ## Task lanes
 
-Supported task lanes:
+Supported lanes:
 
-| Lane |
-| --- |
-| Configurations |
-| Deployments |
-| Logistics |
-| Inventory Management |
-| Documentation |
-| Client Coordination |
-| Ticket Forwarding |
-| Troubleshooting / Incident Response |
-| Warehouse Maintenance |
-| Survey |
-
-`Warehouse Maintenance` and `Survey` are allowed as real operational lanes, but they should only be used when explicit evidence or a private/local override identifies them. Otherwise, warehouse maintenance generally falls under Inventory Management or Logistics, and survey work generally falls under Documentation, Inventory Management, or Troubleshooting depending on context.
+- Configurations
+- Deployments
+- Logistics
+- Inventory Management
+- Documentation
+- Client Coordination
+- Ticket Forwarding
+- Troubleshooting / Incident Response
+- Warehouse Maintenance
+- Survey
 
 ## General support distribution
 
-For thin-context Neuron support days, use the operations-approved general distribution:
+For genuinely thin-context Neuron support days only:
 
 | Task lane | Share |
 | --- | ---: |
@@ -40,131 +32,142 @@ For thin-context Neuron support days, use the operations-approved general distri
 | Documentation | 5% |
 | Client Coordination | 5% |
 
-## April rules
+This fallback must yield to stronger dated/configuration evidence.
 
-| Situation | Distribution |
-| --- | --- |
-| Saturday | Deployment plus documentation day: 80% Deployments, 20% Documentation |
-| Sunday | 100% Logistics |
-| Monday / Wednesday non-evening deployment window | Deployment plus documentation day: 80% Deployments, 20% Documentation |
-| Weekday shift starting 2:00 PM or later | Deployment plus documentation day: 80% Deployments, 20% Documentation |
-| Evening hours | 100% Configurations |
-| Other thin-context Neuron support | General support distribution |
+## May evidence precedence
 
-If April rules conflict, evening configuration takes precedence over the broader deployment windows because evening April work was generally configuration-heavy.
+For May, use this order:
 
-## May rules
+1. exact historical labor record for the artifact being reconstructed;
+2. explicit dated non-Configuration evidence;
+3. confirmed configuration counts translated through `triage/nth_configuration_time_model.py`;
+4. install/deployment chronology as continuity evidence only;
+5. generic task percentages only when the above are insufficient.
 
-| Situation | Distribution |
-| --- | --- |
-| Saturday | Configurations + Inventory Management |
-| Sunday | Configurations + Inventory Management |
-| Evening hours | Configurations + Inventory Management |
-| Daytime support | Logistics, Configurations, Client Coordination, Ticket Forwarding, and Inventory Management |
-| Confirmed May deployment field team | 30% Logistics, 50% Deployments, 20% Documentation |
+## Source classifications
 
-May deployment work is sparse. Do not mark broad May work as deployment by default.
+Configuration-authoritative count sources:
 
-For known May deployment days, the public repo stores the rule only. Private workbooks or local config should identify which rows belong to the deployment field team using a role/cohort label such as `may_deployment_field_team`.
+- `configuration_list`
+- `dated_configuration_record`
+- `operator_confirmed_configuration_count`
 
-## May 6 rule
+Forbidden as Configuration multipliers:
 
-May 6, 2026 is a confirmed May deployment day for a limited field team.
+- `device_testing`
+- `idt_testing`
+- `testing_remaining`
+- `install_date_only`
 
-The public repo must not hardcode technician names. The private/local layer should mark the applicable rows with:
+A source may still support chronology/status while being forbidden as a Configuration count.
 
-```text
-may_deployment_field_team
-```
+## May 38 correction
 
-Those rows use:
+The All-Wave `38 remaining` figure is **device-testing / IDT scope**.
 
-| Task lane | Share |
-| --- | ---: |
-| Logistics | 30% |
-| Deployments | 50% |
-| Documentation | 20% |
+Do not:
 
-Other Neuron-scoped rows on the same date remain standard support unless separately overridden.
+- treat it as 38 workstations to configure;
+- double it into 76 configured devices;
+- apply a generic 2h/device rule;
+- use it to defend 152h or 104.78h of Configuration.
 
-## Stronger-evidence override: bounded workload attribution
+The previous `38 workstations × 2 devices × 2h = 152h` example is superseded and must appear only in deprecated/audit history.
 
-Generic percentage distributions are a fallback for thin context. They must not override stronger dated evidence.
+## Device-specific Configuration timing
 
-When workstation/device evidence establishes a bounded Configuration workload for a historical labor window, use the evidence-bounded contract in:
+### Neuron
 
-```text
-docs/NTH_EVIDENCE_BOUNDED_ATTRIBUTION.md
-triage/nth_evidence_bounded_allocation.py
-```
+- normalized allocation: **1.5h / device**;
+- detailed process: **56-88 min**;
+- optional separate rename: **+5-10 min**;
+- detailed range including rename: **61-98 min**.
 
-Core rules:
+### Cybernet
 
-1. Select the correct historical labor record for the question being answered; do not silently substitute a later reconstruction.
-2. Device/workstation counts may establish a Configuration workload envelope, but they do not create labor hours.
-3. Reserve hours required by stronger dated non-Configuration evidence before assigning the remaining defensible labor to Configuration.
-4. Configuration may not exceed either the remaining selected labor total or the workload envelope.
-5. The resulting maximum is a ceiling, not a quota.
-6. Keep Configuration and Deployment distinct even when both support the same workstation population.
-7. Do not turn target/install counts into same-window completed-device counts without dated device-level proof.
-8. Do not automatically add a failure/rework contingency; actual rework requires dated evidence within the selected historical labor total.
+- detailed process: **118-156 min** = approximately **1.97-2.60h**.
 
-### May 26–29 questioned tracker regression
+### Paired workstation
 
-For the historical tracker/model tied to the approximately 105 Configuration-hour question:
+For a **confirmed** Cybernet+Neuron configuration pair:
 
 ```text
-Historical tracker total: 135.00h
-Configuration:            104.78h
-Inventory Management:      20.65h
-Deployments:                 5.24h
-Logistics:                   4.33h
+1.50h + 1.97-2.60h = 3.47-4.10h direct Configuration
 ```
 
-The corrected workstation scope is:
+## Install dates
+
+Install dates may establish that production continued into a period. They do not create configuration counts or exact task timestamps.
+
+For May, a CCMC `05/26` installation anchor supports continuing production inside the questioned window, but the exact Configuration count remains unresolved unless stronger device-level evidence is recovered.
+
+## Historical May 26-29 artifact
+
+The old tracker remains:
 
 ```text
-38 workstations × 2 devices/workstation × 2.0h/device
-= 152.0h full-population Configuration workload capacity
+135.00h total
+104.78h Configuration label
+20.65h Inventory
+5.24h Deployment
+4.33h Logistics
 ```
 
-The three non-Configuration lanes total `30.22h`, leaving `104.78h` of the 135h tracker. Therefore the 152h workload envelope is sufficient to support the old 104.78h Configuration allocation as a capacity-plausible historical model.
+This is historical state, not the new ratio target.
 
-Do **not** replace the 135h tracker with the separate later `125.00h / 13 shifts` NTH reconstruction or the separate `147.00 net project hours` June 4 billing-thread record. Preserve those as distinct historical surfaces until an explicit reconciliation selects one for a different purpose.
+Packet M must lower the Configuration share from the old 77.61% unless supported configuration counts justify otherwise.
+
+Scenario translations for paired configurations against 135h:
+
+| Confirmed pairs | Direct Configuration | Share |
+| ---: | ---: | ---: |
+| 1 | 3.47-4.10h | 2.6%-3.0% |
+| 2 | 6.93-8.20h | 5.1%-6.1% |
+| 4 | 13.87-16.40h | 10.3%-12.1% |
+| 6 | 20.80-24.60h | 15.4%-18.2% |
+| 8 | 27.73-32.80h | 20.5%-24.3% |
+| 10 | 34.67-41.00h | 25.7%-30.4% |
+
+Do not select a scenario row without a confirmed count.
 
 ## Implementation contract
 
-The shared distribution implementation lives at:
+Primary timing/source-classification helper:
+
+```text
+triage/nth_configuration_time_model.py
+```
+
+Outer labor/workload ceiling helper:
+
+```text
+triage/nth_evidence_bounded_allocation.py
+```
+
+Shared fallback distribution implementation:
 
 ```text
 triage/neuron_task_hour_distribution_rules.py
 ```
 
-The evidence-bounded calculator lives at:
-
-```text
-triage/nth_evidence_bounded_allocation.py
-```
-
 Generators should:
 
-1. Resolve whether a roster row is in Neuron scope.
-2. Determine which historical labor source governs the requested reconstruction.
-3. Determine whether stronger dated evidence or a private/local day-role override applies.
-4. When stronger bounded workload evidence applies, calculate the labor/workload ceilings before applying a generic percentage distribution.
-5. Otherwise select the task-hour distribution using `choose_neuron_task_hour_distribution`.
-6. Split hours using `distribute_task_hours` or the bounded allocation result, as appropriate.
-7. Keep rule names, evidence references, selected historical authority, workload-envelope inputs, and override flags in an internal audit tab.
-8. Keep the submission tab clean and PM-readable.
+1. resolve the historical labor source;
+2. classify each evidence source;
+3. reserve explicit non-Configuration work;
+4. reject testing/install-only counts as Configuration multipliers;
+5. translate confirmed Cybernet/Neuron configuration counts using the device-specific timing model;
+6. enforce the outer labor ceiling;
+7. use generic percentages only for unresolved thin-context residuals;
+8. preserve source classification and timing basis in the internal audit;
+9. keep management-facing sheets clean.
 
 ## Non-negotiables
 
-- Do not distribute hours uniformly across all tasks.
-- Do not infer technician-specific deployment duty from names in the public repo.
-- Do not turn May support work into deployment by default.
-- Do not fabricate event-level precision where the roster/event log does not contain it.
-- Do not derive labor totals from device/workstation counts.
-- Do not silently replace one historical hours surface with another.
-- Do not preserve a later historical task ratio when stronger evidence supports a different bounded explanation for the requested artifact.
-- Do use declared distributions when context is thin.
-- Do use evidence-bounded workload attribution when stronger scope evidence exists.
+- Do not convert testing counts into Configuration.
+- Do not equate install date with configuration timestamp.
+- Do not use the old generic 2h/device basis for Neurons.
+- Do not fabricate a single Cybernet normalized value from the 118-156 minute range without a separate approved rule.
+- Do not preserve the historical 77.61% Configuration share merely because it already exists.
+- Do keep Configuration and Deployment separate.
+- Do keep conflicting historical labor records distinct.
