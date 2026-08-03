@@ -1,0 +1,48 @@
+name: delivery-signoff-harness
+
+on:
+  pull_request:
+    paths:
+      - 'harness/delivery-signoff/**'
+      - 'configs/delivery_signoff_layout_v1.json'
+      - 'skills/delivery-signoff-generation/**'
+      - 'capabilities/delivery-signoff-generation.json'
+      - 'triggers/delivery-signoff-generation.json'
+      - 'scripts/validate_delivery_signoff_harness.py'
+      - '.githooks/pre-commit-delivery-signoff'
+      - 'reports/harness/delivery-signoff-state.md'
+      - '.github/workflows/delivery-signoff-harness.yml'
+  push:
+    branches:
+      - main
+      - 'harness/delivery-signoff-*'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate delivery sign-off harness completeness
+        run: |
+          set -o pipefail
+          mkdir -p artifacts/validation
+          python scripts/validate_delivery_signoff_harness.py | tee artifacts/validation/delivery-signoff-harness.txt
+      - name: Compile harness validator
+        run: python -m py_compile scripts/validate_delivery_signoff_harness.py
+      - name: Run existing test suite
+        run: python -m pytest -q
+      - name: Check patch whitespace
+        run: git diff --check HEAD^ HEAD
+      - name: Publish harness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: delivery-signoff-harness-report
+          path: artifacts/validation/delivery-signoff-harness.txt
+          if-no-files-found: error
