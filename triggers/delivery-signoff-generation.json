@@ -1,0 +1,27 @@
+{
+  "schema": "triage-trigger/v1",
+  "id": "delivery-signoff-generation",
+  "when_any": [
+    "request mentions delivery sign-off",
+    "request mentions transfer receipt or acceptance form",
+    "request requires serial-first asset verification",
+    "request requires a Word drawbox or ink-ready signature form"
+  ],
+  "requires": [
+    "validated delivery-signoff-spec/v1 or an evidence-pack task routed to FUN",
+    "site and delivery identity",
+    "equipment quantities",
+    "serialized asset list"
+  ],
+  "route": {
+    "skill": "skills/delivery-signoff-generation/SKILL.md",
+    "capability": "capabilities/delivery-signoff-generation.json",
+    "workflow": "harness/delivery-signoff/WORKFLOWS.md",
+    "validator": "scripts/validate_delivery_signoff_harness.py"
+  },
+  "do_not_route_when": [
+    "the task is only labor-hour reconstruction",
+    "the request is only workbook repair with no sign-off artifact",
+    "required evidence is unresolved and the operator asked for no placeholders"
+  ]
+}
