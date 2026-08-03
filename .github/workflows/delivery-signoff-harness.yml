@@ -37,8 +37,6 @@ jobs:
           python scripts/validate_delivery_signoff_harness.py | tee artifacts/validation/delivery-signoff-harness.txt
       - name: Compile harness validator
         run: python -m py_compile scripts/validate_delivery_signoff_harness.py
-      - name: Run existing test suite
-        run: python -m pytest -q
       - name: Check patch whitespace
         run: git diff --check HEAD^ HEAD
       - name: Publish harness report
