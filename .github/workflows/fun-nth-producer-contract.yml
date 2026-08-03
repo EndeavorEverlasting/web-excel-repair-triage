@@ -66,21 +66,22 @@ jobs:
             --artifact ADMIN_SHARE_NTH_July_2026_MTD_SLEEK.xlsx \
             --drive-file-id 1i-cMvf20h8V4vkv7K0GjnbUQC6cu5Dv9 \
             --drive-folder-id 1UlFWQ-HD9axj9Gyrlb0589rXba_cB683
-      - name: Confirm May remains fail-closed pending summary sync
+      - name: Verify current May public Drive reference
         run: |
           python scripts/verify_fun_nth_document_reference.py \
             --packet-id may-2026-05-26-29 \
             --artifact-type share_ready \
             --artifact ADMIN_SHARE_NTH_May_26-29_2026_SLEEK.xlsx \
             --drive-file-id 1L-IkmhQSgktbHHyM2zpOkcJ0NbLxPchp \
-            --drive-folder-id 1vWbdRwubd-lYP5WsPNPmMdXuDR1sksAO \
-            --allow-nonpass | tee /tmp/may-document-reference.json
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          payload = json.loads(Path('/tmp/may-document-reference.json').read_text())
-          assert payload['status'] == 'FAIL_CLOSED_PENDING_SUMMARY_SYNC'
-          PY
+            --drive-folder-id 1vWbdRwubd-lYP5WsPNPmMdXuDR1sksAO
+      - name: Verify current May internal packet reference
+        run: |
+          python scripts/verify_fun_nth_document_reference.py \
+            --packet-id may-2026-05-26-29 \
+            --artifact-type internal \
+            --artifact May_26_29_2026_Workstream_Math_Packet_INTERNAL_CURRENT.xlsx \
+            --drive-file-id 1hxwFYBEz3Ba1cNKg0bwMrHE6ynkoVzAl \
+            --drive-folder-id 16pOC_Aa3v8Ig4WD9UQ7MXxrCQzR--Qzk
       - name: Build sanitized producer proof bundle
         run: |
           python scripts/build_fun_nth_integration_fixture.py \
