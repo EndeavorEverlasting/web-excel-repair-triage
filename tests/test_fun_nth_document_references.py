@@ -13,8 +13,9 @@ from triage.fun_nth_document_references import (
 
 ROOT = Path(__file__).resolve().parents[1]
 LOCK = ROOT / "contracts/upstream/fun/nth-document-references.lock.json"
-EXPECTED_FUN_COMMIT = "125dcee2b96694dcde316038653a250ad8307e39"
+EXPECTED_FUN_COMMIT = "4fba5c88f248b94a70ce93d4b9a550b8c215e90c"
 MAY_LOGISTICS_EVIDENCE_ID = "MAY-0526-ALEJANDRO-LOGISTICS-TEAMS"
+MAY_LOGISTICS_SHA256 = "7fb6378e9af8a2d545852e960eea4c92d5ebb2ff6e60e60a957f571e693bb62e"
 
 
 class FunNthDocumentReferenceTests(unittest.TestCase):
@@ -83,6 +84,8 @@ class FunNthDocumentReferenceTests(unittest.TestCase):
         self.assertEqual(raw["evidence_id"], MAY_LOGISTICS_EVIDENCE_ID)
         self.assertEqual(raw["visible_time_range"], "18:31/19:40")
         self.assertEqual(raw["attendance_clock_out"], "20:00")
+        self.assertEqual(raw["artifact_sha256"], MAY_LOGISTICS_SHA256)
+        self.assertEqual(raw["artifact_size_bytes"], 114744)
 
     def test_may_drive_registry_resolves(self):
         _, document = resolve_registered_document(
