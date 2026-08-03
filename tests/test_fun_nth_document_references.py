@@ -13,14 +13,21 @@ from triage.fun_nth_document_references import (
 
 ROOT = Path(__file__).resolve().parents[1]
 LOCK = ROOT / "contracts/upstream/fun/nth-document-references.lock.json"
+EXPECTED_FUN_COMMIT = "125dcee2b96694dcde316038653a250ad8307e39"
+MAY_LOGISTICS_EVIDENCE_ID = "MAY-0526-ALEJANDRO-LOGISTICS-TEAMS"
 
 
 class FunNthDocumentReferenceTests(unittest.TestCase):
     def test_lock_is_well_formed_and_drive_ids_are_unique(self):
         lock, documents = load_document_reference_lock(LOCK)
-        self.assertEqual(lock["fun_commit"], "95f344a50a61a661500528bb9ca5cc3736b2c9fa")
-        self.assertEqual(len(documents), 4)
-        self.assertEqual(len({document.drive_file_id for document in documents}), 4)
+        self.assertEqual(lock["fun_commit"], EXPECTED_FUN_COMMIT)
+        self.assertEqual(lock["reference_registry_schema"], "fun-nth-document-reference-registry/v2")
+        self.assertEqual(len(documents), 6)
+        self.assertEqual(len({document.drive_file_id for document in documents}), 6)
+        self.assertEqual(
+            lock["navigation"]["source_evidence_folder_id"],
+            "1gDVO5RuoBHu1w-gPEE55Oy3hhK8MgdHW",
+        )
 
     def test_july_public_sleek_reference_passes(self):
         _, document = resolve_registered_document(
@@ -34,7 +41,7 @@ class FunNthDocumentReferenceTests(unittest.TestCase):
         self.assertEqual(document.validation_status, "PASS")
 
     def test_may_public_sleek_reference_passes(self):
-        _, document = resolve_registered_document(
+        lock, document = resolve_registered_document(
             lock_path=LOCK,
             packet_id="may-2026-05-26-29",
             artifact_type="share_ready",
@@ -44,9 +51,12 @@ class FunNthDocumentReferenceTests(unittest.TestCase):
         )
         self.assertEqual(document.validation_status, "PASS")
         self.assertEqual(document.status, "current")
+        raw = next(item for item in lock["documents"] if item["id"] == document.id)
+        self.assertEqual(raw["evidence_id"], MAY_LOGISTICS_EVIDENCE_ID)
+        self.assertEqual(raw["may_27_boundary_status"], "CURRENT / BOUNDED")
 
     def test_may_internal_packet_passes(self):
-        _, document = resolve_registered_document(
+        lock, document = resolve_registered_document(
             lock_path=LOCK,
             packet_id="may-2026-05-26-29",
             artifact_type="internal",
@@ -55,6 +65,51 @@ class FunNthDocumentReferenceTests(unittest.TestCase):
             drive_folder_id="16pOC_Aa3v8Ig4WD9UQ7MXxrCQzR--Qzk",
         )
         self.assertEqual(document.validation_status, "PASS")
+        raw = next(item for item in lock["documents"] if item["id"] == document.id)
+        self.assertEqual(raw["evidence_matrix_contains"], MAY_LOGISTICS_EVIDENCE_ID)
+
+    def test_may_direct_logistics_source_resolves(self):
+        lock, document = resolve_registered_document(
+            lock_path=LOCK,
+            packet_id="may-2026-05-26-29",
+            artifact_type="source_evidence",
+            artifact_filename="2026-05-26_Alejandro_Tim_Logistics_Text_Message_Evidence.png",
+            drive_file_id="1d_GePGN4HquXgx_WhOVQ7Z4Rx0MSvdxe",
+            drive_folder_id="1gDVO5RuoBHu1w-gPEE55Oy3hhK8MgdHW",
+        )
+        self.assertEqual(document.validation_status, "PASS")
+        self.assertEqual(document.status, "current")
+        raw = next(item for item in lock["documents"] if item["id"] == document.id)
+        self.assertEqual(raw["evidence_id"], MAY_LOGISTICS_EVIDENCE_ID)
+        self.assertEqual(raw["visible_time_range"], "18:31/19:40")
+        self.assertEqual(raw["attendance_clock_out"], "20:00")
+
+    def test_may_drive_registry_resolves(self):
+        _, document = resolve_registered_document(
+            lock_path=LOCK,
+            packet_id="may-2026-05-26-29",
+            artifact_type="evidence_registry",
+            artifact_filename="may-configuration-evidence-20260801_CURRENT.json",
+            drive_file_id="1wZCrcRYArgyjAHHpXeZinNQjnbFUBDhe",
+            drive_folder_id="11WKCjxgz8wNq2ek-ppBmibianZWCFgEy",
+        )
+        self.assertEqual(document.validation_status, "PASS")
+
+    def test_proof_ceiling_preserves_evidence_boundaries(self):
+        lock, _ = load_document_reference_lock(LOCK)
+        proof_ceiling = lock["proof_ceiling"]
+        self.assertIn("19:40", proof_ceiling)
+        self.assertIn("20:00", proof_ceiling)
+        self.assertIn("does not independently prove the exact five-hour split", proof_ceiling)
+        self.assertIn("do not prove a 13-hour Deployment block", proof_ceiling)
+        self.assertEqual(
+            lock["fun_evidence_paths"]["direct_may_26_source"],
+            "registry/may-0526-alejandro-logistics-text-evidence.json",
+        )
+        self.assertEqual(
+            lock["fun_evidence_paths"]["correction_overlay"],
+            "registry/may-evidence-correction-overlay-20260803.json",
+        )
 
     def test_filename_and_packet_mismatches_fail(self):
         with self.assertRaisesRegex(FunNthDocumentReferenceError, "filename"):
