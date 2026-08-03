@@ -1,0 +1,62 @@
+{
+  "schema": "web-excel-fun-nth-document-reference-lock/v1",
+  "canonical_owner": "EndeavorEverlasting/FUN",
+  "consumer_repository": "EndeavorEverlasting/web-excel-repair-triage",
+  "fun_commit": "dc4de367967c0dc168208dff886b611e7eaf8386",
+  "source_path": "registry/nth-document-references-20260803.json",
+  "git_blob_sha": "d2b778b5cc111bdd0380512c4f2408b918d5e319",
+  "reference_registry_schema": "fun-nth-document-reference-registry/v1",
+  "primary_key": "drive_file_id",
+  "documents": [
+    {
+      "id": "nth-may-2026-05-26-29-public-sleek",
+      "packet_id": "may-2026-05-26-29",
+      "artifact_type": "share_ready",
+      "publication_posture": "admin_share",
+      "drive_file_id": "1L-IkmhQSgktbHHyM2zpOkcJ0NbLxPchp",
+      "drive_folder_id": "1vWbdRwubd-lYP5WsPNPmMdXuDR1sksAO",
+      "title": "ADMIN_SHARE_NTH_May_26-29_2026_SLEEK.xlsx",
+      "status": "current_operator_bytes_summary_sync_pending",
+      "validation_status": "FAIL_CLOSED_PENDING_SUMMARY_SYNC"
+    },
+    {
+      "id": "nth-july-2026-mtd-public-sleek",
+      "packet_id": "july-2026",
+      "artifact_type": "share_ready",
+      "publication_posture": "admin_share",
+      "drive_file_id": "1i-cMvf20h8V4vkv7K0GjnbUQC6cu5Dv9",
+      "drive_folder_id": "1UlFWQ-HD9axj9Gyrlb0589rXba_cB683",
+      "title": "ADMIN_SHARE_NTH_July_2026_MTD_SLEEK.xlsx",
+      "status": "current",
+      "validation_status": "PASS"
+    },
+    {
+      "id": "nth-may-2026-05-26-29-math-packet",
+      "packet_id": "may-2026-05-26-29",
+      "artifact_type": "internal",
+      "publication_posture": "internal_only",
+      "drive_file_id": "1hxwFYBEz3Ba1cNKg0bwMrHE6ynkoVzAl",
+      "drive_folder_id": "16pOC_Aa3v8Ig4WD9UQ7MXxrCQzR--Qzk",
+      "title": "May_26_29_2026_Workstream_Math_Packet_INTERNAL_CURRENT.xlsx",
+      "status": "needs_resync_to_current_operator_ledger",
+      "validation_status": "FAIL_CLOSED_PENDING_RESYNC"
+    },
+    {
+      "id": "nth-july-2026-math-packet",
+      "packet_id": "july-2026",
+      "artifact_type": "internal",
+      "publication_posture": "internal_only",
+      "drive_file_id": "1PcAOqWaYI7DG0JLReP5_T1z1Iw1nzImG",
+      "drive_folder_id": "16pOC_Aa3v8Ig4WD9UQ7MXxrCQzR--Qzk",
+      "title": "July_2026_Support_Work_Math_Packet_STANDARDIZED_INTERNAL_CURRENT.xlsx",
+      "status": "current",
+      "validation_status": "PASS"
+    }
+  ],
+  "navigation": {
+    "map_folder_id": "1ltyMPvSC5iGPk4tayLZt1Urf7aDhpvq7",
+    "map_sheet_id": "1qeqUqaMB5C0OdSOAT6Ogqfv8-13Rk5HP2tOQRrfvh6g",
+    "read_me_id": "16kYfp288C0V8A9lBPtTX7QSzp3uOGS8ZZoGQQYIPA5o"
+  },
+  "proof_ceiling": "The lock proves the approved Drive identities and FUN validation posture at the pinned commit. It does not fetch private bytes or upgrade a non-PASS artifact to accepted."
+}
