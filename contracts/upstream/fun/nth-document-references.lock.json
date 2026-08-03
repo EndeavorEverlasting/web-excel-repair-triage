@@ -2,7 +2,7 @@
   "schema": "web-excel-fun-nth-document-reference-lock/v1",
   "canonical_owner": "EndeavorEverlasting/FUN",
   "consumer_repository": "EndeavorEverlasting/web-excel-repair-triage",
-  "fun_commit": "125dcee2b96694dcde316038653a250ad8307e39",
+  "fun_commit": "4fba5c88f248b94a70ce93d4b9a550b8c215e90c",
   "source_path": "registry/nth-document-references-20260803.json",
   "git_blob_sha": "c6cb93a381bab4d5903285dcd5fe5279c2675e36",
   "reference_registry_schema": "fun-nth-document-reference-registry/v2",
@@ -67,7 +67,9 @@
       "validation_status": "PASS",
       "evidence_id": "MAY-0526-ALEJANDRO-LOGISTICS-TEAMS",
       "visible_time_range": "18:31/19:40",
-      "attendance_clock_out": "20:00"
+      "attendance_clock_out": "20:00",
+      "artifact_sha256": "7fb6378e9af8a2d545852e960eea4c92d5ebb2ff6e60e60a957f571e693bb62e",
+      "artifact_size_bytes": 114744
     },
     {
       "id": "nth-may-2026-evidence-registry-drive-copy",
