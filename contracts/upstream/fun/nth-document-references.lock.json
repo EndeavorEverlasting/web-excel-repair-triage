@@ -2,10 +2,10 @@
   "schema": "web-excel-fun-nth-document-reference-lock/v1",
   "canonical_owner": "EndeavorEverlasting/FUN",
   "consumer_repository": "EndeavorEverlasting/web-excel-repair-triage",
-  "fun_commit": "95f344a50a61a661500528bb9ca5cc3736b2c9fa",
+  "fun_commit": "125dcee2b96694dcde316038653a250ad8307e39",
   "source_path": "registry/nth-document-references-20260803.json",
-  "git_blob_sha": "b53078c477b4482800be5225ddf4802e8da13996",
-  "reference_registry_schema": "fun-nth-document-reference-registry/v1",
+  "git_blob_sha": "c6cb93a381bab4d5903285dcd5fe5279c2675e36",
+  "reference_registry_schema": "fun-nth-document-reference-registry/v2",
   "primary_key": "drive_file_id",
   "documents": [
     {
@@ -18,7 +18,8 @@
       "title": "ADMIN_SHARE_NTH_May_26-29_2026_SLEEK.xlsx",
       "status": "current",
       "validation_status": "PASS",
-      "evidence_id": "MAY-0526-ALEJANDRO-LOGISTICS-TEXT"
+      "evidence_id": "MAY-0526-ALEJANDRO-LOGISTICS-TEAMS",
+      "may_27_boundary_status": "CURRENT / BOUNDED"
     },
     {
       "id": "nth-july-2026-mtd-public-sleek",
@@ -41,7 +42,7 @@
       "title": "May_26_29_2026_Workstream_Math_Packet_INTERNAL_CURRENT.xlsx",
       "status": "current",
       "validation_status": "PASS",
-      "evidence_matrix_contains": "MAY-0526-ALEJANDRO-LOGISTICS-TEXT"
+      "evidence_matrix_contains": "MAY-0526-ALEJANDRO-LOGISTICS-TEAMS"
     },
     {
       "id": "nth-july-2026-math-packet",
@@ -53,12 +54,42 @@
       "title": "July_2026_Support_Work_Math_Packet_STANDARDIZED_INTERNAL_CURRENT.xlsx",
       "status": "current",
       "validation_status": "PASS"
+    },
+    {
+      "id": "nth-may-2026-direct-logistics-source",
+      "packet_id": "may-2026-05-26-29",
+      "artifact_type": "source_evidence",
+      "publication_posture": "internal_only",
+      "drive_file_id": "1d_GePGN4HquXgx_WhOVQ7Z4Rx0MSvdxe",
+      "drive_folder_id": "1gDVO5RuoBHu1w-gPEE55Oy3hhK8MgdHW",
+      "title": "2026-05-26_Alejandro_Tim_Logistics_Text_Message_Evidence.png",
+      "status": "current",
+      "validation_status": "PASS",
+      "evidence_id": "MAY-0526-ALEJANDRO-LOGISTICS-TEAMS",
+      "visible_time_range": "18:31/19:40",
+      "attendance_clock_out": "20:00"
+    },
+    {
+      "id": "nth-may-2026-evidence-registry-drive-copy",
+      "packet_id": "may-2026-05-26-29",
+      "artifact_type": "evidence_registry",
+      "publication_posture": "internal_only",
+      "drive_file_id": "1wZCrcRYArgyjAHHpXeZinNQjnbFUBDhe",
+      "drive_folder_id": "11WKCjxgz8wNq2ek-ppBmibianZWCFgEy",
+      "title": "may-configuration-evidence-20260801_CURRENT.json",
+      "status": "current",
+      "validation_status": "PASS"
     }
   ],
   "navigation": {
     "map_folder_id": "1ltyMPvSC5iGPk4tayLZt1Urf7aDhpvq7",
     "map_sheet_id": "1qeqUqaMB5C0OdSOAT6Ogqfv8-13Rk5HP2tOQRrfvh6g",
-    "read_me_id": "16kYfp288C0V8A9lBPtTX7QSzp3uOGS8ZZoGQQYIPA5o"
+    "read_me_id": "16kYfp288C0V8A9lBPtTX7QSzp3uOGS8ZZoGQQYIPA5o",
+    "source_evidence_folder_id": "1gDVO5RuoBHu1w-gPEE55Oy3hhK8MgdHW"
   },
-  "proof_ceiling": "The lock proves approved Drive identities and FUN validation posture at the pinned commit. The May text message proves date and workstream classification, not exact five-hour telemetry by itself."
+  "fun_evidence_paths": {
+    "direct_may_26_source": "registry/may-0526-alejandro-logistics-text-evidence.json",
+    "correction_overlay": "registry/may-evidence-correction-overlay-20260803.json"
+  },
+  "proof_ceiling": "The direct Teams screenshot proves Alejandro's Tim-directed Logistics / Material Movement through at least 19:40 on May 26; attendance proves the 20:00 clock-out. It does not independently prove the exact five-hour split or a full-shift single-task assignment. The May 27 device date and contingency-material record do not prove a 13-hour Deployment block or exact task minutes."
 }
