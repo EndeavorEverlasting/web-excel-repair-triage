@@ -1,0 +1,57 @@
+{
+  "schema": "triage-capability/v1",
+  "id": "delivery-signoff-generation",
+  "name": "Generate serial-first ink-ready delivery sign-off",
+  "mode": "bounded_artifact_generation",
+  "inputs": {
+    "required": [
+      "validated_delivery_signoff_spec",
+      "output_directory"
+    ],
+    "optional": [
+      "active_roster_log",
+      "reference_template",
+      "operator_draw_smoke_test_result"
+    ],
+    "contracts": {
+      "validated_delivery_signoff_spec": "delivery-signoff-spec/v1",
+      "layout": "configs/delivery_signoff_layout_v1.json",
+      "active_roster": "docs/ACTIVE_ROSTER_LOG_MECHANICS.md"
+    }
+  },
+  "outputs": {
+    "required": [
+      "editable_unprotected_docx",
+      "rendered_preview",
+      "artifact_manifest",
+      "validation_log"
+    ],
+    "manifest_fields": [
+      "input_spec_sha256",
+      "docx_sha256",
+      "preview_sha256_or_page_hashes",
+      "page_count",
+      "minimum_font_points",
+      "serial_counts",
+      "equipment_row_count",
+      "document_protection",
+      "required_ink_surfaces",
+      "draw_proof_level",
+      "stale_content_scan",
+      "proof_ceiling"
+    ]
+  },
+  "fail_closed_on": [
+    "unresolved_required_input",
+    "serial_quantity_mismatch",
+    "duplicate_serial",
+    "collapsed_distinct_equipment",
+    "temporary_hostname_as_primary_identity",
+    "more_than_two_pages",
+    "font_below_8_5_points",
+    "clipping_or_truncation",
+    "stale_site_content",
+    "protected_or_flattened_docx"
+  ],
+  "proof_ceiling": "Generation and static validation can prove package/layout contracts. Word pen input and field acceptance require operator evidence."
+}
