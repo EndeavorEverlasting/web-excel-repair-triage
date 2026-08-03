@@ -14,6 +14,9 @@
 - One page is preferred; two pages are the maximum. Body and serial text must remain at least 8.5 pt.
 - The manifest validator distinguishes static draw readiness from a real Word pen smoke test and operator acceptance.
 - CI publishes `delivery-signoff-harness-report`.
+- `delivery-signoff-harness` run `30848794049` completed successfully.
+- Existing `Operational harness contracts` run `30848793262` completed successfully.
+- Existing `Artifact engine tests` run `30848793468` completed successfully.
 
 ## Missing or unproven
 
@@ -21,7 +24,6 @@
 - A production `delivery-signoff-spec/v1` has not yet been consumed by a repository-owned renderer.
 - No DOCX/PDF artifact has yet been produced and validated under the new manifest contract.
 - Word Draw/pen behavior remains an operator-runtime gate.
-- CI status is pending until the branch workflow completes.
 
 ## Next owned action
 
