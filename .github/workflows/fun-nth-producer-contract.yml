@@ -5,9 +5,12 @@ on:
     paths:
       - 'contracts/upstream/fun/**'
       - 'triage/fun_nth_artifact_export.py'
+      - 'triage/fun_nth_document_references.py'
       - 'scripts/export_fun_nth_artifact_manifest.py'
+      - 'scripts/verify_fun_nth_document_reference.py'
       - 'scripts/build_fun_nth_integration_fixture.py'
       - 'tests/test_fun_nth_artifact_export.py'
+      - 'tests/test_fun_nth_document_references.py'
       - '.ai/skills/fun-nth-artifact-export/**'
       - 'harness/integrations/fun-nth-artifact-producer.v1.json'
       - 'docs/FUN_NTH_PRODUCER_CONSUMER_CONTRACT_20260803.md'
@@ -17,9 +20,12 @@ on:
     paths:
       - 'contracts/upstream/fun/**'
       - 'triage/fun_nth_artifact_export.py'
+      - 'triage/fun_nth_document_references.py'
       - 'scripts/export_fun_nth_artifact_manifest.py'
+      - 'scripts/verify_fun_nth_document_reference.py'
       - 'scripts/build_fun_nth_integration_fixture.py'
       - 'tests/test_fun_nth_artifact_export.py'
+      - 'tests/test_fun_nth_document_references.py'
       - '.ai/skills/fun-nth-artifact-export/**'
       - 'harness/integrations/fun-nth-artifact-producer.v1.json'
       - 'docs/FUN_NTH_PRODUCER_CONSUMER_CONTRACT_20260803.md'
@@ -42,11 +48,39 @@ jobs:
         run: |
           python -m py_compile \
             triage/fun_nth_artifact_export.py \
+            triage/fun_nth_document_references.py \
             scripts/export_fun_nth_artifact_manifest.py \
+            scripts/verify_fun_nth_document_reference.py \
             scripts/build_fun_nth_integration_fixture.py \
-            tests/test_fun_nth_artifact_export.py
+            tests/test_fun_nth_artifact_export.py \
+            tests/test_fun_nth_document_references.py
       - name: Run producer contract tests
-        run: python -m unittest tests.test_fun_nth_artifact_export -v
+        run: |
+          python -m unittest tests.test_fun_nth_artifact_export -v
+          python -m unittest tests.test_fun_nth_document_references -v
+      - name: Verify current July Drive reference
+        run: |
+          python scripts/verify_fun_nth_document_reference.py \
+            --packet-id july-2026 \
+            --artifact-type share_ready \
+            --artifact ADMIN_SHARE_NTH_July_2026_MTD_SLEEK.xlsx \
+            --drive-file-id 1i-cMvf20h8V4vkv7K0GjnbUQC6cu5Dv9 \
+            --drive-folder-id 1UlFWQ-HD9axj9Gyrlb0589rXba_cB683
+      - name: Confirm May remains fail-closed pending summary sync
+        run: |
+          python scripts/verify_fun_nth_document_reference.py \
+            --packet-id may-2026-05-26-29 \
+            --artifact-type share_ready \
+            --artifact ADMIN_SHARE_NTH_May_26-29_2026_SLEEK.xlsx \
+            --drive-file-id 1L-IkmhQSgktbHHyM2zpOkcJ0NbLxPchp \
+            --drive-folder-id 1vWbdRwubd-lYP5WsPNPmMdXuDR1sksAO \
+            --allow-nonpass | tee /tmp/may-document-reference.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          payload = json.loads(Path('/tmp/may-document-reference.json').read_text())
+          assert payload['status'] == 'FAIL_CLOSED_PENDING_SUMMARY_SYNC'
+          PY
       - name: Build sanitized producer proof bundle
         run: |
           python scripts/build_fun_nth_integration_fixture.py \
@@ -57,6 +91,7 @@ jobs:
           python -m json.tool Outputs/fun-nth-integration-fixture/artifact-manifest.json > /dev/null
           python -m json.tool Outputs/fun-nth-integration-fixture/producer-receipt.json > /dev/null
           python -m json.tool contracts/upstream/fun/nth-artifact-contract.lock.json > /dev/null
+          python -m json.tool contracts/upstream/fun/nth-document-references.lock.json > /dev/null
           python -m json.tool harness/integrations/fun-nth-artifact-producer.v1.json > /dev/null
       - name: Patch hygiene
         run: git diff --check
