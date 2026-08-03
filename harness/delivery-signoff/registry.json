@@ -1,0 +1,42 @@
+{
+  "schema": "triage-delivery-signoff-harness/v1",
+  "as_of": "2026-08-03",
+  "authority": "artifact_generation_layout_and_validation",
+  "components": {
+    "codebase_map": "harness/delivery-signoff/CODEBASE_MAP.md",
+    "workflows": "harness/delivery-signoff/WORKFLOWS.md",
+    "artifact_registry": "harness/delivery-signoff/ARTIFACT_REGISTRY.md",
+    "layout_config": "configs/delivery_signoff_layout_v1.json",
+    "skill": "skills/delivery-signoff-generation/SKILL.md",
+    "capability": "capabilities/delivery-signoff-generation.json",
+    "trigger": "triggers/delivery-signoff-generation.json",
+    "validator": "scripts/validate_delivery_signoff_harness.py",
+    "hook": ".githooks/pre-commit-delivery-signoff",
+    "ci": ".github/workflows/delivery-signoff-harness.yml",
+    "operator_report": "reports/harness/delivery-signoff-state.md"
+  },
+  "upstream": {
+    "repository": "EndeavorEverlasting/FUN",
+    "spec_schema": "delivery-signoff-spec/v1",
+    "source_authority": "FUN remains authoritative for evidence, provenance, quantities, serial lists, chronology, and unresolved fields."
+  },
+  "roster_resolution": {
+    "contract": "docs/ACTIVE_ROSTER_LOG_MECHANICS.md",
+    "implementation": "triage/admin_billing_summary/reader.py",
+    "precedence": ["approved_override", "worked_project", "assignment", "default"],
+    "boundary": "Roster context does not replace physical delivery counts or serial evidence."
+  },
+  "artifacts": {
+    "docx": "Outputs/delivery-signoff/<site>/<date>/<SITE>_<Hospital>_Delivery_Sign_Off_<date>_SERIAL_FIRST_INK_READY.docx",
+    "preview": "Outputs/delivery-signoff/<site>/<date>/preview/",
+    "manifest": "Outputs/delivery-signoff/<site>/<date>/delivery-signoff-artifact-manifest.json",
+    "validation": "Outputs/delivery-signoff/<site>/<date>/delivery-signoff-validation.txt"
+  },
+  "commands": {
+    "focused": "python scripts/validate_delivery_signoff_harness.py",
+    "manifest": "python scripts/validate_delivery_signoff_harness.py --manifest <artifact-manifest.json>",
+    "tests": "python -m pytest -q",
+    "patch_hygiene": "git diff --check"
+  },
+  "proof_ceiling": "Static harness and manifest validation do not prove Word pen input or operator acceptance."
+}
