@@ -2,9 +2,9 @@
   "schema": "web-excel-fun-nth-document-reference-lock/v1",
   "canonical_owner": "EndeavorEverlasting/FUN",
   "consumer_repository": "EndeavorEverlasting/web-excel-repair-triage",
-  "fun_commit": "dc4de367967c0dc168208dff886b611e7eaf8386",
+  "fun_commit": "95f344a50a61a661500528bb9ca5cc3736b2c9fa",
   "source_path": "registry/nth-document-references-20260803.json",
-  "git_blob_sha": "d2b778b5cc111bdd0380512c4f2408b918d5e319",
+  "git_blob_sha": "b53078c477b4482800be5225ddf4802e8da13996",
   "reference_registry_schema": "fun-nth-document-reference-registry/v1",
   "primary_key": "drive_file_id",
   "documents": [
@@ -16,8 +16,9 @@
       "drive_file_id": "1L-IkmhQSgktbHHyM2zpOkcJ0NbLxPchp",
       "drive_folder_id": "1vWbdRwubd-lYP5WsPNPmMdXuDR1sksAO",
       "title": "ADMIN_SHARE_NTH_May_26-29_2026_SLEEK.xlsx",
-      "status": "current_operator_bytes_summary_sync_pending",
-      "validation_status": "FAIL_CLOSED_PENDING_SUMMARY_SYNC"
+      "status": "current",
+      "validation_status": "PASS",
+      "evidence_id": "MAY-0526-ALEJANDRO-LOGISTICS-TEXT"
     },
     {
       "id": "nth-july-2026-mtd-public-sleek",
@@ -38,8 +39,9 @@
       "drive_file_id": "1hxwFYBEz3Ba1cNKg0bwMrHE6ynkoVzAl",
       "drive_folder_id": "16pOC_Aa3v8Ig4WD9UQ7MXxrCQzR--Qzk",
       "title": "May_26_29_2026_Workstream_Math_Packet_INTERNAL_CURRENT.xlsx",
-      "status": "needs_resync_to_current_operator_ledger",
-      "validation_status": "FAIL_CLOSED_PENDING_RESYNC"
+      "status": "current",
+      "validation_status": "PASS",
+      "evidence_matrix_contains": "MAY-0526-ALEJANDRO-LOGISTICS-TEXT"
     },
     {
       "id": "nth-july-2026-math-packet",
@@ -58,5 +60,5 @@
     "map_sheet_id": "1qeqUqaMB5C0OdSOAT6Ogqfv8-13Rk5HP2tOQRrfvh6g",
     "read_me_id": "16kYfp288C0V8A9lBPtTX7QSzp3uOGS8ZZoGQQYIPA5o"
   },
-  "proof_ceiling": "The lock proves the approved Drive identities and FUN validation posture at the pinned commit. It does not fetch private bytes or upgrade a non-PASS artifact to accepted."
+  "proof_ceiling": "The lock proves approved Drive identities and FUN validation posture at the pinned commit. The May text message proves date and workstream classification, not exact five-hour telemetry by itself."
 }
