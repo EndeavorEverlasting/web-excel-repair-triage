@@ -69,6 +69,13 @@ def _require(relative: str) -> Path:
     return path
 
 
+def _require_phrases(relative: str, phrases: tuple[str, ...]) -> None:
+    text = _require(relative).read_text(encoding="utf-8")
+    for phrase in phrases:
+        if phrase not in text:
+            raise HarnessError(f"{relative} is missing required text: {phrase}")
+
+
 def validate() -> dict[str, Any]:
     for relative in REQUIRED_PATHS:
         _require(relative)
@@ -91,23 +98,27 @@ def validate() -> dict[str, Any]:
     if missing_registry:
         raise HarnessError(f"registry misses components: {missing_registry}")
 
+    _require_phrases(
+        "harness/webexcel-fonts/CODEBASE_MAP.md",
+        ("Aptos", "Carlito", "validate_webexcel_fonts.py", "## Known traps"),
+    )
+    _require_phrases(
+        "harness/webexcel-fonts/WORKFLOWS.md",
+        ("## 1. Pick up a task", "### A. Workbook artifact is ready for delivery", "## 5. Handoff contract"),
+    )
+    _require_phrases(
+        "harness/webexcel-fonts/ARTIFACT_REGISTRY.md",
+        ("WebExcel font validation report", "Outputs/webexcel-font-validation.json", "## Delivery gate"),
+    )
+    _require_phrases(
+        "reports/harness/webexcel-font-compatibility-state.md",
+        ("## Status", "Aptos", "Carlito", "## What remains unproven"),
+    )
+
     skill = _require(".ai/skills/webexcel-font-compatibility/SKILL.md").read_text(encoding="utf-8")
     for section in REQUIRED_SKILL_SECTIONS:
         if section not in skill:
             raise HarnessError(f"font skill is missing {section}")
-
-    required_mentions = {
-        "CODEBASE_MAP.md": ("Aptos", "Carlito", "validate_webexcel_fonts.py"),
-        "WORKFLOW.md": ("WebExcel font compatibility", "validate_webexcel_font_harness.py"),
-        "ARTIFACT_REGISTRY.md": ("WebExcel font validation report", "Outputs/webexcel-font-validation.json"),
-        "SKILLS.md": ("webexcel-font-compatibility", "Aptos"),
-        "harness/reports/CURRENT_STATE.md": ("Aptos", "Carlito"),
-    }
-    for relative, phrases in required_mentions.items():
-        text = _require(relative).read_text(encoding="utf-8")
-        for phrase in phrases:
-            if phrase not in text:
-                raise HarnessError(f"{relative} is missing harness reference: {phrase}")
 
     pre_commit = _require(".githooks/pre-commit").read_text(encoding="utf-8")
     pre_push = _require(".githooks/pre-push").read_text(encoding="utf-8")
@@ -121,7 +132,8 @@ def validate() -> dict[str, Any]:
     for phrase in (
         "validate_webexcel_font_harness.py",
         "tests.test_webexcel_font_compatibility",
-        "validate_webexcel_fonts.py --scan-source",
+        "validate_webexcel_fonts.py",
+        "--scan-source",
         "git diff --check",
     ):
         if phrase not in workflow:
@@ -131,8 +143,17 @@ def validate() -> dict[str, Any]:
     domain = manifest.get("domain_contracts", {}).get("webexcel_font_compatibility")
     if not isinstance(domain, dict):
         raise HarnessError("root harness manifest does not register webexcel_font_compatibility")
-    if domain.get("validator") != "scripts/validate_webexcel_fonts.py":
-        raise HarnessError("root harness manifest font validator drifted")
+    expected_domain = {
+        "policy": "configs/webexcel_fonts_v1.json",
+        "default_font": "Aptos",
+        "validator": "scripts/validate_webexcel_fonts.py",
+        "completeness_validator": "scripts/validate_webexcel_font_harness.py",
+        "registry": "harness/webexcel-fonts/registry.json",
+        "skill": ".ai/skills/webexcel-font-compatibility/SKILL.md",
+    }
+    for key, value in expected_domain.items():
+        if domain.get(key) != value:
+            raise HarnessError(f"root harness manifest font domain drifted: {key}")
 
     return {
         "schema": "webexcel-font-harness-result/v1",
