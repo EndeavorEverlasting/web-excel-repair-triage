@@ -1,0 +1,60 @@
+{
+  "schema": "webexcel-font-policy/v1",
+  "policy_id": "office-webexcel-aptos-default/v1",
+  "scope": "Office workbooks generated or repaired for Excel for Web delivery",
+  "default_font": "Aptos",
+  "allowed_explicit_fonts": [
+    "Aptos",
+    "Aptos Display"
+  ],
+  "forbidden_fonts": [
+    "Carlito"
+  ],
+  "supported_extensions": [
+    ".xlsx",
+    ".xlsm",
+    ".xltx",
+    ".xltm"
+  ],
+  "source_scan": {
+    "roots": [
+      "triage",
+      "scripts",
+      "configs"
+    ],
+    "extensions": [
+      ".py",
+      ".json",
+      ".yaml",
+      ".yml"
+    ],
+    "excluded_paths": [
+      "scripts/validate_webexcel_fonts.py",
+      "scripts/validate_webexcel_font_harness.py",
+      "configs/webexcel_fonts_v1.json"
+    ]
+  },
+  "rules": [
+    {
+      "id": "WEBFONT001",
+      "severity": "error",
+      "description": "Carlito is forbidden on WebExcel-facing workbook and producer surfaces."
+    },
+    {
+      "id": "WEBFONT002",
+      "severity": "error",
+      "description": "The workbook default explicit font must be Aptos."
+    },
+    {
+      "id": "WEBFONT003",
+      "severity": "error",
+      "description": "Every explicit workbook font must be in the approved Aptos family."
+    },
+    {
+      "id": "WEBFONT004",
+      "severity": "error",
+      "description": "A changed workbook producer or configuration source must not introduce a forbidden font token."
+    }
+  ],
+  "proof_ceiling": "Static OOXML and source-token validation only. Excel for Web visual rendering remains operator or browser-runtime proof."
+}
