@@ -1,0 +1,48 @@
+{
+  "schema": "triage-integration-capability/v1",
+  "capability_id": "nth-identity-abstraction-report",
+  "title": "NTH Abstract-Detail Producer Report",
+  "status": "active",
+  "trigger": "nth-workbook-ready-for-share-review",
+  "owner_repo": "EndeavorEverlasting/web-excel-repair-triage",
+  "authority_repo": "EndeavorEverlasting/FUN",
+  "inputs": [
+    {
+      "name": "validation",
+      "schema": "fun-nth-identity-abstraction-result/v1",
+      "required": true
+    },
+    {
+      "name": "policy",
+      "schema": "fun-nth-identity-abstraction-policy/v1",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "json_report",
+      "schema": "triage-nth-abstract-detail-report/v1"
+    },
+    {
+      "name": "markdown_report",
+      "schema": "human-readable abstract-detail producer report"
+    }
+  ],
+  "implementation": {
+    "module": "triage/nth_identity_abstraction_report.py",
+    "cli": "scripts/report_nth_identity_abstraction.py",
+    "tests": "tests/test_nth_identity_abstraction_report.py",
+    "workflow": ".github/workflows/nth-identity-abstraction-report.yml",
+    "skill": ".ai/skills/nth-abstract-detail-delivery/SKILL.md"
+  },
+  "fail_closed_conditions": [
+    "upstream validation is missing, malformed, or not PASS",
+    "policy identifiers do not match",
+    "any identity violation is non-zero",
+    "any special-case-label violation is non-zero",
+    "any package/chart/drawing identity violation is non-zero",
+    "artifact identity fields or required counts are missing",
+    "the report repeats a protected identity token"
+  ],
+  "proof_ceiling": "Producer report proof only. FUN remains authority for artifact-byte identity abstraction, evidence truth, attendance truth, allocation truth, and client acceptance."
+}
