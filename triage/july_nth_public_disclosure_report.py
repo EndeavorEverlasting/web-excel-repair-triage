@@ -108,7 +108,7 @@ def _markdown(report: dict[str, Any]) -> str:
         lines.extend(["## Report errors", ""])
         lines.extend(f"- {error}" for error in report["errors"])
         lines.append("")
-    lines.extend(["## Proof ceiling", "", report["proof_ceiling"], ""])
+    lines.extend(["## Validation boundary", "", report["proof_ceiling"], ""])
     return "\n".join(lines)
 
 
@@ -143,7 +143,7 @@ def build_report(validation: dict[str, Any], policy: dict[str, Any]) -> ReportBu
         "upstream_status": validation.get("status"),
         "proof_ceiling": (
             "Confirms that the FUN July public-disclosure result is complete and passing. "
-            "It does not independently prove workbook math, attendance truth, payroll compliance, or legal conclusions."
+            "It does not independently prove workbook math, attendance truth, compensation compliance, or legal conclusions."
         ),
     }
     markdown = _markdown(report)
