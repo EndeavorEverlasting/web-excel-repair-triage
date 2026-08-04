@@ -11,7 +11,7 @@ The repository now has a dedicated operational harness that treats **Aptos** as 
 - completeness validator: `scripts/validate_webexcel_font_harness.py`;
 - codebase map, workflows, artifact registry, and machine registry under `harness/webexcel-fonts/`;
 - synthesized positive/negative workbook fixtures in `tests/test_webexcel_font_compatibility.py`;
-- root-manifest, docs, hook, workflow, and registry wiring tests in `tests/test_webexcel_font_harness.py`;
+- root-manifest, hook, workflow, and registry wiring tests in `tests/test_webexcel_font_harness.py`;
 - reusable skill: `.ai/skills/webexcel-font-compatibility/SKILL.md`;
 - pre-commit, pre-push, and dedicated CI gates;
 - canonical runtime reports under `Outputs/` or CI artifact storage.
@@ -40,9 +40,20 @@ git diff --check
 ## What is working
 
 - The policy makes the Aptos default and Carlito prohibition explicit.
-- Synthesized OOXML tests prove Aptos acceptance and rejection of Carlito, Calibri, missing/unsupported defaults, source regressions, and macro-enabled containers.
-- The completeness validator requires all requested harness component classes and root integration.
+- Synthesized OOXML tests prove Aptos acceptance and rejection of Carlito, Calibri, unsupported defaults, source regressions, and macro-enabled containers.
+- The completeness validator requires every requested harness component class and root-manifest discovery.
 - Hooks and CI prevent a future agent from relying on prose alone.
+
+## Remote validation
+
+Validated implementation head `9f755c6cb75b2f0c9d8cafab3470d4bd004cb379`:
+
+- `WebExcel Aptos font harness` run `30922224428`: **SUCCESS**
+- `Operational harness contracts` run `30922224575`: **SUCCESS**
+- `Prompt Kit web contracts` run `30922224198`: **SUCCESS**
+- `Artifact engine tests` run `30922224461`: **SUCCESS**
+
+The final commit updates only this tracked operator report with the completed validation evidence; implementation files are unchanged from the validated head.
 
 ## What remains unproven
 
