@@ -13,8 +13,9 @@ from triage.fun_nth_document_references import (
 
 ROOT = Path(__file__).resolve().parents[1]
 LOCK = ROOT / "contracts/upstream/fun/nth-document-references.lock.json"
-EXPECTED_FUN_COMMIT = "4fba5c88f248b94a70ce93d4b9a550b8c215e90c"
+EXPECTED_FUN_COMMIT = "bf5470ab55c127fa9fe4769975357940ae40b82c"
 MAY_LOGISTICS_EVIDENCE_ID = "MAY-0526-ALEJANDRO-LOGISTICS-TEAMS"
+MAY_KHADEJAH_ATTENDANCE_ID = "MAY-0526-0528-KHADEJAH-ATTENDANCE"
 MAY_LOGISTICS_SHA256 = "7fb6378e9af8a2d545852e960eea4c92d5ebb2ff6e60e60a957f571e693bb62e"
 
 
@@ -22,7 +23,7 @@ class FunNthDocumentReferenceTests(unittest.TestCase):
     def test_lock_is_well_formed_and_drive_ids_are_unique(self):
         lock, documents = load_document_reference_lock(LOCK)
         self.assertEqual(lock["fun_commit"], EXPECTED_FUN_COMMIT)
-        self.assertEqual(lock["reference_registry_schema"], "fun-nth-document-reference-registry/v2")
+        self.assertEqual(lock["reference_registry_schema"], "fun-nth-document-reference-registry/v3")
         self.assertEqual(len(documents), 6)
         self.assertEqual(len({document.drive_file_id for document in documents}), 6)
         self.assertEqual(
@@ -55,6 +56,43 @@ class FunNthDocumentReferenceTests(unittest.TestCase):
         raw = next(item for item in lock["documents"] if item["id"] == document.id)
         self.assertEqual(raw["evidence_id"], MAY_LOGISTICS_EVIDENCE_ID)
         self.assertEqual(raw["may_27_boundary_status"], "CURRENT / BOUNDED")
+        self.assertEqual(raw["shift_records"], 12)
+        self.assertEqual(raw["configuration_hours"], 0.0)
+        self.assertEqual(raw["khadejah_attendance_evidence_id"], MAY_KHADEJAH_ATTENDANCE_ID)
+        self.assertEqual(raw["khadejah_nth_hours"], 32.0)
+        self.assertEqual(raw["synthetic_correction_rows"], 0)
+        self.assertEqual(raw["consolidated_multiday_attendance_rows"], 0)
+        self.assertEqual(raw["khadejah_friday_nth_treatment"], "EXCLUDED_PROJECTS_TEAM")
+
+        rows = raw["khadejah_dated_rows"]
+        self.assertEqual(
+            rows,
+            [
+                {
+                    "date": "2026-05-26",
+                    "clock_in": "09:00",
+                    "clock_out": "22:00",
+                    "lunch_hours": 1.0,
+                    "paid_hours": 12.0,
+                },
+                {
+                    "date": "2026-05-27",
+                    "clock_in": "09:00",
+                    "clock_out": "22:00",
+                    "lunch_hours": 1.0,
+                    "paid_hours": 12.0,
+                },
+                {
+                    "date": "2026-05-28",
+                    "clock_in": "09:00",
+                    "clock_out": "18:00",
+                    "lunch_hours": 1.0,
+                    "paid_hours": 8.0,
+                },
+            ],
+        )
+        self.assertEqual(sum(row["paid_hours"] for row in rows), 32.0)
+        self.assertEqual(sum(row["lunch_hours"] for row in rows), 3.0)
 
     def test_may_internal_packet_passes(self):
         lock, document = resolve_registered_document(
@@ -67,7 +105,9 @@ class FunNthDocumentReferenceTests(unittest.TestCase):
         )
         self.assertEqual(document.validation_status, "PASS")
         raw = next(item for item in lock["documents"] if item["id"] == document.id)
-        self.assertEqual(raw["evidence_matrix_contains"], MAY_LOGISTICS_EVIDENCE_ID)
+        self.assertIn(MAY_LOGISTICS_EVIDENCE_ID, raw["evidence_matrix_contains"])
+        self.assertIn(MAY_KHADEJAH_ATTENDANCE_ID, raw["evidence_matrix_contains"])
+        self.assertEqual(raw["khadejah_clock_rows_status"], "CURRENT / LOCKED")
 
     def test_may_direct_logistics_source_resolves(self):
         lock, document = resolve_registered_document(
@@ -88,7 +128,7 @@ class FunNthDocumentReferenceTests(unittest.TestCase):
         self.assertEqual(raw["artifact_size_bytes"], 114744)
 
     def test_may_drive_registry_resolves(self):
-        _, document = resolve_registered_document(
+        lock, document = resolve_registered_document(
             lock_path=LOCK,
             packet_id="may-2026-05-26-29",
             artifact_type="evidence_registry",
@@ -97,6 +137,8 @@ class FunNthDocumentReferenceTests(unittest.TestCase):
             drive_folder_id="11WKCjxgz8wNq2ek-ppBmibianZWCFgEy",
         )
         self.assertEqual(document.validation_status, "PASS")
+        raw = next(item for item in lock["documents"] if item["id"] == document.id)
+        self.assertEqual(raw["attendance_status"], "may_26_28_khadejah_dated_clock_rows_locked")
 
     def test_proof_ceiling_preserves_evidence_boundaries(self):
         lock, _ = load_document_reference_lock(LOCK)
@@ -105,6 +147,10 @@ class FunNthDocumentReferenceTests(unittest.TestCase):
         self.assertIn("20:00", proof_ceiling)
         self.assertIn("does not independently prove the exact five-hour split", proof_ceiling)
         self.assertIn("do not prove a 13-hour Deployment block", proof_ceiling)
+        self.assertIn("05/26 09:00-22:00 less one-hour lunch = 12h", proof_ceiling)
+        self.assertIn("05/27 09:00-22:00 less one-hour lunch = 12h", proof_ceiling)
+        self.assertIn("05/28 09:00-18:00 less one-hour lunch = 8h", proof_ceiling)
+        self.assertIn("Friday projects-team go-live work is excluded from NTH", proof_ceiling)
         self.assertEqual(
             lock["fun_evidence_paths"]["direct_may_26_source"],
             "registry/may-0526-alejandro-logistics-text-evidence.json",
@@ -112,6 +158,10 @@ class FunNthDocumentReferenceTests(unittest.TestCase):
         self.assertEqual(
             lock["fun_evidence_paths"]["correction_overlay"],
             "registry/may-evidence-correction-overlay-20260803.json",
+        )
+        self.assertEqual(
+            lock["fun_evidence_paths"]["khadejah_attendance_correction"],
+            "registry/may-0526-0528-khadejah-attendance-correction.json",
         )
 
     def test_filename_and_packet_mismatches_fail(self):
