@@ -8,7 +8,7 @@ July share-ready NTH workbook only. No May artifact behavior is changed.
 
 - FUN policy: `fun-july-nth-public-disclosure-policy/v1`
 - Pinned schema blob: `836e1bb5af0bd7ddd329cef62f7a76baa48fff01`
-- Source commit: `4f70ec23d3b126c1363a23ee86a1737515bf8e37`
+- Merged source commit: `454b2563d90773f6de635026df979e3c8ead18af`
 
 ## Producer behavior
 
