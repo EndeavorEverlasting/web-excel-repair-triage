@@ -1,0 +1,13 @@
+{
+  "schema": "triage-upstream-contract-lock/v1",
+  "contract_id": "fun-july-nth-public-disclosure-policy/v1",
+  "source_repository": "EndeavorEverlasting/FUN",
+  "source_commit": "454b2563d90773f6de635026df979e3c8ead18af",
+  "source_path": "schemas/july-nth-public-disclosure-policy.schema.json",
+  "source_git_blob_sha": "836e1bb5af0bd7ddd329cef62f7a76baa48fff01",
+  "local_snapshot": "contracts/upstream/fun/schemas/july-nth-public-disclosure-policy.schema.json",
+  "consumer": "triage/july_nth_public_disclosure_report.py",
+  "status": "pinned",
+  "scope": "July share-ready NTH workbook only",
+  "proof_ceiling": "Pins the triage producer report to the exact merged FUN July public-disclosure schema snapshot. Advance this lock only when the upstream schema changes."
+}
