@@ -1,0 +1,54 @@
+{
+  "schema": "webexcel-font-harness/v1",
+  "harness_id": "webexcel-aptos-font-compatibility",
+  "status": "active",
+  "repository": "EndeavorEverlasting/web-excel-repair-triage",
+  "policy": "configs/webexcel_fonts_v1.json",
+  "default_font": "Aptos",
+  "forbidden_fonts": [
+    "Carlito"
+  ],
+  "components": {
+    "policy": "configs/webexcel_fonts_v1.json",
+    "codebase_map": "harness/webexcel-fonts/CODEBASE_MAP.md",
+    "workflow_spec": "harness/webexcel-fonts/WORKFLOWS.md",
+    "artifact_registry": "harness/webexcel-fonts/ARTIFACT_REGISTRY.md",
+    "registry": "harness/webexcel-fonts/registry.json",
+    "artifact_validator": "scripts/validate_webexcel_fonts.py",
+    "completeness_validator": "scripts/validate_webexcel_font_harness.py",
+    "artifact_tests": "tests/test_webexcel_font_compatibility.py",
+    "completeness_tests": "tests/test_webexcel_font_harness.py",
+    "skill": ".ai/skills/webexcel-font-compatibility/SKILL.md",
+    "workflow": ".github/workflows/webexcel-font-harness.yml",
+    "operator_report": "reports/harness/webexcel-font-compatibility-state.md"
+  },
+  "artifacts": {
+    "validation_report": {
+      "schema": "webexcel-font-validation-result/v1",
+      "default_path": "Outputs/webexcel-font-validation.json",
+      "generator": "python scripts/validate_webexcel_fonts.py",
+      "tracked": false
+    },
+    "harness_report": {
+      "schema": "webexcel-font-harness-result/v1",
+      "default_path": "Outputs/webexcel-font-harness.json",
+      "generator": "python scripts/validate_webexcel_font_harness.py",
+      "tracked": false
+    }
+  },
+  "triggers": [
+    "workbook-generator-or-repair-change",
+    "share-ready-workbook-before-delivery",
+    "font-regression-or-manual-font-correction-observed"
+  ],
+  "validation_order": [
+    "python -m py_compile scripts/validate_webexcel_fonts.py scripts/validate_webexcel_font_harness.py tests/test_webexcel_font_compatibility.py tests/test_webexcel_font_harness.py",
+    "python scripts/validate_webexcel_font_harness.py --output Outputs/webexcel-font-harness.json --summary",
+    "python -m unittest tests.test_webexcel_font_compatibility tests.test_webexcel_font_harness -v",
+    "python scripts/validate_webexcel_fonts.py --scan-source --output Outputs/webexcel-font-validation.json --summary",
+    "python scripts/validate_harness.py",
+    "python -m unittest tests.test_harness_contract -v",
+    "git diff --check"
+  ],
+  "proof_ceiling": "Tracked harness, source-token, synthesized OOXML, and actual supplied workbook-byte font proof. Excel for Web visual acceptance remains separate field proof."
+}
