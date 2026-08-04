@@ -38,6 +38,28 @@
       "workflow": "WORKFLOW.md#b-prompt-registry-or-website-change",
       "harness_gate": "python scripts/validate_prompt_kit_discovery.py --summary",
       "strict_product_gate": "python -m unittest tests.test_prompt_kit_discovery -v"
+    },
+    "webexcel_font_compatibility": {
+      "policy": "configs/webexcel_fonts_v1.json",
+      "default_font": "Aptos",
+      "forbidden_fonts": [
+        "Carlito"
+      ],
+      "codebase_map": "harness/webexcel-fonts/CODEBASE_MAP.md",
+      "workflow": "harness/webexcel-fonts/WORKFLOWS.md",
+      "artifact_registry": "harness/webexcel-fonts/ARTIFACT_REGISTRY.md",
+      "registry": "harness/webexcel-fonts/registry.json",
+      "validator": "scripts/validate_webexcel_fonts.py",
+      "completeness_validator": "scripts/validate_webexcel_font_harness.py",
+      "contract_tests": [
+        "tests/test_webexcel_font_compatibility.py",
+        "tests/test_webexcel_font_harness.py"
+      ],
+      "skill": ".ai/skills/webexcel-font-compatibility/SKILL.md",
+      "operator_report": "reports/harness/webexcel-font-compatibility-state.md",
+      "ci_workflow": ".github/workflows/webexcel-font-harness.yml",
+      "artifact_gate": "python scripts/validate_webexcel_fonts.py --workbook <path> --require-workbook --output Outputs/webexcel-font-validation.json --summary",
+      "proof_ceiling": "Static source and OOXML font declarations; Excel for Web visual rendering remains field proof."
     }
   },
   "skills": [
@@ -69,6 +91,9 @@
   },
   "validation_order": [
     "python scripts/validate_harness.py",
+    "python scripts/validate_webexcel_font_harness.py --output Outputs/webexcel-font-harness.json --summary",
+    "python -m unittest tests.test_webexcel_font_compatibility tests.test_webexcel_font_harness -v",
+    "python scripts/validate_webexcel_fonts.py --scan-source --output Outputs/webexcel-font-validation.json --summary",
     "python -m unittest tests.test_harness_contract -v",
     "python -m unittest tests.test_prompt_kit_interactions_contract -v",
     "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
