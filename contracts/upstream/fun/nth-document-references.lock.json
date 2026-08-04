@@ -1,11 +1,11 @@
 {
-  "schema": "web-excel-fun-nth-document-reference-lock/v1",
+  "schema": "web-excel-fun-nth-document-reference-lock/v2",
   "canonical_owner": "EndeavorEverlasting/FUN",
   "consumer_repository": "EndeavorEverlasting/web-excel-repair-triage",
-  "fun_commit": "4fba5c88f248b94a70ce93d4b9a550b8c215e90c",
+  "fun_commit": "bf5470ab55c127fa9fe4769975357940ae40b82c",
   "source_path": "registry/nth-document-references-20260803.json",
-  "git_blob_sha": "c6cb93a381bab4d5903285dcd5fe5279c2675e36",
-  "reference_registry_schema": "fun-nth-document-reference-registry/v2",
+  "git_blob_sha": "a6a7330b01e854340feeabe87016743c9eb4c47d",
+  "reference_registry_schema": "fun-nth-document-reference-registry/v3",
   "primary_key": "drive_file_id",
   "documents": [
     {
@@ -19,7 +19,19 @@
       "status": "current",
       "validation_status": "PASS",
       "evidence_id": "MAY-0526-ALEJANDRO-LOGISTICS-TEAMS",
-      "may_27_boundary_status": "CURRENT / BOUNDED"
+      "may_27_boundary_status": "CURRENT / BOUNDED",
+      "shift_records": 12,
+      "configuration_hours": 0.0,
+      "khadejah_attendance_evidence_id": "MAY-0526-0528-KHADEJAH-ATTENDANCE",
+      "khadejah_nth_hours": 32.0,
+      "khadejah_dated_rows": [
+        {"date": "2026-05-26", "clock_in": "09:00", "clock_out": "22:00", "lunch_hours": 1.0, "paid_hours": 12.0},
+        {"date": "2026-05-27", "clock_in": "09:00", "clock_out": "22:00", "lunch_hours": 1.0, "paid_hours": 12.0},
+        {"date": "2026-05-28", "clock_in": "09:00", "clock_out": "18:00", "lunch_hours": 1.0, "paid_hours": 8.0}
+      ],
+      "khadejah_friday_nth_treatment": "EXCLUDED_PROJECTS_TEAM",
+      "synthetic_correction_rows": 0,
+      "consolidated_multiday_attendance_rows": 0
     },
     {
       "id": "nth-july-2026-mtd-public-sleek",
@@ -42,7 +54,8 @@
       "title": "May_26_29_2026_Workstream_Math_Packet_INTERNAL_CURRENT.xlsx",
       "status": "current",
       "validation_status": "PASS",
-      "evidence_matrix_contains": "MAY-0526-ALEJANDRO-LOGISTICS-TEAMS"
+      "evidence_matrix_contains": ["MAY-0526-ALEJANDRO-LOGISTICS-TEAMS", "MAY-0526-0528-KHADEJAH-ATTENDANCE"],
+      "khadejah_clock_rows_status": "CURRENT / LOCKED"
     },
     {
       "id": "nth-july-2026-math-packet",
@@ -80,7 +93,8 @@
       "drive_folder_id": "11WKCjxgz8wNq2ek-ppBmibianZWCFgEy",
       "title": "may-configuration-evidence-20260801_CURRENT.json",
       "status": "current",
-      "validation_status": "PASS"
+      "validation_status": "PASS",
+      "attendance_status": "may_26_28_khadejah_dated_clock_rows_locked"
     }
   ],
   "navigation": {
@@ -91,7 +105,8 @@
   },
   "fun_evidence_paths": {
     "direct_may_26_source": "registry/may-0526-alejandro-logistics-text-evidence.json",
-    "correction_overlay": "registry/may-evidence-correction-overlay-20260803.json"
+    "correction_overlay": "registry/may-evidence-correction-overlay-20260803.json",
+    "khadejah_attendance_correction": "registry/may-0526-0528-khadejah-attendance-correction.json"
   },
-  "proof_ceiling": "The direct Teams screenshot proves Alejandro's Tim-directed Logistics / Material Movement through at least 19:40 on May 26; attendance proves the 20:00 clock-out. It does not independently prove the exact five-hour split or a full-shift single-task assignment. The May 27 device date and contingency-material record do not prove a 13-hour Deployment block or exact task minutes."
+  "proof_ceiling": "The direct Teams screenshot proves Alejandro's Tim-directed Logistics / Material Movement through at least 19:40 on May 26; attendance proves the 20:00 clock-out. It does not independently prove the exact five-hour split or a full-shift single-task assignment. The May 27 device date and contingency-material record do not prove a 13-hour Deployment block or exact task minutes. Khadejah attendance is controlled by three operator-confirmed dated rows: 05/26 09:00-22:00 less one-hour lunch = 12h, 05/27 09:00-22:00 less one-hour lunch = 12h, and 05/28 09:00-18:00 less one-hour lunch = 8h. Her Friday projects-team go-live work is excluded from NTH."
 }
