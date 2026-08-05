@@ -1575,7 +1575,7 @@
   },
   {
     "id": "P61",
-    "seq": "63",
+    "seq": "61",
     "name": "Existing Repository Clone + Working-Directory Bootstrapper",
     "type": "BUILD + BOOTSTRAP",
     "class": "STANDARD AI / EXISTING REPOSITORY CLONE + DIRECTORY",
