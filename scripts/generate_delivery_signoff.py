@@ -6,7 +6,11 @@ import argparse
 import sys
 from pathlib import Path
 
-from triage.delivery_signoff import SignoffValidationError, generate_signoff
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from triage.delivery_signoff import SignoffValidationError, generate_signoff  # noqa: E402
 
 
 def main() -> int:
