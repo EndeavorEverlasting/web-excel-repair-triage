@@ -10,13 +10,14 @@
   "requires": [
     "validated delivery-signoff-spec/v1 or an evidence-pack task routed to FUN",
     "site and delivery identity",
-    "equipment quantities",
-    "serialized asset list"
+    "one or more distinct equipment rows",
+    "serialized asset list when serialized assets are part of the sign-off"
   ],
   "route": {
     "skill": "skills/delivery-signoff-generation/SKILL.md",
     "capability": "capabilities/delivery-signoff-generation.json",
     "workflow": "harness/delivery-signoff/WORKFLOWS.md",
+    "generator": "scripts/generate_delivery_signoff.py",
     "validator": "scripts/validate_delivery_signoff_harness.py"
   },
   "do_not_route_when": [

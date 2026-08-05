@@ -1,30 +1,38 @@
 # Delivery Sign-Off Harness — Operator Report
 
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`
-**Lane:** serial-first, ink-ready sign-off artifact generation and validation
-**As of:** 2026-08-03
+**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
+**Branch:** `feat/delivery-signoff-generator-20260805`  
+**Lane:** serial-first, ink-ready sign-off artifact generation and validation  
+**As of:** 2026-08-05
 
 ## Working
 
-- Codebase map, workflow, artifact registry, layout config, skill, capability, trigger, validator, hook, CI workflow, and operator report are tracked.
-- The harness reuses the existing active-roster precedence instead of creating a competing roster parser.
-- Serial numbers are primary; Neuron serial/MAC pairs remain together; temporary hostnames are secondary.
-- Different cable colors/models and all separately counted physical items must remain separate equipment rows.
-- The document contract is editable, unprotected, and not flattened, with asset mark cells, a field annotation box, and receiver signature.
-- One page is preferred; two pages are the maximum. Body and serial text must remain at least 8.5 pt.
-- The manifest validator distinguishes static draw readiness from a real Word pen smoke test and operator acceptance.
-- CI publishes `delivery-signoff-harness-report`.
-- `delivery-signoff-harness` run `30848794049` completed successfully.
-- Existing `Operational harness contracts` run `30848793262` completed successfully.
-- Existing `Artifact engine tests` run `30848793468` completed successfully.
+- `triage/delivery_signoff/generator.py` now consumes `delivery-signoff-spec/v1` and builds an editable, unprotected DOCX from a clean document tree.
+- The CLI is `python scripts/generate_delivery_signoff.py <spec.json> --output-root Outputs/delivery-signoff`.
+- Equipment-only stock receipts are supported without invented serials.
+- Serialized groups use serial-first verification rows and preserve serial/MAC pairs.
+- Distinct equipment rows are retained; non-positive quantities, duplicate rows/serials, and incomplete cable identity fail closed.
+- LibreOffice produces the PDF preview and `pdftoppm` produces per-page PNG evidence.
+- The manifest contains package-relative, containment-checked paths and SHA-256 values for the normalized input, DOCX, PDF, and every page image.
+- Page count is limited to one or two, the minimum font is 8.5 points, and the document retains mark cells, a field annotation box, and receiver signature.
+- The field-notes region expands on low-density receipts to use the page ergonomically.
+- Protected-data-safe Melville/3HQ and Huntington Hospital fixtures render as clean one-page sign-offs.
+- Focused local validation: 11 tests passed; both fixture packages generated; both page PNGs visually inspected.
+
+## Harness repairs inherited from PR #130
+
+- pre-commit validates the staged index rather than an unstaged working tree;
+- preview path/hash/page hashes are mandatory;
+- serial counts must be present, integer, and non-negative when serialized assets are expected;
+- equipment rows require a non-empty type and positive integer quantity;
+- absolute and escaping manifest paths fail closed.
 
 ## Missing or unproven
 
-- Product DOCX generation code was not changed in this harness-only sprint.
-- A production `delivery-signoff-spec/v1` has not yet been consumed by a repository-owned renderer.
-- No DOCX/PDF artifact has yet been produced and validated under the new manifest contract.
-- Word Draw/pen behavior remains an operator-runtime gate.
+- Word Draw/pen behavior remains an operator-runtime gate; current proof is `draw_ready_static`.
+- CI run and pull-request merge state are pending for this branch.
+- Branding/reference-template ingestion remains optional future work; the current generator uses the repository-owned clean layout.
 
 ## Next owned action
 
-Artifact-generation lane owner: implement or bind the existing document construction surface to `delivery-signoff-spec/v1`, generate one protected-data-safe fixture DOCX plus preview and manifest, and run `python scripts/validate_delivery_signoff_harness.py --manifest <manifest.json>` without changing evidence authority.
+Run the generator workflow, inspect the uploaded Melville and Huntington acceptance packages, then merge after the stacked harness PR is green.

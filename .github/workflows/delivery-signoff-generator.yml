@@ -48,7 +48,13 @@ jobs:
       - name: Compile generator surfaces
         run: python -m py_compile triage/delivery_signoff/*.py scripts/generate_delivery_signoff.py scripts/validate_delivery_signoff_harness.py
       - name: Check patch whitespace
-        run: git diff --check "${{ github.event.pull_request.base.sha || 'HEAD^' }}" HEAD
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}" HEAD
+          else
+            git diff --check HEAD^ HEAD
+          fi
       - name: Publish sign-off acceptance packages
         if: always()
         uses: actions/upload-artifact@v4
