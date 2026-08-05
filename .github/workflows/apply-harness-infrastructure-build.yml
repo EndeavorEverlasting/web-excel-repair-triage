@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Reconstruct bounded harness payload
+      - name: Reconstruct and stage bounded harness payload
         shell: bash
         run: |
           set -euo pipefail
@@ -58,6 +58,27 @@ jobs:
           diff -u "$RUNNER_TEMP/expected-files.txt" "$RUNNER_TEMP/actual-files.txt"
           tar -xzf "$RUNNER_TEMP/harness-build.tar.gz"
           chmod +x scripts/validate_harness.py .githooks/pre-commit .githooks/pre-push
+          git add -- \
+            .ai/skills/harness-infrastructure-maintenance/SKILL.md \
+            .githooks/pre-commit \
+            .githooks/pre-push \
+            .github/workflows/harness-contract.yml \
+            ARTIFACT_REGISTRY.md \
+            CAPABILITIES.md \
+            CODEBASE_MAP.md \
+            SKILLS.md \
+            TRIGGERS.md \
+            WORKFLOW.md \
+            harness/artifacts.v1.json \
+            harness/capabilities.v1.json \
+            harness/manifest.v1.json \
+            harness/reports/CURRENT_STATE.md \
+            harness/triggers.v1.json \
+            harness/validators.v1.json \
+            harness/workflows.v1.json \
+            scripts/validate_harness.py \
+            tests/test_harness_contract.py
+          git diff --cached --check
       - name: Validate operational harness
         shell: bash
         run: |
@@ -83,26 +104,6 @@ jobs:
           rm -rf Outputs
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- \
-            .ai/skills/harness-infrastructure-maintenance/SKILL.md \
-            .githooks/pre-commit \
-            .githooks/pre-push \
-            .github/workflows/harness-contract.yml \
-            ARTIFACT_REGISTRY.md \
-            CAPABILITIES.md \
-            CODEBASE_MAP.md \
-            SKILLS.md \
-            TRIGGERS.md \
-            WORKFLOW.md \
-            harness/artifacts.v1.json \
-            harness/capabilities.v1.json \
-            harness/manifest.v1.json \
-            harness/reports/CURRENT_STATE.md \
-            harness/triggers.v1.json \
-            harness/validators.v1.json \
-            harness/workflows.v1.json \
-            scripts/validate_harness.py \
-            tests/test_harness_contract.py
           git diff --cached --check
           git commit -m 'feat(harness): build operational harness infrastructure'
           git push origin HEAD:"${GITHUB_REF_NAME}"
