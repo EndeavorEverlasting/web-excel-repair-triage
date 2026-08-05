@@ -1,8 +1,8 @@
 # Delivery Sign-Off Harness — Operator Report
 
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Branch:** `feat/delivery-signoff-generator-20260805`  
-**Lane:** serial-first, ink-ready sign-off artifact generation and validation  
+**Repository:** `EndeavorEverlasting/web-excel-repair-triage`
+**Branch:** `feat/delivery-signoff-generator-20260805`
+**Lane:** serial-first, ink-ready sign-off artifact generation and validation
 **As of:** 2026-08-05
 
 ## Working
