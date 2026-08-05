@@ -8,7 +8,7 @@
 ## Working
 
 - `triage/delivery_signoff/generator.py` now consumes `delivery-signoff-spec/v1` and builds an editable, unprotected DOCX from a clean document tree.
-- The CLI is `python scripts/generate_delivery_signoff.py <spec.json> --output-root Outputs/delivery-signoff`.
+- The CLI is `python scripts/generate_delivery_signoff.py <spec.json> --output-root Outputs/delivery-signoff` and resolves the repository package without requiring `PYTHONPATH`.
 - Equipment-only stock receipts are supported without invented serials.
 - Serialized groups use serial-first verification rows and preserve serial/MAC pairs.
 - Distinct equipment rows are retained; non-positive quantities, duplicate rows/serials, and incomplete cable identity fail closed.
@@ -17,7 +17,7 @@
 - Page count is limited to one or two, the minimum font is 8.5 points, and the document retains mark cells, a field annotation box, and receiver signature.
 - The field-notes region expands on low-density receipts to use the page ergonomically.
 - Protected-data-safe Melville/3HQ and Huntington Hospital fixtures render as clean one-page sign-offs.
-- Focused local validation: 11 tests passed; both fixture packages generated; both page PNGs visually inspected.
+- Focused local validation: 12 tests passed; the clean CLI invocation passed; both fixture packages generated; both page PNGs visually inspected.
 
 ## Harness repairs inherited from PR #130
 
