@@ -8,8 +8,11 @@ on:
       - 'skills/delivery-signoff-generation/**'
       - 'capabilities/delivery-signoff-generation.json'
       - 'triggers/delivery-signoff-generation.json'
+      - 'scripts/evaluate_delivery_signoff_trigger.py'
       - 'scripts/validate_delivery_signoff_harness.py'
       - '.githooks/pre-commit-delivery-signoff'
+      - 'tests/fixtures/delivery_signoff_trigger/**'
+      - 'tests/test_delivery_signoff_trigger.py'
       - 'tests/test_delivery_signoff_harness_validator.py'
       - 'reports/harness/delivery-signoff-state.md'
       - '.github/workflows/delivery-signoff-harness.yml'
@@ -17,6 +20,7 @@ on:
     branches:
       - main
       - 'harness/delivery-signoff-*'
+      - 'feat/delivery-signoff-*'
 
 permissions:
   contents: read
@@ -33,15 +37,15 @@ jobs:
           python-version: '3.11'
       - name: Install focused test dependency
         run: python -m pip install --disable-pip-version-check pytest
-      - name: Validate delivery sign-off harness completeness
+      - name: Validate complete delivery sign-off harness contract
         run: |
           set -o pipefail
           mkdir -p artifacts/validation
           python scripts/validate_delivery_signoff_harness.py | tee artifacts/validation/delivery-signoff-harness.txt
-      - name: Exercise fail-closed manifest rules
-        run: python -m pytest -q tests/test_delivery_signoff_harness_validator.py
-      - name: Compile harness validator
-        run: python -m py_compile scripts/validate_delivery_signoff_harness.py
+      - name: Exercise fail-closed manifest and typed-trigger rules
+        run: python -m pytest -q tests/test_delivery_signoff_harness_validator.py tests/test_delivery_signoff_trigger.py
+      - name: Compile harness surfaces
+        run: python -m py_compile scripts/evaluate_delivery_signoff_trigger.py scripts/validate_delivery_signoff_harness.py
       - name: Check patch whitespace
         run: git diff --check HEAD^ HEAD
       - name: Publish harness report
