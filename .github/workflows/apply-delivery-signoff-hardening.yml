@@ -57,14 +57,29 @@ jobs:
           find Outputs/delivery-signoff/migration-proof -name delivery-signoff-artifact-manifest.json -print0 | xargs -0 -n1 python scripts/validate_delivery_signoff_harness.py --manifest
           rm -rf Outputs/delivery-signoff/migration-proof
           git diff --check
-      - name: Commit validated implementation and remove transport
+      - name: Commit validated non-workflow implementation
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf .github/delivery-signoff-hardening
-          rm -f .github/workflows/apply-delivery-signoff-hardening.yml
+          git restore --source=HEAD -- .github/workflows/delivery-signoff-generator.yml .github/workflows/delivery-signoff-harness.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
+          git add -- \
+            triage/delivery_signoff \
+            scripts/generate_delivery_signoff.py \
+            scripts/validate_delivery_signoff_harness.py \
+            scripts/evaluate_delivery_signoff_trigger.py \
+            tests/test_delivery_signoff_generator.py \
+            tests/test_delivery_signoff_harness_validator.py \
+            tests/test_delivery_signoff_trigger.py \
+            tests/fixtures/delivery_signoff_trigger \
+            .githooks/pre-commit-delivery-signoff \
+            capabilities/delivery-signoff-generation.json \
+            triggers/delivery-signoff-generation.json \
+            harness/delivery-signoff \
+            skills/delivery-signoff-generation/SKILL.md \
+            reports/harness/delivery-signoff-state.md \
+            configs/delivery_signoff_layout_v1.json
+          git diff --cached --check
           git commit -m 'fix(signoff): harden generation and proof contracts'
           git push origin HEAD:"${GITHUB_REF_NAME}"
