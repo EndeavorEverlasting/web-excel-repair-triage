@@ -12,7 +12,7 @@
     "default": "Aptos",
     "title": "Aptos Display",
     "allowed": ["Aptos", "Aptos Display"],
-    "forbidden": ["Carlito"]
+    "forbidden_fonts_authority": "configs/webexcel_fonts_v1.json"
   },
   "chrome": {
     "title_and_total_fill": "FF17365D",
