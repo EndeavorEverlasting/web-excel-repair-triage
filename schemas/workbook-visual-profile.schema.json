@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/web-excel-repair-triage/schemas/workbook-visual-profile.schema.json",
+  "title": "Workbook visual integrity profile",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema", "profile_id", "artifact_family", "filename_patterns", "rules", "generator_binding", "proof_ceiling"],
+  "properties": {
+    "schema": {"const": "workbook-visual-profile/v1"},
+    "profile_id": {"type": "string", "minLength": 1},
+    "artifact_family": {"type": "string", "minLength": 1},
+    "filename_patterns": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "required_sheets": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "required_sheet_patterns": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "artifact_specific_roles": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^[A-F0-9]{8}$"}},
+    "exceptions": {"type": "array", "items": {"type": "object"}},
+    "rules": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["id", "type"]}},
+    "generator_binding": {"type": "object", "required": ["required", "manifest_fields"]},
+    "proof_ceiling": {"type": "string", "minLength": 1}
+  }
+}
