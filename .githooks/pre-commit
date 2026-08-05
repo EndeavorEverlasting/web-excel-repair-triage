@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+python scripts/validate_workbook_visual_harness.py --summary
+python scripts/validate_workbook_visual_integrity.py --validate-profiles --summary
 python scripts/validate_webexcel_font_harness.py --summary
 python scripts/validate_webexcel_fonts.py --scan-source --summary
 python scripts/validate_harness.py
