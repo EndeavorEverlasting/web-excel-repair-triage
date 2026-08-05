@@ -97,13 +97,15 @@ jobs:
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           python -m triage.gitignore_hygiene
           git diff --check
-      - name: Commit validated harness components
+      - name: Publish validated non-workflow harness components
         shell: bash
         run: |
           set -euo pipefail
           rm -rf Outputs
+          git restore --staged .github/workflows/harness-contract.yml
+          git restore .github/workflows/harness-contract.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git diff --cached --check
-          git commit -m 'feat(harness): build operational harness infrastructure'
+          git commit -m 'chore(harness): publish validated non-workflow components'
           git push origin HEAD:"${GITHUB_REF_NAME}"
