@@ -2,12 +2,13 @@
 
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
 **Branch:** `feat/delivery-signoff-generator-20260805`
+**PR:** `#135`, stacked on harness PR `#130`
 **Lane:** serial-first, ink-ready sign-off artifact generation and validation
 **As of:** 2026-08-05
 
 ## Working
 
-- `triage/delivery_signoff/generator.py` now consumes `delivery-signoff-spec/v1` and builds an editable, unprotected DOCX from a clean document tree.
+- `triage/delivery_signoff/generator.py` consumes `delivery-signoff-spec/v1` and builds an editable, unprotected DOCX from a clean document tree.
 - The CLI is `python scripts/generate_delivery_signoff.py <spec.json> --output-root Outputs/delivery-signoff` and resolves the repository package without requiring `PYTHONPATH`.
 - Equipment-only stock receipts are supported without invented serials.
 - Serialized groups use serial-first verification rows and preserve serial/MAC pairs.
@@ -18,6 +19,8 @@
 - The field-notes region expands on low-density receipts to use the page ergonomically.
 - Protected-data-safe Melville/3HQ and Huntington Hospital fixtures render as clean one-page sign-offs.
 - Focused local validation: 12 tests passed; the clean CLI invocation passed; both fixture packages generated; both page PNGs visually inspected.
+- Branch CI has passed the generator workflow, focused sign-off harness, repository-wide operational contracts, and artifact-engine tests.
+- CI publishes the `delivery-signoff-acceptance-packages` artifact containing the generated fixtures and proof files.
 
 ## Harness repairs inherited from PR #130
 
@@ -30,9 +33,9 @@
 ## Missing or unproven
 
 - Word Draw/pen behavior remains an operator-runtime gate; current proof is `draw_ready_static`.
-- CI run and pull-request merge state are pending for this branch.
 - Branding/reference-template ingestion remains optional future work; the current generator uses the repository-owned clean layout.
+- PR #130 must land before or with stacked PR #135.
 
 ## Next owned action
 
-Run the generator workflow, inspect the uploaded Melville and Huntington acceptance packages, then merge after the stacked harness PR is green.
+Review the CI-published Melville and Huntington acceptance packages, merge PR #130, then merge or retarget PR #135 to `main`.
