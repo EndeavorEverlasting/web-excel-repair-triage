@@ -1,28 +1,70 @@
 {
   "schema": "triage-trigger/v1",
   "id": "delivery-signoff-generation",
-  "when_any": [
-    "request mentions delivery sign-off",
-    "request mentions transfer receipt or acceptance form",
-    "request requires serial-first asset verification",
-    "request requires a Word drawbox or ink-ready signature form"
-  ],
-  "requires": [
-    "validated delivery-signoff-spec/v1 or an evidence-pack task routed to FUN",
-    "site and delivery identity",
-    "one or more distinct equipment rows",
-    "serialized asset list when serialized assets are part of the sign-off"
-  ],
-  "route": {
-    "skill": "skills/delivery-signoff-generation/SKILL.md",
-    "capability": "capabilities/delivery-signoff-generation.json",
-    "workflow": "harness/delivery-signoff/WORKFLOWS.md",
-    "generator": "scripts/generate_delivery_signoff.py",
-    "validator": "scripts/validate_delivery_signoff_harness.py"
+  "evaluation": {
+    "predicate_schema": "triage-trigger-predicate/v1",
+    "deny_precedence": true,
+    "default_decision": "no_match"
   },
-  "do_not_route_when": [
-    "the task is only labor-hour reconstruction",
-    "the request is only workbook repair with no sign-off artifact",
-    "required evidence is unresolved and the operator asked for no placeholders"
-  ]
+  "deny_rules": [
+    {
+      "id": "evidence-pack-without-validated-spec",
+      "match": "all",
+      "predicates": [
+        {
+          "field": "request_text",
+          "operator": "contains_any",
+          "values": ["delivery sign-off", "delivery signoff", "transfer receipt", "acceptance form"]
+        },
+        {
+          "field": "input_schema",
+          "operator": "not_equals",
+          "value": "delivery-signoff-spec/v1"
+        }
+      ],
+      "route": "evidence_authority"
+    },
+    {
+      "id": "labor-only-task",
+      "match": "all",
+      "predicates": [
+        {
+          "field": "task_kind",
+          "operator": "equals_any",
+          "values": ["labor_reconstruction", "billing_repair", "roster_only"]
+        }
+      ],
+      "route": "deny"
+    }
+  ],
+  "allow_rules": [
+    {
+      "id": "validated-signoff-generation",
+      "match": "all",
+      "predicates": [
+        {
+          "field": "request_text",
+          "operator": "contains_any",
+          "values": ["delivery sign-off", "delivery signoff", "transfer receipt", "acceptance form", "ink-ready signature"]
+        },
+        {
+          "field": "input_schema",
+          "operator": "equals",
+          "value": "delivery-signoff-spec/v1"
+        }
+      ],
+      "route": "generation"
+    }
+  ],
+  "routes": {
+    "generation": {
+      "skill": "skills/delivery-signoff-generation/SKILL.md",
+      "capability": "capabilities/delivery-signoff-generation.json",
+      "workflow": "harness/delivery-signoff/WORKFLOWS.md",
+      "generator": "scripts/generate_delivery_signoff.py",
+      "validator": "scripts/validate_delivery_signoff_harness.py"
+    },
+    "evidence_authority": "EndeavorEverlasting/FUN",
+    "deny": "no_delivery_signoff_route"
+  }
 }

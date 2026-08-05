@@ -8,34 +8,28 @@
 
 ## Working
 
-- `triage/delivery_signoff/generator.py` consumes `delivery-signoff-spec/v1` and builds an editable, unprotected DOCX from a clean document tree.
-- The CLI is `python scripts/generate_delivery_signoff.py <spec.json> --output-root Outputs/delivery-signoff` and resolves the repository package without requiring `PYTHONPATH`.
-- Equipment-only stock receipts are supported without invented serials.
-- Serialized groups use serial-first verification rows and preserve serial/MAC pairs.
-- Distinct equipment rows are retained; non-positive quantities, duplicate rows/serials, and incomplete cable identity fail closed.
-- LibreOffice produces the PDF preview and `pdftoppm` produces per-page PNG evidence.
-- The manifest contains package-relative, containment-checked paths and SHA-256 values for the normalized input, DOCX, PDF, and every page image.
-- Page count is limited to one or two, the minimum font is 8.5 points, and the document retains mark cells, a field annotation box, and receiver signature.
-- The field-notes region expands on low-density receipts to use the page ergonomically.
-- Protected-data-safe Melville/3HQ and Huntington Hospital fixtures render as clean one-page sign-offs.
-- Focused local validation: 12 tests passed; the clean CLI invocation passed; both fixture packages generated; both page PNGs visually inspected.
-- Branch CI has passed the generator workflow, focused sign-off harness, repository-wide operational contracts, and artifact-engine tests.
-- CI publishes the `delivery-signoff-acceptance-packages` artifact containing the generated fixtures and proof files.
+- Triage consumes `delivery-signoff-spec/v1` and generates editable, unprotected DOCX, PDF, page PNGs, manifest, and validation log.
+- Equipment-only receipts do not require invented serials.
+- Serialized groups are unique, match exactly one equipment row, and reconcile quantity, exact DOCX cells, and rendered PDF text.
+- Density-based portrait/landscape selection preserves 8.5-point body/serial text and 11-point headings.
+- Same-identity locks prevent concurrent writes; failed regeneration preserves the last valid package; successful replacement creates a timestamped backup and publishes atomically.
+- Safe-slug identity collisions, noncanonical CLI outputs, protected-input overlap, malformed paths/hashes, and input-spec/manifest drift fail closed.
+- Typed triggers evaluate deny rules before allow rules and route unresolved evidence work to FUN.
+- Local focused validation after review repair: 16 generator tests, 9 manifest tests, and 5 trigger tests passed.
 
-## Harness repairs inherited from PR #130
+## Delivery state
 
-- pre-commit validates the staged index rather than an unstaged working tree;
-- preview path/hash/page hashes are mandatory;
-- serial counts must be present, integer, and non-negative when serialized assets are expected;
-- equipment rows require a non-empty type and positive integer quantity;
-- absolute and escaping manifest paths fail closed.
+- Push authority: available through the connected GitHub repository API.
+- PR state: PR #130 and stacked PR #135 remain open pending repaired-review CI and final review resolution.
+- Local Git status: unavailable because the container cannot clone GitHub; tracked writes and commits are performed through the connected GitHub API.
+- Current proof ceiling: `draw_ready_static`; Word pen input and receiving-operator acceptance remain unproven.
 
-## Missing or unproven
+## Executable proof command
 
-- Word Draw/pen behavior remains an operator-runtime gate; current proof is `draw_ready_static`.
-- Branding/reference-template ingestion remains optional future work; the current generator uses the repository-owned clean layout.
-- PR #130 must land before or with stacked PR #135.
+```bash
+python scripts/validate_delivery_signoff_harness.py --manifest Outputs/delivery-signoff/<run-root>/<site>/<signoff-id>/delivery-signoff-artifact-manifest.json
+```
 
-## Next owned action
+## Next gate
 
-Review the CI-published Melville and Huntington acceptance packages, merge PR #130, then merge or retarget PR #135 to `main`.
+Commit the repaired harness to PR #130, mirror the shared contracts into PR #135, run all required CI on both heads, inspect the published acceptance package, then resolve review threads before merge.

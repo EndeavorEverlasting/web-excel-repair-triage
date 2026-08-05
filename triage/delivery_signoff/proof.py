@@ -63,11 +63,27 @@ def render_docx(docx_path: Path, preview_dir: Path) -> tuple[Path, tuple[Path, .
     return pdf_path, page_paths
 
 
+def extract_pdf_text(pdf_path: Path) -> str:
+    pdftotext = shutil.which("pdftotext")
+    if not pdftotext:
+        raise SignoffValidationError("pdftotext is required to verify rendered identifiers")
+    completed = subprocess.run(
+        [pdftotext, "-raw", str(pdf_path), "-"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise SignoffValidationError("PDF text extraction failed: " + completed.stderr.strip())
+    return completed.stdout
+
+
 def relative_entry(path: Path, package_dir: Path) -> dict[str, str]:
     return {"path": path.relative_to(package_dir).as_posix(), "sha256": sha256(path)}
 
 
-def validate_path_hash_object(item: Any, package_dir: Path, label: str) -> None:
+def validate_path_hash_object(item: Any, package_dir: Path, label: str) -> Path:
     if not isinstance(item, dict):
         raise SignoffValidationError(f"{label} must be an object")
     raw_path = item.get("path")
@@ -88,3 +104,4 @@ def validate_path_hash_object(item: Any, package_dir: Path, label: str) -> None:
         raise SignoffValidationError(f"{label}.path does not exist: {candidate}")
     if sha256(candidate) != expected_hash.lower():
         raise SignoffValidationError(f"{label}.sha256 mismatch")
+    return candidate

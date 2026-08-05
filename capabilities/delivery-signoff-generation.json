@@ -3,7 +3,7 @@
   "id": "delivery-signoff-generation",
   "name": "Generate serial-first ink-ready delivery sign-off",
   "mode": "bounded_artifact_generation",
-  "entrypoint": "python scripts/generate_delivery_signoff.py <delivery-signoff-spec.json> --output-root Outputs/delivery-signoff",
+  "entrypoint": "python scripts/generate_delivery_signoff.py <delivery-signoff-spec.json> --output-root Outputs/delivery-signoff/<new-run-root>",
   "inputs": {
     "required": [
       "validated_delivery_signoff_spec",
@@ -18,7 +18,14 @@
     "contracts": {
       "validated_delivery_signoff_spec": "delivery-signoff-spec/v1",
       "layout": "configs/delivery_signoff_layout_v1.json",
-      "active_roster": "docs/ACTIVE_ROSTER_LOG_MECHANICS.md"
+      "active_roster": "docs/ACTIVE_ROSTER_LOG_MECHANICS.md",
+      "output_directory": {
+        "root": "Outputs/delivery-signoff/",
+        "must_be_root_or_descendant": true,
+        "input_spec_inside_output_forbidden": true,
+        "protected_operator_input_forbidden": true,
+        "replacement_strategy": "generate_validate_then_atomic_publish_with_timestamped_backup"
+      }
     }
   },
   "outputs": {
@@ -36,6 +43,7 @@
       "preview.page_hashes",
       "page_count",
       "minimum_font_points",
+      "minimum_heading_points",
       "serialized_assets_expected",
       "serial_counts",
       "equipment_rows",
@@ -49,23 +57,29 @@
   "runtime_dependencies": [
     "python-docx",
     "LibreOffice or soffice",
-    "pdftoppm"
+    "pdftoppm",
+    "pdftotext"
   ],
   "fail_closed_on": [
     "unresolved_required_input",
+    "noncanonical_or_input_overlapping_output_directory",
     "invalid_or_non_positive_quantity",
     "serial_quantity_mismatch",
-    "duplicate_serial",
+    "duplicate_serial_or_serialized_asset_type",
+    "safe_slug_identity_collision",
+    "concurrent_same_identity_generation",
     "collapsed_distinct_equipment",
     "incomplete_cable_identity",
     "temporary_hostname_as_primary_identity",
     "more_than_two_pages",
     "font_below_8_5_points",
+    "heading_below_11_points",
     "missing_preview_or_page_hashes",
     "manifest_path_escape_or_hash_mismatch",
-    "clipping_or_truncation",
+    "input_spec_manifest_evidence_mismatch",
+    "rendered_identifier_truncation",
     "stale_site_content",
     "protected_or_flattened_docx"
   ],
-  "proof_ceiling": "Generation and static validation can prove package/layout contracts. Word pen input and field acceptance require operator evidence."
+  "proof_ceiling": "Generation and static validation can prove package, evidence-binding, layout, backup, and replacement contracts. Word pen input and field acceptance require operator evidence."
 }

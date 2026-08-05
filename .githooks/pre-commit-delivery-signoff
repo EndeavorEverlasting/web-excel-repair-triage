@@ -5,5 +5,12 @@ staged_tree="$(mktemp -d "${TMPDIR:-/tmp}/triage-delivery-signoff-index.XXXXXX")
 trap 'rm -rf "$staged_tree"' EXIT HUP INT TERM
 
 git checkout-index --all --prefix="$staged_tree/"
+
+# Validate staged data with the trusted validator from HEAD. Never execute a
+# validator supplied by an untrusted staged branch with developer privileges.
+if ! git show HEAD:scripts/validate_delivery_signoff_harness.py > "$staged_tree/scripts/validate_delivery_signoff_harness.py"; then
+  echo "FAIL: trusted delivery sign-off validator is unavailable in HEAD; use CI for the validator-introduction commit" >&2
+  exit 1
+fi
 python "$staged_tree/scripts/validate_delivery_signoff_harness.py"
 git diff --check --cached

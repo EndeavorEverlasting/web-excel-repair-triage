@@ -29,11 +29,7 @@
   "draw_surfaces": {
     "document_protection": "none",
     "flattened_document_forbidden": true,
-    "required": [
-      "asset_mark_cells",
-      "field_annotation_box",
-      "receiver_signature"
-    ],
+    "required": ["asset_mark_cells", "field_annotation_box", "receiver_signature"],
     "static_proof_label": "draw_ready_static",
     "operator_smoke_test_label": "draw_smoke_tested"
   },

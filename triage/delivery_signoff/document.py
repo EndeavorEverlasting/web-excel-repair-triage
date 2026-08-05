@@ -4,6 +4,7 @@ from __future__ import annotations
 import math
 import re
 import zipfile
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -15,7 +16,14 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Inches, Pt
 
-from .schema import MINIMUM_FONT_POINTS
+from .schema import MINIMUM_FONT_POINTS, MINIMUM_HEADING_POINTS
+
+
+@dataclass(frozen=True)
+class LayoutPlan:
+    landscape: bool
+    serial_columns: int
+    serial_width: float
 
 
 def _set_cell_shading(cell: Any, fill: str) -> None:
@@ -59,7 +67,14 @@ def _format_run(run: Any, *, size: float = MINIMUM_FONT_POINTS, bold: bool = Fal
     run.bold = bold
 
 
-def _write_cell(cell: Any, text: str, *, bold: bool = False, size: float = MINIMUM_FONT_POINTS, align: Any = None) -> None:
+def _write_cell(
+    cell: Any,
+    text: str,
+    *,
+    bold: bool = False,
+    size: float = MINIMUM_FONT_POINTS,
+    align: Any = None,
+) -> None:
     cell.text = ""
     paragraph = cell.paragraphs[0]
     if align is not None:
@@ -70,6 +85,32 @@ def _write_cell(cell: Any, text: str, *, bold: bool = False, size: float = MINIM
     _format_run(paragraph.add_run(text), size=size, bold=bold)
     cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
     _set_cell_margins(cell)
+
+
+def _heading(document: Document, text: str) -> None:
+    paragraph = document.add_paragraph()
+    paragraph.paragraph_format.space_before = Pt(3)
+    paragraph.paragraph_format.space_after = Pt(2)
+    _set_keep_with_next(paragraph)
+    _format_run(paragraph.add_run(text), size=MINIMUM_HEADING_POINTS, bold=True)
+
+
+def format_identifier(item: dict[str, str]) -> str:
+    return f"{item['serial_number']} / {item['mac_address']}" if item["mac_address"] else item["serial_number"]
+
+
+def choose_layout(spec: dict[str, Any]) -> LayoutPlan:
+    identifiers = [format_identifier(item) for group in spec["serialized_assets"] for item in group["identifiers"]]
+    serial_total = len(identifiers)
+    longest = max((len(value) for value in identifiers), default=0)
+    equipment_count = len(spec["equipment_rows"])
+    if not serial_total:
+        return LayoutPlan(landscape=equipment_count > 18, serial_columns=0, serial_width=0.0)
+    if serial_total <= 10 and longest <= 30 and equipment_count <= 12:
+        return LayoutPlan(landscape=False, serial_columns=2, serial_width=2.82)
+    if longest > 34:
+        return LayoutPlan(landscape=True, serial_columns=2, serial_width=4.25)
+    return LayoutPlan(landscape=True, serial_columns=3, serial_width=2.55)
 
 
 def _add_info_table(document: Document, spec: dict[str, Any]) -> None:
@@ -87,16 +128,12 @@ def _add_info_table(document: Document, spec: dict[str, Any]) -> None:
             _write_cell(cell, value, bold=index % 2 == 0)
             if index % 2 == 0:
                 _set_cell_shading(cell, "D9E2F3")
-    document.add_paragraph().paragraph_format.space_after = Pt(0)
+    spacer = document.add_paragraph()
+    spacer.paragraph_format.space_after = Pt(0)
 
 
 def _add_equipment_table(document: Document, rows: list[dict[str, Any]]) -> None:
-    heading = document.add_paragraph()
-    heading.paragraph_format.space_before = Pt(2)
-    heading.paragraph_format.space_after = Pt(2)
-    _set_keep_with_next(heading)
-    _format_run(heading.add_run("Equipment / Stock Receipt"), size=10.5, bold=True)
-
+    _heading(document, "Equipment / Stock Receipt")
     table = document.add_table(rows=1, cols=5)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table.style = "Table Grid"
@@ -116,26 +153,25 @@ def _add_equipment_table(document: Document, rows: list[dict[str, Any]]) -> None
             _write_cell(cell, value, align=WD_ALIGN_PARAGRAPH.CENTER if index in (3, 4) else None)
 
 
-def _format_identifier(item: dict[str, str]) -> str:
-    return f"{item['serial_number']} / {item['mac_address']}" if item["mac_address"] else item["serial_number"]
-
-
-def _add_serial_group(document: Document, group: dict[str, Any], columns: int = 3) -> None:
-    heading = document.add_paragraph()
-    heading.paragraph_format.space_before = Pt(3)
-    heading.paragraph_format.space_after = Pt(1)
-    _set_keep_with_next(heading)
-    _format_run(heading.add_run(f"{group['asset_type']} Serial Verification ({len(group['identifiers'])})"), size=10, bold=True)
-
+def _add_serial_group(document: Document, group: dict[str, Any], plan: LayoutPlan) -> None:
+    _heading(document, f"{group['asset_type']} Serial Verification ({len(group['identifiers'])})")
+    columns = plan.serial_columns
     identifiers = group["identifiers"]
     rows_needed = math.ceil(len(identifiers) / columns)
     table = document.add_table(rows=1 + rows_needed, cols=columns * 3)
     table.style = "Table Grid"
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table.autofit = False
+    number_width = 0.30
+    mark_width = 0.43
     for column in range(columns):
         cells = table.rows[0].cells[column * 3 : column * 3 + 3]
-        for cell, text, width in zip(cells, ("#", "Serial / MAC", "Mark"), (0.28, 1.75, 0.42), strict=True):
+        for cell, text, width in zip(
+            cells,
+            ("#", "Serial / MAC", "Mark"),
+            (number_width, plan.serial_width, mark_width),
+            strict=True,
+        ):
             cell.width = Inches(width)
             _write_cell(cell, text, bold=True, align=WD_ALIGN_PARAGRAPH.CENTER)
             _set_cell_shading(cell, "D9E2F3")
@@ -147,34 +183,26 @@ def _add_serial_group(document: Document, group: dict[str, Any], columns: int = 
             item_index = row_index + column * rows_needed
             cells = row.cells[column * 3 : column * 3 + 3]
             values = (
-                [str(item_index + 1), _format_identifier(identifiers[item_index]), "[  ]"]
+                [str(item_index + 1), format_identifier(identifiers[item_index]), "[  ]"]
                 if item_index < len(identifiers)
                 else ["", "", ""]
             )
-            for item_column, (cell, text, width) in enumerate(zip(cells, values, (0.28, 1.75, 0.42), strict=True)):
+            for item_column, (cell, text, width) in enumerate(
+                zip(cells, values, (number_width, plan.serial_width, mark_width), strict=True)
+            ):
                 cell.width = Inches(width)
                 _write_cell(cell, text, align=WD_ALIGN_PARAGRAPH.CENTER if item_column != 1 else None)
 
 
 def _add_annotation_and_acceptance(document: Document, spec: dict[str, Any], *, notes_height: float) -> None:
-    heading = document.add_paragraph()
-    heading.paragraph_format.space_before = Pt(3)
-    heading.paragraph_format.space_after = Pt(1)
-    _set_keep_with_next(heading)
-    _format_run(heading.add_run("Exceptions / Field Notes"), size=9.5, bold=True)
-
+    _heading(document, "Exceptions / Field Notes")
     notes = document.add_table(rows=1, cols=1)
     notes.style = "Table Grid"
     notes.rows[0].height = Inches(notes_height)
     notes.rows[0].height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
     _write_cell(notes.cell(0, 0), "")
 
-    heading = document.add_paragraph()
-    heading.paragraph_format.space_before = Pt(3)
-    heading.paragraph_format.space_after = Pt(1)
-    _set_keep_with_next(heading)
-    _format_run(heading.add_run("Receipt Acceptance"), size=9.5, bold=True)
-
+    _heading(document, "Receipt Acceptance")
     recipient = spec["recipient"]
     table = document.add_table(rows=3, cols=4)
     table.style = "Table Grid"
@@ -194,11 +222,11 @@ def _add_annotation_and_acceptance(document: Document, spec: dict[str, Any], *, 
                 _set_cell_shading(cell, "D9E2F3")
 
 
-def build_document(spec: dict[str, Any], output_path: Path) -> None:
+def build_document(spec: dict[str, Any], output_path: Path) -> LayoutPlan:
     document = Document()
     section = document.sections[0]
-    serial_total = sum(len(group["identifiers"]) for group in spec["serialized_assets"])
-    if serial_total > 0 or len(spec["equipment_rows"]) > 18:
+    plan = choose_layout(spec)
+    if plan.landscape:
         section.orientation = WD_ORIENT.LANDSCAPE
         section.page_width, section.page_height = section.page_height, section.page_width
     section.top_margin = section.bottom_margin = section.left_margin = section.right_margin = Inches(0.35)
@@ -217,13 +245,14 @@ def build_document(spec: dict[str, Any], output_path: Path) -> None:
     subtitle = document.add_paragraph()
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
     subtitle.paragraph_format.space_after = Pt(3)
-    _format_run(subtitle.add_run(spec["signoff"]["subtitle"] or spec["site"]["name"]), size=10.5, bold=True)
+    _format_run(subtitle.add_run(spec["signoff"]["subtitle"] or spec["site"]["name"]), size=MINIMUM_HEADING_POINTS, bold=True)
 
     _add_info_table(document, spec)
     _add_equipment_table(document, spec["equipment_rows"])
     for group in spec["serialized_assets"]:
-        _add_serial_group(document, group)
-    notes_height = 0.55 if spec["serialized_assets"] else max(1.0, min(5.8, 6.8 - (0.23 * len(spec["equipment_rows"]))))
+        _add_serial_group(document, group, plan)
+    serial_total = sum(len(group["identifiers"]) for group in spec["serialized_assets"])
+    notes_height = 0.65 if serial_total else max(1.0, min(5.8, 6.8 - (0.23 * len(spec["equipment_rows"]))))
     _add_annotation_and_acceptance(document, spec, notes_height=notes_height)
 
     footer = section.footer.paragraphs[0]
@@ -233,9 +262,26 @@ def build_document(spec: dict[str, Any], output_path: Path) -> None:
     document.core_properties.subject = spec["site"]["name"]
     document.core_properties.comments = "Generated by Triage delivery sign-off generator"
     document.save(output_path)
+    return plan
 
 
 def docx_text(path: Path) -> str:
     with zipfile.ZipFile(path) as archive:
         xml = archive.read("word/document.xml").decode("utf-8", errors="replace")
     return re.sub(r"<[^>]+>", " ", xml)
+
+
+def docx_serial_cell_texts(path: Path) -> list[str]:
+    document = Document(path)
+    values: list[str] = []
+    for table in document.tables:
+        if not table.rows:
+            continue
+        header = [cell.text.strip() for cell in table.rows[0].cells]
+        serial_columns = [index for index, value in enumerate(header) if value == "Serial / MAC"]
+        for row in table.rows[1:]:
+            for index in serial_columns:
+                value = row.cells[index].text.strip()
+                if value:
+                    values.append(value)
+    return values

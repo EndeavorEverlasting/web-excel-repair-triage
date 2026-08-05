@@ -18,8 +18,10 @@
   "runtime": {
     "package": "triage/delivery_signoff/",
     "cli": "scripts/generate_delivery_signoff.py",
+    "trigger_evaluator": "scripts/evaluate_delivery_signoff_trigger.py",
     "ci": ".github/workflows/delivery-signoff-generator.yml",
     "acceptance_tests": "tests/test_delivery_signoff_generator.py",
+    "trigger_tests": "tests/test_delivery_signoff_trigger.py",
     "fixtures": "tests/fixtures/delivery_signoff/"
   },
   "upstream": {
@@ -27,25 +29,19 @@
     "spec_schema": "delivery-signoff-spec/v1",
     "source_authority": "FUN remains authoritative for evidence, provenance, quantities, serial lists, chronology, and unresolved fields."
   },
-  "roster_resolution": {
-    "contract": "docs/ACTIVE_ROSTER_LOG_MECHANICS.md",
-    "implementation": "triage/admin_billing_summary/reader.py",
-    "precedence": ["approved_override", "worked_project", "assignment", "default"],
-    "boundary": "Roster context does not replace physical delivery counts or serial evidence."
-  },
   "artifacts": {
-    "docx": "Outputs/delivery-signoff/<site>/<signoff-id>/<SITE>_Delivery_Sign_Off_<id>_SERIAL_FIRST_INK_READY.docx",
-    "preview": "Outputs/delivery-signoff/<site>/<signoff-id>/preview/",
-    "manifest": "Outputs/delivery-signoff/<site>/<signoff-id>/delivery-signoff-artifact-manifest.json",
-    "validation": "Outputs/delivery-signoff/<site>/<signoff-id>/delivery-signoff-validation.txt"
+    "docx": "Outputs/delivery-signoff/<run-root>/<site>/<signoff-id>/<SITE>_Delivery_Sign_Off_<id>_SERIAL_FIRST_INK_READY.docx",
+    "preview": "Outputs/delivery-signoff/<run-root>/<site>/<signoff-id>/preview/",
+    "manifest": "Outputs/delivery-signoff/<run-root>/<site>/<signoff-id>/delivery-signoff-artifact-manifest.json",
+    "validation": "Outputs/delivery-signoff/<run-root>/<site>/<signoff-id>/delivery-signoff-validation.txt",
+    "backup": "Outputs/backups/delivery-signoff/<site>/<signoff-id>/<timestamp-id>/"
   },
   "commands": {
-    "generate": "python scripts/generate_delivery_signoff.py <spec.json> --output-root Outputs/delivery-signoff",
+    "generate": "python scripts/generate_delivery_signoff.py <spec.json> --output-root Outputs/delivery-signoff/<new-run-root>",
     "focused": "python scripts/validate_delivery_signoff_harness.py",
-    "manifest": "python scripts/validate_delivery_signoff_harness.py --manifest <artifact-manifest.json>",
-    "acceptance_tests": "python -m pytest -q tests/test_delivery_signoff_generator.py tests/test_delivery_signoff_harness_validator.py",
-    "tests": "python -m pytest -q",
+    "manifest": "python scripts/validate_delivery_signoff_harness.py --manifest <canonical-package>/delivery-signoff-artifact-manifest.json",
+    "acceptance_tests": "python -m pytest -q tests/test_delivery_signoff_generator.py tests/test_delivery_signoff_harness_validator.py tests/test_delivery_signoff_trigger.py",
     "patch_hygiene": "git diff --check"
   },
-  "proof_ceiling": "Static generation, rendering, and manifest validation do not prove Word pen input or operator acceptance."
+  "proof_ceiling": "Static generation, rendering, evidence reconciliation, backup, and manifest validation do not prove Word pen input or operator acceptance."
 }

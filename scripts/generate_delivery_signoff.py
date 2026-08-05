@@ -12,16 +12,40 @@ if str(ROOT) not in sys.path:
 
 from triage.delivery_signoff import SignoffValidationError, generate_signoff  # noqa: E402
 
+CANONICAL_OUTPUT_ROOT = (ROOT / "Outputs" / "delivery-signoff").resolve()
+
+
+def _validated_output_root(spec_path: Path, output_root: Path) -> Path:
+    source = spec_path.resolve()
+    candidate = output_root.resolve()
+    try:
+        candidate.relative_to(CANONICAL_OUTPUT_ROOT)
+    except ValueError as exc:
+        raise SignoffValidationError(
+            f"output root must be {CANONICAL_OUTPUT_ROOT} or one of its descendants"
+        ) from exc
+    try:
+        source.relative_to(CANONICAL_OUTPUT_ROOT)
+    except ValueError:
+        pass
+    else:
+        raise SignoffValidationError("input specification must not be stored inside generated output")
+    return candidate
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate an editable, validated delivery sign-off package.")
     parser.add_argument("spec", type=Path, help="delivery-signoff-spec/v1 JSON")
-    parser.add_argument("--output-root", type=Path, default=Path("Outputs/delivery-signoff"))
+    parser.add_argument("--output-root", type=Path, default=CANONICAL_OUTPUT_ROOT)
     args = parser.parse_args()
     try:
-        result = generate_signoff(args.spec, args.output_root)
+        output_root = _validated_output_root(args.spec, args.output_root)
+        result = generate_signoff(args.spec, output_root)
     except SignoffValidationError as exc:
         print(f"FAIL: {exc}", file=sys.stderr)
+        return 1
+    except Exception as exc:  # noqa: BLE001
+        print(f"FAIL: unexpected generation error: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
     print("PASS: delivery sign-off generated")
     print(f"- package: {result.package_dir}")
