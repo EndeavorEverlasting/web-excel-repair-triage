@@ -96,8 +96,11 @@ def validate() -> dict[str, Any]:
         raise HarnessError("visual policy schema drifted")
     if policy.get("fonts", {}).get("default") != "Aptos":
         raise HarnessError("Aptos is not the visual policy default")
-    if "Carlito" not in policy.get("fonts", {}).get("forbidden", []):
-        raise HarnessError("Carlito is not explicitly forbidden")
+    expected_font_policy = "configs/webexcel_fonts_v1.json"
+    if policy.get("authorities", {}).get("font_policy") != expected_font_policy:
+        raise HarnessError("visual policy does not reference the canonical font authority")
+    if policy.get("fonts", {}).get("forbidden_fonts_authority") != expected_font_policy:
+        raise HarnessError("visual policy duplicates or loses the canonical forbidden-font authority")
     roles = policy.get("semantic_roles", {})
     required_roles = {
         "configuration", "inventory_management", "logistics_material_movement", "deployment",
