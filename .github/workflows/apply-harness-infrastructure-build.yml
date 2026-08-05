@@ -1,0 +1,108 @@
+name: apply-harness-infrastructure-build
+
+on:
+  push:
+    branches:
+      - chore/harness-infrastructure-staging-20260805
+    paths:
+      - '.harness-build-payload/**'
+      - '.github/workflows/apply-harness-infrastructure-build.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: harness-infrastructure-staging-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-and-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Reconstruct bounded harness payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .harness-build-payload/part-* | base64 --decode > "$RUNNER_TEMP/harness-build.tar.gz"
+          echo '30540b4e1053962e7c481e29c431d1e7e29dd548875560b2e9a9b50eafd2829d  '"$RUNNER_TEMP/harness-build.tar.gz" | sha256sum --check --strict
+          tar -tzf "$RUNNER_TEMP/harness-build.tar.gz" | sort > "$RUNNER_TEMP/actual-files.txt"
+          cat > "$RUNNER_TEMP/expected-files.txt" <<'FILES'
+          ./.ai/skills/harness-infrastructure-maintenance/SKILL.md
+          ./.githooks/pre-commit
+          ./.githooks/pre-push
+          ./.github/workflows/harness-contract.yml
+          ./ARTIFACT_REGISTRY.md
+          ./CAPABILITIES.md
+          ./CODEBASE_MAP.md
+          ./SKILLS.md
+          ./TRIGGERS.md
+          ./WORKFLOW.md
+          ./harness/artifacts.v1.json
+          ./harness/capabilities.v1.json
+          ./harness/manifest.v1.json
+          ./harness/reports/CURRENT_STATE.md
+          ./harness/triggers.v1.json
+          ./harness/validators.v1.json
+          ./harness/workflows.v1.json
+          ./scripts/validate_harness.py
+          ./tests/test_harness_contract.py
+          FILES
+          sed -i 's/^          //' "$RUNNER_TEMP/expected-files.txt"
+          sort -o "$RUNNER_TEMP/expected-files.txt" "$RUNNER_TEMP/expected-files.txt"
+          diff -u "$RUNNER_TEMP/expected-files.txt" "$RUNNER_TEMP/actual-files.txt"
+          tar -xzf "$RUNNER_TEMP/harness-build.tar.gz"
+          chmod +x scripts/validate_harness.py .githooks/pre-commit .githooks/pre-push
+      - name: Validate operational harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile scripts/validate_harness.py tests/test_harness_contract.py
+          python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
+          python -m unittest tests.test_harness_contract -v
+          python -m unittest tests.test_prompt_kit_interactions_contract -v
+          python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_discovery -v
+          python -m unittest tests.test_prompt_language_audit -v
+          python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary
+          python -m unittest tests.test_skill_prompt_registry -v
+          python tests/test_prompt_kit_header_contract.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python -m triage.gitignore_hygiene
+          git diff --check
+      - name: Commit validated harness components
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf Outputs
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- \
+            .ai/skills/harness-infrastructure-maintenance/SKILL.md \
+            .githooks/pre-commit \
+            .githooks/pre-push \
+            .github/workflows/harness-contract.yml \
+            ARTIFACT_REGISTRY.md \
+            CAPABILITIES.md \
+            CODEBASE_MAP.md \
+            SKILLS.md \
+            TRIGGERS.md \
+            WORKFLOW.md \
+            harness/artifacts.v1.json \
+            harness/capabilities.v1.json \
+            harness/manifest.v1.json \
+            harness/reports/CURRENT_STATE.md \
+            harness/triggers.v1.json \
+            harness/validators.v1.json \
+            harness/workflows.v1.json \
+            scripts/validate_harness.py \
+            tests/test_harness_contract.py
+          git diff --cached --check
+          git commit -m 'feat(harness): build operational harness infrastructure'
+          git push origin HEAD:"${GITHUB_REF_NAME}"
