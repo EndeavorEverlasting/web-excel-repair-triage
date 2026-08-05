@@ -1,4 +1,4 @@
-name: Bootstrap P63 prompt registry
+name: Bootstrap P61 prompt registry
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
       - feat/prompt-kit-clone-enter-repo
     paths:
       - scripts/_bootstrap_add_p63.py
+      - scripts/_bootstrap_run_p61.py
       - .github/workflows/_bootstrap-p63.yml
 
 permissions:
@@ -22,17 +23,17 @@ jobs:
         with:
           python-version: '3.12'
       - name: Apply canonical registry update and rebuild outputs
-        run: python scripts/_bootstrap_add_p63.py
+        run: python scripts/_bootstrap_run_p61.py
       - name: Validate JSON and generated surfaces
         run: |
           python -m json.tool docs/prompts.json >/dev/null
           python -m py_compile build_prompt_kit.py
           git diff --check
-          grep -q '"id": "P63"' docs/prompts.json
+          grep -q '"id": "P61"' docs/prompts.json
           grep -q 'Existing Repository Clone + Working-Directory Bootstrapper' docs/prompt-kit.html
           grep -q 'Existing Repository Clone + Working-Directory Bootstrapper' web/prompt-kit/index.html
       - name: Remove one-time bootstrap machinery
-        run: git rm scripts/_bootstrap_add_p63.py .github/workflows/_bootstrap-p63.yml
+        run: git rm scripts/_bootstrap_add_p63.py scripts/_bootstrap_run_p61.py .github/workflows/_bootstrap-p63.yml
       - name: Commit generated registry release
         run: |
           git config user.name 'github-actions[bot]'
