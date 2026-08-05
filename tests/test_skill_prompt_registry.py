@@ -21,9 +21,12 @@ class SkillPromptRegistryTests(unittest.TestCase):
         self.assertEqual(len(by_id), len(prompts))
         self.assertIn("P61", by_id)
         self.assertIn("P62", by_id)
+        self.assertIn("P63", by_id)
         self.assertEqual(by_id["P61"]["skillPath"], ".ai/skills/skill-factoring/SKILL.md")
         self.assertEqual(by_id["P62"]["class"], "AGENT HARNESS / SKILL EVALS")
+        self.assertEqual(by_id["P63"]["class"], "RECOVERY / FILE PRESERVATION")
         self.assertNotEqual(by_id["P61"]["copyContent"], by_id["P62"]["copyContent"])
+        self.assertNotEqual(by_id["P62"]["copyContent"], by_id["P63"]["copyContent"])
 
     def test_skill_eval_prompt_requires_correctness_weakness_and_efficiency_proof(self) -> None:
         prompts = build_prompt_kit_registry.load_prompt_registry()
@@ -66,6 +69,45 @@ class SkillPromptRegistryTests(unittest.TestCase):
             "DO NOT RETURN ONLY A RUBRIC",
             "Never weaken an assertion",
             "do not optimize a proxy while degrading the real task",
+        ):
+            self.assertIn(forbidden_shortcut, content)
+
+    def test_preservation_prompt_fails_closed_on_unexplained_deletions(self) -> None:
+        prompts = build_prompt_kit_registry.load_prompt_registry()
+        prompt = {item["id"]: item for item in prompts}["P63"]
+        content = prompt["copyContent"]
+
+        self.assertEqual(
+            prompt["name"],
+            "Conservative File Preservation and Cherry-Pick Closeout",
+        )
+        self.assertIn("OneDrive or sync-provider bulk-delete warning", prompt["useWhen"])
+        self.assertIn("machine-readable file disposition ledger", prompt["expectedOutput"])
+        self.assertIn("leave every disputed item preserved", prompt["nextStep"])
+        self.assertIn("sync-provider bulk deletion is not approved", prompt["proofGate"])
+
+        for phrase in (
+            "SAFETY DEFAULT",
+            "When intent is uncertain, preserve",
+            "BUILD A FILE-DISPOSITION LEDGER",
+            "Never classify by filename alone",
+            "PRESERVE UNIQUE WORK BEFORE CLEANUP",
+            "Do not use a stash as the only durable preservation record",
+            "DISTINGUISH VALID DELETIONS FROM LOSS",
+            "CHERRY-PICK SELECTIVELY",
+            "Never close or abandon the source PR/branch",
+            "compare the provider's affected count and visible paths against the ledger",
+            "git status --porcelain=v2 --branch",
+            "git ls-files --deleted",
+            "git reflog -20",
+        ):
+            self.assertIn(phrase, content)
+
+        for forbidden_shortcut in (
+            "git reset --hard",
+            "git clean -fd/-fdx",
+            "Remove-Item -Recurse -Force",
+            "do not approve deletion",
         ):
             self.assertIn(forbidden_shortcut, content)
 
@@ -133,15 +175,17 @@ class SkillPromptRegistryTests(unittest.TestCase):
             (REPO_ROOT / "Build-PromptKitWebsite.cmd").read_text(encoding="utf-8"),
         )
 
-    def test_combined_registry_build_contains_both_new_prompts(self) -> None:
+    def test_combined_registry_build_contains_all_extension_prompts(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             output = Path(temp_dir) / "prompt-kit.html"
             html = build_prompt_kit_registry.build(output)
             self.assertEqual(output.read_text(encoding="utf-8"), html)
             self.assertIn('"id": "P61"', html)
             self.assertIn('"id": "P62"', html)
+            self.assertIn('"id": "P63"', html)
             self.assertIn("Skill Factoring and Boundary Refactorer", html)
             self.assertIn("Skill Correctness and Efficiency Eval Implementer", html)
+            self.assertIn("Conservative File Preservation and Cherry-Pick Closeout", html)
 
     def test_checked_in_operator_site_is_exact_combined_build(self) -> None:
         deployed = REPO_ROOT / "web" / "prompt-kit" / "index.html"
@@ -150,7 +194,9 @@ class SkillPromptRegistryTests(unittest.TestCase):
         self.assertEqual(actual, expected)
         self.assertIn('"id": "P61"', actual)
         self.assertIn('"id": "P62"', actual)
+        self.assertIn('"id": "P63"', actual)
         self.assertIn("Skill Correctness and Efficiency Eval Implementer", actual)
+        self.assertIn("Conservative File Preservation and Cherry-Pick Closeout", actual)
 
 
 if __name__ == "__main__":

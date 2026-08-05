@@ -18,6 +18,7 @@ import build_prompt_kit  # noqa: E402
 BASE_REGISTRY = REPO_ROOT / "docs" / "prompts.json"
 EXTENSION_REGISTRIES = (
     REPO_ROOT / "registry" / "prompts" / "skill-development-prompts.v1.json",
+    REPO_ROOT / "registry" / "prompts" / "preservation-closeout-prompts.v1.json",
 )
 ACTIONABILITY_POLICY = (
     REPO_ROOT / "registry" / "prompts" / "actionable-next-step-policy.v1.json"
