@@ -4,58 +4,75 @@ This is the repository skill index. Reusable procedures live under `.ai/skills/<
 
 ## Skill selection rules
 
-1. Read `AGENTS.md`, `CODEBASE_MAP.md`, `WORKFLOW.md`, `CAPABILITIES.md`, `TRIGGERS.md`, and `harness/manifest.v1.json` first.
+1. Read `AGENTS.md`, `CODEBASE_MAP.md`, `WORKFLOW.md`, `CAPABILITIES.md`, `TRIGGERS.md`, and `harness/manifest.v1.json`.
 2. Select a skill only when a registered trigger matches and no forbidden condition applies.
-3. Prefer one primary skill/capability owner; add a second only for a distinct downstream phase.
-4. Do not use skills to bypass protected inputs, credentials, validation, or proof boundaries.
-5. Update skill, capability, trigger, manifest, tests, and docs atomically when ownership changes.
-6. Prompt Kit card interactions are deterministic product behavior. Their versioned requirements live in `harness/contracts/prompt-kit-interactions.v1.json` and Workflow B; a skill may help design downstream evals but must not become the only implementation of click, double-click, dismissal, clipboard, or focus behavior.
+3. Prefer one primary skill/capability owner; add another only for a distinct downstream phase.
+4. Do not use skills to bypass protected inputs, credentials, validators, or proof boundaries.
+5. Update skill, capability, trigger, manifest, tests, docs, hooks/CI, and reports atomically when ownership changes.
+6. Skills describe repeatable judgment and procedure. Product behavior remains in deterministic code and contracts.
 
 ## Active repository skills
+
+### Harness infrastructure maintenance
+
+- **Path:** `.ai/skills/harness-infrastructure-maintenance/SKILL.md`
+- **Trigger:** `harness-infrastructure-change`
+- **Capability:** `harness-infrastructure-maintenance`
+- **Use when:** Maps, workflow/artifact/validator registries, validators, hooks, skills, reports, or component ownership are missing, stale, disconnected, or failing.
+- **Forbidden scope:** `AGENTS.md`, product implementation, secrets, destructive cleanup.
+- **Outputs:** Canonical harness repairs, completeness report, regression tests, current-state report, commit/PR evidence, and an actionable next command.
+- **Primary validation:** `python scripts/validate_harness.py --report Outputs/harness-completeness-report.json` and `python -m unittest tests.test_harness_contract -v`.
 
 ### Prompt language audit
 
 - **Path:** `.ai/skills/prompt-language-audit/SKILL.md`
-- **Trigger:** Prompt registry/policy/builder/generated language changes, or empty/lazy next-action language is suspected.
+- **Triggers:** `prompt-language-change`, `lazy-next-action-report`
 - **Capability:** `prompt-language-audit`
-- **Inputs:** Every canonical registry, effective builder output, actionability policy, eval policy, fixtures, and known failures.
-- **Outputs:** Complete inventory, one disposition per prompt, stable findings, machine-readable report, and canonical-source repairs when authorized.
+- **Inputs:** Canonical registries, effective builder output, actionability policy, eval policy, fixtures, and known failures.
+- **Outputs:** Complete inventory, one disposition per prompt, stable findings, machine-readable report, and authorized canonical-source repairs.
 - **Primary validation:** `python -m unittest tests.test_prompt_language_audit -v` and `python scripts/evaluate_prompt_language.py --summary`.
 
 ### Skill evaluation
 
 - **Path:** `.ai/skills/skill-evaluation/SKILL.md`
-- **Trigger:** A target skill's correctness, routing, failure behavior, regression safety, performance, cost, or token efficiency lacks executable proof.
-- **Capability:** `skill-evaluation`; Prompt Kit owner P62 — Skill Correctness and Efficiency Eval Implementer.
-- **Inputs:** Target skill/contracts, known failures, representative cases, unit/integration surfaces, and baseline traces.
-- **Outputs:** Versioned eval cases, runner, machine-readable results, finding-to-repair ledger, and before/after measurements.
-- **Primary validation:** Target-repository eval suite plus unit, integration, regression, profiling, and token/cost evidence appropriate to the claim.
-- **Prompt Kit interaction boundary:** P62 may build downstream eval coverage around `harness/contracts/prompt-kit-interactions.v1.json`, but product behavior remains owned by the canonical Prompt Kit source and Workflow B.
+- **Trigger:** `skill-quality-unproven`
+- **Capability:** `skill-evaluation`; Prompt Kit owner P62.
+- **Outputs:** Versioned cases, runner, machine-readable results, repair ledger, and before/after correctness and efficiency evidence.
+- **Boundary:** May evaluate product behavior but cannot become the product implementation.
 
 ### Skill factoring
 
 - **Path:** `.ai/skills/skill-factoring/SKILL.md`
-- **Trigger:** A skill is oversized, overlapping, ambiguous, prompt-only, or lacks testable boundaries.
+- **Trigger:** `skill-boundary-defect`
 - **Capability:** `skill-factoring`; Prompt Kit owner P61.
 - **Outputs:** `KEEP`, `SPLIT`, `MERGE`, `RETIRE`, or `REWIRE` dispositions; repaired skills/routing; boundary fixtures.
 
 ### Technician Prompt Kit acquisition
 
 - **Path:** `.ai/skills/technician-prompt-kit-acquisition/SKILL.md`
-- **Trigger:** A technician needs to clone, safely update, validate, and open the latest `main` Prompt Kit through Windows GUI/CMD.
+- **Trigger:** `technician-needs-latest-prompt-kit`
 - **Capability:** `technician-prompt-kit-acquisition`
 - **Forbidden conditions:** Dirty worktree, wrong origin, non-main branch, local-only commits, divergence, missing tools/files.
-- **Primary validation:** harness validator/contracts plus native Windows field proof.
+- **Primary validation:** Harness validator/contracts plus native Windows field proof.
 
 ## Required skill-file sections
 
-Every active `SKILL.md` must include `## Trigger`, `## Required inputs`, `## Outputs`, `## Procedure`, `## Guardrails`, `## Validation`, and `## Proof ceiling`.
+Every active `SKILL.md` must include:
+
+- `## Trigger`
+- `## Required inputs`
+- `## Outputs`
+- `## Procedure`
+- `## Guardrails`
+- `## Validation`
+- `## Proof ceiling`
 
 ## Adding, repairing, or retiring a skill
 
-1. Use P61 for ownership factoring and inspect all consumers.
-2. Update `SKILLS.md`, `CAPABILITIES.md`, `TRIGGERS.md`, machine-readable registries, and manifest references atomically.
-3. Preserve unique useful procedures before retirement.
-4. Add positive, negative, boundary, malformed-input, and regression validation appropriate to the skill.
-5. Use P62 to implement correctness and efficiency evals.
-6. Report the preservation destination, executed proof, and proof ceiling.
+1. Inspect all triggers, capabilities, workflows, consumers, validators, and historical failures.
+2. Use skill factoring when ownership is ambiguous.
+3. Update `SKILLS.md`, `CAPABILITIES.md`, `TRIGGERS.md`, machine registries, manifest, tests, hooks/CI, and reports atomically.
+4. Preserve unique useful procedures before retirement.
+5. Add positive, negative, boundary, malformed-input, and regression validation.
+6. Use skill evaluation for correctness and efficiency proof.
+7. Report preservation destination, executed proof, commit/PR state, and proof ceiling.

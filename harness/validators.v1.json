@@ -1,0 +1,166 @@
+{
+  "schema_version": "web-excel-validators/v1",
+  "validators": [
+    {
+      "id": "harness-completeness",
+      "class": "contract",
+      "command": "python scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
+      "blocking": true,
+      "output": "Outputs/harness-completeness-report.json",
+      "proof_ceiling": "Static completeness, routing, registry, hook, acquisition, and connected-contract proof."
+    },
+    {
+      "id": "harness-contract-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_harness_contract -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable regression proof for registered harness contracts."
+    },
+    {
+      "id": "prompt-kit-interaction-contract-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_prompt_kit_interactions_contract -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Interaction contract and static fixture proof."
+    },
+    {
+      "id": "prompt-kit-interaction-audit",
+      "class": "contract",
+      "command": "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
+      "blocking": true,
+      "output": "Outputs/prompt-kit-interaction-audit.json",
+      "proof_ceiling": "Static contract audit; non-strict mode may retain a product implementation gap."
+    },
+    {
+      "id": "prompt-kit-discovery-audit",
+      "class": "contract",
+      "command": "python scripts/validate_prompt_kit_discovery.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static prompt discovery and registration proof."
+    },
+    {
+      "id": "prompt-kit-discovery-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_prompt_kit_discovery -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable prompt discovery regression proof."
+    },
+    {
+      "id": "prompt-language-contract-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_prompt_language_audit -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Prompt-language policy and mutation-fixture proof."
+    },
+    {
+      "id": "prompt-language-audit",
+      "class": "contract",
+      "command": "python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary",
+      "blocking": true,
+      "output": "Outputs/prompt-language-audit.json",
+      "proof_ceiling": "Exhaustive static prompt-language coverage and disposition proof."
+    },
+    {
+      "id": "skill-prompt-registry-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_skill_prompt_registry -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Skill prompt registry identity and integration proof."
+    },
+    {
+      "id": "prompt-kit-header-contract",
+      "class": "test",
+      "command": "python tests/test_prompt_kit_header_contract.py",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Checked-in Prompt Kit header contract proof."
+    },
+    {
+      "id": "prompt-kit-parity",
+      "class": "build",
+      "command": "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
+      "blocking": true,
+      "output": "web/prompt-kit/index.html",
+      "proof_ceiling": "Deterministic source-to-generated-site parity."
+    },
+    {
+      "id": "artifact-hygiene",
+      "class": "lint",
+      "command": "python -m triage.gitignore_hygiene",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Tracked and ignored artifact-path policy proof."
+    },
+    {
+      "id": "patch-hygiene",
+      "class": "lint",
+      "command": "git diff --check",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Whitespace and conflict-marker proof for the current diff."
+    },
+    {
+      "id": "patch-hygiene-staged",
+      "class": "lint",
+      "command": "git diff --cached --check",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Whitespace and conflict-marker proof for the staged index."
+    }
+  ],
+  "profiles": {
+    "harness": [
+      "harness-completeness",
+      "harness-contract-tests",
+      "prompt-kit-interaction-contract-tests",
+      "prompt-kit-interaction-audit",
+      "prompt-kit-discovery-audit",
+      "prompt-kit-discovery-tests",
+      "prompt-language-contract-tests",
+      "prompt-language-audit",
+      "skill-prompt-registry-tests",
+      "prompt-kit-header-contract",
+      "prompt-kit-parity",
+      "artifact-hygiene",
+      "patch-hygiene"
+    ],
+    "pre_commit": [
+      "harness-completeness",
+      "harness-contract-tests",
+      "patch-hygiene-staged"
+    ],
+    "pre_push": [
+      "harness-completeness",
+      "harness-contract-tests",
+      "prompt-kit-interaction-contract-tests",
+      "prompt-kit-interaction-audit",
+      "prompt-kit-discovery-audit",
+      "prompt-kit-discovery-tests",
+      "prompt-language-contract-tests",
+      "prompt-language-audit",
+      "skill-prompt-registry-tests",
+      "prompt-kit-header-contract",
+      "prompt-kit-parity",
+      "artifact-hygiene",
+      "patch-hygiene"
+    ]
+  },
+  "hooks": {
+    "pre_commit": {
+      "path": ".githooks/pre-commit",
+      "profile": "pre_commit",
+      "index_mode": "staged-tree"
+    },
+    "pre_push": {
+      "path": ".githooks/pre-push",
+      "profile": "pre_push",
+      "index_mode": "working-tree"
+    }
+  }
+}
