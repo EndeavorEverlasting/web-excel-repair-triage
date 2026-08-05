@@ -10,6 +10,9 @@
     "skill_index": "SKILLS.md",
     "capability_index": "CAPABILITIES.md",
     "trigger_index": "TRIGGERS.md",
+    "workflow_registry": "harness/workflows.v1.json",
+    "artifact_registry_machine": "harness/artifacts.v1.json",
+    "validator_registry": "harness/validators.v1.json",
     "capability_registry": "harness/capabilities.v1.json",
     "trigger_registry": "harness/triggers.v1.json",
     "prompt_language_eval_policy": "harness/evals/prompt-language-audit.v1.json",
@@ -41,6 +44,7 @@
     }
   },
   "skills": [
+    ".ai/skills/harness-infrastructure-maintenance/SKILL.md",
     ".ai/skills/prompt-language-audit/SKILL.md",
     ".ai/skills/skill-evaluation/SKILL.md",
     ".ai/skills/skill-factoring/SKILL.md",
@@ -68,7 +72,7 @@
     }
   },
   "validation_order": [
-    "python scripts/validate_harness.py",
+    "python scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
     "python -m unittest tests.test_harness_contract -v",
     "python -m unittest tests.test_prompt_kit_interactions_contract -v",
     "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
