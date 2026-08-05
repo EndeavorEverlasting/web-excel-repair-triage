@@ -37,6 +37,8 @@ jobs:
             exit 1
           fi
           tar -xzf /tmp/delivery-signoff-hardening.tar.gz
+          sed -i 's#ROOT / "trigger.json"#ROOT / "triggers/delivery-signoff-generation.json"#' tests/test_delivery_signoff_trigger.py
+          grep -F 'triggers/delivery-signoff-generation.json' tests/test_delivery_signoff_trigger.py
           chmod +x scripts/generate_delivery_signoff.py scripts/validate_delivery_signoff_harness.py scripts/evaluate_delivery_signoff_trigger.py .githooks/pre-commit-delivery-signoff
       - name: Install render and test dependencies
         run: |
