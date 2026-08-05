@@ -1,4 +1,9 @@
 #!/bin/sh
 set -eu
-python scripts/validate_delivery_signoff_harness.py
+
+staged_tree="$(mktemp -d "${TMPDIR:-/tmp}/triage-delivery-signoff-index.XXXXXX")"
+trap 'rm -rf "$staged_tree"' EXIT HUP INT TERM
+
+git checkout-index --all --prefix="$staged_tree/"
+python "$staged_tree/scripts/validate_delivery_signoff_harness.py"
 git diff --check --cached

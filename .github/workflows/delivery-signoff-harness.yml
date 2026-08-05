@@ -10,6 +10,7 @@ on:
       - 'triggers/delivery-signoff-generation.json'
       - 'scripts/validate_delivery_signoff_harness.py'
       - '.githooks/pre-commit-delivery-signoff'
+      - 'tests/test_delivery_signoff_harness_validator.py'
       - 'reports/harness/delivery-signoff-state.md'
       - '.github/workflows/delivery-signoff-harness.yml'
   push:
@@ -30,11 +31,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install focused test dependency
+        run: python -m pip install --disable-pip-version-check pytest
       - name: Validate delivery sign-off harness completeness
         run: |
           set -o pipefail
           mkdir -p artifacts/validation
           python scripts/validate_delivery_signoff_harness.py | tee artifacts/validation/delivery-signoff-harness.txt
+      - name: Exercise fail-closed manifest rules
+        run: python -m pytest -q tests/test_delivery_signoff_harness_validator.py
       - name: Compile harness validator
         run: python -m py_compile scripts/validate_delivery_signoff_harness.py
       - name: Check patch whitespace
