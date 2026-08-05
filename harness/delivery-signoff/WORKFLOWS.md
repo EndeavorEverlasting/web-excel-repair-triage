@@ -21,7 +21,7 @@ python scripts/generate_delivery_signoff.py <spec.json> --output-root Outputs/de
 6. The generator constructs a clean editable DOCX, chooses portrait or landscape from content density, renders it through LibreOffice, rasterizes every PDF page with `pdftoppm`, reconciles serialized identifiers against the DOCX XML, scans stale-content tokens, and writes a contained manifest plus validation log.
 7. Serial numbers remain primary; MACs stay paired with their serials. Temporary hostnames are not rendered into the primary verification drawbox.
 8. Every separately counted line remains distinct. Cable types require explicit model and color/variant.
-9. One page is preferred, two pages are the maximum, and text never drops below 8.5 points.
+9. One page is preferred, the two-page maximum is enforced, and text never drops below 8.5 points.
 10. The field-notes area expands for low-density equipment receipts so the page remains useful rather than mostly blank.
 
 ## Validate before commit
