@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -39,8 +42,8 @@ def test_generates_serial_first_group_and_reconciles_counts(tmp_path: Path) -> N
             "identifiers": [
                 {"serial_number": "1100000001", "mac_address": "AA:BB:CC:00:00:01"},
                 {"serial_number": "1100000002", "mac_address": "AA:BB:CC:00:00:02"},
-                {"serial_number": "1100000003", "mac_address": ""}
-            ]
+                {"serial_number": "1100000003", "mac_address": ""},
+            ],
         }
     ]
     source = tmp_path / "serial-signoff.json"
@@ -50,6 +53,28 @@ def test_generates_serial_first_group_and_reconciles_counts(tmp_path: Path) -> N
     assert manifest["serialized_assets_expected"] is True
     assert manifest["serial_counts"]["Neuron"] == {"declared": 3, "rendered": 3, "duplicates": 0}
     assert "1100000001 / AA:BB:CC:00:00:01" in _docx_xml(result.docx_path)
+
+
+def test_cli_runs_without_pythonpath(tmp_path: Path) -> None:
+    env = os.environ.copy()
+    env.pop("PYTHONPATH", None)
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/generate_delivery_signoff.py",
+            str(FIXTURES / "huntington_hospital_20260805.json"),
+            "--output-root",
+            str(tmp_path / "cli-out"),
+        ],
+        cwd=Path(__file__).parents[1],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert "PASS: delivery sign-off generated" in completed.stdout
+    assert list((tmp_path / "cli-out").rglob("delivery-signoff-artifact-manifest.json"))
 
 
 def test_rejects_invalid_quantity(tmp_path: Path) -> None:
@@ -68,8 +93,8 @@ def test_rejects_duplicate_serials(tmp_path: Path) -> None:
             "asset_type": "Neuron",
             "identifiers": [
                 {"serial_number": "1100000001"},
-                {"serial_number": "1100000001"}
-            ]
+                {"serial_number": "1100000001"},
+            ],
         }
     ]
     source = tmp_path / "bad-serials.json"
