@@ -33,7 +33,7 @@ jobs:
           grep -q 'xyz_repository_url_or_owner_name' web/prompt-kit/index.html
           grep -q 'set terminal directory' build_prompt_kit.py
       - name: Remove one-time bootstrap machinery
-        run: git rm scripts/_bootstrap_add_p63.py scripts/_bootstrap_run_p61.py .github/workflows/_bootstrap-p63.yml
+        run: git rm -f scripts/_bootstrap_add_p63.py scripts/_bootstrap_run_p61.py .github/workflows/_bootstrap-p63.yml
       - name: Commit generated registry release
         run: |
           git config user.name 'github-actions[bot]'
