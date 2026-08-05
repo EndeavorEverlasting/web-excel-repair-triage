@@ -42,9 +42,7 @@
     "webexcel_font_compatibility": {
       "policy": "configs/webexcel_fonts_v1.json",
       "default_font": "Aptos",
-      "forbidden_fonts": [
-        "Carlito"
-      ],
+      "forbidden_fonts": ["Carlito"],
       "codebase_map": "harness/webexcel-fonts/CODEBASE_MAP.md",
       "workflow": "harness/webexcel-fonts/WORKFLOWS.md",
       "artifact_registry": "harness/webexcel-fonts/ARTIFACT_REGISTRY.md",
@@ -60,6 +58,28 @@
       "ci_workflow": ".github/workflows/webexcel-font-harness.yml",
       "artifact_gate": "python scripts/validate_webexcel_fonts.py --workbook <path> --require-workbook --output Outputs/webexcel-font-validation.json --summary",
       "proof_ceiling": "Static source and OOXML font declarations; Excel for Web visual rendering remains field proof."
+    },
+    "workbook_visual_integrity": {
+      "policy": "configs/workbook_visual_integrity_v1.json",
+      "profile_schema": "schemas/workbook-visual-profile.schema.json",
+      "result_schema": "schemas/workbook-visual-validation-result.schema.json",
+      "codebase_map": "harness/workbook-visual-integrity/CODEBASE_MAP.md",
+      "workflow": "harness/workbook-visual-integrity/WORKFLOWS.md",
+      "artifact_registry": "harness/workbook-visual-integrity/ARTIFACT_REGISTRY.md",
+      "registry": "harness/workbook-visual-integrity/registry.json",
+      "generator_bindings": "harness/workbook-visual-integrity/generator-bindings.v1.json",
+      "cross_repo_contract": "harness/workbook-visual-integrity/fun-triage-contract.v1.json",
+      "validator": "scripts/validate_workbook_visual_integrity.py",
+      "completeness_validator": "scripts/validate_workbook_visual_harness.py",
+      "contract_tests": [
+        "tests/test_workbook_visual_integrity.py",
+        "tests/test_workbook_visual_harness.py"
+      ],
+      "skill": ".ai/skills/workbook-visual-integrity/SKILL.md",
+      "operator_report": "reports/harness/workbook-visual-integrity-state.md",
+      "ci_workflow": ".github/workflows/workbook-visual-integrity.yml",
+      "artifact_gate": "python scripts/validate_workbook_visual_integrity.py --workbook <path> --profile <profile.json> --output Outputs/workbook-visual-validation.json --summary",
+      "proof_ceiling": "Static OOXML color, formatting, range, layout, and baseline-preservation proof; Excel for Web rendering remains field proof."
     }
   },
   "skills": [
@@ -94,6 +114,9 @@
     "python scripts/validate_webexcel_font_harness.py --output Outputs/webexcel-font-harness.json --summary",
     "python -m unittest tests.test_webexcel_font_compatibility tests.test_webexcel_font_harness -v",
     "python scripts/validate_webexcel_fonts.py --scan-source --output Outputs/webexcel-font-validation.json --summary",
+    "python scripts/validate_workbook_visual_harness.py --output Outputs/workbook-visual-harness.json --summary",
+    "python -m unittest tests.test_workbook_visual_integrity tests.test_workbook_visual_harness -v",
+    "python scripts/validate_workbook_visual_integrity.py --validate-profiles --output Outputs/workbook-visual-profile-audit.json --summary",
     "python -m unittest tests.test_harness_contract -v",
     "python -m unittest tests.test_prompt_kit_interactions_contract -v",
     "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
