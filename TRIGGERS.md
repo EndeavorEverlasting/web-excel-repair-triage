@@ -6,21 +6,22 @@ This file describes deterministic routing into repository skills and capabilitie
 
 | Trigger ID | Route when | Capability | Do not route when |
 |---|---|---|---|
-| `prompt-language-change` | Prompt registry, actionability policy, builder, or generated Prompt Kit language changes; or a request asks for a full language pass. | `prompt-language-audit` | The request is only to read an already generated report. |
-| `lazy-next-action-report` | Empty, placeholder, observation-only, PR/status/log-only, optional-only, or generic next actions are suspected. | `prompt-language-audit` | No canonical registry or effective builder is available; route first to repository intake. |
-| `skill-quality-unproven` | A skill exists but correctness, boundary behavior, regression safety, efficiency, or token use lacks executable evidence. | `skill-evaluation` | The task is only skill ownership factoring with no eval implementation requested. |
-| `skill-boundary-defect` | A skill is oversized, overlapping, ambiguous, prompt-only, or owns multiple unrelated triggers. | `skill-factoring` | The skill boundary is healthy and only cosmetic text changes are requested. |
-| `technician-needs-latest-prompt-kit` | A technician needs a mouse-accessible clone/update/validate/open path for the current main Prompt Kit. | `technician-prompt-kit-acquisition` | The checkout is dirty, divergent, on a non-main branch, or has an unexpected origin. |
+| `harness-infrastructure-change` | Maps, workflow/artifact/validator registries, completeness checks, hooks, skills, reports, or ownership are missing, stale, disconnected, or failing. | `harness-infrastructure-maintenance` | The task changes `AGENTS.md`, implements product behavior only, requires secrets, or requests destructive cleanup. |
+| `prompt-language-change` | Prompt registry, actionability policy, builder, or generated Prompt Kit language changes; or a full language pass is requested. | `prompt-language-audit` | The request is only to read an existing validated report. |
+| `lazy-next-action-report` | Empty, placeholder, observation-only, PR/status/log-only, optional-only, or generic next actions are suspected. | `prompt-language-audit` | No canonical registry/effective builder exists; route to repository intake first. |
+| `skill-quality-unproven` | Skill correctness, routing, regression safety, efficiency, or token use lacks executable proof. | `skill-evaluation` | The task is ownership factoring only. |
+| `skill-boundary-defect` | A skill is oversized, overlapping, ambiguous, prompt-only, or owns unrelated triggers. | `skill-factoring` | The boundary is healthy and the change is cosmetic only. |
+| `technician-needs-latest-prompt-kit` | A technician needs a mouse-accessible clone/update/validate/open path for current `main`. | `technician-prompt-kit-acquisition` | The checkout is dirty, divergent, non-main, or has an unexpected origin. |
 
 ## Routing procedure
 
 1. Match concrete repository state and request language against `harness/triggers.v1.json`.
-2. Reject any route with a matching forbidden condition.
-3. Select one primary capability and skill owner.
-4. Load its required inputs before mutation.
-5. Run the linked workflow and validators.
-6. Record the trigger ID and capability ID in the handoff.
+2. Reject a route when any forbidden condition matches.
+3. Select one primary capability, skill, and workflow ID.
+4. Load required inputs and canonical registries before mutation.
+5. Run the linked validator profile.
+6. Record trigger, capability, workflow, artifacts, validation, and proof ceiling in the handoff.
 
 ## Collision rule
 
-Prompt-language audit may run read-only beside another lane, but repair mode owns canonical prompt registries, policies, tests, and generated Prompt Kit output. Skill-evaluation implementation owns the target skill's eval files and directly related repairs. Shared registries, workflows, or generated artifacts require one explicit writer.
+One writer owns each shared registry, workflow, generated artifact, branch, PR, or mutable runtime. Read-only audits may run in parallel only when they cannot invalidate the writer's floor. Harness infrastructure may modify contracts, registries, validators, tests, hooks, CI, skills, and reports; it may not silently take ownership of product implementation or governance.

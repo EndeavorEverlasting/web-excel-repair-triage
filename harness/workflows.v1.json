@@ -1,0 +1,223 @@
+{
+  "schema_version": "web-excel-workflows/v1",
+  "workflows": [
+    {
+      "id": "technician-acquisition",
+      "document": "WORKFLOW.md#a-technician-acquisition-or-update",
+      "trigger": "A technician needs a mouse-accessible clone, safe fast-forward update, validation, and launch path for the current main Prompt Kit.",
+      "owned_scope": [
+        "Acquire-Latest-PromptKit.cmd",
+        "scripts/Acquire-LatestPromptKit.ps1",
+        "configs/prompt_kit/generators.v1.json",
+        "acquisition tests and reports"
+      ],
+      "forbidden_scope": [
+        "destructive Git cleanup",
+        "credential automation",
+        "force update",
+        "product behavior changes"
+      ],
+      "entry_points": [
+        "Acquire-Latest-PromptKit.cmd"
+      ],
+      "validation_profile": "harness",
+      "failure_policy": "Preserve the checkout and report the exact Git, network, authentication, origin, branch, divergence, required-file, or parity failure.",
+      "handoff_fields": [
+        "destination",
+        "branch",
+        "commit",
+        "validation result",
+        "opened surface",
+        "remaining runtime gates"
+      ]
+    },
+    {
+      "id": "prompt-kit-change",
+      "document": "WORKFLOW.md#b-prompt-registry-or-website-change",
+      "trigger": "Canonical prompts, policies, reference data, builder behavior, generator options, checked-in HTML, or Prompt Kit interaction contracts change.",
+      "owned_scope": [
+        "canonical registry sources",
+        "builders",
+        "focused contracts",
+        "fixtures",
+        "tests",
+        "deterministic generated output"
+      ],
+      "forbidden_scope": [
+        "generated-HTML-only repair",
+        "unregistered prompt mutation",
+        "inflated browser or provider proof"
+      ],
+      "entry_points": [
+        "scripts/build_prompt_kit_registry.py",
+        "scripts/validate_prompt_kit_interactions.py"
+      ],
+      "validation_profile": "harness",
+      "failure_policy": "Repair canonical sources or contract drift; never weaken parity, coverage, or interaction requirements merely to turn CI green.",
+      "handoff_fields": [
+        "source files",
+        "generated artifact",
+        "parity result",
+        "audit report",
+        "browser proof ceiling"
+      ]
+    },
+    {
+      "id": "harness-infrastructure",
+      "document": "WORKFLOW.md#c-harness-infrastructure-change",
+      "trigger": "Maps, workflow specifications, registries, validators, hooks, skills, reports, acquisition surfaces, or versioned domain contracts are missing, stale, or inconsistent.",
+      "owned_scope": [
+        "CODEBASE_MAP.md",
+        "WORKFLOW.md",
+        "ARTIFACT_REGISTRY.md",
+        "SKILLS.md",
+        "CAPABILITIES.md",
+        "TRIGGERS.md",
+        "harness/**",
+        "scripts/validate_harness.py",
+        "tests/test_harness_contract.py",
+        ".githooks/**",
+        ".github/workflows/harness-contract.yml"
+      ],
+      "forbidden_scope": [
+        "AGENTS.md",
+        "product implementation",
+        "secrets",
+        "destructive cleanup"
+      ],
+      "entry_points": [
+        "scripts/validate_harness.py",
+        "tests/test_harness_contract.py"
+      ],
+      "validation_profile": "harness",
+      "failure_policy": "Repair the canonical component or registry owner, add a regression test, rerun the first failing gate, then run the full harness profile.",
+      "handoff_fields": [
+        "component inventory",
+        "validator results",
+        "report path",
+        "commit",
+        "push or PR state",
+        "next executable command"
+      ]
+    },
+    {
+      "id": "artifact-engine-change",
+      "document": "WORKFLOW.md#d-workbook-or-artifact-engine-change",
+      "trigger": "A triage engine, workbook contract, schema, fixture, or generated artifact behavior changes.",
+      "owned_scope": [
+        "triage/**",
+        "sanitized fixtures",
+        "focused engine tests",
+        "approved Outputs paths"
+      ],
+      "forbidden_scope": [
+        "writes to Candidates/",
+        "writes to Active/",
+        "private workbook publication",
+        "unproven Excel for Web acceptance"
+      ],
+      "entry_points": [
+        "python -m pytest",
+        "python -m triage.gitignore_hygiene"
+      ],
+      "validation_profile": "artifact-engine",
+      "failure_policy": "Preserve protected inputs, reproduce with sanitized fixtures, repair the focused engine, and distinguish static proof from Excel or operator proof.",
+      "handoff_fields": [
+        "input fixture",
+        "output artifact",
+        "focused test result",
+        "hygiene result",
+        "runtime proof ceiling"
+      ]
+    },
+    {
+      "id": "pr-floor-integration",
+      "document": "WORKFLOW.md#e-pr-floor-cleanup-and-integration",
+      "trigger": "Work is stacked, divergent, superseded, or blocked across branches or pull requests.",
+      "owned_scope": [
+        "branch and PR evidence",
+        "dependency ordering",
+        "conflict repair",
+        "preservation of unique commits"
+      ],
+      "forbidden_scope": [
+        "force push",
+        "deleting unique work",
+        "destructive cleanup",
+        "merging with unresolved required checks"
+      ],
+      "entry_points": [
+        "git status --short",
+        "git log --oneline --decorate -5"
+      ],
+      "validation_profile": "harness",
+      "failure_policy": "Stop destructive integration, preserve unique work, identify the exact dependency or conflict, and provide the safest executable next action.",
+      "handoff_fields": [
+        "base",
+        "head",
+        "unique commits",
+        "checks",
+        "review findings",
+        "merge blocker"
+      ]
+    },
+    {
+      "id": "prompt-language-audit",
+      "document": "WORKFLOW.md#f-prompt-language-audit-or-repair",
+      "trigger": "Prompt language changes or lazy, placeholder, observation-only, status-only, or non-executable next actions are suspected.",
+      "owned_scope": [
+        "prompt registries",
+        "actionability policy",
+        "prompt-language eval policy",
+        "fixtures",
+        "audit report"
+      ],
+      "forbidden_scope": [
+        "generated-HTML-only repair",
+        "sampled-only coverage",
+        "provider-compliance claims"
+      ],
+      "entry_points": [
+        "scripts/evaluate_prompt_language.py"
+      ],
+      "validation_profile": "harness",
+      "failure_policy": "Stop on coverage or identity drift; repair canonical registry or builder ownership before interpreting language findings.",
+      "handoff_fields": [
+        "prompt count",
+        "disposition count",
+        "finding ledger",
+        "strict result",
+        "generated parity"
+      ]
+    },
+    {
+      "id": "skill-evaluation",
+      "document": "WORKFLOW.md#g-skill-evaluation-build",
+      "trigger": "A skill lacks executable correctness, routing, regression, performance, cost, or token-efficiency evidence.",
+      "owned_scope": [
+        "target skill eval contract",
+        "fixtures",
+        "runner",
+        "machine-readable results",
+        "directly related repairs"
+      ],
+      "forbidden_scope": [
+        "moving deterministic product behavior into prose",
+        "weakening safety gates",
+        "unmeasured efficiency claims"
+      ],
+      "entry_points": [
+        "Prompt Kit P62"
+      ],
+      "validation_profile": "target-repository",
+      "failure_policy": "Reproduce the weakness, repair the smallest owned boundary, and rerun correctness before accepting efficiency changes.",
+      "handoff_fields": [
+        "baseline",
+        "cases",
+        "runner",
+        "before and after results",
+        "remaining runtime gates"
+      ]
+    }
+  ]
+}
