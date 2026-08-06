@@ -41,6 +41,16 @@
       "workflow": "WORKFLOW.md#b-prompt-registry-or-website-change",
       "harness_gate": "python scripts/validate_prompt_kit_discovery.py --summary",
       "strict_product_gate": "python -m unittest tests.test_prompt_kit_discovery -v"
+    },
+    "prompt_kit_portability": {
+      "contract": "harness/contracts/prompt-kit-portability.v1.json",
+      "doctrine": "docs/PROMPT_KIT_PORTABILITY.md",
+      "runtime": "docs/prompt-kit-favorites-portability.js",
+      "validator": "scripts/validate_prompt_kit_portability.py",
+      "contract_tests": "tests/test_prompt_kit_portability.py",
+      "workflow": "WORKFLOW.md#b-prompt-registry-or-website-change",
+      "harness_gate": "python scripts/validate_prompt_kit_portability.py --summary",
+      "strict_product_gate": "python -m unittest tests.test_prompt_kit_portability -v"
     }
   },
   "skills": [
@@ -78,6 +88,8 @@
     "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
     "python scripts/validate_prompt_kit_discovery.py --summary",
     "python -m unittest tests.test_prompt_kit_discovery -v",
+    "python scripts/validate_prompt_kit_portability.py --summary",
+    "python -m unittest tests.test_prompt_kit_portability -v",
     "python -m unittest tests.test_prompt_language_audit -v",
     "python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary",
     "python -m unittest tests.test_skill_prompt_registry -v",
