@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 POLICY = ROOT / "harness" / "contracts" / "prompt-kit-portability.v1.json"
 DOCTRINE = ROOT / "docs" / "PROMPT_KIT_PORTABILITY.md"
 RUNTIME = ROOT / "docs" / "prompt-kit-favorites-portability.js"
-BUILDER = ROOT / "build_prompt_kit.py"
+BUILDER = ROOT / "scripts" / "build_prompt_kit_registry.py"
 SITE = ROOT / "web" / "prompt-kit" / "index.html"
 WORKFLOW = ROOT / ".github" / "workflows" / "prompt-kit-web.yml"
 MANIFEST = ROOT / "harness" / "manifest.v1.json"
@@ -161,15 +161,17 @@ def validate_repository_surfaces() -> dict:
             "mergePortableFavorites",
             "migrateLegacyFavoriteStorage",
             "PORTABLE_FAVORITES_MAX_BYTES=65536",
-            "never",
+            "favorite_prompt_ids",
+            "unknown_prompt_ids",
         ),
     )
     builder = require_text(
         BUILDER,
         (
-            "PORTABILITY_JS_PATH",
+            "PORTABILITY_RUNTIME",
             "prompt-kit-favorites-portability.js",
-            "for script_path in (JS_PATH, PORTABILITY_JS_PATH)",
+            "_embed_portability_runtime",
+            "html.count(marker) != 1",
         ),
     )
     site = require_text(
@@ -193,7 +195,7 @@ def validate_repository_surfaces() -> dict:
     manifest = require_text(
         MANIFEST,
         (
-            '"prompt_kit_portability_contract"',
+            '"prompt_kit_portability"',
             "harness/contracts/prompt-kit-portability.v1.json",
             "python scripts/validate_prompt_kit_portability.py --summary",
         ),
