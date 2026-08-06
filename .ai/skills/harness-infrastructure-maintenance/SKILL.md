@@ -33,9 +33,11 @@ Do not use this skill for governance-contract changes in `AGENTS.md`, product im
 5. Repair the canonical owner rather than adding a competing map, registry, validator, hook, or report.
 6. Update human indexes, machine registries, validator logic, tests, hooks, CI path filters, and operator state atomically when ownership or commands change.
 7. Make pre-commit validation inspect the staged index, not unrelated unstaged work. Keep pre-push validation exhaustive and non-destructive.
-8. Run focused compilation, `scripts/validate_harness.py --report Outputs/harness-completeness-report.json`, harness contract tests, connected validators, broader affected tests, and `git diff --check`.
-9. Commit coherent owned files with a useful message, push normally, and open or update a focused PR.
-10. Hand off with exact files, artifacts, commands/results, commit, push/PR state, blockers, skipped checks, proof achieved, final Git state, and a next command that retrieves and exercises the unmerged work safely.
+8. Keep repository hooks local and opt-in. Install them through `python scripts/install_local_hooks.py`; never change global Git hook configuration.
+9. Run the staged path-only artifact gate before staged-tree validation. Reject live/generated evidence and machine-local junk without opening or printing file contents; allow normal code/docs and sanitized fixture paths.
+10. Run focused compilation, `scripts/validate_harness.py --report Outputs/harness-completeness-report.json`, harness contract tests, connected validators, broader affected tests, and `git diff --check`.
+11. Commit coherent owned files with a useful message, push normally, and open or update a focused PR.
+12. Hand off with exact files, artifacts, commands/results, commit, push/PR state, blockers, skipped checks, proof achieved, final Git state, and a next command that retrieves and exercises the unmerged work safely.
 
 ## Guardrails
 
@@ -44,13 +46,16 @@ Do not use this skill for governance-contract changes in `AGENTS.md`, product im
 - Never write generated output into `Candidates/` or `Active/`.
 - Never weaken validators, fixtures, schemas, or proof language to make a check pass.
 - Never reset, clean, force-push, delete unique work, embed credentials, or disclose private workbook data.
+- Keep hooks repository-local and opt-in; do not write `--global` Git configuration.
+- Hook diagnostics may print paths and policy reasons but never staged file contents or sensitive excerpts.
+- Hooks must not start launchers, GUIs, browsers, workbook runtimes, deployments, or network activity.
 - Keep one writer per branch or worktree and preserve unrelated work.
 - Treat skills as procedures, registries as ownership, validators as proof, and reports as evidence; do not collapse them into one prose file.
 
 ## Validation
 
 ```bash
-python -m py_compile scripts/validate_harness.py tests/test_harness_contract.py
+python -m py_compile scripts/validate_harness.py scripts/validate_staged_artifacts.py scripts/install_local_hooks.py tests/test_harness_contract.py tests/test_local_hook_artifact_hygiene.py
 python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
 python -m unittest tests.test_harness_contract -v
 python -m unittest tests.test_prompt_kit_interactions_contract -v
@@ -62,7 +67,7 @@ python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audi
 python -m unittest tests.test_skill_prompt_registry -v
 python tests/test_prompt_kit_header_contract.py
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-python -m triage.gitignore_hygiene
+python scripts/validate_artifact_hygiene.py
 git diff --check
 ```
 

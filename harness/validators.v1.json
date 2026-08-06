@@ -92,10 +92,10 @@
     {
       "id": "artifact-hygiene",
       "class": "lint",
-      "command": "python -m triage.gitignore_hygiene",
+      "command": "python scripts/validate_artifact_hygiene.py",
       "blocking": true,
       "output": "process log",
-      "proof_ceiling": "Tracked and ignored artifact-path policy proof."
+      "proof_ceiling": "Tracked-path, staged-path policy, local hook configuration, remediation, and false-positive regression proof."
     },
     {
       "id": "patch-hygiene",

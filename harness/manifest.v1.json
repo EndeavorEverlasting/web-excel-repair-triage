@@ -83,7 +83,7 @@
     "python -m unittest tests.test_skill_prompt_registry -v",
     "python tests/test_prompt_kit_header_contract.py",
     "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
-    "python -m triage.gitignore_hygiene",
+    "python scripts/validate_artifact_hygiene.py",
     "git diff --check"
   ]
 }
