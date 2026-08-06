@@ -1,0 +1,93 @@
+name: WebExcel Aptos font harness
+
+on:
+  pull_request:
+    paths:
+      - "triage/**"
+      - "scripts/**"
+      - "configs/**"
+      - "harness/webexcel-fonts/**"
+      - "tests/test_webexcel_font_compatibility.py"
+      - "tests/test_webexcel_font_harness.py"
+      - "tests/test_webexcel_font_review_regressions.py"
+      - ".ai/skills/webexcel-font-compatibility/**"
+      - "reports/harness/webexcel-font-compatibility-state.md"
+      - ".githooks/pre-commit"
+      - ".githooks/pre-push"
+      - "CODEBASE_MAP.md"
+      - "WORKFLOW.md"
+      - "ARTIFACT_REGISTRY.md"
+      - "SKILLS.md"
+      - "harness/manifest.v1.json"
+      - "harness/reports/CURRENT_STATE.md"
+      - ".github/workflows/webexcel-font-harness.yml"
+  push:
+    branches: [main]
+    paths:
+      - "triage/**"
+      - "scripts/**"
+      - "configs/**"
+      - "harness/webexcel-fonts/**"
+      - "tests/test_webexcel_font_compatibility.py"
+      - "tests/test_webexcel_font_harness.py"
+      - "tests/test_webexcel_font_review_regressions.py"
+      - ".ai/skills/webexcel-font-compatibility/**"
+      - "reports/harness/webexcel-font-compatibility-state.md"
+      - ".githooks/pre-commit"
+      - ".githooks/pre-push"
+      - "CODEBASE_MAP.md"
+      - "WORKFLOW.md"
+      - "ARTIFACT_REGISTRY.md"
+      - "SKILLS.md"
+      - "harness/manifest.v1.json"
+      - "harness/reports/CURRENT_STATE.md"
+      - ".github/workflows/webexcel-font-harness.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile font harness
+        run: |
+          python -m py_compile \
+            scripts/validate_webexcel_fonts.py \
+            scripts/validate_webexcel_font_harness.py \
+            tests/test_webexcel_font_compatibility.py \
+            tests/test_webexcel_font_harness.py \
+            tests/test_webexcel_font_review_regressions.py
+      - name: Validate harness completeness
+        run: |
+          mkdir -p Outputs/webexcel-font-ci
+          python scripts/validate_webexcel_font_harness.py \
+            --output Outputs/webexcel-font-ci/webexcel-font-harness.json \
+            --summary
+      - name: Run font regressions
+        run: python -m unittest tests.test_webexcel_font_compatibility tests.test_webexcel_font_harness tests.test_webexcel_font_review_regressions -v
+      - name: Scan workbook producer sources
+        run: |
+          python scripts/validate_webexcel_fonts.py \
+            --scan-source \
+            --output Outputs/webexcel-font-ci/webexcel-font-validation.json \
+            --summary
+      - name: Validate root harness compatibility
+        run: |
+          python scripts/validate_harness.py
+          python -m unittest tests.test_harness_contract -v
+      - name: Patch hygiene
+        run: git diff --check
+      - name: Publish font harness reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webexcel-font-harness-report
+          path: Outputs/webexcel-font-ci/*.json
+          if-no-files-found: error

@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+python scripts/validate_webexcel_font_harness.py --summary
+python scripts/validate_webexcel_fonts.py --scan-source --summary
 python scripts/validate_harness.py
 python -m unittest tests.test_harness_contract -v
 git diff --cached --check

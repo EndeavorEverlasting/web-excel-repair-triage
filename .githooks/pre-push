@@ -4,6 +4,9 @@ set -eu
 PROMPT_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-language-audit.json"
 INTERACTION_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-kit-interaction-audit.json"
 
+python scripts/validate_webexcel_font_harness.py --summary
+python -m unittest tests.test_webexcel_font_compatibility tests.test_webexcel_font_harness tests.test_webexcel_font_review_regressions -v
+python scripts/validate_webexcel_fonts.py --scan-source --summary
 python scripts/validate_harness.py
 python -m unittest tests.test_harness_contract -v
 python -m unittest tests.test_prompt_kit_interactions_contract -v
