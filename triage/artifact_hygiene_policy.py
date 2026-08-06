@@ -98,6 +98,7 @@ ALLOWED_TRACKED_EXACT_PATHS: frozenset[str] = frozenset(
     {
         "Outputs/cf_dict_deprecated.json",
         "Outputs/dv_spec_deprecated.json",
+        ".env.example",
     }
 )
 

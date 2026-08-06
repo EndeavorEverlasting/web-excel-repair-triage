@@ -57,6 +57,7 @@ class ArtifactHygienePolicyTests(unittest.TestCase):
             "triage/service.py",
             "tests/test_service.py",
             "configs/runtime_contract.json",
+            ".env.example",
         )
         self.assertEqual(scan_paths(allowed), [])
 
