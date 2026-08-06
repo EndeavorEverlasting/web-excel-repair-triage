@@ -3,8 +3,8 @@
   "registry_id": "skill-development-prompts",
   "prompts": [
     {
-      "id": "P61",
-      "seq": "61",
+      "id": "P63",
+      "seq": "63",
       "name": "Skill Factoring and Boundary Refactorer",
       "type": "ANALYZE + FACTOR",
       "class": "AGENT HARNESS / SKILL FACTORING",
@@ -16,7 +16,7 @@
       "nextStep": "Run P62 when the factored skill boundaries need executable quality, routing, correctness, performance, and token-efficiency evals.",
       "proofGate": "Every changed skill has a deterministic activation condition, explicit inputs and outputs, forbidden conditions, owning files, tests or fixtures, and a commit ahead of the recorded floor.",
       "color": "Lavender",
-      "copySheet": "P61_COPY_SAFE",
+      "copySheet": "P63_COPY_SAFE",
       "category": "standard",
       "copyContent": "FACTOR THE REPOSITORY SKILLS NOW. DO NOT STOP AT A TAXONOMY, INVENTORY, OR PLAN.\n\nRepo: resolve the current repository from the environment.\nBranch: preserve existing work and use an isolated branch or worktree.\nSprint: Skill Factoring and Boundary Refactor.\nOwned scope: skill files, skill manifests, deterministic triggers, capability references, routing contracts, focused validators, fixtures, and directly related docs.\nForbidden scope: unrelated product behavior, secret handling, provider authentication, destructive cleanup, force-push, and moving application logic into prompts.\n\n1. Inspect repository law, skill files, capabilities, triggers, routing, application code, validators, fixtures, open PRs, and recent history.\n2. Build a disposition table for every in-scope skill: KEEP, SPLIT, MERGE, RETIRE, or REWIRE.\n3. For every retained or created skill, define one deterministic trigger, required inputs, produced outputs, preconditions, forbidden conditions, guardrails, owning files, and proof ceiling.\n4. Split skills when one file mixes unrelated domains, multiple activation conditions, or application behavior with procedural guidance.\n5. Merge skills only when their triggers, inputs, outputs, and validation are materially identical.\n6. Move deterministic behavior into scripts, modules, schemas, registries, or workflows. Skills may explain judgment and procedure but must not be the only implementation of product behavior.\n7. Update skill manifests, trigger routing, capability references, and operator documentation so a fresh agent can select the correct skill without guessing.\n8. Add positive trigger fixtures, negative trigger fixtures, boundary tests, and a validator that rejects duplicate ownership or ambiguous activation.\n9. Run focused skill and routing checks, existing repository validators, build/static checks, secret and generated-output hygiene, and git diff --check.\n10. Commit the coherent factoring change and push or open/update a PR when allowed.\n\nFINAL REPORT\nRepo, branch, skill disposition table, files, trigger and capability changes, validators, fixtures, commit SHA, push or PR state, proof achieved, proof ceiling, final Git status, and one exact next command.",
       "keywords": [
