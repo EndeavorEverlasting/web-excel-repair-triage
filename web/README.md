@@ -4,17 +4,18 @@
 
 **Canonical access guide:** [`../PROMPT_KIT_ACCESS.md`](../PROMPT_KIT_ACCESS.md)
 
-The fastest normal Windows path is `Open-Latest-PromptKit.cmd`: it finds or creates a safe canonical checkout, syncs `main`, validates exact Prompt Kit parity, and opens the website without a configuration dialog.
+The fastest normal Windows path is `Open-Latest-PromptKit.cmd`. It finds or creates a safe canonical checkout, syncs `main`, validates exact Prompt Kit parity, generates a portable runtime artifact, and opens the stable origin `http://127.0.0.1:8765/` without a configuration dialog.
+
+The stable origin preserves the browser's Favorites storage across repository and website upgrades. The generated runtime artifact and hash receipt are written to:
+
+```text
+Outputs/prompt-kit-portable/index.html
+Outputs/prompt-kit-portable/manifest.json
+```
 
 `Acquire-Latest-PromptKit.cmd` remains the advanced technician GUI when a destination or generator surface must be selected manually.
 
-From an existing validated checkout, open the deployed operator surface from the repository root:
-
-```powershell
-start web\prompt-kit\index.html
-```
-
-Canonical release artifact: `web/prompt-kit/index.html`.
+The canonical tracked release artifact remains `web/prompt-kit/index.html`. Opening that file directly is useful for static inspection, but the supported portable user path is `Open-Latest-PromptKit.cmd` because it supplies stable-origin persistence and Favorites transfer controls without modifying the tracked site.
 
 ### Home / reset control
 
@@ -76,7 +77,7 @@ This specifically prevents common policy words such as `artifact` from making ne
 
 ### Portable Favorites
 
-The current browser continues to store Favorites under `promptKit.favoritePromptIds.v1`, but that local storage is no longer the only preservation mechanism.
+The current browser stores Favorites under `promptKit.favoritePromptIds.v1`. The supported launcher keeps that storage under the stable loopback origin `http://127.0.0.1:8765/`, so ordinary Prompt Kit upgrades retain the saved collection automatically.
 
 - Select the star on any prompt card to save or remove it.
 - Visible favorited prompts are promoted into one **Favorites** section before the normal sections.
@@ -88,11 +89,20 @@ The current browser continues to store Favorites under `promptKit.favoritePrompt
 - Prompt IDs missing from the current release remain preserved in storage so a future release can restore them automatically.
 - Imports are capped at 64 KiB, reject unsupported schemas and malformed IDs, and never execute imported content.
 
-Use export before replacing a local site copy, clearing browser data, moving to another browser profile, or moving to another device. Open the upgraded Prompt Kit and use import to restore the same collection.
+For an ordinary upgrade, run `Open-Latest-PromptKit.cmd` again. The launcher validates and refreshes the repository, rebuilds the portable artifact, records SHA-256 evidence, disables browser caching, reuses the stable origin, and opens the new version.
 
-The editable runtime is `docs/prompt-kit-favorites-portability.js`. The canonical registry builder embeds that runtime into the standalone `web/prompt-kit/index.html`; generated HTML must not be hand-edited.
+Use Export Favorites before clearing browser data, moving to another browser profile, changing devices, or abandoning the old origin. Use Import Favorites from the supported portable site to restore the same collection.
 
-The machine-readable policy is `harness/contracts/prompt-kit-portability.v1.json`, and the human-readable contract is `docs/PROMPT_KIT_PORTABILITY.md`.
+Implementation ownership:
+
+- runtime: `docs/prompt-kit-favorites-portability.js`;
+- stable-origin builder/server: `scripts/serve_prompt_kit_portable.py`;
+- portable acquisition/open launcher: `scripts/Open-LatestPromptKitPortable.ps1`;
+- Windows entry point: `Open-Latest-PromptKit.cmd`;
+- machine policy: `harness/contracts/prompt-kit-portability.v1.json`;
+- human contract: `docs/PROMPT_KIT_PORTABILITY.md`.
+
+The runtime generator reads the exact tracked `web/prompt-kit/index.html`, injects the tracked portability runtime into a gitignored artifact, and leaves the canonical site untouched.
 
 ### Collapsible category sections
 
@@ -107,7 +117,7 @@ Every rendered category divider is also an independent expand/collapse control, 
 - Section-toggle foreground color is explicitly defined for the dark surface; browser-default button text color must never leak through.
 - Activating the main title/reset expands every category again.
 
-Implementation ownership stays in `docs/prompt-kit.js`; portable Favorites behavior is isolated in `docs/prompt-kit-favorites-portability.js`. `web/prompt-kit/index.html` is regenerated output and must not be hand-edited.
+Base interaction ownership stays in `docs/prompt-kit.js`; portable Favorites behavior is isolated in `docs/prompt-kit-favorites-portability.js`. `web/prompt-kit/index.html` remains canonical generated output and must not be hand-edited.
 
 ### Mobile layout contract
 
@@ -117,7 +127,7 @@ Mobile is a responsive form of the existing Prompt Kit, not a second application
 - Library, category, and type controls keep their existing semantics and become horizontally scrollable touch rails where needed.
 - Prompt cards render in one column.
 - Category expand/collapse remains explicit and touch-sized.
-- Favorite, **Open**, **Copy**, **Export Favorites**, and **Import Favorites** actions remain directly reachable on coarse-pointer devices.
+- Favorite, **Open**, **Copy**, **Export Favorites**, and **Import Favorites** actions remain directly reachable on coarse-pointer devices when the portable runtime is served.
 - Prompt detail uses the available mobile viewport and keeps the existing close/copy behavior.
 - The existing reference panel expands to the mobile viewport.
 - Search uses a touch-sized control and avoids mobile browser zoom caused by undersized input text.
@@ -160,16 +170,17 @@ Their keyboard shortcuts are `1`, `2`, and `3` respectively. Doctrine may use sh
 ```powershell
 node --check docs\prompt-kit.js
 node --check docs\prompt-kit-favorites-portability.js
+python scripts\serve_prompt_kit_portable.py --build-only
+python scripts\validate_prompt_kit_portability.py --require-artifact --output Outputs\prompt-kit-portability-validation.json --summary
+python -m unittest tests.test_prompt_kit_portability -v
 python tests\test_prompt_kit_header_contract.py
 python -m unittest tests.test_prompt_kit_product_interactions -v
 python -m unittest tests.test_prompt_kit_filtering_access -v
 python -m unittest tests.test_prompt_kit_mobile -v
 python -m unittest tests.test_prompt_kit_discovery -v
-python -m unittest tests.test_prompt_kit_portability -v
 python scripts\validate_prompt_kit_interactions.py --require-implementation --output Outputs\prompt-kit-interaction-audit.json --summary
 python scripts\validate_prompt_kit_discovery.py --summary
-python scripts\validate_prompt_kit_portability.py --summary
 python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
 ```
 
-Repository validation does not substitute for physical phone/tablet touch acceptance, browser download/file-picker policy restrictions, cross-device transfer, or a Windows field run of the quick launcher.
+Repository validation does not substitute for physical browser download/file-picker behavior, browser-profile transfer, cross-device acceptance, phone/tablet touch acceptance, or a Windows field run of the quick launcher.
