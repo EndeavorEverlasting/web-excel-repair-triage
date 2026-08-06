@@ -11,7 +11,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# Trigger the already-registered branch workflow after its workflow-file commit.
 subprocess.run(
     [
         "python",
@@ -23,5 +22,5 @@ subprocess.run(
     check=True,
 )
 
-(ROOT / ".github" / "workflows" / "prompt-kit-branch-regenerate.yml").unlink()
+(ROOT / ".github" / "workflows" / "apply-prompt-kit-portability.yml").unlink()
 Path(__file__).unlink()
