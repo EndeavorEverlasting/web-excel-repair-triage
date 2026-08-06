@@ -82,7 +82,7 @@
       ],
       "implementation": {
         "kind": "prompt",
-        "prompt_id": "P61"
+        "prompt_id": "P63"
       },
       "proof_ceiling": "Static ownership and routing proof until model or runtime evals are executed."
     },

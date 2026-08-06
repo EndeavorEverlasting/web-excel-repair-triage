@@ -21,9 +21,10 @@ class SkillPromptRegistryTests(unittest.TestCase):
         self.assertEqual(len(by_id), len(prompts))
         self.assertIn("P61", by_id)
         self.assertIn("P62", by_id)
-        self.assertEqual(by_id["P61"]["skillPath"], ".ai/skills/skill-factoring/SKILL.md")
+        self.assertIn("P63", by_id)
+        self.assertEqual(by_id["P63"]["skillPath"], ".ai/skills/skill-factoring/SKILL.md")
         self.assertEqual(by_id["P62"]["class"], "AGENT HARNESS / SKILL EVALS")
-        self.assertNotEqual(by_id["P61"]["copyContent"], by_id["P62"]["copyContent"])
+        self.assertNotEqual(by_id["P63"]["copyContent"], by_id["P62"]["copyContent"])
 
     def test_skill_eval_prompt_requires_correctness_weakness_and_efficiency_proof(self) -> None:
         prompts = build_prompt_kit_registry.load_prompt_registry()
@@ -140,6 +141,7 @@ class SkillPromptRegistryTests(unittest.TestCase):
             self.assertEqual(output.read_text(encoding="utf-8"), html)
             self.assertIn('"id": "P61"', html)
             self.assertIn('"id": "P62"', html)
+            self.assertIn('"id": "P63"', html)
             self.assertIn("Skill Factoring and Boundary Refactorer", html)
             self.assertIn("Skill Correctness and Efficiency Eval Implementer", html)
 
@@ -150,6 +152,7 @@ class SkillPromptRegistryTests(unittest.TestCase):
         self.assertEqual(actual, expected)
         self.assertIn('"id": "P61"', actual)
         self.assertIn('"id": "P62"', actual)
+        self.assertIn('"id": "P63"', actual)
         self.assertIn("Skill Correctness and Efficiency Eval Implementer", actual)
 
 
