@@ -65,13 +65,29 @@ class PowerShellCommandEnvelopeTests(unittest.TestCase):
             with self.subTest(marker=marker):
                 self.assertIn(marker, self.runner)
 
+    def test_evidence_exists_before_repository_root_gate(self) -> None:
+        summary_write = self.runner.index(
+            "Write-AtomicJson -Value $summary -Path $summaryPath"
+        )
+        root_resolve = self.runner.index(
+            "$resolvedRoot = (Resolve-Path -LiteralPath $RepositoryRoot).Path"
+        )
+        self.assertLess(summary_write, root_resolve)
+        self.assertIn("repository_root_requested", self.runner)
+
     def test_runner_uses_child_process_and_preserves_exit_code(self) -> None:
-        self.assertIn("Start-Process", self.runner)
+        self.assertIn("System.Diagnostics.ProcessStartInfo", self.runner)
+        self.assertIn("System.Diagnostics.Process", self.runner)
         self.assertIn("$env:ComSpec", self.runner)
         self.assertIn("RedirectStandardOutput", self.runner)
         self.assertIn("RedirectStandardError", self.runner)
+        self.assertIn("ReadToEndAsync", self.runner)
         self.assertIn("$process.ExitCode", self.runner)
         self.assertIn("call exit /b", self.runner)
+
+    def test_command_file_path_is_quoted_for_spaces(self) -> None:
+        self.assertIn("$escapedCommandPath", self.runner)
+        self.assertIn('/d /s /c call `"$escapedCommandPath`"', self.runner)
 
     def test_runner_gates_repository_and_expected_head(self) -> None:
         self.assertIn("harness\\manifest.v1.json", self.runner)
@@ -107,10 +123,18 @@ class PowerShellCommandEnvelopeTests(unittest.TestCase):
         )
         validators = json.loads(VALIDATORS.read_text(encoding="utf-8"))
         harness_tests = next(
-            item for item in validators["validators"]
+            item
+            for item in validators["validators"]
             if item["id"] == "harness-contract-tests"
         )
-        self.assertIn("tests.test_powershell_command_envelope", harness_tests["command"])
+        self.assertIn(
+            "tests.test_powershell_command_envelope",
+            harness_tests["command"],
+        )
+        self.assertEqual(
+            manifest["validation_order"][1],
+            harness_tests["command"],
+        )
 
     def test_hooks_execute_the_command_envelope_contract_tests(self) -> None:
         expected = "tests.test_powershell_command_envelope"
