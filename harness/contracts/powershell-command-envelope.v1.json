@@ -1,0 +1,52 @@
+{
+  "schema_version": "powershell-command-envelope/v1",
+  "purpose": "Prevent operator-facing PowerShell validation commands from terminating the caller's terminal or losing failure evidence.",
+  "runner": "scripts/Invoke-HarnessProfile.ps1",
+  "requirements": {
+    "caller_terminal_survives": true,
+    "standalone_exit_forbidden": true,
+    "environment_exit_forbidden": true,
+    "stop_process_forbidden": true,
+    "child_process_execution": true,
+    "repository_root_gate": true,
+    "expected_head_gate": true,
+    "durable_run_log": "run.log",
+    "durable_summary": "summary.json",
+    "per_step_stdout": "steps/<step-id>.stdout.log",
+    "per_step_stderr": "steps/<step-id>.stderr.log",
+    "summary_written_before_first_command": true,
+    "summary_updated_after_each_command": true,
+    "summary_finalized_on_failure": true,
+    "nonzero_failure_propagation": "throw after evidence is finalized",
+    "automatic_dependency_installation": false,
+    "destructive_cleanup": false
+  },
+  "result_schema": {
+    "schema_version": "powershell-command-envelope-result/v1",
+    "required_fields": [
+      "repository_root",
+      "profile",
+      "expected_head",
+      "actual_head",
+      "started_at",
+      "finished_at",
+      "status",
+      "failed_step",
+      "run_root",
+      "run_log",
+      "summary",
+      "steps"
+    ],
+    "step_required_fields": [
+      "id",
+      "command",
+      "started_at",
+      "finished_at",
+      "exit_code",
+      "stdout_log",
+      "stderr_log",
+      "command_file"
+    ]
+  },
+  "proof_ceiling": "Static contract and native PowerShell runner behavior on the exercised workstation. It does not prove product, browser, workbook, provider, deployment, or production behavior."
+}
