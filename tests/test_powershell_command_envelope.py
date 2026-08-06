@@ -10,6 +10,7 @@ RUNNER = ROOT / "scripts" / "Invoke-HarnessProfile.ps1"
 CONTRACT = ROOT / "harness" / "contracts" / "powershell-command-envelope.v1.json"
 MANIFEST = ROOT / "harness" / "manifest.v1.json"
 VALIDATORS = ROOT / "harness" / "validators.v1.json"
+VALIDATE_HARNESS = ROOT / "scripts" / "validate_harness.py"
 PRE_COMMIT = ROOT / ".githooks" / "pre-commit"
 PRE_PUSH = ROOT / ".githooks" / "pre-push"
 
@@ -28,10 +29,24 @@ class PowerShellCommandEnvelopeTests(unittest.TestCase):
             self.contract["runner"],
             "scripts/Invoke-HarnessProfile.ps1",
         )
+        self.assertEqual(
+            self.contract["supported_profiles"],
+            ["harness", "pre_push"],
+        )
+        self.assertEqual(
+            self.contract["staged_profile_owner"],
+            ".githooks/pre-commit",
+        )
         requirements = self.contract["requirements"]
         self.assertTrue(requirements["caller_terminal_survives"])
         self.assertTrue(requirements["standalone_exit_forbidden"])
         self.assertTrue(requirements["summary_finalized_on_failure"])
+        self.assertTrue(requirements["custom_run_root_must_be_new"])
+        self.assertTrue(requirements["pre_commit_requires_isolated_staged_tree"])
+        self.assertEqual(
+            requirements["protected_run_roots_forbidden"],
+            ["Candidates/", "Active/"],
+        )
         self.assertFalse(requirements["automatic_dependency_installation"])
         self.assertFalse(requirements["destructive_cleanup"])
 
@@ -96,6 +111,34 @@ class PowerShellCommandEnvelopeTests(unittest.TestCase):
         self.assertIn("ExpectedHead", self.runner)
         self.assertIn("Expected HEAD", self.runner)
 
+    def test_runner_does_not_expose_working_tree_pre_commit_profile(self) -> None:
+        validate_set = re.search(r"\[ValidateSet\(([^)]*)\)\]", self.runner)
+        self.assertIsNotNone(validate_set)
+        values = validate_set.group(1) if validate_set else ""
+        self.assertIn("'harness'", values)
+        self.assertIn("'pre_push'", values)
+        self.assertNotIn("'pre_commit'", values)
+
+    def test_runner_rejects_existing_and_protected_run_roots(self) -> None:
+        required_markers = (
+            "Test-PathWithin",
+            "@('Candidates', 'Active')",
+            "Run root must not be inside protected operator input",
+            "run root already exists; refusing to overwrite evidence",
+            "Test-Path -LiteralPath $resolvedRunRoot",
+        )
+        for marker in required_markers:
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.runner)
+        self.assertNotIn(
+            "New-Item -ItemType Directory -Path $stepsDirectory -Force",
+            self.runner,
+        )
+        self.assertNotIn(
+            "New-Item -ItemType File -Path $runLogPath -Force",
+            self.runner,
+        )
+
     def test_runner_does_not_install_dependencies_or_clean_work(self) -> None:
         forbidden = (
             "winget install",
@@ -136,10 +179,17 @@ class PowerShellCommandEnvelopeTests(unittest.TestCase):
             harness_tests["command"],
         )
 
-    def test_hooks_execute_the_command_envelope_contract_tests(self) -> None:
-        expected = "tests.test_powershell_command_envelope"
+    def test_hooks_and_root_validator_use_combined_contract_command(self) -> None:
+        expected = (
+            "python -m unittest tests.test_harness_contract "
+            "tests.test_powershell_command_envelope -v"
+        )
         self.assertIn(expected, PRE_COMMIT.read_text(encoding="utf-8"))
         self.assertIn(expected, PRE_PUSH.read_text(encoding="utf-8"))
+        self.assertIn(
+            "HARNESS_CONTRACT_TEST_COMMAND",
+            VALIDATE_HARNESS.read_text(encoding="utf-8"),
+        )
 
 
 if __name__ == "__main__":
