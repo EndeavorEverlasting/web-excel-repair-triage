@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 POLICY = ROOT / "harness" / "contracts" / "prompt-kit-portability.v1.json"
 RUNTIME = ROOT / "docs" / "prompt-kit-favorites-portability.js"
-BUILDER = ROOT / "build_prompt_kit.py"
+BUILDER = ROOT / "scripts" / "build_prompt_kit_registry.py"
 SITE = ROOT / "web" / "prompt-kit" / "index.html"
 WORKFLOW = ROOT / ".github" / "workflows" / "prompt-kit-web.yml"
 
@@ -96,8 +96,9 @@ class PromptKitPortabilityTests(unittest.TestCase):
         )
 
     def test_builder_embeds_portability_runtime_and_site_is_current(self) -> None:
-        self.assertIn("PORTABILITY_JS_PATH", self.builder)
-        self.assertIn("for script_path in (JS_PATH, PORTABILITY_JS_PATH)", self.builder)
+        self.assertIn("PORTABILITY_RUNTIME", self.builder)
+        self.assertIn("_embed_portability_runtime", self.builder)
+        self.assertIn("html.count(marker) != 1", self.builder)
         for marker in (
             "prompt-kit-favorites/v1",
             "favoritePortabilityControls",
