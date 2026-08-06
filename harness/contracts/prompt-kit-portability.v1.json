@@ -120,7 +120,11 @@
         ],
         "selection_rule": "largest_allowed_divisor_evenly_dividing_prompt_count",
         "fail_closed_when_no_allowed_divisor": true
-      }
+      },
+      "validator": "triage/prompt_library_portability.py",
+      "tests": "tests/test_prompt_library_portability.py",
+      "validation_command": "python -m unittest tests.test_prompt_library_portability -v",
+      "runtime_command": "python -m triage.prompt_library_portability <workbook.xlsx> --output Outputs/prompt-library-portability.json"
     }
   },
   "sequential_prompt_suite": {
@@ -141,6 +145,8 @@
     "windows_entry_point": "Open-Latest-PromptKit.cmd",
     "generated_artifact": "Outputs/prompt-kit-portable/index.html",
     "artifact_manifest": "Outputs/prompt-kit-portable/manifest.json",
+    "prompt_library_validator": "triage/prompt_library_portability.py",
+    "prompt_library_tests": "tests/test_prompt_library_portability.py",
     "human_doctrine": "docs/PROMPT_KIT_PORTABILITY.md",
     "validator": "scripts/validate_prompt_kit_portability.py",
     "tests": "tests/test_prompt_kit_portability.py",
@@ -148,5 +154,5 @@
     "harness_manifest": "harness/manifest.v1.json",
     "agent_entry_surface": "web/README.md"
   },
-  "proof_ceiling": "Source, stable-origin generator, runtime receipt, focused tests, canonical-site parity, and CI prove repository integration. Physical browser download/file-picker, browser-profile transfer, and cross-device acceptance require observed browser proof."
+  "proof_ceiling": "Source, stable-origin generator, runtime receipt, focused tests, canonical-site parity, Prompt Library OOXML checks, and CI prove repository integration. Physical browser download/file-picker, workbook link-click behavior, browser-profile transfer, and cross-device acceptance require observed runtime proof."
 }
