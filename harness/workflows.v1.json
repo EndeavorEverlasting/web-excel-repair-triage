@@ -65,7 +65,7 @@
     {
       "id": "harness-infrastructure",
       "document": "WORKFLOW.md#c-harness-infrastructure-change",
-      "trigger": "Maps, workflow specifications, registries, validators, hooks, skills, reports, acquisition surfaces, or versioned domain contracts are missing, stale, or inconsistent.",
+      "trigger": "Maps, workflow specifications, registries, validators, hooks, skills, reports, acquisition surfaces, operator command envelopes, or versioned domain contracts are missing, stale, or inconsistent.",
       "owned_scope": [
         "CODEBASE_MAP.md",
         "WORKFLOW.md",
@@ -75,7 +75,9 @@
         "TRIGGERS.md",
         "harness/**",
         "scripts/validate_harness.py",
+        "scripts/Invoke-HarnessProfile.ps1",
         "tests/test_harness_contract.py",
+        "tests/test_powershell_command_envelope.py",
         ".githooks/**",
         ".github/workflows/harness-contract.yml"
       ],
@@ -83,18 +85,25 @@
         "AGENTS.md",
         "product implementation",
         "secrets",
-        "destructive cleanup"
+        "destructive cleanup",
+        "caller terminal termination",
+        "surprise dependency installation"
       ],
       "entry_points": [
         "scripts/validate_harness.py",
-        "tests/test_harness_contract.py"
+        "scripts/Invoke-HarnessProfile.ps1",
+        "tests/test_harness_contract.py",
+        "tests/test_powershell_command_envelope.py"
       ],
       "validation_profile": "harness",
-      "failure_policy": "Repair the canonical component or registry owner, add a regression test, rerun the first failing gate, then run the full harness profile.",
+      "failure_policy": "Repair the canonical component or registry owner, add a regression test, rerun the first failing gate, then run the full harness profile. On Windows, persist summary, combined log, and per-step stdout/stderr before throwing back to the caller; never call standalone exit or close the operator terminal.",
       "handoff_fields": [
         "component inventory",
         "validator results",
         "report path",
+        "PowerShell summary path",
+        "PowerShell run-log path",
+        "failed-step stdout/stderr paths",
         "commit",
         "push or PR state",
         "next executable command"
