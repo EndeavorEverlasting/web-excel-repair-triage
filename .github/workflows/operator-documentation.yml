@@ -3,8 +3,10 @@ name: Operator documentation contracts
 on:
   pull_request:
     paths:
+      - PROMPT_KIT_ACCESS.md
       - docs/README.md
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
+      - docs/PROMPT_KIT_PORTABILITY.md
       - docs/PROMPT_KIT_GENERATOR_OPERATOR_GUIDE.md
       - docs/TECHNICIAN_PROMPT_KIT_ACQUISITION_TUTORIAL.md
       - docs/PROMPT_KIT_GENERATOR_TUTORIAL.md
@@ -12,19 +14,27 @@ on:
       - Open-Latest-PromptKit.cmd
       - Acquire-Latest-PromptKit.cmd
       - scripts/Acquire-LatestPromptKit.ps1
+      - scripts/Open-LatestPromptKitPortable.ps1
+      - scripts/serve_prompt_kit_portable.py
+      - scripts/validate_prompt_kit_portability.py
+      - harness/contracts/prompt-kit-portability.v1.json
       - Run-PromptKitGenerator.cmd
       - Build-PromptKitWebsite.cmd
       - scripts/prompt_kit_generator_gui.py
       - scripts/build_prompt_kit_registry.py
       - configs/prompt_kit/generators.v1.json
       - tests/test_operator_documentation.py
+      - tests/Test-PromptKitQuickOpenPathResolution.ps1
       - tests/test_prompt_kit_mobile.py
+      - tests/test_prompt_kit_portability.py
       - .github/workflows/operator-documentation.yml
   push:
     branches: [main]
     paths:
+      - PROMPT_KIT_ACCESS.md
       - docs/README.md
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
+      - docs/PROMPT_KIT_PORTABILITY.md
       - docs/PROMPT_KIT_GENERATOR_OPERATOR_GUIDE.md
       - docs/TECHNICIAN_PROMPT_KIT_ACQUISITION_TUTORIAL.md
       - docs/PROMPT_KIT_GENERATOR_TUTORIAL.md
@@ -32,13 +42,19 @@ on:
       - Open-Latest-PromptKit.cmd
       - Acquire-Latest-PromptKit.cmd
       - scripts/Acquire-LatestPromptKit.ps1
+      - scripts/Open-LatestPromptKitPortable.ps1
+      - scripts/serve_prompt_kit_portable.py
+      - scripts/validate_prompt_kit_portability.py
+      - harness/contracts/prompt-kit-portability.v1.json
       - Run-PromptKitGenerator.cmd
       - Build-PromptKitWebsite.cmd
       - scripts/prompt_kit_generator_gui.py
       - scripts/build_prompt_kit_registry.py
       - configs/prompt_kit/generators.v1.json
       - tests/test_operator_documentation.py
+      - tests/Test-PromptKitQuickOpenPathResolution.ps1
       - tests/test_prompt_kit_mobile.py
+      - tests/test_prompt_kit_portability.py
       - .github/workflows/operator-documentation.yml
 
 permissions:
@@ -55,16 +71,34 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Compile documentation and mobile contracts
-        run: python -m py_compile tests/test_operator_documentation.py tests/test_prompt_kit_mobile.py
-      - name: Validate acquisition PowerShell syntax
+      - name: Compile documentation mobile and portability contracts
+        run: |
+          python -m py_compile \
+            scripts/serve_prompt_kit_portable.py \
+            scripts/validate_prompt_kit_portability.py \
+            tests/test_operator_documentation.py \
+            tests/test_prompt_kit_mobile.py \
+            tests/test_prompt_kit_portability.py
+      - name: Validate acquisition and portable PowerShell syntax
         shell: pwsh
         run: |
           $null = [scriptblock]::Create((Get-Content -Raw scripts/Acquire-LatestPromptKit.ps1))
-      - name: Validate documentation, links, controls, examples, and mobile acquisition
+          $null = [scriptblock]::Create((Get-Content -Raw scripts/Open-LatestPromptKitPortable.ps1))
+      - name: Validate deterministic portable quick-open path
+        shell: pwsh
+        run: ./tests/Test-PromptKitQuickOpenPathResolution.ps1
+      - name: Validate documentation links controls examples and mobile acquisition
         run: |
           python -m unittest tests.test_operator_documentation -v
           python -m unittest tests.test_prompt_kit_mobile -v
+      - name: Build and validate portable runtime artifact
+        run: |
+          python scripts/serve_prompt_kit_portable.py --build-only
+          python scripts/validate_prompt_kit_portability.py \
+            --require-artifact \
+            --output Outputs/prompt-kit-portability-validation.json \
+            --summary
+          python -m unittest tests.test_prompt_kit_portability -v
       - name: Validate connected harness contracts
         run: |
           python scripts/validate_harness.py
