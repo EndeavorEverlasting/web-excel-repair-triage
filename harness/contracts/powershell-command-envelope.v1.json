@@ -2,6 +2,11 @@
   "schema_version": "powershell-command-envelope/v1",
   "purpose": "Prevent operator-facing PowerShell validation commands from terminating the caller's terminal or losing failure evidence.",
   "runner": "scripts/Invoke-HarnessProfile.ps1",
+  "supported_profiles": [
+    "harness",
+    "pre_push"
+  ],
+  "staged_profile_owner": ".githooks/pre-commit",
   "requirements": {
     "caller_terminal_survives": true,
     "standalone_exit_forbidden": true,
@@ -18,6 +23,12 @@
     "summary_updated_after_each_command": true,
     "summary_finalized_on_failure": true,
     "nonzero_failure_propagation": "throw after evidence is finalized",
+    "custom_run_root_must_be_new": true,
+    "protected_run_roots_forbidden": [
+      "Candidates/",
+      "Active/"
+    ],
+    "pre_commit_requires_isolated_staged_tree": true,
     "automatic_dependency_installation": false,
     "destructive_cleanup": false
   },
