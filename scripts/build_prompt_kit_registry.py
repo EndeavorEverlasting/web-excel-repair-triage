@@ -23,7 +23,6 @@ ACTIONABILITY_POLICY = (
     REPO_ROOT / "registry" / "prompts" / "actionable-next-step-policy.v1.json"
 )
 REFERENCE = REPO_ROOT / "docs" / "reference.json"
-PORTABILITY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-favorites-portability.js"
 DEFAULT_OUTPUT = REPO_ROOT / "web" / "prompt-kit" / "index.html"
 PROTECTED_OUTPUT_ROOTS = (
     REPO_ROOT / "Candidates",
@@ -190,29 +189,11 @@ def load_prompt_registry() -> list[dict[str, Any]]:
     return sorted(strengthened_prompts, key=lambda prompt: int(str(prompt["seq"])))
 
 
-def _embed_portability_runtime(html: str) -> str:
-    """Embed the tracked portable-favorites runtime in the standalone site."""
-    try:
-        runtime = PORTABILITY_RUNTIME.read_text(encoding="utf-8").strip()
-    except FileNotFoundError as exc:
-        raise SystemExit(f"Required portability runtime is missing: {PORTABILITY_RUNTIME}") from exc
-    if not runtime:
-        raise SystemExit(f"Portability runtime is empty: {PORTABILITY_RUNTIME}")
-    marker = "</script>"
-    if html.count(marker) != 1:
-        raise SystemExit(
-            "Prompt Kit builder expected exactly one closing script marker before "
-            "embedding the portability runtime"
-        )
-    return html.replace(marker, f"\n{runtime}\n{marker}", 1)
-
-
 def render() -> str:
     """Return the exact combined Prompt Kit HTML without writing it."""
     prompts = load_prompt_registry()
     reference = _load_json(REFERENCE)
-    html = build_prompt_kit.build_html(prompts, reference)
-    return _embed_portability_runtime(html)
+    return build_prompt_kit.build_html(prompts, reference)
 
 
 def build(output: Path) -> str:
