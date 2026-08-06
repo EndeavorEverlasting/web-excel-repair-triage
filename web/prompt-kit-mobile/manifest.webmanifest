@@ -1,0 +1,40 @@
+{
+  "id": "./prompt-kit/",
+  "name": "AI Harness Prompt Kit",
+  "short_name": "AI Prompt Kit",
+  "description": "Responsive AI Harness Prompt Kit published from the canonical GitHub repository.",
+  "start_url": "./prompt-kit/",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#080d16",
+  "theme_color": "#111827",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Open Prompt Kit",
+      "short_name": "Open",
+      "url": "./prompt-kit/",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
