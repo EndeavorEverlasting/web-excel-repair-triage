@@ -182,7 +182,10 @@ class SkillPromptRegistryTests(unittest.TestCase):
             self.assertIn("Repository Tutorial Portfolio Ranker", html)
             self.assertIn("Guided Prompt Finder Questionnaire", html)
             self.assertIn("Find My Prompt", html)
-            self.assertIn("prompt-kit-guided-recommendations.js", build_prompt_kit_registry.GUIDED_JS.as_posix())
+            self.assertIn(
+                "prompt-kit-guided-recommendations.js",
+                build_prompt_kit_registry.GUIDED_RECOMMENDATIONS.as_posix(),
+            )
 
     def test_checked_in_operator_site_is_exact_combined_build(self) -> None:
         deployed = REPO_ROOT / "web" / "prompt-kit" / "index.html"
