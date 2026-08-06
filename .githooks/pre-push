@@ -6,7 +6,7 @@ PROMPT_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-language-audit.json"
 INTERACTION_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-kit-interaction-audit.json"
 
 python scripts/validate_harness.py --report "$HARNESS_REPORT"
-python -m unittest tests.test_harness_contract -v
+python -m unittest tests.test_harness_contract tests.test_powershell_command_envelope -v
 python -m unittest tests.test_prompt_kit_interactions_contract -v
 python scripts/validate_prompt_kit_interactions.py --output "$INTERACTION_REPORT" --summary
 python scripts/validate_prompt_kit_discovery.py --summary
