@@ -16,5 +16,8 @@ python scripts/evaluate_prompt_language.py --output "$PROMPT_REPORT" --summary
 python -m unittest tests.test_skill_prompt_registry -v
 python tests/test_prompt_kit_header_contract.py
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+# Keep the canonical tracked-path gate explicit for fail-closed harness validation.
+python -m triage.gitignore_hygiene
+# Run the expanded hook, installer, remediation, and false-positive regressions.
 python scripts/validate_artifact_hygiene.py
 git diff --check
