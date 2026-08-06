@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+OUTPUT_ROOT = ROOT / "Outputs"
 REGISTRY = ROOT / "harness" / "webexcel-fonts" / "registry.json"
 REQUIRED_PATHS = (
     "configs/webexcel_fonts_v1.json",
@@ -76,6 +77,26 @@ def _require_phrases(relative: str, phrases: tuple[str, ...]) -> None:
             raise HarnessError(f"{relative} is missing required text: {phrase}")
 
 
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+        return True
+    except ValueError:
+        return False
+
+
+def _validate_output_path(output: Path) -> Path:
+    target = output.resolve()
+    repo = ROOT.resolve()
+    output_root = OUTPUT_ROOT.resolve()
+    if _is_relative_to(target, repo) and not _is_relative_to(target, output_root):
+        relative = target.relative_to(repo).as_posix()
+        raise HarnessError(
+            f"harness report inside the repository must be under Outputs/: {relative}"
+        )
+    return target
+
+
 def validate() -> dict[str, Any]:
     for relative in REQUIRED_PATHS:
         _require(relative)
@@ -94,7 +115,7 @@ def validate() -> dict[str, Any]:
     if registry.get("policy") != "configs/webexcel_fonts_v1.json":
         raise HarnessError("font harness registry does not own the canonical policy")
     registered = set(registry.get("components", {}).values())
-    missing_registry = sorted(set(REQUIRED_PATHS[:12]) - registered)
+    missing_registry = sorted(set(REQUIRED_PATHS) - registered)
     if missing_registry:
         raise HarnessError(f"registry misses components: {missing_registry}")
 
@@ -130,10 +151,14 @@ def validate() -> dict[str, Any]:
 
     workflow = _require(".github/workflows/webexcel-font-harness.yml").read_text(encoding="utf-8")
     for phrase in (
+        '"triage/**"',
+        '"scripts/**"',
+        '"configs/**"',
         "validate_webexcel_font_harness.py",
         "tests.test_webexcel_font_compatibility",
         "validate_webexcel_fonts.py",
         "--scan-source",
+        "Outputs/webexcel-font-ci",
         "git diff --check",
     ):
         if phrase not in workflow:
@@ -173,20 +198,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--summary", action="store_true")
     args = parser.parse_args(argv)
     try:
+        output = _validate_output_path(args.output) if args.output else None
         result = validate()
     except HarnessError as exc:
         print(f"FAIL: {exc}", file=sys.stderr)
         return 1
-    if args.output:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    if output:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     if args.summary:
         print(
             f"PASS: Aptos/WebExcel harness complete; components={result['component_count']} "
             f"policy={result['policy_id']}"
         )
-        if args.output:
-            print(args.output)
+        if output:
+            print(output)
     else:
         print(json.dumps(result, indent=2))
     return 0

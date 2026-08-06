@@ -8,13 +8,14 @@ import json
 import sys
 import zipfile
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Iterator
 from xml.etree import ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_POLICY = ROOT / "configs" / "webexcel_fonts_v1.json"
 MAIN_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 NS = {"m": MAIN_NS}
+OUTPUT_ROOT = ROOT / "Outputs"
 
 
 class FontValidationError(RuntimeError):
@@ -45,24 +46,120 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _font_names_from_styles(raw: bytes) -> list[str]:
+def _local_name(tag: str) -> str:
+    return tag.rsplit("}", 1)[-1]
+
+
+def _font_name(font: ET.Element) -> str:
+    name = font.find("m:name", NS)
+    value = name.get("val") if name is not None else None
+    return value.strip() if value else ""
+
+
+def _styles_inventory(raw: bytes) -> tuple[list[str], str | None, str]:
     root = ET.fromstring(raw)
-    fonts = root.find("m:fonts", NS)
-    if fonts is None:
-        return []
-    names: list[str] = []
-    for font in fonts.findall("m:font", NS):
-        name = font.find("m:name", NS)
-        value = name.get("val") if name is not None else None
+    fonts_node = root.find("m:fonts", NS)
+    fonts = [_font_name(font) for font in fonts_node.findall("m:font", NS)] if fonts_node is not None else []
+
+    font_id: int | None = None
+    location = "xl/styles.xml#default-style"
+
+    normal = root.find("m:cellStyles/m:cellStyle[@name='Normal']", NS)
+    style_xfs = root.find("m:cellStyleXfs", NS)
+    if normal is not None and style_xfs is not None:
+        try:
+            xf_id = int(normal.get("xfId", "0"))
+            xfs = style_xfs.findall("m:xf", NS)
+            if 0 <= xf_id < len(xfs):
+                font_id = int(xfs[xf_id].get("fontId", "0"))
+                location = f"xl/styles.xml#cellStyles/Normal->cellStyleXfs[{xf_id}]/@fontId"
+        except ValueError:
+            font_id = None
+
+    if font_id is None:
+        cell_xfs = root.find("m:cellXfs", NS)
+        first = cell_xfs.find("m:xf", NS) if cell_xfs is not None else None
+        if first is not None:
+            try:
+                font_id = int(first.get("fontId", "0"))
+                location = "xl/styles.xml#cellXfs[0]/@fontId"
+            except ValueError:
+                font_id = None
+
+    if font_id is None and style_xfs is not None:
+        first = style_xfs.find("m:xf", NS)
+        if first is not None:
+            try:
+                font_id = int(first.get("fontId", "0"))
+                location = "xl/styles.xml#cellStyleXfs[0]/@fontId"
+            except ValueError:
+                font_id = None
+
+    default_font = fonts[font_id] if font_id is not None and 0 <= font_id < len(fonts) else None
+    if font_id is not None:
+        location = f"{location}={font_id}"
+    return fonts, default_font, location
+
+
+def _iter_font_declarations(member: str, raw: bytes) -> Iterator[tuple[str, str]]:
+    """Yield explicit font declarations without treating ordinary cell text as fonts."""
+    root = ET.fromstring(raw)
+    counters: dict[str, int] = {}
+
+    def walk(element: ET.Element, parent_local: str | None = None) -> Iterator[tuple[str, str]]:
+        local = _local_name(element.tag)
+        counters[local] = counters.get(local, 0) + 1
+        index = counters[local]
+        value: str | None = None
+
+        if local == "name" and parent_local == "font":
+            value = element.get("val")
+        elif local == "rFont":
+            value = element.get("val")
+        elif local == "latin":
+            value = element.get("typeface")
+        elif local in {"defRPr", "rPr", "endParaRPr"}:
+            value = element.get("typeface")
+
         if value:
-            names.append(value.strip())
-        else:
-            names.append("")
-    return names
+            value = value.strip()
+            # +mj-lt / +mn-lt are theme references, not explicit typefaces.
+            if value and not value.startswith("+"):
+                yield f"{member}#{local}[{index}]", value
+
+        for child in list(element):
+            yield from walk(child, local)
+
+    yield from walk(root)
 
 
 def _violation(rule_id: str, location: str, message: str) -> dict[str, str]:
     return {"rule_id": rule_id, "location": location, "message": message}
+
+
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+        return True
+    except ValueError:
+        return False
+
+
+def _validate_output_path(output: Path, workbooks: Iterable[Path] = ()) -> Path:
+    target = output.resolve()
+    repo = ROOT.resolve()
+    output_root = OUTPUT_ROOT.resolve()
+
+    for workbook in workbooks:
+        if target == workbook.resolve():
+            raise FontValidationError("report output must not overwrite a workbook input")
+
+    if _is_relative_to(target, repo) and not _is_relative_to(target, output_root):
+        relative = target.relative_to(repo).as_posix()
+        raise FontValidationError(
+            f"report output inside the repository must be under Outputs/: {relative}"
+        )
+    return target
 
 
 def inspect_workbook(path: Path, policy: dict[str, Any]) -> dict[str, Any]:
@@ -75,7 +172,7 @@ def inspect_workbook(path: Path, policy: dict[str, Any]) -> dict[str, Any]:
     allowed = {item.casefold() for item in policy["allowed_explicit_fonts"]}
     forbidden = {item.casefold(): item for item in policy["forbidden_fonts"]}
     violations: list[dict[str, str]] = []
-    package_hits: set[tuple[str, str]] = set()
+    declarations: list[tuple[str, str]] = []
 
     try:
         with zipfile.ZipFile(path) as archive:
@@ -83,50 +180,71 @@ def inspect_workbook(path: Path, policy: dict[str, Any]) -> dict[str, Any]:
             styles_path = "xl/styles.xml"
             if styles_path not in names:
                 violations.append(
-                    _violation("WEBFONT002", styles_path, "Workbook styles.xml is missing; Aptos default cannot be proved.")
+                    _violation(
+                        "WEBFONT002",
+                        styles_path,
+                        "Workbook styles.xml is missing; Aptos default cannot be proved.",
+                    )
                 )
-                explicit_fonts: list[str] = []
+                style_fonts: list[str] = []
+                default_font = None
+                default_location = styles_path
             else:
-                explicit_fonts = _font_names_from_styles(archive.read(styles_path))
+                style_fonts, default_font, default_location = _styles_inventory(
+                    archive.read(styles_path)
+                )
 
-            for member in sorted(name for name in names if name.lower().endswith((".xml", ".rels"))):
+            for member in sorted(name for name in names if name.lower().endswith(".xml")):
                 raw = archive.read(member)
-                lowered = raw.lower()
-                for folded, display in forbidden.items():
-                    token = display.encode("utf-8").lower()
-                    if token in lowered and (member, folded) not in package_hits:
-                        package_hits.add((member, folded))
-                        violations.append(
-                            _violation("WEBFONT001", member, f"Forbidden explicit font {display} is present in the OOXML package.")
-                        )
+                try:
+                    declarations.extend(_iter_font_declarations(member, raw))
+                except ET.ParseError as exc:
+                    raise FontValidationError(
+                        f"invalid OOXML XML part {member} in {path}: {exc}"
+                    ) from exc
     except zipfile.BadZipFile as exc:
         raise FontValidationError(f"invalid OOXML ZIP package: {path}") from exc
     except ET.ParseError as exc:
         raise FontValidationError(f"invalid styles XML in {path}: {exc}") from exc
 
-    default_font = explicit_fonts[0] if explicit_fonts else None
     expected_default = str(policy["default_font"])
     if default_font is None or default_font.casefold() != expected_default.casefold():
         violations.append(
             _violation(
                 "WEBFONT002",
-                "xl/styles.xml#fonts[0]",
-                f"Workbook default explicit font must be {expected_default}; found {default_font or '<missing>'}.",
+                default_location,
+                f"Workbook default explicit font must be {expected_default}; "
+                f"found {default_font or '<missing>'}.",
             )
         )
 
-    for index, font_name in enumerate(explicit_fonts):
-        if not font_name:
+    for location, font_name in declarations:
+        folded = font_name.casefold()
+        if folded in forbidden:
             violations.append(
-                _violation("WEBFONT003", f"xl/styles.xml#fonts[{index}]", "Explicit font entry has no name.")
+                _violation(
+                    "WEBFONT001",
+                    location,
+                    f"Forbidden explicit font {forbidden[folded]} is declared.",
+                )
             )
-            continue
-        if font_name.casefold() not in allowed:
+        if folded not in allowed:
+            violations.append(
+                _violation(
+                    "WEBFONT003",
+                    location,
+                    f"Explicit font {font_name} is outside the approved Aptos family.",
+                )
+            )
+
+    # Keep unnamed style-table fonts fail-closed; they are explicit font records.
+    for index, font_name in enumerate(style_fonts):
+        if not font_name:
             violations.append(
                 _violation(
                     "WEBFONT003",
                     f"xl/styles.xml#fonts[{index}]",
-                    f"Explicit font {font_name} is outside the approved Aptos family.",
+                    "Explicit font entry has no name.",
                 )
             )
 
@@ -138,6 +256,7 @@ def inspect_workbook(path: Path, policy: dict[str, Any]) -> dict[str, Any]:
             seen.add(key)
             unique.append(item)
 
+    explicit_fonts = list(dict.fromkeys(font_name for _, font_name in declarations))
     return {
         "schema": "webexcel-font-artifact-result/v1",
         "path": str(path),
@@ -146,6 +265,10 @@ def inspect_workbook(path: Path, policy: dict[str, Any]) -> dict[str, Any]:
         "sha256": sha256_file(path),
         "default_font": default_font,
         "explicit_fonts": explicit_fonts,
+        "font_declarations": [
+            {"location": location, "font": font_name}
+            for location, font_name in declarations
+        ],
         "violation_count": len(unique),
         "violations": unique,
         "status": "PASS" if not unique else "FAIL",
@@ -186,7 +309,8 @@ def inspect_sources(policy: dict[str, Any]) -> dict[str, Any]:
                         _violation(
                             "WEBFONT004",
                             f"{relative}:{line_number}",
-                            f"Workbook producer/configuration source contains forbidden font token {font}.",
+                            f"Workbook producer/configuration source contains "
+                            f"forbidden font token {font}.",
                         )
                     )
     return {
@@ -237,25 +361,27 @@ def main(argv: list[str] | None = None) -> int:
             raise FontValidationError("at least one --workbook is required")
         if not args.workbook and not args.scan_source:
             raise FontValidationError("provide --workbook and/or --scan-source")
+        workbooks = [path.resolve() for path in args.workbook]
+        output = _validate_output_path(args.output, workbooks) if args.output else None
         report = build_report(
             policy=policy,
-            workbooks=[path.resolve() for path in args.workbook],
+            workbooks=workbooks,
             scan_source=args.scan_source,
         )
     except FontValidationError as exc:
         print(f"FAIL: {exc}", file=sys.stderr)
         return 2
 
-    if args.output:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    if output:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     if args.summary:
         print(
             f"{report['status']}: Aptos WebExcel font validation; "
             f"artifacts={report['artifact_count']} violations={report['violation_count']}"
         )
-        if args.output:
-            print(args.output)
+        if output:
+            print(output)
     else:
         print(json.dumps(report, indent=2))
     return 0 if report["status"] == "PASS" else 1

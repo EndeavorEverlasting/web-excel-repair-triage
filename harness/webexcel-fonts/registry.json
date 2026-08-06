@@ -20,7 +20,9 @@
     "completeness_tests": "tests/test_webexcel_font_harness.py",
     "skill": ".ai/skills/webexcel-font-compatibility/SKILL.md",
     "workflow": ".github/workflows/webexcel-font-harness.yml",
-    "operator_report": "reports/harness/webexcel-font-compatibility-state.md"
+    "operator_report": "reports/harness/webexcel-font-compatibility-state.md",
+    "pre_commit_hook": ".githooks/pre-commit",
+    "pre_push_hook": ".githooks/pre-push"
   },
   "artifacts": {
     "validation_report": {
@@ -42,9 +44,9 @@
     "font-regression-or-manual-font-correction-observed"
   ],
   "validation_order": [
-    "python -m py_compile scripts/validate_webexcel_fonts.py scripts/validate_webexcel_font_harness.py tests/test_webexcel_font_compatibility.py tests/test_webexcel_font_harness.py",
+    "python -m py_compile scripts/validate_webexcel_fonts.py scripts/validate_webexcel_font_harness.py tests/test_webexcel_font_compatibility.py tests/test_webexcel_font_harness.py tests/test_webexcel_font_review_regressions.py",
     "python scripts/validate_webexcel_font_harness.py --output Outputs/webexcel-font-harness.json --summary",
-    "python -m unittest tests.test_webexcel_font_compatibility tests.test_webexcel_font_harness -v",
+    "python -m unittest tests.test_webexcel_font_compatibility tests.test_webexcel_font_harness tests.test_webexcel_font_review_regressions -v",
     "python scripts/validate_webexcel_fonts.py --scan-source --output Outputs/webexcel-font-validation.json --summary",
     "python scripts/validate_harness.py",
     "python -m unittest tests.test_harness_contract -v",
