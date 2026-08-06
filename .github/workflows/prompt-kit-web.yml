@@ -37,6 +37,7 @@ on:
       - tests/test_prompt_kit_mobile.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_kit_portability.py
+      - tests/test_prompt_kit_portable_health.py
       - tests/test_prompt_library_portability.py
       - tests/test_skill_prompt_registry.py
       - .github/workflows/prompt-kit-web.yml
@@ -77,6 +78,7 @@ on:
       - tests/test_prompt_kit_mobile.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_kit_portability.py
+      - tests/test_prompt_kit_portable_health.py
       - tests/test_prompt_library_portability.py
       - tests/test_skill_prompt_registry.py
       - .github/workflows/prompt-kit-web.yml
@@ -110,6 +112,7 @@ jobs:
             tests/test_prompt_kit_mobile.py \
             tests/test_prompt_kit_discovery.py \
             tests/test_prompt_kit_portability.py \
+            tests/test_prompt_kit_portable_health.py \
             tests/test_prompt_library_portability.py \
             tests/test_skill_prompt_registry.py
       - name: Validate Prompt Kit JavaScript syntax
@@ -162,7 +165,10 @@ jobs:
             --require-artifact \
             --output Outputs/prompt-kit-portability-validation.json \
             --summary
-          python -m unittest tests.test_prompt_kit_portability -v
+          python -m unittest \
+            tests.test_prompt_kit_portability \
+            tests.test_prompt_kit_portable_health \
+            -v
       - name: Validate Prompt Library portability contract
         run: python -m unittest tests.test_prompt_library_portability -v
       - name: Upload portable Prompt Kit runtime proof
