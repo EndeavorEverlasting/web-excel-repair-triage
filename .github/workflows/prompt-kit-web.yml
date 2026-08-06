@@ -14,6 +14,7 @@ on:
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_prompt_kit_portability.py
+      - triage/prompt_library_portability.py
       - registry/prompts/skill-development-prompts.v1.json
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
       - docs/PROMPT_KIT_PORTABILITY.md
@@ -36,6 +37,7 @@ on:
       - tests/test_prompt_kit_mobile.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_kit_portability.py
+      - tests/test_prompt_library_portability.py
       - tests/test_skill_prompt_registry.py
       - .github/workflows/prompt-kit-web.yml
   push:
@@ -52,6 +54,7 @@ on:
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_prompt_kit_portability.py
+      - triage/prompt_library_portability.py
       - registry/prompts/skill-development-prompts.v1.json
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
       - docs/PROMPT_KIT_PORTABILITY.md
@@ -74,6 +77,7 @@ on:
       - tests/test_prompt_kit_mobile.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_kit_portability.py
+      - tests/test_prompt_library_portability.py
       - tests/test_skill_prompt_registry.py
       - .github/workflows/prompt-kit-web.yml
 
@@ -99,12 +103,14 @@ jobs:
             scripts/validate_prompt_kit_interactions.py \
             scripts/validate_prompt_kit_discovery.py \
             scripts/validate_prompt_kit_portability.py \
+            triage/prompt_library_portability.py \
             tests/test_prompt_kit_header_contract.py \
             tests/test_prompt_kit_product_interactions.py \
             tests/test_prompt_kit_filtering_access.py \
             tests/test_prompt_kit_mobile.py \
             tests/test_prompt_kit_discovery.py \
             tests/test_prompt_kit_portability.py \
+            tests/test_prompt_library_portability.py \
             tests/test_skill_prompt_registry.py
       - name: Validate Prompt Kit JavaScript syntax
         run: |
@@ -157,6 +163,8 @@ jobs:
             --output Outputs/prompt-kit-portability-validation.json \
             --summary
           python -m unittest tests.test_prompt_kit_portability -v
+      - name: Validate Prompt Library portability contract
+        run: python -m unittest tests.test_prompt_library_portability -v
       - name: Upload portable Prompt Kit runtime proof
         uses: actions/upload-artifact@v4
         with:
