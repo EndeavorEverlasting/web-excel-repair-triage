@@ -54,6 +54,10 @@ tracked-path scan and executes the focused installer, remediation, allow-path,
 and no-sensitive-output regression tests. The explicit command is retained so
 the root harness validator and operator-visible hook contract remain fail-closed.
 
+This explicit line also prevents a drift where the validator registry points to
+the expanded wrapper while `scripts/validate_harness.py` still requires the
+canonical tracked-path command in the hook source.
+
 ## Paths blocked by default
 
 - live or generated material under `Outputs/`, `outputs/`, `billing_runs/`,
