@@ -1,0 +1,62 @@
+{
+  "schema": "workbook-visual-integrity-policy/v1",
+  "policy_id": "triage-workbook-visual-integrity/v1",
+  "authorities": {
+    "spreadsheet_style": "configs/spreadsheet_style_v1.json",
+    "visual_design": "configs/workbook_visual_design_v1.json",
+    "font_policy": "configs/webexcel_fonts_v1.json",
+    "evidence_authority": "EndeavorEverlasting/FUN",
+    "producer_authority": "EndeavorEverlasting/web-excel-repair-triage"
+  },
+  "fonts": {
+    "default": "Aptos",
+    "title": "Aptos Display",
+    "allowed": ["Aptos", "Aptos Display"],
+    "forbidden_fonts_authority": "configs/webexcel_fonts_v1.json"
+  },
+  "chrome": {
+    "title_and_total_fill": "FF17365D",
+    "subtitle_fill": "FFF3F6F9",
+    "table_header_fill": "FF1F4E78",
+    "table_header_font": "FFFFFFFF"
+  },
+  "semantic_roles": {
+    "configuration": {"fill": "FFD9E1F2", "label": "Configuration"},
+    "inventory_management": {"fill": "FFE2F0D9", "label": "Inventory Management / Reconciliation"},
+    "logistics_material_movement": {"fill": "FFFCE4D6", "label": "Logistics / Material Movement"},
+    "deployment": {"fill": "FFF4CCCC", "label": "Deployment"},
+    "client_coordination": {"fill": "FFFFF2CC", "label": "Client Coordination"},
+    "staging_readiness": {"fill": "FFDDEBF7", "label": "Staging / Readiness"},
+    "survey_recon": {"fill": "FFD9EAD3", "label": "Survey / Recon"},
+    "pm_operational_control": {"fill": "FFE4DFEC", "label": "PM / Data Analysis / Operational Control"}
+  },
+  "artifact_specific_roles": [
+    "go_live_support",
+    "documentation",
+    "cleanup_disposal"
+  ],
+  "rules": {
+    "semantic_color_only": true,
+    "unique_color_per_role": true,
+    "direct_cell_formatting_required": true,
+    "date_or_person_striping_requires_bounded_profile_exception": true,
+    "style_only_pass_preserves_values_formulas_sheet_order_and_merges": true,
+    "range_boundaries_are_inclusive_and_fail_on_bleed": true,
+    "paired_visual_ranges_require_relative_row_fill_parity": true,
+    "generated_artifact_requires_profile_id_and_validation_receipt": true,
+    "operator_excel_for_web_review_is_separate_proof": true
+  },
+  "stable_rule_ids": {
+    "WVI001": "Artifact or profile identity mismatch",
+    "WVI002": "Required sheet or package surface missing",
+    "WVI003": "Semantic role color mismatch",
+    "WVI004": "Same-key formatting divergence",
+    "WVI005": "Declared range boundary bleed",
+    "WVI006": "Paired visual range parity mismatch",
+    "WVI007": "Style-only baseline changed workbook content or structure",
+    "WVI008": "Exact range or layout contract mismatch",
+    "WVI009": "Visual profile or registry contract invalid",
+    "WVI010": "Validation receipt incomplete or artifact identity missing"
+  },
+  "proof_ceiling": "Static OOXML style, range, layout, profile, and baseline-preservation proof. Excel for Web rendering and operator acceptance remain field proof."
+}

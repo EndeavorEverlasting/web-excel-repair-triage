@@ -1,0 +1,43 @@
+{
+  "schema": "workbook-visual-generator-bindings/v1",
+  "policy": "configs/workbook_visual_integrity_v1.json",
+  "bindings": [
+    {
+      "artifact_family": "nth-admin-workbook",
+      "profiles": ["nth-admin-may-26-29/v1", "nth-admin-july/v1"],
+      "producer_repository": "EndeavorEverlasting/web-excel-repair-triage",
+      "acceptance_repository": "EndeavorEverlasting/FUN",
+      "status": "contract_ready_product_wiring_pending",
+      "required_sequence": ["generate", "font_gate", "visual_gate", "artifact_and_semantic_gates", "operator_excel_for_web_review"]
+    },
+    {
+      "artifact_family": "nth-internal-math-packet",
+      "profiles": ["nth-math-packet/v1"],
+      "producer_repository": "EndeavorEverlasting/web-excel-repair-triage",
+      "acceptance_repository": "EndeavorEverlasting/FUN",
+      "status": "contract_ready_product_wiring_pending",
+      "required_sequence": ["generate", "font_gate", "visual_gate", "artifact_and_semantic_gates", "operator_excel_for_web_review"]
+    },
+    {
+      "artifact_family": "generic-workbook",
+      "profiles": [],
+      "status": "profile_required",
+      "required_sequence": ["register_profile", "generate", "font_gate", "visual_gate", "artifact_specific_gates", "operator_review"]
+    }
+  ],
+  "required_manifest_fields": [
+    "visual_profile_id",
+    "visual_policy_sha256",
+    "visual_validation_result",
+    "artifact_sha256",
+    "font_validation_result",
+    "operator_excel_for_web_status"
+  ],
+  "forbidden_shortcuts": [
+    "using a chart palette as the cell palette",
+    "treating process exit zero as visual acceptance",
+    "hand-editing generated output without updating the profile or generator",
+    "changing formulas or values during a style-only pass",
+    "accepting a workbook whose validation receipt names different bytes"
+  ]
+}

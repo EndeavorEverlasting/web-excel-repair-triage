@@ -1,0 +1,43 @@
+{
+  "schema": "workbook-visual-profile/v1",
+  "profile_id": "nth-math-packet/v1",
+  "artifact_family": "nth-internal-math-packet",
+  "scope": "Internal NTH Math Packet workbook family",
+  "filename_patterns": ["(?i).*Math[_ -]Packet.*\\.xlsx$"],
+  "required_sheet_patterns": ["^00 ", "Summary|Crosswalk"],
+  "artifact_specific_roles": {
+    "go_live_support": "FFD9EAF7",
+    "documentation": "FFE7E6E6",
+    "cleanup_disposal": "FFF0F1F2"
+  },
+  "exceptions": [],
+  "defense_tab_contract": {
+    "one_tab_per_workstream": true,
+    "required_sections": [
+      "Allocation Basis",
+      "Included Activities",
+      "Evidence & Authority",
+      "Defense Boundaries",
+      "Share-Safe Claim"
+    ]
+  },
+  "rules": [
+    {"id": "MATH-VIS-001", "type": "profile_palette"},
+    {"id": "MATH-VIS-002", "type": "defense_tab_sections"},
+    {"id": "MATH-VIS-003", "type": "chrome_contract", "title_fill": "FF17365D", "subtitle_fill": "FFF3F6F9", "table_header_fill": "FF1F4E78"},
+    {"id": "MATH-VIS-004", "type": "style_only_baseline", "preserve": ["sheet_order", "cell_values", "formulas", "merged_ranges"]}
+  ],
+  "generator_binding": {
+    "required": true,
+    "status": "contract_ready_product_wiring_pending",
+    "manifest_fields": [
+      "visual_profile_id",
+      "visual_policy_sha256",
+      "visual_validation_result",
+      "artifact_sha256",
+      "font_validation_result",
+      "operator_excel_for_web_status"
+    ]
+  },
+  "proof_ceiling": "Static profile, palette, defense-tab structure, and style-only preservation proof. Evidence truth, workbook math, Excel for Web rendering, and operator acceptance remain separate gates."
+}

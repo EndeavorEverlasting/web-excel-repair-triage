@@ -1,0 +1,75 @@
+{
+  "schema": "workbook-visual-profile/v1",
+  "profile_id": "nth-admin-may-26-29/v1",
+  "artifact_family": "nth-admin-workbook",
+  "scope": "May 26-29, 2026 administrative NTH only",
+  "filename_patterns": ["(?i).*May[_ -]26[-_ ]29.*\\.xls[mx]$"],
+  "required_sheets": ["May 26-29 NTH", "Task Summary"],
+  "artifact_specific_roles": {
+    "go_live_support": "FFD9EAF7",
+    "documentation": "FFE7E6E6"
+  },
+  "exceptions": [
+    {
+      "id": "may-26-29-legacy-date-bands",
+      "type": "legacy_date_band",
+      "bounded_sheet": "May 26-29 NTH",
+      "bounded_rows": [9, 20],
+      "reason": "Operator-confirmed historical May presentation. It does not authorize date striping in future NTH artifacts."
+    }
+  ],
+  "rules": [
+    {"id": "MAY-VIS-001", "type": "range_fill", "sheet": "May 26-29 NTH", "range": "A8:I8", "expected_fill": "FF4472C4"},
+    {"id": "MAY-VIS-002", "type": "range_fill", "sheet": "May 26-29 NTH", "range": "A9:I11", "expected_fill": "FFFCE4D6"},
+    {"id": "MAY-VIS-003", "type": "range_fill", "sheet": "May 26-29 NTH", "range": "A12:I15", "expected_fill": "FFE2F0D9"},
+    {"id": "MAY-VIS-004", "type": "range_fill", "sheet": "May 26-29 NTH", "range": "A16:I18", "expected_fill": "FFEAD1DC"},
+    {"id": "MAY-VIS-005", "type": "range_fill", "sheet": "May 26-29 NTH", "range": "A19:I20", "expected_fill": "FFD9EAF7"},
+    {
+      "id": "MAY-VIS-006",
+      "type": "same_key_style",
+      "sheet": "May 26-29 NTH",
+      "rows": [9, 20],
+      "key_column": "A",
+      "style_columns": ["A", "I"],
+      "attributes": ["fill", "font", "border", "alignment"],
+      "contiguous": true
+    },
+    {"id": "MAY-VIS-007", "type": "boundary", "sheet": "May 26-29 NTH", "range": "A9:I11", "expected_fill": "FFFCE4D6", "edges": ["bottom"]},
+    {"id": "MAY-VIS-008", "type": "boundary", "sheet": "May 26-29 NTH", "range": "A12:I15", "expected_fill": "FFE2F0D9", "edges": ["top", "bottom"]},
+    {"id": "MAY-VIS-009", "type": "boundary", "sheet": "May 26-29 NTH", "range": "A16:I18", "expected_fill": "FFEAD1DC", "edges": ["top", "bottom"]},
+    {
+      "id": "MAY-VIS-010",
+      "type": "semantic_rows",
+      "sheet": "Task Summary",
+      "rows": [9, 17],
+      "label_column": "A",
+      "style_columns": ["A", "F"],
+      "match_mode": "prefix",
+      "mappings": [
+        {"token": "Inventory", "role": "inventory_management"},
+        {"token": "Logistics", "role": "logistics_material_movement"},
+        {"token": "Survey", "role": "survey_recon"},
+        {"token": "PM", "role": "pm_operational_control"},
+        {"token": "Staging", "role": "staging_readiness"},
+        {"token": "Go-Live", "role": "go_live_support"},
+        {"token": "Client", "role": "client_coordination"},
+        {"token": "Documentation", "role": "documentation"},
+        {"token": "Configuration", "role": "configuration"}
+      ]
+    },
+    {"id": "MAY-VIS-011", "type": "style_only_baseline", "preserve": ["sheet_order", "cell_values", "formulas", "merged_ranges"]}
+  ],
+  "generator_binding": {
+    "required": true,
+    "status": "contract_ready_product_wiring_pending",
+    "manifest_fields": [
+      "visual_profile_id",
+      "visual_policy_sha256",
+      "visual_validation_result",
+      "artifact_sha256",
+      "font_validation_result",
+      "operator_excel_for_web_status"
+    ]
+  },
+  "proof_ceiling": "Static May-specific range, same-key, semantic-color, and style-only preservation proof. Excel for Web appearance and administrative acceptance remain operator proof."
+}
