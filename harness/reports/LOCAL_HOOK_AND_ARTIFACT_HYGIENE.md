@@ -41,6 +41,19 @@ After the path gate passes, the hook validates the isolated staged tree and runs
 patch hygiene. It does not launch the product, contact the network, or invoke a
 browser, GUI, workbook runtime, or deployment path.
 
+## Pre-push behavior
+
+The pre-push hook keeps the canonical tracked-path check explicit:
+
+```text
+python -m triage.gitignore_hygiene
+```
+
+It then runs the expanded artifact-hygiene wrapper, which repeats the bounded
+tracked-path scan and executes the focused installer, remediation, allow-path,
+and no-sensitive-output regression tests. The explicit command is retained so
+the root harness validator and operator-visible hook contract remain fail-closed.
+
 ## Paths blocked by default
 
 - live or generated material under `Outputs/`, `outputs/`, `billing_runs/`,
