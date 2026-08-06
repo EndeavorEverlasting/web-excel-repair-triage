@@ -46,7 +46,7 @@
     },
     {
       "id": "guided_questionnaire",
-      "expected": "A visible Find My Prompt control opens an accessible three-question questionnaire and returns one primary recommendation with no more than two follow-on options."
+      "expected": "A separate visible Find My Prompt control preserves the existing Add Prompt action, opens an accessible three-question questionnaire, and returns one primary recommendation with no more than two follow-on options."
     },
     {
       "id": "metadata_recommendations",
