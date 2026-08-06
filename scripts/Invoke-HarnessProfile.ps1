@@ -180,6 +180,12 @@ if (Test-Path -LiteralPath $resolvedRunRoot) {
     throw "$source run root already exists; refusing to overwrite evidence: $resolvedRunRoot"
 }
 
+$runRootParent = Split-Path -Parent $resolvedRunRoot
+New-Item -ItemType Directory -Path $runRootParent -Force | Out-Null
+if (Test-Path -LiteralPath $resolvedRunRoot) {
+    throw "Run root appeared during initialization; refusing to overwrite evidence: $resolvedRunRoot"
+}
+New-Item -ItemType Directory -Path $resolvedRunRoot | Out-Null
 $stepsDirectory = Join-Path $resolvedRunRoot 'steps'
 $runLogPath = Join-Path $resolvedRunRoot 'run.log'
 $summaryPath = Join-Path $resolvedRunRoot 'summary.json'
