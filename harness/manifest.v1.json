@@ -44,8 +44,10 @@
     },
     "powershell_command_envelope": {
       "contract": "harness/contracts/powershell-command-envelope.v1.json",
+      "runner": "scripts/Invoke-HarnessProfile.ps1",
       "validator": "tests/test_powershell_command_envelope.py",
       "contract_tests": "tests/test_powershell_command_envelope.py",
+      "operator_report": "harness/reports/POWERSHELL_COMMAND_SAFETY.md",
       "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
       "harness_gate": "python -m unittest tests.test_powershell_command_envelope -v"
     }
