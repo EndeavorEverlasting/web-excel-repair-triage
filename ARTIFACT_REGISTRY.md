@@ -1,6 +1,6 @@
 # Artifact Registry
 
-This registry defines repository artifacts that agents, CI, and operators may produce or consume. The machine-readable authority is `harness/artifacts.v1.json`; component ownership lives in `harness/manifest.v1.json`; validator ownership lives in `harness/validators.v1.json`.
+This registry defines repository artifacts that agents, CI, and operators may produce or consume. The machine-readable root authority is `harness/artifacts.v1.json`; domain-specific artifact ownership may also be declared by a registered contract in `harness/manifest.v1.json`. Validator ownership lives in `harness/validators.v1.json`.
 
 ## Tracked control-plane artifacts
 
@@ -11,21 +11,25 @@ This registry defines repository artifacts that agents, CI, and operators may pr
 | Workflow specification | `WORKFLOW.md` | edited Markdown | `harness-completeness` | Tracked human workflow source. |
 | Workflow registry | `harness/workflows.v1.json` | edited versioned JSON | `harness-completeness` and contract tests | Machine-readable triggers, scope, failure, validation, and handoff ownership. |
 | Artifact registry | `ARTIFACT_REGISTRY.md` | edited Markdown | `harness-completeness` | Human-readable artifact contract. |
-| Machine artifact registry | `harness/artifacts.v1.json` | edited versioned JSON | `harness-completeness` and contract tests | Canonical paths, producers, validators, naming, tracking, and proof ceilings. |
-| Validator registry | `harness/validators.v1.json` | edited versioned JSON | `harness-completeness` and contract tests | Validator commands, outputs, profiles, and hook bindings. |
+| Machine artifact registry | `harness/artifacts.v1.json` | edited versioned JSON | `harness-completeness` and contract tests | Root artifact families, canonical paths, producers, validators, naming, tracking, and proof ceilings. |
+| Validator registry | `harness/validators.v1.json` | edited versioned JSON | `harness-completeness` and contract tests | Root validator commands, outputs, profiles, and hook bindings. |
 | Skill index | `SKILLS.md` | edited Markdown | harness validator | Indexes every active skill. |
 | Capability index | `CAPABILITIES.md` | edited Markdown | harness validator | Mirrors the capability registry. |
 | Trigger index | `TRIGGERS.md` | edited Markdown | harness validator | Mirrors the trigger registry. |
-| Harness manifest | `harness/manifest.v1.json` | edited JSON | `python scripts/validate_harness.py` | Complete component inventory and full validation order; update atomically. |
+| Harness manifest | `harness/manifest.v1.json` | edited JSON | `python scripts/validate_harness.py` | Complete component inventory, registered domain contracts, and root validation order; update atomically. |
 | Capability registry | `harness/capabilities.v1.json` | edited JSON | harness validator/tests | Unique IDs, inputs, outputs, implementation, skill, triggers, and proof ceiling. |
 | Trigger registry | `harness/triggers.v1.json` | edited JSON | harness validator/tests | Deterministic conditions and forbidden conditions with one capability/skill owner. |
 | Scoped skills | `.ai/skills/*/SKILL.md` | edited Markdown | harness validator/tests | Repeatable procedures; deterministic behavior remains in code/contracts. |
 | Operator report | `harness/reports/CURRENT_STATE.md` | edited Markdown | harness validator | Current working, broken, missing, validation, and proof state. |
 | Prompt Kit interaction contract | `harness/contracts/prompt-kit-interactions.v1.json` | edited versioned JSON | focused tests and audit | Harness owns the requirement; product lane owns implementation. |
 | Prompt Kit discovery contract | `harness/contracts/prompt-kit-discovery.v1.json` | edited versioned JSON | focused tests and audit | Tracked discovery requirement and proof boundary. |
+| Prompt Kit portability contract | `harness/contracts/prompt-kit-portability.v1.json` | edited versioned JSON | portability validator/tests | Stable-origin Favorites persistence, transfer schema, artifact rules, connected-GitHub fallback, and sequential prompt routing. |
 | Prompt-language policy and fixtures | `harness/evals/**` | edited versioned JSON | prompt-language tests/evaluator | Rules, severities, fixtures, and result contract. |
-| Prompt Kit website | `web/prompt-kit/index.html` | deterministic builder output | `prompt-kit-parity` | Tracked; change canonical sources and rebuild. |
-| Technician acquisition surfaces | `Acquire-Latest-PromptKit.cmd`, `scripts/Acquire-LatestPromptKit.ps1` | edited code | harness tests plus native Windows proof | Preservation-first clone/fast-forward/validate/open behavior. |
+| Prompt Kit website | `web/prompt-kit/index.html` | deterministic builder output | `prompt-kit-parity` | Tracked canonical source artifact; change canonical sources and rebuild. Runtime portability injection must not modify it. |
+| Prompt Kit portable runtime source | `docs/prompt-kit-favorites-portability.js` | edited JavaScript | Node syntax plus portability tests | Tracked Export/Import behavior; injected only into the generated runtime artifact. |
+| Prompt Kit portable generator/server | `scripts/serve_prompt_kit_portable.py` | edited Python | portability tests and validator | Generates a hash-receipted artifact and serves it from loopback only. |
+| Technician acquisition surfaces | `Acquire-Latest-PromptKit.cmd`, `scripts/Acquire-LatestPromptKit.ps1` | edited code | harness tests plus native Windows proof | Preservation-first clone/fast-forward/validate behavior. |
+| Portable quick-open surfaces | `Open-Latest-PromptKit.cmd`, `scripts/Open-LatestPromptKitPortable.ps1` | edited code | portability tests plus native Windows proof | Reuse acquisition helpers, generate/validate the runtime artifact, open the stable origin. |
 | Hooks | `.githooks/pre-commit`, `.githooks/pre-push` | edited shell | harness validator/tests | Optional per-worktree local gates. |
 
 ## Generated runtime artifacts
@@ -34,6 +38,9 @@ This registry defines repository artifacts that agents, CI, and operators may pr
 |---|---|---|---|---|
 | Harness completeness report | `Outputs/harness-completeness-report.json` | `python scripts/validate_harness.py --report Outputs/harness-completeness-report.json` | schema `harness-completeness-report/v1`; stable family name | Gitignored or CI artifact. |
 | Prompt Kit interaction audit | `Outputs/prompt-kit-interaction-audit.json` | focused interaction validator | stable result schema and family name | Gitignored or CI artifact. |
+| Prompt Kit portable site | `Outputs/prompt-kit-portable/index.html` | `python scripts/serve_prompt_kit_portable.py --build-only` | exact tracked site plus tracked portability runtime | Gitignored; CI artifact name `prompt-kit-portable-runtime`. |
+| Prompt Kit portable receipt | `Outputs/prompt-kit-portable/manifest.json` | portable builder/server | schema `prompt-kit-portable-artifact/v1`; source/runtime/artifact SHA-256 | Gitignored or CI artifact. |
+| Prompt Kit portability validation | `Outputs/prompt-kit-portability-validation.json` | portability validator with `--require-artifact` | schema `prompt-kit-portability-validation-result/v1` | Gitignored or CI artifact. |
 | Prompt-language audit | `Outputs/prompt-language-audit.json` | exhaustive evaluator | stable result schema and family name | Gitignored or CI artifact. |
 | Strict prompt-language repair audit | `Outputs/prompt-language-audit-strict.json` | evaluator `--strict` | strict flag plus one disposition per prompt | Gitignored. |
 | Skill eval results | target repository approved output path | target eval runner | stable skill ID/version/run ID | Gitignored unless sanitized baseline. |
@@ -53,7 +60,7 @@ This registry defines repository artifacts that agents, CI, and operators may pr
 
 ## Artifact lifecycle
 
-1. Resolve the artifact ID from `harness/artifacts.v1.json`; do not guess from a generic filename.
+1. Resolve the artifact ID from `harness/artifacts.v1.json` or the registered domain contract in `harness/manifest.v1.json`; do not guess from a generic filename.
 2. Declare artifact owner, source, destination, schema/profile, validator, and proof ceiling.
 3. Generate through the registered script, module, launcher, workflow, or CI job.
 4. Validate structural, semantic, parity, safety, and path requirements appropriate to the artifact.
@@ -78,7 +85,15 @@ Harness report:
 python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
 ```
 
-Full harness profile:
+Portable Prompt Kit artifact and receipt:
+
+```bash
+python scripts/serve_prompt_kit_portable.py --build-only
+python scripts/validate_prompt_kit_portability.py --require-artifact --output Outputs/prompt-kit-portability-validation.json --summary
+python -m unittest tests.test_prompt_kit_portability -v
+```
+
+Full root harness profile:
 
 ```bash
 python -m unittest tests.test_harness_contract -v
@@ -97,4 +112,4 @@ git diff --check
 
 ## Proof boundaries
 
-File and registry presence prove repository integration only. A harness completeness report proves the registered static checks executed on one checkout and commit. Deterministic builder parity proves source-to-generated identity, not browser acceptance. Interaction/discovery audits prove only their documented static surfaces. Prompt-language audit proves canonical/effective coverage and findings, not provider obedience. CI proves only the commands and fixtures exercised by that workflow. Excel for Web, native Windows GUI, browser events, clipboard/focus behavior, credentials, network, protected targets, technician acceptance, deployment, and production success require separate observed proof.
+File and registry presence prove repository integration only. A harness completeness report proves the registered static checks executed on one checkout and commit. Deterministic canonical builder parity proves source-to-generated identity, not browser acceptance. A portable artifact receipt proves exact source/runtime composition and hashes on one execution; loopback launch, browser storage persistence, Export/Import dialogs, browser-profile transfer, and cross-device acceptance remain separate observed gates. Interaction/discovery audits prove only their documented static surfaces. Prompt-language audit proves canonical/effective coverage and findings, not provider obedience. CI proves only the commands and fixtures exercised by that workflow. Excel for Web, native Windows GUI, browser events, clipboard/focus behavior, credentials, network, protected targets, technician acceptance, deployment, and production success require separate observed proof.
