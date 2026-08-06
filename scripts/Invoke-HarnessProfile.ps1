@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('harness', 'pre_commit', 'pre_push')]
+    [ValidateSet('harness', 'pre_push')]
     [string]$Profile = 'harness',
 
     [string]$RepositoryRoot = (Split-Path -Parent $PSScriptRoot),
@@ -48,6 +48,24 @@ function Get-SafeStepId {
 
     $safe = $Value -replace '[^A-Za-z0-9._-]', '-'
     return $safe.Trim('-')
+}
+
+function Test-PathWithin {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Candidate,
+
+        [Parameter(Mandatory)]
+        [string]$Container
+    )
+
+    $separator = [IO.Path]::DirectorySeparatorChar
+    $candidateFull = [IO.Path]::GetFullPath($Candidate).TrimEnd('\', '/')
+    $containerFull = [IO.Path]::GetFullPath($Container).TrimEnd('\', '/')
+    return (
+        $candidateFull.Equals($containerFull, [StringComparison]::OrdinalIgnoreCase) -or
+        $candidateFull.StartsWith("$containerFull$separator", [StringComparison]::OrdinalIgnoreCase)
+    )
 }
 
 function Invoke-CapturedCommand {
@@ -137,6 +155,7 @@ function Invoke-CapturedCommand {
     }
 }
 
+$runRootWasProvided = [bool]$RunRoot
 if (-not $RunRoot) {
     $evidenceBase = if ($env:LOCALAPPDATA) {
         Join-Path $env:LOCALAPPDATA 'EndeavorEverlasting\web-excel-repair-triage\harness-runs'
@@ -149,11 +168,23 @@ if (-not $RunRoot) {
 }
 
 $resolvedRunRoot = [IO.Path]::GetFullPath($RunRoot)
+$requestedRepositoryRoot = [IO.Path]::GetFullPath($RepositoryRoot)
+foreach ($protectedName in @('Candidates', 'Active')) {
+    $protectedPath = Join-Path $requestedRepositoryRoot $protectedName
+    if (Test-PathWithin -Candidate $resolvedRunRoot -Container $protectedPath) {
+        throw "Run root must not be inside protected operator input '$protectedPath': $resolvedRunRoot"
+    }
+}
+if (Test-Path -LiteralPath $resolvedRunRoot) {
+    $source = if ($runRootWasProvided) { 'Caller-supplied' } else { 'Generated' }
+    throw "$source run root already exists; refusing to overwrite evidence: $resolvedRunRoot"
+}
+
 $stepsDirectory = Join-Path $resolvedRunRoot 'steps'
 $runLogPath = Join-Path $resolvedRunRoot 'run.log'
 $summaryPath = Join-Path $resolvedRunRoot 'summary.json'
-New-Item -ItemType Directory -Path $stepsDirectory -Force | Out-Null
-New-Item -ItemType File -Path $runLogPath -Force | Out-Null
+New-Item -ItemType Directory -Path $stepsDirectory | Out-Null
+New-Item -ItemType File -Path $runLogPath | Out-Null
 
 $summary = [ordered]@{
     schema_version = 'powershell-command-envelope-result/v1'
