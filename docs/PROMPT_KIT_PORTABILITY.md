@@ -19,6 +19,12 @@ Import is additive and deduplicating. It does not silently delete current Favori
 
 The current browser-local key remains `promptKit.favoritePromptIds.v1`. Legacy array backups and known older storage keys are migrated without replacing the portable JSON contract.
 
+### Upgrade procedure
+
+Before replacing a local Prompt Kit copy, clearing browser data, changing browser profiles, or moving to another device, the operator exports Favorites from the old site. After opening the upgraded site, the operator imports that JSON backup and verifies that the expected Favorites section is restored.
+
+Every release must regenerate the standalone website through the canonical registry builder so the portability runtime is carried into the next version. A release that omits the runtime, export/import controls, schema validator, or focused tests is stale and must fail validation.
+
 ## Portable execution discipline
 
 Every repository-writing sprint must name:
@@ -69,7 +75,7 @@ Task-specific prompt rules override generic closeout behavior.
 
 - Runtime behavior: `docs/prompt-kit-favorites-portability.js`
 - Machine policy: `harness/contracts/prompt-kit-portability.v1.json`
-- Builder: `build_prompt_kit.py`
+- Builder: `scripts/build_prompt_kit_registry.py`
 - Generated site: `web/prompt-kit/index.html`
 - Validator: `scripts/validate_prompt_kit_portability.py`
 - Tests: `tests/test_prompt_kit_portability.py`
