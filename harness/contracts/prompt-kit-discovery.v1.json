@@ -10,6 +10,11 @@
     "guided_prompt_source": "registry/prompts/tutorial-discovery-prompts.v1.json",
     "tutorial": "docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md"
   },
+  "privacy": {
+    "answer_processing": "local-page-only",
+    "answer_persistence": "none",
+    "network_submission": false
+  },
   "requirements": [
     {
       "id": "section_heading_contrast",
