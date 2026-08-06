@@ -1,35 +1,14 @@
-"""Validate that git-tracked binary artifacts match repo ignore policy."""
+"""Validate that tracked paths comply with artifact and local-junk policy."""
 from __future__ import annotations
 
 import argparse
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable, List, Sequence, Tuple
+from typing import Iterable, List, Sequence
 
+from triage.artifact_hygiene_policy import scan_paths
 from triage.path_policy import repo_root
-
-_BINARY_EXTENSIONS = (".xlsx", ".xlsm", ".xls", ".docx", ".zip", ".doc")
-
-# Paths where tracked workbook/archive bytes are allowed (sanitized fixtures only).
-_TRACKED_BINARY_ALLOWLIST_PREFIXES: Tuple[str, ...] = (
-    "tests/fixtures/",
-)
-
-# Paths that must never appear in `git ls-files` for binary types.
-_FORBIDDEN_TRACKED_PREFIXES: Tuple[str, ...] = (
-    "attached_assets/",
-    "Candidates/",
-    "Outputs/",
-    "outputs/",
-    "References/",
-    "ArtifactIntake/",
-    "Repaired/",
-    "artifacts/",
-    "billing_runs/",
-    "Workbook Payload Artifacts/",
-    "RecoveredArtifacts/",
-)
 
 
 @dataclass
@@ -50,28 +29,30 @@ class HygieneReport:
         return {
             "ok": self.ok,
             "finding_count": len(self.findings),
-            "findings": [{"path": f.path, "reason": f.reason} for f in self.findings],
+            "findings": [
+                {"path": finding.path, "reason": finding.reason}
+                for finding in self.findings
+            ],
         }
 
 
 def _git_ls_files(root: Path) -> List[str]:
     proc = subprocess.run(
-        ["git", "ls-files"],
+        ["git", "ls-files", "-z"],
         cwd=str(root),
-        check=True,
-        capture_output=True,
-        text=True,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+        timeout=15,
     )
-    return [line.strip() for line in proc.stdout.splitlines() if line.strip()]
-
-
-def _is_binary_tracked(path: str) -> bool:
-    lower = path.lower()
-    return any(lower.endswith(ext) for ext in _BINARY_EXTENSIONS)
-
-
-def _allowed_tracked_binary(path: str) -> bool:
-    return any(path.startswith(prefix) for prefix in _TRACKED_BINARY_ALLOWLIST_PREFIXES)
+    if proc.returncode != 0:
+        raise RuntimeError(f"git ls-files exited with code {proc.returncode}")
+    return [
+        item
+        for item in proc.stdout.decode("utf-8", errors="replace").split("\0")
+        if item
+    ]
 
 
 def scan_tracked_binaries(
@@ -79,50 +60,51 @@ def scan_tracked_binaries(
     *,
     root: Path | None = None,
 ) -> HygieneReport:
-    """Return policy violations for tracked binary artifact paths."""
+    """Compatibility entry point that now scans every tracked path."""
     root = root or repo_root()
     tracked = list(paths) if paths is not None else _git_ls_files(root)
-    report = HygieneReport()
-
-    for rel in tracked:
-        if not _is_binary_tracked(rel):
-            continue
-        if any(rel.startswith(prefix) for prefix in _FORBIDDEN_TRACKED_PREFIXES):
-            report.findings.append(
-                HygieneFinding(rel, "forbidden_tracked_binary_prefix")
-            )
-            continue
-        if not _allowed_tracked_binary(rel):
-            report.findings.append(
-                HygieneFinding(rel, "unexpected_tracked_binary_outside_allowlist")
-            )
-    return report
+    findings = [
+        HygieneFinding(item.path, item.reason)
+        for item in scan_paths(tracked)
+    ]
+    return HygieneReport(findings=findings)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(
         prog="triage.gitignore_hygiene",
-        description="Fail if private/binary artifacts are tracked outside allowlisted fixture paths.",
+        description=(
+            "Fail when generated/runtime evidence, secrets, crash dumps, or "
+            "machine-local junk are tracked outside approved fixture/docs paths."
+        ),
     )
-    ap.add_argument(
+    parser.add_argument(
         "--json",
         action="store_true",
-        help="Emit JSON report to stdout",
+        help="Emit a path-only JSON report to stdout.",
     )
-    args = ap.parse_args(list(argv) if argv is not None else None)
+    args = parser.parse_args(list(argv) if argv is not None else None)
 
-    report = scan_tracked_binaries()
+    try:
+        report = scan_tracked_binaries()
+    except RuntimeError as exc:
+        print(f"gitignore hygiene: ERROR: {exc}")
+        return 2
+
     if args.json:
         import json
 
         print(json.dumps(report.to_dict(), indent=2))
+    elif report.ok:
+        print("gitignore hygiene: OK")
     else:
-        if report.ok:
-            print("gitignore hygiene: OK")
-        else:
-            print("gitignore hygiene: FAIL")
-            for finding in report.findings:
-                print(f"  {finding.path}: {finding.reason}")
+        print("gitignore hygiene: FAIL")
+        for finding in report.findings:
+            print(f"  {finding.path}: {finding.reason}")
+        print(
+            "Move live/generated evidence back to ignored local output, or "
+            "commit a sanitized fixture under an approved fixture/docs path."
+        )
     return 0 if report.ok else 1
 
 
