@@ -158,3 +158,5 @@ subprocess.run(
 
 (ROOT / ".github" / "workflows" / "apply-prompt-kit-portability.yml").unlink()
 Path(__file__).unlink()
+
+# This no-op marker exists only to trigger the already-registered workflow.
