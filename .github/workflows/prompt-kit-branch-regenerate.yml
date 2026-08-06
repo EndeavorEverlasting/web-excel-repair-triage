@@ -1,3 +1,4 @@
+# Temporary branch-only generator; removed before review.
 name: Prompt Kit branch regeneration
 
 on:
