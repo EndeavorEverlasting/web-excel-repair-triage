@@ -14,9 +14,11 @@
     "generator_bindings": "harness/workbook-visual-integrity/generator-bindings.v1.json",
     "cross_repo_contract": "harness/workbook-visual-integrity/fun-triage-contract.v1.json",
     "validator": "scripts/validate_workbook_visual_integrity.py",
+    "guarded_runtime_validator": "scripts/validate_workbook_visual_integrity_guarded.py",
     "completeness_validator": "scripts/validate_workbook_visual_harness.py",
     "tests": [
       "tests/test_workbook_visual_integrity.py",
+      "tests/test_workbook_visual_integrity_guarded.py",
       "tests/test_workbook_visual_harness.py"
     ],
     "skill": ".ai/skills/workbook-visual-integrity/SKILL.md",
@@ -44,9 +46,10 @@
   },
   "validation_order": [
     "python scripts/validate_workbook_visual_harness.py --output Outputs/workbook-visual-harness.json --summary",
-    "python -m unittest tests.test_workbook_visual_integrity tests.test_workbook_visual_harness -v",
+    "python -m unittest tests.test_workbook_visual_integrity tests.test_workbook_visual_integrity_guarded tests.test_workbook_visual_harness -v",
     "python scripts/validate_workbook_visual_integrity.py --validate-profiles --output Outputs/workbook-visual-profile-audit.json --summary",
+    "python scripts/validate_workbook_visual_integrity_guarded.py --validate-profiles --output Outputs/workbook-visual-profile-guard-audit.json --summary",
     "git diff --check"
   ],
-  "proof_ceiling": "Tracked harness completeness, profile integrity, synthesized OOXML color/range behavior, source binding, and static artifact validation. Excel for Web rendering and operator acceptance remain field proof."
+  "proof_ceiling": "Tracked harness completeness, profile integrity, synthesized OOXML color/range behavior, guarded runtime allocation, source binding, and static artifact validation. Excel for Web rendering and operator acceptance remain field proof."
 }

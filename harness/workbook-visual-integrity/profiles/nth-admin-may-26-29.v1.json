@@ -30,6 +30,7 @@
       "sheet": "May 26-29 NTH",
       "rows": [9, 20],
       "key_column": "A",
+      "key_semantic": "date",
       "style_columns": ["A", "I"],
       "attributes": ["fill", "font", "border", "alignment"],
       "contiguous": true

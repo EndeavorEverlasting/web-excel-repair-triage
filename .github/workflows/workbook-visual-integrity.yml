@@ -4,33 +4,27 @@ on:
   pull_request:
     paths:
       - "configs/workbook_visual_integrity_v1.json"
-      - "schemas/workbook-visual-*.json"
       - "harness/workbook-visual-integrity/**"
-      - "scripts/validate_workbook_visual_integrity.py"
-      - "scripts/validate_workbook_visual_harness.py"
-      - "tests/test_workbook_visual_integrity.py"
-      - "tests/test_workbook_visual_harness.py"
+      - "schemas/workbook-visual-*.json"
+      - "scripts/validate_workbook_visual_*.py"
+      - "tests/test_workbook_visual_*.py"
       - ".ai/skills/workbook-visual-integrity/**"
       - ".githooks/pre-commit"
       - ".githooks/pre-push"
       - "harness/manifest.v1.json"
-      - "reports/harness/workbook-visual-integrity-state.md"
       - ".github/workflows/workbook-visual-integrity.yml"
   push:
     branches: [main]
     paths:
       - "configs/workbook_visual_integrity_v1.json"
-      - "schemas/workbook-visual-*.json"
       - "harness/workbook-visual-integrity/**"
-      - "scripts/validate_workbook_visual_integrity.py"
-      - "scripts/validate_workbook_visual_harness.py"
-      - "tests/test_workbook_visual_integrity.py"
-      - "tests/test_workbook_visual_harness.py"
+      - "schemas/workbook-visual-*.json"
+      - "scripts/validate_workbook_visual_*.py"
+      - "tests/test_workbook_visual_*.py"
       - ".ai/skills/workbook-visual-integrity/**"
       - ".githooks/pre-commit"
       - ".githooks/pre-push"
       - "harness/manifest.v1.json"
-      - "reports/harness/workbook-visual-integrity-state.md"
       - ".github/workflows/workbook-visual-integrity.yml"
 
 permissions:
@@ -41,6 +35,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -48,26 +44,43 @@ jobs:
         run: |
           python -m py_compile \
             scripts/validate_workbook_visual_integrity.py \
+            scripts/validate_workbook_visual_integrity_guarded.py \
             scripts/validate_workbook_visual_harness.py \
             tests/test_workbook_visual_integrity.py \
+            tests/test_workbook_visual_integrity_guarded.py \
             tests/test_workbook_visual_harness.py
       - name: Validate harness completeness
-        run: python scripts/validate_workbook_visual_harness.py --output Outputs/workbook-visual-harness.json --summary
+        run: |
+          mkdir -p Outputs/workbook-visual-ci
+          python scripts/validate_workbook_visual_harness.py \
+            --output Outputs/workbook-visual-ci/workbook-visual-harness.json \
+            --summary
       - name: Run visual integrity regressions
-        run: python -m unittest tests.test_workbook_visual_integrity tests.test_workbook_visual_harness -v
-      - name: Audit all tracked visual profiles
-        run: python scripts/validate_workbook_visual_integrity.py --validate-profiles --output Outputs/workbook-visual-profile-audit.json --summary
-      - name: Validate stacked Aptos and root harness compatibility
+        run: python -m unittest tests.test_workbook_visual_integrity tests.test_workbook_visual_integrity_guarded tests.test_workbook_visual_harness -v
+      - name: Audit registered visual profiles
+        run: |
+          python scripts/validate_workbook_visual_integrity.py \
+            --validate-profiles \
+            --output Outputs/workbook-visual-ci/workbook-visual-profile-audit.json \
+            --summary
+          python scripts/validate_workbook_visual_integrity_guarded.py \
+            --validate-profiles \
+            --output Outputs/workbook-visual-ci/workbook-visual-profile-guard-audit.json \
+            --summary
+      - name: Validate font predecessor
         run: |
           python scripts/validate_webexcel_font_harness.py --summary
+          python scripts/validate_webexcel_fonts.py --scan-source --summary
+      - name: Validate root harness compatibility
+        run: |
           python scripts/validate_harness.py
           python -m unittest tests.test_harness_contract -v
       - name: Patch hygiene
         run: git diff --check
-      - name: Publish workbook visual integrity reports
+      - name: Publish visual harness reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: workbook-visual-integrity-report
-          path: |
-            Outputs/workbook-visual-harness.json
-            Outputs/workbook-visual-profile-audit.json
+          path: Outputs/workbook-visual-ci/*.json
+          if-no-files-found: error
