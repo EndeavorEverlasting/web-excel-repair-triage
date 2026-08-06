@@ -113,11 +113,20 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             "slice(0,3)",
             "copyPrompt(",
             "showPromptDetail(",
+            "promptFinderBtn",
+            "prompt-header-actions",
+            "actions.appendChild(addButton)",
         ):
             self.assertIn(marker, guided)
         self.assertEqual(guided.count("id:'goal'"), 1)
         self.assertEqual(guided.count("id:'state'"), 1)
         self.assertEqual(guided.count("id:'shape'"), 1)
+        self.assertIn("document.getElementById('addPromptBtn')", guided)
+        self.assertNotIn("replaceChild(button,old)", guided)
+        self.assertLess(
+            guided.index("actions.appendChild(finder)"),
+            guided.index("actions.appendChild(addButton)"),
+        )
 
     def test_display_order_promotes_entry_points_without_changing_ids(self) -> None:
         payload = json.loads(DISPLAY_ORDER.read_text(encoding="utf-8"))
