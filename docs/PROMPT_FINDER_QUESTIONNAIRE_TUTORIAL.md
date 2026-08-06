@@ -2,7 +2,7 @@
 
 The Prompt Kit contains many specialized prompts. You do not need to know their IDs or scroll through the entire library before beginning work.
 
-Use **Find My Prompt** to answer three short questions. The Prompt Kit then recommends one prompt to start with and, when useful, up to two follow-on prompts.
+Use **Find My Prompt** to answer three short questions. The Prompt Kit then recommends one prompt to start with and, when useful, up to two follow-on prompts. The questionnaire runs entirely in the generated page and does not send answers to a server.
 
 ## Start the questionnaire
 
