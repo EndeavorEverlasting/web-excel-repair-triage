@@ -1,0 +1,135 @@
+{
+  "schema_version": "prompt-kit-portability/v1",
+  "policy_id": "prompt-kit-portability",
+  "prompt_surface": "standard-ai",
+  "mission": "Preserve user-owned Prompt Kit state across website upgrades and enforce portable repository execution discipline.",
+  "required_context": [
+    "repository",
+    "branch_or_worktree",
+    "pr_or_sprint",
+    "lane",
+    "owned_scope",
+    "forbidden_scope",
+    "expected_artifacts",
+    "validation_order"
+  ],
+  "directory_gate": {
+    "required": true,
+    "checks": [
+      "resolve_exact_repository_root",
+      "enter_repository_root_before_mutation",
+      "verify_origin_branch_head_and_status"
+    ],
+    "connected_github_fallback": {
+      "allowed_when": "network_clone_unavailable",
+      "mutation_surface": "connected_github_branch",
+      "bounded_local_reconstruction": [
+        "generator",
+        "validator",
+        "focused_tests"
+      ],
+      "required_report": "explicit_proof_ceiling"
+    }
+  },
+  "execution_loop": [
+    "request",
+    "evidence_review",
+    "bounded_decision",
+    "repository_or_github_mutation",
+    "artifacts",
+    "validation",
+    "report",
+    "next_decision"
+  ],
+  "favorites_portability": {
+    "browser_storage_key": "promptKit.favoritePromptIds.v1",
+    "export_schema": "prompt-kit-favorites/v1",
+    "max_import_bytes": 65536,
+    "controls": [
+      "Export Favorites",
+      "Import Favorites"
+    ],
+    "export_format": {
+      "media_type": "application/json",
+      "required_fields": [
+        "schema_version",
+        "exported_at",
+        "source",
+        "favorite_prompt_ids"
+      ]
+    },
+    "import_behavior": "merge_deduplicate_normalize_preserve_unknown_ids",
+    "legacy_behavior": "accept_legacy_array_payload_and_migrate_known_legacy_storage_keys",
+    "security": [
+      "reject_oversized_payload",
+      "reject_unsupported_schema",
+      "reject_invalid_prompt_ids",
+      "never_execute_imported_content"
+    ],
+    "accessibility": [
+      "native_buttons",
+      "keyboard_activation",
+      "accessible_labels",
+      "mobile_touch_targets"
+    ]
+  },
+  "artifact_rules": {
+    "generate_actual_artifact": true,
+    "inspect_and_validate": true,
+    "record_path_and_hash_when_practical": true,
+    "prompt_library": {
+      "linked_prompt_columns": [
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O"
+      ],
+      "reserved_navigation_columns": [
+        "A",
+        "P"
+      ],
+      "link_target": "associated_prompt_tab_and_exact_copy_range",
+      "preserve_displayed_values": true,
+      "sparse_navigation": {
+        "allowed_cadences": [
+          10,
+          5,
+          2
+        ],
+        "selection_rule": "largest_allowed_divisor_evenly_dividing_prompt_count",
+        "fail_closed_when_no_allowed_divisor": true
+      }
+    }
+  },
+  "sequential_prompt_suite": {
+    "P03": "unknown_repository_intake_and_first_action",
+    "P06": "repository_and_pr_cleanup",
+    "P07": "general_implementation",
+    "P14": "broken_pr_repair",
+    "P15": "merge_or_release",
+    "P20": "selected_opportunity_discovery_row",
+    "P12": "closeout"
+  },
+  "integration": {
+    "runtime_source": "docs/prompt-kit-favorites-portability.js",
+    "builder": "build_prompt_kit.py",
+    "generated_artifact": "web/prompt-kit/index.html",
+    "human_doctrine": "docs/PROMPT_KIT_PORTABILITY.md",
+    "validator": "scripts/validate_prompt_kit_portability.py",
+    "tests": "tests/test_prompt_kit_portability.py",
+    "workflow": ".github/workflows/prompt-kit-web.yml",
+    "harness_manifest": "harness/manifest.v1.json",
+    "agent_entry_surface": "web/README.md"
+  },
+  "proof_ceiling": "Source, deterministic builder, generated-site parity, focused tests, and CI prove repository integration. Browser download/upload ergonomics and cross-device operator acceptance require observed browser proof."
+}
