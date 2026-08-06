@@ -1,16 +1,33 @@
 from __future__ import annotations
 
+import importlib.util
 import json
+import shutil
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY = ROOT / "harness" / "contracts" / "prompt-kit-portability.v1.json"
 RUNTIME = ROOT / "docs" / "prompt-kit-favorites-portability.js"
-BUILDER = ROOT / "scripts" / "build_prompt_kit_registry.py"
+CANONICAL_BUILDER = ROOT / "scripts" / "build_prompt_kit_registry.py"
+PORTABLE_BUILDER = ROOT / "scripts" / "serve_prompt_kit_portable.py"
+VALIDATOR = ROOT / "scripts" / "validate_prompt_kit_portability.py"
+PORTABLE_LAUNCHER = ROOT / "scripts" / "Open-LatestPromptKitPortable.ps1"
+WINDOWS_ENTRY = ROOT / "Open-Latest-PromptKit.cmd"
 SITE = ROOT / "web" / "prompt-kit" / "index.html"
 WORKFLOW = ROOT / ".github" / "workflows" / "prompt-kit-web.yml"
+EXPECTED_ORIGIN = "http://127.0.0.1:8765/"
+
+
+def load_module(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"could not load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 class PromptKitPortabilityTests(unittest.TestCase):
@@ -18,7 +35,10 @@ class PromptKitPortabilityTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.policy = json.loads(POLICY.read_text(encoding="utf-8"))
         cls.runtime = RUNTIME.read_text(encoding="utf-8")
-        cls.builder = BUILDER.read_text(encoding="utf-8")
+        cls.canonical_builder = CANONICAL_BUILDER.read_text(encoding="utf-8")
+        cls.portable_builder = PORTABLE_BUILDER.read_text(encoding="utf-8")
+        cls.portable_launcher = PORTABLE_LAUNCHER.read_text(encoding="utf-8")
+        cls.windows_entry = WINDOWS_ENTRY.read_text(encoding="utf-8")
         cls.site = SITE.read_text(encoding="utf-8")
         cls.workflow = WORKFLOW.read_text(encoding="utf-8")
 
@@ -58,6 +78,17 @@ class PromptKitPortabilityTests(unittest.TestCase):
             ["generator", "validator", "focused_tests"],
         )
 
+    def test_favorites_stable_origin_and_transfer_contract(self) -> None:
+        favorites = self.policy["favorites_portability"]
+        self.assertEqual(favorites["stable_origin"], EXPECTED_ORIGIN)
+        self.assertEqual(favorites["browser_storage_key"], "promptKit.favoritePromptIds.v1")
+        self.assertEqual(favorites["export_schema"], "prompt-kit-favorites/v1")
+        self.assertEqual(favorites["max_import_bytes"], 65536)
+        self.assertEqual(favorites["controls"], ["Export Favorites", "Import Favorites"])
+        self.assertIn("bind_loopback_only", favorites["security"])
+        self.assertIn("disable_browser_cache", favorites["security"])
+        self.assertIn("never_execute_imported_content", favorites["security"])
+
     def test_prompt_library_link_and_sparse_navigation_contract(self) -> None:
         prompt_library = self.policy["artifact_rules"]["prompt_library"]
         self.assertEqual(
@@ -95,18 +126,71 @@ class PromptKitPortabilityTests(unittest.TestCase):
             },
         )
 
-    def test_builder_embeds_portability_runtime_and_site_is_current(self) -> None:
-        self.assertIn("PORTABILITY_RUNTIME", self.builder)
-        self.assertIn("_embed_portability_runtime", self.builder)
-        self.assertIn("html.count(marker) != 1", self.builder)
-        for marker in (
-            "prompt-kit-favorites/v1",
-            "favoritePortabilityControls",
-            "Export Favorites",
-            "Import Favorites",
-        ):
-            self.assertIn(marker, self.runtime)
-            self.assertIn(marker, self.site)
+    def test_portable_builder_preserves_canonical_site_and_emits_receipt(self) -> None:
+        portable = load_module("prompt_kit_portable_builder", PORTABLE_BUILDER)
+        validator = load_module("prompt_kit_portability_validator", VALIDATOR)
+        outputs = ROOT / "Outputs"
+        outputs.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=outputs) as temporary:
+            temporary_path = Path(temporary)
+            artifact = temporary_path / "index.html"
+            manifest = temporary_path / "manifest.json"
+            source_before = SITE.read_bytes()
+            receipt = portable.build_portable_artifact(
+                repo_root=ROOT,
+                source_path=SITE,
+                runtime_path=RUNTIME,
+                output_path=artifact,
+                manifest_path=manifest,
+                origin=EXPECTED_ORIGIN,
+            )
+            self.assertEqual(SITE.read_bytes(), source_before)
+            artifact_text = artifact.read_text(encoding="utf-8")
+            for marker in (
+                "prompt-kit-favorites/v1",
+                "favoritePortabilityControls",
+                "Export Favorites",
+                "Import Favorites",
+            ):
+                self.assertIn(marker, artifact_text)
+            self.assertEqual(receipt["stable_origin"], EXPECTED_ORIGIN)
+            self.assertTrue(receipt["guardrails"]["canonical_site_untouched"])
+            validated = validator.validate_artifact(artifact, manifest)
+            self.assertEqual(validated["sha256"], receipt["artifact"]["sha256"])
+            self.assertEqual(validated["bytes"], receipt["artifact"]["bytes"])
+
+    def test_portable_builder_rejects_duplicate_injection_and_non_loopback(self) -> None:
+        portable = load_module("prompt_kit_portable_builder_rejection", PORTABLE_BUILDER)
+        outputs = ROOT / "Outputs"
+        outputs.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=outputs) as temporary:
+            temporary_path = Path(temporary)
+            duplicate = temporary_path / "duplicate.html"
+            duplicate.write_text(
+                "<html><script>prompt-kit-favorites/v1</script></html>",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "duplicate injection"):
+                portable.build_portable_artifact(
+                    repo_root=ROOT,
+                    source_path=duplicate,
+                    runtime_path=RUNTIME,
+                    output_path=temporary_path / "output.html",
+                    manifest_path=temporary_path / "manifest.json",
+                    origin=EXPECTED_ORIGIN,
+                )
+        self.assertEqual(
+            portable.main(
+                [
+                    "--repo-root",
+                    str(ROOT),
+                    "--host",
+                    "0.0.0.0",
+                    "--build-only",
+                ]
+            ),
+            2,
+        )
 
     def test_runtime_payload_merge_legacy_and_rejection_behavior(self) -> None:
         node_script = r"""
@@ -147,13 +231,53 @@ console.log('PORTABILITY_RUNTIME_PASS');
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertIn("PORTABILITY_RUNTIME_PASS", completed.stdout)
 
-    def test_workflow_executes_portability_gate(self) -> None:
+    def test_launcher_reuses_acquisition_and_opens_stable_origin(self) -> None:
         for marker in (
-            "docs/prompt-kit-favorites-portability.js",
-            "harness/contracts/prompt-kit-portability.v1.json",
+            EXPECTED_ORIGIN,
+            "Import-AcquisitionFunctions",
+            "Update-RepositorySafely",
+            "serve_prompt_kit_portable.py",
+            "validate_prompt_kit_portability.py",
+            "Start-PortableServer",
+        ):
+            self.assertIn(marker, self.portable_launcher)
+        self.assertIn("Open-LatestPromptKitPortable.ps1", self.windows_entry)
+        self.assertNotIn("Acquire-Latest-PromptKit.cmd\" -Quick", self.windows_entry)
+
+    def test_powershell_launcher_parses_when_pwsh_is_available(self) -> None:
+        pwsh = shutil.which("pwsh") or shutil.which("powershell")
+        if not pwsh:
+            self.skipTest("PowerShell is not installed in this test environment")
+        command = (
+            "$ErrorActionPreference='Stop';"
+            "$null=[scriptblock]::Create((Get-Content -Raw "
+            "'scripts/Open-LatestPromptKitPortable.ps1'));"
+            "Write-Host 'PORTABLE_POWERSHELL_PARSE_PASS'"
+        )
+        completed = subprocess.run(
+            [pwsh, "-NoLogo", "-NoProfile", "-Command", command],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn("PORTABLE_POWERSHELL_PARSE_PASS", completed.stdout)
+
+    def test_canonical_builder_and_site_remain_separate_from_runtime_injection(self) -> None:
+        self.assertIn("build_prompt_kit.build_html", self.canonical_builder)
+        self.assertNotIn("_embed_portability_runtime", self.canonical_builder)
+        self.assertNotIn("prompt-kit-favorites/v1", self.site)
+        self.assertIn("AI Harness Prompt Kit", self.site)
+
+    def test_workflow_builds_uploads_and_validates_portable_artifact(self) -> None:
+        for marker in (
+            "scripts/serve_prompt_kit_portable.py",
             "scripts/validate_prompt_kit_portability.py",
             "tests/test_prompt_kit_portability.py",
+            "Build portable Prompt Kit runtime artifact",
             "Validate portable Favorites and harness discipline",
+            "prompt-kit-portable-runtime",
         ):
             self.assertIn(marker, self.workflow)
 
