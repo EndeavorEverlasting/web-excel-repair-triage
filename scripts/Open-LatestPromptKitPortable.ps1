@@ -84,9 +84,6 @@ function Import-AcquisitionFunctions {
             throw "Acquisition helper is missing required function: $name"
         }
 
-        # The helper is parsed rather than dot-sourced so its GUI/quick-open entry
-        # point never executes. Promote only the named reusable functions into this
-        # script scope so they remain available after this import function returns.
         $pattern = [regex]::new('^function\s+' + [regex]::Escape($name) + '\b')
         $definition = $pattern.Replace(
             $functionAst.Extent.Text,
@@ -161,22 +158,32 @@ function Invoke-PythonChecked {
     return $text
 }
 
-function Test-PortableServer {
+function Get-PortableServerHealth {
     try {
         $response = Invoke-WebRequest -UseBasicParsing -Uri $HealthUrl -TimeoutSec 2
         if ($response.StatusCode -ne 200) {
-            return $false
+            return $null
         }
-        $health = $response.Content | ConvertFrom-Json
-        return (
-            $health.status -eq 'ok' -and
-            $health.schema_version -eq 'prompt-kit-portable-artifact/v1' -and
-            $health.artifact -eq 'index.html'
-        )
+        return ($response.Content | ConvertFrom-Json)
     }
     catch {
+        return $null
+    }
+}
+
+function Test-PortableServer {
+    param([Parameter(Mandatory)][string]$ExpectedArtifactSha256)
+
+    $health = Get-PortableServerHealth
+    if ($null -eq $health) {
         return $false
     }
+    return (
+        $health.status -eq 'ok' -and
+        $health.schema_version -eq 'prompt-kit-portable-artifact/v1' -and
+        $health.artifact -eq 'index.html' -and
+        $health.artifact_sha256 -eq $ExpectedArtifactSha256
+    )
 }
 
 function ConvertTo-NativeArgument {
@@ -187,12 +194,22 @@ function ConvertTo-NativeArgument {
 function Start-PortableServer {
     param(
         [Parameter(Mandatory)][hashtable]$Python,
-        [Parameter(Mandatory)][string]$RepositoryRoot
+        [Parameter(Mandatory)][string]$RepositoryRoot,
+        [Parameter(Mandatory)][string]$ExpectedArtifactSha256
     )
 
-    if (Test-PortableServer) {
-        Write-OperatorLog "Portable Prompt Kit server is already available at $StableUrl"
-        return
+    $existingHealth = Get-PortableServerHealth
+    if ($null -ne $existingHealth) {
+        if (Test-PortableServer -ExpectedArtifactSha256 $ExpectedArtifactSha256) {
+            Write-OperatorLog "Portable Prompt Kit server already serves the exact artifact at $StableUrl"
+            return
+        }
+        $actual = [string]$existingHealth.artifact_sha256
+        throw (
+            "Stable Prompt Kit origin is already occupied by a different artifact. " +
+            "Expected $ExpectedArtifactSha256 but health reported $actual. " +
+            "Stop the prior Prompt Kit server or run this launcher with another explicit -Port."
+        )
     }
 
     $scriptPath = Join-Path $RepositoryRoot 'scripts\serve_prompt_kit_portable.py'
@@ -215,11 +232,14 @@ function Start-PortableServer {
     $deadline = (Get-Date).AddSeconds(15)
     while ((Get-Date) -lt $deadline) {
         Start-Sleep -Milliseconds 300
-        if (Test-PortableServer) {
+        if (Test-PortableServer -ExpectedArtifactSha256 $ExpectedArtifactSha256) {
             return
         }
     }
-    throw "Portable Prompt Kit server did not become healthy at $HealthUrl"
+    throw (
+        "Portable Prompt Kit server did not become healthy with artifact " +
+        "$ExpectedArtifactSha256 at $HealthUrl"
+    )
 }
 
 $acquisitionScript = Resolve-AcquisitionScript
@@ -256,12 +276,23 @@ Invoke-PythonChecked `
     ) `
     -FailureLabel 'Prompt Kit portability validation' | Out-Null
 
-Start-PortableServer -Python $python -RepositoryRoot $repositoryRoot
+$artifact = Join-Path $repositoryRoot 'Outputs\prompt-kit-portable\index.html'
+$manifest = Join-Path $repositoryRoot 'Outputs\prompt-kit-portable\manifest.json'
+$portableReceipt = Get-Content -LiteralPath $manifest -Raw -Encoding UTF8 | ConvertFrom-Json
+$expectedArtifactSha256 = [string]$portableReceipt.artifact.sha256
+if ([string]::IsNullOrWhiteSpace($expectedArtifactSha256)) {
+    throw "Portable Prompt Kit manifest has no artifact SHA-256: $manifest"
+}
+
+Start-PortableServer `
+    -Python $python `
+    -RepositoryRoot $repositoryRoot `
+    -ExpectedArtifactSha256 $expectedArtifactSha256
+
 Write-OperatorLog "Opening the stable Prompt Kit origin: $StableUrl"
 Start-Process -FilePath $StableUrl
 
-$artifact = Join-Path $repositoryRoot 'Outputs\prompt-kit-portable\index.html'
-$manifest = Join-Path $repositoryRoot 'Outputs\prompt-kit-portable\manifest.json'
 Write-Host "PROMPT_KIT_PORTABLE_ARTIFACT=$artifact"
+Write-Host "PROMPT_KIT_PORTABLE_SHA256=$expectedArtifactSha256"
 Write-Host "PROMPT_KIT_PORTABLE_MANIFEST=$manifest"
 Write-Host "PROMPT_KIT_PORTABLE_URL=$StableUrl"
