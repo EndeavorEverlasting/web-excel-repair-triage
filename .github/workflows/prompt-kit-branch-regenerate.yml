@@ -1,0 +1,47 @@
+name: Prompt Kit branch regeneration
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-guided-recommendations-20260806
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    if: github.actor != 'github-actions[bot]' || !contains(github.event.head_commit.message, 'regenerate guided Prompt Kit')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-guided-recommendations-20260806
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate sources and regenerate canonical site
+        run: |
+          python -m py_compile \
+            scripts/build_prompt_kit_registry.py \
+            scripts/validate_prompt_kit_discovery.py \
+            tests/test_prompt_kit_discovery.py \
+            tests/test_skill_prompt_registry.py
+          node --check docs/prompt-kit.js
+          node --check docs/prompt-kit-guided-recommendations.js
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_discovery tests.test_skill_prompt_registry -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit generated site when changed
+        run: |
+          if git diff --quiet -- web/prompt-kit/index.html; then
+            echo "Canonical Prompt Kit site is already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/prompt-kit/index.html
+          git commit -m "build(prompt-kit): regenerate guided Prompt Kit"
+          git push origin HEAD:feat/prompt-kit-guided-recommendations-20260806

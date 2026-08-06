@@ -15,16 +15,20 @@ import build_prompt_kit_registry
 
 
 class SkillPromptRegistryTests(unittest.TestCase):
-    def test_combined_registry_contains_unique_skill_prompts(self) -> None:
+    def test_combined_registry_contains_unique_skill_and_discovery_prompts(self) -> None:
         prompts = build_prompt_kit_registry.load_prompt_registry()
         by_id = {prompt["id"]: prompt for prompt in prompts}
         self.assertEqual(len(by_id), len(prompts))
-        self.assertIn("P61", by_id)
-        self.assertIn("P62", by_id)
-        self.assertIn("P63", by_id)
+        for prompt_id in ("P61", "P62", "P63", "P64", "P65"):
+            self.assertIn(prompt_id, by_id)
         self.assertEqual(by_id["P63"]["skillPath"], ".ai/skills/skill-factoring/SKILL.md")
         self.assertEqual(by_id["P62"]["class"], "AGENT HARNESS / SKILL EVALS")
         self.assertNotEqual(by_id["P63"]["copyContent"], by_id["P62"]["copyContent"])
+        self.assertEqual(by_id["P64"]["type"], "TUTORIAL PLAN")
+        self.assertEqual(by_id["P65"]["type"], "SETUP")
+        self.assertEqual(prompts[0]["id"], "P65")
+        self.assertEqual(prompts[0]["discoveryRank"], 1)
+        self.assertEqual(prompts[0]["displayOrderPolicy"], "prompt-kit-guided-discovery-order")
 
     def test_skill_eval_prompt_requires_correctness_weakness_and_efficiency_proof(self) -> None:
         prompts = build_prompt_kit_registry.load_prompt_registry()
@@ -69,6 +73,38 @@ class SkillPromptRegistryTests(unittest.TestCase):
             "do not optimize a proxy while degrading the real task",
         ):
             self.assertIn(forbidden_shortcut, content)
+
+    def test_tutorial_portfolio_prompt_preserves_uploaded_contract(self) -> None:
+        prompt = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P64"]
+        content = prompt["copyContent"]
+        for phrase in (
+            "ANALYZE THE REPOSITORY AND RANK TUTORIAL PATHS WORTH SPRINTING",
+            "Do not confuse a documentation gap with a tutorial opportunity",
+            "TUTORIAL READINESS CLASSIFICATIONS",
+            "READY_AFTER_PRODUCT_FIX",
+            "CANDIDATE DISPOSITION LEDGER",
+            "COPYABLE TUTORIAL SPRINT PANELS",
+            "Use P18 when the sprint primarily creates durable tutorials",
+            "one exact next command",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_guided_prompt_finder_is_bounded_and_registry_aware(self) -> None:
+        prompt = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P65"]
+        content = prompt["copyContent"]
+        for phrase in (
+            "Ask one concise question at a time",
+            "ask no more than four questions",
+            "recommend exactly one primary prompt",
+            "up to two optional follow-on prompts",
+            "Do not invent prompt IDs",
+            "P64 Repository Tutorial Portfolio Ranker",
+        ):
+            self.assertIn(phrase, content)
 
     def test_skill_factoring_file_has_required_contract_sections(self) -> None:
         path = REPO_ROOT / ".ai" / "skills" / "skill-factoring" / "SKILL.md"
@@ -134,26 +170,29 @@ class SkillPromptRegistryTests(unittest.TestCase):
             (REPO_ROOT / "Build-PromptKitWebsite.cmd").read_text(encoding="utf-8"),
         )
 
-    def test_combined_registry_build_contains_both_new_prompts(self) -> None:
+    def test_combined_registry_build_contains_guided_discovery(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             output = Path(temp_dir) / "prompt-kit.html"
             html = build_prompt_kit_registry.build(output)
             self.assertEqual(output.read_text(encoding="utf-8"), html)
-            self.assertIn('"id": "P61"', html)
-            self.assertIn('"id": "P62"', html)
-            self.assertIn('"id": "P63"', html)
+            for prompt_id in ("P61", "P62", "P63", "P64", "P65"):
+                self.assertIn(f'"id": "{prompt_id}"', html)
             self.assertIn("Skill Factoring and Boundary Refactorer", html)
             self.assertIn("Skill Correctness and Efficiency Eval Implementer", html)
+            self.assertIn("Repository Tutorial Portfolio Ranker", html)
+            self.assertIn("Guided Prompt Finder Questionnaire", html)
+            self.assertIn("Find My Prompt", html)
+            self.assertIn("prompt-kit-guided-recommendations.js", build_prompt_kit_registry.GUIDED_JS.as_posix())
 
     def test_checked_in_operator_site_is_exact_combined_build(self) -> None:
         deployed = REPO_ROOT / "web" / "prompt-kit" / "index.html"
         actual = deployed.read_text(encoding="utf-8")
         expected = build_prompt_kit_registry.render()
         self.assertEqual(actual, expected)
-        self.assertIn('"id": "P61"', actual)
-        self.assertIn('"id": "P62"', actual)
-        self.assertIn('"id": "P63"', actual)
+        for prompt_id in ("P61", "P62", "P63", "P64", "P65"):
+            self.assertIn(f'"id": "{prompt_id}"', actual)
         self.assertIn("Skill Correctness and Efficiency Eval Implementer", actual)
+        self.assertIn("Find My Prompt", actual)
 
 
 if __name__ == "__main__":

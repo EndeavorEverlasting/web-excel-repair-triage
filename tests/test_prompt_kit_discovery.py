@@ -7,7 +7,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 JS = ROOT / "docs" / "prompt-kit.js"
+GUIDED_JS = ROOT / "docs" / "prompt-kit-guided-recommendations.js"
 CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-discovery.v1.json"
+DISPLAY_ORDER = ROOT / "registry" / "prompts" / "prompt-display-order.v1.json"
+TUTORIAL_PROMPTS = ROOT / "registry" / "prompts" / "tutorial-discovery-prompts.v1.json"
 DEPLOYED = ROOT / "web" / "prompt-kit" / "index.html"
 
 
@@ -25,6 +28,10 @@ class PromptKitDiscoveryTests(unittest.TestCase):
                 "local_favorites",
                 "favorites_first",
                 "favorite_accessibility",
+                "guided_questionnaire",
+                "metadata_recommendations",
+                "stable_identity_resequence",
+                "registry_prompt_fallback",
                 "generated_site_parity",
             },
         )
@@ -96,10 +103,49 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         flattened = [prompt_id for group in groups for prompt_id in group["ids"]]
         self.assertEqual(flattened.count("P10"), 1)
 
-    def test_generated_site_contains_exact_behavior_source(self) -> None:
+    def test_guided_questionnaire_uses_registered_prompts_and_three_result_cap(self) -> None:
+        guided = GUIDED_JS.read_text(encoding="utf-8")
+        for marker in (
+            "PROMPT_FINDER_QUESTIONS",
+            "PROMPTS.find",
+            "Find My Prompt",
+            "Primary recommendation",
+            "slice(0,3)",
+            "copyPrompt(",
+            "showPromptDetail(",
+        ):
+            self.assertIn(marker, guided)
+        self.assertEqual(guided.count("id:'goal'"), 1)
+        self.assertEqual(guided.count("id:'state'"), 1)
+        self.assertEqual(guided.count("id:'shape'"), 1)
+
+    def test_display_order_promotes_entry_points_without_changing_ids(self) -> None:
+        payload = json.loads(DISPLAY_ORDER.read_text(encoding="utf-8"))
+        promoted = payload["promoted_prompt_ids"]
+        self.assertEqual(payload["schema_version"], "prompt-display-order/v1")
+        self.assertEqual(payload["fallback"], "sequence_ascending")
+        self.assertEqual(promoted[0], "P65")
+        self.assertEqual(len(promoted), len(set(promoted)))
+        self.assertLess(promoted.index("P61"), promoted.index("P64"))
+
+    def test_tutorial_registry_contains_portfolio_and_conversational_fallback(self) -> None:
+        payload = json.loads(TUTORIAL_PROMPTS.read_text(encoding="utf-8"))
+        by_id = {item["id"]: item for item in payload["prompts"]}
+        self.assertEqual(payload["schema_version"], "prompt-registry-extension/v1")
+        self.assertEqual(set(by_id), {"P64", "P65"})
+        self.assertIn("RANK TUTORIAL PATHS WORTH SPRINTING", by_id["P64"]["copyContent"])
+        self.assertIn("one concise question at a time", by_id["P65"]["copyContent"])
+        self.assertIn("Do not invent prompt IDs", by_id["P65"]["copyContent"])
+
+    def test_generated_site_contains_exact_behavior_sources(self) -> None:
         js = JS.read_text(encoding="utf-8")
+        guided = GUIDED_JS.read_text(encoding="utf-8")
         deployed = DEPLOYED.read_text(encoding="utf-8")
         self.assertIn(js, deployed)
+        self.assertIn(guided, deployed)
+        self.assertIn('"id": "P64"', deployed)
+        self.assertIn('"id": "P65"', deployed)
+        self.assertIn("Find My Prompt", deployed)
 
 
 if __name__ == "__main__":

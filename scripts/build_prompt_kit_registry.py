@@ -18,7 +18,12 @@ import build_prompt_kit  # noqa: E402
 BASE_REGISTRY = REPO_ROOT / "docs" / "prompts.json"
 EXTENSION_REGISTRIES = (
     REPO_ROOT / "registry" / "prompts" / "skill-development-prompts.v1.json",
+    REPO_ROOT / "registry" / "prompts" / "tutorial-discovery-prompts.v1.json",
 )
+DISPLAY_ORDER_POLICY = (
+    REPO_ROOT / "registry" / "prompts" / "prompt-display-order.v1.json"
+)
+GUIDED_RECOMMENDATIONS = REPO_ROOT / "docs" / "prompt-kit-guided-recommendations.js"
 ACTIONABILITY_POLICY = (
     REPO_ROOT / "registry" / "prompts" / "actionable-next-step-policy.v1.json"
 )
@@ -56,6 +61,13 @@ REQUIRED_ACTIONABILITY_POLICY_FIELDS = {
     "allowed_none_value",
     "forbidden_solo_actions",
     "copy_content_appendix",
+}
+REQUIRED_DISPLAY_ORDER_FIELDS = {
+    "schema_version",
+    "policy_id",
+    "promoted_prompt_ids",
+    "fallback",
+    "rationale",
 }
 
 
@@ -123,6 +135,35 @@ def load_actionability_policy() -> dict[str, Any]:
     return payload
 
 
+def load_display_order_policy() -> dict[str, Any]:
+    """Load the discovery order without changing stable prompt IDs or sequences."""
+    payload = _load_json(DISPLAY_ORDER_POLICY)
+    if not isinstance(payload, dict):
+        raise SystemExit(
+            f"Display order policy must be a JSON object: {DISPLAY_ORDER_POLICY}"
+        )
+    if payload.get("schema_version") != "prompt-display-order/v1":
+        raise SystemExit(
+            f"Unsupported display order schema in {DISPLAY_ORDER_POLICY}"
+        )
+    missing = sorted(REQUIRED_DISPLAY_ORDER_FIELDS - set(payload))
+    if missing:
+        raise SystemExit(f"Display order policy is missing fields: {missing}")
+    promoted = payload.get("promoted_prompt_ids")
+    if not isinstance(promoted, list) or not promoted:
+        raise SystemExit("Display order policy must define promoted_prompt_ids")
+    if any(not isinstance(item, str) or not item.strip() for item in promoted):
+        raise SystemExit("Every promoted prompt id must be a non-empty string")
+    normalized = [item.strip().upper() for item in promoted]
+    if len(normalized) != len(set(normalized)):
+        raise SystemExit("Display order policy contains duplicate prompt ids")
+    if payload.get("fallback") != "sequence_ascending":
+        raise SystemExit("Display order fallback must be sequence_ascending")
+    payload = dict(payload)
+    payload["promoted_prompt_ids"] = normalized
+    return payload
+
+
 def apply_actionability_policy(
     prompt: dict[str, Any], policy: dict[str, Any]
 ) -> dict[str, Any]:
@@ -150,6 +191,36 @@ def apply_actionability_policy(
     return strengthened
 
 
+def apply_display_order(
+    prompts: list[dict[str, Any]], policy: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Annotate and sort prompts by a discovery rank while preserving identity."""
+    by_id = {str(prompt["id"]).upper(): prompt for prompt in prompts}
+    promoted_ids = list(policy["promoted_prompt_ids"])
+    missing = [prompt_id for prompt_id in promoted_ids if prompt_id not in by_id]
+    if missing:
+        raise SystemExit(f"Display order references unknown prompt ids: {missing}")
+
+    promoted_rank = {prompt_id: index + 1 for index, prompt_id in enumerate(promoted_ids)}
+    fallback_offset = len(promoted_ids) + 1000
+    ordered: list[dict[str, Any]] = []
+    for prompt in prompts:
+        prompt_id = str(prompt["id"]).upper()
+        ranked = dict(prompt)
+        if prompt_id in promoted_rank:
+            ranked["discoveryRank"] = promoted_rank[prompt_id]
+            ranked["discoveryGroup"] = "promoted"
+        else:
+            ranked["discoveryRank"] = fallback_offset + int(str(prompt["seq"]))
+            ranked["discoveryGroup"] = "sequence"
+        ranked["displayOrderPolicy"] = str(policy["policy_id"])
+        ordered.append(ranked)
+    return sorted(
+        ordered,
+        key=lambda prompt: (int(prompt["discoveryRank"]), int(str(prompt["seq"]))),
+    )
+
+
 def load_prompt_registry() -> list[dict[str, Any]]:
     """Load, validate, strengthen, and merge canonical prompts and extensions."""
     base = _load_json(BASE_REGISTRY)
@@ -166,7 +237,7 @@ def load_prompt_registry() -> list[dict[str, Any]]:
             raise SystemExit(f"Registry extension prompts must be an array: {path}")
         prompts.extend(extension_prompts)
 
-    policy = load_actionability_policy()
+    actionability_policy = load_actionability_policy()
     seen_ids: set[str] = set()
     seen_sequences: set[str] = set()
     strengthened_prompts: list[dict[str, Any]] = []
@@ -184,16 +255,32 @@ def load_prompt_registry() -> list[dict[str, Any]]:
             raise SystemExit(f"Duplicate prompt sequence: {sequence}")
         seen_ids.add(prompt_id)
         seen_sequences.add(sequence)
-        strengthened_prompts.append(apply_actionability_policy(prompt, policy))
+        strengthened_prompts.append(
+            apply_actionability_policy(prompt, actionability_policy)
+        )
 
-    return sorted(strengthened_prompts, key=lambda prompt: int(str(prompt["seq"])))
+    return apply_display_order(strengthened_prompts, load_display_order_policy())
 
 
 def render() -> str:
     """Return the exact combined Prompt Kit HTML without writing it."""
     prompts = load_prompt_registry()
     reference = _load_json(REFERENCE)
-    return build_prompt_kit.build_html(prompts, reference)
+    html = build_prompt_kit.build_html(prompts, reference)
+    try:
+        guided_script = GUIDED_RECOMMENDATIONS.read_text(encoding="utf-8")
+    except FileNotFoundError as exc:
+        raise SystemExit(
+            f"Guided recommendation behavior is missing: {GUIDED_RECOMMENDATIONS}"
+        ) from exc
+    closing = "</body>"
+    if closing not in html:
+        raise SystemExit("Prompt Kit builder output is missing </body>")
+    return html.replace(
+        closing,
+        f"<script>\n{guided_script}\n</script>\n{closing}",
+        1,
+    )
 
 
 def build(output: Path) -> str:
