@@ -46,7 +46,7 @@ On failure, preserve the checkout and report the exact Git, authentication, netw
 ### C. Harness infrastructure change
 
 **Workflow ID:** `harness-infrastructure`
-**Trigger:** Maps, workflow specifications, artifact/validator/capability/trigger registries, validators, hooks, skills, reports, acquisition surfaces, or versioned contracts are missing, stale, disconnected, or failing.
+**Trigger:** Maps, workflow specifications, artifact/validator/capability/trigger registries, validators, hooks, skills, reports, acquisition surfaces, operator command envelopes, or versioned contracts are missing, stale, disconnected, or failing.
 **Capability:** `harness-infrastructure-maintenance`
 **Skill:** `.ai/skills/harness-infrastructure-maintenance/SKILL.md`
 
@@ -56,17 +56,25 @@ On failure, preserve the checkout and report the exact Git, authentication, netw
 4. Update `harness/manifest.v1.json`, human indexes, workflow/artifact/validator registries, capabilities/triggers, tests, hooks, CI path filters, and operator state atomically when ownership or commands change.
 5. Keep `AGENTS.md`, product implementation, secrets, and destructive cleanup out of scope.
 6. Make pre-commit inspect the staged index through an isolated staged tree. Keep pre-push exhaustive and non-destructive.
-7. Run:
+7. For native Windows execution, invoke the registered profile through:
 
-   ```bash
-   python -m py_compile scripts/validate_harness.py tests/test_harness_contract.py
-   python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
-   python -m unittest tests.test_harness_contract -v
+   ```powershell
+   & .\scripts\Invoke-HarnessProfile.ps1 -Profile harness -ExpectedHead '<exact-commit-sha>'
    ```
 
-8. Run the remaining `harness` validator profile from `harness/validators.v1.json`, followed by affected broader tests and `git diff --check`.
-9. Commit coherent owned files, push normally, and open or update a focused PR.
-10. Hand off the component list, report path, validator results, commit SHA, push/PR evidence, blockers, skipped checks, proof ceiling, and an executable next command.
+   The runner must not call standalone `exit`, `[Environment]::Exit()`, `Stop-Process`, or process killing. It must write `summary.json`, `run.log`, and per-step stdout/stderr before propagating a nonzero result. Failure propagation uses `throw` after evidence finalization so the caller's PowerShell terminal remains open.
+8. Do not surprise-install Node.js, Python, Git, or another dependency from the validation runner. Record the missing executable and child exit code in durable evidence.
+9. Run:
+
+   ```bash
+   python -m py_compile scripts/validate_harness.py tests/test_harness_contract.py tests/test_powershell_command_envelope.py
+   python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
+   python -m unittest tests.test_harness_contract tests.test_powershell_command_envelope -v
+   ```
+
+10. Run the remaining `harness` validator profile from `harness/validators.v1.json`, followed by affected broader tests and `git diff --check`.
+11. Commit coherent owned files, push normally, and open or update a focused PR.
+12. Hand off the component list, report path, durable command-envelope evidence paths, validator results, commit SHA, push/PR evidence, blockers, skipped checks, proof ceiling, and an executable next command.
 
 ### D. Workbook or artifact engine change
 
@@ -114,7 +122,7 @@ The canonical harness profile is stored in `harness/validators.v1.json` and mirr
 
 ```bash
 python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
-python -m unittest tests.test_harness_contract -v
+python -m unittest tests.test_harness_contract tests.test_powershell_command_envelope -v
 python -m unittest tests.test_prompt_kit_interactions_contract -v
 python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary
 python scripts/validate_prompt_kit_discovery.py --summary
@@ -124,17 +132,21 @@ python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audi
 python -m unittest tests.test_skill_prompt_registry -v
 python tests/test_prompt_kit_header_contract.py
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-python -m triage.gitignore_hygiene
+python scripts/validate_artifact_hygiene.py
 git diff --check
 ```
 
-Do not claim a skipped check passed. Report the exact command, dependency, failure, and remaining proof owner.
+On Windows, use `scripts/Invoke-HarnessProfile.ps1` to execute the same registry profile with durable evidence and terminal survival. Do not claim a skipped check passed. Report the exact command, dependency, failure, summary path, run-log path, per-step stderr path, and remaining proof owner.
 
 ## 4. Handle failures
 
 ### Harness completeness or contract failure
 
 Read the first actionable failure and identify the canonical owner: human map, machine registry, validator, skill, hook, workflow, test, or report. Repair that owner and add a regression test. Do not weaken expected component IDs, command profiles, protected paths, or proof ceilings merely to obtain green output.
+
+### PowerShell command-envelope failure
+
+Treat a closed operator terminal, missing run summary, missing stdout/stderr, or a standalone `exit` as a harness defect. Repair `scripts/Invoke-HarnessProfile.ps1`, `harness/contracts/powershell-command-envelope.v1.json`, and `tests/test_powershell_command_envelope.py` together. The runner must execute validators in child processes, persist evidence before propagating failure, throw back to the caller, and leave the original prompt usable. Do not hide the defect by adding `-NoExit` around an unsafe script or by relying on terminal scrollback.
 
 ### Staged-index hook failure
 
@@ -182,8 +194,9 @@ A handoff must state:
 - every file created or modified;
 - canonical and runtime artifacts with paths;
 - validation commands actually run and results;
+- durable PowerShell summary, combined log, and failed-step stdout/stderr paths when the native runner was used;
 - skipped checks and exact reasons;
 - commit SHA, push state, PR URL/state, and required-check state;
 - blockers, risks, proof achieved, and proof ceiling;
 - final Git status or explicit statement that local Git status was unavailable;
-- one executable next command that fetches the exact remote commit non-destructively, runs the owning validator/build/launcher, resolves the canonical artifact through tracked registry evidence, prints or opens it, and propagates failure.
+- one executable next command that fetches the exact remote commit non-destructively, runs the owning validator/build/launcher, resolves the canonical artifact through tracked registry evidence, prints or opens it, and propagates failure without terminating the caller terminal.
