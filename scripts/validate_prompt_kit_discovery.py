@@ -72,6 +72,9 @@ def audit() -> dict[str, object]:
             "Find My Prompt",
             "Primary recommendation",
             "slice(0,3)",
+            "promptFinderBtn",
+            "prompt-header-actions",
+            "actions.appendChild(addButton)",
         ),
         "metadata_recommendations": (
             "PROMPTS.find",
@@ -87,6 +90,8 @@ def audit() -> dict[str, object]:
     for requirement_id, markers in guided_markers.items():
         if any(marker not in guided_js for marker in markers):
             missing.append(requirement_id)
+    if "replaceChild(button,old)" in guided_js:
+        missing.append("guided_questionnaire")
 
     if "var SYNONYMS=" not in deployed or "SYNONYMS = {" not in builder:
         missing.append("synonym_source")
