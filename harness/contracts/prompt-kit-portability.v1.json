@@ -43,6 +43,8 @@
   ],
   "favorites_portability": {
     "browser_storage_key": "promptKit.favoritePromptIds.v1",
+    "stable_origin": "http://127.0.0.1:8765/",
+    "stable_origin_behavior": "reuse_same_loopback_origin_across_repository_and_site_upgrades",
     "export_schema": "prompt-kit-favorites/v1",
     "max_import_bytes": 65536,
     "controls": [
@@ -61,10 +63,13 @@
     "import_behavior": "merge_deduplicate_normalize_preserve_unknown_ids",
     "legacy_behavior": "accept_legacy_array_payload_and_migrate_known_legacy_storage_keys",
     "security": [
+      "bind_loopback_only",
+      "disable_browser_cache",
       "reject_oversized_payload",
       "reject_unsupported_schema",
       "reject_invalid_prompt_ids",
-      "never_execute_imported_content"
+      "never_execute_imported_content",
+      "never_modify_canonical_site_during_runtime_generation"
     ],
     "accessibility": [
       "native_buttons",
@@ -77,6 +82,13 @@
     "generate_actual_artifact": true,
     "inspect_and_validate": true,
     "record_path_and_hash_when_practical": true,
+    "portable_runtime_artifact": {
+      "path": "Outputs/prompt-kit-portable/index.html",
+      "manifest": "Outputs/prompt-kit-portable/manifest.json",
+      "source": "web/prompt-kit/index.html",
+      "runtime": "docs/prompt-kit-favorites-portability.js",
+      "tracking": "gitignored_runtime_artifact"
+    },
     "prompt_library": {
       "linked_prompt_columns": [
         "B",
@@ -122,8 +134,13 @@
   },
   "integration": {
     "runtime_source": "docs/prompt-kit-favorites-portability.js",
-    "builder": "build_prompt_kit.py",
-    "generated_artifact": "web/prompt-kit/index.html",
+    "canonical_builder": "scripts/build_prompt_kit_registry.py",
+    "canonical_site": "web/prompt-kit/index.html",
+    "portable_builder_and_server": "scripts/serve_prompt_kit_portable.py",
+    "portable_launcher": "scripts/Open-LatestPromptKitPortable.ps1",
+    "windows_entry_point": "Open-Latest-PromptKit.cmd",
+    "generated_artifact": "Outputs/prompt-kit-portable/index.html",
+    "artifact_manifest": "Outputs/prompt-kit-portable/manifest.json",
     "human_doctrine": "docs/PROMPT_KIT_PORTABILITY.md",
     "validator": "scripts/validate_prompt_kit_portability.py",
     "tests": "tests/test_prompt_kit_portability.py",
@@ -131,5 +148,5 @@
     "harness_manifest": "harness/manifest.v1.json",
     "agent_entry_surface": "web/README.md"
   },
-  "proof_ceiling": "Source, deterministic builder, generated-site parity, focused tests, and CI prove repository integration. Browser download/upload ergonomics and cross-device operator acceptance require observed browser proof."
+  "proof_ceiling": "Source, stable-origin generator, runtime receipt, focused tests, canonical-site parity, and CI prove repository integration. Physical browser download/file-picker, browser-profile transfer, and cross-device acceptance require observed browser proof."
 }
