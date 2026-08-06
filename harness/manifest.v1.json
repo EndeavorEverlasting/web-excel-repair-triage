@@ -41,6 +41,13 @@
       "workflow": "WORKFLOW.md#b-prompt-registry-or-website-change",
       "harness_gate": "python scripts/validate_prompt_kit_discovery.py --summary",
       "strict_product_gate": "python -m unittest tests.test_prompt_kit_discovery -v"
+    },
+    "powershell_command_envelope": {
+      "contract": "harness/contracts/powershell-command-envelope.v1.json",
+      "validator": "tests/test_powershell_command_envelope.py",
+      "contract_tests": "tests/test_powershell_command_envelope.py",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "harness_gate": "python -m unittest tests.test_powershell_command_envelope -v"
     }
   },
   "skills": [
@@ -73,7 +80,7 @@
   },
   "validation_order": [
     "python scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
-    "python -m unittest tests.test_harness_contract -v",
+    "python -m unittest tests.test_harness_contract tests.test_powershell_command_envelope -v",
     "python -m unittest tests.test_prompt_kit_interactions_contract -v",
     "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
     "python scripts/validate_prompt_kit_discovery.py --summary",
