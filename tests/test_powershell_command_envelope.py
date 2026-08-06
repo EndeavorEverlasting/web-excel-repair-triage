@@ -90,6 +90,28 @@ class PowerShellCommandEnvelopeTests(unittest.TestCase):
         self.assertLess(summary_write, root_resolve)
         self.assertIn("repository_root_requested", self.runner)
 
+    def test_runner_creates_parent_chain_without_forcing_run_root(self) -> None:
+        parent_create = (
+            "New-Item -ItemType Directory -Path $runRootParent -Force"
+        )
+        root_create = (
+            "New-Item -ItemType Directory -Path $resolvedRunRoot | Out-Null"
+        )
+        self.assertIn(parent_create, self.runner)
+        self.assertIn(root_create, self.runner)
+        self.assertLess(
+            self.runner.index(parent_create),
+            self.runner.index(root_create),
+        )
+        self.assertIn(
+            "Run root appeared during initialization; refusing to overwrite evidence",
+            self.runner,
+        )
+        self.assertNotIn(
+            "New-Item -ItemType Directory -Path $resolvedRunRoot -Force",
+            self.runner,
+        )
+
     def test_runner_uses_child_process_and_preserves_exit_code(self) -> None:
         self.assertIn("System.Diagnostics.ProcessStartInfo", self.runner)
         self.assertIn("System.Diagnostics.Process", self.runner)
@@ -159,6 +181,14 @@ class PowerShellCommandEnvelopeTests(unittest.TestCase):
         self.assertEqual(
             contract["contract"],
             "harness/contracts/powershell-command-envelope.v1.json",
+        )
+        self.assertEqual(
+            contract["runner"],
+            "scripts/Invoke-HarnessProfile.ps1",
+        )
+        self.assertEqual(
+            contract["operator_report"],
+            "harness/reports/POWERSHELL_COMMAND_SAFETY.md",
         )
         self.assertEqual(
             contract["validator"],
