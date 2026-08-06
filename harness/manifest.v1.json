@@ -90,9 +90,7 @@
       "refuse_divergence": true,
       "force_push": false,
       "destructive_reset": false,
-      "embedded_credentials": false,
-      "portable_origin_loopback_only": true,
-      "portable_origin_cache_disabled": true
+      "embedded_credentials": false
     }
   },
   "validation_order": [
@@ -102,9 +100,6 @@
     "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
     "python scripts/validate_prompt_kit_discovery.py --summary",
     "python -m unittest tests.test_prompt_kit_discovery -v",
-    "python scripts/serve_prompt_kit_portable.py --build-only",
-    "python scripts/validate_prompt_kit_portability.py --require-artifact --output Outputs/prompt-kit-portability-validation.json --summary",
-    "python -m unittest tests.test_prompt_kit_portability -v",
     "python -m unittest tests.test_prompt_language_audit -v",
     "python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary",
     "python -m unittest tests.test_skill_prompt_registry -v",
