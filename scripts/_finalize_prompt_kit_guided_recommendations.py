@@ -11,6 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
+# Trigger the repository-registered branch finalizer after its workflow commit.
 subprocess.run(
     [
         "python",
