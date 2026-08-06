@@ -15,19 +15,23 @@ DOCS = {
 }
 ACQUISITION_CMD = ROOT / "Acquire-Latest-PromptKit.cmd"
 ACQUISITION_PS1 = ROOT / "scripts" / "Acquire-LatestPromptKit.ps1"
+PORTABLE_CMD = ROOT / "Open-Latest-PromptKit.cmd"
+PORTABLE_PS1 = ROOT / "scripts" / "Open-LatestPromptKitPortable.ps1"
+PORTABLE_SERVER = ROOT / "scripts" / "serve_prompt_kit_portable.py"
+PORTABLE_VALIDATOR = ROOT / "scripts" / "validate_prompt_kit_portability.py"
+PORTABLE_POLICY = ROOT / "harness" / "contracts" / "prompt-kit-portability.v1.json"
 GENERATOR_MANIFEST = ROOT / "configs" / "prompt_kit" / "generators.v1.json"
 
 
 class OperatorDocumentationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.text = {
-            name: path.read_text(encoding="utf-8")
-            for name, path in DOCS.items()
-        }
+        cls.text = {name: path.read_text(encoding="utf-8") for name, path in DOCS.items()}
         cls.all_docs = "\n".join(cls.text.values())
         cls.acquisition_cmd = ACQUISITION_CMD.read_text(encoding="utf-8")
         cls.acquisition_ps1 = ACQUISITION_PS1.read_text(encoding="utf-8")
+        cls.portable_cmd = PORTABLE_CMD.read_text(encoding="utf-8")
+        cls.portable_ps1 = PORTABLE_PS1.read_text(encoding="utf-8")
         cls.acquisition_implementation = cls.acquisition_cmd + "\n" + cls.acquisition_ps1
 
     def test_required_documents_exist_and_are_substantial(self) -> None:
@@ -53,21 +57,47 @@ class OperatorDocumentationTests(unittest.TestCase):
     def test_latest_website_reference_is_unambiguous(self) -> None:
         latest = self.text["latest_website"]
         for phrase in (
+            "Open-Latest-PromptKit.cmd",
             "Acquire-Latest-PromptKit.cmd",
             "Open Prompt Kit website",
             "Get Latest and Open",
             "Repository and Prompt Kit validation passed.",
             r"web\prompt-kit\index.html",
+            r"Outputs\prompt-kit-portable\index.html",
+            r"Outputs\prompt-kit-portable\manifest.json",
             r".venv\Lib\site-packages",
             r"Outputs\...\index.html",
             "do not need to search the repository for `index.html`",
             "fetches `origin/main` and fast-forwards only",
             "It does not reset, clean, overwrite, rebase, force-push, delete branches, or discard work.",
+            "http://127.0.0.1:8765/",
+            "prompt-kit-favorites/v1",
+            "Export Favorites",
+            "Import Favorites",
         ):
             self.assertIn(phrase, latest)
 
         for document in ("index", "quick_reference"):
             self.assertIn("GET_LATEST_PROMPT_KIT_WEBSITE.md", self.text[document])
+
+    def test_portable_launcher_matches_documented_runtime(self) -> None:
+        latest = self.text["latest_website"]
+        for phrase in (
+            "Open-LatestPromptKitPortable.ps1",
+            "scripts\\serve_prompt_kit_portable.py",
+            "scripts\\validate_prompt_kit_portability.py",
+            "PROMPT_KIT_PORTABLE_ARTIFACT=",
+            "PROMPT_KIT_PORTABLE_MANIFEST=",
+            "PROMPT_KIT_PORTABLE_URL=",
+        ):
+            source = self.portable_cmd + "\n" + self.portable_ps1
+            self.assertIn(phrase, source)
+        for phrase in (
+            "http://127.0.0.1:8765/",
+            "Outputs\\prompt-kit-portable\\index.html",
+            "Outputs\\prompt-kit-portable\\manifest.json",
+        ):
+            self.assertIn(phrase, latest)
 
     def test_local_markdown_links_resolve(self) -> None:
         link_re = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
@@ -138,8 +168,7 @@ class OperatorDocumentationTests(unittest.TestCase):
         ):
             self.assertIn(phrase.lower(), self.all_docs.lower())
 
-        forbidden_commands = ("git reset --hard", "git clean -fd", "git push --force")
-        for command in forbidden_commands:
+        for command in ("git reset --hard", "git clean -fd", "git push --force"):
             self.assertNotIn(command, self.all_docs)
 
     def test_platform_boundaries_are_documented(self) -> None:
@@ -165,6 +194,11 @@ class OperatorDocumentationTests(unittest.TestCase):
         for path in (
             ACQUISITION_CMD,
             ACQUISITION_PS1,
+            PORTABLE_CMD,
+            PORTABLE_PS1,
+            PORTABLE_SERVER,
+            PORTABLE_VALIDATOR,
+            PORTABLE_POLICY,
             ROOT / "Run-PromptKitGenerator.cmd",
             ROOT / "Build-PromptKitWebsite.cmd",
             ROOT / "scripts" / "build_prompt_kit_registry.py",
@@ -178,11 +212,7 @@ class OperatorDocumentationTests(unittest.TestCase):
             self.assertTrue(path.is_file(), f"documented entry point is missing: {path}")
 
     def test_no_person_specific_path_is_presented_as_universal(self) -> None:
-        for forbidden in (
-            r"C:\Users\Cheex",
-            r"C:\Users\Richard",
-            "rperez",
-        ):
+        for forbidden in (r"C:\Users\Cheex", r"C:\Users\Richard", "rperez"):
             self.assertNotIn(forbidden.lower(), self.all_docs.lower())
         self.assertIn(r"%USERPROFILE%\Desktop\dev\web-excel-repair-triage", self.all_docs)
 
