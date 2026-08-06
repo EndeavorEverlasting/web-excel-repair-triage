@@ -118,6 +118,10 @@ REQUIRED_TRIGGER_IDS = {
     "technician-needs-latest-prompt-kit",
 }
 PROTECTED_PATHS = ("Candidates/", "Active/")
+HARNESS_CONTRACT_TEST_COMMAND = (
+    "python -m unittest tests.test_harness_contract "
+    "tests.test_powershell_command_envelope -v"
+)
 
 
 class HarnessValidationError(RuntimeError):
@@ -690,7 +694,7 @@ def validate_hooks() -> None:
     for phrase in (
         "git checkout-index --all --prefix=",
         'python scripts/validate_harness.py --report "$HARNESS_REPORT"',
-        "python -m unittest tests.test_harness_contract -v",
+        HARNESS_CONTRACT_TEST_COMMAND,
         "git diff --cached --check",
     ):
         if phrase not in pre_commit:
@@ -700,7 +704,7 @@ def validate_hooks() -> None:
     pre_push = require_file(".githooks/pre-push").read_text(encoding="utf-8")
     for phrase in (
         'python scripts/validate_harness.py --report "$HARNESS_REPORT"',
-        "python -m unittest tests.test_harness_contract -v",
+        HARNESS_CONTRACT_TEST_COMMAND,
         "python -m unittest tests.test_prompt_kit_interactions_contract -v",
         "python scripts/validate_prompt_kit_interactions.py",
         "python scripts/validate_prompt_kit_discovery.py --summary",
@@ -899,4 +903,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

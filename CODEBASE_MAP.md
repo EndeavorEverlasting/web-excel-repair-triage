@@ -12,6 +12,7 @@ This is the operational entry point for `EndeavorEverlasting/web-excel-repair-tr
 6. `SKILLS.md`, `CAPABILITIES.md`, `TRIGGERS.md`, and their machine registries — route reusable procedures.
 7. `harness/manifest.v1.json` — complete component inventory and validation order.
 8. `harness/reports/CURRENT_STATE.md` — human-readable working, broken, missing, and proof-ceiling state.
+9. `harness/reports/POWERSHELL_COMMAND_SAFETY.md` — terminal-survival and durable-log contract for operator-facing PowerShell.
 
 ## Repository structure
 
@@ -31,11 +32,13 @@ web-excel-repair-triage/
 │   ├── validators.v1.json                 validator profiles and hook ownership
 │   ├── capabilities.v1.json               machine-readable capabilities
 │   ├── triggers.v1.json                   machine-readable triggers
-│   ├── contracts/                         versioned domain contracts
+│   ├── contracts/                         versioned domain contracts, including PowerShell command safety
 │   ├── evals/                             eval policies and fixtures
-│   └── reports/CURRENT_STATE.md            operator-readable current state
+│   ├── reports/CURRENT_STATE.md            operator-readable current state
+│   └── reports/POWERSHELL_COMMAND_SAFETY.md terminal-survival and logging guidance
 ├── scripts/
 │   ├── validate_harness.py                fail-closed completeness validator/report writer
+│   ├── Invoke-HarnessProfile.ps1          crash-safe validator runner with durable evidence
 │   ├── evaluate_prompt_language.py        exhaustive prompt-language evaluator
 │   ├── validate_prompt_kit_interactions.py interaction contract audit
 │   ├── validate_prompt_kit_discovery.py   prompt discovery contract audit
@@ -57,6 +60,7 @@ web-excel-repair-triage/
 │   └── other focused workflows            product and report lanes
 ├── tests/
 │   ├── test_harness_contract.py
+│   ├── test_powershell_command_envelope.py
 │   ├── test_prompt_kit_interactions_contract.py
 │   ├── test_prompt_kit_discovery.py
 │   ├── test_prompt_language_audit.py
@@ -83,7 +87,7 @@ web-excel-repair-triage/
 |---|---|---|
 | `harness/` | Operational ownership, workflow, artifact, validator, capability, trigger, contract, eval, and report data. | Harness lane only; update connected files atomically. |
 | `.ai/skills/` | Repeatable procedures and judgment boundaries. | Do not hide deterministic application behavior only in prose. |
-| `scripts/` | Validators, builders, audit runners, launch support, and utilities. | Add regression tests for behavior changes. |
+| `scripts/` | Validators, builders, audit runners, launch support, crash-safe command envelopes, and utilities. | Add regression tests for behavior changes. |
 | `tests/` | Contract, regression, integration, and artifact tests. | Do not weaken expectations to obtain green CI. |
 | `triage/` | Workbook and artifact engines. | Product/engine lane; outside a harness-only sprint. |
 | `docs/` and `registry/prompts/` | Canonical Prompt Kit sources and shared prompt policies. | Change source, then regenerate; never patch HTML alone. |
@@ -96,6 +100,7 @@ web-excel-repair-triage/
 | Entry point | Audience | Purpose |
 |---|---|---|
 | `scripts/validate_harness.py` | Agent/developer/CI | Validate every registered harness component and optionally write `harness-completeness-report/v1`. |
+| `scripts/Invoke-HarnessProfile.ps1` | Windows operator/agent | Run a registered validator profile without closing the caller terminal; retain summary, combined log, and per-step stdout/stderr. |
 | `harness/validators.v1.json` | Agent/tooling | Resolve ordered validator profiles for harness, pre-commit, and pre-push use. |
 | `Acquire-Latest-PromptKit.cmd` | Technician | Clone or clean-fast-forward canonical `main`, validate, and open a selected surface. |
 | `Run-PromptKitGenerator.cmd` | Technician/operator | Open the registered generator GUI. |
@@ -115,6 +120,7 @@ web-excel-repair-triage/
 | `harness/validators.v1.json` | Validator commands, outputs, profiles, and hook bindings. |
 | `harness/capabilities.v1.json` | Reusable operation IDs, skills, triggers, inputs, outputs, implementations, and proof ceilings. |
 | `harness/triggers.v1.json` | Deterministic route and forbidden-condition ownership. |
+| `harness/contracts/powershell-command-envelope.v1.json` | Terminal-survival, child-process, durable-log, failure-finalization, and no-surprise-install requirements. |
 | `configs/prompt_kit/generators.v1.json` | Allowed Prompt Kit generators and launchers. |
 | `docs/prompts.json` | Canonical base prompt registry. |
 | `registry/prompts/*.json` | Versioned prompt extensions and shared policies. |
@@ -125,9 +131,15 @@ web-excel-repair-triage/
 Focused harness validation:
 
 ```bash
-python -m py_compile scripts/validate_harness.py tests/test_harness_contract.py
+python -m py_compile scripts/validate_harness.py tests/test_harness_contract.py tests/test_powershell_command_envelope.py
 python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
-python -m unittest tests.test_harness_contract -v
+python -m unittest tests.test_harness_contract tests.test_powershell_command_envelope -v
+```
+
+Crash-safe native Windows harness execution:
+
+```powershell
+& .\scripts\Invoke-HarnessProfile.ps1 -Profile harness -ExpectedHead '<exact-commit-sha>'
 ```
 
 Connected Prompt Kit contract and parity validation:
@@ -147,7 +159,7 @@ python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html -
 Broader checks:
 
 ```bash
-python -m triage.gitignore_hygiene
+python scripts/validate_artifact_hygiene.py
 python -m pytest
 git diff --check
 ```
@@ -175,5 +187,8 @@ Build-PromptKitWebsite.cmd
 - Update human indexes and machine registries together. A new file is not integrated until the manifest, validator, tests, hooks/CI, and operator report recognize it.
 - Do not edit `web/prompt-kit/index.html` as the source. Repair canonical registries, policies, or builders and regenerate deterministically.
 - Do not turn a known product gap into a passing harness check by weakening a contract, fixture, strict mode, or proof ceiling.
+- Operator-facing PowerShell must not use standalone `exit`, `[Environment]::Exit()`, `Stop-Process`, or process killing. Use `scripts/Invoke-HarnessProfile.ps1`, which runs child commands, writes durable evidence before failure propagation, and returns control to the caller.
+- Terminal scrollback is not evidence storage. Every PowerShell harness run must retain `summary.json`, `run.log`, and per-step stdout/stderr paths.
+- A validation runner must not surprise-install missing dependencies. Record the missing executable in retained stderr and preserve the workstation.
 - Hooks are tracked but must be enabled per checkout with `git config core.hooksPath .githooks`.
 - Static and CI proof do not prove Excel for Web, native Windows GUI, browser events, clipboard permissions, provider/model behavior, credentials, network, technician acceptance, protected targets, deployment, or production success.

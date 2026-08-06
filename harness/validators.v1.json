@@ -12,10 +12,10 @@
     {
       "id": "harness-contract-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_harness_contract -v",
+      "command": "python -m unittest tests.test_harness_contract tests.test_powershell_command_envelope -v",
       "blocking": true,
       "output": "process log",
-      "proof_ceiling": "Executable regression proof for registered harness contracts."
+      "proof_ceiling": "Executable regression proof for registered harness contracts, including caller-safe PowerShell execution and durable failure evidence."
     },
     {
       "id": "prompt-kit-interaction-contract-tests",

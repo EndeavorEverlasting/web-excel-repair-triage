@@ -43,7 +43,12 @@
       "validator": "harness-completeness",
       "naming": "Stable family name; CI may store the same file as a run artifact.",
       "tracking_policy": "Gitignored runtime evidence or CI artifact.",
-      "proof_ceiling": "Executed static harness checks on one checkout and commit."
+      "related_runtime_artifacts": {
+        "powershell_summary": "%LOCALAPPDATA%/EndeavorEverlasting/web-excel-repair-triage/harness-runs/<run-id>/summary.json",
+        "powershell_run_log": "%LOCALAPPDATA%/EndeavorEverlasting/web-excel-repair-triage/harness-runs/<run-id>/run.log",
+        "powershell_steps": "%LOCALAPPDATA%/EndeavorEverlasting/web-excel-repair-triage/harness-runs/<run-id>/steps/"
+      },
+      "proof_ceiling": "Executed static harness checks on one checkout and commit; native command-envelope evidence additionally proves only the exercised PowerShell wrapper retained child output and returned control."
     },
     {
       "id": "prompt-kit-interaction-audit-report",
