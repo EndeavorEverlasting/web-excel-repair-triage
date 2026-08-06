@@ -67,8 +67,7 @@
     ".ai/skills/prompt-language-audit/SKILL.md",
     ".ai/skills/skill-evaluation/SKILL.md",
     ".ai/skills/skill-factoring/SKILL.md",
-    ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
-    ".ai/skills/webexcel-font-compatibility/SKILL.md"
+    ".ai/skills/technician-prompt-kit-acquisition/SKILL.md"
   ],
   "technician_acquisition": {
     "launcher": "Acquire-Latest-PromptKit.cmd",
