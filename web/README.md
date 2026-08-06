@@ -30,7 +30,7 @@ Activating it by pointer, tap, Enter, or Space restores:
 - closed prompt detail and reference surfaces;
 - the top of the page.
 
-It does not reload the browser or create a second filter state. Saved Favorites are intentionally preserved because they belong to the browser-local user state, not the temporary filter state.
+It does not reload the browser or create a second filter state. Saved Favorites are intentionally preserved because they belong to user state, not temporary filter state.
 
 ### Prompt card interaction contract
 
@@ -40,7 +40,7 @@ It does not reload the browser or create a second filter state. Saved Favorites 
 - **Click outside** an open prompt detail to collapse it and return focus to the originating prompt card without clearing search or filters.
 - **Enter** expands a focused prompt card; **Space** copies it.
 - Explicit **Copy** controls remain available on cards and inside prompt detail.
-- The **star** control saves or removes that prompt from browser-local Favorites without triggering copy/open.
+- The **star** control saves or removes that prompt from Favorites without triggering copy/open.
 - **Esc** closes an open prompt detail before falling back to broader filter clearing.
 
 A short click-delay continues to distinguish desktop single-click from double-click. Mobile users never need to rely on double-tap timing because **Open** is explicit. Prompt cards are semantic groups containing explicit Favorite/Open/Copy buttons rather than button containers with nested buttons.
@@ -74,17 +74,25 @@ Search is relevance-ranked rather than a raw full-text dump.
 
 This specifically prevents common policy words such as `artifact` from making nearly every prompt appear merely because that word exists in shared prompt boilerplate.
 
-### Browser-local Favorites
+### Portable Favorites
 
-Favorites are device/browser-local convenience state, not repository data and not a server-side account feature.
+The current browser continues to store Favorites under `promptKit.favoritePromptIds.v1`, but that local storage is no longer the only preservation mechanism.
 
-- Select the star on any prompt card to save it.
-- Favorites are stored under `promptKit.favoritePromptIds.v1` in browser `localStorage`.
+- Select the star on any prompt card to save or remove it.
 - Visible favorited prompts are promoted into one **Favorites** section before the normal sections.
-- A favorited prompt appears only once; it is not duplicated again in its original section during that render.
+- A favorited prompt appears only once during a render.
 - Active library/category/type/search filters still apply before Favorites are promoted.
-- Removing the star returns the prompt to its normal section.
-- Clearing browser site data or using another browser/device starts with a separate Favorites state.
+- **Export Favorites** downloads a portable JSON backup using schema `prompt-kit-favorites/v1`.
+- **Import Favorites** validates, normalizes, deduplicates, and merges a backup without deleting Favorites already saved in the current browser.
+- Legacy array backups remain accepted.
+- Prompt IDs missing from the current release remain preserved in storage so a future release can restore them automatically.
+- Imports are capped at 64 KiB, reject unsupported schemas and malformed IDs, and never execute imported content.
+
+Use export before replacing a local site copy, clearing browser data, moving to another browser profile, or moving to another device. Open the upgraded Prompt Kit and use import to restore the same collection.
+
+The editable runtime is `docs/prompt-kit-favorites-portability.js`. The canonical registry builder embeds that runtime into the standalone `web/prompt-kit/index.html`; generated HTML must not be hand-edited.
+
+The machine-readable policy is `harness/contracts/prompt-kit-portability.v1.json`, and the human-readable contract is `docs/PROMPT_KIT_PORTABILITY.md`.
 
 ### Collapsible category sections
 
@@ -99,7 +107,7 @@ Every rendered category divider is also an independent expand/collapse control, 
 - Section-toggle foreground color is explicitly defined for the dark surface; browser-default button text color must never leak through.
 - Activating the main title/reset expands every category again.
 
-Implementation ownership stays in `docs/prompt-kit.js`; `web/prompt-kit/index.html` is regenerated output and must not be hand-edited.
+Implementation ownership stays in `docs/prompt-kit.js`; portable Favorites behavior is isolated in `docs/prompt-kit-favorites-portability.js`. `web/prompt-kit/index.html` is regenerated output and must not be hand-edited.
 
 ### Mobile layout contract
 
@@ -109,7 +117,7 @@ Mobile is a responsive form of the existing Prompt Kit, not a second application
 - Library, category, and type controls keep their existing semantics and become horizontally scrollable touch rails where needed.
 - Prompt cards render in one column.
 - Category expand/collapse remains explicit and touch-sized.
-- Favorite, **Open**, and **Copy** actions remain directly reachable on coarse-pointer devices.
+- Favorite, **Open**, **Copy**, **Export Favorites**, and **Import Favorites** actions remain directly reachable on coarse-pointer devices.
 - Prompt detail uses the available mobile viewport and keeps the existing close/copy behavior.
 - The existing reference panel expands to the mobile viewport.
 - Search uses a touch-sized control and avoids mobile browser zoom caused by undersized input text.
@@ -151,14 +159,17 @@ Their keyboard shortcuts are `1`, `2`, and `3` respectively. Doctrine may use sh
 
 ```powershell
 node --check docs\prompt-kit.js
+node --check docs\prompt-kit-favorites-portability.js
 python tests\test_prompt_kit_header_contract.py
 python -m unittest tests.test_prompt_kit_product_interactions -v
 python -m unittest tests.test_prompt_kit_filtering_access -v
 python -m unittest tests.test_prompt_kit_mobile -v
 python -m unittest tests.test_prompt_kit_discovery -v
+python -m unittest tests.test_prompt_kit_portability -v
 python scripts\validate_prompt_kit_interactions.py --require-implementation --output Outputs\prompt-kit-interaction-audit.json --summary
 python scripts\validate_prompt_kit_discovery.py --summary
+python scripts\validate_prompt_kit_portability.py --summary
 python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
 ```
 
-Repository validation does not substitute for physical phone/tablet touch acceptance, browser storage-policy restrictions, or a Windows field run of the quick launcher.
+Repository validation does not substitute for physical phone/tablet touch acceptance, browser download/file-picker policy restrictions, cross-device transfer, or a Windows field run of the quick launcher.
