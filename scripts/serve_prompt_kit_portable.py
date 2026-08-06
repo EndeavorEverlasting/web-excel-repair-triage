@@ -113,6 +113,7 @@ def build_portable_artifact(
             "cache_disabled": True,
             "protected_inputs_untouched": True,
             "canonical_site_untouched": True,
+            "health_hash_matches_served_artifact": True,
         },
         "proof_ceiling": (
             "Generation and local HTTP serving prove a stable-origin artifact. "
@@ -138,15 +139,28 @@ class PortablePromptKitHandler(SimpleHTTPRequestHandler):
         self.send_header("X-Frame-Options", "SAMEORIGIN")
         super().end_headers()
 
+    def _served_artifact_status(self) -> dict[str, Any]:
+        artifact_path = Path(self.directory).resolve() / "index.html"
+        try:
+            payload = artifact_path.read_bytes()
+        except OSError as exc:
+            return {
+                "status": "error",
+                "schema_version": SCHEMA_VERSION,
+                "artifact": "index.html",
+                "error": str(exc),
+            }
+        return {
+            "status": "ok",
+            "schema_version": SCHEMA_VERSION,
+            "artifact": "index.html",
+            "artifact_sha256": sha256_bytes(payload),
+            "artifact_bytes": len(payload),
+        }
+
     def do_GET(self) -> None:  # noqa: N802 - stdlib handler API
         if self.path.rstrip("/") == "/healthz":
-            payload = json.dumps(
-                {
-                    "status": "ok",
-                    "schema_version": SCHEMA_VERSION,
-                    "artifact": "index.html",
-                }
-            ).encode("utf-8")
+            payload = json.dumps(self._served_artifact_status()).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(payload)))
@@ -224,7 +238,10 @@ def main(argv: list[str] | None = None) -> int:
         except OSError as exc:
             print(f"Prompt Kit portable server failed to bind: {exc}", file=sys.stderr)
             return 3
-        print(f"Prompt Kit portable server listening at {origin}")
+        print(
+            "Prompt Kit portable server listening at "
+            f"{origin} (artifact {receipt['artifact']['sha256']})"
+        )
         try:
             server.serve_forever()
         except KeyboardInterrupt:
