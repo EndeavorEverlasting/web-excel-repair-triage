@@ -87,28 +87,32 @@ function Invoke-CapturedCommand {
     Write-Host "[harness] stdout: $stdoutPath"
     Write-Host "[harness] stderr: $stderrPath"
 
-    $process = Start-Process `
-        -FilePath $env:ComSpec `
-        -ArgumentList @('/d', '/s', '/c', 'call', $commandPath) `
-        -WorkingDirectory $WorkingDirectory `
-        -NoNewWindow `
-        -Wait `
-        -PassThru `
-        -RedirectStandardOutput $stdoutPath `
-        -RedirectStandardError $stderrPath
+    $escapedCommandPath = $commandPath.Replace('"', '""')
+    $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $startInfo.FileName = $env:ComSpec
+    $startInfo.Arguments = "/d /s /c call `"$escapedCommandPath`""
+    $startInfo.WorkingDirectory = $WorkingDirectory
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
 
-    $stdout = if (Test-Path -LiteralPath $stdoutPath) {
-        Get-Content -LiteralPath $stdoutPath -Raw
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $startInfo
+    $startedAt = [DateTimeOffset]::Now.ToString('o')
+    if (-not $process.Start()) {
+        throw "Unable to start child command for step '$StepId'."
     }
-    else {
-        ''
-    }
-    $stderr = if (Test-Path -LiteralPath $stderrPath) {
-        Get-Content -LiteralPath $stderrPath -Raw
-    }
-    else {
-        ''
-    }
+
+    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
+    $process.WaitForExit()
+    $stdout = $stdoutTask.Result
+    $stderr = $stderrTask.Result
+    $finishedAt = [DateTimeOffset]::Now.ToString('o')
+
+    $stdout | Set-Content -LiteralPath $stdoutPath -Encoding UTF8
+    $stderr | Set-Content -LiteralPath $stderrPath -Encoding UTF8
 
     if ($stdout) {
         Write-Host $stdout.TrimEnd()
@@ -124,24 +128,13 @@ function Invoke-CapturedCommand {
     return [ordered]@{
         id = $StepId
         command = $Command
-        started_at = $process.StartTime.ToUniversalTime().ToString('o')
-        finished_at = $process.ExitTime.ToUniversalTime().ToString('o')
+        started_at = $startedAt
+        finished_at = $finishedAt
         exit_code = [int]$process.ExitCode
         stdout_log = $stdoutPath
         stderr_log = $stderrPath
         command_file = $commandPath
     }
-}
-
-$resolvedRoot = (Resolve-Path -LiteralPath $RepositoryRoot).Path
-$manifestPath = Join-Path $resolvedRoot 'harness\manifest.v1.json'
-$validatorRegistryPath = Join-Path $resolvedRoot 'harness\validators.v1.json'
-
-if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
-    throw "Repository root gate failed; missing $manifestPath"
-}
-if (-not (Test-Path -LiteralPath $validatorRegistryPath -PathType Leaf)) {
-    throw "Repository root gate failed; missing $validatorRegistryPath"
 }
 
 if (-not $RunRoot) {
@@ -164,7 +157,8 @@ New-Item -ItemType File -Path $runLogPath -Force | Out-Null
 
 $summary = [ordered]@{
     schema_version = 'powershell-command-envelope-result/v1'
-    repository_root = $resolvedRoot
+    repository_root_requested = $RepositoryRoot
+    repository_root = $null
     profile = $Profile
     expected_head = $ExpectedHead
     actual_head = $null
@@ -178,9 +172,23 @@ $summary = [ordered]@{
     steps = @()
 }
 Write-AtomicJson -Value $summary -Path $summaryPath
-Add-RunLog -Path $runLogPath -Message "RUN START profile=$Profile root=$resolvedRoot"
+Add-RunLog -Path $runLogPath -Message "RUN START profile=$Profile requested_root=$RepositoryRoot"
 
 try {
+    $resolvedRoot = (Resolve-Path -LiteralPath $RepositoryRoot).Path
+    $summary.repository_root = $resolvedRoot
+    Write-AtomicJson -Value $summary -Path $summaryPath
+
+    $manifestPath = Join-Path $resolvedRoot 'harness\manifest.v1.json'
+    $validatorRegistryPath = Join-Path $resolvedRoot 'harness\validators.v1.json'
+
+    if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+        throw "Repository root gate failed; missing $manifestPath. Evidence: $summaryPath"
+    }
+    if (-not (Test-Path -LiteralPath $validatorRegistryPath -PathType Leaf)) {
+        throw "Repository root gate failed; missing $validatorRegistryPath. Evidence: $summaryPath"
+    }
+
     $headStep = Invoke-CapturedCommand `
         -Command 'git rev-parse HEAD' `
         -StepId '00-git-head' `
