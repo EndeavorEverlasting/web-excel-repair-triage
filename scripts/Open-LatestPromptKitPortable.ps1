@@ -83,7 +83,20 @@ function Import-AcquisitionFunctions {
         if (-not $functionAst) {
             throw "Acquisition helper is missing required function: $name"
         }
-        Invoke-Expression $functionAst.Extent.Text
+
+        # The helper is parsed rather than dot-sourced so its GUI/quick-open entry
+        # point never executes. Promote only the named reusable functions into this
+        # script scope so they remain available after this import function returns.
+        $pattern = [regex]::new('^function\s+' + [regex]::Escape($name) + '\b')
+        $definition = $pattern.Replace(
+            $functionAst.Extent.Text,
+            "function script:$name",
+            1
+        )
+        if ($definition -eq $functionAst.Extent.Text) {
+            throw "Could not scope imported acquisition function: $name"
+        }
+        Invoke-Expression $definition
     }
 }
 
@@ -151,7 +164,15 @@ function Invoke-PythonChecked {
 function Test-PortableServer {
     try {
         $response = Invoke-WebRequest -UseBasicParsing -Uri $HealthUrl -TimeoutSec 2
-        return $response.StatusCode -eq 200
+        if ($response.StatusCode -ne 200) {
+            return $false
+        }
+        $health = $response.Content | ConvertFrom-Json
+        return (
+            $health.status -eq 'ok' -and
+            $health.schema_version -eq 'prompt-kit-portable-artifact/v1' -and
+            $health.artifact -eq 'index.html'
+        )
     }
     catch {
         return $false
