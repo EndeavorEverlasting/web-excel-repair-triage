@@ -42,25 +42,29 @@
     "webexcel_font_compatibility": {
       "policy": "configs/webexcel_fonts_v1.json",
       "default_font": "Aptos",
-      "forbidden_fonts": [
-        "Carlito"
-      ],
+      "forbidden_fonts": ["Carlito"],
       "codebase_map": "harness/webexcel-fonts/CODEBASE_MAP.md",
       "workflow": "harness/webexcel-fonts/WORKFLOWS.md",
       "artifact_registry": "harness/webexcel-fonts/ARTIFACT_REGISTRY.md",
       "registry": "harness/webexcel-fonts/registry.json",
       "validator": "scripts/validate_webexcel_fonts.py",
       "completeness_validator": "scripts/validate_webexcel_font_harness.py",
-      "contract_tests": [
-        "tests/test_webexcel_font_compatibility.py",
-        "tests/test_webexcel_font_harness.py",
-        "tests/test_webexcel_font_review_regressions.py"
-      ],
+      "contract_tests": ["tests/test_webexcel_font_compatibility.py", "tests/test_webexcel_font_harness.py", "tests/test_webexcel_font_review_regressions.py"],
       "skill": ".ai/skills/webexcel-font-compatibility/SKILL.md",
       "operator_report": "reports/harness/webexcel-font-compatibility-state.md",
       "ci_workflow": ".github/workflows/webexcel-font-harness.yml",
       "artifact_gate": "python scripts/validate_webexcel_fonts.py --workbook <path> --require-workbook --output Outputs/webexcel-font-validation.json --summary",
       "proof_ceiling": "Static source and OOXML font declarations; Excel for Web visual rendering remains field proof."
+    },
+    "workbook_visual_integrity": {
+      "policy": "configs/workbook_visual_integrity_v1.json",
+      "registry": "harness/workbook-visual-integrity/registry.json",
+      "validator": "scripts/validate_workbook_visual_integrity.py",
+      "guarded_runtime_validator": "scripts/validate_workbook_visual_integrity_guarded.py",
+      "completeness_validator": "scripts/validate_workbook_visual_harness.py",
+      "skill": ".ai/skills/workbook-visual-integrity/SKILL.md",
+      "ci_workflow": ".github/workflows/workbook-visual-integrity.yml",
+      "proof_ceiling": "Static profile, OOXML visual, and guarded runtime proof; Excel for Web acceptance remains separate."
     }
   },
   "skills": [
@@ -73,28 +77,18 @@
     "launcher": "Acquire-Latest-PromptKit.cmd",
     "gui": "scripts/Acquire-LatestPromptKit.ps1",
     "repository_url": "https://github.com/EndeavorEverlasting/web-excel-repair-triage.git",
-    "required_files": [
-      "web/prompt-kit/index.html",
-      "Run-PromptKitGenerator.cmd",
-      "Build-PromptKitWebsite.cmd",
-      "configs/prompt_kit/generators.v1.json",
-      "scripts/build_prompt_kit_registry.py"
-    ],
-    "safety": {
-      "clone_when_absent": true,
-      "fast_forward_only": true,
-      "refuse_dirty_worktree": true,
-      "refuse_divergence": true,
-      "force_push": false,
-      "destructive_reset": false,
-      "embedded_credentials": false
-    }
+    "required_files": ["web/prompt-kit/index.html", "Run-PromptKitGenerator.cmd", "Build-PromptKitWebsite.cmd", "configs/prompt_kit/generators.v1.json", "scripts/build_prompt_kit_registry.py"],
+    "safety": {"clone_when_absent": true, "fast_forward_only": true, "refuse_dirty_worktree": true, "refuse_divergence": true, "force_push": false, "destructive_reset": false, "embedded_credentials": false}
   },
   "validation_order": [
     "python scripts/validate_harness.py",
     "python scripts/validate_webexcel_font_harness.py --output Outputs/webexcel-font-harness.json --summary",
     "python -m unittest tests.test_webexcel_font_compatibility tests.test_webexcel_font_harness tests.test_webexcel_font_review_regressions -v",
     "python scripts/validate_webexcel_fonts.py --scan-source --output Outputs/webexcel-font-validation.json --summary",
+    "python scripts/validate_workbook_visual_harness.py --output Outputs/workbook-visual-harness.json --summary",
+    "python -m unittest tests.test_workbook_visual_integrity tests.test_workbook_visual_integrity_guarded tests.test_workbook_visual_harness -v",
+    "python scripts/validate_workbook_visual_integrity.py --validate-profiles --output Outputs/workbook-visual-profile-audit.json --summary",
+    "python scripts/validate_workbook_visual_integrity_guarded.py --validate-profiles --output Outputs/workbook-visual-profile-guard-audit.json --summary",
     "python -m unittest tests.test_harness_contract -v",
     "python -m unittest tests.test_prompt_kit_interactions_contract -v",
     "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",

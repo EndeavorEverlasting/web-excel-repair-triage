@@ -1,0 +1,82 @@
+{
+  "schema": "workbook-visual-profile/v1",
+  "profile_id": "nth-admin-july/v1",
+  "artifact_family": "nth-admin-workbook",
+  "scope": "July administrative NTH workbook family",
+  "filename_patterns": ["(?i).*(July.*NTH|NTH.*July).*\\.xlsx$"],
+  "required_sheets": ["July 2026 NTH", "Task Summary"],
+  "artifact_specific_roles": {
+    "documentation": "FFE7E6E6",
+    "cleanup_disposal": "FFF0F1F2",
+    "go_live_support": "FFD9EAF7"
+  },
+  "exceptions": [],
+  "rules": [
+    {"id": "JULY-VIS-001", "type": "range_fill", "sheet": "July 2026 NTH", "range": "A9:I9", "expected_fill": "FF1F4E78"},
+    {
+      "id": "JULY-VIS-002",
+      "type": "semantic_rows",
+      "sheet": "July 2026 NTH",
+      "rows": [10, 76],
+      "label_column": "H",
+      "style_columns": ["A", "I"],
+      "match_mode": "prefix",
+      "mappings": [
+        {"token": "Configuration", "role": "configuration"},
+        {"token": "Inventory", "role": "inventory_management"},
+        {"token": "Logistics", "role": "logistics_material_movement"},
+        {"token": "Deployment", "role": "deployment"},
+        {"token": "Client Coordination", "role": "client_coordination"},
+        {"token": "Staging", "role": "staging_readiness"},
+        {"token": "Survey", "role": "survey_recon"},
+        {"token": "PM / Operational Control", "role": "pm_operational_control"},
+        {"token": "Documentation", "role": "documentation"},
+        {"token": "Cleanup", "role": "cleanup_disposal"},
+        {"token": "Go-Live", "role": "go_live_support"}
+      ]
+    },
+    {
+      "id": "JULY-VIS-003",
+      "type": "semantic_rows",
+      "sheet": "Task Summary",
+      "rows": [10, 18],
+      "label_column": "A",
+      "style_columns": ["A", "F"],
+      "match_mode": "prefix",
+      "mappings": [
+        {"token": "Configuration", "role": "configuration"},
+        {"token": "Inventory", "role": "inventory_management"},
+        {"token": "PM", "role": "pm_operational_control"},
+        {"token": "Logistics", "role": "logistics_material_movement"},
+        {"token": "Survey", "role": "survey_recon"},
+        {"token": "Staging", "role": "staging_readiness"},
+        {"token": "Documentation", "role": "documentation"},
+        {"token": "Client", "role": "client_coordination"},
+        {"token": "Cleanup", "role": "cleanup_disposal"}
+      ]
+    },
+    {
+      "id": "JULY-VIS-004",
+      "type": "paired_range_fill",
+      "sheet": "Task Summary",
+      "left_range": "A10:F18",
+      "right_range": "H10:J18",
+      "compare": "row_fill"
+    },
+    {"id": "JULY-VIS-005", "type": "forbid_unbounded_striping", "forbidden": ["date", "person"]},
+    {"id": "JULY-VIS-006", "type": "style_only_baseline", "preserve": ["sheet_order", "cell_values", "formulas", "merged_ranges"]}
+  ],
+  "generator_binding": {
+    "required": true,
+    "status": "contract_ready_product_wiring_pending",
+    "manifest_fields": [
+      "visual_profile_id",
+      "visual_policy_sha256",
+      "visual_validation_result",
+      "artifact_sha256",
+      "font_validation_result",
+      "operator_excel_for_web_status"
+    ]
+  },
+  "proof_ceiling": "Static July semantic workstream-color, paired-range, and style-only preservation proof. Excel for Web appearance and administrative acceptance remain operator proof."
+}

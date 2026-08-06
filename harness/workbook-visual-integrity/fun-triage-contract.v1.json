@@ -1,0 +1,36 @@
+{
+  "schema": "fun-triage-workbook-visual-contract/v1",
+  "contract_id": "fun-triage-workbook-visual-integrity/v1",
+  "producer": {
+    "repository": "EndeavorEverlasting/web-excel-repair-triage",
+    "responsibilities": [
+      "own the workbook generator and exact visual profile binding",
+      "validate the exact generated XLSX or XLSM bytes",
+      "emit triage-workbook-visual-validation-result/v1",
+      "preserve values, formulas, sheet order, and merges during style-only work"
+    ]
+  },
+  "acceptor": {
+    "repository": "EndeavorEverlasting/FUN",
+    "responsibilities": [
+      "remain authoritative for evidence and final NTH acceptance",
+      "pin the triage policy and profile identities before accepting a receipt",
+      "reject a missing, failing, stale, or wrong-artifact visual receipt",
+      "not reinterpret the palette independently"
+    ]
+  },
+  "receipt_contract": {
+    "schema": "triage-workbook-visual-validation-result/v1",
+    "required_match_fields": [
+      "artifact.sha256",
+      "artifact.size_bytes",
+      "policy.policy_id",
+      "policy.sha256",
+      "profile.profile_id",
+      "profile.sha256",
+      "status"
+    ],
+    "required_status": "PASS"
+  },
+  "boundary": "This contract aligns producer and acceptance surfaces. It does not change evidence truth, workbook math, payroll records, or administrative conclusions."
+}

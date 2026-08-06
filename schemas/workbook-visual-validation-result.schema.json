@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/web-excel-repair-triage/schemas/workbook-visual-validation-result.schema.json",
+  "title": "Workbook visual validation result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "status", "artifact", "policy", "profile", "counts", "violations", "proof_ceiling"],
+  "properties": {
+    "schema": {"const": "triage-workbook-visual-validation-result/v1"},
+    "status": {"enum": ["PASS", "FAIL"]},
+    "artifact": {
+      "type": "object",
+      "required": ["filename", "size_bytes", "sha256"],
+      "properties": {
+        "filename": {"type": "string"},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "policy": {"type": "object", "required": ["policy_id", "sha256"]},
+    "profile": {"type": "object", "required": ["profile_id", "sha256"]},
+    "counts": {"type": "object", "required": ["rules", "violations"]},
+    "violations": {"type": "array", "items": {"type": "object", "required": ["rule_id", "location"]}},
+    "proof_ceiling": {"type": "string", "minLength": 1}
+  }
+}

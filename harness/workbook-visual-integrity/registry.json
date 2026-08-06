@@ -1,0 +1,55 @@
+{
+  "schema": "workbook-visual-integrity-harness/v1",
+  "harness_id": "workbook-visual-integrity",
+  "status": "active",
+  "policy": "configs/workbook_visual_integrity_v1.json",
+  "schemas": {
+    "profile": "schemas/workbook-visual-profile.schema.json",
+    "result": "schemas/workbook-visual-validation-result.schema.json"
+  },
+  "components": {
+    "codebase_map": "harness/workbook-visual-integrity/CODEBASE_MAP.md",
+    "workflow": "harness/workbook-visual-integrity/WORKFLOWS.md",
+    "artifact_registry": "harness/workbook-visual-integrity/ARTIFACT_REGISTRY.md",
+    "generator_bindings": "harness/workbook-visual-integrity/generator-bindings.v1.json",
+    "cross_repo_contract": "harness/workbook-visual-integrity/fun-triage-contract.v1.json",
+    "validator": "scripts/validate_workbook_visual_integrity.py",
+    "guarded_runtime_validator": "scripts/validate_workbook_visual_integrity_guarded.py",
+    "completeness_validator": "scripts/validate_workbook_visual_harness.py",
+    "tests": [
+      "tests/test_workbook_visual_integrity.py",
+      "tests/test_workbook_visual_integrity_guarded.py",
+      "tests/test_workbook_visual_harness.py"
+    ],
+    "skill": ".ai/skills/workbook-visual-integrity/SKILL.md",
+    "workflow_ci": ".github/workflows/workbook-visual-integrity.yml",
+    "operator_report": "reports/harness/workbook-visual-integrity-state.md"
+  },
+  "profiles": [
+    "harness/workbook-visual-integrity/profiles/nth-admin-may-26-29.v1.json",
+    "harness/workbook-visual-integrity/profiles/nth-admin-july.v1.json",
+    "harness/workbook-visual-integrity/profiles/nth-math-packet.v1.json"
+  ],
+  "artifacts": {
+    "harness_report": {
+      "schema": "workbook-visual-integrity-harness-result/v1",
+      "default_path": "Outputs/workbook-visual-harness.json"
+    },
+    "profile_audit": {
+      "schema": "workbook-visual-profile-audit-result/v1",
+      "default_path": "Outputs/workbook-visual-profile-audit.json"
+    },
+    "workbook_validation": {
+      "schema": "triage-workbook-visual-validation-result/v1",
+      "default_path": "Outputs/workbook-visual-validation.json"
+    }
+  },
+  "validation_order": [
+    "python scripts/validate_workbook_visual_harness.py --output Outputs/workbook-visual-harness.json --summary",
+    "python -m unittest tests.test_workbook_visual_integrity tests.test_workbook_visual_integrity_guarded tests.test_workbook_visual_harness -v",
+    "python scripts/validate_workbook_visual_integrity.py --validate-profiles --output Outputs/workbook-visual-profile-audit.json --summary",
+    "python scripts/validate_workbook_visual_integrity_guarded.py --validate-profiles --output Outputs/workbook-visual-profile-guard-audit.json --summary",
+    "git diff --check"
+  ],
+  "proof_ceiling": "Tracked harness completeness, profile integrity, synthesized OOXML color/range behavior, guarded runtime allocation, source binding, and static artifact validation. Excel for Web rendering and operator acceptance remain field proof."
+}
