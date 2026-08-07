@@ -78,6 +78,13 @@ jobs:
             tests/test_prompt_kit_interactions_contract.py \
             tests/test_prompt_kit_discovery.py \
             tests/test_prompt_language_audit.py
+      - name: Validate operator proof PowerShell syntax
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $source = Get-Content -LiteralPath 'harness/templates/Invoke-RemoteHarnessProof.ps1' -Raw -Encoding UTF8
+          $null = [scriptblock]::Create($source)
+          Write-Host 'Operator remote-proof PowerShell syntax: PASS'
       - name: Validate operator command envelope
         run: |
           python scripts/validate_operator_command_envelope.py --summary
