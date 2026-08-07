@@ -106,16 +106,28 @@ class PromptKitMobileTests(unittest.TestCase):
         quick = QUICK_CMD.read_text(encoding="utf-8")
         portable = PORTABLE_PS1.read_text(encoding="utf-8")
         acquire = ACQUIRE_CMD.read_text(encoding="utf-8")
-        self.assertIn(
-            "https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/scripts/Open-LatestPromptKitPortable.ps1",
+        for marker in (
+            "BOOTSTRAP_COMMIT=892e92bc9c04c3904411f20d5af71a82a0769cad",
+            "BOOTSTRAP_BLOB=501505cc3779964745bf4ca4537f5801c488eaa4",
+            "api.github.com/repos/EndeavorEverlasting/web-excel-repair-triage/contents/scripts/Open-LatestPromptKitPortable.ps1",
+            'Open-LatestPromptKitPortable.ps1',
+            '-File "%SCRIPT%" -Destination "%PREFERRED_REPO%"',
+            "exit /b %EXIT_CODE%",
+        ):
+            self.assertIn(marker, quick)
+        self.assertNotIn(
+            "raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/scripts/Open-LatestPromptKitPortable.ps1",
             quick,
         )
-        self.assertIn('Open-LatestPromptKitPortable.ps1', quick)
-        self.assertIn('-File "%SCRIPT%" -Destination "%PREFERRED_REPO%"', quick)
-        self.assertIn("exit /b %EXIT_CODE%", quick)
-        self.assertIn("Import-AcquisitionFunctions", portable)
-        self.assertIn("Update-RepositorySafely", portable)
-        self.assertIn("http://127.0.0.1:8765/", portable)
+        for marker in (
+            "$AcquireBootstrapCommit = 'b73242b4ada14df421513a7962ef1a826c09d012'",
+            "$AcquireBootstrapBlob = '4a79b58b0b14ee9454c84ea41abeb01b4915d92d'",
+            "$StableHost = '127.0.0.1'",
+            '$StableUrl = "http://${StableHost}:$Port/"',
+            "Import-AcquisitionFunctions",
+            "Update-RepositorySafely",
+        ):
+            self.assertIn(marker, portable)
         self.assertIn('-File "%SCRIPT%" %*', acquire)
         self.assertIn("/main/scripts/Acquire-LatestPromptKit.ps1", acquire)
 
