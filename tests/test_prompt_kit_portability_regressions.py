@@ -7,8 +7,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / "docs" / "prompt-kit-favorites-portability.js"
-VALIDATOR = ROOT / "scripts" / "validate_prompt_kit_portability.py"
 BASE_RUNTIME = ROOT / "docs" / "prompt-kit.js"
+SITE = ROOT / "web" / "prompt-kit" / "index.html"
 
 
 class PromptKitPortabilityRegressionTests(unittest.TestCase):
@@ -50,16 +50,13 @@ console.log('PORTABILITY_REGRESSION_PASS');
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertIn("PORTABILITY_REGRESSION_PASS", completed.stdout)
 
-    def test_validator_owns_storage_key_check_at_base_runtime_source(self) -> None:
-        validator = VALIDATOR.read_text(encoding="utf-8")
+    def test_base_runtime_is_storage_key_owner_and_generated_site_contains_it(self) -> None:
         base_runtime = BASE_RUNTIME.read_text(encoding="utf-8")
-        self.assertIn("promptKit.favoritePromptIds.v1", base_runtime)
-        self.assertIn('BASE_RUNTIME = ROOT / "docs" / "prompt-kit.js"', validator)
-        self.assertIn("base_runtime = require_text(", validator)
-        self.assertNotIn(
-            'SITE,\n        (\n            "AI Harness Prompt Kit",\n            "promptKit.favoritePromptIds.v1",',
-            validator,
-        )
+        site = SITE.read_text(encoding="utf-8")
+        marker = "promptKit.favoritePromptIds.v1"
+        self.assertIn(marker, base_runtime)
+        self.assertIn(marker, site)
+        self.assertNotIn(marker, RUNTIME.read_text(encoding="utf-8").split("function currentFavoritePromptIds", 1)[0])
 
 
 if __name__ == "__main__":
