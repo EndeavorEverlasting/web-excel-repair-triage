@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 JS = ROOT / "docs" / "prompt-kit.js"
 CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-mobile.v1.json"
 QUICK_CMD = ROOT / "Open-Latest-PromptKit.cmd"
+PORTABLE_PS1 = ROOT / "scripts" / "Open-LatestPromptKitPortable.ps1"
 ACQUIRE_CMD = ROOT / "Acquire-Latest-PromptKit.cmd"
 ACQUIRE_PS1 = ROOT / "scripts" / "Acquire-LatestPromptKit.ps1"
 ACCESS = ROOT / "PROMPT_KIT_ACCESS.md"
@@ -101,15 +102,20 @@ class PromptKitMobileTests(unittest.TestCase):
         ):
             self.assertIn(marker, js)
 
-    def test_quick_cmd_bootstraps_canonical_main_and_propagates_exit(self) -> None:
+    def test_quick_cmd_bootstraps_portable_main_and_propagates_exit(self) -> None:
         quick = QUICK_CMD.read_text(encoding="utf-8")
+        portable = PORTABLE_PS1.read_text(encoding="utf-8")
         acquire = ACQUIRE_CMD.read_text(encoding="utf-8")
         self.assertIn(
-            "https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/Acquire-Latest-PromptKit.cmd",
+            "https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/scripts/Open-LatestPromptKitPortable.ps1",
             quick,
         )
-        self.assertIn('call "%BOOTSTRAP%" -Quick', quick)
+        self.assertIn('Open-LatestPromptKitPortable.ps1', quick)
+        self.assertIn('-File "%SCRIPT%" -Destination "%PREFERRED_REPO%"', quick)
         self.assertIn("exit /b %EXIT_CODE%", quick)
+        self.assertIn("Import-AcquisitionFunctions", portable)
+        self.assertIn("Update-RepositorySafely", portable)
+        self.assertIn("http://127.0.0.1:8765/", portable)
         self.assertIn('-File "%SCRIPT%" %*', acquire)
         self.assertIn("/main/scripts/Acquire-LatestPromptKit.ps1", acquire)
 
@@ -131,7 +137,7 @@ class PromptKitMobileTests(unittest.TestCase):
     def test_universal_paths_do_not_embed_person_specific_usernames(self) -> None:
         combined = "\n".join(
             path.read_text(encoding="utf-8")
-            for path in (QUICK_CMD, ACQUIRE_CMD, ACQUIRE_PS1, ACCESS, WEB_README)
+            for path in (QUICK_CMD, PORTABLE_PS1, ACQUIRE_CMD, ACQUIRE_PS1, ACCESS, WEB_README)
         ).lower()
         for forbidden in (
             r"c:\users\cheex",
@@ -151,6 +157,8 @@ class PromptKitMobileTests(unittest.TestCase):
         self.assertIn("mobile", (access + readme).lower())
         self.assertIn("reset", (access + readme).lower())
         self.assertIn("collapsible", readme.lower())
+        self.assertIn("prompt-kit-favorites/v1", access + readme)
+        self.assertIn("http://127.0.0.1:8765/", access + readme)
 
 
 if __name__ == "__main__":
