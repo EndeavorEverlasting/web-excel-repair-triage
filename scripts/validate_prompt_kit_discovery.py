@@ -9,11 +9,14 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-discovery.v1.json"
 JS = ROOT / "docs" / "prompt-kit.js"
 GUIDED_JS = ROOT / "docs" / "prompt-kit-guided-recommendations.js"
+POLISH_JS = ROOT / "docs" / "prompt-kit-polish.js"
 BUILDER = ROOT / "build_prompt_kit.py"
 REGISTRY_BUILDER = ROOT / "scripts" / "build_prompt_kit_registry.py"
 DISPLAY_ORDER = ROOT / "registry" / "prompts" / "prompt-display-order.v1.json"
 TUTORIAL_PROMPTS = ROOT / "registry" / "prompts" / "tutorial-discovery-prompts.v1.json"
 TUTORIAL = ROOT / "docs" / "PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md"
+ACCESS_GUIDE = ROOT / "PROMPT_KIT_ACCESS.md"
+README = ROOT / "README.md"
 DEPLOYED = ROOT / "web" / "prompt-kit" / "index.html"
 REQUIRED_IDS = {
     "section_heading_contrast",
@@ -24,11 +27,21 @@ REQUIRED_IDS = {
     "favorites_first",
     "favorite_accessibility",
     "guided_questionnaire",
+    "guided_uses_shared_search",
     "metadata_recommendations",
+    "tutorial_beacon",
+    "card_action_rail",
+    "clipboard_confirmation",
     "stable_identity_resequence",
     "registry_prompt_fallback",
+    "distribution_front_door",
     "generated_site_parity",
 }
+PUBLIC_PROMPT_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/"
+PUBLIC_LAUNCHER_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/"
+DIRECT_ZIP_URL = "https://github.com/EndeavorEverlasting/web-excel-repair-triage/archive/refs/heads/main.zip"
+DIRECT_CMD_URL = "https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/Open-Latest-PromptKit.cmd"
+CLONE_COMMAND = "git clone --branch main --single-branch https://github.com/EndeavorEverlasting/web-excel-repair-triage.git"
 
 
 def _load_json(path: Path) -> object:
@@ -39,10 +52,13 @@ def audit() -> dict[str, object]:
     payload = _load_json(CONTRACT)
     js = JS.read_text(encoding="utf-8")
     guided_js = GUIDED_JS.read_text(encoding="utf-8")
+    polish_js = POLISH_JS.read_text(encoding="utf-8")
     builder = BUILDER.read_text(encoding="utf-8")
     registry_builder = REGISTRY_BUILDER.read_text(encoding="utf-8")
     deployed = DEPLOYED.read_text(encoding="utf-8")
     tutorial = TUTORIAL.read_text(encoding="utf-8")
+    access_guide = ACCESS_GUIDE.read_text(encoding="utf-8")
+    readme = README.read_text(encoding="utf-8")
     order = _load_json(DISPLAY_ORDER)
     extension = _load_json(TUTORIAL_PROMPTS)
     ids = {item["id"] for item in payload.get("requirements", [])}
@@ -66,32 +82,55 @@ def audit() -> dict[str, object]:
         if marker not in js:
             missing.append(requirement_id)
 
-    guided_markers = {
-        "guided_questionnaire": (
-            "PROMPT_FINDER_QUESTIONS",
-            "Find My Prompt",
-            "Primary recommendation",
-            "slice(0,3)",
-            "promptFinderBtn",
-            "prompt-header-actions",
-            "actions.appendChild(addButton)",
-        ),
-        "metadata_recommendations": (
-            "PROMPTS.find",
-            "registered(",
-            "copyPrompt(",
-            "showPromptDetail(",
-        ),
-        "stable_identity_resequence": (
-            "discoveryRank",
-            "window.promptSequenceValue=rank",
-        ),
-    }
-    for requirement_id, markers in guided_markers.items():
-        if any(marker not in guided_js for marker in markers):
-            missing.append(requirement_id)
+    guided_markers = (
+        "PROMPT_FINDER_QUESTIONS",
+        "id:'startingPoint'",
+        "id:'problemKnown'",
+        "id:'goal'",
+        "id:'shape'",
+        "slice(0,3)",
+        "promptFinderBtn",
+        "✦ Tutorial · Find My Prompt",
+        "prompt-finder-beacon",
+        "prefers-reduced-motion:reduce",
+        "filterPromptsForQuery(PROMPTS,query)",
+        "actions.appendChild(addButton)",
+    )
+    if any(marker not in guided_js for marker in guided_markers):
+        missing.append("guided_questionnaire")
+    if "filterPromptsForQuery(PROMPTS,query)" not in guided_js or "var R=" in guided_js:
+        missing.append("guided_uses_shared_search")
+    if any(marker not in guided_js for marker in ("PROMPTS.find", "copyPrompt(", "showPromptDetail(")):
+        missing.append("metadata_recommendations")
+    if any(marker not in guided_js for marker in ("prompt-finder-beacon", "animation:prompt-finder-beacon", "prefers-reduced-motion:reduce")):
+        missing.append("tutorial_beacon")
     if "replaceChild(button,old)" in guided_js:
         missing.append("guided_questionnaire")
+
+    polish_markers = {
+        "card_action_rail": (
+            "prompt-card-actions",
+            "actions.appendChild(favBtn)",
+            "actions.appendChild(openBtn)",
+            "actions.appendChild(copyBtn)",
+            "padding-right:176px",
+            "position:static",
+            "grid-template-columns:44px minmax(72px,1fr) minmax(72px,1fr)",
+        ),
+        "clipboard_confirmation": (
+            "showCopyConfirmation",
+            "✓ Copied to clipboard",
+            ".toast.success",
+            "prompt-copy-confirm",
+            "copy-confirmed",
+            "prefers-reduced-motion:reduce",
+        ),
+    }
+    for requirement_id, markers in polish_markers.items():
+        if any(marker not in polish_js for marker in markers):
+            missing.append(requirement_id)
+    if "card.querySelector('.prompt-header').appendChild(favBtn)" in polish_js:
+        missing.append("card_action_rail")
 
     if "var SYNONYMS=" not in deployed or "SYNONYMS = {" not in builder:
         missing.append("synonym_source")
@@ -128,9 +167,25 @@ def audit() -> dict[str, object]:
     ):
         missing.append("registry_prompt_fallback")
 
-    if js not in deployed or guided_js not in deployed:
+    distribution_markers = (
+        PUBLIC_PROMPT_URL,
+        PUBLIC_LAUNCHER_URL,
+        DIRECT_ZIP_URL,
+        DIRECT_CMD_URL,
+        CLONE_COMMAND,
+    )
+    if any(marker not in access_guide for marker in distribution_markers):
+        missing.append("distribution_front_door")
+    if (
+        "<!-- PROMPT_KIT_QUICK_ACCESS_START -->" not in readme
+        or "<!-- PROMPT_KIT_QUICK_ACCESS_END -->" not in readme
+        or any(marker not in readme for marker in distribution_markers)
+    ):
+        missing.append("distribution_front_door")
+
+    if js not in deployed or guided_js not in deployed or polish_js not in deployed:
         missing.append("generated_site_parity")
-    for marker in ('"id": "P64"', '"id": "P65"', "Find My Prompt"):
+    for marker in ('"id": "P64"', '"id": "P65"', "✦ Tutorial · Find My Prompt", "prompt-card-actions"):
         if marker not in deployed:
             missing.append("generated_site_parity")
             break
