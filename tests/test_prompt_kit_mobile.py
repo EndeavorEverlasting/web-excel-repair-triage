@@ -107,8 +107,8 @@ class PromptKitMobileTests(unittest.TestCase):
         portable = PORTABLE_PS1.read_text(encoding="utf-8")
         acquire = ACQUIRE_CMD.read_text(encoding="utf-8")
         for marker in (
-            "BOOTSTRAP_COMMIT=892e92bc9c04c3904411f20d5af71a82a0769cad",
-            "BOOTSTRAP_BLOB=501505cc3779964745bf4ca4537f5801c488eaa4",
+            "BOOTSTRAP_COMMIT=2282baa2226186fedfae6d696c1531ee5341fa59",
+            "BOOTSTRAP_BLOB=ae13387b05964342b96f89aace30e790a732fd5c",
             "api.github.com/repos/EndeavorEverlasting/web-excel-repair-triage/contents/scripts/Open-LatestPromptKitPortable.ps1",
             'Open-LatestPromptKitPortable.ps1',
             '-File "%SCRIPT%" -Destination "%PREFERRED_REPO%"',

@@ -322,8 +322,8 @@ def validate_repository_surfaces(
     windows_entry = require_text(
         WINDOWS_ENTRY,
         (
-            "BOOTSTRAP_COMMIT=892e92bc9c04c3904411f20d5af71a82a0769cad",
-            "BOOTSTRAP_BLOB=501505cc3779964745bf4ca4537f5801c488eaa4",
+            "BOOTSTRAP_COMMIT=2282baa2226186fedfae6d696c1531ee5341fa59",
+            "BOOTSTRAP_BLOB=ae13387b05964342b96f89aace30e790a732fd5c",
             "Open-LatestPromptKitPortable.ps1",
             "Prompt Kit portable quick-open",
         ),
