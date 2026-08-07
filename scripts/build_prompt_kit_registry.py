@@ -24,6 +24,7 @@ DISPLAY_ORDER_POLICY = (
     REPO_ROOT / "registry" / "prompts" / "prompt-display-order.v1.json"
 )
 GUIDED_RECOMMENDATIONS = REPO_ROOT / "docs" / "prompt-kit-guided-recommendations.js"
+POLISH_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-polish.js"
 ACTIONABILITY_POLICY = (
     REPO_ROOT / "registry" / "prompts" / "actionable-next-step-policy.v1.json"
 )
@@ -262,25 +263,28 @@ def load_prompt_registry() -> list[dict[str, Any]]:
     return apply_display_order(strengthened_prompts, load_display_order_policy())
 
 
+def _read_runtime(path: Path, label: str) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except FileNotFoundError as exc:
+        raise SystemExit(f"{label} is missing: {path}") from exc
+
+
 def render() -> str:
     """Return the exact combined Prompt Kit HTML without writing it."""
     prompts = load_prompt_registry()
     reference = _load_json(REFERENCE)
     html = build_prompt_kit.build_html(prompts, reference)
-    try:
-        guided_script = GUIDED_RECOMMENDATIONS.read_text(encoding="utf-8")
-    except FileNotFoundError as exc:
-        raise SystemExit(
-            f"Guided recommendation behavior is missing: {GUIDED_RECOMMENDATIONS}"
-        ) from exc
+    guided_script = _read_runtime(GUIDED_RECOMMENDATIONS, "Guided recommendation behavior")
+    polish_script = _read_runtime(POLISH_RUNTIME, "Prompt Kit polish behavior")
     closing = "</body>"
     if closing not in html:
         raise SystemExit("Prompt Kit builder output is missing </body>")
-    return html.replace(
-        closing,
-        f"<script>\n{guided_script}\n</script>\n{closing}",
-        1,
+    supplemental = (
+        f"<script>\n{guided_script}\n</script>\n"
+        f"<script>\n{polish_script}\n</script>\n"
     )
+    return html.replace(closing, supplemental + closing, 1)
 
 
 def build(output: Path) -> str:
