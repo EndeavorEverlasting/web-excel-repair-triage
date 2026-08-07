@@ -1,22 +1,23 @@
-# Find the Right Prompt with the Prompt Finder
+# Find the Right Prompt with the Prompt Kit Tutorial
 
 The Prompt Kit contains many specialized prompts. You do not need to know their IDs or scroll through the entire library before beginning work.
 
-Use **Find My Prompt** to answer three short questions. The Prompt Kit then recommends one prompt to start with and, when useful, up to two follow-on prompts. The questionnaire runs entirely in the generated page, does not send answers to a server, and does not retain them after the page is reset or closed.
+Use the glowing **Tutorial · Find My Prompt** control to answer four short questions. The Prompt Kit then recommends one prompt to start with and, when useful, up to two follow-on prompts. The questionnaire runs entirely in the generated page, does not send answers to a server, and does not retain them after the page is reset or closed.
 
 ## Start the questionnaire
 
-1. Open the generated Prompt Kit website at `web/prompt-kit/index.html`.
-2. Select **Find My Prompt** in the header.
-3. Answer each question based on the work in front of you:
-   - what you are trying to accomplish;
-   - what state the work is currently in;
-   - how the work should be organized.
+1. Open the generated Prompt Kit website at `web/prompt-kit/index.html` or the public Prompt Kit URL.
+2. Select the glowing **Tutorial · Find My Prompt** control in the header.
+3. Answer four bounded questions:
+   - whether you are just starting out, already inside a repository, or looking at an app/artifact;
+   - whether you already know the problem or task you want to solve;
+   - what outcome you are trying to accomplish;
+   - whether the work is one sprint, parallel, sequential, or moving toward runtime proof.
 4. Review the **Primary recommendation** first.
 5. Select **Open** to read the full prompt or **Copy** to place it on the clipboard.
 6. Use a follow-on option only when its described gate becomes relevant.
 
-The questionnaire does not invent new prompt text. Every result is resolved from the current combined prompt registry, so the name, content, and metadata shown are the same records used elsewhere in the Prompt Kit.
+The questionnaire does not invent prompt text or maintain a private prompt-ID routing table. Each answer is translated into ordinary search phrases and passed through the same `filterPromptsForQuery(PROMPTS, query)` function used by the Prompt Kit search box. That means the tutorial reuses the current registry, synonym dictionary, metadata ranking, and filtering behavior instead of creating a second recommendation engine.
 
 ## Common paths
 
@@ -32,6 +33,8 @@ The questionnaire does not invent new prompt text. Every result is resolved from
 | Several possible tutorials must be ranked first | P64 | Inventories and ranks tutorial paths, prerequisites, and proof readiness. |
 | Immediate coaching is needed for an app already open | P24 | Guides the current app-at-hand interaction without replacing durable documentation. |
 
+The table is explanatory documentation, not the browser recommendation implementation. Browser recommendations are computed from the current registry and shared search/filter path.
+
 Recommendations are evidence-informed routing aids, not automatic authorization. Read the selected prompt's owned scope, forbidden scope, dependencies, and proof gate before using it.
 
 ## Conversational fallback
@@ -42,7 +45,7 @@ P65 asks one question at a time, recommends one primary prompt and no more than 
 
 ## Why prompt IDs did not change
 
-Prompt IDs and `seq` values are stable identities used by documentation, search synonyms, tests, capabilities, and external references. The Prompt Kit now applies a separate `discoveryRank` from `registry/prompts/prompt-display-order.v1.json` to promote broadly useful entry points without renaming or renumbering established prompts.
+Prompt IDs and `seq` values are stable identities used by documentation, search synonyms, tests, capabilities, and external references. The Prompt Kit applies a separate `discoveryRank` from `registry/prompts/prompt-display-order.v1.json` to promote broadly useful entry points without renaming or renumbering established prompts.
 
 This means:
 
@@ -50,6 +53,13 @@ This means:
 - newly added prompts can be promoted when they are important entry points;
 - search and copied prompt references remain stable;
 - future ordering changes can be reviewed as a bounded display-policy change.
+
+## Interaction polish
+
+The Prompt Kit has two additional browser guardrails around the tutorial workflow:
+
+- Favorite, Open, and Copy live in one explicit prompt-card action rail. Desktop cards reserve space for the rail; mobile cards move the rail into its own touch-sized row. This prevents action buttons from occupying overlapping absolute positions.
+- A successful copy produces both a green glowing confirmation toast and a brief green card flash. Reduced-motion preferences disable the movement while preserving visible confirmation.
 
 ## Tutorial-planning prompts
 
@@ -69,6 +79,7 @@ From the repository root:
 python -m py_compile scripts/build_prompt_kit_registry.py scripts/validate_prompt_kit_discovery.py tests/test_prompt_kit_discovery.py tests/test_skill_prompt_registry.py
 node --check docs/prompt-kit.js
 node --check docs/prompt-kit-guided-recommendations.js
+node --check docs/prompt-kit-polish.js
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 python scripts/validate_prompt_kit_discovery.py --summary
 python -m unittest tests.test_prompt_kit_discovery tests.test_skill_prompt_registry -v
@@ -77,4 +88,4 @@ python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html -
 
 ## Proof ceiling
 
-Repository validation can prove registry integrity, deterministic recommendation routing, JavaScript syntax, generated-site parity, and focused test behavior. It does not prove every browser or assistive-technology combination, organizational acceptance of the recommendations, or that a recommended prompt will succeed without the environment and permissions required by that prompt.
+Repository validation can prove registry integrity, shared-search recommendation routing, JavaScript syntax, action-rail structure, generated-site parity, and focused test behavior. It does not prove every browser or assistive-technology combination, clipboard permissions on every device, organizational acceptance of the recommendations, or that a recommended prompt will succeed without the environment and permissions required by that prompt.
