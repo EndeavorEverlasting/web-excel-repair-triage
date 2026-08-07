@@ -5,6 +5,7 @@
     "canonical_site": "web/prompt-kit/index.html",
     "behavior_source": "docs/prompt-kit.js",
     "guided_behavior_source": "docs/prompt-kit-guided-recommendations.js",
+    "journey_behavior_source": "docs/prompt-kit-journey.js",
     "polish_behavior_source": "docs/prompt-kit-polish.js",
     "synonym_source": "build_prompt_kit.py",
     "display_order_source": "registry/prompts/prompt-display-order.v1.json",
@@ -16,6 +17,7 @@
   "privacy": {
     "answer_processing": "local-page-only",
     "answer_persistence": "none",
+    "workflow_completion_persistence": "session-only",
     "network_submission": false
   },
   "requirements": [
@@ -60,6 +62,14 @@
       "expected": "Questionnaire results resolve current PROMPTS registry records and expose their existing names and copy content rather than duplicating or fabricating prompt bodies."
     },
     {
+      "id": "guided_next_step_journey",
+      "expected": "The recommendation result and every opened prompt expose a structured current-to-next workflow using each live registry record's nextStep, expectedOutput, and referenced prompt IDs; the UI must not maintain a competing hard-coded prompt routing table."
+    },
+    {
+      "id": "guided_completion_state",
+      "expected": "Users may mark the current prompt step complete for the browser session; completion is sessionStorage-only, does not mutate the repository, and remains accessible and reduced-motion safe."
+    },
+    {
       "id": "tutorial_beacon",
       "expected": "The tutorial entry point has an obvious steady glow on ordinary displays and a non-animated but still visible state when reduced motion is requested."
     },
@@ -85,12 +95,13 @@
     },
     {
       "id": "generated_site_parity",
-      "expected": "The checked-in Prompt Kit website contains the exact canonical base, guided, and polish behavior sources after regeneration."
+      "expected": "The checked-in Prompt Kit website contains the exact canonical base, guided-questionnaire, journey-guidance, and polish behavior sources after regeneration."
     }
   ],
   "validation": [
     "node --check docs/prompt-kit.js",
     "node --check docs/prompt-kit-guided-recommendations.js",
+    "node --check docs/prompt-kit-journey.js",
     "node --check docs/prompt-kit-polish.js",
     "python scripts/validate_prompt_kit_discovery.py --summary",
     "python -m unittest tests.test_prompt_kit_discovery -v",
@@ -98,5 +109,5 @@
     "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
     "git diff --check"
   ],
-  "proof_ceiling": "Deterministic registry, shared-search recommendation, layout markers, Node syntax, generated-site parity, acquisition documentation, and CI proof. Physical browser rendering, clipboard permissions, assistive-technology coverage, device installation, and user acceptance remain field gates."
+  "proof_ceiling": "Deterministic registry, shared-search recommendation, registry-owned next-step routing, session-only completion state, layout markers, Node syntax, generated-site parity, acquisition documentation, and CI proof. Physical browser rendering, clipboard permissions, assistive-technology coverage, device installation, and user acceptance remain field gates."
 }

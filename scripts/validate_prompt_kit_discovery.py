@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-discovery.v1.json"
 JS = ROOT / "docs" / "prompt-kit.js"
 GUIDED_JS = ROOT / "docs" / "prompt-kit-guided-recommendations.js"
+JOURNEY_JS = ROOT / "docs" / "prompt-kit-journey.js"
 POLISH_JS = ROOT / "docs" / "prompt-kit-polish.js"
 BUILDER = ROOT / "build_prompt_kit.py"
 REGISTRY_BUILDER = ROOT / "scripts" / "build_prompt_kit_registry.py"
@@ -29,6 +30,8 @@ REQUIRED_IDS = {
     "guided_questionnaire",
     "guided_uses_shared_search",
     "metadata_recommendations",
+    "guided_next_step_journey",
+    "guided_completion_state",
     "tutorial_beacon",
     "card_action_rail",
     "clipboard_confirmation",
@@ -52,6 +55,7 @@ def audit() -> dict[str, object]:
     payload = _load_json(CONTRACT)
     js = JS.read_text(encoding="utf-8")
     guided_js = GUIDED_JS.read_text(encoding="utf-8")
+    journey_js = JOURNEY_JS.read_text(encoding="utf-8")
     polish_js = POLISH_JS.read_text(encoding="utf-8")
     builder = BUILDER.read_text(encoding="utf-8")
     registry_builder = REGISTRY_BUILDER.read_text(encoding="utf-8")
@@ -106,6 +110,39 @@ def audit() -> dict[str, object]:
         missing.append("tutorial_beacon")
     if "replaceChild(button,old)" in guided_js:
         missing.append("guided_questionnaire")
+
+    journey_markers = (
+        "promptKit.guidance.completed.v1",
+        "function guidanceNextIds(prompt)",
+        "prompt.nextStep",
+        "buildPromptGuidanceModel",
+        "Guided workflow",
+        "NEXT-STEP CONTRACT",
+        "READY TO CONTINUE WHEN",
+        "finder-journey-preview",
+        "MutationObserver",
+        "stableGuidanceOrigin",
+        "closest('#promptDetail')",
+        "prefers-reduced-motion:reduce",
+    )
+    if any(marker not in journey_js for marker in journey_markers):
+        missing.append("guided_next_step_journey")
+    if (
+        "NEXT_PROMPT_MAP" in journey_js
+        or "hard-coded prompt" in journey_js.lower()
+        or "MAX_NEXT" in journey_js
+    ):
+        missing.append("guided_next_step_journey")
+    if any(marker not in journey_js for marker in ("sessionStorage", "Mark this step complete", "aria-pressed")):
+        missing.append("guided_completion_state")
+    if "localStorage" in journey_js:
+        missing.append("guided_completion_state")
+    if (
+        "PROMPT_JOURNEY_RUNTIME" not in registry_builder
+        or "docs\" / \"prompt-kit-journey.js" not in registry_builder
+        or "journey_script" not in registry_builder
+    ):
+        missing.append("guided_next_step_journey")
 
     polish_markers = {
         "card_action_rail": (
@@ -183,9 +220,15 @@ def audit() -> dict[str, object]:
     ):
         missing.append("distribution_front_door")
 
-    if js not in deployed or guided_js not in deployed or polish_js not in deployed:
+    if js not in deployed or guided_js not in deployed or journey_js not in deployed or polish_js not in deployed:
         missing.append("generated_site_parity")
-    for marker in ('"id": "P64"', '"id": "P65"', "✦ Tutorial · Find My Prompt", "prompt-card-actions"):
+    for marker in (
+        '"id": "P64"',
+        '"id": "P65"',
+        "✦ Tutorial · Find My Prompt",
+        "prompt-kit-journey-styles",
+        "prompt-card-actions",
+    ):
         if marker not in deployed:
             missing.append("generated_site_parity")
             break

@@ -24,6 +24,7 @@ DISPLAY_ORDER_POLICY = (
     REPO_ROOT / "registry" / "prompts" / "prompt-display-order.v1.json"
 )
 GUIDED_RECOMMENDATIONS = REPO_ROOT / "docs" / "prompt-kit-guided-recommendations.js"
+PROMPT_JOURNEY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-journey.js"
 POLISH_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-polish.js"
 ACTIONABILITY_POLICY = (
     REPO_ROOT / "registry" / "prompts" / "actionable-next-step-policy.v1.json"
@@ -276,12 +277,14 @@ def render() -> str:
     reference = _load_json(REFERENCE)
     html = build_prompt_kit.build_html(prompts, reference)
     guided_script = _read_runtime(GUIDED_RECOMMENDATIONS, "Guided recommendation behavior")
+    journey_script = _read_runtime(PROMPT_JOURNEY_RUNTIME, "Guided next-step journey behavior")
     polish_script = _read_runtime(POLISH_RUNTIME, "Prompt Kit polish behavior")
     closing = "</body>"
     if closing not in html:
         raise SystemExit("Prompt Kit builder output is missing </body>")
     supplemental = (
         f"<script>\n{guided_script}\n</script>\n"
+        f"<script>\n{journey_script}\n</script>\n"
         f"<script>\n{polish_script}\n</script>\n"
     )
     return html.replace(closing, supplemental + closing, 1)

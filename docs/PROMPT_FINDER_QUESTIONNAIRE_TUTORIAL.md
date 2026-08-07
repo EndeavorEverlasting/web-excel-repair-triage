@@ -14,10 +14,29 @@ Use the glowing **Tutorial · Find My Prompt** control to answer four short ques
    - what outcome you are trying to accomplish;
    - whether the work is one sprint, parallel, sequential, or moving toward runtime proof.
 4. Review the **Primary recommendation** first.
-5. Select **Open** to read the full prompt or **Copy** to place it on the clipboard.
-6. Use a follow-on option only when its described gate becomes relevant.
+5. Read the **After the recommendation** path to see what the current registry says should follow that prompt.
+6. Select **Open** to read the full prompt or **Copy** to place it on the clipboard.
+7. Complete the current prompt's expected output or proof before moving to the next registered step.
 
 The questionnaire does not invent prompt text or maintain a private prompt-ID routing table. Each answer is translated into ordinary search phrases and passed through the same `filterPromptsForQuery(PROMPTS, query)` function used by the Prompt Kit search box. That means the tutorial reuses the current registry, synonym dictionary, metadata ranking, and filtering behavior instead of creating a second recommendation engine.
+
+## Use → prove → continue
+
+The recommendation is a starting point, not the end of the tutorial. The current Prompt Kit restores the useful sequencing principle from the earlier spreadsheet-era Prompt Sequence while keeping the experience web-native.
+
+When you open any prompt, its detail view includes a **Guided workflow** panel:
+
+1. **Now** identifies the prompt you are about to use.
+2. **Next-step contract** shows that prompt's current `nextStep` registry guidance.
+3. **Ready to continue when** shows the prompt's registered expected output or proof gate.
+4. **Next** or **Option** cards appear only for prompt IDs actually referenced by the current prompt's `nextStep` and present in the current registry.
+5. **Open** lets you inspect the next prompt before committing to it; **Copy** copies that registered prompt directly.
+6. **Mark this step complete** gives you lightweight session progress. Completion is stored only in browser `sessionStorage`; it is cleared with the browsing session and never changes the repository or your saved Favorites.
+7. If the prompt has no explicit registered successor, use **Re-run Find My Prompt** after the current result changes your context.
+
+This is deliberately not a new routing database. The browser reads the same `nextStep`, `expectedOutput`, `proofGate`, `useWhen`, IDs, and names already produced by the canonical prompt registry. Updating prompt guidance therefore remains a registry concern instead of requiring a second UI-specific sequence map.
+
+The workflow rail uses subtle motion to make progression visible. Browsers requesting reduced motion receive the same structure and state without the movement. Mobile layouts keep the path horizontally readable and make the workflow actions touch-sized.
 
 ## Common paths
 
@@ -33,7 +52,7 @@ The questionnaire does not invent prompt text or maintain a private prompt-ID ro
 | Several possible tutorials must be ranked first | P64 | Inventories and ranks tutorial paths, prerequisites, and proof readiness. |
 | Immediate coaching is needed for an app already open | P24 | Guides the current app-at-hand interaction without replacing durable documentation. |
 
-The table is explanatory documentation, not the browser recommendation implementation. Browser recommendations are computed from the current registry and shared search/filter path.
+The table is explanatory documentation, not the browser recommendation implementation. Browser recommendations are computed from the current registry and shared search/filter path, while subsequent workflow guidance comes from each selected prompt's current registry-owned `nextStep`.
 
 Recommendations are evidence-informed routing aids, not automatic authorization. Read the selected prompt's owned scope, forbidden scope, dependencies, and proof gate before using it.
 
@@ -56,10 +75,12 @@ This means:
 
 ## Interaction polish
 
-The Prompt Kit has two additional browser guardrails around the tutorial workflow:
+The Prompt Kit has additional browser guardrails around the tutorial workflow:
 
 - Favorite, Open, and Copy live in one explicit prompt-card action rail. Desktop cards reserve space for the rail; mobile cards move the rail into its own touch-sized row. This prevents action buttons from occupying overlapping absolute positions.
 - A successful copy produces both a green glowing confirmation toast and a brief green card flash. Reduced-motion preferences disable the movement while preserving visible confirmation.
+- Guided workflow panels use an animated current-to-next rail, distinct current/next states, and compact successor cards. Reduced-motion preferences preserve the structure while disabling movement.
+- Workflow completion is intentionally session-scoped; it does not compete with Favorites, which remain persistent browser-local preferences.
 
 ## Tutorial-planning prompts
 
@@ -76,16 +97,17 @@ Use P64 before P18 when the team has several possible tutorials and does not yet
 From the repository root:
 
 ```powershell
-python -m py_compile scripts/build_prompt_kit_registry.py scripts/validate_prompt_kit_discovery.py tests/test_prompt_kit_discovery.py tests/test_skill_prompt_registry.py
+python -m py_compile scripts/build_prompt_kit_registry.py scripts/validate_prompt_kit_discovery.py tests/test_prompt_kit_discovery.py tests/test_prompt_kit_guidance.py tests/test_skill_prompt_registry.py
 node --check docs/prompt-kit.js
 node --check docs/prompt-kit-guided-recommendations.js
+node --check docs/prompt-kit-journey.js
 node --check docs/prompt-kit-polish.js
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 python scripts/validate_prompt_kit_discovery.py --summary
-python -m unittest tests.test_prompt_kit_discovery tests.test_skill_prompt_registry -v
+python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance tests.test_skill_prompt_registry -v
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 ```
 
 ## Proof ceiling
 
-Repository validation can prove registry integrity, shared-search recommendation routing, JavaScript syntax, action-rail structure, generated-site parity, and focused test behavior. It does not prove every browser or assistive-technology combination, clipboard permissions on every device, organizational acceptance of the recommendations, or that a recommended prompt will succeed without the environment and permissions required by that prompt.
+Repository validation can prove registry integrity, shared-search recommendation routing, registry-owned next-step extraction, session-only completion state, JavaScript syntax, action-rail structure, generated-site parity, and focused test behavior. It does not prove every browser or assistive-technology combination, clipboard permissions on every device, organizational acceptance of the recommendations, or that a recommended prompt will succeed without the environment and permissions required by that prompt.
