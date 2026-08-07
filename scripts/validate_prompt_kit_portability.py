@@ -217,6 +217,7 @@ def validate_artifact(artifact_path: Path, manifest_path: Path) -> dict[str, Any
         "cache_disabled",
         "protected_inputs_untouched",
         "canonical_site_untouched",
+        "overwrite_backup_required",
     ):
         if guardrails.get(key) is not True:
             fail(f"portable artifact manifest guardrail is not true: {key}")
@@ -283,7 +284,7 @@ def validate_repository_surfaces(
         (
             "build_prompt_kit.build_html",
             "Prompt Kit check passed",
-            "web/prompt-kit/index.html",
+            'DEFAULT_OUTPUT = REPO_ROOT / "web" / "prompt-kit" / "index.html"',
         ),
     )
     portable_builder = require_text(
@@ -292,19 +293,24 @@ def validate_repository_surfaces(
             'SCHEMA_VERSION = "prompt-kit-portable-artifact/v1"',
             'CLOSING_BODY = "</body>"',
             "compose_portable_html",
-            "DEFAULT_HOST = \"127.0.0.1\"",
+            "backup_existing_output",
+            'DEFAULT_HOST = "127.0.0.1"',
             "DEFAULT_PORT = 8765",
             "ALLOWED_HOSTS",
             "build_portable_artifact",
             "Cache-Control",
             "canonical_site_untouched",
+            "overwrite_backup_required",
             "PROMPT_KIT_PORTABLE_SHA256",
         ),
     )
     portable_launcher = require_text(
         PORTABLE_LAUNCHER,
         (
-            EXPECTED_ORIGIN,
+            "$AcquireBootstrapCommit = 'b73242b4ada14df421513a7962ef1a826c09d012'",
+            "$AcquireBootstrapBlob = '4a79b58b0b14ee9454c84ea41abeb01b4915d92d'",
+            "$StableHost = '127.0.0.1'",
+            '$StableUrl = "http://${StableHost}:$Port/"',
             "Import-AcquisitionFunctions",
             "Update-RepositorySafely",
             "serve_prompt_kit_portable.py",
@@ -316,6 +322,8 @@ def validate_repository_surfaces(
     windows_entry = require_text(
         WINDOWS_ENTRY,
         (
+            "BOOTSTRAP_COMMIT=892e92bc9c04c3904411f20d5af71a82a0769cad",
+            "BOOTSTRAP_BLOB=501505cc3779964745bf4ca4537f5801c488eaa4",
             "Open-LatestPromptKitPortable.ps1",
             "Prompt Kit portable quick-open",
         ),
