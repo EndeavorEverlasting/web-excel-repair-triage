@@ -51,12 +51,13 @@ console.log('PORTABILITY_REGRESSION_PASS');
         self.assertIn("PORTABILITY_REGRESSION_PASS", completed.stdout)
 
     def test_base_runtime_is_storage_key_owner_and_generated_site_contains_it(self) -> None:
+        marker = "promptKit.favoritePromptIds.v1"
         base_runtime = BASE_RUNTIME.read_text(encoding="utf-8")
         site = SITE.read_text(encoding="utf-8")
-        marker = "promptKit.favoritePromptIds.v1"
+        portability_runtime = RUNTIME.read_text(encoding="utf-8")
         self.assertIn(marker, base_runtime)
         self.assertIn(marker, site)
-        self.assertNotIn(marker, RUNTIME.read_text(encoding="utf-8").split("function currentFavoritePromptIds", 1)[0])
+        self.assertNotIn(marker, portability_runtime)
 
 
 if __name__ == "__main__":
