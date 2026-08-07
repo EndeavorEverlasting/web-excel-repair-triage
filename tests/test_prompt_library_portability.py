@@ -52,6 +52,7 @@ def build_fixture(
     remove_link: str | None = None,
     drift_link: str | None = None,
     wrong_end_prompt: str | None = None,
+    wrong_sheet_prompt: str | None = None,
     dense_navigation_row: int | None = None,
 ) -> None:
     library_rows: dict[int, dict[str, str]] = {
@@ -83,7 +84,11 @@ def build_fixture(
         library_rows[row]["C"] = prompt_id
         library_rows[row]["O"] = sheet_name
         target_end = 4 if wrong_end_prompt == prompt_id else 3
-        target = f"'{sheet_name}'!A1:A{target_end}"
+        target_sheet = sheet_name
+        if wrong_sheet_prompt == prompt_id:
+            wrong_ordinal = ordinal % prompt_count
+            target_sheet = f"P{wrong_ordinal:02d}_COPY_SAFE"
+        target = f"'{target_sheet}'!A1:A{target_end}"
         for column in LINK_COLUMNS:
             reference = f"{column}{row}"
             library_links[reference] = target
@@ -192,6 +197,17 @@ class PromptLibraryPortabilityTests(unittest.TestCase):
         codes = {item.code for item in report.findings}
         self.assertIn("PROMPT_ROW_LINK_DRIFT", codes)
         self.assertIn("PROMPT_COPY_RANGE_NOT_EXACT", codes)
+
+    def test_cross_prompt_target_fails_even_when_entire_row_is_consistent(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "wrong-prompt.xlsx"
+            build_fixture(path, wrong_sheet_prompt="P00")
+            report = validate_prompt_library_workbook(path)
+        self.assertFalse(report.valid)
+        self.assertIn(
+            "PROMPT_TARGET_SHEET_MISMATCH",
+            {item.code for item in report.findings},
+        )
 
     def test_dense_navigation_fails(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
