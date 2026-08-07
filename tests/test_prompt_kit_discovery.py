@@ -155,12 +155,15 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             "READY TO CONTINUE WHEN",
             "Mark this step complete",
             "sessionStorage",
+            "stableGuidanceOrigin",
+            "closest('#promptDetail')",
             "finder-journey-preview",
             "prefers-reduced-motion:reduce",
         ):
             self.assertIn(marker, journey)
         self.assertNotIn("NEXT_PROMPT_MAP", journey)
         self.assertNotIn("localStorage", journey)
+        self.assertNotIn("MAX_NEXT", journey)
 
     def test_tutorial_entry_point_is_visible_glowing_and_reduced_motion_safe(self) -> None:
         guided = GUIDED_JS.read_text(encoding="utf-8")

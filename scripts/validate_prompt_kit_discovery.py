@@ -121,11 +121,17 @@ def audit() -> dict[str, object]:
         "READY TO CONTINUE WHEN",
         "finder-journey-preview",
         "MutationObserver",
+        "stableGuidanceOrigin",
+        "closest('#promptDetail')",
         "prefers-reduced-motion:reduce",
     )
     if any(marker not in journey_js for marker in journey_markers):
         missing.append("guided_next_step_journey")
-    if "NEXT_PROMPT_MAP" in journey_js or "hard-coded prompt" in journey_js.lower():
+    if (
+        "NEXT_PROMPT_MAP" in journey_js
+        or "hard-coded prompt" in journey_js.lower()
+        or "MAX_NEXT" in journey_js
+    ):
         missing.append("guided_next_step_journey")
     if any(marker not in journey_js for marker in ("sessionStorage", "Mark this step complete", "aria-pressed")):
         missing.append("guided_completion_state")

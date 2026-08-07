@@ -27,12 +27,15 @@ class PromptKitGuidanceTests(unittest.TestCase):
             "READY TO CONTINUE WHEN",
             "Mark this step complete",
             "MutationObserver",
+            "stableGuidanceOrigin",
+            "closest('#promptDetail')",
             "finder-journey-preview",
             "prefers-reduced-motion:reduce",
         ):
             self.assertIn(marker, source)
         self.assertNotIn("NEXT_PROMPT_MAP", source)
         self.assertNotIn("hard-coded prompt", source.lower())
+        self.assertNotIn("MAX_NEXT", source)
 
     def test_next_prompt_parser_keeps_known_ids_deduplicated_and_ordered(self) -> None:
         node = shutil.which("node")
@@ -63,6 +66,39 @@ console.log('GUIDANCE_MODEL_PASS');
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertIn("GUIDANCE_MODEL_PASS", completed.stdout)
+
+    def test_complex_next_step_preserves_every_registered_route(self) -> None:
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("Node is not installed in this test environment")
+        script = f"""
+const fs=require('fs');
+global.PROMPTS=[
+ {{id:'P03',name:'Intake',nextStep:'Use P06.',useWhen:'intake'}},
+ {{id:'P06',name:'Cleanup',nextStep:'Use P07.',useWhen:'cleanup'}},
+ {{id:'P07',name:'Sprint',nextStep:'Use P12.',useWhen:'build'}},
+ {{id:'P12',name:'Close',nextStep:'none; no safe actionable work remains',useWhen:'close'}},
+ {{id:'P14',name:'Repair',nextStep:'Use P15.',useWhen:'repair'}},
+ {{id:'P15',name:'Merge',nextStep:'Use P12.',useWhen:'merge'}},
+ {{id:'P20',name:'Discover',nextStep:'Use P07.',useWhen:'discover'}},
+ {{id:'P57',name:'Router',nextStep:'Route through P03, P06, P07, P14, P15, P20, then P12.',useWhen:'route'}}
+];
+const vm=require('vm');
+vm.runInThisContext(fs.readFileSync({json.dumps(str(JOURNEY))},'utf8'));
+const ids=global.promptGuidanceNextIds('P57');
+const expected=['P03','P06','P07','P14','P15','P20','P12'];
+if(JSON.stringify(ids)!==JSON.stringify(expected)) throw new Error(JSON.stringify(ids));
+console.log('GUIDANCE_COMPLEX_ROUTE_PASS');
+"""
+        completed = subprocess.run(
+            [node, "-e", script],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn("GUIDANCE_COMPLEX_ROUTE_PASS", completed.stdout)
 
     def test_builder_and_discovery_contract_register_journey_runtime(self) -> None:
         builder = BUILDER.read_text(encoding="utf-8")
