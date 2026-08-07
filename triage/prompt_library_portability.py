@@ -188,6 +188,8 @@ def validate_prompt_library_workbook(path: str | Path) -> PromptLibraryPortabili
 
             last_library_row = prompt_rows[-1]
             for ordinal, row in enumerate(prompt_rows, start=1):
+                prompt_id = cells.get(f"C{row}", (None, ""))[1].strip().upper()
+                associated_sheet = f"{prompt_id}_COPY_SAFE"
                 expected_location: str | None = None
                 expected_sheet: str | None = None
                 expected_end: int | None = None
@@ -240,6 +242,15 @@ def validate_prompt_library_workbook(path: str | Path) -> PromptLibraryPortabili
                                 reference,
                             )
                         )
+
+                if expected_sheet and expected_sheet != associated_sheet:
+                    findings.append(
+                        Finding(
+                            "PROMPT_TARGET_SHEET_MISMATCH",
+                            f"{prompt_id} row must target {associated_sheet}, not {expected_sheet}",
+                            row,
+                        )
+                    )
 
                 if expected_sheet:
                     prompt_part = sheets.get(expected_sheet)
