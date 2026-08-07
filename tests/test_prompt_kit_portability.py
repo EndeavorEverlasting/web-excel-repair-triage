@@ -151,13 +151,32 @@ class PromptKitPortabilityTests(unittest.TestCase):
                 "favoritePortabilityControls",
                 "Export Favorites",
                 "Import Favorites",
+                "Tutorial · Find My Prompt",
+                "prompt-card-actions",
             ):
                 self.assertIn(marker, artifact_text)
             self.assertEqual(receipt["stable_origin"], EXPECTED_ORIGIN)
             self.assertTrue(receipt["guardrails"]["canonical_site_untouched"])
+            self.assertTrue(receipt["guardrails"]["overwrite_backup_required"])
             validated = validator.validate_artifact(artifact, manifest)
             self.assertEqual(validated["sha256"], receipt["artifact"]["sha256"])
             self.assertEqual(validated["bytes"], receipt["artifact"]["bytes"])
+
+    def test_existing_generated_output_is_backed_up_before_replacement(self) -> None:
+        portable = load_module("prompt_kit_portable_backup", PORTABLE_BUILDER)
+        with tempfile.TemporaryDirectory() as temporary:
+            repo_root = Path(temporary)
+            output = repo_root / "Outputs" / "prompt-kit-portable" / "index.html"
+            output.parent.mkdir(parents=True)
+            output.write_text("old portable artifact", encoding="utf-8")
+            backup = portable.backup_existing_output(repo_root, output)
+            self.assertIsNotNone(backup)
+            assert backup is not None
+            self.assertTrue(backup.is_file())
+            self.assertEqual(backup.read_text(encoding="utf-8"), "old portable artifact")
+            self.assertTrue(
+                backup.is_relative_to(repo_root / "Outputs" / "backups" / "prompt-kit-portable")
+            )
 
     def test_portable_builder_rejects_duplicate_injection_and_non_loopback(self) -> None:
         portable = load_module("prompt_kit_portable_builder_rejection", PORTABLE_BUILDER)
@@ -167,7 +186,7 @@ class PromptKitPortabilityTests(unittest.TestCase):
             temporary_path = Path(temporary)
             duplicate = temporary_path / "duplicate.html"
             duplicate.write_text(
-                "<html><script>prompt-kit-favorites/v1</script></html>",
+                "<html><body><script>prompt-kit-favorites/v1</script></body></html>",
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "duplicate injection"):
@@ -197,7 +216,7 @@ class PromptKitPortabilityTests(unittest.TestCase):
 const fs=require('fs');
 globalThis.PROMPTS=[{id:'P03'},{id:'P06'},{id:'P07'}];
 globalThis.favoritePromptIds={P03:true};
-globalThis.localStorage={data:{},getItem(k){return this.data[k]||null},setItem(k,v){this.data[k]=v}};
+globalThis.localStorage={data:{},getItem(k){return this.data[k]||null},setItem(k,v){this.data[k]=v},removeItem(k){delete this.data[k]}};
 globalThis.saveFavoritePromptIds=function(){globalThis.saved=true};
 globalThis.render=function(){globalThis.rendered=true};
 const source=fs.readFileSync('docs/prompt-kit-favorites-portability.js','utf8');
@@ -231,9 +250,12 @@ console.log('PORTABILITY_RUNTIME_PASS');
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertIn("PORTABILITY_RUNTIME_PASS", completed.stdout)
 
-    def test_launcher_reuses_acquisition_and_opens_stable_origin(self) -> None:
+    def test_launcher_reuses_pinned_acquisition_and_opens_stable_origin(self) -> None:
         for marker in (
-            EXPECTED_ORIGIN,
+            "$StableHost = '127.0.0.1'",
+            '$StableUrl = "http://${StableHost}:$Port/"',
+            "$AcquireBootstrapCommit = 'b73242b4ada14df421513a7962ef1a826c09d012'",
+            "$AcquireBootstrapBlob = '4a79b58b0b14ee9454c84ea41abeb01b4915d92d'",
             "Import-AcquisitionFunctions",
             "Update-RepositorySafely",
             "serve_prompt_kit_portable.py",
@@ -241,8 +263,14 @@ console.log('PORTABILITY_RUNTIME_PASS');
             "Start-PortableServer",
         ):
             self.assertIn(marker, self.portable_launcher)
+        for marker in (
+            "BOOTSTRAP_COMMIT=892e92bc9c04c3904411f20d5af71a82a0769cad",
+            "BOOTSTRAP_BLOB=501505cc3779964745bf4ca4537f5801c488eaa4",
+            "api.github.com/repos/EndeavorEverlasting/web-excel-repair-triage/contents/scripts/Open-LatestPromptKitPortable.ps1",
+        ):
+            self.assertIn(marker, self.windows_entry)
         self.assertIn("Open-LatestPromptKitPortable.ps1", self.windows_entry)
-        self.assertNotIn("Acquire-Latest-PromptKit.cmd\" -Quick", self.windows_entry)
+        self.assertNotIn("raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/scripts/Open-LatestPromptKitPortable.ps1", self.windows_entry)
 
     def test_powershell_launcher_parses_when_pwsh_is_available(self) -> None:
         pwsh = shutil.which("pwsh") or shutil.which("powershell")
@@ -275,6 +303,7 @@ console.log('PORTABILITY_RUNTIME_PASS');
             "scripts/serve_prompt_kit_portable.py",
             "scripts/validate_prompt_kit_portability.py",
             "tests/test_prompt_kit_portability.py",
+            "tests/test_prompt_kit_portability_regressions.py",
             "Build portable Prompt Kit runtime artifact",
             "Validate portable Favorites and harness discipline",
             "prompt-kit-portable-runtime",
