@@ -71,6 +71,8 @@ class PromptKitPagesContractTests(unittest.TestCase):
         self.assertIn("Open in browser", text)
         self.assertIn("Install on this Android phone", text)
         self.assertIn("same Prompt Kit used on desktop", text)
+        self.assertIn("Canonical generated/deployed website artifact", text)
+        self.assertIn("Implementation source: `docs/prompt-kit.js`", text)
 
     def test_mobile_launcher_exposes_open_install_share_and_copy(self):
         html = (MOBILE_ROOT / "index.html").read_text(encoding="utf-8")
@@ -117,6 +119,16 @@ class PromptKitPagesContractTests(unittest.TestCase):
                 self.assertIn(marker, text)
         self.assertNotIn('fetch("http', text)
         self.assertNotIn("importScripts(", text)
+
+    def test_service_worker_only_cleans_prompt_kit_caches_and_waits_for_runtime_writes(self):
+        text = (MOBILE_ROOT / "service-worker.js").read_text(encoding="utf-8")
+        self.assertIn('const CACHE_PREFIX = "ai-prompt-kit-mobile-";', text)
+        self.assertIn("key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME", text)
+        self.assertNotIn("keys.filter(key => key !== CACHE_NAME)", text)
+        self.assertIn(
+            "event.waitUntil(\n            caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy))",
+            text,
+        )
 
     def test_mobile_icons_and_qr_are_tracked_sized_pngs(self):
         self.assertEqual(png_size(MOBILE_ROOT / "icon-192.png"), (192, 192))
