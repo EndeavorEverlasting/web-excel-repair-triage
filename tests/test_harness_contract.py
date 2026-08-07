@@ -16,6 +16,7 @@ if str(SCRIPTS) not in sys.path:
 
 import evaluate_prompt_language
 import validate_harness
+import validate_operator_command_envelope
 
 
 class HarnessContractTests(unittest.TestCase):
@@ -83,6 +84,27 @@ class HarnessContractTests(unittest.TestCase):
                 )["capabilities"]
             },
         )
+
+    def test_operator_command_envelope_is_registered_and_executable(self) -> None:
+        manifest = self.load("harness/manifest.v1.json")
+        contract = manifest["domain_contracts"]["operator_command_envelope"]
+        self.assertEqual(
+            contract["contract"],
+            "harness/contracts/operator-command-envelope.v1.json",
+        )
+        self.assertEqual(
+            contract["validator"],
+            "scripts/validate_operator_command_envelope.py",
+        )
+        self.assertEqual(
+            contract["contract_tests"],
+            "tests/test_operator_command_envelope.py",
+        )
+        self.assertEqual(
+            contract["template"],
+            "harness/templates/Invoke-RemoteHarnessProof.ps1",
+        )
+        self.assertEqual(validate_operator_command_envelope.main([]), 0)
 
     def test_machine_registries_are_complete_and_connected(self) -> None:
         manifest = self.load("harness/manifest.v1.json")
