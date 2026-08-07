@@ -20,7 +20,8 @@ $RequiredFiles = @(
     'configs\prompt_kit\generators.v1.json',
     'scripts\build_prompt_kit_registry.py'
 )
-$AcquireScriptUrl = 'https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/scripts/Acquire-LatestPromptKit.ps1'
+$AcquireBootstrapCommit = 'b73242b4ada14df421513a7962ef1a826c09d012'
+$AcquireBootstrapBlob = '4a79b58b0b14ee9454c84ea41abeb01b4915d92d'
 $StableHost = '127.0.0.1'
 $StableUrl = "http://${StableHost}:$Port/"
 $HealthUrl = "${StableUrl}healthz"
@@ -42,8 +43,26 @@ function Resolve-AcquisitionScript {
     if (-not (Test-Path -LiteralPath $parent)) {
         New-Item -ItemType Directory -Path $parent -Force | Out-Null
     }
-    Write-OperatorLog 'Downloading the canonical acquisition helper.'
-    Invoke-WebRequest -UseBasicParsing -Uri $AcquireScriptUrl -OutFile $cache
+    Write-OperatorLog "Acquiring pinned acquisition helper $AcquireBootstrapCommit."
+    $headers = @{
+        'User-Agent' = 'PromptKit-Pinned-Acquisition-Bootstrap'
+        'Accept' = 'application/vnd.github+json'
+    }
+    $uri = (
+        'https://api.github.com/repos/EndeavorEverlasting/web-excel-repair-triage/' +
+        'contents/scripts/Acquire-LatestPromptKit.ps1?ref=' + $AcquireBootstrapCommit
+    )
+    $response = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers
+    if ([string]$response.sha -ne $AcquireBootstrapBlob) {
+        throw (
+            'Pinned acquisition helper blob mismatch. Expected ' +
+            "$AcquireBootstrapBlob; received $($response.sha)."
+        )
+    }
+    [IO.File]::WriteAllBytes(
+        $cache,
+        [Convert]::FromBase64String(([string]$response.content -replace '\s', ''))
+    )
     return $cache
 }
 
