@@ -1,5 +1,19 @@
 # Get the Latest Prompt Kit Website
 
+<!-- PROMPT_KIT_FAST_PATH_START -->
+## Choose the easiest path
+
+| Device / need | Do this |
+|---|---|
+| Browser on any computer | Open **https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/** |
+| Phone / tablet / install / QR | Open **https://endeavoreverlasting.github.io/web-excel-repair-triage/** |
+| Windows local/offline copy | Download **https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/Open-Latest-PromptKit.cmd** and double-click it |
+| No Git client | Download **https://github.com/EndeavorEverlasting/web-excel-repair-triage/archive/refs/heads/main.zip** and open `web/prompt-kit/index.html` after extraction |
+| Git user | `git clone --branch main --single-branch https://github.com/EndeavorEverlasting/web-excel-repair-triage.git` |
+
+Normal users should prefer the public browser URL. The CMD path exists for a validated local Windows copy; the ZIP and clone paths are fallbacks, not prerequisites for using the web app.
+<!-- PROMPT_KIT_FAST_PATH_END -->
+
 The canonical checked-in website is:
 
 ```text

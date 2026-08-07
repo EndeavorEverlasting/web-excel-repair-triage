@@ -1,0 +1,29 @@
+{
+  "schema_version": "prompt-display-order/v1",
+  "policy_id": "prompt-kit-guided-discovery-order",
+  "promoted_prompt_ids": [
+    "P65",
+    "P61",
+    "P03",
+    "P58",
+    "P07",
+    "P14",
+    "P11",
+    "P12",
+    "P06",
+    "P04",
+    "P05",
+    "P59",
+    "P60",
+    "P18",
+    "P25",
+    "P64",
+    "P08",
+    "P15",
+    "P19",
+    "P21",
+    "P24"
+  ],
+  "fallback": "sequence_ascending",
+  "rationale": "Promote guided entry, repository intake, common execution, diagnosis, validation, closeout, planning, and tutorial discovery without renumbering stable prompt identities. All unlisted prompts retain numeric sequence order."
+}
