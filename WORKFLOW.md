@@ -1,11 +1,11 @@
 # Workflow Specifications
 
-This file defines how agents and operators enter, select, validate, recover, and hand off work in this repository. Product-specific behavior remains in focused modules, schemas, tests, and contract documents.
+This file defines how agents and operators enter, select, validate, recover, commit, and hand off work in this repository. Machine-readable workflow ownership lives in `harness/workflows.v1.json`. Focused domain-contract ownership, including operator command delivery, is registered in `harness/manifest.v1.json`. Product behavior remains in focused modules, schemas, registries, tests, and contracts.
 
 ## 1. Pick up a task
 
-1. Read `AGENTS.md` and any nearest nested instruction file.
-2. Read `CODEBASE_MAP.md`, `harness/manifest.v1.json`, and `harness/reports/CURRENT_STATE.md`.
+1. Read `AGENTS.md` and any nearest nested instructions.
+2. Read `CODEBASE_MAP.md`, `harness/manifest.v1.json`, `harness/workflows.v1.json`, `harness/validators.v1.json`, and `harness/reports/CURRENT_STATE.md`.
 3. Record the Git floor:
 
    ```bash
@@ -14,176 +14,206 @@ This file defines how agents and operators enter, select, validate, recover, and
    git log --oneline --decorate -5
    ```
 
-4. Inspect open PRs, affected files, registered capabilities/triggers, validators, and recent commits.
-5. Declare repository, branch/worktree, lane, mission, owned scope, forbidden scope, dependencies, expected artifacts, validation order, proof ceiling, and mutation authority.
-6. Preserve dirty or occupied worktrees; use an isolated branch/worktree instead of reset or cleanup.
-7. Choose one primary workflow and capability owner.
+4. Inspect open PRs, recent commits, affected files, registered triggers/capabilities, validators, canonical artifacts, and known gaps.
+5. Declare repository, branch/worktree, sprint, lane, mission, owned scope, forbidden scope, dependencies, expected artifacts, validation order, proof ceiling, and mutation authority.
+6. Preserve dirty or separately owned work. Use an isolated branch/worktree instead of reset, clean, force, or overwrite.
+7. Select one workflow ID from `harness/workflows.v1.json`, one primary capability owner, and the validator profile or focused domain gate that proves the requested change.
 
 ## 2. Workflow selection
 
 ### A. Technician acquisition or update
 
-**Trigger:** A technician needs the latest `main` Prompt Kit through a mouse-accessible Windows surface.
-
+**Workflow ID:** `technician-acquisition`
+**Trigger:** A technician needs the latest canonical `main` Prompt Kit through a mouse-accessible Windows surface.
 **Entry point:** `Acquire-Latest-PromptKit.cmd`
 
-**Flow:** clone when absent; otherwise verify canonical origin, clean `main`, no local-only commits or divergence; fetch and fast-forward only; validate required files and exact website parity; open the selected surface after success.
+Clone when absent. Otherwise verify the canonical origin, clean `main`, no local-only commits or divergence, fetch, fast-forward only, validate required files and exact Prompt Kit parity, and open the selected surface only after success.
 
-**Failure routing:** preserve state and report the exact tool, authentication, network, origin, cleanliness, branch, divergence, file, or parity failure.
+On failure, preserve the checkout and report the exact Git, authentication, network, origin, branch, divergence, required-file, or parity failure. Do not automate credentials or use destructive Git commands.
 
 ### B. Prompt registry or website change
 
-**Trigger:** Canonical prompts, extensions, policies, reference data, builder behavior, generator options, checked-in HTML, or Prompt Kit interaction behavior changes.
+**Workflow ID:** `prompt-kit-change`
+**Trigger:** Canonical prompts, extensions, policies, reference data, builder behavior, generator options, checked-in HTML, or Prompt Kit interaction/discovery contracts change.
 
 1. Change canonical source, never only generated HTML.
-2. Run the prompt-language audit in audit mode before prompt-language mutation.
-3. For prompt-card behavior, read `harness/contracts/prompt-kit-interactions.v1.json` before planning implementation.
-4. In a harness-only lane, change only the interaction contract, validator, tests, hooks, CI, reports, and harness documentation. Do not mutate `docs/prompt-kit.js`, `build_prompt_kit.py`, or `web/prompt-kit/index.html` as product implementation.
-5. Run `python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary` to classify current interaction implementation without inflating proof.
-6. In an authorized Prompt Kit product lane, reproduce the gap, implement the canonical behavior source, regenerate the site, and require the strict interaction gate `--require-implementation` before browser field proof.
-7. Add or repair focused fixtures and tests.
-8. Regenerate the combined Prompt Kit deterministically when canonical product sources change.
-9. Run strict prompt-language audit for the owned repaired scope when prompt content changes and exact website parity for every product change.
-10. Run harness and broad repository checks.
-
-**Prompt-card interaction contract:** single-click copies the prompt without opening detail; double-click expands detail; clicking the backdrop/main page outside an open detail collapses it, returns the operator to the main prompt surface, restores usable focus, and preserves search/filter state; Escape-to-close remains; explicit Copy controls continue to copy without unintended expansion.
+2. Read the relevant contract before implementation.
+3. Keep harness-only work to contracts, registries, validators, fixtures, hooks, CI, reports, and documentation.
+4. In an authorized product lane, repair the canonical behavior source and regenerate deterministic output.
+5. Run interaction/discovery validators, prompt-language audit when language changes, registry tests, header checks, exact site parity, and broader affected tests.
+6. Keep browser, clipboard, focus, provider, and visual proof separate from static checks.
 
 ### C. Harness infrastructure change
 
-**Trigger:** Maps, workflow specs, artifact/capability/trigger registries, validators, hooks, skills, evals, reports, acquisition surfaces, or versioned domain contracts change.
+**Workflow ID:** `harness-infrastructure`
+**Trigger:** Maps, workflow specifications, artifact/validator/capability/trigger registries, validators, hooks, skills, reports, acquisition surfaces, command-delivery contracts, or versioned contracts are missing, stale, disconnected, or failing.
+**Capability:** `harness-infrastructure-maintenance`
+**Skill:** `.ai/skills/harness-infrastructure-maintenance/SKILL.md`
 
-1. Repair existing canonical components before adding competing files.
-2. Update `harness/manifest.v1.json` atomically with path, domain-contract, or command changes.
-3. Update human indexes when machine-readable ownership changes.
-4. Add or repair contract tests and fixtures.
-5. Run `scripts/validate_harness.py`, focused domain validators/tests, and `git diff --check`.
-6. Run affected Prompt Kit checks and the broader artifact suite last.
+1. Preserve occupied or dirty work and create an isolated harness branch/worktree.
+2. Inspect all canonical harness files before inventing new names or contracts.
+3. Repair the canonical owner. Do not create a competing map, registry, validator, hook, report, or command-delivery surface.
+4. Update `harness/manifest.v1.json`, human indexes, workflow/artifact/validator registries, capabilities/triggers, tests, hooks, CI path filters, and operator state atomically when ownership or commands change.
+5. Keep `AGENTS.md`, product implementation, secrets, and destructive cleanup out of scope.
+6. Make pre-commit inspect the staged index through an isolated staged tree. Keep pre-push exhaustive and non-destructive.
+7. When the failure involves a NEXT COMMAND, handoff snippet, or operator proof command, read `harness/contracts/operator-command-envelope.v1.json`, use `harness/templates/Invoke-RemoteHarnessProof.ps1` for unmerged harness proof, and run:
+
+   ```bash
+   python -m py_compile scripts/validate_operator_command_envelope.py tests/test_operator_command_envelope.py
+   python scripts/validate_operator_command_envelope.py --summary
+   python -m unittest tests.test_operator_command_envelope -v
+   ```
+
+   The operator command must not assume a remembered `C:\Users\<name>\...` path, must not contain Markdown hyperlink syntax as command data, and must not use top-level `exit` in an interactive PowerShell envelope. When the exact local repo root has not been proven in the current shell, use the environment-derived isolated checkout template rather than guessing.
+8. Run the root harness checks:
+
+   ```bash
+   python -m py_compile scripts/validate_harness.py tests/test_harness_contract.py
+   python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
+   python -m unittest tests.test_harness_contract -v
+   ```
+
+9. Run the remaining `harness` validator profile from `harness/validators.v1.json`, followed by affected broader tests and `git diff --check`.
+10. Commit coherent owned files, push normally, and open or update the existing focused PR.
+11. Hand off the component list, report path, validator results, commit SHA, push/PR evidence, blockers, skipped checks, proof ceiling, and an executable next command.
 
 ### D. Workbook or artifact engine change
 
-**Trigger:** A `triage/` engine, workbook contract, schema, fixture, or generated artifact behavior changes.
+**Workflow ID:** `artifact-engine-change`
+**Trigger:** A `triage/` engine, workbook contract, schema, sanitized fixture, or generated artifact behavior changes.
 
-Keep `Candidates/` and `Active/` read-only, use sanitized fixtures, write runtime outputs only to approved locations, run focused engine tests and hygiene, and treat Excel for Web/operator acceptance as separate runtime proof.
+Keep `Candidates/` and `Active/` read-only. Use sanitized fixtures. Write runtime outputs only to registered paths. Run focused engine tests, artifact hygiene, broader tests, and exact artifact validation. Treat Excel for Web and operator acceptance as separate runtime proof.
 
 ### E. PR-floor cleanup and integration
 
-**Trigger:** Work is stacked, divergent, superseded, or blocked across branches/PRs.
+**Workflow ID:** `pr-floor-integration`
+**Trigger:** Work is stacked, divergent, superseded, conflicted, or blocked across branches/PRs.
 
-Inspect commit/file deltas, preserve unique useful work before closure, integrate in dependency order, resolve findings/checks, and never force-push or delete unique work without separate authority.
+Inspect base/head SHAs, unique commits, file deltas, required checks, review findings, and dependencies. Preserve unique work before closure. Integrate in dependency order. Never force-push, delete unique work, destructively clean, or merge with unresolved required gates.
 
 ### F. Prompt-language audit or repair
 
-**Triggers:** `prompt-language-change` or `lazy-next-action-report`.
-
+**Workflow ID:** `prompt-language-audit`
+**Triggers:** `prompt-language-change` or `lazy-next-action-report`
 **Capability:** `prompt-language-audit`
 
-**Audit flow:**
-
-1. Run `scripts/evaluate_prompt_language.py` across every raw and effective prompt.
-2. Require equal canonical, effective, and disposition counts.
-3. Fail on duplicate IDs, coverage gaps, empty required language, missing effective policy, or other error findings.
-4. Record warning findings as canonical-source repair debt with stable rule IDs.
-5. Write the report to `Outputs/prompt-language-audit.json` or CI artifact storage.
-
-**Repair flow:**
-
-1. Reproduce each owned finding with a fixture.
-2. Repair canonical registries, policy, builder, or focused tests—not generated HTML alone.
-3. Run strict audit.
-4. Regenerate `web/prompt-kit/index.html` and prove exact parity.
-5. Commit source, tests, and deterministic output together.
+Audit every canonical and effective prompt. Require equal canonical, effective, and disposition counts. Fail duplicate identity, coverage gaps, empty required language, missing effective policy, and error findings. Repair canonical registries, policies, builders, and focused tests—not generated HTML alone. Strict mode is the completion gate for bounded language repair.
 
 ### G. Skill-evaluation build
 
-**Trigger:** `skill-quality-unproven`.
+**Workflow ID:** `skill-evaluation`
+**Trigger:** `skill-quality-unproven`
+**Capability:** `skill-evaluation`; Prompt Kit owner P62.
 
-**Capability:** `skill-evaluation`; Prompt Kit owner: P62.
-
-1. Define the eval contract and baseline before changing behavior.
-2. Add positive, negative, near-miss, boundary, malformed-input, forbidden-condition, unit, integration, and historical-regression cases.
-3. Reproduce weaknesses before repair when practical.
-4. Use TDD and profile-guided feedback for the smallest valid repair.
-5. Measure latency, calls, context, retries, cost, and tokens when available.
-6. Accept efficiency changes only with correctness/safety/routing gates green.
-7. Emit machine-readable results and a finding-to-repair ledger.
+Define the eval contract and baseline, add positive/negative/near-miss/boundary/malformed/regression cases, reproduce weaknesses, implement the smallest valid repair, and measure performance, calls, context, retries, cost, and tokens when available. Accept efficiency changes only after correctness, safety, and routing gates remain green.
 
 ## 3. Validate before committing
 
-Use the strongest practical checks in this order:
+Use the strongest practical checks in dependency order:
 
 1. Focused unit/fixture tests.
-2. Contract validators and static compilation.
-3. Prompt Kit interaction contract audit when prompt-card behavior is in scope.
-4. Exhaustive prompt-language audit when prompt or skill surfaces are involved.
-5. Exact generated-output checks.
-6. Repository hygiene.
-7. Broader tests and honest runtime checks.
+2. Static compilation.
+3. Focused domain-contract validators such as the operator command envelope.
+4. Root contract validators.
+5. Exhaustive audits when prompt/skill surfaces are involved.
+6. Deterministic generated-output parity.
+7. Artifact and Git hygiene.
+8. Broader tests and honest runtime checks.
 
-Baseline harness sequence:
+For a harness command-delivery change, run the focused gate before the root profile:
 
-```powershell
-python -m py_compile scripts\validate_harness.py scripts\validate_prompt_kit_interactions.py scripts\evaluate_prompt_language.py tests\test_harness_contract.py tests\test_prompt_kit_interactions_contract.py tests\test_prompt_language_audit.py
-python scripts\validate_harness.py
+```bash
+python scripts/validate_operator_command_envelope.py --summary
+python -m unittest tests.test_operator_command_envelope -v
+```
+
+The canonical root harness profile is stored in `harness/validators.v1.json` and mirrored exactly in `harness/manifest.v1.json`. Execute it in order:
+
+```bash
+python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
 python -m unittest tests.test_harness_contract -v
 python -m unittest tests.test_prompt_kit_interactions_contract -v
-python scripts\validate_prompt_kit_interactions.py --output Outputs\prompt-kit-interaction-audit.json --summary
+python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary
+python scripts/validate_prompt_kit_discovery.py --summary
+python -m unittest tests.test_prompt_kit_discovery -v
 python -m unittest tests.test_prompt_language_audit -v
-python scripts\evaluate_prompt_language.py --output Outputs\prompt-language-audit.json --summary
+python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary
 python -m unittest tests.test_skill_prompt_registry -v
-python tests\test_prompt_kit_header_contract.py
-python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
+python tests/test_prompt_kit_header_contract.py
+python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 python -m triage.gitignore_hygiene
 git diff --check
 ```
 
-When Prompt Kit interaction implementation is authorized, add before browser testing:
-
-```powershell
-python scripts\validate_prompt_kit_interactions.py --require-implementation --output Outputs\prompt-kit-interaction-audit.json --summary
-```
-
-Never claim skipped checks passed. Name the exact command and reason.
+Do not claim a skipped check passed. Report the exact command, dependency, failure, and remaining proof owner.
 
 ## 4. Handle failures
 
-### Focused test, validator, or eval failure
+### Harness completeness or contract failure
 
-Read and reproduce the first actionable failure. Repair implementation or contract drift; do not weaken expectations merely to turn CI green. Add a regression fixture and rerun the focused gate before broad checks.
+Read the first actionable failure and identify the canonical owner: human map, machine registry, validator, skill, hook, workflow, test, report, or focused domain contract. Repair that owner and add a regression test. Do not weaken expected component IDs, command profiles, protected paths, or proof ceilings merely to obtain green output.
 
-### Prompt Kit interaction implementation gap
+### Operator command / NEXT COMMAND failure
 
-A non-strict interaction audit may pass while reporting missing product markers. That is expected in a harness-only lane and must remain a visible gap. The strict `--require-implementation` gate belongs to the authorized product lane; do not “fix” it by weakening the contract or editing generated HTML directly.
+Treat a failed `Set-Location`, a command that runs Git outside a repo after the location gate failed, a Markdown-wrapped URL, or a vanished terminal caused by `exit` as a harness defect. Do not simply issue another guessed path.
 
-### Dirty worktree or branch collision
+1. Preserve the failed transcript as evidence.
+2. Run `scripts/validate_operator_command_envelope.py` and the mutation fixtures.
+3. If the current shell has not already proven the exact canonical repo root, use the isolated proof template under `LOCALAPPDATA`/`TEMP`; do not derive a user name from memory or another machine.
+4. For remote work, fetch without force and verify the exact expected branch head before checkout.
+5. Resolve the result artifact by ID through `harness/artifacts.v1.json` and print or open it only after validation succeeds.
+6. Use terminating errors inside the proof script; never use top-level interactive `exit` as failure propagation.
 
-Do not reset, clean, or discard files. Identify the owner, isolate the lane, and preserve coherent work with a commit or explicit handoff.
+### Staged-index hook failure
+
+Inspect the staged tree rather than assuming ordinary working-tree state. Preserve unrelated unstaged changes. Repair only owned staged files, restage them, and rerun the hook.
 
 ### Generated-output drift
 
-Regenerate from canonical source, commit source and deterministic output together, and keep CI read-only after any bounded repair transaction.
+Repair canonical sources and regenerate deterministically. Commit source and generated output together only when the product workflow owns both. Harness-only work must not patch generated product output.
 
-### Prompt-language coverage failure
+### Dirty worktree or branch collision
 
-Stop if any canonical prompt lacks an effective partner, any effective prompt lacks a canonical source, IDs duplicate, or disposition count differs. Repair registry/builder ownership before interpreting language findings.
+Do not reset, clean, or discard files. Identify the writer, create an isolated worktree/branch, and preserve coherent unique work.
 
-### Network, authentication, provider, or runtime failure
+### Network, authentication, provider, GUI, device, or protected-runtime failure
 
-Preserve local state, report exact command/error, never embed secrets, and do not substitute static proof for the blocked external surface.
+Preserve local state, report the exact blocked command or gate, never embed secrets, and do not substitute static proof for the blocked runtime.
 
 ## 5. Commit and PR contract
+
+Before commit:
 
 ```bash
 git diff --check
 git status --short
 git diff --stat
 git diff
-git add <owned tracked files>
+```
+
+Stage only owned files, allow the staged-index pre-commit hook to validate the exact commit, then commit with a useful message and push normally:
+
+```bash
+git add <owned-files>
 git commit -m "<useful message>"
 git push -u origin <branch>
 ```
 
-Open or update a focused PR, state stack dependencies, and resolve review findings and required checks before merge.
+Open or update a focused PR. State dependencies, owned/forbidden scope, artifacts, validation, proof ceiling, blockers, and the exact head SHA. Resolve valid review findings and required checks before merge.
 
 ## 6. Handoff contract
 
-A handoff must state repository, branch/worktree, sprint, lane, owned/forbidden scope, trigger/capability used, files changed, artifacts, validation commands/results, commit SHA, push/PR state, blockers, skipped checks, proof achieved/ceiling, final Git status, and one exact actionable next command. Interrupted work must include the last coherent commit and uncommitted file list.
+A handoff must state:
+
+- repository, branch/worktree, sprint, lane, mission, owned and forbidden scope;
+- workflow ID, trigger ID, capability, and skill;
+- every file created or modified;
+- canonical and runtime artifacts with paths;
+- validation commands actually run and results;
+- skipped checks and exact reasons;
+- commit SHA, push state, PR URL/state, and required-check state;
+- blockers, risks, proof achieved, and proof ceiling;
+- final Git status or explicit statement that local Git status was unavailable;
+- one executable next command that fetches the exact remote commit non-destructively, runs the owning validator/build/launcher, resolves the canonical artifact through tracked registry evidence, prints or opens it, and propagates failure without closing the operator terminal.
+
+Before delivering an unmerged harness NEXT COMMAND, validate the shape against `harness/contracts/operator-command-envelope.v1.json`. Prefer the tracked `harness/templates/Invoke-RemoteHarnessProof.ps1` instead of reconstructing a machine-specific path-heavy snippet. A remembered path, a raw Markdown hyperlink embedded as a string, or a top-level `exit` invalidates the handoff.

@@ -112,6 +112,44 @@
         "path": "Acquire-Latest-PromptKit.cmd"
       },
       "proof_ceiling": "Source and contract proof until native Windows acquisition and browser behavior are observed."
+    },
+    {
+      "id": "harness-infrastructure-maintenance",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/harness-infrastructure-maintenance/SKILL.md",
+      "trigger_ids": [
+        "harness-infrastructure-change"
+      ],
+      "operation": "Inspect, repair, validate, report, and hand off the repository operational harness without crossing into governance or product implementation.",
+      "inputs": [
+        "AGENTS.md",
+        "CODEBASE_MAP.md",
+        "WORKFLOW.md",
+        "ARTIFACT_REGISTRY.md",
+        "harness/manifest.v1.json",
+        "harness/workflows.v1.json",
+        "harness/artifacts.v1.json",
+        "harness/validators.v1.json",
+        "harness/capabilities.v1.json",
+        "harness/triggers.v1.json",
+        ".githooks/",
+        ".github/workflows/harness-contract.yml",
+        "existing harness failures and PR state"
+      ],
+      "outputs": [
+        "tracked canonical harness repairs",
+        "harness-completeness-report/v1",
+        "focused regression tests",
+        "updated operator report",
+        "commit and push or PR evidence",
+        "actionable next command"
+      ],
+      "implementation": {
+        "kind": "script",
+        "path": "scripts/validate_harness.py"
+      },
+      "proof_ceiling": "Static repository and CI harness proof on the tested commit; no product runtime, provider, GUI, protected-target, or production proof."
     }
   ]
 }
