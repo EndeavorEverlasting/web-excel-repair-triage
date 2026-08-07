@@ -31,7 +31,8 @@ https://endeavoreverlasting.github.io/web-excel-repair-triage/
 
 ## Source and publishing contract
 
-- Canonical website source: `web/prompt-kit/index.html`
+- Canonical generated/deployed website artifact: `web/prompt-kit/index.html`
+- Implementation source: `docs/prompt-kit.js`
 - Android/mobile launcher source: `web/prompt-kit-mobile/`
 - Pages deployment: `.github/workflows/prompt-kit-pages.yml`
 - Stable Prompt Kit URL: `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`
