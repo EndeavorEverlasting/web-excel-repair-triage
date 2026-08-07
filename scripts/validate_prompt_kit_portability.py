@@ -12,6 +12,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 POLICY = ROOT / "harness" / "contracts" / "prompt-kit-portability.v1.json"
 DOCTRINE = ROOT / "docs" / "PROMPT_KIT_PORTABILITY.md"
+BASE_RUNTIME = ROOT / "docs" / "prompt-kit.js"
 RUNTIME = ROOT / "docs" / "prompt-kit-favorites-portability.js"
 CANONICAL_BUILDER = ROOT / "scripts" / "build_prompt_kit_registry.py"
 PORTABLE_BUILDER = ROOT / "scripts" / "serve_prompt_kit_portable.py"
@@ -25,6 +26,7 @@ DEFAULT_ARTIFACT = ROOT / "Outputs" / "prompt-kit-portable" / "index.html"
 DEFAULT_ARTIFACT_MANIFEST = ROOT / "Outputs" / "prompt-kit-portable" / "manifest.json"
 EXPECTED_ORIGIN = "http://127.0.0.1:8765/"
 RUNTIME_MARKER = "prompt-kit-favorites/v1"
+CLOSING_BODY = "</body>"
 
 REQUIRED_CONTEXT = {
     "repository",
@@ -185,9 +187,15 @@ def validate_artifact(artifact_path: Path, manifest_path: Path) -> dict[str, Any
     artifact_bytes = artifact_path.read_bytes()
     runtime = runtime_bytes.decode("utf-8").strip()
     source = source_bytes.decode("utf-8")
-    if source.count("</script>") != 1:
-        fail("canonical site must contain exactly one closing script marker")
-    expected = source.replace("</script>", f"\n{runtime}\n</script>", 1).encode("utf-8")
+    if RUNTIME_MARKER in source:
+        fail("canonical tracked site must not contain runtime-only portability injection")
+    if source.count(CLOSING_BODY) != 1:
+        fail("canonical site must contain exactly one closing body marker")
+    expected = source.replace(
+        CLOSING_BODY,
+        f"<script>\n{runtime}\n</script>\n{CLOSING_BODY}",
+        1,
+    ).encode("utf-8")
     if artifact_bytes != expected:
         fail("portable artifact is not the exact canonical site plus tracked runtime")
     if RUNTIME_MARKER not in artifact_bytes.decode("utf-8"):
@@ -248,15 +256,23 @@ def validate_repository_surfaces(
             "`P12`",
         ),
     )
+    base_runtime = require_text(
+        BASE_RUNTIME,
+        (
+            "promptKit.favoritePromptIds.v1",
+            "loadFavoritePromptIds",
+            "saveFavoritePromptIds",
+        ),
+    )
     runtime = require_text(
         RUNTIME,
         (
             RUNTIME_MARKER,
-            "promptKit.favoritePromptIds.v1",
             "Export Favorites",
             "Import Favorites",
             "mergePortableFavorites",
             "migrateLegacyFavoriteStorage",
+            "sanitizeFavoritePromptState",
             "PORTABLE_FAVORITES_MAX_BYTES=65536",
             "favorite_prompt_ids",
             "unknown_prompt_ids",
@@ -274,6 +290,8 @@ def validate_repository_surfaces(
         PORTABLE_BUILDER,
         (
             'SCHEMA_VERSION = "prompt-kit-portable-artifact/v1"',
+            'CLOSING_BODY = "</body>"',
+            "compose_portable_html",
             "DEFAULT_HOST = \"127.0.0.1\"",
             "DEFAULT_PORT = 8765",
             "ALLOWED_HOSTS",
@@ -307,6 +325,8 @@ def validate_repository_surfaces(
         (
             "AI Harness Prompt Kit",
             "promptKit.favoritePromptIds.v1",
+            "Tutorial · Find My Prompt",
+            "prompt-card-actions",
         ),
     )
     if RUNTIME_MARKER in site:
@@ -317,6 +337,7 @@ def validate_repository_surfaces(
             "scripts/serve_prompt_kit_portable.py",
             "scripts/validate_prompt_kit_portability.py",
             "tests/test_prompt_kit_portability.py",
+            "tests/test_prompt_kit_portability_regressions.py",
             "docs/prompt-kit-favorites-portability.js",
             "Build portable Prompt Kit runtime artifact",
             "Validate portable Favorites and harness discipline",
@@ -353,6 +374,7 @@ def validate_repository_surfaces(
     checks = {
         "policy": True,
         "doctrine": bool(doctrine),
+        "base_runtime": bool(base_runtime),
         "runtime": bool(runtime),
         "canonical_builder": bool(canonical_builder),
         "portable_builder": bool(portable_builder),
