@@ -116,7 +116,7 @@ function migrateLegacyFavoriteStorage(){
       if(!Array.isArray(parsed))return;
       var normalized=normalizeFavoritePromptIds(parsed);
       parsedLegacyKeys.push(key);
-      normalized.forEach(function(id){if(!seen[id]){seen[id]=true;migrated.push(id)})
+      normalized.forEach(function(id){if(!seen[id]){seen[id]=true;migrated.push(id)}})
     }catch(error){}
   });
   var additions=migrated.filter(function(id){return !before[id]});
