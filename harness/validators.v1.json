@@ -130,6 +130,15 @@
       "artifact-hygiene",
       "patch-hygiene"
     ],
+    "artifact-engine": [
+      "artifact-hygiene",
+      "patch-hygiene"
+    ],
+    "target-repository": [
+      "harness-completeness",
+      "harness-contract-tests",
+      "patch-hygiene"
+    ],
     "pre_commit": [
       "harness-completeness",
       "harness-contract-tests",
