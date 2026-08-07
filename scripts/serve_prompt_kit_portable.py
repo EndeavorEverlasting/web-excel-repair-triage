@@ -17,7 +17,7 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
 ALLOWED_HOSTS = {"127.0.0.1", "localhost", "::1"}
 RUNTIME_MARKER = "prompt-kit-favorites/v1"
-CLOSING_SCRIPT = "</script>"
+CLOSING_BODY = "</body>"
 
 
 def sha256_bytes(value: bytes) -> str:
@@ -48,6 +48,23 @@ def require_output_path(repo_root: Path, path: Path) -> None:
         raise ValueError(f"portable artifact output must remain under {outputs}") from exc
 
 
+def compose_portable_html(source: str, runtime: str) -> str:
+    """Append the portability runtime after all canonical Prompt Kit runtimes."""
+    if RUNTIME_MARKER in source:
+        raise ValueError(
+            "canonical Prompt Kit site already contains the portable runtime; "
+            "refusing duplicate injection"
+        )
+    if source.count(CLOSING_BODY) != 1:
+        raise ValueError(
+            "canonical Prompt Kit site must contain exactly one closing body marker"
+        )
+    if RUNTIME_MARKER not in runtime:
+        raise ValueError("portable Favorites runtime is missing its schema marker")
+    injection = f"<script>\n{runtime}\n</script>\n{CLOSING_BODY}"
+    return source.replace(CLOSING_BODY, injection, 1)
+
+
 def build_portable_artifact(
     *,
     repo_root: Path,
@@ -65,24 +82,7 @@ def build_portable_artifact(
     runtime_bytes = require_file(runtime_path, "portable Favorites runtime")
     source = source_bytes.decode("utf-8")
     runtime = runtime_bytes.decode("utf-8").strip()
-
-    if RUNTIME_MARKER in source:
-        raise ValueError(
-            "canonical Prompt Kit site already contains the portable runtime; "
-            "refusing duplicate injection"
-        )
-    if source.count(CLOSING_SCRIPT) != 1:
-        raise ValueError(
-            "canonical Prompt Kit site must contain exactly one closing script marker"
-        )
-    if RUNTIME_MARKER not in runtime:
-        raise ValueError("portable Favorites runtime is missing its schema marker")
-
-    artifact = source.replace(
-        CLOSING_SCRIPT,
-        f"\n{runtime}\n{CLOSING_SCRIPT}",
-        1,
-    )
+    artifact = compose_portable_html(source, runtime)
     artifact_bytes = artifact.encode("utf-8")
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
