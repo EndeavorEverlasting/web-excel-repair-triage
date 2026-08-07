@@ -1,0 +1,64 @@
+name: Device transfer sign-off contracts
+
+on:
+  push:
+    paths:
+      - "triage/device_transfer_signoff.py"
+      - "triage/device_transfer_signoff_cli.py"
+      - "triage/device_transfer_signoff_validator.py"
+      - "scripts/build_device_transfer_signoff_example.py"
+      - "tests/test_device_transfer_signoff.py"
+      - "configs/device_transfer_signoff/**"
+      - "configs/artifact_profiles/device_transfer_signoff.json"
+      - "docs/DEVICE_TRANSFER_SIGNOFF_CONTRACT.md"
+      - "ARTIFACT_REGISTRY.md"
+      - ".github/workflows/device-transfer-signoff.yml"
+  pull_request:
+    paths:
+      - "triage/device_transfer_signoff.py"
+      - "triage/device_transfer_signoff_cli.py"
+      - "triage/device_transfer_signoff_validator.py"
+      - "scripts/build_device_transfer_signoff_example.py"
+      - "tests/test_device_transfer_signoff.py"
+      - "configs/device_transfer_signoff/**"
+      - "configs/artifact_profiles/device_transfer_signoff.json"
+      - "docs/DEVICE_TRANSFER_SIGNOFF_CONTRACT.md"
+      - "ARTIFACT_REGISTRY.md"
+      - ".github/workflows/device-transfer-signoff.yml"
+
+jobs:
+  signoff-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Compile sign-off engine
+        run: >-
+          python -m py_compile
+          triage/device_transfer_signoff.py
+          triage/device_transfer_signoff_cli.py
+          triage/device_transfer_signoff_validator.py
+          scripts/build_device_transfer_signoff_example.py
+          tests/test_device_transfer_signoff.py
+      - name: Focused sign-off tests
+        run: python -m unittest tests.test_device_transfer_signoff -v
+      - name: Generate sanitized proof artifact
+        run: python -m scripts.build_device_transfer_signoff_example --out-dir Outputs/device_transfer_signoff_example --serial-count 25
+      - name: Validate generated proof artifact
+        run: >-
+          python -m triage.device_transfer_signoff_validator
+          --workbook Outputs/device_transfer_signoff_example/EXAMPLE_Device_Transfer_SignOff_20260728.xlsx
+          --source-configs Outputs/device_transfer_signoff_example/example_source_configs.xlsx
+          --site-config Outputs/device_transfer_signoff_example/example_site_config.json
+          --json-out Outputs/device_transfer_signoff_example/independent_validation.json
+      - name: Artifact hygiene
+        run: python -m triage.gitignore_hygiene
+      - name: Patch hygiene
+        run: git diff --check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: device-transfer-signoff-example
+          path: Outputs/device_transfer_signoff_example/

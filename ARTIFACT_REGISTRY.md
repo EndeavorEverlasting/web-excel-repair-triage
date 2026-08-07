@@ -24,6 +24,7 @@ This registry defines repository artifacts that agents, CI, and operators may pr
 | Prompt registries/policies | `docs/prompts.json`, `registry/prompts/*.json` | edited JSON | registry builder/tests/audit | Tracked canonical prompt sources. |
 | Prompt Kit website | `web/prompt-kit/index.html` | deterministic generated HTML | combined builder `--check` | Tracked and exact-parity required. |
 | Technician acquisition surfaces | `Acquire-Latest-PromptKit.cmd`, `scripts/Acquire-LatestPromptKit.ps1` | edited code | harness tests plus Windows field proof | Tracked; preservation-first. |
+| Device transfer sign-off contract | `docs/DEVICE_TRANSFER_SIGNOFF_CONTRACT.md`, `configs/device_transfer_signoff/site-config.schema.json`, `configs/artifact_profiles/device_transfer_signoff.json` | edited contract/schema/profile | `tests.test_device_transfer_signoff` and `triage.device_transfer_signoff_validator` | Tracked control plane only; never commit real site configs or workbooks. |
 | Hooks | `.githooks/pre-commit`, `.githooks/pre-push` | edited shell | harness validator | Optional per-worktree local gates. |
 
 ## Generated runtime artifacts
@@ -34,6 +35,7 @@ This registry defines repository artifacts that agents, CI, and operators may pr
 | Prompt-language audit report | `Outputs/prompt-language-audit.json` or CI artifact storage | stable result schema `prompt-language-audit-result/v1` | Gitignored runtime evidence; upload from CI when useful. |
 | Strict prompt-language repair report | `Outputs/prompt-language-audit-strict.json` | include strict flag and per-prompt dispositions | Gitignored. |
 | Skill eval results | Target repository approved output path | stable skill ID/version/run ID | Gitignored unless a sanitized fixture or approved baseline. |
+| Device transfer / stock sign-off | `Outputs/device_transfer_signoff/` | `<SITE>_Device_Transfer_SignOff_<YYYYMMDD>.xlsx` plus `_manifest.json` and `_preflight.json` | Gitignored runtime workbook. Exact shipment rows come only from the private site config; serialized IDs come only from the source workbook. |
 | Workbook engine outputs | `Outputs/` or focused contract directory | focused contract; otherwise family + run ID/timestamp | Gitignored unless sanitized and approved. |
 | Backups before permitted overwrite | `Outputs/backups/` | `<source-stem>_backup_<YYYYMMDD_HHMMSS>.<ext>` | Gitignored. |
 | Test and CI reports | CI logs/artifacts or temp directories | workflow/run identifier | Do not commit generated logs. |
@@ -75,6 +77,7 @@ python -m unittest tests.test_prompt_language_audit -v
 python scripts\evaluate_prompt_language.py --output Outputs\prompt-language-audit.json --summary
 python -m unittest tests.test_skill_prompt_registry -v
 python tests\test_prompt_kit_header_contract.py
+python -m unittest tests.test_device_transfer_signoff -v
 python -m triage.gitignore_hygiene
 git diff --check
 ```
@@ -89,4 +92,4 @@ followed by browser observation of the canonical Prompt Kit site.
 
 ## Proof boundaries
 
-File/schema presence proves repository integration only. The non-strict Prompt Kit interaction audit proves the versioned requirement is tracked and classifies recognizable source markers; it may intentionally report missing product markers without failing a harness-only sprint. The strict interaction gate still does not prove browser event ordering, clipboard permissions, focus restoration, or visual acceptance without field observation. Exhaustive prompt-language audit proves static canonical/effective coverage and findings, not provider obedience. Deterministic builder parity proves tracked-site identity, not browser acceptance. CI proves only exercised commands and fixtures. Excel for Web, Windows GUI, credentials, network, model/provider behavior, protected targets, and production acceptance require separate observed proof.
+File/schema presence proves repository integration only. The non-strict Prompt Kit interaction audit proves the versioned requirement is tracked and classifies recognizable source markers; it may intentionally report missing product markers without failing a harness-only sprint. The strict interaction gate still does not prove browser event ordering, clipboard permissions, focus restoration, or visual acceptance without field observation. Exhaustive prompt-language audit proves static canonical/effective coverage and findings, not provider obedience. Deterministic builder parity proves tracked-site identity, not browser acceptance. Device-transfer sign-off CI proves exact-config generation, source-serial reconciliation, package structure, and sanitized fixture behavior; it does not prove private Bayshore input truth, Excel for Web rendering, physical counts, signatures, or site acceptance. CI proves only exercised commands and fixtures. Excel for Web, Windows GUI, credentials, network, model/provider behavior, protected targets, and production acceptance require separate observed proof.
