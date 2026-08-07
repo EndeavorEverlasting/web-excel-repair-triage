@@ -3,6 +3,7 @@ name: Prompt Kit GitHub Pages
 on:
   pull_request:
     paths:
+      - OPEN_PROMPT_KIT_ON_PHONE.md
       - PROMPT_KIT_ACCESS.md
       - build_prompt_kit.py
       - scripts/build_prompt_kit_registry.py
@@ -11,11 +12,13 @@ on:
       - docs/prompts.json
       - docs/reference.json
       - web/prompt-kit/index.html
+      - web/prompt-kit-mobile/**
       - tests/test_prompt_kit_pages.py
       - .github/workflows/prompt-kit-pages.yml
   push:
     branches: [main]
     paths:
+      - OPEN_PROMPT_KIT_ON_PHONE.md
       - PROMPT_KIT_ACCESS.md
       - build_prompt_kit.py
       - scripts/build_prompt_kit_registry.py
@@ -24,6 +27,7 @@ on:
       - docs/prompts.json
       - docs/reference.json
       - web/prompt-kit/index.html
+      - web/prompt-kit-mobile/**
       - tests/test_prompt_kit_pages.py
       - .github/workflows/prompt-kit-pages.yml
   workflow_dispatch:
@@ -69,12 +73,17 @@ jobs:
         env:
           SITE_ROOT: ${{ runner.temp }}/prompt-kit-pages
         run: |
+          set -euo pipefail
           mkdir -p "$SITE_ROOT/prompt-kit"
-          python scripts/build_prompt_kit_registry.py --output "$SITE_ROOT/index.html"
-          cp "$SITE_ROOT/index.html" "$SITE_ROOT/prompt-kit/index.html"
+          python scripts/build_prompt_kit_registry.py --output "$SITE_ROOT/prompt-kit/index.html"
+          cp -R web/prompt-kit-mobile/. "$SITE_ROOT/"
           test -s "$SITE_ROOT/index.html"
+          test -s "$SITE_ROOT/manifest.webmanifest"
+          test -s "$SITE_ROOT/service-worker.js"
+          test -s "$SITE_ROOT/icon-192.png"
+          test -s "$SITE_ROOT/icon-512.png"
+          test -s "$SITE_ROOT/qr-prompt-kit.png"
           test -s "$SITE_ROOT/prompt-kit/index.html"
-          cmp "$SITE_ROOT/index.html" web/prompt-kit/index.html
           cmp "$SITE_ROOT/prompt-kit/index.html" web/prompt-kit/index.html
       - name: Configure GitHub Pages
         if: github.event_name != 'pull_request'
