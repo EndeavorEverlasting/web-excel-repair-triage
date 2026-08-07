@@ -3,6 +3,7 @@ name: Prompt Kit web contracts
 on:
   pull_request:
     paths:
+      - README.md
       - PROMPT_KIT_ACCESS.md
       - Open-Latest-PromptKit.cmd
       - Acquire-Latest-PromptKit.cmd
@@ -18,6 +19,7 @@ on:
       - docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md
       - docs/prompt-kit.js
       - docs/prompt-kit-guided-recommendations.js
+      - docs/prompt-kit-polish.js
       - docs/prompts.json
       - docs/reference.json
       - harness/contracts/prompt-kit-interactions.v1.json
@@ -38,6 +40,7 @@ on:
   push:
     branches: [main]
     paths:
+      - README.md
       - PROMPT_KIT_ACCESS.md
       - Open-Latest-PromptKit.cmd
       - Acquire-Latest-PromptKit.cmd
@@ -53,6 +56,7 @@ on:
       - docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md
       - docs/prompt-kit.js
       - docs/prompt-kit-guided-recommendations.js
+      - docs/prompt-kit-polish.js
       - docs/prompts.json
       - docs/reference.json
       - harness/contracts/prompt-kit-interactions.v1.json
@@ -101,6 +105,7 @@ jobs:
         run: |
           node --check docs/prompt-kit.js
           node --check docs/prompt-kit-guided-recommendations.js
+          node --check docs/prompt-kit-polish.js
       - name: Validate acquisition PowerShell syntax
         shell: pwsh
         run: |
@@ -135,7 +140,7 @@ jobs:
           name: prompt-kit-current-preview
           path: ${{ runner.temp }}/prompt-kit/index.html
           if-no-files-found: error
-      - name: Validate search favorites and guided recommendations contract
+      - name: Validate search favorites tutorial and polish contract
         run: |
           python scripts/validate_prompt_kit_discovery.py --summary
           python -m unittest tests.test_prompt_kit_discovery -v
