@@ -15,7 +15,7 @@ class PromptKitPortabilityRegressionTests(unittest.TestCase):
     def test_runtime_rejects_malformed_ids_and_merges_legacy_with_current(self) -> None:
         script = r"""
 const fs=require('fs');
-globalThis.PROMPTS=[{id:'P03'},{id:'P06'},{id:'P07'}];
+globalThis.PROMPTS=[{id:'P03'},{id:'P06'},{id:'P07'},{id:'CUSTOM'}];
 globalThis.favoritePromptIds={P03:true,NOT_A_PROMPT:true};
 globalThis.localStorage={
   data:{'promptKit.favoritePromptIds':'["p06"]','promptKit.favorites':'["P07","P06"]'},
@@ -38,6 +38,12 @@ try{api.parsePayload(JSON.stringify({schema_version:'prompt-kit-favorites/v1',fa
 if(!rejected)throw new Error('malformed imported prompt id was accepted');
 const unknown=api.parsePayload(JSON.stringify({schema_version:'prompt-kit-favorites/v1',favorite_prompt_ids:['P999']}));
 if(JSON.stringify(unknown.favorite_prompt_ids)!=='["P999"]')throw new Error('well-formed unknown prompt id was not preserved');
+const mergedUnknown=api.mergeFavorites(['P999']);
+if(mergedUnknown.unknown_prompt_ids[0]!=='P999')throw new Error('malformed custom registry id blocked valid unknown import');
+globalThis.localStorage.data['promptKit.favorites']='["P03"]';
+const added=api.migrateLegacyStorage();
+if(added!==0)throw new Error('duplicate-only legacy migration reported a new favorite');
+if(globalThis.localStorage.getItem('promptKit.favorites'))throw new Error('duplicate-only parsed legacy key was not retired');
 console.log('PORTABILITY_REGRESSION_PASS');
 """
         completed = subprocess.run(
