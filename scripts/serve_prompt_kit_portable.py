@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
 import sys
 from datetime import datetime, timezone
 from functools import partial
@@ -48,6 +49,20 @@ def require_output_path(repo_root: Path, path: Path) -> None:
         raise ValueError(f"portable artifact output must remain under {outputs}") from exc
 
 
+def backup_existing_output(repo_root: Path, path: Path) -> Path | None:
+    """Preserve an existing generated file before replacement."""
+    if not path.exists():
+        return None
+    if not path.is_file():
+        raise ValueError(f"portable output exists but is not a file: {path}")
+    backup_root = (repo_root / "Outputs" / "backups" / "prompt-kit-portable").resolve()
+    backup_root.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    destination = backup_root / f"{stamp}-{path.name}"
+    shutil.copy2(path, destination)
+    return destination
+
+
 def compose_portable_html(source: str, runtime: str) -> str:
     """Append the portability runtime after all canonical Prompt Kit runtimes."""
     if RUNTIME_MARKER in source:
@@ -85,6 +100,7 @@ def build_portable_artifact(
     artifact = compose_portable_html(source, runtime)
     artifact_bytes = artifact.encode("utf-8")
 
+    artifact_backup = backup_existing_output(repo_root, output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_bytes(artifact_bytes)
 
@@ -108,12 +124,17 @@ def build_portable_artifact(
             "sha256": sha256_bytes(artifact_bytes),
             "bytes": len(artifact_bytes),
         },
+        "backups": {
+            "artifact": str(artifact_backup.relative_to(repo_root)) if artifact_backup else None,
+            "manifest": None,
+        },
         "guardrails": {
             "loopback_only": True,
             "cache_disabled": True,
             "protected_inputs_untouched": True,
             "canonical_site_untouched": True,
             "health_hash_matches_served_artifact": True,
+            "overwrite_backup_required": True,
         },
         "proof_ceiling": (
             "Generation and local HTTP serving prove a stable-origin artifact. "
@@ -121,6 +142,9 @@ def build_portable_artifact(
             "acceptance require observed browser proof."
         ),
     }
+    manifest_backup = backup_existing_output(repo_root, manifest_path)
+    if manifest_backup:
+        receipt["backups"]["manifest"] = str(manifest_backup.relative_to(repo_root))
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     manifest_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
     return receipt
