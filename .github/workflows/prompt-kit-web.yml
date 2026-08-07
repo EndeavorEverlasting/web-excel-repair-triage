@@ -24,6 +24,7 @@ on:
       - docs/PROMPT_KIT_PORTABILITY.md
       - docs/prompt-kit.js
       - docs/prompt-kit-guided-recommendations.js
+      - docs/prompt-kit-journey.js
       - docs/prompt-kit-polish.js
       - docs/prompt-kit-favorites-portability.js
       - docs/prompts.json
@@ -42,6 +43,7 @@ on:
       - tests/test_prompt_kit_filtering_access.py
       - tests/test_prompt_kit_mobile.py
       - tests/test_prompt_kit_discovery.py
+      - tests/test_prompt_kit_guidance.py
       - tests/test_prompt_kit_portability.py
       - tests/test_prompt_kit_portability_regressions.py
       - tests/test_prompt_kit_portable_health.py
@@ -72,6 +74,7 @@ on:
       - docs/PROMPT_KIT_PORTABILITY.md
       - docs/prompt-kit.js
       - docs/prompt-kit-guided-recommendations.js
+      - docs/prompt-kit-journey.js
       - docs/prompt-kit-polish.js
       - docs/prompt-kit-favorites-portability.js
       - docs/prompts.json
@@ -90,6 +93,7 @@ on:
       - tests/test_prompt_kit_filtering_access.py
       - tests/test_prompt_kit_mobile.py
       - tests/test_prompt_kit_discovery.py
+      - tests/test_prompt_kit_guidance.py
       - tests/test_prompt_kit_portability.py
       - tests/test_prompt_kit_portability_regressions.py
       - tests/test_prompt_kit_portable_health.py
@@ -125,6 +129,7 @@ jobs:
             tests/test_prompt_kit_filtering_access.py \
             tests/test_prompt_kit_mobile.py \
             tests/test_prompt_kit_discovery.py \
+            tests/test_prompt_kit_guidance.py \
             tests/test_prompt_kit_portability.py \
             tests/test_prompt_kit_portability_regressions.py \
             tests/test_prompt_kit_portable_health.py \
@@ -134,6 +139,7 @@ jobs:
         run: |
           node --check docs/prompt-kit.js
           node --check docs/prompt-kit-guided-recommendations.js
+          node --check docs/prompt-kit-journey.js
           node --check docs/prompt-kit-polish.js
           node --check docs/prompt-kit-favorites-portability.js
       - name: Validate acquisition and portable PowerShell syntax
@@ -198,10 +204,10 @@ jobs:
             Outputs/prompt-kit-portable/manifest.json
             Outputs/prompt-kit-portability-validation.json
           if-no-files-found: error
-      - name: Validate search favorites tutorial and polish contract
+      - name: Validate search favorites tutorial journey and polish contract
         run: |
           python scripts/validate_prompt_kit_discovery.py --summary
-          python -m unittest tests.test_prompt_kit_discovery -v
+          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
       - name: Validate combined prompt registry
         run: python -m unittest tests.test_skill_prompt_registry -v
       - name: Validate Prompt Kit product interactions
