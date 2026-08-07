@@ -81,7 +81,11 @@ function parsePortableFavoritesPayload(text){
 
 function knownPromptIds(){
   var known={};
-  (root.PROMPTS||[]).forEach(function(prompt){if(prompt&&prompt.id)known[normalizePromptId(prompt.id)]=true});
+  (root.PROMPTS||[]).forEach(function(prompt){
+    if(!prompt||!prompt.id)return;
+    var id=tryNormalizePromptId(prompt.id);
+    if(id)known[id]=true
+  });
   return known
 }
 
@@ -103,19 +107,21 @@ function migrateLegacyFavoriteStorage(){
   currentFavoritePromptIds().forEach(function(id){before[id]=true});
   var migrated=[];
   var seen={};
+  var parsedLegacyKeys=[];
   PORTABLE_FAVORITES_LEGACY_KEYS.forEach(function(key){
     var raw=root.localStorage.getItem(key);
     if(!raw)return;
     try{
       var parsed=JSON.parse(raw);
       if(!Array.isArray(parsed))return;
-      normalizeFavoritePromptIds(parsed).forEach(function(id){if(!seen[id]){seen[id]=true;migrated.push(id)}})
+      var normalized=normalizeFavoritePromptIds(parsed);
+      parsedLegacyKeys.push(key);
+      normalized.forEach(function(id){if(!seen[id]){seen[id]=true;migrated.push(id)})
     }catch(error){}
   });
   var additions=migrated.filter(function(id){return !before[id]});
-  if(!additions.length)return 0;
-  mergePortableFavorites(migrated);
-  PORTABLE_FAVORITES_LEGACY_KEYS.forEach(function(key){if(typeof root.localStorage.removeItem==='function')root.localStorage.removeItem(key)});
+  if(migrated.length)mergePortableFavorites(migrated);
+  parsedLegacyKeys.forEach(function(key){if(typeof root.localStorage.removeItem==='function')root.localStorage.removeItem(key)});
   return additions.length
 }
 
