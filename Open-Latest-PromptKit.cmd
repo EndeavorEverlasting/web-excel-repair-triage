@@ -4,7 +4,8 @@ setlocal
 set "LOCAL_SCRIPT=%~dp0scripts\Open-LatestPromptKitPortable.ps1"
 set "CACHE_DIR=%TEMP%\WebExcelPromptKit"
 set "CACHED_SCRIPT=%CACHE_DIR%\Open-LatestPromptKitPortable.ps1"
-set "SCRIPT_URL=https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/scripts/Open-LatestPromptKitPortable.ps1"
+set "BOOTSTRAP_COMMIT=892e92bc9c04c3904411f20d5af71a82a0769cad"
+set "BOOTSTRAP_BLOB=501505cc3779964745bf4ca4537f5801c488eaa4"
 set "POWERSHELL=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 set "PREFERRED_REPO=%~dp0dev\web-excel-repair-triage"
 
@@ -25,11 +26,11 @@ if exist "%LOCAL_SCRIPT%" (
 ) else (
     if not exist "%CACHE_DIR%" mkdir "%CACHE_DIR%"
     "%POWERSHELL%" -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
-        "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri '%SCRIPT_URL%' -OutFile '%CACHED_SCRIPT%'"
+        "$ErrorActionPreference='Stop'; $h=@{'User-Agent'='PromptKit-Pinned-Bootstrap';'Accept'='application/vnd.github+json'}; $u='https://api.github.com/repos/EndeavorEverlasting/web-excel-repair-triage/contents/scripts/Open-LatestPromptKitPortable.ps1?ref=%BOOTSTRAP_COMMIT%'; $r=Invoke-RestMethod -Method Get -Uri $u -Headers $h; if($r.sha -ne '%BOOTSTRAP_BLOB%'){throw ('Pinned Prompt Kit launcher blob mismatch. Expected %BOOTSTRAP_BLOB%; received '+$r.sha)}; [IO.File]::WriteAllBytes('%CACHED_SCRIPT%',[Convert]::FromBase64String(($r.content -replace '\s','')))"
     if errorlevel 1 (
         echo.
-        echo Could not download the canonical portable Prompt Kit launcher.
-        echo Check network access to GitHub and try again.
+        echo Could not acquire the pinned Prompt Kit launcher.
+        echo Check GitHub network access and try again.
         pause
         exit /b 1
     )
