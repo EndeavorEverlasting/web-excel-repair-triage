@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 JS = ROOT / "docs" / "prompt-kit.js"
 CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-mobile.v1.json"
 QUICK_CMD = ROOT / "Open-Latest-PromptKit.cmd"
+PORTABLE_PS1 = ROOT / "scripts" / "Open-LatestPromptKitPortable.ps1"
 ACQUIRE_CMD = ROOT / "Acquire-Latest-PromptKit.cmd"
 ACQUIRE_PS1 = ROOT / "scripts" / "Acquire-LatestPromptKit.ps1"
 ACCESS = ROOT / "PROMPT_KIT_ACCESS.md"
@@ -101,15 +102,32 @@ class PromptKitMobileTests(unittest.TestCase):
         ):
             self.assertIn(marker, js)
 
-    def test_quick_cmd_bootstraps_canonical_main_and_propagates_exit(self) -> None:
+    def test_quick_cmd_bootstraps_portable_main_and_propagates_exit(self) -> None:
         quick = QUICK_CMD.read_text(encoding="utf-8")
+        portable = PORTABLE_PS1.read_text(encoding="utf-8")
         acquire = ACQUIRE_CMD.read_text(encoding="utf-8")
-        self.assertIn(
-            "https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/Acquire-Latest-PromptKit.cmd",
+        for marker in (
+            "BOOTSTRAP_COMMIT=892e92bc9c04c3904411f20d5af71a82a0769cad",
+            "BOOTSTRAP_BLOB=501505cc3779964745bf4ca4537f5801c488eaa4",
+            "api.github.com/repos/EndeavorEverlasting/web-excel-repair-triage/contents/scripts/Open-LatestPromptKitPortable.ps1",
+            'Open-LatestPromptKitPortable.ps1',
+            '-File "%SCRIPT%" -Destination "%PREFERRED_REPO%"',
+            "exit /b %EXIT_CODE%",
+        ):
+            self.assertIn(marker, quick)
+        self.assertNotIn(
+            "raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/scripts/Open-LatestPromptKitPortable.ps1",
             quick,
         )
-        self.assertIn('call "%BOOTSTRAP%" -Quick', quick)
-        self.assertIn("exit /b %EXIT_CODE%", quick)
+        for marker in (
+            "$AcquireBootstrapCommit = 'b73242b4ada14df421513a7962ef1a826c09d012'",
+            "$AcquireBootstrapBlob = '4a79b58b0b14ee9454c84ea41abeb01b4915d92d'",
+            "$StableHost = '127.0.0.1'",
+            '$StableUrl = "http://${StableHost}:$Port/"',
+            "Import-AcquisitionFunctions",
+            "Update-RepositorySafely",
+        ):
+            self.assertIn(marker, portable)
         self.assertIn('-File "%SCRIPT%" %*', acquire)
         self.assertIn("/main/scripts/Acquire-LatestPromptKit.ps1", acquire)
 
@@ -131,7 +149,7 @@ class PromptKitMobileTests(unittest.TestCase):
     def test_universal_paths_do_not_embed_person_specific_usernames(self) -> None:
         combined = "\n".join(
             path.read_text(encoding="utf-8")
-            for path in (QUICK_CMD, ACQUIRE_CMD, ACQUIRE_PS1, ACCESS, WEB_README)
+            for path in (QUICK_CMD, PORTABLE_PS1, ACQUIRE_CMD, ACQUIRE_PS1, ACCESS, WEB_README)
         ).lower()
         for forbidden in (
             r"c:\users\cheex",
@@ -151,6 +169,8 @@ class PromptKitMobileTests(unittest.TestCase):
         self.assertIn("mobile", (access + readme).lower())
         self.assertIn("reset", (access + readme).lower())
         self.assertIn("collapsible", readme.lower())
+        self.assertIn("prompt-kit-favorites/v1", access + readme)
+        self.assertIn("http://127.0.0.1:8765/", access + readme)
 
 
 if __name__ == "__main__":

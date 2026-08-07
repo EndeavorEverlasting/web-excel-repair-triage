@@ -7,11 +7,11 @@
 |---|---|
 | Browser on any computer | Open **https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/** |
 | Phone / tablet / install / QR | Open **https://endeavoreverlasting.github.io/web-excel-repair-triage/** |
-| Windows local/offline copy | Download **https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/Open-Latest-PromptKit.cmd** and double-click it |
+| Windows Favorites-preserving local app | Download **https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/Open-Latest-PromptKit.cmd** and double-click it |
 | No Git client | Download **https://github.com/EndeavorEverlasting/web-excel-repair-triage/archive/refs/heads/main.zip** and open `web/prompt-kit/index.html` after extraction |
 | Git user | `git clone --branch main --single-branch https://github.com/EndeavorEverlasting/web-excel-repair-triage.git` |
 
-Normal users should prefer the public browser URL. The CMD path exists for a validated local Windows copy; the ZIP and clone paths are fallbacks, not prerequisites for using the web app.
+Normal browser/phone users should prefer the public URL. The Windows CMD path adds a stable local origin and portable Favorites while preserving the same canonical `main` release. ZIP and clone are fallback acquisition paths, not prerequisites for using the web app.
 <!-- PROMPT_KIT_FAST_PATH_END -->
 
 The canonical checked-in website is:
@@ -26,7 +26,7 @@ The canonical public browser URL is:
 https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/
 ```
 
-The release source is the repository's `main` branch. GitHub Pages is a deployment surface for that exact release, not a second source of truth. Do not treat an old feature branch, copied HTML file, or preview from an older run as the latest release.
+The release source is the repository's `main` branch. GitHub Pages and the Windows portable runtime are delivery surfaces generated from that exact release, not competing editable Prompt Kits.
 
 ## Phone, tablet, or any browser
 
@@ -56,26 +56,33 @@ GitHub Pages must use GitHub Actions as its publishing source:
 
 After that one-time repository setting is enabled, `.github/workflows/prompt-kit-pages.yml` automatically rebuilds and deploys the canonical Prompt Kit when relevant files land on `main`. Pull requests run the Pages build contract but do not deploy.
 
-The deployment workflow fails closed before publishing if the checked-in release no longer matches `scripts/build_prompt_kit_registry.py`. Its Pages bundle exposes the same generated Prompt Kit at both the project root and `/prompt-kit/`, with `/prompt-kit/` documented as the stable shareable URL.
+The deployment workflow fails closed before publishing if the checked-in release no longer matches `scripts/build_prompt_kit_registry.py`.
 
 ## Fastest Windows path — one file, no dialog
 
 Download `Open-Latest-PromptKit.cmd` and double-click it.
 
-The quick launcher uses a deterministic destination derived from the launcher's own folder:
+The quick launcher now treats the Prompt Kit like a local app while retaining the repository's existing safety rules:
 
-1. if the launcher is inside a tracked Prompt Kit checkout, that checkout is used;
-2. otherwise a Desktop copy targets `Desktop\dev\web-excel-repair-triage` beside that launcher;
-3. the resolved destination is passed explicitly to the shared safe acquisition implementation, so normal quick-open does not depend on broad path discovery;
-4. an existing destination is verified by canonical Git origin, clean worktree, `main` branch, and fast-forward-only history;
-5. a missing destination is cloned from canonical `main`;
-6. dirty, divergent, wrong-branch, or wrong-origin destinations are preserved and refused rather than reset or overwritten;
-7. `web\prompt-kit\index.html` is validated against the tracked Prompt Kit builder output;
-8. the validated website opens automatically.
+1. it resolves the deterministic checkout path from the launcher's location;
+2. it reuses the existing safe acquisition functions and canonical `main` origin;
+3. an existing destination must be clean, on `main`, and fast-forwardable; a missing destination is cloned;
+4. dirty, divergent, wrong-branch, wrong-origin, or local-only work is preserved and refused rather than reset or overwritten;
+5. `web\prompt-kit\index.html` must exactly match the canonical builder;
+6. `scripts\serve_prompt_kit_portable.py` generates `Outputs\prompt-kit-portable\index.html` from the canonical site plus the tracked portability runtime;
+7. `Outputs\prompt-kit-portable\manifest.json` records source/runtime/artifact SHA-256 evidence;
+8. the portable artifact is validated before launch;
+9. a loopback-only, no-cache server opens the stable origin:
 
-A copy of `Open-Latest-PromptKit.cmd` may live outside the repository. When the tracked bootstrap is not beside it, it downloads the current `Acquire-Latest-PromptKit.cmd` from canonical `main`, which in turn downloads the shared PowerShell implementation when necessary.
+```text
+http://127.0.0.1:8765/
+```
 
-This remains the recommended normal-user path when a local/offline Windows copy is required.
+That stable origin preserves the browser's `promptKit.favoritePromptIds.v1` state across ordinary repository/site upgrades. The served runtime also exposes **Export Favorites** and **Import Favorites** using schema `prompt-kit-favorites/v1`.
+
+Export before clearing browser data, changing browser profiles/devices, or moving between the public GitHub Pages origin and the local loopback origin. Import merges and deduplicates; it does not delete Favorites already saved at the destination. Legacy browser keys are merged with current Favorites, malformed IDs are rejected or sanitized, and well-formed IDs not present in the current release remain portable for future versions.
+
+A copy of `Open-Latest-PromptKit.cmd` may live outside the repository. Its bootstrap remains path-derived and non-destructive.
 
 ## Advanced Windows acquisition GUI
 
@@ -83,28 +90,38 @@ Use `Acquire-Latest-PromptKit.cmd` when a technician needs to choose a destinati
 
 It opens **Get Latest Prompt Kit**, where the operator can choose **Open Prompt Kit website** or **Open generator selection GUI**, then select **Get Latest and Open**.
 
-The advanced GUI may derive a default development root from the Windows Desktop and available OneDrive locations, including an existing `OG Laptop Backup\Desktop\dev` tree. The path helper is required to accept an initially empty collection, and that condition is covered by CI.
-
-The same bootstrap also supports zero-dialog mode with an explicit destination:
+The advanced GUI may derive a default development root from the Windows Desktop and available OneDrive locations. Its zero-dialog mode remains available with an explicit destination:
 
 ```text
 Acquire-Latest-PromptKit.cmd -Quick -Destination "C:\path\to\web-excel-repair-triage"
 ```
 
-Both entry points preserve the same safety rules: no reset, clean, force-push, branch deletion, or silent discard of local work.
+Use `Open-Latest-PromptKit.cmd` for the stable-origin Favorites-preserving app experience. Both paths preserve the same no-reset/no-force/no-silent-discard Git posture.
 
 ## Existing checkout
 
-From a clean checkout already on `main`:
+From a clean checkout already on `main`, validate the canonical release:
 
 ```powershell
 git fetch origin main --prune
 git pull --ff-only origin main
 python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
-start web\prompt-kit\index.html
 ```
 
-If the canonical Desktop checkout contains local work, do not reset or clean it. Preserve that work first, or use the advanced acquisition GUI with a deliberately separate destination.
+Build and validate the portable runtime manually:
+
+```powershell
+python scripts\serve_prompt_kit_portable.py --build-only
+python scripts\validate_prompt_kit_portability.py --require-artifact --output Outputs\prompt-kit-portability-validation.json --summary
+```
+
+To launch that validated checkout through the supported stable origin:
+
+```powershell
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\Open-LatestPromptKitPortable.ps1 -Destination (Get-Location).Path
+```
+
+If the checkout contains local work, do not reset or clean it merely to run the Prompt Kit. Preserve the work or use a deliberately separate safe destination.
 
 ## Fresh clone
 
@@ -112,8 +129,9 @@ If the canonical Desktop checkout contains local work, do not reset or clean it.
 git clone --branch main --single-branch https://github.com/EndeavorEverlasting/web-excel-repair-triage.git
 cd web-excel-repair-triage
 python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
-start web\prompt-kit\index.html
 ```
+
+On Windows, run `Open-Latest-PromptKit.cmd` from there for the stable-origin portable experience.
 
 ## Download ZIP — no Git commands
 
@@ -122,25 +140,26 @@ On the GitHub repository page:
 1. choose **Code**;
 2. choose **Download ZIP**;
 3. extract the ZIP;
-4. open `web/prompt-kit/index.html`.
+4. open `web/prompt-kit/index.html` for static/direct use.
 
-The ZIP is a snapshot. Download it again when you need a newer release.
+The ZIP is a snapshot. Direct `file://` origins can change with extraction paths, so ZIP/direct-file use is not the preferred Favorites-preserving upgrade mechanism.
 
-## GitHub Actions preview artifact
+## GitHub Actions preview artifacts
 
 Every Prompt Kit web contract run builds the website from canonical source before checking the checked-in copy.
 
-Open the latest successful **Prompt Kit web contracts** run for `main`, download:
+The workflow exposes:
 
 ```text
 prompt-kit-current-preview
+prompt-kit-portable-runtime
 ```
 
-Extract it and open `index.html`. This is useful for inspecting builder output without cloning, but `main:web/prompt-kit/index.html` remains the checked-in release surface.
+`prompt-kit-current-preview` is the canonical builder preview. `prompt-kit-portable-runtime` contains the generated stable-origin artifact, its SHA-256 manifest, and portability validation output. Neither artifact replaces `main` as the source of truth.
 
 ## Rebuild and open locally
 
-Windows double-click entry point:
+Windows canonical builder entry point:
 
 ```text
 Build-PromptKitWebsite.cmd
@@ -150,7 +169,6 @@ Developer command:
 
 ```powershell
 python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html
-start web\prompt-kit\index.html
 ```
 
 Exact parity check without rewriting:
@@ -164,31 +182,34 @@ python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html -
 - Prompt registry: `docs/prompts.json` plus registered prompt extensions
 - Combined registry builder: `scripts/build_prompt_kit_registry.py`
 - HTML renderer: `build_prompt_kit.py`
-- Browser behavior and responsive layer: `docs/prompt-kit.js`
-- Checked-in release: `web/prompt-kit/index.html`
+- Base browser behavior and Favorites storage owner: `docs/prompt-kit.js`
+- Guided questionnaire: `docs/prompt-kit-guided-recommendations.js`
+- Interaction polish/action rail: `docs/prompt-kit-polish.js`
+- Favorites transfer runtime: `docs/prompt-kit-favorites-portability.js`
+- Checked-in canonical release: `web/prompt-kit/index.html`
+- Portable generated artifact: `Outputs/prompt-kit-portable/index.html`
+- Portable receipt: `Outputs/prompt-kit-portable/manifest.json`
+- Portable builder/server: `scripts/serve_prompt_kit_portable.py`
+- Portable launcher: `scripts/Open-LatestPromptKitPortable.ps1`
 - Public deployment workflow: `.github/workflows/prompt-kit-pages.yml`
 - Public share path: `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`
 - Web usage notes: `web/README.md`
-- Zero-dialog normal-user launcher: `Open-Latest-PromptKit.cmd`
+- Zero-dialog normal-user Windows launcher: `Open-Latest-PromptKit.cmd`
 - Advanced acquisition bootstrap: `Acquire-Latest-PromptKit.cmd`
 - Shared safe acquisition implementation: `scripts/Acquire-LatestPromptKit.ps1`
 
-Generated HTML is not the source of truth. Repair canonical sources, rebuild, validate parity, then commit the generated website. GitHub Pages must deploy from the same builder output rather than introducing hand-edited web content.
+Generated HTML is not the primary editable source. Repair canonical tracked sources, rebuild, validate parity, and preserve the proof boundary between the checked-in site and the gitignored portable runtime.
 
 ## Desktop and mobile browsing contract
 
 The desktop and mobile layouts use the same prompts, filters, renderers, and action functions.
 
-- Tap/click the **AI Harness Prompt Kit** title to reset to the original All / All Categories / All Types view, clear search, close detail/reference surfaces, and return to the top.
-- Single click or tap on a prompt card still copies the prompt.
-- Double-click still expands on desktop; touch users also receive an explicit **Open** button so expansion never depends on double-tap timing.
-- The explicit **Copy** button remains available and becomes touch-sized on mobile.
-- **All Categories** shows each visible category exactly once; a selected category shows only its matching prompts.
-- **All Types** or one concrete type may be selected independently.
-- Prompts remain in numeric sequence inside each visible category even when IDs have gaps.
-- Library, category, and type controls remain the same filters; on narrow screens they become horizontal touch rails rather than a second navigation model.
-- Prompt cards become one column on narrow screens.
-- Prompt detail and the reference panel use the mobile viewport while retaining the same underlying actions.
-- Every visible prompt category heading retains **Top** on the left and **Bottom** on the right without clearing active filters.
+- Tap/click the **AI Harness Prompt Kit** title to reset the temporary browsing state while preserving Favorites.
+- Use the glowing **Tutorial · Find My Prompt** control when you do not know which prompt to choose; it reuses the same search/synonym/registry logic.
+- Single click or tap on a prompt card copies the prompt; the current polish layer gives green clipboard confirmation.
+- Double-click expands on desktop; touch users receive explicit **Open**.
+- Favorite / Open / Copy occupy one guarded action rail rather than overlapping absolute coordinates.
+- Library, category, type, search, Favorites, and collapsible sections remain the same model on narrow screens.
+- Every visible prompt category heading retains **Top** and **Bottom** navigation without clearing active filters.
 
-Physical phone/tablet ergonomics, clipboard permission behavior, live GitHub Pages publication, live filesystem state, and Windows browser launch remain field-acceptance checks after repository validation passes.
+Physical browser persistence through a real upgrade, file-picker/download behavior, cross-profile/device transfer, phone/tablet ergonomics, clipboard permission behavior, live GitHub Pages publication, and Windows launch remain field-acceptance checks after repository validation passes.

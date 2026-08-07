@@ -42,6 +42,23 @@
       "harness_gate": "python scripts/validate_prompt_kit_discovery.py --summary",
       "strict_product_gate": "python -m unittest tests.test_prompt_kit_discovery -v"
     },
+    "prompt_kit_portability": {
+      "contract": "harness/contracts/prompt-kit-portability.v1.json",
+      "doctrine": "docs/PROMPT_KIT_PORTABILITY.md",
+      "runtime": "docs/prompt-kit-favorites-portability.js",
+      "portable_builder_and_server": "scripts/serve_prompt_kit_portable.py",
+      "portable_launcher": "scripts/Open-LatestPromptKitPortable.ps1",
+      "windows_entry_point": "Open-Latest-PromptKit.cmd",
+      "stable_origin": "http://127.0.0.1:8765/",
+      "generated_artifact": "Outputs/prompt-kit-portable/index.html",
+      "artifact_manifest": "Outputs/prompt-kit-portable/manifest.json",
+      "validator": "scripts/validate_prompt_kit_portability.py",
+      "contract_tests": "tests/test_prompt_kit_portability.py",
+      "regression_tests": "tests/test_prompt_kit_portability_regressions.py",
+      "workflow": "WORKFLOW.md#b-prompt-registry-or-website-change",
+      "harness_gate": "python scripts/validate_prompt_kit_portability.py --summary",
+      "strict_product_gate": "python scripts/serve_prompt_kit_portable.py --build-only && python scripts/validate_prompt_kit_portability.py --require-artifact --output Outputs/prompt-kit-portability-validation.json --summary && python -m unittest tests.test_prompt_kit_portability tests.test_prompt_kit_portability_regressions tests.test_prompt_kit_portable_health -v"
+    },
     "operator_command_envelope": {
       "contract": "harness/contracts/operator-command-envelope.v1.json",
       "validator": "scripts/validate_operator_command_envelope.py",
@@ -62,9 +79,15 @@
   "technician_acquisition": {
     "launcher": "Acquire-Latest-PromptKit.cmd",
     "gui": "scripts/Acquire-LatestPromptKit.ps1",
+    "portable_quick_launcher": "Open-Latest-PromptKit.cmd",
+    "portable_quick_script": "scripts/Open-LatestPromptKitPortable.ps1",
     "repository_url": "https://github.com/EndeavorEverlasting/web-excel-repair-triage.git",
     "required_files": [
       "web/prompt-kit/index.html",
+      "docs/prompt-kit-favorites-portability.js",
+      "harness/contracts/prompt-kit-portability.v1.json",
+      "scripts/serve_prompt_kit_portable.py",
+      "scripts/validate_prompt_kit_portability.py",
       "Run-PromptKitGenerator.cmd",
       "Build-PromptKitWebsite.cmd",
       "configs/prompt_kit/generators.v1.json",
