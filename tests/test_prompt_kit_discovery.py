@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 JS = ROOT / "docs" / "prompt-kit.js"
 GUIDED_JS = ROOT / "docs" / "prompt-kit-guided-recommendations.js"
+JOURNEY_JS = ROOT / "docs" / "prompt-kit-journey.js"
 POLISH_JS = ROOT / "docs" / "prompt-kit-polish.js"
 CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-discovery.v1.json"
 DISPLAY_ORDER = ROOT / "registry" / "prompts" / "prompt-display-order.v1.json"
@@ -39,6 +40,8 @@ class PromptKitDiscoveryTests(unittest.TestCase):
                 "guided_questionnaire",
                 "guided_uses_shared_search",
                 "metadata_recommendations",
+                "guided_next_step_journey",
+                "guided_completion_state",
                 "tutorial_beacon",
                 "card_action_rail",
                 "clipboard_confirmation",
@@ -141,6 +144,24 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         self.assertEqual(sum(guided.count(f"id:'{item}'") for item in question_ids), 4)
         self.assertLessEqual(len(question_ids), 5)
 
+    def test_guided_journey_uses_registry_next_step_and_session_state(self) -> None:
+        journey = JOURNEY_JS.read_text(encoding="utf-8")
+        for marker in (
+            "promptKit.guidance.completed.v1",
+            "function guidanceNextIds(prompt)",
+            "prompt.nextStep",
+            "buildPromptGuidanceModel",
+            "NEXT-STEP CONTRACT",
+            "READY TO CONTINUE WHEN",
+            "Mark this step complete",
+            "sessionStorage",
+            "finder-journey-preview",
+            "prefers-reduced-motion:reduce",
+        ):
+            self.assertIn(marker, journey)
+        self.assertNotIn("NEXT_PROMPT_MAP", journey)
+        self.assertNotIn("localStorage", journey)
+
     def test_tutorial_entry_point_is_visible_glowing_and_reduced_motion_safe(self) -> None:
         guided = GUIDED_JS.read_text(encoding="utf-8")
         for marker in (
@@ -216,14 +237,17 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
     def test_generated_site_contains_exact_behavior_sources(self) -> None:
         js = JS.read_text(encoding="utf-8")
         guided = GUIDED_JS.read_text(encoding="utf-8")
+        journey = JOURNEY_JS.read_text(encoding="utf-8")
         polish = POLISH_JS.read_text(encoding="utf-8")
         deployed = DEPLOYED.read_text(encoding="utf-8")
         self.assertIn(js, deployed)
         self.assertIn(guided, deployed)
+        self.assertIn(journey, deployed)
         self.assertIn(polish, deployed)
         self.assertIn('"id": "P64"', deployed)
         self.assertIn('"id": "P65"', deployed)
         self.assertIn("✦ Tutorial · Find My Prompt", deployed)
+        self.assertIn("prompt-kit-journey-styles", deployed)
         self.assertIn("prompt-card-actions", deployed)
 
 
