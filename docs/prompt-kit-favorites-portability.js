@@ -7,8 +7,12 @@ var PORTABLE_FAVORITES_LEGACY_KEYS=['promptKit.favoritePromptIds','promptKit.fav
 
 function normalizePromptId(value){
   var id=String(value==null?'':value).trim().toUpperCase();
-  if(!/^[A-Z][A-Z0-9._:-]{0,63}$/.test(id))throw new Error('Invalid prompt id in favorites payload: '+id);
+  if(!/^P\d{2,4}$/.test(id))throw new Error('Invalid prompt id in favorites payload: '+id);
   return id
+}
+
+function tryNormalizePromptId(value){
+  try{return normalizePromptId(value)}catch(error){return null}
 }
 
 function normalizeFavoritePromptIds(values){
@@ -25,7 +29,29 @@ function normalizeFavoritePromptIds(values){
 
 function currentFavoritePromptIds(){
   var source=root.favoritePromptIds||{};
-  return Object.keys(source).filter(function(id){return source[id]===true}).map(normalizePromptId).sort()
+  var seen={};
+  var ids=[];
+  Object.keys(source).forEach(function(value){
+    if(source[value]!==true)return;
+    var id=tryNormalizePromptId(value);
+    if(id&&!seen[id]){seen[id]=true;ids.push(id)}
+  });
+  ids.sort();
+  return ids
+}
+
+function sanitizeFavoritePromptState(){
+  var source=root.favoritePromptIds||{};
+  var clean={};
+  var removed=0;
+  Object.keys(source).forEach(function(value){
+    if(source[value]!==true)return;
+    var id=tryNormalizePromptId(value);
+    if(id)clean[id]=true;else removed++
+  });
+  root.favoritePromptIds=clean;
+  if(removed&&typeof root.saveFavoritePromptIds==='function')root.saveFavoritePromptIds();
+  return removed
 }
 
 function promptKitVersion(){
@@ -64,6 +90,7 @@ function mergePortableFavorites(ids){
   var unknown=[];
   root.favoritePromptIds=root.favoritePromptIds||{};
   normalizeFavoritePromptIds(ids).forEach(function(id){root.favoritePromptIds[id]=true;if(!known[id])unknown.push(id)});
+  sanitizeFavoritePromptState();
   if(typeof root.saveFavoritePromptIds==='function')root.saveFavoritePromptIds();
   if(typeof root.render==='function')root.render();
   return{saved:currentFavoritePromptIds().length,unknown_prompt_ids:unknown}
@@ -71,18 +98,25 @@ function mergePortableFavorites(ids){
 
 function migrateLegacyFavoriteStorage(){
   if(!root.localStorage)return 0;
-  var current=currentFavoritePromptIds();
-  if(current.length)return 0;
+  sanitizeFavoritePromptState();
+  var before={};
+  currentFavoritePromptIds().forEach(function(id){before[id]=true});
   var migrated=[];
-  PORTABLE_FAVORITES_LEGACY_KEYS.some(function(key){
+  var seen={};
+  PORTABLE_FAVORITES_LEGACY_KEYS.forEach(function(key){
     var raw=root.localStorage.getItem(key);
-    if(!raw)return false;
-    try{var parsed=JSON.parse(raw);if(Array.isArray(parsed)){migrated=normalizeFavoritePromptIds(parsed);return migrated.length>0}}catch(error){}
-    return false
+    if(!raw)return;
+    try{
+      var parsed=JSON.parse(raw);
+      if(!Array.isArray(parsed))return;
+      normalizeFavoritePromptIds(parsed).forEach(function(id){if(!seen[id]){seen[id]=true;migrated.push(id)}})
+    }catch(error){}
   });
-  if(!migrated.length)return 0;
+  var additions=migrated.filter(function(id){return !before[id]});
+  if(!additions.length)return 0;
   mergePortableFavorites(migrated);
-  return migrated.length
+  PORTABLE_FAVORITES_LEGACY_KEYS.forEach(function(key){if(typeof root.localStorage.removeItem==='function')root.localStorage.removeItem(key)});
+  return additions.length
 }
 
 function safeDateStamp(){return new Date().toISOString().slice(0,10)}
@@ -120,7 +154,10 @@ function importPortableFavoritesFile(file){
 }
 
 function ensureFavoritesPortabilitySupport(){
-  if(typeof document==='undefined'||document.getElementById('favoritePortabilityControls'))return;
+  sanitizeFavoritePromptState();
+  var migrated=migrateLegacyFavoriteStorage();
+  if(typeof document==='undefined')return;
+  if(document.getElementById('favoritePortabilityControls'))return;
   var addPrompt=document.getElementById('addPromptBtn');
   if(!addPrompt||!addPrompt.parentNode)return;
   var style=document.createElement('style');
@@ -155,7 +192,6 @@ function ensureFavoritesPortabilitySupport(){
   controls.appendChild(importButton);
   controls.appendChild(input);
   addPrompt.parentNode.insertBefore(controls,addPrompt);
-  var migrated=migrateLegacyFavoriteStorage();
   if(migrated&&typeof root.showToast==='function')root.showToast('Migrated '+migrated+' legacy Favorites')
 }
 
@@ -163,6 +199,7 @@ root.PromptKitFavoritesPortability={
   schema_version:PORTABLE_FAVORITES_SCHEMA,
   max_bytes:PORTABLE_FAVORITES_MAX_BYTES,
   normalizeFavoritePromptIds:normalizeFavoritePromptIds,
+  sanitizeFavoritePromptState:sanitizeFavoritePromptState,
   buildPayload:buildPortableFavoritesPayload,
   parsePayload:parsePortableFavoritesPayload,
   mergeFavorites:mergePortableFavorites,
