@@ -15,10 +15,12 @@ on:
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
+      - scripts/validate_operator_command_envelope.py
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
+      - tests/test_operator_command_envelope.py
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_language_audit.py
@@ -38,10 +40,12 @@ on:
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
+      - scripts/validate_operator_command_envelope.py
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
+      - tests/test_operator_command_envelope.py
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_language_audit.py
@@ -65,13 +69,19 @@ jobs:
         run: |
           python -m py_compile \
             scripts/validate_harness.py \
+            scripts/validate_operator_command_envelope.py \
             scripts/validate_prompt_kit_interactions.py \
             scripts/validate_prompt_kit_discovery.py \
             scripts/evaluate_prompt_language.py \
             tests/test_harness_contract.py \
+            tests/test_operator_command_envelope.py \
             tests/test_prompt_kit_interactions_contract.py \
             tests/test_prompt_kit_discovery.py \
             tests/test_prompt_language_audit.py
+      - name: Validate operator command envelope
+        run: |
+          python scripts/validate_operator_command_envelope.py --summary
+          python -m unittest tests.test_operator_command_envelope -v
       - name: Validate harness completeness
         run: python scripts/validate_harness.py --report "$RUNNER_TEMP/harness-completeness-report.json"
       - name: Upload harness completeness report
