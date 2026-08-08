@@ -1,0 +1,43 @@
+{
+  "schema_version": "prompt-kit-filtering-contract/v1",
+  "contract_id": "prompt-kit-category-type-filtering",
+  "surface": {
+    "canonical_site": "web/prompt-kit/index.html",
+    "behavior_source": "docs/prompt-kit.js",
+    "access_guide": "PROMPT_KIT_ACCESS.md"
+  },
+  "requirements": [
+    {
+      "id": "unique_categories",
+      "expected": "All Categories renders each visible SECTIONS category at most once."
+    },
+    {
+      "id": "single_category_scope",
+      "expected": "Selecting one category renders only matching prompts beneath that category heading."
+    },
+    {
+      "id": "unique_type_filters",
+      "expected": "All Types plus one unique control per prompt type is available."
+    },
+    {
+      "id": "sequential_with_gaps",
+      "expected": "Prompts inside each visible category are sorted by numeric prompt sequence; missing numbers do not create placeholders."
+    },
+    {
+      "id": "anchors_on_visible_categories",
+      "expected": "Every visible category divider carries Top-left and Bottom-right same-document anchors without clearing filters."
+    },
+    {
+      "id": "acquisition_discoverability",
+      "expected": "The repository documents zero-dialog one-click acquisition, the advanced acquisition GUI, existing-checkout update, fresh clone, ZIP download, Actions preview, canonical artifact path, and rebuild/parity commands."
+    }
+  ],
+  "validation": [
+    "node --check docs/prompt-kit.js",
+    "python -m unittest tests.test_prompt_kit_filtering_access -v",
+    "python -m unittest tests.test_prompt_kit_product_interactions -v",
+    "python -m unittest tests.test_prompt_kit_mobile -v",
+    "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check"
+  ],
+  "proof_ceiling": "Source, deterministic grouping/mobile tests, generated-site parity, and CI artifact proof; real operator browser and physical mobile acceptance remain field gates."
+}
