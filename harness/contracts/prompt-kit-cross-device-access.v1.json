@@ -92,8 +92,21 @@
         "Run pkg update.",
         "Run pkg install git."
       ],
-      "update_command": "git pull --ff-only origin main",
-      "operator_message": "Use a real checkout only when the user intends to edit, commit, push, inspect source locally, or run repository tooling."
+      "existing_checkout_requirements": {
+        "origin": "https://github.com/EndeavorEverlasting/web-excel-repair-triage.git",
+        "worktree": "clean",
+        "branch": "main",
+        "local_only_commits": 0
+      },
+      "update_sequence": [
+        "git remote get-url origin",
+        "git status --porcelain",
+        "git branch --show-current",
+        "git fetch origin main --prune",
+        "git rev-list --left-right --count HEAD...origin/main",
+        "git merge --ff-only origin/main"
+      ],
+      "operator_message": "Use a real checkout only when the user intends to edit, commit, push, inspect source locally, or run repository tooling. Before updating an existing checkout, prove canonical origin, a clean worktree, current branch main, and zero local-only commits; then fast-forward main only."
     },
     {
       "id": "zip-snapshot",
@@ -118,7 +131,7 @@
     "Do not tell a normal phone or browser user to clone the repository merely to use the Prompt Kit.",
     "Do not tell a mobile GitHub-app user to hunt for or download web/prompt-kit/index.html as the primary access path.",
     "Distinguish use/install intent from edit/commit/push intent before prescribing acquisition commands.",
-    "For existing editable checkouts, update main only with a clean fast-forward path; never reset, clean, force-push, or discard local work.",
+    "For existing editable checkouts, verify canonical origin, clean worktree, current branch main, and zero local-only commits before fetching and fast-forwarding; never reset, clean, force-push, or discard local work.",
     "Do not claim Add to Home Screen, PWA installation, Termux, Git authentication, browser storage, or clipboard behavior succeeded without device observation.",
     "Resolve the canonical website through this contract and harness/artifacts.v1.json instead of guessing an index.html path."
   ],
