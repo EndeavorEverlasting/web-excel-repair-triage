@@ -18,7 +18,7 @@ This file is the human-readable index for reusable repository operations. The ma
 | `prompt-language-audit` | `.ai/skills/prompt-language-audit/SKILL.md` | `scripts/evaluate_prompt_language.py` | Exhaustive prompt disposition and finding report. |
 | `skill-evaluation` | `.ai/skills/skill-evaluation/SKILL.md` | Prompt Kit P62 | Repository-native eval harness, cases, runner, results, and repair ledger. |
 | `skill-factoring` | `.ai/skills/skill-factoring/SKILL.md` | Prompt Kit P61 | Skill ownership dispositions and repaired routing boundaries. |
-| `technician-prompt-kit-acquisition` | `.ai/skills/technician-prompt-kit-acquisition/SKILL.md` | `Acquire-Latest-PromptKit.cmd` | Safely acquired or fast-forwarded checkout and validated Prompt Kit surface. |
+| `technician-prompt-kit-acquisition` | `.ai/skills/technician-prompt-kit-acquisition/SKILL.md` | Existing public/Windows/Git acquisition surfaces | Device-aware access mode: public use, phone install, Windows local app, editable checkout, or ZIP snapshot. |
 
 ## Harness infrastructure capability
 
@@ -28,6 +28,23 @@ Canonical report command:
 
 ```bash
 python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
+```
+
+## Prompt Kit acquisition capability
+
+`technician-prompt-kit-acquisition` is intentionally one capability across devices rather than separate phone, browser, Windows, and Git implementations. `harness/contracts/prompt-kit-cross-device-access.v1.json` owns the routing boundary.
+
+- **Use/open/share:** open `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`; no Git checkout is required.
+- **Phone/tablet install:** open `https://endeavoreverlasting.github.io/web-excel-repair-triage/` in the system browser and use the install/Add to Home Screen surface.
+- **Windows stable local app:** use `Open-Latest-PromptKit.cmd` so repository-owned clone/update/validation and portable Favorites behavior remain centralized.
+- **Edit/commit/push/local tooling:** use a real `main` checkout. Android source work uses Termux from F-Droid and Git; existing checkouts update with `git pull --ff-only origin main`.
+- **No-Git source snapshot:** use the repository `main.zip`, explicitly as a point-in-time snapshot.
+
+Focused contract proof:
+
+```bash
+python scripts/validate_prompt_kit_cross_device_access.py --summary
+python -m unittest tests.test_prompt_kit_cross_device_access -v
 ```
 
 ## Prompt-language audit modes
@@ -41,4 +58,4 @@ P62 must reproduce functional weaknesses and inefficiencies with versioned cases
 
 ## Proof boundaries
 
-Capability registration, static validators, tests, and CI prove only the repository surfaces and commands exercised on the tested commit. They do not prove provider behavior, model judgment, Excel for Web, Windows GUI, browser behavior, credentials, network, protected runtime access, technician acceptance, deployment, or production success.
+Capability registration, static validators, tests, and CI prove only the repository surfaces and commands exercised on the tested commit. Cross-device Prompt Kit validation proves routing intent and canonical access surfaces, not a phone/browser install menu, Termux/F-Droid availability, Git credentials, browser storage, clipboard behavior, or push success. Other capability proof likewise does not establish provider behavior, model judgment, Excel for Web, Windows GUI, protected runtime access, technician acceptance, deployment, or production success.
