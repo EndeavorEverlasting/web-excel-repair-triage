@@ -23,10 +23,10 @@ This file defines how agents and operators enter, select, validate, recover, com
 
 ### A. Technician acquisition or update
 
-**Workflow ID:** `technician-acquisition`  
-**Trigger:** A user or technician needs to open, install, share, download, clone, update, or locally edit the current `main` Prompt Kit.  
-**Capability:** `technician-prompt-kit-acquisition`  
-**Skill:** `.ai/skills/technician-prompt-kit-acquisition/SKILL.md`  
+**Workflow ID:** `technician-acquisition`
+**Trigger:** A user or technician needs to open, install, share, download, clone, update, or locally edit the current `main` Prompt Kit.
+**Capability:** `technician-prompt-kit-acquisition`
+**Skill:** `.ai/skills/technician-prompt-kit-acquisition/SKILL.md`
 **Focused contract:** `harness/contracts/prompt-kit-cross-device-access.v1.json`
 
 Route by **intent first**, then by device. Do not default every acquisition question into a Git checkout.
@@ -63,7 +63,7 @@ Static success does not prove a specific browser menu, PWA installation, Termux/
 
 ### B. Prompt registry or website change
 
-**Workflow ID:** `prompt-kit-change`  
+**Workflow ID:** `prompt-kit-change`
 **Trigger:** Canonical prompts, extensions, policies, reference data, builder behavior, generator options, checked-in HTML, or Prompt Kit interaction/discovery contracts change.
 
 1. Change canonical source, never only generated HTML.
@@ -75,9 +75,9 @@ Static success does not prove a specific browser menu, PWA installation, Termux/
 
 ### C. Harness infrastructure change
 
-**Workflow ID:** `harness-infrastructure`  
-**Trigger:** Maps, workflow specifications, artifact/validator/capability/trigger registries, validators, hooks, skills, reports, acquisition surfaces, command-delivery contracts, or versioned contracts are missing, stale, disconnected, or failing.  
-**Capability:** `harness-infrastructure-maintenance`  
+**Workflow ID:** `harness-infrastructure`
+**Trigger:** Maps, workflow specifications, artifact/validator/capability/trigger registries, validators, hooks, skills, reports, acquisition surfaces, command-delivery contracts, or versioned contracts are missing, stale, disconnected, or failing.
+**Capability:** `harness-infrastructure-maintenance`
 **Skill:** `.ai/skills/harness-infrastructure-maintenance/SKILL.md`
 
 1. Preserve occupied or dirty work and create an isolated harness branch/worktree.
@@ -110,30 +110,30 @@ Static success does not prove a specific browser menu, PWA installation, Termux/
 
 ### D. Workbook or artifact engine change
 
-**Workflow ID:** `artifact-engine-change`  
+**Workflow ID:** `artifact-engine-change`
 **Trigger:** A `triage/` engine, workbook contract, schema, sanitized fixture, or generated artifact behavior changes.
 
 Keep `Candidates/` and `Active/` read-only. Use sanitized fixtures. Write runtime outputs only to registered paths. Run focused engine tests, artifact hygiene, broader tests, and exact artifact validation. Treat Excel for Web and operator acceptance as separate runtime proof.
 
 ### E. PR-floor cleanup and integration
 
-**Workflow ID:** `pr-floor-integration`  
+**Workflow ID:** `pr-floor-integration`
 **Trigger:** Work is stacked, divergent, superseded, conflicted, or blocked across branches/PRs.
 
 Inspect base/head SHAs, unique commits, file deltas, required checks, review findings, and dependencies. Preserve unique work before closure. Integrate in dependency order. Never force-push, delete unique work, destructively clean, or merge with unresolved required gates.
 
 ### F. Prompt-language audit or repair
 
-**Workflow ID:** `prompt-language-audit`  
-**Triggers:** `prompt-language-change` or `lazy-next-action-report`  
+**Workflow ID:** `prompt-language-audit`
+**Triggers:** `prompt-language-change` or `lazy-next-action-report`
 **Capability:** `prompt-language-audit`
 
 Audit every canonical and effective prompt. Require equal canonical, effective, and disposition counts. Fail duplicate identity, coverage gaps, empty required language, missing effective policy, and error findings. Repair canonical registries, policies, builders, and focused tests—not generated HTML alone. Strict mode is the completion gate for bounded language repair.
 
 ### G. Skill-evaluation build
 
-**Workflow ID:** `skill-evaluation`  
-**Trigger:** `skill-quality-unproven`  
+**Workflow ID:** `skill-evaluation`
+**Trigger:** `skill-quality-unproven`
 **Capability:** `skill-evaluation`; Prompt Kit owner P62.
 
 Define the eval contract and baseline, add positive/negative/near-miss/boundary/malformed/regression cases, reproduce weaknesses, implement the smallest valid repair, and measure performance, calls, context, retries, cost, and tokens when available. Accept efficiency changes only after correctness, safety, and routing gates remain green.
