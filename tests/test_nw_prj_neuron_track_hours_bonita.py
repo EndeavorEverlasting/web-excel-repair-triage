@@ -45,10 +45,10 @@ def test_cli_imports():
     assert hasattr(mod, "main")
 
 
-# 2 ─ Exactly Apr 26 + May 26 tabs ───────────────────────────────────
-def test_exactly_two_named_tabs(generated):
+# 2 ─ Exactly Apr 26 + May 26 + Rules & Legend ───────────────────────
+def test_month_tabs_and_legend_sheet(generated):
     wb = openpyxl.load_workbook(generated["outputs"]["workbook"], read_only=True)
-    assert wb.sheetnames == ["Apr 26", "May 26"]
+    assert wb.sheetnames == ["Apr 26", "May 26", "Rules & Legend"]
     wb.close()
 
 
@@ -176,6 +176,8 @@ def test_excluded_name_never_counted(resolution):
 def test_no_blank_cells_on_populated_rows(generated):
     wb = openpyxl.load_workbook(generated["outputs"]["workbook"], read_only=True)
     for ws in wb.worksheets:
+        if ws.title == "Rules & Legend":
+            continue
         rows = list(ws.iter_rows(min_row=3, values_only=True))
         for row in rows:
             if not any(c is not None for c in row):
@@ -189,11 +191,11 @@ def test_no_blank_cells_on_populated_rows(generated):
 # 11 ─ Manifest has per-month row counts + total hours ───────────────
 def test_manifest_has_per_month_counts_and_totals(generated):
     pm = generated["per_month"]
-    assert pm["2026-04"]["row_count"] == 7
-    assert pm["2026-04"]["total_hours"] == 66.0
+    assert pm["2026-04"]["row_count"] == 9
+    assert pm["2026-04"]["total_hours"] == 74.0
     assert pm["2026-05"]["row_count"] == 2
     assert pm["2026-05"]["total_hours"] == 16.0
-    assert generated["grand_total_hours"] == 82.0
+    assert generated["grand_total_hours"] == 90.0
 
 
 # 12 ─ Preflight passes (no inlineStr/ns0/calcChain/external links) ──
@@ -275,3 +277,21 @@ def test_override_beats_worked_project_in_bonita_resolver(tmp_path):
     assert len(zulu) == 1
     assert zulu[0].total_hours == 8.0
     assert zulu[0].project_name == "Northwell - Neurons"
+
+
+def test_client_coordination_outside_allowlist_reviewed(resolution):
+    kilo = [r for r in resolution.review if r.tech == "Kilo Tech"
+            and r.category == "client_coordination_outside_allowlist"]
+    assert len(kilo) == 1
+    assert not [s for s in resolution.shifts if s.tech == "Kilo Tech"]
+
+
+def test_mixed_assignment_split(resolution):
+    mixed = [s for s in resolution.shifts if s.tech == "Mixed Tech"]
+    assert len(mixed) == 2
+    types = {s.assignment_type for s in mixed}
+    assert "Inventory Management" in types
+    assert "Configurations" in types
+    assert round(sum(s.total_hours for s in mixed), 2) == 8.0
+    split_review = [r for r in resolution.review if r.category == "mixed_assignment_split"]
+    assert len(split_review) == 1

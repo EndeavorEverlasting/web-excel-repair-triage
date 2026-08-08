@@ -163,6 +163,7 @@ def run(
     websafe: bool = True,
     repo_root: Optional[Path] = None,
     reference: Optional[str] = None,
+    reference_profile: Optional[str] = None,
     artifact_profile: str = "bonita_neuron_track_hours",
     approved_delta: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -185,12 +186,32 @@ def run(
     resolution = resolve_bonita_shifts(str(roster_path), months)
 
     xlsx_path = out / WORKBOOK_NAME
-    _, tabs = build_bonita_workbook(resolution, months, str(xlsx_path))
+    profile_path = _resolve(reference_profile, root)
+    _, tabs = build_bonita_workbook(
+        resolution,
+        months,
+        str(xlsx_path),
+        profile_path=str(profile_path) if profile_path else None,
+    )
 
     review_path = out / REVIEW_NAME
     _write_review_queue_csv(review_path, resolution)
 
     preflight = preflight_bonita(str(xlsx_path)) if websafe else {}
+    if websafe and profile_path and profile_path.is_file():
+        from triage.nw_prj_neuron_track_hours.repairfree_profile_gate import (
+            run_repairfree_profile_gate,
+        )
+        profile_gate = run_repairfree_profile_gate(str(xlsx_path), profile_path)
+        preflight["repairfree_profile"] = profile_gate.get("profile")
+        preflight["repairfree_profile_pass"] = profile_gate.get("profile_pass")
+        preflight["repairfree_profile_failures"] = profile_gate.get("profile_failures", [])
+        if not profile_gate.get("profile_pass"):
+            preflight["preflight_pass"] = False
+    elif websafe and profile_path:
+        preflight["repairfree_profile_pass"] = False
+        preflight["repairfree_profile_failures"] = ["reference_profile_not_found"]
+        preflight["preflight_pass"] = False
     preflight_path = out / PREFLIGHT_NAME
     preflight_path.write_text(json.dumps(preflight, indent=2, default=str), encoding="utf-8")
 
@@ -245,6 +266,7 @@ def run(
         "websafe_preflight_pass": bool(preflight.get("preflight_pass")) if websafe else None,
         "preflight_data": preflight if websafe else {},
         "reference": str(reference_path) if reference_path else "",
+        "reference_profile": str(profile_path) if profile_path else "",
         "artifact_profile": artifact_profile if reference_path else "",
         "warnings": resolution.warnings,
         "outputs": {
@@ -303,6 +325,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--out-dir", default="Outputs/neuron_track_hours_2026_06_02")
     ap.add_argument("--reference", help="Approved reference workbook for artifact_compare")
     ap.add_argument(
+        "--reference-profile",
+        default="configs/artifact_profiles/neuron_track_hours_repairfree_golden.json",
+        help="Repair-free golden profile JSON for structural gate",
+    )
+    ap.add_argument(
         "--artifact-profile",
         default="bonita_neuron_track_hours",
     )
@@ -319,6 +346,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         template=args.template,
         websafe=args.websafe,
         reference=args.reference,
+        reference_profile=args.reference_profile,
         artifact_profile=args.artifact_profile,
         approved_delta=args.approved_delta,
     )
