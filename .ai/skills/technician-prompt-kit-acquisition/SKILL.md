@@ -4,6 +4,8 @@
 
 Use this skill when a user or technician needs to **open, install, download, clone, update, or locally edit** the Prompt Kit on a phone, tablet, Windows PC, macOS, or Linux machine.
 
+Also trigger this skill when the user reports a Prompt Kit or prompt version label, downloaded snapshot, installed copy, cached copy, or previously cloned checkout and currentness has not been proven in the current interaction.
+
 Route by intent before prescribing commands:
 
 1. **Use/open/share only** → public Prompt Kit URL; no clone.
@@ -18,6 +20,7 @@ Do not use this skill to repair arbitrary Git history, recover local commits, sw
 
 - User intent: use/install/share versus edit/commit/push/local tooling.
 - Device/platform: Android, iPhone/iPad, Windows, macOS, Linux, or other browser-capable device.
+- Any user-reported Prompt Kit/prompt version label or indication that the copy was downloaded, installed, cached, or cloned previously.
 - Canonical repository URL: `https://github.com/EndeavorEverlasting/web-excel-repair-triage.git`.
 - Default branch: `main`.
 - Public Prompt Kit URL: `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`.
@@ -29,15 +32,34 @@ Do not use this skill to repair arbitrary Git history, recover local commits, sw
 
 Depending on the selected route:
 
+- an explicit currentness decision before troubleshooting or prompt-selection guidance when a versioned/potentially stale copy was reported;
 - the public Prompt Kit opened directly in the browser;
 - an Android/iOS home-screen installation path through the public launcher;
 - a validated Windows stable-origin local app launched through `Open-Latest-PromptKit.cmd`;
 - a clean editable checkout on `main` for source work;
 - or a clearly identified point-in-time ZIP snapshot.
 
-The handoff must state which route was selected, why it matched the user intent, what prerequisites were required, and which runtime gates remain unproven.
+The handoff must state which route was selected, why it matched the user intent, whether freshness was proven or remained stale-or-unverified, what prerequisites were required, and which runtime gates remain unproven.
 
 ## Procedure
+
+### 0. Freshness gate before guidance
+
+A version label is a freshness signal, not proof of currentness. If the user reports a Prompt Kit or prompt version such as `V39`, says the kit was downloaded/installed/cloned earlier, or presents a local copy whose currentness has not been proven, do not silently continue as though it were current.
+
+Before troubleshooting, tutorial guidance, or prompt selection:
+
+1. Tell the user that the reported copy may be stale or unverified.
+2. Recommend the lowest-friction refresh route first, based on the same intent routing used by this skill:
+   - browser use → open `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`;
+   - phone/tablet install → open `https://endeavoreverlasting.github.io/web-excel-repair-triage/` in the system browser and use Install app / Add to Home Screen when offered;
+   - Windows stable local app → run `Open-Latest-PromptKit.cmd`;
+   - editable checkout → use the preservation-first existing-checkout sequence in step 4 and integrate only with `git merge --ff-only origin/main`;
+   - explicit ZIP snapshot → re-download the canonical `main.zip` and keep calling it a point-in-time snapshot.
+3. Continue with troubleshooting or prompt-selection guidance after the refresh/currentness step is satisfied.
+4. If the user explicitly declines to refresh, continue only while labeling the copy **stale-or-unverified** so the limitation remains visible.
+
+Do not translate “pull latest” into Git work automatically. A normal phone/browser user gets the public latest route; Git synchronization is reserved for real editable checkout intent.
 
 ### 1. Normal browser use
 
@@ -125,6 +147,8 @@ Explain that ZIP is a snapshot. It does not provide normal Git updates and is no
 
 ## Guardrails
 
+- Treat a reported Prompt Kit/prompt version or previously acquired local copy as a freshness trigger until currentness is proven.
+- Recommend refresh before troubleshooting, tutorial guidance, or prompt selection against a stale-or-unverified copy.
 - Do not require a clone merely to use the Prompt Kit.
 - Distinguish use/install intent from edit/commit/push intent before giving shell commands.
 - Existing editable checkout updates must prove canonical origin, a clean worktree, current branch `main`, and zero local-only commits before an ff-only merge.
@@ -137,12 +161,14 @@ Explain that ZIP is a snapshot. It does not provide normal Git updates and is no
 
 ## Validation
 
-Focused cross-device contract:
+Focused cross-device and freshness contracts:
 
 ```bash
-python -m py_compile scripts/validate_prompt_kit_cross_device_access.py tests/test_prompt_kit_cross_device_access.py
+python -m py_compile scripts/validate_prompt_kit_cross_device_access.py tests/test_prompt_kit_cross_device_access.py scripts/validate_prompt_kit_freshness_guidance.py tests/test_prompt_kit_freshness_guidance.py
 python scripts/validate_prompt_kit_cross_device_access.py --summary
 python -m unittest tests.test_prompt_kit_cross_device_access -v
+python scripts/validate_prompt_kit_freshness_guidance.py --summary
+python -m unittest tests.test_prompt_kit_freshness_guidance -v
 ```
 
 Connected harness gates:
@@ -162,4 +188,4 @@ Runtime acceptance remains separate:
 
 ## Proof ceiling
 
-Repository and CI checks prove the device-routing contract, canonical URLs/commands, registered ownership, preservation-first Git posture, and current documentation/launcher references on the tested commit. They do not prove a specific device's browser menus, PWA installation, Termux or F-Droid availability, network, Git credentials, browser storage, clipboard behavior, Windows policy, or successful remote push.
+Repository and CI checks prove the device-routing contract, freshness-trigger guidance, canonical URLs/commands, registered ownership, preservation-first Git posture, and current documentation/launcher references on the tested commit. They do not prove a specific device's browser menus, PWA installation, cache/service-worker refresh, Termux or F-Droid availability, network, Git credentials, browser storage, clipboard behavior, Windows policy, or successful remote push.
