@@ -76,8 +76,7 @@
         "phone or tablet user wants to open, install, or Add to Home Screen",
         "Windows user wants the stable local Prompt Kit app",
         "user wants an editable local checkout to edit, commit, push, or run repository tooling",
-        "user explicitly wants a source ZIP snapshot without Git",
-        "user reports a Prompt Kit or prompt version label and currentness is not proven"
+        "user explicitly wants a source ZIP snapshot without Git"
       ],
       "forbidden_conditions": [
         "destructive Git cleanup is proposed",
