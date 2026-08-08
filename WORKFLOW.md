@@ -34,22 +34,29 @@ Route by **intent first**, then by device. Do not default every acquisition ques
 1. **Normal browser use / sharing** — open `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`. No repository clone, ZIP extraction, Git client, Python, PowerShell, Termux, or local server is required.
 2. **Phone/tablet install** — open `https://endeavoreverlasting.github.io/web-excel-repair-triage/` in the system browser and use the install/Add to Home Screen surface. If the GitHub mobile app uses its in-app browser, move to the system browser first.
 3. **Windows stable local app / portable Favorites** — use `Open-Latest-PromptKit.cmd`. The repository-owned launcher owns safe clone-or-fast-forward, parity validation, portable runtime generation, and stable loopback serving.
-4. **Edit, commit, push, inspect source, or run repository tooling locally** — use a real Git checkout. Clone exactly:
+4. **Edit, commit, push, inspect source, or run repository tooling locally** — use a real Git checkout. A fresh clone is:
 
    ```bash
    git clone --branch main --single-branch https://github.com/EndeavorEverlasting/web-excel-repair-triage.git
    ```
 
-   Update an existing clean canonical checkout only with:
+   For an existing editable checkout, do not integrate anything until these gates are evaluated in order:
 
    ```bash
-   git pull --ff-only origin main
+   git remote get-url origin
+   git status --porcelain
+   git branch --show-current
+   git fetch origin main --prune
+   git rev-list --left-right --count HEAD...origin/main
+   git merge --ff-only origin/main
    ```
 
-   On Android, use Termux from F-Droid, then `pkg update`, `pkg install git`, and the same clone command. This route is for source work, not ordinary Prompt Kit use.
+   The origin must exactly equal the canonical repository URL, status must be empty, the current branch must be `main`, and the first count from `git rev-list --left-right --count HEAD...origin/main` must be `0`. If any gate fails, preserve the checkout and stop. Only then may `git merge --ff-only origin/main` advance `main`.
+
+   On Android, use Termux from F-Droid, then `pkg update`, `pkg install git`, and the same clone/update gates. This route is for source work, not ordinary Prompt Kit use.
 5. **Explicit source snapshot without Git** — use the repository `main.zip` and state clearly that it is a point-in-time snapshot, not a synchronized checkout.
 
-For a Windows editable/acquisition checkout, verify canonical origin, clean `main`, no local-only commits or divergence, fetch, and fast-forward only. On failure, preserve the checkout and report the exact access-mode, Git, authentication, network, origin, branch, divergence, required-file, parity, browser, or device gate. Do not automate credentials or use destructive Git commands.
+For a Windows editable/acquisition checkout, the repository-owned launcher already implements equivalent preservation-first origin/cleanliness/branch/divergence gates. On failure, preserve the checkout and report the exact access-mode, Git, authentication, network, origin, branch, divergence, required-file, parity, browser, or device gate. Do not automate credentials or use destructive Git commands.
 
 Focused validation:
 
@@ -194,14 +201,15 @@ Read the first actionable failure and identify the canonical owner: human map, m
 
 ### Prompt Kit cross-device access failure
 
-Treat unnecessary cloning for normal use, asking a mobile GitHub-app user to hunt for `index.html`, giving editable-checkout commands before establishing edit/commit/push intent, or replacing a safe launcher with manual destructive Git steps as harness defects.
+Treat unnecessary cloning for normal use, asking a mobile GitHub-app user to hunt for `index.html`, giving editable-checkout commands before establishing edit/commit/push intent, updating an unverified feature branch as though it were `main`, or replacing a safe launcher with manual destructive Git steps as harness defects.
 
 1. Read `harness/contracts/prompt-kit-cross-device-access.v1.json`.
 2. Classify user intent: use/install/share versus edit/commit/push/local tooling.
 3. Select the lowest-friction registered mode that satisfies that intent.
-4. Preserve existing checkout work. Never repair routing by resetting, cleaning, force-pushing, or discarding local work.
-5. Run `scripts/validate_prompt_kit_cross_device_access.py` plus focused tests.
-6. Keep device/browser/Termux/network/authentication acceptance outside static proof.
+4. For existing editable checkouts, verify exact canonical origin, empty `git status --porcelain`, current branch `main`, fetch `origin/main`, and require zero local-only commits before an ff-only merge.
+5. Preserve existing checkout work. Never repair routing by resetting, cleaning, force-pushing, or discarding local work.
+6. Run `scripts/validate_prompt_kit_cross_device_access.py` plus focused tests.
+7. Keep device/browser/Termux/network/authentication acceptance outside static proof.
 
 ### Operator command / NEXT COMMAND failure
 
