@@ -13,6 +13,15 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def test_skill_has_discovery_frontmatter() -> None:
+    text = read(SKILL)
+    assert text.startswith("---\n")
+    frontmatter = text.split("---", 2)[1]
+    assert "name: package-static-analysis" in frontmatter
+    assert "description:" in frontmatter
+    assert "SysAdminSuite" in frontmatter
+
+
 def test_skill_uses_sysadminsuite_as_canonical_authority() -> None:
     text = read(SKILL)
     for fragment in (
@@ -54,6 +63,12 @@ def test_adoption_doc_names_offline_venv_and_evidence_contract() -> None:
     assert "every execution, extraction, network, mutation, trust, and runtime proof flag is false" in text
 
 
+def test_public_examples_use_fictional_package_identity() -> None:
+    text = read(DOC)
+    assert "ExamplePackage" in text
+    assert "Allscripts" not in text
+
+
 def test_workflow_runs_this_contract() -> None:
     text = read(WORKFLOW)
     assert "ubuntu-latest" in text
@@ -62,7 +77,15 @@ def test_workflow_runs_this_contract() -> None:
 
 def test_documents_do_not_contain_client_package_values() -> None:
     combined = read(SKILL) + "\n" + read(DOC)
-    forbidden = ("nt2kwb", "nslijhs", "northwell", "defaultpassword", "bearer ", "api_key")
+    forbidden = (
+        "nt2kwb",
+        "nslijhs",
+        "northwell",
+        "defaultpassword",
+        "bearer ",
+        "api_key",
+        "allscripts",
+    )
     lowered = combined.lower()
     for value in forbidden:
         assert value not in lowered
