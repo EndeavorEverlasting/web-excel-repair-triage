@@ -41,24 +41,28 @@
         "focused contracts",
         "fixtures",
         "tests",
-        "deterministic generated output"
+        "deterministic generated output",
+        "integration of the exact validated owned PR head"
       ],
       "forbidden_scope": [
         "generated-HTML-only repair",
         "unregistered prompt mutation",
-        "inflated browser or provider proof"
+        "inflated browser or provider proof",
+        "merge with unresolved required gates"
       ],
       "entry_points": [
         "scripts/build_prompt_kit_registry.py",
         "scripts/validate_prompt_kit_interactions.py"
       ],
       "validation_profile": "harness",
-      "failure_policy": "Repair canonical sources or contract drift; never weaken parity, coverage, or interaction requirements merely to turn CI green.",
+      "failure_policy": "Repair canonical sources or contract drift; never weaken parity, coverage, interaction, review, dependency, or merge gates merely to turn CI green. When the exact validated head is genuinely green and authorized, integrate it instead of stopping at PR status.",
       "handoff_fields": [
         "source files",
         "generated artifact",
         "parity result",
         "audit report",
+        "required-check state",
+        "merge SHA or exact merge blocker",
         "browser proof ceiling"
       ]
     },
@@ -77,26 +81,29 @@
         "scripts/validate_harness.py",
         "tests/test_harness_contract.py",
         ".githooks/**",
-        ".github/workflows/harness-contract.yml"
+        ".github/workflows/harness-contract.yml",
+        "integration of the exact validated owned PR head"
       ],
       "forbidden_scope": [
         "AGENTS.md",
         "product implementation",
         "secrets",
-        "destructive cleanup"
+        "destructive cleanup",
+        "merge with unresolved required gates"
       ],
       "entry_points": [
         "scripts/validate_harness.py",
         "tests/test_harness_contract.py"
       ],
       "validation_profile": "harness",
-      "failure_policy": "Repair the canonical component or registry owner, add a regression test, rerun the first failing gate, then run the full harness profile.",
+      "failure_policy": "Repair the canonical component or registry owner, add a regression test, rerun the first failing gate, then run the full harness profile. If the resulting exact head is green and authorized, merge it in the same run; otherwise name the exact merge blocker.",
       "handoff_fields": [
         "component inventory",
         "validator results",
         "report path",
         "commit",
-        "push or PR state",
+        "push state",
+        "merge SHA or exact merge blocker",
         "next executable command"
       ]
     },
@@ -108,86 +115,100 @@
         "triage/**",
         "sanitized fixtures",
         "focused engine tests",
-        "approved Outputs paths"
+        "approved Outputs paths",
+        "integration of the exact validated owned PR head"
       ],
       "forbidden_scope": [
         "writes to Candidates/",
         "writes to Active/",
         "private workbook publication",
-        "unproven Excel for Web acceptance"
+        "unproven Excel for Web acceptance",
+        "merge with unresolved required gates"
       ],
       "entry_points": [
         "python -m pytest",
         "python -m triage.gitignore_hygiene"
       ],
       "validation_profile": "artifact-engine",
-      "failure_policy": "Preserve protected inputs, reproduce with sanitized fixtures, repair the focused engine, and distinguish static proof from Excel or operator proof.",
+      "failure_policy": "Preserve protected inputs, reproduce with sanitized fixtures, repair the focused engine, and distinguish static proof from Excel or operator proof. A missing higher runtime proof does not block source integration unless that proof is a declared required merge gate.",
       "handoff_fields": [
         "input fixture",
         "output artifact",
         "focused test result",
         "hygiene result",
+        "merge SHA or exact merge blocker",
         "runtime proof ceiling"
       ]
     },
     {
       "id": "pr-floor-integration",
       "document": "WORKFLOW.md#e-pr-floor-cleanup-and-integration",
-      "trigger": "Work is stacked, divergent, superseded, or blocked across branches or pull requests.",
+      "trigger": "Work is ready to integrate, stacked, divergent, superseded, conflicted, or blocked across branches or pull requests.",
       "owned_scope": [
         "branch and PR evidence",
         "dependency ordering",
         "conflict repair",
-        "preservation of unique commits"
+        "preservation of unique commits",
+        "merge execution for exact validated green heads",
+        "post-merge verification and safe superseded-work disposition"
       ],
       "forbidden_scope": [
         "force push",
         "deleting unique work",
         "destructive cleanup",
-        "merging with unresolved required checks"
+        "merging with unresolved required checks, validators, dependencies, reviews, conflicts, protection rules, or approvals",
+        "merging a head that moved after validation"
       ],
       "entry_points": [
         "git status --short",
         "git log --oneline --decorate -5"
       ],
       "validation_profile": "harness",
-      "failure_policy": "Stop destructive integration, preserve unique work, identify the exact dependency or conflict, and provide the safest executable next action.",
+      "failure_policy": "Default to integration, not indefinite staging. Preserve unique work and repair merge blockers. If the exact head is validated, required checks and owning validators are green, dependencies and reviews are satisfied, and merge authority exists, merge in dependency order in the same run. Stop only on a concrete required gate and name it exactly.",
       "handoff_fields": [
         "base",
         "head",
         "unique commits",
         "checks",
+        "owning validator state",
         "review findings",
-        "merge blocker"
+        "dependency state",
+        "merge SHA or exact merge blocker",
+        "post-merge target verification"
       ]
     },
     {
       "id": "prompt-language-audit",
       "document": "WORKFLOW.md#f-prompt-language-audit-or-repair",
-      "trigger": "Prompt language changes or lazy, placeholder, observation-only, status-only, or non-executable next actions are suspected.",
+      "trigger": "Prompt language changes or lazy, placeholder, observation-only, status-only, green-but-unmerged, or non-executable next actions are suspected.",
       "owned_scope": [
         "prompt registries",
         "actionability policy",
+        "green-branch integration language",
         "prompt-language eval policy",
         "fixtures",
-        "audit report"
+        "audit report",
+        "integration of the exact validated owned PR head"
       ],
       "forbidden_scope": [
         "generated-HTML-only repair",
         "sampled-only coverage",
-        "provider-compliance claims"
+        "provider-compliance claims",
+        "merge with unresolved required gates"
       ],
       "entry_points": [
         "scripts/evaluate_prompt_language.py"
       ],
       "validation_profile": "harness",
-      "failure_policy": "Stop on coverage or identity drift; repair canonical registry or builder ownership before interpreting language findings.",
+      "failure_policy": "Stop on coverage or identity drift; repair canonical registry or builder ownership before interpreting language findings. Treat missing green-integration language as policy drift, and merge the exact validated repair head when required gates are green and authorization exists.",
       "handoff_fields": [
         "prompt count",
         "disposition count",
         "finding ledger",
+        "green-integration coverage",
         "strict result",
-        "generated parity"
+        "generated parity",
+        "merge SHA or exact merge blocker"
       ]
     },
     {
@@ -199,23 +220,26 @@
         "fixtures",
         "runner",
         "machine-readable results",
-        "directly related repairs"
+        "directly related repairs",
+        "integration of the exact validated owned PR head"
       ],
       "forbidden_scope": [
         "moving deterministic product behavior into prose",
         "weakening safety gates",
-        "unmeasured efficiency claims"
+        "unmeasured efficiency claims",
+        "merge with unresolved required gates"
       ],
       "entry_points": [
         "Prompt Kit P62"
       ],
       "validation_profile": "target-repository",
-      "failure_policy": "Reproduce the weakness, repair the smallest owned boundary, and rerun correctness before accepting efficiency changes.",
+      "failure_policy": "Reproduce the weakness, repair the smallest owned boundary, and rerun correctness before accepting efficiency changes. When the exact repaired head is green under its owning gates, integrate it rather than treating a green PR as the terminal artifact.",
       "handoff_fields": [
         "baseline",
         "cases",
         "runner",
         "before and after results",
+        "merge SHA or exact merge blocker",
         "remaining runtime gates"
       ]
     }
