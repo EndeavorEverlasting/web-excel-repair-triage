@@ -24,7 +24,7 @@
         "class": "TEST",
         "useWhen": "A deterministic audit is required.",
         "expectedOutput": "A machine-readable report.",
-        "nextStep": "Run the registered validator and begin with the first executable action that advances the canonical artifact or proof.",
+        "nextStep": "Run the registered validator and begin with the first executable action that advances the canonical artifact or proof. If the owned PR is green with required checks and owning harness validators passing, merge it in the same run.",
         "proofGate": "The report covers every prompt.",
         "copyContent": "Run the audit. ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT"
       }
@@ -52,7 +52,7 @@
         "class": "TEST",
         "useWhen": "Always.",
         "expectedOutput": "A report.",
-        "nextStep": "Begin with the first executable action that advances the canonical artifact or proof.",
+        "nextStep": "Begin with the first executable action that advances the canonical artifact or proof. If the owned PR is green with required checks and owning harness validators passing, merge it in the same run.",
         "proofGate": "A report exists.",
         "copyContent": "ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT"
       }
@@ -80,7 +80,7 @@
         "class": "TEST",
         "useWhen": "Always.",
         "expectedOutput": "A report.",
-        "nextStep": "Open the PR. Begin with the first executable action that advances the canonical artifact or proof.",
+        "nextStep": "Open the PR. Begin with the first executable action that advances the canonical artifact or proof. If the owned PR is green with required checks and owning harness validators passing, merge it in the same run.",
         "proofGate": "A report exists.",
         "copyContent": "Run it. ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT"
       }
@@ -108,7 +108,7 @@
         "class": "TEST",
         "useWhen": "Always.",
         "expectedOutput": "A report.",
-        "nextStep": "Check the logs, then update the PR. Begin with the first executable action that advances the canonical artifact or proof.",
+        "nextStep": "Check the logs, then update the PR. Begin with the first executable action that advances the canonical artifact or proof. If the owned PR is green with required checks and owning harness validators passing, merge it in the same run.",
         "proofGate": "A report exists.",
         "copyContent": "Run it. ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT"
       }
@@ -136,7 +136,7 @@
         "class": "TEST",
         "useWhen": "Always.",
         "expectedOutput": "A report.",
-        "nextStep": "Check the logs, then run the registered validator and open the report artifact. Begin with the first executable action that advances the canonical artifact or proof.",
+        "nextStep": "Check the logs, then run the registered validator and open the report artifact. Begin with the first executable action that advances the canonical artifact or proof. If the owned PR is green with required checks and owning harness validators passing, merge it in the same run.",
         "proofGate": "The validator produces the report.",
         "copyContent": "Run it. ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT"
       }
