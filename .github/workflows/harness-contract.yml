@@ -9,18 +9,23 @@ on:
       - SKILLS.md
       - CAPABILITIES.md
       - TRIGGERS.md
+      - PROMPT_KIT_ACCESS.md
+      - OPEN_PROMPT_KIT_ON_PHONE.md
       - Acquire-Latest-PromptKit.cmd
+      - Open-Latest-PromptKit.cmd
       - harness/**
       - .ai/skills/**
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
       - scripts/validate_operator_command_envelope.py
+      - scripts/validate_prompt_kit_cross_device_access.py
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
+      - tests/test_prompt_kit_cross_device_access.py
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_language_audit.py
@@ -34,18 +39,23 @@ on:
       - SKILLS.md
       - CAPABILITIES.md
       - TRIGGERS.md
+      - PROMPT_KIT_ACCESS.md
+      - OPEN_PROMPT_KIT_ON_PHONE.md
       - Acquire-Latest-PromptKit.cmd
+      - Open-Latest-PromptKit.cmd
       - harness/**
       - .ai/skills/**
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
       - scripts/validate_operator_command_envelope.py
+      - scripts/validate_prompt_kit_cross_device_access.py
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
+      - tests/test_prompt_kit_cross_device_access.py
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_language_audit.py
@@ -70,11 +80,13 @@ jobs:
           python -m py_compile \
             scripts/validate_harness.py \
             scripts/validate_operator_command_envelope.py \
+            scripts/validate_prompt_kit_cross_device_access.py \
             scripts/validate_prompt_kit_interactions.py \
             scripts/validate_prompt_kit_discovery.py \
             scripts/evaluate_prompt_language.py \
             tests/test_harness_contract.py \
             tests/test_operator_command_envelope.py \
+            tests/test_prompt_kit_cross_device_access.py \
             tests/test_prompt_kit_interactions_contract.py \
             tests/test_prompt_kit_discovery.py \
             tests/test_prompt_language_audit.py
@@ -85,6 +97,10 @@ jobs:
           $source = Get-Content -LiteralPath 'harness/templates/Invoke-RemoteHarnessProof.ps1' -Raw -Encoding UTF8
           $null = [scriptblock]::Create($source)
           Write-Host 'Operator remote-proof PowerShell syntax: PASS'
+      - name: Validate Prompt Kit cross-device access
+        run: |
+          python scripts/validate_prompt_kit_cross_device_access.py --summary
+          python -m unittest tests.test_prompt_kit_cross_device_access -v
       - name: Validate operator command envelope
         run: |
           python scripts/validate_operator_command_envelope.py --summary
