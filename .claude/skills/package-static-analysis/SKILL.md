@@ -1,3 +1,8 @@
+---
+name: package-static-analysis
+description: Interpret, compare, and preserve deliberately sanitized package-analysis evidence produced by the canonical SysAdminSuite static-analysis harness without duplicating executable-analysis authority.
+---
+
 # Package Static Analysis Skill
 
 Use this skill when Web-Excel Repair Triage needs to interpret, compare, or preserve sanitized evidence produced by SysAdminSuite for an EXE, MSI, MST, MSP, archive, installer wrapper, script, shortcut, or configuration package.
