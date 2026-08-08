@@ -52,8 +52,11 @@ This is the repository skill index. Reusable procedures live under `.ai/skills/<
 - **Path:** `.ai/skills/technician-prompt-kit-acquisition/SKILL.md`
 - **Trigger:** `technician-needs-latest-prompt-kit`
 - **Capability:** `technician-prompt-kit-acquisition`
-- **Forbidden conditions:** Dirty worktree, wrong origin, non-main branch, local-only commits, divergence, missing tools/files.
-- **Primary validation:** Harness validator/contracts plus native Windows field proof.
+- **Use when:** A user needs to open, install, share, download, clone, update, or locally edit the Prompt Kit on a browser, phone/tablet, Windows PC, macOS, or Linux machine.
+- **Routing:** Normal browser use goes directly to the public Prompt Kit; phone/tablet install uses the public launcher; Windows stable-origin use prefers `Open-Latest-PromptKit.cmd`; an editable checkout is reserved for edit/commit/push/local-tooling intent; ZIP is a source snapshot fallback.
+- **Android editable checkout:** Use Termux from F-Droid, install Git, clone `main`, and update only with `git pull --ff-only origin main`.
+- **Forbidden conditions:** Destructive Git cleanup, credential automation, or updating an editable checkout that is dirty, divergent, non-main, or has an unexpected origin.
+- **Primary validation:** `python scripts/validate_prompt_kit_cross_device_access.py --summary`, `python -m unittest tests.test_prompt_kit_cross_device_access -v`, then the root harness validator/contracts and native device field proof.
 
 ## Required skill-file sections
 
