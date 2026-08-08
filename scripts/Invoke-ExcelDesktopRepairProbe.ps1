@@ -15,10 +15,14 @@ if ($env:OS -ne "Windows_NT") {
 }
 
 $resolvedWorkbook = (Resolve-Path -LiteralPath $Workbook).Path
+$workbookLeaf = [System.IO.Path]::GetFileName($resolvedWorkbook)
+$workbookStem = [System.IO.Path]::GetFileNameWithoutExtension($resolvedWorkbook)
 $outPath = [System.IO.Path]::GetFullPath($OutDir)
 New-Item -ItemType Directory -Force -Path $outPath | Out-Null
 
-$scanRoots = @($env:TEMP, (Split-Path -Parent $resolvedWorkbook)) | Where-Object { $_ -and (Test-Path $_) }
+$scanRoots = @($env:TEMP, (Split-Path -Parent $resolvedWorkbook)) |
+    Where-Object { $_ -and (Test-Path $_) } |
+    Select-Object -Unique
 $before = @{}
 foreach ($root in $scanRoots) {
     Get-ChildItem -LiteralPath $root -Filter "error*.xml" -File -ErrorAction SilentlyContinue | ForEach-Object {
@@ -59,17 +63,59 @@ finally {
     [GC]::WaitForPendingFinalizers()
 }
 
-Start-Sleep -Milliseconds 750
-$newLogs = @()
-foreach ($root in $scanRoots) {
-    Get-ChildItem -LiteralPath $root -Filter "error*.xml" -File -ErrorAction SilentlyContinue | ForEach-Object {
-        $isNew = -not $before.ContainsKey($_.FullName) -or $_.LastWriteTimeUtc -gt $startedUtc
-        if ($isNew) {
-            $destination = Join-Path $outPath $_.Name
-            Copy-Item -LiteralPath $_.FullName -Destination $destination -Force
-            $newLogs += $destination
+# Excel recovery logs use shared locations and may arrive after COM returns. Poll
+# briefly, but accept only fresh logs whose own text names this workbook.
+$deadline = (Get-Date).AddSeconds(5)
+$lastSignature = ""
+$stablePasses = 0
+$attributedLogs = @{}
+do {
+    $current = @{}
+    foreach ($root in $scanRoots) {
+        Get-ChildItem -LiteralPath $root -Filter "error*.xml" -File -ErrorAction SilentlyContinue | ForEach-Object {
+            $isFresh = -not $before.ContainsKey($_.FullName) -or $_.LastWriteTimeUtc -gt $startedUtc
+            if (-not $isFresh) { return }
+            try {
+                $text = Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8 -ErrorAction Stop
+            }
+            catch { return }
+            $mentionsWorkbook =
+                $text.IndexOf($workbookLeaf, [System.StringComparison]::OrdinalIgnoreCase) -ge 0 -or
+                $text.IndexOf($workbookStem, [System.StringComparison]::OrdinalIgnoreCase) -ge 0
+            if (-not $mentionsWorkbook) { return }
+            $current[$_.FullName] = [pscustomobject]@{
+                FullName = $_.FullName
+                Length = $_.Length
+                LastWriteTimeUtc = $_.LastWriteTimeUtc
+            }
         }
     }
+
+    $signature = (@($current.Values) |
+        Sort-Object FullName |
+        ForEach-Object { '{0}|{1}|{2:o}' -f $_.FullName, $_.Length, $_.LastWriteTimeUtc }) -join ';'
+    if ($signature -and $signature -eq $lastSignature) {
+        $stablePasses++
+    }
+    else {
+        $stablePasses = 0
+        $lastSignature = $signature
+    }
+    foreach ($item in $current.Values) { $attributedLogs[$item.FullName] = $item }
+    if ($stablePasses -ge 1) { break }
+    Start-Sleep -Milliseconds 250
+} while ((Get-Date) -lt $deadline)
+
+$newLogs = @()
+foreach ($item in @($attributedLogs.Values | Sort-Object FullName)) {
+    $source = [string]$item.FullName
+    $name = [System.IO.Path]::GetFileName($source)
+    $sourceId = [Convert]::ToHexString(
+        [Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($source))
+    ).Substring(0, 8).ToLowerInvariant()
+    $destination = Join-Path $outPath ("{0}-{1}" -f $sourceId, $name)
+    Copy-Item -LiteralPath $source -Destination $destination -Force
+    $newLogs += $destination
 }
 $newLogs = @($newLogs | Sort-Object -Unique)
 
@@ -99,10 +145,11 @@ $probe = [ordered]@{
     workbook_open_succeeded = $openSucceeded
     workbook_open_error = $openError
     recovery_logs = $newLogs
+    recovery_log_attribution = "fresh log text must name the target workbook; unrelated shared-directory logs are ignored"
     triage_json = $jsonOut
     triage_markdown = $markdownOut
     triage_exit_code = $triageExitCode
-    proof_ceiling = "Automated Excel desktop open attempt plus captured recovery logs and read-only OOXML triage. No operator acceptance is implied."
+    proof_ceiling = "Automated Excel desktop open attempt plus workbook-attributed recovery logs and read-only OOXML triage. No operator acceptance is implied."
 }
 $probe | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $outPath "desktop_probe.json") -Encoding UTF8
 
