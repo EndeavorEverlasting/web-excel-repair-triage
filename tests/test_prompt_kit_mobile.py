@@ -107,8 +107,8 @@ class PromptKitMobileTests(unittest.TestCase):
         portable = PORTABLE_PS1.read_text(encoding="utf-8")
         acquire = ACQUIRE_CMD.read_text(encoding="utf-8")
         for marker in (
-            "BOOTSTRAP_COMMIT=2282baa2226186fedfae6d696c1531ee5341fa59",
-            "BOOTSTRAP_BLOB=ae13387b05964342b96f89aace30e790a732fd5c",
+            "BOOTSTRAP_COMMIT=9c7809cfe4dab62bb30b5ba9d12f6e204125d03c",
+            "BOOTSTRAP_BLOB=b6e4f1fd2d2771370d3b23d355a7a0f4301aa2bc",
             "api.github.com/repos/EndeavorEverlasting/web-excel-repair-triage/contents/scripts/Open-LatestPromptKitPortable.ps1",
             'Open-LatestPromptKitPortable.ps1',
             '-File "%SCRIPT%" -Destination "%PREFERRED_REPO%"',
@@ -120,8 +120,8 @@ class PromptKitMobileTests(unittest.TestCase):
             quick,
         )
         for marker in (
-            "$AcquireBootstrapCommit = 'b73242b4ada14df421513a7962ef1a826c09d012'",
-            "$AcquireBootstrapBlob = '4a79b58b0b14ee9454c84ea41abeb01b4915d92d'",
+            "$AcquireBootstrapCommit = 'd61ff0c165c5647f4607a32e85e1171d6b898501'",
+            "$AcquireBootstrapBlob = '674130635ed70b5e57a3784f26511d932f63adb3'",
             "$StableHost = '127.0.0.1'",
             '$StableUrl = "http://${StableHost}:$Port/"',
             "Import-AcquisitionFunctions",
@@ -143,6 +143,49 @@ class PromptKitMobileTests(unittest.TestCase):
             "Preserving candidate and continuing:",
             "'merge', '--ff-only'",
             "Start-Process -FilePath $site",
+        ):
+            self.assertIn(marker, ps1)
+
+    def test_native_git_stderr_is_exit_code_authoritative_and_separate(self) -> None:
+        ps1 = ACQUIRE_PS1.read_text(encoding="utf-8")
+        start = ps1.index("function Invoke-Git {")
+        end = ps1.index("function Resolve-PythonCommand", start)
+        invoke_git = ps1[start:end]
+        for marker in (
+            "$previousErrorActionPreference = $ErrorActionPreference",
+            "$stderrPath = [System.IO.Path]::GetTempFileName()",
+            "$ErrorActionPreference = 'Continue'",
+            "$output = & git @Arguments 2> $stderrPath",
+            "$exitCode = $LASTEXITCODE",
+            "$stderr = @(Get-Content -LiteralPath $stderrPath -ErrorAction SilentlyContinue)",
+            "$ErrorActionPreference = $previousErrorActionPreference",
+            "Remove-Item -LiteralPath $stderrPath -Force -ErrorAction SilentlyContinue",
+            "if ($exitCode -ne 0)",
+            "return $stdoutText.Trim()",
+        ):
+            self.assertIn(marker, invoke_git)
+        self.assertNotIn("2>&1", invoke_git)
+        self.assertLess(
+            invoke_git.index("$ErrorActionPreference = 'Continue'"),
+            invoke_git.index("$output = & git @Arguments 2> $stderrPath"),
+        )
+        self.assertLess(
+            invoke_git.index("$exitCode = $LASTEXITCODE"),
+            invoke_git.index("$ErrorActionPreference = $previousErrorActionPreference"),
+        )
+
+    def test_acquisition_gui_blocks_close_while_handler_is_running(self) -> None:
+        ps1 = ACQUIRE_PS1.read_text(encoding="utf-8")
+        for marker in (
+            "$form.Tag = 'idle'",
+            "$form.Add_FormClosing({",
+            "if ([string]$sender.Tag -eq 'acquiring')",
+            "$eventArgs.Cancel = $true",
+            "$form.Tag = 'acquiring'",
+            "$closeButton.Enabled = $false",
+            "$form.Tag = 'idle'",
+            "if (-not $form.IsDisposed)",
+            "$closeButton.Enabled = $true",
         ):
             self.assertIn(marker, ps1)
 
