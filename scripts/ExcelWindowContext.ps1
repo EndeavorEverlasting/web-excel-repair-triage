@@ -87,6 +87,16 @@ public static class ExcelWindowNative
 '@ -ErrorAction Stop
 }
 
+function Test-ExcelTitleContainsWorkbookStem {
+    param(
+        [string]$Title,
+        [string]$WorkbookStem
+    )
+    if ([string]::IsNullOrWhiteSpace($WorkbookStem)) { return $false }
+    $escapedStem = [WildcardPattern]::Escape($WorkbookStem)
+    return ([string]$Title -like "*$escapedStem*")
+}
+
 function Get-ExcelWindowRecords {
     param([int]$ProcessId = 0)
 
@@ -210,7 +220,7 @@ function Get-ExcelWindowCandidateScore {
     $isNew = @($Delta.newProcesses | Where-Object { [int]$_.pid -eq $pid }).Count -gt 0
     $isChanged = @($Delta.changedProcesses | Where-Object { [int]$_.pid -eq $pid }).Count -gt 0
 
-    if ($PreferredProcessId -gt 0 -and $pid -eq $PreferredProcessId) { $score += 45; $signals.Add('preferred_start_process') | Out-Null }
+    if ($PreferredProcessId -gt 0 -and $pid -eq $PreferredProcessId) { $score += 15; $signals.Add('preferred_start_process') | Out-Null }
     if ($isNew) { $score += 30; $signals.Add('new_pid_after_baseline') | Out-Null }
     elseif ($isChanged) { $score += 20; $signals.Add('existing_pid_window_changed') | Out-Null }
     else { $missing.Add('not_new_or_changed') | Out-Null }
@@ -220,7 +230,7 @@ function Get-ExcelWindowCandidateScore {
     else { $missing.Add('no_visible_excel_window') | Out-Null }
 
     $allTitles = @($ProcessRecord.mainWindowTitle) + @($ProcessRecord.windows | ForEach-Object { [string]$_.title })
-    if (-not [string]::IsNullOrWhiteSpace($WorkbookStem) -and @($allTitles | Where-Object { [string]$_ -like "*$WorkbookStem*" }).Count -gt 0) {
+    if (-not [string]::IsNullOrWhiteSpace($WorkbookStem) -and @($allTitles | Where-Object { Test-ExcelTitleContainsWorkbookStem -Title ([string]$_) -WorkbookStem $WorkbookStem }).Count -gt 0) {
         $score += 20; $signals.Add('workbook_title_match') | Out-Null
     }
     if (@($allTitles | Where-Object { [string]$_ -match '(?i)repaired|repair|recover|problem with some content' }).Count -gt 0) {
@@ -242,7 +252,7 @@ function Get-ExcelWindowCandidateScore {
         $windowScore = 0
         if ([bool]$_.visible) { $windowScore += 20 }
         if ([Int64]$_.hwnd -ne 0) { $windowScore += 10 }
-        if (-not [string]::IsNullOrWhiteSpace($WorkbookStem) -and [string]$_.title -like "*$WorkbookStem*") { $windowScore += 30 }
+        if (Test-ExcelTitleContainsWorkbookStem -Title ([string]$_.title) -WorkbookStem $WorkbookStem) { $windowScore += 30 }
         if ([string]$_.title -match '(?i)repaired|repair|recover|problem with some content') { $windowScore += 25 }
         [pscustomobject][ordered]@{
             pid = $pid
