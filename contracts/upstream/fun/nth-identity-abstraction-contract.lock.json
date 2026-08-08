@@ -1,0 +1,14 @@
+{
+  "schema": "triage-upstream-contract-lock/v1",
+  "contract_id": "fun-nth-identity-abstraction-policy/v1",
+  "source_repository": "EndeavorEverlasting/FUN",
+  "source_commit": "d6b29511fb9ea90428f42257795d63be910ba510",
+  "source_path": "schemas/nth-identity-abstraction-policy.schema.json",
+  "source_git_blob_sha": "ee6a1b30c7a6df80a5ca72eb04110102ecc06873",
+  "source_byte_count": 2526,
+  "source_sha256": "556cbb17ab60065e86396ce8cc1d4c7e635d858f17960a19c44ef76e1209ac86",
+  "local_snapshot": "contracts/upstream/fun/schemas/nth-identity-abstraction-policy.schema.json",
+  "consumer": "triage/nth_identity_abstraction_report.py",
+  "status": "pinned",
+  "proof_ceiling": "Pins the producer reporting schema to the exact FUN branch commit that contains the abstract-detail delivery harness and V11 correction report. The lock must be advanced when the FUN contract merges or changes."
+}

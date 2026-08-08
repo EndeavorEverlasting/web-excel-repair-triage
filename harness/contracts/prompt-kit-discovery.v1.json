@@ -1,0 +1,113 @@
+{
+  "schema_version": "prompt-kit-discovery-contract/v1",
+  "contract_id": "prompt-kit-search-favorites-guided-polish-distribution",
+  "surface": {
+    "canonical_site": "web/prompt-kit/index.html",
+    "behavior_source": "docs/prompt-kit.js",
+    "guided_behavior_source": "docs/prompt-kit-guided-recommendations.js",
+    "journey_behavior_source": "docs/prompt-kit-journey.js",
+    "polish_behavior_source": "docs/prompt-kit-polish.js",
+    "synonym_source": "build_prompt_kit.py",
+    "display_order_source": "registry/prompts/prompt-display-order.v1.json",
+    "guided_prompt_source": "registry/prompts/tutorial-discovery-prompts.v1.json",
+    "tutorial": "docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md",
+    "access_guide": "PROMPT_KIT_ACCESS.md",
+    "repository_front_door": "README.md"
+  },
+  "privacy": {
+    "answer_processing": "local-page-only",
+    "answer_persistence": "none",
+    "workflow_completion_persistence": "session-only",
+    "network_submission": false
+  },
+  "requirements": [
+    {
+      "id": "section_heading_contrast",
+      "expected": "Interactive section headings always set an explicit readable foreground color on the dark Prompt Kit surface."
+    },
+    {
+      "id": "ranked_search",
+      "expected": "Search ranks IDs, names, keywords, synonyms, types, and use-case metadata ahead of incidental prompt-body text."
+    },
+    {
+      "id": "synonym_routing",
+      "expected": "Existing SYNONYMS mappings remain active and partial query terms may resolve related synonym keys such as close -> closeout."
+    },
+    {
+      "id": "body_noise_suppression",
+      "expected": "When strong metadata or synonym matches exist, copyContent-only matches do not flood the visible result set."
+    },
+    {
+      "id": "local_favorites",
+      "expected": "Users can favorite and unfavorite prompt cards; favorite IDs persist in browser localStorage without repository or server writes."
+    },
+    {
+      "id": "favorites_first",
+      "expected": "Visible favorited prompts are promoted into one Favorites section before normal prompt sections and are not duplicated below."
+    },
+    {
+      "id": "favorite_accessibility",
+      "expected": "Favorite controls expose an accessible label and aria-pressed state and do not trigger card copy/open actions."
+    },
+    {
+      "id": "guided_questionnaire",
+      "expected": "A separate visible Tutorial / Find My Prompt control preserves the existing Add Prompt action, asks no more than five bounded questions, and returns one primary recommendation with no more than two follow-on options."
+    },
+    {
+      "id": "guided_uses_shared_search",
+      "expected": "Questionnaire answers are translated into normal search phrases and routed through filterPromptsForQuery against current PROMPTS; no hard-coded prompt-ID recommendation table is allowed."
+    },
+    {
+      "id": "metadata_recommendations",
+      "expected": "Questionnaire results resolve current PROMPTS registry records and expose their existing names and copy content rather than duplicating or fabricating prompt bodies."
+    },
+    {
+      "id": "guided_next_step_journey",
+      "expected": "The recommendation result and every opened prompt expose a structured current-to-next workflow using each live registry record's nextStep, expectedOutput, and referenced prompt IDs; the UI must not maintain a competing hard-coded prompt routing table."
+    },
+    {
+      "id": "guided_completion_state",
+      "expected": "Users may mark the current prompt step complete for the browser session; completion is sessionStorage-only, does not mutate the repository, and remains accessible and reduced-motion safe."
+    },
+    {
+      "id": "tutorial_beacon",
+      "expected": "The tutorial entry point has an obvious steady glow on ordinary displays and a non-animated but still visible state when reduced motion is requested."
+    },
+    {
+      "id": "card_action_rail",
+      "expected": "Favorite, Open, and Copy are rendered inside one explicit action rail with reserved desktop header space and a static touch layout on narrow screens so controls cannot overlap."
+    },
+    {
+      "id": "clipboard_confirmation",
+      "expected": "A successful clipboard write produces a green glowing confirmation toast and a bounded green card-flash animation, with reduced-motion support."
+    },
+    {
+      "id": "stable_identity_resequence",
+      "expected": "Prompt identities and seq values remain stable while a separate validated discovery-rank policy controls default display priority."
+    },
+    {
+      "id": "registry_prompt_fallback",
+      "expected": "P65 provides the same bounded recommendation workflow as a copyable conversational fallback and P64 registers the repository tutorial-portfolio ranking prompt."
+    },
+    {
+      "id": "distribution_front_door",
+      "expected": "Repository guidance exposes the public browser app, phone launcher, direct main ZIP download, direct Windows CMD download, and a one-command main clone path."
+    },
+    {
+      "id": "generated_site_parity",
+      "expected": "The checked-in Prompt Kit website contains the exact canonical base, guided-questionnaire, journey-guidance, and polish behavior sources after regeneration."
+    }
+  ],
+  "validation": [
+    "node --check docs/prompt-kit.js",
+    "node --check docs/prompt-kit-guided-recommendations.js",
+    "node --check docs/prompt-kit-journey.js",
+    "node --check docs/prompt-kit-polish.js",
+    "python scripts/validate_prompt_kit_discovery.py --summary",
+    "python -m unittest tests.test_prompt_kit_discovery -v",
+    "python -m unittest tests.test_skill_prompt_registry -v",
+    "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
+    "git diff --check"
+  ],
+  "proof_ceiling": "Deterministic registry, shared-search recommendation, registry-owned next-step routing, session-only completion state, layout markers, Node syntax, generated-site parity, acquisition documentation, and CI proof. Physical browser rendering, clipboard permissions, assistive-technology coverage, device installation, and user acceptance remain field gates."
+}

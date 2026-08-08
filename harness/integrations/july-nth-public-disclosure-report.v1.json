@@ -1,0 +1,31 @@
+{
+  "schema": "triage-harness-integration/v1",
+  "integration_id": "july-nth-public-disclosure-report",
+  "status": "active",
+  "scope": "July share-ready NTH workbook only",
+  "trigger": "fun-july-nth-public-disclosure-result-ready",
+  "upstream_repository": "EndeavorEverlasting/FUN",
+  "upstream_contract_lock": "contracts/upstream/fun/july-nth-public-disclosure-contract.lock.json",
+  "implementation": "triage/july_nth_public_disclosure_report.py",
+  "cli": "scripts/report_july_nth_public_disclosure.py",
+  "tests": "tests/test_july_nth_public_disclosure_report.py",
+  "workflow": ".github/workflows/july-nth-public-disclosure-report.yml",
+  "skill": ".ai/skills/july-nth-public-disclosure/SKILL.md",
+  "required_inputs": [
+    "fun-july-nth-public-disclosure-result/v1 JSON",
+    "matching fun-july-nth-public-disclosure-policy/v1 JSON"
+  ],
+  "required_outputs": [
+    "triage-july-nth-public-disclosure-report/v1 JSON",
+    "Markdown disposition report"
+  ],
+  "fail_closed_on": [
+    "upstream status is not PASS",
+    "policy identifier mismatch",
+    "cell or package disclosure violations",
+    "math-lock violations",
+    "scope violations",
+    "incomplete artifact identity or counts",
+    "producer report matches a protected disclosure rule"
+  ]
+}

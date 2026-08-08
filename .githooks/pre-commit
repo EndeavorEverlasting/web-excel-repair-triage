@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+staged_tree="$(mktemp -d "${TMPDIR:-/tmp}/web-excel-harness-index.XXXXXX")"
+HARNESS_REPORT="${TMPDIR:-/tmp}/web-excel-harness-pre-commit.json"
+trap 'rm -rf "$staged_tree"' EXIT HUP INT TERM
+
+git checkout-index --all --prefix="$staged_tree/"
+(
+  cd "$staged_tree"
+  python scripts/validate_harness.py --report "$HARNESS_REPORT"
+  python -m unittest tests.test_harness_contract -v
+)
+git diff --cached --check

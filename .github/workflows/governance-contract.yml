@@ -1,0 +1,35 @@
+name: Governance contract
+
+on:
+  pull_request:
+    paths:
+      - AGENTS.md
+      - tests/test_governance_contract.py
+      - .github/workflows/governance-contract.yml
+  push:
+    branches: [main]
+    paths:
+      - AGENTS.md
+      - tests/test_governance_contract.py
+      - .github/workflows/governance-contract.yml
+
+permissions:
+  contents: read
+
+jobs:
+  governance-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile governance validator
+        run: python -m py_compile tests/test_governance_contract.py
+      - name: Enforce canonical governance doctrine
+        run: python -m unittest tests.test_governance_contract -v
+      - name: Check patch hygiene
+        run: git diff --check origin/main...HEAD

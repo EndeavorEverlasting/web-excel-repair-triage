@@ -1,0 +1,35 @@
+{
+  "schema": "web-excel-fun-nth-contract-lock/v1",
+  "canonical_owner": "EndeavorEverlasting/FUN",
+  "consumer_repository": "EndeavorEverlasting/web-excel-repair-triage",
+  "fun_commit": "9ba432808f823e52c6ba80ffd05ec673d2e15acf",
+  "contracts": [
+    {
+      "schema_id": "fun-nth-packet-spec/v1",
+      "source_path": "schemas/nth-packet-spec.schema.json",
+      "snapshot_path": "contracts/upstream/fun/schemas/nth-packet-spec.schema.json",
+      "git_blob_sha": "c9e2da11930c3c3694a88b0e61b12efbe618d882",
+      "sha256": "5838d9006d6441cd3f5c5f39999f85fefef9ca78159842495335cbf1f8eeb81a",
+      "size": 3273
+    },
+    {
+      "schema_id": "fun-nth-artifact-manifest/v1",
+      "source_path": "schemas/nth-artifact-manifest.schema.json",
+      "snapshot_path": "contracts/upstream/fun/schemas/nth-artifact-manifest.schema.json",
+      "git_blob_sha": "2e54a2977a2015110e73a96e34cedb18e44097cf",
+      "sha256": "11cdfe3ecd8f492b2a7658281cb28e95fe3edd85973d04c06e982ef53544c901",
+      "size": 4008
+    },
+    {
+      "schema_id": "fun-nth-validation-result/v1",
+      "source_path": "schemas/nth-validation-result.schema.json",
+      "snapshot_path": "contracts/upstream/fun/schemas/nth-validation-result.schema.json",
+      "git_blob_sha": "59e459d43ee7181bdc02d19b879e67c55ecb550c",
+      "sha256": "340b2ea53b504d75320e74e1c9e19f8676c5c9319c68bfee62a75d8cf487c5ea",
+      "size": 1466
+    }
+  ],
+  "producer_responsibility": "Emit a byte-accurate FUN artifact manifest from a reviewed NTH packet specification and artifact assertion profile.",
+  "acceptance_owner": "EndeavorEverlasting/FUN",
+  "proof_ceiling": "Contract pinning and producer output proof only; FUN retains final byte-level artifact acceptance and evidence authority."
+}

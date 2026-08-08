@@ -10,6 +10,7 @@ from pathlib import Path
 
 from openpyxl import Workbook
 
+_REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 _EXT_LINK_XML = (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
     '<externalLink xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
@@ -92,10 +93,26 @@ def _inject_defects(data: bytes, *, add_external: bool, add_calc_chain: bool) ->
         )
         parts["xl/_rels/workbook.xml.rels"] = rels.encode("utf-8")
         wb = parts["xl/workbook.xml"].decode("utf-8")
+        if 'xmlns:r="' not in wb.split(">")[0]:
+            wb = wb.replace(
+                "<workbook ",
+                '<workbook xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ',
+                1,
+            )
         if "<externalReferences" not in wb:
+            workbook_start = wb.find("<workbook")
+            workbook_end = wb.find(">", workbook_start)
+            if workbook_start < 0 or workbook_end < 0:
+                raise ValueError("generated workbook.xml is missing its workbook root")
+            if "xmlns:r=" not in wb[workbook_start:workbook_end]:
+                wb = (
+                    wb[:workbook_end]
+                    + f' xmlns:r="{_REL_NS}"'
+                    + wb[workbook_end:]
+                )
             wb = wb.replace(
                 "</sheets>",
-                '</sheets><externalReferences><externalReference r:id="rIdExt1"/>'
+                '</sheets><externalReferences xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><externalReference r:id="rIdExt1"/>'
                 "</externalReferences>",
             )
             parts["xl/workbook.xml"] = wb.encode("utf-8")

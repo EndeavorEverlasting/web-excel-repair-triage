@@ -1,0 +1,79 @@
+{
+  "schema_version": "web-excel-artifacts/v1",
+  "protected_paths": [
+    "Candidates/",
+    "Active/"
+  ],
+  "artifacts": [
+    {
+      "id": "harness-control-plane",
+      "kind": "tracked",
+      "canonical_path": "harness/manifest.v1.json",
+      "producer": "Harness infrastructure workflow",
+      "validator": "harness-completeness",
+      "naming": "Stable versioned JSON under harness/",
+      "tracking_policy": "Tracked; update atomically with connected indexes, registries, tests, hooks, workflows, and reports.",
+      "proof_ceiling": "Repository integration and static contract proof."
+    },
+    {
+      "id": "operator-harness-state",
+      "kind": "tracked",
+      "canonical_path": "harness/reports/CURRENT_STATE.md",
+      "producer": "Harness infrastructure workflow",
+      "validator": "harness-completeness",
+      "naming": "Stable uppercase operator report name.",
+      "tracking_policy": "Tracked human-readable state; do not hard-code transient CI or PR claims as permanent truth.",
+      "proof_ceiling": "Human-readable repository state, not runtime acceptance."
+    },
+    {
+      "id": "prompt-kit-website",
+      "kind": "tracked",
+      "canonical_path": "web/prompt-kit/index.html",
+      "producer": "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html",
+      "validator": "prompt-kit-parity",
+      "naming": "Stable checked-in canonical site path.",
+      "tracking_policy": "Tracked deterministic output; edit canonical sources and rebuild.",
+      "proof_ceiling": "Exact generated parity, not browser or clipboard acceptance."
+    },
+    {
+      "id": "harness-completeness-report",
+      "kind": "runtime",
+      "canonical_path": "Outputs/harness-completeness-report.json",
+      "producer": "python scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
+      "validator": "harness-completeness",
+      "naming": "Stable family name; CI may store the same file as a run artifact.",
+      "tracking_policy": "Gitignored runtime evidence or CI artifact.",
+      "proof_ceiling": "Executed static harness checks on one checkout and commit."
+    },
+    {
+      "id": "prompt-kit-interaction-audit-report",
+      "kind": "runtime",
+      "canonical_path": "Outputs/prompt-kit-interaction-audit.json",
+      "producer": "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
+      "validator": "prompt-kit-interaction-audit",
+      "naming": "Stable result schema and family name.",
+      "tracking_policy": "Gitignored runtime evidence or CI artifact.",
+      "proof_ceiling": "Static interaction-contract audit; strict static markers still do not prove browser behavior."
+    },
+    {
+      "id": "prompt-language-audit-report",
+      "kind": "runtime",
+      "canonical_path": "Outputs/prompt-language-audit.json",
+      "producer": "python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary",
+      "validator": "prompt-language-audit",
+      "naming": "Stable result schema and family name.",
+      "tracking_policy": "Gitignored runtime evidence or CI artifact.",
+      "proof_ceiling": "Exhaustive canonical/effective prompt-language proof, not provider obedience."
+    },
+    {
+      "id": "workbook-engine-output",
+      "kind": "runtime",
+      "canonical_path": "Outputs/",
+      "producer": "Focused triage module, launcher, or workflow",
+      "validator": "Focused engine tests plus artifact-hygiene",
+      "naming": "Focused contract; otherwise artifact family plus run ID or timestamp.",
+      "tracking_policy": "Gitignored unless explicitly sanitized and approved as a fixture.",
+      "proof_ceiling": "Depends on executed engine and runtime gates; Excel for Web acceptance remains separate."
+    }
+  ]
+}

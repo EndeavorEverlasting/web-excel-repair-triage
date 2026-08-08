@@ -34,6 +34,7 @@ def build_provenance(
     review_rules_rows: int = 17,
     cf_dictionary_rows_after: int = 0,
     mode: str = "full",
+    openpyxl_save_used: bool = False,
 ) -> Dict[str, Any]:
     live_cf = {name: st.to_dict() for name, st in live_cf_stats.items() if st.patched}
     live_cf_counts_after = {
@@ -53,7 +54,7 @@ def build_provenance(
         "output_workbook": output_workbook,
         "output_zip": output_zip,
         "repair_safety": {
-            "openpyxl_save_used": False,
+            "openpyxl_save_used": openpyxl_save_used,
             "structured_tables_added": False,
         },
         "verification": verification,

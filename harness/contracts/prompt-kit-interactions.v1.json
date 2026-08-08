@@ -1,0 +1,67 @@
+{
+  "schema_version": "prompt-kit-interaction-contract/v1",
+  "contract_id": "prompt-kit-card-interactions",
+  "surface": {
+    "canonical_site": "web/prompt-kit/index.html",
+    "canonical_behavior_source": "docs/prompt-kit.js",
+    "canonical_renderer": "build_prompt_kit.py",
+    "combined_builder": "scripts/build_prompt_kit_registry.py",
+    "main_results_surface": "prompt card grid"
+  },
+  "status": "implemented",
+  "owner": {
+    "workflow": "WORKFLOW.md#b-prompt-registry-or-website-change",
+    "downstream_eval_capability": "skill-evaluation",
+    "implementation_lane": "Prompt Kit product behavior",
+    "forbidden_in_harness_lane": [
+      "docs/prompt-kit.js product mutation",
+      "build_prompt_kit.py product mutation",
+      "web/prompt-kit/index.html direct mutation"
+    ]
+  },
+  "requirements": [
+    {
+      "id": "single_click_copy",
+      "event": "single pointer click on a prompt card",
+      "expected": "Copy the selected prompt's exact copyContent to the clipboard and show copy acknowledgement without opening the detail panel.",
+      "forbidden": "Opening or expanding the prompt detail panel from the single-click action."
+    },
+    {
+      "id": "double_click_expand",
+      "event": "double-click on a prompt card",
+      "expected": "Open or expand the selected prompt detail panel exactly once.",
+      "forbidden": "Leaving duplicate copy acknowledgements or other duplicate single-click side effects from the double-click gesture."
+    },
+    {
+      "id": "outside_click_collapse_restore",
+      "event": "click on the detail backdrop or main prompt page outside the open prompt detail panel",
+      "expected": "Close or collapse the detail panel, return the operator to the main prompt results surface, restore usable focus to the prompt results or originating card, and preserve active filters and search state.",
+      "forbidden": "Closing the entire Prompt Kit, clearing filters/search, or leaving an invisible overlay that blocks the main page."
+    },
+    {
+      "id": "escape_close_preserved",
+      "event": "Escape while the prompt detail panel is open",
+      "expected": "Close or collapse the prompt detail panel before broader Escape-key fallback behavior.",
+      "forbidden": "Regressing the existing Escape-to-close behavior."
+    },
+    {
+      "id": "copy_button_compatibility",
+      "event": "activate the explicit Copy control on a prompt card or detail panel",
+      "expected": "Continue copying the selected prompt content without propagating an unintended card expansion action.",
+      "forbidden": "Breaking the explicit Copy control while adding card-level click behavior."
+    }
+  ],
+  "validation": {
+    "harness_command": "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
+    "implementation_gate": "python scripts/validate_prompt_kit_interactions.py --require-implementation --output Outputs/prompt-kit-interaction-audit.json --summary",
+    "contract_tests": "python -m unittest tests.test_prompt_kit_interactions_contract -v",
+    "exact_site_parity": "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
+    "browser_field_gate": "Observe single-click copy, double-click expansion, backdrop/main-page dismissal, focus restoration, Escape close, and explicit Copy behavior in the canonical Prompt Kit website."
+  },
+  "artifact": {
+    "schema_version": "prompt-kit-interaction-audit-result/v1",
+    "default_path": "Outputs/prompt-kit-interaction-audit.json",
+    "tracking": "gitignored runtime evidence or CI artifact"
+  },
+  "proof_ceiling": "Harness schema/static-source audit proves the interaction requirement is tracked and whether recognizable source markers exist. It does not prove browser event ordering, clipboard permission behavior, focus restoration, visual acceptance, or technician runtime behavior until the strict implementation gate and browser field gate are both exercised."
+}
