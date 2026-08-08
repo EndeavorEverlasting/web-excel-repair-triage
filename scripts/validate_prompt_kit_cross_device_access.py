@@ -32,6 +32,20 @@ REQUIRED_MODE_IDS = {
     "editable-checkout",
     "zip-snapshot",
 }
+EDITABLE_CHECKOUT_REQUIREMENTS = {
+    "origin": REPOSITORY_URL,
+    "worktree": "clean",
+    "branch": "main",
+    "local_only_commits": 0,
+}
+EDITABLE_UPDATE_SEQUENCE = [
+    "git remote get-url origin",
+    "git status --porcelain",
+    "git branch --show-current",
+    "git fetch origin main --prune",
+    "git rev-list --left-right --count HEAD...origin/main",
+    "git merge --ff-only origin/main",
+]
 FORBIDDEN_DESTRUCTIVE_PATTERNS = (
     "git reset --hard",
     "git clean -fd",
@@ -196,11 +210,10 @@ def validate_contract_payload(payload: dict[str, Any]) -> dict[str, dict[str, An
         raise CrossDeviceAccessError("phone-install entry point drifted")
     if by_id["windows-local-app"]["entry_point"] != "Open-Latest-PromptKit.cmd":
         raise CrossDeviceAccessError("Windows local-app entry point drifted")
+
     editable = by_id["editable-checkout"]
     if editable.get("entry_point") != f"git clone --branch main --single-branch {REPOSITORY_URL}":
         raise CrossDeviceAccessError("editable checkout clone command drifted")
-    if editable.get("update_command") != "git pull --ff-only origin main":
-        raise CrossDeviceAccessError("editable checkout must update with ff-only")
     prereqs = _string_list(
         editable.get("android_prerequisites"),
         "editable-checkout.android_prerequisites",
@@ -211,6 +224,13 @@ def validate_contract_payload(payload: dict[str, Any]) -> dict[str, dict[str, An
             raise CrossDeviceAccessError(
                 f"Android editable-checkout prerequisites are missing: {phrase}"
             )
+    if editable.get("existing_checkout_requirements") != EDITABLE_CHECKOUT_REQUIREMENTS:
+        raise CrossDeviceAccessError("editable checkout safety requirements drifted")
+    if editable.get("update_sequence") != EDITABLE_UPDATE_SEQUENCE:
+        raise CrossDeviceAccessError("editable checkout safe update sequence drifted")
+    if any("git pull" in command for command in editable["update_sequence"]):
+        raise CrossDeviceAccessError("editable checkout update sequence must not use bare pull")
+
     if by_id["zip-snapshot"]["entry_point"] != ZIP_URL:
         raise CrossDeviceAccessError("ZIP snapshot URL drifted")
 
@@ -219,6 +239,7 @@ def validate_contract_payload(payload: dict[str, Any]) -> dict[str, dict[str, An
         "Do not tell a normal phone or browser user to clone",
         "download web/prompt-kit/index.html",
         "Distinguish use/install intent from edit/commit/push intent",
+        "verify canonical origin, clean worktree, current branch main, and zero local-only commits",
         "never reset, clean, force-push, or discard local work",
     ):
         if phrase not in guardrails:
@@ -405,7 +426,7 @@ def validate_repository_surfaces() -> None:
             "F-Droid",
             "pkg install git",
             f"git clone --branch main --single-branch {REPOSITORY_URL}",
-            "git pull --ff-only origin main",
+            *EDITABLE_UPDATE_SEQUENCE,
             "Do not require a clone merely to use the Prompt Kit",
         ),
     )
@@ -421,6 +442,20 @@ def validate_repository_surfaces() -> None:
         "### 2. Android or iPhone/iPad install",
         required=(LAUNCHER_URL, "Open in browser", "Add to Home Screen"),
         forbidden=NORMAL_USE_FORBIDDEN,
+        label=ACQUISITION_SKILL,
+    )
+    require_markdown_section(
+        skill,
+        "### 4. Real editable checkout",
+        required=(
+            f"git clone --branch main --single-branch {REPOSITORY_URL}",
+            *EDITABLE_UPDATE_SEQUENCE,
+            "must equal `https://github.com/EndeavorEverlasting/web-excel-repair-triage.git`",
+            "must return no output",
+            "must return `main`",
+            "must report **0** in the first (local-only) count",
+        ),
+        forbidden=("git pull --ff-only origin main",),
         label=ACQUISITION_SKILL,
     )
     lowered_skill = skill.lower()
