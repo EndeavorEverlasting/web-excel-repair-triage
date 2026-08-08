@@ -41,12 +41,20 @@ class PromptKitCrossDeviceAccessTests(unittest.TestCase):
             modes["phone-install"]["entry_point"], cross_device.LAUNCHER_URL
         )
 
-    def test_editable_android_checkout_is_explicit_and_ff_only(self) -> None:
+    def test_editable_android_checkout_requires_state_gates_and_ff_only_merge(self) -> None:
         modes = cross_device.validate_contract_payload(self.load_contract())
         editable = modes["editable-checkout"]
         self.assertTrue(editable["manual_clone_required"])
         self.assertIn("--branch main --single-branch", editable["entry_point"])
-        self.assertEqual(editable["update_command"], "git pull --ff-only origin main")
+        self.assertEqual(
+            editable["existing_checkout_requirements"],
+            cross_device.EDITABLE_CHECKOUT_REQUIREMENTS,
+        )
+        self.assertEqual(
+            editable["update_sequence"],
+            cross_device.EDITABLE_UPDATE_SEQUENCE,
+        )
+        self.assertNotIn("git pull", "\n".join(editable["update_sequence"]))
         prereqs = "\n".join(editable["android_prerequisites"])
         for phrase in ("Termux", "F-Droid", "pkg update", "pkg install git"):
             self.assertIn(phrase, prereqs)
@@ -63,15 +71,27 @@ class PromptKitCrossDeviceAccessTests(unittest.TestCase):
         ):
             cross_device.validate_contract_payload(payload)
 
-    def test_non_ff_only_editable_update_fails_closed(self) -> None:
+    def test_unsafe_editable_update_sequence_fails_closed(self) -> None:
         payload = copy.deepcopy(self.load_contract())
         for mode in payload["modes"]:
             if mode["id"] == "editable-checkout":
-                mode["update_command"] = "git pull origin main"
+                mode["update_sequence"][-1] = "git merge origin/main"
                 break
         with self.assertRaisesRegex(
             cross_device.CrossDeviceAccessError,
-            "editable checkout must update with ff-only",
+            "safe update sequence drifted",
+        ):
+            cross_device.validate_contract_payload(payload)
+
+    def test_missing_editable_branch_gate_fails_closed(self) -> None:
+        payload = copy.deepcopy(self.load_contract())
+        for mode in payload["modes"]:
+            if mode["id"] == "editable-checkout":
+                mode["existing_checkout_requirements"]["branch"] = "any"
+                break
+        with self.assertRaisesRegex(
+            cross_device.CrossDeviceAccessError,
+            "safety requirements drifted",
         ):
             cross_device.validate_contract_payload(payload)
 
