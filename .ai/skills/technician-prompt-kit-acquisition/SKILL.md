@@ -71,18 +71,32 @@ Use `Open-Latest-PromptKit.cmd`. The repository-owned launcher owns clone-or-fas
 
 Use this route only when the user intends to edit source, commit, push, inspect repository files locally, or run repository tooling.
 
-Generic clone:
+Fresh clone:
 
 ```bash
 git clone --branch main --single-branch https://github.com/EndeavorEverlasting/web-excel-repair-triage.git
 cd web-excel-repair-triage
 ```
 
-Existing clean checkout update:
+For an **existing** editable checkout, do not run a bare pull first. Prove the checkout is the canonical clean `main` branch before any integration:
 
 ```bash
-git pull --ff-only origin main
+git remote get-url origin
+git status --porcelain
+git branch --show-current
+git fetch origin main --prune
+git rev-list --left-right --count HEAD...origin/main
+git merge --ff-only origin/main
 ```
+
+Interpret those gates in order:
+
+1. `git remote get-url origin` must equal `https://github.com/EndeavorEverlasting/web-excel-repair-triage.git`.
+2. `git status --porcelain` must return no output. If it is dirty, preserve the work and stop.
+3. `git branch --show-current` must return `main`. Do not update a feature branch as though it were `main`.
+4. `git fetch origin main --prune` may update only remote-tracking state; it does not integrate changes.
+5. `git rev-list --left-right --count HEAD...origin/main` must report **0** in the first (local-only) count. A nonzero first count means local-only/divergent work exists; preserve it and stop.
+6. Only after those gates pass, run `git merge --ff-only origin/main` to update `main` without creating a merge commit or discarding local history.
 
 For Android, install **Termux from F-Droid** rather than relying on the Play Store build, then run:
 
@@ -95,12 +109,7 @@ cd web-excel-repair-triage
 git status
 ```
 
-Later updates remain fast-forward only:
-
-```bash
-cd ~/web-excel-repair-triage
-git pull --ff-only origin main
-```
+Later Android source updates use the same existing-checkout verification sequence above. Do not substitute a bare pull merely because the checkout is on a phone.
 
 A real checkout is the correct Android route when the user wants to edit, commit, push, or keep source locally. It is not required for normal Prompt Kit use.
 
@@ -118,6 +127,7 @@ Explain that ZIP is a snapshot. It does not provide normal Git updates and is no
 
 - Do not require a clone merely to use the Prompt Kit.
 - Distinguish use/install intent from edit/commit/push intent before giving shell commands.
+- Existing editable checkout updates must prove canonical origin, a clean worktree, current branch `main`, and zero local-only commits before an ff-only merge.
 - Never run destructive Git cleanup or tell the operator to discard dirty, divergent, or local-only work merely to update the kit.
 - Never overwrite an existing non-canonical checkout.
 - Never embed credentials or user-specific absolute paths.
@@ -147,7 +157,7 @@ python tests/test_prompt_kit_header_contract.py
 Runtime acceptance remains separate:
 
 - phone/browser: open the public launcher/site and observe install/open behavior;
-- Android editable checkout: run the Termux clone/update commands on the device;
+- Android editable checkout: run the Termux clone/update gates on the device;
 - Windows local app: execute `Open-Latest-PromptKit.cmd` and verify its stable-origin health proof.
 
 ## Proof ceiling
