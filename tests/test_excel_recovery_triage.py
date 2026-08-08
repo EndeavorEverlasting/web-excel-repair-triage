@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import zipfile
 
+import triage.excel_recovery_triage as recovery_triage
 from triage.excel_recovery_triage import (
     build_report,
     main,
@@ -69,6 +70,8 @@ def test_exact_failure_class_is_stop_ship_and_correlated(tmp_path):
     report = build_report(workbook, [log])
 
     assert report["verdict"] == "STOP_SHIP"
+    assert report["achieved_proof"] == "static_package_inspection"
+    assert "did not itself observe Desktop Excel" in report["proof_ceiling"]
     assert "excel_recovery_actions_observed" in report["stop_ship_reasons"]
     assert "xml_part_parse_failure" in report["stop_ship_reasons"]
     assert {item["part"] for item in report["workbook"]["xml_parse_failures"]} == {"xl/styles.xml"}
@@ -104,6 +107,42 @@ def test_valid_static_package_passes_without_claiming_desktop_proof(tmp_path):
     assert report["workbook"]["xml_parse_failures"] == []
 
 
+def test_unreadable_recovery_log_becomes_bounded_stop_ship_evidence(tmp_path):
+    workbook = tmp_path / "ok.xlsx"
+    _write_xlsx(workbook, _valid_parts())
+    missing_log = tmp_path / "missing-error.xml"
+
+    report = build_report(workbook, [missing_log])
+
+    assert report["verdict"] == "STOP_SHIP"
+    assert "recovery_log_parse_failed" in report["stop_ship_reasons"]
+    assert report["recovery_logs"][0]["parsed"] is False
+    assert "FileNotFoundError" in report["recovery_logs"][0]["parse_error"]
+    assert report["recovery_logs"][0]["source_path"] == str(missing_log)
+
+
+def test_zip_member_read_failure_is_reported_not_raised(tmp_path, monkeypatch):
+    workbook = tmp_path / "flaky.xlsx"
+    _write_xlsx(workbook, _valid_parts())
+    real_read = recovery_triage._read_zip_part
+
+    def flaky_read(zf, name):
+        if name == "xl/styles.xml":
+            return b"", "BadZipFile: simulated truncated member"
+        return real_read(zf, name)
+
+    monkeypatch.setattr(recovery_triage, "_read_zip_part", flaky_read)
+    report = build_report(workbook)
+
+    assert report["verdict"] == "STOP_SHIP"
+    assert "xml_part_parse_failure" in report["stop_ship_reasons"]
+    style_failure = next(
+        item for item in report["workbook"]["xml_parse_failures"] if item["part"] == "xl/styles.xml"
+    )
+    assert "zip_read_failed" in style_failure["error"]
+    assert report["workbook"]["styles_and_cf"]["styles_parse_status"] == "FAIL"
+
+
 def test_cli_writes_json_and_markdown(tmp_path):
     workbook = tmp_path / "broken.xlsx"
     parts = _valid_parts()
@@ -125,7 +164,9 @@ def test_cli_writes_json_and_markdown(tmp_path):
     ])
 
     assert rc == 1
-    assert json.loads(json_out.read_text(encoding="utf-8"))["verdict"] == "STOP_SHIP"
+    saved = json.loads(json_out.read_text(encoding="utf-8"))
+    assert saved["verdict"] == "STOP_SHIP"
+    assert saved["achieved_proof"] == "static_package_inspection"
     rendered = markdown_out.read_text(encoding="utf-8")
     assert "STYLES_XML_UNREADABLE" in rendered
     assert "xl/styles.xml" in rendered
