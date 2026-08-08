@@ -5,6 +5,7 @@ import json
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
@@ -20,6 +21,14 @@ class PromptKitCrossDeviceAccessTests(unittest.TestCase):
 
     def test_focused_validator_passes(self) -> None:
         self.assertEqual(cross_device.main([]), 0)
+
+    def test_load_json_rejects_non_object_root(self) -> None:
+        with mock.patch.object(Path, "read_text", return_value="null"):
+            with self.assertRaisesRegex(
+                cross_device.CrossDeviceAccessError,
+                "JSON root must be an object",
+            ):
+                cross_device.load_json(cross_device.CONTRACT_PATH)
 
     def test_normal_phone_use_never_requires_clone(self) -> None:
         modes = cross_device.validate_contract_payload(self.load_contract())
@@ -65,6 +74,79 @@ class PromptKitCrossDeviceAccessTests(unittest.TestCase):
             "editable checkout must update with ff-only",
         ):
             cross_device.validate_contract_payload(payload)
+
+    def test_normal_use_section_rejects_contradictory_clone_instruction(self) -> None:
+        text = "\n".join(
+            (
+                "## Phone, tablet, or any browser",
+                cross_device.PUBLIC_URL,
+                "No clone is required.",
+                "git clone https://example.invalid/repo.git",
+                "## Next section",
+            )
+        )
+        with self.assertRaisesRegex(
+            cross_device.CrossDeviceAccessError,
+            "contradictory normal-use instruction",
+        ):
+            cross_device.require_markdown_section(
+                text,
+                "## Phone, tablet, or any browser",
+                required=(cross_device.PUBLIC_URL, "No clone is required."),
+                forbidden=("git clone",),
+                label="synthetic.md",
+            )
+
+    def test_workflow_entry_point_drift_fails_closed(self) -> None:
+        payload = json.loads(
+            cross_device.WORKFLOWS_PATH.read_text(encoding="utf-8")
+        )
+        mutated = copy.deepcopy(payload)
+        acquisition = next(
+            item
+            for item in mutated["workflows"]
+            if item["id"] == "technician-acquisition"
+        )
+        acquisition["entry_points"] = ["Open-Latest-PromptKit.cmd"]
+        with self.assertRaisesRegex(
+            cross_device.CrossDeviceAccessError,
+            "entry points drifted",
+        ):
+            cross_device.validate_workflow_registration(mutated)
+
+    def test_capability_owner_drift_fails_closed(self) -> None:
+        payload = json.loads(
+            cross_device.CAPABILITIES_PATH.read_text(encoding="utf-8")
+        )
+        mutated = copy.deepcopy(payload)
+        capability = next(
+            item
+            for item in mutated["capabilities"]
+            if item["id"] == "technician-prompt-kit-acquisition"
+        )
+        capability["implementation"] = {"kind": "script", "path": "other.py"}
+        with self.assertRaisesRegex(
+            cross_device.CrossDeviceAccessError,
+            "implementation ownership drifted",
+        ):
+            cross_device.validate_capability_registration(mutated)
+
+    def test_trigger_route_drift_fails_closed(self) -> None:
+        payload = json.loads(
+            cross_device.TRIGGERS_PATH.read_text(encoding="utf-8")
+        )
+        mutated = copy.deepcopy(payload)
+        trigger = next(
+            item
+            for item in mutated["triggers"]
+            if item["id"] == cross_device.ACQUISITION_TRIGGER
+        )
+        trigger["workflow"] = "WORKFLOW.md#wrong"
+        with self.assertRaisesRegex(
+            cross_device.CrossDeviceAccessError,
+            "trigger workflow drifted",
+        ):
+            cross_device.validate_trigger_registration(mutated)
 
     def test_repository_surfaces_are_connected(self) -> None:
         cross_device.validate_repository_surfaces()
