@@ -18,11 +18,11 @@ The triage repository must not copy the analyzer implementation. That would crea
 
 ## Canonical local command
 
-From a SysAdminSuite checkout on Windows:
+From a SysAdminSuite checkout on Windows, use a fictional/local package path in public documentation and substitute the actual operator-local path only at runtime:
 
 ```powershell
 .\scripts\Invoke-SasPackageStaticAnalysis.ps1 `
-  -InputPath 'D:\PrivatePackages\Allscripts' `
+  -InputPath 'D:\PrivatePackages\ExamplePackage' `
   -CreateVenv
 ```
 
@@ -30,7 +30,7 @@ Optional deeper PE/OLE inspection may use an approved offline wheelhouse:
 
 ```powershell
 .\scripts\Invoke-SasPackageStaticAnalysis.ps1 `
-  -InputPath 'D:\PrivatePackages\Allscripts' `
+  -InputPath 'D:\PrivatePackages\ExamplePackage' `
   -CreateVenv `
   -OfflineWheelhouse 'D:\ApprovedWheelhouse'
 ```
