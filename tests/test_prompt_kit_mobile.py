@@ -107,8 +107,8 @@ class PromptKitMobileTests(unittest.TestCase):
         portable = PORTABLE_PS1.read_text(encoding="utf-8")
         acquire = ACQUIRE_CMD.read_text(encoding="utf-8")
         for marker in (
-            "BOOTSTRAP_COMMIT=2282baa2226186fedfae6d696c1531ee5341fa59",
-            "BOOTSTRAP_BLOB=ae13387b05964342b96f89aace30e790a732fd5c",
+            "BOOTSTRAP_COMMIT=771218271a5fa1826f10a92a49e719d5e18f4da6",
+            "BOOTSTRAP_BLOB=98de1e2a26bc44a60410470f986914c5c0681896",
             "api.github.com/repos/EndeavorEverlasting/web-excel-repair-triage/contents/scripts/Open-LatestPromptKitPortable.ps1",
             'Open-LatestPromptKitPortable.ps1',
             '-File "%SCRIPT%" -Destination "%PREFERRED_REPO%"',
@@ -120,8 +120,8 @@ class PromptKitMobileTests(unittest.TestCase):
             quick,
         )
         for marker in (
-            "$AcquireBootstrapCommit = 'b73242b4ada14df421513a7962ef1a826c09d012'",
-            "$AcquireBootstrapBlob = '4a79b58b0b14ee9454c84ea41abeb01b4915d92d'",
+            "$AcquireBootstrapCommit = '0318ded2d55664373f472ac52e3d6346066fe131'",
+            "$AcquireBootstrapBlob = 'e0d73dc6ba0b304119cf4a9785edb74c72c5b2d0'",
             "$StableHost = '127.0.0.1'",
             '$StableUrl = "http://${StableHost}:$Port/"',
             "Import-AcquisitionFunctions",
