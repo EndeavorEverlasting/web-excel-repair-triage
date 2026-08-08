@@ -11,6 +11,7 @@ on:
       - TRIGGERS.md
       - Acquire-Latest-PromptKit.cmd
       - harness/**
+      - registry/prompts/actionable-next-step-policy.v1.json
       - .ai/skills/**
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
@@ -19,6 +20,7 @@ on:
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
+      - tests/test_green_branch_integration_policy.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
       - tests/test_prompt_kit_interactions_contract.py
@@ -36,6 +38,7 @@ on:
       - TRIGGERS.md
       - Acquire-Latest-PromptKit.cmd
       - harness/**
+      - registry/prompts/actionable-next-step-policy.v1.json
       - .ai/skills/**
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
@@ -44,6 +47,7 @@ on:
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
+      - tests/test_green_branch_integration_policy.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
       - tests/test_prompt_kit_interactions_contract.py
@@ -73,6 +77,7 @@ jobs:
             scripts/validate_prompt_kit_interactions.py \
             scripts/validate_prompt_kit_discovery.py \
             scripts/evaluate_prompt_language.py \
+            tests/test_green_branch_integration_policy.py \
             tests/test_harness_contract.py \
             tests/test_operator_command_envelope.py \
             tests/test_prompt_kit_interactions_contract.py \
@@ -103,6 +108,7 @@ jobs:
           python -m unittest tests.test_prompt_kit_interactions_contract -v
           python -m unittest tests.test_prompt_kit_discovery -v
           python -m unittest tests.test_prompt_language_audit -v
+          python -m unittest tests.test_green_branch_integration_policy -v
       - name: Audit Prompt Kit interaction contract
         run: python scripts/validate_prompt_kit_interactions.py --output "$RUNNER_TEMP/prompt-kit-interaction-audit.json" --summary
       - name: Upload Prompt Kit interaction audit
