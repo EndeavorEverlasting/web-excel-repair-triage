@@ -47,24 +47,19 @@ class PromptKitFreshnessGuidanceTests(unittest.TestCase):
         self.assertIn("explicitly declines to refresh", behavior)
         self.assertIn("stale-or-unverified", behavior)
 
-    def test_trigger_registry_fires_when_user_reports_version(self) -> None:
-        payload = json.loads(freshness.TRIGGERS_PATH.read_text(encoding="utf-8"))
-        freshness.validate_trigger(payload)
+    def test_manifest_registers_freshness_domain(self) -> None:
+        payload = json.loads(freshness.MANIFEST_PATH.read_text(encoding="utf-8"))
+        freshness.validate_manifest(payload)
 
-    def test_trigger_registry_drift_fails_closed(self) -> None:
-        payload = json.loads(freshness.TRIGGERS_PATH.read_text(encoding="utf-8"))
+    def test_manifest_freshness_owner_drift_fails_closed(self) -> None:
+        payload = json.loads(freshness.MANIFEST_PATH.read_text(encoding="utf-8"))
         mutated = copy.deepcopy(payload)
-        trigger = next(item for item in mutated["triggers"] if item["id"] == freshness.TRIGGER_ID)
-        trigger["conditions"] = [
-            condition
-            for condition in trigger["conditions"]
-            if condition != freshness.FRESHNESS_TRIGGER
-        ]
+        mutated["domain_contracts"]["prompt_kit_freshness_guidance"]["workflow"] = "WORKFLOW.md#wrong"
         with self.assertRaisesRegex(
             freshness.FreshnessGuidanceError,
-            "does not fire on a reported version label",
+            "freshness domain ownership drifted",
         ):
-            freshness.validate_trigger(mutated)
+            freshness.validate_manifest(mutated)
 
     def test_skill_and_report_are_connected(self) -> None:
         freshness.validate_skill()
