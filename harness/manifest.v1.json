@@ -69,6 +69,15 @@
       "access_guide": "PROMPT_KIT_ACCESS.md",
       "phone_guide": "OPEN_PROMPT_KIT_ON_PHONE.md"
     },
+    "prompt_kit_freshness_guidance": {
+      "contract": "harness/contracts/prompt-kit-freshness-guidance.v1.json",
+      "validator": "scripts/validate_prompt_kit_freshness_guidance.py",
+      "contract_tests": "tests/test_prompt_kit_freshness_guidance.py",
+      "workflow": "WORKFLOW.md#a-technician-acquisition-or-update",
+      "harness_gate": "python scripts/validate_prompt_kit_freshness_guidance.py --summary",
+      "skill": ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
+      "trigger": "technician-needs-latest-prompt-kit"
+    },
     "operator_command_envelope": {
       "contract": "harness/contracts/operator-command-envelope.v1.json",
       "validator": "scripts/validate_operator_command_envelope.py",
