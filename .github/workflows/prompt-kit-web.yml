@@ -16,6 +16,7 @@ on:
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_prompt_kit_portability.py
       - triage/prompt_library_portability.py
+      - registry/prompts/actionable-next-step-policy.v1.json
       - registry/prompts/skill-development-prompts.v1.json
       - registry/prompts/tutorial-discovery-prompts.v1.json
       - registry/prompts/prompt-display-order.v1.json
@@ -38,6 +39,8 @@ on:
       - web/prompt-kit/index.html
       - web/README.md
       - tests/Test-PromptKitQuickOpenPathResolution.ps1
+      - tests/test_green_branch_integration_policy.py
+      - tests/test_prompt_language_audit.py
       - tests/test_prompt_kit_header_contract.py
       - tests/test_prompt_kit_product_interactions.py
       - tests/test_prompt_kit_filtering_access.py
@@ -66,6 +69,7 @@ on:
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_prompt_kit_portability.py
       - triage/prompt_library_portability.py
+      - registry/prompts/actionable-next-step-policy.v1.json
       - registry/prompts/skill-development-prompts.v1.json
       - registry/prompts/tutorial-discovery-prompts.v1.json
       - registry/prompts/prompt-display-order.v1.json
@@ -88,6 +92,8 @@ on:
       - web/prompt-kit/index.html
       - web/README.md
       - tests/Test-PromptKitQuickOpenPathResolution.ps1
+      - tests/test_green_branch_integration_policy.py
+      - tests/test_prompt_language_audit.py
       - tests/test_prompt_kit_header_contract.py
       - tests/test_prompt_kit_product_interactions.py
       - tests/test_prompt_kit_filtering_access.py
@@ -124,6 +130,8 @@ jobs:
             scripts/validate_prompt_kit_discovery.py \
             scripts/validate_prompt_kit_portability.py \
             triage/prompt_library_portability.py \
+            tests/test_green_branch_integration_policy.py \
+            tests/test_prompt_language_audit.py \
             tests/test_prompt_kit_header_contract.py \
             tests/test_prompt_kit_product_interactions.py \
             tests/test_prompt_kit_filtering_access.py \
@@ -208,6 +216,9 @@ jobs:
         run: |
           python scripts/validate_prompt_kit_discovery.py --summary
           python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
+      - name: Validate merge-forward prompt language
+        run: |
+          python -m unittest tests.test_prompt_language_audit tests.test_green_branch_integration_policy -v
       - name: Validate combined prompt registry
         run: python -m unittest tests.test_skill_prompt_registry -v
       - name: Validate Prompt Kit product interactions

@@ -3,14 +3,14 @@
   "capabilities": [
     {
       "id": "prompt-language-audit",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "status": "canonical",
       "skill": ".ai/skills/prompt-language-audit/SKILL.md",
       "trigger_ids": [
         "prompt-language-change",
         "lazy-next-action-report"
       ],
-      "operation": "Evaluate every canonical and effective Prompt Kit prompt for complete, actionable, non-lazy language and emit one disposition per prompt.",
+      "operation": "Evaluate every canonical and effective Prompt Kit prompt for complete, actionable, non-lazy language, including the repository-wide green-branch integration default, and emit one disposition per prompt.",
       "inputs": [
         "docs/prompts.json",
         "registry/prompts/*.json",
@@ -21,13 +21,14 @@
       "outputs": [
         "prompt-language-audit-result/v1 report",
         "per-prompt disposition",
+        "green-integration policy coverage",
         "finding-to-repair ledger"
       ],
       "implementation": {
         "kind": "script",
         "path": "scripts/evaluate_prompt_language.py"
       },
-      "proof_ceiling": "Exhaustive static registry and effective-prompt language proof; no provider compliance proof."
+      "proof_ceiling": "Exhaustive static registry and effective-prompt language proof, including green-integration language; no provider compliance or actual merge proof."
     },
     {
       "id": "skill-evaluation",
@@ -115,13 +116,13 @@
     },
     {
       "id": "harness-infrastructure-maintenance",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "status": "canonical",
       "skill": ".ai/skills/harness-infrastructure-maintenance/SKILL.md",
       "trigger_ids": [
         "harness-infrastructure-change"
       ],
-      "operation": "Inspect, repair, validate, report, and hand off the repository operational harness without crossing into governance or product implementation.",
+      "operation": "Inspect, repair, validate, integrate green owned work, report, and hand off the repository operational harness without crossing into governance or product implementation.",
       "inputs": [
         "AGENTS.md",
         "CODEBASE_MAP.md",
@@ -142,14 +143,16 @@
         "harness-completeness-report/v1",
         "focused regression tests",
         "updated operator report",
-        "commit and push or PR evidence",
+        "commit and push evidence",
+        "merge evidence when the exact validated PR head is green and authorized",
+        "named merge blocker when integration cannot proceed",
         "actionable next command"
       ],
       "implementation": {
         "kind": "script",
         "path": "scripts/validate_harness.py"
       },
-      "proof_ceiling": "Static repository and CI harness proof on the tested commit; no product runtime, provider, GUI, protected-target, or production proof."
+      "proof_ceiling": "Static repository and CI harness proof on the tested commit plus provider-reported merge state when performed; no product runtime, provider execution semantics, GUI, protected-target, or production proof."
     }
   ]
 }

@@ -29,7 +29,11 @@
   "compound_connectors_pattern": "\\s*(?:,|;|\\b(?:then|and then|and|after that)\\b)\\s*",
   "required_effective_next_step_phrases": [
     "first executable",
-    "canonical artifact or proof"
+    "canonical artifact or proof",
+    "merge it in the same run",
+    "required checks",
+    "owning harness validators",
+    "green"
   ],
   "result_schema": {
     "prompt_id": "string",
