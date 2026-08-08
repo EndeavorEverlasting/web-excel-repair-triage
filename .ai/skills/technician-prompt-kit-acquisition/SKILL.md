@@ -61,7 +61,7 @@ https://endeavoreverlasting.github.io/web-excel-repair-triage/
 - iPhone/iPad: open in Safari, use **Share → Add to Home Screen**.
 - If the GitHub mobile app opens its in-app browser, use **Open in browser** first.
 
-Do not tell a phone user to hunt for or download `web/prompt-kit/index.html` from the GitHub app as the primary access path.
+The tracked generated HTML path is not a phone acquisition step. Keep normal phone users on the public launcher instead of source-file navigation.
 
 ### 3. Windows stable-origin local app
 
