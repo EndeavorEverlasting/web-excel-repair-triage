@@ -22,6 +22,9 @@ PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/prom
 LAUNCHER_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/"
 REPOSITORY_URL = "https://github.com/EndeavorEverlasting/web-excel-repair-triage.git"
 ZIP_URL = "https://github.com/EndeavorEverlasting/web-excel-repair-triage/archive/refs/heads/main.zip"
+ACQUISITION_SKILL = ".ai/skills/technician-prompt-kit-acquisition/SKILL.md"
+ACQUISITION_TRIGGER = "technician-needs-latest-prompt-kit"
+ACQUISITION_WORKFLOW = "WORKFLOW.md#a-technician-acquisition-or-update"
 REQUIRED_MODE_IDS = {
     "browser-use",
     "phone-install",
@@ -36,33 +39,47 @@ FORBIDDEN_DESTRUCTIVE_PATTERNS = (
     "git push --force",
     "git checkout -f",
 )
+NORMAL_USE_FORBIDDEN = (
+    "git clone",
+    "main.zip",
+    "download `web/prompt-kit/index.html`",
+    "download web/prompt-kit/index.html",
+)
 
 
 class CrossDeviceAccessError(RuntimeError):
     """Raised when the cross-device Prompt Kit access contract drifts."""
 
 
-def load_json(path: Path) -> Any:
+def _path_label(path: Path) -> str:
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        return path.relative_to(ROOT).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def load_json(path: Path) -> dict[str, Any]:
+    label = _path_label(path)
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
-        raise CrossDeviceAccessError(f"missing required file: {path.relative_to(ROOT)}") from exc
+        raise CrossDeviceAccessError(f"missing required file: {label}") from exc
     except json.JSONDecodeError as exc:
-        raise CrossDeviceAccessError(
-            f"invalid JSON in {path.relative_to(ROOT)}: {exc}"
-        ) from exc
+        raise CrossDeviceAccessError(f"invalid JSON in {label}: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise CrossDeviceAccessError(f"{label} JSON root must be an object")
+    return payload
 
 
 def require_text(path: Path, phrases: tuple[str, ...]) -> str:
+    label = _path_label(path)
     try:
         text = path.read_text(encoding="utf-8")
     except FileNotFoundError as exc:
-        raise CrossDeviceAccessError(f"missing required file: {path.relative_to(ROOT)}") from exc
+        raise CrossDeviceAccessError(f"missing required file: {label}") from exc
     for phrase in phrases:
         if phrase not in text:
-            raise CrossDeviceAccessError(
-                f"{path.relative_to(ROOT)} is missing required text: {phrase}"
-            )
+            raise CrossDeviceAccessError(f"{label} is missing required text: {phrase}")
     return text
 
 
@@ -77,6 +94,46 @@ def _string_list(value: Any, field: str) -> list[str]:
     if len(result) != len(set(result)):
         raise CrossDeviceAccessError(f"{field} contains duplicate items")
     return result
+
+
+def require_markdown_section(
+    text: str,
+    heading: str,
+    *,
+    required: tuple[str, ...],
+    forbidden: tuple[str, ...] = (),
+    label: str,
+) -> str:
+    """Validate required/forbidden text inside one Markdown heading boundary."""
+    lines = text.splitlines()
+    try:
+        start = next(index for index, line in enumerate(lines) if line.strip() == heading)
+    except StopIteration as exc:
+        raise CrossDeviceAccessError(f"{label} is missing section: {heading}") from exc
+
+    level = len(heading) - len(heading.lstrip("#"))
+    end = len(lines)
+    for index in range(start + 1, len(lines)):
+        stripped = lines[index].lstrip()
+        if not stripped.startswith("#"):
+            continue
+        next_level = len(stripped) - len(stripped.lstrip("#"))
+        if next_level <= level:
+            end = index
+            break
+    section = "\n".join(lines[start:end])
+    lowered = section.lower()
+    for phrase in required:
+        if phrase not in section:
+            raise CrossDeviceAccessError(
+                f"{label} section {heading!r} is missing required text: {phrase}"
+            )
+    for phrase in forbidden:
+        if phrase.lower() in lowered:
+            raise CrossDeviceAccessError(
+                f"{label} section {heading!r} contains contradictory normal-use instruction: {phrase}"
+            )
+    return section
 
 
 def validate_contract_payload(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -144,7 +201,10 @@ def validate_contract_payload(payload: dict[str, Any]) -> dict[str, dict[str, An
         raise CrossDeviceAccessError("editable checkout clone command drifted")
     if editable.get("update_command") != "git pull --ff-only origin main":
         raise CrossDeviceAccessError("editable checkout must update with ff-only")
-    prereqs = _string_list(editable.get("android_prerequisites"), "editable-checkout.android_prerequisites")
+    prereqs = _string_list(
+        editable.get("android_prerequisites"),
+        "editable-checkout.android_prerequisites",
+    )
     prereq_text = "\n".join(prereqs)
     for phrase in ("Termux", "F-Droid", "pkg update", "pkg install git"):
         if phrase not in prereq_text:
@@ -168,8 +228,122 @@ def validate_contract_payload(payload: dict[str, Any]) -> dict[str, dict[str, An
     return by_id
 
 
+def validate_workflow_registration(payload: dict[str, Any]) -> None:
+    workflows = payload.get("workflows")
+    if not isinstance(workflows, list):
+        raise CrossDeviceAccessError("workflow registry workflows must be a list")
+    acquisition = next(
+        (
+            item
+            for item in workflows
+            if isinstance(item, dict) and item.get("id") == "technician-acquisition"
+        ),
+        None,
+    )
+    if not isinstance(acquisition, dict):
+        raise CrossDeviceAccessError("technician-acquisition workflow is missing")
+    if acquisition.get("document") != ACQUISITION_WORKFLOW:
+        raise CrossDeviceAccessError("technician-acquisition workflow document drifted")
+    if acquisition.get("validation_profile") != "harness":
+        raise CrossDeviceAccessError("technician-acquisition validation profile drifted")
+    expected_entry_points = {
+        PUBLIC_URL,
+        LAUNCHER_URL,
+        "Open-Latest-PromptKit.cmd",
+        "Acquire-Latest-PromptKit.cmd",
+    }
+    if set(_string_list(acquisition.get("entry_points"), "technician-acquisition.entry_points")) != expected_entry_points:
+        raise CrossDeviceAccessError("technician-acquisition entry points drifted")
+    owned = _string_list(acquisition.get("owned_scope"), "technician-acquisition.owned_scope")
+    if "harness/contracts/prompt-kit-cross-device-access.v1.json" not in owned:
+        raise CrossDeviceAccessError("technician-acquisition no longer owns the cross-device contract")
+    forbidden = _string_list(
+        acquisition.get("forbidden_scope"),
+        "technician-acquisition.forbidden_scope",
+    )
+    if "requiring a clone for normal browser or phone use" not in forbidden:
+        raise CrossDeviceAccessError("technician-acquisition no-clone guardrail drifted")
+
+
+def validate_capability_registration(payload: dict[str, Any]) -> None:
+    capabilities = payload.get("capabilities")
+    if not isinstance(capabilities, list):
+        raise CrossDeviceAccessError("capability registry capabilities must be a list")
+    capability = next(
+        (
+            item
+            for item in capabilities
+            if isinstance(item, dict)
+            and item.get("id") == "technician-prompt-kit-acquisition"
+        ),
+        None,
+    )
+    if not isinstance(capability, dict):
+        raise CrossDeviceAccessError("technician-prompt-kit-acquisition capability is missing")
+    if capability.get("status") != "canonical":
+        raise CrossDeviceAccessError("technician acquisition capability must remain canonical")
+    if capability.get("skill") != ACQUISITION_SKILL:
+        raise CrossDeviceAccessError("technician acquisition capability skill drifted")
+    if capability.get("trigger_ids") != [ACQUISITION_TRIGGER]:
+        raise CrossDeviceAccessError("technician acquisition capability trigger ownership drifted")
+    if capability.get("implementation") != {
+        "kind": "launcher",
+        "path": "Acquire-Latest-PromptKit.cmd",
+    }:
+        raise CrossDeviceAccessError("technician acquisition implementation ownership drifted")
+    outputs = set(_string_list(capability.get("outputs"), "technician acquisition outputs"))
+    expected_outputs = {
+        "selected cross-device access mode",
+        "public Prompt Kit or phone install surface",
+        "validated Windows local app when requested",
+        "clean editable checkout when source work is requested",
+        "explicit runtime proof ceiling",
+    }
+    if outputs != expected_outputs:
+        raise CrossDeviceAccessError("technician acquisition capability outputs drifted")
+
+
+def validate_trigger_registration(payload: dict[str, Any]) -> None:
+    triggers = payload.get("triggers")
+    if not isinstance(triggers, list):
+        raise CrossDeviceAccessError("trigger registry triggers must be a list")
+    trigger = next(
+        (
+            item
+            for item in triggers
+            if isinstance(item, dict) and item.get("id") == ACQUISITION_TRIGGER
+        ),
+        None,
+    )
+    if not isinstance(trigger, dict):
+        raise CrossDeviceAccessError("technician-needs-latest-prompt-kit trigger is missing")
+    if trigger.get("capability_id") != "technician-prompt-kit-acquisition":
+        raise CrossDeviceAccessError("technician acquisition trigger capability drifted")
+    if trigger.get("skill") != ACQUISITION_SKILL:
+        raise CrossDeviceAccessError("technician acquisition trigger skill drifted")
+    if trigger.get("workflow") != ACQUISITION_WORKFLOW:
+        raise CrossDeviceAccessError("technician acquisition trigger workflow drifted")
+    expected_conditions = {
+        "user wants to open or use the Prompt Kit in a browser",
+        "phone or tablet user wants to open, install, or Add to Home Screen",
+        "Windows user wants the stable local Prompt Kit app",
+        "user wants an editable local checkout to edit, commit, push, or run repository tooling",
+        "user explicitly wants a source ZIP snapshot without Git",
+    }
+    if set(_string_list(trigger.get("conditions"), "technician acquisition conditions")) != expected_conditions:
+        raise CrossDeviceAccessError("technician acquisition trigger conditions drifted")
+    expected_forbidden = {
+        "destructive Git cleanup is proposed",
+        "credential embedding or authentication automation is requested",
+        "an editable checkout update is requested while that checkout is dirty, divergent, non-main, or has an unexpected origin",
+        "the request is a Prompt Kit product behavior change rather than acquisition or access",
+    }
+    if set(_string_list(trigger.get("forbidden_conditions"), "technician acquisition forbidden conditions")) != expected_forbidden:
+        raise CrossDeviceAccessError("technician acquisition trigger forbidden conditions drifted")
+
+
 def validate_repository_surfaces() -> None:
-    require_text(
+    access_guide = require_text(
         ACCESS_GUIDE_PATH,
         (
             PUBLIC_URL,
@@ -180,7 +354,20 @@ def validate_repository_surfaces() -> None:
             f"git clone --branch main --single-branch {REPOSITORY_URL}",
         ),
     )
-    require_text(
+    require_markdown_section(
+        access_guide,
+        "## Phone, tablet, or any browser",
+        required=(
+            PUBLIC_URL,
+            "No repository clone, ZIP extraction, Git client, Python installation, PowerShell, or local web server is required for normal browser use.",
+            "Add to Home Screen",
+            "Add to Home screen",
+        ),
+        forbidden=NORMAL_USE_FORBIDDEN,
+        label="PROMPT_KIT_ACCESS.md",
+    )
+
+    phone_guide = require_text(
         PHONE_GUIDE_PATH,
         (
             LAUNCHER_URL,
@@ -190,6 +377,20 @@ def validate_repository_surfaces() -> None:
             "same Prompt Kit used on desktop",
         ),
     )
+    require_markdown_section(
+        phone_guide,
+        "## One tap — no download required",
+        required=(
+            LAUNCHER_URL,
+            PUBLIC_URL,
+            "does not need to download `index.html`",
+            "Open in browser",
+            "Install on this Android phone",
+        ),
+        forbidden=("git clone", "main.zip"),
+        label="OPEN_PROMPT_KIT_ON_PHONE.md",
+    )
+
     skill = require_text(
         SKILL_PATH,
         (
@@ -208,6 +409,20 @@ def validate_repository_surfaces() -> None:
             "Do not require a clone merely to use the Prompt Kit",
         ),
     )
+    require_markdown_section(
+        skill,
+        "### 1. Normal browser use",
+        required=(PUBLIC_URL, "Do not require a clone merely to use the Prompt Kit"),
+        forbidden=NORMAL_USE_FORBIDDEN,
+        label=ACQUISITION_SKILL,
+    )
+    require_markdown_section(
+        skill,
+        "### 2. Android or iPhone/iPad install",
+        required=(LAUNCHER_URL, "Open in browser", "Add to Home Screen"),
+        forbidden=NORMAL_USE_FORBIDDEN,
+        label=ACQUISITION_SKILL,
+    )
     lowered_skill = skill.lower()
     for pattern in FORBIDDEN_DESTRUCTIVE_PATTERNS:
         if pattern in lowered_skill:
@@ -216,69 +431,49 @@ def validate_repository_surfaces() -> None:
             )
 
     manifest = load_json(MANIFEST_PATH)
-    domain = manifest.get("domain_contracts", {}).get("prompt_kit_cross_device_access")
+    domains = manifest.get("domain_contracts")
+    if not isinstance(domains, dict):
+        raise CrossDeviceAccessError("manifest domain_contracts must be an object")
+    domain = domains.get("prompt_kit_cross_device_access")
     if not isinstance(domain, dict):
         raise CrossDeviceAccessError("manifest is missing prompt_kit_cross_device_access")
     expected_domain = {
         "contract": "harness/contracts/prompt-kit-cross-device-access.v1.json",
         "validator": "scripts/validate_prompt_kit_cross_device_access.py",
         "contract_tests": "tests/test_prompt_kit_cross_device_access.py",
-        "workflow": "WORKFLOW.md#a-technician-acquisition-or-update",
+        "workflow": ACQUISITION_WORKFLOW,
         "harness_gate": "python scripts/validate_prompt_kit_cross_device_access.py --summary",
     }
     for key, value in expected_domain.items():
         if domain.get(key) != value:
-            raise CrossDeviceAccessError(
-                f"manifest cross-device domain field drifted: {key}"
-            )
+            raise CrossDeviceAccessError(f"manifest cross-device domain field drifted: {key}")
 
-    workflows = load_json(WORKFLOWS_PATH).get("workflows", [])
-    acquisition = next((item for item in workflows if item.get("id") == "technician-acquisition"), None)
-    if not isinstance(acquisition, dict):
-        raise CrossDeviceAccessError("technician-acquisition workflow is missing")
-    workflow_text = json.dumps(acquisition, sort_keys=True).lower()
-    for phrase in ("phone", "browser", "edit", "commit", "public"):
-        if phrase not in workflow_text:
-            raise CrossDeviceAccessError(
-                f"technician-acquisition workflow lacks cross-device routing term: {phrase}"
-            )
+    validate_workflow_registration(load_json(WORKFLOWS_PATH))
+    validate_capability_registration(load_json(CAPABILITIES_PATH))
+    validate_trigger_registration(load_json(TRIGGERS_PATH))
 
-    capabilities = load_json(CAPABILITIES_PATH).get("capabilities", [])
-    capability = next(
-        (item for item in capabilities if item.get("id") == "technician-prompt-kit-acquisition"),
+    artifacts = load_json(ARTIFACTS_PATH).get("artifacts")
+    if not isinstance(artifacts, list):
+        raise CrossDeviceAccessError("artifact registry artifacts must be a list")
+    site = next(
+        (
+            item
+            for item in artifacts
+            if isinstance(item, dict) and item.get("id") == "prompt-kit-website"
+        ),
         None,
     )
-    if not isinstance(capability, dict):
-        raise CrossDeviceAccessError("technician-prompt-kit-acquisition capability is missing")
-    capability_text = json.dumps(capability, sort_keys=True).lower()
-    for phrase in ("public", "phone", "editable checkout", "termux"):
-        if phrase not in capability_text:
-            raise CrossDeviceAccessError(
-                f"acquisition capability lacks cross-device routing term: {phrase}"
-            )
-
-    triggers = load_json(TRIGGERS_PATH).get("triggers", [])
-    trigger = next(
-        (item for item in triggers if item.get("id") == "technician-needs-latest-prompt-kit"),
-        None,
-    )
-    if not isinstance(trigger, dict):
-        raise CrossDeviceAccessError("technician-needs-latest-prompt-kit trigger is missing")
-    trigger_text = json.dumps(trigger, sort_keys=True).lower()
-    for phrase in ("phone", "browser", "install", "edit"):
-        if phrase not in trigger_text:
-            raise CrossDeviceAccessError(
-                f"acquisition trigger lacks cross-device routing term: {phrase}"
-            )
-
-    artifacts = load_json(ARTIFACTS_PATH).get("artifacts", [])
-    site = next((item for item in artifacts if item.get("id") == "prompt-kit-website"), None)
     if not isinstance(site, dict):
         raise CrossDeviceAccessError("prompt-kit-website artifact is missing")
-    surfaces = site.get("delivery_surfaces")
-    if not isinstance(surfaces, list):
-        raise CrossDeviceAccessError("prompt-kit-website delivery_surfaces are missing")
-    if PUBLIC_URL not in surfaces or LAUNCHER_URL not in surfaces or "Open-Latest-PromptKit.cmd" not in surfaces:
+    surfaces = set(_string_list(site.get("delivery_surfaces"), "prompt-kit-website.delivery_surfaces"))
+    expected_surfaces = {
+        PUBLIC_URL,
+        LAUNCHER_URL,
+        "Open-Latest-PromptKit.cmd",
+        "PROMPT_KIT_ACCESS.md",
+        "OPEN_PROMPT_KIT_ON_PHONE.md",
+    }
+    if surfaces != expected_surfaces:
         raise CrossDeviceAccessError("prompt-kit-website delivery surfaces drifted")
 
 
