@@ -30,22 +30,35 @@ function Invoke-Git {
 
     $previous = Get-Location
     $previousErrorActionPreference = $ErrorActionPreference
+    $stderrPath = [System.IO.Path]::GetTempFileName()
+    $output = @()
+    $stderr = @()
+    $exitCode = -1
     try {
         Set-Location -LiteralPath $WorkingDirectory
         $ErrorActionPreference = 'Continue'
-        $output = & git @Arguments 2>&1
+        $output = & git @Arguments 2> $stderrPath
         $exitCode = $LASTEXITCODE
+        if (Test-Path -LiteralPath $stderrPath) {
+            $stderr = @(Get-Content -LiteralPath $stderrPath -ErrorAction SilentlyContinue)
+        }
     }
     finally {
         $ErrorActionPreference = $previousErrorActionPreference
         Set-Location -LiteralPath $previous
+        if (Test-Path -LiteralPath $stderrPath) {
+            Remove-Item -LiteralPath $stderrPath -Force -ErrorAction SilentlyContinue
+        }
     }
 
-    $text = ($output | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
+    $stdoutText = ($output | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
+    $stderrText = ($stderr | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
     if ($exitCode -ne 0) {
-        throw "git $($Arguments -join ' ') failed with exit code $exitCode.`r`n$text"
+        $diagnostic = @($stdoutText, $stderrText) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+        $detail = $diagnostic -join [Environment]::NewLine
+        throw "git $($Arguments -join ' ') failed with exit code $exitCode.`r`n$detail"
     }
-    return $text.Trim()
+    return $stdoutText.Trim()
 }
 
 function Resolve-PythonCommand {
@@ -342,6 +355,13 @@ $form.Text = 'Get Latest Prompt Kit'
 $form.StartPosition = 'CenterScreen'
 $form.Size = New-Object System.Drawing.Size(760, 520)
 $form.MinimumSize = New-Object System.Drawing.Size(760, 520)
+$form.Tag = 'idle'
+$form.Add_FormClosing({
+    param($sender, $eventArgs)
+    if ([string]$sender.Tag -eq 'acquiring') {
+        $eventArgs.Cancel = $true
+    }
+})
 
 $title = New-Object System.Windows.Forms.Label
 $title.Text = 'Clone or safely update the Prompt Kit repository'
@@ -440,8 +460,10 @@ $browseButton.Add_Click({
 $closeButton.Add_Click({ $form.Close() })
 
 $runButton.Add_Click({
+    $form.Tag = 'acquiring'
     $runButton.Enabled = $false
     $browseButton.Enabled = $false
+    $closeButton.Enabled = $false
     try {
         & $writeLog 'Starting safe acquisition.'
         $repositoryRoot = Update-RepositorySafely -Destination $destinationBox.Text -WriteLog $writeLog
@@ -470,8 +492,12 @@ $runButton.Add_Click({
         ) | Out-Null
     }
     finally {
-        $runButton.Enabled = $true
-        $browseButton.Enabled = $true
+        $form.Tag = 'idle'
+        if (-not $form.IsDisposed) {
+            $runButton.Enabled = $true
+            $browseButton.Enabled = $true
+            $closeButton.Enabled = $true
+        }
     }
 })
 
