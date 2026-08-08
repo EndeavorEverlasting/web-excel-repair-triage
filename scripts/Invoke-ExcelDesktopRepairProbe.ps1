@@ -74,19 +74,25 @@ do {
     foreach ($root in $scanRoots) {
         Get-ChildItem -LiteralPath $root -Filter "error*.xml" -File -ErrorAction SilentlyContinue | ForEach-Object {
             $isFresh = -not $before.ContainsKey($_.FullName) -or $_.LastWriteTimeUtc -gt $startedUtc
-            if (-not $isFresh) { return }
-            try {
-                $text = Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8 -ErrorAction Stop
-            }
-            catch { return }
-            $mentionsWorkbook =
-                $text.IndexOf($workbookLeaf, [System.StringComparison]::OrdinalIgnoreCase) -ge 0 -or
-                $text.IndexOf($workbookStem, [System.StringComparison]::OrdinalIgnoreCase) -ge 0
-            if (-not $mentionsWorkbook) { return }
-            $current[$_.FullName] = [pscustomobject]@{
-                FullName = $_.FullName
-                Length = $_.Length
-                LastWriteTimeUtc = $_.LastWriteTimeUtc
+            if ($isFresh) {
+                try {
+                    $text = Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8 -ErrorAction Stop
+                }
+                catch {
+                    $text = $null
+                }
+                if ($null -ne $text) {
+                    $mentionsWorkbook =
+                        $text.IndexOf($workbookLeaf, [System.StringComparison]::OrdinalIgnoreCase) -ge 0 -or
+                        $text.IndexOf($workbookStem, [System.StringComparison]::OrdinalIgnoreCase) -ge 0
+                    if ($mentionsWorkbook) {
+                        $current[$_.FullName] = [pscustomobject]@{
+                            FullName = $_.FullName
+                            Length = $_.Length
+                            LastWriteTimeUtc = $_.LastWriteTimeUtc
+                        }
+                    }
+                }
             }
         }
     }
@@ -110,9 +116,14 @@ $newLogs = @()
 foreach ($item in @($attributedLogs.Values | Sort-Object FullName)) {
     $source = [string]$item.FullName
     $name = [System.IO.Path]::GetFileName($source)
-    $sourceId = [Convert]::ToHexString(
-        [Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($source))
-    ).Substring(0, 8).ToLowerInvariant()
+    $sha256 = [Security.Cryptography.SHA256]::Create()
+    try {
+        $hashBytes = $sha256.ComputeHash([Text.Encoding]::UTF8.GetBytes($source))
+    }
+    finally {
+        $sha256.Dispose()
+    }
+    $sourceId = (([BitConverter]::ToString($hashBytes)) -replace '-', '').Substring(0, 8).ToLowerInvariant()
     $destination = Join-Path $outPath ("{0}-{1}" -f $sourceId, $name)
     Copy-Item -LiteralPath $source -Destination $destination -Force
     $newLogs += $destination
