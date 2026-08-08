@@ -76,7 +76,7 @@
       "workflow": "WORKFLOW.md#a-technician-acquisition-or-update",
       "harness_gate": "python scripts/validate_prompt_kit_freshness_guidance.py --summary",
       "skill": ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
-      "trigger": "technician-needs-latest-prompt-kit"
+      "operator_report": "harness/reports/PROMPT_KIT_FRESHNESS.md"
     },
     "operator_command_envelope": {
       "contract": "harness/contracts/operator-command-envelope.v1.json",
