@@ -20,8 +20,8 @@ $RequiredFiles = @(
     'configs\prompt_kit\generators.v1.json',
     'scripts\build_prompt_kit_registry.py'
 )
-$AcquireBootstrapCommit = '0318ded2d55664373f472ac52e3d6346066fe131'
-$AcquireBootstrapBlob = 'e0d73dc6ba0b304119cf4a9785edb74c72c5b2d0'
+$AcquireBootstrapCommit = 'd61ff0c165c5647f4607a32e85e1171d6b898501'
+$AcquireBootstrapBlob = '674130635ed70b5e57a3784f26511d932f63adb3'
 $StableHost = '127.0.0.1'
 $StableUrl = "http://${StableHost}:$Port/"
 $HealthUrl = "${StableUrl}healthz"
