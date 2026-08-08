@@ -4,8 +4,8 @@ setlocal
 set "LOCAL_SCRIPT=%~dp0scripts\Open-LatestPromptKitPortable.ps1"
 set "CACHE_DIR=%TEMP%\WebExcelPromptKit"
 set "CACHED_SCRIPT=%CACHE_DIR%\Open-LatestPromptKitPortable.ps1"
-set "BOOTSTRAP_COMMIT=2282baa2226186fedfae6d696c1531ee5341fa59"
-set "BOOTSTRAP_BLOB=ae13387b05964342b96f89aace30e790a732fd5c"
+set "BOOTSTRAP_COMMIT=9c7809cfe4dab62bb30b5ba9d12f6e204125d03c"
+set "BOOTSTRAP_BLOB=b6e4f1fd2d2771370d3b23d355a7a0f4301aa2bc"
 set "POWERSHELL=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 set "PREFERRED_REPO=%~dp0dev\web-excel-repair-triage"
 

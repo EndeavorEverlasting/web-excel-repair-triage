@@ -307,8 +307,8 @@ def validate_repository_surfaces(
     portable_launcher = require_text(
         PORTABLE_LAUNCHER,
         (
-            "$AcquireBootstrapCommit = 'b73242b4ada14df421513a7962ef1a826c09d012'",
-            "$AcquireBootstrapBlob = '4a79b58b0b14ee9454c84ea41abeb01b4915d92d'",
+            "$AcquireBootstrapCommit = 'd61ff0c165c5647f4607a32e85e1171d6b898501'",
+            "$AcquireBootstrapBlob = '674130635ed70b5e57a3784f26511d932f63adb3'",
             "$StableHost = '127.0.0.1'",
             '$StableUrl = "http://${StableHost}:$Port/"',
             "Import-AcquisitionFunctions",
@@ -322,8 +322,8 @@ def validate_repository_surfaces(
     windows_entry = require_text(
         WINDOWS_ENTRY,
         (
-            "BOOTSTRAP_COMMIT=2282baa2226186fedfae6d696c1531ee5341fa59",
-            "BOOTSTRAP_BLOB=ae13387b05964342b96f89aace30e790a732fd5c",
+            "BOOTSTRAP_COMMIT=9c7809cfe4dab62bb30b5ba9d12f6e204125d03c",
+            "BOOTSTRAP_BLOB=b6e4f1fd2d2771370d3b23d355a7a0f4301aa2bc",
             "Open-LatestPromptKitPortable.ps1",
             "Prompt Kit portable quick-open",
         ),
