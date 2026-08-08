@@ -4,30 +4,37 @@
     {
       "id": "technician-acquisition",
       "document": "WORKFLOW.md#a-technician-acquisition-or-update",
-      "trigger": "A technician needs a mouse-accessible clone, safe fast-forward update, validation, and launch path for the current main Prompt Kit.",
+      "trigger": "A user or technician needs to open, install, share, download, clone, update, or locally edit the current main Prompt Kit on a browser, phone, tablet, Windows PC, macOS, or Linux machine.",
       "owned_scope": [
-        "Acquire-Latest-PromptKit.cmd",
-        "scripts/Acquire-LatestPromptKit.ps1",
-        "configs/prompt_kit/generators.v1.json",
-        "acquisition tests and reports"
+        "device-aware access routing",
+        "PROMPT_KIT_ACCESS.md and OPEN_PROMPT_KIT_ON_PHONE.md contract references",
+        "Acquire-Latest-PromptKit.cmd and Open-Latest-PromptKit.cmd acquisition surfaces",
+        "harness/contracts/prompt-kit-cross-device-access.v1.json",
+        "cross-device acquisition validator tests and reports"
       ],
       "forbidden_scope": [
         "destructive Git cleanup",
         "credential automation",
         "force update",
-        "product behavior changes"
+        "product behavior changes",
+        "requiring a clone for normal browser or phone use"
       ],
       "entry_points": [
+        "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
+        "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
+        "Open-Latest-PromptKit.cmd",
         "Acquire-Latest-PromptKit.cmd"
       ],
       "validation_profile": "harness",
-      "failure_policy": "Preserve the checkout and report the exact Git, network, authentication, origin, branch, divergence, required-file, or parity failure.",
+      "failure_policy": "Preserve existing checkouts and classify the failed gate by access mode: public browser/phone routing, device install, Windows launcher, editable Git checkout, network/authentication, origin/branch/divergence, required-file, or parity failure. Never substitute a destructive or higher-friction route merely to make progress.",
       "handoff_fields": [
-        "destination",
-        "branch",
-        "commit",
+        "selected access mode",
+        "device and user intent",
+        "entry point",
+        "destination when a checkout exists",
+        "branch and commit when Git is used",
         "validation result",
-        "opened surface",
+        "opened or installed surface",
         "remaining runtime gates"
       ]
     },

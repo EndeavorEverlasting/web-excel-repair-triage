@@ -59,6 +59,25 @@
       "harness_gate": "python scripts/validate_prompt_kit_portability.py --summary",
       "strict_product_gate": "python scripts/serve_prompt_kit_portable.py --build-only && python scripts/validate_prompt_kit_portability.py --require-artifact --output Outputs/prompt-kit-portability-validation.json --summary && python -m unittest tests.test_prompt_kit_portability tests.test_prompt_kit_portability_regressions tests.test_prompt_kit_portable_health -v"
     },
+    "prompt_kit_cross_device_access": {
+      "contract": "harness/contracts/prompt-kit-cross-device-access.v1.json",
+      "validator": "scripts/validate_prompt_kit_cross_device_access.py",
+      "contract_tests": "tests/test_prompt_kit_cross_device_access.py",
+      "workflow": "WORKFLOW.md#a-technician-acquisition-or-update",
+      "harness_gate": "python scripts/validate_prompt_kit_cross_device_access.py --summary",
+      "skill": ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
+      "access_guide": "PROMPT_KIT_ACCESS.md",
+      "phone_guide": "OPEN_PROMPT_KIT_ON_PHONE.md"
+    },
+    "prompt_kit_freshness_guidance": {
+      "contract": "harness/contracts/prompt-kit-freshness-guidance.v1.json",
+      "validator": "scripts/validate_prompt_kit_freshness_guidance.py",
+      "contract_tests": "tests/test_prompt_kit_freshness_guidance.py",
+      "workflow": "WORKFLOW.md#a-technician-acquisition-or-update",
+      "harness_gate": "python scripts/validate_prompt_kit_freshness_guidance.py --summary",
+      "skill": ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
+      "operator_report": "harness/reports/PROMPT_KIT_FRESHNESS.md"
+    },
     "operator_command_envelope": {
       "contract": "harness/contracts/operator-command-envelope.v1.json",
       "validator": "scripts/validate_operator_command_envelope.py",

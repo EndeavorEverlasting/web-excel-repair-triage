@@ -5,6 +5,10 @@ HARNESS_REPORT="${TMPDIR:-/tmp}/web-excel-harness-completeness.json"
 PROMPT_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-language-audit.json"
 INTERACTION_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-kit-interaction-audit.json"
 
+python scripts/validate_prompt_kit_cross_device_access.py --summary
+python -m unittest tests.test_prompt_kit_cross_device_access -v
+python scripts/validate_prompt_kit_freshness_guidance.py --summary
+python -m unittest tests.test_prompt_kit_freshness_guidance -v
 python scripts/validate_harness.py --report "$HARNESS_REPORT"
 python -m unittest tests.test_harness_contract -v
 python -m unittest tests.test_prompt_kit_interactions_contract -v

@@ -72,15 +72,17 @@
       "skill": ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
       "workflow": "WORKFLOW.md#a-technician-acquisition-or-update",
       "conditions": [
-        "technician requests latest main Prompt Kit",
-        "mouse-accessible acquisition requested"
+        "user wants to open or use the Prompt Kit in a browser",
+        "phone or tablet user wants to open, install, or Add to Home Screen",
+        "Windows user wants the stable local Prompt Kit app",
+        "user wants an editable local checkout to edit, commit, push, or run repository tooling",
+        "user explicitly wants a source ZIP snapshot without Git"
       ],
       "forbidden_conditions": [
-        "dirty checkout",
-        "wrong origin",
-        "non-main checkout",
-        "local-only commits",
-        "divergence"
+        "destructive Git cleanup is proposed",
+        "credential embedding or authentication automation is requested",
+        "an editable checkout update is requested while that checkout is dirty, divergent, non-main, or has an unexpected origin",
+        "the request is a Prompt Kit product behavior change rather than acquisition or access"
       ]
     },
     {
