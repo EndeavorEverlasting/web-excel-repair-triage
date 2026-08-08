@@ -20,12 +20,14 @@ on:
       - scripts/evaluate_prompt_language.py
       - scripts/validate_operator_command_envelope.py
       - scripts/validate_prompt_kit_cross_device_access.py
+      - scripts/validate_prompt_kit_freshness_guidance.py
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
       - tests/test_prompt_kit_cross_device_access.py
+      - tests/test_prompt_kit_freshness_guidance.py
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_language_audit.py
@@ -50,12 +52,14 @@ on:
       - scripts/evaluate_prompt_language.py
       - scripts/validate_operator_command_envelope.py
       - scripts/validate_prompt_kit_cross_device_access.py
+      - scripts/validate_prompt_kit_freshness_guidance.py
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
       - tests/test_prompt_kit_cross_device_access.py
+      - tests/test_prompt_kit_freshness_guidance.py
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_language_audit.py
@@ -81,12 +85,14 @@ jobs:
             scripts/validate_harness.py \
             scripts/validate_operator_command_envelope.py \
             scripts/validate_prompt_kit_cross_device_access.py \
+            scripts/validate_prompt_kit_freshness_guidance.py \
             scripts/validate_prompt_kit_interactions.py \
             scripts/validate_prompt_kit_discovery.py \
             scripts/evaluate_prompt_language.py \
             tests/test_harness_contract.py \
             tests/test_operator_command_envelope.py \
             tests/test_prompt_kit_cross_device_access.py \
+            tests/test_prompt_kit_freshness_guidance.py \
             tests/test_prompt_kit_interactions_contract.py \
             tests/test_prompt_kit_discovery.py \
             tests/test_prompt_language_audit.py
@@ -101,6 +107,10 @@ jobs:
         run: |
           python scripts/validate_prompt_kit_cross_device_access.py --summary
           python -m unittest tests.test_prompt_kit_cross_device_access -v
+      - name: Validate Prompt Kit freshness guidance
+        run: |
+          python scripts/validate_prompt_kit_freshness_guidance.py --summary
+          python -m unittest tests.test_prompt_kit_freshness_guidance -v
       - name: Validate operator command envelope
         run: |
           python scripts/validate_operator_command_envelope.py --summary
