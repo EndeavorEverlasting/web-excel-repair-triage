@@ -254,8 +254,8 @@ console.log('PORTABILITY_RUNTIME_PASS');
         for marker in (
             "$StableHost = '127.0.0.1'",
             '$StableUrl = "http://${StableHost}:$Port/"',
-            "$AcquireBootstrapCommit = '0318ded2d55664373f472ac52e3d6346066fe131'",
-            "$AcquireBootstrapBlob = 'e0d73dc6ba0b304119cf4a9785edb74c72c5b2d0'",
+            "$AcquireBootstrapCommit = 'd61ff0c165c5647f4607a32e85e1171d6b898501'",
+            "$AcquireBootstrapBlob = '674130635ed70b5e57a3784f26511d932f63adb3'",
             "Import-AcquisitionFunctions",
             "Update-RepositorySafely",
             "serve_prompt_kit_portable.py",
@@ -264,8 +264,8 @@ console.log('PORTABILITY_RUNTIME_PASS');
         ):
             self.assertIn(marker, self.portable_launcher)
         for marker in (
-            "BOOTSTRAP_COMMIT=771218271a5fa1826f10a92a49e719d5e18f4da6",
-            "BOOTSTRAP_BLOB=98de1e2a26bc44a60410470f986914c5c0681896",
+            "BOOTSTRAP_COMMIT=9c7809cfe4dab62bb30b5ba9d12f6e204125d03c",
+            "BOOTSTRAP_BLOB=b6e4f1fd2d2771370d3b23d355a7a0f4301aa2bc",
             "api.github.com/repos/EndeavorEverlasting/web-excel-repair-triage/contents/scripts/Open-LatestPromptKitPortable.ps1",
         ):
             self.assertIn(marker, self.windows_entry)
