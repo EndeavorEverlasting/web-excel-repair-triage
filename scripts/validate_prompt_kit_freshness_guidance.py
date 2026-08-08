@@ -9,13 +9,12 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "harness" / "contracts" / "prompt-kit-freshness-guidance.v1.json"
-TRIGGERS_PATH = ROOT / "harness" / "triggers.v1.json"
+MANIFEST_PATH = ROOT / "harness" / "manifest.v1.json"
 SKILL_PATH = ROOT / ".ai" / "skills" / "technician-prompt-kit-acquisition" / "SKILL.md"
 REPORT_PATH = ROOT / "harness" / "reports" / "PROMPT_KIT_FRESHNESS.md"
 
 PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/"
 LAUNCHER_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/"
-TRIGGER_ID = "technician-needs-latest-prompt-kit"
 FRESHNESS_TRIGGER = "user reports a Prompt Kit or prompt version label and currentness is not proven"
 
 EXPECTED_ROUTES = {
@@ -24,6 +23,15 @@ EXPECTED_ROUTES = {
     "windows-local-app": "Run Open-Latest-PromptKit.cmd so the repository-owned launcher performs safe acquisition/update and validation.",
     "editable-checkout": "Verify canonical origin, clean worktree, current branch main, and zero local-only commits; fetch origin/main; then integrate only with git merge --ff-only origin/main.",
     "zip-snapshot": "Explain that the ZIP is point-in-time and re-download main.zip when the user explicitly wants a fresh no-Git source snapshot.",
+}
+EXPECTED_DOMAIN = {
+    "contract": "harness/contracts/prompt-kit-freshness-guidance.v1.json",
+    "validator": "scripts/validate_prompt_kit_freshness_guidance.py",
+    "contract_tests": "tests/test_prompt_kit_freshness_guidance.py",
+    "workflow": "WORKFLOW.md#a-technician-acquisition-or-update",
+    "harness_gate": "python scripts/validate_prompt_kit_freshness_guidance.py --summary",
+    "skill": ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
+    "operator_report": "harness/reports/PROMPT_KIT_FRESHNESS.md",
 }
 
 
@@ -76,8 +84,7 @@ def validate_contract(payload: dict[str, Any]) -> None:
         if phrase not in behavior:
             raise FreshnessGuidanceError(f"required freshness behavior is missing: {phrase}")
 
-    routes = payload.get("freshness_routes")
-    if routes != EXPECTED_ROUTES:
+    if payload.get("freshness_routes") != EXPECTED_ROUTES:
         raise FreshnessGuidanceError("freshness routes drifted")
 
     evidence = "\n".join(string_list(payload.get("currentness_evidence"), "currentness_evidence"))
@@ -94,16 +101,15 @@ def validate_contract(payload: dict[str, Any]) -> None:
         raise FreshnessGuidanceError("freshness proof ceiling is missing")
 
 
-def validate_trigger(payload: dict[str, Any]) -> None:
-    triggers = payload.get("triggers")
-    if not isinstance(triggers, list):
-        raise FreshnessGuidanceError("trigger registry triggers must be a list")
-    trigger = next((item for item in triggers if isinstance(item, dict) and item.get("id") == TRIGGER_ID), None)
-    if not isinstance(trigger, dict):
-        raise FreshnessGuidanceError("technician-needs-latest-prompt-kit trigger is missing")
-    conditions = string_list(trigger.get("conditions"), "technician-needs-latest-prompt-kit.conditions")
-    if FRESHNESS_TRIGGER not in conditions:
-        raise FreshnessGuidanceError("technician acquisition trigger does not fire on a reported version label")
+def validate_manifest(payload: dict[str, Any]) -> None:
+    domains = payload.get("domain_contracts")
+    if not isinstance(domains, dict):
+        raise FreshnessGuidanceError("manifest domain_contracts must be an object")
+    domain = domains.get("prompt_kit_freshness_guidance")
+    if not isinstance(domain, dict):
+        raise FreshnessGuidanceError("manifest is missing prompt_kit_freshness_guidance")
+    if domain != EXPECTED_DOMAIN:
+        raise FreshnessGuidanceError("Prompt Kit freshness domain ownership drifted")
 
 
 def validate_skill() -> None:
@@ -112,6 +118,7 @@ def validate_skill() -> None:
     except FileNotFoundError as exc:
         raise FreshnessGuidanceError("technician acquisition skill is missing") from exc
     required = (
+        "Also trigger this skill when the user reports a Prompt Kit or prompt version label",
         "### 0. Freshness gate before guidance",
         "A version label is a freshness signal, not proof of currentness.",
         "Before troubleshooting, tutorial guidance, or prompt selection",
@@ -145,7 +152,7 @@ def validate_report() -> None:
 def validate() -> dict[str, Any]:
     contract = load_object(CONTRACT_PATH)
     validate_contract(contract)
-    validate_trigger(load_object(TRIGGERS_PATH))
+    validate_manifest(load_object(MANIFEST_PATH))
     validate_skill()
     validate_report()
     return {
