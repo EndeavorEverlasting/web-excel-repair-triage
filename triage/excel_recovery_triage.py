@@ -1,7 +1,7 @@
 """Automate Excel recovery-log parsing and targeted OOXML package triage.
 
-The command is read-only. It correlates a desktop Excel recovery log with the
-referenced workbook parts, parses all XML and relationship parts, and emits
+The command is read-only. It correlates supplied Excel recovery-log evidence
+with referenced workbook parts, parses XML and relationship parts, and emits
 machine-readable JSON plus an operator-facing Markdown report.
 """
 from __future__ import annotations
@@ -19,6 +19,7 @@ from xml.etree import ElementTree as ET
 
 RECOVERY_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 _PART_RE = re.compile(r"/(?:[^\s<'\"]+/)*[^\s<'\"]+?\.xml(?:\.rels)?", re.IGNORECASE)
+_ZIP_READ_ERRORS = (KeyError, RuntimeError, zipfile.BadZipFile, OSError, EOFError)
 
 
 @dataclass(frozen=True)
@@ -50,6 +51,17 @@ def _normalize_part(part: str) -> str:
 def _extract_part(message: str) -> str:
     match = _PART_RE.search(message)
     return _normalize_part(match.group(0)) if match else ""
+
+
+def _failed_recovery_log(error: Exception, source: Path) -> dict:
+    return {
+        "parsed": False,
+        "parse_error": f"{type(error).__name__}: {error}",
+        "log_file_name": "",
+        "summary": "",
+        "entries": [],
+        "source_path": str(source),
+    }
 
 
 def parse_recovery_log_text(text: str) -> dict:
@@ -94,7 +106,11 @@ def parse_recovery_log_text(text: str) -> dict:
 
 def parse_recovery_log(path: str | Path) -> dict:
     source = Path(path)
-    payload = parse_recovery_log_text(source.read_text(encoding="utf-8-sig", errors="replace"))
+    try:
+        text = source.read_text(encoding="utf-8-sig", errors="replace")
+    except (OSError, UnicodeError) as exc:
+        return _failed_recovery_log(exc, source)
+    payload = parse_recovery_log_text(text)
     payload["source_path"] = str(source)
     return payload
 
@@ -107,6 +123,13 @@ def _parse_xml_part(raw: bytes) -> tuple[str, str]:
     except ET.ParseError as exc:
         return "FAIL", f"{type(exc).__name__}: {exc}"
     return "PASS", ""
+
+
+def _read_zip_part(zf: zipfile.ZipFile, name: str) -> tuple[bytes, str]:
+    try:
+        return zf.read(name), ""
+    except _ZIP_READ_ERRORS as exc:
+        return b"", f"{type(exc).__name__}: {exc}"
 
 
 def _part_finding(name: str, raw: bytes, *, referenced: bool) -> PartFinding:
@@ -125,6 +148,16 @@ def _part_finding(name: str, raw: bytes, *, referenced: bool) -> PartFinding:
     )
 
 
+def _zip_read_failure(name: str, error: str, *, referenced: bool) -> PartFinding:
+    return PartFinding(
+        part=name,
+        present=True,
+        parse_status="FAIL",
+        parse_error=f"zip_read_failed: {error}",
+        referenced_by_recovery_log=referenced,
+    )
+
+
 def _styles_dxf_diagnostics(zf: zipfile.ZipFile, names: set[str]) -> dict:
     result = {
         "styles_present": "xl/styles.xml" in names,
@@ -138,7 +171,11 @@ def _styles_dxf_diagnostics(zf: zipfile.ZipFile, names: set[str]) -> dict:
     if "xl/styles.xml" not in names:
         return result
 
-    styles_raw = zf.read("xl/styles.xml")
+    styles_raw, read_error = _read_zip_part(zf, "xl/styles.xml")
+    if read_error:
+        result["styles_parse_status"] = "FAIL"
+        result["styles_parse_error"] = f"zip_read_failed: {read_error}"
+        return result
     status, error = _parse_xml_part(styles_raw)
     result["styles_parse_status"] = status
     result["styles_parse_error"] = error
@@ -157,7 +194,9 @@ def _styles_dxf_diagnostics(zf: zipfile.ZipFile, names: set[str]) -> dict:
     references: list[dict] = []
     invalid: list[dict] = []
     for part in sorted(name for name in names if name.startswith("xl/worksheets/") and name.endswith(".xml")):
-        raw = zf.read(part)
+        raw, part_read_error = _read_zip_part(zf, part)
+        if part_read_error:
+            continue
         status, _ = _parse_xml_part(raw)
         if status != "PASS":
             continue
@@ -189,7 +228,7 @@ def inspect_workbook(path: str | Path, referenced_parts: Iterable[str] = ()) -> 
     result = {
         "path": str(workbook),
         "exists": workbook.exists(),
-        "size_bytes": workbook.stat().st_size if workbook.exists() else 0,
+        "size_bytes": 0,
         "sha256": "",
         "zip_status": "NOT_RUN",
         "zip_error": "",
@@ -203,23 +242,38 @@ def inspect_workbook(path: str | Path, referenced_parts: Iterable[str] = ()) -> 
         result["zip_error"] = "workbook does not exist"
         return result
 
-    workbook_bytes = workbook.read_bytes()
+    try:
+        result["size_bytes"] = workbook.stat().st_size
+        workbook_bytes = workbook.read_bytes()
+    except OSError as exc:
+        result["zip_status"] = "FAIL"
+        result["zip_error"] = f"{type(exc).__name__}: {exc}"
+        return result
     result["sha256"] = _sha256(workbook_bytes)
     try:
         zf = zipfile.ZipFile(workbook)
-    except zipfile.BadZipFile as exc:
+    except (zipfile.BadZipFile, OSError) as exc:
         result["zip_status"] = "FAIL"
         result["zip_error"] = f"{type(exc).__name__}: {exc}"
         return result
 
     with zf:
         result["zip_status"] = "PASS"
-        names = set(zf.namelist())
+        try:
+            names = set(zf.namelist())
+        except _ZIP_READ_ERRORS as exc:
+            result["zip_status"] = "FAIL"
+            result["zip_error"] = f"{type(exc).__name__}: {exc}"
+            return result
         findings: list[PartFinding] = []
         for name in sorted(names):
             if not name.lower().endswith((".xml", ".rels")) and name not in referenced:
                 continue
-            findings.append(_part_finding(name, zf.read(name), referenced=name in referenced))
+            raw, read_error = _read_zip_part(zf, name)
+            if read_error:
+                findings.append(_zip_read_failure(name, read_error, referenced=name in referenced))
+            else:
+                findings.append(_part_finding(name, raw, referenced=name in referenced))
         for part in sorted(referenced - names):
             findings.append(PartFinding(part=part, present=False, referenced_by_recovery_log=True))
             result["referenced_parts_missing"].append(part)
@@ -304,16 +358,15 @@ def build_report(workbook_path: str | Path, recovery_log_paths: Sequence[str | P
         stop_ship_reasons.append("conditional_formatting_dxf_reference_invalid")
 
     verdict = "STOP_SHIP" if stop_ship_reasons else "STATIC_PACKAGE_PASS"
-    achieved_proof = "desktop_excel_repair_observed" if entries else "static_package_inspection"
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "verdict": verdict,
         "stop_ship_reasons": stop_ship_reasons,
-        "achieved_proof": achieved_proof,
+        "achieved_proof": "static_package_inspection",
         "proof_ceiling": (
-            "Desktop Excel recovery evidence plus read-only package triage. "
-            "Does not prove a repaired or replacement workbook is acceptable."
-            if entries
+            "Supplied recovery-log evidence plus read-only package triage. "
+            "This CLI did not itself observe Desktop Excel and does not prove a repaired or replacement workbook is acceptable."
+            if recovery_log_paths
             else "Read-only static package triage only; no Desktop Excel or Excel for Web acceptance proof."
         ),
         "workbook": workbook,
