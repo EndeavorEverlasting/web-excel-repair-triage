@@ -146,6 +146,29 @@ class PromptKitMobileTests(unittest.TestCase):
         ):
             self.assertIn(marker, ps1)
 
+    def test_native_git_stderr_is_exit_code_authoritative(self) -> None:
+        ps1 = ACQUIRE_PS1.read_text(encoding="utf-8")
+        start = ps1.index("function Invoke-Git {")
+        end = ps1.index("function Resolve-PythonCommand", start)
+        invoke_git = ps1[start:end]
+        for marker in (
+            "$previousErrorActionPreference = $ErrorActionPreference",
+            "$ErrorActionPreference = 'Continue'",
+            "$output = & git @Arguments 2>&1",
+            "$exitCode = $LASTEXITCODE",
+            "$ErrorActionPreference = $previousErrorActionPreference",
+            "if ($exitCode -ne 0)",
+        ):
+            self.assertIn(marker, invoke_git)
+        self.assertLess(
+            invoke_git.index("$ErrorActionPreference = 'Continue'"),
+            invoke_git.index("$output = & git @Arguments 2>&1"),
+        )
+        self.assertLess(
+            invoke_git.index("$exitCode = $LASTEXITCODE"),
+            invoke_git.index("$ErrorActionPreference = $previousErrorActionPreference"),
+        )
+
     def test_universal_paths_do_not_embed_person_specific_usernames(self) -> None:
         combined = "\n".join(
             path.read_text(encoding="utf-8")
