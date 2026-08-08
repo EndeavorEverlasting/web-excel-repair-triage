@@ -29,12 +29,15 @@ function Invoke-Git {
     )
 
     $previous = Get-Location
+    $previousErrorActionPreference = $ErrorActionPreference
     try {
         Set-Location -LiteralPath $WorkingDirectory
+        $ErrorActionPreference = 'Continue'
         $output = & git @Arguments 2>&1
         $exitCode = $LASTEXITCODE
     }
     finally {
+        $ErrorActionPreference = $previousErrorActionPreference
         Set-Location -LiteralPath $previous
     }
 
