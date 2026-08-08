@@ -1,9 +1,9 @@
 # Harness Current State
 
-**As of:** 2026-08-08  
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Canonical branch:** `main`  
-**Harness workflow:** `harness-infrastructure`  
+**As of:** 2026-08-08
+**Repository:** `EndeavorEverlasting/web-excel-repair-triage`
+**Canonical branch:** `main`
+**Harness workflow:** `harness-infrastructure`
 **Harness capability:** `harness-infrastructure-maintenance`
 
 ## Status
