@@ -117,4 +117,17 @@ $result = Resolve-ExcelWindowSelection -Before (New-TestSnapshot -Label 'S1') -A
 Assert-True ([bool]$result.allowed) 'T6 expected the frozen repair-session PID to be selected.'
 Assert-True (@($result.winner.evidenceSignals) -contains 'repair_surface_observed') 'T6 did not retain repair-surface evidence.'
 
-Write-Host 'Excel window context tests: 6 passed'
+# T7: wildcard metacharacters in workbook names are literal, not matching operators.
+Assert-True (-not (Test-ExcelTitleContainsWorkbookStem -Title 'Budget1.xlsx - Excel' -WorkbookStem 'Budget[1]')) 'T7 wildcard characters must not match unrelated titles.'
+Assert-True (Test-ExcelTitleContainsWorkbookStem -Title 'Budget[1].xlsx - Excel' -WorkbookStem 'Budget[1]') 'T7 literal workbook title should still match.'
+
+# T8: a preferred stale PID with a visible unrelated window cannot reach confidence by preference alone.
+$stalePreferredWindow = New-TestWindow -Pid 800 -Hwnd 80001 -Title 'Other.xlsx - Excel'
+$stalePreferredProcess = New-TestProcess -Pid 800 -Windows @($stalePreferredWindow) -Started '2026-07-14T18:00:00Z'
+$before = New-TestSnapshot -Label 'S1' -Processes @($stalePreferredProcess)
+$after = New-TestSnapshot -Label 'S2' -Processes @($stalePreferredProcess)
+$result = Resolve-ExcelWindowSelection -Before $before -After $after -WorkbookStem 'roster_review_blank' -PreferredProcessId 800 -LaunchRequestedUtc $launchUtc
+Assert-True (-not [bool]$result.allowed) 'T8 preferred PID alone must not authorize an unrelated Excel process.'
+Assert-Equal $result.reason 'no_candidate_above_threshold' 'T8 returned the wrong blocked reason.'
+
+Write-Host 'Excel window context tests: 8 passed'
