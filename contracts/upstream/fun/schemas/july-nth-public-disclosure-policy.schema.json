@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/FUN/schemas/july-nth-public-disclosure-policy.schema.json",
+  "title": "FUN July NTH public-disclosure policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "policy_id",
+    "artifact_scope",
+    "forbidden_rules",
+    "locked_numeric_cells"
+  ],
+  "properties": {
+    "schema": {
+      "const": "fun-july-nth-public-disclosure-policy/v1"
+    },
+    "policy_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filename_pattern", "required_sheets"],
+      "properties": {
+        "filename_pattern": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_sheets": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "forbidden_rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "pattern", "reason"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "pattern": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "allowed_rule_exceptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rule_id", "sheet", "cell", "reason"],
+        "properties": {
+          "rule_id": {"type": "string", "minLength": 1},
+          "sheet": {"type": "string", "minLength": 1},
+          "cell": {"type": "string", "pattern": "^[A-Z]+[1-9][0-9]*$"},
+          "reason": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "locked_numeric_cells": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sheet", "cell", "expected"],
+        "properties": {
+          "sheet": {"type": "string", "minLength": 1},
+          "cell": {"type": "string", "pattern": "^[A-Z]+[1-9][0-9]*$"},
+          "expected": {"type": "number"},
+          "tolerance": {"type": "number", "minimum": 0},
+          "purpose": {"type": "string"}
+        }
+      }
+    },
+    "proof_ceiling": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

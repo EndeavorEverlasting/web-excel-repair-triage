@@ -9,6 +9,7 @@ on:
       - docs/TECHNICIAN_PROMPT_KIT_ACQUISITION_TUTORIAL.md
       - docs/PROMPT_KIT_GENERATOR_TUTORIAL.md
       - docs/PROMPT_KIT_ADMIN_VERIFICATION.md
+      - Open-Latest-PromptKit.cmd
       - Acquire-Latest-PromptKit.cmd
       - scripts/Acquire-LatestPromptKit.ps1
       - Run-PromptKitGenerator.cmd
@@ -17,6 +18,7 @@ on:
       - scripts/build_prompt_kit_registry.py
       - configs/prompt_kit/generators.v1.json
       - tests/test_operator_documentation.py
+      - tests/test_prompt_kit_mobile.py
       - .github/workflows/operator-documentation.yml
   push:
     branches: [main]
@@ -27,6 +29,7 @@ on:
       - docs/TECHNICIAN_PROMPT_KIT_ACQUISITION_TUTORIAL.md
       - docs/PROMPT_KIT_GENERATOR_TUTORIAL.md
       - docs/PROMPT_KIT_ADMIN_VERIFICATION.md
+      - Open-Latest-PromptKit.cmd
       - Acquire-Latest-PromptKit.cmd
       - scripts/Acquire-LatestPromptKit.ps1
       - Run-PromptKitGenerator.cmd
@@ -35,6 +38,7 @@ on:
       - scripts/build_prompt_kit_registry.py
       - configs/prompt_kit/generators.v1.json
       - tests/test_operator_documentation.py
+      - tests/test_prompt_kit_mobile.py
       - .github/workflows/operator-documentation.yml
 
 permissions:
@@ -51,10 +55,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Compile documentation contracts
-        run: python -m py_compile tests/test_operator_documentation.py
-      - name: Validate documentation, links, controls, and examples
-        run: python -m unittest tests.test_operator_documentation -v
+      - name: Compile documentation and mobile contracts
+        run: python -m py_compile tests/test_operator_documentation.py tests/test_prompt_kit_mobile.py
+      - name: Validate acquisition PowerShell syntax
+        shell: pwsh
+        run: |
+          $null = [scriptblock]::Create((Get-Content -Raw scripts/Acquire-LatestPromptKit.ps1))
+      - name: Validate documentation, links, controls, examples, and mobile acquisition
+        run: |
+          python -m unittest tests.test_operator_documentation -v
+          python -m unittest tests.test_prompt_kit_mobile -v
       - name: Validate connected harness contracts
         run: |
           python scripts/validate_harness.py

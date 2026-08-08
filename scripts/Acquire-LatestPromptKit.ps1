@@ -1,11 +1,14 @@
+param(
+    [switch]$Quick,
+    [string]$Destination
+)
+
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Drawing
-
 $RepositoryUrl = 'https://github.com/EndeavorEverlasting/web-excel-repair-triage.git'
 $DefaultBranch = 'main'
+$RepositoryFolderName = 'web-excel-repair-triage'
 $RequiredFiles = @(
     'web\prompt-kit\index.html',
     'Run-PromptKitGenerator.cmd',
@@ -171,6 +174,166 @@ function Update-RepositorySafely {
     return $destinationPath
 }
 
+function Add-UniquePath {
+    param(
+        [Parameter(Mandatory)][AllowEmptyCollection()][System.Collections.Generic.List[string]]$Paths,
+        [string]$Path
+    )
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        return
+    }
+    try {
+        $full = [System.IO.Path]::GetFullPath($Path)
+    }
+    catch {
+        return
+    }
+    if (-not ($Paths | Where-Object { $_ -ieq $full })) {
+        $Paths.Add($full)
+    }
+}
+
+function Get-PromptKitDevRoots {
+    $roots = [System.Collections.Generic.List[string]]::new()
+
+    $desktop = [Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)
+    if (-not [string]::IsNullOrWhiteSpace($desktop)) {
+        Add-UniquePath -Paths $roots -Path (Join-Path $desktop 'dev')
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE)) {
+        Add-UniquePath -Paths $roots -Path (Join-Path $env:USERPROFILE 'Desktop\dev')
+    }
+
+    $oneDriveRoots = [System.Collections.Generic.List[string]]::new()
+    foreach ($name in @('OneDrive', 'OneDriveCommercial', 'OneDriveConsumer')) {
+        $value = [Environment]::GetEnvironmentVariable($name)
+        if (-not [string]::IsNullOrWhiteSpace($value)) {
+            Add-UniquePath -Paths $oneDriveRoots -Path $value
+        }
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE) -and (Test-Path -LiteralPath $env:USERPROFILE)) {
+        Get-ChildItem -LiteralPath $env:USERPROFILE -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -like 'OneDrive*' } |
+            ForEach-Object { Add-UniquePath -Paths $oneDriveRoots -Path $_.FullName }
+    }
+
+    foreach ($oneDriveRoot in $oneDriveRoots) {
+        Add-UniquePath -Paths $roots -Path (Join-Path $oneDriveRoot 'Desktop\dev')
+        Add-UniquePath -Paths $roots -Path (Join-Path $oneDriveRoot 'OG Laptop Backup\Desktop\dev')
+    }
+
+    return @($roots)
+}
+
+function Get-ExistingPromptKitRepositories {
+    param([Parameter(Mandatory)][string[]]$DevRoots)
+
+    $repositories = [System.Collections.Generic.List[string]]::new()
+
+    foreach ($root in $DevRoots) {
+        if (-not (Test-Path -LiteralPath $root -PathType Container)) {
+            continue
+        }
+
+        $candidates = @($root)
+        $candidates += @(
+            Get-ChildItem -LiteralPath $root -Directory -ErrorAction SilentlyContinue |
+                Select-Object -ExpandProperty FullName
+        )
+
+        foreach ($candidate in $candidates) {
+            $gitPath = Join-Path $candidate '.git'
+            if (-not (Test-Path -LiteralPath $gitPath -PathType Container)) {
+                continue
+            }
+
+            try {
+                $origin = Invoke-Git -WorkingDirectory $candidate -Arguments @('remote', 'get-url', 'origin')
+            }
+            catch {
+                continue
+            }
+
+            if ((Normalize-RepositoryUrl $origin) -eq (Normalize-RepositoryUrl $RepositoryUrl)) {
+                Add-UniquePath -Paths $repositories -Path $candidate
+            }
+        }
+    }
+
+    return @($repositories)
+}
+
+function Invoke-QuickOpen {
+    param([string]$RequestedDestination)
+
+    $writeLog = {
+        param([string]$Message)
+        $timestamp = Get-Date -Format 'HH:mm:ss'
+        Write-Host "[$timestamp] $Message"
+    }
+
+    & $writeLog 'Locating the latest Prompt Kit checkout.'
+
+    if (-not [string]::IsNullOrWhiteSpace($RequestedDestination)) {
+        $repositoryRoot = Update-RepositorySafely -Destination $RequestedDestination -WriteLog $writeLog
+        $site = Join-Path $repositoryRoot 'web\prompt-kit\index.html'
+        & $writeLog "Opening Prompt Kit website: $site"
+        Start-Process -FilePath $site
+        return
+    }
+
+    $devRoots = @(Get-PromptKitDevRoots)
+    if ($devRoots.Count -lt 1) {
+        throw 'Could not resolve a Windows Desktop or development root.'
+    }
+
+    $existingRepositories = @(Get-ExistingPromptKitRepositories -DevRoots $devRoots)
+    foreach ($candidate in $existingRepositories) {
+        try {
+            & $writeLog "Trying existing canonical checkout: $candidate"
+            $repositoryRoot = Update-RepositorySafely -Destination $candidate -WriteLog $writeLog
+            $site = Join-Path $repositoryRoot 'web\prompt-kit\index.html'
+            & $writeLog "Opening Prompt Kit website: $site"
+            Start-Process -FilePath $site
+            return
+        }
+        catch {
+            & $writeLog "Preserving candidate and continuing: $candidate"
+            & $writeLog $_.Exception.Message
+        }
+    }
+
+    $preferredDevRoot = $devRoots[0]
+    $destinationPath = Join-Path $preferredDevRoot $RepositoryFolderName
+
+    if (Test-Path -LiteralPath $destinationPath) {
+        $suffix = 'latest'
+        $fallback = Join-Path $preferredDevRoot "$RepositoryFolderName-$suffix"
+        $counter = 2
+        while (Test-Path -LiteralPath $fallback) {
+            $fallback = Join-Path $preferredDevRoot "$RepositoryFolderName-$suffix-$counter"
+            $counter++
+        }
+        $destinationPath = $fallback
+        & $writeLog "Default destination is occupied; preserving it and using $destinationPath"
+    }
+
+    $repositoryRoot = Update-RepositorySafely -Destination $destinationPath -WriteLog $writeLog
+    $site = Join-Path $repositoryRoot 'web\prompt-kit\index.html'
+    & $writeLog "Opening Prompt Kit website: $site"
+    Start-Process -FilePath $site
+}
+
+if ($Quick) {
+    Invoke-QuickOpen -RequestedDestination $Destination
+    exit 0
+}
+
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+
 $form = New-Object System.Windows.Forms.Form
 $form.Text = 'Get Latest Prompt Kit'
 $form.StartPosition = 'CenterScreen'
@@ -199,7 +362,13 @@ $form.Controls.Add($destinationLabel)
 $destinationBox = New-Object System.Windows.Forms.TextBox
 $destinationBox.Location = New-Object System.Drawing.Point(22, 114)
 $destinationBox.Size = New-Object System.Drawing.Size(602, 27)
-$destinationBox.Text = Join-Path $env:USERPROFILE 'Desktop\dev\web-excel-repair-triage'
+$resolvedRoots = @(Get-PromptKitDevRoots)
+if ($resolvedRoots.Count -gt 0) {
+    $destinationBox.Text = Join-Path $resolvedRoots[0] $RepositoryFolderName
+}
+else {
+    $destinationBox.Text = Join-Path $env:USERPROFILE 'Desktop\dev\web-excel-repair-triage'
+}
 $form.Controls.Add($destinationBox)
 
 $browseButton = New-Object System.Windows.Forms.Button
@@ -261,7 +430,7 @@ $browseButton.Add_Click({
         $dialog.SelectedPath = $current
     }
     if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-        $destinationBox.Text = Join-Path $dialog.SelectedPath 'web-excel-repair-triage'
+        $destinationBox.Text = Join-Path $dialog.SelectedPath $RepositoryFolderName
     }
 })
 

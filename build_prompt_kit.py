@@ -100,6 +100,8 @@ SYNONYMS = {
     "cursor": "P48", "live cert": "P48",
     "auto config": "P49", "environment config": "P49",
     "directory": "P50", "command guard": "P50",
+    "clone repo": "P61", "clone repository": "P61", "git clone": "P61",
+    "set terminal directory": "P61", "set working directory": "P61", "repository checkout": "P61",
     "test planner": "P51", "zero token": "P51",
     "factoring analyzer": "P52", "factoring builder": "P53",
     "local validation": "P54", "bootstrap": "P55", "github cli": "P55",
@@ -434,7 +436,7 @@ def build_html(prompts, ref):
     html.append('<!DOCTYPE html>\n<html lang="en">\n<head>')
     html.append('<meta charset="UTF-8">')
     html.append('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
-    html.append('<title>AI Harness Prompt Kit v39</title>')
+    html.append('<title>AI Harness Prompt Kit v40</title>')
     html.append('<style>')
     html.append(CSS_TEXT)
     html.append('</style>\n</head>\n<body>')

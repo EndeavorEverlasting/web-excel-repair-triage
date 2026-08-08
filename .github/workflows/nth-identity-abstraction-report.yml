@@ -1,0 +1,91 @@
+name: NTH abstract-detail producer report
+
+on:
+  pull_request:
+    paths:
+      - "docs/NTH_ABSTRACT_DETAIL_REPORTING_CONTRACT_20260803.md"
+      - "contracts/upstream/fun/nth-identity-abstraction-contract.lock.json"
+      - "contracts/upstream/fun/schemas/nth-identity-abstraction-policy.schema.json"
+      - "triage/nth_identity_abstraction_report.py"
+      - "scripts/report_nth_identity_abstraction.py"
+      - "tests/test_nth_identity_abstraction_report.py"
+      - "harness/integrations/nth-identity-abstraction-report.v1.json"
+      - ".ai/skills/nth-abstract-detail-delivery/**"
+      - ".github/workflows/nth-identity-abstraction-report.yml"
+  push:
+    branches: [main]
+    paths:
+      - "docs/NTH_ABSTRACT_DETAIL_REPORTING_CONTRACT_20260803.md"
+      - "contracts/upstream/fun/nth-identity-abstraction-contract.lock.json"
+      - "contracts/upstream/fun/schemas/nth-identity-abstraction-policy.schema.json"
+      - "triage/nth_identity_abstraction_report.py"
+      - "scripts/report_nth_identity_abstraction.py"
+      - "tests/test_nth_identity_abstraction_report.py"
+      - "harness/integrations/nth-identity-abstraction-report.v1.json"
+      - ".ai/skills/nth-abstract-detail-delivery/**"
+      - ".github/workflows/nth-identity-abstraction-report.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile producer reporting surfaces
+        run: |
+          python -m py_compile triage/nth_identity_abstraction_report.py scripts/report_nth_identity_abstraction.py tests/test_nth_identity_abstraction_report.py
+      - name: Run producer report regressions
+        run: python -m unittest tests.test_nth_identity_abstraction_report -v
+      - name: Verify pinned FUN schema snapshot
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          lock_path = Path("contracts/upstream/fun/nth-identity-abstraction-contract.lock.json")
+          lock = json.loads(lock_path.read_text(encoding="utf-8"))
+          snapshot = Path(lock["local_snapshot"])
+          payload = snapshot.read_bytes()
+          actual = {
+              "source_byte_count": len(payload),
+              "source_sha256": hashlib.sha256(payload).hexdigest(),
+          }
+          for key, value in actual.items():
+              if lock.get(key) != value:
+                  raise SystemExit(f"{key} drift: lock={lock.get(key)!r} actual={value!r}")
+          schema = json.loads(payload.decode("utf-8"))
+          constant = schema["properties"]["schema"]["const"]
+          if constant != lock["contract_id"]:
+              raise SystemExit(f"contract id drift: {constant!r} != {lock['contract_id']!r}")
+          print("PASS: pinned FUN identity-abstraction schema snapshot")
+          PY
+      - name: Validate integration registry
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("harness/integrations/nth-identity-abstraction-report.v1.json")
+          value = json.loads(path.read_text(encoding="utf-8"))
+          required = [
+              "triage/nth_identity_abstraction_report.py",
+              "scripts/report_nth_identity_abstraction.py",
+              "tests/test_nth_identity_abstraction_report.py",
+              ".github/workflows/nth-identity-abstraction-report.yml",
+              ".ai/skills/nth-abstract-detail-delivery/SKILL.md",
+          ]
+          missing = [item for item in required if not Path(item).is_file()]
+          if missing:
+              raise SystemExit(f"missing harness files: {missing}")
+          if value.get("trigger") != "nth-workbook-ready-for-share-review":
+              raise SystemExit("integration trigger drift")
+          print("PASS: abstract-detail report integration is complete")
+          PY
+      - name: Patch hygiene
+        run: git diff --check

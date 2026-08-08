@@ -1,0 +1,64 @@
+name: July NTH public disclosure report
+
+on:
+  pull_request:
+    paths:
+      - "docs/JULY_NTH_PUBLIC_DISCLOSURE_REPORTING_CONTRACT_20260804.md"
+      - "triage/july_nth_public_disclosure_report.py"
+      - "scripts/report_july_nth_public_disclosure.py"
+      - "tests/test_july_nth_public_disclosure_report.py"
+      - "contracts/upstream/fun/july-nth-public-disclosure-contract.lock.json"
+      - "contracts/upstream/fun/schemas/july-nth-public-disclosure-policy.schema.json"
+      - "harness/integrations/july-nth-public-disclosure-report.v1.json"
+      - ".ai/skills/july-nth-public-disclosure/**"
+      - ".github/workflows/july-nth-public-disclosure-report.yml"
+  push:
+    branches: [main]
+    paths:
+      - "docs/JULY_NTH_PUBLIC_DISCLOSURE_REPORTING_CONTRACT_20260804.md"
+      - "triage/july_nth_public_disclosure_report.py"
+      - "scripts/report_july_nth_public_disclosure.py"
+      - "tests/test_july_nth_public_disclosure_report.py"
+      - "contracts/upstream/fun/july-nth-public-disclosure-contract.lock.json"
+      - "contracts/upstream/fun/schemas/july-nth-public-disclosure-policy.schema.json"
+      - "harness/integrations/july-nth-public-disclosure-report.v1.json"
+      - ".ai/skills/july-nth-public-disclosure/**"
+      - ".github/workflows/july-nth-public-disclosure-report.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile July disclosure report harness
+        run: |
+          python -m py_compile \
+            triage/july_nth_public_disclosure_report.py \
+            scripts/report_july_nth_public_disclosure.py \
+            tests/test_july_nth_public_disclosure_report.py
+      - name: Run July disclosure report regressions
+        run: python -m unittest tests.test_july_nth_public_disclosure_report -v
+      - name: Validate upstream contract lock
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          lock = json.loads(Path("contracts/upstream/fun/july-nth-public-disclosure-contract.lock.json").read_text(encoding="utf-8"))
+          schema = json.loads(Path(lock["local_snapshot"]).read_text(encoding="utf-8"))
+          if lock.get("contract_id") != "fun-july-nth-public-disclosure-policy/v1":
+              raise SystemExit("unexpected contract_id")
+          if schema.get("properties", {}).get("schema", {}).get("const") != lock["contract_id"]:
+              raise SystemExit("local schema snapshot does not match lock contract_id")
+          if len(lock.get("source_git_blob_sha", "")) != 40:
+              raise SystemExit("source_git_blob_sha is invalid")
+          print("PASS: FUN July disclosure contract lock is coherent")
+          PY
+      - name: Patch hygiene
+        run: git diff --check

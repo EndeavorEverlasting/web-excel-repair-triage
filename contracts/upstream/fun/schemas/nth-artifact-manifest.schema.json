@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/FUN/schemas/nth-artifact-manifest.schema.json",
+  "title": "NTH Artifact Proof Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "packet_id", "artifact", "sheet_contract", "cell_assertions", "reconciliations"],
+  "properties": {
+    "schema": {"const": "fun-nth-artifact-manifest/v1"},
+    "packet_id": {"type": "string", "minLength": 1},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filename", "sha256", "size", "artifact_type"],
+      "properties": {
+        "filename": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "size": {"type": "integer", "minimum": 1},
+        "artifact_type": {"enum": ["share_ready", "internal", "fixture"]},
+        "builder_version": {"type": "string"},
+        "drive_file_id": {"type": "string"},
+        "drive_folder_id": {"type": "string"}
+      }
+    },
+    "sheet_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed_sheets", "hidden_sheets_forbidden"],
+      "properties": {
+        "allowed_sheets": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "hidden_sheets_forbidden": {"type": "boolean"},
+        "forbidden_sheet_patterns": {"type": "array", "items": {"type": "string"}},
+        "forbidden_text": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "cell_assertions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sheet", "cell", "value"],
+        "properties": {
+          "sheet": {"type": "string", "minLength": 1},
+          "cell": {"type": "string", "pattern": "^[A-Z]+[1-9][0-9]*$"},
+          "value": {},
+          "tolerance": {"type": "number", "minimum": 0}
+        }
+      }
+    },
+    "reconciliations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "terms", "expected"],
+        "properties": {
+          "label": {"type": "string", "minLength": 1},
+          "terms": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["sheet", "cell"],
+              "properties": {
+                "sheet": {"type": "string", "minLength": 1},
+                "cell": {"type": "string", "pattern": "^[A-Z]+[1-9][0-9]*$"},
+                "multiplier": {"type": "number"}
+              }
+            }
+          },
+          "expected": {"type": "number"},
+          "tolerance": {"type": "number", "minimum": 0}
+        }
+      }
+    },
+    "required_text": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sheet", "text"],
+        "properties": {
+          "sheet": {"type": "string", "minLength": 1},
+          "text": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "row_color_contracts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sheet", "key_column", "start_row", "end_row", "apply_columns", "palette"],
+        "properties": {
+          "sheet": {"type": "string", "minLength": 1},
+          "key_column": {"type": "string", "pattern": "^[A-Z]+$"},
+          "start_row": {"type": "integer", "minimum": 1},
+          "end_row": {"type": "integer", "minimum": 1},
+          "apply_columns": {"type": "string", "pattern": "^[A-Z]+:[A-Z]+$"},
+          "palette": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"}
+          }
+        }
+      }
+    }
+  }
+}
