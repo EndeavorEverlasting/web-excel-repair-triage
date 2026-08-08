@@ -24,8 +24,8 @@ The operator-command envelope separately closes a reproduced failure class where
 - `harness/validators.v1.json` defines the root harness, pre-commit, and pre-push validator profiles.
 - `harness/manifest.v1.json` additionally registers focused domain gates, including `prompt_kit_cross_device_access` and `operator_command_envelope`.
 - `harness/contracts/prompt-kit-cross-device-access.v1.json` defines five acquisition modes: browser use, phone install, Windows local app, editable checkout, and ZIP snapshot. It requires direct public routes for normal use and reserves manual Git checkout for source-work intent.
-- `scripts/validate_prompt_kit_cross_device_access.py` validates canonical URLs, route priority, no-clone browser/phone rules, ff-only editable updates, Android Termux/F-Droid prerequisites, access guides, workflow/capability/trigger ownership, artifact delivery surfaces, and the existing acquisition skill.
-- `tests/test_prompt_kit_cross_device_access.py` supplies positive and mutation regressions for accidental browser cloning and non-fast-forward editable updates.
+- `scripts/validate_prompt_kit_cross_device_access.py` validates canonical URLs, route priority, no-clone browser/phone rules, safe existing-checkout origin/cleanliness/branch/divergence gates, Android Termux/F-Droid prerequisites, access guides, workflow/capability/trigger ownership, artifact delivery surfaces, and the existing acquisition skill.
+- `tests/test_prompt_kit_cross_device_access.py` supplies positive and mutation regressions for accidental browser cloning, malformed JSON roots, contradictory phone guidance, ownership drift, missing checkout-state gates, and unsafe editable updates.
 - `.ai/skills/technician-prompt-kit-acquisition/SKILL.md` is the single reusable cross-device procedure. It does not duplicate the public Pages launcher, Windows launcher, or Git implementation.
 - `harness/contracts/operator-command-envelope.v1.json` defines fail-closed operator-command rules for person-specific paths, Markdown link data, interactive `exit`, Git before directory gate, unpinned remote work, destructive dirty-work handling, guessed artifacts, and ignored native failure.
 - `harness/templates/Invoke-RemoteHarnessProof.ps1` provides a repository-owned unmerged-harness proof path that uses `LOCALAPPDATA`/`TEMP`, an isolated checkout, exact branch/commit verification, the owning validators, artifact-registry resolution, and `throw` rather than terminal-closing `exit`.
@@ -48,7 +48,7 @@ python scripts/validate_prompt_kit_cross_device_access.py --summary
 python -m unittest tests.test_prompt_kit_cross_device_access -v
 ```
 
-They fail when normal browser/phone use requires a clone, public URLs drift, phone installation is routed through source-file hunting, editable checkout loses `--ff-only`, Android source-work prerequisites drift, access docs disagree with the contract, or machine registries stop owning the route.
+They fail when normal browser/phone use requires a clone, public URLs drift, phone installation is routed through source-file hunting, an existing editable checkout omits canonical-origin/clean-worktree/main-branch/local-only-commit gates, an unsafe integration command replaces the ff-only merge, Android source-work prerequisites drift, access docs disagree with the contract, or machine registries stop owning the route.
 
 Focused operator-command commands:
 
@@ -87,13 +87,20 @@ A real checkout is selected only when the user intends to edit, commit, push, in
 git clone --branch main --single-branch https://github.com/EndeavorEverlasting/web-excel-repair-triage.git
 ```
 
-Existing clean checkouts update with:
+For an existing editable checkout, verify state before integration:
 
 ```bash
-git pull --ff-only origin main
+git remote get-url origin
+git status --porcelain
+git branch --show-current
+git fetch origin main --prune
+git rev-list --left-right --count HEAD...origin/main
+git merge --ff-only origin/main
 ```
 
-Android source work uses Termux from F-Droid, then `pkg update` and `pkg install git`. This is not the normal-use route.
+The origin must exactly match the canonical repository URL, status must be empty, the current branch must be `main`, and the first/local-only count must be `0`. Any failed gate preserves the checkout and stops the update. Only after all gates pass may the ff-only merge advance `main`.
+
+Android source work uses Termux from F-Droid, then `pkg update` and `pkg install git`. Fresh Android source acquisition uses the canonical clone; later updates use the same existing-checkout state gates above. This is not the normal-use route.
 
 ## Operator command delivery behavior
 
@@ -154,7 +161,7 @@ git diff --check
 
 ## Proof ceiling
 
-A passing cross-device validator proves registered routing, canonical URLs/commands, no-clone normal-use rules, and source-work boundaries on the tested commit. A passing command-envelope validator, harness completeness report, contract tests, hooks, and CI prove only the tracked repository surfaces, command shapes, fixtures, and commands exercised on that commit. They do not prove a specific phone/tablet/Windows device, browser install behavior, Termux/F-Droid, credentials, network, local storage, clipboard/focus behavior, Excel for Web acceptance, provider obedience, protected target access, technician acceptance, deployment, or production success.
+A passing cross-device validator proves registered routing, canonical URLs/commands, no-clone normal-use rules, explicit existing-checkout safety gates, and source-work boundaries on the tested commit. A passing command-envelope validator, harness completeness report, contract tests, hooks, and CI prove only the tracked repository surfaces, command shapes, fixtures, and commands exercised on that commit. They do not prove a specific phone/tablet/Windows device, browser install behavior, Termux/F-Droid, credentials, network, local storage, clipboard/focus behavior, Excel for Web acceptance, provider obedience, protected target access, technician acceptance, deployment, or production success.
 
 ## Operator next action
 
