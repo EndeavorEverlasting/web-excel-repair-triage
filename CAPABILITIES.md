@@ -37,7 +37,7 @@ python scripts/validate_harness.py --report Outputs/harness-completeness-report.
 - **Use/open/share:** open `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`; no Git checkout is required.
 - **Phone/tablet install:** open `https://endeavoreverlasting.github.io/web-excel-repair-triage/` in the system browser and use the install/Add to Home Screen surface.
 - **Windows stable local app:** use `Open-Latest-PromptKit.cmd` so repository-owned clone/update/validation and portable Favorites behavior remain centralized.
-- **Edit/commit/push/local tooling:** use a real `main` checkout. Android source work uses Termux from F-Droid and Git; existing checkouts update with `git pull --ff-only origin main`.
+- **Edit/commit/push/local tooling:** use a real `main` checkout. Android source work uses Termux from F-Droid and Git. Before updating any existing editable checkout, prove canonical origin, a clean worktree, current branch `main`, and zero local-only commits; fetch `origin/main` and finish with `git merge --ff-only origin/main`.
 - **No-Git source snapshot:** use the repository `main.zip`, explicitly as a point-in-time snapshot.
 
 Focused contract proof:
@@ -58,4 +58,4 @@ P62 must reproduce functional weaknesses and inefficiencies with versioned cases
 
 ## Proof boundaries
 
-Capability registration, static validators, tests, and CI prove only the repository surfaces and commands exercised on the tested commit. Cross-device Prompt Kit validation proves routing intent and canonical access surfaces, not a phone/browser install menu, Termux/F-Droid availability, Git credentials, browser storage, clipboard behavior, or push success. Other capability proof likewise does not establish provider behavior, model judgment, Excel for Web, Windows GUI, protected runtime access, technician acceptance, deployment, or production success.
+Capability registration, static validators, tests, and CI prove only the repository surfaces and commands exercised on the tested commit. Cross-device Prompt Kit validation proves routing intent and canonical access surfaces plus the existing-checkout preconditions encoded in the contract, not a phone/browser install menu, Termux/F-Droid availability, Git credentials, browser storage, clipboard behavior, or push success. Other capability proof likewise does not establish provider behavior, model judgment, Excel for Web, Windows GUI, protected runtime access, technician acceptance, deployment, or production success.
