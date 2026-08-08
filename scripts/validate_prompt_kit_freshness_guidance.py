@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "harness" / "contracts" / "prompt-kit-freshness-guidance.v1.json"
 TRIGGERS_PATH = ROOT / "harness" / "triggers.v1.json"
 SKILL_PATH = ROOT / ".ai" / "skills" / "technician-prompt-kit-acquisition" / "SKILL.md"
-REPORT_PATH = ROOT / "harness" / "reports" / "CURRENT_STATE.md"
+REPORT_PATH = ROOT / "harness" / "reports" / "PROMPT_KIT_FRESHNESS.md"
 
 PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/"
 LAUNCHER_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/"
@@ -115,7 +115,7 @@ def validate_skill() -> None:
         "### 0. Freshness gate before guidance",
         "A version label is a freshness signal, not proof of currentness.",
         "Before troubleshooting, tutorial guidance, or prompt selection",
-        "recommend the lowest-friction refresh route first",
+        "Recommend the lowest-friction refresh route first",
         PUBLIC_URL,
         LAUNCHER_URL,
         "Open-Latest-PromptKit.cmd",
@@ -131,11 +131,12 @@ def validate_report() -> None:
     try:
         text = REPORT_PATH.read_text(encoding="utf-8")
     except FileNotFoundError as exc:
-        raise FreshnessGuidanceError("harness operator report is missing") from exc
+        raise FreshnessGuidanceError("Prompt Kit freshness operator report is missing") from exc
     for phrase in (
         "Prompt Kit freshness",
         "version label",
         "recommend a refresh before troubleshooting",
+        "stale-or-unverified",
     ):
         if phrase not in text:
             raise FreshnessGuidanceError(f"operator report is missing freshness state: {phrase}")
