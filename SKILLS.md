@@ -54,7 +54,7 @@ This is the repository skill index. Reusable procedures live under `.ai/skills/<
 - **Capability:** `technician-prompt-kit-acquisition`
 - **Use when:** A user needs to open, install, share, download, clone, update, or locally edit the Prompt Kit on a browser, phone/tablet, Windows PC, macOS, or Linux machine.
 - **Routing:** Normal browser use goes directly to the public Prompt Kit; phone/tablet install uses the public launcher; Windows stable-origin use prefers `Open-Latest-PromptKit.cmd`; an editable checkout is reserved for edit/commit/push/local-tooling intent; ZIP is a source snapshot fallback.
-- **Android editable checkout:** Use Termux from F-Droid, install Git, clone `main`, and update only with `git pull --ff-only origin main`.
+- **Android editable checkout:** Use Termux from F-Droid, install Git, clone `main`, then update an existing checkout only after verifying canonical origin, a clean worktree, current branch `main`, and zero local-only commits; fetch and finish with `git merge --ff-only origin/main`.
 - **Forbidden conditions:** Destructive Git cleanup, credential automation, or updating an editable checkout that is dirty, divergent, non-main, or has an unexpected origin.
 - **Primary validation:** `python scripts/validate_prompt_kit_cross_device_access.py --summary`, `python -m unittest tests.test_prompt_kit_cross_device_access -v`, then the root harness validator/contracts and native device field proof.
 
