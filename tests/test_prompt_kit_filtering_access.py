@@ -29,6 +29,9 @@ class PromptKitFilteringAccessTests(unittest.TestCase):
                 "acquisition_discoverability",
             },
         )
+        expected = {item["id"]: item["expected"] for item in payload["requirements"]}
+        self.assertIn("complete visible prompt-card stream", expected["sequential_with_gaps"])
+        self.assertIn("at most once", expected["unique_categories"])
 
     def test_category_and_type_controls_are_initialized(self) -> None:
         js = JS.read_text(encoding="utf-8")
@@ -39,15 +42,15 @@ class PromptKitFilteringAccessTests(unittest.TestCase):
         self.assertIn("aria-label','Prompt categories", js)
         self.assertIn("aria-label','Prompt types", js)
 
-    def test_render_groups_once_and_preserves_category_heading_when_filtered(self) -> None:
+    def test_render_uses_unique_category_metadata_without_reordering_cards(self) -> None:
         js = JS.read_text(encoding="utf-8")
         self.assertIn("function groupPromptsBySection(prompts)", js)
-        self.assertIn("var groups=groupPromptsBySection(f);", js)
-        self.assertIn("groups.forEach(function(group)", js)
-        self.assertIn("appendSectionDivider(grid,group);", js)
-        self.assertIn("group.prompts.forEach(function(p){appendPromptCard(grid,p)})", js)
+        self.assertIn("var groups=groupPromptsBySection(orderedPrompts),groupByName={},renderedSections={};", js)
+        self.assertIn("groups.forEach(function(group){groupByName[group.name]=group});", js)
+        self.assertIn("orderedPrompts.forEach(function(p)", js)
+        self.assertIn("if(!renderedSections[sectionName]){appendSectionDivider(grid,group);renderedSections[sectionName]=true}", js)
+        self.assertIn("appendPromptCard(grid,p);visiblePromptIndex++;", js)
         self.assertNotIn("sectionName!==lastSection&&!activeSection&&!activeType", js)
-        self.assertIn("if(activeSection){var secTypes=[];", js)
         self.assertIn("divider.setAttribute('data-category',group.name)", js)
 
     def test_grouping_is_unique_and_numeric_for_noncontiguous_prompt_ids(self) -> None:
@@ -61,7 +64,6 @@ var SECTIONS=[
  {name:'Build & Repair',types:['BUILD','REPAIR'],glow:'#2'},
  {name:'Validate & Protect',types:['VALIDATE'],glow:'#3'}
 ];
-function isFavoritePrompt(id){return false;}
 """ + helpers + r"""
 var prompts=[
  {id:'P10',seq:'10',type:'BUILD'},
@@ -93,6 +95,9 @@ process.stdout.write(JSON.stringify(groups.map(function(g){
         )
         names = [item["name"] for item in groups]
         self.assertEqual(len(names), len(set(names)))
+        for group in groups:
+            seqs = [int(item[1:]) for item in group["ids"]]
+            self.assertEqual(seqs, sorted(seqs))
 
     def test_visible_category_divider_keeps_top_and_bottom_anchors(self) -> None:
         js = JS.read_text(encoding="utf-8")
