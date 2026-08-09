@@ -42,6 +42,14 @@
       "harness_gate": "python scripts/validate_prompt_kit_discovery.py --summary",
       "strict_product_gate": "python -m unittest tests.test_prompt_kit_discovery -v"
     },
+    "prompt_kit_order_navigation": {
+      "contract": "harness/contracts/prompt-kit-order-navigation.v1.json",
+      "validator": "scripts/validate_prompt_kit_order_navigation.py",
+      "contract_tests": "tests/test_prompt_kit_order_navigation_contract.py",
+      "workflow": "WORKFLOW.md#b-prompt-registry-or-website-change",
+      "harness_gate": "python scripts/validate_prompt_kit_order_navigation.py --output Outputs/prompt-kit-order-navigation-audit.json --summary",
+      "strict_product_gate": "python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary"
+    },
     "prompt_kit_portability": {
       "contract": "harness/contracts/prompt-kit-portability.v1.json",
       "doctrine": "docs/PROMPT_KIT_PORTABILITY.md",
