@@ -165,10 +165,10 @@
       "patch-hygiene-staged"
     ],
     "pre_push": [
-      "prompt-kit-profile-routing-audit",
-      "prompt-kit-profile-routing-tests",
       "harness-completeness",
       "harness-contract-tests",
+      "prompt-kit-profile-routing-audit",
+      "prompt-kit-profile-routing-tests",
       "prompt-kit-interaction-contract-tests",
       "prompt-kit-interaction-audit",
       "prompt-kit-discovery-audit",
