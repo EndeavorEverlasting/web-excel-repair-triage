@@ -37,6 +37,16 @@ class PromptKitOrderNavigationProductTests(unittest.TestCase):
         self.assertIn("renderedSections={}", source)
         self.assertIn(".distributed-page-navigation .page-jump", source)
         self.assertIn("min-height:40px", source)
+        self.assertIn("Just before next prompt", source)
+        self.assertIn("End of visible prompts", source)
+        self.assertNotIn("After prompt '+visiblePromptIndex", source)
+
+    def test_visible_version_is_consistently_v40(self) -> None:
+        html = build_prompt_kit_registry.render()
+        self.assertIn('<title>AI Harness Prompt Kit v40</title>', html)
+        self.assertIn('AI Harness Prompt Kit <span>v40</span>', html)
+        self.assertIn('id=\"versionBadge\">v40</div>', html)
+        self.assertNotIn('AI Harness Prompt Kit <span>v39</span>', html)
 
     def test_dynamic_prompt_id_is_not_embedded_in_inline_copy_javascript(self) -> None:
         source = (ROOT / "docs" / "prompt-kit.js").read_text(encoding="utf-8")

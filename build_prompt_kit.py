@@ -445,7 +445,7 @@ def build_html(prompts, ref):
     html.append('  <div class="header-top">')
     html.append('    <div class="logo">')
     html.append('      <div class="logo-icon">AK</div>')
-    html.append('      <div><h1>AI Harness Prompt Kit <span>v39</span></h1>'
+    html.append('      <div><h1>AI Harness Prompt Kit <span>v40</span></h1>'
                 '<div style="font-size:10px;color:var(--text-muted)">Agent Control Panel</div></div>')
     html.append('    </div>')
     html.append('    <div class="search-container">')
@@ -490,7 +490,7 @@ def build_html(prompts, ref):
     html.append('<div class="prompt-detail-overlay" id="promptDetailOverlay">')
     html.append('  <div class="prompt-detail" id="promptDetail"></div>')
     html.append('</div>')
-    html.append('<div class="version-badge" id="versionBadge">v39</div>')
+    html.append('<div class="version-badge" id="versionBadge">v40</div>')
 
     html.append('<script>')
     html.append('var PROMPTS=' + prompt_json + ';')

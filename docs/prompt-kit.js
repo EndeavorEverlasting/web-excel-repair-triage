@@ -88,11 +88,12 @@ function appendSectionDivider(grid,group){
   divider.innerHTML='<a class="page-jump page-jump-top" href="#page-top" aria-label="Go to top of page">&#8593; Top</a><div class="sd-line" style="background:'+secGlow+'"></div><button class="sd-label section-toggle" type="button" data-collapse-section="'+safeGroup+'" aria-expanded="'+(!collapsed)+'" aria-label="'+(collapsed?'Expand ':'Collapse ')+safeGroup+' section"><span class="section-chevron" aria-hidden="true">&#9656;</span><span class="sd-icon">'+(icons[group.name]||'◆')+'</span>'+safeGroup+'<span class="sd-count">'+group.prompts.length+' prompts</span></button><div class="sd-line" style="background:'+secGlow+'"></div><a class="page-jump page-jump-bottom" href="#page-bottom" aria-label="Go to bottom of page">Bottom &#8595;</a>';
   grid.appendChild(divider)
 }
-function appendDistributedPageNavigation(grid,visiblePromptIndex){
+function appendDistributedPageNavigation(grid,visiblePromptIndex,isFinal){
   var navigation=document.createElement('nav');
+  var contextLabel=isFinal?'End of visible prompts':'Just before next prompt';
   navigation.className='distributed-page-navigation';
-  navigation.setAttribute('aria-label','Prompt list navigation after '+visiblePromptIndex+' visible prompts');
-  navigation.innerHTML='<a class="page-jump page-jump-top" href="#page-top" aria-label="Go to top of page">&#8593; Top</a><span class="distributed-page-navigation-count">After prompt '+visiblePromptIndex+'</span><a class="page-jump page-jump-bottom" href="#page-bottom" aria-label="Go to bottom of page">Bottom &#8595;</a>';
+  navigation.setAttribute('aria-label',isFinal?'Prompt list navigation at end of visible prompts':'Prompt list navigation just before next prompt');
+  navigation.innerHTML='<a class="page-jump page-jump-top" href="#page-top" aria-label="Go to top of page">&#8593; Top</a><span class="distributed-page-navigation-count">'+contextLabel+'</span><a class="page-jump page-jump-bottom" href="#page-bottom" aria-label="Go to bottom of page">Bottom &#8595;</a>';
   grid.appendChild(navigation)
 }
 function appendPromptCard(grid,p){
@@ -155,7 +156,7 @@ function render(){
     appendPromptCard(grid,p);visiblePromptIndex++;
     if(visiblePromptIndex%PROMPT_NAVIGATION_INTERVAL===0)appendDistributedPageNavigation(grid,visiblePromptIndex)
   });
-  if(visiblePromptIndex>0&&visiblePromptIndex%PROMPT_NAVIGATION_INTERVAL!==0)appendDistributedPageNavigation(grid,visiblePromptIndex);
+  if(visiblePromptIndex>0&&visiblePromptIndex%PROMPT_NAVIGATION_INTERVAL!==0)appendDistributedPageNavigation(grid,visiblePromptIndex,true);
   document.getElementById('showing').textContent=f.length;
   document.getElementById('total').textContent=PROMPTS.length
 }
