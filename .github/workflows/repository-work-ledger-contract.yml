@@ -1,0 +1,34 @@
+name: Repository work ledger contract
+
+on:
+  pull_request:
+    paths:
+      - ".ai/WORK_QUEUE.md"
+      - ".ai/work-ledger-adoption.json"
+      - "scripts/validate_repository_work_ledger.py"
+      - "tests/test_repository_work_ledger.py"
+      - ".githooks/pre-commit"
+      - ".githooks/pre-push"
+      - ".github/workflows/repository-work-ledger-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+      - name: Validate work ledger
+        run: python scripts/validate_repository_work_ledger.py
+      - name: Run work-ledger contract tests
+        run: python -m unittest tests.test_repository_work_ledger -v
+      - name: Verify patch hygiene
+        run: |
+          set -euo pipefail
+          git diff --check "${{ github.event.pull_request.base.sha }}" HEAD
+          test -z "$(git status --short)"

@@ -6,6 +6,8 @@ PROMPT_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-language-audit.json"
 INTERACTION_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-kit-interaction-audit.json"
 ORDER_NAV_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-kit-order-navigation-audit.json"
 
+python scripts/validate_repository_work_ledger.py --summary
+python -m unittest tests.test_repository_work_ledger -v
 python scripts/validate_prompt_kit_cross_device_access.py --summary
 python -m unittest tests.test_prompt_kit_cross_device_access -v
 python scripts/validate_prompt_kit_freshness_guidance.py --summary
