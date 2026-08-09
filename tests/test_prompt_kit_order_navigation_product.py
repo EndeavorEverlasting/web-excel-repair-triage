@@ -1,0 +1,56 @@
+from __future__ import annotations
+
+import importlib.util
+import sys
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = ROOT / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
+import build_prompt_kit_registry
+
+
+class PromptKitOrderNavigationProductTests(unittest.TestCase):
+    def test_registry_defaults_to_numeric_sequence_order(self) -> None:
+        prompts = build_prompt_kit_registry.load_prompt_registry()
+        sequences = [int(str(prompt["seq"])) for prompt in prompts]
+        self.assertEqual(sequences, sorted(sequences))
+        self.assertEqual(prompts[0]["id"], "P00")
+        self.assertTrue(any(prompt.get("discoveryGroup") == "promoted" for prompt in prompts))
+
+    def test_recommendation_runtime_does_not_replace_library_sort(self) -> None:
+        guided = build_prompt_kit_registry.GUIDED_RECOMMENDATIONS.read_text(encoding="utf-8")
+        self.assertNotIn("window.promptSequenceValue=rank", guided)
+        self.assertIn("function rank(p)", guided)
+        self.assertIn("scorePromptFinderAnswers", guided)
+
+    def test_main_renderer_owns_chronology_favorites_and_dense_navigation(self) -> None:
+        source = (ROOT / "docs" / "prompt-kit.js").read_text(encoding="utf-8")
+        self.assertIn("PROMPT_NAVIGATION_INTERVAL=5", source)
+        self.assertIn("function appendDistributedPageNavigation", source)
+        self.assertIn("visiblePromptIndex", source)
+        self.assertIn("__favorites__", source)
+        self.assertIn("prompts.slice().sort", source)
+        self.assertIn(".distributed-page-navigation .page-jump", source)
+        self.assertIn("min-height:40px", source)
+
+    def test_strict_harness_gate_accepts_product_sources(self) -> None:
+        validator_path = SCRIPTS / "validate_prompt_kit_order_navigation.py"
+        spec = importlib.util.spec_from_file_location("prompt_order_validator", validator_path)
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        report = module.evaluate_repository()
+        gaps = {
+            finding["requirement_id"]
+            for finding in report["findings"]
+            if finding["requirement_id"] != "canonical_site_parity"
+        }
+        self.assertEqual(gaps, set())
+
+
+if __name__ == "__main__":
+    unittest.main()
