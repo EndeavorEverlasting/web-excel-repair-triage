@@ -75,14 +75,15 @@ jobs:
           text = text.replace(marker, addition, 1)
 
           insert_before = "    def test_dynamic_prompt_id_is_not_embedded_in_inline_copy_javascript(self) -> None:\n"
-          version_test = """    def test_visible_version_is_consistently_v40(self) -> None:
-              html = build_prompt_kit_registry.render()
-              self.assertIn('<title>AI Harness Prompt Kit v40</title>', html)
-              self.assertIn('AI Harness Prompt Kit <span>v40</span>', html)
-              self.assertIn('id=\"versionBadge\">v40</div>', html)
-              self.assertNotIn('AI Harness Prompt Kit <span>v39</span>', html)
-
-          """
+          version_test = (
+              "    def test_visible_version_is_consistently_v40(self) -> None:\n"
+              "        html = build_prompt_kit_registry.render()\n"
+              "        self.assertIn('<title>AI Harness Prompt Kit v40</title>', html)\n"
+              "        self.assertIn('AI Harness Prompt Kit <span>v40</span>', html)\n"
+              "        self.assertIn('id=\\\"versionBadge\\\">v40</div>', html)\n"
+              "        self.assertNotIn('AI Harness Prompt Kit <span>v39</span>', html)\n"
+              "\n"
+          )
           if insert_before not in text:
               raise SystemExit('Product version test insertion point was not found')
           text = text.replace(insert_before, version_test + insert_before, 1)
