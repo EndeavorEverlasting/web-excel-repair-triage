@@ -3,20 +3,21 @@
   "adoptionId": "web-excel-repair-triage.repository-work-ledger.v1",
   "repository": "EndeavorEverlasting/web-excel-repair-triage",
   "canonicalContract": {
-    "repository": "EndeavorEverlasting/AgentSwitchboard",
-    "id": "agentswitchboard.repository-work-ledger.v1",
-    "version": "1.0.0",
-    "pinnedCommit": "62acecf4a590ecadf4a0b1ad1410e659b4e1b650",
-    "documentationPath": "docs/governance/repository-work-ledger-contract.md",
-    "policyPath": ".ai/harness/repository-work-ledger.policy.json"
+    "repository": "EndeavorEverlasting/BlacksmithGuild",
+    "id": "repo-ledger-interoperability",
+    "version": "RepoLedgerInteroperability.v1",
+    "pinnedCommit": "429237aa41d8712d71859865c9be407ca23d8580",
+    "contractPath": ".tbg/workflows/repo-ledger-interoperability.contract.json",
+    "schemaPath": ".tbg/harness/schemas/repo-ledger-adoption.schema.json"
   },
   "originalDonor": {
     "repository": "EndeavorEverlasting/AxTask",
     "pinnedCommit": "9351c952b057ae4520b1ea0d388e1d8908f4c093",
     "authoritativePaths": [
+      ".ai/README.md",
       ".ai/WORK_QUEUE.md",
-      "scripts/ai-harness/validate-work-queue.mjs",
-      "server/ai-harness/work-queue-contract.test.ts"
+      ".ai/authority.json",
+      "scripts/ai-harness/validate-work-queue.mjs"
     ]
   },
   "local": {
@@ -38,8 +39,10 @@
   "mustNotCopyOrReimplement": [
     "AxTask AXQ task namespace or task contents",
     "AxTask deployment/database behavior",
+    "AgentSwitchboard Work class/frontier as a portable requirement",
     "AgentSwitchboard family governance as local product law",
     "Prompt Kit implementation truth inside the ledger",
+    "BlacksmithGuild consumer queue state or runtime behavior",
     "remote validator execution"
   ],
   "proofCeiling": "static local ledger contract and hook/CI wiring only; no Prompt Kit behavior, browser, launcher, deployment, or live-runtime proof"
