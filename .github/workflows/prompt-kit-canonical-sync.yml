@@ -1,0 +1,52 @@
+name: Prompt Kit identity guard sync (temporary sprint)
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-chronological-order-dense-navigation-20260808
+    paths:
+      - .github/workflows/prompt-kit-canonical-sync.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Add numeric identity guard
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('docs/prompt-kit.js')
+          text = path.read_text(encoding='utf-8')
+          old_a = "var content=document.getElementById('newPromptContent').value.trim();if(!rawId||!name)"
+          new_a = "var content=document.getElementById('newPromptContent').value.trim();var sequence=Number(rawId.slice(1));if(!rawId||!name)"
+          old_b = "if(PROMPTS.some(function(existing){return String(existing.id).toUpperCase()===rawId})){showToast(rawId+' already exists');return}"
+          new_b = "if(PROMPTS.some(function(existing){return String(existing.id).toUpperCase()===rawId||promptSequenceValue(existing)===sequence})){showToast(rawId+' or its numeric sequence already exists');return}"
+          if text.count(old_a) != 1 or text.count(old_b) != 1:
+              raise SystemExit('Expected submitNewPrompt identity-guard seams were not found exactly once.')
+          text = text.replace(old_a, new_a, 1).replace(old_b, new_b, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+          node --check docs/prompt-kit.js
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python -m unittest tests.test_prompt_kit_order_navigation_product -v
+          git diff --check
+      - name: Commit product source and canonical site
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/prompt-kit.js web/prompt-kit/index.html
+          git commit -m "fix(prompt-kit): reject duplicate numeric prompt identities"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
