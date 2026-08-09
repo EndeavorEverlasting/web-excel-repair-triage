@@ -19,6 +19,7 @@ BASE_REGISTRY = REPO_ROOT / "docs" / "prompts.json"
 EXTENSION_REGISTRIES = (
     REPO_ROOT / "registry" / "prompts" / "skill-development-prompts.v1.json",
     REPO_ROOT / "registry" / "prompts" / "tutorial-discovery-prompts.v1.json",
+    REPO_ROOT / "registry" / "prompts" / "repository-work-ledger-prompts.v1.json",
 )
 DISPLAY_ORDER_POLICY = (
     REPO_ROOT / "registry" / "prompts" / "prompt-display-order.v1.json"

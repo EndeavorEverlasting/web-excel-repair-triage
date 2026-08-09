@@ -19,6 +19,7 @@ on:
       - triage/prompt_library_portability.py
       - registry/prompts/skill-development-prompts.v1.json
       - registry/prompts/tutorial-discovery-prompts.v1.json
+      - registry/prompts/repository-work-ledger-prompts.v1.json
       - registry/prompts/prompt-display-order.v1.json
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
       - docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md
@@ -54,6 +55,7 @@ on:
       - tests/test_prompt_kit_portable_health.py
       - tests/test_prompt_library_portability.py
       - tests/test_skill_prompt_registry.py
+      - tests/test_repository_work_ledger_prompt.py
       - .github/workflows/prompt-kit-web.yml
   push:
     branches: [main]
@@ -74,6 +76,7 @@ on:
       - triage/prompt_library_portability.py
       - registry/prompts/skill-development-prompts.v1.json
       - registry/prompts/tutorial-discovery-prompts.v1.json
+      - registry/prompts/repository-work-ledger-prompts.v1.json
       - registry/prompts/prompt-display-order.v1.json
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
       - docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md
@@ -109,6 +112,7 @@ on:
       - tests/test_prompt_kit_portable_health.py
       - tests/test_prompt_library_portability.py
       - tests/test_skill_prompt_registry.py
+      - tests/test_repository_work_ledger_prompt.py
       - .github/workflows/prompt-kit-web.yml
 
 permissions:
@@ -147,7 +151,8 @@ jobs:
             tests/test_prompt_kit_portability_regressions.py \
             tests/test_prompt_kit_portable_health.py \
             tests/test_prompt_library_portability.py \
-            tests/test_skill_prompt_registry.py
+            tests/test_skill_prompt_registry.py \
+            tests/test_repository_work_ledger_prompt.py
       - name: Validate Prompt Kit JavaScript syntax
         run: |
           node --check docs/prompt-kit.js
@@ -222,7 +227,9 @@ jobs:
           python scripts/validate_prompt_kit_discovery.py --summary
           python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
       - name: Validate combined prompt registry
-        run: python -m unittest tests.test_skill_prompt_registry -v
+        run: |
+          python -m unittest tests.test_skill_prompt_registry -v
+          python -m unittest tests.test_repository_work_ledger_prompt -v
       - name: Validate chronological ordering and dense navigation
         run: |
           python -m unittest \

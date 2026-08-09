@@ -42,3 +42,19 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** workflow:31332698254 passed the repository work-ledger contract with 14 local contract tests and patch hygiene; workflow:31332698237 passed artifact engine tests; merge:da8d9dae9b615301dffc4d280eb7969e0ff4f5ff merged PR #162; artifact:.ai/work-ledger-adoption.json artifact:scripts/validate_repository_work_ledger.py artifact:tests/test_repository_work_ledger.py
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-08-09T19:55:00Z
+
+## TRQ-003 — Add repository work ledger stewardship prompt to Prompt Kit
+
+- **Status:** MERGE
+- **Priority:** P1
+- **Owner:** chatgpt-prompt-ledger-p66-20260809
+- **Branch / PR:** feat/prompt-kit-repository-ledger-p66-20260809 / #163
+- **Scope:** add P66 Repository Work Ledger Steward as a versioned prompt extension, integrate it with registry loading and both interactive and copyable guided discovery, add focused regression coverage, regenerate the canonical Prompt Kit website, and preserve the existing safe Windows acquisition route
+- **Forbidden:** changing BlacksmithGuild RepoLedgerInteroperability.v1 or repository-local ledger semantics; changing AxTask or AgentSwitchboard domain authority; unrelated Prompt Kit UX; hand-editing generated `web/prompt-kit/index.html`; hard-coded Windows usernames; destructive checkout cleanup
+- **Dependencies:** TRQ-001, TRQ-002
+- **References:** `registry/prompts/repository-work-ledger-prompts.v1.json`, `registry/prompts/tutorial-discovery-prompts.v1.json`, `scripts/build_prompt_kit_registry.py`, `registry/prompts/prompt-display-order.v1.json`, `docs/prompt-kit-guided-recommendations.js`, `tests/test_repository_work_ledger_prompt.py`, `web/prompt-kit/index.html`, `scripts/Acquire-LatestPromptKit.ps1`
+- **Acceptance gate:** P66 loads through the combined registry with unique ID/sequence, interactive and copyable P65 discovery can route repository-ledger intent to P66, focused tests pass, the checked-in website exactly matches the canonical builder output and contains P66, Prompt Kit and ledger CI pass against current repository authority, concurrent TRQ blocks are preserved, and the merged site remains retrievable through the repository-owned Windows quick-open acquisition path
+- **Gate:** none
+- **Last proof:** commit:7f884a4f50cf9a79a6279aefa3449ef644141a3f reconciled the nine-file P66 sprint onto current Blacksmith-authority main without replacing TRQ-001/TRQ-002; workflow:31333415602 passed the repository work-ledger contract; workflow:31333415653 passed Prompt Kit web contracts including exact generated-site parity; workflow:31333415601 passed skill prompt registry and generator UX; workflow:31333415617 passed Prompt Kit GitHub Pages; workflow:31333415628 passed operator documentation contracts; workflow:31333415619 passed artifact engine tests
+- **Next action:** merge PR #163 at the current exact head after this queue-only continuation commit passes the repository work-ledger contract, then record the merge receipt in a strict-DONE closeout
+- **Updated:** 2026-08-09T20:08:00Z
