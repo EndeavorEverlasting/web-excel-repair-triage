@@ -26,6 +26,16 @@
       "proof_ceiling": "Human-readable repository state, not runtime acceptance."
     },
     {
+      "id": "prompt-kit-profile-routing-report",
+      "kind": "tracked",
+      "canonical_path": "harness/reports/PROMPT_KIT_PROFILE_ROUTING.md",
+      "producer": "Prompt Kit profile-qualified routing harness",
+      "validator": "prompt-kit-profile-routing-audit",
+      "naming": "Stable uppercase focused operator report name.",
+      "tracking_policy": "Tracked human-readable contract state. Runtime route JSON remains process output unless explicitly captured outside protected inputs.",
+      "proof_ceiling": "Repository-family relationship, profile/shell/path routing, and handoff state only; no device execution proof."
+    },
+    {
       "id": "prompt-kit-website",
       "kind": "tracked",
       "canonical_path": "web/prompt-kit/index.html",
