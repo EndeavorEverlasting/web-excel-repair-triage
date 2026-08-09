@@ -159,13 +159,12 @@ class PromptKitOrderNavigationContractTests(unittest.TestCase):
         self.assertEqual(report["findings"], [])
         self.assertTrue(all(value == "pass" for value in report["requirement_status"].values()))
 
-    def test_current_repository_matches_recorded_product_gap_until_product_lane_repairs_it(self) -> None:
+    def test_current_repository_matches_recorded_repaired_baseline(self) -> None:
         report = validator.evaluate_repository()
-        self.assertEqual(self.contract["known_baseline"]["status"], "needs-product-repair")
-        self.assertEqual(report["implementation_status"], "needs-product-repair")
-        self.assertTrue(report["findings"])
-        self.assertEqual(report["requirement_status"]["stable_prompt_identity"], "pass")
-        self.assertEqual(report["requirement_status"]["canonical_site_parity"], "pass")
+        self.assertEqual(self.contract["known_baseline"]["status"], "pass")
+        self.assertEqual(report["implementation_status"], "pass")
+        self.assertEqual(report["findings"], [])
+        self.assertTrue(all(value == "pass" for value in report["requirement_status"].values()))
 
 
 if __name__ == "__main__":
