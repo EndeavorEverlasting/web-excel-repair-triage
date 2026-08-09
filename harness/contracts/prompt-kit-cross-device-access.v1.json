@@ -6,6 +6,14 @@
   "canonical_site": "web/prompt-kit/index.html",
   "public_prompt_kit_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
   "public_launcher_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
+  "windows_checkout_policy": {
+    "desktop_dev_relative_root": "Desktop\\dev",
+    "repository_folder": "web-excel-repair-triage",
+    "automatic_duplicate_checkout_fallback": "forbidden",
+    "launcher_location_is_checkout_root": false,
+    "persistent_browser_proof_root": "repository-owned Outputs only",
+    "operator_message": "On Windows, reuse or create exactly one canonical checkout under the user's Desktop\\dev folder. Do not invent -latest siblings, derive a checkout from the downloaded launcher directory, or keep persistent browser-proof website copies in arbitrary Temp folders."
+  },
   "source_guides": [
     "PROMPT_KIT_ACCESS.md",
     "OPEN_PROMPT_KIT_ON_PHONE.md"
@@ -68,7 +76,7 @@
       ],
       "manual_clone_required": false,
       "entry_point": "Open-Latest-PromptKit.cmd",
-      "operator_message": "Use the repository-owned CMD. It owns safe clone or fast-forward behavior and serves the validated portable Prompt Kit on the stable loopback origin."
+      "operator_message": "Use the repository-owned CMD. It owns safe clone or fast-forward behavior, resolves the single canonical Desktop\\dev checkout independently of where the CMD was downloaded, and serves the validated portable Prompt Kit on the stable loopback origin."
     },
     {
       "id": "editable-checkout",
@@ -106,7 +114,7 @@
         "git rev-list --left-right --count HEAD...origin/main",
         "git merge --ff-only origin/main"
       ],
-      "operator_message": "Use a real checkout only when the user intends to edit, commit, push, inspect source locally, or run repository tooling. Before updating an existing checkout, prove canonical origin, a clean worktree, current branch main, and zero local-only commits; then fast-forward main only."
+      "operator_message": "Use a real checkout only when the user intends to edit, commit, push, inspect source locally, or run repository tooling. On Windows the default checkout is Desktop\\dev\\web-excel-repair-triage. Before updating an existing checkout, prove canonical origin, a clean worktree, current branch main, and zero local-only commits; then fast-forward main only."
     },
     {
       "id": "zip-snapshot",
@@ -131,9 +139,11 @@
     "Do not tell a normal phone or browser user to clone the repository merely to use the Prompt Kit.",
     "Do not tell a mobile GitHub-app user to hunt for or download web/prompt-kit/index.html as the primary access path.",
     "Distinguish use/install intent from edit/commit/push intent before prescribing acquisition commands.",
+    "On Windows, automatic acquisition must reuse or create Desktop\\dev\\web-excel-repair-triage and must fail closed if that canonical path cannot be used; do not create -latest sibling checkouts or derive a checkout from the launcher download directory.",
+    "Do not leave persistent local browser-proof copies of the Prompt Kit under arbitrary Temp or download directories; use the canonical checkout, repository-owned Outputs, or CI-owned ephemeral runner storage.",
     "For existing editable checkouts, verify canonical origin, clean worktree, current branch main, and zero local-only commits before fetching and fast-forwarding; never reset, clean, force-push, or discard local work.",
     "Do not claim Add to Home Screen, PWA installation, Termux, Git authentication, browser storage, or clipboard behavior succeeded without device observation.",
     "Resolve the canonical website through this contract and harness/artifacts.v1.json instead of guessing an index.html path."
   ],
-  "proof_ceiling": "Static repository routing and documentation contract proof only. Device browser behavior, PWA installation, Termux/F-Droid availability, Git credentials, network reachability, local storage, clipboard behavior, and successful push require observed runtime proof."
+  "proof_ceiling": "Static repository routing, canonical Windows checkout-path discipline, and documentation contract proof only. Device browser behavior, PWA installation, Termux/F-Droid availability, Git credentials, network reachability, local storage, clipboard behavior, and successful push require observed runtime proof."
 }
