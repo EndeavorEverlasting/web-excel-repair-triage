@@ -29,16 +29,16 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-002 — Reconcile portable ledger authority to BlacksmithGuild
 
-- **Status:** VERIFY
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** chatgpt-blacksmith-ledger-authority-reconcile-20260809
-- **Branch / PR:** chore/blacksmith-ledger-authority-reconcile-20260809 / pending
+- **Branch / PR:** main / #162 merged
 - **Scope:** repoint the existing triage adoption manifest, queue header, validator, and tests directly to BlacksmithGuild RepoLedgerInteroperability.v1 while preserving the repository-local TRQ ledger, CI, hooks, Prompt Kit authority, and artifact-engine boundaries
 - **Forbidden:** changing Prompt Kit product behavior; changing workbook/artifact engines; adopting AgentSwitchboard Work class/frontier as a portable requirement; copying AxTask domain tasks; executing remote BlacksmithGuild or AgentSwitchboard validators
 - **Dependencies:** BlacksmithGuild portable contract merge 429237aa41d8712d71859865c9be407ca23d8580 and authority-registry reconciliation merge ecf0718556e77f10747a997d2cb0173af81b3d29
 - **References:** `.ai/work-ledger-adoption.json`, `scripts/validate_repository_work_ledger.py`, `tests/test_repository_work_ledger.py`, `.github/workflows/repository-work-ledger-contract.yml`, `.githooks/pre-commit`, `.githooks/pre-push`
 - **Acceptance gate:** the existing local ledger workflow passes; validator enforces exact Blacksmith portable pin, verified AxTask donor provenance, local references, continuation/DONE rules, and stale symbolic-ref rejection; existing hooks remain wired; PR contains no Prompt Kit or artifact-engine product mutation
 - **Gate:** none
-- **Last proof:** artifact:.ai/work-ledger-adoption.json artifact:scripts/validate_repository_work_ledger.py artifact:tests/test_repository_work_ledger.py
-- **Next action:** run the existing repository-work-ledger contract workflow, inspect exact-head failures, and repair any owned compatibility regression before merge
-- **Updated:** 2026-08-09T19:49:00Z
+- **Last proof:** workflow:31332698254 passed the repository work-ledger contract with 14 local contract tests and patch hygiene; workflow:31332698237 passed artifact engine tests; merge:da8d9dae9b615301dffc4d280eb7969e0ff4f5ff merged PR #162; artifact:.ai/work-ledger-adoption.json artifact:scripts/validate_repository_work_ledger.py artifact:tests/test_repository_work_ledger.py
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-08-09T19:55:00Z
