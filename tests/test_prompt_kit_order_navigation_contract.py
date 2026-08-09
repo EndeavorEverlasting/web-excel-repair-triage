@@ -17,6 +17,7 @@ class PromptKitOrderNavigationContractTests(unittest.TestCase):
     def setUp(self) -> None:
         self.contract = json.loads(validator.CONTRACT.read_text(encoding="utf-8"))
         self.valid_prompts = [
+            {"id": "P00", "seq": "00"},
             {"id": "P01", "seq": "01"},
             {"id": "P02", "seq": "02"},
         ]
@@ -48,7 +49,7 @@ class PromptKitOrderNavigationContractTests(unittest.TestCase):
         self.assertEqual(report["implementation_status"], "needs-product-repair")
         rule_ids = {item["rule_id"] for item in report["findings"]}
         self.assertTrue(
-            {"PKON001", "PKON002", "PKON004", "PKON005", "PKON006"}.issubset(rule_ids)
+            {"PKON001", "PKON002", "PKON003", "PKON004", "PKON005", "PKON006"}.issubset(rule_ids)
         )
         self.assertEqual(report["requirement_status"]["distributed_page_navigation"], "gap")
         self.assertEqual(report["navigation_interval"], 5)
@@ -131,10 +132,23 @@ class PromptKitOrderNavigationContractTests(unittest.TestCase):
             "var css='.distributed-page-navigation .page-jump{min-height:40px}';"
         )
 
+    def test_recommendation_only_p65_promotion_is_allowed(self) -> None:
+        report = validator.evaluate_source_payloads(
+            self.contract,
+            {"promoted_prompt_ids": ["P65", "P01"]},
+            "def build():\n    return prompts",
+            "function rankRecommendationOnly(){return 65}",
+            self._good_base_source(),
+            raw_prompts=self.valid_prompts,
+            canonical_site_matches=True,
+        )
+        self.assertNotIn("PKON003", {item["rule_id"] for item in report["findings"]})
+        self.assertEqual(report["implementation_status"], "pass")
+
     def test_good_static_sources_satisfy_contract(self) -> None:
         report = validator.evaluate_source_payloads(
             self.contract,
-            {"promoted_prompt_ids": []},
+            {"promoted_prompt_ids": ["P65"]},
             "def build():\n    return prompts",
             "function rankRecommendationOnly(){}",
             self._good_base_source(),
