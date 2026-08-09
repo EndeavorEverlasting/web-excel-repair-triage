@@ -16,9 +16,12 @@ import build_prompt_kit_registry
 
 
 class RepositoryWorkLedgerPromptTests(unittest.TestCase):
-    def prompt(self) -> dict:
+    def prompts_by_id(self) -> dict[str, dict]:
         prompts = build_prompt_kit_registry.load_prompt_registry()
-        return {item["id"]: item for item in prompts}["P66"]
+        return {item["id"]: item for item in prompts}
+
+    def prompt(self) -> dict:
+        return self.prompts_by_id()["P66"]
 
     def test_p66_is_registered_with_stable_identity_and_discovery_rank(self) -> None:
         prompt = self.prompt()
@@ -79,6 +82,17 @@ class RepositoryWorkLedgerPromptTests(unittest.TestCase):
             "'shared work state'",
         ):
             self.assertIn(phrase, guided)
+
+    def test_copyable_p65_finder_can_recommend_p66_without_inventing_it(self) -> None:
+        p65 = self.prompts_by_id()["P65"]["copyContent"]
+        self.assertIn(
+            "P66 Repository Work Ledger Steward: establish, adopt, contribute to, or repair",
+            p65,
+        )
+        self.assertLess(
+            p65.index("P66 Repository Work Ledger Steward"),
+            p65.index("RECOMMENDATION CONTRACT"),
+        )
 
     def test_generated_preview_contains_p66(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
