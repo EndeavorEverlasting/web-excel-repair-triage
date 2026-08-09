@@ -41,7 +41,8 @@ class PromptKitCrossDeviceAccessTests(unittest.TestCase):
             modes["phone-install"]["entry_point"], cross_device.LAUNCHER_URL
         )
 
-    def test_windows_checkout_policy_is_canonical_and_duplicate_safe(self) -> None:
+    def test_windows_checkout_static_contract_uses_canonical_path_and_forbids_duplicate_fallback_markers(self) -> None:
+        """Static contract proof only; native resolver behavior remains a Windows runtime gate."""
         payload = self.load_contract()
         policy = payload["windows_checkout_policy"]
         self.assertEqual(policy["desktop_dev_relative_root"], r"Desktop\dev")
