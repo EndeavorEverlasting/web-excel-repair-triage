@@ -20,8 +20,8 @@ $RequiredFiles = @(
     'configs\prompt_kit\generators.v1.json',
     'scripts\build_prompt_kit_registry.py'
 )
-$AcquireBootstrapCommit = 'd61ff0c165c5647f4607a32e85e1171d6b898501'
-$AcquireBootstrapBlob = '674130635ed70b5e57a3784f26511d932f63adb3'
+$AcquireBootstrapCommit = 'b91b2c8c925cbd3f702cab13e36edba5483f9b8a'
+$AcquireBootstrapBlob = '9d5e428adeacc8cdde9f1e850b40785cb85e9137'
 $StableHost = '127.0.0.1'
 $StableUrl = "http://${StableHost}:$Port/"
 $HealthUrl = "${StableUrl}healthz"
@@ -125,7 +125,7 @@ function Resolve-RepositoryDestination {
 
     $devRoots = @(Get-PromptKitDevRoots)
     if ($devRoots.Count -lt 1) {
-        throw 'Could not resolve a Windows Desktop or development root.'
+        throw 'Could not resolve the Windows Desktop\dev development root.'
     }
 
     $existing = @(Get-ExistingPromptKitRepositories -DevRoots $devRoots)
@@ -138,15 +138,10 @@ function Resolve-RepositoryDestination {
         return $preferred
     }
 
-    $counter = 1
-    do {
-        $suffix = if ($counter -eq 1) { 'latest' } else { "latest-$counter" }
-        $candidate = Join-Path $devRoots[0] "$RepositoryFolderName-$suffix"
-        $counter++
-    } while (Test-Path -LiteralPath $candidate)
-
-    Write-OperatorLog "Default destination is occupied; preserving it and using $candidate"
-    return $candidate
+    throw (
+        "Canonical Prompt Kit checkout path is occupied: $preferred. " +
+        "Resolve or move that path explicitly; no '-latest' sibling clone was created."
+    )
 }
 
 function Invoke-PythonChecked {
