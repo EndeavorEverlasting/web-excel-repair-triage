@@ -1,3 +1,4 @@
+import json
 import pathlib
 import subprocess
 import tempfile
@@ -5,17 +6,21 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 VALIDATOR = ROOT / 'scripts' / 'validate_repository_work_ledger.py'
+ADOPTION = ROOT / '.ai' / 'work-ledger-adoption.json'
+PORTABLE_COMMIT = '429237aa41d8712d71859865c9be407ca23d8580'
 
 
-def run_validator(path=None):
+def run_validator(path=None, adoption=None):
     command = ['python', str(VALIDATOR)]
     if path:
         command += ['--file', str(path)]
+    if adoption:
+        command += ['--adoption', str(adoption)]
     return subprocess.run(command, cwd=ROOT, text=True, capture_output=True)
 
 
-HEADER = '''contractRef: agentswitchboard.repository-work-ledger.v1@1.0.0
-canonicalContractCommit: 62acecf4a590ecadf4a0b1ad1410e659b4e1b650
+HEADER = f'''portableContractRef: RepoLedgerInteroperability.v1@{PORTABLE_COMMIT}
+canonicalContractCommit: {PORTABLE_COMMIT}
 localAuthority: AGENTS.md
 
 # Test ledger
@@ -46,6 +51,19 @@ class RepositoryWorkLedgerTests(unittest.TestCase):
     def test_repository_ledger_passes(self):
         result = run_validator()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('portable=RepoLedgerInteroperability.v1@429237aa41d8', result.stdout)
+        self.assertIn('stale-ref-probes=PASS', result.stdout)
+
+    def test_canonical_contract_is_blacksmith_and_exact(self):
+        adoption = json.loads(ADOPTION.read_text(encoding='utf-8'))
+        canonical = adoption['canonicalContract']
+        self.assertEqual(canonical['repository'], 'EndeavorEverlasting/BlacksmithGuild')
+        self.assertEqual(canonical['id'], 'repo-ledger-interoperability')
+        self.assertEqual(canonical['version'], 'RepoLedgerInteroperability.v1')
+        self.assertEqual(canonical['pinnedCommit'], PORTABLE_COMMIT)
+        self.assertRegex(canonical['pinnedCommit'], r'^[0-9a-f]{40}$')
+        self.assertEqual(canonical['contractPath'], '.tbg/workflows/repo-ledger-interoperability.contract.json')
+        self.assertEqual(canonical['schemaPath'], '.tbg/harness/schemas/repo-ledger-adoption.schema.json')
 
     def run_temp(self, content):
         with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False, dir=ROOT, encoding='utf-8') as handle:
@@ -55,6 +73,28 @@ class RepositoryWorkLedgerTests(unittest.TestCase):
             return run_validator(relative)
         finally:
             pathlib.Path(handle.name).unlink(missing_ok=True)
+
+    def run_temp_adoption(self, mutator):
+        adoption = json.loads(ADOPTION.read_text(encoding='utf-8'))
+        mutator(adoption)
+        with tempfile.NamedTemporaryFile('w', suffix='.json', delete=False, dir=ROOT, encoding='utf-8') as handle:
+            json.dump(adoption, handle)
+            relative = pathlib.Path(handle.name).relative_to(ROOT)
+        try:
+            return run_validator(adoption=relative)
+        finally:
+            pathlib.Path(handle.name).unlink(missing_ok=True)
+
+    def test_symbolic_contract_pin_fails_closed(self):
+        result = self.run_temp_adoption(lambda adoption: adoption['canonicalContract'].__setitem__('pinnedCommit', 'main'))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('canonical contract pinnedCommit drifted', result.stderr)
+        self.assertIn('canonical contract pinnedCommit must be a full exact SHA', result.stderr)
+
+    def test_wrong_contract_owner_fails_closed(self):
+        result = self.run_temp_adoption(lambda adoption: adoption['canonicalContract'].__setitem__('repository', 'EndeavorEverlasting/AgentSwitchboard'))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('canonical contract repository must be BlacksmithGuild', result.stderr)
 
     def test_done_rejects_prose_proof(self):
         result = self.run_temp(task(Status='DONE', **{'Last proof': 'completed successfully', 'Next action': 'merge later'}))
