@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,7 +35,15 @@ def load_resolver():
     if spec is None or spec.loader is None:
         raise ProfileRoutingError("Unable to load profile route resolver")
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    # dataclasses resolves postponed type annotations through sys.modules while
+    # the module body executes. Register the dynamic module before exec so the
+    # validator behaves the same on Python 3.11+ as a normal import.
+    sys.modules[spec.name] = module
+    try:
+        spec.loader.exec_module(module)
+    except Exception:
+        sys.modules.pop(spec.name, None)
+        raise
     return module
 
 
