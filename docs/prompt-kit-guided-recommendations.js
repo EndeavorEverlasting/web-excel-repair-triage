@@ -13,6 +13,7 @@ var PROMPT_FINDER_QUESTIONS=[
  ]},
  {id:'goal',prompt:'What are you trying to accomplish?',options:[
   {id:'plan',label:'Plan or divide the work',queries:['plan','factor','sprint plan']},
+  {id:'coordinate',label:'Keep human and agent work continuous in a repository ledger',queries:['repository ledger','work ledger','agent queue','shared work state']},
   {id:'build',label:'Implement a bounded change',queries:['implement','build','sprint']},
   {id:'prove',label:'Validate or prove behavior',queries:['validate','behavior proof','runtime']},
   {id:'ship',label:'Integrate, deploy, or release',queries:['integrate','deploy','release']},
