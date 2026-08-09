@@ -1,0 +1,66 @@
+{
+  "schema_version": "prompt-kit-order-navigation-contract/v1",
+  "contract_id": "prompt-kit-sequence-and-long-list-navigation",
+  "surface": {
+    "canonical_site": "web/prompt-kit/index.html",
+    "base_behavior_source": "docs/prompt-kit.js",
+    "guided_behavior_source": "docs/prompt-kit-guided-recommendations.js",
+    "registry_builder": "scripts/build_prompt_kit_registry.py",
+    "display_order_policy": "registry/prompts/prompt-display-order.v1.json"
+  },
+  "navigation_interval": 5,
+  "requirements": [
+    {
+      "id": "default_sequence_ascending",
+      "expected": "With no search, category, type, color, Favorites, or explicit alternate sort active, the main Prompt Kit library renders prompts in ascending numeric sequence. Recommendation ranking may affect recommendation results but must not globally replace the library's chronological sequence order."
+    },
+    {
+      "id": "filtered_sequence_ascending",
+      "expected": "Every filtered visible prompt set preserves ascending numeric prompt sequence, allowing gaps and never renumbering stable prompt IDs."
+    },
+    {
+      "id": "distributed_page_navigation",
+      "expected": "The rendered visible prompt stream exposes both Top and Bottom navigation at intervals of no more than five visible prompt cards. A final partial group also retains navigation access."
+    },
+    {
+      "id": "filter_persistent_navigation",
+      "expected": "Distributed Top and Bottom controls are regenerated from the current visible result set after every render and remain available through search, category, type, color, Favorites, and other filtering states without clearing those states."
+    },
+    {
+      "id": "mobile_touch_accessibility",
+      "expected": "Distributed Top and Bottom controls remain keyboard accessible and have at least a 40px mobile/coarse-pointer touch target while using same-document navigation that does not reset filters."
+    },
+    {
+      "id": "stable_prompt_identity",
+      "expected": "Chronological display ordering never renumbers or repurposes stable prompt IDs or sequence values."
+    }
+  ],
+  "implementation_detection": {
+    "forbidden_global_order_markers": [
+      "window.promptSequenceValue=rank;render();",
+      "return apply_display_order(strengthened_prompts, load_display_order_policy())"
+    ],
+    "required_navigation_markers": [
+      "PROMPT_NAVIGATION_INTERVAL=5",
+      "appendDistributedPageNavigation",
+      "visiblePromptIndex"
+    ],
+    "existing_sparse_navigation_marker": "appendSectionDivider(grid,group);"
+  },
+  "known_baseline": {
+    "status": "needs-product-repair",
+    "evidence": [
+      "registry/prompts/prompt-display-order.v1.json currently promotes P65 first.",
+      "scripts/build_prompt_kit_registry.py currently applies display-order promotion to the combined registry.",
+      "docs/prompt-kit-guided-recommendations.js currently overrides window.promptSequenceValue with recommendation discovery rank and rerenders the main library.",
+      "docs/prompt-kit.js currently attaches Top and Bottom controls to section/category dividers rather than distributing them through every five visible prompt cards."
+    ]
+  },
+  "validation": {
+    "harness_gate": "python scripts/validate_prompt_kit_order_navigation.py --output Outputs/prompt-kit-order-navigation-audit.json --summary",
+    "contract_tests": "python -m unittest tests.test_prompt_kit_order_navigation_contract -v",
+    "strict_product_gate": "python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary",
+    "generated_parity": "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check"
+  },
+  "proof_ceiling": "Contract registration and static source evidence can prove the requirement and detect known implementation gaps. Strict static markers plus generated parity do not prove real scrolling ergonomics, touch behavior, browser focus, or mobile acceptance; those require observed browser/device proof."
+}
