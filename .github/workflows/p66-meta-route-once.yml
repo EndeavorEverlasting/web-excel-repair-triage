@@ -1,0 +1,69 @@
+name: P66 one-shot P65 route regeneration
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-repository-ledger-p66-20260809
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-repository-ledger-p66-20260809
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Add P66 to the copyable P65 routing vocabulary
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('registry/prompts/tutorial-discovery-prompts.v1.json')
+          source = path.read_text(encoding='utf-8')
+          replacements = [
+              (
+                  'current repository, failure, planning, tutorial, validation, deployment, or handoff need',
+                  'current repository, failure, planning, coordination, tutorial, validation, deployment, or handoff need',
+              ),
+              (
+                  '2. Desired outcome: understand, plan, build or repair, diagnose, validate, integrate or deploy, document or teach, or close out and hand off.',
+                  '2. Desired outcome: understand, plan, coordinate or maintain a repository work ledger, build or repair, diagnose, validate, integrate or deploy, document or teach, or close out and hand off.',
+              ),
+              (
+                  '- P64 Repository Tutorial Portfolio Ranker: inventory and rank multiple tutorial journeys before selecting tutorial sprints.\\n\\nRECOMMENDATION CONTRACT',
+                  '- P64 Repository Tutorial Portfolio Ranker: inventory and rank multiple tutorial journeys before selecting tutorial sprints.\\n- P66 Repository Work Ledger Steward: establish, adopt, contribute to, or repair a repository-owned human/agent work ledger without creating competing authority.\\n\\nRECOMMENDATION CONTRACT',
+              ),
+          ]
+          for old, new in replacements:
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'Expected exactly one P65 routing occurrence, found {count}: {old[:80]}')
+              source = source.replace(old, new, 1)
+          path.write_text(source, encoding='utf-8')
+          PY
+      - name: Regenerate and prove the exact site
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python -m unittest tests.test_repository_work_ledger_prompt -v
+          git diff --check
+      - name: Commit source route and generated artifact
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add registry/prompts/tutorial-discovery-prompts.v1.json web/prompt-kit/index.html
+          if git diff --cached --quiet; then
+            echo "P65 route and canonical site already current."
+            exit 0
+          fi
+          git commit -m "feat(prompt-kit): route P65 ledger intent to P66"
+          git push origin HEAD:feat/prompt-kit-repository-ledger-p66-20260809
