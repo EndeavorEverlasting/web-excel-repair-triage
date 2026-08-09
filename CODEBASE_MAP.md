@@ -1,24 +1,42 @@
 # Codebase Map
 
-This is the operational entry point for `EndeavorEverlasting/web-excel-repair-triage`. It tells a fresh agent where repository law, workflow selection, artifact ownership, validators, product engines, launchers, cross-device Prompt Kit access contracts, command-delivery contracts, and proof reports live.
+This is the operational entry point for `EndeavorEverlasting/web-excel-repair-triage`. It tells a fresh agent where repository law, workflow selection, artifact ownership, validators, product engines, launchers, cross-device Prompt Kit access contracts, profile-qualified routing, command-delivery contracts, and proof reports live.
 
 ## Reading order for a fresh agent
 
-1. `AGENTS.md` — governance and safety authority.
-2. `CODEBASE_MAP.md` — repository navigation, entry points, commands, and traps.
+1. `AGENTS.md` — governance and safety authority for this repository.
+2. `CODEBASE_MAP.md` — repository navigation, related-repository boundary, entry points, commands, and traps.
 3. `WORKFLOW.md` and `harness/workflows.v1.json` — select the correct workflow and failure route.
 4. `ARTIFACT_REGISTRY.md` and `harness/artifacts.v1.json` — resolve canonical tracked/runtime artifacts and registered delivery surfaces.
 5. `harness/validators.v1.json` plus registered `harness/manifest.v1.json` domain contracts — select the correct root profile and focused contract gate.
 6. `SKILLS.md`, `CAPABILITIES.md`, `TRIGGERS.md`, and their machine registries — route reusable procedures.
 7. `harness/manifest.v1.json` — complete component inventory, domain contracts, and validation order.
-8. `harness/reports/CURRENT_STATE.md` — human-readable working, broken, missing, and proof-ceiling state.
+8. `harness/reports/CURRENT_STATE.md` and focused reports under `harness/reports/` — human-readable working, broken, missing, and proof-ceiling state.
+
+## Repository-family relationship
+
+`EndeavorEverlasting/web-excel-repair-triage` is the active repository in this codebase map and remains authoritative for Prompt Kit behavior, acquisition, artifacts, validators, and Triage mutations.
+
+`EndeavorEverlasting/AgentSwitchboard` is a related repository-family authority for machine-profile and path-convention evidence. Triage may consume its machine-profile surfaces read-only when qualifying an operator environment, but that relationship does **not** switch the active repository or grant AgentSwitchboard mutation authority inside a Triage sprint.
+
+For Prompt Kit shell commands, resolve in this order:
+
+1. active repository = Triage;
+2. current host profile;
+3. current shell/execution surface;
+4. target profile/device;
+5. user intent;
+6. profile-associated Triage repository path when local tooling is actually needed;
+7. shell-safe command or cross-profile HANDOFF.
+
+If the current shell is Windows PowerShell and the target is Android/Termux, the correct outcome is a **HANDOFF**, not a Termux command pasted into PowerShell. Use `scripts/resolve_prompt_kit_profile_route.py` to make that decision deterministically.
 
 ## Repository structure
 
 ```text
 web-excel-repair-triage/
 ├── AGENTS.md                              governance contract; P00-owned
-├── CODEBASE_MAP.md                        repository map and commands
+├── CODEBASE_MAP.md                        repository map, family boundary, and commands
 ├── WORKFLOW.md                            human workflow specifications
 ├── ARTIFACT_REGISTRY.md                   human artifact and delivery registry
 ├── SKILLS.md                              scoped skill index
@@ -34,14 +52,19 @@ web-excel-repair-triage/
 │   ├── capabilities.v1.json               machine-readable capabilities
 │   ├── triggers.v1.json                   machine-readable triggers
 │   ├── contracts/
-│   │   ├── prompt-kit-cross-device-access.v1.json  use/install/edit acquisition routing
-│   │   └── operator-command-envelope.v1.json       copy-safe operator handoff contract
+│   │   ├── prompt-kit-cross-device-access.v1.json     use/install/edit acquisition routing
+│   │   ├── prompt-kit-profile-qualified-routing.v1.json repository/profile/shell/path routing
+│   │   └── operator-command-envelope.v1.json          copy-safe operator handoff contract
 │   ├── evals/                             eval policies and fixtures
 │   ├── templates/
 │   │   └── Invoke-RemoteHarnessProof.ps1  isolated remote-proof command template
-│   └── reports/CURRENT_STATE.md            operator-readable current state
+│   └── reports/
+│       ├── CURRENT_STATE.md                operator-readable current state
+│       └── PROMPT_KIT_PROFILE_ROUTING.md  focused repository/profile routing report
 ├── scripts/
 │   ├── validate_harness.py                fail-closed completeness validator/report writer
+│   ├── resolve_prompt_kit_profile_route.py deterministic host/target/path/command resolver
+│   ├── validate_prompt_kit_profile_routing.py repository/profile routing contract validator
 │   ├── validate_prompt_kit_cross_device_access.py device-aware acquisition contract
 │   ├── validate_operator_command_envelope.py command-delivery validator
 │   ├── evaluate_prompt_language.py        exhaustive prompt-language evaluator
@@ -56,7 +79,7 @@ web-excel-repair-triage/
 │   ├── skill-factoring/SKILL.md
 │   └── technician-prompt-kit-acquisition/SKILL.md
 ├── .githooks/
-│   ├── pre-commit                         staged-index harness + focused access gates
+│   ├── pre-commit                         staged-index harness + focused profile/access gates
 │   └── pre-push                           exhaustive non-destructive harness profile
 ├── .github/workflows/
 │   ├── harness-contract.yml               harness completeness + focused contracts
@@ -65,6 +88,7 @@ web-excel-repair-triage/
 │   └── other focused workflows            product and report lanes
 ├── tests/
 │   ├── test_harness_contract.py
+│   ├── test_prompt_kit_profile_routing.py
 │   ├── test_prompt_kit_cross_device_access.py
 │   ├── test_operator_command_envelope.py
 │   ├── test_prompt_kit_interactions_contract.py
@@ -93,7 +117,7 @@ web-excel-repair-triage/
 | Path | Purpose | Mutation rule |
 |---|---|---|
 | `harness/` | Operational ownership, workflow, artifact, validator, capability, trigger, contract, eval, template, and report data. | Harness lane only; update connected files atomically. |
-| `harness/contracts/` | Focused versioned rules such as Prompt Kit cross-device access and operator command delivery. | Contract + validator + tests + registries must stay connected. |
+| `harness/contracts/` | Focused versioned rules such as Prompt Kit cross-device access, profile-qualified routing, and operator command delivery. | Contract + validator + tests + registries must stay connected. |
 | `harness/templates/` | Repository-owned transport templates for safe operator proof and handoff commands. | Must remain environment-derived, copy-safe, non-destructive, and validator-backed. |
 | `.ai/skills/` | Repeatable procedures and judgment boundaries. | Do not hide deterministic application behavior only in prose. |
 | `scripts/` | Validators, builders, audit runners, launch support, and utilities. | Add regression tests for behavior changes. |
@@ -109,11 +133,13 @@ web-excel-repair-triage/
 | Entry point | Audience | Purpose |
 |---|---|---|
 | `scripts/validate_harness.py` | Agent/developer/CI | Validate every registered harness component and optionally write `harness-completeness-report/v1`. |
+| `scripts/resolve_prompt_kit_profile_route.py` | Agent/operator/harness | Resolve active Triage repo, host profile, shell, target profile, intent, profile-associated Triage path, and either a shell-safe command or HANDOFF. |
+| `scripts/validate_prompt_kit_profile_routing.py` | Agent/developer/CI | Enforce Triage/AgentSwitchboard relationship boundaries, profile/shell qualification, sibling-path behavior, and cross-profile shell isolation. |
 | `scripts/validate_prompt_kit_cross_device_access.py` | Agent/developer/CI | Enforce intent-first Prompt Kit access: direct public use/install versus Windows local app versus editable Git checkout versus ZIP snapshot. |
 | `scripts/validate_operator_command_envelope.py` | Agent/developer/CI | Reject hard-coded user paths, Markdown-mangled URLs, terminal-closing `exit`, pre-gate Git, unpinned remote work, destructive dirty-work handling, guessed artifacts, and ignored native failures. |
 | `harness/templates/Invoke-RemoteHarnessProof.ps1` | Agent/operator | Perform an isolated environment-derived checkout of an exact remote branch/commit, validate it, resolve `harness-completeness-report` from the artifact registry, and print it without assuming a user profile path. |
 | `harness/validators.v1.json` | Agent/tooling | Resolve ordered root validator profiles for harness, pre-commit, and pre-push use. |
-| `harness/manifest.v1.json` | Agent/tooling | Resolve focused domain gates such as cross-device access and operator command envelope. |
+| `harness/manifest.v1.json` | Agent/tooling | Resolve focused domain gates such as profile-qualified routing, cross-device access, and operator command envelope. |
 | Public Prompt Kit URL | Browser user | Open the canonical Prompt Kit directly without cloning. |
 | Public phone launcher | Phone/tablet user | Install/share/open the same canonical Prompt Kit through browser-native surfaces. |
 | `Open-Latest-PromptKit.cmd` | Windows user | Open the validated stable-origin local app with portable Favorites behavior. |
@@ -132,6 +158,7 @@ web-excel-repair-triage/
 | `harness/workflows.v1.json` | Workflow IDs, triggers, scope, entry points, validation profiles, failure handling, and handoff fields. |
 | `harness/artifacts.v1.json` | Canonical artifact paths, producers, validators, delivery surfaces, naming, tracking, and proof ceilings. |
 | `harness/validators.v1.json` | Root validator commands, outputs, profiles, and hook bindings. |
+| `harness/contracts/prompt-kit-profile-qualified-routing.v1.json` | Active-repository, related-repository, profile, shell, target, path, and handoff policy. |
 | `harness/contracts/prompt-kit-cross-device-access.v1.json` | Machine policy for choosing public use/install, Windows local-app, editable-checkout, or ZIP routes. |
 | `harness/contracts/operator-command-envelope.v1.json` | Machine policy for copy-safe, path-safe, terminal-preserving next commands. |
 | `harness/capabilities.v1.json` | Reusable operation IDs, skills, triggers, inputs, outputs, implementations, and proof ceilings. |
@@ -142,6 +169,14 @@ web-excel-repair-triage/
 | `.github/workflows/*.yml` | CI gates for governance, harness, artifacts, reports, and product lanes. |
 
 ## Build, test, and launch commands
+
+Focused profile-qualified Prompt Kit routing validation:
+
+```bash
+python -m py_compile scripts/resolve_prompt_kit_profile_route.py scripts/validate_prompt_kit_profile_routing.py tests/test_prompt_kit_profile_routing.py
+python scripts/validate_prompt_kit_profile_routing.py --summary
+python -m unittest tests.test_prompt_kit_profile_routing -v
+```
 
 Focused cross-device Prompt Kit acquisition validation:
 
@@ -209,9 +244,12 @@ Build-PromptKitWebsite.cmd
 
 - `AGENTS.md` is governance authority and is outside a harness-infrastructure sprint unless P00 explicitly owns it.
 - `Candidates/` and `Active/` are protected read-only inputs. Generated output belongs under `Outputs/` or another registered path.
+- **Do not switch repositories merely because a related repository supplied profile evidence.** In this repo, AgentSwitchboard is read-only relationship/context for machine-profile/path conventions; Triage remains the active mutation owner.
+- **Qualify host profile, current shell, and target profile before emitting shell commands.** A Windows PowerShell prompt must never receive `termux-open-url`, `command -v`, `/dev/null`, `pkg install`, or `$PREFIX` syntax. A Windows-to-Android request is a HANDOFF.
+- **Use the profile-associated Triage path for local launcher/source work.** Prefer explicit/proven Triage path, then verified existing Triage checkout, then a sibling next to verified `AGENT_SWITCHBOARD_REPO`, then the platform default. Never operate inside AgentSwitchboard simply because that checkout was easier to find.
 - **Do not make normal Prompt Kit use harder than the product requires.** Browser use goes to the public Prompt Kit and phone/tablet install goes to the public launcher. A Git checkout is appropriate only for edit/commit/push/source/tooling intent.
 - **Do not tell a phone user to hunt for `web/prompt-kit/index.html` in the GitHub app.** For Android source work, use Termux from F-Droid and Git; for normal use, stay in the browser path.
-- **Never place a remembered or guessed `C:\Users\<name>\...` path in an operator NEXT COMMAND.** A path from another machine, account, or prior chat is not repository evidence. If the current shell has not proven the repository root, use the isolated environment-derived proof template instead.
+- **Never place a remembered or guessed `C:\Users\<name>\...` path in an operator NEXT COMMAND.** A path from another machine, account, or prior chat is not repository evidence. If the current shell has not proven the repository root, use profile/path resolution or the isolated environment-derived proof template instead.
 - **Never rely on a raw URL surviving chat rendering inside pasteable PowerShell.** Markdown syntax such as `[http://host/](http://host/)` is invalid command data. Prefer repository slugs, tracked values, or split non-linkable URL fragments in transport commands.
 - **Never use top-level `exit` in an interactive pasteable PowerShell envelope.** It can close the terminal and destroy visible evidence. Convert failures to `throw` inside a script/scriptblock and preserve the operator shell.
 - Git fetch/status operations must occur only after repository/directory gating. Unmerged remote work must be pinned to the exact expected commit and exercised in an isolated checkout/worktree.
