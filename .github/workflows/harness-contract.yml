@@ -18,7 +18,9 @@ on:
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
+      - scripts/resolve_prompt_kit_profile_route.py
       - scripts/validate_operator_command_envelope.py
+      - scripts/validate_prompt_kit_profile_routing.py
       - scripts/validate_prompt_kit_cross_device_access.py
       - scripts/validate_prompt_kit_freshness_guidance.py
       - scripts/validate_prompt_kit_interactions.py
@@ -26,6 +28,7 @@ on:
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
+      - tests/test_prompt_kit_profile_routing.py
       - tests/test_prompt_kit_cross_device_access.py
       - tests/test_prompt_kit_freshness_guidance.py
       - tests/test_prompt_kit_interactions_contract.py
@@ -50,7 +53,9 @@ on:
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
+      - scripts/resolve_prompt_kit_profile_route.py
       - scripts/validate_operator_command_envelope.py
+      - scripts/validate_prompt_kit_profile_routing.py
       - scripts/validate_prompt_kit_cross_device_access.py
       - scripts/validate_prompt_kit_freshness_guidance.py
       - scripts/validate_prompt_kit_interactions.py
@@ -58,6 +63,7 @@ on:
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
+      - tests/test_prompt_kit_profile_routing.py
       - tests/test_prompt_kit_cross_device_access.py
       - tests/test_prompt_kit_freshness_guidance.py
       - tests/test_prompt_kit_interactions_contract.py
@@ -84,6 +90,8 @@ jobs:
           python -m py_compile \
             scripts/validate_harness.py \
             scripts/validate_operator_command_envelope.py \
+            scripts/resolve_prompt_kit_profile_route.py \
+            scripts/validate_prompt_kit_profile_routing.py \
             scripts/validate_prompt_kit_cross_device_access.py \
             scripts/validate_prompt_kit_freshness_guidance.py \
             scripts/validate_prompt_kit_interactions.py \
@@ -91,6 +99,7 @@ jobs:
             scripts/evaluate_prompt_language.py \
             tests/test_harness_contract.py \
             tests/test_operator_command_envelope.py \
+            tests/test_prompt_kit_profile_routing.py \
             tests/test_prompt_kit_cross_device_access.py \
             tests/test_prompt_kit_freshness_guidance.py \
             tests/test_prompt_kit_interactions_contract.py \
@@ -103,6 +112,10 @@ jobs:
           $source = Get-Content -LiteralPath 'harness/templates/Invoke-RemoteHarnessProof.ps1' -Raw -Encoding UTF8
           $null = [scriptblock]::Create($source)
           Write-Host 'Operator remote-proof PowerShell syntax: PASS'
+      - name: Validate Prompt Kit profile-qualified routing
+        run: |
+          python scripts/validate_prompt_kit_profile_routing.py --summary
+          python -m unittest tests.test_prompt_kit_profile_routing -v
       - name: Validate Prompt Kit cross-device access
         run: |
           python scripts/validate_prompt_kit_cross_device_access.py --summary
