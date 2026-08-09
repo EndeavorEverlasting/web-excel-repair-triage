@@ -24,8 +24,10 @@ jobs:
         with:
           python-version: '3.11'
       - name: Repair browser-proof wording and visible version
-        shell: python
+        shell: bash
         run: |
+          set -euo pipefail
+          python - <<'PY'
           from pathlib import Path
 
           builder = Path('build_prompt_kit.py')
@@ -38,22 +40,22 @@ jobs:
           js = Path('docs/prompt-kit.js')
           text = js.read_text(encoding='utf-8')
           old = """function appendDistributedPageNavigation(grid,visiblePromptIndex){
-  var navigation=document.createElement('nav');
-  navigation.className='distributed-page-navigation';
-  navigation.setAttribute('aria-label','Prompt list navigation after '+visiblePromptIndex+' visible prompts');
-  navigation.innerHTML='<a class=\"page-jump page-jump-top\" href=\"#page-top\" aria-label=\"Go to top of page\">&#8593; Top</a><span class=\"distributed-page-navigation-count\">After prompt '+visiblePromptIndex+'</span><a class=\"page-jump page-jump-bottom\" href=\"#page-bottom\" aria-label=\"Go to bottom of page\">Bottom &#8595;</a>';
-  grid.appendChild(navigation)
-}
-"""
+            var navigation=document.createElement('nav');
+            navigation.className='distributed-page-navigation';
+            navigation.setAttribute('aria-label','Prompt list navigation after '+visiblePromptIndex+' visible prompts');
+            navigation.innerHTML='<a class=\"page-jump page-jump-top\" href=\"#page-top\" aria-label=\"Go to top of page\">&#8593; Top</a><span class=\"distributed-page-navigation-count\">After prompt '+visiblePromptIndex+'</span><a class=\"page-jump page-jump-bottom\" href=\"#page-bottom\" aria-label=\"Go to bottom of page\">Bottom &#8595;</a>';
+            grid.appendChild(navigation)
+          }
+          """
           new = """function appendDistributedPageNavigation(grid,visiblePromptIndex,isFinal){
-  var navigation=document.createElement('nav');
-  var contextLabel=isFinal?'End of visible prompts':'Just before next prompt';
-  navigation.className='distributed-page-navigation';
-  navigation.setAttribute('aria-label',isFinal?'Prompt list navigation at end of visible prompts':'Prompt list navigation just before next prompt');
-  navigation.innerHTML='<a class=\"page-jump page-jump-top\" href=\"#page-top\" aria-label=\"Go to top of page\">&#8593; Top</a><span class=\"distributed-page-navigation-count\">'+contextLabel+'</span><a class=\"page-jump page-jump-bottom\" href=\"#page-bottom\" aria-label=\"Go to bottom of page\">Bottom &#8595;</a>';
-  grid.appendChild(navigation)
-}
-"""
+            var navigation=document.createElement('nav');
+            var contextLabel=isFinal?'End of visible prompts':'Just before next prompt';
+            navigation.className='distributed-page-navigation';
+            navigation.setAttribute('aria-label',isFinal?'Prompt list navigation at end of visible prompts':'Prompt list navigation just before next prompt');
+            navigation.innerHTML='<a class=\"page-jump page-jump-top\" href=\"#page-top\" aria-label=\"Go to top of page\">&#8593; Top</a><span class=\"distributed-page-navigation-count\">'+contextLabel+'</span><a class=\"page-jump page-jump-bottom\" href=\"#page-bottom\" aria-label=\"Go to bottom of page\">Bottom &#8595;</a>';
+            grid.appendChild(navigation)
+          }
+          """
           if old not in text:
               raise SystemExit('Distributed navigation helper baseline did not match expected merged source')
           text = text.replace(old, new, 1)
@@ -74,17 +76,18 @@ jobs:
 
           insert_before = "    def test_dynamic_prompt_id_is_not_embedded_in_inline_copy_javascript(self) -> None:\n"
           version_test = """    def test_visible_version_is_consistently_v40(self) -> None:
-        html = build_prompt_kit_registry.render()
-        self.assertIn('<title>AI Harness Prompt Kit v40</title>', html)
-        self.assertIn('AI Harness Prompt Kit <span>v40</span>', html)
-        self.assertIn('id=\"versionBadge\">v40</div>', html)
-        self.assertNotIn('AI Harness Prompt Kit <span>v39</span>', html)
+              html = build_prompt_kit_registry.render()
+              self.assertIn('<title>AI Harness Prompt Kit v40</title>', html)
+              self.assertIn('AI Harness Prompt Kit <span>v40</span>', html)
+              self.assertIn('id=\"versionBadge\">v40</div>', html)
+              self.assertNotIn('AI Harness Prompt Kit <span>v39</span>', html)
 
-"""
+          """
           if insert_before not in text:
               raise SystemExit('Product version test insertion point was not found')
           text = text.replace(insert_before, version_test + insert_before, 1)
           test.write_text(text, encoding='utf-8')
+          PY
       - name: Regenerate canonical Prompt Kit
         run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
       - name: Validate focused repair
