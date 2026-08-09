@@ -41,6 +41,30 @@ class PromptKitCrossDeviceAccessTests(unittest.TestCase):
             modes["phone-install"]["entry_point"], cross_device.LAUNCHER_URL
         )
 
+    def test_windows_checkout_policy_is_canonical_and_duplicate_safe(self) -> None:
+        payload = self.load_contract()
+        policy = payload["windows_checkout_policy"]
+        self.assertEqual(policy["desktop_dev_relative_root"], r"Desktop\dev")
+        self.assertEqual(policy["repository_folder"], "web-excel-repair-triage")
+        self.assertEqual(policy["automatic_duplicate_checkout_fallback"], "forbidden")
+        self.assertFalse(policy["launcher_location_is_checkout_root"])
+        self.assertEqual(policy["persistent_browser_proof_root"], "repository-owned Outputs only")
+
+        acquire = (ROOT / "scripts" / "Acquire-LatestPromptKit.ps1").read_text(encoding="utf-8")
+        portable = (ROOT / "scripts" / "Open-LatestPromptKitPortable.ps1").read_text(encoding="utf-8")
+        launcher = (ROOT / "Open-Latest-PromptKit.cmd").read_text(encoding="utf-8")
+        self.assertIn("[Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)", acquire)
+        self.assertIn("no '-latest' sibling clone was created", acquire)
+        self.assertIn("no '-latest' sibling clone was created", portable)
+        self.assertIn("canonical Desktop\\dev\\web-excel-repair-triage", launcher)
+        for forbidden in (
+            r"%~dp0dev\web-excel-repair-triage",
+            "$RepositoryFolderName-latest",
+            '"$RepositoryFolderName-$suffix"',
+            "OG Laptop Backup\\Desktop\\dev",
+        ):
+            self.assertNotIn(forbidden, acquire + portable + launcher)
+
     def test_editable_android_checkout_requires_state_gates_and_ff_only_merge(self) -> None:
         modes = cross_device.validate_contract_payload(self.load_contract())
         editable = modes["editable-checkout"]
