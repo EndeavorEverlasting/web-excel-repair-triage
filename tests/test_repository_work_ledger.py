@@ -15,7 +15,7 @@ def run_validator(path=None):
 
 
 HEADER = '''contractRef: agentswitchboard.repository-work-ledger.v1@1.0.0
-canonicalContractCommit: caa32133e67ed2fed7ed643e4bb05570a2ef392f
+canonicalContractCommit: 62acecf4a590ecadf4a0b1ad1410e659b4e1b650
 localAuthority: AGENTS.md
 
 # Test ledger
