@@ -41,10 +41,10 @@
     {
       "id": "prompt-kit-change",
       "document": "WORKFLOW.md#b-prompt-registry-or-website-change",
-      "trigger": "Canonical prompts, policies, reference data, builder behavior, generator options, checked-in HTML, or Prompt Kit interaction contracts change.",
+      "trigger": "Canonical prompts, policies, display ordering, long-list navigation, reference data, builder behavior, generator options, checked-in HTML, or Prompt Kit interaction contracts change.",
       "owned_scope": [
         "canonical registry sources",
-        "builders",
+        "builders and Prompt Kit behavior sources",
         "focused contracts",
         "fixtures",
         "tests",
@@ -57,16 +57,17 @@
       ],
       "entry_points": [
         "scripts/build_prompt_kit_registry.py",
-        "scripts/validate_prompt_kit_interactions.py"
+        "scripts/validate_prompt_kit_interactions.py",
+        "scripts/validate_prompt_kit_order_navigation.py"
       ],
       "validation_profile": "harness",
-      "failure_policy": "Repair canonical sources or contract drift; never weaken parity, coverage, or interaction requirements merely to turn CI green.",
+      "failure_policy": "Repair canonical sources or contract drift; for ordering/navigation changes run the strict prompt-kit-order-navigation gate and regenerate the canonical site. Never weaken parity, five-prompt navigation density, chronological default ordering, or interaction requirements merely to turn CI green.",
       "handoff_fields": [
         "source files",
         "generated artifact",
         "parity result",
-        "audit report",
-        "browser proof ceiling"
+        "order/navigation audit report",
+        "browser and mobile proof ceiling"
       ]
     },
     {
@@ -82,7 +83,9 @@
         "TRIGGERS.md",
         "harness/**",
         "scripts/validate_harness.py",
+        "focused harness validators",
         "tests/test_harness_contract.py",
+        "focused harness contract tests",
         ".githooks/**",
         ".github/workflows/harness-contract.yml"
       ],
@@ -94,12 +97,14 @@
       ],
       "entry_points": [
         "scripts/validate_harness.py",
-        "tests/test_harness_contract.py"
+        "tests/test_harness_contract.py",
+        "harness/manifest.v1.json"
       ],
       "validation_profile": "harness",
-      "failure_policy": "Repair the canonical component or registry owner, add a regression test, rerun the first failing gate, then run the full harness profile.",
+      "failure_policy": "Repair the canonical harness component or registry owner, add a regression test, and distinguish a registered product implementation gap from a harness defect. Do not cross into product code merely to make a harness-only sprint green.",
       "handoff_fields": [
         "component inventory",
+        "focused contract state",
         "validator results",
         "report path",
         "commit",
