@@ -6,7 +6,7 @@
     "repository": "EndeavorEverlasting/AgentSwitchboard",
     "id": "agentswitchboard.repository-work-ledger.v1",
     "version": "1.0.0",
-    "pinnedCommit": "caa32133e67ed2fed7ed643e4bb05570a2ef392f",
+    "pinnedCommit": "62acecf4a590ecadf4a0b1ad1410e659b4e1b650",
     "documentationPath": "docs/governance/repository-work-ledger-contract.md",
     "policyPath": ".ai/harness/repository-work-ledger.policy.json"
   },
