@@ -4,12 +4,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = ROOT / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
 CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-order-navigation.v1.json"
 OUTPUT_DEFAULT = ROOT / "Outputs" / "prompt-kit-order-navigation-audit.json"
 
@@ -20,6 +25,7 @@ REQUIRED_REQUIREMENT_IDS = {
     "filter_persistent_navigation",
     "mobile_touch_accessibility",
     "stable_prompt_identity",
+    "canonical_site_parity",
 }
 
 
@@ -78,7 +84,13 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
     detection = payload.get("implementation_detection")
     if not isinstance(detection, dict):
         raise OrderNavigationValidationError("implementation_detection must be an object")
-    for field in ("forbidden_global_order_markers", "required_navigation_markers"):
+    for field in (
+        "forbidden_global_order_markers",
+        "required_navigation_markers",
+        "required_render_navigation_markers",
+        "required_navigation_helper_markers",
+        "required_navigation_style_markers",
+    ):
         values = detection.get(field)
         if not isinstance(values, list) or not values or any(
             not isinstance(value, str) or not value for value in values
@@ -110,14 +122,90 @@ def _finding(rule_id: str, requirement_id: str, evidence: str) -> dict[str, str]
     }
 
 
+def _extract_function_body(source: str, name: str) -> str | None:
+    """Return one JavaScript function body using balanced braces, or None."""
+    match = re.search(rf"function\s+{re.escape(name)}\s*\([^)]*\)\s*\{{", source)
+    if not match:
+        return None
+    opening = source.find("{", match.start())
+    depth = 0
+    quote: str | None = None
+    escaped = False
+    for index in range(opening, len(source)):
+        char = source[index]
+        if quote is not None:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+            continue
+        if char in {"'", '"', "`"}:
+            quote = char
+            continue
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return source[opening + 1 : index]
+    return None
+
+
+def _identity_findings(raw_prompts: list[dict[str, Any]]) -> list[dict[str, str]]:
+    findings: list[dict[str, str]] = []
+    seen_ids: set[str] = set()
+    seen_sequences: set[int] = set()
+    for index, prompt in enumerate(raw_prompts):
+        prompt_id = str(prompt.get("id", "")).strip().upper()
+        sequence_text = str(prompt.get("seq", "")).strip()
+        match = re.fullmatch(r"P(\d+)", prompt_id)
+        try:
+            sequence = int(sequence_text)
+        except ValueError:
+            sequence = -1
+        if not match or sequence < 1:
+            findings.append(
+                _finding(
+                    "PKON008",
+                    "stable_prompt_identity",
+                    f"prompt record {index} has invalid identity id={prompt_id!r} seq={sequence_text!r}",
+                )
+            )
+            continue
+        if prompt_id in seen_ids:
+            findings.append(
+                _finding("PKON008", "stable_prompt_identity", f"duplicate prompt ID: {prompt_id}")
+            )
+        if sequence in seen_sequences:
+            findings.append(
+                _finding("PKON008", "stable_prompt_identity", f"duplicate prompt sequence: {sequence}")
+            )
+        if int(match.group(1)) != sequence:
+            findings.append(
+                _finding(
+                    "PKON008",
+                    "stable_prompt_identity",
+                    f"prompt ID/sequence mismatch: {prompt_id} uses sequence {sequence_text}",
+                )
+            )
+        seen_ids.add(prompt_id)
+        seen_sequences.add(sequence)
+    return findings
+
+
 def evaluate_source_payloads(
     contract: dict[str, Any],
     display_policy: dict[str, Any],
     builder_text: str,
     guided_text: str,
     base_text: str,
+    *,
+    raw_prompts: list[dict[str, Any]] | None = None,
+    canonical_site_matches: bool = True,
 ) -> dict[str, Any]:
-    """Evaluate static implementation evidence without changing product code."""
+    """Evaluate implementation evidence without changing product code."""
     contract = validate_contract(contract)
     detection = contract["implementation_detection"]
     findings: list[dict[str, str]] = []
@@ -173,20 +261,56 @@ def evaluate_source_payloads(
                 + sparse_note,
             )
         )
+
+    render_body = _extract_function_body(base_text, "render")
+    missing_render_markers = [
+        marker
+        for marker in detection["required_render_navigation_markers"]
+        if render_body is None or marker not in render_body
+    ]
+    if missing_render_markers:
         findings.append(
             _finding(
                 "PKON005",
                 "filter_persistent_navigation",
-                "navigation is not proven to be regenerated by visible-prompt position after each filtered render",
+                "canonical render() does not reconstruct distributed navigation from the visible result stream; missing render markers: "
+                + ", ".join(missing_render_markers),
             )
         )
 
-    if "min-height:40px" not in base_text or "page-jump" not in base_text:
+    helper_body = _extract_function_body(base_text, "appendDistributedPageNavigation")
+    missing_helper_markers = [
+        marker
+        for marker in detection["required_navigation_helper_markers"]
+        if helper_body is None or marker not in helper_body
+    ]
+    missing_style_markers = [
+        marker for marker in detection["required_navigation_style_markers"] if marker not in base_text
+    ]
+    if missing_helper_markers or missing_style_markers:
+        pieces: list[str] = []
+        if missing_helper_markers:
+            pieces.append("helper markers: " + ", ".join(missing_helper_markers))
+        if missing_style_markers:
+            pieces.append("associated style markers: " + ", ".join(missing_style_markers))
         findings.append(
             _finding(
                 "PKON006",
                 "mobile_touch_accessibility",
-                "40px touch-target and page-jump evidence is incomplete",
+                "distributed Top/Bottom controls are not statically associated with keyboard-native anchors and a 40px touch target; missing "
+                + "; ".join(pieces),
+            )
+        )
+
+    if raw_prompts is not None:
+        findings.extend(_identity_findings(raw_prompts))
+
+    if not canonical_site_matches:
+        findings.append(
+            _finding(
+                "PKON007",
+                "canonical_site_parity",
+                "web/prompt-kit/index.html does not exactly match the canonical registry builder render output",
             )
         )
 
@@ -206,6 +330,32 @@ def evaluate_source_payloads(
     }
 
 
+def _load_raw_prompts() -> list[dict[str, Any]]:
+    import build_prompt_kit_registry
+
+    raw = load_json(build_prompt_kit_registry.BASE_REGISTRY)
+    if not isinstance(raw, list):
+        raise OrderNavigationValidationError("base prompt registry must be an array")
+    prompts = list(raw)
+    for path in build_prompt_kit_registry.EXTENSION_REGISTRIES:
+        payload = load_json(path)
+        extension = payload.get("prompts") if isinstance(payload, dict) else None
+        if not isinstance(extension, list):
+            raise OrderNavigationValidationError(f"extension prompts must be an array: {path}")
+        prompts.extend(extension)
+    if any(not isinstance(prompt, dict) for prompt in prompts):
+        raise OrderNavigationValidationError("every canonical prompt must be an object")
+    return prompts
+
+
+def _canonical_site_matches(surface: dict[str, str]) -> bool:
+    import build_prompt_kit_registry
+
+    actual = (ROOT / surface["canonical_site"]).read_text(encoding="utf-8")
+    expected = build_prompt_kit_registry.render()
+    return actual == expected
+
+
 def evaluate_repository(contract_path: Path = CONTRACT) -> dict[str, Any]:
     contract = validate_contract(load_json(contract_path))
     surface = contract["surface"]
@@ -215,6 +365,8 @@ def evaluate_repository(contract_path: Path = CONTRACT) -> dict[str, Any]:
         (ROOT / surface["registry_builder"]).read_text(encoding="utf-8"),
         (ROOT / surface["guided_behavior_source"]).read_text(encoding="utf-8"),
         (ROOT / surface["base_behavior_source"]).read_text(encoding="utf-8"),
+        raw_prompts=_load_raw_prompts(),
+        canonical_site_matches=_canonical_site_matches(surface),
     )
 
 
