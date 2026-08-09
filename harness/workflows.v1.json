@@ -7,31 +7,41 @@
       "trigger": "A user or technician needs to open, install, share, download, clone, update, or locally edit the current main Prompt Kit on a browser, phone, tablet, Windows PC, macOS, or Linux machine.",
       "owned_scope": [
         "device-aware access routing",
+        "profile-qualified host, shell, target, and repository-path routing",
+        "read-only consumption of EndeavorEverlasting/AgentSwitchboard machine-profile and repository-family evidence",
         "PROMPT_KIT_ACCESS.md and OPEN_PROMPT_KIT_ON_PHONE.md contract references",
         "Acquire-Latest-PromptKit.cmd and Open-Latest-PromptKit.cmd acquisition surfaces",
         "harness/contracts/prompt-kit-cross-device-access.v1.json",
-        "cross-device acquisition validator tests and reports"
+        "harness/contracts/prompt-kit-profile-qualified-routing.v1.json",
+        "cross-device acquisition and profile-routing validator tests and reports"
       ],
       "forbidden_scope": [
         "destructive Git cleanup",
         "credential automation",
         "force update",
         "product behavior changes",
-        "requiring a clone for normal browser or phone use"
+        "requiring a clone for normal browser or phone use",
+        "mutating AgentSwitchboard from a Triage acquisition lane",
+        "emitting Android or Termux shell commands as runnable Windows PowerShell commands"
       ],
       "entry_points": [
+        "scripts/resolve_prompt_kit_profile_route.py",
         "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
         "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
         "Open-Latest-PromptKit.cmd",
         "Acquire-Latest-PromptKit.cmd"
       ],
       "validation_profile": "harness",
-      "failure_policy": "Preserve existing checkouts and classify the failed gate by access mode: public browser/phone routing, device install, Windows launcher, editable Git checkout, network/authentication, origin/branch/divergence, required-file, or parity failure. Never substitute a destructive or higher-friction route merely to make progress.",
+      "failure_policy": "Preserve the active Triage repository, qualify current host profile and shell before emitting commands, and classify cross-profile requests as handoffs. Preserve existing checkouts and classify the failed gate by profile/shell mismatch, access mode, public browser/phone routing, device install, Windows launcher, editable Git checkout, network/authentication, origin/branch/divergence, required-file, or parity failure. Never substitute a destructive, cross-profile, or higher-friction route merely to make progress.",
       "handoff_fields": [
+        "active repository",
+        "related repository evidence source",
+        "host profile and shell",
+        "target profile and execution surface",
         "selected access mode",
         "device and user intent",
-        "entry point",
-        "destination when a checkout exists",
+        "profile-associated Triage path when local tooling is required",
+        "entry point or handoff action",
         "branch and commit when Git is used",
         "validation result",
         "opened or installed surface",
