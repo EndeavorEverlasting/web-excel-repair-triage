@@ -66,13 +66,13 @@
     "existing_sparse_navigation_marker": "appendSectionDivider(grid,group);"
   },
   "known_baseline": {
-    "status": "needs-product-repair",
+    "status": "pass",
     "evidence": [
-      "registry/prompts/prompt-display-order.v1.json currently promotes P65 first.",
-      "scripts/build_prompt_kit_registry.py currently applies display-order promotion to the combined prompt registry.",
-      "docs/prompt-kit-guided-recommendations.js currently overrides window.promptSequenceValue with recommendation discovery rank and rerenders the main library.",
-      "docs/prompt-kit.js currently attaches Top and Bottom controls to section/category dividers rather than distributing them through every five visible prompt cards.",
-      "The strict validator also proves canonical site parity and canonical ID/sequence integrity before it can report implementation pass."
+      "scripts/build_prompt_kit_registry.py preserves discoveryRank metadata but returns the canonical registry in ascending numeric seq order.",
+      "docs/prompt-kit-guided-recommendations.js keeps recommendation rank local to questionnaire results and no longer overrides the main library sequence function.",
+      "docs/prompt-kit.js sorts the complete filtered card stream numerically, exposes Favorites as an explicit filter, and renders each category divider at most once.",
+      "docs/prompt-kit.js reconstructs Top and Bottom navigation after every five actually rendered prompt cards plus the final partial group from inside render().",
+      "The strict validator proves canonical site parity and canonical ID/sequence integrity before reporting implementation pass."
     ]
   },
   "validation": {
@@ -81,5 +81,5 @@
     "strict_product_gate": "python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary",
     "generated_parity": "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check"
   },
-  "proof_ceiling": "Contract registration, canonical registry identity checks, exact generated-site parity, and static source evidence can prove the requirement and detect known implementation gaps. Static checks do not prove real scrolling ergonomics, touch behavior, browser focus, or mobile acceptance; those require observed browser/device proof."
+  "proof_ceiling": "Contract registration, canonical registry identity checks, exact generated-site parity, and static source evidence can prove the requirement and detect implementation regressions. Static checks do not prove real scrolling ergonomics, touch behavior, browser focus, or mobile acceptance; those require observed browser/device proof."
 }

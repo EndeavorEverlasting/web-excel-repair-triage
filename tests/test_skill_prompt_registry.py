@@ -26,9 +26,11 @@ class SkillPromptRegistryTests(unittest.TestCase):
         self.assertNotEqual(by_id["P63"]["copyContent"], by_id["P62"]["copyContent"])
         self.assertEqual(by_id["P64"]["type"], "TUTORIAL PLAN")
         self.assertEqual(by_id["P65"]["type"], "SETUP")
-        self.assertEqual(prompts[0]["id"], "P65")
-        self.assertEqual(prompts[0]["discoveryRank"], 1)
-        self.assertEqual(prompts[0]["displayOrderPolicy"], "prompt-kit-guided-discovery-order")
+        sequences = [int(str(prompt["seq"])) for prompt in prompts]
+        self.assertEqual(sequences, sorted(sequences))
+        self.assertEqual(prompts[0]["id"], "P00")
+        self.assertEqual(by_id["P65"]["discoveryRank"], 1)
+        self.assertEqual(by_id["P65"]["displayOrderPolicy"], "prompt-kit-guided-discovery-order")
 
     def test_skill_eval_prompt_requires_correctness_weakness_and_efficiency_proof(self) -> None:
         prompts = build_prompt_kit_registry.load_prompt_registry()

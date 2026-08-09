@@ -51,6 +51,9 @@ class PromptKitDiscoveryTests(unittest.TestCase):
                 "generated_site_parity",
             },
         )
+        expected = {item["id"]: item["expected"] for item in payload["requirements"]}
+        self.assertIn("explicit local filter", expected["favorites_first"])
+        self.assertIn("canonical library defaults to ascending numeric sequence", expected["stable_identity_resequence"])
 
     def test_section_button_has_explicit_dark_surface_contrast(self) -> None:
         js = JS.read_text(encoding="utf-8")
@@ -85,7 +88,7 @@ process.stdout.write(JSON.stringify({artifact:artifact,close:close}));
         self.assertNotIn("P20", result["artifact"], "copyContent-only artifact noise must be suppressed")
         self.assertIn("P12", result["close"], "partial close must resolve closeout synonym and metadata")
 
-    def test_favorites_persist_and_are_promoted_without_duplication(self) -> None:
+    def test_favorites_persist_as_explicit_filter_without_reordering_default(self) -> None:
         js = JS.read_text(encoding="utf-8")
         for marker in (
             "promptKit.favoritePromptIds.v1",
@@ -93,8 +96,11 @@ process.stdout.write(JSON.stringify({artifact:artifact,close:close}));
             "window.localStorage.setItem(FAVORITES_STORAGE_KEY",
             "favBtn.className='prompt-favorite-btn'",
             "favBtn.setAttribute('aria-pressed'",
+            "data-section=\"__favorites__\"",
+            "activeSection==='__favorites__'",
         ):
             self.assertIn(marker, js)
+        self.assertNotIn("name:'Favorites',glow:'#fbbf24'", js)
         start = js.index("function promptSequenceValue")
         end = js.index("function renderSections")
         helpers = js[start:end]
@@ -103,21 +109,18 @@ var SECTIONS=[
  {name:'Foundation',types:['SETUP'],glow:'#64748b'},
  {name:'Build & Repair',types:['BUILD'],glow:'#22c55e'}
 ];
-var favoritePromptIds={P10:true};
-function isFavoritePrompt(id){return favoritePromptIds[String(id||'').toUpperCase()]===true}
 ''' + helpers + r'''
 var groups=groupPromptsBySection([
- {id:'P02',seq:'2',type:'SETUP'},
  {id:'P10',seq:'10',type:'BUILD'},
+ {id:'P02',seq:'2',type:'SETUP'},
  {id:'P03',seq:'3',type:'BUILD'}
 ]);
 process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,ids:g.prompts.map(function(p){return p.id})}})));
 '''
         completed = subprocess.run(["node", "-e", script], check=True, capture_output=True, text=True)
         groups = json.loads(completed.stdout)
-        self.assertEqual(groups[0], {"name": "Favorites", "ids": ["P10"]})
         flattened = [prompt_id for group in groups for prompt_id in group["ids"]]
-        self.assertEqual(flattened.count("P10"), 1)
+        self.assertEqual(flattened, ["P02", "P03", "P10"])
 
     def test_guided_questionnaire_uses_shared_search_and_no_prompt_id_router(self) -> None:
         guided = GUIDED_JS.read_text(encoding="utf-8")
@@ -204,7 +207,7 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         ):
             self.assertIn(marker, polish)
 
-    def test_display_order_promotes_entry_points_without_changing_ids(self) -> None:
+    def test_display_order_keeps_recommendation_priority_metadata_without_changing_ids(self) -> None:
         payload = json.loads(DISPLAY_ORDER.read_text(encoding="utf-8"))
         promoted = payload["promoted_prompt_ids"]
         self.assertEqual(payload["schema_version"], "prompt-display-order/v1")
