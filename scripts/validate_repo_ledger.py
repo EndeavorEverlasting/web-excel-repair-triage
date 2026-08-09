@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / ".ai" / "repo-ledger-adoption.json"
 QUEUE = ROOT / ".ai" / "WORK_QUEUE.md"
 ENTRY = ROOT / ".ai" / "README.md"
-CONTRACT_COMMIT = "3188d577dbda1994c0629c1416ae3362198812dd"
+CONTRACT_COMMIT = "429237aa41d8712d71859865c9be407ca23d8580"
 DONOR_COMMIT = "9351c952b057ae4520b1ea0d388e1d8908f4c093"
 DONOR_PATHS = {
     ".ai/README.md",
@@ -122,7 +122,7 @@ def main() -> int:
     if authority.get("noCircularAuthority") is not True:
         errors.append("noCircularAuthority must be true")
 
-    for bad in ("main", "HEAD", "master", "feat/repo-ledger", "v1", "3188d577dbda"):
+    for bad in ("main", "HEAD", "master", "feat/repo-ledger", "v1", "429237aa41d8"):
         if is_sha(bad):
             errors.append(f"stale-reference probe unexpectedly accepted {bad!r}")
 
