@@ -33,23 +33,28 @@ class PromptKitOrderNavigationProductTests(unittest.TestCase):
         self.assertIn("function appendDistributedPageNavigation", source)
         self.assertIn("visiblePromptIndex", source)
         self.assertIn("__favorites__", source)
-        self.assertIn("prompts.slice().sort", source)
+        self.assertIn("orderedPrompts=f.slice().sort", source)
+        self.assertIn("renderedSections={}", source)
         self.assertIn(".distributed-page-navigation .page-jump", source)
         self.assertIn("min-height:40px", source)
 
-    def test_strict_harness_gate_accepts_product_sources(self) -> None:
+    def test_dynamic_prompt_id_is_not_embedded_in_inline_copy_javascript(self) -> None:
+        source = (ROOT / "docs" / "prompt-kit.js").read_text(encoding="utf-8")
+        self.assertIn("id=\"promptDetailCopy\"", source)
+        self.assertIn("detailCopy.onclick=function(){copyPrompt(p.id)", source)
+        self.assertNotIn("onclick=\"copyPrompt('\\''+safeId", source)
+        self.assertIn("/^P\\d+$/.test(rawId)", source)
+
+    def test_strict_harness_gate_accepts_complete_product_surface(self) -> None:
         validator_path = SCRIPTS / "validate_prompt_kit_order_navigation.py"
         spec = importlib.util.spec_from_file_location("prompt_order_validator", validator_path)
         assert spec and spec.loader
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         report = module.evaluate_repository()
-        gaps = {
-            finding["requirement_id"]
-            for finding in report["findings"]
-            if finding["requirement_id"] != "canonical_site_parity"
-        }
-        self.assertEqual(gaps, set())
+        self.assertEqual(report["implementation_status"], "pass")
+        self.assertEqual(report["findings"], [])
+        self.assertTrue(all(value == "pass" for value in report["requirement_status"].values()))
 
 
 if __name__ == "__main__":
