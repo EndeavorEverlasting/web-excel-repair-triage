@@ -29,16 +29,16 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-002 — Add repository work ledger stewardship prompt to Prompt Kit
 
-- **Status:** CLAIMED
+- **Status:** VERIFY
 - **Priority:** P1
 - **Owner:** chatgpt-prompt-ledger-p66-20260809
-- **Branch / PR:** feat/prompt-kit-repository-ledger-p66-20260809 / none
-- **Scope:** add P66 Repository Work Ledger Steward as a versioned prompt extension, integrate it with registry loading and guided discovery, add focused regression coverage, regenerate the canonical Prompt Kit website, and preserve the existing safe Windows acquisition route
+- **Branch / PR:** feat/prompt-kit-repository-ledger-p66-20260809 / #163
+- **Scope:** add P66 Repository Work Ledger Steward as a versioned prompt extension, integrate it with registry loading and both interactive and copyable guided discovery, add focused regression coverage, regenerate the canonical Prompt Kit website, and preserve the existing safe Windows acquisition route
 - **Forbidden:** changing the repository-work-ledger contract itself; changing AxTask or AgentSwitchboard authority; unrelated Prompt Kit UX; hand-editing generated `web/prompt-kit/index.html`; hard-coded Windows usernames; destructive checkout cleanup
 - **Dependencies:** TRQ-001
-- **References:** `registry/prompts/repository-work-ledger-prompts.v1.json`, `scripts/build_prompt_kit_registry.py`, `registry/prompts/prompt-display-order.v1.json`, `docs/prompt-kit-guided-recommendations.js`, `tests/test_skill_prompt_registry.py`, `tests/test_prompt_kit_guidance.py`, `web/prompt-kit/index.html`, `scripts/Acquire-LatestPromptKit.ps1`
-- **Acceptance gate:** P66 loads through the combined registry with unique ID/sequence, guided discovery can route repository-ledger intent to P66, focused tests pass, the checked-in website exactly matches the canonical builder output and contains P66, Prompt Kit and ledger CI pass on the exact PR head, and the merged site remains retrievable through the repository-owned Windows quick-open acquisition path
+- **References:** `registry/prompts/repository-work-ledger-prompts.v1.json`, `registry/prompts/tutorial-discovery-prompts.v1.json`, `scripts/build_prompt_kit_registry.py`, `registry/prompts/prompt-display-order.v1.json`, `docs/prompt-kit-guided-recommendations.js`, `tests/test_repository_work_ledger_prompt.py`, `web/prompt-kit/index.html`, `scripts/Acquire-LatestPromptKit.ps1`
+- **Acceptance gate:** P66 loads through the combined registry with unique ID/sequence, interactive and copyable P65 discovery can route repository-ledger intent to P66, focused tests pass, the checked-in website exactly matches the canonical builder output and contains P66, Prompt Kit and ledger CI pass on the exact PR head, and the merged site remains retrievable through the repository-owned Windows quick-open acquisition path
 - **Gate:** none
-- **Last proof:** commit:1ef71abc5eabad5dc4fa2b0174f2a96d7a47deef created the P66 extension; commit:89a24e12558a675989b24ef21a048150ed6c68ad registered it with the canonical builder; commit:8b97225677f2b4dda6395697341a7345ca549790 promoted ledger discovery; commit:a6c24212112d11131dc9880209bd752f0d8ee0ab added the guided ledger-intent route
-- **Next action:** create focused P66 registry and guided-discovery regression assertions, register the new extension in Prompt Kit CI path ownership, then open a PR so CI can generate the canonical website preview artifact
-- **Updated:** 2026-08-09T19:45:00Z
+- **Last proof:** commit:1ef71abc5eabad5dc4fa2b0174f2a96d7a47deef created P66; commit:41986311dc6e2ef7f77b5610107617d9d321cd3e added focused CI ownership; workflow:31332845219 built a 67-prompt canonical preview and passed acquisition/portable checks through generated-site parity; workflow:31332921524 regenerated and proved the exact site; commit:22ce22f5bd5bef76307176f255b0f92851be2e78 committed that generated site; workflow:31333012596 proved the P65 route, P66 tests, exact builder parity, and regenerated artifact; commit:324ad631683939c18bb7b54fd648e50449bb2011 added P66 to the copyable P65 routing map and refreshed the site
+- **Next action:** run the repository work-ledger, Prompt Kit web, skill-registry, operator-doc, Pages, and artifact-engine checks on the current exact PR #163 head, repair any owned failure, then advance TRQ-002 to MERGE only when the exact head is green
+- **Updated:** 2026-08-09T19:59:00Z
