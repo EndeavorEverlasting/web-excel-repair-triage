@@ -165,7 +165,7 @@ def _identity_findings(raw_prompts: list[dict[str, Any]]) -> list[dict[str, str]
             sequence = int(sequence_text)
         except ValueError:
             sequence = -1
-        if not match or sequence < 1:
+        if not match or sequence < 0:
             findings.append(
                 _finding(
                     "PKON008",
