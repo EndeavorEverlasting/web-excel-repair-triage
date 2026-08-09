@@ -44,6 +44,8 @@ class PromptKitOrderNavigationProductTests(unittest.TestCase):
         self.assertIn("detailCopy.onclick=function(){copyPrompt(p.id)", source)
         self.assertNotIn("onclick=\"copyPrompt('\\''+safeId", source)
         self.assertIn("/^P\\d+$/.test(rawId)", source)
+        self.assertIn("var sequence=Number(rawId.slice(1))", source)
+        self.assertIn("promptSequenceValue(existing)===sequence", source)
 
     def test_strict_harness_gate_accepts_complete_product_surface(self) -> None:
         validator_path = SCRIPTS / "validate_prompt_kit_order_navigation.py"
