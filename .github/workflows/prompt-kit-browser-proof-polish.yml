@@ -1,0 +1,106 @@
+name: Prompt Kit browser-proof polish (temporary)
+
+on:
+  push:
+    branches:
+      - fix/prompt-kit-browser-proof-polish-20260809
+    paths:
+      - .github/workflows/prompt-kit-browser-proof-polish.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-validate-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/prompt-kit-browser-proof-polish-20260809
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Repair browser-proof wording and visible version
+        shell: python
+        run: |
+          from pathlib import Path
+
+          builder = Path('build_prompt_kit.py')
+          text = builder.read_text(encoding='utf-8')
+          if text.count('v39') != 2:
+              raise SystemExit(f'Expected exactly two visible v39 markers, found {text.count("v39")}')
+          text = text.replace('v39', 'v40')
+          builder.write_text(text, encoding='utf-8')
+
+          js = Path('docs/prompt-kit.js')
+          text = js.read_text(encoding='utf-8')
+          old = """function appendDistributedPageNavigation(grid,visiblePromptIndex){
+  var navigation=document.createElement('nav');
+  navigation.className='distributed-page-navigation';
+  navigation.setAttribute('aria-label','Prompt list navigation after '+visiblePromptIndex+' visible prompts');
+  navigation.innerHTML='<a class=\"page-jump page-jump-top\" href=\"#page-top\" aria-label=\"Go to top of page\">&#8593; Top</a><span class=\"distributed-page-navigation-count\">After prompt '+visiblePromptIndex+'</span><a class=\"page-jump page-jump-bottom\" href=\"#page-bottom\" aria-label=\"Go to bottom of page\">Bottom &#8595;</a>';
+  grid.appendChild(navigation)
+}
+"""
+          new = """function appendDistributedPageNavigation(grid,visiblePromptIndex,isFinal){
+  var navigation=document.createElement('nav');
+  var contextLabel=isFinal?'End of visible prompts':'Just before next prompt';
+  navigation.className='distributed-page-navigation';
+  navigation.setAttribute('aria-label',isFinal?'Prompt list navigation at end of visible prompts':'Prompt list navigation just before next prompt');
+  navigation.innerHTML='<a class=\"page-jump page-jump-top\" href=\"#page-top\" aria-label=\"Go to top of page\">&#8593; Top</a><span class=\"distributed-page-navigation-count\">'+contextLabel+'</span><a class=\"page-jump page-jump-bottom\" href=\"#page-bottom\" aria-label=\"Go to bottom of page\">Bottom &#8595;</a>';
+  grid.appendChild(navigation)
+}
+"""
+          if old not in text:
+              raise SystemExit('Distributed navigation helper baseline did not match expected merged source')
+          text = text.replace(old, new, 1)
+          old_final = "if(visiblePromptIndex>0&&visiblePromptIndex%PROMPT_NAVIGATION_INTERVAL!==0)appendDistributedPageNavigation(grid,visiblePromptIndex);"
+          new_final = "if(visiblePromptIndex>0&&visiblePromptIndex%PROMPT_NAVIGATION_INTERVAL!==0)appendDistributedPageNavigation(grid,visiblePromptIndex,true);"
+          if old_final not in text:
+              raise SystemExit('Final partial navigation call did not match expected merged source')
+          text = text.replace(old_final, new_final, 1)
+          js.write_text(text, encoding='utf-8')
+
+          test = Path('tests/test_prompt_kit_order_navigation_product.py')
+          text = test.read_text(encoding='utf-8')
+          marker = "        self.assertIn(\"min-height:40px\", source)\n"
+          addition = marker + "        self.assertIn(\"Just before next prompt\", source)\n        self.assertIn(\"End of visible prompts\", source)\n        self.assertNotIn(\"After prompt '+visiblePromptIndex\", source)\n"
+          if marker not in text:
+              raise SystemExit('Product navigation test insertion point was not found')
+          text = text.replace(marker, addition, 1)
+
+          insert_before = "    def test_dynamic_prompt_id_is_not_embedded_in_inline_copy_javascript(self) -> None:\n"
+          version_test = """    def test_visible_version_is_consistently_v40(self) -> None:
+        html = build_prompt_kit_registry.render()
+        self.assertIn('<title>AI Harness Prompt Kit v40</title>', html)
+        self.assertIn('AI Harness Prompt Kit <span>v40</span>', html)
+        self.assertIn('id=\"versionBadge\">v40</div>', html)
+        self.assertNotIn('AI Harness Prompt Kit <span>v39</span>', html)
+
+"""
+          if insert_before not in text:
+              raise SystemExit('Product version test insertion point was not found')
+          text = text.replace(insert_before, version_test + insert_before, 1)
+          test.write_text(text, encoding='utf-8')
+      - name: Regenerate canonical Prompt Kit
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Validate focused repair
+        run: |
+          python -m unittest tests.test_prompt_kit_order_navigation_contract tests.test_prompt_kit_order_navigation_product -v
+          python -m unittest tests.test_prompt_kit_portability tests.test_prompt_kit_pages -v
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output "$RUNNER_TEMP/prompt-kit-order-navigation-audit.json" --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit repaired sources and generated site
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add build_prompt_kit.py docs/prompt-kit.js tests/test_prompt_kit_order_navigation_product.py web/prompt-kit/index.html
+          git diff --cached --quiet && { echo 'No repair diff produced'; exit 1; }
+          git commit -m 'fix(prompt-kit): polish browser-proof labels and version'
+          git push origin HEAD:fix/prompt-kit-browser-proof-polish-20260809
