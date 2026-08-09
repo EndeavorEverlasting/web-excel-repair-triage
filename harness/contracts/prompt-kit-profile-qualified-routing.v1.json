@@ -30,7 +30,9 @@
     "verified_existing_checkout": "A checkout whose origin resolves to EndeavorEverlasting/web-excel-repair-triage.",
     "related_repo_sibling": "When a verified AGENT_SWITCHBOARD_REPO is available, use its parent directory plus web-excel-repair-triage as the preferred sibling destination.",
     "windows_default": "%USERPROFILE%\\dev\\web-excel-repair-triage",
+    "windows_default_command_expression": "Join-Path $env:USERPROFILE 'dev\\web-excel-repair-triage'",
     "android_default": "$HOME/web-excel-repair-triage",
+    "android_default_command_expression": "\"$HOME/web-excel-repair-triage\"",
     "rule": "Never substitute a remembered user-specific absolute path for profile/path evidence."
   },
   "profiles": {
@@ -38,6 +40,7 @@
       "shell": "powershell",
       "execution_surface": "windows-powershell",
       "normal_use_command_template": "Start-Process '<public_prompt_kit_url>'",
+      "install_command_template": "Start-Process '<public_launcher_url>'",
       "local_app_entry_point": "Open-Latest-PromptKit.cmd",
       "forbidden_tokens": [
         "termux-open-url",
@@ -51,6 +54,7 @@
       "shell": "termux-bash",
       "execution_surface": "android-termux",
       "normal_use_command_template": "termux-open-url '<public_prompt_kit_url>'",
+      "install_command_template": "termux-open-url '<public_launcher_url>'",
       "editable_checkout_default": "$HOME/web-excel-repair-triage",
       "forbidden_tokens": [
         "Start-Process",
@@ -62,6 +66,7 @@
       "shell": "browser",
       "execution_surface": "browser",
       "normal_use_command_template": "<public_prompt_kit_url>",
+      "install_command_template": "<public_launcher_url>",
       "repository_path_required": false
     }
   },
@@ -71,8 +76,10 @@
     "A Windows PowerShell prompt is positive evidence for the Windows execution surface and negative evidence for direct Termux execution.",
     "An Android target requested from Windows must remain an Android-device action; repairing or invoking WSL is not a substitute.",
     "Normal browser use does not require a repository path, clone, or terminal.",
-    "Local launcher or editable-checkout work must use the profile-associated Triage path rather than an unrelated repository path."
+    "Local launcher or editable-checkout work must use the profile-associated Triage path rather than an unrelated repository path.",
+    "Browser-only execution cannot perform local-app or editable-checkout intent; classify those requests as BLOCKED or hand them off to a supported local profile."
   ],
   "public_prompt_kit_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
+  "public_launcher_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
   "proof_ceiling": "Static repository-family relationship, profile/path qualification, shell-safe route selection, and handoff classification only. No device command execution, browser opening, checkout existence, Git authentication, or runtime success is proven."
 }
