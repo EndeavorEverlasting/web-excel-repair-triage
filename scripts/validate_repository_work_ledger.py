@@ -142,7 +142,11 @@ def main():
         for error in errors:
             print(f'- {error}', file=sys.stderr)
         return 1
-    print(f'[repository-work-ledger] PASS {ledger.relative_to(ROOT)}')
+    try:
+        display_path = ledger.relative_to(ROOT)
+    except ValueError:
+        display_path = ledger
+    print(f'[repository-work-ledger] PASS {display_path}')
     return 0
 
 
