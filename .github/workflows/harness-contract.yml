@@ -15,6 +15,9 @@ on:
       - Open-Latest-PromptKit.cmd
       - harness/**
       - .ai/skills/**
+      - .ai/README.md
+      - .ai/WORK_QUEUE.md
+      - .ai/repo-ledger-adoption.json
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
@@ -25,6 +28,7 @@ on:
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
+      - scripts/validate_repo_ledger.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
       - tests/test_prompt_kit_cross_device_access.py
@@ -33,6 +37,7 @@ on:
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_language_audit.py
+      - tests/test_repo_ledger_validator.py
       - .github/workflows/harness-contract.yml
   push:
     branches: [main]
@@ -49,6 +54,9 @@ on:
       - Open-Latest-PromptKit.cmd
       - harness/**
       - .ai/skills/**
+      - .ai/README.md
+      - .ai/WORK_QUEUE.md
+      - .ai/repo-ledger-adoption.json
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
@@ -59,6 +67,7 @@ on:
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
+      - scripts/validate_repo_ledger.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
       - tests/test_prompt_kit_cross_device_access.py
@@ -67,6 +76,7 @@ on:
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_language_audit.py
+      - tests/test_repo_ledger_validator.py
       - .github/workflows/harness-contract.yml
 
 permissions:
@@ -93,6 +103,7 @@ jobs:
             scripts/validate_prompt_kit_order_navigation.py \
             scripts/validate_prompt_kit_interactions.py \
             scripts/validate_prompt_kit_discovery.py \
+            scripts/validate_repo_ledger.py \
             scripts/evaluate_prompt_language.py \
             tests/test_harness_contract.py \
             tests/test_operator_command_envelope.py \
@@ -101,7 +112,12 @@ jobs:
             tests/test_prompt_kit_order_navigation_contract.py \
             tests/test_prompt_kit_interactions_contract.py \
             tests/test_prompt_kit_discovery.py \
-            tests/test_prompt_language_audit.py
+            tests/test_prompt_language_audit.py \
+            tests/test_repo_ledger_validator.py
+      - name: Validate repo-local work ledger
+        run: python scripts/validate_repo_ledger.py
+      - name: Run repo-ledger regression tests
+        run: python -m unittest tests.test_repo_ledger_validator -v
       - name: Validate operator proof PowerShell syntax
         shell: pwsh
         run: |
