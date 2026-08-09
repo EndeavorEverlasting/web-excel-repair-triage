@@ -102,6 +102,21 @@ class RepositoryWorkLedgerPromptTests(unittest.TestCase):
         self.assertIn("Repository Work Ledger Steward", html)
         self.assertIn("WEAK-MODEL-SAFE LEDGER CONTRACT", html)
 
+    def test_checked_in_site_contains_both_p66_discovery_routes(self) -> None:
+        deployed = (ROOT / "web" / "prompt-kit" / "index.html").read_text(
+            encoding="utf-8"
+        )
+        self.assertEqual(deployed, build_prompt_kit_registry.render())
+        self.assertIn('"id": "P66"', deployed)
+        self.assertIn(
+            "P66 Repository Work Ledger Steward: establish, adopt, contribute to, or repair",
+            deployed,
+        )
+        self.assertIn(
+            "Keep human and agent work continuous in a repository ledger",
+            deployed,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
