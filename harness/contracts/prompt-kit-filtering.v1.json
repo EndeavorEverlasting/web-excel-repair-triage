@@ -9,7 +9,7 @@
   "requirements": [
     {
       "id": "unique_categories",
-      "expected": "All Categories renders each visible SECTIONS category at most once."
+      "expected": "All Categories renders each visible SECTIONS category divider at most once even when chronologically adjacent prompts revisit that category later."
     },
     {
       "id": "single_category_scope",
@@ -21,11 +21,11 @@
     },
     {
       "id": "sequential_with_gaps",
-      "expected": "Prompts inside each visible category are sorted by numeric prompt sequence; missing numbers do not create placeholders."
+      "expected": "The complete visible prompt-card stream is sorted by numeric prompt sequence after search/category/type/color/Favorites filtering; missing numbers do not create placeholders. Category metadata may group counts and collapse state but must not reorder cards."
     },
     {
       "id": "anchors_on_visible_categories",
-      "expected": "Every visible category divider carries Top-left and Bottom-right same-document anchors without clearing filters."
+      "expected": "Every visible category divider carries Top-left and Bottom-right same-document anchors without clearing filters, while distributed list navigation supplies additional Top/Bottom access through long result sets."
     },
     {
       "id": "acquisition_discoverability",
@@ -37,7 +37,8 @@
     "python -m unittest tests.test_prompt_kit_filtering_access -v",
     "python -m unittest tests.test_prompt_kit_product_interactions -v",
     "python -m unittest tests.test_prompt_kit_mobile -v",
+    "python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary",
     "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check"
   ],
-  "proof_ceiling": "Source, deterministic grouping/mobile tests, generated-site parity, and CI artifact proof; real operator browser and physical mobile acceptance remain field gates."
+  "proof_ceiling": "Source, deterministic grouping/order/mobile tests, generated-site parity, and CI artifact proof; real operator browser and physical mobile acceptance remain field gates."
 }
