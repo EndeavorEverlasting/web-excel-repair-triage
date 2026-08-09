@@ -48,7 +48,8 @@
       "contract_tests": "tests/test_prompt_kit_order_navigation_contract.py",
       "workflow": "WORKFLOW.md#b-prompt-registry-or-website-change",
       "harness_gate": "python scripts/validate_prompt_kit_order_navigation.py --output Outputs/prompt-kit-order-navigation-audit.json --summary",
-      "strict_product_gate": "python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary"
+      "strict_product_gate": "python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary",
+      "operator_report": "harness/reports/PROMPT_KIT_ORDER_NAVIGATION.md"
     },
     "prompt_kit_portability": {
       "contract": "harness/contracts/prompt-kit-portability.v1.json",
