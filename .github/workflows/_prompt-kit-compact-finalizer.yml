@@ -1,0 +1,54 @@
+name: Prompt Kit compact browsing branch finalizer
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-compact-favorites-canonical-path-20260809
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-compact-finalizer-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sync-generated-site:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-compact-favorites-canonical-path-20260809
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate owned source before generation
+        run: |
+          node --check docs/prompt-kit-polish.js
+          python -m unittest \
+            tests.test_prompt_kit_order_navigation_product \
+            tests.test_prompt_kit_cross_device_access \
+            tests.test_prompt_kit_mobile \
+            -v
+          pwsh -NoLogo -NoProfile -File tests/Test-PromptKitQuickOpenPathResolution.ps1
+          python scripts/validate_prompt_kit_cross_device_access.py --summary
+      - name: Regenerate canonical Prompt Kit
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit generated parity only when needed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- web/prompt-kit/index.html; then
+            echo 'Generated Prompt Kit already matches canonical source.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add web/prompt-kit/index.html
+          git commit -m 'build(prompt-kit): sync compact browsing site'
+          git push origin HEAD:feat/prompt-kit-compact-favorites-canonical-path-20260809
