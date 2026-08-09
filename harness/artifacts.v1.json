@@ -63,6 +63,16 @@
       "proof_ceiling": "Static interaction-contract audit; strict static markers still do not prove browser behavior."
     },
     {
+      "id": "prompt-kit-order-navigation-audit-report",
+      "kind": "runtime",
+      "canonical_path": "Outputs/prompt-kit-order-navigation-audit.json",
+      "producer": "python scripts/validate_prompt_kit_order_navigation.py --output Outputs/prompt-kit-order-navigation-audit.json --summary",
+      "validator": "prompt-kit-order-navigation domain gate",
+      "naming": "Stable prompt-kit-order-navigation-audit/v1 family name.",
+      "tracking_policy": "Gitignored runtime evidence or CI artifact; strict product mode may intentionally fail while a recorded implementation gap remains.",
+      "proof_ceiling": "Contract and static source-gap proof; real scroll ergonomics, mobile touch behavior, and browser acceptance remain observed runtime gates."
+    },
+    {
       "id": "prompt-language-audit-report",
       "kind": "runtime",
       "canonical_path": "Outputs/prompt-language-audit.json",
