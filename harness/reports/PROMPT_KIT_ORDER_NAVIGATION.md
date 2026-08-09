@@ -1,8 +1,11 @@
 # Prompt Kit Order and Long-List Navigation State
 
-**As of:** 2026-08-08  
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Harness contract:** `harness/contracts/prompt-kit-order-navigation.v1.json`  
+**As of:** 2026-08-08
+
+**Repository:** `EndeavorEverlasting/web-excel-repair-triage`
+
+**Harness contract:** `harness/contracts/prompt-kit-order-navigation.v1.json`
+
 **Harness validator:** `scripts/validate_prompt_kit_order_navigation.py`
 
 ## Working harness surfaces
@@ -15,6 +18,14 @@
 - Mobile/coarse-pointer controls require at least a 40px touch target and must not clear filters when navigating.
 - The normal harness gate validates the contract, records source evidence, writes `Outputs/prompt-kit-order-navigation-audit.json`, and exits successfully while a clearly classified product gap remains.
 - The strict product gate uses `--require-implementation` and exits nonzero while any implementation finding remains.
+
+## Fresh-agent route
+
+1. Read `harness/contracts/prompt-kit-order-navigation.v1.json` to recover the exact ordering and navigation-density contract.
+2. Run `python scripts/validate_prompt_kit_order_navigation.py --output Outputs/prompt-kit-order-navigation-audit.json --summary` to classify the current implementation without changing product code.
+3. Run `python -m unittest tests.test_prompt_kit_order_navigation_contract -v` to prove the harness detector and mutation fixtures.
+4. In a harness-only lane, stop product mutation at the explicit `needs-product-repair` boundary and preserve the audit as evidence.
+5. In an authorized Prompt Kit product lane, run the same validator with `--require-implementation`, repair canonical behavior sources, rebuild `web/prompt-kit/index.html`, and require exact parity before browser/mobile observation.
 
 ## Observed product gaps
 
