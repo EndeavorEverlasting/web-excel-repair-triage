@@ -87,6 +87,19 @@
       "skill": ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
       "operator_report": "harness/reports/PROMPT_KIT_FRESHNESS.md"
     },
+    "prompt_kit_profile_qualified_routing": {
+      "contract": "harness/contracts/prompt-kit-profile-qualified-routing.v1.json",
+      "resolver": "scripts/resolve_prompt_kit_profile_route.py",
+      "validator": "scripts/validate_prompt_kit_profile_routing.py",
+      "contract_tests": "tests/test_prompt_kit_profile_routing.py",
+      "workflow": "WORKFLOW.md#a-technician-acquisition-or-update",
+      "human_workflow": "harness/workflows/prompt-kit-profile-qualified-routing.md",
+      "harness_gate": "python scripts/validate_prompt_kit_profile_routing.py --summary",
+      "skill": ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
+      "operator_report": "harness/reports/PROMPT_KIT_PROFILE_ROUTING.md",
+      "artifact_id": "prompt-kit-profile-routing-report",
+      "related_profile_authority": "EndeavorEverlasting/AgentSwitchboard"
+    },
     "operator_command_envelope": {
       "contract": "harness/contracts/operator-command-envelope.v1.json",
       "validator": "scripts/validate_operator_command_envelope.py",
@@ -110,10 +123,15 @@
     "portable_quick_launcher": "Open-Latest-PromptKit.cmd",
     "portable_quick_script": "scripts/Open-LatestPromptKitPortable.ps1",
     "repository_url": "https://github.com/EndeavorEverlasting/web-excel-repair-triage.git",
+    "profile_route_resolver": "scripts/resolve_prompt_kit_profile_route.py",
+    "related_profile_authority": "EndeavorEverlasting/AgentSwitchboard",
     "required_files": [
       "web/prompt-kit/index.html",
       "docs/prompt-kit-favorites-portability.js",
       "harness/contracts/prompt-kit-portability.v1.json",
+      "harness/contracts/prompt-kit-profile-qualified-routing.v1.json",
+      "scripts/resolve_prompt_kit_profile_route.py",
+      "scripts/validate_prompt_kit_profile_routing.py",
       "scripts/serve_prompt_kit_portable.py",
       "scripts/validate_prompt_kit_portability.py",
       "Run-PromptKitGenerator.cmd",
@@ -128,12 +146,16 @@
       "refuse_divergence": true,
       "force_push": false,
       "destructive_reset": false,
-      "embedded_credentials": false
+      "embedded_credentials": false,
+      "qualify_profile_before_shell_command": true,
+      "cross_profile_command_handoff_only": true
     }
   },
   "validation_order": [
     "python scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
     "python -m unittest tests.test_harness_contract -v",
+    "python scripts/validate_prompt_kit_profile_routing.py --summary",
+    "python -m unittest tests.test_prompt_kit_profile_routing -v",
     "python -m unittest tests.test_prompt_kit_interactions_contract -v",
     "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
     "python scripts/validate_prompt_kit_discovery.py --summary",

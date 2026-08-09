@@ -18,6 +18,22 @@
       "proof_ceiling": "Executable regression proof for registered harness contracts."
     },
     {
+      "id": "prompt-kit-profile-routing-audit",
+      "class": "contract",
+      "command": "python scripts/validate_prompt_kit_profile_routing.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static repository-family, host-profile, shell, target-profile, and path-routing proof."
+    },
+    {
+      "id": "prompt-kit-profile-routing-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_prompt_kit_profile_routing -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable regression proof that cross-profile shell leakage is blocked and profile-associated Triage paths are selected deterministically."
+    },
+    {
       "id": "prompt-kit-interaction-contract-tests",
       "class": "test",
       "command": "python -m unittest tests.test_prompt_kit_interactions_contract -v",
@@ -118,6 +134,8 @@
     "harness": [
       "harness-completeness",
       "harness-contract-tests",
+      "prompt-kit-profile-routing-audit",
+      "prompt-kit-profile-routing-tests",
       "prompt-kit-interaction-contract-tests",
       "prompt-kit-interaction-audit",
       "prompt-kit-discovery-audit",
@@ -140,6 +158,8 @@
       "patch-hygiene"
     ],
     "pre_commit": [
+      "prompt-kit-profile-routing-audit",
+      "prompt-kit-profile-routing-tests",
       "harness-completeness",
       "harness-contract-tests",
       "patch-hygiene-staged"
@@ -147,6 +167,8 @@
     "pre_push": [
       "harness-completeness",
       "harness-contract-tests",
+      "prompt-kit-profile-routing-audit",
+      "prompt-kit-profile-routing-tests",
       "prompt-kit-interaction-contract-tests",
       "prompt-kit-interaction-audit",
       "prompt-kit-discovery-audit",

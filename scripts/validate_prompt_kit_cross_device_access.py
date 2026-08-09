@@ -22,6 +22,7 @@ PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/prom
 LAUNCHER_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/"
 REPOSITORY_URL = "https://github.com/EndeavorEverlasting/web-excel-repair-triage.git"
 ZIP_URL = "https://github.com/EndeavorEverlasting/web-excel-repair-triage/archive/refs/heads/main.zip"
+PROFILE_ROUTE_RESOLVER = "scripts/resolve_prompt_kit_profile_route.py"
 ACQUISITION_SKILL = ".ai/skills/technician-prompt-kit-acquisition/SKILL.md"
 ACQUISITION_TRIGGER = "technician-needs-latest-prompt-kit"
 ACQUISITION_WORKFLOW = "WORKFLOW.md#a-technician-acquisition-or-update"
@@ -268,6 +269,7 @@ def validate_workflow_registration(payload: dict[str, Any]) -> None:
     if acquisition.get("validation_profile") != "harness":
         raise CrossDeviceAccessError("technician-acquisition validation profile drifted")
     expected_entry_points = {
+        PROFILE_ROUTE_RESOLVER,
         PUBLIC_URL,
         LAUNCHER_URL,
         "Open-Latest-PromptKit.cmd",

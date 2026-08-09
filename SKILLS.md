@@ -53,11 +53,14 @@ This is the repository skill index. Reusable procedures live under `.ai/skills/<
 - **Trigger:** `technician-needs-latest-prompt-kit`
 - **Capability:** `technician-prompt-kit-acquisition`
 - **Use when:** A user needs to open, install, share, download, clone, update, or locally edit the Prompt Kit on a browser, phone/tablet, Windows PC, macOS, or Linux machine. Also enter the skill when the user reports a Prompt Kit/prompt version or an older downloaded/installed/cloned copy whose currentness has not been proven.
+- **Repository-family boundary:** `EndeavorEverlasting/web-excel-repair-triage` remains the active repository. `EndeavorEverlasting/AgentSwitchboard` may supply read-only machine-profile and path-convention evidence; that relationship never transfers Triage mutation ownership.
+- **Profile gate:** Before emitting shell commands, qualify current host profile, current shell/execution surface, target profile, and user intent. If target profile differs from current host profile, emit a cross-device HANDOFF rather than target-shell text in the current shell.
+- **Path gate:** Local launcher/editable-checkout work uses the profile-associated Triage path: explicit/proven Triage path first, then verified existing Triage checkout, then the sibling of a verified `AGENT_SWITCHBOARD_REPO`, then the platform default. Never reuse a remembered user-specific absolute path.
 - **Freshness gate:** A version label is not proof of currentness. Before troubleshooting, tutorial guidance, or prompt selection against a versioned/potentially stale copy, recommend the lowest-friction latest route. If refresh is declined, keep the copy labeled `stale-or-unverified`.
 - **Routing:** Normal browser use goes directly to the public Prompt Kit; phone/tablet install uses the public launcher; Windows stable-origin use prefers `Open-Latest-PromptKit.cmd`; an editable checkout is reserved for edit/commit/push/local-tooling intent; ZIP is a source snapshot fallback.
 - **Android editable checkout:** Use Termux from F-Droid, install Git, clone `main`, then update an existing checkout only after verifying canonical origin, a clean worktree, current branch `main`, and zero local-only commits; fetch and finish with `git merge --ff-only origin/main`.
-- **Forbidden conditions:** Destructive Git cleanup, credential automation, or updating an editable checkout that is dirty, divergent, non-main, or has an unexpected origin.
-- **Primary validation:** `python scripts/validate_prompt_kit_cross_device_access.py --summary`, `python -m unittest tests.test_prompt_kit_cross_device_access -v`, `python scripts/validate_prompt_kit_freshness_guidance.py --summary`, `python -m unittest tests.test_prompt_kit_freshness_guidance -v`, then the root harness validator/contracts and native device field proof.
+- **Forbidden conditions:** Destructive Git cleanup, credential automation, updating an editable checkout that is dirty/divergent/non-main/unexpected-origin, mutating AgentSwitchboard from this Triage skill, or sending Termux syntax to Windows PowerShell.
+- **Primary validation:** `python scripts/validate_prompt_kit_profile_routing.py --summary`, `python -m unittest tests.test_prompt_kit_profile_routing -v`, then cross-device/freshness gates, root harness validation, and native device field proof.
 
 ## Required skill-file sections
 

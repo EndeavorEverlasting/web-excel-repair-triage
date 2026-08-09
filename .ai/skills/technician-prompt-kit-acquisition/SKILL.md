@@ -18,8 +18,10 @@ Do not use this skill to repair arbitrary Git history, recover local commits, sw
 
 ## Required inputs
 
+- Active repository: `EndeavorEverlasting/web-excel-repair-triage`.
 - User intent: use/install/share versus edit/commit/push/local tooling.
-- Device/platform: Android, iPhone/iPad, Windows, macOS, Linux, or other browser-capable device.
+- Current host profile and shell/execution surface before any shell command is emitted.
+- Target profile/device when the action is meant for a different device.
 - Any user-reported Prompt Kit/prompt version label or indication that the copy was downloaded, installed, cached, or cloned previously.
 - Canonical repository URL: `https://github.com/EndeavorEverlasting/web-excel-repair-triage.git`.
 - Default branch: `main`.
@@ -27,19 +29,21 @@ Do not use this skill to repair arbitrary Git history, recover local commits, sw
 - Public phone launcher URL: `https://endeavoreverlasting.github.io/web-excel-repair-triage/`.
 - Git and repository access only when a real checkout is required.
 - Windows PowerShell/Python only for the repository-owned Windows local-app path.
+- Related repository evidence when available: `EndeavorEverlasting/AgentSwitchboard` is the repository-family profile/path authority and may be read to qualify profile/path conventions. It is not the active mutation target in this Triage skill.
 
 ## Outputs
 
 Depending on the selected route:
 
 - an explicit currentness decision before troubleshooting or prompt-selection guidance when a versioned/potentially stale copy was reported;
+- a profile-qualified route record or cross-profile HANDOFF;
 - the public Prompt Kit opened directly in the browser;
 - an Android/iOS home-screen installation path through the public launcher;
 - a validated Windows stable-origin local app launched through `Open-Latest-PromptKit.cmd`;
-- a clean editable checkout on `main` for source work;
+- a profile-associated clean editable checkout on `main` for source work;
 - or a clearly identified point-in-time ZIP snapshot.
 
-The handoff must state which route was selected, why it matched the user intent, whether freshness was proven or remained stale-or-unverified, what prerequisites were required, and which runtime gates remain unproven.
+The handoff must state which route was selected, why it matched the user intent, the active repository, related repository evidence used, current host profile/shell, target profile, profile-associated Triage path when local tooling is required, whether freshness was proven or remained stale-or-unverified, what prerequisites were required, and which runtime gates remain unproven.
 
 ## Procedure
 
@@ -50,16 +54,38 @@ A version label is a freshness signal, not proof of currentness. If the user rep
 Before troubleshooting, tutorial guidance, or prompt selection:
 
 1. Tell the user that the reported copy may be stale or unverified.
-2. Recommend the lowest-friction refresh route first, based on the same intent routing used by this skill:
-   - browser use → open `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`;
-   - phone/tablet install → open `https://endeavoreverlasting.github.io/web-excel-repair-triage/` in the system browser and use Install app / Add to Home Screen when offered;
-   - Windows stable local app → run `Open-Latest-PromptKit.cmd`;
-   - editable checkout → use the preservation-first existing-checkout sequence in step 4 and integrate only with `git merge --ff-only origin/main`;
-   - explicit ZIP snapshot → re-download the canonical `main.zip` and keep calling it a point-in-time snapshot.
+2. Recommend the lowest-friction refresh route first, based on the same intent routing used by this skill.
 3. Continue with troubleshooting or prompt-selection guidance after the refresh/currentness step is satisfied.
 4. If the user explicitly declines to refresh, continue only while labeling the copy **stale-or-unverified** so the limitation remains visible.
 
 Do not translate “pull latest” into Git work automatically. A normal phone/browser user gets the public latest route; Git synchronization is reserved for real editable checkout intent.
+
+### 0A. Repository-family and profile gate
+
+The active repository remains Triage: `EndeavorEverlasting/web-excel-repair-triage`.
+
+AgentSwitchboard is a related repository, not a replacement active repo. Its machine-profile and repository-family surfaces may be consumed read-only to qualify the operator environment and path conventions. Do not mutate AgentSwitchboard from this skill merely because its profile data is relevant.
+
+Before emitting any shell command:
+
+1. Qualify the current host profile: Windows, Android, or browser-only.
+2. Qualify the current shell/execution surface: PowerShell, Termux bash, or browser.
+3. Qualify the target profile/device.
+4. If the target profile differs from the current host profile, return a **HANDOFF** and do not emit the target device's shell command as runnable in the current shell.
+5. When a local Triage checkout or launcher is needed, resolve the profile-associated Triage path in this order:
+   - explicit `WEB_EXCEL_TRIAGE_REPO` / already-proven Triage path;
+   - verified existing Triage checkout;
+   - sibling `web-excel-repair-triage` directory next to a verified `AGENT_SWITCHBOARD_REPO` checkout;
+   - platform default (`%USERPROFILE%\dev\web-excel-repair-triage` on Windows, `$HOME/web-excel-repair-triage` on Android).
+6. Never substitute a remembered user-specific absolute path for current profile/path evidence.
+
+Use the deterministic resolver when a shell command or cross-device handoff is required:
+
+```text
+python scripts/resolve_prompt_kit_profile_route.py --host-profile <windows|android|browser> --shell <powershell|termux-bash|browser> --target-profile <windows|android|browser> --intent <use|install|local-app|edit> [--triage-repo <path>] [--agent-switchboard-repo <path>] [--main-sha <sha>]
+```
+
+Windows PowerShell routes must never contain `termux-open-url`, `command -v`, `/dev/null`, `pkg install`, or `$PREFIX`. Android Termux routes must never contain PowerShell-specific `Start-Process` or `Set-Location`. A Windows PowerShell prompt is positive evidence for a Windows execution surface and negative evidence for directly executing Termux text there.
 
 ### 1. Normal browser use
 
@@ -70,6 +96,8 @@ https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/
 ```
 
 Do not require a clone merely to use the Prompt Kit. Normal browser use must not require Git, ZIP extraction, PowerShell, Python, Termux, or a local server.
+
+If the current shell is Windows PowerShell and a browser command is actually useful on that Windows machine, the shell-safe form is `Start-Process '<url>'`. If the target is an Android phone while the current shell is Windows, do not emit `termux-open-url` into PowerShell; hand off the action to the Android device.
 
 ### 2. Android or iPhone/iPad install
 
@@ -87,7 +115,7 @@ The tracked generated HTML path is not a phone acquisition step. Keep normal pho
 
 ### 3. Windows stable-origin local app
 
-Use `Open-Latest-PromptKit.cmd`. The repository-owned launcher owns clone-or-fast-forward behavior, validation, portable Favorites, and loopback serving. Do not reconstruct that workflow by hand when the launcher is available.
+Use `Open-Latest-PromptKit.cmd` from the profile-associated Triage checkout. The repository-owned launcher owns clone-or-fast-forward behavior, validation, portable Favorites, and loopback serving. Do not reconstruct that workflow by hand when the launcher is available, and do not run it from an AgentSwitchboard repository path merely because AgentSwitchboard supplied profile evidence.
 
 ### 4. Real editable checkout
 
@@ -147,6 +175,10 @@ Explain that ZIP is a snapshot. It does not provide normal Git updates and is no
 
 ## Guardrails
 
+- Keep `EndeavorEverlasting/web-excel-repair-triage` as the active repository in this skill; related AgentSwitchboard evidence does not transfer mutation ownership.
+- Qualify host profile, current shell, and target profile before giving shell commands.
+- If target profile differs from host profile, hand off instead of executing target-shell syntax in the current shell.
+- Resolve local launcher/editable-checkout work through the profile-associated Triage path.
 - Treat a reported Prompt Kit/prompt version or previously acquired local copy as a freshness trigger until currentness is proven.
 - Recommend refresh before troubleshooting, tutorial guidance, or prompt selection against a stale-or-unverified copy.
 - Do not require a clone merely to use the Prompt Kit.
@@ -161,10 +193,12 @@ Explain that ZIP is a snapshot. It does not provide normal Git updates and is no
 
 ## Validation
 
-Focused cross-device and freshness contracts:
+Focused profile-qualified, cross-device, and freshness contracts:
 
 ```bash
-python -m py_compile scripts/validate_prompt_kit_cross_device_access.py tests/test_prompt_kit_cross_device_access.py scripts/validate_prompt_kit_freshness_guidance.py tests/test_prompt_kit_freshness_guidance.py
+python -m py_compile scripts/resolve_prompt_kit_profile_route.py scripts/validate_prompt_kit_profile_routing.py tests/test_prompt_kit_profile_routing.py scripts/validate_prompt_kit_cross_device_access.py tests/test_prompt_kit_cross_device_access.py scripts/validate_prompt_kit_freshness_guidance.py tests/test_prompt_kit_freshness_guidance.py
+python scripts/validate_prompt_kit_profile_routing.py --summary
+python -m unittest tests.test_prompt_kit_profile_routing -v
 python scripts/validate_prompt_kit_cross_device_access.py --summary
 python -m unittest tests.test_prompt_kit_cross_device_access -v
 python scripts/validate_prompt_kit_freshness_guidance.py --summary
@@ -182,10 +216,10 @@ python tests/test_prompt_kit_header_contract.py
 
 Runtime acceptance remains separate:
 
-- phone/browser: open the public launcher/site and observe install/open behavior;
-- Android editable checkout: run the Termux clone/update gates on the device;
-- Windows local app: execute `Open-Latest-PromptKit.cmd` and verify its stable-origin health proof.
+- phone/browser: open the public launcher/site on the target device and observe install/open behavior;
+- Android editable checkout: run the Termux clone/update gates on the Android device;
+- Windows local app: execute `Open-Latest-PromptKit.cmd` from the profile-associated Triage checkout and verify its stable-origin health proof.
 
 ## Proof ceiling
 
-Repository and CI checks prove the device-routing contract, freshness-trigger guidance, canonical URLs/commands, registered ownership, preservation-first Git posture, and current documentation/launcher references on the tested commit. They do not prove a specific device's browser menus, PWA installation, cache/service-worker refresh, Termux or F-Droid availability, network, Git credentials, browser storage, clipboard behavior, Windows policy, or successful remote push.
+Repository and CI checks prove the repository-family relationship declaration, device/profile routing contract, shell-safe handoff behavior, freshness-trigger guidance, canonical URLs/commands, registered ownership, preservation-first Git posture, and current documentation/launcher references on the tested commit. They do not prove a specific device's browser menus, PWA installation, cache/service-worker refresh, Termux or F-Droid availability, network, Git credentials, browser storage, clipboard behavior, Windows policy, filesystem path existence, or successful remote push.

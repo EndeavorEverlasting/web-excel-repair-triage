@@ -8,7 +8,7 @@ This registry defines repository artifacts that agents, CI, and operators may pr
 |---|---|---|---|---|
 | Governance contract | `AGENTS.md` | P00-owned canonical file | governance tests | One authority; outside harness-infrastructure scope. |
 | Codebase map | `CODEBASE_MAP.md` | edited Markdown | `harness-completeness` | Tracked; paths and commands must be current. |
-| Workflow specification | `WORKFLOW.md` | edited Markdown | `harness-completeness` | Tracked human workflow source. |
+| Workflow specification | `WORKFLOW.md` plus focused workflow specs under `harness/workflows/` | edited Markdown | `harness-completeness` plus focused validators | Tracked human workflow sources. |
 | Workflow registry | `harness/workflows.v1.json` | edited versioned JSON | `harness-completeness` and contract tests | Machine-readable triggers, scope, failure, validation, and handoff ownership. |
 | Artifact registry | `ARTIFACT_REGISTRY.md` | edited Markdown | `harness-completeness` | Human-readable artifact contract. |
 | Machine artifact registry | `harness/artifacts.v1.json` | edited versioned JSON | `harness-completeness` and contract tests | Canonical paths, producers, validators, naming, tracking, delivery surfaces, and proof ceilings. |
@@ -21,33 +21,37 @@ This registry defines repository artifacts that agents, CI, and operators may pr
 | Trigger registry | `harness/triggers.v1.json` | edited JSON | harness validator/tests | Deterministic conditions and forbidden conditions with one capability/skill owner. |
 | Scoped skills | `.ai/skills/*/SKILL.md` | edited Markdown | harness validator/tests | Repeatable procedures; deterministic behavior remains in code/contracts. |
 | Operator report | `harness/reports/CURRENT_STATE.md` | edited Markdown | harness validator | Current working, broken, missing, validation, and proof state. |
+| Prompt Kit profile-routing report | `harness/reports/PROMPT_KIT_PROFILE_ROUTING.md` | edited Markdown | `prompt-kit-profile-routing-audit` | Human-readable Triage/AgentSwitchboard relationship, host/shell/target/path routing, known traps, and proof ceiling. |
+| Prompt Kit profile-routing workflow | `harness/workflows/prompt-kit-profile-qualified-routing.md` | edited Markdown | `prompt-kit-profile-routing-audit` | Human workflow for active-repository retention, profile qualification, path association, and cross-profile handoff. |
+| Prompt Kit profile-routing contract | `harness/contracts/prompt-kit-profile-qualified-routing.v1.json` | edited versioned JSON | `scripts/validate_prompt_kit_profile_routing.py` plus focused tests | Triage remains active; AgentSwitchboard may supply read-only profile/path evidence; commands are shell-safe and cross-profile targets become handoffs. |
 | Prompt Kit interaction contract | `harness/contracts/prompt-kit-interactions.v1.json` | edited versioned JSON | focused tests and audit | Harness owns the requirement; product lane owns implementation. |
 | Prompt Kit discovery contract | `harness/contracts/prompt-kit-discovery.v1.json` | edited versioned JSON | focused tests and audit | Tracked discovery requirement and proof boundary. |
 | Prompt Kit cross-device access contract | `harness/contracts/prompt-kit-cross-device-access.v1.json` | edited versioned JSON | `scripts/validate_prompt_kit_cross_device_access.py` plus focused tests | Routes normal use/install to public browser surfaces and reserves Git checkout for edit/commit/push/local-tooling intent. |
 | Prompt-language policy and fixtures | `harness/evals/**` | edited versioned JSON | prompt-language tests/evaluator | Rules, severities, fixtures, and result contract. |
 | Prompt Kit website | `web/prompt-kit/index.html` | deterministic builder output | `prompt-kit-parity` | One canonical site delivered through public Pages, the phone launcher, and Windows local-app surfaces; normal phone/browser users do not need a clone. |
-| Technician acquisition surfaces | `Acquire-Latest-PromptKit.cmd`, `Open-Latest-PromptKit.cmd`, `scripts/Acquire-LatestPromptKit.ps1` | edited code | harness tests plus native Windows proof | Preservation-first clone/fast-forward/validate/open behavior for Windows; cross-device routing decides when these are appropriate. |
+| Technician acquisition surfaces | `Acquire-Latest-PromptKit.cmd`, `Open-Latest-PromptKit.cmd`, `scripts/Acquire-LatestPromptKit.ps1` | edited code | harness tests plus native Windows proof | Preservation-first clone/fast-forward/validate/open behavior for Windows; profile-qualified and cross-device routing decide when these are appropriate. |
 | Hooks | `.githooks/pre-commit`, `.githooks/pre-push` | edited shell | harness validator/tests | Optional per-worktree local gates. |
 
 ### Prompt Kit delivery surfaces
 
-The artifact ID `prompt-kit-website` always resolves to the tracked canonical artifact `web/prompt-kit/index.html`. Delivery method is selected by user intent rather than by inventing a second Prompt Kit:
+The artifact ID `prompt-kit-website` always resolves to the tracked canonical artifact `web/prompt-kit/index.html`. Delivery method is selected by user intent and qualified profile rather than by inventing a second Prompt Kit:
 
 | Need | Delivery surface | Git checkout required? |
 |---|---|---|
 | Normal browser use | `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/` | No |
 | Phone/tablet install/share | `https://endeavoreverlasting.github.io/web-excel-repair-triage/` | No |
-| Windows stable local app / portable Favorites | `Open-Latest-PromptKit.cmd` | Launcher owns clone/update internally; no manual clone required |
-| Edit, commit, push, inspect source locally | `git clone --branch main --single-branch https://github.com/EndeavorEverlasting/web-excel-repair-triage.git` | Yes |
+| Windows stable local app / portable Favorites | `Open-Latest-PromptKit.cmd` from the profile-associated Triage checkout | Launcher owns clone/update internally; no manual clone required |
+| Edit, commit, push, inspect source locally | profile-associated Triage checkout; fresh clone when absent | Yes |
 | Source snapshot without Git | repository `main.zip` | No; snapshot only |
 
-Android users who need an editable checkout use Termux from F-Droid and Git. They should not be routed there merely to open or install the Prompt Kit.
+If the current host/shell and target device differ, the route artifact is a cross-profile HANDOFF rather than a target-shell command pasted into the wrong terminal. Android users who need an editable checkout use Termux from F-Droid and Git. They should not be routed there merely to open or install the Prompt Kit.
 
 ## Generated runtime artifacts
 
 | Artifact family | Canonical location | Generation | Naming contract | Tracking policy |
 |---|---|---|---|---|
 | Harness completeness report | `Outputs/harness-completeness-report.json` | `python scripts/validate_harness.py --report Outputs/harness-completeness-report.json` | schema `harness-completeness-report/v1`; stable family name | Gitignored or CI artifact. |
+| Prompt Kit profile route | stdout JSON or an operator-approved untracked evidence file | `python scripts/resolve_prompt_kit_profile_route.py ...` | schema `prompt-kit-profile-route/v1` | Runtime routing evidence; do not commit machine-specific paths. |
 | Prompt Kit interaction audit | `Outputs/prompt-kit-interaction-audit.json` | focused interaction validator | stable result schema and family name | Gitignored or CI artifact. |
 | Prompt-language audit | `Outputs/prompt-language-audit.json` | exhaustive evaluator | stable result schema and family name | Gitignored or CI artifact. |
 | Strict prompt-language repair audit | `Outputs/prompt-language-audit-strict.json` | evaluator `--strict` | strict flag plus one disposition per prompt | Gitignored. |
@@ -71,7 +75,7 @@ Android users who need an editable checkout use Termux from F-Droid and Git. The
 1. Resolve the artifact ID from `harness/artifacts.v1.json`; do not guess from a generic filename.
 2. Declare artifact owner, source, destination, schema/profile, validator, delivery surface when relevant, and proof ceiling.
 3. Generate through the registered script, module, launcher, workflow, or CI job.
-4. Validate structural, semantic, parity, safety, path, and delivery-routing requirements appropriate to the artifact.
+4. Validate structural, semantic, parity, safety, path, profile/shell, and delivery-routing requirements appropriate to the artifact.
 5. Deliver only from the registry-defined canonical path, registered delivery surface, or CI artifact.
 6. Record commit/PR evidence for tracked artifacts and path/checksum/run ID for runtime artifacts.
 7. Clean only known generated outputs; never apply broad deletion to unknown work.
@@ -86,6 +90,14 @@ Android users who need an editable checkout use Termux from F-Droid and Git. The
 - Generated product artifacts: use the focused contract or manifest; do not infer “latest” from modification time alone.
 
 ## Generation and validation commands
+
+Profile-qualified Prompt Kit routing:
+
+```bash
+python -m py_compile scripts/resolve_prompt_kit_profile_route.py scripts/validate_prompt_kit_profile_routing.py tests/test_prompt_kit_profile_routing.py
+python scripts/validate_prompt_kit_profile_routing.py --summary
+python -m unittest tests.test_prompt_kit_profile_routing -v
+```
 
 Cross-device Prompt Kit routing:
 
@@ -120,4 +132,4 @@ git diff --check
 
 ## Proof boundaries
 
-File and registry presence prove repository integration only. The cross-device validator proves the repository routes normal browser/phone use to the public surfaces, preserves an explicit editable-checkout route, and documents safe commands; it does not prove device menus, PWA installation, Termux/F-Droid availability, Git credentials, network, browser storage, clipboard behavior, or push success. A harness completeness report proves the registered static checks executed on one checkout and commit. Deterministic builder parity proves source-to-generated identity, not browser acceptance. Interaction/discovery audits prove only their documented static surfaces. Prompt-language audit proves canonical/effective coverage and findings, not provider obedience. CI proves only the commands and fixtures exercised by that workflow. Excel for Web, native Windows GUI, protected targets, technician acceptance, deployment, and production success require separate observed proof.
+File and registry presence prove repository integration only. The profile-routing validator proves Triage remains active, AgentSwitchboard is related read-only profile/path evidence, host/shell/target combinations are classified, profile-associated paths are resolved deterministically, and cross-profile commands are blocked from the current shell; it does not prove those paths exist or either device executed anything. The cross-device validator proves the repository routes normal browser/phone use to the public surfaces, preserves an explicit editable-checkout route, and documents safe commands; it does not prove device menus, PWA installation, Termux/F-Droid availability, Git credentials, network, browser storage, clipboard behavior, or push success. A harness completeness report proves the registered static checks executed on one checkout and commit. Deterministic builder parity proves source-to-generated identity, not browser acceptance. Interaction/discovery audits prove only their documented static surfaces. Prompt-language audit proves canonical/effective coverage and findings, not provider obedience. CI proves only the commands and fixtures exercised by that workflow. Excel for Web, native Windows GUI, protected targets, technician acceptance, deployment, and production success require separate observed proof.

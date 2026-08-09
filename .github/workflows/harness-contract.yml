@@ -18,7 +18,9 @@ on:
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
+      - scripts/resolve_prompt_kit_profile_route.py
       - scripts/validate_operator_command_envelope.py
+      - scripts/validate_prompt_kit_profile_routing.py
       - scripts/validate_prompt_kit_cross_device_access.py
       - scripts/validate_prompt_kit_freshness_guidance.py
       - scripts/validate_prompt_kit_order_navigation.py
@@ -27,6 +29,7 @@ on:
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
+      - tests/test_prompt_kit_profile_routing.py
       - tests/test_prompt_kit_cross_device_access.py
       - tests/test_prompt_kit_freshness_guidance.py
       - tests/test_prompt_kit_order_navigation_contract.py
@@ -52,7 +55,9 @@ on:
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
+      - scripts/resolve_prompt_kit_profile_route.py
       - scripts/validate_operator_command_envelope.py
+      - scripts/validate_prompt_kit_profile_routing.py
       - scripts/validate_prompt_kit_cross_device_access.py
       - scripts/validate_prompt_kit_freshness_guidance.py
       - scripts/validate_prompt_kit_order_navigation.py
@@ -61,6 +66,7 @@ on:
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
+      - tests/test_prompt_kit_profile_routing.py
       - tests/test_prompt_kit_cross_device_access.py
       - tests/test_prompt_kit_freshness_guidance.py
       - tests/test_prompt_kit_order_navigation_contract.py
@@ -88,6 +94,8 @@ jobs:
           python -m py_compile \
             scripts/validate_harness.py \
             scripts/validate_operator_command_envelope.py \
+            scripts/resolve_prompt_kit_profile_route.py \
+            scripts/validate_prompt_kit_profile_routing.py \
             scripts/validate_prompt_kit_cross_device_access.py \
             scripts/validate_prompt_kit_freshness_guidance.py \
             scripts/validate_prompt_kit_order_navigation.py \
@@ -96,6 +104,7 @@ jobs:
             scripts/evaluate_prompt_language.py \
             tests/test_harness_contract.py \
             tests/test_operator_command_envelope.py \
+            tests/test_prompt_kit_profile_routing.py \
             tests/test_prompt_kit_cross_device_access.py \
             tests/test_prompt_kit_freshness_guidance.py \
             tests/test_prompt_kit_order_navigation_contract.py \
@@ -109,14 +118,10 @@ jobs:
           $source = Get-Content -LiteralPath 'harness/templates/Invoke-RemoteHarnessProof.ps1' -Raw -Encoding UTF8
           $null = [scriptblock]::Create($source)
           Write-Host 'Operator remote-proof PowerShell syntax: PASS'
-      - name: Validate Prompt Kit cross-device access
+      - name: Validate Prompt Kit profile-qualified routing
         run: |
-          python scripts/validate_prompt_kit_cross_device_access.py --summary
-          python -m unittest tests.test_prompt_kit_cross_device_access -v
-      - name: Validate Prompt Kit freshness guidance
-        run: |
-          python scripts/validate_prompt_kit_freshness_guidance.py --summary
-          python -m unittest tests.test_prompt_kit_freshness_guidance -v
+          python scripts/validate_prompt_kit_profile_routing.py --summary
+          python -m unittest tests.test_prompt_kit_profile_routing -v
       - name: Validate Prompt Kit ordering and long-list navigation harness
         run: |
           python scripts/validate_prompt_kit_order_navigation.py --output "$RUNNER_TEMP/prompt-kit-order-navigation-audit.json" --summary
@@ -127,6 +132,14 @@ jobs:
           name: prompt-kit-order-navigation-audit
           path: ${{ runner.temp }}/prompt-kit-order-navigation-audit.json
           if-no-files-found: error
+      - name: Validate Prompt Kit cross-device access
+        run: |
+          python scripts/validate_prompt_kit_cross_device_access.py --summary
+          python -m unittest tests.test_prompt_kit_cross_device_access -v
+      - name: Validate Prompt Kit freshness guidance
+        run: |
+          python scripts/validate_prompt_kit_freshness_guidance.py --summary
+          python -m unittest tests.test_prompt_kit_freshness_guidance -v
       - name: Validate operator command envelope
         run: |
           python scripts/validate_operator_command_envelope.py --summary
@@ -134,6 +147,7 @@ jobs:
       - name: Validate harness completeness
         run: python scripts/validate_harness.py --report "$RUNNER_TEMP/harness-completeness-report.json"
       - name: Upload harness completeness report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: harness-completeness-report
