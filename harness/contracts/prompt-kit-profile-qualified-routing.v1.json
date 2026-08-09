@@ -1,0 +1,78 @@
+{
+  "schema_version": "prompt-kit-profile-qualified-routing/v1",
+  "repository": "EndeavorEverlasting/web-excel-repair-triage",
+  "default_branch": "main",
+  "active_repository_rule": "The active repository remains EndeavorEverlasting/web-excel-repair-triage. Related repositories may supply profile or path evidence but may not become the mutation target implicitly.",
+  "related_repositories": {
+    "agent_switchboard": {
+      "full_name": "EndeavorEverlasting/AgentSwitchboard",
+      "relationship": "repository-family profile and machine-path authority",
+      "mutation_allowed": false,
+      "consumed_surfaces": [
+        ".ai/harness/repository-family.registry.json",
+        "Get-AgentSwitchboard-MachineProfile.cmd",
+        "tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1"
+      ],
+      "boundary": "Use AgentSwitchboard evidence to qualify the host profile and path conventions. Triage remains authoritative for Prompt Kit behavior, acquisition, artifacts, validators, and Triage repository mutations."
+    }
+  },
+  "resolution_order": [
+    "active repository",
+    "current host profile",
+    "current shell/execution surface",
+    "target profile",
+    "user intent",
+    "profile-associated repository path",
+    "command or cross-device handoff"
+  ],
+  "path_resolution": {
+    "explicit_triage_path_environment": "WEB_EXCEL_TRIAGE_REPO",
+    "verified_existing_checkout": "A checkout whose origin resolves to EndeavorEverlasting/web-excel-repair-triage.",
+    "related_repo_sibling": "When a verified AGENT_SWITCHBOARD_REPO is available, use its parent directory plus web-excel-repair-triage as the preferred sibling destination.",
+    "windows_default": "%USERPROFILE%\\dev\\web-excel-repair-triage",
+    "android_default": "$HOME/web-excel-repair-triage",
+    "rule": "Never substitute a remembered user-specific absolute path for profile/path evidence."
+  },
+  "profiles": {
+    "windows": {
+      "shell": "powershell",
+      "execution_surface": "windows-powershell",
+      "normal_use_command_template": "Start-Process '<public_prompt_kit_url>'",
+      "local_app_entry_point": "Open-Latest-PromptKit.cmd",
+      "forbidden_tokens": [
+        "termux-open-url",
+        "command -v",
+        "/dev/null",
+        "pkg install",
+        "$PREFIX"
+      ]
+    },
+    "android": {
+      "shell": "termux-bash",
+      "execution_surface": "android-termux",
+      "normal_use_command_template": "termux-open-url '<public_prompt_kit_url>'",
+      "editable_checkout_default": "$HOME/web-excel-repair-triage",
+      "forbidden_tokens": [
+        "Start-Process",
+        "Set-Location",
+        "%USERPROFILE%"
+      ]
+    },
+    "browser": {
+      "shell": "browser",
+      "execution_surface": "browser",
+      "normal_use_command_template": "<public_prompt_kit_url>",
+      "repository_path_required": false
+    }
+  },
+  "handoff_rules": [
+    "Qualify the current host profile and shell before emitting a shell command.",
+    "If target profile differs from current host profile, emit a HANDOFF with the target execution surface and do not emit a target-shell command as runnable in the current shell.",
+    "A Windows PowerShell prompt is positive evidence for the Windows execution surface and negative evidence for direct Termux execution.",
+    "An Android target requested from Windows must remain an Android-device action; repairing or invoking WSL is not a substitute.",
+    "Normal browser use does not require a repository path, clone, or terminal.",
+    "Local launcher or editable-checkout work must use the profile-associated Triage path rather than an unrelated repository path."
+  ],
+  "public_prompt_kit_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
+  "proof_ceiling": "Static repository-family relationship, profile/path qualification, shell-safe route selection, and handoff classification only. No device command execution, browser opening, checkout existence, Git authentication, or runtime success is proven."
+}
