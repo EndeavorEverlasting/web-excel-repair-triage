@@ -14,6 +14,76 @@ MANIFEST = ROOT / "harness/manifest.v1.json"
 WORKFLOWS = ROOT / "harness/workflows.v1.json"
 SKILL = ROOT / ".ai/skills/technician-prompt-kit-acquisition/SKILL.md"
 RESOLVER = ROOT / "scripts/resolve_prompt_kit_profile_route.py"
+PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/"
+LAUNCHER_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/"
+
+EXPECTED_RELATED = {
+    "agent_switchboard": {
+        "full_name": "EndeavorEverlasting/AgentSwitchboard",
+        "relationship": "repository-family profile and machine-path authority",
+        "mutation_allowed": False,
+        "consumed_surfaces": [
+            ".ai/harness/repository-family.registry.json",
+            "Get-AgentSwitchboard-MachineProfile.cmd",
+            "tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1",
+        ],
+        "boundary": "Use AgentSwitchboard evidence to qualify the host profile and path conventions. Triage remains authoritative for Prompt Kit behavior, acquisition, artifacts, validators, and Triage repository mutations.",
+    }
+}
+EXPECTED_RESOLUTION_ORDER = [
+    "active repository",
+    "current host profile",
+    "current shell/execution surface",
+    "target profile",
+    "user intent",
+    "profile-associated repository path",
+    "command or cross-device handoff",
+]
+EXPECTED_PATH_RESOLUTION = {
+    "explicit_triage_path_environment": "WEB_EXCEL_TRIAGE_REPO",
+    "verified_existing_checkout": "A checkout whose origin resolves to EndeavorEverlasting/web-excel-repair-triage.",
+    "related_repo_sibling": "When a verified AGENT_SWITCHBOARD_REPO is available, use its parent directory plus web-excel-repair-triage as the preferred sibling destination.",
+    "windows_default": r"%USERPROFILE%\dev\web-excel-repair-triage",
+    "windows_default_command_expression": r"Join-Path $env:USERPROFILE 'dev\web-excel-repair-triage'",
+    "android_default": "$HOME/web-excel-repair-triage",
+    "android_default_command_expression": '"$HOME/web-excel-repair-triage"',
+    "rule": "Never substitute a remembered user-specific absolute path for profile/path evidence.",
+}
+EXPECTED_PROFILES = {
+    "windows": {
+        "shell": "powershell",
+        "execution_surface": "windows-powershell",
+        "normal_use_command_template": "Start-Process '<public_prompt_kit_url>'",
+        "install_command_template": "Start-Process '<public_launcher_url>'",
+        "local_app_entry_point": "Open-Latest-PromptKit.cmd",
+        "forbidden_tokens": ["termux-open-url", "command -v", "/dev/null", "pkg install", "$PREFIX"],
+    },
+    "android": {
+        "shell": "termux-bash",
+        "execution_surface": "android-termux",
+        "normal_use_command_template": "termux-open-url '<public_prompt_kit_url>'",
+        "install_command_template": "termux-open-url '<public_launcher_url>'",
+        "editable_checkout_default": "$HOME/web-excel-repair-triage",
+        "forbidden_tokens": ["Start-Process", "Set-Location", "%USERPROFILE%"],
+    },
+    "browser": {
+        "shell": "browser",
+        "execution_surface": "browser",
+        "normal_use_command_template": "<public_prompt_kit_url>",
+        "install_command_template": "<public_launcher_url>",
+        "repository_path_required": False,
+    },
+}
+EXPECTED_HANDOFF_RULES = [
+    "Qualify the current host profile and shell before emitting a shell command.",
+    "If target profile differs from current host profile, emit a HANDOFF with the target execution surface and do not emit a target-shell command as runnable in the current shell.",
+    "A Windows PowerShell prompt is positive evidence for the Windows execution surface and negative evidence for direct Termux execution.",
+    "An Android target requested from Windows must remain an Android-device action; repairing or invoking WSL is not a substitute.",
+    "Normal browser use does not require a repository path, clone, or terminal.",
+    "Local launcher or editable-checkout work must use the profile-associated Triage path rather than an unrelated repository path.",
+    "Browser-only execution cannot perform local-app or editable-checkout intent; classify those requests as BLOCKED or hand them off to a supported local profile.",
+]
+EXPECTED_PROOF_CEILING = "Static repository-family relationship, profile/path qualification, shell-safe route selection, and handoff classification only. No device command execution, browser opening, checkout existence, Git authentication, or runtime success is proven."
 
 
 class ProfileRoutingError(RuntimeError):
@@ -35,9 +105,6 @@ def load_resolver():
     if spec is None or spec.loader is None:
         raise ProfileRoutingError("Unable to load profile route resolver")
     module = importlib.util.module_from_spec(spec)
-    # dataclasses resolves postponed type annotations through sys.modules while
-    # the module body executes. Register the dynamic module before exec so the
-    # validator behaves the same on Python 3.11+ as a normal import.
     sys.modules[spec.name] = module
     try:
         spec.loader.exec_module(module)
@@ -52,25 +119,36 @@ def require(condition: bool, message: str) -> None:
         raise ProfileRoutingError(message)
 
 
-def validate_contract() -> dict:
-    contract = load_object(CONTRACT)
+def validate_contract_payload(contract: dict) -> None:
     require(contract.get("schema_version") == "prompt-kit-profile-qualified-routing/v1", "wrong contract schema")
     require(contract.get("repository") == "EndeavorEverlasting/web-excel-repair-triage", "active repository must remain Triage")
-    related = contract.get("related_repositories", {}).get("agent_switchboard", {})
-    require(related.get("full_name") == "EndeavorEverlasting/AgentSwitchboard", "AgentSwitchboard family relation is missing")
-    require(related.get("mutation_allowed") is False, "related AgentSwitchboard repo must remain read-only from this Triage sprint")
-    consumed = set(related.get("consumed_surfaces", []))
-    require("Get-AgentSwitchboard-MachineProfile.cmd" in consumed, "machine-profile entry point is not registered")
-    require("tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1" in consumed, "machine-profile implementation surface is not registered")
-    windows = contract.get("profiles", {}).get("windows", {})
-    forbidden = set(windows.get("forbidden_tokens", []))
-    for token in ("termux-open-url", "command -v", "/dev/null", "pkg install"):
-        require(token in forbidden, f"Windows route must forbid {token!r}")
+    require(contract.get("default_branch") == "main", "default branch must remain main")
+    require(
+        contract.get("active_repository_rule")
+        == "The active repository remains EndeavorEverlasting/web-excel-repair-triage. Related repositories may supply profile or path evidence but may not become the mutation target implicitly.",
+        "active repository rule drifted",
+    )
+    require(contract.get("related_repositories") == EXPECTED_RELATED, "related repository contract drifted")
+    require(contract.get("resolution_order") == EXPECTED_RESOLUTION_ORDER, "resolution order drifted")
+    require(contract.get("path_resolution") == EXPECTED_PATH_RESOLUTION, "path resolution contract drifted")
+    require(contract.get("profiles") == EXPECTED_PROFILES, "profile shell/surface contract drifted")
+    require(contract.get("handoff_rules") == EXPECTED_HANDOFF_RULES, "handoff rules drifted")
+    require(contract.get("public_prompt_kit_url") == PUBLIC_URL, "public Prompt Kit URL drifted")
+    require(contract.get("public_launcher_url") == LAUNCHER_URL, "public launcher URL drifted")
+    require(contract.get("proof_ceiling") == EXPECTED_PROOF_CEILING, "proof ceiling drifted")
+
+
+def validate_contract() -> dict:
+    contract = load_object(CONTRACT)
+    validate_contract_payload(contract)
     return contract
 
 
 def validate_routes() -> None:
     module = load_resolver()
+    require(module.PUBLIC_URL == PUBLIC_URL, "resolver Prompt Kit URL drifted from contract")
+    require(module.LAUNCHER_URL == LAUNCHER_URL, "resolver launcher URL drifted from contract")
+
     windows_asb = r"C:\Users\Example\Desktop\Dev\AgentSwitchboard"
     route = module.resolve_route(
         "windows", "powershell", "windows", "local-app",
@@ -80,8 +158,18 @@ def validate_routes() -> None:
     require(route.status == "ROUTED", "Windows local-app route did not route")
     require(route.associated_repo_path == r"C:\Users\Example\Desktop\Dev\web-excel-repair-triage", "Windows sibling path did not follow the related repository path")
     require(route.command and "Open-Latest-PromptKit.cmd" in route.command, "Windows local-app route did not use the repo launcher")
-    for forbidden in ("termux-open-url", "command -v", "/dev/null", "pkg install"):
+    for forbidden in ("termux-open-url", "command -v", "/dev/null", "pkg install", "$PREFIX"):
         require(forbidden not in route.command, f"Windows command leaked {forbidden!r}")
+
+    quoted_path = module.resolve_route(
+        "windows", "powershell", "windows", "edit",
+        triage_repo=r"C:\Users\O'Brien\web-excel-repair-triage",
+    )
+    require("O''Brien" in (quoted_path.command or ""), "PowerShell repository path is not single-quote escaped")
+
+    default_windows = module.resolve_route("windows", "powershell", "windows", "edit")
+    require("$env:USERPROFILE" in (default_windows.command or ""), "Windows default path is not natively expandable")
+    require("%USERPROFILE%" not in (default_windows.command or ""), "Windows command contains literal CMD-style default path")
 
     handoff = module.resolve_route(
         "windows", "powershell", "android", "use",
@@ -95,10 +183,35 @@ def validate_routes() -> None:
     android = module.resolve_route("android", "termux-bash", "android", "use", main_sha="abcdef123456")
     require(android.status == "ROUTED", "Android Termux route did not route")
     require(android.command and android.command.startswith("termux-open-url "), "Android route did not use Termux syntax")
+    require(PUBLIC_URL in android.command, "Android use route drifted from Prompt Kit URL")
+
+    android_install = module.resolve_route("android", "termux-bash", "android", "install", main_sha="abcdef123456")
+    require(LAUNCHER_URL in (android_install.command or ""), "Android install route must use the phone launcher")
+    require("/prompt-kit/" not in (android_install.command or ""), "Android install route incorrectly uses direct Prompt Kit path")
+
+    default_android = module.resolve_route("android", "termux-bash", "android", "edit")
+    require('"$HOME/web-excel-repair-triage"' in (default_android.command or ""), "Android default path is not natively expandable")
+
+    quoted_android = module.resolve_route(
+        "android", "termux-bash", "android", "edit",
+        triage_repo="/data/data/com.termux/files/home/O'Brien/web-excel-repair-triage",
+    )
+    require("'\"'\"'" in (quoted_android.command or ""), "Android repository path is not POSIX single-quote escaped")
+
+    browser_edit = module.resolve_route("browser", "browser", "browser", "edit")
+    require(browser_edit.status == "BLOCKED", "browser-only edit must fail closed")
+    require(browser_edit.command is None, "blocked browser edit must not emit a command")
 
     mismatch = module.resolve_route("windows", "termux-bash", "windows", "use")
     require(mismatch.status == "BLOCKED", "Host/shell mismatch must fail closed")
     require(mismatch.command is None, "Blocked shell mismatch must not emit a command")
+
+    try:
+        module.resolve_route("windows", "powershell", "windows", "use", main_sha="abc';Write-Host PWNED")
+    except ValueError:
+        pass
+    else:
+        raise ProfileRoutingError("malformed main_sha was accepted")
 
 
 def validate_repository_wiring() -> None:
@@ -108,7 +221,11 @@ def validate_repository_wiring() -> None:
     require(domain.get("resolver") == "scripts/resolve_prompt_kit_profile_route.py", "manifest resolver registration missing")
     require(domain.get("validator") == "scripts/validate_prompt_kit_profile_routing.py", "manifest validator registration missing")
     require(domain.get("contract_tests") == "tests/test_prompt_kit_profile_routing.py", "manifest test registration missing")
+    require(domain.get("human_workflow") == "harness/workflows/prompt-kit-profile-qualified-routing.md", "manifest human workflow registration missing")
     require(domain.get("skill") == ".ai/skills/technician-prompt-kit-acquisition/SKILL.md", "manifest skill ownership missing")
+    require(domain.get("operator_report") == "harness/reports/PROMPT_KIT_PROFILE_ROUTING.md", "manifest report ownership missing")
+    require(domain.get("artifact_id") == "prompt-kit-profile-routing-report", "manifest artifact ownership missing")
+    require(domain.get("related_profile_authority") == "EndeavorEverlasting/AgentSwitchboard", "manifest related profile authority drifted")
 
     workflows = load_object(WORKFLOWS)
     acquisition = next((w for w in workflows.get("workflows", []) if w.get("id") == "technician-acquisition"), None)
@@ -138,7 +255,7 @@ def main() -> int:
         contract = validate_contract()
         validate_routes()
         validate_repository_wiring()
-    except ProfileRoutingError as exc:
+    except (ProfileRoutingError, ValueError) as exc:
         print(f"Prompt Kit profile-qualified routing: FAIL: {exc}")
         return 1
     if args.summary:
