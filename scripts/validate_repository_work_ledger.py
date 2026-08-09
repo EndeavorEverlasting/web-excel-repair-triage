@@ -8,6 +8,20 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 DEFAULT_LEDGER = ROOT / '.ai' / 'WORK_QUEUE.md'
 ADOPTION = ROOT / '.ai' / 'work-ledger-adoption.json'
+PORTABLE_REPOSITORY = 'EndeavorEverlasting/BlacksmithGuild'
+PORTABLE_ID = 'repo-ledger-interoperability'
+PORTABLE_VERSION = 'RepoLedgerInteroperability.v1'
+PORTABLE_COMMIT = '429237aa41d8712d71859865c9be407ca23d8580'
+PORTABLE_PATH = '.tbg/workflows/repo-ledger-interoperability.contract.json'
+PORTABLE_SCHEMA_PATH = '.tbg/harness/schemas/repo-ledger-adoption.schema.json'
+DONOR_REPOSITORY = 'EndeavorEverlasting/AxTask'
+DONOR_COMMIT = '9351c952b057ae4520b1ea0d388e1d8908f4c093'
+DONOR_PATHS = [
+    '.ai/README.md',
+    '.ai/WORK_QUEUE.md',
+    '.ai/authority.json',
+    'scripts/ai-harness/validate-work-queue.mjs',
+]
 STATUSES = {'READY', 'CLAIMED', 'VERIFY', 'REVIEW', 'MERGE', 'OPERATOR', 'BLOCKED', 'DONE'}
 CONTINUATION = {'READY', 'CLAIMED', 'VERIFY', 'REVIEW', 'MERGE'}
 PRIORITIES = {'P0', 'P1', 'P2', 'P3'}
@@ -30,6 +44,7 @@ ACTIONABLE_NEXT = re.compile(
     r'invoke|edit|write|move|copy|sync|check)\b',
     re.I,
 )
+EXACT_COMMIT = re.compile(r'^[0-9a-f]{40}$')
 
 
 def durable_proof(value):
@@ -41,25 +56,51 @@ def durable_proof(value):
     ))
 
 
-def validate(ledger_path):
+def validate(ledger_path, adoption_path=ADOPTION):
     errors = []
-    if not ADOPTION.is_file():
-        return ['missing adoption manifest: .ai/work-ledger-adoption.json']
-    adoption = json.loads(ADOPTION.read_text(encoding='utf-8'))
-    if adoption.get('canonicalContract', {}).get('id') != 'agentswitchboard.repository-work-ledger.v1':
+    if not adoption_path.is_file():
+        return [f'missing adoption manifest: {adoption_path}']
+    try:
+        adoption = json.loads(adoption_path.read_text(encoding='utf-8'))
+    except (OSError, json.JSONDecodeError) as exc:
+        return [f'invalid adoption manifest: {exc}']
+
+    canonical = adoption.get('canonicalContract', {})
+    if canonical.get('repository') != PORTABLE_REPOSITORY:
+        errors.append('canonical contract repository must be BlacksmithGuild')
+    if canonical.get('id') != PORTABLE_ID:
         errors.append('unexpected canonical contract id')
-    if adoption.get('canonicalContract', {}).get('version') != '1.0.0':
+    if canonical.get('version') != PORTABLE_VERSION:
         errors.append('unexpected canonical contract version')
-    if not re.fullmatch(r'[0-9a-f]{40}', adoption.get('canonicalContract', {}).get('pinnedCommit', '')):
-        errors.append('canonical contract pinnedCommit must be a full SHA')
-    if adoption.get('originalDonor', {}).get('repository') != 'EndeavorEverlasting/AxTask':
+    if canonical.get('pinnedCommit') != PORTABLE_COMMIT:
+        errors.append('canonical contract pinnedCommit drifted; explicit compatibility update required')
+    if not EXACT_COMMIT.fullmatch(canonical.get('pinnedCommit', '')):
+        errors.append('canonical contract pinnedCommit must be a full exact SHA')
+    if canonical.get('contractPath') != PORTABLE_PATH:
+        errors.append('canonical contract path drifted')
+    if canonical.get('schemaPath') != PORTABLE_SCHEMA_PATH:
+        errors.append('canonical contract schema path drifted')
+
+    donor = adoption.get('originalDonor', {})
+    if donor.get('repository') != DONOR_REPOSITORY:
         errors.append('unexpected original donor repository')
+    if donor.get('pinnedCommit') != DONOR_COMMIT:
+        errors.append('original donor pinnedCommit drifted')
+    if not EXACT_COMMIT.fullmatch(donor.get('pinnedCommit', '')):
+        errors.append('original donor pinnedCommit must be a full exact SHA')
+    if donor.get('authoritativePaths') != DONOR_PATHS:
+        errors.append('original donor authoritativePaths drifted')
+
+    for bad_ref in ('main', 'master', 'HEAD', 'v1.0.0', '429237aa41d8'):
+        if EXACT_COMMIT.fullmatch(bad_ref):
+            errors.append(f'symbolic/short contract ref unexpectedly accepted: {bad_ref}')
+
     if not ledger_path.is_file():
         return errors + [f'missing ledger: {ledger_path}']
     source = ledger_path.read_text(encoding='utf-8')
     for phrase in (
-        'contractRef: agentswitchboard.repository-work-ledger.v1@1.0.0',
-        f"canonicalContractCommit: {adoption['canonicalContract']['pinnedCommit']}",
+        f'portableContractRef: {PORTABLE_VERSION}@{PORTABLE_COMMIT}',
+        f'canonicalContractCommit: {PORTABLE_COMMIT}',
         'Continuation states are not stopping states.',
         'PR opened is not completion.',
         'DONE is strict.',
@@ -68,20 +109,20 @@ def validate(ledger_path):
         if phrase not in source:
             errors.append(f'missing ledger contract phrase: {phrase}')
     malformed = re.findall(r'^##[ \t]+(TRQ-[^\r\n]+)\r?$', source, re.M)
-    canonical = list(re.finditer(r'^##[ \t]+(TRQ-\d{3,})[ \t]+—[ \t]+([^\r\n]+)\r?$', source, re.M))
+    canonical_tasks = list(re.finditer(r'^##[ \t]+(TRQ-\d{3,})[ \t]+—[ \t]+([^\r\n]+)\r?$', source, re.M))
     for heading in malformed:
         if not re.fullmatch(r'TRQ-\d{3,}[ \t]+—[ \t]+[^\r\n]+', heading):
             errors.append(f'malformed TRQ heading: {heading}')
-    if not canonical:
+    if not canonical_tasks:
         errors.append('ledger must contain at least one canonical TRQ task block')
         return errors
     seen = set()
-    for index, match in enumerate(canonical):
+    for index, match in enumerate(canonical_tasks):
         task_id = match.group(1)
         if task_id in seen:
             errors.append(f'{task_id}: duplicate task id')
         seen.add(task_id)
-        end = canonical[index + 1].start() if index + 1 < len(canonical) else len(source)
+        end = canonical_tasks[index + 1].start() if index + 1 < len(canonical_tasks) else len(source)
         block = source[match.start():end]
         fields = {}
         for field_match in re.finditer(r'^- \*\*([^*]+):\*\*[ \t]*([^\r\n]*)\r?$', block, re.M):
@@ -128,15 +169,22 @@ def validate(ledger_path):
     return errors
 
 
+def resolve_path(value):
+    path = pathlib.Path(value)
+    if not path.is_absolute():
+        path = ROOT / path
+    return path
+
+
 def main():
     parser = argparse.ArgumentParser(description='Validate the repository-local shared work ledger.')
     parser.add_argument('--file', default=str(DEFAULT_LEDGER))
+    parser.add_argument('--adoption', default=str(ADOPTION))
     parser.add_argument('--summary', action='store_true')
     args = parser.parse_args()
-    ledger = pathlib.Path(args.file)
-    if not ledger.is_absolute():
-        ledger = ROOT / ledger
-    errors = validate(ledger)
+    ledger = resolve_path(args.file)
+    adoption = resolve_path(args.adoption)
+    errors = validate(ledger, adoption)
     if errors:
         print(f'[repository-work-ledger] FAIL ({len(errors)})', file=sys.stderr)
         for error in errors:
@@ -146,7 +194,10 @@ def main():
         display_path = ledger.relative_to(ROOT)
     except ValueError:
         display_path = ledger
-    print(f'[repository-work-ledger] PASS {display_path}')
+    print(
+        f'[repository-work-ledger] PASS {display_path} '
+        f'portable={PORTABLE_VERSION}@{PORTABLE_COMMIT[:12]} donor={DONOR_COMMIT[:12]} stale-ref-probes=PASS'
+    )
     return 0
 
 
