@@ -64,10 +64,10 @@ Download `Open-Latest-PromptKit.cmd` and double-click it.
 
 The quick launcher now treats the Prompt Kit like a local app while retaining the repository's existing safety rules:
 
-1. it resolves the deterministic checkout path from the launcher's location;
+1. if the CMD is already inside the canonical tracked checkout, it reuses that checkout; otherwise it resolves the Windows Desktop and uses exactly `Desktop\dev\web-excel-repair-triage`, independent of the folder where the CMD was downloaded;
 2. it reuses the existing safe acquisition functions and canonical `main` origin;
-3. an existing destination must be clean, on `main`, and fast-forwardable; a missing destination is cloned;
-4. dirty, divergent, wrong-branch, wrong-origin, or local-only work is preserved and refused rather than reset or overwritten;
+3. an existing destination must be clean, on `main`, and fast-forwardable; a missing canonical destination is cloned;
+4. dirty, divergent, wrong-branch, wrong-origin, local-only, or occupied canonical paths are preserved and refused rather than reset, overwritten, or bypassed with `web-excel-repair-triage-latest[-N]` sibling clones;
 5. `web\prompt-kit\index.html` must exactly match the canonical builder;
 6. `scripts\serve_prompt_kit_portable.py` generates `Outputs\prompt-kit-portable\index.html` from the canonical site plus the tracked portability runtime;
 7. `Outputs\prompt-kit-portable\manifest.json` records source/runtime/artifact SHA-256 evidence;
@@ -82,7 +82,25 @@ That stable origin preserves the browser's `promptKit.favoritePromptIds.v1` stat
 
 Export before clearing browser data, changing browser profiles/devices, or moving between the public GitHub Pages origin and the local loopback origin. Import merges and deduplicates; it does not delete Favorites already saved at the destination. Legacy browser keys are merged with current Favorites, malformed IDs are rejected or sanitized, and well-formed IDs not present in the current release remain portable for future versions.
 
-A copy of `Open-Latest-PromptKit.cmd` may live outside the repository. Its bootstrap remains path-derived and non-destructive.
+A copy of `Open-Latest-PromptKit.cmd` may live outside the repository. Its download directory is never treated as an implicit checkout root; normal automatic acquisition still resolves the single Desktop `dev` checkout.
+
+## Canonical Windows workstation layout
+
+Normal Windows source work uses one predictable repository location:
+
+```text
+C:\Users\<user>\Desktop\dev\web-excel-repair-triage
+```
+
+The launcher resolves the actual Windows Desktop through the operating system and appends `dev\web-excel-repair-triage`. This also handles a redirected Desktop without teaching agents to search unrelated OneDrive backup trees or invent new sibling repository names.
+
+Automatic Prompt Kit acquisition must **not**:
+
+- create `web-excel-repair-triage-latest`, `web-excel-repair-triage-latest-2`, or similar persistent sibling clones;
+- derive a repository destination from the folder where a downloaded CMD happens to live;
+- leave persistent source checkouts or browser-proof website copies under arbitrary `%TEMP%`, Downloads, or ad-hoc proof directories.
+
+Repository-owned generated local artifacts belong under `Outputs/`. CI may use its own ephemeral runner temp directory because the runner is disposable; that is not a workstation checkout convention.
 
 ## Advanced Windows acquisition GUI
 
@@ -90,10 +108,10 @@ Use `Acquire-Latest-PromptKit.cmd` when a technician needs to choose a destinati
 
 It opens **Get Latest Prompt Kit**, where the operator can choose **Open Prompt Kit website** or **Open generator selection GUI**, then select **Get Latest and Open**.
 
-The advanced GUI may derive a default development root from the Windows Desktop and available OneDrive locations. Its zero-dialog mode remains available with an explicit destination:
+The advanced GUI defaults to the Windows Desktop `dev` root and the canonical repository folder. It no longer searches backup/OneDrive trees or silently creates `-latest` copies when the canonical path is occupied. An explicitly supplied `-Destination` remains an operator override and should normally remain under the workstation's Desktop `dev` folder:
 
 ```text
-Acquire-Latest-PromptKit.cmd -Quick -Destination "C:\path\to\web-excel-repair-triage"
+Acquire-Latest-PromptKit.cmd -Quick -Destination "C:\Users\<user>\Desktop\dev\web-excel-repair-triage"
 ```
 
 Use `Open-Latest-PromptKit.cmd` for the stable-origin Favorites-preserving app experience. Both paths preserve the same no-reset/no-force/no-silent-discard Git posture.
@@ -121,13 +139,16 @@ To launch that validated checkout through the supported stable origin:
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\Open-LatestPromptKitPortable.ps1 -Destination (Get-Location).Path
 ```
 
-If the checkout contains local work, do not reset or clean it merely to run the Prompt Kit. Preserve the work or use a deliberately separate safe destination.
+If the canonical checkout contains local work, do not reset or clean it merely to run the Prompt Kit, and do not let automation create a second `-latest` repository beside it. Preserve/commit the work first, or deliberately create an isolated Git worktree under the Desktop `dev` workspace when a separate writing lane is actually required.
 
 ## Fresh clone
 
+On Windows, make the canonical destination explicit:
+
 ```powershell
-git clone --branch main --single-branch https://github.com/EndeavorEverlasting/web-excel-repair-triage.git
-cd web-excel-repair-triage
+$Repo = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)) 'dev\web-excel-repair-triage'
+git clone --branch main --single-branch https://github.com/EndeavorEverlasting/web-excel-repair-triage.git $Repo
+Set-Location -LiteralPath $Repo
 python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
 ```
 
@@ -155,7 +176,7 @@ prompt-kit-current-preview
 prompt-kit-portable-runtime
 ```
 
-`prompt-kit-current-preview` is the canonical builder preview. `prompt-kit-portable-runtime` contains the generated stable-origin artifact, its SHA-256 manifest, and portability validation output. Neither artifact replaces `main` as the source of truth.
+`prompt-kit-current-preview` is the canonical builder preview. `prompt-kit-portable-runtime` contains the generated stable-origin artifact, its SHA-256 manifest, and portability validation output. Neither artifact replaces `main` as the source of truth. GitHub-hosted runner temp paths are ephemeral CI evidence and must not be copied into the workstation as another persistent Prompt Kit checkout.
 
 ## Rebuild and open locally
 
@@ -184,7 +205,7 @@ python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html -
 - HTML renderer: `build_prompt_kit.py`
 - Base browser behavior and Favorites storage owner: `docs/prompt-kit.js`
 - Guided questionnaire: `docs/prompt-kit-guided-recommendations.js`
-- Interaction polish/action rail: `docs/prompt-kit-polish.js`
+- Interaction polish/action rail plus compact browsing controls: `docs/prompt-kit-polish.js`
 - Favorites transfer runtime: `docs/prompt-kit-favorites-portability.js`
 - Checked-in canonical release: `web/prompt-kit/index.html`
 - Portable generated artifact: `Outputs/prompt-kit-portable/index.html`
@@ -205,6 +226,9 @@ Generated HTML is not the primary editable source. Repair canonical tracked sour
 The desktop and mobile layouts use the same prompts, filters, renderers, and action functions.
 
 - Tap/click the **AI Harness Prompt Kit** title to reset the temporary browsing state while preserving Favorites.
+- Use **Hide filters** to collapse the search/category/section/type filter chrome and maximize the screen area available to prompt cards; **Show filters** restores it.
+- Press **4** or use the header **Favorites** shortcut to clear transient search/type/category restrictions and show the complete saved Favorites list. Favorites remain persistent; they are not promoted ahead of normal chronological library order unless this explicit Favorites view is selected.
+- **Doctrine** remains available in the header and moves to keyboard shortcut **5**.
 - Use the glowing **Tutorial · Find My Prompt** control when you do not know which prompt to choose; it reuses the same search/synonym/registry logic.
 - Single click or tap on a prompt card copies the prompt; the current polish layer gives green clipboard confirmation.
 - Double-click expands on desktop; touch users receive explicit **Open**.

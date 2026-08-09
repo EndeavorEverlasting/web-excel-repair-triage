@@ -41,6 +41,29 @@ class PromptKitOrderNavigationProductTests(unittest.TestCase):
         self.assertIn("End of visible prompts", source)
         self.assertNotIn("After prompt '+visiblePromptIndex", source)
 
+    def test_compact_browsing_uses_favorites_hotkey_and_collapsible_filter_chrome(self) -> None:
+        polish = (ROOT / "docs" / "prompt-kit-polish.js").read_text(encoding="utf-8")
+        for marker in (
+            "function activateFavoritesView()",
+            "activeSection='__favorites__'",
+            "id='favoritesShortcut'",
+            "data-view','favorites'",
+            "Favorites<span class=\"kbd\">4</span>",
+            "doctrineKbd.textContent='5'",
+            "if(e.key==='4')",
+            "if(e.key==='5')",
+            "e.stopImmediatePropagation()",
+            "filterPanelToggle",
+            "filters-collapsed",
+            "Hide filters ↑",
+            "Show filters ↓",
+        ):
+            self.assertIn(marker, polish)
+        self.assertIn(
+            ".header.filters-collapsed .search-container,.header.filters-collapsed .header-controls,.header.filters-collapsed .sections-nav,.header.filters-collapsed .type-nav{display:none!important}",
+            polish,
+        )
+
     def test_visible_version_is_consistently_v40(self) -> None:
         html = build_prompt_kit_registry.render()
         self.assertIn('<title>AI Harness Prompt Kit v40</title>', html)
