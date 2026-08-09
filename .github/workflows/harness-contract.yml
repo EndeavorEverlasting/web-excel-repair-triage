@@ -131,6 +131,7 @@ jobs:
       - name: Validate harness completeness
         run: python scripts/validate_harness.py --report "$RUNNER_TEMP/harness-completeness-report.json"
       - name: Upload harness completeness report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: harness-completeness-report
