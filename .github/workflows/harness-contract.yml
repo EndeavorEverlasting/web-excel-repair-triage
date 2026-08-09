@@ -21,6 +21,7 @@ on:
       - scripts/validate_operator_command_envelope.py
       - scripts/validate_prompt_kit_cross_device_access.py
       - scripts/validate_prompt_kit_freshness_guidance.py
+      - scripts/validate_prompt_kit_order_navigation.py
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
@@ -28,6 +29,7 @@ on:
       - tests/test_operator_command_envelope.py
       - tests/test_prompt_kit_cross_device_access.py
       - tests/test_prompt_kit_freshness_guidance.py
+      - tests/test_prompt_kit_order_navigation_contract.py
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_language_audit.py
@@ -53,6 +55,7 @@ on:
       - scripts/validate_operator_command_envelope.py
       - scripts/validate_prompt_kit_cross_device_access.py
       - scripts/validate_prompt_kit_freshness_guidance.py
+      - scripts/validate_prompt_kit_order_navigation.py
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
@@ -60,6 +63,7 @@ on:
       - tests/test_operator_command_envelope.py
       - tests/test_prompt_kit_cross_device_access.py
       - tests/test_prompt_kit_freshness_guidance.py
+      - tests/test_prompt_kit_order_navigation_contract.py
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_language_audit.py
@@ -86,6 +90,7 @@ jobs:
             scripts/validate_operator_command_envelope.py \
             scripts/validate_prompt_kit_cross_device_access.py \
             scripts/validate_prompt_kit_freshness_guidance.py \
+            scripts/validate_prompt_kit_order_navigation.py \
             scripts/validate_prompt_kit_interactions.py \
             scripts/validate_prompt_kit_discovery.py \
             scripts/evaluate_prompt_language.py \
@@ -93,6 +98,7 @@ jobs:
             tests/test_operator_command_envelope.py \
             tests/test_prompt_kit_cross_device_access.py \
             tests/test_prompt_kit_freshness_guidance.py \
+            tests/test_prompt_kit_order_navigation_contract.py \
             tests/test_prompt_kit_interactions_contract.py \
             tests/test_prompt_kit_discovery.py \
             tests/test_prompt_language_audit.py
@@ -111,6 +117,16 @@ jobs:
         run: |
           python scripts/validate_prompt_kit_freshness_guidance.py --summary
           python -m unittest tests.test_prompt_kit_freshness_guidance -v
+      - name: Validate Prompt Kit ordering and long-list navigation harness
+        run: |
+          python scripts/validate_prompt_kit_order_navigation.py --output "$RUNNER_TEMP/prompt-kit-order-navigation-audit.json" --summary
+          python -m unittest tests.test_prompt_kit_order_navigation_contract -v
+      - name: Upload Prompt Kit order/navigation audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-order-navigation-audit
+          path: ${{ runner.temp }}/prompt-kit-order-navigation-audit.json
+          if-no-files-found: error
       - name: Validate operator command envelope
         run: |
           python scripts/validate_operator_command_envelope.py --summary
