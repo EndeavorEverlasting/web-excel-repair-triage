@@ -27,7 +27,7 @@
     },
     {
       "id": "ranked_search",
-      "expected": "Search ranks IDs, names, keywords, synonyms, types, and use-case metadata ahead of incidental prompt-body text."
+      "expected": "Search ranks IDs, names, keywords, synonyms, types, and use-case metadata ahead of incidental prompt-body text for matching and recommendation relevance; visible library results are subsequently rendered in chronological numeric prompt order."
     },
     {
       "id": "synonym_routing",
@@ -43,7 +43,7 @@
     },
     {
       "id": "favorites_first",
-      "expected": "Visible favorited prompts are promoted into one Favorites section before normal prompt sections and are not duplicated below."
+      "expected": "Legacy requirement ID retained for compatibility: Favorites are exposed as an explicit local filter rather than silently promoted ahead of earlier prompt numbers. The default library and Favorites-filtered result set remain chronological, and saved prompt identities are not duplicated or renumbered."
     },
     {
       "id": "favorite_accessibility",
@@ -83,7 +83,7 @@
     },
     {
       "id": "stable_identity_resequence",
-      "expected": "Prompt identities and seq values remain stable while a separate validated discovery-rank policy controls default display priority."
+      "expected": "Legacy requirement ID retained for compatibility: Prompt identities and seq values remain stable; discoveryRank remains recommendation metadata only, while the canonical library defaults to ascending numeric sequence."
     },
     {
       "id": "registry_prompt_fallback",
@@ -106,8 +106,9 @@
     "python scripts/validate_prompt_kit_discovery.py --summary",
     "python -m unittest tests.test_prompt_kit_discovery -v",
     "python -m unittest tests.test_skill_prompt_registry -v",
+    "python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary",
     "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
     "git diff --check"
   ],
-  "proof_ceiling": "Deterministic registry, shared-search recommendation, registry-owned next-step routing, session-only completion state, layout markers, Node syntax, generated-site parity, acquisition documentation, and CI proof. Physical browser rendering, clipboard permissions, assistive-technology coverage, device installation, and user acceptance remain field gates."
+  "proof_ceiling": "Deterministic registry, shared-search recommendation, chronological display, explicit Favorites filtering, registry-owned next-step routing, session-only completion state, layout markers, Node syntax, generated-site parity, acquisition documentation, and CI proof. Physical browser rendering, clipboard permissions, assistive-technology coverage, device installation, and user acceptance remain field gates."
 }
