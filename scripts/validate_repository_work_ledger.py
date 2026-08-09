@@ -17,6 +17,19 @@ REQUIRED = [
     'Next action', 'Updated',
 ]
 TERMINAL = 'none; no safe actionable work remains'
+UNASSIGNED_OWNERS = {'unclaimed', 'none', 'unknown', 'tbd', 'n/a'}
+NON_ACTIONS = {
+    TERMINAL, 'none', 'tbd', 'status unchanged', 'pr opened', 'tests passed',
+    'ci green', 'wait', 'wait for review', 'review later', 'merge later', 'test later',
+}
+ACTIONABLE_NEXT = re.compile(
+    r'^(?:(?:after|once)\b.+?,\s*)?(?:operator\s+)?'
+    r'(?:run|execute|create|update|repair|resolve|merge|fetch|inspect|open|verify|'
+    r'validate|test|commit|push|rebase|retarget|compare|generate|record|obtain|'
+    r'install|apply|build|launch|deploy|restore|export|import|review|reconcile|'
+    r'invoke|edit|write|move|copy|sync|check)\b',
+    re.I,
+)
 
 
 def durable_proof(value):
@@ -54,10 +67,10 @@ def validate(ledger_path):
     ):
         if phrase not in source:
             errors.append(f'missing ledger contract phrase: {phrase}')
-    malformed = re.findall(r'^##\s+(TRQ-[^\n]*)$', source, re.M)
-    canonical = list(re.finditer(r'^## (TRQ-\d{3,}) — (.+)$', source, re.M))
+    malformed = re.findall(r'^##[ \t]+(TRQ-[^\r\n]+)\r?$', source, re.M)
+    canonical = list(re.finditer(r'^##[ \t]+(TRQ-\d{3,})[ \t]+—[ \t]+([^\r\n]+)\r?$', source, re.M))
     for heading in malformed:
-        if not re.fullmatch(r'TRQ-\d{3,} — .+', heading):
+        if not re.fullmatch(r'TRQ-\d{3,}[ \t]+—[ \t]+[^\r\n]+', heading):
             errors.append(f'malformed TRQ heading: {heading}')
     if not canonical:
         errors.append('ledger must contain at least one canonical TRQ task block')
@@ -70,7 +83,13 @@ def validate(ledger_path):
         seen.add(task_id)
         end = canonical[index + 1].start() if index + 1 < len(canonical) else len(source)
         block = source[match.start():end]
-        fields = {m.group(1).strip(): m.group(2).strip() for m in re.finditer(r'^- \*\*([^*]+):\*\*[ \t]*(.*)$', block, re.M)}
+        fields = {}
+        for field_match in re.finditer(r'^- \*\*([^*]+):\*\*[ \t]*([^\r\n]*)\r?$', block, re.M):
+            field_name = field_match.group(1).strip()
+            if field_name in fields:
+                errors.append(f"{task_id}: duplicate field '{field_name}'")
+                continue
+            fields[field_name] = field_match.group(2).strip()
         for field in REQUIRED:
             if field not in fields:
                 errors.append(f"{task_id}: missing field '{field}'")
@@ -86,10 +105,12 @@ def validate(ledger_path):
             errors.append(f"{task_id}: invalid status '{status}'")
         if priority and priority not in PRIORITIES:
             errors.append(f"{task_id}: invalid priority '{priority}'")
-        if status == 'CLAIMED' and (not owner or owner == 'unclaimed'):
+        if status == 'CLAIMED' and (not owner or owner.strip().lower() in UNASSIGNED_OWNERS):
             errors.append(f'{task_id}: CLAIMED requires a concrete owner')
-        if status in CONTINUATION and next_action == TERMINAL:
-            errors.append(f'{task_id}: continuation state requires an executable next action')
+        if status in CONTINUATION:
+            normalized_next = next_action.strip().lower()
+            if not next_action or normalized_next in NON_ACTIONS or not ACTIONABLE_NEXT.match(next_action):
+                errors.append(f'{task_id}: continuation state requires an executable next action beginning with a concrete action verb')
         if status in {'BLOCKED', 'OPERATOR'} and (not gate or gate == 'none'):
             errors.append(f'{task_id}: {status} requires an exact Gate')
         if status == 'DONE':
