@@ -4,16 +4,16 @@ setlocal
 set "LOCAL_SCRIPT=%~dp0scripts\Open-LatestPromptKitPortable.ps1"
 set "CACHE_DIR=%TEMP%\WebExcelPromptKit"
 set "CACHED_SCRIPT=%CACHE_DIR%\Open-LatestPromptKitPortable.ps1"
-set "BOOTSTRAP_COMMIT=9c7809cfe4dab62bb30b5ba9d12f6e204125d03c"
-set "BOOTSTRAP_BLOB=b6e4f1fd2d2771370d3b23d355a7a0f4301aa2bc"
+set "BOOTSTRAP_COMMIT=2e8795f1136d2737461c0770127728496eaa4edc"
+set "BOOTSTRAP_BLOB=eee14a8da3a96dc3ca6e671e65b4b87255718500"
 set "POWERSHELL=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
-set "PREFERRED_REPO=%~dp0dev\web-excel-repair-triage"
+set "PREFERRED_REPO="
 
 rem If this launcher is run from inside a tracked checkout, use that checkout.
 if exist "%~dp0.git" if exist "%~dp0web\prompt-kit\index.html" set "PREFERRED_REPO=%~dp0"
 
-rem A Desktop launcher resolves deterministically to Desktop\dev\web-excel-repair-triage.
-if exist "%~dp0dev\web-excel-repair-triage\.git" set "PREFERRED_REPO=%~dp0dev\web-excel-repair-triage"
+rem Otherwise the PowerShell launcher resolves the single canonical Desktop\dev checkout.
+rem The download location of this CMD must never become an implicit repository root.
 
 if not exist "%POWERSHELL%" (
     echo Windows PowerShell was not found.
@@ -37,8 +37,13 @@ if exist "%LOCAL_SCRIPT%" (
     set "SCRIPT=%CACHED_SCRIPT%"
 )
 
-echo Prompt Kit repository: %PREFERRED_REPO%
-"%POWERSHELL%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT%" -Destination "%PREFERRED_REPO%"
+if defined PREFERRED_REPO (
+    echo Prompt Kit repository: %PREFERRED_REPO%
+    "%POWERSHELL%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT%" -Destination "%PREFERRED_REPO%"
+) else (
+    echo Prompt Kit repository: canonical Desktop\dev\web-excel-repair-triage
+    "%POWERSHELL%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT%"
+)
 set "EXIT_CODE=%ERRORLEVEL%"
 if not "%EXIT_CODE%"=="0" (
     echo.
