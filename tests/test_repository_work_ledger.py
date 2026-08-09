@@ -105,6 +105,17 @@ class RepositoryWorkLedgerTests(unittest.TestCase):
         result = self.run_temp(task(Status='VERIFY', Owner='agent-session', **{'Next action': 'run the local validator and record its workflow receipt'}))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_external_absolute_ledger_path_reports_success(self):
+        with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False, encoding='utf-8') as handle:
+            handle.write(task())
+            path = pathlib.Path(handle.name)
+        try:
+            result = run_validator(path)
+        finally:
+            path.unlink(missing_ok=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn(str(path), result.stdout)
+
 
 if __name__ == '__main__':
     unittest.main()
