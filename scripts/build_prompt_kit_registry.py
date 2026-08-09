@@ -138,7 +138,7 @@ def load_actionability_policy() -> dict[str, Any]:
 
 
 def load_display_order_policy() -> dict[str, Any]:
-    """Load the discovery order without changing stable prompt IDs or sequences."""
+    """Load recommendation discovery metadata without changing stable identity."""
     payload = _load_json(DISPLAY_ORDER_POLICY)
     if not isinstance(payload, dict):
         raise SystemExit(
@@ -196,7 +196,7 @@ def apply_actionability_policy(
 def apply_display_order(
     prompts: list[dict[str, Any]], policy: dict[str, Any]
 ) -> list[dict[str, Any]]:
-    """Annotate and sort prompts by a discovery rank while preserving identity."""
+    """Annotate recommendation discovery rank while preserving library chronology."""
     by_id = {str(prompt["id"]).upper(): prompt for prompt in prompts}
     promoted_ids = list(policy["promoted_prompt_ids"])
     missing = [prompt_id for prompt_id in promoted_ids if prompt_id not in by_id]
@@ -205,7 +205,7 @@ def apply_display_order(
 
     promoted_rank = {prompt_id: index + 1 for index, prompt_id in enumerate(promoted_ids)}
     fallback_offset = len(promoted_ids) + 1000
-    ordered: list[dict[str, Any]] = []
+    annotated: list[dict[str, Any]] = []
     for prompt in prompts:
         prompt_id = str(prompt["id"]).upper()
         ranked = dict(prompt)
@@ -216,11 +216,8 @@ def apply_display_order(
             ranked["discoveryRank"] = fallback_offset + int(str(prompt["seq"]))
             ranked["discoveryGroup"] = "sequence"
         ranked["displayOrderPolicy"] = str(policy["policy_id"])
-        ordered.append(ranked)
-    return sorted(
-        ordered,
-        key=lambda prompt: (int(prompt["discoveryRank"]), int(str(prompt["seq"]))),
-    )
+        annotated.append(ranked)
+    return annotated
 
 
 def load_prompt_registry() -> list[dict[str, Any]]:
@@ -261,7 +258,13 @@ def load_prompt_registry() -> list[dict[str, Any]]:
             apply_actionability_policy(prompt, actionability_policy)
         )
 
-    return apply_display_order(strengthened_prompts, load_display_order_policy())
+    annotated_prompts = apply_display_order(
+        strengthened_prompts, load_display_order_policy()
+    )
+    return sorted(
+        annotated_prompts,
+        key=lambda prompt: (int(str(prompt["seq"])), str(prompt["id"])),
+    )
 
 
 def _read_runtime(path: Path, label: str) -> str:
