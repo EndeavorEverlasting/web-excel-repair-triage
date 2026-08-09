@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "adoptionId": "web-excel-repair-triage.repository-work-ledger.v1",
+  "repository": "EndeavorEverlasting/web-excel-repair-triage",
+  "canonicalContract": {
+    "repository": "EndeavorEverlasting/AgentSwitchboard",
+    "id": "agentswitchboard.repository-work-ledger.v1",
+    "version": "1.0.0",
+    "pinnedCommit": "62acecf4a590ecadf4a0b1ad1410e659b4e1b650",
+    "documentationPath": "docs/governance/repository-work-ledger-contract.md",
+    "policyPath": ".ai/harness/repository-work-ledger.policy.json"
+  },
+  "originalDonor": {
+    "repository": "EndeavorEverlasting/AxTask",
+    "pinnedCommit": "9351c952b057ae4520b1ea0d388e1d8908f4c093",
+    "authoritativePaths": [
+      ".ai/WORK_QUEUE.md",
+      "scripts/ai-harness/validate-work-queue.mjs",
+      "server/ai-harness/work-queue-contract.test.ts"
+    ]
+  },
+  "local": {
+    "authority": "AGENTS.md",
+    "ledger": ".ai/WORK_QUEUE.md",
+    "taskPrefix": "TRQ",
+    "validator": "scripts/validate_repository_work_ledger.py",
+    "tests": "tests/test_repository_work_ledger.py",
+    "ci": ".github/workflows/repository-work-ledger-contract.yml",
+    "hooks": [".githooks/pre-commit", ".githooks/pre-push"]
+  },
+  "capabilitiesAdopted": [
+    "shared unfinished-work coordination ledger",
+    "claim and continuation state semantics",
+    "durable DONE proof tokens",
+    "exact gate and executable next-action requirements",
+    "concurrent ledger preservation boundary"
+  ],
+  "mustNotCopyOrReimplement": [
+    "AxTask AXQ task namespace or task contents",
+    "AxTask deployment/database behavior",
+    "AgentSwitchboard family governance as local product law",
+    "Prompt Kit implementation truth inside the ledger",
+    "remote validator execution"
+  ],
+  "proofCeiling": "static local ledger contract and hook/CI wiring only; no Prompt Kit behavior, browser, launcher, deployment, or live-runtime proof"
+}
