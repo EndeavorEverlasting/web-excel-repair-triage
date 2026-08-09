@@ -4,7 +4,6 @@ import importlib.util
 import json
 import subprocess
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
@@ -16,9 +15,14 @@ CONTRACT = ROOT / "harness/contracts/prompt-kit-profile-qualified-routing.v1.jso
 
 def load_resolver():
     spec = importlib.util.spec_from_file_location("prompt_kit_profile_route_tests", RESOLVER)
-    module = importlib.util.module_from_spec(spec)
     assert spec and spec.loader
-    spec.loader.exec_module(module)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    try:
+        spec.loader.exec_module(module)
+    except Exception:
+        sys.modules.pop(spec.name, None)
+        raise
     return module
 
 
