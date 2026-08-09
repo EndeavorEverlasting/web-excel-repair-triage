@@ -8,6 +8,8 @@ trap 'rm -rf "$staged_tree"' EXIT HUP INT TERM
 git checkout-index --all --prefix="$staged_tree/"
 (
   cd "$staged_tree"
+  python scripts/validate_prompt_kit_profile_routing.py --summary
+  python -m unittest tests.test_prompt_kit_profile_routing -v
   python scripts/validate_prompt_kit_cross_device_access.py --summary
   python -m unittest tests.test_prompt_kit_cross_device_access -v
   python scripts/validate_prompt_kit_freshness_guidance.py --summary
