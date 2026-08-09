@@ -1,0 +1,69 @@
+name: Prompt Kit bootstrap pin branch finalizer
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-compact-favorites-canonical-path-20260809
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-pin-finalizer-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  reconcile-bootstrap-pins:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-compact-favorites-canonical-path-20260809
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Reconcile exact immutable bootstrap pins
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          paths = [
+              Path('scripts/validate_prompt_kit_portability.py'),
+              Path('tests/test_prompt_kit_portability.py'),
+          ]
+          replacements = {
+              'd61ff0c165c5647f4607a32e85e1171d6b898501': 'b91b2c8c925cbd3f702cab13e36edba5483f9b8a',
+              '674130635ed70b5e57a3784f26511d932f63adb3': '9d5e428adeacc8cdde9f1e850b40785cb85e9137',
+              '9c7809cfe4dab62bb30b5ba9d12f6e204125d03c': '2e8795f1136d2737461c0770127728496eaa4edc',
+              'b6e4f1fd2d2771370d3b23d355a7a0f4301aa2bc': 'eee14a8da3a96dc3ca6e671e65b4b87255718500',
+          }
+          for path in paths:
+              text = path.read_text(encoding='utf-8')
+              original = text
+              for old, new in replacements.items():
+                  text = text.replace(old, new)
+              if text == original:
+                  raise SystemExit(f'No bootstrap pin drift found in {path}')
+              for old in replacements:
+                  if old in text:
+                      raise SystemExit(f'Stale bootstrap pin remains in {path}: {old}')
+              path.write_text(text, encoding='utf-8')
+          PY
+      - name: Validate portability contract against new pinned chain
+        run: |
+          python -m py_compile scripts/validate_prompt_kit_portability.py tests/test_prompt_kit_portability.py
+          python scripts/serve_prompt_kit_portable.py --build-only
+          python scripts/validate_prompt_kit_portability.py --require-artifact --output Outputs/prompt-kit-portability-validation.json --summary
+          python -m unittest tests.test_prompt_kit_portability tests.test_prompt_kit_portability_regressions tests.test_prompt_kit_portable_health -v
+          git diff --check
+      - name: Commit pin reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/validate_prompt_kit_portability.py tests/test_prompt_kit_portability.py
+          git commit -m 'test(prompt-kit): reconcile portable bootstrap pins'
+          git push origin HEAD:feat/prompt-kit-compact-favorites-canonical-path-20260809
