@@ -214,9 +214,11 @@ def evaluate_source_payloads(
         "registry_builder": builder_text,
         "guided_behavior_source": guided_text,
     }
+    global_order_applied = False
     for marker in detection["forbidden_global_order_markers"]:
         for source_name, source_text in combined_order_sources.items():
             if marker in source_text:
+                global_order_applied = True
                 findings.append(
                     _finding(
                         "PKON001",
@@ -233,12 +235,17 @@ def evaluate_source_payloads(
                 )
 
     promoted = display_policy.get("promoted_prompt_ids")
-    if isinstance(promoted, list) and promoted and str(promoted[0]).upper() == "P65":
+    if (
+        global_order_applied
+        and isinstance(promoted, list)
+        and promoted
+        and str(promoted[0]).upper() == "P65"
+    ):
         findings.append(
             _finding(
                 "PKON003",
                 "default_sequence_ascending",
-                "display-order policy promotes P65 first; this is acceptable only when it is not applied as the default library sort",
+                "P65-first discovery ranking is still connected to the default library sort; recommendation-only promotion is allowed once the global ordering connection is removed",
             )
         )
 
