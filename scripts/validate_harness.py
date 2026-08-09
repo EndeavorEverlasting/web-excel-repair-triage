@@ -80,6 +80,7 @@ REQUIRED_WORKFLOW_IDS = {
 REQUIRED_ARTIFACT_IDS = {
     "harness-control-plane",
     "operator-harness-state",
+    "prompt-kit-profile-routing-report",
     "prompt-kit-website",
     "harness-completeness-report",
     "prompt-kit-interaction-audit-report",
@@ -89,6 +90,8 @@ REQUIRED_ARTIFACT_IDS = {
 REQUIRED_VALIDATOR_IDS = {
     "harness-completeness",
     "harness-contract-tests",
+    "prompt-kit-profile-routing-audit",
+    "prompt-kit-profile-routing-tests",
     "prompt-kit-interaction-contract-tests",
     "prompt-kit-interaction-audit",
     "prompt-kit-discovery-audit",
@@ -285,6 +288,8 @@ def validate_manifest() -> dict[str, Any]:
         "force_push": False,
         "destructive_reset": False,
         "embedded_credentials": False,
+        "qualify_profile_before_shell_command": True,
+        "cross_profile_command_handoff_only": True,
     }
     if acquisition.get("safety") != expected_safety:
         raise HarnessValidationError("technician acquisition safety contract drifted")
