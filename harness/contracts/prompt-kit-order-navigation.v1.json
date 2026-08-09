@@ -24,15 +24,19 @@
     },
     {
       "id": "filter_persistent_navigation",
-      "expected": "Distributed Top and Bottom controls are regenerated from the current visible result set after every render and remain available through search, category, type, color, Favorites, and other filtering states without clearing those states."
+      "expected": "Distributed Top and Bottom controls are created inside the canonical render path from the current visible result set, so every search, category, type, color, Favorites, or other filter rerender reconstructs navigation without clearing filter state."
     },
     {
       "id": "mobile_touch_accessibility",
-      "expected": "Distributed Top and Bottom controls remain keyboard accessible and have at least a 40px mobile/coarse-pointer touch target while using same-document navigation that does not reset filters."
+      "expected": "The distributed navigation helper creates same-document Top and Bottom anchors using the page-jump class, and CSS associated specifically with distributed navigation supplies at least a 40px mobile/coarse-pointer touch target. Native anchors preserve keyboard access."
     },
     {
       "id": "stable_prompt_identity",
-      "expected": "Chronological display ordering never renumbers or repurposes stable prompt IDs or sequence values."
+      "expected": "Every canonical prompt has a unique P-number ID and unique numeric sequence whose numeric values match; chronological display ordering never renumbers those stable ID/sequence identities."
+    },
+    {
+      "id": "canonical_site_parity",
+      "expected": "The tracked web/prompt-kit/index.html exactly matches scripts/build_prompt_kit_registry.py render output, so order/navigation evidence is evaluated against the same deterministic product surface that is delivered."
     }
   ],
   "implementation_detection": {
@@ -42,8 +46,22 @@
     ],
     "required_navigation_markers": [
       "PROMPT_NAVIGATION_INTERVAL=5",
-      "appendDistributedPageNavigation",
+      "function appendDistributedPageNavigation",
       "visiblePromptIndex"
+    ],
+    "required_render_navigation_markers": [
+      "visiblePromptIndex",
+      "appendDistributedPageNavigation"
+    ],
+    "required_navigation_helper_markers": [
+      "distributed-page-navigation",
+      "page-jump",
+      "#page-top",
+      "#page-bottom"
+    ],
+    "required_navigation_style_markers": [
+      ".distributed-page-navigation .page-jump",
+      "min-height:40px"
     ],
     "existing_sparse_navigation_marker": "appendSectionDivider(grid,group);"
   },
@@ -51,9 +69,10 @@
     "status": "needs-product-repair",
     "evidence": [
       "registry/prompts/prompt-display-order.v1.json currently promotes P65 first.",
-      "scripts/build_prompt_kit_registry.py currently applies display-order promotion to the combined registry.",
+      "scripts/build_prompt_kit_registry.py currently applies display-order promotion to the combined prompt registry.",
       "docs/prompt-kit-guided-recommendations.js currently overrides window.promptSequenceValue with recommendation discovery rank and rerenders the main library.",
-      "docs/prompt-kit.js currently attaches Top and Bottom controls to section/category dividers rather than distributing them through every five visible prompt cards."
+      "docs/prompt-kit.js currently attaches Top and Bottom controls to section/category dividers rather than distributing them through every five visible prompt cards.",
+      "The strict validator also proves canonical site parity and canonical ID/sequence integrity before it can report implementation pass."
     ]
   },
   "validation": {
@@ -62,5 +81,5 @@
     "strict_product_gate": "python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary",
     "generated_parity": "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check"
   },
-  "proof_ceiling": "Contract registration and static source evidence can prove the requirement and detect known implementation gaps. Strict static markers plus generated parity do not prove real scrolling ergonomics, touch behavior, browser focus, or mobile acceptance; those require observed browser/device proof."
+  "proof_ceiling": "Contract registration, canonical registry identity checks, exact generated-site parity, and static source evidence can prove the requirement and detect known implementation gaps. Static checks do not prove real scrolling ergonomics, touch behavior, browser focus, or mobile acceptance; those require observed browser/device proof."
 }
