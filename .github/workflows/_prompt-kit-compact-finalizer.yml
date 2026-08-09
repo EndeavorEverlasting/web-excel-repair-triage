@@ -28,16 +28,17 @@ jobs:
         run: |
           node --check docs/prompt-kit-polish.js
           python -m unittest \
-            tests.test_prompt_kit_order_navigation_product \
+            tests.test_prompt_kit_order_navigation_product.PromptKitOrderNavigationProductTests.test_compact_browsing_uses_favorites_hotkey_and_collapsible_filter_chrome \
             tests.test_prompt_kit_cross_device_access \
             tests.test_prompt_kit_mobile \
             -v
           pwsh -NoLogo -NoProfile -File tests/Test-PromptKitQuickOpenPathResolution.ps1
           python scripts/validate_prompt_kit_cross_device_access.py --summary
-      - name: Regenerate canonical Prompt Kit
+      - name: Regenerate and prove canonical Prompt Kit
         run: |
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python -m unittest tests.test_prompt_kit_order_navigation_product -v
           git diff --check
       - name: Commit generated parity only when needed
         shell: bash
