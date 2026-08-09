@@ -45,7 +45,7 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-003 — Add repository work ledger stewardship prompt to Prompt Kit
 
-- **Status:** VERIFY
+- **Status:** MERGE
 - **Priority:** P1
 - **Owner:** chatgpt-prompt-ledger-p66-20260809
 - **Branch / PR:** feat/prompt-kit-repository-ledger-p66-20260809 / #163
@@ -55,6 +55,6 @@ Canonical terminal action: none; no safe actionable work remains
 - **References:** `registry/prompts/repository-work-ledger-prompts.v1.json`, `registry/prompts/tutorial-discovery-prompts.v1.json`, `scripts/build_prompt_kit_registry.py`, `registry/prompts/prompt-display-order.v1.json`, `docs/prompt-kit-guided-recommendations.js`, `tests/test_repository_work_ledger_prompt.py`, `web/prompt-kit/index.html`, `scripts/Acquire-LatestPromptKit.ps1`
 - **Acceptance gate:** P66 loads through the combined registry with unique ID/sequence, interactive and copyable P65 discovery can route repository-ledger intent to P66, focused tests pass, the checked-in website exactly matches the canonical builder output and contains P66, Prompt Kit and ledger CI pass against current repository authority, concurrent TRQ blocks are preserved, and the merged site remains retrievable through the repository-owned Windows quick-open acquisition path
 - **Gate:** none
-- **Last proof:** commit:1ef71abc5eabad5dc4fa2b0174f2a96d7a47deef created P66; workflow:31332921524 regenerated and proved the exact 67-prompt site; commit:22ce22f5bd5bef76307176f255b0f92851be2e78 committed the generated site; workflow:31333012596 proved the P65 route, P66 tests, exact builder parity, and regenerated artifact; commit:324ad631683939c18bb7b54fd648e50449bb2011 added P66 to the copyable P65 routing map; merge:576f4596ab711b3b22321fcf90413b6eef2d6e5e advanced main with the completed Blacksmith authority reconciliation that this task now preserves as TRQ-002
-- **Next action:** reconcile PR #163 against current main, run repository-work-ledger and Prompt Kit contract validation on the reconciled exact head, repair any owned failure, and merge only after the nine-file product/harness diff preserves current Blacksmith ledger authority and both existing DONE blocks
-- **Updated:** 2026-08-09T20:02:00Z
+- **Last proof:** commit:7f884a4f50cf9a79a6279aefa3449ef644141a3f reconciled the nine-file P66 sprint onto current Blacksmith-authority main without replacing TRQ-001/TRQ-002; workflow:31333415602 passed the repository work-ledger contract; workflow:31333415653 passed Prompt Kit web contracts including exact generated-site parity; workflow:31333415601 passed skill prompt registry and generator UX; workflow:31333415617 passed Prompt Kit GitHub Pages; workflow:31333415628 passed operator documentation contracts; workflow:31333415619 passed artifact engine tests
+- **Next action:** merge PR #163 at the current exact head after this queue-only continuation commit passes the repository work-ledger contract, then record the merge receipt in a strict-DONE closeout
+- **Updated:** 2026-08-09T20:08:00Z
