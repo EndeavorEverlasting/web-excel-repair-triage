@@ -120,13 +120,13 @@
     },
     {
       "id": "harness-infrastructure-maintenance",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "status": "canonical",
       "skill": ".ai/skills/harness-infrastructure-maintenance/SKILL.md",
       "trigger_ids": [
         "harness-infrastructure-change"
       ],
-      "operation": "Inspect, repair, validate, report, and hand off the repository operational harness without crossing into governance or product implementation.",
+      "operation": "Inspect, repair, validate, report, and hand off the repository operational harness; when product code is out of scope, convert observed behavior gaps into enforceable focused contracts with non-strict harness evidence and explicit strict product gates.",
       "inputs": [
         "AGENTS.md",
         "CODEBASE_MAP.md",
@@ -138,14 +138,17 @@
         "harness/validators.v1.json",
         "harness/capabilities.v1.json",
         "harness/triggers.v1.json",
+        "focused domain contracts including harness/contracts/prompt-kit-order-navigation.v1.json",
+        "focused operator reports including harness/reports/PROMPT_KIT_ORDER_NAVIGATION.md",
         ".githooks/",
         ".github/workflows/harness-contract.yml",
-        "existing harness failures and PR state"
+        "existing harness failures, product-gap evidence, and PR state"
       ],
       "outputs": [
         "tracked canonical harness repairs",
         "harness-completeness-report/v1",
         "focused regression tests",
+        "focused product-gap audit when implementation is outside owned scope",
         "updated operator report",
         "commit and push or PR evidence",
         "actionable next command"
@@ -154,7 +157,7 @@
         "kind": "script",
         "path": "scripts/validate_harness.py"
       },
-      "proof_ceiling": "Static repository and CI harness proof on the tested commit; no product runtime, provider, GUI, protected-target, or production proof."
+      "proof_ceiling": "Static repository, contract, source-gap, and CI harness proof on the tested commit; no product runtime, browser/mobile ergonomics, provider, GUI, protected-target, or production proof."
     }
   ]
 }
