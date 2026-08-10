@@ -198,13 +198,20 @@ def apply_prompt_overrides(prompts: list[dict[str, Any]]) -> list[dict[str, Any]
             raise SystemExit(
                 f"Prompt override {override.get('id', index)} is missing fields: {missing}"
             )
-        prompt_id = str(override["id"]).upper()
+        override_id = str(override["id"])
+        prompt_id = override_id.upper()
         if prompt_id in seen:
             raise SystemExit(f"Duplicate prompt override id: {prompt_id}")
         seen.add(prompt_id)
         if prompt_id not in positions:
             raise SystemExit(f"Prompt override references unknown prompt id: {prompt_id}")
         current = result[positions[prompt_id]]
+        canonical_id = str(current.get("id", ""))
+        if override_id != canonical_id:
+            raise SystemExit(
+                "Prompt override id must exactly match canonical identity: "
+                f"{override_id} != {canonical_id}"
+            )
         if str(override["seq"]) != str(current.get("seq")):
             raise SystemExit(
                 f"Prompt override may not change stable sequence: {prompt_id} "

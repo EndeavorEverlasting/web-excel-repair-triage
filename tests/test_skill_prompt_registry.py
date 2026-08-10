@@ -83,6 +83,28 @@ class SkillPromptRegistryTests(unittest.TestCase):
         )
         self.assertEqual(source_p02["seq"], override["seq"])
 
+    def test_prompt_override_rejects_id_casing_drift(self) -> None:
+        source_p02 = next(
+            item
+            for item in json.loads(build_prompt_kit_registry.BASE_REGISTRY.read_text(encoding="utf-8"))
+            if item["id"] == "P02"
+        )
+        bad = dict(source_p02)
+        bad["id"] = "p02"
+        original = build_prompt_kit_registry.PROMPT_OVERRIDES
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                path = Path(temp_dir) / "overrides.json"
+                path.write_text(
+                    json.dumps({"schema_version": "prompt-registry-overrides/v1", "overrides": [bad]}),
+                    encoding="utf-8",
+                )
+                build_prompt_kit_registry.PROMPT_OVERRIDES = path
+                with self.assertRaisesRegex(SystemExit, "exactly match canonical identity"):
+                    build_prompt_kit_registry.apply_prompt_overrides([source_p02])
+        finally:
+            build_prompt_kit_registry.PROMPT_OVERRIDES = original
+
     def test_skill_eval_prompt_requires_correctness_weakness_and_efficiency_proof(self) -> None:
         prompts = build_prompt_kit_registry.load_prompt_registry()
         prompt = {item["id"]: item for item in prompts}["P62"]
