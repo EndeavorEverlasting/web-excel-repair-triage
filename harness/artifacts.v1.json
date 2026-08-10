@@ -81,6 +81,16 @@
       "naming": "Focused contract; otherwise artifact family plus run ID or timestamp.",
       "tracking_policy": "Gitignored unless explicitly sanitized and approved as a fixture.",
       "proof_ceiling": "Depends on executed engine and runtime gates; Excel for Web acceptance remains separate."
+    },
+    {
+      "id": "prompt-kit-browser-proof-cleanup-report",
+      "kind": "runtime",
+      "canonical_path": "Outputs/prompt-kit-browser-proof-cleanup-report.json",
+      "producer": "scripts/Clear-PromptKitBrowserProofScratch.ps1",
+      "validator": "prompt-kit-browser-proof-cleanup-completeness",
+      "naming": "Stable latest receipt; previous receipt is preserved under Outputs/backups/prompt-kit-browser-proof-cleanup/ with UTC timestamp.",
+      "tracking_policy": "Gitignored operator evidence; never commit scratch directories or cleanup receipts.",
+      "proof_ceiling": "Filesystem classification and cleanup receipt only; no browser-profile/localStorage/Favorites proof."
     }
   ]
 }

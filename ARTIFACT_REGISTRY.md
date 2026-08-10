@@ -56,6 +56,7 @@ Android users who need an editable checkout use Termux from F-Droid and Git. The
 | Backups before permitted overwrite | `Outputs/backups/` | owning generator/workflow | `<source-stem>_backup_<YYYYMMDD_HHMMSS>.<ext>` | Gitignored. |
 | CI reports and logs | CI artifact storage or runner temp | workflow job | workflow/run identifier | Never commit generated logs. |
 | Prompt Kit preview | `Outputs/prompt-kit-preview.html` or temp | builder preview mode | stable preview name | Never replace canonical site without parity. |
+| Browser-proof cleanup receipt | `Outputs/prompt-kit-browser-proof-cleanup-report.json` | `scripts/Clear-PromptKitBrowserProofScratch.ps1` | stable latest receipt; previous copy under `Outputs/backups/prompt-kit-browser-proof-cleanup/` with UTC timestamp | Gitignored runtime evidence; scratch inputs are never canonical. |
 
 ## Protected inputs
 

@@ -7,7 +7,7 @@
       "producer": "scripts/Clear-PromptKitBrowserProofScratch.ps1",
       "format": "json",
       "durability": "operator_receipt",
-      "overwrite_policy": "latest_run",
+      "overwrite_policy": "backup_previous_then_latest",
       "proof_ceiling": "filesystem_classification_and_cleanup_receipt"
     }
   ],

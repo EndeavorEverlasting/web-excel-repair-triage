@@ -147,6 +147,16 @@ $report = [ordered]@{
 }
 
 New-Item -ItemType Directory -Force -Path (Split-Path -Parent $ResolvedReportPath) | Out-Null
+$previousReceiptBackup = $null
+if (Test-Path -LiteralPath $ResolvedReportPath -PathType Leaf) {
+    $backupRoot = Join-Path $OutputsRoot 'backups/prompt-kit-browser-proof-cleanup'
+    New-Item -ItemType Directory -Force -Path $backupRoot | Out-Null
+    $stamp = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssfffZ')
+    $backupName = '{0}_backup_{1}{2}' -f [System.IO.Path]::GetFileNameWithoutExtension($ResolvedReportPath), $stamp, [System.IO.Path]::GetExtension($ResolvedReportPath)
+    $previousReceiptBackup = Join-Path $backupRoot $backupName
+    Copy-Item -LiteralPath $ResolvedReportPath -Destination $previousReceiptBackup -Force -ErrorAction Stop
+}
+$report.previous_receipt_backup = $previousReceiptBackup
 $report | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $ResolvedReportPath -Encoding UTF8
 
 Write-Host ("Prompt Kit browser-proof cleanup: mode={0} candidates={1} eligible={2} deleted={3} preserved={4} failed={5}" -f $report.mode, $report.candidate_count, $report.eligible_count, $report.deleted_count, $report.preserved_count, $report.failed_count)

@@ -141,6 +141,13 @@ web-excel-repair-triage/
 | `registry/prompts/*.json` | Versioned prompt extensions and shared policies. |
 | `.github/workflows/*.yml` | CI gates for governance, harness, artifacts, reports, and product lanes. |
 
+## Prompt Kit browser-proof scratch lifecycle
+
+- `harness/browser-proof-cleanup/manifest.v1.json` — focused lifecycle authority for detached `prompt-kit-browser-proof-*` Temp copies.
+- `scripts/Clear-PromptKitBrowserProofScratch.ps1` — preview-first, explicit-apply cleanup runner.
+- `Outputs/prompt-kit-browser-proof-cleanup-report.json` — latest cleanup receipt; prior receipt retained under `Outputs/backups/prompt-kit-browser-proof-cleanup/`.
+- Browser profile/localStorage/Favorites are intentionally separate from filesystem scratch cleanup.
+
 ## Build, test, and launch commands
 
 Focused cross-device Prompt Kit acquisition validation:

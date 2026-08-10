@@ -13,7 +13,8 @@
     "apply_requires_explicit_switch": true,
     "default_minimum_age_minutes": 60,
     "browser_profile_data_out_of_scope": true,
-    "favorites_local_storage_out_of_scope": true
+    "favorites_local_storage_out_of_scope": true,
+    "retain_previous_report_before_overwrite": true
   },
   "components": {
     "codebase_map": "harness/browser-proof-cleanup/CODEBASE_MAP.md",

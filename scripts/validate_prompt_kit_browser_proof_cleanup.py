@@ -70,6 +70,7 @@ def validate() -> list[str]:
         "apply_requires_explicit_switch": True,
         "browser_profile_data_out_of_scope": True,
         "favorites_local_storage_out_of_scope": True,
+        "retain_previous_report_before_overwrite": True,
     }
     for key, value in expected.items():
         if contract.get(key) != value:
@@ -94,6 +95,9 @@ def validate() -> list[str]:
             "Remove-Item -LiteralPath $record.path -Recurse -Force",
             "prompt-kit-browser-proof-cleanup-report.json",
             "browser localStorage and Prompt Kit Favorites",
+            "backups/prompt-kit-browser-proof-cleanup",
+            "Copy-Item -LiteralPath $ResolvedReportPath",
+            "previous_receipt_backup",
             "ReportPath must stay under repository Outputs/",
         ]
         for marker in required_markers:

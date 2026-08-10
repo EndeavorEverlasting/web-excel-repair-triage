@@ -115,6 +115,17 @@
       "harness_gate": "python scripts/validate_operator_command_envelope.py --summary",
       "template": "harness/templates/Invoke-RemoteHarnessProof.ps1",
       "fixtures": "harness/evals/fixtures/operator-command-cases.v1.json"
+    },
+    "prompt_kit_browser_proof_cleanup": {
+      "contract": "harness/browser-proof-cleanup/manifest.v1.json",
+      "validator": "scripts/validate_prompt_kit_browser_proof_cleanup.py",
+      "contract_tests": "tests/test_prompt_kit_browser_proof_cleanup_harness.py",
+      "workflow": "WORKFLOW.md#h-prompt-kit-browser-proof-scratch-cleanup",
+      "harness_gate": "python scripts/validate_prompt_kit_browser_proof_cleanup.py --summary",
+      "skill": ".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md",
+      "cleanup_runner": "scripts/Clear-PromptKitBrowserProofScratch.ps1",
+      "artifact_registry": "harness/browser-proof-cleanup/artifacts.v1.json",
+      "operator_report": "harness/browser-proof-cleanup/reports/CURRENT_STATE.md"
     }
   },
   "skills": [
@@ -122,7 +133,8 @@
     ".ai/skills/prompt-language-audit/SKILL.md",
     ".ai/skills/skill-evaluation/SKILL.md",
     ".ai/skills/skill-factoring/SKILL.md",
-    ".ai/skills/technician-prompt-kit-acquisition/SKILL.md"
+    ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
+    ".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md"
   ],
   "technician_acquisition": {
     "launcher": "Acquire-Latest-PromptKit.cmd",

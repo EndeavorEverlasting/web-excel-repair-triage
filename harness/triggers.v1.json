@@ -103,6 +103,21 @@
         "request is product implementation only",
         "request requires secrets or destructive cleanup"
       ]
+    },
+    {
+      "id": "prompt-kit-browser-proof-temp-path",
+      "capability_id": "prompt-kit-browser-proof-scratch-cleanup",
+      "skill": ".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md",
+      "workflow": "WORKFLOW.md#h-prompt-kit-browser-proof-scratch-cleanup",
+      "conditions": [
+        "operator supplies a prompt-kit-browser-proof-* path under the OS temp directory",
+        "operator asks to classify or clear detached Prompt Kit browser-proof scratch copies"
+      ],
+      "forbidden_conditions": [
+        "broad OS temp cleanup is requested",
+        "browser profile/localStorage/Favorites deletion is the actual request",
+        "target is a canonical repository checkout or durable Outputs evidence"
+      ]
     }
   ]
 }

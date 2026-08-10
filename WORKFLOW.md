@@ -145,6 +145,20 @@ Audit every canonical and effective prompt. Require equal canonical, effective, 
 
 Define the eval contract and baseline, add positive/negative/near-miss/boundary/malformed/regression cases, reproduce weaknesses, implement the smallest valid repair, and measure performance, calls, context, retries, cost, and tokens when available. Accept efficiency changes only after correctness, safety, and routing gates remain green.
 
+### H. Prompt Kit browser-proof scratch cleanup
+
+**Workflow ID:** `prompt-kit-browser-proof-cleanup`
+**Trigger:** `prompt-kit-browser-proof-temp-path`
+**Capability:** `prompt-kit-browser-proof-scratch-cleanup`
+**Skill:** `.ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md`
+
+1. Treat `prompt-kit-browser-proof-*` folders as untrusted until the focused runner classifies them.
+2. Run preview first; never broaden an exact target into `%TEMP%` deletion.
+3. Require direct-child OS-temp location, exact leaf regex, non-reparse-point status, `web/prompt-kit/index.html`, and minimum age.
+4. Preserve browser profile data, localStorage/Favorites, canonical repositories, public Pages, portable-loopback state, and unrelated evidence.
+5. Before replacing the stable receipt, preserve the previous receipt under `Outputs/backups/prompt-kit-browser-proof-cleanup/`.
+6. Run `python scripts/validate_prompt_kit_browser_proof_cleanup.py --summary` and `python -m unittest tests.test_prompt_kit_browser_proof_cleanup_harness -v`; native workstation deletion remains a separate runtime gate.
+
 ## 3. Validate before committing
 
 Use the strongest practical checks in dependency order:

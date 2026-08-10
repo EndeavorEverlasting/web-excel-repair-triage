@@ -8,7 +8,7 @@
 
 **Purpose:** Durable receipt describing scratch candidates, safety classification, preview/apply mode, and deletion outcomes.
 
-**Naming:** The default report path is stable so the newest operator run is easy to find. Historical retention is operator-owned; this harness does not create timestamped repository clutter automatically.
+**Naming:** The default report path is stable so the newest operator run is easy to find. Before overwriting an existing receipt, the runner preserves it under `Outputs/backups/prompt-kit-browser-proof-cleanup/` with a UTC timestamp.
 
 **Required fields:** schema version, generated UTC timestamp, mode, system temp root, minimum age, optional target path, candidate records, eligible/preserved/deleted/failed counts, and proof ceiling.
 

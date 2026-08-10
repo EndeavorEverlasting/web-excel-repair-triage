@@ -43,6 +43,20 @@ class PromptKitBrowserProofCleanupHarnessTests(unittest.TestCase):
         self.assertNotIn("localStorage.clear(", text)
         self.assertNotIn("promptKit.favoritePromptIds.v1", text)
 
+    def test_cleanup_runner_retains_previous_receipt_before_overwrite(self) -> None:
+        text = (ROOT / "scripts/Clear-PromptKitBrowserProofScratch.ps1").read_text(encoding="utf-8")
+        self.assertIn("backups/prompt-kit-browser-proof-cleanup", text)
+        self.assertIn("Copy-Item -LiteralPath $ResolvedReportPath", text)
+        self.assertIn("previous_receipt_backup", text)
+
+    def test_root_harness_registers_cleanup_capability_and_trigger(self) -> None:
+        manifest = json.loads((ROOT / "harness/manifest.v1.json").read_text(encoding="utf-8"))
+        self.assertIn("prompt_kit_browser_proof_cleanup", manifest["domain_contracts"])
+        caps = json.loads((ROOT / "harness/capabilities.v1.json").read_text(encoding="utf-8"))["capabilities"]
+        triggers = json.loads((ROOT / "harness/triggers.v1.json").read_text(encoding="utf-8"))["triggers"]
+        self.assertIn("prompt-kit-browser-proof-scratch-cleanup", {item["id"] for item in caps})
+        self.assertIn("prompt-kit-browser-proof-temp-path", {item["id"] for item in triggers})
+
     def test_artifact_registry_keeps_scratch_noncanonical(self) -> None:
         registry = json.loads(
             (ROOT / "harness/browser-proof-cleanup/artifacts.v1.json").read_text(encoding="utf-8")
