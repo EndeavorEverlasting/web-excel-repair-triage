@@ -1,0 +1,26 @@
+{
+  "schema_version": "prompt-kit-browser-proof-cleanup-validators/v1",
+  "validators": [
+    {
+      "id": "browser-proof-cleanup-completeness",
+      "command": "python scripts/validate_prompt_kit_browser_proof_cleanup.py --summary",
+      "proves": ["component_presence", "machine_registry_validity", "cleanup_safety_markers", "artifact_contract"]
+    },
+    {
+      "id": "browser-proof-cleanup-contract-tests",
+      "command": "python -m unittest tests.test_prompt_kit_browser_proof_cleanup_harness -v",
+      "proves": ["fail_closed_contract", "preview_default", "favorites_and_browser_profile_exclusion"]
+    },
+    {
+      "id": "browser-proof-cleanup-powershell-smoke",
+      "command": "pwsh -NoLogo -NoProfile -File scripts/Clear-PromptKitBrowserProofScratch.ps1",
+      "proves": ["powershell_parse_and_preview_execution"],
+      "proof_ceiling": "CI runner only unless executed on the operator workstation"
+    },
+    {
+      "id": "patch-hygiene",
+      "command": "git diff --check",
+      "proves": ["patch_hygiene"]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "schema_version": "prompt-kit-browser-proof-cleanup-artifacts/v1",
+  "artifacts": [
+    {
+      "id": "prompt-kit-browser-proof-cleanup-report",
+      "path": "Outputs/prompt-kit-browser-proof-cleanup-report.json",
+      "producer": "scripts/Clear-PromptKitBrowserProofScratch.ps1",
+      "format": "json",
+      "durability": "operator_receipt",
+      "overwrite_policy": "latest_run",
+      "proof_ceiling": "filesystem_classification_and_cleanup_receipt"
+    }
+  ],
+  "ephemeral_inputs": {
+    "directory_pattern": "%TEMP%/prompt-kit-browser-proof-<hex>/",
+    "canonical": false,
+    "must_not_be_committed": true
+  }
+}
