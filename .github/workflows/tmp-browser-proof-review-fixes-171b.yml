@@ -22,6 +22,21 @@ jobs:
           python-version: "3.11"
       - name: Apply bounded migration
         run: python .github/tmp_apply_browser_proof_review_fixes_171.py
+      - name: Normalize added Markdown
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('WORKFLOW.md')
+          text = p.read_text(encoding='utf-8')
+          for line in (
+              '**Workflow ID:** `prompt-kit-browser-proof-cleanup`',
+              '**Trigger:** `prompt-kit-browser-proof-temp-path`',
+              '**Capability:** `prompt-kit-browser-proof-scratch-cleanup`',
+          ):
+              text = text.replace(line + '  \n', line + '\n')
+          p.write_text(text, encoding='utf-8')
+          PY
       - name: Validate focused and root harnesses
         run: |
           python -m py_compile scripts/validate_harness.py scripts/validate_prompt_kit_browser_proof_cleanup.py tests/test_harness_contract.py tests/test_prompt_kit_browser_proof_cleanup_harness.py
