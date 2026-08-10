@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from scripts import validate_app_harness as validator
 
@@ -31,13 +32,15 @@ class AppHarnessValidatorTests(unittest.TestCase):
         self.assertIn("Result: 5 passed / 1 skipped / 0 failed", text)
         self.assertIn("no live runtime, browser, launcher", text)
 
-    def test_report_is_json_serializable(self):
+    def test_report_is_json_serializable_without_checkout_path(self):
         report = validator.validate(ROOT, runner=self.fake_runner, env={})
         encoded = json.dumps(report)
         decoded = json.loads(encoded)
         self.assertEqual("app-harness-validation/v1", decoded["schema_version"])
+        self.assertEqual(".", decoded["repository_root"])
         self.assertEqual("test-branch", decoded["branch"])
         self.assertEqual("a" * 40, decoded["commit"])
+        self.assertNotIn(str(ROOT), encoded)
 
     def test_required_validator_failure_is_blocking(self):
         def failing_runner(command, root):
@@ -91,7 +94,11 @@ class AppHarnessValidatorTests(unittest.TestCase):
             nested.write_text('{"previous": true}\n', encoding="utf-8")
             check = validator.check_required_files(root, self.fake_runner)
             self.assertEqual("PASS", check.status)
-            backups = list((root / "Outputs" / "backups" / "app-harness-validation").rglob("harness-completeness-report.json"))
+            backups = list(
+                (root / "Outputs" / "backups" / "app-harness-validation").rglob(
+                    "harness-completeness-report.json"
+                )
+            )
             self.assertEqual(1, len(backups))
             self.assertEqual(nested.read_text(encoding="utf-8"), backups[0].read_text(encoding="utf-8"))
 
@@ -106,23 +113,45 @@ class AppHarnessValidatorTests(unittest.TestCase):
         self.assertIn("app-harness-validation", validators["profiles"]["harness"])
         self.assertIn("app-harness-validation", validators["profiles"]["pre_push"])
 
-    def test_offline_allowlist_rejects_launcher_and_network_commands(self):
+    def test_offline_allowlist_accepts_exact_shapes_even_when_root_has_spaces(self):
+        with tempfile.TemporaryDirectory(prefix="open source ") as tmp:
+            root = Path(tmp)
+            expected = subprocess.CompletedProcess(["git", "branch", "--show-current"], 0, "main\n", "")
+            with mock.patch.object(validator.subprocess, "run", return_value=expected) as run:
+                result = validator.safe_runner(["git", "branch", "--show-current"], root)
+            self.assertEqual(0, result.returncode)
+            run.assert_called_once_with(
+                ("git", "branch", "--show-current"),
+                cwd=root,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+    def test_offline_allowlist_rejects_launcher_network_and_extra_git_arguments(self):
         for command in (
             ["python", "app.py"],
             ["powershell", "Start-Process", "index.html"],
             ["curl", "https://example.invalid"],
             ["git", "clean", "-fd"],
+            ["git", "branch", "-D", "main"],
+            ["git", "rev-parse", "--verify", "HEAD"],
         ):
             with self.subTest(command=command):
                 with self.assertRaises(RuntimeError):
                     validator.safe_runner(command, ROOT)
 
-    def test_cli_emits_matrix_and_json_without_runtime_lane(self):
+    def test_cli_emits_matrix_and_relative_json_path_without_runtime_lane(self):
         output = ROOT / "Outputs" / "test-app-harness-validation.json"
         output.unlink(missing_ok=True)
         try:
             result = subprocess.run(
-                [sys.executable, str(ROOT / "scripts" / "validate_app_harness.py"), "--output", "Outputs/test-app-harness-validation.json"],
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_app_harness.py"),
+                    "--output",
+                    "Outputs/test-app-harness-validation.json",
+                ],
                 cwd=ROOT,
                 text=True,
                 capture_output=True,
@@ -131,9 +160,13 @@ class AppHarnessValidatorTests(unittest.TestCase):
             self.assertEqual(0, result.returncode, result.stdout + result.stderr)
             self.assertIn("APP HARNESS VALIDATION", result.stdout)
             self.assertIn("Result: 5 passed / 1 skipped / 0 failed", result.stdout)
+            self.assertIn("JSON: Outputs/test-app-harness-validation.json", result.stdout)
+            self.assertNotIn(str(ROOT), result.stdout)
             payload = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(0, payload["summary"]["failed"])
+            self.assertEqual(".", payload["repository_root"])
             self.assertIn("no live runtime, browser, launcher", payload["proof_ceiling"])
+            self.assertNotIn(str(ROOT), json.dumps(payload))
         finally:
             output.unlink(missing_ok=True)
 
