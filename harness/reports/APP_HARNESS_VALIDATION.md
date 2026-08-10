@@ -29,12 +29,20 @@ The actual output also prints the resolved branch, commit, JSON path, and proof 
 - parse the machine artifact and validator registries;
 - verify registered hooks exist;
 - emit `Outputs/app-harness-validation.json` plus the English matrix;
+- preserve an existing app-harness receipt and the nested harness-completeness receipt under `Outputs/backups/app-harness-validation/<UTC timestamp>/` before replacement;
 - treat an unloaded LSP/MCP project as an explicit optional `SKIP`, never as a fabricated pass;
 - return nonzero when any required check fails.
 
+## Canonical registration
+
+- `harness/artifacts.v1.json` registers `app-harness-validation-report` at `Outputs/app-harness-validation.json`, schema `app-harness-validation/v1`.
+- `harness/validators.v1.json` registers `app-harness-validation` and includes it in the canonical `harness` and `pre_push` profiles.
+- `harness/manifest.v1.json` includes the command in the canonical validation order.
+- `scripts/validate_harness.py` fail-closes if the new artifact or validator registration disappears.
+
 ## Safety boundary
 
-The validator must not execute launchers, browsers, application/game entry points, network tools, cleanup/reset commands, target mutations, save mutations, account mutations, or secret collection. JSON output is restricted to `Outputs/`.
+The validator must not execute launchers, browsers, application/game entry points, network tools, cleanup/reset commands, target mutations, save mutations, account mutations, or secret collection. JSON output and receipt backups are restricted to `Outputs/`.
 
 ## Proof ceiling
 
