@@ -42,7 +42,7 @@ jobs:
       - name: Run harness contract tests
         run: python -m unittest tests.test_prompt_kit_browser_proof_cleanup_harness -v
 
-      - name: Exercise preview and explicit apply against test-owned scratch
+      - name: Exercise preview receipt retention and explicit apply against test-owned scratch
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -50,9 +50,16 @@ jobs:
           $Marker = Join-Path $Scratch 'web/prompt-kit/index.html'
           New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Marker) | Out-Null
           Set-Content -LiteralPath $Marker -Value '<!doctype html><title>test-owned-browser-proof</title>' -Encoding UTF8
+
           & ./scripts/Clear-PromptKitBrowserProofScratch.ps1 -TargetPath $Scratch -MinimumAgeMinutes 0 -ReportPath ./Outputs/browser-proof-preview.json
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           if (-not (Test-Path -LiteralPath $Scratch)) { throw 'Preview deleted the test-owned scratch directory.' }
+
+          & ./scripts/Clear-PromptKitBrowserProofScratch.ps1 -TargetPath $Scratch -MinimumAgeMinutes 0 -ReportPath ./Outputs/browser-proof-preview.json
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $Backup = @(Get-ChildItem ./Outputs/backups/prompt-kit-browser-proof-cleanup -File -Filter 'browser-proof-preview_backup_*.json' -ErrorAction Stop)
+          if ($Backup.Count -lt 1) { throw 'Repeated preview did not preserve the previous durable receipt.' }
+
           & ./scripts/Clear-PromptKitBrowserProofScratch.ps1 -TargetPath $Scratch -MinimumAgeMinutes 0 -Apply -ReportPath ./Outputs/browser-proof-apply.json
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           if (Test-Path -LiteralPath $Scratch) { throw 'Apply did not delete the eligible test-owned scratch directory.' }
