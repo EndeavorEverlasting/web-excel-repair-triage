@@ -20,6 +20,7 @@ on:
       - registry/prompts/skill-development-prompts.v1.json
       - registry/prompts/tutorial-discovery-prompts.v1.json
       - registry/prompts/repository-work-ledger-prompts.v1.json
+      - registry/prompts/prompt-overrides.v1.json
       - registry/prompts/prompt-display-order.v1.json
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
       - docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md
@@ -77,6 +78,7 @@ on:
       - registry/prompts/skill-development-prompts.v1.json
       - registry/prompts/tutorial-discovery-prompts.v1.json
       - registry/prompts/repository-work-ledger-prompts.v1.json
+      - registry/prompts/prompt-overrides.v1.json
       - registry/prompts/prompt-display-order.v1.json
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
       - docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md
