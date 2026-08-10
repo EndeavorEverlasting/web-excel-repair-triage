@@ -34,6 +34,13 @@ def read_deployed() -> str:
     return DEPLOYED.read_text(encoding="utf-8")
 
 
+def polish_runtime(text: str) -> str:
+    marker = "style.id='prompt-kit-polish-styles';"
+    start = text.find(marker)
+    assert start >= 0, "missing Prompt Kit polish runtime"
+    return text[start:]
+
+
 def media_block(css: str, width: int) -> str:
     marker = f"@media(max-width:{width}px){{"
     start = css.find(marker)
@@ -102,8 +109,8 @@ def test_builder_owns_the_same_fixed_header() -> None:
 
 
 def test_responsive_header_reflows_before_collision() -> None:
-    polish = POLISH.read_text(encoding="utf-8")
-    deployed = read_deployed()
+    polish = polish_runtime(POLISH.read_text(encoding="utf-8"))
+    deployed = polish_runtime(read_deployed())
     wide_required = (
         ".header-top{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(280px,400px);",
         ".header-top>.logo{grid-column:1;min-width:0}",
