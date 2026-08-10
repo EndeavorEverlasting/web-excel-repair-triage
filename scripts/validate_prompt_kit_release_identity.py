@@ -7,7 +7,7 @@ import hashlib
 import importlib.util
 import json
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from types import ModuleType
 from typing import Any, Callable
 
@@ -48,22 +48,56 @@ def load_text(root: Path, relative: Path) -> str:
     return text
 
 
-def sha256_file(path: Path) -> str:
+def normalize_repo_relative(value: object) -> str:
+    """Normalize a repository-relative path for cross-platform identity comparison."""
+    text = str(value).strip().replace("\\", "/")
+    while text.startswith("./"):
+        text = text[2:]
+    return PurePosixPath(text).as_posix()
+
+
+def read_required_bytes(path: Path, label: str) -> bytes:
     try:
         payload = path.read_bytes()
     except OSError as exc:
-        raise ReleaseIdentityError(f"cannot read canonical artifact: {CANONICAL_ARTIFACT}: {exc}") from exc
+        raise ReleaseIdentityError(f"cannot read {label}: {path}: {exc}") from exc
     if not payload:
-        raise ReleaseIdentityError(f"canonical artifact is empty: {CANONICAL_ARTIFACT}")
+        raise ReleaseIdentityError(f"{label} is empty: {path}")
+    return payload
+
+
+def sha256_file(path: Path) -> str:
+    """Hash exact checkout bytes; this is diagnostic and may differ after EOL conversion."""
+    payload = read_required_bytes(path, "canonical artifact")
     return hashlib.sha256(payload).hexdigest()
+
+
+def canonical_content_bytes(path: Path) -> bytes:
+    """Return UTF-8 Prompt Kit content with only line endings normalized to LF."""
+    payload = read_required_bytes(path, "canonical artifact")
+    try:
+        text = payload.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ReleaseIdentityError(f"canonical artifact is not UTF-8: {CANONICAL_ARTIFACT}: {exc}") from exc
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    return normalized.encode("utf-8")
+
+
+def sha256_canonical_content(path: Path) -> str:
+    """Hash logical canonical content independent of Git checkout EOL conversion."""
+    return hashlib.sha256(canonical_content_bytes(path)).hexdigest()
 
 
 def validate_canonical_artifact(root: Path) -> str:
     path = root / CANONICAL_ARTIFACT
     if not path.is_file():
         raise ReleaseIdentityError(f"canonical artifact is missing: {CANONICAL_ARTIFACT}")
-    digest = sha256_file(path)
-    return f"canonical Prompt Kit exists and has SHA-256 {digest}"
+    content_digest = sha256_canonical_content(path)
+    worktree_digest = sha256_file(path)
+    return (
+        "canonical Prompt Kit exists; "
+        f"content SHA-256 {content_digest}; checkout-byte SHA-256 {worktree_digest}"
+    )
 
 
 def validate_contract(root: Path) -> str:
@@ -83,13 +117,20 @@ def validate_contract(root: Path) -> str:
     identity_rule = str(contract.get("identity_rule", ""))
     if "one Prompt Kit website release" not in identity_rule:
         raise ReleaseIdentityError("identity rule no longer declares one Prompt Kit release")
-    label_policy = str(contract.get("release_identity", {}).get("version_label_policy", ""))
+    release_identity = contract.get("release_identity", {})
+    label_policy = str(release_identity.get("version_label_policy", ""))
     if "never sufficient proof" not in label_policy:
         raise ReleaseIdentityError("visible version labels must not become freshness authority")
+    content_hash_policy = str(release_identity.get("content_hash_policy", ""))
+    if "CRLF" not in content_hash_policy or "LF" not in content_hash_policy:
+        raise ReleaseIdentityError("release identity must define cross-platform line-ending normalization")
+    path_policy = str(release_identity.get("path_comparison_policy", ""))
+    if "forward slash" not in path_policy:
+        raise ReleaseIdentityError("release identity must define cross-platform path normalization")
     failures = contract.get("drift_failures")
-    if not isinstance(failures, list) or len(failures) < 6:
+    if not isinstance(failures, list) or len(failures) < 8:
         raise ReleaseIdentityError("release-identity contract needs explicit drift failures")
-    return "release identity contract is canonical and fail-closed"
+    return "release identity contract is canonical, cross-platform, and fail-closed"
 
 
 def validate_artifact_registry(root: Path) -> str:
@@ -98,7 +139,7 @@ def validate_artifact_registry(root: Path) -> str:
     if len(sites) != 1:
         raise ReleaseIdentityError("artifact registry must contain exactly one prompt-kit-website")
     site = sites[0]
-    if site.get("canonical_path") != CANONICAL_ARTIFACT:
+    if normalize_repo_relative(site.get("canonical_path", "")) != CANONICAL_ARTIFACT:
         raise ReleaseIdentityError("prompt-kit-website canonical path drifted")
     surfaces = set(site.get("delivery_surfaces", []))
     required = {CANONICAL_PUBLIC_URL, "Open-Latest-PromptKit.cmd"}
@@ -184,9 +225,9 @@ def validate_portable_derivative(root: Path) -> str:
     contract = load_json(root, PORTABILITY_CONTRACT_REL)
     integration = contract.get("integration", {})
     artifact_rules = contract.get("artifact_rules", {}).get("portable_runtime_artifact", {})
-    if integration.get("canonical_site") != CANONICAL_ARTIFACT:
+    if normalize_repo_relative(integration.get("canonical_site", "")) != CANONICAL_ARTIFACT:
         raise ReleaseIdentityError("portability contract canonical site drifted")
-    if artifact_rules.get("source") != CANONICAL_ARTIFACT:
+    if normalize_repo_relative(artifact_rules.get("source", "")) != CANONICAL_ARTIFACT:
         raise ReleaseIdentityError("portable runtime source is not the canonical Prompt Kit")
 
     module = _load_portable_builder(root)
@@ -198,14 +239,15 @@ def validate_portable_derivative(root: Path) -> str:
         defaults = parse_args([])
     except Exception as exc:
         raise ReleaseIdentityError(f"portable builder default arguments failed: {exc}") from exc
-    if getattr(defaults, "source", None) != CANONICAL_ARTIFACT:
+    if normalize_repo_relative(getattr(defaults, "source", "")) != CANONICAL_ARTIFACT:
         raise ReleaseIdentityError("portable builder default source is not the canonical Prompt Kit")
 
     canonical_path = root / CANONICAL_ARTIFACT
     runtime_path = root / PORTABLE_RUNTIME_REL
     if not runtime_path.is_file():
         raise ReleaseIdentityError(f"missing required file: {PORTABLE_RUNTIME_REL.as_posix()}")
-    before_sha = sha256_file(canonical_path)
+    before_worktree_sha = sha256_file(canonical_path)
+    before_content_sha = sha256_canonical_content(canonical_path)
     outputs_root = root / "Outputs"
     outputs_root.mkdir(parents=True, exist_ok=True)
     try:
@@ -224,15 +266,23 @@ def validate_portable_derivative(root: Path) -> str:
 
     source = receipt.get("source", {}) if isinstance(receipt, dict) else {}
     guardrails = receipt.get("guardrails", {}) if isinstance(receipt, dict) else {}
-    if source.get("path") != CANONICAL_ARTIFACT:
-        raise ReleaseIdentityError("portable builder receipt does not name the canonical source path")
-    if source.get("sha256") != before_sha:
-        raise ReleaseIdentityError("portable builder receipt source hash does not match canonical artifact")
+    receipt_source_path = normalize_repo_relative(source.get("path", ""))
+    if receipt_source_path != CANONICAL_ARTIFACT:
+        raise ReleaseIdentityError(
+            "portable builder receipt does not name the canonical source path after separator normalization"
+        )
+    if source.get("sha256") != before_worktree_sha:
+        raise ReleaseIdentityError("portable builder receipt source hash does not match checkout bytes")
     if guardrails.get("canonical_site_untouched") is not True:
         raise ReleaseIdentityError("portable builder no longer asserts canonical-site immutability")
-    if sha256_file(canonical_path) != before_sha:
-        raise ReleaseIdentityError("portable builder mutated the canonical Prompt Kit")
-    return "portable local site behavior derives from and hash-records the canonical artifact"
+    if sha256_file(canonical_path) != before_worktree_sha:
+        raise ReleaseIdentityError("portable builder mutated the canonical Prompt Kit checkout bytes")
+    if sha256_canonical_content(canonical_path) != before_content_sha:
+        raise ReleaseIdentityError("portable builder mutated canonical Prompt Kit content identity")
+    return (
+        "portable local site behavior derives from and hash-records the canonical artifact; "
+        "repository-relative receipt paths are separator-normalized"
+    )
 
 
 def validate_freshness(root: Path) -> str:
@@ -269,24 +319,32 @@ def validate_release_identity(root: Path) -> list[dict[str, str]]:
 def build_report(root: Path) -> dict[str, Any]:
     checks = validate_release_identity(root)
     canonical_path = root / CANONICAL_ARTIFACT
-    source_sha = None
+    content_sha = None
+    worktree_sha = None
     if canonical_path.is_file():
         try:
-            source_sha = sha256_file(canonical_path)
+            content_sha = sha256_canonical_content(canonical_path)
+            worktree_sha = sha256_file(canonical_path)
         except ReleaseIdentityError:
-            source_sha = None
+            content_sha = None
+            worktree_sha = None
     failures = [item for item in checks if item["status"] != "PASS"]
     return {
         "schema_version": "prompt-kit-release-identity-report/v1",
         "status": "FAIL" if failures else "PASS",
         "canonical_artifact": CANONICAL_ARTIFACT,
         "canonical_public_url": CANONICAL_PUBLIC_URL,
-        "canonical_artifact_sha256": source_sha,
+        "canonical_artifact_sha256": content_sha,
+        "canonical_content_sha256": content_sha,
+        "canonical_worktree_sha256": worktree_sha,
+        "hash_policy": "canonical content normalizes CRLF and CR to LF; worktree hash records exact checkout bytes",
+        "path_policy": "repository-relative identity paths normalize backslash to forward slash before comparison",
         "checks": checks,
         "failure_count": len(failures),
         "proof_ceiling": (
-            "Static repository proof of canonical Prompt Kit release identity. "
-            "Observed local/public/deployed equality still requires runtime hash evidence."
+            "Repository proof of canonical Prompt Kit content identity across checkout EOL/path conventions, "
+            "plus executable Pages and portable-builder wiring. Observed local/public/deployed equality still "
+            "requires runtime evidence from the tested machine or deployed URL."
         ),
     }
 
@@ -313,6 +371,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Prompt Kit release identity: {report['status']}")
         print(f"canonical={report['canonical_artifact']}")
         print(f"sha256={report['canonical_artifact_sha256'] or 'unavailable'}")
+        print(f"worktree_sha256={report['canonical_worktree_sha256'] or 'unavailable'}")
         for item in report["checks"]:
             print(f"{item['status']}: {item['id']}: {item['detail']}")
     return 0 if report["status"] == "PASS" else 1

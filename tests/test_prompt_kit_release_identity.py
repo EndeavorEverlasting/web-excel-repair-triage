@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import sys
@@ -28,6 +29,11 @@ class PromptKitReleaseIdentityTests(unittest.TestCase):
         path = self.root / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
+
+    def write_bytes(self, relative: str | Path, payload: bytes) -> None:
+        path = self.root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(payload)
 
     def copy(self, relative: str | Path) -> None:
         relative = Path(relative)
@@ -82,6 +88,7 @@ class PromptKitReleaseIdentityTests(unittest.TestCase):
         self.assertEqual(report["status"], "PASS", report)
         self.assertEqual(report["failure_count"], 0)
         self.assertTrue(report["canonical_artifact_sha256"])
+        self.assertTrue(report["canonical_worktree_sha256"])
 
     def test_fixture_passes(self) -> None:
         self.assertPasses()
@@ -91,6 +98,7 @@ class PromptKitReleaseIdentityTests(unittest.TestCase):
         report = validator.build_report(self.root)
         self.assertEqual(report["status"], "FAIL")
         self.assertIsNone(report["canonical_artifact_sha256"])
+        self.assertIsNone(report["canonical_worktree_sha256"])
         self.assertIn("canonical artifact is missing", json.dumps(report))
 
     def test_artifact_registry_cannot_name_a_second_canonical_site(self) -> None:
@@ -146,6 +154,39 @@ class PromptKitReleaseIdentityTests(unittest.TestCase):
         self.assertEqual(report["status"], "FAIL")
         self.assertIn("default source", json.dumps(report))
 
+    def test_windows_style_receipt_path_is_normalized(self) -> None:
+        path = self.root / validator.PORTABLE_BUILDER_REL
+        text = path.read_text(encoding="utf-8")
+        text = text.replace(
+            '"path": str(source_path.relative_to(repo_root)),',
+            '"path": str(source_path.relative_to(repo_root)).replace("/", "\\\\"),',
+        )
+        path.write_text(text, encoding="utf-8")
+        report = validator.build_report(self.root)
+        self.assertEqual(report["status"], "PASS", report)
+        self.assertEqual(
+            validator.normalize_repo_relative(r"web\prompt-kit\index.html"),
+            validator.CANONICAL_ARTIFACT,
+        )
+
+    def test_crlf_checkout_keeps_platform_stable_content_identity(self) -> None:
+        path = self.root / validator.CANONICAL_ARTIFACT
+        lf_bytes = path.read_bytes()
+        expected_content_sha = hashlib.sha256(lf_bytes).hexdigest()
+        crlf_bytes = lf_bytes.replace(b"\n", b"\r\n")
+        self.assertNotEqual(lf_bytes, crlf_bytes)
+        self.write_bytes(validator.CANONICAL_ARTIFACT, crlf_bytes)
+
+        report = validator.build_report(self.root)
+        self.assertEqual(report["status"], "PASS", report)
+        self.assertEqual(report["canonical_artifact_sha256"], expected_content_sha)
+        self.assertEqual(report["canonical_content_sha256"], expected_content_sha)
+        self.assertEqual(
+            report["canonical_worktree_sha256"],
+            hashlib.sha256(crlf_bytes).hexdigest(),
+        )
+        self.assertNotEqual(report["canonical_worktree_sha256"], expected_content_sha)
+
     def test_version_label_cannot_be_currentness_authority(self) -> None:
         payload = json.loads((self.root / validator.FRESHNESS_CONTRACT_REL).read_text(encoding="utf-8"))
         payload["anti_patterns"] = []
@@ -163,6 +204,8 @@ class PromptKitReleaseIdentityTests(unittest.TestCase):
         report = json.loads(output.read_text(encoding="utf-8"))
         self.assertEqual(report["schema_version"], "prompt-kit-release-identity-report/v1")
         self.assertEqual(report["status"], "PASS")
+        self.assertEqual(report["canonical_artifact_sha256"], report["canonical_content_sha256"])
+        self.assertTrue(report["canonical_worktree_sha256"])
 
 
 if __name__ == "__main__":

@@ -14,52 +14,67 @@ The canonical public Prompt Kit is:
 
 A visible label such as `v40` is descriptive UI metadata. It is not sufficient proof that a local file, loopback site, installed app, browser cache, or public deployment matches current `main`.
 
+## Cross-platform identity rules
+
+Two platform details must never be mistaken for two website releases:
+
+- **Path separators:** a portable receipt may report `web\prompt-kit\index.html` on Windows and `web/prompt-kit/index.html` on POSIX. Repository-relative identity comparisons normalize both to forward-slash form before comparison.
+- **Checkout line endings:** Git may materialize the same tracked HTML with CRLF on Windows and LF on Linux. The release-content SHA-256 normalizes CRLF and lone CR to LF before hashing. The exact checkout-byte SHA-256 is still retained because a portable builder receipt must prove which bytes it actually consumed on that workstation.
+
+Therefore a Linux CI raw-byte hash must not be hard-coded as a Windows worktree invariant. The harness reports both values and assigns them different meanings.
+
 ## Why a local site can look different
 
-A local surface can legitimately add a registered delivery runtime such as portable Favorites while still deriving from the exact canonical site. It becomes stale or invalid when its source is an older/unverified `index.html`, when the canonical source hash is not recorded, or when an operator opens an arbitrary local HTML file rather than resolving `prompt-kit-website` through `harness/artifacts.v1.json`.
+A local surface can legitimately add a registered delivery runtime such as portable Favorites while still deriving from the same canonical Prompt Kit content. It becomes stale or invalid when its source is an older/unverified canonical artifact, when its receipt does not identify the canonical source, when the portability runtime is built from another path, or when an operator opens an arbitrary local HTML file rather than resolving `prompt-kit-website` through `harness/artifacts.v1.json`.
 
-That distinction is now fail-closed: local delivery may be a derivative, but it may not become a second release authority.
+Line-ending conversion and Windows path separators are transport details, not separate Prompt Kit versions.
 
 ## Release identity evidence
 
-Use all three together when currentness matters:
+Use these together when currentness matters:
 
 1. repository commit SHA for canonical `main` or the exact branch under test;
-2. SHA-256 of `web/prompt-kit/index.html`;
-3. deterministic builder parity for `scripts/build_prompt_kit_registry.py`.
+2. normalized canonical-content SHA-256 of `web/prompt-kit/index.html`;
+3. exact checkout-byte SHA-256 when verifying a local portable-builder receipt;
+4. deterministic builder parity for `scripts/build_prompt_kit_registry.py`.
 
-For the Windows portable runtime, `Outputs/prompt-kit-portable/manifest.json` must record the SHA-256 of the canonical source artifact before the portability runtime is added. For GitHub Pages, the Pages build must compare the published `/prompt-kit/index.html` byte-for-byte with the tracked canonical artifact.
+For the Windows portable runtime, `Outputs/prompt-kit-portable/manifest.json` must record the exact SHA-256 of the canonical source bytes consumed on that workstation. The validator then separately proves that the normalized canonical content identity is the same release. For GitHub Pages, the Pages build compares its generated `/prompt-kit/index.html` byte-for-byte with the tracked canonical artifact in that CI checkout.
 
 ## Recovery when local and public surfaces disagree
 
-1. Do not choose a winner from the visible version label or appearance.
+1. Do not choose a winner from the visible version label, appearance, raw cross-platform hash, or path separator style.
 2. Resolve artifact ID `prompt-kit-website` from `harness/artifacts.v1.json`.
 3. Prove the checkout/branch/commit currentness using the registered acquisition path.
 4. Run `python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check`.
-5. Run `python scripts/validate_prompt_kit_release_identity.py --output Outputs/prompt-kit-release-identity.json --summary`.
-6. Rebuild or reacquire the local delivery surface from that canonical source.
-7. Compare source SHA-256 evidence before diagnosing a product/UI defect.
+5. Run `python scripts/validate_prompt_kit_release_identity.py --output Outputs/prompt-kit-release-identity.json --summary` on the actual machine being tested.
+6. Read both `canonical_content_sha256` and `canonical_worktree_sha256` from the report; do not compare a Windows worktree hash directly to a remembered Linux CI worktree hash.
+7. Rebuild or reacquire the local delivery surface from that canonical source.
+8. Verify the portable manifest source SHA-256 against the current workstation's exact checkout-byte SHA-256.
+9. Only after those gates pass, compare the runtime/local/public surfaces and diagnose an actual product or cache defect.
 
 ## What the validator proves
 
 `scripts/validate_prompt_kit_release_identity.py` verifies that:
 
+- the canonical artifact exists, is non-empty UTF-8, and has both normalized-content and exact-checkout hashes;
 - the artifact registry has exactly one `prompt-kit-website` canonical path;
-- the canonical path is `web/prompt-kit/index.html`;
-- GitHub Pages builds `/prompt-kit/index.html` from the canonical builder and compares it byte-for-byte with the tracked site;
-- the portable local runtime sources `web/prompt-kit/index.html` and records its source SHA-256 while leaving the canonical file untouched;
+- repository-relative path identity is separator-normalized;
+- GitHub Pages builds `/prompt-kit/index.html` from the canonical builder and compares it byte-for-byte with the tracked site in its checkout;
+- the portable local runtime defaults to `web/prompt-kit/index.html`, actually builds from that file, records its exact source SHA-256, and leaves the canonical file unchanged;
+- a Windows-style receipt path is accepted only when it normalizes to the registered canonical path;
+- CRLF checkout materialization retains the same normalized release-content identity as LF;
 - freshness guidance points ordinary browser users at the canonical public URL and rejects version-label-only currentness.
 
 Focused mutation tests fail those identities when they drift.
 
 ## Working / broken / missing
 
-**Working:** repository contracts already name one canonical Prompt Kit artifact and route browser, phone, Windows local-app, editable-checkout, and snapshot use separately. The portability builder already records canonical source SHA-256 and leaves the tracked canonical site untouched.
+**Working:** repository contracts name one canonical Prompt Kit artifact and route browser, phone, Windows local-app, editable-checkout, and snapshot use separately. Pages has deterministic parity wiring. The portability builder records the source bytes it consumed and leaves the tracked canonical site untouched.
 
-**Repaired by this harness sprint:** release identity is now an explicit versioned contract with an executable validator, mutation tests, operator report, manifest registration, hook coverage, and CI coverage. A fresh agent no longer has to infer that two visually different `index.html` surfaces must first be reconciled against one canonical artifact.
+**Repaired by this harness sprint:** the release-identity gate now handles Windows/POSIX path separators and Git checkout line-ending conversion explicitly. A fresh agent must not infer two releases from `\` versus `/` or from a raw checkout-byte SHA mismatch across operating systems.
 
-**Still runtime-dependent:** a specific operator machine may still have an old checkout, old generated `Outputs/prompt-kit-portable/index.html`, stale browser tab/cache/service worker, or a public deployment from a different commit. Static repository validation cannot identify which of those is present without runtime hash evidence.
+**Still runtime-dependent:** a specific operator machine may still have an old checkout, old generated `Outputs/prompt-kit-portable/index.html`, stale browser tab/cache/service worker, or a public deployment from a different commit. Repository validation cannot identify which runtime surface is stale without observed runtime evidence from that surface.
 
 ## Proof ceiling
 
-A passing release-identity harness gate proves repository ownership, delivery-source relationships, Pages parity wiring, portable-source hash wiring, freshness policy, and mutation-test enforcement on the tested commit. It does not prove the bytes currently displayed in a particular local browser or deployed Pages session match `main`; that requires observed runtime SHA/commit evidence.
+A passing release-identity harness gate proves repository ownership, normalized cross-platform content identity, delivery-source relationships, Pages parity wiring, local portable-source receipt wiring, freshness policy, and mutation-test enforcement on the tested commit. It does not prove the bytes currently displayed in a particular local browser or deployed Pages session match the intended release; that requires observed runtime evidence.
