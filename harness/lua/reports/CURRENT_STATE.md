@@ -2,8 +2,8 @@
 
 **Runtime status: NOT IMPLEMENTED**
 
-**Domain:** `lua-embedding-readiness`  
-**Parent workflow:** `harness-infrastructure`  
+**Domain:** `lua-embedding-readiness`
+**Parent workflow:** `harness-infrastructure`
 **Canonical contract:** `harness/lua/contracts/lua-embedding-readiness.v1.json`
 
 ## What is working
