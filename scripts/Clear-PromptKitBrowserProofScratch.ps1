@@ -134,7 +134,7 @@ $report = [ordered]@{
     preserved_count = $preservedCount
     deleted_count = $deletedCount
     failed_count = $failedCount
-    candidates = @($records)
+    candidates = $records.ToArray()
     exclusions = @(
         'canonical repository checkouts',
         'GitHub Pages',
