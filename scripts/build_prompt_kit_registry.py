@@ -21,6 +21,7 @@ EXTENSION_REGISTRIES = (
     REPO_ROOT / "registry" / "prompts" / "tutorial-discovery-prompts.v1.json",
     REPO_ROOT / "registry" / "prompts" / "repository-work-ledger-prompts.v1.json",
 )
+PROMPT_OVERRIDES = REPO_ROOT / "registry" / "prompts" / "prompt-overrides.v1.json"
 DISPLAY_ORDER_POLICY = (
     REPO_ROOT / "registry" / "prompts" / "prompt-display-order.v1.json"
 )
@@ -167,6 +168,52 @@ def load_display_order_policy() -> dict[str, Any]:
     return payload
 
 
+def apply_prompt_overrides(prompts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Replace legacy prompt records through one explicit versioned override registry."""
+    payload = _load_json(PROMPT_OVERRIDES)
+    if not isinstance(payload, dict):
+        raise SystemExit(f"Prompt override registry must be an object: {PROMPT_OVERRIDES}")
+    if payload.get("schema_version") != "prompt-registry-overrides/v1":
+        raise SystemExit(f"Unsupported prompt override schema in {PROMPT_OVERRIDES}")
+    overrides = payload.get("overrides")
+    if not isinstance(overrides, list):
+        raise SystemExit("Prompt override registry must define an overrides array")
+
+    positions: dict[str, int] = {}
+    for index, prompt in enumerate(prompts):
+        prompt_id = str(prompt.get("id", "")).upper()
+        if not prompt_id:
+            raise SystemExit(f"Prompt record {index} has no id before overrides")
+        if prompt_id in positions:
+            raise SystemExit(f"Duplicate prompt id before overrides: {prompt_id}")
+        positions[prompt_id] = index
+
+    seen: set[str] = set()
+    result = [dict(prompt) for prompt in prompts]
+    for index, override in enumerate(overrides):
+        if not isinstance(override, dict):
+            raise SystemExit(f"Prompt override {index} is not an object")
+        missing = sorted(REQUIRED_PROMPT_FIELDS - set(override))
+        if missing:
+            raise SystemExit(
+                f"Prompt override {override.get('id', index)} is missing fields: {missing}"
+            )
+        prompt_id = str(override["id"]).upper()
+        if prompt_id in seen:
+            raise SystemExit(f"Duplicate prompt override id: {prompt_id}")
+        seen.add(prompt_id)
+        if prompt_id not in positions:
+            raise SystemExit(f"Prompt override references unknown prompt id: {prompt_id}")
+        current = result[positions[prompt_id]]
+        if str(override["seq"]) != str(current.get("seq")):
+            raise SystemExit(
+                f"Prompt override may not change stable sequence: {prompt_id} "
+                f"{current.get('seq')} -> {override['seq']}"
+            )
+        result[positions[prompt_id]] = dict(override)
+    return result
+
+
 def apply_actionability_policy(
     prompt: dict[str, Any], policy: dict[str, Any]
 ) -> dict[str, Any]:
@@ -237,6 +284,7 @@ def load_prompt_registry() -> list[dict[str, Any]]:
             raise SystemExit(f"Registry extension prompts must be an array: {path}")
         prompts.extend(extension_prompts)
 
+    prompts = apply_prompt_overrides(prompts)
     actionability_policy = load_actionability_policy()
     seen_ids: set[str] = set()
     seen_sequences: set[str] = set()
