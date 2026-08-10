@@ -74,3 +74,19 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** commit:4747efe470c10b9a2f240eb71d9e838d25f82651 built the operational Lua harness; workflow:31420050622 passed the dedicated Lua embedding-readiness harness and uploaded the machine report; workflow:31420050626 passed operational harness contracts; workflow:31420050714 passed Prompt Kit web contracts; workflow:31420050637 passed artifact engine tests; merge:8a29a34f445c4ddf0a5b2d71af6bca57f767fa40 merged PR #167
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-08-10T14:41:00-04:00
+
+## TRQ-005 — Make P02 previous-chat execution-first and restore full All view
+
+- **Status:** DONE
+- **Priority:** P1
+- **Owner:** chatgpt-prompt-kit-chat-continuation-all-reset-20260810
+- **Branch / PR:** main / #169 merged
+- **Scope:** replace effective P02 with a stable-identity Previous Chat → Active Sprint Executor that takes only the previous chat name and drives unfinished work through implementation; add explicit versioned prompt-override authority; make Favorites → All an atomic full-filter reset for click and keyboard `1`; add filtering, override-identity, raw-language-audit, generated-site, and CI regressions; regenerate the canonical Prompt Kit; and publish that exact artifact through GitHub Pages
+- **Forbidden:** changing `AGENTS.md`; unrelated prompt rewrites; workbook/artifact-engine product behavior; Lua runtime/harness changes; secrets; destructive cleanup; force-push; claiming interactive browser behavior from static tests alone
+- **Dependencies:** TRQ-004; main@02eb09a3d3bf364b4a705a3a475f2b9c862e94c2 at sprint start
+- **References:** `registry/prompts/prompt-overrides.v1.json`, `scripts/build_prompt_kit_registry.py`, `scripts/evaluate_prompt_language.py`, `docs/prompt-kit-polish.js`, `harness/contracts/prompt-kit-filtering.v1.json`, `tests/test_prompt_kit_filtering_access.py`, `tests/test_skill_prompt_registry.py`, `tests/test_prompt_language_audit.py`, `.github/workflows/prompt-kit-web.yml`, `web/prompt-kit/index.html`, `.github/workflows/prompt-kit-pages.yml`
+- **Acceptance gate:** effective P02 keeps `P02`/`02`, contains exactly one operator placeholder `xyz_previous_chat_name`, retrieves the named prior chat and is execution-first rather than launch-pack-only; prompt overrides cannot drift stable ID casing/sequence and are included in raw/effective language audit; selecting Favorites then All by click or `4` then `1` clears section, type, color, search, and collapse state and renders the complete prompt stream; checked-in website equals the canonical builder output; final PR head passes Prompt Kit, skill-registry, operational-harness, documentation, Pages-build, and artifact-engine gates; PR merges; main Pages build and deployment succeed for the merge commit
+- **Gate:** none
+- **Last proof:** commit:def92656a582d7c8ad7ee233ae599eebf5c3a12c regenerated `web/prompt-kit/index.html` only through the registered builder; commit:3e4175ee1ea92d8a86759ffa4cfdf8f6897100d7 closed review gaps for exact override identity and raw language-audit authority; workflow:31423160675 passed Prompt Kit web contracts on final PR head; workflow:31423160691 passed skill prompt registry and generator UX; workflow:31423160714 passed operational harness contracts; workflow:31423160681 passed operator documentation contracts; workflow:31423160676 passed PR Pages build/parity; workflow:31423160720 passed artifact engine tests; merge:6d6d1b3f2aaf46d2353f7b411e1f36c3ef278733 merged PR #169; workflow:31423332238 built the exact main artifact and successfully deployed GitHub Pages for merge 6d6d1b3f2aaf46d2353f7b411e1f36c3ef278733
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-08-10T15:18:00-04:00
