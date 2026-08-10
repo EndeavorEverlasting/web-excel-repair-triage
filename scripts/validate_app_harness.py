@@ -31,20 +31,6 @@ REQUIRED_FILES = (
     ".githooks/pre-commit",
     ".githooks/pre-push",
 )
-FORBIDDEN_EXTERNAL_TOKENS = (
-    "start-process",
-    "xdg-open",
-    "open ",
-    "webbrowser",
-    "selenium",
-    "playwright",
-    "curl ",
-    "wget ",
-    "invoke-webrequest",
-    "requests.",
-    "git clean",
-    "reset --hard",
-)
 
 
 @dataclass(frozen=True)
@@ -72,14 +58,18 @@ def detect_repo_root() -> Path:
 
 
 def safe_runner(command: Sequence[str], root: Path) -> subprocess.CompletedProcess[str]:
-    text = " ".join(command).lower()
-    if any(token in text for token in FORBIDDEN_EXTERNAL_TOKENS):
-        raise RuntimeError(f"unsafe command rejected by synthetic harness: {' '.join(command)}")
+    command = tuple(command)
     allowed = (
-        command[:2] == ["git", "branch"],
-        command[:2] == ["git", "rev-parse"],
-        len(command) >= 2 and command[0] == sys.executable and command[1].endswith("validate_harness.py"),
-        len(command) >= 3 and command[:3] == [sys.executable, "-m", "triage.gitignore_hygiene"],
+        command == ("git", "branch", "--show-current"),
+        command == ("git", "rev-parse", "HEAD"),
+        command
+        == (
+            sys.executable,
+            str(root / "scripts" / "validate_harness.py"),
+            "--report",
+            str(root / "Outputs" / "harness-completeness-report.json"),
+        ),
+        command == (sys.executable, "-m", "triage.gitignore_hygiene"),
     )
     if not any(allowed):
         raise RuntimeError(f"command is not in the offline allowlist: {' '.join(command)}")
@@ -137,7 +127,16 @@ def check_run_context(root: Path, runner: Runner, env: Mapping[str, str]) -> tup
     branch = branch or env.get("GITHUB_HEAD_REF") or env.get("GITHUB_REF_NAME") or "detached"
     commit = commit_result.stdout.strip() if commit_result.returncode == 0 else ""
     ok = branch_result.returncode == 0 and commit_result.returncode == 0 and bool(commit)
-    return _result("run context", ok, "git_identity_resolved" if ok else "git_identity_unavailable", [f"branch={branch}", f"commit={commit or 'unknown'}"]), branch, commit or "unknown"
+    return (
+        _result(
+            "run context",
+            ok,
+            "git_identity_resolved" if ok else "git_identity_unavailable",
+            [f"branch={branch}", f"commit={commit or 'unknown'}"],
+        ),
+        branch,
+        commit or "unknown",
+    )
 
 
 def check_artifact_registry(root: Path) -> Check:
@@ -155,15 +154,27 @@ def check_artifact_registry(root: Path) -> Check:
         ok = payload.get("schema_version") == "web-excel-artifacts/v1" and required <= ids
     except (OSError, json.JSONDecodeError, AttributeError, TypeError) as exc:
         return _result("artifact registry", False, "artifact_registry_invalid", [str(exc)])
-    return _result("artifact registry", ok, "artifact_registry_parseable" if ok else "artifact_registry_contract_missing")
+    return _result(
+        "artifact registry",
+        ok,
+        "artifact_registry_parseable" if ok else "artifact_registry_contract_missing",
+    )
 
 
 def check_report_renderer(root: Path) -> Check:
     if not (root / "harness" / "reports" / "CURRENT_STATE.md").is_file():
         return _result("report renderer", False, "operator_report_missing")
     sample = render_matrix([Check("probe", "PASS", "ok", [])], "main", "0" * 40)
-    ok = sample.startswith("APP HARNESS VALIDATION\n") and "[PASS] probe" in sample and "Result: 1 passed / 0 skipped / 0 failed" in sample
-    return _result("report renderer", ok, "matrix_and_summary_renderer_ready" if ok else "matrix_renderer_broken")
+    ok = (
+        sample.startswith("APP HARNESS VALIDATION\n")
+        and "[PASS] probe" in sample
+        and "Result: 1 passed / 0 skipped / 0 failed" in sample
+    )
+    return _result(
+        "report renderer",
+        ok,
+        "matrix_and_summary_renderer_ready" if ok else "matrix_renderer_broken",
+    )
 
 
 def check_optional_mcp(root: Path, env: Mapping[str, str]) -> Check:
@@ -176,15 +187,28 @@ def check_optional_mcp(root: Path, env: Mapping[str, str]) -> Check:
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     except (OSError, SyntaxError) as exc:
         return _result("optional MCP symbol smoke", False, "mcp_module_not_parseable", [str(exc)])
-    symbols = [node.name for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))]
-    return _result("optional MCP symbol smoke", bool(symbols), "static_mcp_symbols_readable" if symbols else "mcp_symbols_missing", symbols[:5])
+    symbols = [
+        node.name
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+    ]
+    return _result(
+        "optional MCP symbol smoke",
+        bool(symbols),
+        "static_mcp_symbols_readable" if symbols else "mcp_symbols_missing",
+        symbols[:5],
+    )
 
 
 def check_hook_hygiene(root: Path, runner: Runner) -> Check:
     try:
         validators = json.loads((root / "harness" / "validators.v1.json").read_text(encoding="utf-8"))
         hooks = validators.get("hooks", {})
-        hook_paths = [entry.get("path") for entry in hooks.values() if isinstance(entry, dict)] if isinstance(hooks, dict) else []
+        hook_paths = (
+            [entry.get("path") for entry in hooks.values() if isinstance(entry, dict)]
+            if isinstance(hooks, dict)
+            else []
+        )
         missing = [path for path in hook_paths if not isinstance(path, str) or not (root / path).is_file()]
         if missing or len(hook_paths) < 2:
             return _result("hook hygiene", False, "registered_hooks_missing", [str(item) for item in missing])
@@ -192,7 +216,12 @@ def check_hook_hygiene(root: Path, runner: Runner) -> Check:
         return _result("hook hygiene", False, "validator_registry_invalid", [str(exc)])
     result = runner([sys.executable, "-m", "triage.gitignore_hygiene"], root)
     if result.returncode != 0:
-        return _result("hook hygiene", False, "artifact_hygiene_failed", [(result.stderr or result.stdout).strip()][:1])
+        return _result(
+            "hook hygiene",
+            False,
+            "artifact_hygiene_failed",
+            [(result.stderr or result.stdout).strip()][:1],
+        )
     return _result("hook hygiene", True, "registered_hooks_and_artifact_hygiene_passed")
 
 
@@ -209,7 +238,11 @@ def render_matrix(checks: Sequence[Check], branch: str, commit: str) -> str:
     return "\n".join(lines)
 
 
-def validate(root: Path, runner: Runner = safe_runner, env: Mapping[str, str] | None = None) -> dict[str, object]:
+def validate(
+    root: Path,
+    runner: Runner = safe_runner,
+    env: Mapping[str, str] | None = None,
+) -> dict[str, object]:
     environment = dict(os.environ if env is None else env)
     run_context, branch, commit = check_run_context(root, runner, environment)
     checks = [
@@ -222,7 +255,7 @@ def validate(root: Path, runner: Runner = safe_runner, env: Mapping[str, str] | 
     ]
     return {
         "schema_version": "app-harness-validation/v1",
-        "repository_root": str(root),
+        "repository_root": ".",
         "branch": branch,
         "commit": commit,
         "proof_ceiling": PROOF_CEILING,
@@ -264,8 +297,8 @@ def main() -> int:
     checks = [Check(**item) for item in report["checks"]]
     print(render_matrix(checks, str(report["branch"]), str(report["commit"])))
     if backup:
-        print(f"Previous JSON: {backup}")
-    print(f"JSON: {target}")
+        print(f"Previous JSON: {backup.relative_to(root).as_posix()}")
+    print(f"JSON: {target.relative_to(root).as_posix()}")
     return 1 if report["summary"]["failed"] else 0
 
 
