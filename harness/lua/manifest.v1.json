@@ -1,0 +1,33 @@
+{
+  "schema_version": "lua-embedding-harness/v1",
+  "domain": "lua-embedding-readiness",
+  "runtime_status": "not_implemented",
+  "parent_workflow": "harness-infrastructure",
+  "components": {
+    "codebase_map": "harness/lua/CODEBASE_MAP.md",
+    "workflow_spec": "harness/lua/WORKFLOW.md",
+    "artifact_registry": "harness/lua/ARTIFACT_REGISTRY.md",
+    "artifact_registry_machine": "harness/lua/artifacts.v1.json",
+    "validator_registry": "harness/lua/validators.v1.json",
+    "capability_registry": "harness/lua/capabilities.v1.json",
+    "trigger_registry": "harness/lua/triggers.v1.json",
+    "contract": "harness/lua/contracts/lua-embedding-readiness.v1.json",
+    "skill": ".ai/skills/lua-embedding-readiness/SKILL.md",
+    "pre_commit_hook": "harness/lua/hooks/pre-commit.sh",
+    "pre_push_hook": "harness/lua/hooks/pre-push.sh",
+    "operator_report": "harness/lua/reports/CURRENT_STATE.md",
+    "validator": "scripts/validate_lua_harness.py",
+    "contract_tests": "tests/test_lua_harness_contract.py",
+    "ci_workflow": ".github/workflows/lua-harness-contract.yml"
+  },
+  "validation_order": [
+    "python -m py_compile scripts/validate_lua_harness.py tests/test_lua_harness_contract.py",
+    "python scripts/validate_lua_harness.py --output Outputs/lua-embedding-readiness.json --summary",
+    "python -m unittest tests.test_lua_harness_contract -v",
+    "python scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
+    "python -m unittest tests.test_harness_contract -v",
+    "python -m triage.gitignore_hygiene",
+    "git diff --check"
+  ],
+  "proof_ceiling": "Tracked Lua embedding-readiness harness, static contract validation, root harness integration, and CI proof. Product/runtime Lua remains explicitly unimplemented."
+}
