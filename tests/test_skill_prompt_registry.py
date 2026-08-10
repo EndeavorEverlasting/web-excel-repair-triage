@@ -32,6 +32,57 @@ class SkillPromptRegistryTests(unittest.TestCase):
         self.assertEqual(by_id["P65"]["discoveryRank"], 1)
         self.assertEqual(by_id["P65"]["displayOrderPolicy"], "prompt-kit-guided-discovery-order")
 
+    def test_p02_previous_chat_executor_is_execution_first(self) -> None:
+        prompt = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P02"]
+        content = prompt["copyContent"]
+
+        self.assertEqual(prompt["name"], "Previous Chat → Active Sprint Executor")
+        self.assertEqual(prompt["class"], "CONTINUATION / EXECUTE")
+        self.assertEqual(prompt["progress"], "YES")
+        self.assertEqual(content.count("xyz_previous_chat_name"), 1)
+        for phrase in (
+            "PREVIOUS CHAT:",
+            "CONTINUE THAT CHAT AS AN ACTIVE IMPLEMENTATION SPRINT",
+            "planning is subordinate to implementation",
+            "RECOVER THE NAMED CHAT",
+            "VERIFY THE CURRENT FLOOR",
+            "SELECT THE FIRST UNFINISHED EXECUTION SLICE",
+            "IMPLEMENT NOW",
+            "VALIDATE AND DELIVER",
+            "Do not stop at a summary, TODO list, architecture discussion, branch listing, PR status, or plan",
+            "NEXT COMMAND: one exact executable action",
+        ):
+            self.assertIn(phrase, content)
+        for plan_only_marker in (
+            "NEXT CHAT PANELS",
+            "SUPPORTING SPRINT MAP",
+            "one prompt panel goes into one new chat",
+        ):
+            self.assertNotIn(plan_only_marker, content)
+        for keyword in (
+            "previous chat",
+            "continue chat",
+            "resume conversation",
+            "implement previous chat",
+        ):
+            self.assertIn(keyword, prompt["keywords"])
+
+    def test_prompt_override_registry_is_explicit_and_identity_preserving(self) -> None:
+        payload = json.loads(build_prompt_kit_registry.PROMPT_OVERRIDES.read_text(encoding="utf-8"))
+        self.assertEqual(payload["schema_version"], "prompt-registry-overrides/v1")
+        self.assertEqual(len(payload["overrides"]), 1)
+        override = payload["overrides"][0]
+        self.assertEqual((override["id"], override["seq"]), ("P02", "02"))
+        self.assertEqual(override["copySheet"], "P02_COPY_SAFE")
+        source_p02 = next(
+            item
+            for item in json.loads(build_prompt_kit_registry.BASE_REGISTRY.read_text(encoding="utf-8"))
+            if item["id"] == "P02"
+        )
+        self.assertEqual(source_p02["seq"], override["seq"])
+
     def test_skill_eval_prompt_requires_correctness_weakness_and_efficiency_proof(self) -> None:
         prompts = build_prompt_kit_registry.load_prompt_registry()
         prompt = {item["id"]: item for item in prompts}["P62"]
@@ -179,6 +230,7 @@ class SkillPromptRegistryTests(unittest.TestCase):
             self.assertEqual(output.read_text(encoding="utf-8"), html)
             for prompt_id in ("P61", "P62", "P63", "P64", "P65"):
                 self.assertIn(f'"id": "{prompt_id}"', html)
+            self.assertIn("Previous Chat → Active Sprint Executor", html)
             self.assertIn("Skill Factoring and Boundary Refactorer", html)
             self.assertIn("Skill Correctness and Efficiency Eval Implementer", html)
             self.assertIn("Repository Tutorial Portfolio Ranker", html)
