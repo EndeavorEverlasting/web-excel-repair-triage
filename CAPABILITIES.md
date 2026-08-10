@@ -19,6 +19,7 @@ This file is the human-readable index for reusable repository operations. The ma
 | `skill-evaluation` | `.ai/skills/skill-evaluation/SKILL.md` | Prompt Kit P62 | Repository-native eval harness, cases, runner, results, and repair ledger. |
 | `skill-factoring` | `.ai/skills/skill-factoring/SKILL.md` | Prompt Kit P61 | Skill ownership dispositions and repaired routing boundaries. |
 | `technician-prompt-kit-acquisition` | `.ai/skills/technician-prompt-kit-acquisition/SKILL.md` | Existing public/Windows/Git acquisition surfaces | Device-aware access mode: public use, phone install, Windows local app, editable checkout, or ZIP snapshot. |
+| `prompt-kit-browser-proof-scratch-cleanup` | `.ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md` | `scripts/Clear-PromptKitBrowserProofScratch.ps1` | Preview/apply cleanup receipt for exact eligible detached browser-proof scratch. |
 
 ## Harness infrastructure capability
 
@@ -55,6 +56,10 @@ python -m unittest tests.test_prompt_kit_cross_device_access -v
 ## Skill-evaluation capability
 
 P62 must reproduce functional weaknesses and inefficiencies with versioned cases, guide the smallest valid repair through tests or profiling, validate unit/integration correctness, and measure performance, tool calls, context, cost, retries, and tokens without weakening safety or routing.
+
+## Browser-proof scratch cleanup capability
+
+`prompt-kit-browser-proof-scratch-cleanup` owns only detached `prompt-kit-browser-proof-*` directories directly under the OS temp root. Preview is default; apply is explicit; rejected paths are preserved; prior stable receipts are backed up. Browser profile data, localStorage, Favorites, canonical repositories, public Pages, and unrelated Temp contents are outside this capability.
 
 ## Proof boundaries
 

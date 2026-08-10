@@ -230,6 +230,39 @@
         "before and after results",
         "remaining runtime gates"
       ]
+    },
+    {
+      "id": "prompt-kit-browser-proof-cleanup",
+      "document": "WORKFLOW.md#h-prompt-kit-browser-proof-scratch-cleanup",
+      "trigger": "An operator presents a detached prompt-kit-browser-proof-* Temp path or requests safe Prompt Kit browser-proof scratch classification/cleanup.",
+      "owned_scope": [
+        "browser-proof scratch classification",
+        "preview/apply cleanup runner",
+        "cleanup receipts and retained receipt backups",
+        "focused validator/tests/skill/report"
+      ],
+      "forbidden_scope": [
+        "AGENTS.md",
+        "Prompt Kit product behavior",
+        "browser profile/localStorage/Favorites deletion",
+        "broad temp deletion",
+        "canonical checkout deletion"
+      ],
+      "entry_points": [
+        "scripts/Clear-PromptKitBrowserProofScratch.ps1",
+        "scripts/validate_prompt_kit_browser_proof_cleanup.py",
+        "harness/browser-proof-cleanup/manifest.v1.json"
+      ],
+      "validation_profile": "target-repository",
+      "failure_policy": "Fail closed and preserve the candidate when temp-root, name, marker, age, reparse-point, report-path, or deletion gates fail. Never widen cleanup scope to recover from a failure.",
+      "handoff_fields": [
+        "target path",
+        "preview/apply mode",
+        "eligible/preserved/deleted/failed counts",
+        "receipt and backup paths",
+        "proof ceiling",
+        "next executable action"
+      ]
     }
   ]
 }

@@ -158,6 +158,32 @@
         "path": "scripts/validate_harness.py"
       },
       "proof_ceiling": "Static repository, contract, source-gap, and CI harness proof on the tested commit; no product runtime, browser/mobile ergonomics, provider, GUI, protected-target, or production proof."
+    },
+    {
+      "id": "prompt-kit-browser-proof-scratch-cleanup",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md",
+      "trigger_ids": [
+        "prompt-kit-browser-proof-temp-path"
+      ],
+      "operation": "Preview, classify, retain receipts for, and explicitly remove only eligible detached Prompt Kit browser-proof scratch directories under the OS temp root.",
+      "inputs": [
+        "optional exact prompt-kit-browser-proof path",
+        "OS temp root",
+        "minimum age",
+        "explicit apply intent"
+      ],
+      "outputs": [
+        "prompt-kit-browser-proof-cleanup-report",
+        "preserved prior receipt when present",
+        "eligible/preserved/deleted/failed counts"
+      ],
+      "implementation": {
+        "kind": "script",
+        "path": "scripts/Clear-PromptKitBrowserProofScratch.ps1"
+      },
+      "proof_ceiling": "Filesystem classification and cleanup receipt only; browser profile/localStorage/Favorites state remains separate."
     }
   ]
 }

@@ -112,6 +112,30 @@
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Whitespace and conflict-marker proof for the staged index."
+    },
+    {
+      "id": "prompt-kit-browser-proof-cleanup-completeness",
+      "class": "contract",
+      "command": "python scripts/validate_prompt_kit_browser_proof_cleanup.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static focused cleanup-harness completeness and safety-marker proof."
+    },
+    {
+      "id": "prompt-kit-browser-proof-cleanup-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_prompt_kit_browser_proof_cleanup_harness -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable focused cleanup contract regression proof."
+    },
+    {
+      "id": "prompt-kit-browser-proof-cleanup-powershell-smoke",
+      "class": "test",
+      "command": "pwsh -NoLogo -NoProfile -File scripts/Clear-PromptKitBrowserProofScratch.ps1",
+      "blocking": true,
+      "output": "Outputs/prompt-kit-browser-proof-cleanup-report.json",
+      "proof_ceiling": "PowerShell preview execution on the current host; not P-Top cleanup proof."
     }
   ],
   "profiles": {

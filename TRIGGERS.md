@@ -12,6 +12,7 @@ This file describes deterministic routing into repository skills and capabilitie
 | `skill-quality-unproven` | Skill correctness, routing, regression safety, efficiency, or token use lacks executable proof. | `skill-evaluation` | The task is ownership factoring only. |
 | `skill-boundary-defect` | A skill is oversized, overlapping, ambiguous, prompt-only, or owns unrelated triggers. | `skill-factoring` | The boundary is healthy and the change is cosmetic only. |
 | `technician-needs-latest-prompt-kit` | A user needs to open/use the Prompt Kit in a browser, install it on a phone/tablet, launch the Windows stable local app, obtain a source snapshot, or create/update an editable checkout for edit/commit/push work. | `technician-prompt-kit-acquisition` | Destructive Git cleanup or credential automation is proposed; or an editable checkout update is unsafe because the checkout is dirty, divergent, non-main, or has the wrong origin. |
+| `prompt-kit-browser-proof-temp-path` | An operator supplies a `prompt-kit-browser-proof-*` path under OS Temp or asks to classify/remove detached Prompt Kit browser-proof scratch. | `prompt-kit-browser-proof-scratch-cleanup` | The real request is browser-site data/Favorites deletion, broad Temp cleanup, canonical-repo cleanup, or durable evidence deletion. |
 
 ## Prompt Kit acquisition routing rule
 
@@ -24,6 +25,10 @@ The acquisition trigger is intent-first, not device-command-first:
 5. **Explicit no-Git source snapshot** → `main.zip`, with snapshot semantics stated clearly.
 
 The focused owner is `harness/contracts/prompt-kit-cross-device-access.v1.json`. A normal-use request must fail routing review if the proposed answer unnecessarily sends the user into Git or file extraction.
+
+## Browser-proof cleanup routing rule
+
+A `file:///.../Temp/prompt-kit-browser-proof-<hex>/web/prompt-kit/index.html` path routes to the cleanup capability only after filesystem classification. Preview first. Do not translate this trigger into browser localStorage/Favorites deletion or generic Temp cleanup.
 
 ## Routing procedure
 

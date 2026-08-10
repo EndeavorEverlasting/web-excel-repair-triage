@@ -59,6 +59,16 @@ This is the repository skill index. Reusable procedures live under `.ai/skills/<
 - **Forbidden conditions:** Destructive Git cleanup, credential automation, or updating an editable checkout that is dirty, divergent, non-main, or has an unexpected origin.
 - **Primary validation:** `python scripts/validate_prompt_kit_cross_device_access.py --summary`, `python -m unittest tests.test_prompt_kit_cross_device_access -v`, `python scripts/validate_prompt_kit_freshness_guidance.py --summary`, `python -m unittest tests.test_prompt_kit_freshness_guidance -v`, then the root harness validator/contracts and native device field proof.
 
+### Prompt Kit browser-proof cleanup
+
+- **Path:** `.ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md`
+- **Trigger:** `prompt-kit-browser-proof-temp-path`
+- **Capability:** `prompt-kit-browser-proof-scratch-cleanup`
+- **Use when:** An operator presents a detached `prompt-kit-browser-proof-*` directory under the OS temp root or requests safe classification/removal of those browser-proof copies.
+- **Forbidden scope:** Browser profile/localStorage/Favorites deletion, broad temp cleanup, canonical checkout deletion, product behavior changes.
+- **Outputs:** Preview/apply receipt, retained prior receipt backup, classified candidates, and bounded filesystem proof.
+- **Primary validation:** `python scripts/validate_prompt_kit_browser_proof_cleanup.py --summary` and `python -m unittest tests.test_prompt_kit_browser_proof_cleanup_harness -v`.
+
 ## Required skill-file sections
 
 Every active `SKILL.md` must include:
