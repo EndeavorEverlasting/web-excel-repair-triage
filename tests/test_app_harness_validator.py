@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -65,11 +66,52 @@ class AppHarnessValidatorTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "under Outputs"):
             validator.output_path(ROOT, "app-harness-validation.json")
 
+    def test_previous_receipt_is_preserved_under_outputs_backups(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = root / "Outputs" / "app-harness-validation.json"
+            target.parent.mkdir(parents=True)
+            target.write_text('{"old": true}\n', encoding="utf-8")
+            backup = validator.preserve_existing_output(root, target)
+            self.assertIsNotNone(backup)
+            assert backup is not None
+            self.assertTrue(backup.is_file())
+            self.assertEqual(target.read_text(encoding="utf-8"), backup.read_text(encoding="utf-8"))
+            self.assertIn("Outputs/backups/app-harness-validation/", backup.as_posix())
+
+    def test_nested_harness_receipt_is_preserved_before_validator_runs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for relative in validator.REQUIRED_FILES:
+                path = root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("fixture\n", encoding="utf-8")
+            nested = root / "Outputs" / "harness-completeness-report.json"
+            nested.parent.mkdir(parents=True, exist_ok=True)
+            nested.write_text('{"previous": true}\n', encoding="utf-8")
+            check = validator.check_required_files(root, self.fake_runner)
+            self.assertEqual("PASS", check.status)
+            backups = list((root / "Outputs" / "backups" / "app-harness-validation").rglob("harness-completeness-report.json"))
+            self.assertEqual(1, len(backups))
+            self.assertEqual(nested.read_text(encoding="utf-8"), backups[0].read_text(encoding="utf-8"))
+
+    def test_validator_and_receipt_are_registered_centrally(self):
+        artifacts = json.loads((ROOT / "harness" / "artifacts.v1.json").read_text(encoding="utf-8"))
+        artifact_ids = {item["id"] for item in artifacts["artifacts"]}
+        self.assertIn("app-harness-validation-report", artifact_ids)
+
+        validators = json.loads((ROOT / "harness" / "validators.v1.json").read_text(encoding="utf-8"))
+        validator_ids = {item["id"] for item in validators["validators"]}
+        self.assertIn("app-harness-validation", validator_ids)
+        self.assertIn("app-harness-validation", validators["profiles"]["harness"])
+        self.assertIn("app-harness-validation", validators["profiles"]["pre_push"])
+
     def test_offline_allowlist_rejects_launcher_and_network_commands(self):
         for command in (
             ["python", "app.py"],
             ["powershell", "Start-Process", "index.html"],
             ["curl", "https://example.invalid"],
+            ["git", "clean", "-fd"],
         ):
             with self.subTest(command=command):
                 with self.assertRaises(RuntimeError):
