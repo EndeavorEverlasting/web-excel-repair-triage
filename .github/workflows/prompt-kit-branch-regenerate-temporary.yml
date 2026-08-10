@@ -1,0 +1,38 @@
+name: Prompt Kit branch regeneration helper
+
+on:
+  push:
+    branches:
+      - fix/prompt-kit-responsive-header-overlap-20260810
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/prompt-kit-responsive-header-overlap-20260810
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Regenerate canonical Prompt Kit
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Commit exact builder output
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- web/prompt-kit/index.html; then
+            echo 'Canonical Prompt Kit already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'build(prompt-kit): regenerate responsive header site'
+          git push origin HEAD:fix/prompt-kit-responsive-header-overlap-20260810
