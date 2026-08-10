@@ -36,6 +36,8 @@ class PromptKitBrowserProofCleanupHarnessTests(unittest.TestCase):
         self.assertIn("ReparsePoint", text)
         self.assertIn("[switch]$Apply", text)
         self.assertIn("ShouldProcess", text)
+        self.assertIn("$records.ToArray()", text)
+        self.assertNotIn("candidates = @($records)", text)
         self.assertNotIn("Remove-Item -Path $env:TEMP", text)
         self.assertNotIn("Remove-Item $env:TEMP", text)
         self.assertNotIn("localStorage.clear(", text)
