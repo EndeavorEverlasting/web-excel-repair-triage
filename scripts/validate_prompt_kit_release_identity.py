@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
+import tempfile
 from pathlib import Path
+from types import ModuleType
 from typing import Any, Callable
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[1]
@@ -13,10 +16,12 @@ CONTRACT_REL = Path("harness/contracts/prompt-kit-release-identity.v1.json")
 ARTIFACTS_REL = Path("harness/artifacts.v1.json")
 PORTABILITY_CONTRACT_REL = Path("harness/contracts/prompt-kit-portability.v1.json")
 PORTABLE_BUILDER_REL = Path("scripts/serve_prompt_kit_portable.py")
+PORTABLE_RUNTIME_REL = Path("docs/prompt-kit-favorites-portability.js")
 FRESHNESS_CONTRACT_REL = Path("harness/contracts/prompt-kit-freshness-guidance.v1.json")
 PAGES_WORKFLOW_REL = Path(".github/workflows/prompt-kit-pages.yml")
 CANONICAL_ARTIFACT = "web/prompt-kit/index.html"
 CANONICAL_PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/"
+PAGES_BUILD_STEP = "Build Pages bundle from canonical registry"
 
 
 class ReleaseIdentityError(RuntimeError):
@@ -41,6 +46,24 @@ def load_text(root: Path, relative: Path) -> str:
     if not text.strip():
         raise ReleaseIdentityError(f"required file is empty: {relative.as_posix()}")
     return text
+
+
+def sha256_file(path: Path) -> str:
+    try:
+        payload = path.read_bytes()
+    except OSError as exc:
+        raise ReleaseIdentityError(f"cannot read canonical artifact: {CANONICAL_ARTIFACT}: {exc}") from exc
+    if not payload:
+        raise ReleaseIdentityError(f"canonical artifact is empty: {CANONICAL_ARTIFACT}")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def validate_canonical_artifact(root: Path) -> str:
+    path = root / CANONICAL_ARTIFACT
+    if not path.is_file():
+        raise ReleaseIdentityError(f"canonical artifact is missing: {CANONICAL_ARTIFACT}")
+    digest = sha256_file(path)
+    return f"canonical Prompt Kit exists and has SHA-256 {digest}"
 
 
 def validate_contract(root: Path) -> str:
@@ -87,18 +110,74 @@ def validate_artifact_registry(root: Path) -> str:
     return "artifact registry resolves one canonical Prompt Kit website"
 
 
+def _workflow_run_commands(text: str, step_name: str) -> list[str]:
+    lines = text.splitlines()
+    step_index = None
+    step_indent = None
+    for index, line in enumerate(lines):
+        if line.strip() == f"- name: {step_name}":
+            step_index = index
+            step_indent = len(line) - len(line.lstrip())
+            break
+    if step_index is None or step_indent is None:
+        raise ReleaseIdentityError(f"Pages workflow is missing step: {step_name}")
+
+    run_index = None
+    run_indent = None
+    for index in range(step_index + 1, len(lines)):
+        line = lines[index]
+        stripped = line.strip()
+        indent = len(line) - len(line.lstrip())
+        if stripped and indent <= step_indent:
+            break
+        if stripped == "run: |":
+            run_index = index
+            run_indent = indent
+            break
+    if run_index is None or run_indent is None:
+        raise ReleaseIdentityError(f"Pages step has no executable run block: {step_name}")
+
+    commands: list[str] = []
+    for line in lines[run_index + 1 :]:
+        stripped = line.strip()
+        indent = len(line) - len(line.lstrip())
+        if stripped and indent <= run_indent:
+            break
+        if not stripped or stripped.startswith("#"):
+            continue
+        commands.append(stripped)
+    return commands
+
+
 def validate_pages(root: Path) -> str:
     text = load_text(root, PAGES_WORKFLOW_REL)
-    required = (
+    commands = _workflow_run_commands(text, PAGES_BUILD_STEP)
+    required = [
+        "set -euo pipefail",
         'python scripts/build_prompt_kit_registry.py --output "$SITE_ROOT/prompt-kit/index.html"',
         'cmp "$SITE_ROOT/prompt-kit/index.html" web/prompt-kit/index.html',
-    )
-    for marker in required:
-        if marker not in text:
-            raise ReleaseIdentityError(f"Pages workflow lost canonical parity marker: {marker}")
-    if 'cp "$SITE_ROOT/index.html" "$SITE_ROOT/prompt-kit/index.html"' in text and CANONICAL_ARTIFACT not in text:
-        raise ReleaseIdentityError("Pages workflow may not derive Prompt Kit identity from an unregistered root index")
-    return "Pages bundle is required to match the canonical tracked Prompt Kit"
+    ]
+    missing = [command for command in required if command not in commands]
+    if missing:
+        raise ReleaseIdentityError(f"Pages build step lost executable canonical parity command(s): {missing}")
+    if commands.index(required[1]) > commands.index(required[2]):
+        raise ReleaseIdentityError("Pages compares canonical output before building it")
+    return "Pages build step executes canonical builder and byte-for-byte parity comparison"
+
+
+def _load_portable_builder(root: Path) -> ModuleType:
+    path = root / PORTABLE_BUILDER_REL
+    if not path.is_file():
+        raise ReleaseIdentityError(f"missing required file: {PORTABLE_BUILDER_REL.as_posix()}")
+    spec = importlib.util.spec_from_file_location("prompt_kit_portable_release_identity_probe", path)
+    if spec is None or spec.loader is None:
+        raise ReleaseIdentityError("portable builder cannot be imported for behavior proof")
+    module = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(module)
+    except Exception as exc:  # pragma: no cover - exact import error is environment-specific
+        raise ReleaseIdentityError(f"portable builder import failed: {exc}") from exc
+    return module
 
 
 def validate_portable_derivative(root: Path) -> str:
@@ -109,16 +188,51 @@ def validate_portable_derivative(root: Path) -> str:
         raise ReleaseIdentityError("portability contract canonical site drifted")
     if artifact_rules.get("source") != CANONICAL_ARTIFACT:
         raise ReleaseIdentityError("portable runtime source is not the canonical Prompt Kit")
-    builder = load_text(root, PORTABLE_BUILDER_REL)
-    required = (
-        'parser.add_argument("--source", default="web/prompt-kit/index.html")',
-        '"sha256": sha256_bytes(source_bytes)',
-        '"canonical_site_untouched": True',
-    )
-    for marker in required:
-        if marker not in builder:
-            raise ReleaseIdentityError(f"portable builder lost source-identity evidence: {marker}")
-    return "portable local site is a hash-recorded derivative of the canonical artifact"
+
+    module = _load_portable_builder(root)
+    parse_args = getattr(module, "parse_args", None)
+    build_portable_artifact = getattr(module, "build_portable_artifact", None)
+    if not callable(parse_args) or not callable(build_portable_artifact):
+        raise ReleaseIdentityError("portable builder lost executable parse/build entry points")
+    try:
+        defaults = parse_args([])
+    except Exception as exc:
+        raise ReleaseIdentityError(f"portable builder default arguments failed: {exc}") from exc
+    if getattr(defaults, "source", None) != CANONICAL_ARTIFACT:
+        raise ReleaseIdentityError("portable builder default source is not the canonical Prompt Kit")
+
+    canonical_path = root / CANONICAL_ARTIFACT
+    runtime_path = root / PORTABLE_RUNTIME_REL
+    if not runtime_path.is_file():
+        raise ReleaseIdentityError(f"missing required file: {PORTABLE_RUNTIME_REL.as_posix()}")
+    before_sha = sha256_file(canonical_path)
+    outputs_root = root / "Outputs"
+    outputs_root.mkdir(parents=True, exist_ok=True)
+    try:
+        with tempfile.TemporaryDirectory(prefix="release-identity-", dir=outputs_root) as temp_dir:
+            temp = Path(temp_dir)
+            receipt = build_portable_artifact(
+                repo_root=root,
+                source_path=canonical_path,
+                runtime_path=runtime_path,
+                output_path=temp / "index.html",
+                manifest_path=temp / "manifest.json",
+                origin="http://127.0.0.1:8765/",
+            )
+    except Exception as exc:
+        raise ReleaseIdentityError(f"portable builder behavior proof failed: {exc}") from exc
+
+    source = receipt.get("source", {}) if isinstance(receipt, dict) else {}
+    guardrails = receipt.get("guardrails", {}) if isinstance(receipt, dict) else {}
+    if source.get("path") != CANONICAL_ARTIFACT:
+        raise ReleaseIdentityError("portable builder receipt does not name the canonical source path")
+    if source.get("sha256") != before_sha:
+        raise ReleaseIdentityError("portable builder receipt source hash does not match canonical artifact")
+    if guardrails.get("canonical_site_untouched") is not True:
+        raise ReleaseIdentityError("portable builder no longer asserts canonical-site immutability")
+    if sha256_file(canonical_path) != before_sha:
+        raise ReleaseIdentityError("portable builder mutated the canonical Prompt Kit")
+    return "portable local site behavior derives from and hash-records the canonical artifact"
 
 
 def validate_freshness(root: Path) -> str:
@@ -134,6 +248,7 @@ def validate_freshness(root: Path) -> str:
 
 def validate_release_identity(root: Path) -> list[dict[str, str]]:
     checks: list[tuple[str, Callable[[Path], str]]] = [
+        ("canonical-artifact", validate_canonical_artifact),
         ("contract", validate_contract),
         ("artifact-registry", validate_artifact_registry),
         ("pages-parity", validate_pages),
@@ -156,7 +271,10 @@ def build_report(root: Path) -> dict[str, Any]:
     canonical_path = root / CANONICAL_ARTIFACT
     source_sha = None
     if canonical_path.is_file():
-        source_sha = hashlib.sha256(canonical_path.read_bytes()).hexdigest()
+        try:
+            source_sha = sha256_file(canonical_path)
+        except ReleaseIdentityError:
+            source_sha = None
     failures = [item for item in checks if item["status"] != "PASS"]
     return {
         "schema_version": "prompt-kit-release-identity-report/v1",
