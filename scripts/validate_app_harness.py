@@ -6,9 +6,11 @@ import argparse
 import ast
 import json
 import os
+import shutil
 import subprocess
 import sys
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Mapping, Sequence
 
@@ -84,6 +86,23 @@ def safe_runner(command: Sequence[str], root: Path) -> subprocess.CompletedProce
     return subprocess.run(command, cwd=root, text=True, capture_output=True, check=False)
 
 
+def preserve_existing_output(root: Path, target: Path) -> Path | None:
+    """Copy an existing runtime receipt to a timestamped Outputs/backups path."""
+    if not target.is_file():
+        return None
+    outputs = (root / "Outputs").resolve()
+    resolved = target.resolve()
+    try:
+        relative = resolved.relative_to(outputs)
+    except ValueError as exc:
+        raise ValueError("receipt preservation is restricted to Outputs/") from exc
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
+    backup = outputs / "backups" / "app-harness-validation" / stamp / relative
+    backup.parent.mkdir(parents=True, exist_ok=False)
+    shutil.copy2(resolved, backup)
+    return backup
+
+
 def _result(name: str, ok: bool, reason: str, details: list[str] | None = None) -> Check:
     return Check(name, "PASS" if ok else "FAIL", reason, details or [])
 
@@ -92,17 +111,23 @@ def check_required_files(root: Path, runner: Runner) -> Check:
     missing = [path for path in REQUIRED_FILES if not (root / path).is_file()]
     if missing:
         return _result("required files", False, "missing_required_files", missing)
+    nested_report = root / "Outputs" / "harness-completeness-report.json"
+    try:
+        backup = preserve_existing_output(root, nested_report)
+    except ValueError as exc:
+        return _result("required files", False, "nested_receipt_backup_failed", [str(exc)])
     command = [
         sys.executable,
         str(root / "scripts" / "validate_harness.py"),
         "--report",
-        str(root / "Outputs" / "harness-completeness-report.json"),
+        str(nested_report),
     ]
     result = runner(command, root)
     if result.returncode != 0:
         detail = (result.stderr or result.stdout).strip()
         return _result("required files", False, "required_harness_validator_failed", [detail][:1])
-    return _result("required files", True, "required_harness_validator_passed")
+    details = [f"previous_receipt_backup={backup.relative_to(root).as_posix()}"] if backup else []
+    return _result("required files", True, "required_harness_validator_passed", details)
 
 
 def check_run_context(root: Path, runner: Runner, env: Mapping[str, str]) -> tuple[Check, str, str]:
@@ -121,7 +146,12 @@ def check_artifact_registry(root: Path) -> Check:
         payload = json.loads(path.read_text(encoding="utf-8"))
         artifacts = payload.get("artifacts")
         ids = {item.get("id") for item in artifacts if isinstance(item, dict)} if isinstance(artifacts, list) else set()
-        required = {"harness-control-plane", "operator-harness-state", "harness-completeness-report"}
+        required = {
+            "harness-control-plane",
+            "operator-harness-state",
+            "harness-completeness-report",
+            "app-harness-validation-report",
+        }
         ok = payload.get("schema_version") == "web-excel-artifacts/v1" and required <= ids
     except (OSError, json.JSONDecodeError, AttributeError, TypeError) as exc:
         return _result("artifact registry", False, "artifact_registry_invalid", [str(exc)])
@@ -223,13 +253,18 @@ def main() -> int:
         root = detect_repo_root()
         report = validate(root)
         target = output_path(root, args.output)
-    except (RuntimeError, ValueError) as exc:
+        backup = preserve_existing_output(root, target)
+    except (RuntimeError, ValueError, OSError) as exc:
         print(f"APP HARNESS VALIDATION\n[FAIL] bootstrap: {exc}", file=sys.stderr)
         return 2
+    if backup:
+        report["previous_receipt_backup"] = backup.relative_to(root).as_posix()
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     checks = [Check(**item) for item in report["checks"]]
     print(render_matrix(checks, str(report["branch"]), str(report["commit"])))
+    if backup:
+        print(f"Previous JSON: {backup}")
     print(f"JSON: {target}")
     return 1 if report["summary"]["failed"] else 0
 
