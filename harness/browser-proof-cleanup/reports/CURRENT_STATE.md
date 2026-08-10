@@ -3,12 +3,13 @@
 ## Working
 
 - Detached `prompt-kit-browser-proof-<hex>` directories have an explicit lifecycle contract.
+- The cleanup capability is registered in the canonical root harness manifest, capability/trigger/workflow/artifact/validator registries, and human indexes so a fresh agent can discover it from the normal harness entry points.
 - Preview mode is the default; apply requires an explicit switch.
 - Exact-target cleanup is supported.
 - The runner refuses paths outside the OS temp root.
 - The runner refuses unexpected leaf names, missing Prompt Kit markers, and reparse points.
-- Cleanup emits a JSON receipt under `Outputs/`.
-- CI validates the harness and exercises a test-owned scratch fixture.
+- Cleanup emits a stable JSON receipt under `Outputs/` and preserves the prior receipt under `Outputs/backups/prompt-kit-browser-proof-cleanup/` before replacement.
+- CI validates the focused harness, root-harness registration, receipt retention, and preview/apply behavior against a test-owned scratch fixture.
 
 ## Intentionally outside this harness
 
@@ -21,8 +22,8 @@
 
 ## Missing / unproven
 
-Native P-Top/Windows execution against an operator-owned scratch directory remains unproven until preview and apply are run on that workstation.
+Native P-Top/Windows execution against an operator-owned scratch directory remains unproven until the focused runner previews that exact workstation path. Actual deletion remains a later explicit `-Apply` gate.
 
 ## Operator interpretation
 
-A URL like `file:///C:/Users/<user>/AppData/Local/Temp/prompt-kit-browser-proof-<hex>/web/prompt-kit/index.html` is a detached browser-proof copy when its filesystem path passes this harness classification. It is disposable scratch; it is not the public Pages site or canonical checkout.
+A URL like `file:///C:/Users/<user>/AppData/Local/Temp/prompt-kit-browser-proof-<hex>/web/prompt-kit/index.html` is a detached browser-proof copy when its filesystem path passes this harness classification. It is disposable scratch; it is not the public Pages site, canonical checkout, browser profile, or Favorites store.
