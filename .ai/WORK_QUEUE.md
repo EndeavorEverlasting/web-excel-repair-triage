@@ -58,3 +58,19 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** workflow:31333483267 passed repository work-ledger contract on the final PR head; workflow:31333483288 passed Prompt Kit web contracts including exact generated-site parity and acquisition checks; workflow:31333483286 passed skill prompt registry and generator UX; workflow:31333483282 passed Prompt Kit GitHub Pages; workflow:31333483297 passed operator documentation contracts; workflow:31333483289 passed artifact engine tests; merge:d4c10a0def8a1ba4ccb7009db7ddfd4f9bba82dd merged PR #163
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-08-09T20:10:00Z
+
+## TRQ-004 — Build Lua embedding-readiness operational harness
+
+- **Status:** DONE
+- **Priority:** P1
+- **Owner:** chatgpt-lua-harness-20260810
+- **Branch / PR:** main / #167 merged
+- **Scope:** build a tracked Lua embedding-readiness harness with codebase map, workflow, artifact/validator/capability/trigger registries, explicit host-controlled design contract, scoped skill, focused hook fragments, operator report, fail-closed validator/tests, CI report artifact, and root harness registration while preserving the concurrent Prompt Kit release-identity harness dependency
+- **Forbidden:** changing `AGENTS.md`; implementing a Lua interpreter, host binding, native module, or `.lua` product behavior; selecting a product host runtime without a product lane; secrets; destructive cleanup; force-push; claiming runtime proof from static harness evidence
+- **Dependencies:** PR #166 / merge:aadf9765ba3f5a8b5df30d7d40232cff8dc646f4
+- **References:** `harness/lua/manifest.v1.json`, `harness/lua/contracts/lua-embedding-readiness.v1.json`, `harness/lua/WORKFLOW.md`, `harness/lua/ARTIFACT_REGISTRY.md`, `harness/lua/reports/CURRENT_STATE.md`, `.ai/skills/lua-embedding-readiness/SKILL.md`, `scripts/validate_lua_harness.py`, `tests/test_lua_harness_contract.py`, `.github/workflows/lua-harness-contract.yml`, `harness/manifest.v1.json`
+- **Acceptance gate:** every Lua harness component is tracked and registered; host-owned execution, independent VM states, explicit state release, host-caught errors/rollback, runtime type discipline, optional JIT, default-deny OS/IO/native loading, allow-listed host APIs, 1-based Lua semantics, conceptual minimalism, and AI auditability are fail-closed contract requirements; focused validator/tests, root harness, artifact hygiene, and patch hygiene pass; PR is merged without product/runtime Lua changes; runtime remains explicitly `not_implemented`
+- **Gate:** none
+- **Last proof:** commit:4747efe470c10b9a2f240eb71d9e838d25f82651 built the operational Lua harness; workflow:31420050622 passed the dedicated Lua embedding-readiness harness and uploaded the machine report; workflow:31420050626 passed operational harness contracts; workflow:31420050714 passed Prompt Kit web contracts; workflow:31420050637 passed artifact engine tests; merge:8a29a34f445c4ddf0a5b2d71af6bca57f767fa40 merged PR #167
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-08-10T14:41:00-04:00
