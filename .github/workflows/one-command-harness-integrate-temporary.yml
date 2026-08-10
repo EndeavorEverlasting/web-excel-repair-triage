@@ -30,17 +30,19 @@ jobs:
           import re
 
           root = Path('.')
+          validator_id = 'app-harness-validation'
+          artifact_id = 'app-harness-validation-report'
+          validator_command = 'python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json'
 
           artifacts_path = root / 'harness/artifacts.v1.json'
           artifacts = json.loads(artifacts_path.read_text(encoding='utf-8'))
-          artifact_id = 'app-harness-validation-report'
           if not any(item.get('id') == artifact_id for item in artifacts['artifacts']):
               artifacts['artifacts'].append({
                   'id': artifact_id,
                   'kind': 'runtime',
                   'canonical_path': 'Outputs/app-harness-validation.json',
-                  'producer': 'python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json',
-                  'validator': 'app-harness-validation',
+                  'producer': validator_command,
+                  'validator': validator_id,
                   'naming': 'Stable latest receipt; previous app and nested harness receipts are copied under Outputs/backups/app-harness-validation/<UTC timestamp>/.',
                   'tracking_policy': 'Gitignored runtime evidence or CI artifact; preserve the previous receipt before replacement.',
                   'schema': 'app-harness-validation/v1',
@@ -50,12 +52,11 @@ jobs:
 
           validators_path = root / 'harness/validators.v1.json'
           validators = json.loads(validators_path.read_text(encoding='utf-8'))
-          validator_id = 'app-harness-validation'
           if not any(item.get('id') == validator_id for item in validators['validators']):
               validators['validators'].append({
                   'id': validator_id,
                   'class': 'contract',
-                  'command': 'python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json',
+                  'command': validator_command,
                   'blocking': True,
                   'output': 'Outputs/app-harness-validation.json',
                   'proof_ceiling': 'Offline/synthetic repository harness readiness with explicit optional skips; no runtime proof.'
@@ -66,6 +67,14 @@ jobs:
                   insert_at = profile.index('patch-hygiene') if 'patch-hygiene' in profile else len(profile)
                   profile.insert(insert_at, validator_id)
           validators_path.write_text(json.dumps(validators, indent=2) + '\n', encoding='utf-8')
+
+          manifest_path = root / 'harness/manifest.v1.json'
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          validation_order = manifest['validation_order']
+          if validator_command not in validation_order:
+              insert_at = validation_order.index('git diff --check') if 'git diff --check' in validation_order else len(validation_order)
+              validation_order.insert(insert_at, validator_command)
+          manifest_path.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
 
           validator_path = root / 'scripts/validate_harness.py'
           source = validator_path.read_text(encoding='utf-8')
@@ -108,7 +117,7 @@ jobs:
           git rm .github/workflows/one-command-harness-integrate-temporary.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add ARTIFACT_REGISTRY.md harness/artifacts.v1.json harness/validators.v1.json scripts/validate_harness.py
+          git add ARTIFACT_REGISTRY.md harness/manifest.v1.json harness/artifacts.v1.json harness/validators.v1.json scripts/validate_harness.py
           git diff --cached --check
           git commit -m 'fix(harness): register synthetic proof control plane'
           git push origin HEAD:feat/one-command-harness-proof-20260810
