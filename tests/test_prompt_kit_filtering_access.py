@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 JS = ROOT / "docs" / "prompt-kit.js"
+POLISH = ROOT / "docs" / "prompt-kit-polish.js"
 ACCESS = ROOT / "PROMPT_KIT_ACCESS.md"
 WEB_README = ROOT / "web" / "README.md"
 CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-filtering.v1.json"
@@ -24,12 +25,15 @@ class PromptKitFilteringAccessTests(unittest.TestCase):
                 "unique_categories",
                 "single_category_scope",
                 "unique_type_filters",
+                "all_view_full_reset",
                 "sequential_with_gaps",
                 "anchors_on_visible_categories",
                 "acquisition_discoverability",
             },
         )
         expected = {item["id"]: item["expected"] for item in payload["requirements"]}
+        self.assertIn("complete prompt stream", expected["all_view_full_reset"])
+        self.assertIn("Favorites then All", expected["all_view_full_reset"])
         self.assertIn("complete visible prompt-card stream", expected["sequential_with_gaps"])
         self.assertIn("at most once", expected["unique_categories"])
 
@@ -41,6 +45,47 @@ class PromptKitFilteringAccessTests(unittest.TestCase):
         self.assertIn("renderTypes();", js)
         self.assertIn("aria-label','Prompt categories", js)
         self.assertIn("aria-label','Prompt types", js)
+
+    def test_all_view_is_an_atomic_reset_after_favorites(self) -> None:
+        js = JS.read_text(encoding="utf-8")
+        polish = POLISH.read_text(encoding="utf-8")
+
+        start = js.index("function resetPromptKitView()")
+        end = js.index("\n\nfunction showAddPrompt", start)
+        reset = js[start:end]
+        for marker in (
+            "activeCat='all'",
+            "activeSection=null",
+            "activeType=null",
+            "activeColor=null",
+            "collapsedSections={}",
+            "search.value=''",
+            "syncLibraryTabs()",
+            "renderSections()",
+            "renderTypes()",
+            "render()",
+        ):
+            self.assertIn(marker, reset)
+
+        favorites = polish[polish.index("function activateFavoritesView()") : polish.index("function ensureCompactBrowsingControls()")]
+        self.assertIn("activeSection='__favorites__'", favorites)
+
+        all_view = polish[polish.index("function activateAllPromptsView()") : polish.index("function activateFavoritesView()")]
+        self.assertIn("resetPromptKitView();", all_view)
+
+        switches = polish[polish.index("function installCompactBrowsingViewSwitches()") : polish.index("function installCompactBrowsingHotkeys()")]
+        self.assertIn(".cat-tab[data-cat=\"all\"]", switches)
+        self.assertIn("e.stopImmediatePropagation();", switches)
+        self.assertIn("activateAllPromptsView();", switches)
+
+        hotkeys = polish[polish.index("function installCompactBrowsingHotkeys()") : polish.index("window.appendPromptCard")]
+        key_one = hotkeys[hotkeys.index("if(e.key==='1')") : hotkeys.index("if(e.key==='4')")]
+        self.assertIn("e.preventDefault();", key_one)
+        self.assertIn("e.stopImmediatePropagation();", key_one)
+        self.assertIn("activateAllPromptsView();", key_one)
+
+        self.assertIn("installCompactBrowsingViewSwitches();", polish)
+        self.assertIn("installCompactBrowsingHotkeys();", polish)
 
     def test_render_uses_unique_category_metadata_without_reordering_cards(self) -> None:
         js = JS.read_text(encoding="utf-8")
