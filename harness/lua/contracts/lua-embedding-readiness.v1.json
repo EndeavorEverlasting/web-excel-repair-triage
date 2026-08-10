@@ -1,0 +1,68 @@
+{
+  "schema_version": "lua-embedding-readiness/v1",
+  "contract_id": "lua-embedding-readiness",
+  "runtime_status": "not_implemented",
+  "architecture": {
+    "embedding_model": "language-as-library",
+    "host_owns_main_loop": true,
+    "script_owns_main_loop": false,
+    "performance_critical_code_owner": "host",
+    "dynamic_logic_owner": "lua"
+  },
+  "state_isolation": {
+    "independent_vm_states": true,
+    "state_destroy_isolated": true,
+    "explicit_release_required": true
+  },
+  "error_handling": {
+    "script_errors_allowed": true,
+    "host_catches_script_errors": true,
+    "host_owns_rollback": true,
+    "cleanup_on_error": true
+  },
+  "execution": {
+    "precompiled_bytecode_allowed": true,
+    "small_interpreter_dispatch_preferred": true,
+    "jit_required": false,
+    "deoptimization_requires_reconstructible_state": true
+  },
+  "type_system": {
+    "runtime_type_checks": true,
+    "internal_type_discipline_required": true
+  },
+  "sandbox": {
+    "default_os_library": false,
+    "default_io_library": false,
+    "default_native_module_loading": false,
+    "host_api_policy": "allow-list",
+    "expose_only_required_host_functions": true
+  },
+  "design_philosophy": {
+    "feature_policy": "exclude-by-default",
+    "prefer_host_solution_before_script_complexity": true,
+    "auditable_non_magical_semantics": true,
+    "indexing": "lua-1-based"
+  },
+  "ai_auditability": {
+    "human_auditable_generated_code": true,
+    "hidden_mechanisms_forbidden": true
+  },
+  "implementation_boundary": {
+    "product_runtime_present": false,
+    "product_code_allowed_in_harness_sprint": false,
+    "host_language_is_selected_by_product_lane": true,
+    "lua_distribution_is_selected_by_product_lane": true
+  },
+  "required_runtime_proof": [
+    "host creates at least two independent Lua VM states and can destroy one without corrupting the other",
+    "host catches a script error and performs deterministic cleanup without losing host control",
+    "Lua state is explicitly released on normal completion and error completion",
+    "OS, IO, and native-module access are unavailable unless individually allow-listed by the host",
+    "only required host functions are exposed to Lua",
+    "host retains the main execution loop and performance-critical/resource-critical work",
+    "runtime type checks enforce documented host/Lua boundary types",
+    "JIT remains optional; any future deoptimization path preserves reconstructible execution state",
+    "generated or contributed Lua remains readable enough for human audit without hidden magic"
+  ],
+  "proof_ceiling": "Harness readiness and static contract proof only. No Lua interpreter, host adapter, sandbox runtime, bytecode execution, JIT behavior, memory isolation, or live host/Lua behavior is implemented or proven by this contract."
+}

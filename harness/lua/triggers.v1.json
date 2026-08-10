@@ -1,0 +1,24 @@
+{
+  "schema_version": "lua-harness-triggers/v1",
+  "triggers": [
+    {
+      "id": "lua-embedding-request",
+      "capability_id": "lua-embedding-readiness",
+      "skill": ".ai/skills/lua-embedding-readiness/SKILL.md",
+      "workflow": "harness/lua/WORKFLOW.md",
+      "conditions": [
+        "Lua is proposed as an embedded scripting layer",
+        "a Lua host boundary or sandbox needs design or review",
+        "multiple Lua states, script error handling, teardown, or host API exposure needs validation",
+        "LuaJIT or bytecode is proposed and its proof boundary must be made explicit",
+        "AI-generated Lua needs a human-auditable execution contract"
+      ],
+      "forbidden_conditions": [
+        "the request is only to change AGENTS.md governance",
+        "the task requires product/runtime code but no product lane owns it",
+        "the proposal grants default OS, IO, native module, or unrestricted host access",
+        "the proposal makes Lua own the host main loop or critical resource lifecycle"
+      ]
+    }
+  ]
+}
