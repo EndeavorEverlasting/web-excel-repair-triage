@@ -1,0 +1,114 @@
+name: One-command harness registry integration
+
+on:
+  push:
+    branches:
+      - feat/one-command-harness-proof-20260810
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/one-command-harness-proof-20260810
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Register validator and receipt in canonical control plane
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          import re
+
+          root = Path('.')
+
+          artifacts_path = root / 'harness/artifacts.v1.json'
+          artifacts = json.loads(artifacts_path.read_text(encoding='utf-8'))
+          artifact_id = 'app-harness-validation-report'
+          if not any(item.get('id') == artifact_id for item in artifacts['artifacts']):
+              artifacts['artifacts'].append({
+                  'id': artifact_id,
+                  'kind': 'runtime',
+                  'canonical_path': 'Outputs/app-harness-validation.json',
+                  'producer': 'python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json',
+                  'validator': 'app-harness-validation',
+                  'naming': 'Stable latest receipt; previous app and nested harness receipts are copied under Outputs/backups/app-harness-validation/<UTC timestamp>/.',
+                  'tracking_policy': 'Gitignored runtime evidence or CI artifact; preserve the previous receipt before replacement.',
+                  'schema': 'app-harness-validation/v1',
+                  'proof_ceiling': 'Offline/synthetic repository harness proof only; no live runtime, browser, launcher, network, target, save/account, or production proof.'
+              })
+          artifacts_path.write_text(json.dumps(artifacts, indent=2) + '\n', encoding='utf-8')
+
+          validators_path = root / 'harness/validators.v1.json'
+          validators = json.loads(validators_path.read_text(encoding='utf-8'))
+          validator_id = 'app-harness-validation'
+          if not any(item.get('id') == validator_id for item in validators['validators']):
+              validators['validators'].append({
+                  'id': validator_id,
+                  'class': 'contract',
+                  'command': 'python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json',
+                  'blocking': True,
+                  'output': 'Outputs/app-harness-validation.json',
+                  'proof_ceiling': 'Offline/synthetic repository harness readiness with explicit optional skips; no runtime proof.'
+              })
+          for profile_name in ('harness', 'pre_push'):
+              profile = validators['profiles'][profile_name]
+              if validator_id not in profile:
+                  insert_at = profile.index('patch-hygiene') if 'patch-hygiene' in profile else len(profile)
+                  profile.insert(insert_at, validator_id)
+          validators_path.write_text(json.dumps(validators, indent=2) + '\n', encoding='utf-8')
+
+          validator_path = root / 'scripts/validate_harness.py'
+          source = validator_path.read_text(encoding='utf-8')
+
+          def add_required_id(text: str, variable: str, value: str) -> str:
+              pattern = rf'({re.escape(variable)}\s*=\s*\{{\n)(.*?)(\n\}})'
+              match = re.search(pattern, text, flags=re.S)
+              if not match:
+                  raise SystemExit(f'could not find {variable}')
+              body = match.group(2)
+              if f'"{value}"' in body:
+                  return text
+              body = body.rstrip() + f'\n    "{value}",'
+              return text[:match.start()] + match.group(1) + body + match.group(3) + text[match.end():]
+
+          source = add_required_id(source, 'REQUIRED_ARTIFACT_IDS', artifact_id)
+          source = add_required_id(source, 'REQUIRED_VALIDATOR_IDS', validator_id)
+          validator_path.write_text(source, encoding='utf-8')
+
+          human_path = root / 'ARTIFACT_REGISTRY.md'
+          human = human_path.read_text(encoding='utf-8')
+          marker = '## One-command synthetic harness receipt'
+          if marker not in human:
+              human = human.rstrip() + '''\n\n## One-command synthetic harness receipt\n\n- Canonical runtime path: `Outputs/app-harness-validation.json`.\n- Producer: `python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json`.\n- Machine authority: `harness/artifacts.v1.json` with validator `app-harness-validation`.\n- Previous app-harness and nested harness-completeness receipts are preserved under `Outputs/backups/app-harness-validation/<UTC timestamp>/` before replacement.\n- Proof ceiling: offline/synthetic repository harness readiness only; no browser, layout, launcher, network, target, save/account, or production proof.\n'''
+              human_path.write_text(human, encoding='utf-8')
+          PY
+      - name: Validate integrated control plane
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile scripts/validate_harness.py scripts/validate_app_harness.py tests/test_app_harness_validator.py
+          python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
+          python -m unittest tests.test_app_harness_validator -v
+          python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json
+          git diff --check
+      - name: Commit integrated control plane and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/one-command-harness-integrate-temporary.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ARTIFACT_REGISTRY.md harness/artifacts.v1.json harness/validators.v1.json scripts/validate_harness.py
+          git diff --cached --check
+          git commit -m 'fix(harness): register synthetic proof control plane'
+          git push origin HEAD:feat/one-command-harness-proof-20260810
