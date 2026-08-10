@@ -48,6 +48,7 @@ Android users who need an editable checkout use Termux from F-Droid and Git. The
 | Artifact family | Canonical location | Generation | Naming contract | Tracking policy |
 |---|---|---|---|---|
 | Harness completeness report | `Outputs/harness-completeness-report.json` | `python scripts/validate_harness.py --report Outputs/harness-completeness-report.json` | schema `harness-completeness-report/v1`; stable family name | Gitignored or CI artifact. |
+| App harness validation report | `Outputs/app-harness-validation.json` | `python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json` | schema `app-harness-validation/v1`; stable latest receipt, prior receipt backed up before overwrite | Gitignored or CI artifact. |
 | Prompt Kit interaction audit | `Outputs/prompt-kit-interaction-audit.json` | focused interaction validator | stable result schema and family name | Gitignored or CI artifact. |
 | Prompt-language audit | `Outputs/prompt-language-audit.json` | exhaustive evaluator | stable result schema and family name | Gitignored or CI artifact. |
 | Strict prompt-language repair audit | `Outputs/prompt-language-audit-strict.json` | evaluator `--strict` | strict flag plus one disposition per prompt | Gitignored. |
@@ -116,9 +117,18 @@ python -m unittest tests.test_skill_prompt_registry -v
 python tests/test_prompt_kit_header_contract.py
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 python -m triage.gitignore_hygiene
+python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json
 git diff --check
 ```
 
 ## Proof boundaries
 
 File and registry presence prove repository integration only. The cross-device validator proves the repository routes normal browser/phone use to the public surfaces, preserves an explicit editable-checkout route, and documents safe commands; it does not prove device menus, PWA installation, Termux/F-Droid availability, Git credentials, network, browser storage, clipboard behavior, or push success. A harness completeness report proves the registered static checks executed on one checkout and commit. Deterministic builder parity proves source-to-generated identity, not browser acceptance. Interaction/discovery audits prove only their documented static surfaces. Prompt-language audit proves canonical/effective coverage and findings, not provider obedience. CI proves only the commands and fixtures exercised by that workflow. Excel for Web, native Windows GUI, protected targets, technician acceptance, deployment, and production success require separate observed proof.
+
+## One-command synthetic harness receipt
+
+- Canonical runtime path: `Outputs/app-harness-validation.json`.
+- Producer: `python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json`.
+- Machine authority: `harness/artifacts.v1.json` with validator `app-harness-validation`.
+- Previous app-harness and nested harness-completeness receipts are preserved under `Outputs/backups/app-harness-validation/<UTC timestamp>/` before replacement.
+- Proof ceiling: offline/synthetic repository harness readiness only; no browser, layout, launcher, network, target, save/account, or production proof.

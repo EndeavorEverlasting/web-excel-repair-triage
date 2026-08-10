@@ -1,0 +1,59 @@
+name: App harness validation
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/validate_app_harness.py'
+      - 'tests/test_app_harness_validator.py'
+      - 'harness/reports/APP_HARNESS_VALIDATION.md'
+      - '.github/workflows/app-harness-validation.yml'
+      - 'harness/**'
+      - '.githooks/**'
+      - 'triage/gitignore_hygiene.py'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/validate_app_harness.py'
+      - 'tests/test_app_harness_validator.py'
+      - 'harness/reports/APP_HARNESS_VALIDATION.md'
+      - '.github/workflows/app-harness-validation.yml'
+      - 'harness/**'
+      - '.githooks/**'
+      - 'triage/gitignore_hygiene.py'
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-harness-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Parse validator and tests
+        run: python -m py_compile scripts/validate_app_harness.py tests/test_app_harness_validator.py
+      - name: Focused safety and matrix tests
+        run: python -m unittest tests.test_app_harness_validator -v
+      - name: One-command offline harness proof
+        run: python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json
+      - name: Patch hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"
+          else
+            git diff --check HEAD^..HEAD
+          fi
+      - name: Upload synthetic harness receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-harness-validation-report
+          path: Outputs/app-harness-validation.json
+          if-no-files-found: error
