@@ -60,6 +60,10 @@ function clearTransientPromptFilters(){
   document.querySelectorAll('.type-chip').forEach(function(button){button.classList.toggle('active',button.dataset.type==='__all__')})
 }
 
+function activateAllPromptsView(){
+  resetPromptKitView();
+}
+
 function activateFavoritesView(){
   activeCat='all';
   activeSection='__favorites__';
@@ -113,11 +117,29 @@ function ensureCompactBrowsingControls(){
   }
 }
 
+function installCompactBrowsingViewSwitches(){
+  document.addEventListener('click',function(e){
+    var target=e.target;
+    if(!target||typeof target.closest!=='function')return;
+    var allButton=target.closest('.cat-tab[data-cat="all"]');
+    if(!allButton)return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    activateAllPromptsView();
+  },true)
+}
+
 function installCompactBrowsingHotkeys(){
   document.addEventListener('keydown',function(e){
     if(e.defaultPrevented||e.altKey||e.metaKey||e.ctrlKey)return;
     var target=e.target;
     if(target&&(target.tagName==='INPUT'||target.tagName==='TEXTAREA'||target.tagName==='SELECT'||target.isContentEditable))return;
+    if(e.key==='1'){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      activateAllPromptsView();
+      return;
+    }
     if(e.key==='4'){
       e.preventDefault();
       e.stopImmediatePropagation();
@@ -179,6 +201,7 @@ window.appendPromptCard=function(grid,p){
 
 ensurePromptKitPolishStyles();
 ensureCompactBrowsingControls();
+installCompactBrowsingViewSwitches();
 installCompactBrowsingHotkeys();
 render();
 })();
