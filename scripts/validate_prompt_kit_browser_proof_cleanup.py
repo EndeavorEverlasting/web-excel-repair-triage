@@ -26,6 +26,7 @@ REQUIRED_COMPONENT_KEYS = {
     "pre_push_hook",
     "skill",
     "operator_report",
+    "operator_acceptance_report",
     "ci",
 }
 
@@ -113,6 +114,31 @@ def validate() -> list[str]:
         for marker in forbidden:
             if marker in text:
                 errors.append(f"cleanup runner contains forbidden broad/browser-data mutation: {marker}")
+
+    acceptance_path = ROOT / str(components.get("operator_acceptance_report", ""))
+    if acceptance_path.is_file():
+        acceptance = acceptance_path.read_text(encoding="utf-8")
+        for marker in [
+            "P-Top Acceptance",
+            "mode: `apply`",
+            "eligible: 1",
+            "deleted: 1",
+            "failed: 0",
+            "TARGET_EXISTS=False",
+            "native Windows/P-Top explicit-apply cleanup was observed",
+            "browser `localStorage`",
+            "Prompt Kit Favorites",
+        ]:
+            if marker not in acceptance:
+                errors.append(f"operator acceptance report missing marker: {marker}")
+        privacy_patterns = {
+            "absolute Windows user-profile path": r"[A-Za-z]:\\Users\\",
+            "file URL user-profile path": r"file:///+[A-Za-z]:/Users/",
+            "exact browser-proof scratch identifier": r"prompt-kit-browser-proof-[0-9a-fA-F]{16,64}",
+        }
+        for label, pattern in privacy_patterns.items():
+            if re.search(pattern, acceptance, flags=re.IGNORECASE):
+                errors.append(f"operator acceptance report leaks {label}")
 
     artifacts = load_json(DOMAIN / "artifacts.v1.json")
     if artifacts.get("schema_version") != "prompt-kit-browser-proof-cleanup-artifacts/v1":
