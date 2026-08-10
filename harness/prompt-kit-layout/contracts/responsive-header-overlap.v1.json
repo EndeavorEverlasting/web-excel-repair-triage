@@ -1,10 +1,11 @@
 {
   "schema_version": "prompt-kit-responsive-header-overlap/v1",
   "contract_id": "prompt-kit-responsive-header-no-overlap",
-  "implementation_status": "known_defect",
+  "implementation_status": "implemented_pending_browser_geometry",
   "evidence": {
     "operator_observation": "Overlapping header/search elements are visible across multiple Prompt Kit versions.",
-    "captured_2026_08_10": true
+    "captured_2026_08_10": true,
+    "product_repair": "Header-top now uses explicit responsive grid placement; search moves to a full-width row before narrow collision; mobile header controls stack and category tabs scroll instead of forcing horizontal page overflow."
   },
   "viewports": [
     {"id":"narrow","width":640,"height":720},
@@ -26,5 +27,5 @@
     "all_viewports_required": true,
     "browser_geometry_required": true
   },
-  "proof_ceiling": "This harness records the regression and acceptance geometry. Until product code is repaired and browser geometry is executed, implementation remains a known defect."
+  "proof_ceiling": "Tracked product source and generated-artifact tests may prove the responsive reflow contract. Browser geometry at all declared viewports remains required before claiming observed no-overlap behavior."
 }
