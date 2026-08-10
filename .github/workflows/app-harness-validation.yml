@@ -15,8 +15,11 @@ on:
     paths:
       - 'scripts/validate_app_harness.py'
       - 'tests/test_app_harness_validator.py'
+      - 'harness/reports/APP_HARNESS_VALIDATION.md'
+      - '.github/workflows/app-harness-validation.yml'
       - 'harness/**'
       - '.githooks/**'
+      - 'triage/gitignore_hygiene.py'
 
 permissions:
   contents: read
@@ -27,6 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          persist-credentials: false
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
       - uses: actions/setup-python@v5
