@@ -6,7 +6,7 @@ Use this skill when repository maps, workflow specifications, artifact or valida
 
 Also use this skill when a Prompt Kit usability defect must first be converted into an enforceable harness contract without crossing into product implementation. Examples include a non-chronological default prompt order, sparse long-list navigation, filter-state regressions, or mobile accessibility requirements that are currently only described informally.
 
-A failed NEXT COMMAND is a harness trigger when it assumes the wrong local path, runs Git after a failed directory gate, embeds Markdown hyperlink syntax inside a pasteable command, closes the terminal with top-level `exit`, fails to pin unmerged remote work, or asks the operator to guess the canonical artifact.
+A failed NEXT COMMAND is a harness trigger when it assumes the wrong local path, runs Git after a failed directory gate, embeds Markdown hyperlink syntax inside a pasteable command, closes the terminal with top-level `exit`, fails to pin unmerged remote work, asks the operator to guess the canonical artifact, compares repository-relative paths without normalizing Windows/POSIX separators, or treats a Linux checkout-byte hash as a cross-platform invariant.
 
 Do not use this skill for governance-contract changes in `AGENTS.md`, product implementation, secret handling, destructive cleanup, or production deployment.
 
@@ -18,6 +18,7 @@ Do not use this skill for governance-contract changes in `AGENTS.md`, product im
 - `CODEBASE_MAP.md`, `WORKFLOW.md`, `ARTIFACT_REGISTRY.md`, `SKILLS.md`, `CAPABILITIES.md`, and `TRIGGERS.md`;
 - `harness/manifest.v1.json`, workflow/artifact/validator/capability/trigger registries, domain contracts, and reports;
 - `harness/contracts/prompt-kit-order-navigation.v1.json` and `harness/reports/PROMPT_KIT_ORDER_NAVIGATION.md` when ordering, long-list navigation, or filter-persistent navigation is implicated;
+- `harness/contracts/prompt-kit-release-identity.v1.json` and `harness/reports/PROMPT_KIT_RELEASE_IDENTITY.md` when local/public/portable Prompt Kit identity, hashes, or source paths are implicated;
 - `harness/contracts/operator-command-envelope.v1.json`, its fixtures, and the tracked remote-proof PowerShell template when the failure is operator-command delivery;
 - `scripts/validate_harness.py`, focused harness validators, contract tests, hooks, and harness CI;
 - the exact missing component, drift, failure output, stale claim, failed operator transcript, or product-gap evidence being registered.
@@ -41,12 +42,13 @@ Do not use this skill for governance-contract changes in `AGENTS.md`, product im
 5. Repair the canonical harness owner rather than adding a competing map, registry, validator, hook, report, or command-delivery surface.
 6. When the user reports a product behavior gap but the lane forbids product code, encode the desired behavior as a focused contract with an observable baseline, a non-destructive harness gate, a strict product gate, mutation fixtures, and an operator report. Do not claim the behavior is fixed merely because the harness now detects it.
 7. For Prompt Kit chronological ordering or long-list navigation, require `navigation_interval = 5`, default/filtered numeric sequence order, Top and Bottom controls throughout the visible result stream, filter-persistent regeneration, mobile touch targets, and stable prompt identity. Run `scripts/validate_prompt_kit_order_navigation.py` plus its contract tests. Reserve `--require-implementation` for the product lane that is authorized to change Prompt Kit behavior sources.
-8. Update human indexes, machine registries, validator logic, tests, hooks/CI path filters, and operator state together when ownership or commands change.
-9. If the defect is a NEXT COMMAND or operator proof command, run `scripts/validate_operator_command_envelope.py` and its fixtures. Never emit a remembered `C:\Users\<name>\...` path as repository evidence. Never place Markdown hyperlink syntax inside PowerShell command data. Never use top-level `exit` in an interactive pasteable command. If the exact local root is not proven in the current shell, use `harness/templates/Invoke-RemoteHarnessProof.ps1`, which works from an environment-derived isolated checkout.
-10. Make pre-commit validation inspect the staged index, not unrelated unstaged work. Keep pre-push validation exhaustive and non-destructive.
-11. Run focused compilation, the owning focused domain validator/tests, `scripts/validate_harness.py --report Outputs/harness-completeness-report.json`, harness contract tests, connected validators, broader affected tests, and `git diff --check`.
-12. Commit coherent owned files with the required sprint message when one was specified, push normally, and update the existing focused PR rather than creating a duplicate owner.
-13. Hand off with exact files, artifacts, commands/results, commit, push/PR state, blockers, skipped checks, proof achieved, final Git state, and a next command that advances the next unproven owner without assuming the operator's local path.
+8. When Prompt Kit release identity is implicated, distinguish logical release identity from checkout transport details. Normalize repository-relative `\` and `/` separators before identity comparison. Use normalized UTF-8 content SHA-256 with CRLF/CR converted to LF for cross-platform release identity, retain the exact checkout-byte SHA-256 for a local builder receipt, and never hard-code a Linux CI checkout-byte hash as a Windows invariant.
+9. Update human indexes, machine registries, validator logic, tests, hooks/CI path filters, and operator state together when ownership or commands change.
+10. If the defect is a NEXT COMMAND or operator proof command, run `scripts/validate_operator_command_envelope.py` and its fixtures. Never emit a remembered `C:\Users\<name>\...` path as repository evidence. Never place Markdown hyperlink syntax inside PowerShell command data. Never use top-level `exit` in an interactive pasteable command. If the exact local root is not proven in the current shell, use `harness/templates/Invoke-RemoteHarnessProof.ps1`, which works from an environment-derived isolated checkout.
+11. Make pre-commit validation inspect the staged index, not unrelated unstaged work. Keep pre-push validation exhaustive and non-destructive.
+12. Run focused compilation, the owning focused domain validator/tests, `scripts/validate_harness.py --report Outputs/harness-completeness-report.json`, harness contract tests, connected validators, broader affected tests, and `git diff --check`.
+13. Commit coherent owned files with the required sprint message when one was specified, push normally, and update the existing focused PR rather than creating a duplicate owner.
+14. Hand off with exact files, artifacts, commands/results, commit, push/PR state, blockers, skipped checks, proof achieved, final Git state, and a next command that advances the next unproven owner without assuming the operator's local path or platform-specific checkout bytes.
 
 ## Guardrails
 
@@ -58,11 +60,21 @@ Do not use this skill for governance-contract changes in `AGENTS.md`, product im
 - Never reset, clean, force-push, delete unique work, embed credentials, or disclose private workbook data.
 - Keep one writer per branch or worktree and preserve unrelated work.
 - A remembered machine path is not a verified repository root. Use current-shell evidence or the environment-derived isolated proof template.
+- Repository-relative paths are logical identities, not OS-native display strings; normalize separators before comparing them.
+- Raw worktree hashes may differ across Git checkout EOL policies. Use normalized content identity across platforms and exact-byte hashes only within the checkout that produced them.
 - A raw URL may be transformed by chat rendering; do not depend on a raw auto-linkable URL token surviving inside copy/paste PowerShell when a repository slug or split string is available.
 - Top-level `exit` is forbidden in pasteable interactive PowerShell because it can close the terminal and destroy visible evidence. Use terminating errors inside a script/scriptblock instead.
 - Treat skills as procedures, registries as ownership, validators as proof, templates as transport, and reports as evidence; do not collapse them into one prose file.
 
 ## Validation
+
+Focused Prompt Kit release-identity gate:
+
+```bash
+python -m py_compile scripts/validate_prompt_kit_release_identity.py tests/test_prompt_kit_release_identity.py
+python scripts/validate_prompt_kit_release_identity.py --output Outputs/prompt-kit-release-identity.json --summary
+python -m unittest tests.test_prompt_kit_release_identity -v
+```
 
 Focused Prompt Kit order/navigation harness gate:
 
@@ -109,4 +121,4 @@ Do not claim skipped checks passed. Record the exact command, failure, dependenc
 
 ## Proof ceiling
 
-A green focused harness contract, harness validator, focused tests, hooks, and CI prove only the tracked repository surfaces, source evidence, command shapes, fixtures, and commands exercised on the tested commit. A non-strict Prompt Kit order/navigation pass may intentionally report `needs-product-repair`; it proves the gap is registered and reproducible, not that the website behavior is fixed. Browser scrolling ergonomics, mobile touch behavior, focus behavior, native Windows execution, product runtime behavior, Excel for Web acceptance, provider obedience, credentials, network reachability, protected target access, technician acceptance, deployment, and production success require separate proof.
+A green focused harness contract, harness validator, focused tests, hooks, and CI prove only the tracked repository surfaces, source evidence, command shapes, fixtures, and commands exercised on the tested commit. Cross-platform release-identity proof treats path separators and checkout line endings as transport details, not product versions; it still does not prove a specific browser cache, installed app, or deployed Pages response is current. A non-strict Prompt Kit order/navigation pass may intentionally report `needs-product-repair`; it proves the gap is registered and reproducible, not that the website behavior is fixed. Browser scrolling ergonomics, mobile touch behavior, focus behavior, native Windows execution, product runtime behavior, Excel for Web acceptance, provider obedience, credentials, network reachability, protected target access, technician acceptance, deployment, and production success require separate proof.

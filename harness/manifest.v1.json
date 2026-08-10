@@ -87,6 +87,16 @@
       "skill": ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
       "operator_report": "harness/reports/PROMPT_KIT_FRESHNESS.md"
     },
+    "prompt_kit_release_identity": {
+      "contract": "harness/contracts/prompt-kit-release-identity.v1.json",
+      "validator": "scripts/validate_prompt_kit_release_identity.py",
+      "contract_tests": "tests/test_prompt_kit_release_identity.py",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "harness_gate": "python scripts/validate_prompt_kit_release_identity.py --output Outputs/prompt-kit-release-identity.json --summary",
+      "operator_report": "harness/reports/PROMPT_KIT_RELEASE_IDENTITY.md",
+      "canonical_artifact_id": "prompt-kit-website",
+      "canonical_artifact": "web/prompt-kit/index.html"
+    },
     "operator_command_envelope": {
       "contract": "harness/contracts/operator-command-envelope.v1.json",
       "validator": "scripts/validate_operator_command_envelope.py",

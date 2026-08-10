@@ -1,0 +1,65 @@
+{
+  "schema_version": "prompt-kit-release-identity/v1",
+  "repository": "EndeavorEverlasting/web-excel-repair-triage",
+  "default_branch": "main",
+  "artifact_id": "prompt-kit-website",
+  "canonical_artifact": "web/prompt-kit/index.html",
+  "canonical_public_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
+  "launcher_public_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
+  "identity_rule": "There is one Prompt Kit website release. Local, portable, preview, installed, and public delivery surfaces must resolve to or derive from the exact canonical artifact; none may become an independent product version authority.",
+  "release_identity": {
+    "source_branch": "main",
+    "source_artifact": "web/prompt-kit/index.html",
+    "source_builder": "scripts/build_prompt_kit_registry.py",
+    "identity_evidence": [
+      "repository commit SHA",
+      "canonical content SHA-256 with line endings normalized to LF",
+      "checkout-byte SHA-256 when validating a local derivative receipt",
+      "builder parity result"
+    ],
+    "content_hash_policy": "Prompt Kit release-content SHA-256 normalizes CRLF and lone CR line endings to LF before hashing so Git checkout EOL conversion cannot create a false second release identity.",
+    "worktree_hash_policy": "Exact checkout-byte SHA-256 is diagnostic and is the correct comparator for a portable builder receipt produced from that checkout; it must not be compared across operating systems as the sole release identity.",
+    "path_comparison_policy": "Repository-relative identity paths normalize backslash to forward slash before comparison; Windows and POSIX separators do not create distinct artifact identities.",
+    "version_label_policy": "A visible vXX label is descriptive UI metadata only and never sufficient proof of release identity or freshness."
+  },
+  "delivery_surfaces": {
+    "public_pages": {
+      "url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
+      "required_behavior": "publish the canonical artifact byte-for-byte from the Pages checkout/build"
+    },
+    "phone_launcher": {
+      "url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
+      "required_behavior": "route to the canonical public Prompt Kit; the launcher is not a second Prompt Kit"
+    },
+    "windows_portable": {
+      "entry_point": "Open-Latest-PromptKit.cmd",
+      "generated_artifact": "Outputs/prompt-kit-portable/index.html",
+      "manifest": "Outputs/prompt-kit-portable/manifest.json",
+      "required_behavior": "derive from the exact checked-out canonical artifact, record that checkout source SHA-256, normalize repository-relative path separators when validating identity, and add only the registered portability runtime"
+    },
+    "local_preview": {
+      "required_behavior": "serve the canonical artifact directly or a declared temporary derivative that records source identity; never use an unregistered local index.html as release authority"
+    }
+  },
+  "drift_failures": [
+    "artifact registry points prompt-kit-website at a path other than web/prompt-kit/index.html",
+    "Pages publishes a Prompt Kit that is not compared byte-for-byte with web/prompt-kit/index.html in the executable Pages build step",
+    "portable/local generation uses a source other than web/prompt-kit/index.html",
+    "portable artifact receipt omits the checkout source SHA-256",
+    "a Windows backslash receipt path is treated as a different repository artifact than the same forward-slash path",
+    "a CRLF checkout is treated as a different release solely because its raw checkout-byte SHA-256 differs from a Linux LF checkout",
+    "freshness guidance treats a visible version label or old local copy as proof of currentness",
+    "documentation describes the local/portable site as a separate Prompt Kit version rather than a delivery derivative",
+    "an operator is told to guess which index.html is current instead of resolving prompt-kit-website through the artifact registry",
+    "an operator proof hard-codes a CI checkout-byte SHA-256 as a cross-platform invariant"
+  ],
+  "failure_route": {
+    "stale_or_different_local_surface": "Mark the local surface stale-or-unverified, resolve prompt-kit-website from harness/artifacts.v1.json, prove branch and commit currentness, run the release-identity validator on that machine, rebuild or reacquire through the registered launcher, and compare normalized content identity plus local derivative receipt evidence before troubleshooting product behavior.",
+    "cross_platform_hash_mismatch": "Do not declare a second release from raw SHA mismatch alone. Compare normalized canonical content SHA-256, retain exact checkout-byte SHA-256 for local derivative receipt verification, and report both.",
+    "public_surface_drift": "Stop release claims, run builder parity and Pages contract validation, and repair the product/release lane; do not bless a second canonical artifact from the harness lane."
+  },
+  "validator": "scripts/validate_prompt_kit_release_identity.py",
+  "contract_tests": "tests/test_prompt_kit_release_identity.py",
+  "operator_report": "harness/reports/PROMPT_KIT_RELEASE_IDENTITY.md",
+  "proof_ceiling": "Repository contract proof that delivery surfaces name one canonical Prompt Kit content identity across Windows/POSIX separator and checkout-EOL conventions, plus executable Pages and portable-builder wiring. It does not prove a specific browser cache, service worker, deployed Pages response, installed app, or operator workstation currently displays the same release without runtime evidence."
+}
