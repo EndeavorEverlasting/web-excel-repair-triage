@@ -122,3 +122,11 @@ git diff --check
 ## Proof boundaries
 
 File and registry presence prove repository integration only. The cross-device validator proves the repository routes normal browser/phone use to the public surfaces, preserves an explicit editable-checkout route, and documents safe commands; it does not prove device menus, PWA installation, Termux/F-Droid availability, Git credentials, network, browser storage, clipboard behavior, or push success. A harness completeness report proves the registered static checks executed on one checkout and commit. Deterministic builder parity proves source-to-generated identity, not browser acceptance. Interaction/discovery audits prove only their documented static surfaces. Prompt-language audit proves canonical/effective coverage and findings, not provider obedience. CI proves only the commands and fixtures exercised by that workflow. Excel for Web, native Windows GUI, protected targets, technician acceptance, deployment, and production success require separate observed proof.
+
+## One-command synthetic harness receipt
+
+- Canonical runtime path: `Outputs/app-harness-validation.json`.
+- Producer: `python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json`.
+- Machine authority: `harness/artifacts.v1.json` with validator `app-harness-validation`.
+- Previous app-harness and nested harness-completeness receipts are preserved under `Outputs/backups/app-harness-validation/<UTC timestamp>/` before replacement.
+- Proof ceiling: offline/synthetic repository harness readiness only; no browser, layout, launcher, network, target, save/account, or production proof.
