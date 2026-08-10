@@ -1,0 +1,57 @@
+{
+  "schema_version": "prompt-kit-release-identity/v1",
+  "repository": "EndeavorEverlasting/web-excel-repair-triage",
+  "default_branch": "main",
+  "artifact_id": "prompt-kit-website",
+  "canonical_artifact": "web/prompt-kit/index.html",
+  "canonical_public_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
+  "launcher_public_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
+  "identity_rule": "There is one Prompt Kit website release. Local, portable, preview, installed, and public delivery surfaces must resolve to or derive from the exact canonical artifact; none may become an independent product version authority.",
+  "release_identity": {
+    "source_branch": "main",
+    "source_artifact": "web/prompt-kit/index.html",
+    "source_builder": "scripts/build_prompt_kit_registry.py",
+    "identity_evidence": [
+      "repository commit SHA",
+      "canonical artifact SHA-256",
+      "builder parity result"
+    ],
+    "version_label_policy": "A visible vXX label is descriptive UI metadata only and never sufficient proof of release identity or freshness."
+  },
+  "delivery_surfaces": {
+    "public_pages": {
+      "url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
+      "required_behavior": "publish the canonical artifact byte-for-byte"
+    },
+    "phone_launcher": {
+      "url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
+      "required_behavior": "route to the canonical public Prompt Kit; the launcher is not a second Prompt Kit"
+    },
+    "windows_portable": {
+      "entry_point": "Open-Latest-PromptKit.cmd",
+      "generated_artifact": "Outputs/prompt-kit-portable/index.html",
+      "manifest": "Outputs/prompt-kit-portable/manifest.json",
+      "required_behavior": "derive from the exact canonical artifact and record its SHA-256 before adding only the registered portability runtime"
+    },
+    "local_preview": {
+      "required_behavior": "serve the canonical artifact directly or a declared temporary derivative that records the canonical source hash; never use an unregistered local index.html as release authority"
+    }
+  },
+  "drift_failures": [
+    "artifact registry points prompt-kit-website at a path other than web/prompt-kit/index.html",
+    "Pages publishes a Prompt Kit that is not compared byte-for-byte with web/prompt-kit/index.html",
+    "portable/local generation uses a source other than web/prompt-kit/index.html",
+    "portable artifact receipt omits the canonical source SHA-256",
+    "freshness guidance treats a visible version label or old local copy as proof of currentness",
+    "documentation describes the local/portable site as a separate Prompt Kit version rather than a delivery derivative",
+    "an operator is told to guess which index.html is current instead of resolving prompt-kit-website through the artifact registry"
+  ],
+  "failure_route": {
+    "stale_or_different_local_surface": "Mark the local surface stale-or-unverified, resolve prompt-kit-website from harness/artifacts.v1.json, prove current main, rebuild or reacquire through the registered launcher, then compare the canonical source hash before troubleshooting product behavior.",
+    "public_surface_drift": "Stop release claims, run builder parity and Pages contract validation, and repair the product/release lane; do not bless a second canonical artifact from the harness lane."
+  },
+  "validator": "scripts/validate_prompt_kit_release_identity.py",
+  "contract_tests": "tests/test_prompt_kit_release_identity.py",
+  "operator_report": "harness/reports/PROMPT_KIT_RELEASE_IDENTITY.md",
+  "proof_ceiling": "Static contract proof that repository delivery surfaces name one canonical Prompt Kit artifact and that registered local/public builders preserve source identity. It does not prove a specific user's local checkout, browser cache, service worker, deployed Pages bytes, or installed app currently matches main without runtime hash evidence."
+}

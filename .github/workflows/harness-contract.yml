@@ -21,6 +21,7 @@ on:
       - scripts/validate_operator_command_envelope.py
       - scripts/validate_prompt_kit_cross_device_access.py
       - scripts/validate_prompt_kit_freshness_guidance.py
+      - scripts/validate_prompt_kit_release_identity.py
       - scripts/validate_prompt_kit_order_navigation.py
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
@@ -29,6 +30,7 @@ on:
       - tests/test_operator_command_envelope.py
       - tests/test_prompt_kit_cross_device_access.py
       - tests/test_prompt_kit_freshness_guidance.py
+      - tests/test_prompt_kit_release_identity.py
       - tests/test_prompt_kit_order_navigation_contract.py
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_kit_discovery.py
@@ -55,6 +57,7 @@ on:
       - scripts/validate_operator_command_envelope.py
       - scripts/validate_prompt_kit_cross_device_access.py
       - scripts/validate_prompt_kit_freshness_guidance.py
+      - scripts/validate_prompt_kit_release_identity.py
       - scripts/validate_prompt_kit_order_navigation.py
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
@@ -63,6 +66,7 @@ on:
       - tests/test_operator_command_envelope.py
       - tests/test_prompt_kit_cross_device_access.py
       - tests/test_prompt_kit_freshness_guidance.py
+      - tests/test_prompt_kit_release_identity.py
       - tests/test_prompt_kit_order_navigation_contract.py
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_kit_discovery.py
@@ -90,6 +94,7 @@ jobs:
             scripts/validate_operator_command_envelope.py \
             scripts/validate_prompt_kit_cross_device_access.py \
             scripts/validate_prompt_kit_freshness_guidance.py \
+            scripts/validate_prompt_kit_release_identity.py \
             scripts/validate_prompt_kit_order_navigation.py \
             scripts/validate_prompt_kit_interactions.py \
             scripts/validate_prompt_kit_discovery.py \
@@ -98,6 +103,7 @@ jobs:
             tests/test_operator_command_envelope.py \
             tests/test_prompt_kit_cross_device_access.py \
             tests/test_prompt_kit_freshness_guidance.py \
+            tests/test_prompt_kit_release_identity.py \
             tests/test_prompt_kit_order_navigation_contract.py \
             tests/test_prompt_kit_interactions_contract.py \
             tests/test_prompt_kit_discovery.py \
@@ -117,6 +123,16 @@ jobs:
         run: |
           python scripts/validate_prompt_kit_freshness_guidance.py --summary
           python -m unittest tests.test_prompt_kit_freshness_guidance -v
+      - name: Validate Prompt Kit release identity
+        run: |
+          python scripts/validate_prompt_kit_release_identity.py --output "$RUNNER_TEMP/prompt-kit-release-identity.json" --summary
+          python -m unittest tests.test_prompt_kit_release_identity -v
+      - name: Upload Prompt Kit release identity report
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-release-identity-report
+          path: ${{ runner.temp }}/prompt-kit-release-identity.json
+          if-no-files-found: error
       - name: Validate Prompt Kit ordering and long-list navigation harness
         run: |
           python scripts/validate_prompt_kit_order_navigation.py --output "$RUNNER_TEMP/prompt-kit-order-navigation-audit.json" --summary
