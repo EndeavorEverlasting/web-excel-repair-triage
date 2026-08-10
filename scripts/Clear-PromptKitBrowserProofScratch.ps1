@@ -13,15 +13,16 @@ Set-StrictMode -Version Latest
 $SchemaVersion = 'prompt-kit-browser-proof-cleanup-report/v1'
 $LeafPattern = '^prompt-kit-browser-proof-[0-9a-fA-F]{16,64}$'
 $RequiredMarkerRelative = 'web\prompt-kit\index.html'
+$PathTrimChars = [char[]]'\/'
 $RepoRoot = Split-Path -Parent $PSScriptRoot
-$OutputsRoot = [System.IO.Path]::GetFullPath((Join-Path $RepoRoot 'Outputs')).TrimEnd('\', '/')
-$SystemTemp = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath()).TrimEnd('\', '/')
+$OutputsRoot = [System.IO.Path]::GetFullPath((Join-Path $RepoRoot 'Outputs')).TrimEnd($PathTrimChars)
+$SystemTemp = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath()).TrimEnd($PathTrimChars)
 
 if ([string]::IsNullOrWhiteSpace($ReportPath)) {
     $ReportPath = Join-Path $OutputsRoot 'prompt-kit-browser-proof-cleanup-report.json'
 }
 $ResolvedReportPath = [System.IO.Path]::GetFullPath($ReportPath)
-$ReportParent = [System.IO.Path]::GetFullPath((Split-Path -Parent $ResolvedReportPath)).TrimEnd('\', '/')
+$ReportParent = [System.IO.Path]::GetFullPath((Split-Path -Parent $ResolvedReportPath)).TrimEnd($PathTrimChars)
 if ($ReportParent -ne $OutputsRoot -and -not $ReportParent.StartsWith($OutputsRoot + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "ReportPath must stay under repository Outputs/: $ResolvedReportPath"
 }
@@ -44,8 +45,8 @@ function New-CandidateRecord {
     }
 
     $item = Get-Item -LiteralPath $Path -Force
-    $full = [System.IO.Path]::GetFullPath($item.FullName).TrimEnd('\', '/')
-    $parent = [System.IO.Path]::GetFullPath($item.Parent.FullName).TrimEnd('\', '/')
+    $full = [System.IO.Path]::GetFullPath($item.FullName).TrimEnd($PathTrimChars)
+    $parent = [System.IO.Path]::GetFullPath($item.Parent.FullName).TrimEnd($PathTrimChars)
     $leaf = $item.Name
 
     if (-not $parent.Equals($SystemTemp, [System.StringComparison]::OrdinalIgnoreCase)) {
