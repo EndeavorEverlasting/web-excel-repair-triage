@@ -15,6 +15,7 @@ README = ROOT / "web" / "README.md"
 BUILDER = ROOT / "build_prompt_kit.py"
 COMBINED_BUILDER = ROOT / "scripts" / "build_prompt_kit_registry.py"
 JS = ROOT / "docs" / "prompt-kit.js"
+POLISH = ROOT / "docs" / "prompt-kit-polish.js"
 EXPECTED = [
     ("all", "All", "1"),
     ("standard", "Standard", "2"),
@@ -84,6 +85,26 @@ def test_builder_owns_the_same_fixed_header() -> None:
     assert positions == sorted(positions), "builder may not reorder the fixed header contract"
 
 
+def test_responsive_header_reflows_before_collision() -> None:
+    polish = POLISH.read_text(encoding="utf-8")
+    deployed = read_deployed()
+    required = (
+        ".header-top{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(280px,400px);",
+        ".header-top>.logo{grid-column:1;min-width:0}",
+        ".header-top>.search-container{grid-column:3;min-width:0;width:100%;max-width:none}",
+        ".header-top>.header-controls{grid-column:1/-1;min-width:0;width:100%;justify-self:stretch;justify-content:flex-end;flex-wrap:wrap}",
+        "@media(max-width:980px){.header-top{grid-template-columns:minmax(0,1fr) auto}",
+        ".header-top>.search-container{grid-column:1/-1;max-width:none}",
+        ".header-top>.header-controls .cat-tabs{max-width:100%;overflow-x:auto;",
+        ".header-top>.header-controls .cat-tab{min-height:42px}",
+    )
+    for marker in required:
+        assert marker in polish, f"responsive header source is missing: {marker}"
+        assert marker in deployed, f"generated Prompt Kit is missing responsive header marker: {marker}"
+    assert ".header.filters-collapsed .header-top{padding-bottom:0;flex-wrap:nowrap}" not in polish
+    assert ".header.filters-collapsed .header-top{padding-bottom:0;flex-wrap:nowrap}" not in deployed
+
+
 def test_readme_records_exact_deployed_surface() -> None:
     text = README.read_text(encoding="utf-8")
     assert "### Header navigation contract" in text
@@ -115,6 +136,7 @@ def main() -> None:
         test_gnhf_is_a_filter_not_a_stats_substitute,
         test_keyboard_routes_match_visible_contract,
         test_builder_owns_the_same_fixed_header,
+        test_responsive_header_reflows_before_collision,
         test_readme_records_exact_deployed_surface,
         test_deployed_artifact_is_current_combined_registry_output,
     ]
