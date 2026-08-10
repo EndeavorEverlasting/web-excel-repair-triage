@@ -13,9 +13,12 @@ class PromptKitLayoutHarnessTests(unittest.TestCase):
         errors, _, _ = validate(False)
         self.assertEqual([], errors)
 
-    def test_known_defect_is_not_misrepresented_as_fixed(self):
+    def test_product_repair_still_requires_browser_geometry(self):
         errors, _, contract = validate(True)
-        self.assertEqual("known_defect", contract["implementation_status"])
+        self.assertEqual(
+            "implemented_pending_browser_geometry",
+            contract["implementation_status"],
+        )
         self.assertTrue(any("not yet proven" in item for item in errors))
 
     def test_contract_requires_zero_overlap_and_browser_geometry(self):
