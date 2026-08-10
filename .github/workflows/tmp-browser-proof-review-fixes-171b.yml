@@ -45,10 +45,14 @@ jobs:
           python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
           python -m unittest tests.test_harness_contract -v
           git diff --check
-      - name: Commit only owned review fixes
+      - name: Commit non-workflow review fixes
         shell: bash
         run: |
           set -euo pipefail
+          # GitHub Actions cannot publish workflow-file changes with this token.
+          # Preserve the tested dedicated-workflow mutation for connector publication,
+          # but reset it in this commit so the non-workflow harness fixes can land.
+          git checkout -- .github/workflows/prompt-kit-browser-proof-cleanup.yml
           git add -- \
             .ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md \
             ARTIFACT_REGISTRY.md CAPABILITIES.md CODEBASE_MAP.md SKILLS.md TRIGGERS.md WORKFLOW.md \
@@ -60,11 +64,10 @@ jobs:
             scripts/Clear-PromptKitBrowserProofScratch.ps1 \
             scripts/validate_prompt_kit_browser_proof_cleanup.py \
             scripts/validate_harness.py \
-            tests/test_prompt_kit_browser_proof_cleanup_harness.py \
-            .github/workflows/prompt-kit-browser-proof-cleanup.yml
+            tests/test_prompt_kit_browser_proof_cleanup_harness.py
           git diff --cached --check
           if git diff --cached --quiet; then
-            echo 'No review-fix changes to commit.'
+            echo 'No non-workflow review-fix changes to commit.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
