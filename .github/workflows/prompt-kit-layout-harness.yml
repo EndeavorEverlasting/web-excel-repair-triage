@@ -31,7 +31,7 @@ jobs:
       - name: Contract tests
         run: python -m unittest tests.test_prompt_kit_layout_harness -v
       - name: Patch hygiene
-        run: git diff --check origin/${{ github.base_ref || 'main' }}...HEAD
+        run: git diff --check
       - name: Upload layout harness receipt
         uses: actions/upload-artifact@v4
         with:
