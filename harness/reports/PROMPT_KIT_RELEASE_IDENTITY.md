@@ -1,7 +1,7 @@
 # Prompt Kit Release Identity
 
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Canonical branch:** `main`  
+**Repository:** `EndeavorEverlasting/web-excel-repair-triage`
+**Canonical branch:** `main`
 **Harness contract:** `prompt-kit-release-identity/v1`
 
 ## One-site rule
