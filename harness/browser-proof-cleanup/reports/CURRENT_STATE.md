@@ -10,6 +10,7 @@
 - The runner refuses unexpected leaf names, missing Prompt Kit markers, and reparse points.
 - Cleanup emits a stable JSON receipt under `Outputs/` and preserves the prior receipt under `Outputs/backups/prompt-kit-browser-proof-cleanup/` before replacement.
 - CI validates the focused harness, root-harness registration, receipt retention, and preview/apply behavior against a test-owned scratch fixture.
+- Native Windows/P-Top acceptance is recorded in `reports/P_TOP_ACCEPTANCE_20260810.md`: one operator-owned candidate passed classification, explicit apply deleted exactly one directory, zero failures were reported, and the postcondition confirmed the target no longer existed.
 
 ## Intentionally outside this harness
 
@@ -22,7 +23,7 @@
 
 ## Missing / unproven
 
-Native P-Top/Windows execution against an operator-owned scratch directory remains unproven until the focused runner previews that exact workstation path. Actual deletion remains a later explicit `-Apply` gate.
+No remaining filesystem-cleanup runtime gate is open for the observed P-Top acceptance case. Browser profile data, browser `localStorage`, Prompt Kit Favorites, other machines, and unrelated scratch families remain outside this proof rather than implicitly proven.
 
 ## Operator interpretation
 

@@ -30,6 +30,7 @@
     "pre_push_hook": "harness/browser-proof-cleanup/hooks/pre-push.sh",
     "skill": ".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md",
     "operator_report": "harness/browser-proof-cleanup/reports/CURRENT_STATE.md",
+    "operator_acceptance_report": "harness/browser-proof-cleanup/reports/P_TOP_ACCEPTANCE_20260810.md",
     "ci": ".github/workflows/prompt-kit-browser-proof-cleanup.yml"
   },
   "validation_order": [
@@ -39,5 +40,5 @@
     "pwsh -NoLogo -NoProfile -File scripts/Clear-PromptKitBrowserProofScratch.ps1",
     "git diff --check"
   ],
-  "proof_ceiling": "Repository contract, static test, CI, and test-owned temporary-directory cleanup proof. Native Windows/P-Top cleanup of an operator-owned browser-proof directory remains an operator runtime gate."
+  "proof_ceiling": "Repository contract, static test, CI, test-owned cleanup proof, and sanitized operator-observed native Windows/P-Top explicit-apply filesystem cleanup proof. Browser profile data, localStorage, Favorites, and Prompt Kit product behavior remain outside this proof ceiling."
 }
