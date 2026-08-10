@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -28,6 +29,7 @@ class PromptKitBrowserProofCleanupHarnessTests(unittest.TestCase):
         self.assertTrue(contract["reject_reparse_points"])
         self.assertTrue(contract["browser_profile_data_out_of_scope"])
         self.assertTrue(contract["favorites_local_storage_out_of_scope"])
+        self.assertIn("native Windows/P-Top", manifest["proof_ceiling"])
 
     def test_cleanup_runner_has_exact_scope_and_no_broad_temp_or_favorites_mutation(self) -> None:
         text = (ROOT / "scripts/Clear-PromptKitBrowserProofScratch.ps1").read_text(encoding="utf-8")
@@ -65,6 +67,28 @@ class PromptKitBrowserProofCleanupHarnessTests(unittest.TestCase):
         self.assertTrue(registry["ephemeral_inputs"]["must_not_be_committed"])
         artifact = registry["artifacts"][0]
         self.assertEqual(artifact["path"], "Outputs/prompt-kit-browser-proof-cleanup-report.json")
+
+    def test_operator_acceptance_report_records_native_apply_without_machine_local_paths(self) -> None:
+        manifest = json.loads(
+            (ROOT / "harness/browser-proof-cleanup/manifest.v1.json").read_text(encoding="utf-8")
+        )
+        report_path = ROOT / manifest["components"]["operator_acceptance_report"]
+        report = report_path.read_text(encoding="utf-8")
+        for marker in (
+            "P-Top Acceptance",
+            "mode: `apply`",
+            "eligible: 1",
+            "deleted: 1",
+            "failed: 0",
+            "TARGET_EXISTS=False",
+            "PASS — native Windows/P-Top explicit-apply cleanup was observed",
+        ):
+            self.assertIn(marker, report)
+        self.assertIsNone(re.search(r"[A-Za-z]:\\Users\\", report, flags=re.IGNORECASE))
+        self.assertIsNone(re.search(r"file:///+[A-Za-z]:/Users/", report, flags=re.IGNORECASE))
+        self.assertIsNone(
+            re.search(r"prompt-kit-browser-proof-[0-9a-fA-F]{16,64}", report, flags=re.IGNORECASE)
+        )
 
 
 if __name__ == "__main__":
