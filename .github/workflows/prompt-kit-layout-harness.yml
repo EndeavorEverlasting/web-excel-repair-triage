@@ -1,0 +1,39 @@
+name: Prompt Kit responsive layout harness
+
+on:
+  pull_request:
+    paths:
+      - 'harness/prompt-kit-layout/**'
+      - '.ai/skills/prompt-kit-responsive-layout/**'
+      - 'scripts/validate_prompt_kit_layout_harness.py'
+      - 'tests/test_prompt_kit_layout_harness.py'
+      - '.github/workflows/prompt-kit-layout-harness.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'harness/prompt-kit-layout/**'
+      - '.ai/skills/prompt-kit-responsive-layout/**'
+      - 'scripts/validate_prompt_kit_layout_harness.py'
+      - 'tests/test_prompt_kit_layout_harness.py'
+
+jobs:
+  layout-harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: python -m py_compile scripts/validate_prompt_kit_layout_harness.py tests/test_prompt_kit_layout_harness.py
+      - name: Harness completeness
+        run: python scripts/validate_prompt_kit_layout_harness.py --output Outputs/prompt-kit-layout-harness.json --summary
+      - name: Contract tests
+        run: python -m unittest tests.test_prompt_kit_layout_harness -v
+      - name: Patch hygiene
+        run: git diff --check origin/${{ github.base_ref || 'main' }}...HEAD
+      - name: Upload layout harness receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-layout-harness-report
+          path: Outputs/prompt-kit-layout-harness.json
