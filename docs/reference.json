@@ -577,6 +577,41 @@
       "variable": "xyz_stateful_runtime_boundary",
       "meaning": "forbidden personal or live state",
       "example": "saves, accounts, inventory, production services"
+    },
+    {
+      "variable": "xyz_ai_surface",
+      "meaning": "model, agent, workflow, or AI-enabled product surface under evaluation",
+      "example": "support-agent tool loop / retrieval answerer"
+    },
+    {
+      "variable": "xyz_eval_risks",
+      "meaning": "known quality failures, regressions, or task classes the eval system must cover",
+      "example": "wrong tool choice; malformed response; stale retrieval"
+    },
+    {
+      "variable": "xyz_context_problem",
+      "meaning": "context-system symptom to measure and repair",
+      "example": "tool-schema bloat / stale retrieval / oversized history"
+    },
+    {
+      "variable": "xyz_agent_runtime",
+      "meaning": "agent loop, service, worker, or orchestrator being hardened",
+      "example": "triage agent worker / background tool executor"
+    },
+    {
+      "variable": "xyz_provider_runtime",
+      "meaning": "model/provider/runtime combination subject to LLM Ops controls",
+      "example": "primary model + fallback provider"
+    },
+    {
+      "variable": "xyz_ai_dependency",
+      "meaning": "volatile model, SDK, framework, provider, or protocol under review",
+      "example": "agent SDK / model API / tool protocol"
+    },
+    {
+      "variable": "xyz_review_window",
+      "meaning": "bounded evidence window for adaptability review",
+      "example": "last 90 days / current release cycle"
     }
   ],
   "promptSequence": [
@@ -1209,6 +1244,76 @@
       "authority": "Validation, report, and finalization of existing overnight work",
       "proofCeiling": "Closeout and local proof only; no push, merge, or release proof.",
       "copySafeSheet": "P44_COPY_SAFE"
+    },
+    {
+      "seq": "67",
+      "promptId": "P67",
+      "moment": "Repository Eval Framework Builder",
+      "useItFor": "AI/agent behavior needs repository-wide quality and regression gates.",
+      "doNotUseWhen": "Only one deterministic unit test is missing and no AI-behavior eval layer is needed.",
+      "produces": "Versioned cases, oracles, reports, and executable eval gates.",
+      "gate": "Representative regressions fail closed and deterministic checks precede expensive judge/model evaluation.",
+      "then": "Use P68/P69 or the owning product repair based on what the eval exposes.",
+      "mutatesRepo": "YES",
+      "authority": "Eval fixtures, validators, reports, and CI inside owned scope",
+      "proofCeiling": "Repository eval/static/synthetic proof; no live-user quality claim unless observed.",
+      "copySafeSheet": "P67_COPY_SAFE"
+    },
+    {
+      "seq": "68",
+      "promptId": "P68",
+      "moment": "Context Engineering System Refactorer",
+      "useItFor": "Context bloat, stale retrieval, duplicated authority, or indiscriminate tool/history loading harms quality, cost, or latency.",
+      "doNotUseWhen": "The issue is ordinary application memory unrelated to model context.",
+      "produces": "Measured context map/budget, routing/pruning changes, and context-selection regression tests.",
+      "gate": "Required information remains available while unnecessary context is measurably reduced or better routed.",
+      "then": "Re-run representative evals with P67.",
+      "mutatesRepo": "YES",
+      "authority": "Context loaders, prompt/tool registries, routing, retrieval configuration, and validators inside scope",
+      "proofCeiling": "Measured context-selection and repository test proof; provider billing/latency claims require actual telemetry.",
+      "copySafeSheet": "P68_COPY_SAFE"
+    },
+    {
+      "seq": "69",
+      "promptId": "P69",
+      "moment": "Production Agent Reliability Hardener",
+      "useItFor": "An agent must survive timeouts, malformed tools/APIs, duplicates, partial failure, restarts, or degraded providers.",
+      "doNotUseWhen": "There is no agent loop or external side-effect boundary.",
+      "produces": "Reliability controls, failure taxonomy, recovery state, observability, and fault-injection tests.",
+      "gate": "Retries are bounded, side effects are safe, failure paths are recoverable, and synthetic faults pass.",
+      "then": "Use P70 when the hardened path is approaching deployment.",
+      "mutatesRepo": "YES",
+      "authority": "Agent runtime/harness reliability surfaces inside explicit scope",
+      "proofCeiling": "Synthetic failure-path proof until protected/live runtime is actually exercised.",
+      "copySafeSheet": "P69_COPY_SAFE"
+    },
+    {
+      "seq": "70",
+      "promptId": "P70",
+      "moment": "LLM Ops Production Readiness Builder",
+      "useItFor": "A model-backed feature needs deployability, monitoring, latency/cost, caching, fallback, release, and rollback controls.",
+      "doNotUseWhen": "The feature is still only a local prototype with no operational path to harden.",
+      "produces": "Operational readiness controls, SLO/budgets, telemetry, fallback policy, release gates, and rollback/runbook artifacts.",
+      "gate": "Readiness is measurable and deployment remains gated by actual authority and runtime proof.",
+      "then": "Use P19/P08 for authorized deployment or live behavior proof.",
+      "mutatesRepo": "YES",
+      "authority": "Repository-owned deployment/observability/configuration/runbook surfaces; no implicit production authority",
+      "proofCeiling": "Config/static/synthetic operational readiness until real deployment is authorized and observed.",
+      "copySafeSheet": "P70_COPY_SAFE"
+    },
+    {
+      "seq": "71",
+      "promptId": "P71",
+      "moment": "AI Toolchain Adaptability Review + Upgrade",
+      "useItFor": "Fast-moving models, SDKs, providers, frameworks, or tool protocols are causing coupling or upgrade risk.",
+      "doNotUseWhen": "No evidence-backed compatibility or lifecycle problem exists.",
+      "produces": "Volatility inventory, stable contracts/adapters, one bounded upgrade or compatibility repair, matrix proof, and rollback/migration notes.",
+      "gate": "Adaptation is evidence-driven, compatibility-tested, and reversible rather than novelty-driven.",
+      "then": "Re-run P67 evals and P70 readiness if runtime dependencies changed.",
+      "mutatesRepo": "YES",
+      "authority": "Bounded compatibility/adaptor/dependency surfaces inside scope",
+      "proofCeiling": "Compatibility and repository proof; production/provider behavior requires actual runtime evidence.",
+      "copySafeSheet": "P71_COPY_SAFE"
     }
   ],
   "classLegend": [
@@ -1715,6 +1820,18 @@
       "fillHex": "#E5E7EB",
       "color": "Gray",
       "meaning": "Closes the night without starting another feature or mistaking process exit for delivery."
+    },
+    {
+      "promptType": "AI ENGINEERING LEVEL-UP",
+      "promptClass": "EVALS / CONTEXT / AGENT RELIABILITY / LLM OPS / ADAPTABILITY",
+      "promptIds": "P67-P71",
+      "whenToUse": "Move an AI/agent repository from demo-level confidence toward production engineering maturity",
+      "progressUse": "YES",
+      "proofGate": "Each discipline produces executable repository evidence and preserves its proof ceiling",
+      "fillRole": "Production AI maturity",
+      "fillHex": "#A7F3D0",
+      "color": "Mint",
+      "meaning": "Five complementary tracks: evaluate behavior, engineer context, harden agents, operate model infrastructure, and keep volatile dependencies replaceable."
     }
   ],
   "colorRouting": [

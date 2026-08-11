@@ -16,6 +16,7 @@ var PROMPT_FINDER_QUESTIONS=[
   {id:'plan',label:'Plan or divide the work',queries:['plan','factor','sprint plan']},
   {id:'coordinate',label:'Keep human and agent work continuous in a repository ledger',queries:['repository ledger','work ledger','agent queue','shared work state']},
   {id:'build',label:'Implement a bounded change',queries:['implement','build','sprint']},
+  {id:'ai-level-up',label:'Level up an AI/agent repository for production',queries:['ai engineering level up','evals','context engineering','production agents','llm ops','adaptability']},
   {id:'prove',label:'Validate or prove behavior',queries:['validate','behavior proof','runtime']},
   {id:'ship',label:'Integrate, deploy, or release',queries:['integrate','deploy','release']},
   {id:'teach',label:'Create tutorials or guidance',queries:['tutorial','documentation','repo tutorial']},
