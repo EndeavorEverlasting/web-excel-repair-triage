@@ -36,7 +36,20 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git merge --no-ff --no-commit "$STACK_SHA"
       - name: Repair unresolved review findings and mainline delivery contract
-        run: python scripts/_converge_prompt_kit_public_mainline.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/_converge_prompt_kit_public_mainline.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/validate_prompt_kit_layout_harness.py')
+          text = path.read_text(encoding='utf-8')
+          old = 'product responsive-layout implementation is not fully proven; status must be implemented'
+          new = 'product responsive-layout implementation is not yet proven; status must be implemented'
+          if old not in text:
+              raise SystemExit('expected layout proof wording not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
       - name: Rebuild canonical Prompt Kit
         run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
       - name: Validate converged Prompt Kit and harness
@@ -62,7 +75,6 @@ jobs:
               if token not in html:
                   raise SystemExit(f'canonical Prompt Kit missing {token}')
           if not re.search(r'72\s+prompts', html, flags=re.I) and '"total":72' not in html.replace(' ', ''):
-              # The builder/test suite is authoritative for registry count; print an explicit diagnostic instead of guessing silently.
               print('NOTE: visible literal "72 prompts" marker not found; registry/build tests remain authoritative.')
           PY
       - name: Commit final mainline convergence
