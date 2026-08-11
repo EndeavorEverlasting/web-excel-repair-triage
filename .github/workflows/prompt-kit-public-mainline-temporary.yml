@@ -39,6 +39,7 @@ jobs:
         run: |
           python scripts/_converge_prompt_kit_public_mainline.py
           python scripts/_sync_prompt_kit_root_harness.py
+          python scripts/_finish_prompt_kit_root_sync.py
       - name: Rebuild canonical Prompt Kit
         run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
       - name: Validate converged Prompt Kit and harness
@@ -61,7 +62,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git rm .github/workflows/prompt-kit-public-mainline-temporary.yml scripts/_converge_prompt_kit_public_mainline.py scripts/_sync_prompt_kit_root_harness.py
+          git rm .github/workflows/prompt-kit-public-mainline-temporary.yml scripts/_converge_prompt_kit_public_mainline.py scripts/_sync_prompt_kit_root_harness.py scripts/_finish_prompt_kit_root_sync.py
           git add -A
           git diff --cached --check
           git status --short
