@@ -1,0 +1,47 @@
+name: Prompt Kit public live proof
+
+on:
+  push:
+    branches:
+      - proof/prompt-kit-public-live-72-20260811
+
+permissions:
+  contents: read
+
+jobs:
+  live-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: proof/prompt-kit-public-live-72-20260811
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify canonical mainline artifact is 72 prompts
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Fetch deployed public Prompt Kit and prove byte parity
+        shell: bash
+        env:
+          EXPECTED_MAIN: 02560c842f5cb1df8b3b702dc752bf5afad9d2fd
+          PUBLIC_URL: https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/
+        run: |
+          set -euo pipefail
+          url="${PUBLIC_URL}?v=${EXPECTED_MAIN}"
+          curl --fail --show-error --silent --location \
+            --retry 5 --retry-delay 2 --retry-all-errors \
+            -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' \
+            "$url" -o /tmp/prompt-kit-live.html
+          cmp web/prompt-kit/index.html /tmp/prompt-kit-live.html
+          for token in P67 P68 P69 P70 P71 'Production AI Engineering Doctrine' 'Repeated Friction'; do
+            grep -Fq "$token" /tmp/prompt-kit-live.html
+          done
+          canonical_sha="$(sha256sum web/prompt-kit/index.html | awk '{print $1}')"
+          live_sha="$(sha256sum /tmp/prompt-kit-live.html | awk '{print $1}')"
+          test "$canonical_sha" = "$live_sha"
+          echo "PUBLIC_PROMPT_KIT_LIVE_PROOF=PASS"
+          echo "PUBLIC_URL=$url"
+          echo "MAIN_SHA=$EXPECTED_MAIN"
+          echo "CANONICAL_SHA256=$canonical_sha"
+          echo "LIVE_SHA256=$live_sha"
+          echo "LIVE_BYTES=$(wc -c < /tmp/prompt-kit-live.html)"
