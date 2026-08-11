@@ -41,12 +41,11 @@ def normalize_validation_order() -> None:
 def index_skill() -> None:
     path = ROOT / "SKILLS.md"
     text = path.read_text(encoding="utf-8")
-    if SKILL in text:
-        return
-    anchor = "## Required skill-file sections"
-    if anchor not in text:
-        raise SystemExit("SKILLS.md required-sections anchor missing")
-    section = """### Prompt Kit responsive layout audit
+    if SKILL not in text:
+        anchor = "## Required skill-file sections"
+        if anchor not in text:
+            raise SystemExit("SKILLS.md required-sections anchor missing")
+        section = """### Prompt Kit responsive layout audit
 
 - **Path:** `.ai/skills/prompt-kit-responsive-layout/SKILL.md`
 - **Trigger:** `prompt-kit-responsive-overlap`
@@ -56,13 +55,27 @@ def index_skill() -> None:
 - **Primary validation:** `python scripts/validate_prompt_kit_layout_harness.py --summary` and `python -m unittest tests.test_prompt_kit_layout_harness -v`; strict geometry uses `--require-implementation --geometry-report Outputs/prompt-kit-layout-geometry.json`.
 
 """
-    text = text.replace(anchor, section + anchor, 1)
-    path.write_text(text, encoding="utf-8")
+        text = text.replace(anchor, section + anchor, 1)
+        path.write_text(text, encoding="utf-8")
+
+
+def synchronize_pre_push_hook() -> None:
+    path = ROOT / ".githooks/pre-push"
+    text = path.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    lines = [line for line in lines if line not in {AUDIT_CMD, TEST_CMD}]
+    try:
+        anchor = lines.index(HEADER_CMD)
+    except ValueError as exc:
+        raise SystemExit("pre-push header-contract command anchor missing") from exc
+    lines[anchor:anchor] = [AUDIT_CMD, TEST_CMD]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def main() -> None:
     normalize_validation_order()
     index_skill()
+    synchronize_pre_push_hook()
 
 
 if __name__ == "__main__":
