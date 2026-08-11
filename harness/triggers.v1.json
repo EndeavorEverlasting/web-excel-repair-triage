@@ -118,6 +118,21 @@
         "browser profile/localStorage/Favorites deletion is the actual request",
         "target is a canonical repository checkout or durable Outputs evidence"
       ]
+    },
+    {
+      "id": "prompt-kit-responsive-overlap",
+      "capability_id": "prompt-kit-responsive-layout",
+      "skill": ".ai/skills/prompt-kit-responsive-layout/SKILL.md",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "conditions": [
+        "Prompt Kit header, brand, search, filter, or navigation controls overlap",
+        "responsive header regression is reported across viewport widths",
+        "strict browser no-overlap proof is requested"
+      ],
+      "forbidden_conditions": [
+        "request is unrelated to Prompt Kit layout",
+        "browser geometry is claimed from static source assertions alone"
+      ]
     }
   ]
 }

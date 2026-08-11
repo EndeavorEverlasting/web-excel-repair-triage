@@ -9,12 +9,14 @@ var PROMPT_FINDER_QUESTIONS=[
  {id:'problemKnown',prompt:'Do you have a known problem you want to solve?',options:[
   {id:'known-failure',label:'Yes — something is failing or broken now',queries:['troubleshoot','diagnose','root cause']},
   {id:'known-task',label:'Yes — the task and desired change are already known',queries:['implement','sprint','code change']},
+  {id:'repeated-stall',label:'Yes — the work keeps stalling, urgency is being missed, or I keep repeating the same correction',queries:['urgency','repeated pain','sub-part agent','stalled execution']},
   {id:'not-yet',label:'Not yet — I need to discover or plan first',queries:['discovery','plan','opportunity']}
  ]},
  {id:'goal',prompt:'What are you trying to accomplish?',options:[
   {id:'plan',label:'Plan or divide the work',queries:['plan','factor','sprint plan']},
   {id:'coordinate',label:'Keep human and agent work continuous in a repository ledger',queries:['repository ledger','work ledger','agent queue','shared work state']},
   {id:'build',label:'Implement a bounded change',queries:['implement','build','sprint']},
+  {id:'ai-level-up',label:'Level up an AI/agent repository for production',queries:['ai engineering level up','evals','context engineering','production agents','llm ops','adaptability']},
   {id:'prove',label:'Validate or prove behavior',queries:['validate','behavior proof','runtime']},
   {id:'ship',label:'Integrate, deploy, or release',queries:['integrate','deploy','release']},
   {id:'teach',label:'Create tutorials or guidance',queries:['tutorial','documentation','repo tutorial']},

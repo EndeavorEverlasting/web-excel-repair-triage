@@ -106,6 +106,8 @@ REQUIRED_VALIDATOR_IDS = {
     "prompt-kit-browser-proof-cleanup-completeness",
     "prompt-kit-browser-proof-cleanup-tests",
     "prompt-kit-browser-proof-cleanup-powershell-smoke",
+    "prompt-kit-responsive-layout-audit",
+    "prompt-kit-responsive-layout-tests",
 }
 REQUIRED_CAPABILITY_IDS = {
     "harness-infrastructure-maintenance",
@@ -114,6 +116,7 @@ REQUIRED_CAPABILITY_IDS = {
     "skill-factoring",
     "technician-prompt-kit-acquisition",
     "prompt-kit-browser-proof-scratch-cleanup",
+    "prompt-kit-responsive-layout",
 }
 REQUIRED_TRIGGER_IDS = {
     "harness-infrastructure-change",
@@ -123,6 +126,7 @@ REQUIRED_TRIGGER_IDS = {
     "skill-boundary-defect",
     "technician-needs-latest-prompt-kit",
     "prompt-kit-browser-proof-temp-path",
+    "prompt-kit-responsive-overlap",
 }
 PROTECTED_PATHS = ("Candidates/", "Active/")
 

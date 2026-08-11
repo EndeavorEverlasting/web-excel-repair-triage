@@ -184,6 +184,33 @@
         "path": "scripts/Clear-PromptKitBrowserProofScratch.ps1"
       },
       "proof_ceiling": "Filesystem classification and cleanup receipt only; browser profile/localStorage/Favorites state remains separate."
+    },
+    {
+      "id": "prompt-kit-responsive-layout",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/prompt-kit-responsive-layout/SKILL.md",
+      "trigger_ids": [
+        "prompt-kit-responsive-overlap"
+      ],
+      "operation": "Classify Prompt Kit header/search collisions, enforce responsive source and generated-artifact contracts, and require browser geometry before strict no-overlap proof.",
+      "inputs": [
+        "operator overlap evidence",
+        "web/prompt-kit/index.html",
+        "docs/prompt-kit-polish.js",
+        "harness/prompt-kit-layout/contracts/responsive-header-overlap.v1.json",
+        "declared responsive viewports"
+      ],
+      "outputs": [
+        "responsive-layout harness validation",
+        "focused source/artifact regression proof",
+        "browser geometry receipt for strict proof when available"
+      ],
+      "implementation": {
+        "kind": "script",
+        "path": "scripts/validate_prompt_kit_layout_harness.py"
+      },
+      "proof_ceiling": "Static harness/source/artifact proof unless a validated browser-geometry receipt covers every declared viewport."
     }
   ]
 }

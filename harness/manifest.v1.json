@@ -126,6 +126,18 @@
       "cleanup_runner": "scripts/Clear-PromptKitBrowserProofScratch.ps1",
       "artifact_registry": "harness/browser-proof-cleanup/artifacts.v1.json",
       "operator_report": "harness/browser-proof-cleanup/reports/CURRENT_STATE.md"
+    },
+    "prompt_kit_responsive_layout": {
+      "contract": "harness/prompt-kit-layout/contracts/responsive-header-overlap.v1.json",
+      "validator": "scripts/validate_prompt_kit_layout_harness.py",
+      "contract_tests": "tests/test_prompt_kit_layout_harness.py",
+      "workflow": "harness/prompt-kit-layout/WORKFLOW.md",
+      "harness_gate": "python scripts/validate_prompt_kit_layout_harness.py --summary",
+      "strict_product_gate": "python scripts/validate_prompt_kit_layout_harness.py --require-implementation --geometry-report Outputs/prompt-kit-layout-geometry.json --summary",
+      "domain_manifest": "harness/prompt-kit-layout/manifest.v1.json",
+      "skill": ".ai/skills/prompt-kit-responsive-layout/SKILL.md",
+      "artifact_registry": "harness/prompt-kit-layout/artifacts.v1.json",
+      "operator_report": "harness/prompt-kit-layout/reports/CURRENT_STATE.md"
     }
   },
   "skills": [
@@ -134,7 +146,8 @@
     ".ai/skills/skill-evaluation/SKILL.md",
     ".ai/skills/skill-factoring/SKILL.md",
     ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
-    ".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md"
+    ".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md",
+    ".ai/skills/prompt-kit-responsive-layout/SKILL.md"
   ],
   "technician_acquisition": {
     "launcher": "Acquire-Latest-PromptKit.cmd",
@@ -173,6 +186,8 @@
     "python -m unittest tests.test_prompt_language_audit -v",
     "python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary",
     "python -m unittest tests.test_skill_prompt_registry -v",
+    "python scripts/validate_prompt_kit_layout_harness.py --summary",
+    "python -m unittest tests.test_prompt_kit_layout_harness -v",
     "python tests/test_prompt_kit_header_contract.py",
     "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
     "python -m triage.gitignore_hygiene",

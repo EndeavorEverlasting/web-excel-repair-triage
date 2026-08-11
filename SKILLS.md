@@ -69,6 +69,15 @@ This is the repository skill index. Reusable procedures live under `.ai/skills/<
 - **Outputs:** Preview/apply receipt, retained prior receipt backup, classified candidates, and bounded filesystem proof.
 - **Primary validation:** `python scripts/validate_prompt_kit_browser_proof_cleanup.py --summary` and `python -m unittest tests.test_prompt_kit_browser_proof_cleanup_harness -v`.
 
+### Prompt Kit responsive layout audit
+
+- **Path:** `.ai/skills/prompt-kit-responsive-layout/SKILL.md`
+- **Trigger:** `prompt-kit-responsive-overlap`
+- **Capability:** `prompt-kit-responsive-layout`
+- **Use when:** Prompt Kit brand, search, filter, or navigation controls overlap, escape the header, overflow horizontally, or need strict responsive proof.
+- **Proof boundary:** Static source/artifact checks do not prove browser geometry; strict no-overlap proof requires the registered all-viewport geometry receipt.
+- **Primary validation:** `python scripts/validate_prompt_kit_layout_harness.py --summary` and `python -m unittest tests.test_prompt_kit_layout_harness -v`; strict geometry uses `--require-implementation --geometry-report Outputs/prompt-kit-layout-geometry.json`.
+
 ## Required skill-file sections
 
 Every active `SKILL.md` must include:
