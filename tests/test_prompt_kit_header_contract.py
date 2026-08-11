@@ -15,6 +15,7 @@ README = ROOT / "web" / "README.md"
 BUILDER = ROOT / "build_prompt_kit.py"
 COMBINED_BUILDER = ROOT / "scripts" / "build_prompt_kit_registry.py"
 JS = ROOT / "docs" / "prompt-kit.js"
+POLISH = ROOT / "docs" / "prompt-kit-polish.js"
 EXPECTED = [
     ("all", "All", "1"),
     ("standard", "Standard", "2"),
@@ -31,6 +32,29 @@ TAG_RE = re.compile(r"<[^>]+>")
 def read_deployed() -> str:
     assert DEPLOYED.is_file(), f"missing exact deployed artifact: {DEPLOYED}"
     return DEPLOYED.read_text(encoding="utf-8")
+
+
+def polish_runtime(text: str) -> str:
+    marker = "style.id='prompt-kit-polish-styles';"
+    start = text.find(marker)
+    assert start >= 0, "missing Prompt Kit polish runtime"
+    return text[start:]
+
+
+def media_block(css: str, width: int) -> str:
+    marker = f"@media(max-width:{width}px){{"
+    start = css.find(marker)
+    assert start >= 0, f"missing {marker}"
+    depth = 0
+    for index in range(start + len(marker) - 1, len(css)):
+        char = css[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return css[start : index + 1]
+    raise AssertionError(f"unterminated {marker}")
 
 
 def parse_header_buttons(text: str) -> list[tuple[str, str, str, bool]]:
@@ -84,6 +108,33 @@ def test_builder_owns_the_same_fixed_header() -> None:
     assert positions == sorted(positions), "builder may not reorder the fixed header contract"
 
 
+def test_responsive_header_reflows_before_collision() -> None:
+    polish = polish_runtime(POLISH.read_text(encoding="utf-8"))
+    deployed = polish_runtime(read_deployed())
+    wide_required = (
+        ".header-top{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(280px,400px);",
+        ".header-top>.logo{grid-column:1;min-width:0}",
+        ".header-top>.search-container{grid-column:3;min-width:0;width:100%;max-width:none}",
+        ".header-top>.header-controls{grid-column:1/-1;min-width:0;width:100%;justify-self:stretch;justify-content:flex-end;flex-wrap:wrap}",
+    )
+    for marker in wide_required:
+        assert marker in polish, f"responsive header source is missing: {marker}"
+        assert marker in deployed, f"generated Prompt Kit is missing responsive header marker: {marker}"
+
+    for text, label in ((polish, "source"), (deployed, "generated Prompt Kit")):
+        medium = media_block(text, 980)
+        mobile = media_block(text, 760)
+        assert ".header-top{grid-template-columns:minmax(0,1fr) auto}" in medium, f"{label} medium breakpoint lost header grid"
+        assert ".header-top>.search-container{grid-column:1/-1;max-width:none}" in medium, f"{label} medium breakpoint must move search to its own row"
+        assert ".header-top>.header-controls{grid-column:1/-1}" in medium, f"{label} medium breakpoint must keep controls below search"
+        assert ".header-top>.header-controls{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr);" in mobile, f"{label} mobile controls must stack"
+        assert ".header-top>.header-controls .cat-tabs{max-width:100%;overflow-x:auto;" in mobile, f"{label} mobile category tabs must scroll inside their own rail"
+        assert ".header-top>.header-controls .cat-tab{min-height:42px}" in mobile, f"{label} mobile category targets must remain touch-sized"
+
+    assert ".header.filters-collapsed .header-top{padding-bottom:0;flex-wrap:nowrap}" not in polish
+    assert ".header.filters-collapsed .header-top{padding-bottom:0;flex-wrap:nowrap}" not in deployed
+
+
 def test_readme_records_exact_deployed_surface() -> None:
     text = README.read_text(encoding="utf-8")
     assert "### Header navigation contract" in text
@@ -115,6 +166,7 @@ def main() -> None:
         test_gnhf_is_a_filter_not_a_stats_substitute,
         test_keyboard_routes_match_visible_contract,
         test_builder_owns_the_same_fixed_header,
+        test_responsive_header_reflows_before_collision,
         test_readme_records_exact_deployed_surface,
         test_deployed_artifact_is_current_combined_registry_output,
     ]

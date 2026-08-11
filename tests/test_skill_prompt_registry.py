@@ -69,19 +69,66 @@ class SkillPromptRegistryTests(unittest.TestCase):
         ):
             self.assertIn(keyword, prompt["keywords"])
 
+    def test_p13_recurring_urgency_recovery_advances_and_parallelizes(self) -> None:
+        prompt = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P13"]
+        content = prompt["copyContent"]
+
+        self.assertEqual(prompt["name"], "Repeated Friction → Urgency Recovery + Rule Repair")
+        self.assertEqual(prompt["class"], "IMPROVE / RULES + EXECUTION")
+        self.assertEqual(prompt["progress"], "YES")
+        for phrase in (
+            "THE SAME PROBLEM HAS REPEATED",
+            "We need to move past R1",
+            "Deployment has held up",
+            "A plan for a Sub-Part Agent was not in your output",
+            "ESTABLISH THE CURRENT CRITICAL PATH",
+            "current proven floor or stage",
+            "next unproven gate",
+            "EXECUTE ONE CRITICAL-PATH ADVANCEMENT NOW",
+            "SUB-PART AGENT PLAN IS MANDATORY",
+            "Sub-Part Agent: none — serialized dependency",
+            "Never use a Sub-Part Agent plan as an excuse to stop the primary critical path",
+            "INSTALL THE SMALLEST DURABLE PREVENTION",
+            "REGRESSION SCENARIO",
+            "no stopping at plan/status while safe action remains",
+        ):
+            self.assertIn(phrase, content)
+
+        self.assertEqual(build_prompt_kit_registry.build_prompt_kit.SYNONYMS["urgency"], "P13")
+        self.assertEqual(build_prompt_kit_registry.build_prompt_kit.SYNONYMS["sub-part agent"], "P13")
+        self.assertEqual(prompt["discoveryGroup"], "promoted")
+
+        reference = json.loads(build_prompt_kit_registry.REFERENCE.read_text(encoding="utf-8"))
+        sequence = next(item for item in reference["promptSequence"] if item["promptId"] == "P13")
+        legend = next(item for item in reference["classLegend"] if item["promptIds"] == "P13")
+        self.assertIn("Urgency Recovery", sequence["moment"])
+        self.assertIn("Sub-Part Agent", sequence["produces"])
+        self.assertEqual(sequence["mutatesRepo"], "YES")
+        self.assertEqual(legend["promptClass"], "IMPROVE / RULES + EXECUTION")
+
+        guided = build_prompt_kit_registry.GUIDED_RECOMMENDATIONS.read_text(encoding="utf-8")
+        self.assertIn("id:'repeated-stall'", guided)
+        self.assertIn("work keeps stalling, urgency is being missed", guided)
+        self.assertIn("'sub-part agent'", guided)
+
     def test_prompt_override_registry_is_explicit_and_identity_preserving(self) -> None:
         payload = json.loads(build_prompt_kit_registry.PROMPT_OVERRIDES.read_text(encoding="utf-8"))
         self.assertEqual(payload["schema_version"], "prompt-registry-overrides/v1")
-        self.assertEqual(len(payload["overrides"]), 1)
-        override = payload["overrides"][0]
-        self.assertEqual((override["id"], override["seq"]), ("P02", "02"))
-        self.assertEqual(override["copySheet"], "P02_COPY_SAFE")
-        source_p02 = next(
-            item
+        self.assertEqual(len(payload["overrides"]), 2)
+        by_id = {item["id"]: item for item in payload["overrides"]}
+        self.assertEqual(set(by_id), {"P02", "P13"})
+        self.assertEqual((by_id["P02"]["id"], by_id["P02"]["seq"]), ("P02", "02"))
+        self.assertEqual(by_id["P02"]["copySheet"], "P02_COPY_SAFE")
+        self.assertEqual((by_id["P13"]["id"], by_id["P13"]["seq"]), ("P13", "13"))
+        self.assertEqual(by_id["P13"]["copySheet"], "P13_COPY_SAFE")
+        source_by_id = {
+            item["id"]: item
             for item in json.loads(build_prompt_kit_registry.BASE_REGISTRY.read_text(encoding="utf-8"))
-            if item["id"] == "P02"
-        )
-        self.assertEqual(source_p02["seq"], override["seq"])
+        }
+        self.assertEqual(source_by_id["P02"]["seq"], by_id["P02"]["seq"])
+        self.assertEqual(source_by_id["P13"]["seq"], by_id["P13"]["seq"])
 
     def test_prompt_override_rejects_id_casing_drift(self) -> None:
         source_p02 = next(

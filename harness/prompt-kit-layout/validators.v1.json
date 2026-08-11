@@ -1,0 +1,9 @@
+{
+  "schema_version": "prompt-kit-layout-validators/v1",
+  "validators": [
+    {"id":"layout-harness-completeness","command":"python scripts/validate_prompt_kit_layout_harness.py --summary","required":true},
+    {"id":"layout-contract-tests","command":"python -m unittest tests.test_prompt_kit_layout_harness -v","required":true},
+    {"id":"patch-hygiene","command":"git diff --check","required":true},
+    {"id":"strict-product-layout","command":"python scripts/validate_prompt_kit_layout_harness.py --require-implementation --summary","required":false,"gate":"product_repair_lane"}
+  ]
+}

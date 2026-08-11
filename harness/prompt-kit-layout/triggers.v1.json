@@ -1,0 +1,7 @@
+{
+  "schema_version": "prompt-kit-layout-triggers/v1",
+  "triggers": [
+    {"id":"header-overlap","when":"Prompt Kit header, branding, search, filters, or controls overlap or clip","capability":"prompt-kit-responsive-layout-audit","workflow":"harness/prompt-kit-layout/WORKFLOW.md"},
+    {"id":"responsive-regression","when":"A layout problem differs by viewport or Prompt Kit version","capability":"prompt-kit-responsive-layout-audit","workflow":"harness/prompt-kit-layout/WORKFLOW.md"}
+  ]
+}

@@ -11,6 +11,8 @@
 
 The Prompt Kit is a separate, self-contained operator surface in this repository. You do **not** need to install the workbook-repair application just to use the prompts.
 
+**Release behavior:** the public Prompt Kit link above is the GitHub Pages deployment from canonical `main`. Pull-request and feature-branch Pages checks are previews only; a Prompt Kit website change is not operator-delivered until it lands on `main` and the Pages deployment succeeds.
+
 | What you want | Fastest path |
 |---|---|
 | **Use the Prompt Kit now** on any browser | **[Open the Prompt Kit](https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/)** |

@@ -74,6 +74,22 @@
       "proof_ceiling": "Skill prompt registry identity and integration proof."
     },
     {
+      "id": "prompt-kit-responsive-layout-audit",
+      "class": "contract",
+      "command": "python scripts/validate_prompt_kit_layout_harness.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static responsive-layout harness and contract completeness proof; no browser geometry proof."
+    },
+    {
+      "id": "prompt-kit-responsive-layout-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_prompt_kit_layout_harness -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable responsive-layout harness regression proof; strict browser geometry remains separate."
+    },
+    {
       "id": "prompt-kit-header-contract",
       "class": "test",
       "command": "python tests/test_prompt_kit_header_contract.py",
@@ -149,6 +165,8 @@
       "prompt-language-contract-tests",
       "prompt-language-audit",
       "skill-prompt-registry-tests",
+      "prompt-kit-responsive-layout-audit",
+      "prompt-kit-responsive-layout-tests",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",
@@ -178,6 +196,8 @@
       "prompt-language-contract-tests",
       "prompt-language-audit",
       "skill-prompt-registry-tests",
+      "prompt-kit-responsive-layout-audit",
+      "prompt-kit-responsive-layout-tests",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",

@@ -1,0 +1,125 @@
+import importlib.util
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def load_json(rel):
+    return json.loads((ROOT / rel).read_text(encoding="utf-8"))
+
+
+def load_layout_validator():
+    spec = importlib.util.spec_from_file_location("layout_validator", ROOT / "scripts/validate_prompt_kit_layout_harness.py")
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+class PromptKitMainlineDeliveryTests(unittest.TestCase):
+    def test_p13_declares_sprint_and_isolates_subpart_agents(self):
+        payload = load_json("registry/prompts/prompt-overrides.v1.json")
+        p13 = next(item for item in payload["overrides"] if item["id"] == "P13")
+        copy = p13["copyContent"]
+        for phrase in (
+            "SPRINT DECLARATION BEFORE MUTATION",
+            "repository and branch/worktree",
+            "owned scope and forbidden scope",
+            "validation order",
+            "proof ceiling",
+            "mutation authority",
+            "dedicated branch and isolated worktree",
+            "waiting lanes and their explicit start gates",
+            "shared-surface owner",
+            "final convergence owner",
+        ):
+            self.assertIn(phrase, copy)
+
+    def test_p65_can_route_repeated_friction_without_browser_finder(self):
+        payload = load_json("registry/prompts/tutorial-discovery-prompts.v1.json")
+        p65 = next(item for item in payload["prompts"] if item["id"] == "P65")
+        self.assertIn("P13 Repeated Friction", p65["copyContent"])
+        self.assertIn("repeated friction or urgency", p65["copyContent"])
+
+    def test_generic_path_search_is_not_a_p13_synonym(self):
+        source = (ROOT / "build_prompt_kit.py").read_text(encoding="utf-8")
+        self.assertNotIn('"critical path": "P13"', source)
+
+    def test_layout_harness_is_registered_at_root(self):
+        manifest = load_json("harness/manifest.v1.json")
+        capabilities = load_json("harness/capabilities.v1.json")
+        triggers = load_json("harness/triggers.v1.json")
+        self.assertIn("prompt_kit_responsive_layout", manifest["domain_contracts"])
+        self.assertTrue(any(item["id"] == "prompt-kit-responsive-layout" for item in capabilities["capabilities"]))
+        self.assertTrue(any(item["id"] == "prompt-kit-responsive-overlap" for item in triggers["triggers"]))
+
+    def test_layout_validator_fails_closed_on_malformed_shapes(self):
+        validator = load_layout_validator()
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            manifest = td / "manifest.json"
+            contract = td / "contract.json"
+            manifest.write_text(json.dumps({"components": []}), encoding="utf-8")
+            contract.write_text(json.dumps({"viewports": ["bad"], "requirements": [42], "strict_acceptance": []}), encoding="utf-8")
+            errors, _, _ = validator.validate(False, manifest, contract)
+            self.assertTrue(errors)
+            self.assertTrue(any("must be" in error or "invalid" in error for error in errors))
+
+    def test_layout_strict_gate_requires_all_viewports_and_real_geometry(self):
+        validator = load_layout_validator()
+        manifest = ROOT / "harness/prompt-kit-layout/manifest.v1.json"
+        contract_path = ROOT / "harness/prompt-kit-layout/contracts/responsive-header-overlap.v1.json"
+        contract = json.loads(contract_path.read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            pending = td / "pending.json"
+            pending.write_text(json.dumps(contract), encoding="utf-8")
+            errors, _, _ = validator.validate(True, manifest, pending, td / "missing-geometry.json")
+            self.assertTrue(any("status must be implemented" in error for error in errors))
+            self.assertTrue(any("geometry receipt is required" in error for error in errors))
+
+            contract["implementation_status"] = "implemented"
+            contract["strict_acceptance"]["all_viewports_required"] = False
+            bad_acceptance = td / "bad-acceptance.json"
+            bad_acceptance.write_text(json.dumps(contract), encoding="utf-8")
+            errors, _, _ = validator.validate(False, manifest, bad_acceptance)
+            self.assertIn("strict acceptance must require all declared viewports", errors)
+
+            contract["strict_acceptance"]["all_viewports_required"] = True
+            implemented = td / "implemented.json"
+            implemented.write_text(json.dumps(contract), encoding="utf-8")
+            receipt = {
+                "contract_id": contract["contract_id"],
+                "browser_engine": "synthetic-test-fixture",
+                "viewports": [
+                    {
+                        "id": item["id"], "width": item["width"], "height": item["height"],
+                        "brand_search_intersections": 0,
+                        "filter_search_intersections": 0,
+                        "header_escape": False,
+                        "horizontal_overflow_pixels": 0,
+                        "responsive_reflow": True,
+                        "touch_targets_usable": True,
+                    }
+                    for item in contract["viewports"]
+                ],
+            }
+            geometry = td / "geometry.json"
+            geometry.write_text(json.dumps(receipt), encoding="utf-8")
+            errors, _, _ = validator.validate(True, manifest, implemented, geometry)
+            self.assertEqual([], errors)
+
+    def test_repo_quick_access_explains_mainline_deployment_gate(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn("Open the Prompt Kit", readme)
+        self.assertIn("feature-branch Pages checks are previews only", readme)
+        workflow = (ROOT / ".github/workflows/prompt-kit-pages.yml").read_text(encoding="utf-8")
+        self.assertIn("branches: [main]", workflow)
+        self.assertIn("Deploy Prompt Kit to GitHub Pages", workflow)
+
+
+if __name__ == "__main__":
+    unittest.main()
