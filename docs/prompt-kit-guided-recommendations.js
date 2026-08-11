@@ -9,6 +9,7 @@ var PROMPT_FINDER_QUESTIONS=[
  {id:'problemKnown',prompt:'Do you have a known problem you want to solve?',options:[
   {id:'known-failure',label:'Yes — something is failing or broken now',queries:['troubleshoot','diagnose','root cause']},
   {id:'known-task',label:'Yes — the task and desired change are already known',queries:['implement','sprint','code change']},
+  {id:'repeated-stall',label:'Yes — the work keeps stalling, urgency is being missed, or I keep repeating the same correction',queries:['urgency','repeated pain','sub-part agent','stalled execution']},
   {id:'not-yet',label:'Not yet — I need to discover or plan first',queries:['discovery','plan','opportunity']}
  ]},
  {id:'goal',prompt:'What are you trying to accomplish?',options:[

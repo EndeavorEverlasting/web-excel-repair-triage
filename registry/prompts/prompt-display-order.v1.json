@@ -6,6 +6,7 @@
     "P61",
     "P03",
     "P66",
+    "P13",
     "P58",
     "P07",
     "P14",
@@ -26,5 +27,5 @@
     "P24"
   ],
   "fallback": "sequence_ascending",
-  "rationale": "Promote guided entry, repository intake, durable work-ledger continuity, common execution, diagnosis, validation, closeout, planning, and tutorial discovery without renumbering stable prompt identities. All unlisted prompts retain numeric sequence order."
+  "rationale": "Promote guided entry, repository intake, durable work-ledger continuity, repeated-friction/urgency recovery, common execution, diagnosis, validation, closeout, planning, and tutorial discovery without renumbering stable prompt identities. All unlisted prompts retain numeric sequence order."
 }
