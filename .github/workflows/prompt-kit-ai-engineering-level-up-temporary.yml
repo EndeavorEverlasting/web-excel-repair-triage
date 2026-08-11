@@ -1,0 +1,62 @@
+name: Prompt Kit AI engineering level-up integration
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-ai-engineering-level-up-20260811
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-ai-engineering-level-up-20260811
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Integrate five production AI engineering tracks
+        run: python scripts/_integrate_ai_engineering_level_up.py
+      - name: Build canonical Prompt Kit and validate focused contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile build_prompt_kit.py scripts/build_prompt_kit_registry.py tests/test_skill_prompt_registry.py tests/test_ai_engineering_level_up.py
+          python -m json.tool registry/prompts/ai-engineering-level-up-prompts.v1.json >/dev/null
+          python -m json.tool docs/tutorials/ai-engineering-level-up/tutorial-manifest.v1.json >/dev/null
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python -m unittest tests.test_skill_prompt_registry tests.test_ai_engineering_level_up -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python tests/test_prompt_kit_header_contract.py
+          python -m triage.gitignore_hygiene
+          git diff --check
+      - name: Commit registry, tutorials, references, doctrine, tests, and website
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/prompt-kit-ai-engineering-level-up-temporary.yml scripts/_integrate_ai_engineering_level_up.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add build_prompt_kit.py scripts/build_prompt_kit_registry.py \
+            registry/prompts/ai-engineering-level-up-prompts.v1.json \
+            registry/prompts/prompt-display-order.v1.json \
+            registry/prompts/tutorial-discovery-prompts.v1.json \
+            docs/reference.json docs/prompt-kit-guided-recommendations.js \
+            docs/tutorials/ai-engineering-level-up \
+            tests/test_ai_engineering_level_up.py \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          git status --short
+          git diff --cached --stat
+          if git diff --cached --quiet; then
+            echo 'No sprint diff produced'
+            exit 1
+          fi
+          git commit -m 'feat(prompt-kit): add production AI engineering level-up tracks'
+          git push origin HEAD:feat/prompt-kit-ai-engineering-level-up-20260811
