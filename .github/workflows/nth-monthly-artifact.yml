@@ -1,0 +1,37 @@
+name: NTH monthly artifact
+
+on:
+  pull_request:
+    paths:
+      - 'triage/nth_month_readiness.py'
+      - 'triage/nth_monthly_artifact.py'
+      - 'scripts/build_nth_month.py'
+      - 'tests/test_nth_monthly_artifact.py'
+      - 'docs/NTH_MONTH_OPERATION_READINESS_20260812.md'
+      - '.github/workflows/nth-monthly-artifact.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'triage/nth_month_readiness.py'
+      - 'triage/nth_monthly_artifact.py'
+      - 'scripts/build_nth_month.py'
+      - 'tests/test_nth_monthly_artifact.py'
+
+jobs:
+  monthly-nth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: pip install openpyxl pytest
+      - name: Compile
+        run: python -m py_compile triage/nth_month_readiness.py triage/nth_monthly_artifact.py scripts/build_nth_month.py tests/test_nth_monthly_artifact.py
+      - name: Focused month readiness and build tests
+        run: python -m pytest tests/test_nth_monthly_artifact.py -q
+      - name: Legacy NTH regression
+        run: python -m pytest tests/test_nw_prj_neuron_track_hours.py -q
+      - name: Patch hygiene
+        run: git diff --check HEAD^ HEAD || git diff --check
