@@ -20,6 +20,7 @@ on:
       - registry/prompts/skill-development-prompts.v1.json
       - registry/prompts/tutorial-discovery-prompts.v1.json
       - registry/prompts/repository-work-ledger-prompts.v1.json
+      - registry/prompts/correspondence-prompts.v1.json
       - registry/prompts/prompt-overrides.v1.json
       - registry/prompts/prompt-display-order.v1.json
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
@@ -30,6 +31,7 @@ on:
       - docs/prompt-kit-guided-recommendations.js
       - docs/prompt-kit-journey.js
       - docs/prompt-kit-polish.js
+      - docs/prompt-kit-correspondence.js
       - docs/prompt-kit-favorites-portability.js
       - docs/prompts.json
       - docs/reference.json
@@ -57,6 +59,7 @@ on:
       - tests/test_prompt_library_portability.py
       - tests/test_skill_prompt_registry.py
       - tests/test_repository_work_ledger_prompt.py
+      - tests/test_correspondence_prompt_registry.py
       - .github/workflows/prompt-kit-web.yml
   push:
     branches: [main]
@@ -78,6 +81,7 @@ on:
       - registry/prompts/skill-development-prompts.v1.json
       - registry/prompts/tutorial-discovery-prompts.v1.json
       - registry/prompts/repository-work-ledger-prompts.v1.json
+      - registry/prompts/correspondence-prompts.v1.json
       - registry/prompts/prompt-overrides.v1.json
       - registry/prompts/prompt-display-order.v1.json
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
@@ -88,6 +92,7 @@ on:
       - docs/prompt-kit-guided-recommendations.js
       - docs/prompt-kit-journey.js
       - docs/prompt-kit-polish.js
+      - docs/prompt-kit-correspondence.js
       - docs/prompt-kit-favorites-portability.js
       - docs/prompts.json
       - docs/reference.json
@@ -115,6 +120,7 @@ on:
       - tests/test_prompt_library_portability.py
       - tests/test_skill_prompt_registry.py
       - tests/test_repository_work_ledger_prompt.py
+      - tests/test_correspondence_prompt_registry.py
       - .github/workflows/prompt-kit-web.yml
 
 permissions:
@@ -154,13 +160,15 @@ jobs:
             tests/test_prompt_kit_portable_health.py \
             tests/test_prompt_library_portability.py \
             tests/test_skill_prompt_registry.py \
-            tests/test_repository_work_ledger_prompt.py
+            tests/test_repository_work_ledger_prompt.py \
+            tests/test_correspondence_prompt_registry.py
       - name: Validate Prompt Kit JavaScript syntax
         run: |
           node --check docs/prompt-kit.js
           node --check docs/prompt-kit-guided-recommendations.js
           node --check docs/prompt-kit-journey.js
           node --check docs/prompt-kit-polish.js
+          node --check docs/prompt-kit-correspondence.js
           node --check docs/prompt-kit-favorites-portability.js
       - name: Validate acquisition and portable PowerShell syntax
         shell: pwsh
@@ -232,6 +240,7 @@ jobs:
         run: |
           python -m unittest tests.test_skill_prompt_registry -v
           python -m unittest tests.test_repository_work_ledger_prompt -v
+          python -m unittest tests.test_correspondence_prompt_registry -v
       - name: Validate chronological ordering and dense navigation
         run: |
           python -m unittest \
