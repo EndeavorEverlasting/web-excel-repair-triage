@@ -21,6 +21,7 @@ EXTENSION_REGISTRIES = (
     REPO_ROOT / "registry" / "prompts" / "tutorial-discovery-prompts.v1.json",
     REPO_ROOT / "registry" / "prompts" / "ai-engineering-level-up-prompts.v1.json",
     REPO_ROOT / "registry" / "prompts" / "repository-work-ledger-prompts.v1.json",
+    REPO_ROOT / "registry" / "prompts" / "correspondence-prompts.v1.json",
 )
 PROMPT_OVERRIDES = REPO_ROOT / "registry" / "prompts" / "prompt-overrides.v1.json"
 DISPLAY_ORDER_POLICY = (
@@ -29,6 +30,7 @@ DISPLAY_ORDER_POLICY = (
 GUIDED_RECOMMENDATIONS = REPO_ROOT / "docs" / "prompt-kit-guided-recommendations.js"
 PROMPT_JOURNEY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-journey.js"
 POLISH_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-polish.js"
+CORRESPONDENCE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-correspondence.js"
 ACTIONABILITY_POLICY = (
     REPO_ROOT / "registry" / "prompts" / "actionable-next-step-policy.v1.json"
 )
@@ -236,6 +238,11 @@ def apply_actionability_policy(
         raise SystemExit(f"Prompt {prompt_id} has empty copyContent")
 
     strengthened = dict(prompt)
+    profile = str(prompt.get("profile", "")).strip().lower()
+    if profile == "correspondence":
+        strengthened["actionabilityPolicy"] = "profile-exempt:correspondence"
+        return strengthened
+
     suffix = str(policy["next_step_suffix"]).strip()
     if suffix not in next_step:
         strengthened["nextStep"] = f"{next_step} {suffix}"
@@ -339,6 +346,9 @@ def render() -> str:
     guided_script = _read_runtime(GUIDED_RECOMMENDATIONS, "Guided recommendation behavior")
     journey_script = _read_runtime(PROMPT_JOURNEY_RUNTIME, "Guided next-step journey behavior")
     polish_script = _read_runtime(POLISH_RUNTIME, "Prompt Kit polish behavior")
+    correspondence_script = _read_runtime(
+        CORRESPONDENCE_RUNTIME, "Prompt Kit correspondence profile behavior"
+    )
     closing = "</body>"
     if closing not in html:
         raise SystemExit("Prompt Kit builder output is missing </body>")
@@ -346,6 +356,7 @@ def render() -> str:
         f"<script>\n{guided_script}\n</script>\n"
         f"<script>\n{journey_script}\n</script>\n"
         f"<script>\n{polish_script}\n</script>\n"
+        f"<script>\n{correspondence_script}\n</script>\n"
     )
     return html.replace(closing, supplemental + closing, 1)
 
