@@ -21,6 +21,8 @@ EXTENSION_REGISTRIES = (
     REPO_ROOT / "registry" / "prompts" / "tutorial-discovery-prompts.v1.json",
     REPO_ROOT / "registry" / "prompts" / "ai-engineering-level-up-prompts.v1.json",
     REPO_ROOT / "registry" / "prompts" / "repository-work-ledger-prompts.v1.json",
+)
+CONTENT_REGISTRIES = (
     REPO_ROOT / "registry" / "prompts" / "correspondence-prompts.v1.json",
 )
 PROMPT_OVERRIDES = REPO_ROOT / "registry" / "prompts" / "prompt-overrides.v1.json"
@@ -227,7 +229,7 @@ def apply_prompt_overrides(prompts: list[dict[str, Any]]) -> list[dict[str, Any]
 def apply_actionability_policy(
     prompt: dict[str, Any], policy: dict[str, Any]
 ) -> dict[str, Any]:
-    """Return one prompt strengthened by the repository-wide actionability contract."""
+    """Return one operational prompt strengthened by the shared actionability contract."""
     prompt_id = str(prompt.get("id", "unknown"))
     next_step = str(prompt.get("nextStep", "")).strip()
     if not next_step:
@@ -238,11 +240,6 @@ def apply_actionability_policy(
         raise SystemExit(f"Prompt {prompt_id} has empty copyContent")
 
     strengthened = dict(prompt)
-    profile = str(prompt.get("profile", "")).strip().lower()
-    if profile == "correspondence":
-        strengthened["actionabilityPolicy"] = "profile-exempt:correspondence"
-        return strengthened
-
     suffix = str(policy["next_step_suffix"]).strip()
     if suffix not in next_step:
         strengthened["nextStep"] = f"{next_step} {suffix}"
@@ -283,8 +280,29 @@ def apply_display_order(
     return annotated
 
 
+def _validate_unique_prompt_identity(prompts: list[dict[str, Any]], label: str) -> None:
+    seen_ids: set[str] = set()
+    seen_sequences: set[str] = set()
+    for index, prompt in enumerate(prompts):
+        if not isinstance(prompt, dict):
+            raise SystemExit(f"{label} prompt record {index} is not an object")
+        missing = sorted(REQUIRED_PROMPT_FIELDS - set(prompt))
+        if missing:
+            raise SystemExit(
+                f"{label} prompt {prompt.get('id', index)} is missing fields: {missing}"
+            )
+        prompt_id = str(prompt["id"])
+        sequence = str(prompt["seq"])
+        if prompt_id in seen_ids:
+            raise SystemExit(f"Duplicate {label} prompt id: {prompt_id}")
+        if sequence in seen_sequences:
+            raise SystemExit(f"Duplicate {label} prompt sequence: {sequence}")
+        seen_ids.add(prompt_id)
+        seen_sequences.add(sequence)
+
+
 def load_prompt_registry() -> list[dict[str, Any]]:
-    """Load, validate, strengthen, and merge canonical prompts and extensions."""
+    """Load the canonical operational registry and apply its shared policies."""
     base = _load_json(BASE_REGISTRY)
     if not isinstance(base, list):
         raise SystemExit(f"Base prompt registry must be a JSON array: {BASE_REGISTRY}")
@@ -300,31 +318,58 @@ def load_prompt_registry() -> list[dict[str, Any]]:
         prompts.extend(extension_prompts)
 
     prompts = apply_prompt_overrides(prompts)
+    _validate_unique_prompt_identity(prompts, "operational")
     actionability_policy = load_actionability_policy()
-    seen_ids: set[str] = set()
-    seen_sequences: set[str] = set()
-    strengthened_prompts: list[dict[str, Any]] = []
-    for index, prompt in enumerate(prompts):
-        if not isinstance(prompt, dict):
-            raise SystemExit(f"Prompt record {index} is not an object")
-        missing = sorted(REQUIRED_PROMPT_FIELDS - set(prompt))
-        if missing:
-            raise SystemExit(f"Prompt {prompt.get('id', index)} is missing fields: {missing}")
-        prompt_id = str(prompt["id"])
-        sequence = str(prompt["seq"])
-        if prompt_id in seen_ids:
-            raise SystemExit(f"Duplicate prompt id: {prompt_id}")
-        if sequence in seen_sequences:
-            raise SystemExit(f"Duplicate prompt sequence: {sequence}")
-        seen_ids.add(prompt_id)
-        seen_sequences.add(sequence)
-        strengthened_prompts.append(
-            apply_actionability_policy(prompt, actionability_policy)
-        )
-
+    strengthened_prompts = [
+        apply_actionability_policy(prompt, actionability_policy) for prompt in prompts
+    ]
     annotated_prompts = apply_display_order(
         strengthened_prompts, load_display_order_policy()
     )
+    return sorted(
+        annotated_prompts,
+        key=lambda prompt: (int(str(prompt["seq"])), str(prompt["id"])),
+    )
+
+
+def load_content_prompt_registry() -> list[dict[str, Any]]:
+    """Load content-only website prompts without injecting repo-execution policy text."""
+    prompts: list[dict[str, Any]] = []
+    for path in CONTENT_REGISTRIES:
+        payload = _load_json(path)
+        if not isinstance(payload, dict):
+            raise SystemExit(f"Content registry must be a JSON object: {path}")
+        if payload.get("schema_version") != "prompt-registry-extension/v1":
+            raise SystemExit(f"Unsupported content registry schema in {path}")
+        content_prompts = payload.get("prompts")
+        if not isinstance(content_prompts, list):
+            raise SystemExit(f"Content registry prompts must be an array: {path}")
+        prompts.extend(content_prompts)
+
+    _validate_unique_prompt_identity(prompts, "content")
+    prepared: list[dict[str, Any]] = []
+    for prompt in prompts:
+        prompt_id = str(prompt["id"])
+        if str(prompt.get("profile", "")).strip().lower() != "correspondence":
+            raise SystemExit(
+                f"Content prompt {prompt_id} must declare profile=correspondence"
+            )
+        if not str(prompt.get("nextStep", "")).strip():
+            raise SystemExit(f"Content prompt {prompt_id} has an empty nextStep")
+        if not str(prompt.get("copyContent", "")).strip():
+            raise SystemExit(f"Content prompt {prompt_id} has empty copyContent")
+        item = dict(prompt)
+        item["actionabilityPolicy"] = "not-applicable:content-only"
+        prepared.append(item)
+    return prepared
+
+
+def load_prompt_kit_registry() -> list[dict[str, Any]]:
+    """Merge governed operational prompts with content-only website prompt profiles."""
+    prompts = [dict(prompt) for prompt in load_prompt_registry()]
+    prompts.extend(load_content_prompt_registry())
+    _validate_unique_prompt_identity(prompts, "Prompt Kit")
+    annotated_prompts = apply_display_order(prompts, load_display_order_policy())
     return sorted(
         annotated_prompts,
         key=lambda prompt: (int(str(prompt["seq"])), str(prompt["id"])),
@@ -340,7 +385,7 @@ def _read_runtime(path: Path, label: str) -> str:
 
 def render() -> str:
     """Return the exact combined Prompt Kit HTML without writing it."""
-    prompts = load_prompt_registry()
+    prompts = load_prompt_kit_registry()
     reference = _load_json(REFERENCE)
     html = build_prompt_kit.build_html(prompts, reference)
     guided_script = _read_runtime(GUIDED_RECOMMENDATIONS, "Guided recommendation behavior")
@@ -388,7 +433,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Prompt Kit output rejected: {exc}", file=sys.stderr)
         return 2
 
-    prompts = load_prompt_registry()
+    prompts = load_prompt_kit_registry()
     expected = render()
 
     if args.check:
