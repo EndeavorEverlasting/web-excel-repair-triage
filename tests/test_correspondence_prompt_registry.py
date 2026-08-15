@@ -8,13 +8,23 @@ from scripts import build_prompt_kit_registry
 class CorrespondencePromptRegistryTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        cls.operational_prompts = {
+            prompt["id"]: prompt
+            for prompt in build_prompt_kit_registry.load_prompt_registry()
+        }
+        cls.content_prompts = {
+            prompt["id"]: prompt
+            for prompt in build_prompt_kit_registry.load_content_prompt_registry()
+        }
         cls.prompts = {
-            prompt["id"]: prompt for prompt in build_prompt_kit_registry.load_prompt_registry()
+            prompt["id"]: prompt
+            for prompt in build_prompt_kit_registry.load_prompt_kit_registry()
         }
 
-    def test_correspondence_prompts_are_registered_with_stable_identity(self) -> None:
-        self.assertIn("P72", self.prompts)
-        self.assertIn("P73", self.prompts)
+    def test_correspondence_prompts_are_content_only_with_stable_identity(self) -> None:
+        self.assertNotIn("P72", self.operational_prompts)
+        self.assertNotIn("P73", self.operational_prompts)
+        self.assertEqual(set(self.content_prompts), {"P72", "P73"})
         self.assertEqual(self.prompts["P72"]["seq"], "72")
         self.assertEqual(self.prompts["P73"]["seq"], "73")
         for prompt_id in ("P72", "P73"):
@@ -23,8 +33,16 @@ class CorrespondencePromptRegistryTests(unittest.TestCase):
             self.assertEqual(prompt["category"], "standard")
             self.assertEqual(prompt["color"], "Magenta")
             self.assertEqual(
-                prompt["actionabilityPolicy"], "profile-exempt:correspondence"
+                prompt["actionabilityPolicy"], "not-applicable:content-only"
             )
+
+    def test_operational_prompts_keep_global_actionability_policy(self) -> None:
+        policy = build_prompt_kit_registry.load_actionability_policy()
+        for prompt in self.operational_prompts.values():
+            with self.subTest(prompt=prompt["id"]):
+                self.assertEqual(prompt["actionabilityPolicy"], policy["policy_id"])
+                self.assertIn(policy["marker"], prompt["copyContent"])
+                self.assertIn(policy["next_step_suffix"], prompt["nextStep"])
 
     def test_message_polisher_preserves_fidelity_and_does_not_invent_action(self) -> None:
         content = self.prompts["P72"]["copyContent"]
