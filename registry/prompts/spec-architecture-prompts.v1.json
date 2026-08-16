@@ -1,0 +1,45 @@
+{
+  "schema_version": "prompt-registry-extension/v1",
+  "registry_id": "spec-architecture-prompts",
+  "prompts": [
+    {
+      "id": "P76",
+      "seq": "76",
+      "name": "Progressive-Disclosure Spec & Harness Factorer",
+      "type": "BUILD + FACTOR",
+      "class": "HARNESS / SPEC ARCHITECTURE",
+      "sprintRole": "Refactor repository specs and harness resources into 50,000-, 30,000-, and 15,000-foot views so agents and developers load only the context required for the current question or workflow",
+      "progress": "YES",
+      "useWhen": "AGENTS.md, HARNESS.md, codebase maps, specifications, skills, workflows, registries, reports, or other agent resources have become duplicated or bloated and a simple repository question loads far more context than it needs.",
+      "inspectFirst": "Current repository governance and precedence; agent/harness entrypoints; codebase/spec maps; workflow, capability, trigger, skill, artifact, and validator registries; actual context-loading behavior; document sizes; duplicated authority; representative 50k/30k/15k queries; existing context-engineering measurements when present.",
+      "expectedOutput": "A measured progressive-disclosure architecture with one compact orientation layer, domain-level routing, workflow/spec-level detail, demand-loaded deep resources, canonical ownership links, executable context-budget checks, and before/after evidence that required behavior survives with less default context.",
+      "nextStep": "Execute the highest-value safe factoring change now, run the repository's context/spec/harness validators plus the before/after load-budget check, and consume the new 50k entrypoint with one representative query before expanding deeper.",
+      "proofGate": "A fresh user or agent can orient at 50k without loading deep implementation detail, select one domain at 30k, load only the triggered workflow/spec/skills at 15k, reach ground-level files on demand, preserve every unique authoritative rule, and show measured context reduction without a representative-task regression.",
+      "color": "Cyan",
+      "copySheet": "P76_COPY_SAFE",
+      "category": "standard",
+      "profile": "spec-architecture",
+      "copyContent": "FACTOR THE REPOSITORY HARNESS AND SPECS FOR PROGRESSIVE DISCLOSURE. DO NOT TURN THIS INTO A DOCS REWRITE OR A SUMMARY-ONLY EXERCISE.\n\nRepo: xyz_repo_or_path\nPrimary app or subsystem: xyz_app_or_subsystem\nKnown context pain, if any: xyz_context_bloat\n\nMISSION\nMake the repository understandable at three deliberate zoom levels while keeping deep implementation detail demand-loaded. Reduce default context, duplication, and token cost without deleting unique rules or weakening executable contracts. Change tracked files, validate the result, and measure the before/after context load.\n\nZOOM CONTRACT\n1. 50,000 FT — ORIENTATION\nA fresh user or agent should learn: what the app is for, major subsystems, canonical entrypoints, the few commands that matter, current proof/status boundaries, and where to drill down next. Target <= 1,000 approximate tokens of repo-specific material. This layer is a router, not an encyclopedia.\n\n2. 30,000 FT — DOMAIN / CAPABILITY\nAfter one domain is selected, load only that domain's responsibilities, inputs/outputs, dependencies, owning specs/contracts, artifacts, validators, and next drill-down links. Target <= 2,000 additional approximate tokens for the selected domain. Do not load unrelated domains.\n\n3. 15,000 FT — WORKFLOW / SPEC\nAfter one task or workflow is selected, load the exact workflow/spec, required skill procedure, relevant schema/registry records, validators, failure policy, and handoff/output contract. Target <= 4,000 additional approximate tokens for that selected workflow. Large code files, historical reports, full schemas, fixtures, and implementation detail remain on-demand.\n\nThese are default soft ceilings, not permission to omit required safety or correctness context. Exceed one only when the repository records why a smaller authoritative split would be unsafe or misleading. If tokenizer data is unavailable, measure characters/bytes and clearly mark token counts as estimates.\n\nFACTOR BY RESPONSIBILITY\n- `AGENTS.md`: governance, precedence, universal safety/operating law. Do not use it as the app encyclopedia.\n- harness/spec entrypoint: compact 50k map and routing table.\n- codebase/spec maps: 30k ownership and navigation, not copied workflow prose.\n- workflow specs: trigger, inputs, outputs, dependencies, validator, failure policy, proof ceiling, and handoff.\n- skills: repeatable procedure and judgment only; deterministic facts belong in code, schemas, registries, or validators.\n- registries/schemas: machine-readable identity, ownership, routing, and contracts; prose should link to them instead of duplicating them.\n- reports/history: evidence and current state, loaded only when the active task needs them.\n\nREMOVE DEFAULT-BLOAT FAILURE MODES\nDo not preload every skill, nested AGENTS file, tool schema, workflow, historical handoff, report, PR body, artifact manifest, or implementation file merely because it exists. Eliminate duplicated authority, repeated boilerplate, giant indexes that embed whole documents, and links that do not state when the target should be loaded. Preserve one canonical owner and lightweight references elsewhere.\n\nMEASURE BEFORE MODIFYING\nInventory the harness/spec surfaces with path, purpose, owner, trigger/load condition, size, overlap, and consumer. Run at least three representative retrieval simulations:\n- `What is this app and how is it organized?` — 50k\n- `How does <one domain> work?` — 30k\n- `How do I execute or change <one workflow/spec>?` — 15k\nRecord which files and approximate tokens/bytes each query requires before factoring.\n\nIMPLEMENT, DON'T JUST RECOMMEND\nReuse existing repository patterns. Split or tighten bloated files, add compact indexes/metadata only where needed, replace duplicated prose with canonical references, add trigger/load metadata where routing is ambiguous, and update validators/tests so future changes cannot silently re-bloat the entry path. Do not move deterministic behavior into prose. Do not change product behavior merely to simplify documentation.\n\nVALIDATE THE NEW INFORMATION ARCHITECTURE\nProve that:\n- 50k answers do not require 15k resources;\n- selecting one 30k domain excludes unrelated domains;\n- 15k routing reaches every required spec, skill, validator, and artifact contract for the chosen workflow;\n- no unique rule or authority disappeared during deduplication;\n- links/IDs resolve;\n- precedence remains explicit;\n- representative tasks still succeed;\n- measured default context falls meaningfully.\nFail closed on broken routing or lost authority.\n\nDELIVER\nReport the three-layer map, files factored, canonical owners, before/after context measurements, validation, commit/PR/merge state, and the exact first query/command that exercises the new 50k entrypoint. Keep the report itself concise: the goal is a quieter repository, not a larger explanation of why it is quiet.",
+      "keywords": [
+        "spec driven development",
+        "spec-driven development",
+        "spec factoring",
+        "harness factoring",
+        "progressive disclosure",
+        "50000 ft",
+        "50,000 ft",
+        "30000 ft",
+        "30,000 ft",
+        "15000 ft",
+        "15,000 ft",
+        "harness bloat",
+        "spec bloat",
+        "AGENTS.md bloat",
+        "skills bloat",
+        "minimal context",
+        "token budget",
+        "context hierarchy"
+      ]
+    }
+  ]
+}
