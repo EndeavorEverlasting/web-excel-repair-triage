@@ -96,12 +96,31 @@
         "artifact, validator, capability, trigger, or component registry drift exists",
         "hook validates the wrong Git surface",
         "harness completeness check is missing or failing",
-        "operator report is stale or incomplete"
+        "operator report is stale or incomplete",
+        "a PR integration failure reveals missing or incorrect merge-gate harness behavior"
       ],
       "forbidden_conditions": [
         "request changes AGENTS.md governance",
         "request is product implementation only",
         "request requires secrets or destructive cleanup"
+      ]
+    },
+    {
+      "id": "pr-integration-gate",
+      "capability_id": "pr-floor-integration",
+      "skill": ".ai/skills/harness-infrastructure-maintenance/SKILL.md",
+      "workflow": "WORKFLOW.md#e-pr-floor-cleanup-and-integration",
+      "conditions": [
+        "the user explicitly requests an in-scope pull request merge",
+        "an open pull request is green and mergeable and integration intent exists",
+        "an agent reports an open pull request as a blocker or next gate",
+        "branch or pull-request floor cleanup must decide merge versus true blocker",
+        "post-merge guidance might still point normal consumers at a feature branch"
+      ],
+      "forbidden_conditions": [
+        "required PR state cannot be established",
+        "merge requires force push or destructive history rewrite",
+        "unique work has not been preserved where supersession or closure is proposed"
       ]
     },
     {
