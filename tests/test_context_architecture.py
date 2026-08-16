@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import sys
 import unittest
@@ -41,12 +42,37 @@ class ContextArchitectureTests(unittest.TestCase):
         self.assertEqual(layers["15000"]["soft_max_additional_approx_tokens"], 4000)
 
     def test_hard_bloat_budgets_hold(self) -> None:
-        for path, ceiling in self.contract["hard_char_budgets"].items():
+        budgets = self.contract["hard_char_budgets"]
+        self.assertTrue(validate_context_architecture.REQUIRED_BUDGET_PATHS.issubset(budgets))
+        for path, ceiling in budgets.items():
             self.assertLessEqual(
                 len((ROOT / path).read_text(encoding="utf-8")),
                 ceiling,
                 path,
             )
+
+    def test_required_budget_key_cannot_be_removed(self) -> None:
+        mutated = copy.deepcopy(self.contract)
+        removed = "AGENTS.md"
+        mutated["hard_char_budgets"].pop(removed)
+        with self.assertRaisesRegex(
+            validate_context_architecture.ContextArchitectureError,
+            "missing mandatory hard context budgets",
+        ):
+            validate_context_architecture.validate(mutated)
+
+    def test_repository_local_reports_are_bounded_to_outputs(self) -> None:
+        for path in ("Candidates/context.json", "Active/context.json", "context.json"):
+            with self.subTest(path=path):
+                with self.assertRaisesRegex(
+                    validate_context_architecture.ContextArchitectureError,
+                    "repository-local report must be written under Outputs/",
+                ):
+                    validate_context_architecture.resolve_output(path)
+        self.assertEqual(
+            validate_context_architecture.resolve_output("Outputs/context.json"),
+            (ROOT / "Outputs/context.json").resolve(),
+        )
 
     def test_root_indexes_route_instead_of_preloading(self) -> None:
         codebase = (ROOT / "CODEBASE_MAP.md").read_text(encoding="utf-8")

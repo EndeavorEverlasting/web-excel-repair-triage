@@ -10,6 +10,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "harness" / "contracts" / "context-architecture.v1.json"
+REQUIRED_BUDGET_PATHS = frozenset(
+    {
+        "AGENTS.md",
+        "harness/CONTEXT.md",
+        "CODEBASE_MAP.md",
+        "SKILLS.md",
+        ".ai/skills/harness-infrastructure-maintenance/SKILL.md",
+        ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
+    }
+)
 
 
 class ContextArchitectureError(RuntimeError):
@@ -42,6 +52,28 @@ def approx_tokens(chars: int, divisor: int) -> int:
     return math.ceil(chars / divisor)
 
 
+def resolve_output(value: str | None) -> Path | None:
+    """Allow external reports, but keep repository-local reports under Outputs/."""
+    if not value:
+        return None
+    candidate = Path(value).expanduser()
+    if not candidate.is_absolute():
+        candidate = ROOT / candidate
+    resolved = candidate.resolve()
+    try:
+        resolved.relative_to(ROOT.resolve())
+    except ValueError:
+        return resolved
+    outputs = (ROOT / "Outputs").resolve()
+    try:
+        resolved.relative_to(outputs)
+    except ValueError as exc:
+        raise ContextArchitectureError(
+            "repository-local report must be written under Outputs/"
+        ) from exc
+    return resolved
+
+
 def validate(payload: dict) -> dict:
     divisor = int(payload["token_estimate"]["chars_per_token"])
     metrics: dict[str, dict[str, int | float]] = {}
@@ -49,11 +81,29 @@ def validate(payload: dict) -> dict:
     if payload.get("default_entrypoints") != ["AGENTS.md", "harness/CONTEXT.md"]:
         raise ContextArchitectureError("default context entrypoints drifted")
 
-    budgets = payload.get("hard_char_budgets", {})
+    budgets = payload.get("hard_char_budgets")
+    if not isinstance(budgets, dict):
+        raise ContextArchitectureError("hard_char_budgets must be an object")
+    missing_budgets = sorted(REQUIRED_BUDGET_PATHS.difference(budgets))
+    if missing_budgets:
+        raise ContextArchitectureError(
+            "missing mandatory hard context budgets: " + ", ".join(missing_budgets)
+        )
+
     for relative_path, max_chars in budgets.items():
+        try:
+            max_chars = int(max_chars)
+        except (TypeError, ValueError) as exc:
+            raise ContextArchitectureError(
+                f"invalid hard context budget for {relative_path}: {max_chars!r}"
+            ) from exc
+        if max_chars <= 0:
+            raise ContextArchitectureError(
+                f"hard context budget must be positive for {relative_path}"
+            )
         text = read(relative_path)
         chars = len(text)
-        if chars > int(max_chars):
+        if chars > max_chars:
             raise ContextArchitectureError(
                 f"{relative_path} exceeds hard context budget: {chars}>{max_chars} chars"
             )
@@ -62,7 +112,7 @@ def validate(payload: dict) -> dict:
         metrics[relative_path] = {
             "chars": chars,
             "approx_tokens": approx_tokens(chars, divisor),
-            "hard_max_chars": int(max_chars),
+            "hard_max_chars": max_chars,
             "baseline_chars": baseline,
             "reduction_percent": reduction,
         }
@@ -110,7 +160,7 @@ def validate(payload: dict) -> dict:
         raise ContextArchitectureError("SKILLS.md is no longer selection-only")
 
     default_chars = len(agents) + len(router)
-    report = {
+    return {
         "schema_version": "triage.context-architecture-report/v1",
         "status": "PASS",
         "default_entrypoints": payload["default_entrypoints"],
@@ -119,7 +169,6 @@ def validate(payload: dict) -> dict:
         "soft_50000_token_target": payload["layers"]["50000"]["soft_max_approx_tokens"],
         "metrics": metrics,
     }
-    return report
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -129,13 +178,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         report = validate(load_contract())
+        target = resolve_output(args.output)
     except ContextArchitectureError as exc:
         print(f"Context architecture validation: FAIL: {exc}", file=sys.stderr)
         return 1
-    if args.output:
-        target = Path(args.output)
-        if not target.is_absolute():
-            target = ROOT / target
+    if target:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     if args.summary:
@@ -147,7 +194,7 @@ def main(argv: list[str] | None = None) -> int:
                 for path, item in report["metrics"].items()
             )
         )
-    elif not args.output:
+    elif not target:
         print(json.dumps(report, indent=2))
     return 0
 
