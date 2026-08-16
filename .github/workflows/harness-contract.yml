@@ -3,6 +3,7 @@ name: Operational harness contracts
 on:
   pull_request:
     paths:
+      - AGENTS.md
       - CODEBASE_MAP.md
       - WORKFLOW.md
       - ARTIFACT_REGISTRY.md
@@ -18,6 +19,7 @@ on:
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
+      - scripts/validate_context_architecture.py
       - scripts/validate_operator_command_envelope.py
       - scripts/validate_pr_merge_gate.py
       - scripts/validate_prompt_kit_cross_device_access.py
@@ -27,6 +29,8 @@ on:
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
+      - tests/test_context_architecture.py
+      - tests/test_governance_contract.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
       - tests/test_pr_merge_gate.py
@@ -41,6 +45,7 @@ on:
   push:
     branches: [main]
     paths:
+      - AGENTS.md
       - CODEBASE_MAP.md
       - WORKFLOW.md
       - ARTIFACT_REGISTRY.md
@@ -56,6 +61,7 @@ on:
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
+      - scripts/validate_context_architecture.py
       - scripts/validate_operator_command_envelope.py
       - scripts/validate_pr_merge_gate.py
       - scripts/validate_prompt_kit_cross_device_access.py
@@ -65,6 +71,8 @@ on:
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
+      - tests/test_context_architecture.py
+      - tests/test_governance_contract.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
       - tests/test_pr_merge_gate.py
@@ -95,6 +103,7 @@ jobs:
         run: |
           python -m py_compile \
             scripts/validate_harness.py \
+            scripts/validate_context_architecture.py \
             scripts/validate_operator_command_envelope.py \
             scripts/validate_pr_merge_gate.py \
             scripts/validate_prompt_kit_cross_device_access.py \
@@ -104,6 +113,8 @@ jobs:
             scripts/validate_prompt_kit_interactions.py \
             scripts/validate_prompt_kit_discovery.py \
             scripts/evaluate_prompt_language.py \
+            tests/test_context_architecture.py \
+            tests/test_governance_contract.py \
             tests/test_harness_contract.py \
             tests/test_operator_command_envelope.py \
             tests/test_pr_merge_gate.py \
@@ -114,6 +125,10 @@ jobs:
             tests/test_prompt_kit_interactions_contract.py \
             tests/test_prompt_kit_discovery.py \
             tests/test_prompt_language_audit.py
+      - name: Validate context architecture and governance factoring
+        run: |
+          python scripts/validate_context_architecture.py --summary
+          python -m unittest tests.test_context_architecture tests.test_governance_contract -v
       - name: Validate operator proof PowerShell syntax
         shell: pwsh
         run: |
