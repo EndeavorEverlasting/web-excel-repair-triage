@@ -11,7 +11,11 @@ April (counted shifts):
   Foxtrot Tech Apr 03  8h   Neuron, Delivery/Transport activity sub-label
   Hotel Tech   Apr 15  17h  long shift (counted + flagged)
   India Tech   Apr 02  8h   default Delivery, Assignments override -> Neuron
-  => 7 rows, 66.0h
+  Mixed Tech   Apr 06  8h   inventory+configuration note -> split (2 rows)
+  => 9 rows, 74.0h
+
+April (excluded, recorded in review) — continued:
+  Kilo Tech    Apr 05  client coordination outside allowlist
 
 April (excluded, recorded in review):
   Charlie Tech Apr 01  / Bonita off-project coverage punch
@@ -31,6 +35,17 @@ from pathlib import Path
 
 from openpyxl import Workbook
 
+_APR_DAYS = (1, 2, 3, 4, 5, 6, 15, 30)
+
+
+def _apr_row(name: str, project: str, punches: dict[int, tuple[str, str]]) -> list:
+    """Build one Live-April row aligned to the eight punch columns in the header."""
+    row = [name, project]
+    for day in _APR_DAYS:
+        cin, cout = punches.get(day, ("", ""))
+        row.extend([cin, cout])
+    return row
+
 
 def write_bonita_roster(path: Path) -> None:
     wb = Workbook()
@@ -45,43 +60,48 @@ def write_bonita_roster(path: Path) -> None:
         "Apr 02 - Clock In", "Apr 02 - Clock Out",
         "Apr 03 - Clock In", "Apr 03 - Clock Out",
         "Apr 04 - Clock In", "Apr 04 - Clock Out",
+        "Apr 05 - Clock In", "Apr 05 - Clock Out",
+        "Apr 06 - Clock In", "Apr 06 - Clock Out",
         "Apr 15 - Clock In", "Apr 15 - Clock Out",
         "Apr 30 - Clock In", "Apr 30 - Clock Out",
     ])
-    # Alpha: full-month bookends.
-    apr.append(["Alpha Tech", "Neuron Deployments",
-                "9:00 AM", "6:00 PM", "", "", "", "", "", "", "", "",
-                "8:00 AM", "4:00 PM"])
-    # Bravo: note-bearing punch on Apr 03.
-    apr.append(["Bravo Tech", "Neuron Deployments",
-                "", "", "", "", "8:00 AM", "4:00 PM - lunch covered",
-                "", "", "", "", "", ""])
-    # Charlie: off-project / Bonita coverage punch on Apr 01.
-    apr.append(["Charlie Tech", "Neuron Deployments",
-                "9:00:00 AM/ Bonita", "1:00 PM", "", "", "", "",
-                "", "", "", "", "", ""])
-    # Delta: default Delivery, override-to-Neuron via Worked Projects on Apr 02.
-    apr.append(["Delta Tech", "Delivery / Transport",
-                "", "", "7:00 AM", "3:00 PM", "", "", "", "", "", "", "", ""])
-    # Echo: default Neuron, override-away-from-Neuron via Worked Projects Apr 02.
-    apr.append(["Echo Tech", "Neuron Deployments",
-                "", "", "9:00 AM", "5:00 PM", "", "", "", "", "", "", "", ""])
-    # Foxtrot: Neuron with a Delivery/Transport activity note on Apr 03.
-    apr.append(["Foxtrot Tech", "Neuron Deployments",
-                "", "", "", "", "6:00 AM", "2:00 PM - Delivery / Transport",
-                "", "", "", "", "", ""])
-    # Golf: PTO non-work marker on Apr 04.
-    apr.append(["Golf Tech", "Neuron Deployments",
-                "", "", "", "", "", "", "PTO", "", "", "", "", ""])
-    # Hotel: long shift on Apr 15.
-    apr.append(["Hotel Tech", "Neuron Deployments",
-                "", "", "", "", "", "", "", "", "6:00 AM", "11:00 PM", "", ""])
-    # Yostinn Minaya: excluded name (never counted).
-    apr.append(["Yostinn Minaya", "Neuron Deployments",
-                "9:00 AM", "6:00 PM", "", "", "", "", "", "", "", "", "", ""])
-    # India: default Delivery, Assignments-override-to-Neuron on Apr 02.
-    apr.append(["India Tech", "Delivery / Transport",
-                "", "", "8:00 AM", "4:00 PM", "", "", "", "", "", "", "", ""])
+    apr.append(_apr_row("Alpha Tech", "Neuron Deployments", {
+        1: ("9:00 AM", "6:00 PM"),
+        30: ("8:00 AM", "4:00 PM"),
+    }))
+    apr.append(_apr_row("Bravo Tech", "Neuron Deployments", {
+        3: ("8:00 AM", "4:00 PM - lunch covered"),
+    }))
+    apr.append(_apr_row("Charlie Tech", "Neuron Deployments", {
+        1: ("9:00:00 AM/ Bonita", "1:00 PM"),
+    }))
+    apr.append(_apr_row("Delta Tech", "Delivery / Transport", {
+        2: ("7:00 AM", "3:00 PM"),
+    }))
+    apr.append(_apr_row("Echo Tech", "Neuron Deployments", {
+        2: ("9:00 AM", "5:00 PM"),
+    }))
+    apr.append(_apr_row("Foxtrot Tech", "Neuron Deployments", {
+        3: ("6:00 AM", "2:00 PM - Delivery / Transport"),
+    }))
+    apr.append(_apr_row("Golf Tech", "Neuron Deployments", {
+        4: ("PTO", ""),
+    }))
+    apr.append(_apr_row("Hotel Tech", "Neuron Deployments", {
+        15: ("6:00 AM", "11:00 PM"),
+    }))
+    apr.append(_apr_row("Yostinn Minaya", "Neuron Deployments", {
+        1: ("9:00 AM", "6:00 PM"),
+    }))
+    apr.append(_apr_row("India Tech", "Delivery / Transport", {
+        2: ("8:00 AM", "4:00 PM"),
+    }))
+    apr.append(_apr_row("Kilo Tech", "Neuron Deployments", {
+        5: ("2:00 PM", "4:00 PM - client status call"),
+    }))
+    apr.append(_apr_row("Mixed Tech", "Neuron Deployments", {
+        6: ("9:00 AM", "5:00 PM - inventory warehouse and configuration baseline"),
+    }))
 
     # ── Worked Projects - April 2026 ─────────────────────────────────
     wapr = wb.create_sheet("Worked Projects - April 2026")
