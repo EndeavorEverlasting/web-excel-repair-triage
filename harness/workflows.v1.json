@@ -147,7 +147,6 @@
       "document": "WORKFLOW.md#e-pr-floor-cleanup-and-integration",
       "trigger": "Work is stacked, divergent, superseded, conflicted, blocked, or ready to integrate across branches or pull requests.",
       "focused_contract": "harness/contracts/pr-merge-gate.v1.json",
-      "capability": "pr-floor-integration",
       "owned_scope": [
         "branch and PR evidence",
         "required-check and review-gate classification",
