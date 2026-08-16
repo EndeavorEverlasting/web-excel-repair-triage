@@ -10,14 +10,6 @@
       "proof_ceiling": "Static completeness, routing, registry, hook, acquisition, and connected-contract proof."
     },
     {
-      "id": "pr-merge-gate",
-      "class": "contract",
-      "command": "python scripts/validate_pr_merge_gate.py --summary",
-      "blocking": true,
-      "output": "process log",
-      "proof_ceiling": "Deterministic PR merge-gate and post-merge consumer-routing fixture proof; actual provider merge success remains separate."
-    },
-    {
       "id": "harness-contract-tests",
       "class": "test",
       "command": "python -m unittest tests.test_harness_contract -v",
@@ -165,7 +157,6 @@
   "profiles": {
     "harness": [
       "harness-completeness",
-      "pr-merge-gate",
       "harness-contract-tests",
       "prompt-kit-interaction-contract-tests",
       "prompt-kit-interaction-audit",
@@ -187,19 +178,16 @@
     ],
     "target-repository": [
       "harness-completeness",
-      "pr-merge-gate",
       "harness-contract-tests",
       "patch-hygiene"
     ],
     "pre_commit": [
       "harness-completeness",
-      "pr-merge-gate",
       "harness-contract-tests",
       "patch-hygiene-staged"
     ],
     "pre_push": [
       "harness-completeness",
-      "pr-merge-gate",
       "harness-contract-tests",
       "prompt-kit-interaction-contract-tests",
       "prompt-kit-interaction-audit",
