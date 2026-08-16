@@ -4,12 +4,22 @@ on:
   pull_request:
     paths:
       - AGENTS.md
+      - harness/CONTEXT.md
+      - harness/specs/**
+      - harness/contracts/context-architecture.v1.json
+      - scripts/validate_context_architecture.py
+      - tests/test_context_architecture.py
       - tests/test_governance_contract.py
       - .github/workflows/governance-contract.yml
   push:
     branches: [main]
     paths:
       - AGENTS.md
+      - harness/CONTEXT.md
+      - harness/specs/**
+      - harness/contracts/context-architecture.v1.json
+      - scripts/validate_context_architecture.py
+      - tests/test_context_architecture.py
       - tests/test_governance_contract.py
       - .github/workflows/governance-contract.yml
 
@@ -27,9 +37,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Compile governance validator
-        run: python -m py_compile tests/test_governance_contract.py
-      - name: Enforce canonical governance doctrine
-        run: python -m unittest tests.test_governance_contract -v
+      - name: Compile governance and context validators
+        run: |
+          python -m py_compile \
+            scripts/validate_context_architecture.py \
+            tests/test_context_architecture.py \
+            tests/test_governance_contract.py
+      - name: Enforce progressive-disclosure governance
+        run: |
+          python scripts/validate_context_architecture.py --summary
+          python -m unittest tests.test_context_architecture tests.test_governance_contract -v
       - name: Check patch hygiene
         run: git diff --check origin/main...HEAD
