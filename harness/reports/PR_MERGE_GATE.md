@@ -1,9 +1,9 @@
 # PR Merge-Gate Operator Report
 
-**As of:** 2026-08-15  
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Workflow owner:** `pr-floor-integration`  
-**Focused contract:** `harness/contracts/pr-merge-gate.v1.json`  
+**As of:** 2026-08-15
+**Repository:** `EndeavorEverlasting/web-excel-repair-triage`
+**Workflow owner:** `pr-floor-integration`
+**Focused contract:** `harness/contracts/pr-merge-gate.v1.json`
 **Validator:** `scripts/validate_pr_merge_gate.py`
 
 ## Failure that triggered this contract
