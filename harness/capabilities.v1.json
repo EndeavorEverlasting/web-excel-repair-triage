@@ -120,7 +120,7 @@
     },
     {
       "id": "harness-infrastructure-maintenance",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "status": "canonical",
       "skill": ".ai/skills/harness-infrastructure-maintenance/SKILL.md",
       "trigger_ids": [
@@ -138,7 +138,7 @@
         "harness/validators.v1.json",
         "harness/capabilities.v1.json",
         "harness/triggers.v1.json",
-        "focused domain contracts including harness/contracts/prompt-kit-order-navigation.v1.json",
+        "focused domain contracts including harness/contracts/prompt-kit-order-navigation.v1.json and harness/contracts/pr-merge-gate.v1.json",
         "focused operator reports including harness/reports/PROMPT_KIT_ORDER_NAVIGATION.md",
         ".githooks/",
         ".github/workflows/harness-contract.yml",
@@ -158,6 +158,38 @@
         "path": "scripts/validate_harness.py"
       },
       "proof_ceiling": "Static repository, contract, source-gap, and CI harness proof on the tested commit; no product runtime, browser/mobile ergonomics, provider, GUI, protected-target, or production proof."
+    },
+    {
+      "id": "pr-floor-integration",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/harness-infrastructure-maintenance/SKILL.md",
+      "trigger_ids": [
+        "pr-integration-gate"
+      ],
+      "operation": "Classify the live PR integration gate, merge immediately when every required gate is satisfied and merge is authorized, verify default-branch advancement, and route normal consumers to main after merge.",
+      "inputs": [
+        "pull request number and state",
+        "draft and mergeability state",
+        "repository-required check conclusions",
+        "unresolved review findings",
+        "current and expected head SHA",
+        "merge intent and merge authority",
+        "default branch and head branch",
+        "harness/contracts/pr-merge-gate.v1.json"
+      ],
+      "outputs": [
+        "merge_now, blocked, handoff_merge_authority, ready_for_review, or already_merged decision",
+        "actual blocker reason only when one exists",
+        "expected-head protected merge action when authorized",
+        "verified default-branch commit after merge",
+        "canonical post-merge consumer ref"
+      ],
+      "implementation": {
+        "kind": "script",
+        "path": "scripts/validate_pr_merge_gate.py"
+      },
+      "proof_ceiling": "Deterministic classification and fixture proof for supplied PR state. Actual GitHub merge success and mainline advancement require observed provider evidence."
     },
     {
       "id": "prompt-kit-browser-proof-scratch-cleanup",
