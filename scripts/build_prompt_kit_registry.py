@@ -22,6 +22,7 @@ EXTENSION_REGISTRIES = (
     REPO_ROOT / "registry" / "prompts" / "ai-engineering-level-up-prompts.v1.json",
     REPO_ROOT / "registry" / "prompts" / "repository-work-ledger-prompts.v1.json",
     REPO_ROOT / "registry" / "prompts" / "management-operations-prompts.v1.json",
+    REPO_ROOT / "registry" / "prompts" / "spec-architecture-prompts.v1.json",
 )
 CONTENT_REGISTRIES = (
     REPO_ROOT / "registry" / "prompts" / "correspondence-prompts.v1.json",
@@ -35,6 +36,7 @@ PROMPT_JOURNEY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-journey.js"
 POLISH_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-polish.js"
 CORRESPONDENCE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-correspondence.js"
 MANAGEMENT_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-management.js"
+SPEC_ARCHITECTURE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-spec-architecture.js"
 ACTIONABILITY_POLICY = (
     REPO_ROOT / "registry" / "prompts" / "actionable-next-step-policy.v1.json"
 )
@@ -399,6 +401,9 @@ def render() -> str:
     management_script = _read_runtime(
         MANAGEMENT_RUNTIME, "Prompt Kit management profile behavior"
     )
+    spec_architecture_script = _read_runtime(
+        SPEC_ARCHITECTURE_RUNTIME, "Prompt Kit spec architecture profile behavior"
+    )
     closing = "</body>"
     if closing not in html:
         raise SystemExit("Prompt Kit builder output is missing </body>")
@@ -408,6 +413,7 @@ def render() -> str:
         f"<script>\n{polish_script}\n</script>\n"
         f"<script>\n{correspondence_script}\n</script>\n"
         f"<script>\n{management_script}\n</script>\n"
+        f"<script>\n{spec_architecture_script}\n</script>\n"
     )
     return html.replace(closing, supplemental + closing, 1)
 
