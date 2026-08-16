@@ -103,9 +103,7 @@
       "contract_tests": "tests/test_pr_merge_gate.py",
       "workflow": "WORKFLOW.md#e-pr-floor-cleanup-and-integration",
       "harness_gate": "python scripts/validate_pr_merge_gate.py --summary",
-      "fixtures": "harness/evals/fixtures/pr-merge-gate-cases.v1.json",
-      "capability": "pr-floor-integration",
-      "trigger": "pr-integration-gate"
+      "fixtures": "harness/evals/fixtures/pr-merge-gate-cases.v1.json"
     },
     "lua_embedding_readiness": {
       "contract": "harness/lua/contracts/lua-embedding-readiness.v1.json",
@@ -188,7 +186,6 @@
   },
   "validation_order": [
     "python scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
-    "python scripts/validate_pr_merge_gate.py --summary",
     "python -m unittest tests.test_harness_contract -v",
     "python -m unittest tests.test_prompt_kit_interactions_contract -v",
     "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
