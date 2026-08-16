@@ -21,74 +21,39 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Register management prompts and permanent checks
+      - name: Register management prompts in canonical builder
         run: |
           python - <<'PY'
           from pathlib import Path
 
-          def replace_exact(path, old, new, expected=1):
+          def replace_exact(path, old, new):
               p = Path(path)
               text = p.read_text(encoding='utf-8')
               count = text.count(old)
-              if count != expected:
-                  raise SystemExit(f'{path}: expected {expected} occurrences, found {count}: {old!r}')
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one occurrence, found {count}: {old!r}')
               p.write_text(text.replace(old, new), encoding='utf-8')
 
-          builder = 'scripts/build_prompt_kit_registry.py'
+          path = 'scripts/build_prompt_kit_registry.py'
           replace_exact(
-              builder,
+              path,
               '    REPO_ROOT / "registry" / "prompts" / "repository-work-ledger-prompts.v1.json",\n)',
               '    REPO_ROOT / "registry" / "prompts" / "repository-work-ledger-prompts.v1.json",\n    REPO_ROOT / "registry" / "prompts" / "management-operations-prompts.v1.json",\n)',
           )
           replace_exact(
-              builder,
+              path,
               'CORRESPONDENCE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-correspondence.js"\n',
               'CORRESPONDENCE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-correspondence.js"\nMANAGEMENT_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-management.js"\n',
           )
           replace_exact(
-              builder,
+              path,
               '    correspondence_script = _read_runtime(\n        CORRESPONDENCE_RUNTIME, "Prompt Kit correspondence profile behavior"\n    )\n',
               '    correspondence_script = _read_runtime(\n        CORRESPONDENCE_RUNTIME, "Prompt Kit correspondence profile behavior"\n    )\n    management_script = _read_runtime(\n        MANAGEMENT_RUNTIME, "Prompt Kit management profile behavior"\n    )\n',
           )
           replace_exact(
-              builder,
+              path,
               '        f"<script>\\n{correspondence_script}\\n</script>\\n"\n    )\n',
               '        f"<script>\\n{correspondence_script}\\n</script>\\n"\n        f"<script>\\n{management_script}\\n</script>\\n"\n    )\n',
-          )
-
-          ci = '.github/workflows/prompt-kit-web.yml'
-          replace_exact(
-              ci,
-              '      - registry/prompts/correspondence-prompts.v1.json\n',
-              '      - registry/prompts/correspondence-prompts.v1.json\n      - registry/prompts/management-operations-prompts.v1.json\n',
-              expected=2,
-          )
-          replace_exact(
-              ci,
-              '      - docs/prompt-kit-correspondence.js\n',
-              '      - docs/prompt-kit-correspondence.js\n      - docs/prompt-kit-management.js\n',
-              expected=2,
-          )
-          replace_exact(
-              ci,
-              '      - tests/test_correspondence_prompt_registry.py\n',
-              '      - tests/test_correspondence_prompt_registry.py\n      - tests/test_management_operations_prompt_registry.py\n',
-              expected=2,
-          )
-          replace_exact(
-              ci,
-              '            tests/test_correspondence_prompt_registry.py\n',
-              '            tests/test_correspondence_prompt_registry.py \\\n            tests/test_management_operations_prompt_registry.py\n',
-          )
-          replace_exact(
-              ci,
-              '          node --check docs/prompt-kit-correspondence.js\n',
-              '          node --check docs/prompt-kit-correspondence.js\n          node --check docs/prompt-kit-management.js\n',
-          )
-          replace_exact(
-              ci,
-              '          python -m unittest tests.test_correspondence_prompt_registry -v\n',
-              '          python -m unittest tests.test_correspondence_prompt_registry -v\n          python -m unittest tests.test_management_operations_prompt_registry -v\n',
           )
           PY
       - name: Validate management prompt integration
@@ -104,11 +69,11 @@ jobs:
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
-      - name: Commit integrated source and generated site
+      - name: Commit integrated builder and generated site
         run: |
           git config user.name "EndeavorEverlasting"
           git config user.email "71802818+EndeavorEverlasting@users.noreply.github.com"
-          git add scripts/build_prompt_kit_registry.py .github/workflows/prompt-kit-web.yml web/prompt-kit/index.html
+          git add scripts/build_prompt_kit_registry.py web/prompt-kit/index.html
           git diff --cached --check
           git commit -m "feat(prompt-kit): integrate management operation profiles"
           git push origin HEAD:feat/prompt-kit-management-operations-20260815
