@@ -13,6 +13,8 @@ python scripts/validate_prompt_kit_cross_device_access.py --summary
 python -m unittest tests.test_prompt_kit_cross_device_access -v
 python scripts/validate_prompt_kit_freshness_guidance.py --summary
 python -m unittest tests.test_prompt_kit_freshness_guidance -v
+python scripts/validate_pr_merge_gate.py --summary
+python -m unittest tests.test_pr_merge_gate -v
 python scripts/validate_prompt_kit_release_identity.py --output "$RELEASE_IDENTITY_REPORT" --summary
 python -m unittest tests.test_prompt_kit_release_identity -v
 python scripts/validate_prompt_kit_order_navigation.py --output "$ORDER_NAV_REPORT" --summary
