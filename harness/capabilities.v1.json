@@ -120,7 +120,7 @@
     },
     {
       "id": "harness-infrastructure-maintenance",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "status": "canonical",
       "skill": ".ai/skills/harness-infrastructure-maintenance/SKILL.md",
       "trigger_ids": [
@@ -138,11 +138,11 @@
         "harness/validators.v1.json",
         "harness/capabilities.v1.json",
         "harness/triggers.v1.json",
-        "focused domain contracts including harness/contracts/prompt-kit-order-navigation.v1.json",
+        "focused domain contracts including harness/contracts/prompt-kit-order-navigation.v1.json and harness/contracts/pr-merge-gate.v1.json",
         "focused operator reports including harness/reports/PROMPT_KIT_ORDER_NAVIGATION.md",
         ".githooks/",
         ".github/workflows/harness-contract.yml",
-        "existing harness failures, product-gap evidence, and PR state"
+        "existing harness failures, product-gap evidence, PR state, merge intent, and merge authority"
       ],
       "outputs": [
         "tracked canonical harness repairs",
@@ -157,7 +157,7 @@
         "kind": "script",
         "path": "scripts/validate_harness.py"
       },
-      "proof_ceiling": "Static repository, contract, source-gap, and CI harness proof on the tested commit; no product runtime, browser/mobile ergonomics, provider, GUI, protected-target, or production proof."
+      "proof_ceiling": "Static repository, contract, source-gap, and CI harness proof on the tested commit; actual provider merges, product runtime, browser/mobile ergonomics, GUI, protected-target, and production proof remain separate."
     },
     {
       "id": "prompt-kit-browser-proof-scratch-cleanup",

@@ -19,6 +19,7 @@ on:
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
       - scripts/validate_operator_command_envelope.py
+      - scripts/validate_pr_merge_gate.py
       - scripts/validate_prompt_kit_cross_device_access.py
       - scripts/validate_prompt_kit_freshness_guidance.py
       - scripts/validate_prompt_kit_release_identity.py
@@ -28,6 +29,7 @@ on:
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
+      - tests/test_pr_merge_gate.py
       - tests/test_prompt_kit_cross_device_access.py
       - tests/test_prompt_kit_freshness_guidance.py
       - tests/test_prompt_kit_release_identity.py
@@ -55,6 +57,7 @@ on:
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
       - scripts/validate_operator_command_envelope.py
+      - scripts/validate_pr_merge_gate.py
       - scripts/validate_prompt_kit_cross_device_access.py
       - scripts/validate_prompt_kit_freshness_guidance.py
       - scripts/validate_prompt_kit_release_identity.py
@@ -64,6 +67,7 @@ on:
       - scripts/validate_harness.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
+      - tests/test_pr_merge_gate.py
       - tests/test_prompt_kit_cross_device_access.py
       - tests/test_prompt_kit_freshness_guidance.py
       - tests/test_prompt_kit_release_identity.py
@@ -92,6 +96,7 @@ jobs:
           python -m py_compile \
             scripts/validate_harness.py \
             scripts/validate_operator_command_envelope.py \
+            scripts/validate_pr_merge_gate.py \
             scripts/validate_prompt_kit_cross_device_access.py \
             scripts/validate_prompt_kit_freshness_guidance.py \
             scripts/validate_prompt_kit_release_identity.py \
@@ -101,6 +106,7 @@ jobs:
             scripts/evaluate_prompt_language.py \
             tests/test_harness_contract.py \
             tests/test_operator_command_envelope.py \
+            tests/test_pr_merge_gate.py \
             tests/test_prompt_kit_cross_device_access.py \
             tests/test_prompt_kit_freshness_guidance.py \
             tests/test_prompt_kit_release_identity.py \
@@ -123,6 +129,10 @@ jobs:
         run: |
           python scripts/validate_prompt_kit_freshness_guidance.py --summary
           python -m unittest tests.test_prompt_kit_freshness_guidance -v
+      - name: Validate PR merge gate
+        run: |
+          python scripts/validate_pr_merge_gate.py --summary
+          python -m unittest tests.test_pr_merge_gate -v
       - name: Validate Prompt Kit release identity
         run: |
           python scripts/validate_prompt_kit_release_identity.py --output "$RUNNER_TEMP/prompt-kit-release-identity.json" --summary

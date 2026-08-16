@@ -145,32 +145,46 @@
     {
       "id": "pr-floor-integration",
       "document": "WORKFLOW.md#e-pr-floor-cleanup-and-integration",
-      "trigger": "Work is stacked, divergent, superseded, or blocked across branches or pull requests.",
+      "trigger": "Work is stacked, divergent, superseded, conflicted, blocked, or ready to integrate across branches or pull requests.",
+      "focused_contract": "harness/contracts/pr-merge-gate.v1.json",
       "owned_scope": [
         "branch and PR evidence",
+        "required-check and review-gate classification",
         "dependency ordering",
         "conflict repair",
-        "preservation of unique commits"
+        "preservation of unique commits",
+        "authorized merge execution with expected-head protection",
+        "post-merge canonical default-branch verification",
+        "post-merge consumer routing to main"
       ],
       "forbidden_scope": [
         "force push",
         "deleting unique work",
         "destructive cleanup",
-        "merging with unresolved required checks"
+        "merging with unresolved required checks or review findings",
+        "reporting a green mergeable merge-authorized PR as a blocker",
+        "stopping at PR status when merge is authorized and every gate is satisfied",
+        "telling normal consumers to fetch a merged feature branch instead of main"
       ],
       "entry_points": [
         "git status --short",
-        "git log --oneline --decorate -5"
+        "git log --oneline --decorate -5",
+        "python scripts/validate_pr_merge_gate.py --summary"
       ],
       "validation_profile": "harness",
-      "failure_policy": "Stop destructive integration, preserve unique work, identify the exact dependency or conflict, and provide the safest executable next action.",
+      "failure_policy": "Classify the exact gate with pr-merge-gate/v1. If open, non-draft, mergeable, required checks are green, review findings are resolved, expected head matches, merge intent exists, and merge authority exists, merge now rather than reporting a blocker. After provider merge success, verify main advanced before routing normal consumers to main or its registered artifact. Only unresolved checks, findings, conflicts/unknown mergeability, head movement, closed-unmerged state, or missing merge authority are blockers.",
       "handoff_fields": [
         "base",
         "head",
+        "expected head SHA",
         "unique commits",
-        "checks",
+        "required checks",
         "review findings",
-        "merge blocker"
+        "merge decision",
+        "actual blocker when one exists",
+        "merge commit when merged",
+        "verified default-branch commit",
+        "canonical consumer ref"
       ]
     },
     {

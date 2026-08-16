@@ -96,7 +96,9 @@
         "artifact, validator, capability, trigger, or component registry drift exists",
         "hook validates the wrong Git surface",
         "harness completeness check is missing or failing",
-        "operator report is stale or incomplete"
+        "operator report is stale or incomplete",
+        "a PR integration failure reveals missing or incorrect merge-gate harness behavior",
+        "an agent labels a green mergeable authorized PR as a blocker or routes normal consumers to a feature branch after merge"
       ],
       "forbidden_conditions": [
         "request changes AGENTS.md governance",
