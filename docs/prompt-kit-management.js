@@ -6,6 +6,9 @@ var PROFILES={
   },
   'fun-management':{
     className:'fun-management',accent:'#6366f1',badgeClass:'fun-management-badge',badge:'◆ FUN Management'
+  },
+  'triage-management':{
+    className:'triage-management',accent:'#10b981',badgeClass:'triage-management-badge',badge:'▣ Triage Ops'
   }
 };
 
@@ -35,7 +38,18 @@ function ensureManagementStyles(){
     +'.prompt-detail.fun-management .pd-glow{background:linear-gradient(90deg,#4338ca,#6366f1,#22d3ee)!important;box-shadow:0 0 14px rgba(99,102,241,.46)}'
     +'.prompt-detail.fun-management .pd-id{background:rgba(99,102,241,.14);color:#a5b4fc;border-color:rgba(99,102,241,.36)}'
     +'.prompt-detail.fun-management .pd-name{color:#e0e7ff}.prompt-detail.fun-management .pd-section h4{color:#818cf8}'
-    +'.prompt-detail.fun-management .pd-copy{background:#4f46e5}.prompt-detail.fun-management .pd-copy:hover{background:#4338ca;box-shadow:0 0 18px rgba(99,102,241,.27)}';
+    +'.prompt-detail.fun-management .pd-copy{background:#4f46e5}.prompt-detail.fun-management .pd-copy:hover{background:#4338ca;box-shadow:0 0 18px rgba(99,102,241,.27)}'
+    +'.prompt-card.triage-management{background:linear-gradient(145deg,#0f241b 0%,#10281e 46%,#0b1d16 100%);border-color:rgba(16,185,129,.42);box-shadow:inset 0 0 34px rgba(16,185,129,.05)}'
+    +'.prompt-card.triage-management:hover{border-color:#10b981;box-shadow:0 8px 32px rgba(0,0,0,.42),0 0 28px rgba(16,185,129,.24),inset 0 0 34px rgba(16,185,129,.08)}'
+    +'.prompt-card.triage-management .glow-bar{background:linear-gradient(90deg,#065f46,#10b981,#6ee7b7,#34d399,#10b981)!important;box-shadow:0 0 9px rgba(16,185,129,.76),0 0 18px rgba(110,231,183,.28)!important}'
+    +'.prompt-card.triage-management .prompt-id{background:rgba(16,185,129,.15);color:#a7f3d0;border-color:rgba(16,185,129,.42)}'
+    +'.prompt-card.triage-management .prompt-name{color:#dcfce7}.prompt-card.triage-management .prompt-type{color:rgba(167,243,208,.76)}'
+    +'.triage-management-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(16,185,129,.16);color:#a7f3d0;border:1px solid rgba(16,185,129,.42);margin-left:6px;font-weight:650;white-space:nowrap}'
+    +'.prompt-detail.triage-management{border-color:rgba(16,185,129,.48);box-shadow:0 20px 60px rgba(0,0,0,.52),0 0 34px rgba(16,185,129,.15)}'
+    +'.prompt-detail.triage-management .pd-glow{background:linear-gradient(90deg,#065f46,#10b981,#6ee7b7)!important;box-shadow:0 0 14px rgba(16,185,129,.5)}'
+    +'.prompt-detail.triage-management .pd-id{background:rgba(16,185,129,.15);color:#a7f3d0;border-color:rgba(16,185,129,.42)}'
+    +'.prompt-detail.triage-management .pd-name{color:#dcfce7}.prompt-detail.triage-management .pd-section h4{color:#6ee7b7}'
+    +'.prompt-detail.triage-management .pd-copy{background:#059669}.prompt-detail.triage-management .pd-copy:hover{background:#047857;box-shadow:0 0 18px rgba(16,185,129,.3)}';
   document.head.appendChild(style);
 }
 
