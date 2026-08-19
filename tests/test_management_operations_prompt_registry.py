@@ -77,6 +77,17 @@ class ManagementOperationsPromptRegistryTests(unittest.TestCase):
         self.assertIn("Drive File Map or audience route", content)
         self.assertIn("generated canonical website", content)
         self.assertIn("merge every exact green authorized head", content)
+        self.assertIn("INTEGRATED ROSTER / SPLIT-PROJECT CONTRACT", content)
+        self.assertIn("codified integrated roster", content)
+        self.assertIn("multiple allocation rows", content)
+        self.assertIn("Attendance creates paid time; allocation explains it", content)
+        self.assertIn("PRIVATE QUANTITATIVE MATH VS OUTWARD PROJECTION", content)
+        self.assertIn("private quantitative Math Packet", content)
+        self.assertIn("direct request-to-response span", content)
+        self.assertIn("qualitative share artifact erase", content)
+        self.assertIn("DRIVE EVIDENCE / GLOSSARY DISCOVERY", content)
+        self.assertIn("dated Drive evidence folder", content)
+        self.assertIn("understand what it does not prove", content)
 
     def test_management_profile_runtime_is_rendered(self) -> None:
         html = build_prompt_kit_registry.render()
