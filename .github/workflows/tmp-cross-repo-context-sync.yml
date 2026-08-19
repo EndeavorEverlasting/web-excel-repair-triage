@@ -1,0 +1,44 @@
+name: Temporary P77 canonical generation
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-cross-repo-context-sync-20260819
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-cross-repo-context-sync-20260819
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate source and generate canonical Prompt Kit
+        run: |
+          set -euo pipefail
+          python -m json.tool registry/prompts/management-operations-prompts.v1.json >/dev/null
+          python -m py_compile scripts/build_prompt_kit_registry.py tests/test_management_operations_prompt_registry.py
+          node --check docs/prompt-kit-management.js
+          python -m unittest tests.test_management_operations_prompt_registry -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit generated site and remove temporary workflow
+        run: |
+          set -euo pipefail
+          rm .github/workflows/tmp-cross-repo-context-sync.yml
+          git add web/prompt-kit/index.html .github/workflows/tmp-cross-repo-context-sync.yml
+          if git diff --cached --quiet; then
+            echo "No generated diff to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "build(prompt-kit): regenerate canonical site for P77"
+          git push origin HEAD:feat/prompt-kit-cross-repo-context-sync-20260819
