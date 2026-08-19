@@ -40,6 +40,72 @@
         "token budget",
         "context hierarchy"
       ]
+    },
+    {
+      "id": "P78",
+      "seq": "78",
+      "name": "Repository Glossary & Documentation Diet",
+      "type": "MAINTENANCE + FACTOR",
+      "class": "HARNESS / KNOWLEDGE ARCHITECTURE",
+      "sprintRole": "Reduce conflicting repository prose by consolidating vocabulary into a lean glossary that points agents to executable sources of truth instead of restating implementation behavior",
+      "progress": "YES",
+      "useWhen": "Markdown and documentation have multiplied, agents cannot tell whether code or prose is current, terminology is inconsistent, or the repository needs a smaller durable vocabulary layer without losing unique operational rules.",
+      "inspectFirst": "Repository governance and precedence; existing glossary or terminology surfaces; code, schemas, contracts, tests, validators, manifests, and registries that actually enforce behavior; documentation references/backlinks; runbooks or safety procedures that cannot safely be reduced to vocabulary entries.",
+      "expectedOutput": "One existing or canonical glossary tightened into a compact vocabulary/navigation layer, redundant explanatory prose removed or collapsed where evidence proves it is duplicated, authoritative implementation paths linked per term, references repaired, and validation showing no unique rule or required operational procedure was lost.",
+      "nextStep": "Mutate the highest-overlap documentation surface now, consolidate its reusable terms into the canonical glossary, repair references, and run the strongest repository documentation/harness/link plus behavior validators that prove the deleted prose was not an independent authority.",
+      "proofGate": "Glossary entries define vocabulary rather than duplicate behavior; repository-specific precedence is preserved; executable code/contracts/schemas/tests/validators remain the implementation authority unless governance explicitly says otherwise; unique safety/runbook content is retained; stale duplicates are removed or clearly deprecated; and all affected validators/tests pass.",
+      "color": "Cyan",
+      "copySheet": "P78_COPY_SAFE",
+      "category": "standard",
+      "profile": "spec-architecture",
+      "copyContent": "DIET THE REPOSITORY DOCUMENTATION DOWN TO A LEAN GLOSSARY AND AUTHORITATIVE POINTERS. EXECUTE THE REPOSITORY CHANGES; DO NOT JUST PROPOSE A DOC STRATEGY.\n\nRepo: xyz_repo_or_path\nScope or subsystem: xyz_scope_or_resolve_from_context\n\nMISSION\nReduce documentation bloat that causes agents to confuse stale prose with current implementation. Prefer one compact glossary for vocabulary and navigation. Keep behavior authoritative in code, schemas, contracts, registries, validators, and tests wherever the repository already enforces it there.\n\nAUTHORITY FIRST\n1. Read the repository's actual governance/precedence rules before deleting or demoting anything.\n2. Inventory overlapping Markdown/docs and the executable surfaces they describe.\n3. For each disputed behavior, determine the current enforceable owner from code/contracts/schemas/tests/validators rather than choosing the newest-looking prose.\n4. Preserve non-glossary documentation only when it is a genuine operational input, safety/runbook procedure, external interface contract, or other unique authority that cannot safely be replaced by a pointer.\n\nGLOSSARY CONTRACT\nUse the existing glossary if one exists; otherwise create the repository's normal minimal glossary path. Each entry should contain only what helps an agent navigate: term, short meaning, authoritative path or owner, and an alias/status note only when useful. Keep definitions short. The glossary may explain vocabulary; it must not become a second specification of implementation behavior. Link to the executable owner instead of copying its rules.\n\nIMPLEMENT THE DIET\nClassify overlapping prose as KEEP-AUTHORITY, KEEP-OPERATIONAL, COLLAPSE-INTO-GLOSSARY, REPLACE-WITH-POINTER, or DELETE-REDUNDANT. Make the bounded changes now. Repair links, indexes, harness routes, and references that point to removed files. Do not create a new tutorial, architecture essay, migration diary, or duplicate policy merely to explain the cleanup. Do not change product behavior to make stale documentation true.\n\nCONFLICT RULE\nWhen narrative documentation disagrees with executable behavior, obey repository-specific precedence first. Absent a higher explicit authority, treat current code plus its contracts/tests/validators as implementation truth and update or remove the contradictory prose. Preserve uncertainty when executable evidence is incomplete instead of inventing reconciliation.\n\nVALIDATE\nRun the strongest practical documentation/harness validators, link/reference checks, targeted behavior tests for surfaces whose prose was removed, and `git diff --check`. Prove every deleted statement was duplicated, stale, or non-authoritative and that every unique rule still has one reachable owner.\n\nDELIVER\nReport the glossary path, files removed/collapsed/retained, authoritative owners established, validators run, commit/PR/merge state, and any remaining documentation that could not safely be reduced. Keep the final report compact; the purpose of this prompt is less repository text, not more.",
+      "keywords": [
+        "glossary",
+        "repository glossary",
+        "documentation bloat",
+        "docs bloat",
+        "markdown bloat",
+        "stale documentation",
+        "source of truth",
+        "code vs docs",
+        "documentation diet",
+        "reduce documentation",
+        "terminology",
+        "agent context bloat"
+      ]
+    },
+    {
+      "id": "P79",
+      "seq": "79",
+      "name": "Prompt Registry Prompt Adder",
+      "type": "MAINTENANCE + REGISTRY",
+      "class": "PROMPT KIT / REGISTRY OPERATIONS",
+      "sprintRole": "Turn the immediately preceding user context into a new canonical Prompt Kit registry entry with minimal operator repetition, focused regression coverage, regenerated output, and integration proof",
+      "progress": "YES",
+      "useWhen": "You have already described a reusable workflow or prompt need in the conversation and want to append one copy-paste instruction that makes an agent add that prompt correctly to the current Prompt Kit registry.",
+      "inspectFirst": "The immediately preceding conversation/request; current Triage main/branch/PR floor; combined Prompt Kit registry and highest live prompt IDs/sequences; owning extension registry; builder policies; existing profiles/categories/keywords; focused registry tests; generated website parity contract and Prompt Kit CI.",
+      "expectedOutput": "The requested prompt added to the canonical registry with the next valid stable identity, reuse of the closest existing registry/profile, compact copy-safe content derived from the supplied context, focused tests, regenerated canonical Prompt Kit website, passing registry/build checks, and commit/push/PR/merge evidence when authorized.",
+      "nextStep": "Resolve the desired reusable prompt from the context immediately above this instruction, assign the next valid registry identity, implement it in the closest current owner with a focused regression test, regenerate the canonical site, and run the strongest Prompt Kit validation through exact-head CI.",
+      "proofGate": "The new prompt has a unique ID and sequence, is not a semantic duplicate, uses the correct existing registry/profile/category where possible, preserves the user's supplied context without invented requirements, receives shared registry policies, renders in the canonical site, passes focused registry/build/order/discovery checks, and is committed and integrated or blocked by an exact named gate.",
+      "color": "Cyan",
+      "copySheet": "P79_COPY_SAFE",
+      "category": "standard",
+      "profile": "spec-architecture",
+      "copyContent": "ADD A PROMPT TO THE PROMPT REGISTRY FROM THE CONTEXT IMMEDIATELY ABOVE THIS INSTRUCTION. EXECUTE THE REPO WORK; DO NOT ASK ME TO RESTATE CONTEXT THAT IS ALREADY PRESENT.\n\nCANONICAL REPO\n`EndeavorEverlasting/web-excel-repair-triage`\n\nPROMPT REQUEST\nUse the immediately preceding conversation/request as the source requirement for the reusable prompt. If the operator supplied an explicit title, wording, scope, or constraints, preserve them.\n\nMISSION\nAdd the requested reusable prompt to the current Prompt Kit using existing repository patterns. The desired completion state is a canonical registry record, focused regression coverage, regenerated site parity, validation, commit/push/PR, and integration when authorized—not another prose plan describing how to add it.\n\nRESOLVE CURRENT TRUTH\n1. Inspect current `main`, recent commits, open/recent overlapping PRs, the combined registry loader, current extension registries, highest live IDs/sequences, profiles/categories, builder, generated `web/prompt-kit/index.html`, focused registry tests, and Prompt Kit CI.\n2. Reuse the closest existing extension registry and profile. Do not create a new registry family, runtime, tutorial, design document, or metadata layer unless the current contracts genuinely require one.\n3. If an exact semantic duplicate already exists, prove the duplicate and strengthen the existing canonical prompt instead of manufacturing a second identity. Otherwise add a new prompt.\n\nCREATE THE PROMPT\n- Assign the next valid unused `P##` identity and matching stable sequence from the current combined registry; never guess from memory or reuse a retired/reserved identity.\n- Fill every required registry field using nearby prompts as the contract.\n- Make `copyContent` directly executable and derived from the supplied context. Include only enough structure to let a future agent recover scope, inspect current evidence, implement, validate, integrate, and report.\n- Add concise discovery keywords that reflect how the operator would naturally ask for the workflow.\n- Let shared builder policies append shared actionability language instead of copying global boilerplate into the source record.\n\nBLOAT RULE\nThe registry record plus focused test is normally the documentation for this feature. Do not add a tutorial, architecture note, handoff essay, duplicate prompt catalog, or planning Markdown unless an existing enforceable repository contract requires that artifact. Prefer modifying a current owner over adding another source of truth.\n\nPROVE IT\nAdd or extend the closest focused registry test to prove identity, profile/category, key behavioral clauses, bounded source size, and rendered presence. Regenerate the canonical website with the repository builder and prove `--check` parity. Run focused registry tests plus applicable Prompt Kit discovery/order/navigation/language checks and `git diff --check`; use exact-head GitHub Actions when the execution environment cannot clone or run the full suite.\n\nINTEGRATE\nCommit only owned files, push normally, open or update the focused PR, inspect exact-head checks/reviews, repair valid failures, and merge the exact green authorized head when repository policy allows. Verify `main` contains the prompt and the canonical generated site before declaring completion.\n\nDELIVER\nReport prompt ID/name, registry path, test path, generated site state, validation, commit SHA, PR/merge state, and any real blocker. Do not finish with a draft of the prompt for the operator to manually register when repository mutation is available.",
+      "keywords": [
+        "add a prompt",
+        "add prompt",
+        "prompt registry",
+        "new prompt",
+        "register prompt",
+        "prompt kit prompt",
+        "create registry prompt",
+        "append prompt",
+        "add this workflow as a prompt",
+        "turn this into a prompt",
+        "prompt authoring",
+        "prompt registry maintenance"
+      ]
     }
   ]
 }
