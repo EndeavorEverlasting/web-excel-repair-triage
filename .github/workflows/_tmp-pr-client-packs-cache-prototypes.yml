@@ -24,14 +24,14 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-          import textwrap
 
           path = Path('.github/workflows/_tmp-prompt-kit-client-packs-cache-prototypes.yml')
           text = path.read_text(encoding='utf-8')
           marker = "          python - <<'PY'\n"
           start = text.index(marker) + len(marker)
           end = text.index('\n          PY', start)
-          block = textwrap.dedent(text[start:end])
+          lines = text[start:end].splitlines()
+          block = '\n'.join(line[10:] if line.startswith('          ') else line for line in lines)
           exec(compile(block, str(path) + ':staged-python', 'exec'))
       - name: Build and validate canonical Prompt Kit
         run: |
