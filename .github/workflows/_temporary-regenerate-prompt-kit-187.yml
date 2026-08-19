@@ -1,0 +1,37 @@
+name: Temporary Prompt Kit Regenerator
+
+on:
+  push:
+    branches:
+      - feat/prompt-glossary-registry-authoring-20260819
+    paths:
+      - .github/workflows/_temporary-regenerate-prompt-kit-187.yml
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-glossary-registry-authoring-20260819
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Generate exact canonical Prompt Kit site
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit generated site and remove temporary workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/_temporary-regenerate-prompt-kit-187.yml
+          git add web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'build(prompt-kit): regenerate canonical site for P78-P79'
+          git push origin HEAD:feat/prompt-glossary-registry-authoring-20260819
