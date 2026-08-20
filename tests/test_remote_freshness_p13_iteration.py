@@ -21,6 +21,7 @@ class RemoteFreshnessAndP13IterationTests(unittest.TestCase):
         cls.effective = {
             item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
         }
+        cls.operator_delivery = (ROOT / "harness" / "specs" / "operator-delivery.md").read_text(encoding="utf-8")
 
     def test_shared_operational_policy_requires_fresh_remote_floor(self) -> None:
         marker = self.policy["freshness_marker"]
@@ -30,6 +31,10 @@ class RemoteFreshnessAndP13IterationTests(unittest.TestCase):
         self.assertIn("git pull --ff-only", appendix)
         self.assertIn("Re-fetch before final exact-head validation/integration", appendix)
         self.assertIn("never force-reset", appendix)
+        self.assertIn("FRESH EVIDENCE FLOOR", appendix)
+        self.assertIn("owning contracts/specs/profiles/registries/generators", appendix)
+        self.assertIn("registered artifact manifests/reports", appendix)
+        self.assertIn("versioned proof", appendix)
 
         # Representative build/repair executors must inherit freshness from one shared owner.
         for prompt_id in ("P01", "P03", "P07", "P14", "P17", "P18", "P83"):
@@ -82,6 +87,43 @@ class RemoteFreshnessAndP13IterationTests(unittest.TestCase):
         self.assertIn("Do not ask the user to compare rule wording", content)
         self.assertIn("Stale branch state is ruled out before inventing doctrine", p13["proofGate"])
         self.assertIn("smallest enforceable repo doctrine", p13["sprintRole"])
+
+
+    def test_every_build_repair_or_artifact_prompt_inherits_fresh_evidence_floor(self) -> None:
+        build_like = [
+            prompt
+            for prompt in self.effective.values()
+            if any(token in str(prompt["type"]).upper() for token in ("BUILD", "REPAIR", "ARTIFACT"))
+        ]
+        self.assertGreater(len(build_like), 0)
+        for prompt in build_like:
+            with self.subTest(prompt_id=prompt["id"], prompt_type=prompt["type"]):
+                content = prompt["copyContent"]
+                self.assertIn("REMOTE FRESHNESS / BRANCH FLOOR CONTRACT", content)
+                self.assertIn("current/open/recent overlapping branches and PRs", content)
+                self.assertIn("FRESH EVIDENCE FLOOR", content)
+                self.assertIn("registered artifact manifests/reports", content)
+                self.assertIn("current canonical generator/template/schema", content)
+
+    def test_p48_and_live_cert_domain_law_pin_fresh_code_artifact_and_evidence(self) -> None:
+        p48 = self.raw["P48"]
+        content = p48["copyContent"]
+        self.assertIn("FRESH REPOSITORY + EVIDENCE FLOOR BEFORE LIVE CERT", content)
+        self.assertIn("git fetch --all --prune --tags", content)
+        self.assertIn("current/open/recent overlapping branches and PRs", content)
+        self.assertIn("artifact path plus manifest/hash", content)
+        self.assertIn("current validators/tests/CI conclusions", content)
+        self.assertIn("prior live-cert receipts", content)
+        self.assertIn("invalidate the affected proof", content)
+        self.assertIn("freshness gate", p48["proofGate"].lower())
+
+        domain = self.operator_delivery
+        self.assertIn("## Freshness gate for live certification", domain)
+        self.assertIn("git fetch --all --prune --tags", domain)
+        self.assertIn("current/open/recent overlapping PRs and branches", domain)
+        self.assertIn("artifact path and manifest/hash", domain)
+        self.assertIn("Prior evidence remains useful history", domain)
+        self.assertIn("mark affected proof stale", domain)
 
 
 if __name__ == "__main__":
