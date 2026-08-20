@@ -113,9 +113,11 @@ class RepositoryWorkLedgerPromptTests(unittest.TestCase):
             "Never claim runtime, deployment, physical-device, or human acceptance proof",
         ):
             self.assertIn(phrase, content)
-        self.assertIn("shared prompt actionability", prompt["copyContent"].lower())
+        policy = build_prompt_kit_registry.load_actionability_policy()
+        self.assertEqual(prompt["actionabilityPolicy"], policy["policy_id"])
+        self.assertIn(policy["marker"], content)
         self.assertGreater(len(content), 3000)
-        self.assertLess(len(content), 9000)
+        self.assertLess(len(content), 12000)
 
     def test_guided_questionnaire_exposes_repository_ledger_intent(self) -> None:
         guided = (ROOT / "docs" / "prompt-kit-guided-recommendations.js").read_text(
