@@ -1,4 +1,4 @@
-# registration-trigger: 2
+# registration-trigger: 3
 name: Temporary Prompt Semantic Hardener Executor
 
 on:
