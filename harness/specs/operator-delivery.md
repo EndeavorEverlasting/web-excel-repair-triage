@@ -21,6 +21,14 @@ Live evidence is separate from CI, replay, fixtures, emulators, and source/build
 
 When both are viable, choose the topology that produces the strongest safe evidence with the least operator reconstruction.
 
+## Freshness gate for live certification
+
+- Before selecting the certification subject, refresh remote/provider truth (`git fetch --all --prune --tags` or provider equivalent), resolve the actual default branch, and inspect current/open/recent overlapping PRs and branches plus the latest relevant commits. An unfetched checkout, remembered SHA, old feature base, or prior handoff is not a certification floor.
+- Establish the current evidence floor: owning runtime-certification contract, launcher/generator/profile/schema, focused validators, current CI/build conclusions, registered artifact manifests/reports, prior live-cert receipts, and known blockers. Prior evidence remains useful history but only proves the exact head/artifact/inputs it observed.
+- Pin the exact subject after refresh: commit SHA, required base/dependency floor, target, phase, artifact path and manifest/hash when applicable, runtime route/provider, and proof ceiling. The runtime report must record those identities.
+- If the remote base/head, dependency, launcher/generator/profile/schema, target artifact, or evidence owner moves after preflight, mark affected proof stale and refresh/reconcile/rebuild/revalidate before claiming certification. A runtime pass cannot bless stale repository state, and old runtime evidence cannot certify a newer head.
+- Preserve dirty/divergent/local-only work while refreshing; never force-reset merely to obtain a certification floor.
+
 ## Evidence and artifact safety
 
 Evidence strength is ordered by what was actually observed. Distinguish source/build proof, process start, command acknowledgment, observed behavior, local runtime proof, target proof, and production proof. Never silently promote a weaker class.
