@@ -25,38 +25,33 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-
           path = Path('scripts/build_prompt_kit_registry.py')
           text = path.read_text(encoding='utf-8')
-          old = '''    marker = str(policy["marker"])
-    appendix = str(policy["copy_content_appendix"]).strip()
-    if marker not in copy_content:
-        strengthened["copyContent"] = f"{copy_content}\\n\\n{appendix}"
-
-    strengthened["actionabilityPolicy"] = str(policy["policy_id"])
-'''
-          new = '''    marker = str(policy["marker"])
-    appendix = str(policy["copy_content_appendix"]).strip()
-    integration_marker = str(policy.get("integration_marker", "")).strip()
-    has_current_integration = not integration_marker or integration_marker in copy_content
-    if marker not in copy_content:
-        strengthened["copyContent"] = f"{copy_content}\\n\\n{appendix}"
-    elif not has_current_integration:
-        legacy_prefix = f"{marker}\\n- Do not leave NEXT COMMAND"
-        legacy_start = copy_content.rfind(legacy_prefix)
-        if legacy_start >= 0:
-            base_content = copy_content[:legacy_start].rstrip()
-            strengthened["copyContent"] = (
-                f"{base_content}\\n\\n{appendix}" if base_content else appendix
-            )
-        else:
-            strengthened["copyContent"] = f"{copy_content}\\n\\n{appendix}"
-
-    strengthened["actionabilityPolicy"] = str(policy["policy_id"])
-'''
-          if old not in text:
-              raise SystemExit('apply_actionability_policy patch anchor not found')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          start_marker = '    marker = str(policy["marker"])\n'
+          end_marker = '    strengthened["actionabilityPolicy"] = str(policy["policy_id"])\n'
+          start = text.index(start_marker)
+          end = text.index(end_marker, start)
+          replacement_lines = [
+              '    marker = str(policy["marker"])',
+              '    appendix = str(policy["copy_content_appendix"]).strip()',
+              '    integration_marker = str(policy.get("integration_marker", "")).strip()',
+              '    has_current_integration = not integration_marker or integration_marker in copy_content',
+              '    if marker not in copy_content:',
+              '        strengthened["copyContent"] = f"{copy_content}\\n\\n{appendix}"',
+              '    elif not has_current_integration:',
+              '        legacy_prefix = f"{marker}\\n- Do not leave NEXT COMMAND"',
+              '        legacy_start = copy_content.rfind(legacy_prefix)',
+              '        if legacy_start >= 0:',
+              '            base_content = copy_content[:legacy_start].rstrip()',
+              '            strengthened["copyContent"] = (',
+              '                f"{base_content}\\n\\n{appendix}" if base_content else appendix',
+              '            )',
+              '        else:',
+              '            strengthened["copyContent"] = f"{copy_content}\\n\\n{appendix}"',
+              '',
+          ]
+          replacement = '\n'.join(replacement_lines)
+          path.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
       - name: Build canonical Prompt Kit and prove P7 convergence policy
         run: |
           python -m py_compile scripts/build_prompt_kit_registry.py tests/test_green_branch_integration_policy.py tests/test_prompt_kit_header_contract.py
