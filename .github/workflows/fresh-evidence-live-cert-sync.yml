@@ -1,0 +1,53 @@
+name: Fresh evidence and live cert sync
+
+on:
+  pull_request:
+    branches: [main]
+    types: [synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.head_ref == 'feat/p07-fresh-floor-p13-iteration-20260819' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p07-fresh-floor-p13-iteration-20260819
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply fresh evidence and live-cert hardening
+        run: |
+          python -m py_compile scripts/_fresh_evidence_live_cert_patch.py
+          python scripts/_fresh_evidence_live_cert_patch.py
+      - name: Validate focused prompt and domain contracts
+        run: |
+          python -m py_compile scripts/build_prompt_kit_registry.py tests/test_remote_freshness_p13_iteration.py
+          python -m json.tool docs/prompts.json > /dev/null
+          python -m json.tool registry/prompts/actionable-next-step-policy.v1.json > /dev/null
+          python -m unittest tests.test_remote_freshness_p13_iteration -v
+          python -m unittest tests.test_actionable_prompt_registry -v
+          python -m unittest tests.test_green_branch_integration_policy -v
+          python scripts/validate_context_architecture.py --summary
+          python -m unittest tests.test_context_architecture -v
+      - name: Rebuild and validate canonical Prompt Kit
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python -m unittest tests.test_prompt_language_audit -v
+          git diff --check
+      - name: Commit durable source and generated artifact
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/prompts.json registry/prompts/actionable-next-step-policy.v1.json harness/specs/operator-delivery.md tests/test_remote_freshness_p13_iteration.py web/prompt-kit/index.html
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m 'feat(prompt-kit): refresh build and live-cert evidence floors'
+          git push origin HEAD:feat/p07-fresh-floor-p13-iteration-20260819
