@@ -6,6 +6,7 @@ from pathlib import Path
 
 import build_prompt_kit
 from scripts import build_prompt_kit_registry
+from scripts import prompt_registry_ops
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -82,7 +83,7 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
         self.assertIn(self.policy["marker"], content)
 
-    def test_prompt_adder_consumes_preceding_context_and_executes_registry_work(self) -> None:
+    def test_prompt_adder_uses_low_friction_helper_without_losing_semantic_proof(self) -> None:
         prompt = self.full["P79"]
         content = prompt["copyContent"]
         self.assertEqual(prompt["seq"], "79")
@@ -91,13 +92,66 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertEqual(prompt["class"], "PROMPT KIT / REGISTRY OPERATIONS")
         self.assertIn("CONTEXT IMMEDIATELY ABOVE THIS INSTRUCTION", content)
         self.assertIn("DO NOT ASK ME TO RESTATE CONTEXT", content)
-        self.assertIn("Assign the next valid unused `P##` identity", content)
-        self.assertIn("Reuse the closest existing extension registry and profile", content)
-        self.assertIn("registry record plus focused test is normally the documentation", content)
-        self.assertIn("Regenerate the canonical website", content)
+        self.assertIn("scripts/prompt_registry_ops.py add", content)
+        self.assertIn("Do NOT set id, seq, or copySheet", content)
+        self.assertIn("roll back registry/site writes if validation fails", content)
+        self.assertIn("focused semantic assertion", content)
+        self.assertIn("Do not fall back to loading the entire Prompt Kit architecture", content)
         self.assertIn("merge the exact green authorized head", content)
+        self.assertLess(len(self.raw["P79"]["copyContent"]), 5000)
         self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
         self.assertIn(self.policy["marker"], content)
+
+    def test_prompt_registry_ops_exposes_compact_current_routing_and_auto_identity(self) -> None:
+        state = prompt_registry_ops.inspect_state()
+        self.assertRegex(state["next_id"], r"^P\d+$")
+        self.assertEqual(state["next_id"][1:], state["next_seq"])
+        self.assertIn("id", state["auto_fields"])
+        self.assertIn("seq", state["auto_fields"])
+        self.assertIn("copySheet", state["auto_fields"])
+        ids = {item["registry_id"] for item in state["registries"]}
+        self.assertIn("spec-architecture-prompts", ids)
+        self.assertGreaterEqual(len(ids), 6)
+
+    def test_prompt_registry_ops_dry_run_builds_complete_record_without_mutation(self) -> None:
+        draft = {
+            "name": "Prompt Ops Test Fixture",
+            "type": "MAINTENANCE",
+            "class": "PROMPT KIT / TEST",
+            "sprintRole": "Exercise low-friction prompt contribution",
+            "useWhen": "A deterministic helper regression is required.",
+            "inspectFirst": "Current registry truth.",
+            "expectedOutput": "A complete dry-run prompt record.",
+            "nextStep": "Validate the dry-run record.",
+            "proofGate": "No tracked source is mutated by dry-run.",
+            "copyContent": "EXECUTE A DETERMINISTIC PROMPT REGISTRY HELPER TEST. " * 12,
+            "keywords": ["prompt ops fixture", "registry helper fixture"],
+            "profile": "spec-architecture",
+            "color": "Cyan",
+        }
+        result = prompt_registry_ops.add_prompt(
+            draft, "spec-architecture-prompts", dry_run=True
+        )
+        record = result["record"]
+        self.assertEqual(result["status"], "dry-run")
+        self.assertRegex(record["id"], r"^P\d+$")
+        self.assertEqual(record["copySheet"], f"{record['id']}_COPY_SAFE")
+        self.assertEqual(record["profile"], "spec-architecture")
+        self.assertEqual(record["color"], "Cyan")
+        self.assertEqual(record["category"], "standard")
+
+    def test_p07_requires_repeated_evidence_passes_until_fixed_point(self) -> None:
+        p07 = self.full["P07"]
+        content = p07["copyContent"]
+        self.assertIn("ITERATIVE SPRINT FIXED-POINT", content)
+        self.assertIn("IMPLEMENT -> VALIDATE -> INSPECT EVIDENCE -> CRITIQUE -> IMPROVE", content)
+        self.assertIn("at least one deliberate second-pass review", content)
+        self.assertIn("Continue until a bounded fixed point", content)
+        self.assertIn("Do not manufacture churn", content)
+        self.assertIn("Each pass must either create/repair an owned artifact", content)
+        self.assertIn("ITERATION EVIDENCE", content)
+        self.assertIn("fixed-point reason", content)
+        self.assertIn("only then stop", content)
 
     def test_client_prompt_pack_builds_local_overlay_without_global_mutation(self) -> None:
         prompt = self.full["P80"]
