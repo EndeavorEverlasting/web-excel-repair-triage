@@ -145,6 +145,23 @@ def test_readme_records_exact_deployed_surface() -> None:
         assert f"| `{key}` | {label} |" in text
 
 
+def test_effective_p07_requires_mainline_convergence() -> None:
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import build_prompt_kit_registry
+
+    p07 = next(prompt for prompt in build_prompt_kit_registry.load_prompt_registry() if prompt["id"] == "P07")
+    content = p07["copyContent"]
+    assert "GREEN BRANCH INTEGRATION CONTRACT" in content
+    assert "P07 MAINLINE CONVERGENCE OVERRIDE" in content
+    assert "Any earlier legacy sentence" in content
+    assert "is superseded by this section" in content
+    assert "must not create a feature branch merely because repository mutation is requested" in content
+    assert "None is sufficient completion" in content
+    assert "integration target" in content
+    assert "pre/post default-branch SHA" in content
+    assert "exact blocking gate" in content
+
+
 def test_deployed_artifact_is_current_combined_registry_output() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         rebuilt = Path(tmp) / "index.html"
@@ -168,6 +185,7 @@ def main() -> None:
         test_builder_owns_the_same_fixed_header,
         test_responsive_header_reflows_before_collision,
         test_readme_records_exact_deployed_surface,
+        test_effective_p07_requires_mainline_convergence,
         test_deployed_artifact_is_current_combined_registry_output,
     ]
     for test in tests:
