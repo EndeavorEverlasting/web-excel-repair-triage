@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -26,12 +27,25 @@ def validate_profile() -> dict:
     styles = ET.fromstring(canonical_styles_xml())
     fonts = styles.find("x:fonts", NS)
     if fonts is None or {item.attrib["val"] for item in fonts.findall(".//x:name", NS)} != {"Carlito"}:
-        raise ValueError("canonical style table must remain Carlito")
+        raise ValueError("canonical style template must remain Carlito")
     cell_xfs = styles.find("x:cellXfs", NS)
-    if cell_xfs is None or int(cell_xfs.attrib.get("count", "0")) != 140:
-        raise ValueError("canonical style table must preserve 140 stable style IDs")
+    if cell_xfs is None or int(cell_xfs.attrib.get("count", "0")) < 140:
+        raise ValueError("canonical style template lost expected cell formats")
     if not THEME_PATH.is_file() or not THEME_PATH.read_bytes().strip():
         raise ValueError("canonical theme template is missing")
+    try:
+        ET.fromstring(THEME_PATH.read_bytes())
+    except ET.ParseError as exc:
+        raise ValueError(f"canonical theme template is malformed: {exc}") from exc
+    expected_hashes = profile["visual_contract"]["template_sha256"]
+    actual_hashes = {
+        "styles.xml": hashlib.sha256(canonical_styles_xml()).hexdigest(),
+        "theme1.xml": hashlib.sha256(THEME_PATH.read_bytes()).hexdigest(),
+    }
+    if actual_hashes != expected_hashes:
+        raise ValueError(
+            f"canonical style/theme fingerprints drifted: actual={actual_hashes} expected={expected_hashes}"
+        )
     return {
         "schema_version": "nth-qualitative-admin-profile-validation/v1",
         "status": "PASS",
