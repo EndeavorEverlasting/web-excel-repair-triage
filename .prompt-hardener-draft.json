@@ -21,5 +21,8 @@
     "prompt regression",
     "P03 hardening",
     "prompt architecture"
-  ]
+  ],
+  "profile": "spec-architecture",
+  "color": "Cyan",
+  "category": "standard"
 }
