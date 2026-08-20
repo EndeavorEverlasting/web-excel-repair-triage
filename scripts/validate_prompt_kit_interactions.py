@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+# prompt-hardener-helper-routing-metadata-explicit
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "harness" / "contracts" / "prompt-kit-interactions.v1.json"
 PROTECTED_OUTPUT_ROOTS = (ROOT / "Candidates", ROOT / "Active")
