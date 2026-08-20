@@ -1,0 +1,43 @@
+name: TEMP P83 Prompt Kit Sync
+
+on:
+  push:
+    branches:
+      - feat/agent-work-verifier-prompt-20260819
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/agent-work-verifier-prompt-20260819
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build canonical Prompt Kit
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Validate focused prompt and generic registry parity
+        run: |
+          python -m unittest tests.test_repository_work_ledger_prompt tests.test_skill_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit canonical artifact and remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/tmp-p83-prompt-kit-sync.yml
+          git add web/prompt-kit/index.html .github/workflows/tmp-p83-prompt-kit-sync.yml
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "Expected generated Prompt Kit or workflow cleanup delta is missing" >&2
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "build(prompt-kit): publish P83 generated site"
+          git push origin HEAD:feat/agent-work-verifier-prompt-20260819
