@@ -5,17 +5,33 @@ on:
     paths:
       - 'triage/nth_month_readiness.py'
       - 'triage/nth_monthly_artifact.py'
+      - 'triage/nth_qualitative_admin/**'
+      - 'configs/artifact_profiles/nth_qualitative_admin.v1.json'
+      - 'configs/examples/nth_qualitative_admin_*.synthetic.json'
       - 'scripts/build_nth_month.py'
+      - 'scripts/build_nth_qualitative_admin.py'
+      - 'scripts/validate_nth_qualitative_admin.py'
       - 'tests/test_nth_monthly_artifact.py'
+      - 'tests/test_nth_qualitative_admin.py'
       - 'docs/NTH_MONTH_OPERATION_READINESS_20260812.md'
+      - 'docs/NTH_QUALITATIVE_ADMIN_PROFILE.md'
+      - 'harness/specs/billing-artifact-safety.md'
       - '.github/workflows/nth-monthly-artifact.yml'
   push:
     branches: [main]
     paths:
       - 'triage/nth_month_readiness.py'
       - 'triage/nth_monthly_artifact.py'
+      - 'triage/nth_qualitative_admin/**'
+      - 'configs/artifact_profiles/nth_qualitative_admin.v1.json'
+      - 'configs/examples/nth_qualitative_admin_*.synthetic.json'
       - 'scripts/build_nth_month.py'
+      - 'scripts/build_nth_qualitative_admin.py'
+      - 'scripts/validate_nth_qualitative_admin.py'
       - 'tests/test_nth_monthly_artifact.py'
+      - 'tests/test_nth_qualitative_admin.py'
+      - 'docs/NTH_QUALITATIVE_ADMIN_PROFILE.md'
+      - 'harness/specs/billing-artifact-safety.md'
 
 jobs:
   monthly-nth:
@@ -38,9 +54,35 @@ jobs:
           fi
           python -m pip install pytest
       - name: Compile
-        run: python -m py_compile triage/nth_month_readiness.py triage/nth_monthly_artifact.py scripts/build_nth_month.py tests/test_nth_monthly_artifact.py
-      - name: Focused month readiness and build tests
-        run: python -m pytest tests/test_nth_monthly_artifact.py -q
+        run: |
+          python -m py_compile \
+            triage/nth_month_readiness.py \
+            triage/nth_monthly_artifact.py \
+            triage/nth_qualitative_admin/__init__.py \
+            triage/nth_qualitative_admin/builder.py \
+            triage/nth_qualitative_admin/cli.py \
+            triage/nth_qualitative_admin/model.py \
+            triage/nth_qualitative_admin/sheets.py \
+            triage/nth_qualitative_admin/style_template.py \
+            triage/nth_qualitative_admin/validator.py \
+            triage/nth_qualitative_admin/xml_writer.py \
+            scripts/build_nth_month.py \
+            scripts/build_nth_qualitative_admin.py \
+            scripts/validate_nth_qualitative_admin.py \
+            tests/test_nth_monthly_artifact.py \
+            tests/test_nth_qualitative_admin.py
+      - name: Validate qualitative admin profile
+        run: python scripts/validate_nth_qualitative_admin.py --profile-only --summary
+      - name: Focused month readiness and qualitative admin tests
+        run: python -m pytest tests/test_nth_monthly_artifact.py tests/test_nth_qualitative_admin.py -q
+      - name: Build both qualitative admin modes from synthetic evidence
+        run: |
+          python scripts/build_nth_qualitative_admin.py \
+            --spec configs/examples/nth_qualitative_admin_completed.synthetic.json \
+            --out-dir Outputs/nth-qualitative-admin-ci/completed
+          python scripts/build_nth_qualitative_admin.py \
+            --spec configs/examples/nth_qualitative_admin_mtd.synthetic.json \
+            --out-dir Outputs/nth-qualitative-admin-ci/mtd
       - name: Legacy NTH regression
         run: python -m pytest tests/test_nw_prj_neuron_track_hours.py -q
       - name: Patch hygiene

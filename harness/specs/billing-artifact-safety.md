@@ -17,6 +17,10 @@ Never silently edit, normalize, deduplicate, repair, re-save, rename, or overwri
 
 When evidence is missing or inconsistent, report the exact mismatch and use the registered review/unresolved mechanism. Do not fabricate hours, dates, workers, sites, devices, tickets, task detail, allocation, or incidents.
 
+## Neuron Track Hours output profiles
+
+Select the output family before loading deeper rules. The older `triage.nth_monthly_artifact` path is a working/review artifact. For the current June-completed / August-MTD **admin-management qualitative** family, demand-load `docs/NTH_QUALITATIVE_ADMIN_PROFILE.md` and `configs/artifact_profiles/nth_qualitative_admin.v1.json`, then use `scripts/build_nth_qualitative_admin.py`. Do not use a reference workbook as attendance truth or reconstruct its styling/language from memory.
+
 ## Cross-artifact reconciliation
 
 Honor registered source direction such as **Roster Log to Admin Sheet**, **Roster Log to Task Tracker**, and **Task Tracker to Roster Log** only where the current domain contract defines it. Do not treat dashboard totals, capacity, device counts, prior totals, or management expectations as labor evidence unless a current authority explicitly does so.
