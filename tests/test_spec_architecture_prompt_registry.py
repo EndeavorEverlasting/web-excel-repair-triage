@@ -247,6 +247,10 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         prompt = matches[0]
         content = prompt["copyContent"]
         raw_content = self.raw[prompt["id"]]["copyContent"]
+        self.assertEqual(prompt["id"], "P86")
+        self.assertEqual(prompt["seq"], "86")
+        self.assertEqual(prompt["copySheet"], "P86_COPY_SAFE")
+        self.assertEqual(prompt["category"], "standard")
         self.assertEqual(prompt["profile"], "spec-architecture")
         self.assertEqual(prompt["color"], "Cyan")
         self.assertEqual(prompt["class"], "PROMPT KIT / PROMPT ARCHITECTURE")
