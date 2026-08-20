@@ -250,9 +250,20 @@ def apply_actionability_policy(
 
     marker = str(policy["marker"])
     appendix = str(policy["copy_content_appendix"]).strip()
+    integration_marker = str(policy.get("integration_marker", "")).strip()
+    has_current_integration = not integration_marker or integration_marker in copy_content
     if marker not in copy_content:
         strengthened["copyContent"] = f"{copy_content}\n\n{appendix}"
-
+    elif not has_current_integration:
+        legacy_prefix = f"{marker}\n- Do not leave NEXT COMMAND"
+        legacy_start = copy_content.rfind(legacy_prefix)
+        if legacy_start >= 0:
+            base_content = copy_content[:legacy_start].rstrip()
+            strengthened["copyContent"] = (
+                f"{base_content}\n\n{appendix}" if base_content else appendix
+            )
+        else:
+            strengthened["copyContent"] = f"{copy_content}\n\n{appendix}"
     strengthened["actionabilityPolicy"] = str(policy["policy_id"])
     return strengthened
 
