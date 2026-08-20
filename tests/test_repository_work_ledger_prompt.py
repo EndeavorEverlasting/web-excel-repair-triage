@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -70,6 +71,62 @@ class RepositoryWorkLedgerPromptTests(unittest.TestCase):
         ):
             self.assertIn(phrase, content)
 
+    def test_p83_is_registered_as_distinct_cross_agent_verification_workflow(self) -> None:
+        prompt = self.prompts_by_id()["P83"]
+        self.assertEqual(prompt["seq"], "83")
+        self.assertEqual(prompt["name"], "Agent Work Verifier & Iterative Advancer")
+        self.assertEqual(prompt["type"], "VERIFY + ADVANCE")
+        self.assertEqual(prompt["class"], "AGENT HARNESS / ITERATIVE REVIEW")
+        self.assertEqual(prompt["color"], "Teal")
+        self.assertEqual(prompt["category"], "standard")
+        self.assertIn("verify another agent", prompt["keywords"])
+        self.assertIn("claim to evidence", prompt["keywords"])
+        self.assertNotEqual(prompt["class"], self.prompts_by_id()["P07"]["class"])
+
+    def test_p83_verifies_inherited_claims_then_repairs_advances_and_rechecks(self) -> None:
+        content = self.prompts_by_id()["P83"]["copyContent"]
+        for phrase in (
+            "DO NOT TREAT THE HANDOFF OR COMPLETION CLAIM AS PROOF",
+            "TREAT CLAIMS AS HYPOTHESES",
+            "VERIFIED, STALE, PARTIAL, CONTRADICTED, or UNPROVEN",
+            "VERIFY -> CRITIQUE -> REPAIR OR ADVANCE -> VALIDATE -> INSPECT NEW EVIDENCE",
+            "Pass 2: deliberately review",
+            "Continue until a bounded fixed point",
+            "CORRECT WITHOUT REGRESSING GOOD WORK",
+            "ADVANCE BEYOND REVIEW",
+            "EXPAND ONLY WHEN EVIDENCE EARNS IT",
+            "KEEP AGENT-CAPABLE WORK WITH THE AGENT",
+            "USER-ONLY GATE",
+            "REPORT PROGRESS AS EVIDENCE, NOT NARRATION",
+            "STOP ONLY AT THE REAL FIXED POINT",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_p83_limits_user_escalation_and_preserves_proof_boundaries(self) -> None:
+        prompt = self.prompts_by_id()["P83"]
+        content = prompt["copyContent"]
+        for phrase in (
+            "do not ask the user to repeat information that is available to the agent",
+            "Do not ask the user to inspect files, run tests, collect logs",
+            "watch CI, merge routine green work",
+            "Ask the user only when the next material step truly requires",
+            "advance every other safe owned action first",
+            "Never claim runtime, deployment, physical-device, or human acceptance proof",
+        ):
+            self.assertIn(phrase, content)
+        policy = build_prompt_kit_registry.load_actionability_policy()
+        self.assertEqual(prompt["actionabilityPolicy"], policy["policy_id"])
+        self.assertIn(policy["marker"], content)
+
+        raw_registry = json.loads(
+            (ROOT / "registry" / "prompts" / "repository-work-ledger-prompts.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        source_prompt = next(item for item in raw_registry["prompts"] if item["id"] == "P83")
+        self.assertGreater(len(source_prompt["copyContent"]), 3000)
+        self.assertLess(len(source_prompt["copyContent"]), 8000)
+
     def test_guided_questionnaire_exposes_repository_ledger_intent(self) -> None:
         guided = (ROOT / "docs" / "prompt-kit-guided-recommendations.js").read_text(
             encoding="utf-8"
@@ -94,15 +151,18 @@ class RepositoryWorkLedgerPromptTests(unittest.TestCase):
             p65.index("RECOMMENDATION CONTRACT"),
         )
 
-    def test_generated_preview_contains_p66(self) -> None:
+    def test_generated_preview_contains_p66_and_p83(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             output = Path(temp_dir) / "prompt-kit.html"
             html = build_prompt_kit_registry.build(output)
         self.assertIn('"id": "P66"', html)
         self.assertIn("Repository Work Ledger Steward", html)
         self.assertIn("WEAK-MODEL-SAFE LEDGER CONTRACT", html)
+        self.assertIn('"id": "P83"', html)
+        self.assertIn("Agent Work Verifier & Iterative Advancer", html)
+        self.assertIn("TREAT CLAIMS AS HYPOTHESES", html)
 
-    def test_checked_in_site_contains_both_p66_discovery_routes(self) -> None:
+    def test_checked_in_site_contains_repository_continuity_routes_and_p83(self) -> None:
         deployed = (ROOT / "web" / "prompt-kit" / "index.html").read_text(
             encoding="utf-8"
         )
@@ -116,6 +176,8 @@ class RepositoryWorkLedgerPromptTests(unittest.TestCase):
             "Keep human and agent work continuous in a repository ledger",
             deployed,
         )
+        self.assertIn('"id": "P83"', deployed)
+        self.assertIn("Agent Work Verifier & Iterative Advancer", deployed)
 
 
 if __name__ == "__main__":
