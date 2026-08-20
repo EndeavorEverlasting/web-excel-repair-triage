@@ -1,0 +1,48 @@
+name: Agentic loop metadata repair
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-agentic-loop-convergence-20260819
+    paths:
+      - '.tmp_agentic_metadata_fix.py'
+      - '.github/workflows/tmp-agentic-metadata-fix.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.tmp_agentic_metadata_fix.py'
+      - '.github/workflows/tmp-agentic-metadata-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-agentic-loop-convergence-20260819
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Repair structured loop metadata
+        run: python .tmp_agentic_metadata_fix.py
+      - name: Validate prompt semantics and parity
+        run: |
+          python -m unittest tests.test_agentic_loop_prompts tests.test_repository_work_ledger_prompt tests.test_actionable_prompt_registry tests.test_green_branch_integration_policy tests.test_remote_freshness_p13_iteration -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit durable repair only
+        run: |
+          set -euo pipefail
+          git rm .tmp_agentic_metadata_fix.py .github/workflows/tmp-agentic-metadata-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/prompts.json registry/prompts/repository-work-ledger-prompts.v1.json web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m "fix(prompt-kit): preserve agentic loop metadata contracts"
+          git push origin HEAD
