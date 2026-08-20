@@ -57,18 +57,43 @@ jobs:
           from pathlib import Path
           path = Path('tests/test_spec_architecture_prompt_registry.py')
           text = path.read_text(encoding='utf-8')
-          anchor = "    def test_new_source_prompts_are_intentionally_bounded(self) -> None:\n"
-          if anchor not in text:
-              raise SystemExit('focused test insertion anchor missing')
-          method = '''    def test_prompt_semantic_hardener_selectively_integrates_stronger_principles(self) -> None:\n        matches = [\n            prompt\n            for prompt in self.full.values()\n            if prompt[\"name\"] == \"Prompt Semantic Hardener & Principle Integrator\"\n        ]\n        self.assertEqual(len(matches), 1)\n        prompt = matches[0]\n        content = prompt[\"copyContent\"]\n        raw_content = self.raw[prompt[\"id\"]][\"copyContent\"]\n        self.assertEqual(prompt[\"profile\"], \"spec-architecture\")\n        self.assertEqual(prompt[\"color\"], \"Cyan\")\n        self.assertEqual(prompt[\"class\"], \"PROMPT KIT / PROMPT ARCHITECTURE\")\n        self.assertIn(\"RAW VS EFFECTIVE PROMPT\", content)\n        self.assertIn(\"PRINCIPLE APPLICABILITY MATRIX\", content)\n        self.assertIn(\"COMPATIBLE, INCOMPATIBLE, or NOT NEEDED\", content)\n        self.assertIn(\"P03 REFERENCE CASE\", content)\n        for donor in (\"P07\", \"P13\", \"P48\", \"P76\", \"P83\"):\n            self.assertIn(donor, content)\n        self.assertIn(\"do not transform P03 into P07, P13, P48, P76, or P83\", content)\n        self.assertIn(\"Do not copy every strong rule into every prompt\", content)\n        self.assertIn(\"shared policy\", content.lower())\n        self.assertIn(\"Extend the closest existing focused test\", content)\n        self.assertIn(\"one deliberate second pass\", content)\n        self.assertLess(len(raw_content), 7000)\n        self.assertGreater(len(raw_content), 2500)\n        self.assertEqual(prompt[\"actionabilityPolicy\"], self.policy[\"policy_id\"])\n        self.assertIn(self.policy[\"marker\"], content)\n\n'''
+          marker = '\n\nif __name__ == "__main__":\n'
+          if marker not in text:
+              raise SystemExit('test module tail marker missing')
+          method = '''
+    def test_prompt_semantic_hardener_selectively_integrates_stronger_principles(self) -> None:
+        matches = [
+            prompt
+            for prompt in self.full.values()
+            if prompt["name"] == "Prompt Semantic Hardener & Principle Integrator"
+        ]
+        self.assertEqual(len(matches), 1)
+        prompt = matches[0]
+        content = prompt["copyContent"]
+        raw_content = self.raw[prompt["id"]]["copyContent"]
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["color"], "Cyan")
+        self.assertEqual(prompt["class"], "PROMPT KIT / PROMPT ARCHITECTURE")
+        self.assertIn("RAW VS EFFECTIVE PROMPT", content)
+        self.assertIn("PRINCIPLE APPLICABILITY MATRIX", content)
+        self.assertIn("COMPATIBLE, INCOMPATIBLE, or NOT NEEDED", content)
+        self.assertIn("P03 REFERENCE CASE", content)
+        for donor in ("P07", "P13", "P48", "P76", "P83"):
+            self.assertIn(donor, content)
+        self.assertIn("do not transform P03 into P07, P13, P48, P76, or P83", content)
+        self.assertIn("Do not copy every strong rule into every prompt", content)
+        self.assertIn("shared policy", content.lower())
+        self.assertIn("Extend the closest existing focused test", content)
+        self.assertIn("one deliberate second pass", content)
+        self.assertLess(len(raw_content), 7000)
+        self.assertGreater(len(raw_content), 2500)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+        html = build_prompt_kit_registry.render()
+        self.assertIn("Prompt Semantic Hardener & Principle Integrator", html)
+'''
           if 'def test_prompt_semantic_hardener_selectively_integrates_stronger_principles' not in text:
-              text = text.replace(anchor, method + anchor, 1)
-          render_anchor = '        self.assertIn("Prototype-Measure-Refine Delivery Loop", html)\n'
-          if render_anchor not in text:
-              raise SystemExit('render assertion anchor missing')
-          render_line = '        self.assertIn("Prompt Semantic Hardener & Principle Integrator", html)\n'
-          if render_line not in text:
-              text = text.replace(render_anchor, render_anchor + render_line, 1)
+              text = text.replace(marker, '\n' + method + marker, 1)
           path.write_text(text, encoding='utf-8')
           PY
       - name: Validate contribution and Prompt Kit
