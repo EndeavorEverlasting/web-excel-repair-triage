@@ -7,6 +7,12 @@ on:
     paths:
       - '.tmp_agentic_loop_patch.py'
       - '.github/workflows/tmp-agentic-loop-contribution.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.tmp_agentic_loop_patch.py'
+      - '.github/workflows/tmp-agentic-loop-contribution.yml'
 
 permissions:
   contents: write
@@ -17,6 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: feat/prompt-kit-agentic-loop-convergence-20260819
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
