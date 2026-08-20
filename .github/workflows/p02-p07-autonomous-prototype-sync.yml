@@ -1,0 +1,49 @@
+name: P02 P07 autonomous prototype sync
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.head_ref == 'feat/p02-p07-autonomous-prototype-loop-20260819' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p02-p07-autonomous-prototype-loop-20260819
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply P02 and P07 autonomy contracts
+        run: python scripts/_p02_p07_autonomy_patch.py
+      - name: Pass 1 focused prompt validation
+        run: |
+          python -m py_compile scripts/_p02_p07_autonomy_patch.py tests/test_p02_p07_autonomous_iteration.py
+          python -m unittest tests.test_p02_p07_autonomous_iteration -v
+          python -m unittest tests.test_green_branch_integration_policy -v
+          python -m unittest tests.test_actionable_prompt_registry -v
+      - name: Pass 2 rebuild and regression validation
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_p02_p07_autonomous_iteration -v
+          python -m unittest tests.test_prompt_language_audit -v
+          git diff --check
+      - name: Commit durable artifacts and remove temporary sync machinery
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/p02-p07-autonomous-prototype-sync.yml scripts/_p02_p07_autonomy_patch.py
+          git add docs/prompts.json tests/test_p02_p07_autonomous_iteration.py web/prompt-kit/index.html
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m 'feat(prompt-kit): make P02 and P07 autonomous iterative agents'
+          git push origin HEAD:feat/p02-p07-autonomous-prototype-loop-20260819
