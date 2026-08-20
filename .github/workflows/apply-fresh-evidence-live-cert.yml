@@ -23,6 +23,8 @@ jobs:
           python-version: '3.12'
       - name: Recover pinned post-194 migration helper
         run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch origin ca766e4982ecf5041ee05ef5f2318ef5e284ad80
           git cherry-pick ca766e4982ecf5041ee05ef5f2318ef5e284ad80
           python -m py_compile scripts/_fresh_evidence_live_cert_patch.py
@@ -46,8 +48,6 @@ jobs:
           git diff --check
       - name: Commit only durable implementation
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git rm -f scripts/_fresh_evidence_live_cert_patch.py
           git add docs/prompts.json registry/prompts/actionable-next-step-policy.v1.json harness/specs/operator-delivery.md tests/test_remote_freshness_p13_iteration.py web/prompt-kit/index.html
           git diff --cached --check
