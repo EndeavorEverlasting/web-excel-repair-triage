@@ -57,7 +57,11 @@ def build_workbook(spec: Mapping[str, Any], output_path: str | Path) -> dict[str
     if len(sheets) != len(names):
         raise RuntimeError("sheet construction drifted from mode profile")
 
-    path = Path(output_path)
+    candidate = Path(output_path).expanduser()
+    if not candidate.is_absolute():
+        candidate = ROOT / candidate
+    safe_parent = _safe_output_dir(candidate.parent)
+    path = (safe_parent / candidate.name).resolve()
     path.parent.mkdir(parents=True, exist_ok=True)
     with ZipFile(path, "w") as zf:
         _zip_write(zf, "[Content_Types].xml", _content_types(len(sheets)))
@@ -95,7 +99,9 @@ def build_package(spec: Mapping[str, Any], out_dir: str | Path) -> dict[str, Any
     output_dir.mkdir(parents=True, exist_ok=True)
     workbook = output_dir / workbook_filename(normalized)
     manifest = build_workbook(normalized, workbook)
+    # Import locally to keep the builder usable without a circular module import at load time.
     from .validator import validate_workbook
+
     validation = validate_workbook(workbook, normalized)
     validation_path = workbook.with_suffix(".validation.json")
     validation_path.write_text(json.dumps(validation, indent=2) + "\n", encoding="utf-8")
