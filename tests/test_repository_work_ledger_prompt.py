@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -116,8 +117,15 @@ class RepositoryWorkLedgerPromptTests(unittest.TestCase):
         policy = build_prompt_kit_registry.load_actionability_policy()
         self.assertEqual(prompt["actionabilityPolicy"], policy["policy_id"])
         self.assertIn(policy["marker"], content)
-        self.assertGreater(len(content), 3000)
-        self.assertLess(len(content), 12000)
+
+        raw_registry = json.loads(
+            (ROOT / "registry" / "prompts" / "repository-work-ledger-prompts.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        source_prompt = next(item for item in raw_registry["prompts"] if item["id"] == "P83")
+        self.assertGreater(len(source_prompt["copyContent"]), 3000)
+        self.assertLess(len(source_prompt["copyContent"]), 8000)
 
     def test_guided_questionnaire_exposes_repository_ledger_intent(self) -> None:
         guided = (ROOT / "docs" / "prompt-kit-guided-recommendations.js").read_text(
