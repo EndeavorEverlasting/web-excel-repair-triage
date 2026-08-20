@@ -2,177 +2,280 @@ name: Prompt Kit web contracts
 
 on:
   pull_request:
+    paths:
+      - README.md
+      - PROMPT_KIT_ACCESS.md
+      - Open-Latest-PromptKit.cmd
+      - Acquire-Latest-PromptKit.cmd
+      - build_prompt_kit.py
+      - scripts/Acquire-LatestPromptKit.ps1
+      - scripts/Open-LatestPromptKitPortable.ps1
+      - scripts/build_prompt_kit_registry.py
+      - scripts/serve_prompt_kit_portable.py
+      - scripts/validate_prompt_kit_interactions.py
+      - scripts/validate_prompt_kit_discovery.py
+      - scripts/validate_prompt_kit_order_navigation.py
+      - scripts/validate_prompt_kit_portability.py
+      - triage/prompt_library_portability.py
+      - registry/prompts/skill-development-prompts.v1.json
+      - registry/prompts/tutorial-discovery-prompts.v1.json
+      - registry/prompts/repository-work-ledger-prompts.v1.json
+      - registry/prompts/correspondence-prompts.v1.json
+      - registry/prompts/management-operations-prompts.v1.json
+      - registry/prompts/spec-architecture-prompts.v1.json
+      - registry/prompts/prompt-overrides.v1.json
+      - registry/prompts/prompt-display-order.v1.json
+      - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
+      - docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md
+      - docs/PROMPT_KIT_PORTABILITY.md
+      - docs/prompt-kit-order-navigation.md
+      - docs/prompt-kit.js
+      - docs/prompt-kit-guided-recommendations.js
+      - docs/prompt-kit-journey.js
+      - docs/prompt-kit-polish.js
+      - docs/prompt-kit-correspondence.js
+      - docs/prompt-kit-management.js
+      - docs/prompt-kit-spec-architecture.js
+      - docs/prompt-kit-favorites-portability.js
+      - docs/prompts.json
+      - docs/reference.json
+      - harness/contracts/prompt-kit-interactions.v1.json
+      - harness/contracts/prompt-kit-filtering.v1.json
+      - harness/contracts/prompt-kit-mobile.v1.json
+      - harness/contracts/prompt-kit-discovery.v1.json
+      - harness/contracts/prompt-kit-order-navigation.v1.json
+      - harness/contracts/prompt-kit-portability.v1.json
+      - harness/manifest.v1.json
+      - web/prompt-kit/index.html
+      - web/README.md
+      - tests/Test-PromptKitQuickOpenPathResolution.ps1
+      - tests/test_prompt_kit_header_contract.py
+      - tests/test_prompt_kit_product_interactions.py
+      - tests/test_prompt_kit_filtering_access.py
+      - tests/test_prompt_kit_mobile.py
+      - tests/test_prompt_kit_discovery.py
+      - tests/test_prompt_kit_guidance.py
+      - tests/test_prompt_kit_order_navigation_contract.py
+      - tests/test_prompt_kit_order_navigation_product.py
+      - tests/test_prompt_kit_portability.py
+      - tests/test_prompt_kit_portability_regressions.py
+      - tests/test_prompt_kit_portable_health.py
+      - tests/test_prompt_library_portability.py
+      - tests/test_skill_prompt_registry.py
+      - tests/test_repository_work_ledger_prompt.py
+      - tests/test_correspondence_prompt_registry.py
+      - tests/test_management_operations_prompt_registry.py
+      - tests/test_spec_architecture_prompt_registry.py
+      - .github/workflows/prompt-kit-web.yml
+  push:
     branches: [main]
-    types: [synchronize, reopened]
+    paths:
+      - README.md
+      - PROMPT_KIT_ACCESS.md
+      - Open-Latest-PromptKit.cmd
+      - Acquire-Latest-PromptKit.cmd
+      - build_prompt_kit.py
+      - scripts/Acquire-LatestPromptKit.ps1
+      - scripts/Open-LatestPromptKitPortable.ps1
+      - scripts/build_prompt_kit_registry.py
+      - scripts/serve_prompt_kit_portable.py
+      - scripts/validate_prompt_kit_interactions.py
+      - scripts/validate_prompt_kit_discovery.py
+      - scripts/validate_prompt_kit_order_navigation.py
+      - scripts/validate_prompt_kit_portability.py
+      - triage/prompt_library_portability.py
+      - registry/prompts/skill-development-prompts.v1.json
+      - registry/prompts/tutorial-discovery-prompts.v1.json
+      - registry/prompts/repository-work-ledger-prompts.v1.json
+      - registry/prompts/correspondence-prompts.v1.json
+      - registry/prompts/management-operations-prompts.v1.json
+      - registry/prompts/spec-architecture-prompts.v1.json
+      - registry/prompts/prompt-overrides.v1.json
+      - registry/prompts/prompt-display-order.v1.json
+      - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
+      - docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md
+      - docs/PROMPT_KIT_PORTABILITY.md
+      - docs/prompt-kit-order-navigation.md
+      - docs/prompt-kit.js
+      - docs/prompt-kit-guided-recommendations.js
+      - docs/prompt-kit-journey.js
+      - docs/prompt-kit-polish.js
+      - docs/prompt-kit-correspondence.js
+      - docs/prompt-kit-management.js
+      - docs/prompt-kit-spec-architecture.js
+      - docs/prompt-kit-favorites-portability.js
+      - docs/prompts.json
+      - docs/reference.json
+      - harness/contracts/prompt-kit-interactions.v1.json
+      - harness/contracts/prompt-kit-filtering.v1.json
+      - harness/contracts/prompt-kit-mobile.v1.json
+      - harness/contracts/prompt-kit-discovery.v1.json
+      - harness/contracts/prompt-kit-order-navigation.v1.json
+      - harness/contracts/prompt-kit-portability.v1.json
+      - harness/manifest.v1.json
+      - web/prompt-kit/index.html
+      - web/README.md
+      - tests/Test-PromptKitQuickOpenPathResolution.ps1
+      - tests/test_prompt_kit_header_contract.py
+      - tests/test_prompt_kit_product_interactions.py
+      - tests/test_prompt_kit_filtering_access.py
+      - tests/test_prompt_kit_mobile.py
+      - tests/test_prompt_kit_discovery.py
+      - tests/test_prompt_kit_guidance.py
+      - tests/test_prompt_kit_order_navigation_contract.py
+      - tests/test_prompt_kit_order_navigation_product.py
+      - tests/test_prompt_kit_portability.py
+      - tests/test_prompt_kit_portability_regressions.py
+      - tests/test_prompt_kit_portable_health.py
+      - tests/test_prompt_library_portability.py
+      - tests/test_skill_prompt_registry.py
+      - tests/test_repository_work_ledger_prompt.py
+      - tests/test_correspondence_prompt_registry.py
+      - tests/test_management_operations_prompt_registry.py
+      - tests/test_spec_architecture_prompt_registry.py
+      - .github/workflows/prompt-kit-web.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  p07-mainline-source-sync:
-    if: github.head_ref == 'feat/green-branch-integration-default-20260808' && github.actor != 'github-actions[bot]'
+  prompt-kit-web:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: feat/green-branch-integration-default-20260808
-          fetch-depth: 0
-          persist-credentials: true
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - name: Strengthen canonical P7 and production policy validation
-        shell: python
+          python-version: "3.11"
+      - name: Compile website builders and contracts
         run: |
-          import json
-          from pathlib import Path
-
-          prompts_path = Path('docs/prompts.json')
-          prompts = json.loads(prompts_path.read_text(encoding='utf-8'))
-          p07 = next(prompt for prompt in prompts if prompt['id'] == 'P07')
-          p07['sprintRole'] = 'Execute any bounded repo change through validated mainline convergence'
-          p07['expectedOutput'] = 'Validated repository progress integrated into the current default branch when integration gates permit, or an exact named integration blocker with the action that advances it.'
-          p07['nextStep'] = 'Continue the owned change through focused validation, exact-head checks, and integration into the current default branch; use P11 or P12 only when one of them is the actual next executable integration gate.'
-          p07['proofGate'] = 'The intended change is verified on the current default branch after integration, or an exact integration blocker is proven with the action that advances it; a feature branch or PR alone is insufficient.'
-          content = p07['copyContent']
-          old_job = 'Your job is to change the repository, validate the change, commit it, and push or open/update a PR when the environment allows.'
-          new_job = "Your job is to change the repository, validate the change, commit and push it, and carry the exact validated work through integration into current `main` (or the repository's configured default branch) when the gates permit."
-          if old_job not in content:
-              raise SystemExit('P07 job-contract anchor missing')
-          content = content.replace(old_job, new_job, 1)
-          anchor = 'Context or plan path: xyz_plan_directory\n'
-          section_lines = [
-              'MAINLINE CONVERGENCE',
-              "- Treat current `main` (or the repository's configured default branch when it is not named `main`) as the consolidation destination for completed owned work.",
-              '- Do not create a new feature branch or pull request merely because repository work was requested. First inspect current, open, and recent overlapping branches, worktrees, pull requests, and commits; reuse, repair, update, retarget, integrate, or extend the existing owner when safe.',
-              '- Create an isolated branch or worktree only when repository policy, branch protection, dirty or separately owned work, required review, or collision isolation makes it necessary. A feature branch, worktree, or pull request is a temporary execution/review lane, not the intended final repository state.',
-              '- After implementation, validate the exact current head and inspect required checks, owning validators, dependencies, blocking reviews, conflicts, protection rules, and merge authority.',
-              '- When those gates are satisfied and the operator has not explicitly prohibited merge, merge the exact validated head into the current default branch in the same run. Do not stop at commit, push, PR-open, review-ready, or green-status reporting.',
-              '- Stop short of integration only for an explicit no-merge instruction or a concrete failing/pending check, validator, dependency, review, conflict, protection, credential, permission, or merge-authority gate. Name the exact blocker and advance that gate.',
-              '- After integration, verify the current default branch contains the intended change with provider merge state plus the owning test, validator, build, or content proof, and report the resulting default-branch SHA.',
-              '',
-          ]
-          section = '\n'.join(section_lines)
-          if 'MAINLINE CONVERGENCE\n' not in content:
-              if anchor not in content:
-                  raise SystemExit('P07 mainline insertion anchor missing')
-              content = content.replace(anchor, anchor + section, 1)
-          movement_old = 'At least one useful repository mutation must occur unless the sprint is already complete or blocked. Valid movement includes tracked-file changes, commits, branch or worktree creation, cherry-picks, merges, pushes, PR comments, labels, base or draft changes, PR closure, or other owned Git/GitHub mutations.'
-          movement_new = movement_old + ' Branch or worktree creation is setup, not completion, while safe implementation or integration remains executable.'
-          if movement_old in content:
-              content = content.replace(movement_old, movement_new, 1)
-          pr_old = 'Open or update a PR when appropriate.'
-          pr_new = 'Open or update the correct PR when an integration lane is required, then continue through exact-head validation and merge into the current default branch when the MAINLINE CONVERGENCE gates permit it.'
-          if pr_old in content:
-              content = content.replace(pr_old, pr_new, 1)
-          final_old = 'Do the repo work. Commit it. Then stop.'
-          final_new = 'Do the repo work. Validate it. Commit and push it. Integrate the exact green authorized head into the current default branch when the gates permit, verify the default branch contains the intended change, then stop.'
-          if final_old not in content:
-              raise SystemExit('P07 final imperative anchor missing')
-          content = content.replace(final_old, final_new, 1)
-          report_anchor = '- PR: URL or not opened\n'
-          report_extra = '- integration target: current default branch and pre/post SHA\n- merged/integrated: yes/no\n- merge commit or provider merge SHA:\n- default-branch verification: owning test/validator/build/content proof\n'
-          if '- integration target: current default branch and pre/post SHA' not in content:
-              if report_anchor not in content:
-                  raise SystemExit('P07 final report anchor missing')
-              content = content.replace(report_anchor, report_anchor + report_extra, 1)
-          p07['copyContent'] = content
-          prompts_path.write_text(json.dumps(prompts, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
-
-          builder_path = Path('scripts/build_prompt_kit_registry.py')
-          text = builder_path.read_text(encoding='utf-8')
-          required_start = text.index('REQUIRED_ACTIONABILITY_POLICY_FIELDS = {')
-          required_end = text.index('REQUIRED_DISPLAY_ORDER_FIELDS = {', required_start)
-          required_lines = [
-              'REQUIRED_ACTIONABILITY_POLICY_FIELDS = {',
-              '    "schema_version",',
-              '    "policy_id",',
-              '    "marker",',
-              '    "integration_marker",',
-              '    "integration_target",',
-              '    "applies_to",',
-              '    "next_step_suffix",',
-              '    "allowed_none_value",',
-              '    "green_merge_conditions",',
-              '    "merge_exceptions",',
-              '    "existing_work_reuse",',
-              '    "forbidden_solo_actions",',
-              '    "copy_content_appendix",',
-              '}',
-              '',
-          ]
-          text = text[:required_start] + '\n'.join(required_lines) + text[required_end:]
-          old_string_fields = '    for field in (\n        "policy_id",\n        "marker",\n        "applies_to",\n        "next_step_suffix",\n        "allowed_none_value",\n        "copy_content_appendix",\n    ):\n'
-          new_string_fields = '    for field in (\n        "policy_id",\n        "marker",\n        "integration_marker",\n        "integration_target",\n        "applies_to",\n        "next_step_suffix",\n        "allowed_none_value",\n        "copy_content_appendix",\n    ):\n'
-          if old_string_fields not in text:
-              raise SystemExit('actionability string-field validation anchor missing')
-          text = text.replace(old_string_fields, new_string_fields, 1)
-          validation_anchor = '    if any(not isinstance(item, str) or not item.strip() for item in forbidden):\n        raise SystemExit("Every forbidden solo action must be a non-empty string")\n\n'
-          validation_lines = [
-              '    for field in ("green_merge_conditions", "merge_exceptions"):',
-              '        values = payload.get(field)',
-              '        if not isinstance(values, list) or not values:',
-              '            raise SystemExit(',
-              '                f"Actionability policy field must define a non-empty list: {field}"',
-              '            )',
-              '        if any(not isinstance(item, str) or not item.strip() for item in values):',
-              '            raise SystemExit(',
-              '                f"Every actionability policy entry must be a non-empty string: {field}"',
-              '            )',
-              '        if len(values) != len(set(values)):',
-              '            raise SystemExit(',
-              '                f"Actionability policy list must not contain duplicates: {field}"',
-              '            )',
-              '',
-              '    reuse = payload.get("existing_work_reuse")',
-              '    if not isinstance(reuse, dict):',
-              '        raise SystemExit("Actionability policy must define existing_work_reuse")',
-              '    for field in ("rule", "preservation_rule", "disposition_evidence"):',
-              '        value = reuse.get(field)',
-              '        if not isinstance(value, str) or not value.strip():',
-              '            raise SystemExit(',
-              '                f"Actionability existing-work field must be non-empty: {field}"',
-              '            )',
-              '    allowed = reuse.get("new_pr_allowed_when")',
-              '    if not isinstance(allowed, list) or not allowed:',
-              '        raise SystemExit(',
-              '            "Actionability existing-work policy must define new_pr_allowed_when"',
-              '        )',
-              '    if any(not isinstance(item, str) or not item.strip() for item in allowed):',
-              '        raise SystemExit(',
-              '            "Every new-PR allowance must be a non-empty string"',
-              '        )',
-              '',
-          ]
-          if validation_anchor not in text:
-              raise SystemExit('actionability structured-validation anchor missing')
-          text = text.replace(validation_anchor, validation_anchor + '\n'.join(validation_lines), 1)
-          marker_anchor = '    marker = str(payload["marker"])\n    if marker not in str(payload["copy_content_appendix"]):\n        raise SystemExit("Actionability appendix must include its declared marker")\n'
-          marker_replacement = '    marker = str(payload["marker"])\n    appendix = str(payload["copy_content_appendix"])\n    if marker not in appendix:\n        raise SystemExit("Actionability appendix must include its declared marker")\n    integration_marker = str(payload["integration_marker"])\n    if integration_marker not in appendix:\n        raise SystemExit("Actionability appendix must include its integration marker")\n'
-          if marker_anchor not in text:
-              raise SystemExit('actionability marker-validation anchor missing')
-          text = text.replace(marker_anchor, marker_replacement, 1)
-          builder_path.write_text(text, encoding='utf-8')
-      - name: Build and validate canonical P7 convergence
+          python -m py_compile \
+            build_prompt_kit.py \
+            scripts/build_prompt_kit_registry.py \
+            scripts/serve_prompt_kit_portable.py \
+            scripts/validate_prompt_kit_interactions.py \
+            scripts/validate_prompt_kit_discovery.py \
+            scripts/validate_prompt_kit_order_navigation.py \
+            scripts/validate_prompt_kit_portability.py \
+            triage/prompt_library_portability.py \
+            tests/test_prompt_kit_header_contract.py \
+            tests/test_prompt_kit_product_interactions.py \
+            tests/test_prompt_kit_filtering_access.py \
+            tests/test_prompt_kit_mobile.py \
+            tests/test_prompt_kit_discovery.py \
+            tests/test_prompt_kit_guidance.py \
+            tests/test_prompt_kit_order_navigation_contract.py \
+            tests/test_prompt_kit_order_navigation_product.py \
+            tests/test_prompt_kit_portability.py \
+            tests/test_prompt_kit_portability_regressions.py \
+            tests/test_prompt_kit_portable_health.py \
+            tests/test_prompt_library_portability.py \
+            tests/test_skill_prompt_registry.py \
+            tests/test_repository_work_ledger_prompt.py \
+            tests/test_correspondence_prompt_registry.py \
+            tests/test_management_operations_prompt_registry.py \
+            tests/test_spec_architecture_prompt_registry.py
+      - name: Validate Prompt Kit JavaScript syntax
         run: |
-          python -m py_compile scripts/build_prompt_kit_registry.py tests/test_green_branch_integration_policy.py tests/test_prompt_kit_header_contract.py
-          python -m json.tool docs/prompts.json >/dev/null
-          python -m json.tool registry/prompts/actionable-next-step-policy.v1.json >/dev/null
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-          python -m unittest tests.test_green_branch_integration_policy -v
-          python -m unittest tests.test_actionable_prompt_registry -v
+          node --check docs/prompt-kit.js
+          node --check docs/prompt-kit-guided-recommendations.js
+          node --check docs/prompt-kit-journey.js
+          node --check docs/prompt-kit-polish.js
+          node --check docs/prompt-kit-correspondence.js
+          node --check docs/prompt-kit-management.js
+          node --check docs/prompt-kit-spec-architecture.js
+          node --check docs/prompt-kit-favorites-portability.js
+      - name: Validate acquisition and portable PowerShell syntax
+        shell: pwsh
+        run: |
+          $null = [scriptblock]::Create((Get-Content -Raw scripts/Acquire-LatestPromptKit.ps1))
+          $null = [scriptblock]::Create((Get-Content -Raw scripts/Open-LatestPromptKitPortable.ps1))
+      - name: Reproduce empty-list path insertion
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile('scripts/Acquire-LatestPromptKit.ps1', [ref]$tokens, [ref]$errors)
+          if ($errors.Count) { throw ($errors -join '; ') }
+          $fn = $ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Add-UniquePath' }, $true)
+          if (-not $fn) { throw 'Add-UniquePath not found' }
+          Invoke-Expression $fn.Extent.Text
+          $paths = [System.Collections.Generic.List[string]]::new()
+          $expected = [System.IO.Path]::GetFullPath((Join-Path ([System.IO.Path]::GetTempPath()) 'prompt-kit-dev'))
+          Add-UniquePath -Paths $paths -Path $expected
+          if ($paths.Count -ne 1 -or $paths[0] -ne $expected) { throw 'empty-list path insertion did not resolve correctly' }
+          Write-Host 'Add-UniquePath empty-list regression: PASS'
+      - name: Validate deterministic quick-open path
+        shell: pwsh
+        run: ./tests/Test-PromptKitQuickOpenPathResolution.ps1
+      - name: Validate strict interaction implementation contract
+        run: python scripts/validate_prompt_kit_interactions.py --require-implementation --output "$RUNNER_TEMP/prompt-kit-interaction-audit.json" --summary
+      - name: Build current Prompt Kit preview
+        run: |
+          mkdir -p "$RUNNER_TEMP/prompt-kit"
+          python scripts/build_prompt_kit_registry.py --output "$RUNNER_TEMP/prompt-kit/index.html"
+      - name: Upload current Prompt Kit preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-current-preview
+          path: ${{ runner.temp }}/prompt-kit/index.html
+          if-no-files-found: error
+      - name: Build portable Prompt Kit runtime artifact
+        run: |
+          python scripts/serve_prompt_kit_portable.py --build-only
+          test -f Outputs/prompt-kit-portable/index.html
+          test -f Outputs/prompt-kit-portable/manifest.json
+      - name: Validate portable Favorites and harness discipline
+        run: |
+          python scripts/validate_prompt_kit_portability.py \
+            --require-artifact \
+            --output Outputs/prompt-kit-portability-validation.json \
+            --summary
+          python -m unittest \
+            tests.test_prompt_kit_portability \
+            tests.test_prompt_kit_portability_regressions \
+            tests.test_prompt_kit_portable_health \
+            -v
+      - name: Validate Prompt Library portability contract
+        run: python -m unittest tests.test_prompt_library_portability -v
+      - name: Upload portable Prompt Kit runtime proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-portable-runtime
+          path: |
+            Outputs/prompt-kit-portable/index.html
+            Outputs/prompt-kit-portable/manifest.json
+            Outputs/prompt-kit-portability-validation.json
+          if-no-files-found: error
+      - name: Validate search favorites tutorial journey and polish contract
+        run: |
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
+      - name: Validate combined prompt registry
+        run: |
+          python -m unittest tests.test_skill_prompt_registry -v
+          python -m unittest tests.test_repository_work_ledger_prompt -v
+          python -m unittest tests.test_correspondence_prompt_registry -v
+          python -m unittest tests.test_management_operations_prompt_registry -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+      - name: Validate chronological ordering and dense navigation
+        run: |
+          python -m unittest \
+            tests.test_prompt_kit_order_navigation_contract \
+            tests.test_prompt_kit_order_navigation_product \
+            -v
+          python scripts/validate_prompt_kit_order_navigation.py \
+            --require-implementation \
+            --output "$RUNNER_TEMP/prompt-kit-order-navigation-audit.json" \
+            --summary
+      - name: Validate Prompt Kit product interactions
+        run: python -m unittest tests.test_prompt_kit_product_interactions -v
+      - name: Validate Prompt Kit category and type filtering
+        run: python -m unittest tests.test_prompt_kit_filtering_access -v
+      - name: Validate Prompt Kit mobile and quick-open behavior
+        run: python -m unittest tests.test_prompt_kit_mobile -v
+      - name: Validate exact deployed website
+        run: |
           python tests/test_prompt_kit_header_contract.py
-          python tests/test_prompt_language_audit.py
-          git diff --check
-      - name: Restore normal workflow and commit canonical P7 convergence
-        run: |
-          git fetch origin main
-          git checkout origin/main -- .github/workflows/prompt-kit-web.yml
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/workflows/prompt-kit-web.yml docs/prompts.json scripts/build_prompt_kit_registry.py web/prompt-kit/index.html
-          git diff --cached --check
-          git diff --cached --stat
-          git commit -m 'feat(prompt-kit): make P7 converge validated work to main'
-          git push origin HEAD:feat/green-branch-integration-default-20260808
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check

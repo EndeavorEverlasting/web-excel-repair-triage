@@ -69,9 +69,14 @@ REQUIRED_ACTIONABILITY_POLICY_FIELDS = {
     "schema_version",
     "policy_id",
     "marker",
+    "integration_marker",
+    "integration_target",
     "applies_to",
     "next_step_suffix",
     "allowed_none_value",
+    "green_merge_conditions",
+    "merge_exceptions",
+    "existing_work_reuse",
     "forbidden_solo_actions",
     "copy_content_appendix",
 }
@@ -127,6 +132,8 @@ def load_actionability_policy() -> dict[str, Any]:
     for field in (
         "policy_id",
         "marker",
+        "integration_marker",
+        "integration_target",
         "applies_to",
         "next_step_suffix",
         "allowed_none_value",
@@ -142,9 +149,46 @@ def load_actionability_policy() -> dict[str, Any]:
     if any(not isinstance(item, str) or not item.strip() for item in forbidden):
         raise SystemExit("Every forbidden solo action must be a non-empty string")
 
+    for field in ("green_merge_conditions", "merge_exceptions"):
+        values = payload.get(field)
+        if not isinstance(values, list) or not values:
+            raise SystemExit(
+                f"Actionability policy field must define a non-empty list: {field}"
+            )
+        if any(not isinstance(item, str) or not item.strip() for item in values):
+            raise SystemExit(
+                f"Every actionability policy entry must be a non-empty string: {field}"
+            )
+        if len(values) != len(set(values)):
+            raise SystemExit(
+                f"Actionability policy list must not contain duplicates: {field}"
+            )
+
+    reuse = payload.get("existing_work_reuse")
+    if not isinstance(reuse, dict):
+        raise SystemExit("Actionability policy must define existing_work_reuse")
+    for field in ("rule", "preservation_rule", "disposition_evidence"):
+        value = reuse.get(field)
+        if not isinstance(value, str) or not value.strip():
+            raise SystemExit(
+                f"Actionability existing-work field must be non-empty: {field}"
+            )
+    allowed = reuse.get("new_pr_allowed_when")
+    if not isinstance(allowed, list) or not allowed:
+        raise SystemExit(
+            "Actionability existing-work policy must define new_pr_allowed_when"
+        )
+    if any(not isinstance(item, str) or not item.strip() for item in allowed):
+        raise SystemExit(
+            "Every new-PR allowance must be a non-empty string"
+        )
     marker = str(payload["marker"])
-    if marker not in str(payload["copy_content_appendix"]):
+    appendix = str(payload["copy_content_appendix"])
+    if marker not in appendix:
         raise SystemExit("Actionability appendix must include its declared marker")
+    integration_marker = str(payload["integration_marker"])
+    if integration_marker not in appendix:
+        raise SystemExit("Actionability appendix must include its integration marker")
     return payload
 
 
