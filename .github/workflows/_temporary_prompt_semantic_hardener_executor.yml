@@ -1,17 +1,16 @@
-# registration-trigger: 3
 name: Temporary Prompt Semantic Hardener Executor
 
 on:
-  push:
+  pull_request:
     branches: [main]
-    paths:
-      - '.github/workflows/_temporary_prompt_semantic_hardener_executor.yml'
+    types: [reopened]
 
 permissions:
   contents: write
 
 jobs:
   apply-to-feature:
+    if: github.head_ref == 'feat/prompt-kit-prompt-semantic-hardener-p86-20260819' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,67 +21,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Refresh feature branch to current main
+      - name: Add prompt through repo-owned helper
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git fetch origin main feat/prompt-kit-prompt-semantic-hardener-p86-20260819 --prune --tags
-          git merge --no-edit origin/main
-      - name: Add prompt through repo-owned helper
-        run: |
           if ! grep -q 'Prompt Semantic Hardener & Principle Integrator' registry/prompts/spec-architecture-prompts.v1.json; then
             python scripts/prompt_registry_ops.py add --input .prompt-hardener-draft.json --registry spec-architecture-prompts | tee "$RUNNER_TEMP/prompt-hardener-helper-receipt.json"
             cat "$RUNNER_TEMP/prompt-hardener-helper-receipt.json"
           else
             echo 'Semantic hardener already present; helper add skipped on idempotent rerun.'
           fi
-      - name: Add focused semantic regression
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('tests/test_spec_architecture_prompt_registry.py')
-          text = path.read_text(encoding='utf-8')
-          marker = '\n\nif __name__ == "__main__":\n'
-          if marker not in text:
-              raise SystemExit('test module tail marker missing')
-          method = '''
-    def test_prompt_semantic_hardener_selectively_integrates_stronger_principles(self) -> None:
-        matches = [
-            prompt
-            for prompt in self.full.values()
-            if prompt["name"] == "Prompt Semantic Hardener & Principle Integrator"
-        ]
-        self.assertEqual(len(matches), 1)
-        prompt = matches[0]
-        content = prompt["copyContent"]
-        raw_content = self.raw[prompt["id"]]["copyContent"]
-        self.assertEqual(prompt["profile"], "spec-architecture")
-        self.assertEqual(prompt["color"], "Cyan")
-        self.assertEqual(prompt["class"], "PROMPT KIT / PROMPT ARCHITECTURE")
-        self.assertIn("RAW VS EFFECTIVE PROMPT", content)
-        self.assertIn("PRINCIPLE APPLICABILITY MATRIX", content)
-        self.assertIn("COMPATIBLE, INCOMPATIBLE, or NOT NEEDED", content)
-        self.assertIn("P03 REFERENCE CASE", content)
-        for donor in ("P07", "P13", "P48", "P76", "P83", "P84", "P85"):
-            self.assertIn(donor, content)
-        self.assertIn("do not transform P03 into P07, P13, P48, P76, P83, P84, or P85", content)
-        self.assertIn("Do not copy every strong rule into every prompt", content)
-        self.assertIn("shared policy", content.lower())
-        self.assertIn("Extend the closest existing focused test", content)
-        self.assertIn("one deliberate second pass", content)
-        self.assertIn("Refresh again immediately before final exact-head conclusions", content)
-        self.assertLess(len(raw_content), 7600)
-        self.assertGreater(len(raw_content), 3000)
-        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
-        self.assertIn(self.policy["marker"], content)
-        html = build_prompt_kit_registry.render()
-        self.assertIn("Prompt Semantic Hardener & Principle Integrator", html)
-'''
-          if 'def test_prompt_semantic_hardener_selectively_integrates_stronger_principles' not in text:
-              text = text.replace(marker, '\n' + method + marker, 1)
-          path.write_text(text, encoding='utf-8')
-          PY
-      - name: Validate contribution
+      - name: Validate durable contribution
         run: |
           python scripts/prompt_registry_ops.py validate
           python -m unittest tests.test_spec_architecture_prompt_registry -v
@@ -90,12 +39,15 @@ jobs:
           python -m unittest tests.test_prompt_kit_order_navigation_contract tests.test_prompt_kit_discovery -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
-      - name: Commit and push feature contribution
+      - name: Remove temporary contribution transport
         run: |
-          git add registry/prompts/spec-architecture-prompts.v1.json tests/test_spec_architecture_prompt_registry.py web/prompt-kit/index.html
-          if ! git diff --cached --quiet; then
-            git diff --cached --check
-            git diff --cached --stat
-            git commit -m 'feat(prompt-kit): add prompt semantic hardener'
-          fi
+          git fetch origin main --prune
+          git checkout origin/main -- scripts/validate_prompt_kit_interactions.py
+          git rm -f .github/workflows/apply-prompt-semantic-hardener.yml .prompt-hardener-draft.json
+      - name: Commit and push helper-generated contribution
+        run: |
+          git add registry/prompts/spec-architecture-prompts.v1.json tests/test_spec_architecture_prompt_registry.py web/prompt-kit/index.html scripts/validate_prompt_kit_interactions.py
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m 'feat(prompt-kit): add prompt semantic hardener'
           git push origin HEAD:feat/prompt-kit-prompt-semantic-hardener-p86-20260819
