@@ -9,14 +9,11 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
-# prompt-hardener-helper-routing-metadata-explicit
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "harness" / "contracts" / "prompt-kit-interactions.v1.json"
 PROTECTED_OUTPUT_ROOTS = (ROOT / "Candidates", ROOT / "Active")
@@ -43,63 +40,6 @@ def _load_json(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise InteractionContractError("interaction contract must be a JSON object")
     return payload
-
-
-def _materialize_prompt_semantic_hardener_in_ci() -> None:
-    """Run the canonical helper in PR CI so its allocation/output can be harvested."""
-    if not os.environ.get("GITHUB_ACTIONS"):
-        return
-    draft = ROOT / ".prompt-hardener-draft.json"
-    target = ROOT / "registry" / "prompts" / "spec-architecture-prompts.v1.json"
-    if not draft.is_file() or not target.is_file():
-        return
-    payload = json.loads(target.read_text(encoding="utf-8"))
-    existing = [
-        item
-        for item in payload.get("prompts", [])
-        if isinstance(item, dict)
-        and item.get("name") == "Prompt Semantic Hardener & Principle Integrator"
-    ]
-    if not existing:
-        proc = subprocess.run(
-            [
-                sys.executable,
-                "scripts/prompt_registry_ops.py",
-                "add",
-                "--input",
-                str(draft),
-                "--registry",
-                "spec-architecture-prompts",
-            ],
-            cwd=ROOT,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        if proc.stdout:
-            print("PROMPT_HARDENER_HELPER_RECEIPT_START")
-            print(proc.stdout.rstrip())
-            print("PROMPT_HARDENER_HELPER_RECEIPT_END")
-        if proc.stderr:
-            print(proc.stderr.rstrip(), file=sys.stderr)
-        if proc.returncode:
-            raise InteractionContractError(
-                f"prompt semantic hardener helper failed with exit {proc.returncode}"
-            )
-        payload = json.loads(target.read_text(encoding="utf-8"))
-        existing = [
-            item
-            for item in payload.get("prompts", [])
-            if isinstance(item, dict)
-            and item.get("name") == "Prompt Semantic Hardener & Principle Integrator"
-        ]
-    if len(existing) != 1:
-        raise InteractionContractError(
-            f"expected exactly one semantic hardener record after helper execution, found {len(existing)}"
-        )
-    print("PROMPT_HARDENER_RAW_RECORD_START")
-    print(json.dumps(existing[0], indent=2, ensure_ascii=False))
-    print("PROMPT_HARDENER_RAW_RECORD_END")
 
 
 def validate_contract() -> dict[str, Any]:
@@ -297,7 +237,6 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        _materialize_prompt_semantic_hardener_in_ci()
         contract = validate_contract()
         report = audit_implementation(contract)
         if args.output:
