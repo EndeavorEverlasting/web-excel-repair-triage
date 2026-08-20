@@ -42,6 +42,15 @@
       "harness_gate": "python scripts/validate_prompt_kit_discovery.py --summary",
       "strict_product_gate": "python -m unittest tests.test_prompt_kit_discovery -v"
     },
+    "prompt_kit_order_navigation": {
+      "contract": "harness/contracts/prompt-kit-order-navigation.v1.json",
+      "validator": "scripts/validate_prompt_kit_order_navigation.py",
+      "contract_tests": "tests/test_prompt_kit_order_navigation_contract.py",
+      "workflow": "WORKFLOW.md#b-prompt-registry-or-website-change",
+      "harness_gate": "python scripts/validate_prompt_kit_order_navigation.py --output Outputs/prompt-kit-order-navigation-audit.json --summary",
+      "strict_product_gate": "python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary",
+      "operator_report": "harness/reports/PROMPT_KIT_ORDER_NAVIGATION.md"
+    },
     "prompt_kit_portability": {
       "contract": "harness/contracts/prompt-kit-portability.v1.json",
       "doctrine": "docs/PROMPT_KIT_PORTABILITY.md",
@@ -59,6 +68,53 @@
       "harness_gate": "python scripts/validate_prompt_kit_portability.py --summary",
       "strict_product_gate": "python scripts/serve_prompt_kit_portable.py --build-only && python scripts/validate_prompt_kit_portability.py --require-artifact --output Outputs/prompt-kit-portability-validation.json --summary && python -m unittest tests.test_prompt_kit_portability tests.test_prompt_kit_portability_regressions tests.test_prompt_kit_portable_health -v"
     },
+    "prompt_kit_cross_device_access": {
+      "contract": "harness/contracts/prompt-kit-cross-device-access.v1.json",
+      "validator": "scripts/validate_prompt_kit_cross_device_access.py",
+      "contract_tests": "tests/test_prompt_kit_cross_device_access.py",
+      "workflow": "WORKFLOW.md#a-technician-acquisition-or-update",
+      "harness_gate": "python scripts/validate_prompt_kit_cross_device_access.py --summary",
+      "skill": ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
+      "access_guide": "PROMPT_KIT_ACCESS.md",
+      "phone_guide": "OPEN_PROMPT_KIT_ON_PHONE.md"
+    },
+    "prompt_kit_freshness_guidance": {
+      "contract": "harness/contracts/prompt-kit-freshness-guidance.v1.json",
+      "validator": "scripts/validate_prompt_kit_freshness_guidance.py",
+      "contract_tests": "tests/test_prompt_kit_freshness_guidance.py",
+      "workflow": "WORKFLOW.md#a-technician-acquisition-or-update",
+      "harness_gate": "python scripts/validate_prompt_kit_freshness_guidance.py --summary",
+      "skill": ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
+      "operator_report": "harness/reports/PROMPT_KIT_FRESHNESS.md"
+    },
+    "prompt_kit_release_identity": {
+      "contract": "harness/contracts/prompt-kit-release-identity.v1.json",
+      "validator": "scripts/validate_prompt_kit_release_identity.py",
+      "contract_tests": "tests/test_prompt_kit_release_identity.py",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "harness_gate": "python scripts/validate_prompt_kit_release_identity.py --output Outputs/prompt-kit-release-identity.json --summary",
+      "operator_report": "harness/reports/PROMPT_KIT_RELEASE_IDENTITY.md",
+      "canonical_artifact_id": "prompt-kit-website",
+      "canonical_artifact": "web/prompt-kit/index.html"
+    },
+    "pr_merge_gate": {
+      "contract": "harness/contracts/pr-merge-gate.v1.json",
+      "validator": "scripts/validate_pr_merge_gate.py",
+      "contract_tests": "tests/test_pr_merge_gate.py",
+      "workflow": "WORKFLOW.md#e-pr-floor-cleanup-and-integration",
+      "harness_gate": "python scripts/validate_pr_merge_gate.py --summary",
+      "fixtures": "harness/evals/fixtures/pr-merge-gate-cases.v1.json"
+    },
+    "lua_embedding_readiness": {
+      "contract": "harness/lua/contracts/lua-embedding-readiness.v1.json",
+      "validator": "scripts/validate_lua_harness.py",
+      "contract_tests": "tests/test_lua_harness_contract.py",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "harness_gate": "python scripts/validate_lua_harness.py --output Outputs/lua-embedding-readiness.json --summary",
+      "domain_manifest": "harness/lua/manifest.v1.json",
+      "skill": ".ai/skills/lua-embedding-readiness/SKILL.md",
+      "operator_report": "harness/lua/reports/CURRENT_STATE.md"
+    },
     "operator_command_envelope": {
       "contract": "harness/contracts/operator-command-envelope.v1.json",
       "validator": "scripts/validate_operator_command_envelope.py",
@@ -67,6 +123,29 @@
       "harness_gate": "python scripts/validate_operator_command_envelope.py --summary",
       "template": "harness/templates/Invoke-RemoteHarnessProof.ps1",
       "fixtures": "harness/evals/fixtures/operator-command-cases.v1.json"
+    },
+    "prompt_kit_browser_proof_cleanup": {
+      "contract": "harness/browser-proof-cleanup/manifest.v1.json",
+      "validator": "scripts/validate_prompt_kit_browser_proof_cleanup.py",
+      "contract_tests": "tests/test_prompt_kit_browser_proof_cleanup_harness.py",
+      "workflow": "WORKFLOW.md#h-prompt-kit-browser-proof-scratch-cleanup",
+      "harness_gate": "python scripts/validate_prompt_kit_browser_proof_cleanup.py --summary",
+      "skill": ".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md",
+      "cleanup_runner": "scripts/Clear-PromptKitBrowserProofScratch.ps1",
+      "artifact_registry": "harness/browser-proof-cleanup/artifacts.v1.json",
+      "operator_report": "harness/browser-proof-cleanup/reports/CURRENT_STATE.md"
+    },
+    "prompt_kit_responsive_layout": {
+      "contract": "harness/prompt-kit-layout/contracts/responsive-header-overlap.v1.json",
+      "validator": "scripts/validate_prompt_kit_layout_harness.py",
+      "contract_tests": "tests/test_prompt_kit_layout_harness.py",
+      "workflow": "harness/prompt-kit-layout/WORKFLOW.md",
+      "harness_gate": "python scripts/validate_prompt_kit_layout_harness.py --summary",
+      "strict_product_gate": "python scripts/validate_prompt_kit_layout_harness.py --require-implementation --geometry-report Outputs/prompt-kit-layout-geometry.json --summary",
+      "domain_manifest": "harness/prompt-kit-layout/manifest.v1.json",
+      "skill": ".ai/skills/prompt-kit-responsive-layout/SKILL.md",
+      "artifact_registry": "harness/prompt-kit-layout/artifacts.v1.json",
+      "operator_report": "harness/prompt-kit-layout/reports/CURRENT_STATE.md"
     }
   },
   "skills": [
@@ -74,7 +153,9 @@
     ".ai/skills/prompt-language-audit/SKILL.md",
     ".ai/skills/skill-evaluation/SKILL.md",
     ".ai/skills/skill-factoring/SKILL.md",
-    ".ai/skills/technician-prompt-kit-acquisition/SKILL.md"
+    ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
+    ".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md",
+    ".ai/skills/prompt-kit-responsive-layout/SKILL.md"
   ],
   "technician_acquisition": {
     "launcher": "Acquire-Latest-PromptKit.cmd",
@@ -113,6 +194,8 @@
     "python -m unittest tests.test_prompt_language_audit -v",
     "python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary",
     "python -m unittest tests.test_skill_prompt_registry -v",
+    "python scripts/validate_prompt_kit_layout_harness.py --summary",
+    "python -m unittest tests.test_prompt_kit_layout_harness -v",
     "python tests/test_prompt_kit_header_contract.py",
     "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
     "python -m triage.gitignore_hygiene",

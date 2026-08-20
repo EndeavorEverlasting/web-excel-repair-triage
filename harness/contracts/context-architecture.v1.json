@@ -1,0 +1,63 @@
+{
+  "schema_version": "triage.harness.context-architecture/v1",
+  "default_entrypoints": [
+    "AGENTS.md",
+    "harness/CONTEXT.md"
+  ],
+  "token_estimate": {
+    "chars_per_token": 4,
+    "note": "Approximation used only for context-budget reporting."
+  },
+  "layers": {
+    "50000": {
+      "soft_max_approx_tokens": 1000,
+      "purpose": "orientation and routing only"
+    },
+    "30000": {
+      "soft_max_additional_approx_tokens": 2000,
+      "purpose": "one selected domain/capability/map"
+    },
+    "15000": {
+      "soft_max_additional_approx_tokens": 4000,
+      "purpose": "one selected workflow/spec/skill plus exact implementation evidence"
+    }
+  },
+  "hard_char_budgets": {
+    "AGENTS.md": 5200,
+    "harness/CONTEXT.md": 3200,
+    "CODEBASE_MAP.md": 8500,
+    "SKILLS.md": 6000,
+    ".ai/skills/harness-infrastructure-maintenance/SKILL.md": 8000,
+    ".ai/skills/technician-prompt-kit-acquisition/SKILL.md": 8000
+  },
+  "baseline_chars": {
+    "AGENTS.md": 24800,
+    "CODEBASE_MAP.md": 16800,
+    ".ai/skills/harness-infrastructure-maintenance/SKILL.md": 13500,
+    ".ai/skills/technician-prompt-kit-acquisition/SKILL.md": 14500
+  },
+  "binding_specs": {
+    "operator_delivery": "harness/specs/operator-delivery.md",
+    "prompt_operations": "harness/specs/prompt-operations.md",
+    "billing_artifact_safety": "harness/specs/billing-artifact-safety.md"
+  },
+  "rules": {
+    "no_eager_root_bundle": true,
+    "single_canonical_authority": true,
+    "skills_are_demand_loaded": true,
+    "history_is_demand_loaded": true,
+    "soft_budgets_never_override_safety": true
+  },
+  "required_router_phrases": [
+    "50,000-foot",
+    "Do not eagerly read",
+    "30,000-foot",
+    "15,000-foot",
+    "demand-loaded"
+  ],
+  "forbidden_default_bundle_fragments": [
+    "Read `WORKFLOW.md`, `CAPABILITIES.md`, `SKILLS.md`, `TRIGGERS.md`",
+    "read all skills before",
+    "load every skill before editing"
+  ]
+}

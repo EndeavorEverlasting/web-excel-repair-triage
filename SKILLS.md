@@ -1,64 +1,63 @@
-# Scoped Skills
+# Skills Index
 
-This is the repository skill index. Reusable procedures live under `.ai/skills/<skill-name>/SKILL.md`. Deterministic behavior remains in scripts, modules, schemas, manifests, tests, registries, and workflows rather than only in prose.
+This is a **selection index**, not a procedure manual. Start with `AGENTS.md` + `harness/CONTEXT.md`; open this file only when the router indicates that a reusable skill is needed.
 
-## Skill selection rules
+## Global skill policy
 
-1. Read `AGENTS.md`, `CODEBASE_MAP.md`, `WORKFLOW.md`, `CAPABILITIES.md`, `TRIGGERS.md`, and `harness/manifest.v1.json`.
-2. Select a skill only when a registered trigger matches and no forbidden condition applies.
-3. Prefer one primary skill/capability owner; add another only for a distinct downstream phase.
-4. Do not use skills to bypass protected inputs, credentials, validators, or proof boundaries.
-5. Update skill, capability, trigger, manifest, tests, docs, hooks/CI, and reports atomically when ownership changes.
-6. Skills describe repeatable judgment and procedure. Product behavior remains in deterministic code and contracts.
+Choose **one primary skill** for the task. Load its `SKILL.md` only after ownership is known. Add a secondary skill only when the task crosses an explicit domain boundary. Do not preload every skill or copy deterministic contracts into skill prose.
+
+Skills own repeatable procedure and judgment. Code, schemas, registries, manifests, validators, and domain contracts own deterministic truth.
+
+## Canonical locations
+
+- Active reusable skills: `.ai/skills/<skill>/SKILL.md`
+- Capability ownership: `harness/capabilities.v1.json`
+- Trigger routing: `harness/triggers.v1.json`
+- Workflow routing: `harness/workflows.v1.json`
+- Context routing/budgets: `harness/CONTEXT.md`, `harness/contracts/context-architecture.v1.json`
 
 ## Active repository skills
 
-### Harness infrastructure maintenance
+| Skill | Use when | Canonical file |
+|---|---|---|
+| Harness infrastructure maintenance | harness maps/contracts/workflows/skills drift or context architecture | `.ai/skills/harness-infrastructure-maintenance/SKILL.md` |
+| Prompt language audit | prompt language quality/repair | `.ai/skills/prompt-language-audit/SKILL.md` |
+| Skill evaluation | skill correctness/quality is unproven | `.ai/skills/skill-evaluation/SKILL.md` |
+| Skill factoring | reusable procedure is duplicated or poorly bounded | `.ai/skills/skill-factoring/SKILL.md` |
+| Technician Prompt Kit acquisition | open/install/update/edit Prompt Kit across devices | `.ai/skills/technician-prompt-kit-acquisition/SKILL.md` |
+| Prompt Kit browser-proof cleanup | browser-proof scratch cleanup | `.ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md` |
+| Prompt Kit responsive layout | Prompt Kit overlap/responsive layout work | `.ai/skills/prompt-kit-responsive-layout/SKILL.md` |
 
-- **Path:** `.ai/skills/harness-infrastructure-maintenance/SKILL.md`
-- **Trigger:** `harness-infrastructure-change`
-- **Capability:** `harness-infrastructure-maintenance`
-- **Use when:** Maps, workflow/artifact/validator registries, validators, hooks, skills, reports, or component ownership are missing, stale, disconnected, or failing.
-- **Forbidden scope:** `AGENTS.md`, product implementation, secrets, destructive cleanup.
-- **Outputs:** Canonical harness repairs, completeness report, regression tests, current-state report, commit/PR evidence, and an actionable next command.
-- **Primary validation:** `python scripts/validate_harness.py --report Outputs/harness-completeness-report.json` and `python -m unittest tests.test_harness_contract -v`.
+Other domain skills may exist under `.ai/skills/`; route to them only from a selected domain contract or capability.
 
-### Prompt language audit
+**Context Engineering System Refactorer** is the Prompt Kit P68 tool for broad model-context systems. Repository-local spec/harness progressive disclosure is P76 and this harness architecture; do not substitute one for the other.
 
-- **Path:** `.ai/skills/prompt-language-audit/SKILL.md`
-- **Triggers:** `prompt-language-change`, `lazy-next-action-report`
-- **Capability:** `prompt-language-audit`
-- **Inputs:** Canonical registries, effective builder output, actionability policy, eval policy, fixtures, and known failures.
-- **Outputs:** Complete inventory, one disposition per prompt, stable findings, machine-readable report, and authorized canonical-source repairs.
-- **Primary validation:** `python -m unittest tests.test_prompt_language_audit -v` and `python scripts/evaluate_prompt_language.py --summary`.
+## When to use which skill
 
-### Skill evaluation
+Use `harness/triggers.v1.json` when a deterministic trigger owns the choice. Otherwise:
+- structure/ownership/context bloat → Harness infrastructure maintenance;
+- duplicated reusable procedure → Skill factoring;
+- skill quality/evals → Skill evaluation;
+- Prompt Kit cross-device acquisition → Technician Prompt Kit acquisition;
+- prompt wording/audit → Prompt language audit.
 
-- **Path:** `.ai/skills/skill-evaluation/SKILL.md`
-- **Trigger:** `skill-quality-unproven`
-- **Capability:** `skill-evaluation`; Prompt Kit owner P62.
-- **Outputs:** Versioned cases, runner, machine-readable results, repair ledger, and before/after correctness and efficiency evidence.
-- **Boundary:** May evaluate product behavior but cannot become the product implementation.
+If none fits, work directly from the selected workflow/contract rather than loading unrelated skills.
 
-### Skill factoring
+## Full read-before-edit checklist
 
-- **Path:** `.ai/skills/skill-factoring/SKILL.md`
-- **Trigger:** `skill-boundary-defect`
-- **Capability:** `skill-factoring`; Prompt Kit owner P61.
-- **Outputs:** `KEEP`, `SPLIT`, `MERGE`, `RETIRE`, or `REWIRE` dispositions; repaired skills/routing; boundary fixtures.
+“Full” means **full for the selected scope**, not “read the repository.”
 
-### Technician Prompt Kit acquisition
+1. `AGENTS.md` and `harness/CONTEXT.md`.
+2. One selected 30,000-foot owner.
+3. One primary `SKILL.md` if a reusable skill applies.
+4. Exact code/schema/registry/validator/tests being changed.
+5. Recent/open Git/PR evidence for overlapping ownership.
 
-- **Path:** `.ai/skills/technician-prompt-kit-acquisition/SKILL.md`
-- **Trigger:** `technician-needs-latest-prompt-kit`
-- **Capability:** `technician-prompt-kit-acquisition`
-- **Forbidden conditions:** Dirty worktree, wrong origin, non-main branch, local-only commits, divergence, missing tools/files.
-- **Primary validation:** Harness validator/contracts plus native Windows field proof.
+Stop loading context once ownership, write surface, validator, artifact, and proof ceiling are resolved.
 
 ## Required skill-file sections
 
-Every active `SKILL.md` must include:
-
+Every registered active skill keeps:
 - `## Trigger`
 - `## Required inputs`
 - `## Outputs`
@@ -67,12 +66,4 @@ Every active `SKILL.md` must include:
 - `## Validation`
 - `## Proof ceiling`
 
-## Adding, repairing, or retiring a skill
-
-1. Inspect all triggers, capabilities, workflows, consumers, validators, and historical failures.
-2. Use skill factoring when ownership is ambiguous.
-3. Update `SKILLS.md`, `CAPABILITIES.md`, `TRIGGERS.md`, machine registries, manifest, tests, hooks/CI, and reports atomically.
-4. Preserve unique useful procedures before retirement.
-5. Add positive, negative, boundary, malformed-input, and regression validation.
-6. Use skill evaluation for correctness and efficiency proof.
-7. Report preservation destination, executed proof, commit/PR state, and proof ceiling.
+Those headings preserve predictable retrieval without requiring every skill to repeat global governance.

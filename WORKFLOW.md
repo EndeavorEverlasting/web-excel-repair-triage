@@ -1,6 +1,6 @@
 # Workflow Specifications
 
-This file defines how agents and operators enter, select, validate, recover, commit, and hand off work in this repository. Machine-readable workflow ownership lives in `harness/workflows.v1.json`. Focused domain-contract ownership, including operator command delivery, is registered in `harness/manifest.v1.json`. Product behavior remains in focused modules, schemas, registries, tests, and contracts.
+This file defines how agents and operators enter, select, validate, recover, commit, and hand off work in this repository. Machine-readable workflow ownership lives in `harness/workflows.v1.json`. Focused domain-contract ownership, including operator command delivery and Prompt Kit cross-device access, is registered in `harness/manifest.v1.json`. Product behavior remains in focused modules, schemas, registries, tests, and contracts.
 
 ## 1. Pick up a task
 
@@ -24,12 +24,49 @@ This file defines how agents and operators enter, select, validate, recover, com
 ### A. Technician acquisition or update
 
 **Workflow ID:** `technician-acquisition`
-**Trigger:** A technician needs the latest canonical `main` Prompt Kit through a mouse-accessible Windows surface.
-**Entry point:** `Acquire-Latest-PromptKit.cmd`
+**Trigger:** A user or technician needs to open, install, share, download, clone, update, or locally edit the current `main` Prompt Kit.
+**Capability:** `technician-prompt-kit-acquisition`
+**Skill:** `.ai/skills/technician-prompt-kit-acquisition/SKILL.md`
+**Focused contract:** `harness/contracts/prompt-kit-cross-device-access.v1.json`
 
-Clone when absent. Otherwise verify the canonical origin, clean `main`, no local-only commits or divergence, fetch, fast-forward only, validate required files and exact Prompt Kit parity, and open the selected surface only after success.
+Route by **intent first**, then by device. Do not default every acquisition question into a Git checkout.
 
-On failure, preserve the checkout and report the exact Git, authentication, network, origin, branch, divergence, required-file, or parity failure. Do not automate credentials or use destructive Git commands.
+1. **Normal browser use / sharing** — open `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`. No repository clone, ZIP extraction, Git client, Python, PowerShell, Termux, or local server is required.
+2. **Phone/tablet install** — open `https://endeavoreverlasting.github.io/web-excel-repair-triage/` in the system browser and use the install/Add to Home Screen surface. If the GitHub mobile app uses its in-app browser, move to the system browser first.
+3. **Windows stable local app / portable Favorites** — use `Open-Latest-PromptKit.cmd`. The repository-owned launcher owns safe clone-or-fast-forward, parity validation, portable runtime generation, and stable loopback serving.
+4. **Edit, commit, push, inspect source, or run repository tooling locally** — use a real Git checkout. A fresh clone is:
+
+   ```bash
+   git clone --branch main --single-branch https://github.com/EndeavorEverlasting/web-excel-repair-triage.git
+   ```
+
+   For an existing editable checkout, do not integrate anything until these gates are evaluated in order:
+
+   ```bash
+   git remote get-url origin
+   git status --porcelain
+   git branch --show-current
+   git fetch origin main --prune
+   git rev-list --left-right --count HEAD...origin/main
+   git merge --ff-only origin/main
+   ```
+
+   The origin must exactly equal the canonical repository URL, status must be empty, the current branch must be `main`, and the first count from `git rev-list --left-right --count HEAD...origin/main` must be `0`. If any gate fails, preserve the checkout and stop. Only then may `git merge --ff-only origin/main` advance `main`.
+
+   On Android, use Termux from F-Droid, then `pkg update`, `pkg install git`, and the same clone/update gates. This route is for source work, not ordinary Prompt Kit use.
+5. **Explicit source snapshot without Git** — use the repository `main.zip` and state clearly that it is a point-in-time snapshot, not a synchronized checkout.
+
+For a Windows editable/acquisition checkout, the repository-owned launcher already implements equivalent preservation-first origin/cleanliness/branch/divergence gates. On failure, preserve the checkout and report the exact access-mode, Git, authentication, network, origin, branch, divergence, required-file, parity, browser, or device gate. Do not automate credentials or use destructive Git commands.
+
+Focused validation:
+
+```bash
+python -m py_compile scripts/validate_prompt_kit_cross_device_access.py tests/test_prompt_kit_cross_device_access.py
+python scripts/validate_prompt_kit_cross_device_access.py --summary
+python -m unittest tests.test_prompt_kit_cross_device_access -v
+```
+
+Static success does not prove a specific browser menu, PWA installation, Termux/F-Droid availability, Git authentication, Favorites persistence, clipboard behavior, or push access.
 
 ### B. Prompt registry or website change
 
@@ -56,7 +93,8 @@ On failure, preserve the checkout and report the exact Git, authentication, netw
 4. Update `harness/manifest.v1.json`, human indexes, workflow/artifact/validator registries, capabilities/triggers, tests, hooks, CI path filters, and operator state atomically when ownership or commands change.
 5. Keep `AGENTS.md`, product implementation, secrets, and destructive cleanup out of scope.
 6. Make pre-commit inspect the staged index through an isolated staged tree. Keep pre-push exhaustive and non-destructive.
-7. When the failure involves a NEXT COMMAND, handoff snippet, or operator proof command, read `harness/contracts/operator-command-envelope.v1.json`, use `harness/templates/Invoke-RemoteHarnessProof.ps1` for unmerged harness proof, and run:
+7. When the failure involves Prompt Kit acquisition/access routing, read `harness/contracts/prompt-kit-cross-device-access.v1.json`, preserve the single `technician-prompt-kit-acquisition` owner, and run its focused validator/tests before the root profile.
+8. When the failure involves a NEXT COMMAND, handoff snippet, or operator proof command, read `harness/contracts/operator-command-envelope.v1.json`, use `harness/templates/Invoke-RemoteHarnessProof.ps1` for unmerged harness proof, and run:
 
    ```bash
    python -m py_compile scripts/validate_operator_command_envelope.py tests/test_operator_command_envelope.py
@@ -65,7 +103,7 @@ On failure, preserve the checkout and report the exact Git, authentication, netw
    ```
 
    The operator command must not assume a remembered `C:\Users\<name>\...` path, must not contain Markdown hyperlink syntax as command data, and must not use top-level `exit` in an interactive PowerShell envelope. When the exact local repo root has not been proven in the current shell, use the environment-derived isolated checkout template rather than guessing.
-8. Run the root harness checks:
+9. Run the root harness checks:
 
    ```bash
    python -m py_compile scripts/validate_harness.py tests/test_harness_contract.py
@@ -73,9 +111,9 @@ On failure, preserve the checkout and report the exact Git, authentication, netw
    python -m unittest tests.test_harness_contract -v
    ```
 
-9. Run the remaining `harness` validator profile from `harness/validators.v1.json`, followed by affected broader tests and `git diff --check`.
-10. Commit coherent owned files, push normally, and open or update the existing focused PR.
-11. Hand off the component list, report path, validator results, commit SHA, push/PR evidence, blockers, skipped checks, proof ceiling, and an executable next command.
+10. Run the remaining `harness` validator profile from `harness/validators.v1.json`, followed by affected broader tests and `git diff --check`.
+11. Commit coherent owned files, push normally, and open or update the existing focused PR.
+12. Hand off the component list, report path, validator results, commit SHA, push/PR evidence, blockers, skipped checks, proof ceiling, and an executable next command.
 
 ### D. Workbook or artifact engine change
 
@@ -107,18 +145,40 @@ Audit every canonical and effective prompt. Require equal canonical, effective, 
 
 Define the eval contract and baseline, add positive/negative/near-miss/boundary/malformed/regression cases, reproduce weaknesses, implement the smallest valid repair, and measure performance, calls, context, retries, cost, and tokens when available. Accept efficiency changes only after correctness, safety, and routing gates remain green.
 
+### H. Prompt Kit browser-proof scratch cleanup
+
+**Workflow ID:** `prompt-kit-browser-proof-cleanup`
+**Trigger:** `prompt-kit-browser-proof-temp-path`
+**Capability:** `prompt-kit-browser-proof-scratch-cleanup`
+**Skill:** `.ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md`
+
+1. Treat `prompt-kit-browser-proof-*` folders as untrusted until the focused runner classifies them.
+2. Run preview first; never broaden an exact target into `%TEMP%` deletion.
+3. Require direct-child OS-temp location, exact leaf regex, non-reparse-point status, `web/prompt-kit/index.html`, and minimum age.
+4. Preserve browser profile data, localStorage/Favorites, canonical repositories, public Pages, portable-loopback state, and unrelated evidence.
+5. Before replacing the stable receipt, preserve the previous receipt under `Outputs/backups/prompt-kit-browser-proof-cleanup/`.
+6. Run `python scripts/validate_prompt_kit_browser_proof_cleanup.py --summary` and `python -m unittest tests.test_prompt_kit_browser_proof_cleanup_harness -v`; native workstation deletion remains a separate runtime gate.
+
 ## 3. Validate before committing
 
 Use the strongest practical checks in dependency order:
 
 1. Focused unit/fixture tests.
 2. Static compilation.
-3. Focused domain-contract validators such as the operator command envelope.
+3. Focused domain-contract validators such as cross-device access or operator command envelope.
 4. Root contract validators.
 5. Exhaustive audits when prompt/skill surfaces are involved.
 6. Deterministic generated-output parity.
 7. Artifact and Git hygiene.
 8. Broader tests and honest runtime checks.
+
+For a cross-device Prompt Kit acquisition/access change, run:
+
+```bash
+python -m py_compile scripts/validate_prompt_kit_cross_device_access.py tests/test_prompt_kit_cross_device_access.py
+python scripts/validate_prompt_kit_cross_device_access.py --summary
+python -m unittest tests.test_prompt_kit_cross_device_access -v
+```
 
 For a harness command-delivery change, run the focused gate before the root profile:
 
@@ -152,6 +212,18 @@ Do not claim a skipped check passed. Report the exact command, dependency, failu
 ### Harness completeness or contract failure
 
 Read the first actionable failure and identify the canonical owner: human map, machine registry, validator, skill, hook, workflow, test, report, or focused domain contract. Repair that owner and add a regression test. Do not weaken expected component IDs, command profiles, protected paths, or proof ceilings merely to obtain green output.
+
+### Prompt Kit cross-device access failure
+
+Treat unnecessary cloning for normal use, asking a mobile GitHub-app user to hunt for `index.html`, giving editable-checkout commands before establishing edit/commit/push intent, updating an unverified feature branch as though it were `main`, or replacing a safe launcher with manual destructive Git steps as harness defects.
+
+1. Read `harness/contracts/prompt-kit-cross-device-access.v1.json`.
+2. Classify user intent: use/install/share versus edit/commit/push/local tooling.
+3. Select the lowest-friction registered mode that satisfies that intent.
+4. For existing editable checkouts, verify exact canonical origin, empty `git status --porcelain`, current branch `main`, fetch `origin/main`, and require zero local-only commits before an ff-only merge.
+5. Preserve existing checkout work. Never repair routing by resetting, cleaning, force-pushing, or discarding local work.
+6. Run `scripts/validate_prompt_kit_cross_device_access.py` plus focused tests.
+7. Keep device/browser/Termux/network/authentication acceptance outside static proof.
 
 ### Operator command / NEXT COMMAND failure
 
@@ -208,7 +280,7 @@ A handoff must state:
 - repository, branch/worktree, sprint, lane, mission, owned and forbidden scope;
 - workflow ID, trigger ID, capability, and skill;
 - every file created or modified;
-- canonical and runtime artifacts with paths;
+- canonical and runtime artifacts with paths and, for Prompt Kit access, the selected delivery mode;
 - validation commands actually run and results;
 - skipped checks and exact reasons;
 - commit SHA, push state, PR URL/state, and required-check state;

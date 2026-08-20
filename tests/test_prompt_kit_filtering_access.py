@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 JS = ROOT / "docs" / "prompt-kit.js"
+POLISH = ROOT / "docs" / "prompt-kit-polish.js"
 ACCESS = ROOT / "PROMPT_KIT_ACCESS.md"
 WEB_README = ROOT / "web" / "README.md"
 CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-filtering.v1.json"
@@ -24,11 +25,17 @@ class PromptKitFilteringAccessTests(unittest.TestCase):
                 "unique_categories",
                 "single_category_scope",
                 "unique_type_filters",
+                "all_view_full_reset",
                 "sequential_with_gaps",
                 "anchors_on_visible_categories",
                 "acquisition_discoverability",
             },
         )
+        expected = {item["id"]: item["expected"] for item in payload["requirements"]}
+        self.assertIn("complete prompt stream", expected["all_view_full_reset"])
+        self.assertIn("Favorites then All", expected["all_view_full_reset"])
+        self.assertIn("complete visible prompt-card stream", expected["sequential_with_gaps"])
+        self.assertIn("at most once", expected["unique_categories"])
 
     def test_category_and_type_controls_are_initialized(self) -> None:
         js = JS.read_text(encoding="utf-8")
@@ -39,15 +46,56 @@ class PromptKitFilteringAccessTests(unittest.TestCase):
         self.assertIn("aria-label','Prompt categories", js)
         self.assertIn("aria-label','Prompt types", js)
 
-    def test_render_groups_once_and_preserves_category_heading_when_filtered(self) -> None:
+    def test_all_view_is_an_atomic_reset_after_favorites(self) -> None:
+        js = JS.read_text(encoding="utf-8")
+        polish = POLISH.read_text(encoding="utf-8")
+
+        start = js.index("function resetPromptKitView()")
+        end = js.index("\n\nfunction showAddPrompt", start)
+        reset = js[start:end]
+        for marker in (
+            "activeCat='all'",
+            "activeSection=null",
+            "activeType=null",
+            "activeColor=null",
+            "collapsedSections={}",
+            "search.value=''",
+            "syncLibraryTabs()",
+            "renderSections()",
+            "renderTypes()",
+            "render()",
+        ):
+            self.assertIn(marker, reset)
+
+        favorites = polish[polish.index("function activateFavoritesView()") : polish.index("function ensureCompactBrowsingControls()")]
+        self.assertIn("activeSection='__favorites__'", favorites)
+
+        all_view = polish[polish.index("function activateAllPromptsView()") : polish.index("function activateFavoritesView()")]
+        self.assertIn("resetPromptKitView();", all_view)
+
+        switches = polish[polish.index("function installCompactBrowsingViewSwitches()") : polish.index("function installCompactBrowsingHotkeys()")]
+        self.assertIn(".cat-tab[data-cat=\"all\"]", switches)
+        self.assertIn("e.stopImmediatePropagation();", switches)
+        self.assertIn("activateAllPromptsView();", switches)
+
+        hotkeys = polish[polish.index("function installCompactBrowsingHotkeys()") : polish.index("window.appendPromptCard")]
+        key_one = hotkeys[hotkeys.index("if(e.key==='1')") : hotkeys.index("if(e.key==='4')")]
+        self.assertIn("e.preventDefault();", key_one)
+        self.assertIn("e.stopImmediatePropagation();", key_one)
+        self.assertIn("activateAllPromptsView();", key_one)
+
+        self.assertIn("installCompactBrowsingViewSwitches();", polish)
+        self.assertIn("installCompactBrowsingHotkeys();", polish)
+
+    def test_render_uses_unique_category_metadata_without_reordering_cards(self) -> None:
         js = JS.read_text(encoding="utf-8")
         self.assertIn("function groupPromptsBySection(prompts)", js)
-        self.assertIn("var groups=groupPromptsBySection(f);", js)
-        self.assertIn("groups.forEach(function(group)", js)
-        self.assertIn("appendSectionDivider(grid,group);", js)
-        self.assertIn("group.prompts.forEach(function(p){appendPromptCard(grid,p)})", js)
+        self.assertIn("var groups=groupPromptsBySection(orderedPrompts),groupByName={},renderedSections={};", js)
+        self.assertIn("groups.forEach(function(group){groupByName[group.name]=group});", js)
+        self.assertIn("orderedPrompts.forEach(function(p)", js)
+        self.assertIn("if(!renderedSections[sectionName]){appendSectionDivider(grid,group);renderedSections[sectionName]=true}", js)
+        self.assertIn("appendPromptCard(grid,p);visiblePromptIndex++;", js)
         self.assertNotIn("sectionName!==lastSection&&!activeSection&&!activeType", js)
-        self.assertIn("if(activeSection){var secTypes=[];", js)
         self.assertIn("divider.setAttribute('data-category',group.name)", js)
 
     def test_grouping_is_unique_and_numeric_for_noncontiguous_prompt_ids(self) -> None:
@@ -61,7 +109,6 @@ var SECTIONS=[
  {name:'Build & Repair',types:['BUILD','REPAIR'],glow:'#2'},
  {name:'Validate & Protect',types:['VALIDATE'],glow:'#3'}
 ];
-function isFavoritePrompt(id){return false;}
 """ + helpers + r"""
 var prompts=[
  {id:'P10',seq:'10',type:'BUILD'},
@@ -93,6 +140,9 @@ process.stdout.write(JSON.stringify(groups.map(function(g){
         )
         names = [item["name"] for item in groups]
         self.assertEqual(len(names), len(set(names)))
+        for group in groups:
+            seqs = [int(item[1:]) for item in group["ids"]]
+            self.assertEqual(seqs, sorted(seqs))
 
     def test_visible_category_divider_keeps_top_and_bottom_anchors(self) -> None:
         js = JS.read_text(encoding="utf-8")

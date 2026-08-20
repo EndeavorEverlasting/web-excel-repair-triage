@@ -1,0 +1,81 @@
+{
+  "schema_version": "pr-merge-gate/v1",
+  "contract_id": "pr-merge-gate",
+  "workflow_id": "pr-floor-integration",
+  "purpose": "Classify pull-request integration gates so a green, mergeable, authorized PR is merged instead of being mislabeled as a blocker, then route normal consumers to the canonical default branch after merge.",
+  "required_state_fields": [
+    "pr_number",
+    "state",
+    "merged",
+    "draft",
+    "mergeable",
+    "required_checks",
+    "unresolved_review_findings",
+    "head_sha",
+    "expected_head_sha",
+    "merge_intent",
+    "merge_authorized",
+    "default_branch",
+    "head_branch"
+  ],
+  "passing_required_check_conclusions": [
+    "success"
+  ],
+  "decision_order": [
+    "already_merged",
+    "closed_unmerged",
+    "head_moved",
+    "draft",
+    "mergeability_unresolved_or_conflicted",
+    "required_check_not_green",
+    "unresolved_review_findings",
+    "ready_for_review",
+    "handoff_merge_authority",
+    "merge_now"
+  ],
+  "merge_now_when": [
+    "pull request is open and not already merged",
+    "pull request is not draft",
+    "mergeable is true",
+    "every repository-required check conclusion is success",
+    "unresolved review finding count is zero",
+    "head_sha exactly equals expected_head_sha",
+    "merge intent exists",
+    "merge authority exists"
+  ],
+  "true_blockers": [
+    "pull request is closed without merge",
+    "expected head SHA moved",
+    "pull request is draft",
+    "mergeability is unknown or false",
+    "a repository-required check is not successful",
+    "an unresolved review finding remains",
+    "merge authority is unavailable when merge intent exists"
+  ],
+  "required_merge_action": "Merge immediately with expected-head protection, then verify the canonical default branch advanced to a commit containing the merged head before declaring integration complete.",
+  "post_merge_consumption": {
+    "canonical_default_branch": "main",
+    "normal_consumer_intents": [
+      "use",
+      "update",
+      "pull",
+      "acquire",
+      "open",
+      "install"
+    ],
+    "rules": [
+      "After merge, normal consumers must be routed to the canonical default branch or its registered public artifact, not instructed to fetch the merged feature branch.",
+      "Feature-branch retrieval after merge is allowed only for explicit historical, forensic, or branch-specific debugging intent.",
+      "A post-merge handoff must record the merge commit or verified default-branch commit before claiming mainline availability."
+    ]
+  },
+  "forbidden_outcomes": [
+    "reporting a green mergeable merge-authorized PR as a blocker",
+    "stopping at PR review or PR status when merge is authorized and every merge gate is satisfied",
+    "asking the operator for permission to merge when merge authority and merge intent are already explicit",
+    "telling normal users to fetch or pin a feature branch after that work has been merged to the canonical default branch",
+    "claiming integration complete without verifying the default branch advanced",
+    "merging when required checks, review findings, mergeability, expected-head identity, or authority remain unresolved"
+  ],
+  "proof_ceiling": "The contract and classifier prove deterministic merge-gate classification and post-merge handoff rules for supplied PR state. Actual provider merge success and default-branch advancement require observed Git/GitHub evidence."
+}

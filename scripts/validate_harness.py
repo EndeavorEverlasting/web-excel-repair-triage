@@ -76,6 +76,7 @@ REQUIRED_WORKFLOW_IDS = {
     "pr-floor-integration",
     "prompt-language-audit",
     "skill-evaluation",
+    "prompt-kit-browser-proof-cleanup",
 }
 REQUIRED_ARTIFACT_IDS = {
     "harness-control-plane",
@@ -85,6 +86,7 @@ REQUIRED_ARTIFACT_IDS = {
     "prompt-kit-interaction-audit-report",
     "prompt-language-audit-report",
     "workbook-engine-output",
+    "prompt-kit-browser-proof-cleanup-report",
 }
 REQUIRED_VALIDATOR_IDS = {
     "harness-completeness",
@@ -101,6 +103,11 @@ REQUIRED_VALIDATOR_IDS = {
     "artifact-hygiene",
     "patch-hygiene",
     "patch-hygiene-staged",
+    "prompt-kit-browser-proof-cleanup-completeness",
+    "prompt-kit-browser-proof-cleanup-tests",
+    "prompt-kit-browser-proof-cleanup-powershell-smoke",
+    "prompt-kit-responsive-layout-audit",
+    "prompt-kit-responsive-layout-tests",
 }
 REQUIRED_CAPABILITY_IDS = {
     "harness-infrastructure-maintenance",
@@ -108,6 +115,8 @@ REQUIRED_CAPABILITY_IDS = {
     "skill-evaluation",
     "skill-factoring",
     "technician-prompt-kit-acquisition",
+    "prompt-kit-browser-proof-scratch-cleanup",
+    "prompt-kit-responsive-layout",
 }
 REQUIRED_TRIGGER_IDS = {
     "harness-infrastructure-change",
@@ -116,6 +125,8 @@ REQUIRED_TRIGGER_IDS = {
     "skill-quality-unproven",
     "skill-boundary-defect",
     "technician-needs-latest-prompt-kit",
+    "prompt-kit-browser-proof-temp-path",
+    "prompt-kit-responsive-overlap",
 }
 PROTECTED_PATHS = ("Candidates/", "Active/")
 
@@ -384,6 +395,7 @@ def validate_workflow_registry() -> dict[str, Any]:
         "e-pr-floor-cleanup-and-integration",
         "f-prompt-language-audit-or-repair",
         "g-skill-evaluation-build",
+        "h-prompt-kit-browser-proof-scratch-cleanup",
     }
     by_id: dict[str, dict[str, Any]] = {}
     for workflow in workflows:

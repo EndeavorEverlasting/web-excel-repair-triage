@@ -14,8 +14,9 @@ import build_prompt_kit_registry
 
 
 class GreenBranchIntegrationPolicyTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.policy = json.loads(
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.policy = json.loads(
             (
                 ROOT
                 / "registry"
@@ -23,12 +24,17 @@ class GreenBranchIntegrationPolicyTests(unittest.TestCase):
                 / "actionable-next-step-policy.v1.json"
             ).read_text(encoding="utf-8")
         )
+        cls.prompts = {
+            prompt["id"]: prompt
+            for prompt in build_prompt_kit_registry.load_prompt_registry()
+        }
 
-    def test_policy_defines_fail_closed_green_merge_gate(self) -> None:
+    def test_policy_defines_fail_closed_default_branch_merge_gate(self) -> None:
         self.assertEqual(
             self.policy["integration_marker"],
             "GREEN BRANCH INTEGRATION CONTRACT",
         )
+        self.assertIn("main", self.policy["integration_target"])
         conditions = "\n".join(self.policy["green_merge_conditions"]).lower()
         for phrase in (
             "exact current head",
@@ -50,64 +56,49 @@ class GreenBranchIntegrationPolicyTests(unittest.TestCase):
         ):
             self.assertIn(phrase, exceptions)
 
-    def test_every_effective_prompt_encourages_same_run_green_merge(self) -> None:
-        prompts = build_prompt_kit_registry.load_prompt_registry()
-        self.assertGreater(len(prompts), 0)
+    def test_every_effective_prompt_encourages_same_run_default_branch_merge(self) -> None:
         marker = self.policy["integration_marker"]
-        for prompt in prompts:
+        for prompt in self.prompts.values():
             with self.subTest(prompt=prompt["id"]):
                 copy_content = str(prompt["copyContent"])
                 next_step = str(prompt["nextStep"]).lower()
                 self.assertIn(marker, copy_content)
-                self.assertIn("merge it in the same run", next_step)
+                self.assertIn("merge it into the current default branch in the same run", next_step)
                 self.assertIn("required checks", next_step)
                 self.assertIn("owning harness validators", next_step)
-                self.assertIn("green", next_step)
+
+    def test_p07_explicitly_supersedes_branch_only_legacy_completion(self) -> None:
+        p07 = self.prompts["P07"]
+        content = p07["copyContent"]
+        self.assertEqual(p07["name"], "Repo Sprint Executor")
+        self.assertIn("P07 MAINLINE CONVERGENCE OVERRIDE", content)
+        self.assertIn("Any earlier legacy sentence", content)
+        self.assertIn("Do the repo work. Commit it. Then stop.", content)
+        self.assertIn("is superseded by this section", content)
+        self.assertIn("must not create a feature branch merely because repository mutation is requested", content)
+        self.assertIn("open pull request", content)
+        self.assertIn("intermediate evidence only", content)
+        self.assertIn("None is sufficient completion", content)
+        self.assertIn("integration target", content)
+        self.assertIn("pre/post default-branch SHA", content)
+        self.assertIn("exact blocking gate", content)
 
     def test_green_pr_status_is_explicitly_not_a_terminal_action(self) -> None:
         forbidden = "\n".join(self.policy["forbidden_solo_actions"]).lower()
         self.assertIn("report that a pull request is green without merging it", forbidden)
         appendix = self.policy["copy_content_appendix"].lower()
         self.assertIn("do not merely report that it is green", appendix)
-        self.assertIn("bounded implementation scope limits what may be changed", appendix)
+        self.assertIn("open pr, pushed feature branch, or green status is not a valid terminal state", appendix)
+        self.assertIn("normal completion state", appendix)
 
-    def test_harness_workflows_own_green_integration(self) -> None:
-        payload = json.loads(
-            (ROOT / "harness" / "workflows.v1.json").read_text(encoding="utf-8")
-        )
-        workflows = {item["id"]: item for item in payload["workflows"]}
-        pr_floor = workflows["pr-floor-integration"]
-        self.assertIn("ready to integrate", pr_floor["trigger"].lower())
-        self.assertIn(
-            "merge execution for exact validated green heads",
-            pr_floor["owned_scope"],
-        )
-        self.assertIn("merge in dependency order in the same run", pr_floor["failure_policy"].lower())
-
-        for workflow_id in (
-            "prompt-kit-change",
-            "harness-infrastructure",
-            "artifact-engine-change",
-            "prompt-language-audit",
-            "skill-evaluation",
-        ):
-            with self.subTest(workflow=workflow_id):
-                owned = workflows[workflow_id]["owned_scope"]
-                self.assertIn("integration of the exact validated owned PR head", owned)
-
-    def test_harness_skills_do_not_stop_at_green_pr_handoff(self) -> None:
-        prompt_skill = (
-            ROOT / ".ai" / "skills" / "prompt-language-audit" / "SKILL.md"
-        ).read_text(encoding="utf-8")
-        harness_skill = (
-            ROOT / ".ai" / "skills" / "harness-infrastructure-maintenance" / "SKILL.md"
-        ).read_text(encoding="utf-8")
-        for content in (prompt_skill, harness_skill):
-            lowered = content.lower()
-            self.assertIn("merge it in the same run", lowered)
-            self.assertIn("exact validated", lowered)
-            self.assertIn("required checks", lowered)
-            self.assertIn("owning", lowered)
+    def test_new_branch_requires_evidence_that_existing_owner_cannot_carry_work(self) -> None:
+        reuse = self.policy["existing_work_reuse"]
+        rule = reuse["rule"].lower()
+        self.assertIn("before creating a new branch or pull request", rule)
+        self.assertIn("reuse, repair, update, retarget, integrate, or extend", rule)
+        allowed = "\n".join(reuse["new_pr_allowed_when"]).lower()
+        self.assertIn("no suitable existing owner exists", allowed)
+        self.assertIn("scope isolation requires a distinct writer", allowed)
 
 
 if __name__ == "__main__":

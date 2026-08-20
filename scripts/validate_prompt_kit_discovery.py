@@ -79,12 +79,15 @@ def audit() -> dict[str, object]:
         "synonym_routing": "function synonymPromptIdsForQuery(q)",
         "body_noise_suppression": "strongFloor=maxScore>=40?10:1",
         "local_favorites": "promptKit.favoritePromptIds.v1",
-        "favorites_first": "name:'Favorites',glow:'#fbbf24'",
+        "favorites_first": "data-section=\"__favorites__\"",
         "favorite_accessibility": "favBtn.setAttribute('aria-pressed'",
     }
     for requirement_id, marker in base_markers.items():
         if marker not in js:
             missing.append(requirement_id)
+
+    if "name:'Favorites',glow:'#fbbf24'" in js:
+        missing.append("favorites_first")
 
     guided_markers = (
         "PROMPT_FINDER_QUESTIONS",
@@ -187,6 +190,12 @@ def audit() -> dict[str, object]:
         if marker not in registry_builder:
             missing.append("stable_identity_resequence")
             break
+    if (
+        "window.promptSequenceValue=rank" in guided_js
+        or "return apply_display_order(strengthened_prompts, load_display_order_policy())" in registry_builder
+        or "key=lambda prompt: (int(str(prompt[\"seq\"])), str(prompt[\"id\"]))" not in registry_builder
+    ):
+        missing.append("stable_identity_resequence")
 
     prompts = extension.get("prompts", []) if isinstance(extension, dict) else []
     by_id = {

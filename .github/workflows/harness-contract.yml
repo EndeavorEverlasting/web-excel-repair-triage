@@ -3,26 +3,41 @@ name: Operational harness contracts
 on:
   pull_request:
     paths:
+      - AGENTS.md
       - CODEBASE_MAP.md
       - WORKFLOW.md
       - ARTIFACT_REGISTRY.md
       - SKILLS.md
       - CAPABILITIES.md
       - TRIGGERS.md
+      - PROMPT_KIT_ACCESS.md
+      - OPEN_PROMPT_KIT_ON_PHONE.md
       - Acquire-Latest-PromptKit.cmd
+      - Open-Latest-PromptKit.cmd
       - harness/**
-      - registry/prompts/actionable-next-step-policy.v1.json
       - .ai/skills/**
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
+      - scripts/validate_context_architecture.py
       - scripts/validate_operator_command_envelope.py
+      - scripts/validate_pr_merge_gate.py
+      - scripts/validate_prompt_kit_cross_device_access.py
+      - scripts/validate_prompt_kit_freshness_guidance.py
+      - scripts/validate_prompt_kit_release_identity.py
+      - scripts/validate_prompt_kit_order_navigation.py
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
-      - tests/test_green_branch_integration_policy.py
+      - tests/test_context_architecture.py
+      - tests/test_governance_contract.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
+      - tests/test_pr_merge_gate.py
+      - tests/test_prompt_kit_cross_device_access.py
+      - tests/test_prompt_kit_freshness_guidance.py
+      - tests/test_prompt_kit_release_identity.py
+      - tests/test_prompt_kit_order_navigation_contract.py
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_language_audit.py
@@ -30,26 +45,41 @@ on:
   push:
     branches: [main]
     paths:
+      - AGENTS.md
       - CODEBASE_MAP.md
       - WORKFLOW.md
       - ARTIFACT_REGISTRY.md
       - SKILLS.md
       - CAPABILITIES.md
       - TRIGGERS.md
+      - PROMPT_KIT_ACCESS.md
+      - OPEN_PROMPT_KIT_ON_PHONE.md
       - Acquire-Latest-PromptKit.cmd
+      - Open-Latest-PromptKit.cmd
       - harness/**
-      - registry/prompts/actionable-next-step-policy.v1.json
       - .ai/skills/**
       - .githooks/**
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
+      - scripts/validate_context_architecture.py
       - scripts/validate_operator_command_envelope.py
+      - scripts/validate_pr_merge_gate.py
+      - scripts/validate_prompt_kit_cross_device_access.py
+      - scripts/validate_prompt_kit_freshness_guidance.py
+      - scripts/validate_prompt_kit_release_identity.py
+      - scripts/validate_prompt_kit_order_navigation.py
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
-      - tests/test_green_branch_integration_policy.py
+      - tests/test_context_architecture.py
+      - tests/test_governance_contract.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
+      - tests/test_pr_merge_gate.py
+      - tests/test_prompt_kit_cross_device_access.py
+      - tests/test_prompt_kit_freshness_guidance.py
+      - tests/test_prompt_kit_release_identity.py
+      - tests/test_prompt_kit_order_navigation_contract.py
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_language_audit.py
@@ -73,16 +103,32 @@ jobs:
         run: |
           python -m py_compile \
             scripts/validate_harness.py \
+            scripts/validate_context_architecture.py \
             scripts/validate_operator_command_envelope.py \
+            scripts/validate_pr_merge_gate.py \
+            scripts/validate_prompt_kit_cross_device_access.py \
+            scripts/validate_prompt_kit_freshness_guidance.py \
+            scripts/validate_prompt_kit_release_identity.py \
+            scripts/validate_prompt_kit_order_navigation.py \
             scripts/validate_prompt_kit_interactions.py \
             scripts/validate_prompt_kit_discovery.py \
             scripts/evaluate_prompt_language.py \
-            tests/test_green_branch_integration_policy.py \
+            tests/test_context_architecture.py \
+            tests/test_governance_contract.py \
             tests/test_harness_contract.py \
             tests/test_operator_command_envelope.py \
+            tests/test_pr_merge_gate.py \
+            tests/test_prompt_kit_cross_device_access.py \
+            tests/test_prompt_kit_freshness_guidance.py \
+            tests/test_prompt_kit_release_identity.py \
+            tests/test_prompt_kit_order_navigation_contract.py \
             tests/test_prompt_kit_interactions_contract.py \
             tests/test_prompt_kit_discovery.py \
             tests/test_prompt_language_audit.py
+      - name: Validate context architecture and governance factoring
+        run: |
+          python scripts/validate_context_architecture.py --summary
+          python -m unittest tests.test_context_architecture tests.test_governance_contract -v
       - name: Validate operator proof PowerShell syntax
         shell: pwsh
         run: |
@@ -90,6 +136,38 @@ jobs:
           $source = Get-Content -LiteralPath 'harness/templates/Invoke-RemoteHarnessProof.ps1' -Raw -Encoding UTF8
           $null = [scriptblock]::Create($source)
           Write-Host 'Operator remote-proof PowerShell syntax: PASS'
+      - name: Validate Prompt Kit cross-device access
+        run: |
+          python scripts/validate_prompt_kit_cross_device_access.py --summary
+          python -m unittest tests.test_prompt_kit_cross_device_access -v
+      - name: Validate Prompt Kit freshness guidance
+        run: |
+          python scripts/validate_prompt_kit_freshness_guidance.py --summary
+          python -m unittest tests.test_prompt_kit_freshness_guidance -v
+      - name: Validate PR merge gate
+        run: |
+          python scripts/validate_pr_merge_gate.py --summary
+          python -m unittest tests.test_pr_merge_gate -v
+      - name: Validate Prompt Kit release identity
+        run: |
+          python scripts/validate_prompt_kit_release_identity.py --output "$RUNNER_TEMP/prompt-kit-release-identity.json" --summary
+          python -m unittest tests.test_prompt_kit_release_identity -v
+      - name: Upload Prompt Kit release identity report
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-release-identity-report
+          path: ${{ runner.temp }}/prompt-kit-release-identity.json
+          if-no-files-found: error
+      - name: Validate Prompt Kit ordering and long-list navigation harness
+        run: |
+          python scripts/validate_prompt_kit_order_navigation.py --output "$RUNNER_TEMP/prompt-kit-order-navigation-audit.json" --summary
+          python -m unittest tests.test_prompt_kit_order_navigation_contract -v
+      - name: Upload Prompt Kit order/navigation audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-order-navigation-audit
+          path: ${{ runner.temp }}/prompt-kit-order-navigation-audit.json
+          if-no-files-found: error
       - name: Validate operator command envelope
         run: |
           python scripts/validate_operator_command_envelope.py --summary
@@ -108,7 +186,6 @@ jobs:
           python -m unittest tests.test_prompt_kit_interactions_contract -v
           python -m unittest tests.test_prompt_kit_discovery -v
           python -m unittest tests.test_prompt_language_audit -v
-          python -m unittest tests.test_green_branch_integration_policy -v
       - name: Audit Prompt Kit interaction contract
         run: python scripts/validate_prompt_kit_interactions.py --output "$RUNNER_TEMP/prompt-kit-interaction-audit.json" --summary
       - name: Upload Prompt Kit interaction audit

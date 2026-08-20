@@ -87,7 +87,10 @@ def load_raw_registry() -> list[dict[str, Any]]:
         if not isinstance(prompts, list):
             raise PromptLanguageAuditError(f"extension prompts must be an array: {path}")
         raw.extend(prompts)
-    return raw
+    try:
+        return build_prompt_kit_registry.apply_prompt_overrides(raw)
+    except SystemExit as exc:
+        raise PromptLanguageAuditError(str(exc)) from exc
 
 
 def load_effective_registry() -> list[dict[str, Any]]:
