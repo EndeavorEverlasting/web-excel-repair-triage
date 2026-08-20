@@ -75,6 +75,7 @@ def _dashboard(spec: Mapping[str, Any], metrics: Mapping[str, Any], profile: Map
         right = s["wrapped_total_right"] if last else s["wrapped_right"]
         rows.setdefault(r, []).append(Cell(f"G{r}", left, item["theme"]))
         _add_merged(rows, merges, f"H{r}:L{r}", mid, item["readout"])
+        # Preserve a right-edge border on the merged group as the reference family does.
         rows[r] = [cell if cell.ref != f"L{r}" else Cell(f"L{r}", right) for cell in rows[r]]
 
     second_section = max(18, 10 + max(len(techs) + 1, len(themes)) + 3)
@@ -254,6 +255,7 @@ def _billing_support(spec: Mapping[str, Any], profile: Mapping[str, Any]) -> byt
         Cell("B4", s["detail_header_right"], "Grounded statement"),
     ]
     items = spec["billing_support_context"]
+    # Always anchor direct month totals first; supplied context extends rather than replaces truth.
     auto_items: list[dict[str, Any]] = [
         {"control": f"{spec['month_label'].split()[0]} NTH", "statement": f"{_num(derive_metrics(spec)['total_paid_hours'])} paid hours across {derive_metrics(spec)['completed_shift_records']} shift records."}
     ]
@@ -326,4 +328,3 @@ def _technical_scope(spec: Mapping[str, Any], profile: Mapping[str, Any]) -> byt
     closing_row = 5 + len(items) + 2
     _add_merged(rows, merges, f"A{closing_row}:B{closing_row+3}", s["boundary_note"], spec["technical_scope_closing_note"])
     return _worksheet_xml(widths, rows, merges)
-
