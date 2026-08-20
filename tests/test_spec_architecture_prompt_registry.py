@@ -237,6 +237,47 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("Multi-Tier Cache Architecture & Invalidation Hardener", html)
         self.assertIn("Prototype-Measure-Refine Delivery Loop", html)
 
+    def test_prompt_semantic_hardener_selectively_integrates_stronger_principles(self) -> None:
+        matches = [
+            prompt
+            for prompt in self.full.values()
+            if prompt["name"] == "Prompt Semantic Hardener & Principle Integrator"
+        ]
+        self.assertEqual(len(matches), 1)
+        prompt = matches[0]
+        content = prompt["copyContent"]
+        raw_content = self.raw[prompt["id"]]["copyContent"]
+        self.assertEqual(prompt["id"], "P86")
+        self.assertEqual(prompt["seq"], "86")
+        self.assertEqual(prompt["copySheet"], "P86_COPY_SAFE")
+        self.assertEqual(prompt["category"], "standard")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["color"], "Cyan")
+        self.assertEqual(prompt["class"], "PROMPT KIT / PROMPT ARCHITECTURE")
+        self.assertIn("RAW VS EFFECTIVE PROMPT", content)
+        self.assertIn("PRINCIPLE APPLICABILITY MATRIX", content)
+        self.assertIn("COMPATIBLE, INCOMPATIBLE, or NOT NEEDED", content)
+        self.assertIn("P03 REFERENCE CASE", content)
+        for donor in ("P07", "P13", "P48", "P76", "P83", "P84", "P85"):
+            self.assertIn(donor, content)
+        self.assertIn(
+            "do not transform P03 into P07, P13, P48, P76, P83, P84, or P85",
+            content,
+        )
+        self.assertIn("Do not copy every strong rule into every prompt", content)
+        self.assertIn("shared policy", content.lower())
+        self.assertIn("Extend the closest existing focused test", content)
+        self.assertIn("one deliberate second pass", content)
+        self.assertIn(
+            "Refresh again immediately before final exact-head conclusions", content
+        )
+        self.assertLess(len(raw_content), 7600)
+        self.assertGreater(len(raw_content), 3000)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+        html = build_prompt_kit_registry.render()
+        self.assertIn("Prompt Semantic Hardener & Principle Integrator", html)
+
 
 if __name__ == "__main__":
     unittest.main()
