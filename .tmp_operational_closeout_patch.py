@@ -45,7 +45,6 @@ def strengthen_record(record: dict, *, label: str) -> None:
         record["proofGate"] = gate.rstrip(". ") + ". " + phrase3 + "."
 
 
-# Shared effective-policy owner.
 policy_path = "registry/prompts/actionable-next-step-policy.v1.json"
 policy = load(policy_path)
 policy["closeout_marker"] = MARKER
@@ -58,7 +57,6 @@ if suffix_add.strip() not in str(policy["next_step_suffix"]):
 policy["copy_content_appendix"] = append_once(str(policy["copy_content_appendix"]), BLOCK)
 dump(policy_path, policy)
 
-# Raw direct-consumer protection: build executor, sprint executor, live cert, and cross-agent verifier.
 docs_path = "docs/prompts.json"
 docs = load(docs_path)
 for prompt_id in ("P03", "P07", "P48"):
@@ -70,7 +68,6 @@ ledger = load(ledger_path)
 strengthen_record(next(p for p in ledger["prompts"] if p.get("id") == "P83"), label="P83")
 dump(ledger_path, ledger)
 
-# Builder must fail closed on the new marker and upgrade stale already-injected appendices.
 builder_path = ROOT / "scripts" / "build_prompt_kit_registry.py"
 builder = builder_path.read_text(encoding="utf-8")
 builder = builder.replace(
@@ -98,7 +95,6 @@ for needle in ('"closeout_marker",', 'has_current_closeout', 'operational closeo
         raise SystemExit(f"builder patch failed to install {needle}")
 builder_path.write_text(builder, encoding="utf-8")
 
-# Runtime/live-cert domain law needs the same closeout semantics even outside Prompt Kit rendering.
 operator_path = ROOT / "harness" / "specs" / "operator-delivery.md"
 operator = operator_path.read_text(encoding="utf-8")
 operator_section = """## Actionable runtime / live-cert closeout
@@ -115,11 +111,9 @@ if "## Actionable runtime / live-cert closeout" not in operator:
     operator = operator.replace(anchor, "\n" + operator_section + "\n" + anchor)
 operator_path.write_text(operator, encoding="utf-8")
 
-# Focused permanent proof.
 test_path = ROOT / "tests" / "test_operational_closeout_contract.py"
 test_path.write_text('''from __future__ import annotations\n\nimport json\nimport unittest\nfrom pathlib import Path\n\nfrom scripts import build_prompt_kit_registry\n\nROOT = Path(__file__).resolve().parents[1]\nMARKER = "OPERATIONAL CLOSEOUT / GAP-RISK CONTRACT"\n\n\nclass OperationalCloseoutContractTests(unittest.TestCase):\n    @classmethod\n    def setUpClass(cls) -> None:\n        cls.policy = build_prompt_kit_registry.load_actionability_policy()\n        cls.effective = {p["id"]: p for p in build_prompt_kit_registry.load_prompt_registry()}\n        cls.base = {p["id"]: p for p in json.loads((ROOT / "docs" / "prompts.json").read_text(encoding="utf-8"))}\n        ledger = json.loads((ROOT / "registry" / "prompts" / "repository-work-ledger-prompts.v1.json").read_text(encoding="utf-8"))\n        cls.ledger = {p["id"]: p for p in ledger["prompts"]}\n\n    def test_shared_policy_requires_gap_risk_blocker_and_executable_continuation(self) -> None:\n        self.assertEqual(self.policy["closeout_marker"], MARKER)\n        appendix = self.policy["copy_content_appendix"]\n        for phrase in (\n            "REMAINING GAPS", "RISKS", "BLOCKERS", "PROOF CEILING",\n            "INTEGRATION STATE", "NEXT ACTION / NEXT STEPS",\n            "owner, dependency, exact command or operator action",\n            "none; no safe actionable work remains",\n        ):\n            self.assertIn(phrase, appendix)\n\n    def test_operational_effective_prompts_inherit_closeout_contract(self) -> None:\n        tokens = ("BUILD", "REPAIR", "ARTIFACT", "RUNTIME", "CERT", "DEPLOY", "VERIFY", "ADVANCE")\n        selected = [p for p in self.effective.values() if any(t in str(p["type"]).upper() for t in tokens)]\n        self.assertGreater(len(selected), 0)\n        for prompt in selected:\n            with self.subTest(prompt_id=prompt["id"], prompt_type=prompt["type"]):\n                content = prompt["copyContent"]\n                self.assertIn(MARKER, content)\n                self.assertIn("REMAINING GAPS", content)\n                self.assertIn("PROOF CEILING", content)\n                self.assertIn("first executable continuation", content)\n\n    def test_p03_p07_p48_and_p83_are_strong_even_without_policy_injection(self) -> None:\n        for prompt in (self.base["P03"], self.base["P07"], self.base["P48"], self.ledger["P83"]):\n            with self.subTest(prompt_id=prompt["id"]):\n                self.assertIn(MARKER, prompt["copyContent"])\n                self.assertIn("remaining gaps, risks, blockers, proof ceiling, integration state", prompt["expectedOutput"].lower())\n                self.assertIn("Report the current gap/risk/blocker", prompt["nextStep"])\n                self.assertIn("Closeout is incomplete", prompt["proofGate"])\n\n    def test_builder_upgrades_legacy_appendix_missing_closeout(self) -> None:\n        prompt = dict(self.base["P07"])\n        marker = self.policy["marker"]\n        prompt["copyContent"] = "BASE\\n\\n" + marker + "\\n- Do not leave NEXT COMMAND blank.\\n\\n" + self.policy["integration_marker"] + "\\n- merge.\\n\\n" + self.policy["freshness_marker"] + "\\n- fetch."\n        upgraded = build_prompt_kit_registry.apply_actionability_policy(prompt, self.policy)\n        self.assertIn(MARKER, upgraded["copyContent"])\n        self.assertEqual(upgraded["copyContent"].count(marker), 1)\n        self.assertEqual(upgraded["copyContent"].count(MARKER), 1)\n\n    def test_live_cert_domain_law_requires_actionable_closeout(self) -> None:\n        text = (ROOT / "harness" / "specs" / "operator-delivery.md").read_text(encoding="utf-8")\n        self.assertIn("## Actionable runtime / live-cert closeout", text)\n        self.assertIn("remaining gaps; risks; blockers; proof ceiling; integration state", text)\n        self.assertIn("owner, dependency, exact command or operator action", text)\n        self.assertIn("genuine operator-only gate", text)\n\n    def test_generated_site_is_exact_and_contains_closeout_contract(self) -> None:\n        actual = (ROOT / "web" / "prompt-kit" / "index.html").read_text(encoding="utf-8")\n        self.assertEqual(actual, build_prompt_kit_registry.render())\n        self.assertIn(MARKER, actual)\n\n\nif __name__ == "__main__":\n    unittest.main()\n''', encoding="utf-8")
 
-# Permanently run the focused contract wherever freshness/actionability changes are checked.
 workflow_path = ROOT / ".github" / "workflows" / "prompt-freshness-evidence.yml"
 workflow = workflow_path.read_text(encoding="utf-8")
 path_line = "      - 'tests/test_remote_freshness_p13_iteration.py'"
@@ -134,3 +128,5 @@ if "tests/test_operational_closeout_contract.py" not in workflow:
 workflow_path.write_text(workflow, encoding="utf-8")
 
 subprocess.run(["python", "scripts/build_prompt_kit_registry.py", "--output", "web/prompt-kit/index.html"], cwd=ROOT, check=True)
+
+# trigger: workflow already exists on this branch
