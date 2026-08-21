@@ -4,21 +4,28 @@ on:
   push:
     branches:
       - feat/prompt-kit-bidirectional-repository-hook-router-20260821
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
 
 concurrency:
-  group: prompt-hook-contrib-${{ github.ref }}
+  group: prompt-hook-contrib-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
   contribute:
-    if: github.actor != 'github-actions[bot]'
+    if: >-
+      github.actor != 'github-actions[bot]' &&
+      (github.event_name != 'pull_request' || github.head_ref == 'feat/prompt-kit-bidirectional-repository-hook-router-20260821')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref || github.ref_name }}
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
@@ -131,4 +138,4 @@ jobs:
           printf '%s\n' "Durable staged files:"
           git diff --cached --name-only
           git commit -m "feat(prompt-kit): add bidirectional repository hook router"
-          git push origin HEAD:${GITHUB_REF_NAME}
+          git push origin HEAD:${{ github.head_ref || github.ref_name }}
