@@ -1,0 +1,35 @@
+{
+  "schema_version": "lua-command-safety-contract/v1",
+  "contract_id": "lua-host-command-safety",
+  "result_schema_version": "lua-command-safety-result/v1",
+  "checker_version": "1.0.0",
+  "required_top_level_fields": ["schema_version", "checker_version", "findings"],
+  "required_finding_fields": ["rule_id", "severity", "category", "shell_or_language", "location", "evidence", "host_action", "remediation_hint", "retryable"],
+  "severities": ["WARN", "BLOCK"],
+  "categories": ["wrong_shell", "quoting", "platform_assumption", "failure_propagation", "destructive_scope", "canonical_bypass", "partial_operation"],
+  "shell_or_language_values": ["generic", "powershell", "cmd", "bash"],
+  "host_action_by_severity": {"WARN": "PRESERVE_DIAGNOSTIC", "BLOCK": "BLOCK_AND_REPAIR"},
+  "host_outcomes": {
+    "PASS": "valid structured result with no findings; host may continue to deliberate second-pass review",
+    "WARN": "valid structured result with non-blocking findings; host preserves diagnostics and continues only when profile permits",
+    "BLOCK": "one or more blocking findings; host prevents execution/handoff and returns control to repair",
+    "CHECKER_FAILURE": "Lua/runtime/schema/checker failure; host fails closed and never reinterprets it as PASS"
+  },
+  "sandbox": {
+    "default_deny": true,
+    "lua_os": false,
+    "lua_io": false,
+    "lua_package": false,
+    "native_module_loading": false,
+    "python_bridge": false,
+    "host_functions_exposed": []
+  },
+  "repair_loop": {
+    "owner": "python_host",
+    "sequence": ["SCAN", "LUA_FLAGS", "HOST_BLOCK_OR_RAISE", "AGENT_REPAIR", "REVALIDATE"],
+    "minimum_consecutive_clean_passes": 2,
+    "command_execution_owned_by_lua": false,
+    "user_handoff_owned_by_lua": false
+  },
+  "proof_ceiling": "Contract for one command-text inspection lane. It does not prove arbitrary shell semantics, production command execution, hostile-script sandbox escape resistance, or every command class."
+}
