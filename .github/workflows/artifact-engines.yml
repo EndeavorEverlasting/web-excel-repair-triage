@@ -54,7 +54,9 @@ jobs:
             -q
 
   prompt-hook-executor:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && github.head_ref == 'chore/execute-bidirectional-hook-via-pr-ci-20260821')
     runs-on: ubuntu-latest
     permissions:
       contents: write
