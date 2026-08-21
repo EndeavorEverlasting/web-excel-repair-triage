@@ -1,0 +1,50 @@
+name: Operational closeout prompt hardening
+
+on:
+  push:
+    branches:
+      - feat/prompt-operational-closeout-contract-20260821
+    paths:
+      - '.tmp_operational_closeout_patch.py'
+      - '.github/workflows/tmp-operational-closeout-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply bounded closeout hardening
+        run: python .tmp_operational_closeout_patch.py
+      - name: Validate closeout, freshness, integration, and Prompt Kit parity
+        run: |
+          python -m py_compile scripts/build_prompt_kit_registry.py tests/test_operational_closeout_contract.py
+          python -m unittest tests.test_operational_closeout_contract tests.test_remote_freshness_p13_iteration tests.test_actionable_prompt_registry tests.test_green_branch_integration_policy tests.test_repository_work_ledger_prompt tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit durable closeout contract only
+        run: |
+          set -euo pipefail
+          git rm .tmp_operational_closeout_patch.py .github/workflows/tmp-operational-closeout-patch.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            docs/prompts.json \
+            registry/prompts/actionable-next-step-policy.v1.json \
+            registry/prompts/repository-work-ledger-prompts.v1.json \
+            scripts/build_prompt_kit_registry.py \
+            tests/test_operational_closeout_contract.py \
+            harness/specs/operator-delivery.md \
+            .github/workflows/prompt-freshness-evidence.yml \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m "feat(prompt-kit): require actionable operational closeout"
+          git push origin HEAD
