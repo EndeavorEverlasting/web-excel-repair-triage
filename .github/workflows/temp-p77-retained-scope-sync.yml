@@ -1,0 +1,81 @@
+name: temp-p77-retained-scope-sync
+
+on:
+  push:
+    branches:
+      - fix/p77-retained-scope-carryforward-20260821
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: fix/p77-retained-scope-carryforward-20260821
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Strengthen P77 retained-scope behavior and regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          registry_path = Path('registry/prompts/management-operations-prompts.v1.json')
+          data = json.loads(registry_path.read_text(encoding='utf-8'))
+          p77 = next(item for item in data['prompts'] if item['id'] == 'P77')
+          marker = '\n\nEXECUTE THE DEPENDENCY MAP\n'
+          section = '''\n\nRETAINED PROGRAM SCOPE / NARROWED SOURCE CONTRACT
+- Treat a later narrowed, filtered, edited, or strike-through worksheet/view as view-state evidence; it does not by itself prove that previously verified program-scope rows were permanently removed.
+- Before deleting a previously verified site/device row from current scope, reconcile the current source against the latest preserved prior/deprecated program-scope evidence and any explicit program-level removal evidence.
+- Explicit program-level removal evidence supersedes preserved scope. Otherwise carry forward exact prior rows omitted only by later narrowing.
+- Never restore or exclude a row solely by fuzzy matching, substring/name similarity, or a similarly named surviving row; require exact row identity plus evidence state.
+- If a displayed aggregate conflicts with its row-level detail, preserve the contradiction and use row-level reconciliation for current scoped counts unless the authoritative source explicitly resolves the conflict.
+- Preserve the prior/deprecated source as dated evidence with stable identity and Drive/navigation routing when the workspace contract supports it.
+- Site/device quantities remain program-scale context and must not create or multiply paid hours.'''
+          content = p77['copyContent']
+          if 'RETAINED PROGRAM SCOPE / NARROWED SOURCE CONTRACT' not in content:
+              if content.count(marker) != 1:
+                  raise SystemExit(f'expected one dependency-map marker, found {content.count(marker)}')
+              p77['copyContent'] = content.replace(marker, section + marker, 1)
+          extra_output = ' Retained program-scope reconciliation preserves exact prior rows across narrowed sources, records contradictions, and routes dated prior evidence without manufacturing labor hours.'
+          if extra_output.strip() not in p77['expectedOutput']:
+              p77['expectedOutput'] += extra_output
+          extra_proof = ' A later narrowed worksheet cannot silently erase previously verified program scope: exact prior-row carry-forward, explicit-removal precedence, row-level reconciliation, and no-fuzzy-match behavior are all preserved.'
+          if extra_proof.strip() not in p77['proofGate']:
+              p77['proofGate'] += extra_proof
+          for keyword in ('retained scope', 'narrowed worksheet', 'deprecated sheet', 'scope carry-forward', 'program scope reconciliation'):
+              if keyword not in p77['keywords']:
+                  p77['keywords'].append(keyword)
+          registry_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          test_path = Path('tests/test_management_operations_prompt_registry.py')
+          test_text = test_path.read_text(encoding='utf-8')
+          anchor = '        self.assertIn("understand what it does not prove", content)\n'
+          assertions = '''        self.assertIn("RETAINED PROGRAM SCOPE / NARROWED SOURCE CONTRACT", content)\n        self.assertIn("does not by itself prove that previously verified program-scope rows were permanently removed", content)\n        self.assertIn("Explicit program-level removal evidence supersedes preserved scope", content)\n        self.assertIn("Never restore or exclude a row solely by fuzzy matching", content)\n        self.assertIn("use row-level reconciliation for current scoped counts", content)\n        self.assertIn("Site/device quantities remain program-scale context and must not create or multiply paid hours", content)\n'''
+          if 'RETAINED PROGRAM SCOPE / NARROWED SOURCE CONTRACT' not in test_text:
+              if test_text.count(anchor) != 1:
+                  raise SystemExit(f'expected one P77 assertion anchor, found {test_text.count(anchor)}')
+              test_text = test_text.replace(anchor, anchor + assertions, 1)
+              test_path.write_text(test_text, encoding='utf-8')
+          PY
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python -m unittest tests.test_management_operations_prompt_registry -v
+          git diff --check
+      - name: Commit canonical registry, regression, and generated site
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/temp-p77-retained-scope-sync.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add registry/prompts/management-operations-prompts.v1.json tests/test_management_operations_prompt_registry.py web/prompt-kit/index.html .github/workflows/temp-p77-retained-scope-sync.yml
+          git commit -m "fix(prompt-kit): preserve retained scope across narrowed sources"
+          git push origin HEAD:fix/p77-retained-scope-carryforward-20260821
