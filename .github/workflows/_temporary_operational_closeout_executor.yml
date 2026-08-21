@@ -20,11 +20,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Refresh exact feature and default-branch floors
+      - name: Refresh and reconcile exact feature/default-branch floors
         run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch --all --prune --tags
           test "$(git rev-parse HEAD)" = "$(git rev-parse origin/feat/prompt-operational-closeout-contract-20260821)"
-          git merge-base --is-ancestor origin/main HEAD
+          git merge --no-edit origin/main
       - name: Apply bounded operational closeout hardening
         run: python .tmp_operational_closeout_patch.py
       - name: Validate durable semantics and generated parity
@@ -34,12 +37,13 @@ jobs:
           python scripts/prompt_registry_ops.py validate
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
-      - name: Remove feature transport and commit durable change
+      - name: Remove all temporary transport and commit durable change
         run: |
           set -euo pipefail
-          git rm -f .tmp_operational_closeout_patch.py .github/workflows/tmp-operational-closeout-patch.yml
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -f \
+            .tmp_operational_closeout_patch.py \
+            .github/workflows/tmp-operational-closeout-patch.yml \
+            .github/workflows/_temporary_operational_closeout_executor.yml
           git add \
             .github/workflows/prompt-freshness-evidence.yml \
             docs/prompts.json \
