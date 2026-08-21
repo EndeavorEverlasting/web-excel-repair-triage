@@ -1,0 +1,55 @@
+name: Temporary Operational Closeout Executor
+
+on:
+  pull_request:
+    branches: [main]
+    types: [reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  apply-to-feature:
+    if: github.head_ref == 'feat/prompt-operational-closeout-contract-20260821' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-operational-closeout-contract-20260821
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Refresh exact feature and default-branch floors
+        run: |
+          git fetch --all --prune --tags
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/feat/prompt-operational-closeout-contract-20260821)"
+          git merge-base --is-ancestor origin/main HEAD
+      - name: Apply bounded operational closeout hardening
+        run: python .tmp_operational_closeout_patch.py
+      - name: Validate durable semantics and generated parity
+        run: |
+          python -m py_compile scripts/build_prompt_kit_registry.py tests/test_operational_closeout_contract.py
+          python -m unittest tests.test_operational_closeout_contract tests.test_remote_freshness_p13_iteration tests.test_actionable_prompt_registry tests.test_green_branch_integration_policy tests.test_repository_work_ledger_prompt tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Remove feature transport and commit durable change
+        run: |
+          set -euo pipefail
+          git rm -f .tmp_operational_closeout_patch.py .github/workflows/tmp-operational-closeout-patch.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            .github/workflows/prompt-freshness-evidence.yml \
+            docs/prompts.json \
+            harness/specs/operator-delivery.md \
+            registry/prompts/actionable-next-step-policy.v1.json \
+            registry/prompts/repository-work-ledger-prompts.v1.json \
+            scripts/build_prompt_kit_registry.py \
+            tests/test_operational_closeout_contract.py \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m 'feat(prompt-kit): require actionable operational closeout'
+          git push origin HEAD:feat/prompt-operational-closeout-contract-20260821
