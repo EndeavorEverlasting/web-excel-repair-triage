@@ -1,6 +1,10 @@
 name: Temporary Operational Closeout Executor
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/_temporary_operational_closeout_executor.yml'
   pull_request:
     branches: [main]
     types: [reopened]
@@ -10,7 +14,7 @@ permissions:
 
 jobs:
   apply-to-feature:
-    if: github.head_ref == 'feat/prompt-operational-closeout-contract-20260821' && github.actor != 'github-actions[bot]'
+    if: (github.event_name == 'push' || github.head_ref == 'feat/prompt-operational-closeout-contract-20260821') && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
