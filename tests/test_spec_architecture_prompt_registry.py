@@ -319,5 +319,36 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn('Bidirectional Use-Case Hook & Repository Route Builder', html)
 
 
+    def test_lua_flagging_host_enforcement_prompt_preserves_host_control_and_repair_loop(self) -> None:
+        matches = [
+            prompt
+            for prompt in self.full.values()
+            if prompt["name"] == "Lua Flagging + Host Enforcement Repair Loop"
+        ]
+        self.assertEqual(len(matches), 1)
+        prompt = matches[0]
+        content = prompt["copyContent"]
+        raw_content = self.raw[prompt["id"]]["copyContent"]
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["color"], "Cyan")
+        self.assertEqual(prompt["class"], "HARNESS / LUA HOST ENFORCEMENT")
+        self.assertIn("Lua detects and classifies command defects", content)
+        self.assertIn("host language validates the finding schema", content)
+        self.assertIn("Lua error, malformed Lua result, or checker failure", content)
+        self.assertIn("wrong-shell syntax", content)
+        self.assertIn("Bash constructs emitted for a PowerShell or CMD operator path", content)
+        self.assertIn("CHECKER_FAILURE", content)
+        self.assertIn("SCAN -> LUA FLAGS -> HOST BLOCK/RAISE -> AGENT REPAIR -> REVALIDATE", content)
+        self.assertIn("Pass 2 must inspect the repaired command plus nearby failure classes", content)
+        self.assertIn("Do not ask the user to choose between technically equivalent safe implementations", content)
+        self.assertIn("Escalate only when progress truly requires user-controlled credentials", content)
+        self.assertIn("Do not claim command safety from Lua-only tests", content)
+        self.assertGreater(len(raw_content), 5000)
+        self.assertLess(len(raw_content), 8000)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+        html = build_prompt_kit_registry.render()
+        self.assertIn("Lua Flagging + Host Enforcement Repair Loop", html)
+
 if __name__ == "__main__":
     unittest.main()
