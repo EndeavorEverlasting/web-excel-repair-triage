@@ -184,7 +184,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm --ignore-unmatch .github/prompt91-draft.json .github/prompt92-draft.json .github/prompt93-draft.json .github/workflows/prompt-failure-suite-bootstrap.yml
+          git rm --ignore-unmatch .github/prompt91-draft.json .github/prompt92-draft.json .github/prompt93-draft.json .github/workflows/prompt-failure-suite-bootstrap.yml .failure-suite-trigger
           git add registry/prompts/spec-architecture-prompts.v1.json registry/prompts/prompt-overrides.v1.json tests/test_spec_architecture_prompt_registry.py tests/test_p02_p07_autonomous_iteration.py web/prompt-kit/index.html
           git diff --cached --check
           git commit -m "feat(prompt-kit): complete failure-audit suite and tighten P02 updates"
