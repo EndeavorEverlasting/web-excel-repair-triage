@@ -96,6 +96,8 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("Do NOT set id, seq, or copySheet", content)
         self.assertIn("roll back registry/site writes if validation fails", content)
         self.assertIn("focused semantic assertion", content)
+        self.assertIn("materially overlapping prompt", content)
+        self.assertIn("genuinely missing bounded behavior", content)
         self.assertIn("Do not fall back to loading the entire Prompt Kit architecture", content)
         self.assertIn("merge the exact green authorized head", content)
         self.assertLess(len(self.raw["P79"]["copyContent"]), 5000)
