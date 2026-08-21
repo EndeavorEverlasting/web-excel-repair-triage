@@ -88,6 +88,12 @@ class ManagementOperationsPromptRegistryTests(unittest.TestCase):
         self.assertIn("DRIVE EVIDENCE / GLOSSARY DISCOVERY", content)
         self.assertIn("dated Drive evidence folder", content)
         self.assertIn("understand what it does not prove", content)
+        self.assertIn("WORKBOOK CONTROL SURFACES", content)
+        self.assertIn("one canonical worksheet dictionary/range", content)
+        self.assertIn("duplicated per-cell inline lists", content)
+        self.assertIn("re-read the live validation metadata", content)
+        self.assertIn("data validation", " ".join(prompt["keywords"]).lower())
+        self.assertIn("controlled vocabulary", " ".join(prompt["keywords"]).lower())
 
     def test_message_evidence_harvesters_are_bounded_and_handoff_to_p74(self) -> None:
         expected = {
@@ -129,6 +135,7 @@ class ManagementOperationsPromptRegistryTests(unittest.TestCase):
         self.assertIn("Neuron Track Hours Billing Artifact Builder", html)
         self.assertIn("FUN Repository Management & Evidence Updater", html)
         self.assertIn("Triage + FUN + Drive Context Synchronizer", html)
+        self.assertIn("WORKBOOK CONTROL SURFACES", html)
 
     def test_base_palette_supports_management_accents(self) -> None:
         self.assertEqual(build_prompt_kit.COLOR_HEX["emerald"], "#10b981")
