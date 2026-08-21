@@ -52,3 +52,46 @@ jobs:
             tests/test_gitignore_hygiene.py \
             tests/test_roster_log_review_queue.py \
             -q
+
+  prompt-failure-suite-219:
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 219 && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-failure-suite-p02-updates-20260821
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Refresh and execute canonical contribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --all --prune --tags
+          python .github/tmp_failure_suite_219.py
+      - name: Commit durable PR219 result only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout origin/main -- .github/workflows/artifact-engines.yml
+          git rm --ignore-unmatch \
+            .github/prompt91-draft.json \
+            .github/prompt92-draft.json \
+            .github/prompt93-draft.json \
+            .github/workflows/prompt-failure-suite-bootstrap.yml \
+            .github/tmp_failure_suite_219.py
+          git add \
+            registry/prompts/spec-architecture-prompts.v1.json \
+            registry/prompts/prompt-overrides.v1.json \
+            tests/test_spec_architecture_prompt_registry.py \
+            tests/test_p02_p07_autonomous_iteration.py \
+            web/prompt-kit/index.html \
+            .github/workflows/artifact-engines.yml
+          git diff --cached --check
+          git commit -m "feat(prompt-kit): complete failure-audit suite and tighten P02 updates"
+          git push origin HEAD:feat/prompt-failure-suite-p02-updates-20260821
