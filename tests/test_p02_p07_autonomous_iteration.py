@@ -47,6 +47,20 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
         self.assertIn("ask one minimal concrete question", content)
         self.assertIn("do not expose the user to avoidable intermediate drafts", content)
 
+
+    def test_effective_p02_requires_concise_inflight_progress_without_status_stops(self) -> None:
+        prompt = self.effective["P02"]
+        content = prompt["copyContent"]
+        self.assertIn("0. CONCISE PROGRESS LOOP", content)
+        self.assertIn("Do not work through multiple meaningful passes silently", content)
+        self.assertIn("CHANGED: ... | PROVED: ... | NEXT: ...", content)
+        self.assertIn("Prefer fragments over filler", content)
+        self.assertIn("Maximum two short sentences", content)
+        self.assertIn("Do not repeat the plan, narrate polling, or use an update as a stopping point", content)
+        self.assertIn("pass count and fixed-point reason", content)
+        self.assertIn("Multi-pass silent execution fails this prompt", content)
+        self.assertIn("compact in-flight evidence updates", prompt["expectedOutput"])
+
     def test_p07_preserves_fixed_point_and_adds_user_only_gate(self) -> None:
         prompt = self.raw["P07"]
         content = prompt["copyContent"]
