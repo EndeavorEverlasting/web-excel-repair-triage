@@ -1,0 +1,161 @@
+name: Temporary bounded message-evidence prompt contributor
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-message-evidence-harvest-20260821
+
+permissions:
+  contents: write
+
+jobs:
+  contribute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-message-evidence-harvest-20260821
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Refresh remote floor and preserve current main
+        run: |
+          set -euo pipefail
+          git fetch --all --prune --tags
+          echo "branch_head=$(git rev-parse HEAD)"
+          echo "main_head=$(git rev-parse origin/main)"
+          git merge --no-edit origin/main
+
+      - name: Strengthen existing overlap and artifact-handoff owners
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+
+          import json
+          from pathlib import Path
+
+          spec_path = Path("registry/prompts/spec-architecture-prompts.v1.json")
+          spec = json.loads(spec_path.read_text(encoding="utf-8"))
+          p79 = next(prompt for prompt in spec["prompts"] if prompt["id"] == "P79")
+          old = (
+              "Search the current combined Prompt Kit for an exact/obvious duplicate; "
+              "strengthen the existing canonical prompt instead of creating a second identity when one exists."
+          )
+          new = (
+              "Search the current combined Prompt Kit for an exact, obvious, adjacent, or materially overlapping prompt. "
+              "Strengthen or extend the existing canonical owner when it already covers the core use case; create a new identity only for the genuinely missing bounded behavior."
+          )
+          if old in p79["copyContent"]:
+              p79["copyContent"] = p79["copyContent"].replace(old, new, 1)
+          elif new not in p79["copyContent"]:
+              raise SystemExit("P79 overlap guidance owner changed; refusing blind rewrite")
+          if "material overlap" not in p79["inspectFirst"].lower():
+              p79["inspectFirst"] = p79["inspectFirst"].rstrip(".") + "; current combined Prompt Kit material-overlap search before assigning a new identity."
+          spec_path.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+          management_path = Path("registry/prompts/management-operations-prompts.v1.json")
+          management = json.loads(management_path.read_text(encoding="utf-8"))
+          p74 = next(prompt for prompt in management["prompts"] if prompt["id"] == "P74")
+          inspect_phrase = "normalized Outlook/Teams evidence ledgers when supplied"
+          if inspect_phrase not in p74["inspectFirst"]:
+              p74["inspectFirst"] = p74["inspectFirst"].rstrip(".") + f"; {inspect_phrase}."
+          handoff = (
+              "- When normalized Outlook/Teams evidence ledgers are supplied, treat them as supporting task-context evidence and candidate billing-category inputs. "
+              "Reconcile them against attendance/roster hour authority and the current source hierarchy before assigning rows or labels; preserve source identity in internal evidence/sidecars rather than exposing message-recovery mechanics in the clean outward workbook.\n"
+          )
+          if handoff.strip() not in p74["copyContent"]:
+              marker = "EVIDENCE AND HOURS\n"
+              if marker not in p74["copyContent"]:
+                  raise SystemExit("P74 evidence section changed; refusing blind rewrite")
+              p74["copyContent"] = p74["copyContent"].replace(marker, marker + handoff, 1)
+          management_path.write_text(json.dumps(management, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          PY
+
+      - name: Add Outlook prompt through repo-owned helper
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py add \
+            --input .prompt-contrib/outlook-work-evidence-harvester.json \
+            --registry management-operations-prompts \
+            | tee "$RUNNER_TEMP/outlook-helper-receipt.json"
+          cat "$RUNNER_TEMP/outlook-helper-receipt.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Add Teams prompt through repo-owned helper
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py add \
+            --input .prompt-contrib/teams-work-evidence-harvester.json \
+            --registry management-operations-prompts \
+            | tee "$RUNNER_TEMP/teams-helper-receipt.json"
+          cat "$RUNNER_TEMP/teams-helper-receipt.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Add focused semantic assertions
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+
+          from pathlib import Path
+
+          spec_path = Path("tests/test_spec_architecture_prompt_registry.py")
+          spec = spec_path.read_text(encoding="utf-8")
+          anchor = '        self.assertIn("focused semantic assertion", content)\n'
+          additions = (
+              '        self.assertIn("materially overlapping prompt", content)\n'
+              '        self.assertIn("genuinely missing bounded behavior", content)\n'
+          )
+          if additions not in spec:
+              if anchor not in spec:
+                  raise SystemExit("P79 focused-test anchor changed")
+              spec = spec.replace(anchor, anchor + additions, 1)
+              spec_path.write_text(spec, encoding="utf-8")
+
+          management_path = Path("tests/test_management_operations_prompt_registry.py")
+          source = management_path.read_text(encoding="utf-8")
+          method_name = "test_message_evidence_harvesters_are_bounded_and_handoff_to_p74"
+          if method_name not in source:
+              anchor = "    def test_management_profile_runtime_is_rendered(self) -> None:\n"
+              if anchor not in source:
+                  raise SystemExit("Management prompt test insertion anchor changed")
+              method = '''    def test_message_evidence_harvesters_are_bounded_and_handoff_to_p74(self) -> None:\n        expected = {\n            "Outlook Work-Evidence Harvester": "OUTLOOK",\n            "Teams Work-Evidence Harvester": "MICROSOFT TEAMS",\n        }\n        for name, source_marker in expected.items():\n            matches = [prompt for prompt in self.full.values() if prompt["name"] == name]\n            self.assertEqual(len(matches), 1, name)\n            prompt = matches[0]\n            content = prompt["copyContent"]\n            self.assertEqual(prompt["type"], "RESEARCH + EVIDENCE")\n            self.assertEqual(prompt["profile"], "billing-management")\n            self.assertEqual(prompt["color"], "Emerald")\n            self.assertEqual(prompt["category"], "standard")\n            self.assertIn(source_marker, content)\n            self.assertIn("PASS 2 — DELIBERATE RECOVERY PASS", content)\n            self.assertIn("Attendance/roster trackers remain the authority", content)\n            self.assertIn("redistribution/reallocation candidate", content)\n            self.assertIn("P74 `Neuron Track Hours Billing Artifact Builder`", content)\n            self.assertIn("Do not generate the final billing workbook here", content)\n            self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])\n            self.assertIn(self.policy["marker"], content)\n\n        p74 = self.full["P74"]\n        self.assertIn("normalized Outlook/Teams evidence ledgers", p74["copyContent"])\n        self.assertIn("supporting task-context evidence", p74["copyContent"])\n        self.assertIn("candidate billing-category inputs", p74["copyContent"])\n\n'''
+              source = source.replace(anchor, method + anchor, 1)
+              management_path.write_text(source, encoding="utf-8")
+          PY
+
+      - name: Remove one-shot contribution transport
+        run: |
+          set -euo pipefail
+          git rm -f \
+            .github/workflows/tmp-message-evidence-prompt-contributor.yml \
+            .prompt-contrib/outlook-work-evidence-harvester.json \
+            .prompt-contrib/teams-work-evidence-harvester.json
+
+      - name: Validate helper, semantics, language, order, discovery, and parity
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_management_operations_prompt_registry -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python -m unittest tests.test_skill_prompt_registry -v
+          python scripts/validate_prompt_kit_order_navigation.py --output "$RUNNER_TEMP/prompt-kit-order-navigation-audit.json" --summary
+          python -m unittest tests.test_prompt_kit_order_navigation_contract -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_discovery -v
+          python scripts/evaluate_prompt_language.py --output "$RUNNER_TEMP/prompt-language-audit.json" --summary
+          python -m unittest tests.test_prompt_language_audit -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Commit and push durable prompt contribution
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git status --short
+          git commit -m "feat(prompt-kit): add bounded message evidence harvesters"
+          git push origin HEAD:feat/prompt-kit-message-evidence-harvest-20260821
