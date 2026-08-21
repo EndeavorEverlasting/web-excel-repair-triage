@@ -4,17 +4,20 @@ on:
   push:
     branches:
       - feat/prompt-failure-suite-p02-updates-20260821
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
 
 jobs:
   contribute:
-    if: github.actor != 'github-actions[bot]'
+    if: github.actor != 'github-actions[bot]' && (github.event_name == 'push' || github.event.pull_request.head.ref == 'feat/prompt-failure-suite-p02-updates-20260821')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: feat/prompt-failure-suite-p02-updates-20260821
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
