@@ -66,14 +66,29 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Refresh and reconcile current main
+      - name: Refresh and prove current semantic floor
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch --all --prune --tags
           test "$(git rev-parse HEAD)" = "$(git rev-parse origin/feat/prompt-operational-closeout-contract-20260821)"
-          git merge --no-edit origin/main
+          git diff --quiet HEAD origin/main -- \
+            docs/prompts.json \
+            harness/specs/operator-delivery.md \
+            registry/prompts/actionable-next-step-policy.v1.json \
+            registry/prompts/repository-work-ledger-prompts.v1.json \
+            scripts/build_prompt_kit_registry.py \
+            web/prompt-kit/index.html || {
+              git diff --stat HEAD origin/main -- \
+                docs/prompts.json \
+                harness/specs/operator-delivery.md \
+                registry/prompts/actionable-next-step-policy.v1.json \
+                registry/prompts/repository-work-ledger-prompts.v1.json \
+                scripts/build_prompt_kit_registry.py \
+                web/prompt-kit/index.html
+              exit 1
+            }
       - name: Apply rollback-safe operational closeout migration
         run: python .tmp_operational_closeout_patch.py
       - name: Validate connected prompt contracts
@@ -83,17 +98,12 @@ jobs:
           python scripts/prompt_registry_ops.py validate
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
-      - name: Restore CI and remove all migration transport
+      - name: Commit only non-workflow durable changes
         run: |
           set -euo pipefail
-          git checkout 7a523a3b973db9058b62e8b66726a39645c558f1 -- .github/workflows/artifact-engines.yml
-          git rm -f \
-            .tmp_operational_closeout_patch.py \
-            .github/workflows/tmp-operational-closeout-patch.yml \
-            .github/workflows/_temporary_operational_closeout_executor.yml
+          git checkout HEAD -- .github/workflows/prompt-freshness-evidence.yml
+          git rm -f .tmp_operational_closeout_patch.py .tmp_operational_closeout_ci_trigger
           git add \
-            .github/workflows/artifact-engines.yml \
-            .github/workflows/prompt-freshness-evidence.yml \
             docs/prompts.json \
             harness/specs/operator-delivery.md \
             registry/prompts/actionable-next-step-policy.v1.json \
@@ -101,6 +111,11 @@ jobs:
             scripts/build_prompt_kit_registry.py \
             tests/test_operational_closeout_contract.py \
             web/prompt-kit/index.html
+          if git diff --cached --name-only | grep -q '^.github/workflows/'; then
+            echo 'Refusing bot push containing workflow-file mutation' >&2
+            git diff --cached --name-only >&2
+            exit 1
+          fi
           git diff --cached --check
           git diff --cached --stat
           git commit -m 'feat(prompt-kit): require actionable operational closeout'
