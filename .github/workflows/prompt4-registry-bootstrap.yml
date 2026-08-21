@@ -1,0 +1,78 @@
+name: Prompt 4 registry helper bootstrap
+
+on:
+  push:
+    branches:
+      - feat/prompt4-lua-host-enforcement-20260821
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  contribute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt4-lua-host-enforcement-20260821
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Add prompt through canonical helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py inspect | tee /tmp/prompt4-inspect.json
+          if grep -Fq '"name": "Lua Flagging + Host Enforcement Repair Loop"' registry/prompts/spec-architecture-prompts.v1.json; then
+            echo '{"status":"already-present"}' | tee /tmp/prompt4-helper-receipt.json
+          else
+            python scripts/prompt_registry_ops.py add \
+              --input .github/prompt4-draft.json \
+              --registry spec-architecture-prompts | tee /tmp/prompt4-helper-receipt.json
+          fi
+          cat /tmp/prompt4-helper-receipt.json
+      - name: Add focused semantic proof
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path("tests/test_spec_architecture_prompt_registry.py")
+          text = path.read_text(encoding="utf-8")
+          marker = '    def test_lua_flagging_host_enforcement_prompt_preserves_host_control_and_repair_loop(self) -> None:'
+          if marker not in text:
+              insert = '\n    def test_lua_flagging_host_enforcement_prompt_preserves_host_control_and_repair_loop(self) -> None:\n        matches = [\n            prompt\n            for prompt in self.full.values()\n            if prompt["name"] == "Lua Flagging + Host Enforcement Repair Loop"\n        ]\n        self.assertEqual(len(matches), 1)\n        prompt = matches[0]\n        content = prompt["copyContent"]\n        raw_content = self.raw[prompt["id"]]["copyContent"]\n        self.assertEqual(prompt["profile"], "spec-architecture")\n        self.assertEqual(prompt["color"], "Cyan")\n        self.assertEqual(prompt["class"], "HARNESS / LUA HOST ENFORCEMENT")\n        self.assertIn("Lua detects and classifies command defects", content)\n        self.assertIn("host language validates the finding schema", content)\n        self.assertIn("Lua error, malformed Lua result, or checker failure", content)\n        self.assertIn("wrong-shell syntax", content)\n        self.assertIn("Bash constructs emitted for a PowerShell or CMD operator path", content)\n        self.assertIn("CHECKER_FAILURE", content)\n        self.assertIn("SCAN -> LUA FLAGS -> HOST BLOCK/RAISE -> AGENT REPAIR -> REVALIDATE", content)\n        self.assertIn("Pass 2 must inspect the repaired command plus nearby failure classes", content)\n        self.assertIn("Do not ask the user to choose between technically equivalent safe implementations", content)\n        self.assertIn("Escalate only when progress truly requires user-controlled credentials", content)\n        self.assertIn("Do not claim command safety from Lua-only tests", content)\n        self.assertGreater(len(raw_content), 5000)\n        self.assertLess(len(raw_content), 8000)\n        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])\n        self.assertIn(self.policy["marker"], content)\n        html = build_prompt_kit_registry.render()\n        self.assertIn("Lua Flagging + Host Enforcement Repair Loop", html)\n'
+              anchor = '\n\nif __name__ == "__main__":'
+              if anchor not in text:
+                  raise SystemExit("focused-test insertion anchor missing")
+              text = text.replace(anchor, '\n' + insert.rstrip() + anchor, 1)
+              path.write_text(text, encoding="utf-8")
+          PY
+      - name: Validate helper output and Prompt Kit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
+          python -m unittest tests.test_prompt_language_audit -v
+          python scripts/evaluate_prompt_language.py --output /tmp/prompt4-language-audit.json --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit canonical contribution and remove bootstrap inputs
+        shell: bash
+        env:
+          BRANCH: feat/prompt4-lua-host-enforcement-20260821
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/prompt4-draft.json .github/workflows/prompt4-registry-bootstrap.yml
+          git add registry/prompts/spec-architecture-prompts.v1.json web/prompt-kit/index.html tests/test_spec_architecture_prompt_registry.py
+          git diff --cached --check
+          git commit -m "feat(prompt-kit): add Lua host enforcement repair loop"
+          git push origin "HEAD:${BRANCH}"
