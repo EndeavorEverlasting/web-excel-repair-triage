@@ -71,6 +71,7 @@ REQUIRED_ACTIONABILITY_POLICY_FIELDS = {
     "marker",
     "integration_marker",
     "freshness_marker",
+    "closeout_marker",
     "integration_target",
     "applies_to",
     "next_step_suffix",
@@ -135,6 +136,7 @@ def load_actionability_policy() -> dict[str, Any]:
         "marker",
         "integration_marker",
         "freshness_marker",
+        "closeout_marker",
         "integration_target",
         "applies_to",
         "next_step_suffix",
@@ -194,6 +196,9 @@ def load_actionability_policy() -> dict[str, Any]:
     freshness_marker = str(payload["freshness_marker"])
     if freshness_marker not in appendix:
         raise SystemExit("Actionability appendix must include its freshness marker")
+    closeout_marker = str(payload["closeout_marker"])
+    if closeout_marker not in appendix:
+        raise SystemExit("Actionability appendix must include its operational closeout marker")
     return payload
 
 
@@ -303,9 +308,11 @@ def apply_actionability_policy(
     has_current_integration = not integration_marker or integration_marker in copy_content
     freshness_marker = str(policy.get("freshness_marker", "")).strip()
     has_current_freshness = not freshness_marker or freshness_marker in copy_content
+    closeout_marker = str(policy.get("closeout_marker", "")).strip()
+    has_current_closeout = not closeout_marker or closeout_marker in copy_content
     if marker not in copy_content:
         strengthened["copyContent"] = f"{copy_content}\n\n{appendix}"
-    elif not has_current_integration or not has_current_freshness:
+    elif not has_current_integration or not has_current_freshness or not has_current_closeout:
         legacy_prefix = f"{marker}\n- Do not leave NEXT COMMAND"
         legacy_start = copy_content.rfind(legacy_prefix)
         if legacy_start >= 0:

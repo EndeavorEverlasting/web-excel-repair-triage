@@ -29,6 +29,13 @@ When both are viable, choose the topology that produces the strongest safe evide
 - If the remote base/head, dependency, launcher/generator/profile/schema, target artifact, or evidence owner moves after preflight, mark affected proof stale and refresh/reconcile/rebuild/revalidate before claiming certification. A runtime pass cannot bless stale repository state, and old runtime evidence cannot certify a newer head.
 - Preserve dirty/divergent/local-only work while refreshing; never force-reset merely to obtain a certification floor.
 
+## Actionable runtime / live-cert closeout
+
+- Every runtime or live-cert stop must state: completed/proven behavior; remaining gaps; risks; blockers; proof ceiling; integration state; and the first executable next action or ordered dependency-aware next steps.
+- Each gap/risk/blocker must identify the affected target or artifact, current evidence, consequence, and the exact action or operator gate that advances it. A passing command, process start, or green CI result does not erase unobserved runtime risk.
+- The next action must identify owner, dependency, exact command or operator action, expected evidence/artifact, and completion gate. Continue agent-capable work immediately; reserve handoff for a protected runtime, physical action, inaccessible credential/system, or another genuine operator-only gate.
+- `none; no safe actionable work remains` is valid only when the requested proof ceiling is actually satisfied, integration/cleanup is complete or explicitly out of scope, and no known safe unproven action remains.
+
 ## Evidence and artifact safety
 
 Evidence strength is ordered by what was actually observed. Distinguish source/build proof, process start, command acknowledgment, observed behavior, local runtime proof, target proof, and production proof. Never silently promote a weaker class.
