@@ -52,3 +52,56 @@ jobs:
             tests/test_gitignore_hygiene.py \
             tests/test_roster_log_review_queue.py \
             -q
+
+  operational-closeout-pr202:
+    if: github.event_name == 'pull_request' && github.head_ref == 'feat/prompt-operational-closeout-contract-20260821' && github.actor != 'github-actions[bot]'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-operational-closeout-contract-20260821
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Refresh and reconcile current main
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch --all --prune --tags
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/feat/prompt-operational-closeout-contract-20260821)"
+          git merge --no-edit origin/main
+      - name: Apply rollback-safe operational closeout migration
+        run: python .tmp_operational_closeout_patch.py
+      - name: Validate connected prompt contracts
+        run: |
+          python -m py_compile scripts/build_prompt_kit_registry.py tests/test_operational_closeout_contract.py
+          python -m unittest tests.test_operational_closeout_contract tests.test_remote_freshness_p13_iteration tests.test_actionable_prompt_registry tests.test_green_branch_integration_policy tests.test_repository_work_ledger_prompt tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Restore CI and remove all migration transport
+        run: |
+          set -euo pipefail
+          git checkout 7a523a3b973db9058b62e8b66726a39645c558f1 -- .github/workflows/artifact-engines.yml
+          git rm -f \
+            .tmp_operational_closeout_patch.py \
+            .github/workflows/tmp-operational-closeout-patch.yml \
+            .github/workflows/_temporary_operational_closeout_executor.yml
+          git add \
+            .github/workflows/artifact-engines.yml \
+            .github/workflows/prompt-freshness-evidence.yml \
+            docs/prompts.json \
+            harness/specs/operator-delivery.md \
+            registry/prompts/actionable-next-step-policy.v1.json \
+            registry/prompts/repository-work-ledger-prompts.v1.json \
+            scripts/build_prompt_kit_registry.py \
+            tests/test_operational_closeout_contract.py \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m 'feat(prompt-kit): require actionable operational closeout'
+          git push origin HEAD:feat/prompt-operational-closeout-contract-20260821
