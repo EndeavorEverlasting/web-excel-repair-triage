@@ -1,0 +1,1 @@
+trigger registered bidirectional hook executor
