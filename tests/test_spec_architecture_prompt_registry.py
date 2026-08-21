@@ -279,5 +279,43 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("Prompt Semantic Hardener & Principle Integrator", html)
 
 
+    def test_bidirectional_use_case_hook_routes_intent_and_reverse_ownership(self) -> None:
+        matches = [
+            prompt
+            for prompt in self.full.values()
+            if prompt["name"] == 'Bidirectional Use-Case Hook & Repository Route Builder'
+        ]
+        self.assertEqual(len(matches), 1)
+        prompt = matches[0]
+        content = prompt["copyContent"]
+        raw_content = self.raw[prompt["id"]]["copyContent"]
+        self.assertEqual(prompt["id"], 'P87')
+        self.assertEqual(prompt["seq"], '87')
+        self.assertEqual(prompt["copySheet"], 'P87_COPY_SAFE')
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["color"], "Cyan")
+        self.assertEqual(prompt["class"], "HARNESS / ROUTING ARCHITECTURE")
+        self.assertIn("BIDIRECTIONAL ROUTE CONTRACT", content)
+        self.assertIn("USER INTENT -> TRIGGER / HOOK -> CAPABILITY", content)
+        self.assertIn("SCRIPT / MANIFEST / VALIDATOR / PROMPT / WORKFLOW / CAPABILITY RECORD", content)
+        self.assertIn("INTENT OVER FILENAME", content)
+        self.assertIn("REVERSE-OWNERSHIP QUESTIONS", content)
+        self.assertIn("Why does this resource exist?", content)
+        self.assertIn("What capability or supported use case owns it?", content)
+        self.assertIn("PROVE BOTH DIRECTIONS", content)
+        self.assertIn("A. INTENT-FIRST", content)
+        self.assertIn("B. IMPLEMENTATION-FIRST", content)
+        self.assertIn("without a pre-supplied implementation filename", content)
+        self.assertIn("Do not create a second capabilities registry", content)
+        self.assertIn("Harness Builder may create or repair general harness infrastructure", content)
+        self.assertIn("Progressive-Disclosure factoring may reduce default context", content)
+        self.assertGreater(len(raw_content), 3500)
+        self.assertLess(len(raw_content), 9000)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+        html = build_prompt_kit_registry.render()
+        self.assertIn('Bidirectional Use-Case Hook & Repository Route Builder', html)
+
+
 if __name__ == "__main__":
     unittest.main()
