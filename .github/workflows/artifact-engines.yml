@@ -75,6 +75,8 @@ jobs:
         run: |
           set -euo pipefail
           feature_pre="$(git rev-parse HEAD)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main --prune --tags
           echo "feature_pre=$feature_pre"
           echo "main=$(git rev-parse origin/main)"
