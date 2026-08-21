@@ -89,6 +89,34 @@ class ManagementOperationsPromptRegistryTests(unittest.TestCase):
         self.assertIn("dated Drive evidence folder", content)
         self.assertIn("understand what it does not prove", content)
 
+    def test_message_evidence_harvesters_are_bounded_and_handoff_to_p74(self) -> None:
+        expected = {
+            "Outlook Work-Evidence Harvester": "OUTLOOK",
+            "Teams Work-Evidence Harvester": "MICROSOFT TEAMS",
+        }
+        for name, source_marker in expected.items():
+            matches = [prompt for prompt in self.full.values() if prompt["name"] == name]
+            self.assertEqual(len(matches), 1, name)
+            prompt = matches[0]
+            content = prompt["copyContent"]
+            self.assertEqual(prompt["type"], "RESEARCH + EVIDENCE")
+            self.assertEqual(prompt["profile"], "billing-management")
+            self.assertEqual(prompt["color"], "Emerald")
+            self.assertEqual(prompt["category"], "standard")
+            self.assertIn(source_marker, content)
+            self.assertIn("PASS 2 — DELIBERATE RECOVERY PASS", content)
+            self.assertIn("Attendance/roster trackers remain the authority", content)
+            self.assertIn("redistribution/reallocation candidate", content)
+            self.assertIn("P74 `Neuron Track Hours Billing Artifact Builder`", content)
+            self.assertIn("Do not generate the final billing workbook here", content)
+            self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+            self.assertIn(self.policy["marker"], content)
+
+        p74 = self.full["P74"]
+        self.assertIn("normalized Outlook/Teams evidence ledgers", p74["copyContent"])
+        self.assertIn("supporting task-context evidence", p74["copyContent"])
+        self.assertIn("candidate billing-category inputs", p74["copyContent"])
+
     def test_management_profile_runtime_is_rendered(self) -> None:
         html = build_prompt_kit_registry.render()
         self.assertIn("prompt-kit-management-styles", html)
