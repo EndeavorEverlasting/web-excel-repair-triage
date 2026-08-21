@@ -354,5 +354,46 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         html = build_prompt_kit_registry.render()
         self.assertIn("Lua Flagging + Host Enforcement Repair Loop", html)
 
+    def test_failure_suite_prompts_cover_class_path_and_closure_without_collapsing_roles(self) -> None:
+        expected = {
+            "P91": ("Failure-Class Generalization & Repository Audit", "TESTING / FAILURE GENERALIZATION"),
+            "P92": ("Production-Path Proof Gap Auditor", "TESTING / PRODUCTION PATH"),
+            "P93": ("Use-Case Closure Certification", "VERIFICATION / USE-CASE CLOSURE"),
+        }
+        for prompt_id, (name, prompt_class) in expected.items():
+            prompt = self.full[prompt_id]
+            self.assertEqual(prompt["id"], prompt_id)
+            self.assertEqual(prompt["seq"], prompt_id[1:])
+            self.assertEqual(prompt["copySheet"], f"{prompt_id}_COPY_SAFE")
+            self.assertEqual(prompt["category"], "standard")
+            self.assertEqual(prompt["profile"], "spec-architecture")
+            self.assertEqual(prompt["color"], "Cyan")
+            self.assertEqual(prompt["name"], name)
+            self.assertEqual(prompt["class"], prompt_class)
+            self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+            self.assertIn(self.policy["marker"], prompt["copyContent"])
+
+        p91 = self.full["P91"]["copyContent"]
+        self.assertIn("BUILD A FAILURE-STATE MATRIX", p91)
+        self.assertIn("UNKNOWN is not PASS", p91)
+        self.assertIn("Do not blanket-replace", p91)
+        self.assertIn("What adjacent state could still fail for the same underlying reason?", p91)
+
+        p92 = self.full["P92"]["copyContent"]
+        self.assertIn("MAP BOTH PATHS", p92)
+        self.assertIn("PRODUCTION-ONLY", p92)
+        self.assertIn("Green helper tests do not prove a production wrapper", p92)
+        self.assertIn("same-entrypoint synthetic proof", p92)
+
+        p93 = self.full["P93"]["copyContent"]
+        self.assertIn("BUILD THE OBLIGATION LEDGER", p93)
+        self.assertIn("UNKNOWN is not PASS", p93)
+        self.assertIn("FALSIFY CLOSURE", p93)
+        self.assertIn("NOT CERTIFIED", p93)
+
+        html = build_prompt_kit_registry.render()
+        for _, (name, _) in expected.items():
+            self.assertIn(name, html)
+
 if __name__ == "__main__":
     unittest.main()
