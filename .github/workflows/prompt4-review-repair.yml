@@ -1,0 +1,58 @@
+name: Prompt 4 review repair
+
+on:
+  push:
+    branches:
+      - feat/prompt4-lua-host-enforcement-20260821
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt4-lua-host-enforcement-20260821
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Pin focused regression to P90 identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/test_spec_architecture_prompt_registry.py')
+          text = path.read_text(encoding='utf-8')
+          needle = '''        prompt = matches[0]\n        content = prompt["copyContent"]\n        raw_content = self.raw[prompt["id"]]["copyContent"]\n        self.assertEqual(prompt["profile"], "spec-architecture")\n        self.assertEqual(prompt["color"], "Cyan")\n        self.assertEqual(prompt["class"], "HARNESS / LUA HOST ENFORCEMENT")\n'''
+          replacement = '''        prompt = matches[0]\n        content = prompt["copyContent"]\n        raw_content = self.raw[prompt["id"]]["copyContent"]\n        self.assertEqual(prompt["id"], "P90")\n        self.assertEqual(prompt["seq"], "90")\n        self.assertEqual(prompt["copySheet"], "P90_COPY_SAFE")\n        self.assertEqual(prompt["category"], "standard")\n        self.assertEqual(prompt["profile"], "spec-architecture")\n        self.assertEqual(prompt["color"], "Cyan")\n        self.assertEqual(prompt["class"], "HARNESS / LUA HOST ENFORCEMENT")\n'''
+          if 'self.assertEqual(prompt["id"], "P90")' not in text:
+              if needle not in text:
+                  raise SystemExit('P90 focused-test patch anchor not found')
+              text = text.replace(needle, replacement, 1)
+              path.write_text(text, encoding='utf-8')
+          PY
+      - name: Revalidate focused Prompt Kit proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit repair and remove transport
+        shell: bash
+        env:
+          BRANCH: feat/prompt4-lua-host-enforcement-20260821
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm --ignore-unmatch .github/workflows/prompt4-review-repair.yml
+          git add tests/test_spec_architecture_prompt_registry.py
+          git diff --cached --check
+          git commit -m "test(prompt-kit): pin P90 Lua host prompt identity"
+          git push origin "HEAD:${BRANCH}"
