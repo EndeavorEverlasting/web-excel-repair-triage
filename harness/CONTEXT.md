@@ -16,6 +16,7 @@ Then choose one domain. Do not eagerly read every root contract, every skill, th
 | Task | 30,000-foot owner | 15,000-foot detail only when needed |
 |---|---|---|
 | Harness/spec structure, context bloat | `CODEBASE_MAP.md` | `.ai/skills/harness-infrastructure-maintenance/SKILL.md`, selected harness contract/validator |
+| **Artifact creation / derivation** | `harness/artifact-derivation/CODEBASE_MAP.md` | `.ai/skills/artifact-derivation/SKILL.md`, `harness/artifact-derivation/contracts/create-new-from-source.v1.json` |
 | Human-facing artifact alias/download handoff | `harness/artifact-handoff/CODEBASE_MAP.md` | `.ai/skills/share-artifact-alias-handoff/SKILL.md`, `harness/artifact-handoff/contracts/share-alias-download.v1.json` |
 | Prompt Kit use/acquisition | `PROMPT_KIT_ACCESS.md` | `.ai/skills/technician-prompt-kit-acquisition/SKILL.md` |
 | Prompt authoring/repair/language | `harness/specs/prompt-operations.md` | selected registry, prompt skill, builder, validator |
@@ -23,6 +24,9 @@ Then choose one domain. Do not eagerly read every root contract, every skill, th
 | Billing/NTH/operator evidence | `harness/specs/billing-artifact-safety.md` | selected NTH contract/skill/validator |
 | Technician delivery/live certification | `harness/specs/operator-delivery.md` | selected launcher/workflow/validator |
 | PR integration | `harness/contracts/pr-merge-gate.v1.json` | `WORKFLOW.md#e-pr-floor-cleanup-and-integration` |
+
+## Artifact creation reflex
+For create/generate/build/produce/make/draft/export work, an existing matching artifact is a **read-only source/reference by default**. Select a distinct output identity before a writer is opened. Same subject, month, audience, or filename family does not authorize in-place mutation. Only an explicit update/repair-in-place request can cross that boundary.
 
 ## Zoom rules
 

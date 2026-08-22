@@ -18,6 +18,8 @@ git checkout-index --all --prefix="$staged_tree/"
   python -m unittest tests.test_pr_merge_gate -v
   python scripts/validate_artifact_handoff_harness.py --summary
   python -m unittest tests.test_artifact_handoff_harness -v
+  python scripts/validate_artifact_derivation_harness.py --summary
+  python -m unittest tests.test_artifact_derivation_harness -v
   python scripts/validate_harness.py --report "$HARNESS_REPORT"
   python -m unittest tests.test_harness_contract -v
 )
