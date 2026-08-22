@@ -53,15 +53,39 @@ DELIVER
 Keep it compact: contribution ledger; strengthened IDs/names; new helper receipts; focused semantic assertion results; prompt count/parity; validation; commit/PR/merge; resulting main SHA; exact blocker if any.'''
 patched = text[:left] + compact + text[right:]
 
-# P83 is already near its intentional size ceiling. Strengthen the existing
+# P83 is already near its intentional size ceiling. Strengthen its existing
 # claim-evidence sentence instead of appending another section.
 p83_start = patched.index('p83_insert = """')
 p83_end = patched.index('if len(p83["copyContent"]) >= 8000:', p83_start)
 p83_replacement = r'''old_claim = "A green test reported by another agent is historical evidence until the exact tested head, command, and relevant current state are confirmed. Do not discard correct work merely because its explanation was weak."
-new_claim = "A reported green test/live run is historical until its head, command, environment, and current state are confirmed. Re-derive regression controls from the request, accepted behavior, and impacted callers; do not inherit only the prior agent's tests. For runtime claims, run the canonical path yourself when safe or keep them UNPROVEN with the exact gate."
+new_claim = "Another agent's green test/live run is historical evidence. Re-derive impacted regression controls; for runtime claims, run the canonical path yourself when safe or keep them UNPROVEN with the exact gate."
 if old_claim not in p83["copyContent"]:
     raise SystemExit("P83 claim-evidence sentence missing")
 p83["copyContent"] = p83["copyContent"].replace(old_claim, new_claim, 1)
 '''
 patched = patched[:p83_start] + p83_replacement + patched[p83_end:]
+
+# The focused P83 assertion should prove the compact copy contract plus the
+# richer metadata fields, not require the discarded oversized section.
+old_test = r'''    def test_agent_verifier_independently_derives_regressions_and_live_proof(self) -> None:
+        p83 = self.full["P83"]["copyContent"]
+        self.assertIn("INDEPENDENT REGRESSION / LIVE CLAIM CHECK", p83)
+        self.assertIn("Do not accept the prior agent's chosen tests as the complete proof set", p83)
+        self.assertIn("impacted callers/call stacks", p83)
+        self.assertIn("execute that entrypoint yourself", p83)
+        self.assertIn("classify the live claim UNPROVEN", p83)
+'''
+new_test = r'''    def test_agent_verifier_independently_derives_regressions_and_live_proof(self) -> None:
+        p83 = self.full["P83"]
+        self.assertIn("green test/live run is historical evidence", p83["copyContent"])
+        self.assertIn("Re-derive impacted regression controls", p83["copyContent"])
+        self.assertIn("canonical path yourself", p83["copyContent"])
+        self.assertIn("UNPROVEN", p83["copyContent"])
+        self.assertIn("impacted callers/call stacks", p83["inspectFirst"])
+        self.assertIn("independently derives a regression/control set", p83["proofGate"])
+'''
+if old_test not in patched:
+    raise SystemExit("P83 generated semantic-test block missing")
+patched = patched.replace(old_test, new_test, 1)
+
 path.write_text(patched, encoding="utf-8")
