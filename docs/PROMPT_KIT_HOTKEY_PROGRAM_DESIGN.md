@@ -148,20 +148,31 @@ When work mentions **hotkey**, **shortcut**, **keyboard navigation**, **show/hid
 Do not create another shortcut registry, another filter visibility owner, or a generated-site-only patch unless current ownership is proven insufficient.
 
 ## Second-pass critique
-Prototype evidence changed the initial sketch in four useful ways:
+Prototype and production evidence changed the initial sketch in five useful ways:
 - `p95` is an ordinary configured sequence, not a special prompt-ID handler.
 - sequence state belongs in the dispatcher, not storage or PromptNavigator.
 - persistence must succeed before a new binding becomes effective.
 - hide/show/toggle are three commands over one filter state owner, not three DOM paths.
+- when a prompt-ID buffer is active, that sequence gets first chance to consume later digits such as `1`, `4`, or `5`; built-in digit navigation retains priority only when no configured sequence is in progress.
 
-Still unresolved by design proof:
-- final default gestures for explicit hide/show (the existing production `F` toggle remains valid);
-- sequence timeout and whether raw prompt-ID sequences are limited to Favorites or allowed for every prompt;
-- whether `OPEN_PROMPT(P95)` expands detail immediately or navigates/focuses first.
+Production decisions closed on 2026-08-22:
+- unmodified backtick `` ` `` toggles the Hotkeys surface. This keeps the core shortcut cluster reachable with one hand; `/` remains dedicated to Focus search.
+- modifier chords and editable fields suppress the backtick Hotkeys command.
+- `F` remains filter toggle; `[` explicitly hides filters and `]` explicitly shows filters.
+- configured prompt-ID sequences expire after 1.2 seconds.
+- only prompts that are currently Favorites may be assigned a prompt-ID shortcut.
+- a completed prompt-ID shortcut opens canonical prompt detail immediately through `showPromptDetail`.
+- shortcut persistence uses versioned `promptKit.promptShortcuts.v1` storage and publishes only after a successful durable write.
+- configured shortcut rows sort by numeric prompt sequence rather than lexicographic ID text.
 
-These are UX policy choices and do not require changing the selected seams.
+These production choices preserve the selected seams and remove the prior UX-policy ambiguity.
 
-## Proof ceiling and next implementation seam
-This design can prove classification, collision rejection, sequence buffering, prompt resolution, fail-closed persistence, and state locality. It cannot prove browser event ordering, real `localStorage` permissions, rendered-card focus/scroll behavior, or visual accessibility.
+## Proof ceiling
+Repository proof must cover the production source, generated-site parity, input/modifier suppression, filter commands, sequence collision ordering, timeout semantics, fail-closed persistence, target validation, and canonical prompt-detail dispatch. The user's direct browser exercise supplies additional live evidence that the existing visible hotkeys operate on the deployed UI.
 
-The next bounded build seam is: extract a production FilterVisibility setter and ShortcutDispatcher in the existing runtime, preserve current hotkeys, wire explicit show/hide/toggle through the setter, then add persisted `pNN` bindings behind ShortcutStore. Rebuild only through the canonical generator and derive the help surface from the effective registry.
+The remaining ceiling is limited to environment diversity that cannot be exhaustively certified by this repository: every browser/keyboard-layout combination, future browser-storage policy changes, and subjective ergonomics on devices not exercised by the current operator. Those are not unresolved ownership or implementation gaps; future reports should name a concrete failing environment before reopening architecture.
+
+## Fixed implementation seam
+Production behavior is owned in `docs/prompt-kit-polish.js`; `web/prompt-kit/index.html` is rebuilt only through `scripts/build_prompt_kit_registry.py`. New hotkeys must extend the existing dispatcher/state owners and focused tests rather than introduce a second keyboard registry, second filter state owner, or generated-only patch.
+
+The owning CI gate is `.github/workflows/prompt-kit-web.yml`, which compiles and executes `tests/test_prompt_kit_hotkey_completion.py` alongside the existing Prompt Kit interaction, discovery, navigation, filtering, mobile, portability, and exact-generated-site checks.

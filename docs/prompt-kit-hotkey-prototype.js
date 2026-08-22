@@ -20,7 +20,7 @@ const isEditableTarget = target => {
 };
 
 class ShortcutPolicy {
-  constructor(reserved = ['f', '[', ']']) {
+  constructor(reserved = ['`', 'f', '[', ']', '1', '4', '5']) {
     this.reserved = new Set(reserved.map(normalizeGesture));
   }
   validateBinding(binding, effectiveBindings, promptCatalog) {
@@ -43,6 +43,10 @@ class ShortcutRegistry {
     this.promptCatalog = promptCatalog;
     this.trace = trace;
     this.builtIns = new Map([
+      ['`', {gesture: '`', command: 'HOTKEY_HELP_TOGGLE'}],
+      ['1', {gesture: '1', command: 'VIEW_ALL'}],
+      ['4', {gesture: '4', command: 'VIEW_FAVORITES'}],
+      ['5', {gesture: '5', command: 'VIEW_DOCTRINE'}],
       ['f', {gesture: 'f', command: 'FILTER_TOGGLE'}],
       ['[', {gesture: '[', command: 'FILTER_HIDE'}],
       [']', {gesture: ']', command: 'FILTER_SHOW'}],
@@ -83,47 +87,95 @@ class FilterVisibility {
   toggle() { return this.setVisible(!this.visible, 'FILTER_TOGGLE'); }
 }
 
+class HotkeyHelpVisibility {
+  constructor(trace) {
+    this.open = false;
+    this.trace = trace;
+  }
+  toggle() {
+    this.open = !this.open;
+    this.trace.push({layer: 'hotkey_help', event: 'visibility_changed', open: this.open});
+    return {open: this.open};
+  }
+}
+
+class ViewNavigatorFake {
+  constructor(trace) {
+    this.views = [];
+    this.trace = trace;
+  }
+  open(view) {
+    this.views.push(view);
+    this.trace.push({layer: 'view_navigator', event: 'view_opened', view});
+    return {view};
+  }
+}
+
 class ShortcutDispatcher {
-  constructor({registry, filterVisibility, promptNavigator, trace}) {
+  constructor({registry, filterVisibility, hotkeyHelpVisibility, promptNavigator, viewNavigator, trace}) {
     this.registry = registry;
     this.filterVisibility = filterVisibility;
+    this.hotkeyHelpVisibility = hotkeyHelpVisibility;
     this.promptNavigator = promptNavigator;
+    this.viewNavigator = viewNavigator;
     this.trace = trace;
+    this.buffer = '';
+  }
+  resetSequence(reason) {
+    if (this.buffer) this.trace.push({layer: 'dispatcher', event: 'sequence_reset', reason, buffer: this.buffer});
     this.buffer = '';
   }
   execute(binding) {
     let result;
-    if (binding.command === 'FILTER_HIDE') result = this.filterVisibility.hide();
+    if (binding.command === 'HOTKEY_HELP_TOGGLE') result = this.hotkeyHelpVisibility.toggle();
+    else if (binding.command === 'FILTER_HIDE') result = this.filterVisibility.hide();
     else if (binding.command === 'FILTER_SHOW') result = this.filterVisibility.show();
     else if (binding.command === 'FILTER_TOGGLE') result = this.filterVisibility.toggle();
     else if (binding.command === 'OPEN_PROMPT') result = this.promptNavigator.openPrompt(binding.promptId);
+    else if (binding.command === 'VIEW_ALL') result = this.viewNavigator.open('all');
+    else if (binding.command === 'VIEW_FAVORITES') result = this.viewNavigator.open('favorites');
+    else if (binding.command === 'VIEW_DOCTRINE') result = this.viewNavigator.open('doctrine');
     else throw new HotkeyError('UNKNOWN_COMMAND', binding.command);
     this.trace.push({layer: 'dispatcher', event: 'dispatched', command: binding.command, promptId: binding.promptId || null});
     return {handled: true, result};
+  }
+  consumeBufferedKey(key, bindings) {
+    if (!this.buffer || !/^[a-z0-9]$/.test(key)) return null;
+    const candidate = this.buffer + key;
+    if (bindings.has(candidate)) {
+      const binding = bindings.get(candidate);
+      this.buffer = '';
+      return this.execute(binding);
+    }
+    const pending = [...bindings.keys()].some(gesture => gesture.length > 1 && gesture.startsWith(candidate));
+    if (pending) {
+      this.buffer = candidate;
+      return {handled: true, pending: true, buffer: this.buffer};
+    }
+    this.resetSequence('no_match');
+    return null;
   }
   handleKey(event = {}) {
     if (event.defaultPrevented || event.altKey || event.metaKey || event.ctrlKey) return {handled: false, reason: 'MODIFIED_OR_PREVENTED'};
     if (isEditableTarget(event.target)) return {handled: false, reason: 'EDITABLE_TARGET'};
     const key = normalizeGesture(event.key);
     if (key === 'escape') {
-      this.buffer = '';
+      this.resetSequence('escape');
       return {handled: false, reason: 'SEQUENCE_CANCELLED'};
     }
     const bindings = this.registry.effectiveBindings();
+    const buffered = this.consumeBufferedKey(key, bindings);
+    if (buffered) return buffered;
     if (bindings.has(key)) {
-      this.buffer = '';
+      this.resetSequence('direct_command');
       return this.execute(bindings.get(key));
     }
     if (/^[a-z0-9]$/.test(key)) {
-      this.buffer += key;
-      if (bindings.has(this.buffer)) {
-        const binding = bindings.get(this.buffer);
-        this.buffer = '';
-        return this.execute(binding);
+      const pending = [...bindings.keys()].some(gesture => gesture.length > 1 && gesture.startsWith(key));
+      if (pending) {
+        this.buffer = key;
+        return {handled: true, pending: true, buffer: this.buffer};
       }
-      const pending = [...bindings.keys()].some(gesture => gesture.length > 1 && gesture.startsWith(this.buffer));
-      if (pending) return {handled: true, pending: true, buffer: this.buffer};
-      this.buffer = '';
     }
     return {handled: false, reason: 'NO_MATCH'};
   }
@@ -151,9 +203,11 @@ function buildProgram({promptIds = ['P95'], store = new MemoryStore()} = {}) {
   const policy = new ShortcutPolicy();
   const registry = new ShortcutRegistry({policy, store, promptCatalog: new Set(promptIds), trace});
   const filterVisibility = new FilterVisibility(trace);
+  const hotkeyHelpVisibility = new HotkeyHelpVisibility(trace);
   const promptNavigator = new PromptNavigatorFake(trace);
-  const dispatcher = new ShortcutDispatcher({registry, filterVisibility, promptNavigator, trace});
-  return {trace, policy, registry, store, filterVisibility, promptNavigator, dispatcher};
+  const viewNavigator = new ViewNavigatorFake(trace);
+  const dispatcher = new ShortcutDispatcher({registry, filterVisibility, hotkeyHelpVisibility, promptNavigator, viewNavigator, trace});
+  return {trace, policy, registry, store, filterVisibility, hotkeyHelpVisibility, promptNavigator, viewNavigator, dispatcher};
 }
 
 function assert(value, message) { if (!value) throw new Error('ASSERTION_FAILED: ' + message); }
@@ -167,7 +221,15 @@ function expectCode(code, fn) {
 }
 
 function runSelfTest() {
-  const program = buildProgram({promptIds: ['P95', 'P07']});
+  const program = buildProgram({promptIds: ['P95', 'P14', 'P07']});
+
+  program.dispatcher.handleKey({key: '`'});
+  assert(program.hotkeyHelpVisibility.open === true, 'backtick opens Hotkeys');
+  program.dispatcher.handleKey({key: '`'});
+  assert(program.hotkeyHelpVisibility.open === false, 'backtick closes Hotkeys');
+  assert(program.dispatcher.handleKey({key: '`', target: {tagName: 'INPUT'}}).reason === 'EDITABLE_TARGET', 'editable backtick suppression');
+  assert(program.dispatcher.handleKey({key: '`', ctrlKey: true}).reason === 'MODIFIED_OR_PREVENTED', 'modified backtick suppression');
+
   program.dispatcher.handleKey({key: '['});
   assert(program.filterVisibility.visible === false, 'hide');
   program.dispatcher.handleKey({key: ']'});
@@ -178,11 +240,22 @@ function runSelfTest() {
   program.registry.configure({gesture: 'p95', command: 'OPEN_PROMPT', promptId: 'p95'});
   assert(program.dispatcher.handleKey({key: 'p'}).pending, 'p prefix');
   assert(program.dispatcher.handleKey({key: '9'}).pending, 'p9 prefix');
-  assert(program.dispatcher.handleKey({key: '5'}).handled, 'p95 dispatch');
+  assert(program.dispatcher.handleKey({key: '5'}).handled, 'p95 dispatch must beat built-in 5');
   assert(program.promptNavigator.opened[0] === 'P95', 'P95 target');
+  assert(program.viewNavigator.views.length === 0, 'built-in 5 must not steal buffered P95');
+
+  program.registry.configure({gesture: 'p14', command: 'OPEN_PROMPT', promptId: 'p14'});
+  program.dispatcher.handleKey({key: 'p'});
+  program.dispatcher.handleKey({key: '1'});
+  assert(program.dispatcher.handleKey({key: '4'}).handled, 'p14 dispatch must beat built-ins 1 and 4');
+  assert(program.promptNavigator.opened[1] === 'P14', 'P14 target');
+  assert(program.viewNavigator.views.length === 0, 'built-in digits must not steal buffered P14');
+  program.dispatcher.handleKey({key: '5'});
+  assert(program.viewNavigator.views[0] === 'doctrine', 'built-in 5 remains active with no sequence buffer');
 
   const editable = program.dispatcher.handleKey({key: 'p', target: {tagName: 'INPUT'}});
   assert(editable.reason === 'EDITABLE_TARGET', 'editable suppression');
+  expectCode('RESERVED_COLLISION', () => program.registry.configure({gesture: '`', command: 'OPEN_PROMPT', promptId: 'P95'}));
   expectCode('RESERVED_COLLISION', () => program.registry.configure({gesture: 'f', command: 'OPEN_PROMPT', promptId: 'P95'}));
   expectCode('UNKNOWN_PROMPT', () => program.registry.configure({gesture: 'p999', command: 'OPEN_PROMPT', promptId: 'P999'}));
 
@@ -192,11 +265,11 @@ function runSelfTest() {
 
   return {
     status: 'PASS',
-    success_paths: ['FILTER_HIDE', 'FILTER_SHOW', 'FILTER_TOGGLE', 'OPEN_PROMPT(P95)'],
-    failure_paths: ['EDITABLE_TARGET', 'RESERVED_COLLISION', 'UNKNOWN_PROMPT', 'PERSISTENCE_FAILED'],
+    success_paths: ['HOTKEY_HELP_TOGGLE', 'FILTER_HIDE', 'FILTER_SHOW', 'FILTER_TOGGLE', 'OPEN_PROMPT(P95)', 'OPEN_PROMPT(P14)', 'VIEW_DOCTRINE'],
+    failure_paths: ['EDITABLE_TARGET', 'MODIFIED_OR_PREVENTED', 'RESERVED_COLLISION', 'UNKNOWN_PROMPT', 'PERSISTENCE_FAILED'],
     trace: program.trace,
   };
 }
 
 if (require.main === module) process.stdout.write(JSON.stringify(runSelfTest()));
-module.exports = {HotkeyError, ShortcutPolicy, ShortcutRegistry, ShortcutDispatcher, FilterVisibility, MemoryStore, PromptNavigatorFake, buildProgram, runSelfTest};
+module.exports = {HotkeyError, ShortcutPolicy, ShortcutRegistry, ShortcutDispatcher, FilterVisibility, HotkeyHelpVisibility, ViewNavigatorFake, MemoryStore, PromptNavigatorFake, buildProgram, runSelfTest};

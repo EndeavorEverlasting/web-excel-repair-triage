@@ -140,6 +140,7 @@ def test_polish_hotkeys_and_glowing_help_are_source_and_deployed_contract() -> N
     deployed = read_deployed()
     required = (
         "var PROMPT_KIT_SHORTCUTS=[",
+        "{key:'`',label:'Show / hide Hotkeys'}",
         "{key:'4',label:'Favorites'}",
         "{key:'5',label:'Doctrine'}",
         "{key:'F',label:'Show / hide filters'}",
@@ -151,10 +152,12 @@ def test_polish_hotkeys_and_glowing_help_are_source_and_deployed_contract() -> N
         "id='prompt-kit-hotkey-help-styles'",
         "animation:hotkey-help-glow",
         "toggle.setAttribute('aria-label','Open keyboard shortcut help')",
+        "toggle.setAttribute('aria-keyshortcuts','`')",
         "panel.setAttribute('role','dialog')",
         "var close=panel.querySelector('.hotkey-help-close');",
         "if(close){try{close.focus({preventScroll:true})}catch(e){close.focus()}}",
         "@media(prefers-reduced-motion:reduce){.hotkey-help-toggle{animation:none}}",
+        "if(key==='`')",
         "if(key==='f')",
         "scrollPromptKitTo('top')",
         "scrollPromptKitTo('bottom')",
@@ -165,7 +168,9 @@ def test_polish_hotkeys_and_glowing_help_are_source_and_deployed_contract() -> N
 
     assert "toggle.setAttribute('aria-keyshortcuts','F')" in source
     assert "target.tagName==='SELECT'||target.isContentEditable" in source
-    assert "if(key==='escape'&&!document.getElementById('hotkeyHelpPanel').hidden)" in source
+    assert "var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');" in source
+    assert "if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)" in source
+    assert "if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;" in source
     assert ".hotkey-help{position:fixed;right:80px;bottom:16px" in source
     assert "@media(max-width:760px){.hotkey-help{right:78px;bottom:16px}" in source
 
@@ -176,6 +181,7 @@ def test_readme_records_exact_deployed_surface() -> None:
     assert "1. All\n2. Standard\n3. GNHF" in text
     assert "The supplemental polish runtime assigns `4` to Favorites and remaps Doctrine to `5`" in text
     assert "`web/prompt-kit/index.html`" in text
+    assert "| `` ` `` | Show / hide Hotkeys |" in text
     for key, label in (
         ("1", "All prompts"),
         ("2", "Standard prompts"),
