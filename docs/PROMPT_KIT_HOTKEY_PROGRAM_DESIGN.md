@@ -154,12 +154,15 @@ Prototype evidence changed the initial sketch in four useful ways:
 - persistence must succeed before a new binding becomes effective.
 - hide/show/toggle are three commands over one filter state owner, not three DOM paths.
 
-Still unresolved by design proof:
-- final default gestures for explicit hide/show (the existing production `F` toggle remains valid);
-- sequence timeout and whether raw prompt-ID sequences are limited to Favorites or allowed for every prompt;
-- whether `OPEN_PROMPT(P95)` expands detail immediately or navigates/focuses first.
+Production decisions closed on 2026-08-22:
+- `Ctrl+/` toggles the Hotkeys surface while preserving editable-field safety.
+- `F` remains filter toggle; `[` explicitly hides filters and `]` explicitly shows filters.
+- configured prompt-ID sequences expire after 1.2 seconds.
+- only prompts that are currently Favorites may be assigned a prompt-ID shortcut.
+- a completed prompt-ID shortcut opens canonical prompt detail immediately through `showPromptDetail`.
+- shortcut persistence uses versioned `promptKit.promptShortcuts.v1` storage and publishes only after a successful durable write.
 
-These are UX policy choices and do not require changing the selected seams.
+These production choices preserve the selected seams and remove the prior UX-policy ambiguity.
 
 ## Proof ceiling and next implementation seam
 This design can prove classification, collision rejection, sequence buffering, prompt resolution, fail-closed persistence, and state locality. It cannot prove browser event ordering, real `localStorage` permissions, rendered-card focus/scroll behavior, or visual accessibility.

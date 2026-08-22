@@ -151,10 +151,11 @@ These remain touch-usable and do not reset library view, category, type, search 
 
 ### Hotkeys
 
-The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference. Select it to view the current effective bindings; select outside it, use its close control, or press **Esc** to dismiss it.
+The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference and favorite-prompt shortcut configurator. Select it or press **Ctrl+/** to toggle it; select outside it, use its close control, or press **Esc** to dismiss it.
 
 | Key | Action |
 |---|---|
+| `Ctrl+/` | Show / hide Hotkeys |
 | `/` | Focus search |
 | `1` | All prompts |
 | `2` | Standard prompts |
@@ -163,11 +164,15 @@ The glowing **Hotkeys** module beside the floating reference control is the in-p
 | `5` | Doctrine |
 | `R` | Toggle reference panel |
 | `F` | Show / hide filters |
+| `[` | Hide filters |
+| `]` | Show filters |
 | `T` | Scroll to top |
 | `B` | Scroll to bottom |
 | `Esc` | Close the active surface or clear filters |
 
-Single-letter navigation shortcuts are ignored while typing in an input, textarea, select, or content-editable surface. Top/bottom scrolling respects reduced-motion preferences.
+Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prompt first, enter its canonical ID such as `P95`, and save it; the persisted binding is then the lower-case prompt ID (`p95`). Typed prompt sequences expire after 1.2 seconds, are ignored in editable fields, and open the canonical prompt detail immediately. A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds.
+
+Navigation shortcuts are ignored while typing in an input, textarea, select, or content-editable surface. Top/bottom scrolling respects reduced-motion preferences.
 
 ### Header navigation contract
 
