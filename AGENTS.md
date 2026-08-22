@@ -16,23 +16,23 @@ This file is the single repository governance authority for `EndeavorEverlasting
 Apply conflicts in this order:
 
 1. Platform, security, legal, and repository-owner instructions.
-2. This contract plus any selected binding domain spec.
+2. This governance contract plus any selected binding domain spec.
 3. Task-specific prompts and sprint instructions.
-4. Generic defaults.
+4. Generic agent defaults.
 
 Lower authority may narrow scope or strengthen safety, never weaken higher authority.
 
 ## 3. Mandatory sprint declaration
 
-Before tracked writes state: repository and branch/worktree; lane and mission; owned and forbidden scope; expected artifacts; validation commands/order; proof ceiling; push/PR/merge/deploy authority.
+Before tracked writes state: repository and branch or worktree; lane and mission; owned scope and forbidden scope; expected artifacts; validation commands and their order; proof ceiling; push/PR/merge/deploy authority.
 
 Preserve dirty, conflicted, stale, or separately owned work and isolate the sprint. Never discard unrelated work merely to become current.
 
 ## 4. Completion standard
 
-Report files changed, validations run, commit SHA, push/PR/integration state, blockers/skips, proof ceiling, final Git state, and one exact next command.
+Report exact files changed, validations run, commit SHA, push state, PR/integration state, blockers/skips, proof ceiling, final Git state, and one exact next command.
 
-NEXT COMMAND must advance the next useful unproven state. For remote/unmerged work, fetch without force, pin exact branch/commit, isolate dirty work, run the owner validator/builder/launcher, resolve the canonical artifact from tracked authority, and propagate failures; never execute production by default.
+NEXT COMMAND must advance the next useful unproven state. For remote/unmerged work, fetch without force, pin exact branch/commit, preserve dirty work through an isolated worktree, run the owner validator/builder/launcher, resolve the canonical artifact from tracked authority, and propagate nonzero exit codes; it must not execute production by default.
 
 Use `none; no safe actionable work remains` only after authorized implementation, validation, integration, preservation/cleanup reporting, and artifact consumption are complete.
 
@@ -69,7 +69,7 @@ Default orientation is exactly:
 2. `harness/CONTEXT.md` — 50,000-foot router.
 3. Select one task domain, then load only its routed 30,000-foot map/contract and one 15,000-foot workflow/skill/spec as needed.
 
-Do **not** preload `CODEBASE_MAP.md`, `WORKFLOW.md`, `CAPABILITIES.md`, `SKILLS.md`, `TRIGGERS.md`, the harness manifest, every skill, or historical reports as a bundle. Escalate only when evidence, ownership, validation, or safety requires it.
+Do **not** preload `CODEBASE_MAP.md`, `WORKFLOW.md`, `CAPABILITIES.md`, `SKILLS.md`, `TRIGGERS.md`, the harness manifest, every skill, or historical reports as a bundle. Escalate context only when evidence, ownership, validation, or safety requires it.
 
 Binding only in the selected domain:
 
