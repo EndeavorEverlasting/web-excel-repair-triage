@@ -75,6 +75,7 @@ jobs:
             git merge --no-edit origin/main
           fi
           git status --short
+          python .github/patch_prompt_registry_expansion_20260822.py
           python .github/tmp_prompt_registry_expansion_20260822.py
       - name: Commit durable Prompt Kit result only
         shell: bash
@@ -87,7 +88,8 @@ jobs:
             .github/prompt-regression-draft.json \
             .github/prompt-program-design-draft.json \
             .github/prompt-teach-draft.json \
-            .github/tmp_prompt_registry_expansion_20260822.py
+            .github/tmp_prompt_registry_expansion_20260822.py \
+            .github/patch_prompt_registry_expansion_20260822.py
           git add \
             docs/prompts.json \
             registry/prompts/spec-architecture-prompts.v1.json \
