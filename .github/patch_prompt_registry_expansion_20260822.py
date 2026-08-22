@@ -101,4 +101,31 @@ patched = patched.replace(
     1,
 )
 
+# P96 legitimately extends the tutorial/discovery registry. Update the old
+# exclusivity assertion after the helper assigns its live identity, and prove
+# the new entry is the stateful tutor rather than weakening the registry check.
+discovery_marker = "# New focused semantic proof covers the three new identities and all five strengthened owners."
+discovery_patch = r'''# Extend tutorial-registry discovery contract for the helper-assigned tutor.
+discovery_test_path = ROOT / "tests/test_prompt_kit_discovery.py"
+discovery_text = discovery_test_path.read_text(encoding="utf-8")
+old_ids = '        self.assertEqual(set(by_id), {"P64", "P65"})'
+new_ids = f'        self.assertEqual(set(by_id), {{"P64", "P65", "{teach["id"]}"}})'
+if old_ids not in discovery_text:
+    raise SystemExit("tutorial registry identity assertion missing")
+discovery_text = discovery_text.replace(old_ids, new_ids, 1)
+needle = '        self.assertIn("Do not invent prompt IDs", by_id["P65"]["copyContent"])'
+addition = (
+    needle
+    + f'\n        self.assertEqual(by_id["{teach["id"]}"]["name"], "Stateful Socratic Technical Tutor Workspace")'
+    + f'\n        self.assertIn("active retrieval", by_id["{teach["id"]}"]["copyContent"].lower())'
+)
+if needle not in discovery_text:
+    raise SystemExit("tutorial registry semantic assertion anchor missing")
+discovery_test_path.write_text(discovery_text.replace(needle, addition, 1), encoding="utf-8")
+
+'''
+if discovery_marker not in patched:
+    raise SystemExit("executor focused-test marker missing")
+patched = patched.replace(discovery_marker, discovery_patch + discovery_marker, 1)
+
 path.write_text(patched, encoding="utf-8")
