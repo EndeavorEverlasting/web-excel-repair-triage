@@ -1,0 +1,41 @@
+name: Temporary Enable Prompt Contribution Executor
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  enable:
+    if: github.head_ref == 'feat/prompt-kit-artifact-risk-path-20260822'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-artifact-risk-path-20260822
+          fetch-depth: 0
+      - name: Enable executor on this PR and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --all --prune --tags
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/workflows/tmp-prompt-contribution-inspect.yml')
+          text = path.read_text(encoding='utf-8')
+          old = "on:\n  push:\n    branches:\n      - feat/prompt-kit-artifact-risk-path-20260822\n\npermissions:"
+          new = "on:\n  push:\n    branches:\n      - feat/prompt-kit-artifact-risk-path-20260822\n  pull_request:\n    branches:\n      - main\n\npermissions:"
+          if old not in text:
+              raise SystemExit('executor trigger block did not match expected form')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          git rm .github/workflows/tmp-enable-prompt-contribution-executor.yml
+          git config user.name 'EndeavorEverlasting'
+          git config user.email '71802818+EndeavorEverlasting@users.noreply.github.com'
+          git add .github/workflows/tmp-prompt-contribution-inspect.yml
+          git diff --cached --check
+          git commit -m 'chore(prompt-kit): arm contribution executor for PR CI'
+          git push origin HEAD:feat/prompt-kit-artifact-risk-path-20260822
