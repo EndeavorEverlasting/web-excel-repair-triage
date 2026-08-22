@@ -220,10 +220,12 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         payload = json.loads(TUTORIAL_PROMPTS.read_text(encoding="utf-8"))
         by_id = {item["id"]: item for item in payload["prompts"]}
         self.assertEqual(payload["schema_version"], "prompt-registry-extension/v1")
-        self.assertEqual(set(by_id), {"P64", "P65"})
+        self.assertEqual(set(by_id), {"P64", "P65", "P96"})
         self.assertIn("RANK TUTORIAL PATHS WORTH SPRINTING", by_id["P64"]["copyContent"])
         self.assertIn("one concise question at a time", by_id["P65"]["copyContent"])
         self.assertIn("Do not invent prompt IDs", by_id["P65"]["copyContent"])
+        self.assertEqual(by_id["P96"]["name"], "Stateful Socratic Technical Tutor Workspace")
+        self.assertIn("active retrieval", by_id["P96"]["copyContent"].lower())
 
     def test_repo_front_door_exposes_browser_phone_zip_cmd_and_clone(self) -> None:
         readme = README.read_text(encoding="utf-8")
