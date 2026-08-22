@@ -151,15 +151,23 @@ These remain touch-usable and do not reset library view, category, type, search 
 
 ### Hotkeys
 
+The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference. Select it to view the current effective bindings; select outside it, use its close control, or press **Esc** to dismiss it.
+
 | Key | Action |
 |---|---|
 | `/` | Focus search |
 | `1` | All prompts |
 | `2` | Standard prompts |
 | `3` | GNHF prompts |
-| `4` | Doctrine |
+| `4` | Favorites |
+| `5` | Doctrine |
 | `R` | Toggle reference panel |
+| `F` | Show / hide filters |
+| `T` | Scroll to top |
+| `B` | Scroll to bottom |
 | `Esc` | Close the active surface or clear filters |
+
+Single-letter navigation shortcuts are ignored while typing in an input, textarea, select, or content-editable surface. Top/bottom scrolling respects reduced-motion preferences.
 
 ### Header navigation contract
 
@@ -169,7 +177,7 @@ The first three library-view filters are fixed and ordered:
 2. Standard
 3. GNHF
 
-Their keyboard shortcuts are `1`, `2`, and `3` respectively. Doctrine may use shortcut `4`, but it must never displace GNHF.
+Their keyboard shortcuts are `1`, `2`, and `3` respectively. The generated base header still carries Doctrine's legacy `4` label before supplemental runtime enhancement. The supplemental polish runtime assigns `4` to Favorites and remaps Doctrine to `5`; the visible Hotkeys module and effective dispatcher must remain aligned without displacing GNHF.
 
 ### Validation
 
