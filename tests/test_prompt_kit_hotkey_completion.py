@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -8,6 +10,7 @@ POLISH = ROOT / "docs" / "prompt-kit-polish.js"
 DEPLOYED = ROOT / "web" / "prompt-kit" / "index.html"
 README = ROOT / "web" / "README.md"
 DESIGN = ROOT / "docs" / "PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md"
+PROTOTYPE = ROOT / "docs" / "prompt-kit-hotkey-prototype.js"
 
 
 class PromptKitHotkeyCompletionTests(unittest.TestCase):
@@ -69,6 +72,37 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             self.assertLess(source.index(buffered), source.index(built_in))
         self.assertIn("var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');", source)
         self.assertIn("if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)", source)
+
+    def test_executable_prototype_proves_success_failure_and_digit_collision_paths(self) -> None:
+        completed = subprocess.run(
+            ["node", str(PROTOTYPE)],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        proof = json.loads(completed.stdout)
+        self.assertEqual(proof["status"], "PASS")
+        for path in (
+            "HOTKEY_HELP_TOGGLE",
+            "FILTER_HIDE",
+            "FILTER_SHOW",
+            "FILTER_TOGGLE",
+            "OPEN_PROMPT(P95)",
+            "OPEN_PROMPT(P14)",
+            "VIEW_DOCTRINE",
+        ):
+            self.assertIn(path, proof["success_paths"])
+        for path in (
+            "EDITABLE_TARGET",
+            "MODIFIED_OR_PREVENTED",
+            "RESERVED_COLLISION",
+            "UNKNOWN_PROMPT",
+            "PERSISTENCE_FAILED",
+        ):
+            self.assertIn(path, proof["failure_paths"])
+        self.assertTrue(any(item.get("promptId") == "P95" for item in proof["trace"]))
+        self.assertTrue(any(item.get("promptId") == "P14" for item in proof["trace"]))
 
     def test_shortcut_rows_are_numeric_and_generated_runtime_matches_source(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
