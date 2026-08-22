@@ -140,7 +140,7 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         self.assertIn("only prompts that are currently Favorites", design)
         self.assertIn("opens canonical prompt detail immediately", design)
         self.assertIn("buffer is active", design)
-        self.assertIn("one-hand", design)
+        self.assertIn("one hand", design)
         self.assertNotIn("Still unresolved by design proof:", design)
 
 
