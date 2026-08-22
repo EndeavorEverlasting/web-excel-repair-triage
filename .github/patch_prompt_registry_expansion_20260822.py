@@ -52,4 +52,9 @@ If routing is ambiguous, inspect once. If a contract mismatch names an owner/hel
 DELIVER
 Keep it compact: contribution ledger; strengthened IDs/names; new helper receipts; focused semantic assertion results; prompt count/parity; validation; commit/PR/merge; resulting main SHA; exact blocker if any.'''
 patched = text[:left] + compact + text[right:]
+patched = patched.replace(
+    'anchor = "\\nSTOP ONLY AT THE REAL FIXED POINT"',
+    'anchor = "\\n10. STOP ONLY AT THE REAL FIXED POINT"',
+    1,
+)
 path.write_text(patched, encoding="utf-8")
