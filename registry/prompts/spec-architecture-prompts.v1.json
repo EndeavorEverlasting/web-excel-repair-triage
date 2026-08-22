@@ -479,6 +479,40 @@
         "program architecture"
       ],
       "profile": "spec-architecture"
+    },
+    {
+      "id": "P97",
+      "seq": "97",
+      "name": "Artifact Risk Review & Triage",
+      "type": "ANALYZE + RISK",
+      "class": "ANALYSIS / ARTIFACT RISK TRIAGE",
+      "sprintRole": "Inspect supplied or generated artifacts before repair and surface the highest-signal correctness, integrity, provenance, usability, operational, and proof risks with evidence-backed triage",
+      "progress": "YES",
+      "useWhen": "The user has one or more files, screenshots, reports, manifests, generated outputs, documents, spreadsheets, logs, UI captures, or other artifacts and asks what stands out as risky, weak, inconsistent, stale, unsafe, or most worth investigating before deciding what to repair.",
+      "inspectFirst": "The actual supplied artifacts and their readable content/metadata; the user's intended outcome or claimed use; artifact provenance/version/commit/generator/schema when available; related reference or accepted artifact when supplied; current validators/contracts; and surrounding context needed to distinguish a real observation from an inference.",
+      "expectedOutput": "A prioritized artifact-risk ledger that separates OBSERVED, INFERRED, and UNKNOWN findings; cites the exact artifact evidence for each retained risk; explains consequence and confidence without fake precision; notes important counterevidence; identifies cross-artifact contradictions or provenance drift; and routes each actionable risk to the smallest next proof or repair owner.",
+      "nextStep": "Execute the strongest safe next proof for the highest-priority evidence-backed risk, or route a discovered defect class to P91, a production-vs-test proof gap to P92, a closure-claim concern to P93, a regression-preservation concern to P94, or required artifact construction to the canonical builder such as P56. Do not mutate artifacts merely because analysis found a concern unless repair is requested or already in scope.",
+      "proofGate": "Every reported risk is traceable to supplied/repository artifact evidence or explicitly labeled INFERRED/UNKNOWN; unreadable or missing content is never pretended to be inspected; risk priority reflects consequence plus evidence rather than unsupported scoring; at least one deliberate cross-artifact/provenance second pass checks contradictions, stale versions, omissions, and counterevidence; and the highest-priority actionable finding has an exact next proof/owner without collapsing into P91/P92/P93/P94 repair roles.",
+      "color": "Cyan",
+      "copySheet": "P97_COPY_SAFE",
+      "category": "standard",
+      "copyContent": "ANALYZE THE ARTIFACTS AND TELL ME WHAT STANDS OUT AS A RISK. DO NOT JUMP STRAIGHT INTO REPAIR OR INVENT PROBLEMS TO FILL A CHECKLIST.\n\nArtifacts / source material: resolve from the current conversation, attached files, repository evidence, or named artifact paths.\nIntended use or claim, if known: xyz_intended_use\nRisk focus, if any: xyz_focus_or_general_review\n\nMISSION\nInspect the actual artifacts first and identify the few risks that materially deserve attention. This is an evidence-led review, not a generic security scan and not a defect-repair sprint. Preserve the difference between what the artifact directly proves, what it reasonably suggests, and what remains unknown.\n\n1. ESTABLISH THE ARTIFACT SET AND PROVENANCE\n- Enumerate the artifacts actually available to inspect. Do not claim to have read missing, inaccessible, truncated, or image-only content that was not actually inspected.\n- Record useful provenance when available: filename/path, artifact type, source vs generated output, timestamp/version, commit/build/generator/schema/profile, and any accepted reference supplied by the user or repository.\n- If multiple artifacts belong to one workflow, identify their expected relationships before judging them independently.\n\n2. PASS 1 — INSPECT EACH ARTIFACT FOR MATERIAL RISK\nApply only categories that fit the artifact. Look for evidence of correctness/internal-consistency defects; malformed, incomplete, corrupted, or structurally invalid content; stale versions, wrong inputs, generator/schema/profile drift, or source/output identity confusion; missing controls, proof, provenance, reconciliation, or acceptance evidence needed for the claimed use; unsafe, destructive, privacy/security, permission, or disclosure exposure visible in the material; operational/usability traps likely to make a real user choose the wrong path, misread state, lose work, or require hidden developer knowledge; and runtime/deployment assumptions contradicted by artifact or environment evidence. Do not turn taste, formatting preference, or speculative edge cases into material risk without a concrete consequence.\n\n3. KEEP EVIDENCE STATES EXPLICIT\nClassify every retained finding as OBSERVED (directly supported), INFERRED (reasonable risk with the inference named), or UNKNOWN (material proof is missing and the uncertainty matters). Never collapse UNKNOWN into PASS or describe an inference as an observed defect. Point to the smallest artifact region, field, screenshot feature, log line, manifest entry, or repository path supporting the finding.\n\n4. PRIORITIZE WITHOUT FAKE PRECISION\nFor each retained risk record: risk ID; state; affected artifact; evidence; likely consequence; confidence; priority only when justified; and the smallest next proof or owner. Prefer a short ranked set of material risks over a long undifferentiated checklist. State important counterevidence or controls that reduce a risk.\n\n5. PASS 2 — CROSS-ARTIFACT / PROVENANCE REVIEW\nReview the set again from the opposite direction. Compare artifacts with each other and any declared contract/reference. Look for contradictions, stale generated output, mismatched versions or identities, omissions between source and derivative artifacts, metadata/timestamp drift, unsupported completion claims, and risks that disappear when counterevidence is considered. Promote, downgrade, merge, or remove findings based on this second pass.\n\n6. ROUTE RATHER THAN ABSORB DOWNSTREAM WORK\nConcrete defect that may represent a wider failure class -> P91 Failure-Class Generalization & Repository Audit. Tests/evidence may bypass the shipped/user path -> P92 Production-Path Proof Gap Auditor. Someone is claiming the use case is done/closed -> P93 Use-Case Closure Certification. A change may break previously accepted behavior -> P94 Regression Test & Live Behavior Guard. A new/rebuilt artifact is actually required -> use the canonical artifact builder/producer, such as P56 when appropriate. Keep this prompt focused on finding and triaging risk. If repair is explicitly in scope, hand the evidence ledger to the correct repair owner and continue there rather than silently broadening this prompt.\n\n7. USER-ONLY GATE\nInspect files, screenshots, repository artifacts, metadata, validators, and references yourself when accessible. Do not ask the user to become the file reader or test runner. Ask only for a genuinely missing artifact, password/protected access, physical observation, or product preference that materially changes the risk judgment and cannot be resolved from current evidence.\n\nDELIVER\nStart with the highest-priority risks and why they matter. Then give the compact risk ledger, important counterevidence, unknowns/proof ceiling, and the exact next proof or downstream owner for the top actionable item. If no material risk is supported, say that clearly and state what was actually inspected rather than manufacturing findings.",
+      "keywords": [
+        "artifact risk",
+        "analyze artifacts",
+        "artifact review",
+        "risk review",
+        "what stands out",
+        "artifact audit",
+        "artifact triage",
+        "artifact weakness",
+        "generated output risk",
+        "cross artifact",
+        "provenance drift",
+        "stale artifact",
+        "artifact inconsistency"
+      ],
+      "profile": "spec-architecture"
     }
   ]
 }
