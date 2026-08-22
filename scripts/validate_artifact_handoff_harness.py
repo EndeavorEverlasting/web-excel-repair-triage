@@ -15,6 +15,23 @@ DOMAIN = ROOT / "harness" / "artifact-handoff"
 MANIFEST = DOMAIN / "manifest.v1.json"
 CONTRACT = DOMAIN / "contracts" / "share-alias-download.v1.json"
 PERCENT_OCTET = re.compile(r"%[0-9A-Fa-f]{2}")
+REQUIRED_RULE_KEYS = {
+    "canonical_identity",
+    "literal_alias_filename",
+    "extension_preservation",
+    "byte_identity",
+    "transport_boundary",
+    "operator_zero_rename",
+}
+REQUIRED_FIXTURE_FIELDS = {
+    "id",
+    "canonical_name",
+    "alias_name",
+    "filesystem_basename",
+    "transport_href",
+    "expected_valid",
+}
+FIXTURE_STRING_FIELDS = REQUIRED_FIXTURE_FIELDS - {"expected_valid"}
 
 
 class ValidationError(RuntimeError):
@@ -57,6 +74,13 @@ def suffix(name: str) -> str:
     return Path(name).suffix.lower()
 
 
+def decoded_transport_basename(transport_href: str) -> str:
+    """Decode only the URL's final encoded segment, never the entire path."""
+    parsed = urlparse(transport_href)
+    encoded_basename = parsed.path.rsplit("/", 1)[-1]
+    return unquote(encoded_basename)
+
+
 def validate_alias_metadata(
     canonical_name: str,
     alias_name: str,
@@ -80,9 +104,7 @@ def validate_alias_metadata(
     if not suffix(canonical_name) or suffix(canonical_name) != suffix(alias_name):
         errors.append("alias extension does not match canonical extension")
     if transport_href:
-        parsed = urlparse(transport_href)
-        decoded_basename = Path(unquote(parsed.path)).name
-        if decoded_basename != alias_name:
+        if decoded_transport_basename(transport_href) != alias_name:
             errors.append("transport href does not decode to the intended alias basename")
     return errors
 
@@ -95,12 +117,22 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def validate_runtime_pair(canonical: Path, alias: Path, expected_alias: str) -> dict:
+def validate_runtime_pair(
+    canonical: Path,
+    alias: Path,
+    expected_alias: str,
+    transport_href: str,
+) -> dict:
     if not canonical.is_file():
         raise ValidationError(f"canonical file does not exist: {canonical}")
     if not alias.is_file():
         raise ValidationError(f"alias file does not exist: {alias}")
-    errors = validate_alias_metadata(canonical.name, expected_alias, alias.name)
+    errors = validate_alias_metadata(
+        canonical.name,
+        expected_alias,
+        alias.name,
+        transport_href,
+    )
     if errors:
         raise ValidationError("; ".join(errors))
     canonical_hash = sha256(canonical)
@@ -112,10 +144,68 @@ def validate_runtime_pair(canonical: Path, alias: Path, expected_alias: str) -> 
         "canonical_name": canonical.name,
         "alias_name": alias.name,
         "extension": canonical.suffix,
+        "transport_href": transport_href,
+        "transport_decoded_basename": decoded_transport_basename(transport_href),
         "canonical_sha256": canonical_hash,
         "alias_sha256": alias_hash,
         "byte_identical": True,
     }
+
+
+def validate_contract_payload(contract: dict) -> list[dict]:
+    if contract.get("schema_version") != "share-artifact-alias-download/v1":
+        raise ValidationError("unsupported alias-download contract schema")
+    rules = contract.get("rules")
+    if not isinstance(rules, dict) or set(rules) != REQUIRED_RULE_KEYS:
+        raise ValidationError("alias-download rule keys drifted")
+    for key in sorted(REQUIRED_RULE_KEYS):
+        if not isinstance(rules[key], str) or not rules[key].strip():
+            raise ValidationError(f"alias-download rule must be non-empty text: {key}")
+
+    fixtures = contract.get("fixtures")
+    if not isinstance(fixtures, list) or len(fixtures) < 5:
+        raise ValidationError("alias-download fixtures are incomplete")
+    seen_ids: set[str] = set()
+    fixture_results: list[dict] = []
+    for index, case in enumerate(fixtures):
+        if not isinstance(case, dict) or set(case) != REQUIRED_FIXTURE_FIELDS:
+            raise ValidationError(f"fixture {index} fields drifted")
+        for field in sorted(FIXTURE_STRING_FIELDS):
+            if not isinstance(case[field], str) or not case[field].strip():
+                raise ValidationError(f"fixture {index} field must be non-empty text: {field}")
+        if type(case["expected_valid"]) is not bool:
+            raise ValidationError(f"fixture {index} expected_valid must be boolean")
+        fixture_id = case["id"]
+        if fixture_id in seen_ids:
+            raise ValidationError(f"duplicate fixture ID: {fixture_id}")
+        seen_ids.add(fixture_id)
+        errors = validate_alias_metadata(
+            case["canonical_name"],
+            case["alias_name"],
+            case["filesystem_basename"],
+            case["transport_href"],
+        )
+        actual = not errors
+        expected = case["expected_valid"]
+        if actual != expected:
+            raise ValidationError(
+                f"fixture {fixture_id} expected valid={expected} got {actual}: {errors}"
+            )
+        fixture_results.append({"id": fixture_id, "valid": actual})
+    return fixture_results
+
+
+def resolve_output_path(raw_output: str) -> Path:
+    output = Path(raw_output).expanduser()
+    if not output.is_absolute():
+        output = ROOT / output
+    output = output.resolve()
+    outputs_root = (ROOT / "Outputs").resolve()
+    try:
+        output.relative_to(outputs_root)
+    except ValueError as exc:
+        raise ValidationError("receipt output must stay under Outputs/") from exc
+    return output
 
 
 def validate_static_harness() -> dict:
@@ -151,30 +241,7 @@ def validate_static_harness() -> dict:
         if heading not in skill_text:
             raise ValidationError(f"artifact handoff skill missing heading: {heading}")
 
-    contract = load_json(CONTRACT)
-    if contract.get("schema_version") != "share-artifact-alias-download/v1":
-        raise ValidationError("unsupported alias-download contract schema")
-    rules = contract.get("rules")
-    if not isinstance(rules, dict) or len(rules) < 6:
-        raise ValidationError("alias-download rules are incomplete")
-    fixtures = contract.get("fixtures")
-    if not isinstance(fixtures, list) or len(fixtures) < 4:
-        raise ValidationError("alias-download fixtures are incomplete")
-    fixture_results = []
-    for case in fixtures:
-        errors = validate_alias_metadata(
-            str(case.get("canonical_name", "")),
-            str(case.get("alias_name", "")),
-            str(case.get("filesystem_basename", "")),
-            str(case.get("transport_href", "")) or None,
-        )
-        actual = not errors
-        expected = bool(case.get("expected_valid"))
-        if actual != expected:
-            raise ValidationError(
-                f"fixture {case.get('id')} expected valid={expected} got {actual}: {errors}"
-            )
-        fixture_results.append({"id": case.get("id"), "valid": actual})
+    fixture_results = validate_contract_payload(load_json(CONTRACT))
 
     integration_markers = {
         "harness/CONTEXT.md": "harness/artifact-handoff/CODEBASE_MAP.md",
@@ -202,30 +269,33 @@ def main() -> int:
     parser.add_argument("--canonical")
     parser.add_argument("--alias", dest="alias_path")
     parser.add_argument("--expected-alias")
+    parser.add_argument("--transport-href")
     parser.add_argument("--output")
     parser.add_argument("--summary", action="store_true")
     args = parser.parse_args()
 
     try:
         report = validate_static_harness()
-        runtime_args = [args.canonical, args.alias_path, args.expected_alias]
+        runtime_args = [
+            args.canonical,
+            args.alias_path,
+            args.expected_alias,
+            args.transport_href,
+        ]
         if any(runtime_args) and not all(runtime_args):
-            raise ValidationError("--canonical, --alias, and --expected-alias must be supplied together")
+            raise ValidationError(
+                "--canonical, --alias, --expected-alias, and --transport-href must be supplied together"
+            )
         if all(runtime_args):
             runtime = validate_runtime_pair(
                 Path(args.canonical).expanduser().resolve(),
                 Path(args.alias_path).expanduser().resolve(),
                 args.expected_alias,
+                args.transport_href,
             )
             report["runtime_pair"] = runtime
         if args.output:
-            output = Path(args.output)
-            if not output.is_absolute():
-                output = ROOT / output
-            try:
-                output.relative_to(ROOT / "Outputs")
-            except ValueError as exc:
-                raise ValidationError("receipt output must stay under Outputs/") from exc
+            output = resolve_output_path(args.output)
             output.parent.mkdir(parents=True, exist_ok=True)
             output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         if args.summary:
@@ -234,6 +304,7 @@ def main() -> int:
             print(f"- fixtures: {len(report['fixtures'])}")
             print("- literal percent-encoded filenames: rejected")
             print("- extension drift: rejected")
+            print("- runtime transport target: required and recorded with real alias pairs")
             print("- byte identity: required for real alias pairs")
         return 0
     except ValidationError as exc:
