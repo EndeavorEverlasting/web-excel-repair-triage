@@ -96,6 +96,7 @@ jobs:
             registry/prompts/repository-work-ledger-prompts.v1.json \
             registry/prompts/tutorial-discovery-prompts.v1.json \
             tests/test_prompt_registry_expansion_regression_design_teach.py \
+            tests/test_prompt_kit_discovery.py \
             web/prompt-kit/index.html \
             .github/workflows/artifact-engines.yml
           git diff --cached --check
