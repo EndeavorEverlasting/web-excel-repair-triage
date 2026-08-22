@@ -52,3 +52,50 @@ jobs:
             tests/test_gitignore_hygiene.py \
             tests/test_roster_log_review_queue.py \
             -q
+
+  prompt-registry-expansion-20260822:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feat/prompt-kit-regression-design-teach-20260822' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-regression-design-teach-20260822
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Refresh remote floor and execute registry expansion
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --all --prune --tags
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+          fi
+          git status --short
+          python .github/tmp_prompt_registry_expansion_20260822.py
+      - name: Commit durable Prompt Kit result only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout origin/main -- .github/workflows/artifact-engines.yml
+          git rm --ignore-unmatch \
+            .github/prompt-regression-draft.json \
+            .github/prompt-program-design-draft.json \
+            .github/prompt-teach-draft.json \
+            .github/tmp_prompt_registry_expansion_20260822.py
+          git add \
+            docs/prompts.json \
+            registry/prompts/spec-architecture-prompts.v1.json \
+            registry/prompts/repository-work-ledger-prompts.v1.json \
+            registry/prompts/tutorial-discovery-prompts.v1.json \
+            tests/test_prompt_registry_expansion_regression_design_teach.py \
+            web/prompt-kit/index.html \
+            .github/workflows/artifact-engines.yml
+          git diff --cached --check
+          git commit -m "feat(prompt-kit): add regression design and stateful teaching workflows"
+          git push origin HEAD:feat/prompt-kit-regression-design-teach-20260822
