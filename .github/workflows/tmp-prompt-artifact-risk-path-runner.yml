@@ -20,4 +20,4 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python scripts/tmp_prompt_artifact_risk_path_executor.py
+      - run: python scripts/tmp_prompt_artifact_risk_path_executor_v2.py
