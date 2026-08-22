@@ -1,3 +1,4 @@
+# Retry after aligning the adjacent header contract with null-safe hotkey dispatch.
 name: Prompt Kit hotkey canonical parity transport
 
 on:
