@@ -1,81 +1,242 @@
-name: Temporary Prompt Contribution Inspect
+name: Temporary Prompt Contribution Executor
 
 on:
   push:
     branches:
       - feat/prompt-kit-artifact-risk-path-20260822
-  pull_request:
-    branches:
-      - main
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  inspect:
-    if: github.head_ref == 'feat/prompt-kit-artifact-risk-path-20260822' || github.ref_name == 'feat/prompt-kit-artifact-risk-path-20260822'
+  contribute:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Refresh and inspect helper routing
+      - name: Refresh branch floor
         shell: bash
         run: |
           set -euo pipefail
+          branch='feat/prompt-kit-artifact-risk-path-20260822'
           git fetch --all --prune --tags
-          printf '%s\n' '=== FLOOR ==='
+          git checkout -B "$branch" "origin/$branch"
+          git merge-base --is-ancestor origin/main HEAD
+          printf 'BASE_MAIN=%s\n' "$(git rev-parse origin/main)"
+          printf 'BRANCH_HEAD=%s\n' "$(git rev-parse HEAD)"
           git status --short
-          git branch --show-current
-          git log --oneline --decorate -5
-          printf '%s\n' '=== HELPER INSPECT ==='
-          python scripts/prompt_registry_ops.py inspect
-      - name: Search combined Prompt Kit ownership
+      - name: Strengthen P50 core ownership
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           import json
-          import sys
           from pathlib import Path
-          sys.path.insert(0, str(Path('scripts').resolve()))
+
+          path = Path('docs/prompts.json')
+          prompts = json.loads(path.read_text(encoding='utf-8'))
+          p50 = next(p for p in prompts if p.get('id') == 'P50')
+          marker = '\n\nACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT'
+          if marker not in p50['copyContent']:
+              raise SystemExit('P50 shared-policy boundary not found')
+          suffix = marker + p50['copyContent'].split(marker, 1)[1]
+          prefix = '''PROMPT SURFACE: STANDARD AI. THIS IS NOT A GOODNIGHT, HAVE FUN (GNHF) PROMPT.
+
+ESTABLISH THE MACHINE, SHELL, LOCAL REPOSITORY ROOT, AND REMOTE FRESHNESS BEFORE GIVING OR RUNNING REPOSITORY COMMANDS.
+
+Repository: xyz_repo_url_or_name
+Known local path, if any: xyz_known_or_unknown
+Requested task: xyz_task
+
+MISSION
+Prevent path, shell, platform, worktree, and stale-checkout assumptions from contaminating later work. Treat execution context as evidence that must be proved on the current box, not remembered from another machine, username, operating system, terminal, or prior chat.
+
+MACHINE / OS / SHELL GATE
+1. Resolve the actual execution environment before constructing commands: operating system/platform, active shell or command host, current directory, and Git availability. Distinguish Windows PowerShell, PowerShell 7+, CMD, Git Bash, WSL/Linux, macOS, and other materially different environments when present.
+2. Do not infer OS, shell, path separator, home directory, drive letter, username, quoting rules, executable names, or privilege model from the repository name, a previous machine, or remembered context.
+3. Emit commands in the syntax of the verified shell. Do not hand Bash syntax to PowerShell/CMD, Windows paths to a Linux/WSL context, or shell-specific quoting to the wrong host.
+4. If the environment changes mid-task (new terminal, SSH/RDP target, container, WSL boundary, admin box, CI runner), re-run the environment and directory gates before continuing.
+
+DIRECTORY GATE
+1. Do not assume the current directory, remembered path, repository name, Desktop path, or newest checkout is correct.
+2. Resolve the intended checkout by matching its remote to the requested repository and inspecting git worktree list when available.
+3. When the root is reachable, verify it with git rev-parse --show-toplevel and git remote get-url origin.
+4. When no matching checkout exists, route to P61 Existing Repository Clone + Working-Directory Bootstrapper rather than inventing a path.
+5. When a root cannot yet be proven, return or run bounded discovery only. Do not start tests, builds, mutations, commits, cleanup, or deployment against an unverified directory.
+6. After resolution, make the first executable task command Set-Location -LiteralPath "<verified-root>" in PowerShell or cd -- "<verified-root>" in Bash, then verify git rev-parse --show-toplevel again.
+
+REMOTE FRESHNESS GATE
+1. After the root is proven and before branch-sensitive analysis or iteration, inspect git status, branch, tracking branch, worktrees, and remotes.
+2. Refresh remote truth with git fetch --all --prune --tags when the remote is reachable. Resolve the actual remote default branch from provider metadata or refs/remotes/origin/HEAD; do not assume main/master or reuse a remembered SHA.
+3. Compare current HEAD, its tracking branch, and the refreshed default-branch floor. Inspect open/recent overlapping branches or PRs when the task could collide with them.
+4. If a clean tracking branch is behind-only, use git pull --ff-only or the repository-approved equivalent. If dirty, diverged, detached, or separately owned work exists, preserve it and reconcile or isolate with a worktree; never force-reset merely to become current.
+5. If remote freshness cannot be proved, state the exact limitation. Do not silently perform branch-sensitive mutation, build/repair decisions, or certification from a stale assumed floor.
+
+COMMAND EMISSION GATE
+- Every later command block must be valid for the verified OS/shell and begin from, or explicitly enter, the verified repository root.
+- Prefer environment variables, repository-relative paths, manifests, and tracked launchers over person-specific absolute paths.
+- Recheck root and shell before commands copied to another box or execution profile.
+- Search existing contracts, helpers, validators, scripts, manifests, and output patterns before inventing replacements.
+
+FINAL RESPONSE
+Return the verified environment profile (OS/platform + shell), root evidence, root/remote/default-branch freshness evidence, branch/worktree state, the shell-correct directory-change command, and then the bounded task commands in execution order. Name any unproved environment or freshness assumption instead of guessing.'''
+
+          p50.update({
+              'sprintRole': 'Resolve and verify the machine environment, local repository directory, shell, and remote freshness before emitting or executing repository commands',
+              'useWhen': 'The repository is known but the exact local checkout, operating system/shell context, worktree, or remote freshness is unknown, stale, or easy to confuse with another box or checkout.',
+              'inspectFirst': 'Repository URL or name; actual OS/platform and active shell; current directory; Git availability; Git worktrees; candidate remotes; branch/tracking/default-branch state; remote freshness; and any operator-supplied path.',
+              'expectedOutput': 'One verified execution profile (OS/platform + shell), one verified repository root, root/remote/default-branch evidence, reconciled freshness state, a shell-matched directory change, branch/worktree evidence, then bounded task commands.',
+              'nextStep': 'If no matching checkout exists, run P61. Otherwise continue to the task-specific prompt only after the environment, directory, and freshness gates pass; preserve dirty/diverged work instead of resetting it.',
+              'proofGate': 'The execution OS/platform and shell are explicitly resolved; the intended root is matched to the requested remote and git rev-parse --show-toplevel; remote refs/default branch are refreshed when reachable and compared with current/tracking HEAD; clean behind-only state is fast-forwarded or non-clean/diverged work is preserved and isolated/reconciled; and later commands use the verified shell and root rather than remembered machine paths.',
+              'keywords': [
+                  'directory', 'command guard', 'directory first', 'repo command', 'repository path',
+                  'local repository', 'local repo path', 'working directory', 'operating system', 'os',
+                  'shell', 'powershell', 'cmd', 'bash', 'wsl', 'worktree', 'git fetch', 'pull latest',
+                  'remote freshness', 'stale checkout', 'path problems'
+              ],
+              'copyContent': prefix + suffix,
+          })
+          path.write_text(json.dumps(prompts, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+      - name: Add bounded artifact-risk reviewer through helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          draft="$RUNNER_TEMP/p97-artifact-risk-review.json"
+          cat > "$draft" <<'JSON'
+          {
+            "name": "Artifact Risk Review & Triage",
+            "type": "ANALYZE + RISK",
+            "class": "ANALYSIS / ARTIFACT RISK TRIAGE",
+            "sprintRole": "Inspect supplied or generated artifacts before repair and surface the highest-signal correctness, integrity, provenance, usability, operational, and proof risks with evidence-backed triage",
+            "useWhen": "The user has one or more files, screenshots, reports, manifests, generated outputs, documents, spreadsheets, logs, UI captures, or other artifacts and asks what stands out as risky, weak, inconsistent, stale, unsafe, or most worth investigating before deciding what to repair.",
+            "inspectFirst": "The actual supplied artifacts and their readable content/metadata; the user's intended outcome or claimed use; artifact provenance/version/commit/generator/schema when available; related reference or accepted artifact when supplied; current validators/contracts; and surrounding context needed to distinguish a real observation from an inference.",
+            "expectedOutput": "A prioritized artifact-risk ledger that separates OBSERVED, INFERRED, and UNKNOWN findings; cites the exact artifact evidence for each retained risk; explains consequence and confidence without fake precision; notes important counterevidence; identifies cross-artifact contradictions or provenance drift; and routes each actionable risk to the smallest next proof or repair owner.",
+            "nextStep": "Execute the strongest safe next proof for the highest-priority evidence-backed risk, or route a discovered defect class to P91, a production-vs-test proof gap to P92, a closure-claim concern to P93, a regression-preservation concern to P94, or required artifact construction to the canonical builder such as P56. Do not mutate artifacts merely because analysis found a concern unless repair is requested or already in scope.",
+            "proofGate": "Every reported risk is traceable to supplied/repository artifact evidence or explicitly labeled INFERRED/UNKNOWN; unreadable or missing content is never pretended to be inspected; risk priority reflects consequence plus evidence rather than unsupported scoring; at least one deliberate cross-artifact/provenance second pass checks contradictions, stale versions, omissions, and counterevidence; and the highest-priority actionable finding has an exact next proof/owner without collapsing into P91/P92/P93/P94 repair roles.",
+            "copyContent": "ANALYZE THE ARTIFACTS AND TELL ME WHAT STANDS OUT AS A RISK. DO NOT JUMP STRAIGHT INTO REPAIR OR INVENT PROBLEMS TO FILL A CHECKLIST.\n\nArtifacts / source material: resolve from the current conversation, attached files, repository evidence, or named artifact paths.\nIntended use or claim, if known: xyz_intended_use\nRisk focus, if any: xyz_focus_or_general_review\n\nMISSION\nInspect the actual artifacts first and identify the few risks that materially deserve attention. This is an evidence-led review, not a generic security scan and not a defect-repair sprint. Preserve the difference between what the artifact directly proves, what it reasonably suggests, and what remains unknown.\n\n1. ESTABLISH THE ARTIFACT SET AND PROVENANCE\n- Enumerate the artifacts actually available to inspect. Do not claim to have read missing, inaccessible, truncated, or image-only content that was not actually inspected.\n- Record useful provenance when available: filename/path, artifact type, source vs generated output, timestamp/version, commit/build/generator/schema/profile, and any accepted reference supplied by the user or repository.\n- If multiple artifacts belong to one workflow, identify their expected relationships before judging them independently.\n\n2. PASS 1 — INSPECT EACH ARTIFACT FOR MATERIAL RISK\nApply only categories that fit the artifact. Look for evidence of:\n- correctness or internal-consistency defects;\n- malformed, incomplete, corrupted, or structurally invalid content;\n- stale versions, wrong inputs, generator/schema/profile drift, or source/output identity confusion;\n- missing controls, proof, provenance, reconciliation, or acceptance evidence needed for the artifact's claimed use;\n- unsafe, destructive, privacy/security, permission, or disclosure exposure visible in the material;\n- operational or usability traps likely to make a real user choose the wrong path, misread state, lose work, or require hidden developer knowledge;\n- runtime/deployment assumptions contradicted by the artifact or its environment evidence.\nDo not turn taste, formatting preference, or speculative edge cases into material risk without a concrete consequence.\n\n3. KEEP EVIDENCE STATES EXPLICIT\nClassify every retained finding as:\n- OBSERVED — directly supported by the inspected artifact;\n- INFERRED — a reasonable risk suggested by evidence, with the inference named;\n- UNKNOWN — material proof is missing and the uncertainty itself matters.\nNever collapse UNKNOWN into PASS or describe an inference as an observed defect. Quote or point to the smallest artifact region, field, screenshot feature, log line, manifest entry, or repository path that supports the finding.\n\n4. PRIORITIZE WITHOUT FAKE PRECISION\nFor each retained risk record: risk ID; state; affected artifact; evidence; likely consequence; confidence; priority (critical/high/medium/low only when justified); and the smallest next proof or owner. Prefer a short ranked set of material risks over a long undifferentiated checklist. State important counterevidence or controls that reduce a risk.\n\n5. PASS 2 — CROSS-ARTIFACT / PROVENANCE REVIEW\nReview the set again from the opposite direction. Compare artifacts with each other and with any declared contract/reference. Look specifically for contradictions, stale generated output, mismatched versions or identities, omissions between source and derivative artifacts, metadata/timestamp drift, unsupported completion claims, and risks that disappear when counterevidence is considered. Promote, downgrade, merge, or remove findings based on this second pass.\n\n6. ROUTE RATHER THAN ABSORB DOWNSTREAM WORK\n- Concrete defect that may represent a wider failure class -> P91 Failure-Class Generalization & Repository Audit.\n- Tests/evidence may bypass the shipped/user path -> P92 Production-Path Proof Gap Auditor.\n- Someone is claiming the use case is done/closed -> P93 Use-Case Closure Certification.\n- A change may break previously accepted behavior -> P94 Regression Test & Live Behavior Guard.\n- A new/rebuilt artifact is actually required -> use the canonical artifact builder/producer, such as P56 when appropriate.\nKeep this prompt focused on finding and triaging risk. If repair is already explicitly in scope, hand the evidence ledger to the correct repair owner and continue there rather than silently broadening this prompt.\n\n7. USER-ONLY GATE\nInspect files, screenshots, repository artifacts, metadata, validators, and references yourself when accessible. Do not ask the user to become the file reader or test runner. Ask only for a genuinely missing artifact, password/protected access, physical observation, or product preference that materially changes the risk judgment and cannot be resolved from current evidence.\n\nDELIVER\nStart with the highest-priority risks and why they matter. Then give the compact risk ledger, important counterevidence, unknowns/proof ceiling, and the exact next proof or downstream owner for the top actionable item. If no material risk is supported, say that clearly and state what was actually inspected rather than manufacturing findings.",
+            "keywords": [
+              "artifact risk", "analyze artifacts", "artifact review", "risk review", "what stands out",
+              "artifact audit", "artifact triage", "artifact weakness", "generated output risk",
+              "cross artifact", "provenance drift", "stale artifact", "artifact inconsistency"
+            ]
+          }
+          JSON
+          python scripts/prompt_registry_ops.py add --input "$draft" --registry spec-architecture-prompts
+      - name: Add focused semantic regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > tests/test_prompt_artifact_risk_path_prompts.py <<'PY'
+          from __future__ import annotations
+
+          import json
+          import sys
+          import unittest
+          from pathlib import Path
+
+          ROOT = Path(__file__).resolve().parents[1]
+          sys.path.insert(0, str(ROOT / 'scripts'))
           import build_prompt_kit_registry
 
-          prompts = build_prompt_kit_registry.load_prompt_registry()
-          print(f'PROMPT_COUNT={len(prompts)}')
-          queries = {
-              'PATH_OS_FRESHNESS': [
-                  'local repository location', 'directory gate', 'local path', 'working directory',
-                  'operating system', 'shell', 'git fetch', 'pull latest', 'remote', 'worktree'
-              ],
-              'ARTIFACT_RISK': [
-                  'artifact', 'risk', 'stands out', 'analyze artifacts', 'audit', 'failure',
-                  'hazard', 'evidence', 'weakness', 'review'
-              ],
-          }
-          fields = ('name','type','class','sprintRole','useWhen','inspectFirst','expectedOutput','nextStep','proofGate','copyContent','keywords')
-          for label, terms in queries.items():
-              print(f'=== {label} ===')
-              scored=[]
-              for p in prompts:
-                  blob=' '.join(str(p.get(f,'')) for f in fields).lower()
-                  hits=[t for t in terms if t.lower() in blob]
-                  if hits:
-                      score=sum(4 if t.lower() in str(p.get('name','')).lower() else 1 for t in hits)
-                      scored.append((score,len(hits),p,hits))
-              for score,count,p,hits in sorted(scored,key=lambda x:(-x[0],-x[1],int(str(x[2]['seq']))))[:15]:
-                  print(json.dumps({
-                      'id':p['id'],'seq':p['seq'],'name':p['name'],'registry':p.get('_registry_id'),
-                      'type':p.get('type'),'class':p.get('class'),'useWhen':p.get('useWhen'),
-                      'inspectFirst':p.get('inspectFirst'),'proofGate':p.get('proofGate'),
-                      'hits':hits,'score':score
-                  }, ensure_ascii=False))
-          print('=== EXACT PATH PROMPT ===')
-          for p in prompts:
-              if 'ANALYZE THE LOCAL REPOSITORY LOCATION BEFORE GIVING THE USER ANY REPOSITORY COMMANDS.' in p.get('copyContent',''):
-                  print(json.dumps(p, ensure_ascii=False))
+
+          class PromptArtifactRiskPathTests(unittest.TestCase):
+              @classmethod
+              def setUpClass(cls) -> None:
+                  cls.prompts = build_prompt_kit_registry.load_prompt_registry()
+                  cls.by_id = {prompt['id']: prompt for prompt in cls.prompts}
+
+              def test_p50_keeps_identity_and_proves_machine_shell_path_and_freshness(self) -> None:
+                  p50 = self.by_id['P50']
+                  self.assertEqual(p50['name'], 'Directory-First Repository Command Guard')
+                  self.assertEqual(p50['copySheet'], 'P50_COPY_SAFE')
+                  content = p50['copyContent']
+                  for marker in (
+                      'MACHINE / OS / SHELL GATE',
+                      'REMOTE FRESHNESS GATE',
+                      'COMMAND EMISSION GATE',
+                      'Windows PowerShell, PowerShell 7+, CMD, Git Bash, WSL/Linux, macOS',
+                      'git fetch --all --prune --tags',
+                      'refs/remotes/origin/HEAD',
+                      'git pull --ff-only',
+                      'P61 Existing Repository Clone + Working-Directory Bootstrapper',
+                      'Do not infer OS, shell, path separator',
+                  ):
+                      self.assertIn(marker, content)
+                  self.assertIn('operating system', p50['useWhen'].lower())
+                  self.assertIn('shell', p50['proofGate'].lower())
+                  self.assertIn('remote', p50['proofGate'].lower())
+
+              def test_p97_is_bounded_artifact_risk_analysis_distinct_from_p91(self) -> None:
+                  matches = [p for p in self.prompts if p['name'] == 'Artifact Risk Review & Triage']
+                  self.assertEqual(len(matches), 1)
+                  p97 = matches[0]
+                  self.assertEqual(p97['id'], 'P97')
+                  self.assertEqual(p97['seq'], '97')
+                  self.assertEqual(p97['copySheet'], 'P97_COPY_SAFE')
+                  self.assertEqual(p97['category'], 'standard')
+                  self.assertEqual(p97['profile'], 'spec-architecture')
+                  self.assertEqual(p97['class'], 'ANALYSIS / ARTIFACT RISK TRIAGE')
+                  content = p97['copyContent']
+                  for marker in (
+                      'OBSERVED', 'INFERRED', 'UNKNOWN',
+                      'PASS 2 — CROSS-ARTIFACT / PROVENANCE REVIEW',
+                      'Do not jump straight into repair',
+                      'P91 Failure-Class Generalization & Repository Audit',
+                      'P92 Production-Path Proof Gap Auditor',
+                      'P93 Use-Case Closure Certification',
+                      'P94 Regression Test & Live Behavior Guard',
+                      'If no material risk is supported, say that clearly',
+                  ):
+                      self.assertIn(marker, content)
+                  p91 = self.by_id['P91']
+                  self.assertIn('real defect', p91['useWhen'].lower())
+                  self.assertNotIn('real defect', p97['useWhen'].lower())
+                  self.assertIn('before deciding what to repair', p97['useWhen'].lower())
+
+              def test_raw_registry_and_generated_site_keep_semantic_parity(self) -> None:
+                  spec = json.loads((ROOT / 'registry' / 'prompts' / 'spec-architecture-prompts.v1.json').read_text(encoding='utf-8'))
+                  raw = next(p for p in spec['prompts'] if p['id'] == 'P97')
+                  self.assertEqual(raw['name'], 'Artifact Risk Review & Triage')
+                  self.assertGreaterEqual(len(raw['copyContent']), 3500)
+                  self.assertLessEqual(len(raw['copyContent']), 8000)
+                  site = (ROOT / 'web' / 'prompt-kit' / 'index.html').read_text(encoding='utf-8')
+                  self.assertIn('Artifact Risk Review &amp; Triage', site)
+                  self.assertIn('MACHINE / OS / SHELL GATE', site)
+                  self.assertIn('PASS 2 — CROSS-ARTIFACT / PROVENANCE REVIEW', site)
+
+
+          if __name__ == '__main__':
+              unittest.main()
           PY
+      - name: Validate contribution and generated parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_prompt_artifact_risk_path_prompts -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python -m unittest tests.test_skill_prompt_registry -v
+          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
+          python -m unittest tests.test_prompt_language_audit -v
+          python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit durable contribution only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/tmp-prompt-contribution-inspect.yml
+          git status --short
+          git diff --stat
+          git diff --check
+          git config user.name 'EndeavorEverlasting'
+          git config user.email '71802818+EndeavorEverlasting@users.noreply.github.com'
+          git add docs/prompts.json registry/prompts/spec-architecture-prompts.v1.json tests/test_prompt_artifact_risk_path_prompts.py web/prompt-kit/index.html
+          git commit -m 'feat(prompt-kit): harden repository context and artifact risk review'
+          git push origin HEAD:feat/prompt-kit-artifact-risk-path-20260822
