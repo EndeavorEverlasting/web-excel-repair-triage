@@ -79,7 +79,8 @@ class PromptKitFilteringAccessTests(unittest.TestCase):
         self.assertIn("activateAllPromptsView();", switches)
 
         hotkeys = polish[polish.index("function installCompactBrowsingHotkeys()") : polish.index("window.appendPromptCard")]
-        key_one = hotkeys[hotkeys.index("if(e.key==='1')") : hotkeys.index("if(e.key==='4')")]
+        self.assertIn("var key=String(e.key||'').toLowerCase();", hotkeys)
+        key_one = hotkeys[hotkeys.index("if(key==='1')") : hotkeys.index("if(key==='4')")]
         self.assertIn("e.preventDefault();", key_one)
         self.assertIn("e.stopImmediatePropagation();", key_one)
         self.assertIn("activateAllPromptsView();", key_one)

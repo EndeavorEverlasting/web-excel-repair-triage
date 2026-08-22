@@ -135,13 +135,55 @@ def test_responsive_header_reflows_before_collision() -> None:
     assert ".header.filters-collapsed .header-top{padding-bottom:0;flex-wrap:nowrap}" not in deployed
 
 
+def test_polish_hotkeys_and_glowing_help_are_source_and_deployed_contract() -> None:
+    source = POLISH.read_text(encoding="utf-8")
+    deployed = read_deployed()
+    required = (
+        "var PROMPT_KIT_SHORTCUTS=[",
+        "{key:'4',label:'Favorites'}",
+        "{key:'5',label:'Doctrine'}",
+        "{key:'F',label:'Show / hide filters'}",
+        "{key:'T',label:'Scroll to top'}",
+        "{key:'B',label:'Scroll to bottom'}",
+        "function scrollPromptKitTo(edge)",
+        "function toggleCompactFilters()",
+        "function ensureHotkeyHelp()",
+        "id='prompt-kit-hotkey-help-styles'",
+        "animation:hotkey-help-glow",
+        "toggle.setAttribute('aria-label','Open keyboard shortcut help')",
+        "panel.setAttribute('role','dialog')",
+        "@media(prefers-reduced-motion:reduce){.hotkey-help-toggle{animation:none}}",
+        "if(key==='f')",
+        "scrollPromptKitTo('top')",
+        "scrollPromptKitTo('bottom')",
+    )
+    for text, label in ((source, "polish source"), (deployed, "generated Prompt Kit")):
+        for marker in required:
+            assert marker in text, f"{label} missing hotkey/help contract: {marker}"
+
+    assert "toggle.setAttribute('aria-keyshortcuts','F')" in source
+    assert "target.tagName==='SELECT'||target.isContentEditable" in source
+    assert "if(key==='escape'&&!document.getElementById('hotkeyHelpPanel').hidden)" in source
+    assert ".hotkey-help{position:fixed;right:80px;bottom:16px" in source
+    assert "@media(max-width:760px){.hotkey-help{right:78px;bottom:16px}" in source
+
+
 def test_readme_records_exact_deployed_surface() -> None:
     text = README.read_text(encoding="utf-8")
     assert "### Header navigation contract" in text
     assert "1. All\n2. Standard\n3. GNHF" in text
-    assert "Doctrine may use shortcut `4`, but it must never displace GNHF." in text
+    assert "The supplemental polish runtime assigns `4` to Favorites and remaps Doctrine to `5`" in text
     assert "`web/prompt-kit/index.html`" in text
-    for key, label in (("1", "All prompts"), ("2", "Standard prompts"), ("3", "GNHF prompts"), ("4", "Doctrine")):
+    for key, label in (
+        ("1", "All prompts"),
+        ("2", "Standard prompts"),
+        ("3", "GNHF prompts"),
+        ("4", "Favorites"),
+        ("5", "Doctrine"),
+        ("F", "Show / hide filters"),
+        ("T", "Scroll to top"),
+        ("B", "Scroll to bottom"),
+    ):
         assert f"| `{key}` | {label} |" in text
 
 
@@ -184,6 +226,7 @@ def main() -> None:
         test_keyboard_routes_match_visible_contract,
         test_builder_owns_the_same_fixed_header,
         test_responsive_header_reflows_before_collision,
+        test_polish_hotkeys_and_glowing_help_are_source_and_deployed_contract,
         test_readme_records_exact_deployed_surface,
         test_effective_p07_requires_mainline_convergence,
         test_deployed_artifact_is_current_combined_registry_output,
