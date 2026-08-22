@@ -62,8 +62,36 @@ class GovernanceContractTests(unittest.TestCase):
         ):
             self.assertIn(phrase, completion)
 
+    def test_repository_identity_keeps_triage_spreadsheet_first(self) -> None:
+        section = self._section(
+            "## 6. Repository identity and product boundary", "## 7."
+        )
+        for phrase in (
+            "core product domain is **spreadsheet intelligence**",
+            "Web Excel compatibility, billing",
+            "roster/time evidence",
+            "began here as a spreadsheet",
+        ):
+            self.assertIn(phrase, section)
+
+    def test_prompt_kit_separation_is_explicit_and_transition_safe(self) -> None:
+        section = self._section(
+            "## 6. Repository identity and product boundary", "## 7."
+        )
+        for phrase in (
+            "dedicated repository under `UnderDeskDev`",
+            "not yet named or created",
+            "must not invent its name",
+            "Prompt Kit sources here remain operationally authoritative",
+            "must not be silently moved",
+            "source, pin, mirror, package, link to, or consume Prompt Kit releases",
+            "must not become a competing Prompt Kit authority",
+            "cross-repo dependencies explicit and versioned",
+        ):
+            self.assertIn(phrase, section)
+
     def test_progressive_disclosure_is_governed(self) -> None:
-        section = self._section("## 6. Progressive disclosure", "## 7.")
+        section = self._section("## 7. Progressive disclosure", "## 8.")
         self.assertIn("harness/CONTEXT.md", section)
         self.assertIn("Do **not** preload", section)
         self.assertIn("Escalate context only", section)
@@ -115,7 +143,7 @@ class GovernanceContractTests(unittest.TestCase):
 
     def test_numbered_governance_sections_are_unique(self) -> None:
         numbers = re.findall(r"^## (\d+)\.", self.text, flags=re.MULTILINE)
-        self.assertEqual(numbers, [str(number) for number in range(1, 7)])
+        self.assertEqual(numbers, [str(number) for number in range(1, 8)])
 
     def _section(self, start: str, next_prefix: str) -> str:
         self.assertIn(start, self.text)
