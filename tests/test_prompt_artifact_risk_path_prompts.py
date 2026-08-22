@@ -14,9 +14,9 @@ class PromptArtifactRiskPathTests(unittest.TestCase):
         p=self.by_id["P50"]; c=p["copyContent"]
         self.assertEqual(p["name"], "Directory-First Repository Command Guard")
         self.assertEqual(p["copySheet"], "P50_COPY_SAFE")
-        for m in ("MACHINE / OS / SHELL GATE","REMOTE FRESHNESS GATE","COMMAND EMISSION GATE","Windows PowerShell, PowerShell 7+, CMD, Git Bash, WSL/Linux, macOS","git fetch --all --prune --tags","refs/remotes/origin/HEAD","git pull --ff-only","P61 Existing Repository Clone + Working-Directory Bootstrapper","Do not infer OS, shell, path separator"):
+        for m in ("MACHINE / OS / SHELL GATE","REMOTE FRESHNESS GATE","COMMAND EMISSION GATE","Windows PowerShell, PowerShell 7+, CMD, Git Bash, WSL/Linux, macOS","git fetch --all --prune --tags","refs/remotes/origin/HEAD","git pull --ff-only","P61 Existing Repository Clone + Working-Directory Bootstrapper","Do not infer OS, shell, path separator","Verify the active repository root immediately before every later command block"):
             self.assertIn(m,c)
-        self.assertIn("operating system",p["useWhen"].lower()); self.assertIn("shell",p["proofGate"].lower()); self.assertIn("remote",p["proofGate"].lower())
+        self.assertIn("operating system",p["useWhen"].lower()); self.assertIn("shell",p["proofGate"].lower()); self.assertIn("remote",p["proofGate"].lower()); self.assertIn("P51",p["nextStep"]); self.assertIn("P52",p["nextStep"]); self.assertIn("P61",p["nextStep"])
     def test_p97_bounded_artifact_risk_analysis(self):
         matches=[p for p in self.prompts if p["name"]=="Artifact Risk Review & Triage"]
         self.assertEqual(len(matches),1); p=matches[0]
