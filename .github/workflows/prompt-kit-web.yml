@@ -50,6 +50,7 @@ on:
       - web/README.md
       - tests/Test-PromptKitQuickOpenPathResolution.ps1
       - tests/test_prompt_kit_header_contract.py
+      - tests/test_prompt_kit_hotkey_completion.py
       - tests/test_prompt_kit_product_interactions.py
       - tests/test_prompt_kit_filtering_access.py
       - tests/test_prompt_kit_mobile.py
@@ -117,6 +118,7 @@ on:
       - web/README.md
       - tests/Test-PromptKitQuickOpenPathResolution.ps1
       - tests/test_prompt_kit_header_contract.py
+      - tests/test_prompt_kit_hotkey_completion.py
       - tests/test_prompt_kit_product_interactions.py
       - tests/test_prompt_kit_filtering_access.py
       - tests/test_prompt_kit_mobile.py
@@ -160,6 +162,7 @@ jobs:
             scripts/validate_prompt_kit_portability.py \
             triage/prompt_library_portability.py \
             tests/test_prompt_kit_header_contract.py \
+            tests/test_prompt_kit_hotkey_completion.py \
             tests/test_prompt_kit_product_interactions.py \
             tests/test_prompt_kit_filtering_access.py \
             tests/test_prompt_kit_mobile.py \
@@ -250,6 +253,7 @@ jobs:
           if-no-files-found: error
       - name: Validate search favorites tutorial journey and polish contract
         run: |
+          python -m unittest tests.test_prompt_kit_hotkey_completion -v
           python scripts/validate_prompt_kit_discovery.py --summary
           python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
       - name: Validate combined prompt registry
