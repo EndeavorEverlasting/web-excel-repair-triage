@@ -4,12 +4,16 @@ on:
   push:
     branches:
       - feat/prompt-kit-artifact-risk-path-20260822
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
 
 jobs:
   inspect:
+    if: github.head_ref == 'feat/prompt-kit-artifact-risk-path-20260822' || github.ref_name == 'feat/prompt-kit-artifact-risk-path-20260822'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
