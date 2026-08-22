@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.github/tmp_prompt_kit_hotkeys_20260822.py'
+      - '.github/tmp_prompt_kit_hotkeys_fix2_20260822.py'
       - '.github/workflows/tmp-prompt-kit-hotkeys-20260822.yml'
 
 permissions:
@@ -31,7 +32,11 @@ jobs:
           echo "origin/main=$(git rev-parse origin/main)"
           test "$(git rev-parse origin/main)" = '447bd6d18c1591759486cf1afacd58bccd7782cd'
       - name: Apply bounded hotkey implementation
-        run: python .github/tmp_prompt_kit_hotkeys_20260822.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .github/tmp_prompt_kit_hotkeys_20260822.py
+          python .github/tmp_prompt_kit_hotkeys_fix2_20260822.py
       - name: Rebuild canonical Prompt Kit
         run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
       - name: Targeted JavaScript and header contracts
@@ -59,8 +64,8 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm -f .github/tmp_prompt_kit_hotkeys_20260822.py .github/workflows/tmp-prompt-kit-hotkeys-20260822.yml
-          git add docs/prompt-kit-polish.js tests/test_prompt_kit_header_contract.py web/README.md web/prompt-kit/index.html
+          git rm -f .github/tmp_prompt_kit_hotkeys_20260822.py .github/tmp_prompt_kit_hotkeys_fix2_20260822.py .github/workflows/tmp-prompt-kit-hotkeys-20260822.yml
+          git add docs/prompt-kit-polish.js tests/test_prompt_kit_header_contract.py tests/test_prompt_kit_filtering_access.py web/README.md web/prompt-kit/index.html
           git diff --cached --check
           echo '=== FINAL STAGED STATUS ==='
           git status --short
