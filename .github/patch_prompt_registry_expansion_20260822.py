@@ -52,9 +52,16 @@ If routing is ambiguous, inspect once. If a contract mismatch names an owner/hel
 DELIVER
 Keep it compact: contribution ledger; strengthened IDs/names; new helper receipts; focused semantic assertion results; prompt count/parity; validation; commit/PR/merge; resulting main SHA; exact blocker if any.'''
 patched = text[:left] + compact + text[right:]
-patched = patched.replace(
-    'anchor = "\\nSTOP ONLY AT THE REAL FIXED POINT"',
-    'anchor = "\\n10. STOP ONLY AT THE REAL FIXED POINT"',
-    1,
-)
+
+# P83 is already near its intentional size ceiling. Strengthen the existing
+# claim-evidence sentence instead of appending another section.
+p83_start = patched.index('p83_insert = """')
+p83_end = patched.index('if len(p83["copyContent"]) >= 8000:', p83_start)
+p83_replacement = r'''old_claim = "A green test reported by another agent is historical evidence until the exact tested head, command, and relevant current state are confirmed. Do not discard correct work merely because its explanation was weak."
+new_claim = "A reported green test/live run is historical until its head, command, environment, and current state are confirmed. Re-derive regression controls from the request, accepted behavior, and impacted callers; do not inherit only the prior agent's tests. For runtime claims, run the canonical path yourself when safe or keep them UNPROVEN with the exact gate."
+if old_claim not in p83["copyContent"]:
+    raise SystemExit("P83 claim-evidence sentence missing")
+p83["copyContent"] = p83["copyContent"].replace(old_claim, new_claim, 1)
+'''
+patched = patched[:p83_start] + p83_replacement + patched[p83_end:]
 path.write_text(patched, encoding="utf-8")
