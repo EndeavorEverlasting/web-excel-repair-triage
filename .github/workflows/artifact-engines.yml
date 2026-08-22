@@ -84,7 +84,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout origin/main -- .github/workflows/artifact-engines.yml
-          git rm --ignore-unmatch \
+          git rm -f --ignore-unmatch \
             .github/prompt-regression-draft.json \
             .github/prompt-program-design-draft.json \
             .github/prompt-teach-draft.json \
