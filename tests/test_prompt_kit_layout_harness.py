@@ -1,4 +1,5 @@
 import json
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -36,6 +37,33 @@ class PromptKitLayoutHarnessTests(unittest.TestCase):
         self.assertIn("no_brand_search_intersection", ids)
         self.assertIn("no_filter_search_intersection", ids)
         self.assertIn("responsive_reflow", ids)
+
+    def test_hotkey_route_points_to_executable_program_design_seam(self):
+        route = (ROOT / "harness/prompt-kit-layout/CODEBASE_MAP.md").read_text(encoding="utf-8")
+        design = ROOT / "docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md"
+        prototype = ROOT / "docs/prompt-kit-hotkey-prototype.js"
+        self.assertIn("Routing hook: hotkeys and keyboard shortcuts", route)
+        self.assertIn("docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md", route)
+        self.assertTrue(design.is_file())
+        self.assertTrue(prototype.is_file())
+
+        completed = subprocess.run(
+            ["node", str(prototype)],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        proof = json.loads(completed.stdout)
+        self.assertEqual("PASS", proof["status"])
+        self.assertEqual(
+            {"FILTER_HIDE", "FILTER_SHOW", "FILTER_TOGGLE", "OPEN_PROMPT(P95)"},
+            set(proof["success_paths"]),
+        )
+        self.assertEqual(
+            {"EDITABLE_TARGET", "RESERVED_COLLISION", "UNKNOWN_PROMPT", "PERSISTENCE_FAILED"},
+            set(proof["failure_paths"]),
+        )
 
 
 if __name__ == "__main__":
