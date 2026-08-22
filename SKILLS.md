@@ -21,6 +21,7 @@ Skills own repeatable procedure and judgment. Code, schemas, registries, manifes
 | Skill | Use when | Canonical file |
 |---|---|---|
 | Harness infrastructure maintenance | harness maps/contracts/workflows/skills drift or context architecture | `.ai/skills/harness-infrastructure-maintenance/SKILL.md` |
+| Share artifact alias handoff | create/download a human-facing alias copy without filename encoding or byte drift | `.ai/skills/share-artifact-alias-handoff/SKILL.md` |
 | Prompt language audit | prompt language quality/repair | `.ai/skills/prompt-language-audit/SKILL.md` |
 | Skill evaluation | skill correctness/quality is unproven | `.ai/skills/skill-evaluation/SKILL.md` |
 | Skill factoring | reusable procedure is duplicated or poorly bounded | `.ai/skills/skill-factoring/SKILL.md` |
@@ -36,6 +37,7 @@ Other domain skills may exist under `.ai/skills/`; route to them only from a sel
 
 Use `harness/triggers.v1.json` when a deterministic trigger owns the choice. Otherwise:
 - structure/ownership/context bloat → Harness infrastructure maintenance;
+- human-facing artifact download/alias naming → Share artifact alias handoff;
 - duplicated reusable procedure → Skill factoring;
 - skill quality/evals → Skill evaluation;
 - Prompt Kit cross-device acquisition → Technician Prompt Kit acquisition;

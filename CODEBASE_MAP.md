@@ -21,12 +21,13 @@ Do **not** preload `WORKFLOW.md`, `CAPABILITIES.md`, `SKILLS.md`, `TRIGGERS.md`,
 | `web/` + `docs/` | Prompt Kit generated/public surfaces and tracked docs/runtime JS | Prompt Kit work |
 | `registry/` + `configs/` | canonical prompt/config registries | registry/config change |
 | `harness/` | machine-readable contracts, maps, workflows, validators, reports, evals | harness/domain contract work |
+| `harness/artifact-handoff/` | alias/download handoff contract that separates canonical artifact identity from human-facing filenames | share/download naming handoff |
 | `.ai/skills/` | demand-loaded repeatable procedures/judgment | only after skill selection |
 | `tests/` | focused and regression proof | changed surface |
 | `Candidates/`, `Active/` | protected operator inputs | read only when domain requires |
 | `Outputs/` | generated runtime evidence/artifacts | validator/generator output |
 
-Machine control-plane entry points are `harness/manifest.v1.json`, `harness/workflows.v1.json`, `harness/artifacts.v1.json`, and `harness/validators.v1.json`. Read a registry only when its owning route is selected.
+Machine control-plane entry points are `harness/manifest.v1.json`, `harness/workflows.v1.json`, `harness/artifacts.v1.json`, and `harness/validators.v1.json`. Focused overlays may additionally own a scoped manifest/registry after `harness/CONTEXT.md` routes the task there.
 
 ## Primary entry points
 
@@ -34,6 +35,7 @@ Machine control-plane entry points are `harness/manifest.v1.json`, `harness/work
 |---|---|
 | orient/rout task | `harness/CONTEXT.md` |
 | workbook repair/analysis | selected `triage/` engine + artifact contract |
+| human alias/download handoff | `harness/artifact-handoff/CODEBASE_MAP.md` + `scripts/validate_artifact_handoff_harness.py` |
 | Prompt Kit build | `scripts/build_prompt_kit_registry.py` |
 | Prompt Kit generator selection | `generator_selection_gui.py` / registered launcher |
 | harness integrity | `scripts/validate_harness.py` |
@@ -53,6 +55,13 @@ python -m unittest tests.test_context_architecture tests.test_harness_contract -
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 python -m triage.gitignore_hygiene
 git diff --check
+```
+
+Artifact alias/download handoff uses:
+
+```bash
+python scripts/validate_artifact_handoff_harness.py --summary
+python -m unittest tests.test_artifact_handoff_harness -v
 ```
 
 Workbook/product changes require their focused engine tests. Prompt Kit changes require the registered Prompt Kit web/interaction/discovery/portability gates rather than this generic set.
@@ -78,6 +87,8 @@ Prompt Kit copy behavior is registry-driven. Copy-safe prompt bodies and index/r
 - Never use a broad recursive source hunt as orientation.
 - Never edit generated Prompt Kit HTML as canonical source.
 - Never overwrite protected operator inputs.
+- Never create an actual alias/download file whose basename contains URL escapes such as `%20`; URL encoding is transport metadata, not a filename convention.
+- Never make the operator manually rename an alias copy when the agent can materialize the correct literal filename and verify byte identity.
 - Never create a second authority because the first is large; factor it and retain one canonical owner.
 - Historical reports describe evidence, not current law.
 - A green CI/build check is not live browser/device/production proof.
