@@ -152,6 +152,8 @@ def test_polish_hotkeys_and_glowing_help_are_source_and_deployed_contract() -> N
         "animation:hotkey-help-glow",
         "toggle.setAttribute('aria-label','Open keyboard shortcut help')",
         "panel.setAttribute('role','dialog')",
+        "var close=panel.querySelector('.hotkey-help-close');",
+        "if(close){try{close.focus({preventScroll:true})}catch(e){close.focus()}}",
         "@media(prefers-reduced-motion:reduce){.hotkey-help-toggle{animation:none}}",
         "if(key==='f')",
         "scrollPromptKitTo('top')",

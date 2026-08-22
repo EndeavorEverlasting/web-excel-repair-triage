@@ -170,7 +170,12 @@ function setHotkeyHelpOpen(open,restoreFocus){
   if(!panel||!toggle)return;
   panel.hidden=!open;
   toggle.setAttribute('aria-expanded',open?'true':'false');
-  if(!open&&restoreFocus){try{toggle.focus({preventScroll:true})}catch(e){toggle.focus()}}
+  if(open){
+    var close=panel.querySelector('.hotkey-help-close');
+    if(close){try{close.focus({preventScroll:true})}catch(e){close.focus()}}
+    return;
+  }
+  if(restoreFocus){try{toggle.focus({preventScroll:true})}catch(e){toggle.focus()}}
 }
 
 function ensureHotkeyHelp(){
