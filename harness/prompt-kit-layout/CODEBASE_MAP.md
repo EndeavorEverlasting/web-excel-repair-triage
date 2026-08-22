@@ -17,6 +17,9 @@ This subordinate harness owns detection and workflow guidance for header/search/
 - `tests/test_prompt_kit_layout_harness.py` — contract regressions.
 - `.github/workflows/prompt-kit-layout-harness.yml` — remote exact-head proof.
 
+## Routing hook: hotkeys and keyboard shortcuts
+If the task mentions hotkeys, keyboard shortcuts, show/hide/toggle filters, favorite-prompt shortcuts, prompt-ID shortcuts, or examples such as `p95`, do not extend this layout harness or invent a second shortcut registry. Route first to `docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md`, then to the current runtime owner `docs/prompt-kit-polish.js` and its focused product checks in `tests/test_prompt_kit_header_contract.py` / `tests/test_prompt_kit_filtering_access.py`. `web/prompt-kit/index.html` remains generated output only.
+
 ## Build / test / deploy commands
 - Harness: `python scripts/validate_prompt_kit_layout_harness.py --summary`
 - Contract tests: `python -m unittest tests.test_prompt_kit_layout_harness -v`
