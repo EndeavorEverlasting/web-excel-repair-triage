@@ -395,5 +395,62 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         for _, (name, _) in expected.items():
             self.assertIn(name, html)
 
+    def test_open_source_prior_art_prompt_separates_real_world_baseline_from_local_gap(self) -> None:
+        matches = [
+            prompt
+            for prompt in self.full.values()
+            if prompt["name"] == 'Open-Source Prior-Art & Gap Analyst'
+        ]
+        self.assertEqual(len(matches), 1)
+        prompt = matches[0]
+        content = prompt["copyContent"]
+        raw_content = self.raw[prompt["id"]]["copyContent"]
+        self.assertEqual(prompt["id"], 'P97')
+        self.assertEqual(prompt["seq"], '97')
+        self.assertEqual(prompt["copySheet"], 'P97_COPY_SAFE')
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["color"], "Cyan")
+        self.assertEqual(prompt["class"], "RESEARCH / REFERENCE ARCHITECTURE")
+        self.assertIn(
+            "ANALYZE OPEN-SOURCE REPOSITORIES THAT HAVE ALREADY DONE THINGS LIKE THIS SO THAT WE CAN EMULATE THAT",
+            content,
+        )
+        self.assertIn("WHAT IS ALREADY AVAILABLE IN THE REAL WORLD", content)
+        self.assertIn("WHAT PROJECT-SPECIFIC GAP IS STILL WORTH DEVELOPING", content)
+        self.assertIn("VERIFY IMPLEMENTATION, NOT MARKETING", content)
+        self.assertIn("A README can orient the search but cannot by itself prove an implementation claim", content)
+        for evidence_state in (
+            "OBSERVED_IMPLEMENTED",
+            "DOCUMENTED_UNVERIFIED",
+            "INFERRED",
+            "ABSENT",
+        ):
+            self.assertIn(evidence_state, content)
+        for disposition in ("ADOPT", "ADAPT", "REJECT", "UNKNOWN"):
+            self.assertIn(disposition, content)
+        for gap_state in (
+            "ALREADY_SOLVED_INTERNALLY",
+            "AVAILABLE_TO_EMULATE_EXTERNALLY",
+            "PROJECT_SPECIFIC_GAP",
+            "EVIDENCE_GAP",
+        ):
+            self.assertIn(gap_state, content)
+        self.assertIn("EMULATE MECHANISMS, NOT CODE BLINDLY", content)
+        self.assertIn("verify license compatibility", content)
+        self.assertIn("Search the current repo before the wider ecosystem", content)
+        self.assertIn("fresh current repository", content.lower())
+        self.assertIn("refresh the evidence", content.lower())
+        self.assertIn("ADVANCE, DON'T END WITH A RESEARCH ESSAY", content)
+        self.assertIn("not portfolio ranking", content.lower())
+        self.assertIn("do not primarily rank which of our internal repositories", content.lower())
+        self.assertIn("do not replace the repository's internal intent routing", content.lower())
+        self.assertGreater(len(raw_content), 4500)
+        self.assertLess(len(raw_content), 9000)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+        html = build_prompt_kit_registry.render()
+        self.assertIn('Open-Source Prior-Art & Gap Analyst', html)
+
+
 if __name__ == "__main__":
     unittest.main()
