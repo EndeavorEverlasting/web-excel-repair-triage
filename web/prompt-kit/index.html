@@ -611,7 +611,7 @@ function installCompactBrowsingViewSwitches(){
 }
 
 var PROMPT_KIT_SHORTCUTS=[
-  {key:'Ctrl+/',label:'Show / hide Hotkeys'},
+  {key:'`',label:'Show / hide Hotkeys'},
   {key:'1',label:'All prompts'},
   {key:'2',label:'Standard prompts'},
   {key:'3',label:'GNHF prompts'},
@@ -703,7 +703,7 @@ function persistPromptShortcutBindings(candidate){
 }
 
 function configuredPromptShortcutIds(){
-  return Object.keys(promptShortcutBindings).sort().map(function(gesture){return promptShortcutBindings[gesture]})
+  return Object.keys(promptShortcutBindings).sort(function(a,b){return Number(a.slice(1))-Number(b.slice(1))}).map(function(gesture){return promptShortcutBindings[gesture]})
 }
 
 function configurePromptShortcut(rawPromptId){
@@ -820,7 +820,7 @@ function ensureHotkeyHelp(){
   toggle.setAttribute('aria-expanded','false');
   toggle.setAttribute('aria-controls','hotkeyHelpPanel');
   toggle.setAttribute('aria-label','Open keyboard shortcut help');
-  toggle.setAttribute('aria-keyshortcuts','Control+/');
+  toggle.setAttribute('aria-keyshortcuts','`');
   toggle.innerHTML='<span class="hotkey-help-icon" aria-hidden="true">⌨</span><span>Hotkeys</span>';
   shell.appendChild(toggle);
 
@@ -903,19 +903,21 @@ function installCompactBrowsingHotkeys(){
     var key=String(e.key||'').toLowerCase();
     var target=e.target;
     var editable=!!(target&&(target.tagName==='INPUT'||target.tagName==='TEXTAREA'||target.tagName==='SELECT'||target.isContentEditable));
-    if(e.ctrlKey&&!e.altKey&&!e.metaKey&&key==='/'&&!editable){
+    if(e.defaultPrevented||e.altKey||e.metaKey||e.ctrlKey)return;
+    if(editable)return;
+    if(key==='`'){
       e.preventDefault();e.stopImmediatePropagation();
       var helpPanel=document.getElementById('hotkeyHelpPanel');
       setHotkeyHelpOpen(helpPanel?helpPanel.hidden:true,false);
       resetPromptShortcutBuffer();
       return
     }
-    if(e.defaultPrevented||e.altKey||e.metaKey||e.ctrlKey)return;
-    if(editable)return;
     if(key==='escape')resetPromptShortcutBuffer();
-    if(key==='escape'&&!document.getElementById('hotkeyHelpPanel').hidden){
+    var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');
+    if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden){
       e.preventDefault();e.stopImmediatePropagation();setHotkeyHelpOpen(false,true);return
     }
+    if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;
     if(key==='1'){e.preventDefault();e.stopImmediatePropagation();activateAllPromptsView();return}
     if(key==='4'){e.preventDefault();e.stopImmediatePropagation();activateFavoritesView();return}
     if(key==='5'){
