@@ -15,6 +15,7 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         source = POLISH.read_text(encoding="utf-8")
         for marker in (
             "{key:'`',label:'Show / hide Hotkeys'}",
+            "{key:'/',label:'Focus search'}",
             "toggle.setAttribute('aria-keyshortcuts','`')",
             "if(key==='`')",
             "if(e.defaultPrevented||e.altKey||e.metaKey||e.ctrlKey)return",
@@ -29,6 +30,17 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         self.assertNotIn("{key:'Ctrl+/'", source)
         self.assertNotIn("aria-keyshortcuts','Control+/", source)
         self.assertLess(source.index("if(editable)return"), source.index("if(key==='`')"))
+
+    def test_backtick_does_not_steal_search_or_modified_typing(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        modifier_guard = "if(e.defaultPrevented||e.altKey||e.metaKey||e.ctrlKey)return;"
+        editable_guard = "if(editable)return;"
+        backtick = "if(key==='`')"
+        self.assertLess(source.index(modifier_guard), source.index(backtick))
+        self.assertLess(source.index(editable_guard), source.index(backtick))
+        self.assertIn("{key:'/',label:'Focus search'}", source)
+        self.assertNotIn("key==='/'&&e.ctrlKey", source)
+        self.assertNotIn("key==='/'&&e.metaKey", source)
 
     def test_favorite_prompt_shortcuts_are_persisted_fail_closed(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
@@ -94,6 +106,7 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         self.assertIn("only prompts that are currently Favorites", design)
         self.assertIn("opens canonical prompt detail immediately", design)
         self.assertIn("buffer is active", design)
+        self.assertIn("one-hand", design)
         self.assertNotIn("Still unresolved by design proof:", design)
 
 
