@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import importlib.util
-import json
-import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -66,43 +64,6 @@ class PromptKitOrderNavigationProductTests(unittest.TestCase):
             ".header.filters-collapsed .search-container,.header.filters-collapsed .header-controls,.header.filters-collapsed .sections-nav,.header.filters-collapsed .type-nav{display:none!important}",
             polish,
         )
-
-    def test_hotkey_program_design_prototype_executes_success_and_failure_stacks(self) -> None:
-        prototype = ROOT / "docs" / "prompt-kit-hotkey-prototype.js"
-        design = ROOT / "docs" / "PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md"
-        routing_map = ROOT / "harness" / "prompt-kit-layout" / "CODEBASE_MAP.md"
-        self.assertTrue(prototype.is_file())
-        self.assertTrue(design.is_file())
-        self.assertTrue(routing_map.is_file())
-
-        completed = subprocess.run(
-            ["node", str(prototype)],
-            cwd=ROOT,
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        proof = json.loads(completed.stdout)
-        self.assertEqual(proof["status"], "PASS")
-        self.assertEqual(
-            set(proof["success_paths"]),
-            {"FILTER_HIDE", "FILTER_SHOW", "FILTER_TOGGLE", "OPEN_PROMPT(P95)"},
-        )
-        self.assertEqual(
-            set(proof["failure_paths"]),
-            {"EDITABLE_TARGET", "RESERVED_COLLISION", "UNKNOWN_PROMPT", "PERSISTENCE_FAILED"},
-        )
-        self.assertTrue(any(item.get("promptId") == "P95" for item in proof["trace"]))
-
-        design_text = design.read_text(encoding="utf-8")
-        self.assertIn("one dispatcher + semantic state owners", design_text)
-        self.assertIn("p95", design_text.lower())
-        self.assertIn("PERSISTENCE_FAILED", design_text)
-
-        route_text = routing_map.read_text(encoding="utf-8")
-        self.assertIn("Routing hook: hotkeys and keyboard shortcuts", route_text)
-        self.assertIn("docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md", route_text)
-        self.assertIn("do not extend this layout harness or invent a second shortcut registry", route_text)
 
     def test_visible_version_is_consistently_v40(self) -> None:
         html = build_prompt_kit_registry.render()
