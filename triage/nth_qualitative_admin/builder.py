@@ -7,10 +7,12 @@ from pathlib import Path
 from typing import Any, Mapping
 from zipfile import ZipFile
 
+from .evidence_phrases import resolve_evidence_backed_contexts
 from .model import PROFILE_PATH, ROOT, QualitativeAdminError, derive_metrics, load_profile, validate_spec
 from .sheets import _billing_support, _carryover, _dashboard, _detail_sheet, _operational_themes, _technical_scope, _visual_summary
 from .style_template import canonical_styles_xml
 from .xml_writer import MAIN_NS, THEME_PATH, _content_types, _root_rels, _sheet_names, _workbook_rels, _workbook_xml, _zip_write
+
 
 def workbook_filename(spec: Mapping[str, Any]) -> str:
     month_name, year = spec["month_label"].split()
@@ -40,7 +42,8 @@ def _profile_digest() -> str:
 
 
 def build_workbook(spec: Mapping[str, Any], output_path: str | Path) -> dict[str, Any]:
-    normalized = validate_spec(spec)
+    resolved = resolve_evidence_backed_contexts(spec)
+    normalized = validate_spec(resolved)
     profile = load_profile()
     metrics = derive_metrics(normalized)
     names = _sheet_names(normalized)
@@ -74,6 +77,7 @@ def build_workbook(spec: Mapping[str, Any], output_path: str | Path) -> dict[str
         for idx, xml in enumerate(sheets, 1):
             _zip_write(zf, f"xl/worksheets/sheet{idx}.xml", xml)
 
+    receipt = normalized.get("_evidence_backed_context_receipt")
     return {
         "schema_version": "nth-qualitative-admin-build/v1",
         "profile_id": profile["profile_id"],
@@ -88,13 +92,16 @@ def build_workbook(spec: Mapping[str, Any], output_path: str | Path) -> dict[str
         "detail_row_count": len(normalized["detail_rows"]),
         "total_paid_hours": metrics["total_paid_hours"],
         "completed_shift_records": metrics["completed_shift_records"],
+        "qualitative_context_mode": "evidence_backed_catalog" if receipt else "legacy_free_text",
+        "qualitative_context_receipt": receipt,
         "formula_policy": "zero worksheet formulas; quantitative cells are build-time values derived from detail_rows",
         "proof_ceiling": "deterministic package/style/language profile and evidence-packet reconciliation; not roster-source verification, FUN acceptance, or operator/client acceptance",
     }
 
 
 def build_package(spec: Mapping[str, Any], out_dir: str | Path) -> dict[str, Any]:
-    normalized = validate_spec(spec)
+    resolved = resolve_evidence_backed_contexts(spec)
+    normalized = validate_spec(resolved)
     output_dir = _safe_output_dir(out_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     workbook = output_dir / workbook_filename(normalized)
