@@ -9,6 +9,7 @@ Use when an operator needs a downloadable/shareable copy of a canonical artifact
 - Exact canonical artifact path/ID and current filename.
 - Intended human alias filename.
 - Canonical bytes or a provider copy operation that preserves bytes.
+- The actual download/open transport URL when completing a handoff receipt.
 - Owning artifact/workspace contract when identity is externally registered.
 
 ## Outputs
@@ -16,6 +17,7 @@ Use when an operator needs a downloadable/shareable copy of a canonical artifact
 - A separate alias copy whose actual basename is the intended literal human filename.
 - Preserved canonical extension.
 - SHA-256 equality proof when both byte streams are accessible.
+- Validated runtime transport target that decodes to the literal alias basename.
 - Optional `Outputs/share-artifact-alias-handoff.json` receipt.
 - A download/open target that resolves to that exact alias.
 
@@ -27,7 +29,7 @@ Use when an operator needs a downloadable/shareable copy of a canonical artifact
 4. Reject local/provider basenames containing percent-encoded octets such as `%20`.
 5. Preserve the source extension exactly for rename/copy-only handoff.
 6. Compare SHA-256 values when bytes are available.
-7. If the link transport contains URL escapes, decode its final path segment and confirm it equals the literal alias basename.
+7. Validate the actual runtime transport URL: extract its final encoded segment first, decode that segment only, and confirm it equals the literal alias basename.
 8. Run the focused validator and hand the operator the alias copy directly.
 
 ## Guardrails
@@ -36,6 +38,8 @@ Use when an operator needs a downloadable/shareable copy of a canonical artifact
 - Do not rename the canonical registered artifact merely to improve outward readability.
 - Do not convert `.xlsm` to `.xlsx` or otherwise change format in an alias-only lane.
 - Do not claim byte identity without comparing bytes/hashes.
+- Do not claim transport-target proof without validating and recording the actual URL.
+- Keep receipts under normalized `Outputs/`; reject traversal or alternate tracked/protected destinations.
 - Do not commit private artifact bytes or external-provider credentials.
 
 ## Validation
@@ -52,10 +56,11 @@ python scripts/validate_artifact_handoff_harness.py \
   --canonical <source> \
   --alias <alias-copy> \
   --expected-alias "Human Alias.ext" \
+  --transport-href <actual-download-url> \
   --output Outputs/share-artifact-alias-handoff.json \
   --summary
 ```
 
 ## Proof ceiling
 
-The skill proves the tracked procedure and, when actual files are supplied, basename/extension/SHA-256 identity for that pair. It does not prove how an external provider or recipient UI will display the file after transfer unless separately observed.
+The skill proves the tracked procedure and, when actual files plus their transport are supplied, basename/extension/SHA-256 identity and exact decoded transport targeting for that pair. It does not prove how an external provider or recipient UI will display the file after transfer unless separately observed.
