@@ -151,11 +151,11 @@ These remain touch-usable and do not reset library view, category, type, search 
 
 ### Hotkeys
 
-The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference and favorite-prompt shortcut configurator. Select it or press **Ctrl+/** to toggle it; select outside it, use its close control, or press **Esc** to dismiss it.
+The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference and favorite-prompt shortcut configurator. Select it or press the unmodified **backtick** key (`` ` ``) to toggle it; select outside it, use its close control, or press **Esc** to dismiss it. Backtick joins `1`–`5` as the one-hand core shortcut cluster, while `/` remains dedicated to Focus search.
 
 | Key | Action |
 |---|---|
-| `Ctrl+/` | Show / hide Hotkeys |
+| `` ` `` | Show / hide Hotkeys |
 | `/` | Focus search |
 | `1` | All prompts |
 | `2` | Standard prompts |
@@ -170,9 +170,9 @@ The glowing **Hotkeys** module beside the floating reference control is the in-p
 | `B` | Scroll to bottom |
 | `Esc` | Close the active surface or clear filters |
 
-Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prompt first, enter its canonical ID such as `P95`, and save it; the persisted binding is then the lower-case prompt ID (`p95`). Typed prompt sequences expire after 1.2 seconds, are ignored in editable fields, and open the canonical prompt detail immediately. A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds.
+Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prompt first, enter its canonical ID such as `P95`, and save it; the persisted binding is then the lower-case prompt ID (`p95`). Typed prompt sequences expire after 1.2 seconds, are ignored in editable fields, and open the canonical prompt detail immediately. A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it receives the next digit before built-in `1`, `4`, or `5` navigation so valid prompt IDs cannot be interrupted; built-in digit shortcuts keep their normal meaning when no sequence is active.
 
-Navigation shortcuts are ignored while typing in an input, textarea, select, or content-editable surface. Top/bottom scrolling respects reduced-motion preferences.
+Navigation shortcuts are ignored while typing in an input, textarea, select, or content-editable surface. Modified backtick chords are ignored. Top/bottom scrolling respects reduced-motion preferences.
 
 ### Header navigation contract
 
@@ -199,6 +199,7 @@ python -m unittest tests.test_prompt_kit_product_interactions -v
 python -m unittest tests.test_prompt_kit_filtering_access -v
 python -m unittest tests.test_prompt_kit_mobile -v
 python -m unittest tests.test_prompt_kit_discovery -v
+python -m unittest tests.test_prompt_kit_hotkey_completion -v
 python scripts\validate_prompt_kit_interactions.py --require-implementation --output Outputs\prompt-kit-interaction-audit.json --summary
 python scripts\validate_prompt_kit_discovery.py --summary
 python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
