@@ -16,6 +16,7 @@ Then choose one domain. Do not eagerly read every root contract, every skill, th
 | Task | 30,000-foot owner | 15,000-foot detail only when needed |
 |---|---|---|
 | Harness/spec structure, context bloat | `CODEBASE_MAP.md` | `.ai/skills/harness-infrastructure-maintenance/SKILL.md`, selected harness contract/validator |
+| Human-facing artifact alias/download handoff | `harness/artifact-handoff/CODEBASE_MAP.md` | `.ai/skills/share-artifact-alias-handoff/SKILL.md`, `harness/artifact-handoff/contracts/share-alias-download.v1.json` |
 | Prompt Kit use/acquisition | `PROMPT_KIT_ACCESS.md` | `.ai/skills/technician-prompt-kit-acquisition/SKILL.md` |
 | Prompt authoring/repair/language | `harness/specs/prompt-operations.md` | selected registry, prompt skill, builder, validator |
 | Workbook/Web Excel artifact behavior | `CODEBASE_MAP.md` → artifact-engine route | selected workflow/contract/engine/test |

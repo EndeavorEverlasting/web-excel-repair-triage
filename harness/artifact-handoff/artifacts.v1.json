@@ -1,0 +1,35 @@
+{
+  "schema_version": "artifact-handoff-artifacts/v1",
+  "artifacts": [
+    {
+      "id": "share-alias-copy",
+      "kind": "runtime",
+      "canonical_path": "Outputs/share-alias/",
+      "producer": "Copy the authoritative source bytes to the registered human alias basename.",
+      "naming": "Human-readable alias with literal spaces/punctuation and the same extension as the canonical artifact.",
+      "tracking_policy": "Runtime/share output; do not commit private or production artifact bytes.",
+      "validator": "scripts/validate_artifact_handoff_harness.py --canonical <source> --alias <copy> --expected-alias <name>",
+      "proof_ceiling": "Alias filename and byte-identity proof for the validated pair."
+    },
+    {
+      "id": "share-alias-handoff-receipt",
+      "kind": "runtime",
+      "canonical_path": "Outputs/share-artifact-alias-handoff.json",
+      "producer": "python scripts/validate_artifact_handoff_harness.py --canonical <source> --alias <copy> --expected-alias <name> --output Outputs/share-artifact-alias-handoff.json",
+      "naming": "Stable JSON receipt name.",
+      "tracking_policy": "Gitignored runtime evidence or CI artifact.",
+      "validator": "scripts/validate_artifact_handoff_harness.py",
+      "proof_ceiling": "Executed alias filename, transport, extension, and SHA-256 comparison proof."
+    },
+    {
+      "id": "artifact-handoff-operator-state",
+      "kind": "tracked",
+      "canonical_path": "harness/artifact-handoff/reports/CURRENT_STATE.md",
+      "producer": "Harness infrastructure workflow",
+      "naming": "Stable CURRENT_STATE.md report.",
+      "tracking_policy": "Tracked human-readable harness state only; no private artifact bytes.",
+      "validator": "scripts/validate_artifact_handoff_harness.py --summary",
+      "proof_ceiling": "Human-readable contract state, not external provider acceptance."
+    }
+  ]
+}

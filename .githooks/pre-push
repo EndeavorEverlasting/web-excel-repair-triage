@@ -19,6 +19,8 @@ python scripts/validate_prompt_kit_release_identity.py --output "$RELEASE_IDENTI
 python -m unittest tests.test_prompt_kit_release_identity -v
 python scripts/validate_prompt_kit_order_navigation.py --output "$ORDER_NAV_REPORT" --summary
 python -m unittest tests.test_prompt_kit_order_navigation_contract -v
+python scripts/validate_artifact_handoff_harness.py --summary
+python -m unittest tests.test_artifact_handoff_harness -v
 python scripts/validate_harness.py --report "$HARNESS_REPORT"
 python -m unittest tests.test_harness_contract -v
 python -m unittest tests.test_prompt_kit_interactions_contract -v
