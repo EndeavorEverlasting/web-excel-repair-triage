@@ -1,3 +1,4 @@
+# Retry with robust single-line anchors after the first read-only transport run proved the multiline YAML/Python anchor was too indentation-sensitive.
 name: Prompt Kit backtick focus-close canonical repair
 
 on:
@@ -36,24 +37,25 @@ jobs:
 
           polish = Path('docs/prompt-kit-polish.js')
           text = polish.read_text(encoding='utf-8')
-          old = """      var helpPanel=document.getElementById('hotkeyHelpPanel');
-          setHotkeyHelpOpen(helpPanel?helpPanel.hidden:true,false);
-          """
-          new = """      var helpPanel=document.getElementById('hotkeyHelpPanel');
-          var openHotkeys=helpPanel?helpPanel.hidden:true;
-          setHotkeyHelpOpen(openHotkeys,!openHotkeys);
-          """
+          old = "setHotkeyHelpOpen(helpPanel?helpPanel.hidden:true,false);"
+          new = "var openHotkeys=helpPanel?helpPanel.hidden:true;\n      setHotkeyHelpOpen(openHotkeys,!openHotkeys);"
           if text.count(old) != 1:
               raise SystemExit(f'backtick focus source anchor mismatch: {text.count(old)}')
           polish.write_text(text.replace(old, new, 1), encoding='utf-8')
 
           test = Path('tests/test_prompt_kit_hotkey_completion.py')
-          text = test.read_text(encoding='utf-8')
-          old = '''            "if(key==='`')",\n            "if(e.defaultPrevented||e.altKey||e.metaKey||e.ctrlKey)return",\n'''
-          new = '''            "if(key==='`')",\n            "var openHotkeys=helpPanel?helpPanel.hidden:true;",\n            "setHotkeyHelpOpen(openHotkeys,!openHotkeys);",\n            "if(e.defaultPrevented||e.altKey||e.metaKey||e.ctrlKey)return",\n'''
-          if text.count(old) != 1:
-              raise SystemExit(f'backtick focus test anchor mismatch: {text.count(old)}')
-          test.write_text(text.replace(old, new, 1), encoding='utf-8')
+          lines = test.read_text(encoding='utf-8').splitlines()
+          anchor = "            \"if(key==='`')\","
+          if lines.count(anchor) != 1:
+              raise SystemExit(f'backtick focus test anchor mismatch: {lines.count(anchor)}')
+          index = lines.index(anchor)
+          additions = [
+              '            "var openHotkeys=helpPanel?helpPanel.hidden:true;",',
+              '            "setHotkeyHelpOpen(openHotkeys,!openHotkeys);",',
+          ]
+          if additions[0] not in lines:
+              lines[index + 1:index + 1] = additions
+          test.write_text('\n'.join(lines) + '\n', encoding='utf-8')
           PY
       - name: Rebuild and validate repaired runtime
         shell: bash
