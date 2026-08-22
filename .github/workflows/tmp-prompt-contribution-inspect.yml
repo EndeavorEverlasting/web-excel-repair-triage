@@ -1,0 +1,77 @@
+name: Temporary Prompt Contribution Inspect
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-artifact-risk-path-20260822
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Refresh and inspect helper routing
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --all --prune --tags
+          printf '%s\n' '=== FLOOR ==='
+          git status --short
+          git branch --show-current
+          git log --oneline --decorate -5
+          printf '%s\n' '=== HELPER INSPECT ==='
+          python scripts/prompt_registry_ops.py inspect
+      - name: Search combined Prompt Kit ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, str(Path('scripts').resolve()))
+          import build_prompt_kit_registry
+
+          prompts = build_prompt_kit_registry.load_prompt_registry()
+          print(f'PROMPT_COUNT={len(prompts)}')
+          queries = {
+              'PATH_OS_FRESHNESS': [
+                  'local repository location', 'directory gate', 'local path', 'working directory',
+                  'operating system', 'shell', 'git fetch', 'pull latest', 'remote', 'worktree'
+              ],
+              'ARTIFACT_RISK': [
+                  'artifact', 'risk', 'stands out', 'analyze artifacts', 'audit', 'failure',
+                  'hazard', 'evidence', 'weakness', 'review'
+              ],
+          }
+          fields = ('name','type','class','sprintRole','useWhen','inspectFirst','expectedOutput','nextStep','proofGate','copyContent','keywords')
+          for label, terms in queries.items():
+              print(f'=== {label} ===')
+              scored=[]
+              for p in prompts:
+                  blob=' '.join(str(p.get(f,'')) for f in fields).lower()
+                  hits=[t for t in terms if t.lower() in blob]
+                  if hits:
+                      score=sum(4 if t.lower() in str(p.get('name','')).lower() else 1 for t in hits)
+                      scored.append((score,len(hits),p,hits))
+              for score,count,p,hits in sorted(scored,key=lambda x:(-x[0],-x[1],int(str(x[2]['seq']))))[:15]:
+                  print(json.dumps({
+                      'id':p['id'],'seq':p['seq'],'name':p['name'],'registry':p.get('_registry_id'),
+                      'type':p.get('type'),'class':p.get('class'),'useWhen':p.get('useWhen'),
+                      'inspectFirst':p.get('inspectFirst'),'proofGate':p.get('proofGate'),
+                      'hits':hits,'score':score
+                  }, ensure_ascii=False))
+          print('=== EXACT PATH PROMPT ===')
+          for p in prompts:
+              if 'ANALYZE THE LOCAL REPOSITORY LOCATION BEFORE GIVING THE USER ANY REPOSITORY COMMANDS.' in p.get('copyContent',''):
+                  print(json.dumps(p, ensure_ascii=False))
+          PY
