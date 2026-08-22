@@ -88,4 +88,17 @@ if old_test not in patched:
     raise SystemExit("P83 generated semantic-test block missing")
 patched = patched.replace(old_test, new_test, 1)
 
+# Keep semantic assertions focused on meaning rather than accidental case or
+# an invented sentence that is stricter than the prompt's actual invariant.
+patched = patched.replace(
+    '"instruction immediately above is the anchor, not the context boundary",',
+    '"CONTEXT IMMEDIATELY ABOVE THIS INSTRUCTION IS THE ANCHOR, NOT THE CONTEXT BOUNDARY",',
+    1,
+)
+patched = patched.replace(
+    '"state/data has one canonical owner",',
+    '"needs one canonical owner",',
+    1,
+)
+
 path.write_text(patched, encoding="utf-8")
