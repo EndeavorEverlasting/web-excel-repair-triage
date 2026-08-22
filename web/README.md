@@ -186,6 +186,8 @@ Their keyboard shortcuts are `1`, `2`, and `3` respectively. The generated base 
 
 ### Validation
 
+The owning `Prompt Kit web contracts` workflow compiles and runs `tests/test_prompt_kit_hotkey_completion.py`; shortcut changes must keep that focused contract green in addition to the broader interaction, discovery, ordering, filtering, mobile, portability, and generated-parity gates.
+
 ```powershell
 node --check docs\prompt-kit.js
 node --check docs\prompt-kit-guided-recommendations.js
