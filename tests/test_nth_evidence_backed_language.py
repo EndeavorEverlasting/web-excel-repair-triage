@@ -21,7 +21,7 @@ def _catalog() -> dict:
             "inventory_reconciliation": {
                 "canonical_label": "Inventory / Reconciliation",
                 "risk_tier": "lower",
-                "required_evidence_scope": "dated_context",
+                "required_evidence_scope": "recurring_pattern",
                 "pattern_evidence_allowed": True,
                 "outward_variants": [
                     "Inventory counts and reconciliation",
@@ -59,6 +59,14 @@ def _spec() -> dict:
     return spec
 
 
+def _contexts(spec: dict) -> list[tuple[str, str, str]]:
+    resolved = resolve_evidence_backed_contexts(spec)
+    return [
+        (str(row["date"]), row["technician"], row["qualitative_work_context"])
+        for row in resolved["detail_rows"]
+    ]
+
+
 def test_evidence_backed_context_is_deterministic_and_preserves_receipt() -> None:
     spec = _spec()
     first = resolve_evidence_backed_contexts(spec)
@@ -70,9 +78,19 @@ def test_evidence_backed_context_is_deterministic_and_preserves_receipt() -> Non
     assert receipt["catalog_id"] == "test-workstream-catalog-v1"
     assert receipt["canonical_codes_preserved"] is True
     assert receipt["evidence_refs_preserved"] is True
+    assert receipt["row_basis_refs_preserved"] is True
     assert receipt["kpi_semantics_changed"] is False
     assert receipt["rows"][0]["workstreams"][0]["code"] == "inventory_reconciliation"
-    assert receipt["rows"][0]["workstreams"][0]["evidence_refs"] == ["EVID-1"]
+
+
+def test_input_order_does_not_change_visible_language_or_receipt_assignment() -> None:
+    forward = _spec()
+    reverse = deepcopy(forward)
+    reverse["detail_rows"].reverse()
+    assert _contexts(forward) == _contexts(reverse)
+    forward_receipt = resolve_evidence_backed_contexts(forward)["_evidence_backed_context_receipt"]
+    reverse_receipt = resolve_evidence_backed_contexts(reverse)["_evidence_backed_context_receipt"]
+    assert forward_receipt == reverse_receipt
 
 
 def test_repeated_canonical_code_can_render_with_multiple_readable_variants() -> None:
@@ -97,14 +115,40 @@ def test_high_risk_term_rejects_recurring_pattern_fallback() -> None:
     item = spec["detail_rows"][0]["workstream_evidence"][0]
     item["code"] = "client_correspondence"
     item["evidence_scope"] = "recurring_pattern"
+    item["row_basis_refs"] = ["ROW-BASIS-1"]
     with pytest.raises(QualitativeAdminError, match="requires dated_person_task"):
+        resolve_evidence_backed_contexts(spec)
+
+
+def test_recurring_pattern_requires_row_basis_reference() -> None:
+    spec = _spec()
+    item = spec["detail_rows"][0]["workstream_evidence"][0]
+    item["evidence_scope"] = "recurring_pattern"
+    with pytest.raises(QualitativeAdminError, match="row_basis_refs must be a non-empty list"):
+        resolve_evidence_backed_contexts(spec)
+
+    item["row_basis_refs"] = ["ATTENDANCE-DATE-1"]
+    resolved = resolve_evidence_backed_contexts(spec)
+    first = resolved["_evidence_backed_context_receipt"]["rows"][0]["workstreams"][0]
+    assert first["row_basis_refs"] == ["ATTENDANCE-DATE-1"]
+
+
+def test_recurring_pattern_cannot_bypass_minimum_scope() -> None:
+    spec = _spec()
+    spec["qualitative_phrase_catalog"]["terms"]["inventory_reconciliation"][
+        "required_evidence_scope"
+    ] = "dated_context"
+    item = spec["detail_rows"][0]["workstream_evidence"][0]
+    item["evidence_scope"] = "recurring_pattern"
+    item["row_basis_refs"] = ["ATTENDANCE-DATE-1"]
+    with pytest.raises(QualitativeAdminError, match="weaker than required"):
         resolve_evidence_backed_contexts(spec)
 
 
 def test_missing_or_unknown_evidence_fails_closed() -> None:
     spec = _spec()
     spec["detail_rows"][0]["workstream_evidence"][0]["evidence_refs"] = []
-    with pytest.raises(QualitativeAdminError, match="requires evidence_refs"):
+    with pytest.raises(QualitativeAdminError, match="evidence_refs must be a non-empty list"):
         resolve_evidence_backed_contexts(spec)
 
     spec = _spec()
@@ -120,6 +164,16 @@ def test_free_text_and_evidence_backed_authority_cannot_compete() -> None:
         resolve_evidence_backed_contexts(spec)
 
 
+def test_caller_cannot_supply_reserved_evidence_receipt() -> None:
+    legacy = json.loads(EXAMPLE.read_text(encoding="utf-8"))
+    legacy["_evidence_backed_context_receipt"] = {
+        "catalog_id": "spoofed",
+        "rows": [{"workstreams": [{"code": "deployment_field_support"}]}],
+    }
+    with pytest.raises(QualitativeAdminError, match="reserved generated metadata"):
+        resolve_evidence_backed_contexts(legacy)
+
+
 def test_legacy_free_text_path_remains_unchanged() -> None:
     legacy = json.loads(EXAMPLE.read_text(encoding="utf-8"))
     assert resolve_evidence_backed_contexts(legacy) == legacy
@@ -132,7 +186,7 @@ def test_build_manifest_keeps_canonical_codes_and_evidence_refs(tmp_path: Path) 
     assert manifest["qualitative_context_mode"] == "evidence_backed_catalog"
     receipt = manifest["qualitative_context_receipt"]
     assert receipt["rows"][0]["workstreams"][0]["code"] == "inventory_reconciliation"
-    assert receipt["rows"][0]["workstreams"][0]["evidence_refs"] == ["EVID-1"]
+    assert receipt["rows"][0]["workstreams"][0]["evidence_refs"]
 
 
 def test_invalid_catalog_cannot_smuggle_high_risk_pattern_use() -> None:

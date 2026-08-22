@@ -100,12 +100,14 @@ def build_workbook(spec: Mapping[str, Any], output_path: str | Path) -> dict[str
 
 
 def build_package(spec: Mapping[str, Any], out_dir: str | Path) -> dict[str, Any]:
-    resolved = resolve_evidence_backed_contexts(spec)
-    normalized = validate_spec(resolved)
+    # Resolve the original caller packet for validation, but pass that original
+    # packet into build_workbook so reserved generated receipt metadata is never
+    # accepted as if it were caller-owned input.
+    normalized = validate_spec(resolve_evidence_backed_contexts(spec))
     output_dir = _safe_output_dir(out_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     workbook = output_dir / workbook_filename(normalized)
-    manifest = build_workbook(normalized, workbook)
+    manifest = build_workbook(spec, workbook)
     # Import locally to keep the builder usable without a circular module import at load time.
     from .validator import validate_workbook
 

@@ -7,6 +7,7 @@ selects presentation variants deterministically. It never invents a workstream.
 from __future__ import annotations
 
 import hashlib
+import json
 from copy import deepcopy
 from typing import Any, Mapping
 
@@ -15,6 +16,7 @@ from .model import QualitativeAdminError
 ALLOWED_SCOPES = {"recurring_pattern", "dated_context", "dated_person_task"}
 SCOPE_RANK = {"recurring_pattern": 1, "dated_context": 2, "dated_person_task": 3}
 ALLOWED_RISKS = {"lower", "high"}
+_RESERVED_RECEIPT = "_evidence_backed_context_receipt"
 
 
 def _clean_string(value: Any, field: str) -> str:
@@ -51,7 +53,10 @@ def _term_contract(code: str, term: Mapping[str, Any]) -> tuple[str, str, bool, 
         raise QualitativeAdminError(
             f"qualitative phrase term {code!r} requires at least two outward_variants"
         )
-    cleaned = [_clean_string(value, f"qualitative phrase term {code!r}.outward_variants") for value in variants]
+    cleaned = [
+        _clean_string(value, f"qualitative phrase term {code!r}.outward_variants")
+        for value in variants
+    ]
     if len({value.casefold() for value in cleaned}) != len(cleaned):
         raise QualitativeAdminError(f"qualitative phrase term {code!r} variants must be unique")
     if risk == "high" and (pattern_allowed or required_scope != "dated_person_task"):
@@ -59,6 +64,26 @@ def _term_contract(code: str, term: Mapping[str, Any]) -> tuple[str, str, bool, 
             f"high-risk qualitative phrase term {code!r} must forbid pattern evidence and require dated_person_task"
         )
     return risk, required_scope, pattern_allowed, cleaned
+
+
+def _canonical_input_sort_key(row: Any) -> tuple[str, ...]:
+    if not isinstance(row, Mapping):
+        return ("", "", "", "", "", "")
+    evidence = row.get("workstream_evidence")
+    evidence_key = json.dumps(evidence, sort_keys=True, separators=(",", ":"), default=str)
+    return (
+        str(row.get("date", "")),
+        str(row.get("technician", "")).casefold(),
+        str(row.get("program_assignment", "")).casefold(),
+        str(row.get("paid_hours", "")),
+        str(row.get("qualitative_work_context", "")).casefold(),
+        evidence_key,
+    )
+
+
+def _row_fingerprint(row: Mapping[str, Any]) -> str:
+    payload = "|".join(_canonical_input_sort_key(row))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def _select_variant(
@@ -74,8 +99,7 @@ def _select_variant(
         (
             catalog_id,
             month_key,
-            str(row.get("date", "")),
-            str(row.get("technician", "")),
+            _row_fingerprint(row),
             code,
         )
     )
@@ -87,21 +111,40 @@ def _select_variant(
     return index, variants[index]
 
 
+def _refs(value: Any, field: str, *, required: bool) -> list[str]:
+    if value is None and not required:
+        return []
+    if not isinstance(value, list) or (required and not value):
+        qualifier = "a non-empty list" if required else "a list"
+        raise QualitativeAdminError(f"{field} must be {qualifier}")
+    cleaned = [_clean_string(ref, field) for ref in value]
+    if len(set(cleaned)) != len(cleaned):
+        raise QualitativeAdminError(f"{field} contains duplicate references")
+    return cleaned
+
+
 def resolve_evidence_backed_contexts(spec: Mapping[str, Any]) -> dict[str, Any]:
     """Return a copy whose evidence-backed rows have deterministic visible context.
 
     Legacy rows with ``qualitative_work_context`` and no ``workstream_evidence``
     remain unchanged. Evidence-backed rows must not also supply free text because
-    that would create two competing semantic authorities.
+    that would create two competing semantic authorities. The generated receipt
+    is reserved output metadata and is rejected when supplied by a caller.
     """
 
     resolved: dict[str, Any] = deepcopy(dict(spec))
+    if _RESERVED_RECEIPT in resolved:
+        raise QualitativeAdminError(
+            f"{_RESERVED_RECEIPT} is reserved generated metadata and cannot be supplied by callers"
+        )
+
     detail = resolved.get("detail_rows")
     if not isinstance(detail, list):
         return resolved
-
-    evidence_rows = [row for row in detail if isinstance(row, Mapping) and row.get("workstream_evidence") is not None]
-    if not evidence_rows:
+    if not any(
+        isinstance(row, Mapping) and row.get("workstream_evidence") is not None
+        for row in detail
+    ):
         return resolved
 
     catalog = resolved.get("qualitative_phrase_catalog")
@@ -111,6 +154,10 @@ def resolve_evidence_backed_contexts(spec: Mapping[str, Any]) -> dict[str, Any]:
         )
     catalog_id, terms = _catalog_terms(catalog)
     month_key = _clean_string(resolved.get("month_key"), "month_key")
+
+    # Canonicalize before the no-repeat guard so equivalent input permutations
+    # produce the same visible language, receipt, and eventual workbook order.
+    detail.sort(key=_canonical_input_sort_key)
     last_index_by_code: dict[str, int] = {}
     receipt_rows: list[dict[str, Any]] = []
 
@@ -137,26 +184,29 @@ def resolve_evidence_backed_contexts(spec: Mapping[str, Any]) -> dict[str, Any]:
                 raise QualitativeAdminError(
                     f"detail_rows[{row_index}].workstream_evidence[{item_index}] must be an object"
                 )
-            code = _clean_string(item.get("code"), f"detail_rows[{row_index}].workstream_evidence[{item_index}].code")
+            prefix = f"detail_rows[{row_index}].workstream_evidence[{item_index}]"
+            code = _clean_string(item.get("code"), f"{prefix}.code")
             if code in seen_codes:
                 raise QualitativeAdminError(f"detail_rows[{row_index}] repeats workstream code {code!r}")
             seen_codes.add(code)
             term = terms.get(code)
             if not isinstance(term, Mapping):
-                raise QualitativeAdminError(f"detail_rows[{row_index}] references unknown workstream code {code!r}")
+                raise QualitativeAdminError(
+                    f"detail_rows[{row_index}] references unknown workstream code {code!r}"
+                )
             risk, required_scope, pattern_allowed, variants = _term_contract(code, term)
-            scope = _clean_string(
-                item.get("evidence_scope"),
-                f"detail_rows[{row_index}].workstream_evidence[{item_index}].evidence_scope",
-            )
+            scope = _clean_string(item.get("evidence_scope"), f"{prefix}.evidence_scope")
             if scope not in ALLOWED_SCOPES:
-                raise QualitativeAdminError(f"detail_rows[{row_index}] has invalid evidence_scope {scope!r}")
-            refs = item.get("evidence_refs")
-            if not isinstance(refs, list) or not refs:
-                raise QualitativeAdminError(f"detail_rows[{row_index}] workstream {code!r} requires evidence_refs")
-            evidence_refs = [_clean_string(ref, f"detail_rows[{row_index}] {code}.evidence_refs") for ref in refs]
-            if len(set(evidence_refs)) != len(evidence_refs):
-                raise QualitativeAdminError(f"detail_rows[{row_index}] workstream {code!r} has duplicate evidence_refs")
+                raise QualitativeAdminError(
+                    f"detail_rows[{row_index}] has invalid evidence_scope {scope!r}"
+                )
+            evidence_refs = _refs(item.get("evidence_refs"), f"{prefix}.evidence_refs", required=True)
+            row_basis_refs = _refs(
+                item.get("row_basis_refs"),
+                f"{prefix}.row_basis_refs",
+                required=scope == "recurring_pattern",
+            )
+
             if risk == "high" and scope != "dated_person_task":
                 raise QualitativeAdminError(
                     f"high-risk workstream {code!r} requires dated_person_task evidence"
@@ -165,7 +215,7 @@ def resolve_evidence_backed_contexts(spec: Mapping[str, Any]) -> dict[str, Any]:
                 raise QualitativeAdminError(
                     f"workstream {code!r} does not allow recurring_pattern evidence"
                 )
-            if scope != "recurring_pattern" and SCOPE_RANK[scope] < SCOPE_RANK[required_scope]:
+            if SCOPE_RANK[scope] < SCOPE_RANK[required_scope]:
                 raise QualitativeAdminError(
                     f"workstream {code!r} evidence_scope {scope!r} is weaker than required {required_scope!r}"
                 )
@@ -185,6 +235,7 @@ def resolve_evidence_backed_contexts(spec: Mapping[str, Any]) -> dict[str, Any]:
                     "risk_tier": risk,
                     "evidence_scope": scope,
                     "evidence_refs": evidence_refs,
+                    "row_basis_refs": row_basis_refs,
                     "variant_index": variant_index,
                     "visible_phrase": fragment,
                 }
@@ -200,12 +251,13 @@ def resolve_evidence_backed_contexts(spec: Mapping[str, Any]) -> dict[str, Any]:
             }
         )
 
-    resolved["_evidence_backed_context_receipt"] = {
+    resolved[_RESERVED_RECEIPT] = {
         "schema_version": "nth-qualitative-context-receipt/v1",
         "catalog_id": catalog_id,
-        "selection": "sha256 stable row identity with deterministic no-immediate-repeat guard",
+        "selection": "sha256 stable row identity over canonical row order with deterministic no-immediate-repeat guard",
         "canonical_codes_preserved": True,
         "evidence_refs_preserved": True,
+        "row_basis_refs_preserved": True,
         "kpi_semantics_changed": False,
         "rows": receipt_rows,
     }
