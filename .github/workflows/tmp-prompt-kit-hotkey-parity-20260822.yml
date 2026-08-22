@@ -1,0 +1,91 @@
+name: Prompt Kit hotkey canonical parity transport
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/tmp-prompt-kit-hotkey-parity-20260822.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-prove:
+    if: github.repository == 'EndeavorEverlasting/web-excel-repair-triage' && github.head_ref == 'feat/prompt-kit-hotkey-completion-main-20260822'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify trusted generator floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune
+          test "$(git rev-parse origin/main)" = 'c733458610df59542a185995edb7928ca2db9be5'
+          git diff --exit-code origin/main -- scripts/build_prompt_kit_registry.py build_prompt_kit.py
+      - name: Build canonical generated site
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          node --check docs/prompt-kit-polish.js
+          python -m unittest tests.test_prompt_kit_hotkey_completion -v
+          python tests/test_prompt_kit_header_contract.py
+          python -m unittest tests.test_prompt_kit_product_interactions tests.test_prompt_kit_filtering_access tests.test_prompt_kit_mobile -v
+          python scripts/validate_prompt_kit_interactions.py --require-implementation --output /tmp/prompt-kit-interaction-audit.json --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output /tmp/prompt-kit-order-navigation-audit.json --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Upload canonical page only
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-hotkey-canonical-page
+          path: web/prompt-kit/index.html
+          if-no-files-found: error
+
+  commit-generated-parity:
+    needs: build-and-prove
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: prompt-kit-hotkey-canonical-page
+          path: ${{ runner.temp }}/canonical-page
+      - name: Install allowlisted artifact and remove transport
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          git fetch origin "$HEAD_REF" --prune
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$(git rev-parse origin/$HEAD_REF)" = "$EXPECTED_HEAD"
+          cp "$RUNNER_TEMP/canonical-page/index.html" web/prompt-kit/index.html
+          git rm .github/workflows/tmp-prompt-kit-hotkey-parity-20260822.yml
+          git add web/prompt-kit/index.html
+          mapfile -t changed < <(git diff --cached --name-only | sort)
+          expected=(.github/workflows/tmp-prompt-kit-hotkey-parity-20260822.yml web/prompt-kit/index.html)
+          test "${#changed[@]}" -eq 2
+          test "${changed[0]}" = "${expected[0]}"
+          test "${changed[1]}" = "${expected[1]}"
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore(prompt-kit): regenerate hotkey site parity'
+          git push origin "HEAD:$HEAD_REF"
