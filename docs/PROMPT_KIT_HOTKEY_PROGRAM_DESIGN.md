@@ -215,6 +215,14 @@ The same path can support a user-configured alias later; exact prompt IDs need n
 
 The executable prototype is `docs/prompt-kit-hotkey-prototype.js`. It intentionally contains no DOM code. It proves the policy/registry/dispatcher/state-owner seams using fake storage, filter, and prompt-navigation ports.
 
+Executable proof command:
+
+```text
+node docs/prompt-kit-hotkey-prototype.js
+```
+
+The owning Prompt Kit product test executes this command and requires the prototype to report all four success paths (`FILTER_HIDE`, `FILTER_SHOW`, `FILTER_TOGGLE`, `OPEN_PROMPT(P95)`) and all four failure paths (`EDITABLE_TARGET`, `RESERVED_COLLISION`, `UNKNOWN_PROMPT`, `PERSISTENCE_FAILED`).
+
 Two boundaries were considered:
 
 1. **Per-widget listeners with local key logic.** Smallest immediate patch, but each widget owns collisions, input safety, help text, and persistence separately. This repeats the current risk and makes user-configured sequences difficult to reason about.
