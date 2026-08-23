@@ -10,12 +10,21 @@ FOCUSED = Path(__file__).resolve().parents[1] / "tests/test_prompt_registry_expa
 
 def repair_checkpoint_expectations() -> None:
     text = FOCUSED.read_text(encoding="utf-8")
-    old = '            "DIAGNOSTIC CHECK",\n            "PRACTICAL HARNESS",\n'
-    new = '            "CONCEPTUAL TRADE-OFF / MECHANISM",\n            "CODE DIAGNOSTIC / EDGE CASE",\n'
-    if old in text:
-        text = text.replace(old, new, 1)
-    elif new not in text:
+
+    old_pair = '            "DIAGNOSTIC CHECK",\n            "PRACTICAL HARNESS",\n'
+    new_pair = '            "CONCEPTUAL TRADE-OFF / MECHANISM",\n            "CODE DIAGNOSTIC / EDGE CASE",\n'
+    if old_pair in text:
+        text = text.replace(old_pair, new_pair, 1)
+    elif new_pair not in text:
         raise SystemExit("teach checkpoint assertion anchor not found")
+
+    old_mastery = '            "MASTERED requires demonstrated retrieval and practical application",\n'
+    new_mastery = '            "VERIFY BEFORE WRITING THE LEARNING RECORD",\n'
+    if old_mastery in text:
+        text = text.replace(old_mastery, new_mastery, 1)
+    elif new_mastery not in text:
+        raise SystemExit("teach mastery assertion anchor not found")
+
     FOCUSED.write_text(text, encoding="utf-8")
 
 
