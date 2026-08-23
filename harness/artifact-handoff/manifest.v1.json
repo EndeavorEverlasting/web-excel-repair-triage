@@ -1,0 +1,24 @@
+{
+  "schema_version": "artifact-handoff-harness/v1",
+  "purpose": "Preserve canonical artifact identity while producing human-facing alias copies whose downloaded filenames remain literal, readable, extension-safe, and byte-identical to their source artifacts.",
+  "components": {
+    "codebase_map": "harness/artifact-handoff/CODEBASE_MAP.md",
+    "workflow": "harness/artifact-handoff/WORKFLOW.md",
+    "artifact_registry": "harness/artifact-handoff/artifacts.v1.json",
+    "contract": "harness/artifact-handoff/contracts/share-alias-download.v1.json",
+    "validator": "scripts/validate_artifact_handoff_harness.py",
+    "tests": "tests/test_artifact_handoff_harness.py",
+    "skill": ".ai/skills/share-artifact-alias-handoff/SKILL.md",
+    "operator_report": "harness/artifact-handoff/reports/CURRENT_STATE.md"
+  },
+  "validation_order": [
+    "python -m py_compile scripts/validate_artifact_handoff_harness.py tests/test_artifact_handoff_harness.py",
+    "python scripts/validate_artifact_handoff_harness.py --summary",
+    "python -m unittest tests.test_artifact_handoff_harness -v",
+    "python scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
+    "python -m unittest tests.test_harness_contract -v",
+    "python -m triage.gitignore_hygiene",
+    "git diff --check"
+  ],
+  "proof_ceiling": "Tracked routing, filename/extension/byte-identity contract, fixture proof, and repository hook/CI wiring. It does not prove external SharePoint/Drive/browser rename behavior unless the produced alias file is separately downloaded and observed."
+}

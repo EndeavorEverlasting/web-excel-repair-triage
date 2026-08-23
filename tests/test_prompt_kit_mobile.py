@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 JS = ROOT / "docs" / "prompt-kit.js"
 CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-mobile.v1.json"
 QUICK_CMD = ROOT / "Open-Latest-PromptKit.cmd"
+PORTABLE_PS1 = ROOT / "scripts" / "Open-LatestPromptKitPortable.ps1"
 ACQUIRE_CMD = ROOT / "Acquire-Latest-PromptKit.cmd"
 ACQUIRE_PS1 = ROOT / "scripts" / "Acquire-LatestPromptKit.ps1"
 ACCESS = ROOT / "PROMPT_KIT_ACCESS.md"
@@ -101,37 +102,108 @@ class PromptKitMobileTests(unittest.TestCase):
         ):
             self.assertIn(marker, js)
 
-    def test_quick_cmd_bootstraps_canonical_main_and_propagates_exit(self) -> None:
+    def test_quick_cmd_bootstraps_portable_main_and_propagates_exit(self) -> None:
         quick = QUICK_CMD.read_text(encoding="utf-8")
+        portable = PORTABLE_PS1.read_text(encoding="utf-8")
         acquire = ACQUIRE_CMD.read_text(encoding="utf-8")
-        self.assertIn(
-            "https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/Acquire-Latest-PromptKit.cmd",
+        for marker in (
+            "BOOTSTRAP_COMMIT=2e8795f1136d2737461c0770127728496eaa4edc",
+            "BOOTSTRAP_BLOB=eee14a8da3a96dc3ca6e671e65b4b87255718500",
+            "api.github.com/repos/EndeavorEverlasting/web-excel-repair-triage/contents/scripts/Open-LatestPromptKitPortable.ps1",
+            'Open-LatestPromptKitPortable.ps1',
+            '-File "%SCRIPT%" -Destination "%PREFERRED_REPO%"',
+            '"%POWERSHELL%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT%"',
+            "exit /b %EXIT_CODE%",
+        ):
+            self.assertIn(marker, quick)
+        self.assertNotIn(
+            "raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/scripts/Open-LatestPromptKitPortable.ps1",
             quick,
         )
-        self.assertIn('call "%BOOTSTRAP%" -Quick', quick)
-        self.assertIn("exit /b %EXIT_CODE%", quick)
+        self.assertNotIn(r"%~dp0dev\web-excel-repair-triage", quick)
+        for marker in (
+            "$AcquireBootstrapCommit = 'b91b2c8c925cbd3f702cab13e36edba5483f9b8a'",
+            "$AcquireBootstrapBlob = '9d5e428adeacc8cdde9f1e850b40785cb85e9137'",
+            "$StableHost = '127.0.0.1'",
+            '$StableUrl = "http://${StableHost}:$Port/"',
+            "Import-AcquisitionFunctions",
+            "Update-RepositorySafely",
+            "no '-latest' sibling clone was created",
+        ):
+            self.assertIn(marker, portable)
         self.assertIn('-File "%SCRIPT%" %*', acquire)
         self.assertIn("/main/scripts/Acquire-LatestPromptKit.ps1", acquire)
 
-    def test_quick_acquisition_resolves_desktop_onedrive_and_backup_roots(self) -> None:
+    def test_quick_acquisition_resolves_single_desktop_dev_root(self) -> None:
         ps1 = ACQUIRE_PS1.read_text(encoding="utf-8")
         for marker in (
             "[Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)",
+            "Join-Path $desktop 'dev'",
+            "Join-Path $root $RepositoryFolderName",
+            "Get-ExistingPromptKitRepositories",
+            "Normalize-RepositoryUrl $origin",
+            "Preserving canonical checkout and refusing a duplicate clone:",
+            "no '-latest' sibling clone was created",
+            "'merge', '--ff-only'",
+            "Start-Process -FilePath $site",
+        ):
+            self.assertIn(marker, ps1)
+        for forbidden in (
             "OneDriveCommercial",
             "OneDriveConsumer",
             "OG Laptop Backup\\Desktop\\dev",
-            "Get-ExistingPromptKitRepositories",
-            "Normalize-RepositoryUrl $origin",
-            "Preserving candidate and continuing:",
-            "'merge', '--ff-only'",
-            "Start-Process -FilePath $site",
+            '$RepositoryFolderName-latest',
+            '"$RepositoryFolderName-$suffix"',
+        ):
+            self.assertNotIn(forbidden, ps1)
+
+    def test_native_git_stderr_is_exit_code_authoritative_and_separate(self) -> None:
+        ps1 = ACQUIRE_PS1.read_text(encoding="utf-8")
+        start = ps1.index("function Invoke-Git {")
+        end = ps1.index("function Resolve-PythonCommand", start)
+        invoke_git = ps1[start:end]
+        for marker in (
+            "$previousErrorActionPreference = $ErrorActionPreference",
+            "$stderrPath = [System.IO.Path]::GetTempFileName()",
+            "$ErrorActionPreference = 'Continue'",
+            "$output = & git @Arguments 2> $stderrPath",
+            "$exitCode = $LASTEXITCODE",
+            "$stderr = @(Get-Content -LiteralPath $stderrPath -ErrorAction SilentlyContinue)",
+            "$ErrorActionPreference = $previousErrorActionPreference",
+            "Remove-Item -LiteralPath $stderrPath -Force -ErrorAction SilentlyContinue",
+            "if ($exitCode -ne 0)",
+            "return $stdoutText.Trim()",
+        ):
+            self.assertIn(marker, invoke_git)
+        self.assertNotIn("2>&1", invoke_git)
+        self.assertLess(
+            invoke_git.index("$ErrorActionPreference = 'Continue'"),
+            invoke_git.index("$output = & git @Arguments 2> $stderrPath"),
+        )
+        self.assertLess(
+            invoke_git.index("$exitCode = $LASTEXITCODE"),
+            invoke_git.index("$ErrorActionPreference = $previousErrorActionPreference"),
+        )
+
+    def test_acquisition_gui_blocks_close_while_handler_is_running(self) -> None:
+        ps1 = ACQUIRE_PS1.read_text(encoding="utf-8")
+        for marker in (
+            "$form.Tag = 'idle'",
+            "$form.Add_FormClosing({",
+            "if ([string]$sender.Tag -eq 'acquiring')",
+            "$eventArgs.Cancel = $true",
+            "$form.Tag = 'acquiring'",
+            "$closeButton.Enabled = $false",
+            "$form.Tag = 'idle'",
+            "if (-not $form.IsDisposed)",
+            "$closeButton.Enabled = $true",
         ):
             self.assertIn(marker, ps1)
 
     def test_universal_paths_do_not_embed_person_specific_usernames(self) -> None:
         combined = "\n".join(
             path.read_text(encoding="utf-8")
-            for path in (QUICK_CMD, ACQUIRE_CMD, ACQUIRE_PS1, ACCESS, WEB_README)
+            for path in (QUICK_CMD, PORTABLE_PS1, ACQUIRE_CMD, ACQUIRE_PS1, ACCESS, WEB_README)
         ).lower()
         for forbidden in (
             r"c:\users\cheex",
@@ -151,6 +223,8 @@ class PromptKitMobileTests(unittest.TestCase):
         self.assertIn("mobile", (access + readme).lower())
         self.assertIn("reset", (access + readme).lower())
         self.assertIn("collapsible", readme.lower())
+        self.assertIn("prompt-kit-favorites/v1", access + readme)
+        self.assertIn("http://127.0.0.1:8765/", access + readme)
 
 
 if __name__ == "__main__":

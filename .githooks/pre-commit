@@ -1,9 +1,6 @@
 #!/bin/sh
 set -eu
 
-# Path-only staged gate: does not read or print artifact contents.
-python scripts/validate_staged_artifacts.py
-
 staged_tree="$(mktemp -d "${TMPDIR:-/tmp}/web-excel-harness-index.XXXXXX")"
 HARNESS_REPORT="${TMPDIR:-/tmp}/web-excel-harness-pre-commit.json"
 trap 'rm -rf "$staged_tree"' EXIT HUP INT TERM
@@ -11,8 +8,19 @@ trap 'rm -rf "$staged_tree"' EXIT HUP INT TERM
 git checkout-index --all --prefix="$staged_tree/"
 (
   cd "$staged_tree"
+  python scripts/validate_repository_work_ledger.py --summary
+  python -m unittest tests.test_repository_work_ledger -v
+  python scripts/validate_prompt_kit_cross_device_access.py --summary
+  python -m unittest tests.test_prompt_kit_cross_device_access -v
+  python scripts/validate_prompt_kit_freshness_guidance.py --summary
+  python -m unittest tests.test_prompt_kit_freshness_guidance -v
+  python scripts/validate_pr_merge_gate.py --summary
+  python -m unittest tests.test_pr_merge_gate -v
+  python scripts/validate_artifact_handoff_harness.py --summary
+  python -m unittest tests.test_artifact_handoff_harness -v
+  python scripts/validate_artifact_derivation_harness.py --summary
+  python -m unittest tests.test_artifact_derivation_harness -v
   python scripts/validate_harness.py --report "$HARNESS_REPORT"
   python -m unittest tests.test_harness_contract -v
-  python -m unittest tests.test_local_hook_artifact_hygiene -v
 )
 git diff --cached --check

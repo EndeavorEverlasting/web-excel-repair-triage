@@ -42,6 +42,14 @@ class PromptLanguageAuditTests(unittest.TestCase):
         self.assertEqual(report["error_count"], 0)
         self.assertIn("P62", {item["prompt_id"] for item in report["prompts"]})
 
+    def test_raw_registry_uses_effective_override_authority(self) -> None:
+        raw = evaluate_prompt_language.load_raw_registry()
+        p02 = next(item for item in raw if item["id"] == "P02")
+        self.assertEqual(p02["name"], "Previous Chat → Active Sprint Executor")
+        report = evaluate_prompt_language.evaluate_registry(policy=self.policy)
+        p02_result = next(item for item in report["prompts"] if item["prompt_id"] == "P02")
+        self.assertEqual(p02_result["name"], "Previous Chat → Active Sprint Executor")
+
     def test_strict_mode_fails_warning_only_registry(self) -> None:
         case = next(item for item in self.fixtures if item["id"] == "lazy-pr-only")
         report = evaluate_prompt_language.evaluate_registry(

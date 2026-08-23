@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="Open or install the AI Harness Prompt Kit on Android without downloading repository files.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <title>Open AI Harness Prompt Kit</title>
+  <style>
+    *{box-sizing:border-box}
+    :root{color-scheme:dark;--bg:#080d16;--panel:#121a29;--panel2:#182235;--line:#2c3a53;--text:#e5edf8;--muted:#9aa9bf;--accent:#4f8cff;--accent2:#8b5cf6;--ok:#34d399}
+    body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#17233a 0,#080d16 48%);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:grid;place-items:center;padding:max(18px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom))}
+    main{width:min(720px,100%);background:rgba(18,26,41,.96);border:1px solid var(--line);border-radius:22px;padding:clamp(22px,5vw,42px);box-shadow:0 24px 80px rgba(0,0,0,.45)}
+    .brand{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+    .brand img{width:58px;height:58px;border-radius:15px;box-shadow:0 10px 30px rgba(79,140,255,.28)}
+    h1{font-size:clamp(27px,7vw,44px);line-height:1.05;margin:0 0 12px;letter-spacing:-.035em}
+    .lead{font-size:clamp(16px,4vw,19px);color:var(--muted);line-height:1.55;margin:0 0 26px}
+    .actions{display:grid;gap:12px}
+    button,a.button{appearance:none;border:0;border-radius:14px;min-height:56px;padding:14px 18px;font-size:17px;font-weight:750;cursor:pointer;text-decoration:none;text-align:center;display:flex;align-items:center;justify-content:center;gap:9px}
+    .primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;box-shadow:0 12px 30px rgba(79,140,255,.25)}
+    .secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+    .primary:active,.secondary:active{transform:translateY(1px)}
+    .status{margin:18px 0 0;padding:12px 14px;border-radius:12px;background:#0d1421;border:1px solid var(--line);color:var(--muted);font-size:14px;line-height:1.5}
+    .status strong{color:var(--ok)}
+    details{margin-top:20px;border-top:1px solid var(--line);padding-top:18px}
+    summary{cursor:pointer;font-weight:700}
+    ol{color:var(--muted);padding-left:22px;line-height:1.65}
+    .share-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .qr{margin-top:22px;display:grid;grid-template-columns:116px 1fr;gap:16px;align-items:center;padding:14px;background:#fff;border-radius:16px;color:#111827}
+    .qr img{width:116px;height:116px}
+    .qr strong{display:block;margin-bottom:5px}
+    .qr small{display:block;overflow-wrap:anywhere;color:#465166}
+    .foot{margin:18px 0 0;color:var(--muted);font-size:12px;text-align:center}
+    [hidden]{display:none!important}
+    @media (max-width:520px){.share-row{grid-template-columns:1fr}.qr{grid-template-columns:92px 1fr}.qr img{width:92px;height:92px}}
+    @media (display-mode:standalone){#installButton{display:none!important}.installed-only{display:block!important}}
+  </style>
+</head>
+<body>
+<main>
+  <div class="brand">
+    <img src="./icon-192.png" alt="">
+    <div><strong>AI Harness</strong><br><span style="color:var(--muted)">Prompt Kit</span></div>
+  </div>
+
+  <h1>Open the Prompt Kit on your phone</h1>
+  <p class="lead">No GitHub download, ZIP file, Git client, or local server is required. Open the same responsive Prompt Kit used on desktop.</p>
+
+  <div class="actions">
+    <a class="button primary" id="openPromptKit" href="./prompt-kit/">Open Prompt Kit</a>
+    <button class="secondary" id="installButton" type="button">Install on this Android phone</button>
+    <div class="share-row">
+      <button class="secondary" id="shareButton" type="button">Share link</button>
+      <button class="secondary" id="copyButton" type="button">Copy link</button>
+    </div>
+  </div>
+
+  <div class="status" id="status" role="status" aria-live="polite">
+    <strong>Ready.</strong> In the GitHub app, open this page in Chrome before installing.
+  </div>
+  <div class="status installed-only" hidden><strong>Installed.</strong> The home-screen app opens the canonical Prompt Kit directly.</div>
+
+  <details>
+    <summary>Android Chrome steps</summary>
+    <ol>
+      <li>Open this page in Chrome. From GitHub's in-app browser, use its menu and choose <strong>Open in browser</strong>.</li>
+      <li>Tap <strong>Install on this Android phone</strong>. When Chrome does not offer the prompt, use Chrome's menu and choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
+      <li>Open <strong>AI Prompt Kit</strong> from the home screen. It refreshes from GitHub Pages when online and retains a cached fallback for interrupted connections.</li>
+    </ol>
+  </details>
+
+  <div class="qr">
+    <img src="./qr-prompt-kit.png" alt="QR code for the public Prompt Kit launcher">
+    <div>
+      <strong>Moving from a computer to your phone?</strong>
+      <small>https://endeavoreverlasting.github.io/web-excel-repair-triage/</small>
+    </div>
+  </div>
+
+  <p class="foot">Canonical Prompt Kit: <code>main:web/prompt-kit/index.html</code></p>
+</main>
+<script>
+(() => {
+  const appUrl = new URL("./prompt-kit/", window.location.href).href;
+  const launcherUrl = new URL("./", window.location.href).href;
+  const installButton = document.getElementById("installButton");
+  const shareButton = document.getElementById("shareButton");
+  const copyButton = document.getElementById("copyButton");
+  const status = document.getElementById("status");
+  let deferredInstallPrompt = null;
+
+  document.getElementById("openPromptKit").href = appUrl;
+
+  const setStatus = (message, ok = false) => {
+    status.innerHTML = ok ? `<strong>Ready.</strong> ${message}` : message;
+  };
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./service-worker.js").catch(() => {
+        setStatus("The site still opens normally, but offline fallback could not be enabled.");
+      });
+    });
+  }
+
+  window.addEventListener("beforeinstallprompt", event => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    installButton.textContent = "Install AI Prompt Kit";
+    setStatus("Chrome is ready to install the Prompt Kit.", true);
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    installButton.hidden = true;
+    setStatus("Installed. Open AI Prompt Kit from your home screen.", true);
+  });
+
+  installButton.addEventListener("click", async () => {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const choice = await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      if (choice.outcome === "accepted") {
+        setStatus("Installation accepted. Look for AI Prompt Kit on the home screen.", true);
+      } else {
+        setStatus("Installation was dismissed. Chrome menu → Install app remains available.");
+      }
+      return;
+    }
+    setStatus("Chrome did not expose the install prompt here. Use Chrome menu → Install app or Add to Home screen.");
+    document.querySelector("details").open = true;
+  });
+
+  shareButton.addEventListener("click", async () => {
+    const data = {title: "AI Harness Prompt Kit", text: "Open the AI Harness Prompt Kit", url: launcherUrl};
+    if (navigator.share) {
+      try {
+        await navigator.share(data);
+        setStatus("Share sheet opened.", true);
+        return;
+      } catch (error) {
+        if (error && error.name === "AbortError") return;
+      }
+    }
+    copyButton.click();
+  });
+
+  copyButton.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(launcherUrl);
+      setStatus("Launcher link copied.", true);
+    } catch {
+      window.prompt("Copy this Prompt Kit link:", launcherUrl);
+    }
+  });
+})();
+</script>
+</body>
+</html>

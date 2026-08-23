@@ -3,64 +3,138 @@ name: Prompt Kit web contracts
 on:
   pull_request:
     paths:
+      - README.md
       - PROMPT_KIT_ACCESS.md
       - Open-Latest-PromptKit.cmd
       - Acquire-Latest-PromptKit.cmd
       - build_prompt_kit.py
       - scripts/Acquire-LatestPromptKit.ps1
+      - scripts/Open-LatestPromptKitPortable.ps1
       - scripts/build_prompt_kit_registry.py
+      - scripts/serve_prompt_kit_portable.py
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
+      - scripts/validate_prompt_kit_order_navigation.py
+      - scripts/validate_prompt_kit_portability.py
+      - triage/prompt_library_portability.py
       - registry/prompts/skill-development-prompts.v1.json
+      - registry/prompts/tutorial-discovery-prompts.v1.json
+      - registry/prompts/repository-work-ledger-prompts.v1.json
+      - registry/prompts/correspondence-prompts.v1.json
+      - registry/prompts/management-operations-prompts.v1.json
+      - registry/prompts/spec-architecture-prompts.v1.json
+      - registry/prompts/prompt-overrides.v1.json
+      - registry/prompts/prompt-display-order.v1.json
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
+      - docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md
+      - docs/PROMPT_KIT_PORTABILITY.md
+      - docs/prompt-kit-order-navigation.md
       - docs/prompt-kit.js
+      - docs/prompt-kit-guided-recommendations.js
+      - docs/prompt-kit-journey.js
+      - docs/prompt-kit-polish.js
+      - docs/prompt-kit-correspondence.js
+      - docs/prompt-kit-management.js
+      - docs/prompt-kit-spec-architecture.js
+      - docs/prompt-kit-favorites-portability.js
       - docs/prompts.json
       - docs/reference.json
       - harness/contracts/prompt-kit-interactions.v1.json
       - harness/contracts/prompt-kit-filtering.v1.json
       - harness/contracts/prompt-kit-mobile.v1.json
       - harness/contracts/prompt-kit-discovery.v1.json
+      - harness/contracts/prompt-kit-order-navigation.v1.json
+      - harness/contracts/prompt-kit-portability.v1.json
       - harness/manifest.v1.json
       - web/prompt-kit/index.html
       - web/README.md
       - tests/Test-PromptKitQuickOpenPathResolution.ps1
       - tests/test_prompt_kit_header_contract.py
+      - tests/test_prompt_kit_hotkey_completion.py
       - tests/test_prompt_kit_product_interactions.py
       - tests/test_prompt_kit_filtering_access.py
       - tests/test_prompt_kit_mobile.py
       - tests/test_prompt_kit_discovery.py
+      - tests/test_prompt_kit_guidance.py
+      - tests/test_prompt_kit_order_navigation_contract.py
+      - tests/test_prompt_kit_order_navigation_product.py
+      - tests/test_prompt_kit_portability.py
+      - tests/test_prompt_kit_portability_regressions.py
+      - tests/test_prompt_kit_portable_health.py
+      - tests/test_prompt_library_portability.py
       - tests/test_skill_prompt_registry.py
+      - tests/test_repository_work_ledger_prompt.py
+      - tests/test_correspondence_prompt_registry.py
+      - tests/test_management_operations_prompt_registry.py
+      - tests/test_spec_architecture_prompt_registry.py
       - .github/workflows/prompt-kit-web.yml
   push:
     branches: [main]
     paths:
+      - README.md
       - PROMPT_KIT_ACCESS.md
       - Open-Latest-PromptKit.cmd
       - Acquire-Latest-PromptKit.cmd
       - build_prompt_kit.py
       - scripts/Acquire-LatestPromptKit.ps1
+      - scripts/Open-LatestPromptKitPortable.ps1
       - scripts/build_prompt_kit_registry.py
+      - scripts/serve_prompt_kit_portable.py
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
+      - scripts/validate_prompt_kit_order_navigation.py
+      - scripts/validate_prompt_kit_portability.py
+      - triage/prompt_library_portability.py
       - registry/prompts/skill-development-prompts.v1.json
+      - registry/prompts/tutorial-discovery-prompts.v1.json
+      - registry/prompts/repository-work-ledger-prompts.v1.json
+      - registry/prompts/correspondence-prompts.v1.json
+      - registry/prompts/management-operations-prompts.v1.json
+      - registry/prompts/spec-architecture-prompts.v1.json
+      - registry/prompts/prompt-overrides.v1.json
+      - registry/prompts/prompt-display-order.v1.json
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
+      - docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md
+      - docs/PROMPT_KIT_PORTABILITY.md
+      - docs/prompt-kit-order-navigation.md
       - docs/prompt-kit.js
+      - docs/prompt-kit-guided-recommendations.js
+      - docs/prompt-kit-journey.js
+      - docs/prompt-kit-polish.js
+      - docs/prompt-kit-correspondence.js
+      - docs/prompt-kit-management.js
+      - docs/prompt-kit-spec-architecture.js
+      - docs/prompt-kit-favorites-portability.js
       - docs/prompts.json
       - docs/reference.json
       - harness/contracts/prompt-kit-interactions.v1.json
       - harness/contracts/prompt-kit-filtering.v1.json
       - harness/contracts/prompt-kit-mobile.v1.json
       - harness/contracts/prompt-kit-discovery.v1.json
+      - harness/contracts/prompt-kit-order-navigation.v1.json
+      - harness/contracts/prompt-kit-portability.v1.json
       - harness/manifest.v1.json
       - web/prompt-kit/index.html
       - web/README.md
       - tests/Test-PromptKitQuickOpenPathResolution.ps1
       - tests/test_prompt_kit_header_contract.py
+      - tests/test_prompt_kit_hotkey_completion.py
       - tests/test_prompt_kit_product_interactions.py
       - tests/test_prompt_kit_filtering_access.py
       - tests/test_prompt_kit_mobile.py
       - tests/test_prompt_kit_discovery.py
+      - tests/test_prompt_kit_guidance.py
+      - tests/test_prompt_kit_order_navigation_contract.py
+      - tests/test_prompt_kit_order_navigation_product.py
+      - tests/test_prompt_kit_portability.py
+      - tests/test_prompt_kit_portability_regressions.py
+      - tests/test_prompt_kit_portable_health.py
+      - tests/test_prompt_library_portability.py
       - tests/test_skill_prompt_registry.py
+      - tests/test_repository_work_ledger_prompt.py
+      - tests/test_correspondence_prompt_registry.py
+      - tests/test_management_operations_prompt_registry.py
+      - tests/test_spec_architecture_prompt_registry.py
       - .github/workflows/prompt-kit-web.yml
 
 permissions:
@@ -81,20 +155,45 @@ jobs:
           python -m py_compile \
             build_prompt_kit.py \
             scripts/build_prompt_kit_registry.py \
+            scripts/serve_prompt_kit_portable.py \
             scripts/validate_prompt_kit_interactions.py \
             scripts/validate_prompt_kit_discovery.py \
+            scripts/validate_prompt_kit_order_navigation.py \
+            scripts/validate_prompt_kit_portability.py \
+            triage/prompt_library_portability.py \
             tests/test_prompt_kit_header_contract.py \
+            tests/test_prompt_kit_hotkey_completion.py \
             tests/test_prompt_kit_product_interactions.py \
             tests/test_prompt_kit_filtering_access.py \
             tests/test_prompt_kit_mobile.py \
             tests/test_prompt_kit_discovery.py \
-            tests/test_skill_prompt_registry.py
+            tests/test_prompt_kit_guidance.py \
+            tests/test_prompt_kit_order_navigation_contract.py \
+            tests/test_prompt_kit_order_navigation_product.py \
+            tests/test_prompt_kit_portability.py \
+            tests/test_prompt_kit_portability_regressions.py \
+            tests/test_prompt_kit_portable_health.py \
+            tests/test_prompt_library_portability.py \
+            tests/test_skill_prompt_registry.py \
+            tests/test_repository_work_ledger_prompt.py \
+            tests/test_correspondence_prompt_registry.py \
+            tests/test_management_operations_prompt_registry.py \
+            tests/test_spec_architecture_prompt_registry.py
       - name: Validate Prompt Kit JavaScript syntax
-        run: node --check docs/prompt-kit.js
-      - name: Validate acquisition PowerShell syntax
+        run: |
+          node --check docs/prompt-kit.js
+          node --check docs/prompt-kit-guided-recommendations.js
+          node --check docs/prompt-kit-journey.js
+          node --check docs/prompt-kit-polish.js
+          node --check docs/prompt-kit-correspondence.js
+          node --check docs/prompt-kit-management.js
+          node --check docs/prompt-kit-spec-architecture.js
+          node --check docs/prompt-kit-favorites-portability.js
+      - name: Validate acquisition and portable PowerShell syntax
         shell: pwsh
         run: |
           $null = [scriptblock]::Create((Get-Content -Raw scripts/Acquire-LatestPromptKit.ps1))
+          $null = [scriptblock]::Create((Get-Content -Raw scripts/Open-LatestPromptKitPortable.ps1))
       - name: Reproduce empty-list path insertion
         shell: pwsh
         run: |
@@ -125,10 +224,55 @@ jobs:
           name: prompt-kit-current-preview
           path: ${{ runner.temp }}/prompt-kit/index.html
           if-no-files-found: error
-      - name: Validate search favorites and readability contract
+      - name: Build portable Prompt Kit runtime artifact
         run: |
+          python scripts/serve_prompt_kit_portable.py --build-only
+          test -f Outputs/prompt-kit-portable/index.html
+          test -f Outputs/prompt-kit-portable/manifest.json
+      - name: Validate portable Favorites and harness discipline
+        run: |
+          python scripts/validate_prompt_kit_portability.py \
+            --require-artifact \
+            --output Outputs/prompt-kit-portability-validation.json \
+            --summary
+          python -m unittest \
+            tests.test_prompt_kit_portability \
+            tests.test_prompt_kit_portability_regressions \
+            tests.test_prompt_kit_portable_health \
+            -v
+      - name: Validate Prompt Library portability contract
+        run: python -m unittest tests.test_prompt_library_portability -v
+      - name: Upload portable Prompt Kit runtime proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-portable-runtime
+          path: |
+            Outputs/prompt-kit-portable/index.html
+            Outputs/prompt-kit-portable/manifest.json
+            Outputs/prompt-kit-portability-validation.json
+          if-no-files-found: error
+      - name: Validate search favorites tutorial journey and polish contract
+        run: |
+          python -m unittest tests.test_prompt_kit_hotkey_completion -v
           python scripts/validate_prompt_kit_discovery.py --summary
-          python -m unittest tests.test_prompt_kit_discovery -v
+          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
+      - name: Validate combined prompt registry
+        run: |
+          python -m unittest tests.test_skill_prompt_registry -v
+          python -m unittest tests.test_repository_work_ledger_prompt -v
+          python -m unittest tests.test_correspondence_prompt_registry -v
+          python -m unittest tests.test_management_operations_prompt_registry -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+      - name: Validate chronological ordering and dense navigation
+        run: |
+          python -m unittest \
+            tests.test_prompt_kit_order_navigation_contract \
+            tests.test_prompt_kit_order_navigation_product \
+            -v
+          python scripts/validate_prompt_kit_order_navigation.py \
+            --require-implementation \
+            --output "$RUNNER_TEMP/prompt-kit-order-navigation-audit.json" \
+            --summary
       - name: Validate Prompt Kit product interactions
         run: python -m unittest tests.test_prompt_kit_product_interactions -v
       - name: Validate Prompt Kit category and type filtering

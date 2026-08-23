@@ -1,0 +1,31 @@
+{
+  "schema_version": "prompt-kit-layout-harness/v1",
+  "harness_id": "prompt-kit-responsive-layout",
+  "parent_harness": "harness/manifest.v1.json",
+  "mission": "Prevent header/search/filter collisions from silently recurring across Prompt Kit versions by making responsive geometry an explicit, testable harness concern.",
+  "owned_scope": ["maps", "workflows", "registries", "hooks", "skills", "reports", "validators", "tests", "ci"],
+  "forbidden_scope": ["AGENTS.md", "Prompt Kit product HTML/CSS/JS changes", "secrets", "destructive cleanup"],
+  "components": {
+    "codebase_map": "harness/prompt-kit-layout/CODEBASE_MAP.md",
+    "workflow": "harness/prompt-kit-layout/WORKFLOW.md",
+    "artifact_registry": "harness/prompt-kit-layout/ARTIFACT_REGISTRY.md",
+    "artifact_registry_machine": "harness/prompt-kit-layout/artifacts.v1.json",
+    "validator_registry": "harness/prompt-kit-layout/validators.v1.json",
+    "capability_registry": "harness/prompt-kit-layout/capabilities.v1.json",
+    "trigger_registry": "harness/prompt-kit-layout/triggers.v1.json",
+    "contract": "harness/prompt-kit-layout/contracts/responsive-header-overlap.v1.json",
+    "skill": ".ai/skills/prompt-kit-responsive-layout/SKILL.md",
+    "validator": "scripts/validate_prompt_kit_layout_harness.py",
+    "contract_tests": "tests/test_prompt_kit_layout_harness.py",
+    "pre_commit_hook": "harness/prompt-kit-layout/hooks/pre-commit.sh",
+    "pre_push_hook": "harness/prompt-kit-layout/hooks/pre-push.sh",
+    "operator_report": "harness/prompt-kit-layout/reports/CURRENT_STATE.md",
+    "ci": ".github/workflows/prompt-kit-layout-harness.yml"
+  },
+  "validation_order": [
+    "python scripts/validate_prompt_kit_layout_harness.py --summary",
+    "python -m unittest tests.test_prompt_kit_layout_harness -v",
+    "git diff --check"
+  ],
+  "proof_ceiling": "Harness completeness, static contract, and CI. Browser geometry and a repaired Prompt Kit layout require a later product/runtime lane because product code is forbidden in this sprint."
+}

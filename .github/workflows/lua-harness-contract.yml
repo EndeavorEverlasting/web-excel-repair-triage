@@ -1,0 +1,55 @@
+name: Lua embedding readiness harness
+
+on:
+  pull_request:
+    paths:
+      - harness/lua/**
+      - harness/manifest.v1.json
+      - .ai/skills/lua-embedding-readiness/SKILL.md
+      - scripts/validate_lua_harness.py
+      - tests/test_lua_harness_contract.py
+      - .github/workflows/lua-harness-contract.yml
+  push:
+    branches: [main]
+    paths:
+      - harness/lua/**
+      - harness/manifest.v1.json
+      - .ai/skills/lua-embedding-readiness/SKILL.md
+      - scripts/validate_lua_harness.py
+      - tests/test_lua_harness_contract.py
+      - .github/workflows/lua-harness-contract.yml
+
+permissions:
+  contents: read
+
+jobs:
+  lua-harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile Lua harness validator and tests
+        run: python -m py_compile scripts/validate_lua_harness.py tests/test_lua_harness_contract.py
+      - name: Validate Lua embedding readiness
+        run: python scripts/validate_lua_harness.py --output "$RUNNER_TEMP/lua-embedding-readiness.json" --summary
+      - name: Upload Lua embedding readiness report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lua-embedding-readiness-report
+          path: ${{ runner.temp }}/lua-embedding-readiness.json
+          if-no-files-found: error
+      - name: Run Lua harness contract tests
+        run: python -m unittest tests.test_lua_harness_contract -v
+      - name: Validate root harness integration
+        run: |
+          python scripts/validate_harness.py --report "$RUNNER_TEMP/harness-completeness-lua.json"
+          python -m unittest tests.test_harness_contract -v
+      - name: Validate artifact hygiene
+        run: python -m triage.gitignore_hygiene
+      - name: Check patch hygiene
+        run: git diff --check origin/${{ github.base_ref || 'main' }}...HEAD

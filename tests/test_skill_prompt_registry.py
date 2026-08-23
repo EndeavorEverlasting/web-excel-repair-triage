@@ -15,16 +15,148 @@ import build_prompt_kit_registry
 
 
 class SkillPromptRegistryTests(unittest.TestCase):
-    def test_combined_registry_contains_unique_skill_prompts(self) -> None:
+    def test_combined_registry_contains_unique_skill_and_discovery_prompts(self) -> None:
         prompts = build_prompt_kit_registry.load_prompt_registry()
         by_id = {prompt["id"]: prompt for prompt in prompts}
         self.assertEqual(len(by_id), len(prompts))
-        self.assertIn("P61", by_id)
-        self.assertIn("P62", by_id)
-        self.assertIn("P63", by_id)
+        for prompt_id in ("P61", "P62", "P63", "P64", "P65"):
+            self.assertIn(prompt_id, by_id)
         self.assertEqual(by_id["P63"]["skillPath"], ".ai/skills/skill-factoring/SKILL.md")
         self.assertEqual(by_id["P62"]["class"], "AGENT HARNESS / SKILL EVALS")
         self.assertNotEqual(by_id["P63"]["copyContent"], by_id["P62"]["copyContent"])
+        self.assertEqual(by_id["P64"]["type"], "TUTORIAL PLAN")
+        self.assertEqual(by_id["P65"]["type"], "SETUP")
+        sequences = [int(str(prompt["seq"])) for prompt in prompts]
+        self.assertEqual(sequences, sorted(sequences))
+        self.assertEqual(prompts[0]["id"], "P00")
+        self.assertEqual(by_id["P65"]["discoveryRank"], 1)
+        self.assertEqual(by_id["P65"]["displayOrderPolicy"], "prompt-kit-guided-discovery-order")
+
+    def test_p02_previous_chat_executor_is_execution_first(self) -> None:
+        prompt = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P02"]
+        content = prompt["copyContent"]
+
+        self.assertEqual(prompt["name"], "Previous Chat → Active Sprint Executor")
+        self.assertEqual(prompt["class"], "CONTINUATION / EXECUTE")
+        self.assertEqual(prompt["progress"], "YES")
+        self.assertEqual(content.count("xyz_previous_chat_name"), 1)
+        for phrase in (
+            "PREVIOUS CHAT:",
+            "CONTINUE THAT CHAT AS AN ACTIVE IMPLEMENTATION SPRINT",
+            "planning is subordinate to implementation",
+            "RECOVER THE NAMED CHAT",
+            "VERIFY THE CURRENT FLOOR",
+            "SELECT THE FIRST UNFINISHED EXECUTION SLICE",
+            "IMPLEMENT NOW",
+            "VALIDATE AND DELIVER",
+            "Do not stop at a summary, TODO list, architecture discussion, branch listing, PR status, or plan",
+            "NEXT COMMAND: one exact executable action",
+        ):
+            self.assertIn(phrase, content)
+        for plan_only_marker in (
+            "NEXT CHAT PANELS",
+            "SUPPORTING SPRINT MAP",
+            "one prompt panel goes into one new chat",
+        ):
+            self.assertNotIn(plan_only_marker, content)
+        for keyword in (
+            "previous chat",
+            "continue chat",
+            "resume conversation",
+            "implement previous chat",
+        ):
+            self.assertIn(keyword, prompt["keywords"])
+
+    def test_p13_recurring_urgency_recovery_advances_and_parallelizes(self) -> None:
+        prompt = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P13"]
+        content = prompt["copyContent"]
+
+        self.assertEqual(prompt["name"], "Repeated Friction → Urgency Recovery + Rule Repair")
+        self.assertEqual(prompt["class"], "IMPROVE / RULES + EXECUTION")
+        self.assertEqual(prompt["progress"], "YES")
+        for phrase in (
+            "THE SAME PROBLEM HAS REPEATED",
+            "We need to move past R1",
+            "Deployment has held up",
+            "A plan for a Sub-Part Agent was not in your output",
+            "ESTABLISH THE CURRENT CRITICAL PATH",
+            "current proven floor or stage",
+            "next unproven gate",
+            "EXECUTE ONE CRITICAL-PATH ADVANCEMENT NOW",
+            "SUB-PART AGENT PLAN IS MANDATORY",
+            "Sub-Part Agent: none — serialized dependency",
+            "Never use a Sub-Part Agent plan as an excuse to stop the primary critical path",
+            "INSTALL THE SMALLEST DURABLE PREVENTION",
+            "REGRESSION SCENARIO",
+            "no stopping at plan/status while safe action remains",
+        ):
+            self.assertIn(phrase, content)
+        for routing_phrase in (
+            "cluttered, noisy, or space-heavy UI keeps getting reported",
+            "route the specialized UX repair to P99 and continue the critical path here",
+            "do not absorb P99's viewport/density/progressive-disclosure checklist into P13",
+        ):
+            self.assertIn(routing_phrase, content)
+
+        self.assertEqual(build_prompt_kit_registry.build_prompt_kit.SYNONYMS["urgency"], "P13")
+        self.assertEqual(build_prompt_kit_registry.build_prompt_kit.SYNONYMS["sub-part agent"], "P13")
+        self.assertEqual(prompt["discoveryGroup"], "promoted")
+
+        reference = json.loads(build_prompt_kit_registry.REFERENCE.read_text(encoding="utf-8"))
+        sequence = next(item for item in reference["promptSequence"] if item["promptId"] == "P13")
+        legend = next(item for item in reference["classLegend"] if item["promptIds"] == "P13")
+        self.assertIn("Urgency Recovery", sequence["moment"])
+        self.assertIn("Sub-Part Agent", sequence["produces"])
+        self.assertEqual(sequence["mutatesRepo"], "YES")
+        self.assertEqual(legend["promptClass"], "IMPROVE / RULES + EXECUTION")
+
+        guided = build_prompt_kit_registry.GUIDED_RECOMMENDATIONS.read_text(encoding="utf-8")
+        self.assertIn("id:'repeated-stall'", guided)
+        self.assertIn("work keeps stalling, urgency is being missed", guided)
+        self.assertIn("'sub-part agent'", guided)
+
+    def test_prompt_override_registry_is_explicit_and_identity_preserving(self) -> None:
+        payload = json.loads(build_prompt_kit_registry.PROMPT_OVERRIDES.read_text(encoding="utf-8"))
+        self.assertEqual(payload["schema_version"], "prompt-registry-overrides/v1")
+        self.assertEqual(len(payload["overrides"]), 2)
+        by_id = {item["id"]: item for item in payload["overrides"]}
+        self.assertEqual(set(by_id), {"P02", "P13"})
+        self.assertEqual((by_id["P02"]["id"], by_id["P02"]["seq"]), ("P02", "02"))
+        self.assertEqual(by_id["P02"]["copySheet"], "P02_COPY_SAFE")
+        self.assertEqual((by_id["P13"]["id"], by_id["P13"]["seq"]), ("P13", "13"))
+        self.assertEqual(by_id["P13"]["copySheet"], "P13_COPY_SAFE")
+        source_by_id = {
+            item["id"]: item
+            for item in json.loads(build_prompt_kit_registry.BASE_REGISTRY.read_text(encoding="utf-8"))
+        }
+        self.assertEqual(source_by_id["P02"]["seq"], by_id["P02"]["seq"])
+        self.assertEqual(source_by_id["P13"]["seq"], by_id["P13"]["seq"])
+
+    def test_prompt_override_rejects_id_casing_drift(self) -> None:
+        source_p02 = next(
+            item
+            for item in json.loads(build_prompt_kit_registry.BASE_REGISTRY.read_text(encoding="utf-8"))
+            if item["id"] == "P02"
+        )
+        bad = dict(source_p02)
+        bad["id"] = "p02"
+        original = build_prompt_kit_registry.PROMPT_OVERRIDES
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                path = Path(temp_dir) / "overrides.json"
+                path.write_text(
+                    json.dumps({"schema_version": "prompt-registry-overrides/v1", "overrides": [bad]}),
+                    encoding="utf-8",
+                )
+                build_prompt_kit_registry.PROMPT_OVERRIDES = path
+                with self.assertRaisesRegex(SystemExit, "exactly match canonical identity"):
+                    build_prompt_kit_registry.apply_prompt_overrides([source_p02])
+        finally:
+            build_prompt_kit_registry.PROMPT_OVERRIDES = original
 
     def test_skill_eval_prompt_requires_correctness_weakness_and_efficiency_proof(self) -> None:
         prompts = build_prompt_kit_registry.load_prompt_registry()
@@ -69,6 +201,38 @@ class SkillPromptRegistryTests(unittest.TestCase):
             "do not optimize a proxy while degrading the real task",
         ):
             self.assertIn(forbidden_shortcut, content)
+
+    def test_tutorial_portfolio_prompt_preserves_uploaded_contract(self) -> None:
+        prompt = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P64"]
+        content = prompt["copyContent"]
+        for phrase in (
+            "ANALYZE THE REPOSITORY AND RANK TUTORIAL PATHS WORTH SPRINTING",
+            "Do not confuse a documentation gap with a tutorial opportunity",
+            "TUTORIAL READINESS CLASSIFICATIONS",
+            "READY_AFTER_PRODUCT_FIX",
+            "CANDIDATE DISPOSITION LEDGER",
+            "COPYABLE TUTORIAL SPRINT PANELS",
+            "Use P18 when the sprint primarily creates durable tutorials",
+            "one exact next command",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_guided_prompt_finder_is_bounded_and_registry_aware(self) -> None:
+        prompt = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P65"]
+        content = prompt["copyContent"]
+        for phrase in (
+            "Ask one concise question at a time",
+            "ask no more than four questions",
+            "recommend exactly one primary prompt",
+            "up to two optional follow-on prompts",
+            "Do not invent prompt IDs",
+            "P64 Repository Tutorial Portfolio Ranker",
+        ):
+            self.assertIn(phrase, content)
 
     def test_skill_factoring_file_has_required_contract_sections(self) -> None:
         path = REPO_ROOT / ".ai" / "skills" / "skill-factoring" / "SKILL.md"
@@ -134,26 +298,33 @@ class SkillPromptRegistryTests(unittest.TestCase):
             (REPO_ROOT / "Build-PromptKitWebsite.cmd").read_text(encoding="utf-8"),
         )
 
-    def test_combined_registry_build_contains_both_new_prompts(self) -> None:
+    def test_combined_registry_build_contains_guided_discovery(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             output = Path(temp_dir) / "prompt-kit.html"
             html = build_prompt_kit_registry.build(output)
             self.assertEqual(output.read_text(encoding="utf-8"), html)
-            self.assertIn('"id": "P61"', html)
-            self.assertIn('"id": "P62"', html)
-            self.assertIn('"id": "P63"', html)
+            for prompt_id in ("P61", "P62", "P63", "P64", "P65"):
+                self.assertIn(f'"id": "{prompt_id}"', html)
+            self.assertIn("Previous Chat → Active Sprint Executor", html)
             self.assertIn("Skill Factoring and Boundary Refactorer", html)
             self.assertIn("Skill Correctness and Efficiency Eval Implementer", html)
+            self.assertIn("Repository Tutorial Portfolio Ranker", html)
+            self.assertIn("Guided Prompt Finder Questionnaire", html)
+            self.assertIn("Find My Prompt", html)
+            self.assertIn(
+                "prompt-kit-guided-recommendations.js",
+                build_prompt_kit_registry.GUIDED_RECOMMENDATIONS.as_posix(),
+            )
 
     def test_checked_in_operator_site_is_exact_combined_build(self) -> None:
         deployed = REPO_ROOT / "web" / "prompt-kit" / "index.html"
         actual = deployed.read_text(encoding="utf-8")
         expected = build_prompt_kit_registry.render()
         self.assertEqual(actual, expected)
-        self.assertIn('"id": "P61"', actual)
-        self.assertIn('"id": "P62"', actual)
-        self.assertIn('"id": "P63"', actual)
+        for prompt_id in ("P61", "P62", "P63", "P64", "P65"):
+            self.assertIn(f'"id": "{prompt_id}"', actual)
         self.assertIn("Skill Correctness and Efficiency Eval Implementer", actual)
+        self.assertIn("Find My Prompt", actual)
 
 
 if __name__ == "__main__":

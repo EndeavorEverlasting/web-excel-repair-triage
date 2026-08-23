@@ -1,0 +1,248 @@
+{
+  "schema_version": "pr-merge-gate-fixtures/v1",
+  "state_cases": [
+    {
+      "id": "green-authorized-pr-merges-now",
+      "state": {
+        "pr_number": 181,
+        "state": "open",
+        "merged": false,
+        "draft": false,
+        "mergeable": true,
+        "required_checks": [
+          {"name": "prompt-kit-web", "conclusion": "success"},
+          {"name": "operator-documentation", "conclusion": "success"}
+        ],
+        "unresolved_review_findings": 0,
+        "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "expected_head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "merge_intent": true,
+        "merge_authorized": true,
+        "default_branch": "main",
+        "head_branch": "feat/example"
+      },
+      "expected_decision": "merge_now",
+      "expected_blocker": false
+    },
+    {
+      "id": "green-pr-without-authority-hands-off-authority",
+      "state": {
+        "pr_number": 182,
+        "state": "open",
+        "merged": false,
+        "draft": false,
+        "mergeable": true,
+        "required_checks": [],
+        "unresolved_review_findings": 0,
+        "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "expected_head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "merge_intent": true,
+        "merge_authorized": false,
+        "default_branch": "main",
+        "head_branch": "feat/example"
+      },
+      "expected_decision": "handoff_merge_authority",
+      "expected_blocker": true
+    },
+    {
+      "id": "failed-required-check-blocks",
+      "state": {
+        "pr_number": 183,
+        "state": "open",
+        "merged": false,
+        "draft": false,
+        "mergeable": true,
+        "required_checks": [
+          {"name": "required-ci", "conclusion": "failure"}
+        ],
+        "unresolved_review_findings": 0,
+        "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
+        "expected_head_sha": "cccccccccccccccccccccccccccccccccccccccc",
+        "merge_intent": true,
+        "merge_authorized": true,
+        "default_branch": "main",
+        "head_branch": "feat/example"
+      },
+      "expected_decision": "blocked",
+      "expected_reason": "required_check_not_green",
+      "expected_blocker": true
+    },
+    {
+      "id": "unresolved-review-blocks",
+      "state": {
+        "pr_number": 184,
+        "state": "open",
+        "merged": false,
+        "draft": false,
+        "mergeable": true,
+        "required_checks": [],
+        "unresolved_review_findings": 1,
+        "head_sha": "dddddddddddddddddddddddddddddddddddddddd",
+        "expected_head_sha": "dddddddddddddddddddddddddddddddddddddddd",
+        "merge_intent": true,
+        "merge_authorized": true,
+        "default_branch": "main",
+        "head_branch": "feat/example"
+      },
+      "expected_decision": "blocked",
+      "expected_reason": "unresolved_review_findings",
+      "expected_blocker": true
+    },
+    {
+      "id": "conflict-blocks",
+      "state": {
+        "pr_number": 185,
+        "state": "open",
+        "merged": false,
+        "draft": false,
+        "mergeable": false,
+        "required_checks": [],
+        "unresolved_review_findings": 0,
+        "head_sha": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "expected_head_sha": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "merge_intent": true,
+        "merge_authorized": true,
+        "default_branch": "main",
+        "head_branch": "feat/example"
+      },
+      "expected_decision": "blocked",
+      "expected_reason": "merge_conflict",
+      "expected_blocker": true
+    },
+    {
+      "id": "unknown-mergeability-blocks-until-resolved",
+      "state": {
+        "pr_number": 186,
+        "state": "open",
+        "merged": false,
+        "draft": false,
+        "mergeable": null,
+        "required_checks": [],
+        "unresolved_review_findings": 0,
+        "head_sha": "ffffffffffffffffffffffffffffffffffffffff",
+        "expected_head_sha": "ffffffffffffffffffffffffffffffffffffffff",
+        "merge_intent": true,
+        "merge_authorized": true,
+        "default_branch": "main",
+        "head_branch": "feat/example"
+      },
+      "expected_decision": "blocked",
+      "expected_reason": "mergeability_unresolved",
+      "expected_blocker": true
+    },
+    {
+      "id": "head-move-blocks-stale-merge",
+      "state": {
+        "pr_number": 187,
+        "state": "open",
+        "merged": false,
+        "draft": false,
+        "mergeable": true,
+        "required_checks": [],
+        "unresolved_review_findings": 0,
+        "head_sha": "1111111111111111111111111111111111111111",
+        "expected_head_sha": "2222222222222222222222222222222222222222",
+        "merge_intent": true,
+        "merge_authorized": true,
+        "default_branch": "main",
+        "head_branch": "feat/example"
+      },
+      "expected_decision": "blocked",
+      "expected_reason": "head_moved",
+      "expected_blocker": true
+    },
+    {
+      "id": "draft-blocks-merge",
+      "state": {
+        "pr_number": 188,
+        "state": "open",
+        "merged": false,
+        "draft": true,
+        "mergeable": true,
+        "required_checks": [],
+        "unresolved_review_findings": 0,
+        "head_sha": "3333333333333333333333333333333333333333",
+        "expected_head_sha": "3333333333333333333333333333333333333333",
+        "merge_intent": true,
+        "merge_authorized": true,
+        "default_branch": "main",
+        "head_branch": "feat/example"
+      },
+      "expected_decision": "blocked",
+      "expected_reason": "draft",
+      "expected_blocker": true
+    },
+    {
+      "id": "already-merged-is-complete-not-blocked",
+      "state": {
+        "pr_number": 189,
+        "state": "closed",
+        "merged": true,
+        "draft": false,
+        "mergeable": true,
+        "required_checks": [],
+        "unresolved_review_findings": 0,
+        "head_sha": "4444444444444444444444444444444444444444",
+        "expected_head_sha": "4444444444444444444444444444444444444444",
+        "merge_intent": true,
+        "merge_authorized": true,
+        "default_branch": "main",
+        "head_branch": "feat/example"
+      },
+      "expected_decision": "already_merged",
+      "expected_blocker": false
+    }
+  ],
+  "handoff_cases": [
+    {
+      "id": "merged-normal-consumer-uses-main",
+      "handoff": {
+        "merged": true,
+        "consumer_intent": "update",
+        "default_branch": "main",
+        "source_ref": "main",
+        "feature_branch": "feat/example",
+        "default_branch_verified": true
+      },
+      "expected_valid": true
+    },
+    {
+      "id": "merged-normal-consumer-must-not-use-feature-branch",
+      "handoff": {
+        "merged": true,
+        "consumer_intent": "pull",
+        "default_branch": "main",
+        "source_ref": "feat/example",
+        "feature_branch": "feat/example",
+        "default_branch_verified": true
+      },
+      "expected_valid": false,
+      "expected_reason": "merged_work_must_route_normal_consumers_to_default_branch"
+    },
+    {
+      "id": "merged-handoff-requires-default-branch-proof",
+      "handoff": {
+        "merged": true,
+        "consumer_intent": "open",
+        "default_branch": "main",
+        "source_ref": "main",
+        "feature_branch": "feat/example",
+        "default_branch_verified": false
+      },
+      "expected_valid": false,
+      "expected_reason": "default_branch_not_verified"
+    },
+    {
+      "id": "historical-feature-branch-intent-is-allowed",
+      "handoff": {
+        "merged": true,
+        "consumer_intent": "historical-debug",
+        "default_branch": "main",
+        "source_ref": "feat/example",
+        "feature_branch": "feat/example",
+        "default_branch_verified": true
+      },
+      "expected_valid": true
+    }
+  ]
+}

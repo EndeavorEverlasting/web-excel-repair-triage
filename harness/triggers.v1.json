@@ -72,15 +72,17 @@
       "skill": ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
       "workflow": "WORKFLOW.md#a-technician-acquisition-or-update",
       "conditions": [
-        "technician requests latest main Prompt Kit",
-        "mouse-accessible acquisition requested"
+        "user wants to open or use the Prompt Kit in a browser",
+        "phone or tablet user wants to open, install, or Add to Home Screen",
+        "Windows user wants the stable local Prompt Kit app",
+        "user wants an editable local checkout to edit, commit, push, or run repository tooling",
+        "user explicitly wants a source ZIP snapshot without Git"
       ],
       "forbidden_conditions": [
-        "dirty checkout",
-        "wrong origin",
-        "non-main checkout",
-        "local-only commits",
-        "divergence"
+        "destructive Git cleanup is proposed",
+        "credential embedding or authentication automation is requested",
+        "an editable checkout update is requested while that checkout is dirty, divergent, non-main, or has an unexpected origin",
+        "the request is a Prompt Kit product behavior change rather than acquisition or access"
       ]
     },
     {
@@ -94,12 +96,44 @@
         "artifact, validator, capability, trigger, or component registry drift exists",
         "hook validates the wrong Git surface",
         "harness completeness check is missing or failing",
-        "operator report is stale or incomplete"
+        "operator report is stale or incomplete",
+        "a PR integration failure reveals missing or incorrect merge-gate harness behavior",
+        "an agent labels a green mergeable authorized PR as a blocker or routes normal consumers to a feature branch after merge"
       ],
       "forbidden_conditions": [
         "request changes AGENTS.md governance",
         "request is product implementation only",
         "request requires secrets or destructive cleanup"
+      ]
+    },
+    {
+      "id": "prompt-kit-browser-proof-temp-path",
+      "capability_id": "prompt-kit-browser-proof-scratch-cleanup",
+      "skill": ".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md",
+      "workflow": "WORKFLOW.md#h-prompt-kit-browser-proof-scratch-cleanup",
+      "conditions": [
+        "operator supplies a prompt-kit-browser-proof-* path under the OS temp directory",
+        "operator asks to classify or clear detached Prompt Kit browser-proof scratch copies"
+      ],
+      "forbidden_conditions": [
+        "broad OS temp cleanup is requested",
+        "browser profile/localStorage/Favorites deletion is the actual request",
+        "target is a canonical repository checkout or durable Outputs evidence"
+      ]
+    },
+    {
+      "id": "prompt-kit-responsive-overlap",
+      "capability_id": "prompt-kit-responsive-layout",
+      "skill": ".ai/skills/prompt-kit-responsive-layout/SKILL.md",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "conditions": [
+        "Prompt Kit header, brand, search, filter, or navigation controls overlap",
+        "responsive header regression is reported across viewport widths",
+        "strict browser no-overlap proof is requested"
+      ],
+      "forbidden_conditions": [
+        "request is unrelated to Prompt Kit layout",
+        "browser geometry is claimed from static source assertions alone"
       ]
     }
   ]

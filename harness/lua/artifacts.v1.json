@@ -1,0 +1,25 @@
+{
+  "schema_version": "lua-harness-artifacts/v1",
+  "artifacts": [
+    {
+      "id": "lua-harness-control-plane",
+      "kind": "tracked",
+      "canonical_path": "harness/lua/manifest.v1.json",
+      "producer": "Harness Infrastructure Build — Lua embedding readiness",
+      "validator": "lua-harness-completeness",
+      "naming": "Stable harness/lua control-plane path",
+      "tracking_policy": "Tracked; update with the Lua contract, workflow, registries, tests, skill, hooks, CI, and report.",
+      "proof_ceiling": "Repository integration and static Lua readiness contract proof."
+    },
+    {
+      "id": "lua-embedding-readiness-report",
+      "kind": "runtime",
+      "canonical_path": "Outputs/lua-embedding-readiness.json",
+      "producer": "python scripts/validate_lua_harness.py --output Outputs/lua-embedding-readiness.json --summary",
+      "validator": "lua-harness-completeness",
+      "naming": "Stable lua-embedding-readiness.json family; CI may store it as a run artifact.",
+      "tracking_policy": "Gitignored runtime evidence or CI artifact.",
+      "proof_ceiling": "Executed static Lua harness checks on one checkout and commit; no product runtime proof."
+    }
+  ]
+}

@@ -29,20 +29,36 @@ function Invoke-Git {
     )
 
     $previous = Get-Location
+    $previousErrorActionPreference = $ErrorActionPreference
+    $stderrPath = [System.IO.Path]::GetTempFileName()
+    $output = @()
+    $stderr = @()
+    $exitCode = -1
     try {
         Set-Location -LiteralPath $WorkingDirectory
-        $output = & git @Arguments 2>&1
+        $ErrorActionPreference = 'Continue'
+        $output = & git @Arguments 2> $stderrPath
         $exitCode = $LASTEXITCODE
+        if (Test-Path -LiteralPath $stderrPath) {
+            $stderr = @(Get-Content -LiteralPath $stderrPath -ErrorAction SilentlyContinue)
+        }
     }
     finally {
+        $ErrorActionPreference = $previousErrorActionPreference
         Set-Location -LiteralPath $previous
+        if (Test-Path -LiteralPath $stderrPath) {
+            Remove-Item -LiteralPath $stderrPath -Force -ErrorAction SilentlyContinue
+        }
     }
 
-    $text = ($output | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
+    $stdoutText = ($output | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
+    $stderrText = ($stderr | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
     if ($exitCode -ne 0) {
-        throw "git $($Arguments -join ' ') failed with exit code $exitCode.`r`n$text"
+        $diagnostic = @($stdoutText, $stderrText) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+        $detail = $diagnostic -join [Environment]::NewLine
+        throw "git $($Arguments -join ' ') failed with exit code $exitCode.`r`n$detail"
     }
-    return $text.Trim()
+    return $stdoutText.Trim()
 }
 
 function Resolve-PythonCommand {
@@ -201,27 +217,8 @@ function Get-PromptKitDevRoots {
         Add-UniquePath -Paths $roots -Path (Join-Path $desktop 'dev')
     }
 
-    if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE)) {
+    if ($roots.Count -eq 0 -and -not [string]::IsNullOrWhiteSpace($env:USERPROFILE)) {
         Add-UniquePath -Paths $roots -Path (Join-Path $env:USERPROFILE 'Desktop\dev')
-    }
-
-    $oneDriveRoots = [System.Collections.Generic.List[string]]::new()
-    foreach ($name in @('OneDrive', 'OneDriveCommercial', 'OneDriveConsumer')) {
-        $value = [Environment]::GetEnvironmentVariable($name)
-        if (-not [string]::IsNullOrWhiteSpace($value)) {
-            Add-UniquePath -Paths $oneDriveRoots -Path $value
-        }
-    }
-
-    if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE) -and (Test-Path -LiteralPath $env:USERPROFILE)) {
-        Get-ChildItem -LiteralPath $env:USERPROFILE -Directory -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -like 'OneDrive*' } |
-            ForEach-Object { Add-UniquePath -Paths $oneDriveRoots -Path $_.FullName }
-    }
-
-    foreach ($oneDriveRoot in $oneDriveRoots) {
-        Add-UniquePath -Paths $roots -Path (Join-Path $oneDriveRoot 'Desktop\dev')
-        Add-UniquePath -Paths $roots -Path (Join-Path $oneDriveRoot 'OG Laptop Backup\Desktop\dev')
     }
 
     return @($roots)
@@ -237,28 +234,21 @@ function Get-ExistingPromptKitRepositories {
             continue
         }
 
-        $candidates = @($root)
-        $candidates += @(
-            Get-ChildItem -LiteralPath $root -Directory -ErrorAction SilentlyContinue |
-                Select-Object -ExpandProperty FullName
-        )
+        $candidate = Join-Path $root $RepositoryFolderName
+        $gitPath = Join-Path $candidate '.git'
+        if (-not (Test-Path -LiteralPath $gitPath -PathType Container)) {
+            continue
+        }
 
-        foreach ($candidate in $candidates) {
-            $gitPath = Join-Path $candidate '.git'
-            if (-not (Test-Path -LiteralPath $gitPath -PathType Container)) {
-                continue
-            }
+        try {
+            $origin = Invoke-Git -WorkingDirectory $candidate -Arguments @('remote', 'get-url', 'origin')
+        }
+        catch {
+            continue
+        }
 
-            try {
-                $origin = Invoke-Git -WorkingDirectory $candidate -Arguments @('remote', 'get-url', 'origin')
-            }
-            catch {
-                continue
-            }
-
-            if ((Normalize-RepositoryUrl $origin) -eq (Normalize-RepositoryUrl $RepositoryUrl)) {
-                Add-UniquePath -Paths $repositories -Path $candidate
-            }
+        if ((Normalize-RepositoryUrl $origin) -eq (Normalize-RepositoryUrl $RepositoryUrl)) {
+            Add-UniquePath -Paths $repositories -Path $candidate
         }
     }
 
@@ -286,7 +276,7 @@ function Invoke-QuickOpen {
 
     $devRoots = @(Get-PromptKitDevRoots)
     if ($devRoots.Count -lt 1) {
-        throw 'Could not resolve a Windows Desktop or development root.'
+        throw 'Could not resolve the Windows Desktop\dev development root.'
     }
 
     $existingRepositories = @(Get-ExistingPromptKitRepositories -DevRoots $devRoots)
@@ -300,8 +290,8 @@ function Invoke-QuickOpen {
             return
         }
         catch {
-            & $writeLog "Preserving candidate and continuing: $candidate"
-            & $writeLog $_.Exception.Message
+            & $writeLog "Preserving canonical checkout and refusing a duplicate clone: $candidate"
+            throw
         }
     }
 
@@ -309,15 +299,10 @@ function Invoke-QuickOpen {
     $destinationPath = Join-Path $preferredDevRoot $RepositoryFolderName
 
     if (Test-Path -LiteralPath $destinationPath) {
-        $suffix = 'latest'
-        $fallback = Join-Path $preferredDevRoot "$RepositoryFolderName-$suffix"
-        $counter = 2
-        while (Test-Path -LiteralPath $fallback) {
-            $fallback = Join-Path $preferredDevRoot "$RepositoryFolderName-$suffix-$counter"
-            $counter++
-        }
-        $destinationPath = $fallback
-        & $writeLog "Default destination is occupied; preserving it and using $destinationPath"
+        throw (
+            "Canonical Prompt Kit checkout path is occupied: $destinationPath. " +
+            "Resolve or move that path explicitly; no '-latest' sibling clone was created."
+        )
     }
 
     $repositoryRoot = Update-RepositorySafely -Destination $destinationPath -WriteLog $writeLog
@@ -339,6 +324,13 @@ $form.Text = 'Get Latest Prompt Kit'
 $form.StartPosition = 'CenterScreen'
 $form.Size = New-Object System.Drawing.Size(760, 520)
 $form.MinimumSize = New-Object System.Drawing.Size(760, 520)
+$form.Tag = 'idle'
+$form.Add_FormClosing({
+    param($sender, $eventArgs)
+    if ([string]$sender.Tag -eq 'acquiring') {
+        $eventArgs.Cancel = $true
+    }
+})
 
 $title = New-Object System.Windows.Forms.Label
 $title.Text = 'Clone or safely update the Prompt Kit repository'
@@ -348,7 +340,7 @@ $title.Location = New-Object System.Drawing.Point(20, 18)
 $form.Controls.Add($title)
 
 $description = New-Object System.Windows.Forms.Label
-$description.Text = 'This tool never resets, cleans, force-pushes, or discards local work.'
+$description.Text = 'This tool never resets, cleans, force-pushes, discards local work, or invents duplicate checkout folders.'
 $description.AutoSize = $true
 $description.Location = New-Object System.Drawing.Point(22, 52)
 $form.Controls.Add($description)
@@ -437,8 +429,10 @@ $browseButton.Add_Click({
 $closeButton.Add_Click({ $form.Close() })
 
 $runButton.Add_Click({
+    $form.Tag = 'acquiring'
     $runButton.Enabled = $false
     $browseButton.Enabled = $false
+    $closeButton.Enabled = $false
     try {
         & $writeLog 'Starting safe acquisition.'
         $repositoryRoot = Update-RepositorySafely -Destination $destinationBox.Text -WriteLog $writeLog
@@ -467,8 +461,12 @@ $runButton.Add_Click({
         ) | Out-Null
     }
     finally {
-        $runButton.Enabled = $true
-        $browseButton.Enabled = $true
+        $form.Tag = 'idle'
+        if (-not $form.IsDisposed) {
+            $runButton.Enabled = $true
+            $browseButton.Enabled = $true
+            $closeButton.Enabled = $true
+        }
     }
 })
 

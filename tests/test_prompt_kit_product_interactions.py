@@ -86,10 +86,9 @@ class PromptKitProductInteractionTests(unittest.TestCase):
             "togglePromptSection(collapse.getAttribute('data-collapse-section'))",
         ):
             self.assertIn(marker, js)
-        self.assertIn(
-            "if(!isSectionCollapsed(group.name)){group.prompts.forEach(function(p){appendPromptCard(grid,p)})}",
-            js,
-        )
+        self.assertIn("if(isSectionCollapsed(sectionName))return;", js)
+        self.assertIn("orderedPrompts.forEach(function(p)", js)
+        self.assertIn("renderedSections={}", js)
 
     def test_collapse_state_survives_rerenders_and_home_reset_expands_all(self) -> None:
         js = JS.read_text(encoding="utf-8")

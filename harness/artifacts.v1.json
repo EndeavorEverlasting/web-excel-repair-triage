@@ -32,8 +32,15 @@
       "producer": "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html",
       "validator": "prompt-kit-parity",
       "naming": "Stable checked-in canonical site path.",
-      "tracking_policy": "Tracked deterministic output; edit canonical sources and rebuild.",
-      "proof_ceiling": "Exact generated parity, not browser or clipboard acceptance."
+      "tracking_policy": "Tracked deterministic output; edit canonical sources and rebuild. Delivery surfaces may expose this same canonical release without creating a second editable Prompt Kit.",
+      "delivery_surfaces": [
+        "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
+        "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
+        "Open-Latest-PromptKit.cmd",
+        "PROMPT_KIT_ACCESS.md",
+        "OPEN_PROMPT_KIT_ON_PHONE.md"
+      ],
+      "proof_ceiling": "Exact generated parity and registered delivery routing, not browser installation, mobile, clipboard, local-storage, network, or device acceptance."
     },
     {
       "id": "harness-completeness-report",
@@ -74,6 +81,16 @@
       "naming": "Focused contract; otherwise artifact family plus run ID or timestamp.",
       "tracking_policy": "Gitignored unless explicitly sanitized and approved as a fixture.",
       "proof_ceiling": "Depends on executed engine and runtime gates; Excel for Web acceptance remains separate."
+    },
+    {
+      "id": "prompt-kit-browser-proof-cleanup-report",
+      "kind": "runtime",
+      "canonical_path": "Outputs/prompt-kit-browser-proof-cleanup-report.json",
+      "producer": "scripts/Clear-PromptKitBrowserProofScratch.ps1",
+      "validator": "prompt-kit-browser-proof-cleanup-completeness",
+      "naming": "Stable latest receipt; previous receipt is preserved under Outputs/backups/prompt-kit-browser-proof-cleanup/ with UTC timestamp.",
+      "tracking_policy": "Gitignored operator evidence; never commit scratch directories or cleanup receipts.",
+      "proof_ceiling": "Filesystem classification and cleanup receipt only; no browser-profile/localStorage/Favorites proof."
     }
   ]
 }

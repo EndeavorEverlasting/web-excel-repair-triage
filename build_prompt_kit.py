@@ -75,6 +75,10 @@ SYNONYMS = {
     "opportunity": "P20", "sprint from opportunity": "P20",
     "portfolio": "P22 P23", "gap priority": "P22", "circumstance": "P23",
     "rules": "P13", "improve rules": "P13", "self improving": "P13",
+    "urgency": "P13", "urgency not met": "P13", "deployment held up": "P13",
+    "move past r1": "P13", "proof floor loop": "P13", "stalled execution": "P13",
+    "sub-part agent": "P13", "subpart agent": "P13", "missing parallelism": "P13",
+    "repeating myself": "P13",
     "cross repo": "P16", "interop": "P16", "contribute": "P16",
     "navigation": "P09", "code intelligence": "P09", "read only": "P09",
     "hygiene": "P10", "secrets": "P10", "hooks": "P10",
@@ -102,6 +106,9 @@ SYNONYMS = {
     "directory": "P50", "command guard": "P50",
     "clone repo": "P61", "clone repository": "P61", "git clone": "P61",
     "set terminal directory": "P61", "set working directory": "P61", "repository checkout": "P61",
+    "canonical path": "P92", "canonical repository path": "P92", "canonical checkout": "P92",
+    "development path": "P92", "production path": "P92", "local deployment path": "P92",
+    "repo location": "P92", "repository location": "P92", "path drift": "P92", "scattered clones": "P92",
     "test planner": "P51", "zero token": "P51",
     "factoring analyzer": "P52", "factoring builder": "P53",
     "local validation": "P54", "bootstrap": "P55", "github cli": "P55",
@@ -111,6 +118,16 @@ SYNONYMS = {
     "sequential sprint": "P60", "serialized plan": "P60", "chat handoff": "P60", "step by step plan": "P60",
     "artifact": "P56", "build artifact": "P56", "generate artifact": "P56",
     "context to artifact": "P56", "create artifact": "P56",
+    "ai engineering": "P67 P68 P69 P70 P71", "ai engineering level up": "P67 P68 P69 P70 P71",
+    "evals": "P67", "evaluation framework": "P67", "agent evals": "P67",
+    "context engineering": "P68", "context pruning": "P68", "token pruning": "P68",
+    "spec driven development": "P76", "spec-driven development": "P76",
+    "progressive disclosure": "P76", "harness bloat": "P76", "spec bloat": "P76",
+    "50000 ft": "P76", "30000 ft": "P76", "15000 ft": "P76",
+    "50,000 ft": "P76", "30,000 ft": "P76", "15,000 ft": "P76",
+    "production agents": "P69", "agent reliability": "P69", "idempotency": "P69",
+    "llm ops": "P70", "llmops": "P70", "provider fallback": "P70",
+    "adaptability": "P71", "ai toolchain": "P71", "model upgrade": "P71",
 }
 
 
@@ -269,6 +286,30 @@ def build_doctrine():
                 {"heading": "No Implicit Authority", "content":
                  "A trigger selects procedure; it does not grant authority. "
                  "The absence of a trigger does not block work that is already within scope and capability."},
+            ],
+        },
+        "ai_engineering": {
+            "title": "Production AI Engineering Doctrine",
+            "subtitle": "Five repository disciplines for moving from an AI demo to an operable system",
+            "sections": [
+                {"heading": "The Five Disciplines", "content":
+                 "1. **Evals** - define executable quality gates before regressions reach users.\n"
+                 "2. **Context engineering** - design the complete information system around the model, not only the first prompt.\n"
+                 "3. **Production agents** - engineer retries, idempotency, degradation, recovery, and failure paths like a distributed system.\n"
+                 "4. **LLM Ops** - operate deployment, monitoring, latency, cost, caching, fallbacks, and rollback as product infrastructure.\n"
+                 "5. **Adaptability** - isolate fast-changing models and tools behind stable contracts and compatibility proof."},
+                {"heading": "Evals Before Confidence", "content":
+                 "A model or agent feature is not production-ready because its happy path works. Repositories should encode representative success cases, real regressions, malformed-input cases, and failure conditions as repeatable evals. Deterministic oracles run before model judges. Human judgment is reserved for criteria code cannot express. A skipped eval is not a pass."},
+                {"heading": "Context Is a System", "content":
+                 "Context includes system instructions, task prompts, tool schemas, retrieved chunks, memory, history, repository maps, skills, and runtime state. Every loaded source should have an owner, trigger, precedence, freshness rule, and measurable cost. Prefer demand-loading and deterministic routing over always-on prompt bloat. Optimize context only when required task quality remains intact."},
+                {"heading": "Agents Need Reliability Engineering", "content":
+                 "Production agents must tolerate malformed tool responses, timeouts, duplicate requests, restarts, partial failures, and degraded providers. External calls need bounded timeouts and retries. Side effects need idempotency or compensation. State transitions and terminal failures need observable evidence. Fault injection should precede high-risk runtime trust."},
+                {"heading": "LLM Ops Is Product Infrastructure", "content":
+                 "Model-backed products need measurable health, latency/error budgets, token and cost visibility, privacy-aware caching, provider/model fallback policy, release identity, rollback, and incident ownership. Evals and operational gates meet at deployment readiness. Configuration proof does not become production proof until the real target is authorized and observed."},
+                {"heading": "Adapt Without Chasing Novelty", "content":
+                 "Models, SDKs, agent frameworks, and tool protocols change quickly. Keep volatile implementations replaceable by stabilizing task contracts, schemas, tool semantics, proof vocabulary, and safety boundaries. Upgrade when evidence shows a verified gap, deprecation, security need, or measurable benefit. Preserve compatibility tests and rollback instead of performing one-off rewrites."},
+                {"heading": "Repository Maturity Loop", "content":
+                 "Use P67 to establish evals, P68 to engineer context, P69 to harden agent reliability, P70 to build operational readiness, and P71 to keep the stack replaceable. These prompts are complementary, not a mandatory waterfall: start at the repository's largest verified gap, preserve dependency order, and re-run evals after every material context, runtime, or dependency change."},
             ],
         },
     }
@@ -445,7 +486,7 @@ def build_html(prompts, ref):
     html.append('  <div class="header-top">')
     html.append('    <div class="logo">')
     html.append('      <div class="logo-icon">AK</div>')
-    html.append('      <div><h1>AI Harness Prompt Kit <span>v39</span></h1>'
+    html.append('      <div><h1>AI Harness Prompt Kit <span>v40</span></h1>'
                 '<div style="font-size:10px;color:var(--text-muted)">Agent Control Panel</div></div>')
     html.append('    </div>')
     html.append('    <div class="search-container">')
@@ -490,7 +531,7 @@ def build_html(prompts, ref):
     html.append('<div class="prompt-detail-overlay" id="promptDetailOverlay">')
     html.append('  <div class="prompt-detail" id="promptDetail"></div>')
     html.append('</div>')
-    html.append('<div class="version-badge" id="versionBadge">v39</div>')
+    html.append('<div class="version-badge" id="versionBadge">v40</div>')
 
     html.append('<script>')
     html.append('var PROMPTS=' + prompt_json + ';')

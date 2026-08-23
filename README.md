@@ -6,6 +6,24 @@
 
 ---
 
+<!-- PROMPT_KIT_QUICK_ACCESS_START -->
+## 🤖 AI Harness Prompt Kit — open it like an app
+
+The Prompt Kit is a separate, self-contained operator surface in this repository. You do **not** need to install the workbook-repair application just to use the prompts.
+
+**Release behavior:** the public Prompt Kit link above is the GitHub Pages deployment from canonical `main`. Pull-request and feature-branch Pages checks are previews only; a Prompt Kit website change is not operator-delivered until it lands on `main` and the Pages deployment succeeds.
+
+| What you want | Fastest path |
+|---|---|
+| **Use the Prompt Kit now** on any browser | **[Open the Prompt Kit](https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/)** |
+| **Phone / tablet / install / QR** | **[Open the device launcher](https://endeavoreverlasting.github.io/web-excel-repair-triage/)** |
+| **Windows one-click local copy** | **[Download `Open-Latest-PromptKit.cmd`](https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/Open-Latest-PromptKit.cmd)**, save it, and double-click it. It safely resolves or clones canonical `main`, fast-forwards only, validates the generated site, and opens it. |
+| **Download without Git** | **[Download the latest `main` ZIP](https://github.com/EndeavorEverlasting/web-excel-repair-triage/archive/refs/heads/main.zip)**, extract it, then open `web/prompt-kit/index.html`. |
+| **Clone once** | `git clone --branch main --single-branch https://github.com/EndeavorEverlasting/web-excel-repair-triage.git` |
+
+Inside the Prompt Kit, use the glowing **Tutorial · Find My Prompt** button when you are unsure which prompt to choose. Full acquisition details: [`PROMPT_KIT_ACCESS.md`](PROMPT_KIT_ACCESS.md). Phone-specific help: [`OPEN_PROMPT_KIT_ON_PHONE.md`](OPEN_PROMPT_KIT_ON_PHONE.md).
+<!-- PROMPT_KIT_QUICK_ACCESS_END -->
+
 ## What Is This?
 
 When you open an `.xlsx` file in Excel for Web (OneDrive / SharePoint), the

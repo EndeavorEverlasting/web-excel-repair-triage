@@ -1,0 +1,17 @@
+{
+  "schema_version": "web-excel-artifact-derivation-harness/v1",
+  "name": "Triage artifact derivation and source-preservation harness",
+  "components": {
+    "codebase_map": "harness/artifact-derivation/CODEBASE_MAP.md",
+    "workflow": "harness/artifact-derivation/WORKFLOW.md",
+    "artifact_registry": "harness/artifact-derivation/artifacts.v1.json",
+    "contract": "harness/artifact-derivation/contracts/create-new-from-source.v1.json",
+    "validator": "scripts/validate_artifact_derivation_harness.py",
+    "tests": "tests/test_artifact_derivation_harness.py",
+    "skill": ".ai/skills/artifact-derivation/SKILL.md",
+    "operator_report": "harness/artifact-derivation/reports/CURRENT_STATE.md"
+  },
+  "entry_command": "python scripts/validate_artifact_derivation_harness.py --summary",
+  "runtime_preflight": "python scripts/validate_artifact_derivation_harness.py --request-text <request> --source <identity> --output <new-identity> --summary",
+  "proof_ceiling": "Harness routing, identity collision prevention, protected-input refusal, source read-only semantics, and create-versus-explicit-update classification. It cannot prevent a caller from bypassing the harness and invoking a mutating engine/tool directly."
+}

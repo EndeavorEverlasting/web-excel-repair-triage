@@ -88,40 +88,45 @@
     },
     {
       "id": "technician-prompt-kit-acquisition",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "status": "canonical",
       "skill": ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
       "trigger_ids": [
         "technician-needs-latest-prompt-kit"
       ],
-      "operation": "Clone or clean-fast-forward main, validate the Prompt Kit, and open the selected technician surface.",
+      "operation": "Route Prompt Kit access by user intent and device: public browser use, phone install, Windows local app, editable checkout, or ZIP snapshot; require Git only when source work actually needs it.",
       "inputs": [
+        "user intent: use/install/share or edit/commit/push",
+        "device or platform",
+        "public Prompt Kit and phone-launcher URLs",
         "canonical repository URL",
-        "destination",
-        "Git",
-        "Windows PowerShell",
-        "Python 3",
-        "repository access"
+        "default branch main",
+        "Git only when an editable checkout is required",
+        "Termux from F-Droid for an Android editable checkout",
+        "Windows PowerShell and Python only for the Windows local-app path"
       ],
       "outputs": [
-        "validated main checkout",
-        "opened Prompt Kit website or generator GUI"
+        "selected cross-device access mode",
+        "public Prompt Kit or phone install surface",
+        "validated Windows local app when requested",
+        "clean editable checkout when source work is requested",
+        "explicit runtime proof ceiling"
       ],
       "implementation": {
         "kind": "launcher",
         "path": "Acquire-Latest-PromptKit.cmd"
       },
-      "proof_ceiling": "Source and contract proof until native Windows acquisition and browser behavior are observed."
+      "proof_ceiling": "Static routing, canonical URL/command, and preservation-first contract proof until the selected phone, browser, Termux, Windows launcher, network, or Git-authentication path is observed."
     },
     {
       "id": "harness-infrastructure-maintenance",
-      "version": "1.0.0",
+      "version": "1.2.0",
       "status": "canonical",
       "skill": ".ai/skills/harness-infrastructure-maintenance/SKILL.md",
       "trigger_ids": [
         "harness-infrastructure-change"
       ],
-      "operation": "Inspect, repair, validate, report, and hand off the repository operational harness without crossing into governance or product implementation.",
+      "operation": "Inspect, repair, validate, report, and hand off the repository operational harness; when product code is out of scope, convert observed behavior gaps into enforceable focused contracts with non-strict harness evidence and explicit strict product gates.",
       "inputs": [
         "AGENTS.md",
         "CODEBASE_MAP.md",
@@ -133,14 +138,17 @@
         "harness/validators.v1.json",
         "harness/capabilities.v1.json",
         "harness/triggers.v1.json",
+        "focused domain contracts including harness/contracts/prompt-kit-order-navigation.v1.json and harness/contracts/pr-merge-gate.v1.json",
+        "focused operator reports including harness/reports/PROMPT_KIT_ORDER_NAVIGATION.md",
         ".githooks/",
         ".github/workflows/harness-contract.yml",
-        "existing harness failures and PR state"
+        "existing harness failures, product-gap evidence, PR state, merge intent, and merge authority"
       ],
       "outputs": [
         "tracked canonical harness repairs",
         "harness-completeness-report/v1",
         "focused regression tests",
+        "focused product-gap audit when implementation is outside owned scope",
         "updated operator report",
         "commit and push or PR evidence",
         "actionable next command"
@@ -149,7 +157,60 @@
         "kind": "script",
         "path": "scripts/validate_harness.py"
       },
-      "proof_ceiling": "Static repository and CI harness proof on the tested commit; no product runtime, provider, GUI, protected-target, or production proof."
+      "proof_ceiling": "Static repository, contract, source-gap, and CI harness proof on the tested commit; actual provider merges, product runtime, browser/mobile ergonomics, GUI, protected-target, and production proof remain separate."
+    },
+    {
+      "id": "prompt-kit-browser-proof-scratch-cleanup",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md",
+      "trigger_ids": [
+        "prompt-kit-browser-proof-temp-path"
+      ],
+      "operation": "Preview, classify, retain receipts for, and explicitly remove only eligible detached Prompt Kit browser-proof scratch directories under the OS temp root.",
+      "inputs": [
+        "optional exact prompt-kit-browser-proof path",
+        "OS temp root",
+        "minimum age",
+        "explicit apply intent"
+      ],
+      "outputs": [
+        "prompt-kit-browser-proof-cleanup-report",
+        "preserved prior receipt when present",
+        "eligible/preserved/deleted/failed counts"
+      ],
+      "implementation": {
+        "kind": "script",
+        "path": "scripts/Clear-PromptKitBrowserProofScratch.ps1"
+      },
+      "proof_ceiling": "Filesystem classification and cleanup receipt only; browser profile/localStorage/Favorites state remains separate."
+    },
+    {
+      "id": "prompt-kit-responsive-layout",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/prompt-kit-responsive-layout/SKILL.md",
+      "trigger_ids": [
+        "prompt-kit-responsive-overlap"
+      ],
+      "operation": "Classify Prompt Kit header/search collisions, enforce responsive source and generated-artifact contracts, and require browser geometry before strict no-overlap proof.",
+      "inputs": [
+        "operator overlap evidence",
+        "web/prompt-kit/index.html",
+        "docs/prompt-kit-polish.js",
+        "harness/prompt-kit-layout/contracts/responsive-header-overlap.v1.json",
+        "declared responsive viewports"
+      ],
+      "outputs": [
+        "responsive-layout harness validation",
+        "focused source/artifact regression proof",
+        "browser geometry receipt for strict proof when available"
+      ],
+      "implementation": {
+        "kind": "script",
+        "path": "scripts/validate_prompt_kit_layout_harness.py"
+      },
+      "proof_ceiling": "Static harness/source/artifact proof unless a validated browser-geometry receipt covers every declared viewport."
     }
   ]
 }

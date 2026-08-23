@@ -1,0 +1,38 @@
+{
+  "schema_version": "prompt-kit-freshness-guidance/v1",
+  "repository": "EndeavorEverlasting/web-excel-repair-triage",
+  "default_branch": "main",
+  "purpose": "Require an explicit freshness check before troubleshooting or guiding a user who reports a versioned, downloaded, installed, cached, or previously cloned Prompt Kit copy.",
+  "freshness_triggers": [
+    "user reports a Prompt Kit or prompt version label and currentness is not proven",
+    "user says the Prompt Kit was downloaded, cloned, installed, or opened previously and currentness is not proven",
+    "user presents a local Prompt Kit file, ZIP snapshot, checkout, or installed copy without current artifact proof",
+    "user asks for troubleshooting or prompt-selection guidance while using a versioned or potentially stale copy"
+  ],
+  "required_agent_behavior": [
+    "Acknowledge that the reported local or versioned copy may be stale before troubleshooting or prompt-selection guidance.",
+    "Recommend the lowest-friction latest route that matches the user's intent and device before continuing.",
+    "Do not require a Git pull, clone, ZIP, Python, PowerShell, or Termux when the user only wants to use the Prompt Kit in a browser.",
+    "If the user explicitly declines to refresh, continue only after labeling the copy stale-or-unverified and keep that limitation visible in the guidance."
+  ],
+  "freshness_routes": {
+    "browser-use": "Open https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/ and use that public surface as the normal-use latest route.",
+    "phone-install": "Open https://endeavoreverlasting.github.io/web-excel-repair-triage/ in the system browser, then use Install app or Add to Home Screen when offered.",
+    "windows-local-app": "Run Open-Latest-PromptKit.cmd so the repository-owned launcher performs safe acquisition/update and validation.",
+    "editable-checkout": "Verify canonical origin, clean worktree, current branch main, and zero local-only commits; fetch origin/main; then integrate only with git merge --ff-only origin/main.",
+    "zip-snapshot": "Explain that the ZIP is point-in-time and re-download main.zip when the user explicitly wants a fresh no-Git source snapshot."
+  },
+  "currentness_evidence": [
+    "normal browser use has just opened the canonical public Prompt Kit URL",
+    "Windows local-app acquisition completed through the repository-owned launcher and its validation/health proof",
+    "editable checkout HEAD was proven synchronized with origin/main after the preservation-first update gates",
+    "ZIP snapshot was freshly downloaded from the canonical main branch during the current interaction"
+  ],
+  "anti_patterns": [
+    "Assuming a version label such as V39 is current without checking the canonical latest route.",
+    "Continuing troubleshooting against a reported old local copy without first recommending refresh.",
+    "Telling a normal phone/browser user to clone the repository merely to get the latest Prompt Kit.",
+    "Using a bare git pull as proof that an editable checkout is safely current."
+  ],
+  "proof_ceiling": "Static harness proof that freshness triggers and refresh-routing guidance are registered and tested. It does not prove a user's device actually refreshed, browser cache updated, PWA/service-worker state changed, Git synchronization succeeded, or a local copy matches the deployed public artifact without observed runtime evidence."
+}

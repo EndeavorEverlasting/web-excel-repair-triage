@@ -8,6 +8,12 @@ explainable: it uses explicit text signals first, then month/day/time rules.
 Submission workbooks should receive the resulting assignment/task label only.
 Rule explanations and uncertainty belong in internal audit sidecars, not in the
 Bonita-style tracker.
+
+``Deployments`` is a high-risk person/date label. Generic project names, legacy
+monthly buckets, deployment trackers, deployment planning/information, or broad
+package-level mentions are not sufficient evidence for a shift-level deployment
+classification. Outside explicitly registered historical month rules, deployment
+requires direct execution language tied to the row evidence.
 """
 from __future__ import annotations
 
@@ -36,16 +42,31 @@ TASK_CATEGORIES = (
     TROUBLESHOOTING,
 )
 
-# Explicit text beats heuristic time-of-day rules.
+# Lower-risk explicit signals may be taken from row notes/worked label/project text.
+# Deployment is deliberately absent and is handled by the stronger direct-execution
+# gate below.
 _SIGNAL_PATTERNS = (
     (TROUBLESHOOTING, re.compile(r"troubleshoot|incident|issue|fix|repair|imprivata|login|escalat", re.I)),
     (DOCUMENTATION, re.compile(r"document|report|sign[-\s]?off|handoff|summary|qc", re.I)),
     (CLIENT_COORDINATION, re.compile(r"client|coordination|coordinate|meeting|email|call|status|update", re.I)),
     (TICKET_FORWARDING, re.compile(r"ticket|ritm|req\d*|request|forward|routing|queue", re.I)),
-    (DEPLOYMENTS, re.compile(r"deploy|deployment|install|go[-\s]?live|onsite|on[-\s]?site", re.I)),
     (INVENTORY_MANAGEMENT, re.compile(r"inventory|stock|recon|asset|serial|count|staging|kit|shortage", re.I)),
     (LOGISTICS, re.compile(r"logistics|deliver|delivery|transport|shipment|ship|pickup|drop[-\s]?off|cleanup|clean[-\s]?up|relay", re.I)),
     (CONFIGURATIONS, re.compile(r"config|configuration|configure|image|baseline|autolog|auto[-\s]?log", re.I)),
+)
+
+# Direct execution verbs are intentionally narrower than generic "deployment".
+# The source row must say that deployment/install/go-live/cutover activity was
+# actually performed. A resolved project name is never sufficient by itself.
+_DIRECT_DEPLOYMENT_PATTERN = re.compile(
+    r"\bdeploy(?:ed|ing)\b"
+    r"|\binstall(?:ed|ing)\b"
+    r"|\b(?:performed|completed|executed)\s+(?:the\s+)?(?:go[-\s]?live|cutover)\b"
+    r"|\b(?:go[-\s]?live|cutover)\s+(?:completed|performed|executed)\b"
+    r"|\bwent\s+live\b"
+    r"|\bcut\s+over\b"
+    r"|\bon[-\s]?site\s+install(?:ed|ing)\b",
+    re.I,
 )
 
 EVENING_START_HOUR = 16.0
@@ -122,6 +143,20 @@ def _explicit_signal(text: str) -> Optional[str]:
     return None
 
 
+def _direct_deployment_signal(notes: str, worked_label: str) -> bool:
+    """Return True only for row evidence that describes deployment execution.
+
+    ``resolved_project`` is intentionally excluded: a project or program name that
+    happens to contain "deployment" is context, not proof that this shift deployed.
+    Bare nouns such as "deployment", "deployment tracker", "deployment support",
+    "go-live planning", and "cutover planning" do not satisfy the direct-action
+    expression.
+    """
+
+    evidence_text = " ".join(x for x in (notes, worked_label) if x).strip()
+    return bool(_DIRECT_DEPLOYMENT_PATTERN.search(evidence_text))
+
+
 def classify_neuron_work_context(
     work_date: date,
     start_hour: Optional[float],
@@ -133,22 +168,30 @@ def classify_neuron_work_context(
     """Classify a Neuron shift into a realistic task lane.
 
     Precedence:
-    1. Explicit text signals from notes/worked label/resolved project.
-    2. Logistics is allowed only during daytime material movement / cleanup.
-    3. April-specific deployment windows.
-    4. May weekend configuration/inventory behavior.
-    5. Time-of-day fallback with configurations as the dominant default.
+    1. Direct deployment execution evidence from row notes/worked label.
+    2. Other explicit text signals from notes/worked label/resolved project.
+    3. Logistics is allowed only during daytime material movement / cleanup.
+    4. Explicitly registered April deployment windows.
+    5. May weekend configuration/inventory behavior.
+    6. Time-of-day fallback with configurations as the dominant default.
+
+    Generic Deployment nouns and project names never trigger a person/date
+    Deployment classification. If no direct deployment evidence exists, the row
+    falls through to a lower-risk supported signal or deterministic fallback.
     """
 
     text = " ".join(x for x in (notes, worked_label, resolved_project) if x).strip()
     explicit = _explicit_signal(text)
+
+    if _direct_deployment_signal(notes, worked_label):
+        return WorkContextDecision(DEPLOYMENTS, "direct-deployment-execution-evidence", "high")
 
     if explicit == LOGISTICS:
         if is_daytime_logistics_window(start_hour, end_hour):
             return WorkContextDecision(LOGISTICS, "explicit-logistics-daytime", "high")
         return WorkContextDecision(CONFIGURATIONS, "logistics-signal-outside-daytime-config-fallback", "medium")
 
-    if explicit and explicit != DEPLOYMENTS:
+    if explicit:
         return WorkContextDecision(explicit, f"explicit-{explicit.lower().replace(' ', '-')}", "high")
 
     month = work_date.month
@@ -157,13 +200,10 @@ def classify_neuron_work_context(
     mid = _midpoint(start_hour, end_hour)
     span = _duration(start_hour, end_hour)
 
-    if explicit == DEPLOYMENTS:
-        return WorkContextDecision(DEPLOYMENTS, "explicit-deployment", "high")
-
     if month == 4:
-        if weekday == 5:  # April Saturdays.
+        if weekday == 5:  # April Saturdays: explicit registered historical rule.
             return WorkContextDecision(DEPLOYMENTS, "april-saturday-deployment", "high")
-        if weekday in (0, 2) and evening:  # April Monday/Wednesday evening windows.
+        if weekday in (0, 2) and evening:  # Registered April Mon/Wed evening windows.
             return WorkContextDecision(DEPLOYMENTS, "april-mon-wed-evening-deployment", "medium")
         if evening:
             return WorkContextDecision(CONFIGURATIONS, "april-evening-configuration", "high")

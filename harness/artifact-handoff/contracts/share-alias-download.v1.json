@@ -1,0 +1,53 @@
+{
+  "schema_version": "share-artifact-alias-download/v1",
+  "rules": {
+    "canonical_identity": "Do not rename or replace the canonical artifact merely to satisfy a human-facing download name. Produce a copy/alias surface.",
+    "literal_alias_filename": "The actual saved/provider alias basename must contain literal human filename characters, not URL percent-encoded octets.",
+    "extension_preservation": "A rename/copy-only alias must preserve the canonical file extension.",
+    "byte_identity": "A rename/copy-only alias must be byte-identical to the canonical source.",
+    "transport_boundary": "A transport href may percent-encode spaces, but decoding only its final encoded path segment must equal the literal alias basename.",
+    "operator_zero_rename": "The operator-facing download should already have the intended alias name; manual rename is a harness failure when the agent can create the alias copy itself."
+  },
+  "fixtures": [
+    {
+      "id": "valid-encoded-transport-literal-file",
+      "canonical_name": "ADMIN_SHARE_Project_CURRENT_2026-08-21.xlsm",
+      "alias_name": "Admin-Share - Project - CURRENT - 2026-08-21.xlsm",
+      "filesystem_basename": "Admin-Share - Project - CURRENT - 2026-08-21.xlsm",
+      "transport_href": "sandbox:/mnt/data/Admin-Share%20-%20Project%20-%20CURRENT%20-%202026-08-21.xlsm",
+      "expected_valid": true
+    },
+    {
+      "id": "reject-literal-percent-encoded-file",
+      "canonical_name": "ADMIN_SHARE_Project_CURRENT_2026-08-21.xlsm",
+      "alias_name": "Admin-Share - Project - CURRENT - 2026-08-21.xlsm",
+      "filesystem_basename": "Admin-Share%20-%20Project%20-%20CURRENT%20-%202026-08-21.xlsm",
+      "transport_href": "sandbox:/mnt/data/Admin-Share%20-%20Project%20-%20CURRENT%20-%202026-08-21.xlsm",
+      "expected_valid": false
+    },
+    {
+      "id": "reject-extension-drift",
+      "canonical_name": "ADMIN_SHARE_Project_CURRENT_2026-08-21.xlsm",
+      "alias_name": "Admin-Share - Project - CURRENT - 2026-08-21.xlsx",
+      "filesystem_basename": "Admin-Share - Project - CURRENT - 2026-08-21.xlsx",
+      "transport_href": "sandbox:/mnt/data/Admin-Share%20-%20Project%20-%20CURRENT%20-%202026-08-21.xlsx",
+      "expected_valid": false
+    },
+    {
+      "id": "reject-transport-target-drift",
+      "canonical_name": "CLIENT_SHARE_Project_SCOPE_CURRENT.xlsm",
+      "alias_name": "Client-Share - Project Scope - CURRENT.xlsm",
+      "filesystem_basename": "Client-Share - Project Scope - CURRENT.xlsm",
+      "transport_href": "sandbox:/mnt/data/Client-Share%20-%20Wrong%20Scope%20-%20CURRENT.xlsm",
+      "expected_valid": false
+    },
+    {
+      "id": "reject-encoded-slash-in-final-segment",
+      "canonical_name": "ADMIN_SHARE_Project_CURRENT_2026-08-21.xlsm",
+      "alias_name": "Admin-Share - Project - CURRENT - 2026-08-21.xlsm",
+      "filesystem_basename": "Admin-Share - Project - CURRENT - 2026-08-21.xlsm",
+      "transport_href": "sandbox:/mnt/data/hidden%2FAdmin-Share%20-%20Project%20-%20CURRENT%20-%202026-08-21.xlsm",
+      "expected_valid": false
+    }
+  ]
+}

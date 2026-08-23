@@ -16,6 +16,8 @@ if str(SCRIPTS) not in sys.path:
 
 import evaluate_prompt_language
 import validate_harness
+import validate_operator_command_envelope
+import validate_prompt_kit_cross_device_access
 
 
 class HarnessContractTests(unittest.TestCase):
@@ -84,6 +86,48 @@ class HarnessContractTests(unittest.TestCase):
             },
         )
 
+    def test_cross_device_prompt_kit_access_is_registered_and_executable(self) -> None:
+        manifest = self.load("harness/manifest.v1.json")
+        contract = manifest["domain_contracts"]["prompt_kit_cross_device_access"]
+        self.assertEqual(
+            contract["contract"],
+            "harness/contracts/prompt-kit-cross-device-access.v1.json",
+        )
+        self.assertEqual(
+            contract["validator"],
+            "scripts/validate_prompt_kit_cross_device_access.py",
+        )
+        self.assertEqual(
+            contract["contract_tests"],
+            "tests/test_prompt_kit_cross_device_access.py",
+        )
+        self.assertEqual(
+            contract["harness_gate"],
+            "python scripts/validate_prompt_kit_cross_device_access.py --summary",
+        )
+        self.assertEqual(validate_prompt_kit_cross_device_access.main([]), 0)
+
+    def test_operator_command_envelope_is_registered_and_executable(self) -> None:
+        manifest = self.load("harness/manifest.v1.json")
+        contract = manifest["domain_contracts"]["operator_command_envelope"]
+        self.assertEqual(
+            contract["contract"],
+            "harness/contracts/operator-command-envelope.v1.json",
+        )
+        self.assertEqual(
+            contract["validator"],
+            "scripts/validate_operator_command_envelope.py",
+        )
+        self.assertEqual(
+            contract["contract_tests"],
+            "tests/test_operator_command_envelope.py",
+        )
+        self.assertEqual(
+            contract["template"],
+            "harness/templates/Invoke-RemoteHarnessProof.ps1",
+        )
+        self.assertEqual(validate_operator_command_envelope.main([]), 0)
+
     def test_machine_registries_are_complete_and_connected(self) -> None:
         manifest = self.load("harness/manifest.v1.json")
         workflows = self.load("harness/workflows.v1.json")
@@ -141,6 +185,19 @@ class HarnessContractTests(unittest.TestCase):
             self.assertFalse(path.startswith("Active/"))
             if artifact["kind"] == "runtime":
                 self.assertTrue(path.startswith("Outputs/"))
+
+    def test_prompt_kit_artifact_registers_cross_device_delivery_surfaces(self) -> None:
+        artifacts = self.load("harness/artifacts.v1.json")["artifacts"]
+        site = next(item for item in artifacts if item["id"] == "prompt-kit-website")
+        self.assertIn(
+            "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
+            site["delivery_surfaces"],
+        )
+        self.assertIn(
+            "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
+            site["delivery_surfaces"],
+        )
+        self.assertIn("Open-Latest-PromptKit.cmd", site["delivery_surfaces"])
 
     def test_capabilities_and_triggers_have_unique_connected_owners(self) -> None:
         capabilities = self.load(
@@ -207,6 +264,8 @@ class HarnessContractTests(unittest.TestCase):
         for phrase in (
             "git checkout-index --all --prefix=",
             'cd "$staged_tree"',
+            "python scripts/validate_prompt_kit_cross_device_access.py --summary",
+            "python -m unittest tests.test_prompt_kit_cross_device_access -v",
             'python scripts/validate_harness.py --report "$HARNESS_REPORT"',
             "git diff --cached --check",
         ):
@@ -214,6 +273,14 @@ class HarnessContractTests(unittest.TestCase):
 
         pre_push = (ROOT / ".githooks" / "pre-push").read_text(
             encoding="utf-8"
+        )
+        self.assertIn(
+            "python scripts/validate_prompt_kit_cross_device_access.py --summary",
+            pre_push,
+        )
+        self.assertIn(
+            "python -m unittest tests.test_prompt_kit_cross_device_access -v",
+            pre_push,
         )
         for validator_id in validators["profiles"]["pre_push"]:
             command = {

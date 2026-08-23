@@ -1,0 +1,149 @@
+{
+  "schema_version": "prompt-kit-cross-device-access/v1",
+  "repository": "EndeavorEverlasting/web-excel-repair-triage",
+  "default_branch": "main",
+  "canonical_repository_url": "https://github.com/EndeavorEverlasting/web-excel-repair-triage.git",
+  "canonical_site": "web/prompt-kit/index.html",
+  "public_prompt_kit_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
+  "public_launcher_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
+  "windows_checkout_policy": {
+    "desktop_dev_relative_root": "Desktop\\dev",
+    "repository_folder": "web-excel-repair-triage",
+    "automatic_duplicate_checkout_fallback": "forbidden",
+    "launcher_location_is_checkout_root": false,
+    "persistent_browser_proof_root": "repository-owned Outputs only",
+    "operator_message": "On Windows, reuse or create exactly one canonical checkout under the user's Desktop\\dev folder. Do not invent -latest siblings, derive a checkout from the downloaded launcher directory, or keep persistent browser-proof website copies in arbitrary Temp folders."
+  },
+  "source_guides": [
+    "PROMPT_KIT_ACCESS.md",
+    "OPEN_PROMPT_KIT_ON_PHONE.md"
+  ],
+  "routing_priority": [
+    "browser-use",
+    "phone-install",
+    "windows-local-app",
+    "editable-checkout",
+    "zip-snapshot"
+  ],
+  "modes": [
+    {
+      "id": "browser-use",
+      "intent": [
+        "open",
+        "use",
+        "try",
+        "share"
+      ],
+      "devices": [
+        "android",
+        "ios",
+        "windows",
+        "macos",
+        "linux",
+        "tablet"
+      ],
+      "manual_clone_required": false,
+      "entry_point": "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
+      "operator_message": "Open the public Prompt Kit directly. Do not require Git, ZIP extraction, PowerShell, Python, or Termux for normal use."
+    },
+    {
+      "id": "phone-install",
+      "intent": [
+        "install",
+        "add to home screen",
+        "phone",
+        "tablet"
+      ],
+      "devices": [
+        "android",
+        "ios",
+        "tablet"
+      ],
+      "manual_clone_required": false,
+      "entry_point": "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
+      "operator_message": "Open the phone launcher in the system browser, then use the install or Add to Home Screen surface."
+    },
+    {
+      "id": "windows-local-app",
+      "intent": [
+        "windows local app",
+        "favorites preserving",
+        "offline-ish local launch",
+        "stable local origin"
+      ],
+      "devices": [
+        "windows"
+      ],
+      "manual_clone_required": false,
+      "entry_point": "Open-Latest-PromptKit.cmd",
+      "operator_message": "Use the repository-owned CMD. It owns safe clone or fast-forward behavior, resolves the single canonical Desktop\\dev checkout independently of where the CMD was downloaded, and serves the validated portable Prompt Kit on the stable loopback origin."
+    },
+    {
+      "id": "editable-checkout",
+      "intent": [
+        "edit",
+        "commit",
+        "push",
+        "develop",
+        "local source checkout"
+      ],
+      "devices": [
+        "android",
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "manual_clone_required": true,
+      "entry_point": "git clone --branch main --single-branch https://github.com/EndeavorEverlasting/web-excel-repair-triage.git",
+      "android_prerequisites": [
+        "Install Termux from F-Droid when a real Android shell checkout is required.",
+        "Run pkg update.",
+        "Run pkg install git."
+      ],
+      "existing_checkout_requirements": {
+        "origin": "https://github.com/EndeavorEverlasting/web-excel-repair-triage.git",
+        "worktree": "clean",
+        "branch": "main",
+        "local_only_commits": 0
+      },
+      "update_sequence": [
+        "git remote get-url origin",
+        "git status --porcelain",
+        "git branch --show-current",
+        "git fetch origin main --prune",
+        "git rev-list --left-right --count HEAD...origin/main",
+        "git merge --ff-only origin/main"
+      ],
+      "operator_message": "Use a real checkout only when the user intends to edit, commit, push, inspect source locally, or run repository tooling. On Windows the default checkout is Desktop\\dev\\web-excel-repair-triage. Before updating an existing checkout, prove canonical origin, a clean worktree, current branch main, and zero local-only commits; then fast-forward main only."
+    },
+    {
+      "id": "zip-snapshot",
+      "intent": [
+        "download snapshot",
+        "no git client"
+      ],
+      "devices": [
+        "android",
+        "ios",
+        "windows",
+        "macos",
+        "linux",
+        "tablet"
+      ],
+      "manual_clone_required": false,
+      "entry_point": "https://github.com/EndeavorEverlasting/web-excel-repair-triage/archive/refs/heads/main.zip",
+      "operator_message": "Treat ZIP as a point-in-time snapshot. It is not the preferred normal-use or Favorites-preserving update path."
+    }
+  ],
+  "guardrails": [
+    "Do not tell a normal phone or browser user to clone the repository merely to use the Prompt Kit.",
+    "Do not tell a mobile GitHub-app user to hunt for or download web/prompt-kit/index.html as the primary access path.",
+    "Distinguish use/install intent from edit/commit/push intent before prescribing acquisition commands.",
+    "On Windows, automatic acquisition must reuse or create Desktop\\dev\\web-excel-repair-triage and must fail closed if that canonical path cannot be used; do not create -latest sibling checkouts or derive a checkout from the launcher download directory.",
+    "Do not leave persistent local browser-proof copies of the Prompt Kit under arbitrary Temp or download directories; use the canonical checkout, repository-owned Outputs, or CI-owned ephemeral runner storage.",
+    "For existing editable checkouts, verify canonical origin, clean worktree, current branch main, and zero local-only commits before fetching and fast-forwarding; never reset, clean, force-push, or discard local work.",
+    "Do not claim Add to Home Screen, PWA installation, Termux, Git authentication, browser storage, or clipboard behavior succeeded without device observation.",
+    "Resolve the canonical website through this contract and harness/artifacts.v1.json instead of guessing an index.html path."
+  ],
+  "proof_ceiling": "Static repository routing, canonical Windows checkout-path discipline, and documentation contract proof only. Device browser behavior, PWA installation, Termux/F-Droid availability, Git credentials, network reachability, local storage, clipboard behavior, and successful push require observed runtime proof."
+}
