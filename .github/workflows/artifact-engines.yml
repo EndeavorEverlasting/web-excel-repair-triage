@@ -91,3 +91,176 @@ jobs:
           path.write_text(text, encoding='utf-8')
           PY
           python .prompt-contrib/canonical_path_repair.py
+
+  hierarchy-state-transition-repair:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, 'stage hierarchy state-transition carrier')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Pin current main floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main --prune
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+          echo "BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          git status --short
+          git log --oneline --decorate -5
+
+      - name: Repair hierarchy state transitions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+          import json
+          from pathlib import Path
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              if new in text:
+                  return text
+              if old not in text:
+                  raise SystemExit(f'{label}: anchor missing')
+              return text.replace(old, new, 1)
+
+          js_path = Path('docs/prompt-kit.js')
+          polish_path = Path('docs/prompt-kit-polish.js')
+          contract_path = Path('harness/contracts/prompt-kit-filtering.v1.json')
+          test_path = Path('tests/test_prompt_kit_filtering_access.py')
+
+          js = js_path.read_text(encoding='utf-8')
+          js = replace_once(
+              js,
+              "function toggleFavoritePrompt(id){var key=String(id||'').toUpperCase();if(!key)return;if(isFavoritePrompt(key)){delete favoritePromptIds[key];showToast('Removed '+key+' from Favorites')}else{favoritePromptIds[key]=true;showToast('Saved '+key+' to Favorites')}saveFavoritePromptIds();render()}",
+              "function toggleFavoritePrompt(id){var key=String(id||'').toUpperCase();if(!key)return;if(isFavoritePrompt(key)){delete favoritePromptIds[key];showToast('Removed '+key+' from Favorites')}else{favoritePromptIds[key]=true;showToast('Saved '+key+' to Favorites')}saveFavoritePromptIds();if(activeSection==='__favorites__')renderTypes();render()}",
+              'favorite membership refresh',
+          )
+          js = replace_once(
+              js,
+              "if(activeSection){activeSection=null;render();return}",
+              "if(activeSection){activeSection=null;activeType=null;renderTypes();render();return}",
+              'Escape section reset refresh',
+          )
+          js_path.write_text(js, encoding='utf-8')
+
+          polish = polish_path.read_text(encoding='utf-8')
+          old = """function activateFavoritesView(){
+            activeCat='all';
+            activeSection='__favorites__';
+            clearTransientPromptFilters();
+            document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.id==='favoritesShortcut')});
+            document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__favorites__')});
+            render();
+          }"""
+          new = """function activateFavoritesView(){
+            activeCat='all';
+            activeSection='__favorites__';
+            clearTransientPromptFilters();
+            document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.id==='favoritesShortcut')});
+            document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__favorites__')});
+            renderTypes();
+            render();
+          }"""
+          polish = replace_once(polish, old, new, 'Favorites activation refresh')
+          polish_path.write_text(polish, encoding='utf-8')
+
+          contract = json.loads(contract_path.read_text(encoding='utf-8'))
+          requirement = next((item for item in contract['requirements'] if item['id'] == 'progressive_type_disclosure'), None)
+          if requirement is None:
+              raise SystemExit('progressive_type_disclosure contract owner missing')
+          sentence = ' Favorites activation, favorite membership changes while Favorites is active, and Escape section reset refresh subordinate navigation so controls cannot describe a stale scope.'
+          if sentence.strip() not in requirement['expected']:
+              requirement['expected'] = requirement['expected'].rstrip() + sentence
+          contract_path.write_text(json.dumps(contract, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          test = test_path.read_text(encoding='utf-8')
+          contract_anchor = '        self.assertIn("only subcategories available in that scope", expected["progressive_type_disclosure"])\n'
+          contract_assert = '        self.assertIn("favorite membership changes while Favorites is active", expected["progressive_type_disclosure"])\n        self.assertIn("Escape section reset", expected["progressive_type_disclosure"])\n'
+          if contract_assert not in test:
+              if contract_anchor not in test:
+                  raise SystemExit('contract regression anchor missing')
+              test = test.replace(contract_anchor, contract_anchor + contract_assert, 1)
+
+          if 'def test_hierarchy_refreshes_on_non_click_state_transitions' not in test:
+              anchor = '    def test_all_view_is_an_atomic_reset_after_favorites(self) -> None:\n'
+              addition = '''    def test_hierarchy_refreshes_on_non_click_state_transitions(self) -> None:\n        js = JS.read_text(encoding="utf-8")\n        polish = POLISH.read_text(encoding="utf-8")\n\n        toggle_start = js.index("function toggleFavoritePrompt")\n        toggle_end = js.index("\\n\\nfunction syncLibraryTabs", toggle_start)\n        toggle = js[toggle_start:toggle_end]\n        self.assertIn("if(activeSection==='__favorites__')renderTypes();render()", toggle)\n\n        favorites_start = polish.index("function activateFavoritesView()")\n        favorites_end = polish.index("function ensureCompactBrowsingControls()", favorites_start)\n        favorites = polish[favorites_start:favorites_end]\n        self.assertIn("renderTypes();", favorites)\n        self.assertLess(favorites.index("renderTypes();"), favorites.index("render();"))\n\n        self.assertIn("if(activeSection){activeSection=null;activeType=null;renderTypes();render();return}", js)\n\n'''
+              if anchor not in test:
+                  raise SystemExit('hierarchy transition test insertion anchor missing')
+              test = test.replace(anchor, addition + anchor, 1)
+          test_path.write_text(test, encoding='utf-8')
+          PY
+
+      - name: Validate pass 1
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check docs/prompt-kit.js
+          node --check docs/prompt-kit-polish.js
+          python -m unittest tests.test_prompt_kit_filtering_access -v
+          python -m unittest tests.test_prompt_kit_product_interactions tests.test_prompt_kit_mobile -v
+          python -m unittest tests.test_prompt_kit_mainline_contract tests.test_prompt_kit_header_contract tests.test_prompt_kit_pages tests.test_prompt_kit_hotkey_completion -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/validate_prompt_kit_order_navigation.py --summary
+          git diff --check
+
+      - name: Deliberate pass 2 falsification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          js = Path('docs/prompt-kit.js').read_text(encoding='utf-8')
+          polish = Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
+          test = Path('tests/test_prompt_kit_filtering_access.py').read_text(encoding='utf-8')
+          html = Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
+          favorites = polish[polish.index('function activateFavoritesView()'):polish.index('function ensureCompactBrowsingControls()')]
+          checks = {
+              'Favorites activation refresh': 'renderTypes();' in favorites and favorites.index('renderTypes();') < favorites.index('render();'),
+              'favorite membership refresh': "if(activeSection==='__favorites__')renderTypes();render()" in js,
+              'Escape section refresh': "if(activeSection){activeSection=null;activeType=null;renderTypes();render();return}" in js,
+              'focused regression': 'test_hierarchy_refreshes_on_non_click_state_transitions' in test,
+              'generated parity': "if(activeSection==='__favorites__')renderTypes();render()" in html,
+          }
+          failed = [name for name, ok in checks.items() if not ok]
+          if failed:
+              raise SystemExit(f'hierarchy second-pass falsification failed: {failed}')
+          PY
+          python -m unittest tests.test_prompt_kit_filtering_access -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Recheck floor, self-clean, commit, and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+          git show HEAD^:.github/workflows/artifact-engines.yml > .github/workflows/artifact-engines.yml
+          git rm .github/workflows/tmp-hierarchy-state-transition-repair.yml
+          git add \
+            .github/workflows/artifact-engines.yml \
+            docs/prompt-kit.js \
+            docs/prompt-kit-polish.js \
+            harness/contracts/prompt-kit-filtering.v1.json \
+            tests/test_prompt_kit_filtering_access.py \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          echo '--- final staged files ---'
+          git diff --cached --name-only
+          git commit -m "fix(prompt-kit): refresh hierarchy on state transitions"
+          git push origin HEAD:main
