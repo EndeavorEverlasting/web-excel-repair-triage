@@ -102,6 +102,41 @@ class AIEngineeringLevelUpTests(unittest.TestCase):
         self.assertLess(len(raw_by_name[diagnostic["name"]]["copyContent"]), 8000)
         self.assertLess(len(raw_by_name[grounding["name"]]["copyContent"]), 8000)
 
+    def test_p68_repeats_context_refactor_until_fixed_point_and_mainline(self) -> None:
+        raw = json.loads((ROOT / "registry/prompts/ai-engineering-level-up-prompts.v1.json").read_text(encoding="utf-8"))
+        source = next(item for item in raw["prompts"] if item["id"] == "P68")
+        effective = {item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()}["P68"]
+        policy = build_prompt_kit_registry.load_actionability_policy()
+
+        self.assertEqual(source["name"], "Context Engineering System Refactorer")
+        self.assertEqual(source["class"], "AI ENGINEERING / CONTEXT")
+        self.assertEqual(source["color"], "Purple")
+        self.assertEqual(source["category"], "standard")
+        self.assertIn("bounded fixed point", source["sprintRole"])
+        self.assertIn("current default branch", source["expectedOutput"])
+        self.assertIn("REFRESH -> MEASURE -> SELECT HIGHEST-IMPACT CONTEXT DEFECT -> REFACTOR -> VALIDATE -> CRITIQUE -> INTEGRATE -> REMEASURE -> CONTINUE", source["nextStep"])
+        self.assertIn("branch, PR, or green CI result alone is insufficient completion", source["proofGate"])
+
+        copy = source["copyContent"]
+        for phrase in (
+            "ENGINEER THE FULL CONTEXT SYSTEM AROUND THE MODEL",
+            "RECOVER FROM ATTENTION SATURATION / THE DUMB ZONE",
+            "CONTINUOUS CONTEXT-CONVERGENCE LOOP",
+            "A pass counts only when",
+            "deliberate second pass",
+            "merge it into the current default branch in the same run",
+            "verify the context-system changes and owning validation are present there",
+            "Do not stop merely because one context slice is green or one bounded slice merged",
+            "Stop only at the bounded fixed point",
+        ):
+            self.assertIn(phrase, copy)
+
+        self.assertNotIn(policy["integration_marker"], copy)
+        self.assertIn(policy["integration_marker"], effective["copyContent"])
+        for forbidden in ("50,000 FT", "30,000 FT", "15,000 FT", "TREAT CLAIMS AS HYPOTHESES"):
+            self.assertNotIn(forbidden, copy)
+        self.assertLess(len(copy), 7000)
+
     def test_prompt_finder_and_search_route_the_five_tracks(self) -> None:
         p65 = {item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()}["P65"]
         for prompt_id in self.IDS:
