@@ -416,7 +416,7 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
     def test_failure_suite_prompts_cover_class_path_and_closure_without_collapsing_roles(self) -> None:
         expected = {
             "P91": ("Failure-Class Generalization & Repository Audit", "TESTING / FAILURE GENERALIZATION"),
-            "P92": ("Production-Path Proof Gap Auditor", "TESTING / PRODUCTION PATH"),
+            "P92": ("Canonical Path Prompt", "HARNESS / CANONICAL PATH"),
             "P93": ("Use-Case Closure Certification", "VERIFICATION / USE-CASE CLOSURE"),
         }
         for prompt_id, (name, prompt_class) in expected.items():
@@ -438,11 +438,49 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("Do not blanket-replace", p91)
         self.assertIn("What adjacent state could still fail for the same underlying reason?", p91)
 
-        p92 = self.full["P92"]["copyContent"]
-        self.assertIn("MAP BOTH PATHS", p92)
-        self.assertIn("PRODUCTION-ONLY", p92)
-        self.assertIn("Green helper tests do not prove a production wrapper", p92)
-        self.assertIn("same-entrypoint synthetic proof", p92)
+        p92_prompt = self.full["P92"]
+        p92 = p92_prompt["copyContent"]
+        self.assertEqual(p92_prompt["name"], "Canonical Path Prompt")
+        self.assertEqual(p92_prompt["class"], "HARNESS / CANONICAL PATH")
+        for phrase in (
+            "ESTABLISH AND ENFORCE THE CANONICAL DEVELOPMENT AND PRODUCTION PATH",
+            "CANONICAL DEVELOPMENT CHECKOUT",
+            "CANONICAL PRODUCTION / USE PATH",
+            "harness/canonical-paths.v1.json",
+            "PREVENT PATH SPRAWL AND COMPUTER BLOAT",
+            "REMOTE INTEGRATION IS NOT LOCAL DEPLOYMENT",
+            "REMOTE_INTEGRATED",
+            "DEV_CHECKOUT_CURRENT",
+            "PROD_PATH_CURRENT",
+            "ENTRYPOINT_PROVED",
+            "UNKNOWN is not permission to guess",
+            "MAP BOTH PATHS WHEN TEST PROOF IS INVOLVED",
+            "PRODUCTION-ONLY",
+            "Green helper tests do not prove a production wrapper",
+            "same-entrypoint synthetic proof",
+            "Could another agent entering fresh still choose a different directory?",
+        ):
+            self.assertIn(phrase, p92)
+        self.assertIn("remote merged SHA is never treated as local deployment proof", p92_prompt["proofGate"])
+        self.assertLess(len(self.raw["P92"]["copyContent"]), 9000)
+        for synonym in (
+            "canonical path",
+            "canonical repository path",
+            "canonical checkout",
+            "development path",
+            "production path",
+            "local deployment path",
+            "path drift",
+            "scattered clones",
+        ):
+            self.assertEqual(build_prompt_kit.SYNONYMS[synonym], "P92")
+
+        p01 = self.full["P01"]["copyContent"]
+        self.assertIn("CANONICAL PATH CONTRACT", p01)
+        self.assertIn("Every app harness must answer where normal development occurs", p01)
+        self.assertIn("Do not let a fresh agent choose a new directory from model preference", p01)
+        self.assertIn("GitHub merge success alone is not workstation deployment proof", p01)
+        self.assertIn("P92 Canonical Path Prompt owns deep repair/audit of this contract", p01)
 
         p93 = self.full["P93"]["copyContent"]
         self.assertIn("BUILD THE OBLIGATION LEDGER", p93)
