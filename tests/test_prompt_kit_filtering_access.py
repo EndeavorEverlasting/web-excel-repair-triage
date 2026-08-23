@@ -25,6 +25,7 @@ class PromptKitFilteringAccessTests(unittest.TestCase):
                 "unique_categories",
                 "single_category_scope",
                 "unique_type_filters",
+                "progressive_type_disclosure",
                 "all_view_full_reset",
                 "sequential_with_gaps",
                 "anchors_on_visible_categories",
@@ -36,15 +37,62 @@ class PromptKitFilteringAccessTests(unittest.TestCase):
         self.assertIn("Favorites then All", expected["all_view_full_reset"])
         self.assertIn("complete visible prompt-card stream", expected["sequential_with_gaps"])
         self.assertIn("at most once", expected["unique_categories"])
+        self.assertIn("compact instructional hint", expected["progressive_type_disclosure"])
+        self.assertIn("only subcategories available in that scope", expected["progressive_type_disclosure"])
 
     def test_category_and_type_controls_are_initialized(self) -> None:
         js = JS.read_text(encoding="utf-8")
         self.assertIn("All Categories", js)
-        self.assertIn("All Types", js)
+        self.assertIn("All Subcategories", js)
         self.assertIn("renderSections();", js)
         self.assertIn("renderTypes();", js)
         self.assertIn("aria-label','Prompt categories", js)
-        self.assertIn("aria-label','Prompt types", js)
+        self.assertIn("aria-label','Prompt subcategories", js)
+
+    def test_type_subcategories_are_progressively_scoped_by_category(self) -> None:
+        js = JS.read_text(encoding="utf-8")
+        self.assertIn("Select a category above to browse subcategories.", js)
+        self.assertIn("Subcategories · ", js)
+        self.assertIn("All Subcategories", js)
+        self.assertIn("activeSection=sn==='__all__'?null:sn;activeType=null", js)
+        self.assertIn("renderTypes();render();return", js)
+
+        start = js.index("function typeFilterScopePrompts")
+        end = js.index("function renderSections", start)
+        helper = js[start:end]
+        script = """
+var SECTIONS=[
+ {name:'Foundation',types:['SETUP','HARVEST']},
+ {name:'Build & Repair',types:['BUILD','REPAIR','BUILD + ARTIFACT']}
+];
+function isFavoritePrompt(id){return id==='P04'}
+""" + helper + r"""
+var prompts=[
+ {id:'P01',category:'standard',type:'SETUP'},
+ {id:'P02',category:'standard',type:'BUILD'},
+ {id:'P03',category:'gnhf',type:'REPAIR'},
+ {id:'P04',category:'standard',type:'BUILD + ARTIFACT'},
+ {id:'P05',category:'standard',type:'HARVEST'}
+];
+var result={
+  all:typeFilterScopePrompts(prompts,'all',null).map(function(p){return p.id}),
+  build:typeFilterScopePrompts(prompts,'all','Build & Repair').map(function(p){return p.id}),
+  standardBuild:typeFilterScopePrompts(prompts,'standard','Build & Repair').map(function(p){return p.id}),
+  favorites:typeFilterScopePrompts(prompts,'all','__favorites__').map(function(p){return p.id})
+};
+process.stdout.write(JSON.stringify(result));
+"""
+        completed = subprocess.run(
+            ["node", "-e", script],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        result = json.loads(completed.stdout)
+        self.assertEqual(result["all"], [])
+        self.assertEqual(result["build"], ["P02", "P03", "P04"])
+        self.assertEqual(result["standardBuild"], ["P02", "P04"])
+        self.assertEqual(result["favorites"], ["P04"])
 
     def test_all_view_is_an_atomic_reset_after_favorites(self) -> None:
         js = JS.read_text(encoding="utf-8")
