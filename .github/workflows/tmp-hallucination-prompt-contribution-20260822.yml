@@ -1,6 +1,12 @@
 name: Temporary Hallucination Prompt Contribution
 
 on:
+  push:
+    branches:
+      - feat/prompt-kit-hallucination-grounding-20260822
+    paths:
+      - '.github/workflows/tmp-hallucination-prompt-contribution-20260822.yml'
+      - 'scripts/tmp_hallucination_prompt_contribution_20260822.py'
   pull_request:
     branches:
       - main
@@ -14,7 +20,7 @@ concurrency:
 
 jobs:
   contribute:
-    if: github.head_ref == 'feat/prompt-kit-hallucination-grounding-20260822'
+    if: github.event_name == 'push' || github.head_ref == 'feat/prompt-kit-hallucination-grounding-20260822'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
