@@ -91,6 +91,7 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
         for phrase in (
             "PARALLEL SUB-AGENT EXECUTION CONTRACT",
             "If a P04/P05 factoring or launch map exists",
+            "sufficient current parallel worker capacity exists to run at least two lanes concurrently",
             "you MUST dispatch those lanes concurrently",
             "Parallelism is mandatory in that condition",
             "one writer per mutation surface",
@@ -120,7 +121,13 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
         self.assertIn("report that capability ceiling", content)
         self.assertIn("shuttle context", content)
         self.assertIn("act as the parallel-work scheduler", content)
-        self.assertIn("when a supported sub-agent mechanism and at least two meaningful independent lanes exist", prompt["proofGate"])
+        self.assertIn("fewer than two concurrent worker slots are currently available", content)
+        self.assertIn("`parallel capacity unavailable`", content)
+        self.assertIn("proceed on the best safe serial lane", content)
+        self.assertIn(
+            "when a supported sub-agent mechanism, sufficient current parallel worker capacity, and at least two meaningful independent lanes exist",
+            prompt["proofGate"],
+        )
 
     def test_effective_prompts_keep_shared_actionability_policy(self) -> None:
         policy = build_prompt_kit_registry.load_actionability_policy()
