@@ -88,8 +88,8 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             "FILTER_HIDE",
             "FILTER_SHOW",
             "FILTER_TOGGLE",
-            "OPEN_PROMPT(P95)",
-            "OPEN_PROMPT(P14)",
+            "COPY_PROMPT(P95)",
+            "COPY_PROMPT(P14)",
             "VIEW_DOCTRINE",
         ):
             self.assertIn(path, proof["success_paths"])
