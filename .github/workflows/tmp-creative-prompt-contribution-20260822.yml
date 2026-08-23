@@ -44,8 +44,12 @@ jobs:
         run: |
           set -euo pipefail
           python scripts/prompt_registry_ops.py inspect
-          python scripts/prompt_registry_ops.py add --input /tmp/creative-plan.json --registry spec-architecture-prompts
-          python scripts/prompt_registry_ops.py add --input /tmp/creative-harness.json --registry spec-architecture-prompts
+          if grep -Fq '"name": "Creative Direction & Production Planner"' registry/prompts/spec-architecture-prompts.v1.json; then
+            echo 'Creative prompts already present; helper mutation not repeated.'
+          else
+            python scripts/prompt_registry_ops.py add --input /tmp/creative-plan.json --registry spec-architecture-prompts
+            python scripts/prompt_registry_ops.py add --input /tmp/creative-harness.json --registry spec-architecture-prompts
+          fi
       - name: Focused proof and parity
         shell: bash
         run: |
@@ -64,5 +68,9 @@ jobs:
           set -euo pipefail
           git add registry/prompts/spec-architecture-prompts.v1.json tests/test_spec_architecture_prompt_registry.py web/prompt-kit/index.html
           git diff --cached --check
+          if git diff --cached --quiet; then
+            echo 'No durable contribution changes remain to commit.'
+            exit 0
+          fi
           git commit -m 'feat(prompt-kit): add creative workflow prompts and harden P79'
           git push origin HEAD:feat/prompt-kit-creative-workflows-p79-20260822
