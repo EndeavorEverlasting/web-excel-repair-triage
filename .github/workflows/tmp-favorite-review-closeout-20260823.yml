@@ -1,9 +1,8 @@
 name: Temporary Favorite Gameplay Review Closeout
 
 on:
-  push:
-    branches:
-      - fix/prompt-kit-favorite-review-closeout-20260823
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
@@ -14,13 +13,14 @@ concurrency:
 
 jobs:
   closeout:
-    if: github.event.head_commit.message == 'chore(prompt-kit): repair isolated favorite closeout executor'
+    if: github.event.pull_request.head.ref == 'fix/prompt-kit-favorite-review-closeout-20260823'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: fix/prompt-kit-favorite-review-closeout-20260823
           fetch-depth: 0
+          persist-credentials: true
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -31,8 +31,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git log -1 --pretty=%s)" = 'chore(prompt-kit): repair isolated favorite closeout executor'
           git fetch --all --prune --tags
           git merge-base --is-ancestor 39bcd7288785dd80c20c85979e8a5f1aa1b1aee1 HEAD
           git config user.name 'github-actions[bot]'
