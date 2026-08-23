@@ -224,6 +224,7 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
             "DEFINE THE TERMINAL USER VALUE",
             "PRESERVE ORTHOGONAL STATE",
             "COLLAPSE REDUNDANT INTERMEDIATE STEPS",
+            "REPAIR THE DEFAULT INFORMATION ARCHITECTURE",
             "UNIFY ENTRYPOINTS ON SEMANTIC ACTIONS",
             "INSTRUMENT SEMANTIC USAGE, NOT NOISE",
             "DERIVE THE DASHBOARD FROM EVENTS",
@@ -234,6 +235,19 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
             "duplicate event dispatch does not double-count one completion",
         ):
             self.assertIn(phrase, content)
+        for default_view_phrase in (
+            "initial viewport is consumed before primary content",
+            "Persistent control density is friction",
+            "progressive disclosure -> subordinate choices",
+            "A Hide/Show toggle reduces clutter on demand but does not fix a noisy default information architecture",
+            "preserve search, keyboard and mobile use, Favorites, and active-state semantics",
+        ):
+            self.assertIn(default_view_phrase, content)
+        self.assertIn(
+            "default-view repairs reduce measured first-viewport consumption before primary content instead of only hiding controls behind a toggle",
+            prompt["proofGate"],
+        )
+        self.assertIn("persistent filter/control chrome", prompt["useWhen"])
         self.assertNotEqual(prompt["id"], "P82")
         self.assertNotEqual(prompt["id"], "P94")
         self.assertNotEqual(prompt["id"], "P95")

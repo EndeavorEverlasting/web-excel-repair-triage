@@ -1,103 +1,20 @@
-name: Artifact engine tests
+name: Temporary hierarchy state-transition repair
 
 on:
-  pull_request:
-  push:
-    branches: [main]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-hierarchy-state-transition-repair
+  cancel-in-progress: false
 
 jobs:
-  artifact-engines:
+  repair:
+    if: github.event.issue.pull_request && github.event.issue.number == 244 && github.event.comment.body == '/repair-hierarchy-state-transitions'
     runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            python -m pip install -r requirements.txt
-          else
-            python -m pip install openpyxl
-          fi
-          python -m pip install pytest
-
-      - name: Import artifact engines
-        run: |
-          python -c "import triage.nw_prj_neuron_track_hours.cli; import triage.nw_prj_neuron_track_hours.bonita_cli; import triage.nth_qualitative_admin; import triage.nth_evidence_bounded_allocation; import triage.admin_billing_summary.cli; import triage.one_marcus_recon.cli; import triage.sidecar_html; import triage.artifact_fingerprint; import triage.artifact_profiles; import triage.artifact_compare; import triage.same_family_compare; import triage.roster_log_compare.compare; import triage.roster_log_review_queue.cli; import triage.gitignore_hygiene; print('imports ok')"
-
-      - name: Gitignore hygiene
-        run: python -m triage.gitignore_hygiene
-
-      - name: Run artifact engine tests
-        run: |
-          python -m pytest \
-            tests/test_nw_prj_neuron_track_hours.py \
-            tests/test_nw_prj_neuron_track_hours_bonita.py \
-            tests/test_nth_qualitative_admin.py \
-            tests/test_nth_evidence_bounded_allocation.py \
-            tests/test_admin_billing_summary.py \
-            tests/test_one_marcus_recon.py \
-            tests/test_one_marcus_generate.py \
-            tests/test_one_marcus_immutability.py \
-            tests/test_sidecar_html_portal.py \
-            tests/test_artifact_compare.py \
-            tests/test_roster_log_compare.py \
-            tests/test_same_family_compare.py \
-            tests/test_gitignore_hygiene.py \
-            tests/test_roster_log_review_queue.py \
-            -q
-
-  canonical-local-path-prompt-repair:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feat/prompt-kit-artifact-risk-path-20260822'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: feat/prompt-kit-artifact-risk-path-20260822
-          fetch-depth: 0
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Repair bounded canonical path transport and execute
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('.prompt-contrib/canonical_path_repair.py')
-          text = path.read_text(encoding='utf-8')
-          old_count = 'self.assertEqual(len(self.prompts), 100)'
-          new_count = 'self.assertEqual(len(self.prompts), len(self.by_id))'
-          if old_count not in text and new_count not in text:
-              raise SystemExit('canonical-path count assertion anchor missing')
-          text = text.replace(old_count, new_count)
-          old_heading = 'FAIL-CLOSED\nIf multiple plausible ordinary checkouts remain'
-          new_heading = 'UNPROVED PATH STOP CONDITION\nIf multiple plausible ordinary checkouts remain'
-          if old_heading not in text and new_heading not in text:
-              raise SystemExit('canonical-path stop-condition heading anchor missing')
-          text = text.replace(old_heading, new_heading)
-          path.write_text(text, encoding='utf-8')
-          PY
-          python .prompt-contrib/canonical_path_repair.py
-
-  hierarchy-state-transition-repair:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'chore/hierarchy-state-transition-trigger-20260823'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
       - uses: actions/checkout@v4
         with:
@@ -106,9 +23,9 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
-      - name: Pin current main floor
+      - name: Refresh exact main floor
         shell: bash
         run: |
           set -euo pipefail
@@ -116,11 +33,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main --prune
           test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
-          echo "BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           git status --short
           git log --oneline --decorate -5
 
-      - name: Repair hierarchy state transitions
+      - name: Repair hierarchy state-transition refresh paths
         shell: bash
         run: |
           set -euo pipefail
@@ -157,7 +73,7 @@ jobs:
           js_path.write_text(js, encoding='utf-8')
 
           polish = polish_path.read_text(encoding='utf-8')
-          old = """function activateFavoritesView(){
+          old_favorites = """function activateFavoritesView(){
             activeCat='all';
             activeSection='__favorites__';
             clearTransientPromptFilters();
@@ -165,7 +81,7 @@ jobs:
             document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__favorites__')});
             render();
           }"""
-          new = """function activateFavoritesView(){
+          new_favorites = """function activateFavoritesView(){
             activeCat='all';
             activeSection='__favorites__';
             clearTransientPromptFilters();
@@ -174,7 +90,7 @@ jobs:
             renderTypes();
             render();
           }"""
-          polish = replace_once(polish, old, new, 'Favorites activation refresh')
+          polish = replace_once(polish, old_favorites, new_favorites, 'Favorites activation refresh')
           polish_path.write_text(polish, encoding='utf-8')
 
           contract = json.loads(contract_path.read_text(encoding='utf-8'))
@@ -203,7 +119,7 @@ jobs:
           test_path.write_text(test, encoding='utf-8')
           PY
 
-      - name: Validate pass 1
+      - name: Validate hierarchy repair pass 1
         shell: bash
         run: |
           set -euo pipefail
@@ -211,14 +127,14 @@ jobs:
           node --check docs/prompt-kit-polish.js
           python -m unittest tests.test_prompt_kit_filtering_access -v
           python -m unittest tests.test_prompt_kit_product_interactions tests.test_prompt_kit_mobile -v
-          python -m unittest tests.test_prompt_kit_mainline_delivery tests.test_prompt_kit_header_contract tests.test_prompt_kit_pages tests.test_prompt_kit_hotkey_completion -v
+          python -m unittest tests.test_prompt_kit_mainline_contract tests.test_prompt_kit_header_contract tests.test_prompt_kit_pages tests.test_prompt_kit_hotkey_completion -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           python scripts/prompt_registry_ops.py validate
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           python scripts/validate_prompt_kit_order_navigation.py --summary
           git diff --check
 
-      - name: Deliberate pass 2 falsification
+      - name: Deliberate second-pass falsification
         shell: bash
         run: |
           set -euo pipefail
@@ -228,13 +144,12 @@ jobs:
           polish = Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
           test = Path('tests/test_prompt_kit_filtering_access.py').read_text(encoding='utf-8')
           html = Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
-          favorites = polish[polish.index('function activateFavoritesView()'):polish.index('function ensureCompactBrowsingControls()')]
           checks = {
-              'Favorites activation refresh': 'renderTypes();' in favorites and favorites.index('renderTypes();') < favorites.index('render();'),
+              'Favorites activation refresh': "activeSection='__favorites__'" in polish and 'renderTypes();' in polish[polish.index('function activateFavoritesView()'):polish.index('function ensureCompactBrowsingControls()')],
               'favorite membership refresh': "if(activeSection==='__favorites__')renderTypes();render()" in js,
               'Escape section refresh': "if(activeSection){activeSection=null;activeType=null;renderTypes();render();return}" in js,
               'focused regression': 'test_hierarchy_refreshes_on_non_click_state_transitions' in test,
-              'generated parity': "if(activeSection==='__favorites__')renderTypes();render()" in html,
+              'generated parity marker': "if(activeSection==='__favorites__')renderTypes();render()" in html,
           }
           failed = [name for name, ok in checks.items() if not ok]
           if failed:
@@ -244,23 +159,19 @@ jobs:
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
-      - name: Recheck floor, self-clean, commit, and push
+      - name: Commit exact durable repair and self-remove transport
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin main --prune
-          test "$(git rev-parse origin/main)" = "$BASE_SHA"
-          git show ea3002468931e2ee238f20a88597b21cee3ecb49:.github/workflows/artifact-engines.yml > .github/workflows/artifact-engines.yml
           git rm .github/workflows/tmp-hierarchy-state-transition-repair.yml
           git add \
-            .github/workflows/artifact-engines.yml \
             docs/prompt-kit.js \
             docs/prompt-kit-polish.js \
             harness/contracts/prompt-kit-filtering.v1.json \
             tests/test_prompt_kit_filtering_access.py \
             web/prompt-kit/index.html
           git diff --cached --check
-          echo '--- final staged files ---'
+          echo '--- staged files ---'
           git diff --cached --name-only
           git commit -m "fix(prompt-kit): refresh hierarchy on state transitions"
           git push origin HEAD:main

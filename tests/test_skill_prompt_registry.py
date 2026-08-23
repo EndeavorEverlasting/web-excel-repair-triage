@@ -95,6 +95,12 @@ class SkillPromptRegistryTests(unittest.TestCase):
             "no stopping at plan/status while safe action remains",
         ):
             self.assertIn(phrase, content)
+        for routing_phrase in (
+            "cluttered, noisy, or space-heavy UI keeps getting reported",
+            "route the specialized UX repair to P99 and continue the critical path here",
+            "do not absorb P99's viewport/density/progressive-disclosure checklist into P13",
+        ):
+            self.assertIn(routing_phrase, content)
 
         self.assertEqual(build_prompt_kit_registry.build_prompt_kit.SYNONYMS["urgency"], "P13")
         self.assertEqual(build_prompt_kit_registry.build_prompt_kit.SYNONYMS["sub-part agent"], "P13")
