@@ -1,0 +1,2 @@
+Execution-only trigger for the hierarchy state-transition repair carrier.
+This branch must not merge; the carrier writes validated product state directly to main.
