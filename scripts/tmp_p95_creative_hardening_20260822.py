@@ -44,14 +44,14 @@ def main() -> int:
     )
     p95["expectedOutput"] = append_once(
         p95["expectedOutput"],
-        " When useful, include a small evidence-backed set of materially different candidate concepts and the local adaptations required before prototype evidence selects one.",
+        " When useful, include materially different candidate concepts and the local adaptations required before prototype evidence selects one.",
     )
     p95["nextStep"] = (
-        "Choose the highest-risk user journey; when design uncertainty is material, run a bounded inspiration scan of relevant external repositories or structurally analogous systems, synthesize 2-4 materially different candidate mechanisms, then build the thinnest executable vertical prototype(s) through the strongest competing seams using real domain logic and stubbed external boundaries only. Inspect success/error traces and converge only after evidence selects the design."
+        "Choose the highest-risk user journey; when design uncertainty is material, scan a bounded set of relevant external repositories or structurally analogous systems, synthesize 2-4 materially different candidate mechanisms, then prototype the strongest competing seams with real domain logic. Inspect success/error traces and converge only after evidence selects the design."
     )
     p95["proofGate"] = append_once(
         p95["proofGate"],
-        " When external inspiration is used, transferred mechanisms are tied to inspected source/tests/config, local adaptation is explicit, and P95 does not claim the exhaustive ecosystem research owned by P97.",
+        " External inspiration must be tied to inspected source/tests/config and locally adapted; exhaustive ecosystem research remains P97's job.",
     )
 
     content = p95["copyContent"]
@@ -59,21 +59,14 @@ def main() -> int:
     section = """
 
 1A. WIDEN THE DESIGN SPACE BEFORE CONVERGING
-When material design uncertainty remains, do not settle on the first familiar architecture. Inspect a small set of relevant external repositories or structurally analogous systems when accessible; read source, tests, or configuration around the use case, because README claims alone are not proof. Extract transferable mechanisms — state ownership, interfaces, workflows, extension seams, failure handling, interaction patterns — rather than foreign file layouts, and note the reference identity plus local adaptation needed.
+When design uncertainty is material, do not settle on the first familiar architecture. Inspect a small bounded set of relevant external repositories or structurally analogous systems when accessible. Prefer source/tests/config around the use case over README claims. Extract transferable mechanisms — ownership, interfaces, workflows, extension seams, failure handling, interaction patterns — not foreign file layouts.
 
-Synthesize 2-4 materially different candidate designs: keep a simple local baseline and, when useful, add a reference-inspired and a non-obvious cross-domain or compositional option. Creativity is disciplined recombination for the user's outcome, not novelty for its own sake. Test the strongest candidates against the same acceptance criteria. If ecosystem precedent becomes the main research task, route to P97 Open-Source Prior-Art & Gap Analyst. Verify license, dependency, security, and maintenance implications before direct code reuse.
+Synthesize 2-4 materially different candidate designs: a simple local baseline plus, when useful, a reference-inspired and a cross-domain/compositional option. Creativity is disciplined recombination for the user's outcome, not novelty for its own sake. Compare candidates under the same acceptance criteria. Route broad ecosystem research to P97 Open-Source Prior-Art & Gap Analyst; verify license/security/dependency implications before direct reuse.
 """
     if "1A. WIDEN THE DESIGN SPACE BEFORE CONVERGING" not in content:
         if content.count(anchor) != 1:
             raise RuntimeError(f"P95 section anchor mismatch: {content.count(anchor)}")
         content = content.replace(anchor, section + anchor, 1)
-
-    critique_anchor = "- Would one likely future change touch too many unrelated modules?"
-    critique_add = "- Did we converge on the first familiar pattern before testing a stronger reference-inspired or cross-domain alternative?"
-    if critique_add not in content:
-        if content.count(critique_anchor) != 1:
-            raise RuntimeError("P95 critique anchor mismatch")
-        content = content.replace(critique_anchor, critique_anchor + "\n" + critique_add, 1)
 
     p95["copyContent"] = content
     for keyword in (
@@ -90,7 +83,7 @@ Synthesize 2-4 materially different candidate designs: keep a simple local basel
     after = len(content)
     if after <= before:
         raise RuntimeError("P95 did not materially strengthen")
-    if after - before > 950:
+    if after - before > 850:
         raise RuntimeError(f"P95 grew too much: before={before} after={after}")
     if after > 9300:
         raise RuntimeError(f"P95 raw prompt exceeds anti-bloat ceiling: {after}")
