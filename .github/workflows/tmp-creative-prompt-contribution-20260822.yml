@@ -1,0 +1,65 @@
+name: Temporary Creative Prompt Contribution Executor
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-creative-workflows-p79-20260822
+    paths:
+      - scripts/tmp_prepare_creative_prompts_20260822.py
+      - .github/workflows/tmp-creative-prompt-contribution-20260822.yml
+
+concurrency:
+  group: creative-prompt-contribution-20260822
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  contribute-and-prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-creative-workflows-p79-20260822
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Refresh exact floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --all --prune --tags
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git merge --no-edit origin/main
+      - name: Strengthen owners and prepare semantic drafts
+        run: python scripts/tmp_prepare_creative_prompts_20260822.py
+      - name: Add genuinely missing prompts through canonical helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py inspect
+          python scripts/prompt_registry_ops.py add --input /tmp/creative-plan.json --registry spec-architecture-prompts
+          python scripts/prompt_registry_ops.py add --input /tmp/creative-harness.json --registry spec-architecture-prompts
+      - name: Focused proof and parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile scripts/prompt_registry_ops.py tests/test_spec_architecture_prompt_registry.py
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/audit_prompt_order_navigation.py --summary
+          git diff --check
+      - name: Commit durable contribution set
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add registry/prompts/spec-architecture-prompts.v1.json tests/test_spec_architecture_prompt_registry.py web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'feat(prompt-kit): add creative workflow prompts and harden P79'
+          git push origin HEAD:feat/prompt-kit-creative-workflows-p79-20260822
