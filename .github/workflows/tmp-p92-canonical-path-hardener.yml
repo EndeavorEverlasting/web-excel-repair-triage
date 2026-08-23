@@ -69,6 +69,7 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
           import build_prompt_kit
           from scripts import build_prompt_kit_registry
@@ -128,7 +129,8 @@ jobs:
               if literal in p92['copyContent'] or literal in p01['copyContent']:
                   raise SystemExit(f'operator-specific path leaked into canonical prompt: {literal}')
 
-          receipt = json.loads(Path('$RUNNER_TEMP/p92-registry-validation.json').read_text(encoding='utf-8'))
+          receipt_path = Path(os.environ['RUNNER_TEMP']) / 'p92-registry-validation.json'
+          receipt = json.loads(receipt_path.read_text(encoding='utf-8'))
           if receipt.get('status') != 'valid' or receipt.get('site_parity') is not True:
               raise SystemExit(f'bad registry validation receipt: {receipt!r}')
           if receipt.get('prompt_count') != len(full):
