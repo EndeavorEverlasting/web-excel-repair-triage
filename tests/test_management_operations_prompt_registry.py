@@ -88,6 +88,17 @@ class ManagementOperationsPromptRegistryTests(unittest.TestCase):
         self.assertIn("DRIVE EVIDENCE / GLOSSARY DISCOVERY", content)
         self.assertIn("dated Drive evidence folder", content)
         self.assertIn("understand what it does not prove", content)
+        self.assertIn("AUDITABLE ACTIVITY ALIASES / OUTWARD LANGUAGE", content)
+        self.assertIn("FUN-owned qualitative workstream language catalog", content)
+        self.assertIn("one canonical workstream code", content)
+        self.assertIn("deterministic evidence-equivalent presentation variants", content)
+        self.assertIn("KPI meaning", content)
+        self.assertIn("random selection is forbidden", content)
+        self.assertIn("`dated_person_task` evidence scope", content)
+        self.assertIn("FUN remains the vocabulary and evidence owner", content)
+        self.assertIn("Triage may implement rendering", content)
+        for keyword in ("activity aliases", "alias activities", "qualitative workstream language", "presentation variants"):
+            self.assertIn(keyword, prompt["keywords"])
 
     def test_message_evidence_harvesters_are_bounded_and_handoff_to_p74(self) -> None:
         expected = {
