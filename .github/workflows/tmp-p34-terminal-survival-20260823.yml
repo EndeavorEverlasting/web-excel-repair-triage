@@ -1,11 +1,12 @@
 name: Temporary P34 Terminal Survival Hardening
 
 on:
-  push:
+  pull_request:
     branches:
-      - fix/p34-terminal-evidence-survival-20260823
+      - main
     paths:
       - .github/workflows/tmp-p34-terminal-survival-20260823.yml
+      - scripts/tmp_harden_p34_terminal_survival_20260823.py
 
 concurrency:
   group: p34-terminal-survival-20260823
