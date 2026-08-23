@@ -1,7 +1,7 @@
 name: Prompt Kit hierarchical filter mainline bridge
 
 on:
-  push:
+  pull_request:
     branches: [main]
 
 permissions:
@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   repair:
-    if: github.actor != 'github-actions[bot]'
+    if: github.event.pull_request.head.ref == 'feat/prompt-kit-hierarchical-filters-20260823'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,8 +34,6 @@ jobs:
           path = Path('.prompt-contrib/hierarchical_filter_patch.py')
           text = path.read_text(encoding='utf-8')
 
-          # Carry forward the pass-1 regression repair: the progressive control is
-          # intentionally named All Subcategories, not the obsolete All Types.
           anchor = 'test = test.replace("self.assertIn(\\"aria-label\x27,\x27Prompt types\\", js)", "self.assertIn(\\"aria-label\x27,\x27Prompt subcategories\\", js)")'
           label_patch = 'test = test.replace(\x27        self.assertIn("All Types", js)\\n\x27, \x27        self.assertIn("All Subcategories", js)\\n\x27)'
           if label_patch not in text:
@@ -43,8 +41,6 @@ jobs:
                   raise SystemExit('hierarchical filter label-repair anchor missing')
               text = text.replace(anchor, label_patch + '\n' + anchor, 1)
 
-          # The replay runs on main. The bridge is its own temporary transport and
-          # the fetched executor is runtime-only, so both disappear before commit.
           text = text.replace(
               'WORKFLOW = ROOT / ".github/workflows/prompt-kit-hierarchical-filter-repair.yml"',
               'WORKFLOW = ROOT / ".github/workflows/prompt-kit-hierarchical-filter-mainline-bridge.yml"',
