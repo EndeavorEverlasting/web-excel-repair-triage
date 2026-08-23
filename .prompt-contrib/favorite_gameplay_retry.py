@@ -16,11 +16,9 @@ RUNTIME ACCEPTANCE WHEN THE USER ASKED FOR BEHAVIOR
 new = '''runtime_section = """
 RUNTIME ACCEPTANCE WHEN THE USER ASKED FOR BEHAVIOR
 - Runtime requests are incomplete as prompt/contract-only work.
-- Prove: favorite shortcut -> canonical copy -> successful clipboard write -> normal success toast -> exactly one semantic usage event -> live dashboard refresh.
-- Count successful semantic actions only; never focus, hover, panel/detail open, or failed copy.
-- Keep telemetry local/privacy-bounded unless shared ownership is explicitly authorized.
-- Show progress/levels, most-used prompts, preference signals, and favorite loadout. Badges remain future scope unless requested.
-- Regression proof must fail if shortcut copy/toast, single-count semantics, generated parity, or dashboard refresh breaks.
+- Prove favorite shortcut -> copy -> successful clipboard write -> normal success toast -> exactly one semantic usage event -> live dashboard refresh.
+- Count successful actions only; keep telemetry local/private unless sharing is authorized.
+- Dashboard shows levels, most-used prompts, preferences, and favorite loadout; badges are a separate future capability.
 """.strip()'''
 if old not in text:
     raise SystemExit('long P99 runtime section anchor missing')
