@@ -5,7 +5,10 @@ import argparse
 import json
 from pathlib import Path
 
-from scripts import build_prompt_kit_registry
+try:
+    from scripts import build_prompt_kit_registry
+except ModuleNotFoundError:  # direct `python scripts/...py` invocation
+    import build_prompt_kit_registry  # type: ignore[no-redef]
 
 ROOT = Path(__file__).resolve().parents[1]
 GUIDED = ROOT / "docs" / "prompt-kit-guided-recommendations.js"
