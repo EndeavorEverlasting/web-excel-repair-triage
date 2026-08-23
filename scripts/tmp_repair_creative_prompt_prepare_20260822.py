@@ -10,6 +10,7 @@ TEST = ROOT / "tests" / "test_spec_architecture_prompt_registry.py"
 
 payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
 by_id = {prompt["id"]: prompt for prompt in payload["prompts"]}
+
 p79 = by_id["P79"]
 p79["copyContent"] = """ADD OR STRENGTHEN ONE OR MANY PROMPT KIT PROMPTS FROM THE RELEVANT CHAT CONTEXT. THE CONTEXT IMMEDIATELY ABOVE THIS INSTRUCTION IS THE ANCHOR, NOT THE CONTEXT BOUNDARY. EXECUTE THE REPO WORK; DO NOT ASK ME TO RESTATE CONTEXT THAT IS ALREADY ACCESSIBLE.
 
@@ -59,6 +60,19 @@ Do not guess identities, bypass helper parity, weaken validators, fabricate cont
 
 DELIVER
 Report ledger, context-authority decisions, strengthened IDs, helper receipts, focused proof, prompt count/parity, commit/PR/merge, resulting main SHA, and exact blocker/next action."""
+
+p82 = by_id["P82"]
+start = "\n\nCREATIVE PROTOTYPE MODE"
+end = "\n\n4. PRESERVE THE LAST KNOWN-GOOD STATE"
+if start in p82["copyContent"]:
+    before, rest = p82["copyContent"].split(start, 1)
+    _, after = rest.split(end, 1)
+    concise_creative = """
+
+CREATIVE PROTOTYPE MODE
+For creative artifacts, keep the user's brief, references, accepted/rejected examples, and explicit constraints authoritative; generated concepts and rationale are revisable working context. When uncertainty warrants divergence, make 2-4 materially distinct variants rather than cosmetic swaps. Critique every candidate against the same brief and record KEEP / COMBINE / REVISE / DISCARD. Use available creation tools directly when safe; ask the user only for a focused taste fork after concrete candidates exist. Final creative proof is fit-to-brief plus deliverable integrity; automated checks do not equal human acceptance."""
+    p82["copyContent"] = before + concise_creative + end + after
+
 REGISTRY.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 text = TEST.read_text(encoding="utf-8")
@@ -66,8 +80,14 @@ text = text.replace(
     'payload = json.loads(REGISTRY.read_text(encoding="utf-8"))',
     'payload = json.loads(RAW_REGISTRY.read_text(encoding="utf-8"))',
 )
+text = text.replace(
+    'self.assertIn("CREATIVE PROTOTYPE", plan["copyContent"])',
+    'self.assertIn("HAND OFF TO CREATIVE PROTOTYPING", plan["copyContent"])',
+)
 TEST.write_text(text, encoding="utf-8")
 
 if len(p79["copyContent"]) >= 5000:
-    raise SystemExit(f"P79 raw copyContent still exceeds focused source budget: {len(p79['copyContent'])}")
-print(f"repaired P79 source budget and focused path: {len(p79['copyContent'])} chars")
+    raise SystemExit(f"P79 raw copyContent exceeds focused source budget: {len(p79['copyContent'])}")
+if len(p82["copyContent"]) >= 8000:
+    raise SystemExit(f"P82 raw copyContent exceeds source budget: {len(p82['copyContent'])}")
+print(f"repaired source budgets: P79={len(p79['copyContent'])}, P82={len(p82['copyContent'])}")
