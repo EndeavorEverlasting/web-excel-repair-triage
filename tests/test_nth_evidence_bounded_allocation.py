@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 
 import pytest
 
@@ -352,6 +352,38 @@ def test_closed_allocation_set_rejects_duplicate_staff_date_records():
         validate_closed_allocation_set((first, second))
 
 
+def test_datetime_values_normalize_to_calendar_day_for_duplicate_detection():
+    morning = _component(
+        "MORNING",
+        hours=8.0,
+        work_date=datetime(2026, 1, 15, 8, 0),
+    )
+    evening = _component(
+        "EVENING",
+        hours=8.0,
+        work_date=datetime(2026, 1, 15, 17, 0),
+    )
+    first = ClosedAttendanceAllocation(
+        staff_key="synthetic-tech",
+        work_date=datetime(2026, 1, 15, 8, 0),
+        attendance_hours=8.0,
+        attendance_evidence_refs=("ROSTER-A",),
+        components=(morning,),
+    )
+    second = ClosedAttendanceAllocation(
+        staff_key="synthetic-tech",
+        work_date=datetime(2026, 1, 15, 17, 0),
+        attendance_hours=8.0,
+        attendance_evidence_refs=("ROSTER-B",),
+        components=(evening,),
+    )
+
+    assert first.staff_date_key == ("synthetic-tech", "2026-01-15")
+    assert first.audit_record()["work_date"] == "2026-01-15"
+    with pytest.raises(ValueError, match="duplicate closed allocation for staff/date"):
+        validate_closed_allocation_set((first, second))
+
+
 def test_closed_allocation_set_rejects_duplicate_allocation_id_across_days():
     first = ClosedAttendanceAllocation(
         staff_key="synthetic-tech",
@@ -371,6 +403,28 @@ def test_closed_allocation_set_rejects_duplicate_allocation_id_across_days():
         attendance_hours=8.0,
         attendance_evidence_refs=("ROSTER-B",),
         components=(second_component,),
+    )
+
+    with pytest.raises(ValueError, match="duplicate allocation_id across closed records"):
+        validate_closed_allocation_set((first, second))
+
+
+def test_cross_day_duplicate_allocation_id_normalizes_surrounding_whitespace():
+    first = ClosedAttendanceAllocation(
+        staff_key="synthetic-tech",
+        work_date=date(2026, 1, 15),
+        attendance_hours=8.0,
+        attendance_evidence_refs=("ROSTER-A",),
+        components=(_component("TASK-1", hours=8.0),),
+    )
+    second = ClosedAttendanceAllocation(
+        staff_key="synthetic-tech",
+        work_date=date(2026, 1, 16),
+        attendance_hours=8.0,
+        attendance_evidence_refs=("ROSTER-B",),
+        components=(
+            _component(" TASK-1 ", hours=8.0, work_date=date(2026, 1, 16)),
+        ),
     )
 
     with pytest.raises(ValueError, match="duplicate allocation_id across closed records"):
