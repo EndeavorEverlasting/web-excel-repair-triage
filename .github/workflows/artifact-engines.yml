@@ -89,7 +89,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python scripts/tmp_teach_framework_contribution_20260822.py
+          python scripts/tmp_teach_framework_retry_20260822.py
           cat .teach-bootstrap-receipt.tmp.json >> "$GITHUB_STEP_SUMMARY"
 
       - name: Validate contribution and generated Prompt Kit
@@ -116,6 +116,7 @@ jobs:
           rm -f .teach-bootstrap-receipt.tmp.json .teach-language-audit.tmp.json
           git rm -f scripts/tmp_teach_workspace_contribution_20260822.py
           git rm -f scripts/tmp_teach_framework_contribution_20260822.py
+          git rm -f scripts/tmp_teach_framework_retry_20260822.py
           git add registry/prompts/tutorial-discovery-prompts.v1.json tests/test_prompt_registry_expansion_regression_design_teach.py tests/test_prompt_kit_discovery.py web/prompt-kit/index.html .github/workflows/artifact-engines.yml .github/workflows/prompt-kit-web.yml
           git diff --cached --check
           echo "prompt_id=$receipt_id"
