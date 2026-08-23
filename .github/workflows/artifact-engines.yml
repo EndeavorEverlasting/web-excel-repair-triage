@@ -200,7 +200,7 @@ jobs:
               + '        self.assertIn("Do not end silently after the last tool call", content)\n'
               + '        self.assertIn("Tool calls, CI output, merge receipts, Drive writes", content)\n'
               + '        self.assertIn("Summarize by lane: FUN, Triage, Drive, Prompt Kit", content)\n'
-              + '        self.assertIn("the final human-readable closeout has been emitted", prompt["proofGate"])\n'
+              + '        self.assertIn("that final human-readable closeout has been emitted", prompt["proofGate"])\n'
               + '        self.assertIn("emit the mandatory operator closeout before stopping", prompt["nextStep"])\n'
               + '        self.assertEqual(content.count("MANDATORY USER-FACING CLOSEOUT"), 1)\n'
           )
