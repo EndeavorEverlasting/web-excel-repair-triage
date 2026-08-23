@@ -4,7 +4,17 @@ This repository tracks `.githooks/pre-commit` and `.githooks/pre-push`, but Git 
 
 ## Activate once per editable checkout
 
+### Windows
+
 From the repository root:
+
+```bat
+Install-Local-Hooks.cmd
+```
+
+The wrapper resolves the repository-owned Python installer beside itself, prefers the Windows `py -3` launcher when available, falls back to `python`, and propagates the installer exit code.
+
+### Any platform with Python 3
 
 ```bash
 python scripts/install_local_hooks.py
@@ -18,6 +28,14 @@ Successful output includes:
 ```
 
 ## Verify without changing configuration
+
+Windows:
+
+```bat
+Install-Local-Hooks.cmd --check
+```
+
+Any platform with Python 3:
 
 ```bash
 python scripts/install_local_hooks.py --check
@@ -40,10 +58,12 @@ If the checkout already has another local `core.hooksPath`, the installer fails 
 python scripts/install_local_hooks.py --replace
 ```
 
+On Windows the equivalent is `Install-Local-Hooks.cmd --replace`.
+
 `--replace` is an explicit operator action. Automation should not use it to overwrite an unknown hook setup.
 
 ## Proof boundary
 
-The installer and CI can prove that activation works in a tested checkout on Windows and Linux. They cannot make Git automatically trust or activate tracked hooks in every future clone before an operator/bootstrap command runs. A newly cloned editable checkout therefore still needs the one-time activation command above.
+The installer and CI can prove that activation works in a tested checkout on Windows and Linux, including the Windows CMD entrypoint. They cannot make Git automatically trust or activate tracked hooks in every future clone before an operator/bootstrap command runs. A newly cloned editable checkout therefore still needs the one-time activation command above.
 
 Local hook activation complements remote validation; it is not a substitute for repository CI, review, or branch controls. The hook installer also does not scan file contents, Git history, or OneDrive synchronization state.
