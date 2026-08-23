@@ -109,3 +109,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'fix(prompt-kit): require P77 operator closeout'
           git push origin HEAD:fix/p77-mandatory-closeout-20260823
+
+# second push exists only to trigger this bootstrap after the workflow file is present
