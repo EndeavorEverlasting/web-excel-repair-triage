@@ -5,6 +5,7 @@ import unittest
 from scripts import build_prompt_kit_registry as prompt_registry
 
 
+TARGET_ID = "P103"
 TARGET_NAME = "Prompt Registry Classification Refiner"
 
 
@@ -19,7 +20,9 @@ class PromptClassificationRefinerPromptTests(unittest.TestCase):
         cls.copy = cls.prompt["copyContent"]
 
     def test_identity_is_distinct_and_helper_allocated(self) -> None:
-        self.assertRegex(self.prompt["id"], r"^P\d+$")
+        self.assertEqual(TARGET_ID, self.prompt["id"])
+        self.assertEqual("103", self.prompt["seq"])
+        self.assertEqual("P103_COPY_SAFE", self.prompt["copySheet"])
         self.assertEqual("MAINTENANCE + HARNESS", self.prompt["type"])
         self.assertEqual("PROMPT KIT / CLASSIFICATION ARCHITECTURE", self.prompt["class"])
         self.assertEqual("spec-architecture", self.prompt["profile"])
@@ -63,6 +66,13 @@ class PromptClassificationRefinerPromptTests(unittest.TestCase):
             "registry taxonomy",
         ):
             self.assertIn(expected, keywords)
+
+    def test_generated_prompt_kit_exposes_helper_allocated_prompt(self) -> None:
+        html = prompt_registry.render()
+        self.assertIn(TARGET_ID, html)
+        self.assertIn(TARGET_NAME, html)
+        self.assertIn("PROMPT KIT / CLASSIFICATION ARCHITECTURE", html)
+        self.assertIn("classification prototype", html.casefold())
 
 
 if __name__ == "__main__":
