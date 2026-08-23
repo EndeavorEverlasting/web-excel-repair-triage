@@ -29,8 +29,23 @@ text = text.replace(
     1,
 )
 text = text.replace(
+    'if TEMP_WORKFLOW.exists():\n    TEMP_WORKFLOW.unlink()\n',
+    'subprocess.run(["git", "checkout", "--", ".github/workflows/prompt-kit-web.yml"], cwd=ROOT, check=True)\n',
+    1,
+)
+text = text.replace(
     'if SELF.exists():\n    SELF.unlink()\n',
     'if RETRY.exists():\n    RETRY.unlink()\nif SELF.exists():\n    SELF.unlink()\n',
+    1,
+)
+text = text.replace(
+    '    ".github/workflows/prompt-kit-web.yml",\n',
+    '',
+    1,
+)
+text = text.replace(
+    '    ".github/workflows/tmp-prompt-kit-favorite-gameplay-20260822.yml",\n',
+    '',
     1,
 )
 text = text.replace(
