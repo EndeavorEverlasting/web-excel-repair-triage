@@ -47,7 +47,6 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
         self.assertIn("ask one minimal concrete question", content)
         self.assertIn("do not expose the user to avoidable intermediate drafts", content)
 
-
     def test_effective_p02_requires_concise_inflight_progress_without_status_stops(self) -> None:
         prompt = self.effective["P02"]
         content = prompt["copyContent"]
@@ -78,6 +77,57 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
         self.assertIn("genuinely user-only", prompt["expectedOutput"])
         self.assertIn("genuinely user-only dependency", prompt["proofGate"])
         self.assertIn("branch or PR alone is insufficient", prompt["proofGate"])
+
+    def test_p07_coerces_safe_parallel_subagents_and_rejoins(self) -> None:
+        prompt = self.effective["P07"]
+        content = prompt["copyContent"]
+        self.assertEqual("BUILD", prompt["type"])
+        self.assertEqual("PLAN", self.raw["P04"]["type"])
+        self.assertIn("[PARALLEL]", self.raw["P04"]["name"])
+        self.assertIn("parallel-safe sub-agent orchestration", prompt["sprintRole"])
+        self.assertIn("parallel sub-agents", prompt["expectedOutput"])
+        self.assertIn("dispatch safe parallel sub-agents", prompt["nextStep"])
+        self.assertIn("Parallel-execution proof requires", prompt["proofGate"])
+        for phrase in (
+            "PARALLEL SUB-AGENT EXECUTION CONTRACT",
+            "If a P04/P05 factoring or launch map exists",
+            "sufficient current parallel worker capacity exists to run at least two lanes concurrently",
+            "you MUST dispatch those lanes concurrently",
+            "Parallelism is mandatory in that condition",
+            "one writer per mutation surface",
+            "The coordinator owns synthesis and integration",
+            "treat sub-agent completion claims as hypotheses",
+            "Do not idle while sub-agents are running",
+            "continue independent safe lanes",
+            "Do not make the user manually create chats",
+            "parallelization disposition",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_p07_serial_fallback_is_fail_closed_and_not_user_scheduled(self) -> None:
+        prompt = self.effective["P07"]
+        content = prompt["copyContent"]
+        for reason in (
+            "hard dependency",
+            "shared mutation surface",
+            "proof ordering",
+            "runtime/security boundary",
+            "tool limitation",
+            "coordination overhead",
+        ):
+            self.assertIn(reason, content)
+        self.assertIn("If the current environment has no sub-agent mechanism", content)
+        self.assertIn("continue autonomously in the current agent", content)
+        self.assertIn("report that capability ceiling", content)
+        self.assertIn("shuttle context", content)
+        self.assertIn("act as the parallel-work scheduler", content)
+        self.assertIn("fewer than two concurrent worker slots are currently available", content)
+        self.assertIn("`parallel capacity unavailable`", content)
+        self.assertIn("proceed on the best safe serial lane", content)
+        self.assertIn(
+            "when a supported sub-agent mechanism, sufficient current parallel worker capacity, and at least two meaningful independent lanes exist",
+            prompt["proofGate"],
+        )
 
     def test_effective_prompts_keep_shared_actionability_policy(self) -> None:
         policy = build_prompt_kit_registry.load_actionability_policy()
