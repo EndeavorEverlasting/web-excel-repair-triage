@@ -1,1 +1,2 @@
 Trigger P68 continuous convergence hardening on refreshed main.
+Retrigger after workflow registration.
