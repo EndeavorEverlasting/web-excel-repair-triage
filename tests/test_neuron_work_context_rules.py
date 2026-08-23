@@ -52,7 +52,7 @@ def test_explicit_documentation_signal():
 
 
 def test_direct_deployment_execution_note_beats_time_heuristic():
-    d = _c(date(2026, 3, 4), 10.0, 14.0, notes="go-live cutover")
+    d = _c(date(2026, 3, 4), 10.0, 14.0, notes="performed go-live cutover")
     assert d.assignment_type == DEPLOYMENTS
     assert d.rule == "direct-deployment-execution-evidence"
 
@@ -61,6 +61,16 @@ def test_direct_deployed_verb_is_deployment():
     d = _c(date(2026, 6, 5), 9.0, 17.0, notes="deployed Cybernet in OR room")
     assert d.assignment_type == DEPLOYMENTS
     assert d.rule == "direct-deployment-execution-evidence"
+
+
+def test_go_live_planning_does_not_create_deployment():
+    d = _c(date(2026, 6, 5), 9.0, 17.0, notes="go-live planning and readiness review")
+    assert d.assignment_type != DEPLOYMENTS
+
+
+def test_cutover_planning_does_not_create_deployment():
+    d = _c(date(2026, 6, 5), 9.0, 17.0, notes="cutover planning")
+    assert d.assignment_type != DEPLOYMENTS
 
 
 def test_bare_deployment_worked_label_does_not_create_deployment():
