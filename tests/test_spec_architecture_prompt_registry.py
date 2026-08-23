@@ -488,5 +488,47 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn('Open-Source Prior-Art & Gap Analyst', html)
 
 
+    def test_p90_command_snippets_preserve_operator_terminal_observability(self) -> None:
+        prompt = self.full["P90"]
+        content = prompt["copyContent"]
+        raw_content = self.raw["P90"]["copyContent"]
+        self.assertEqual(prompt["name"], "Lua Flagging + Host Enforcement Repair Loop")
+        self.assertEqual(prompt["class"], "HARNESS / LUA HOST ENFORCEMENT")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        for phrase in (
+            "ARCHITECTURE BOUNDARY — HOST STAYS IN CONTROL",
+            "COMMAND CLASSES TO EXERCISE",
+            "wrong-shell syntax",
+            "HOST ENFORCEMENT",
+            "SCAN -> LUA FLAGS -> HOST BLOCK/RAISE -> AGENT REPAIR -> REVALIDATE",
+            "CHECKER_FAILURE",
+        ):
+            self.assertIn(phrase, content)
+        for phrase in (
+            "OPERATOR OBSERVABILITY / TERMINAL-LIFETIME CONTRACT",
+            "INTERACTIVE_PASTE",
+            "TRANSIENT_CONSOLE",
+            "CHILD_PROCESS",
+            "AUTOMATION_CI",
+            "no top-level `exit`",
+            "preserve status and keep the parent shell alive",
+            "save exit code first",
+            "never wait for human input",
+            "Waits are inspection aids, not error handling",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("terminal", prompt["useWhen"].lower())
+        self.assertIn("invocation mode", prompt["inspectFirst"].lower())
+        self.assertIn("unattended", prompt["proofGate"].lower())
+        self.assertIn("terminal stays open", prompt["keywords"])
+        self.assertIn("preserve exit code", prompt["keywords"])
+        self.assertGreater(len(raw_content), 5000)
+        self.assertLess(len(raw_content), 8000)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+        html = build_prompt_kit_registry.render()
+        self.assertIn("Lua Flagging + Host Enforcement Repair Loop", html)
+
+
 if __name__ == "__main__":
     unittest.main()
