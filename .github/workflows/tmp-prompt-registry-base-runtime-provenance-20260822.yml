@@ -1,0 +1,59 @@
+name: Temporary Prompt Registry Base Runtime Provenance
+
+on:
+  push:
+    branches:
+      - feat/prompt-registry-grounding-gate-20260822
+    paths:
+      - .github/workflows/tmp-prompt-registry-base-runtime-provenance-20260822.yml
+
+concurrency:
+  group: prompt-registry-base-runtime-provenance-20260822
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-registry-grounding-gate-20260822
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Refresh exact floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --all --prune --tags
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git merge --no-edit origin/main
+      - name: Close base runtime provenance gap
+        run: python scripts/tmp_close_prompt_registry_base_runtime_provenance_20260822.py
+      - name: Prove exact grounding boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile scripts/prompt_registry_ops.py scripts/prompt_registry_grounding.py tests/test_prompt_registry_grounding.py
+          python -m unittest tests.test_prompt_registry_grounding -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python -m unittest tests.test_skill_prompt_registry -v
+          python -m unittest tests.test_actionable_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/evaluate_prompt_language.py --summary
+          git diff --check
+      - name: Commit durable provenance closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -f scripts/tmp_close_prompt_registry_base_runtime_provenance_20260822.py
+          git add scripts/prompt_registry_grounding.py tests/test_prompt_registry_grounding.py harness/specs/prompt-operations.md
+          git diff --cached --check
+          git commit -m 'fix(prompt-kit): ground base runtime source'
+          git push origin HEAD:feat/prompt-registry-grounding-gate-20260822
