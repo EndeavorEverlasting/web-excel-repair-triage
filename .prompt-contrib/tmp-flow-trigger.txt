@@ -1,1 +1,1 @@
-trigger helper-owned Prompt Kit contribution for PR 233
+retrigger helper-owned Prompt Kit contribution for PR 233 after transport staging repair
