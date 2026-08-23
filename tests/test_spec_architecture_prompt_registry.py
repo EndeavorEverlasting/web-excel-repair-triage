@@ -229,6 +229,7 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
             "DERIVE THE DASHBOARD FROM EVENTS",
             "active search -> unrelated filter show/hide/toggle",
             "favorite shortcut -> terminal action occurs once",
+            "reuse the normal success toast/feedback",
             "duplicate event dispatch does not double-count one completion",
         ):
             self.assertIn(phrase, content)
