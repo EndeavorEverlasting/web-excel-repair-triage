@@ -31,7 +31,13 @@ jobs:
           executor = Path('.github/workflows/tmp-favorite-invocation-focus-executor.yml')
           text = executor.read_text(encoding='utf-8')
           old = '              replace_exact(design, old, new)'
-          new = '              replace_exact(design, old, new, expected=2 if old == "configure `p999 → OPEN_PROMPT(P999)`" else 1)'
+          new = '''              expected = 1
+              if old == "configure `p999 → OPEN_PROMPT(P999)`":
+                  observed = Path(design).read_text(encoding='utf-8').count(old)
+                  if observed not in (1, 2):
+                      raise SystemExit(f'{design}: unexpected p999 legacy anchor count {observed}')
+                  expected = observed
+              replace_exact(design, old, new, expected=expected)'''
           if text.count(old) != 1:
               raise SystemExit(f'expected one design dispatcher, found {text.count(old)}')
           text = text.replace(old, new, 1)
