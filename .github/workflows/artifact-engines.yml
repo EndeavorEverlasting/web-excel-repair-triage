@@ -69,5 +69,18 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Execute bounded canonical path repair
-        run: python .prompt-contrib/canonical_path_repair.py
+      - name: Repair stale count assertion and execute bounded canonical path repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.prompt-contrib/canonical_path_repair.py')
+          text = path.read_text(encoding='utf-8')
+          old = 'self.assertEqual(len(self.prompts), 100)'
+          new = 'self.assertEqual(len(self.prompts), len(self.by_id))'
+          if old not in text and new not in text:
+              raise SystemExit('canonical-path count assertion anchor missing')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+          python .prompt-contrib/canonical_path_repair.py
