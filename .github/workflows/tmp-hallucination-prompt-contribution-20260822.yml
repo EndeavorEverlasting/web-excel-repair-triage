@@ -1,0 +1,31 @@
+name: Temporary Hallucination Prompt Contribution
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-hallucination-grounding-20260822
+
+permissions:
+  contents: write
+
+jobs:
+  contribute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-hallucination-grounding-20260822
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Refresh floor, contribute prompts, validate, and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --all --prune --tags
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git merge --no-edit origin/main
+          python scripts/tmp_hallucination_prompt_contribution_20260822.py
+          git push origin HEAD:feat/prompt-kit-hallucination-grounding-20260822
