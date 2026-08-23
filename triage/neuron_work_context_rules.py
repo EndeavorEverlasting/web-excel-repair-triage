@@ -59,7 +59,13 @@ _SIGNAL_PATTERNS = (
 # The source row must say that deployment/install/go-live/cutover activity was
 # actually performed. A resolved project name is never sufficient by itself.
 _DIRECT_DEPLOYMENT_PATTERN = re.compile(
-    r"\bdeploy(?:ed|ing)\b|\binstall(?:ed|ing)\b|\bgo[-\s]?live\b|\bcutover\b|\bon[-\s]?site\s+install(?:ation|ing|ed)?\b",
+    r"\bdeploy(?:ed|ing)\b"
+    r"|\binstall(?:ed|ing)\b"
+    r"|\b(?:performed|completed|executed)\s+(?:the\s+)?(?:go[-\s]?live|cutover)\b"
+    r"|\b(?:go[-\s]?live|cutover)\s+(?:completed|performed|executed)\b"
+    r"|\bwent\s+live\b"
+    r"|\bcut\s+over\b"
+    r"|\bon[-\s]?site\s+install(?:ed|ing)\b",
     re.I,
 )
 
@@ -143,7 +149,8 @@ def _direct_deployment_signal(notes: str, worked_label: str) -> bool:
     ``resolved_project`` is intentionally excluded: a project or program name that
     happens to contain "deployment" is context, not proof that this shift deployed.
     Bare nouns such as "deployment", "deployment tracker", "deployment support",
-    and "deployment information" do not satisfy the direct-action expression.
+    "go-live planning", and "cutover planning" do not satisfy the direct-action
+    expression.
     """
 
     evidence_text = " ".join(x for x in (notes, worked_label) if x).strip()
