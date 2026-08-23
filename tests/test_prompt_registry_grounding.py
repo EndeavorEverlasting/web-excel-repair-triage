@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import json
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
 from unittest import mock
 
@@ -51,7 +52,21 @@ class PromptRegistryGroundingTests(unittest.TestCase):
         self.assertTrue(
             all(set(item) == {"source_key", "path", "sha256"} for item in packet["sources"])
         )
-        self.assertLess(len(serialized), 12000)
+        self.assertLess(len(serialized), 16000)
+        sources = {item["source_key"]: item for item in packet["sources"]}
+        for source_key in (
+            "display_order_policy",
+            "reference",
+            "runtime:guided_recommendations",
+            "runtime:prompt_journey",
+            "runtime:polish",
+            "runtime:correspondence",
+            "runtime:management",
+            "runtime:spec_architecture",
+            "html_builder",
+        ):
+            self.assertIn(source_key, sources)
+            self.assertRegex(sources[source_key]["sha256"], r"^[0-9a-f]{64}$")
 
     def test_valid_proposal_passes_with_resolvable_attribution(self) -> None:
         packet = prompt_registry_ops.build_grounding_packet()
@@ -67,6 +82,12 @@ class PromptRegistryGroundingTests(unittest.TestCase):
             gate["attribution"]["draft_schema"]["path"],
             "scripts/prompt_registry_ops.py",
         )
+        source_keys = {item["source_key"] for item in packet["sources"]}
+        identity_keys = gate["attribution"]["identity"]["source_keys"]
+        self.assertTrue(identity_keys)
+        self.assertTrue(set(identity_keys).issubset(source_keys))
+        self.assertIn("base_registry", identity_keys)
+        self.assertTrue(any(key.startswith("registry:") for key in identity_keys))
 
     def test_hallucinated_registry_is_unsourced_block(self) -> None:
         gate = prompt_registry_ops.ground_prompt_proposal(
@@ -131,23 +152,62 @@ class PromptRegistryGroundingTests(unittest.TestCase):
                 )
             apply.assert_not_called()
 
-    def test_valid_gate_reaches_side_effect_path_exactly_once(self) -> None:
+    def test_valid_gate_reaches_side_effect_path_exactly_once_under_lock(self) -> None:
         packet = prompt_registry_ops.build_grounding_packet()
-        with mock.patch.object(
-            prompt_registry_ops,
-            "_apply_prompt_record",
-            return_value={"status": "added-for-test"},
-        ) as apply:
-            result = prompt_registry_ops.add_prompt(
-                fixture_draft(),
-                "spec-architecture-prompts",
-                dry_run=False,
-                grounding_packet=packet,
-            )
+        events: list[str] = []
+
+        @contextmanager
+        def fake_lock(*args: object, **kwargs: object):
+            events.append("lock-enter")
+            try:
+                yield Path("test-lock")
+            finally:
+                events.append("lock-exit")
+
+        def fake_apply(*args: object, **kwargs: object) -> dict[str, str]:
+            self.assertEqual(events, ["lock-enter"])
+            events.append("apply")
+            return {"status": "added-for-test"}
+
+        with mock.patch.object(grounding, "registry_write_lock", fake_lock):
+            with mock.patch.object(
+                prompt_registry_ops, "_apply_prompt_record", side_effect=fake_apply
+            ) as apply:
+                result = prompt_registry_ops.add_prompt(
+                    fixture_draft(),
+                    "spec-architecture-prompts",
+                    dry_run=False,
+                    grounding_packet=packet,
+                )
         self.assertEqual(result["status"], "added-for-test")
         apply.assert_called_once()
         gate = apply.call_args.args[3]
         self.assertEqual(gate["status"], grounding.GROUNDED_PASS)
+        self.assertEqual(events, ["lock-enter", "apply", "lock-exit"])
+
+    def test_registry_write_lock_fails_closed_on_contention(self) -> None:
+        with grounding.registry_write_lock(REPO_ROOT, timeout_seconds=0.1):
+            with self.assertRaises(grounding.GroundingLockError):
+                with grounding.registry_write_lock(REPO_ROOT, timeout_seconds=0):
+                    self.fail("second writer unexpectedly acquired the registry lock")
+
+    def test_add_reports_grounding_failure_when_write_lock_is_unavailable(self) -> None:
+        packet = prompt_registry_ops.build_grounding_packet()
+        with mock.patch.object(
+            grounding,
+            "registry_write_lock",
+            side_effect=grounding.GroundingLockError("busy"),
+        ):
+            with self.assertRaises(SystemExit) as raised:
+                prompt_registry_ops.add_prompt(
+                    fixture_draft(),
+                    "spec-architecture-prompts",
+                    dry_run=False,
+                    grounding_packet=packet,
+                )
+        block = json.loads(str(raised.exception))
+        self.assertEqual(block["status"], grounding.GROUNDING_FAILURE)
+        self.assertEqual(block["reason"], "registry_write_lock_unavailable")
 
     def test_dry_run_carries_grounding_receipt_without_mutation(self) -> None:
         packet = prompt_registry_ops.build_grounding_packet()

@@ -13,7 +13,7 @@ Binding for Prompt Kit prompt addition/repair, language audit, generated Prompt 
 
 ## Exact prompt-contribution grounding
 
-Exact registry mechanics are a deterministic tool boundary, not model-memory work. `scripts/prompt_registry_ops.py` owns a compact JIT grounding packet containing current registry IDs/paths, next auto-owned identity, draft-field contract, actionability policy identity, builder/output identity, and SHA-256 provenance for only the canonical structural sources that can affect those values. It does **not** load prompt bodies into the grounding packet.
+Exact registry mechanics are a deterministic tool boundary, not model-memory work. `scripts/prompt_registry_ops.py` owns a compact JIT grounding packet containing current registry IDs/paths, next auto-owned identity, draft-field contract, actionability policy identity, builder/output identity, and SHA-256 provenance for only the canonical structural sources that can affect those values. It does **not** load prompt bodies into the grounding packet. The fingerprint also covers every current builder input consumed by the protected site rebuild: display-order policy, reference data, supplemental runtime JavaScript, the HTML builder module, the combined registry builder, and its policy/registry inputs.
 
 For an agent or tool that needs exact structure before composing a contribution, use:
 
@@ -24,7 +24,7 @@ python scripts/prompt_registry_ops.py check --input <draft.json> --registry <reg
 
 The check is read-only and returns one fail-closed gate state: `GROUNDED_PASS`, `UNSOURCED_BLOCK`, `CONTRADICTION_BLOCK`, `SCHEMA_MISMATCH`, or `GROUNDING_FAILURE`. Critical parameters carry resolvable source-key/path/selector attribution. A stale or tampered grounding packet is never treated as PASS.
 
-Ordinary contributors do not need extra ceremony: `add` repeats the gate internally immediately before its protected registry/site write path. Supplying `--grounding` pins the add to a previously emitted packet; if canonical structural inputs moved, the add blocks and must refresh rather than silently allocating from stale memory. Auto-owned `id`, `seq`, and `copySheet` remain forbidden in drafts.
+Ordinary contributors do not need extra ceremony: `add` repeats the gate internally immediately before its protected registry/site write path. Real writes are serialized by a same-checkout process lock held from fresh grounding and identity allocation through registry mutation, rebuild, parity proof, and rollback; a contending helper fails closed instead of racing the ID allocator. Supplying `--grounding` pins the add to a previously emitted packet; if canonical structural inputs moved, the add blocks and must refresh rather than silently allocating from stale memory. Auto-owned `id`, `seq`, and `copySheet` remain forbidden in drafts. Direct registry writes that bypass this helper remain outside the supported mutation contract.
 
 Model critics may help with semantic prompt quality, but they do not override deterministic registry/schema/grounding failures.
 

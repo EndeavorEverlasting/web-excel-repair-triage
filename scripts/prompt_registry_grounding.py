@@ -4,9 +4,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+import tempfile
+import time
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Iterator
 
 SCHEMA_VERSION = "prompt-registry-grounding/v1"
 GATE_ID = "prompt-registry-contribution/v1"
@@ -16,6 +20,65 @@ CONTRADICTION_BLOCK = "CONTRADICTION_BLOCK"
 SCHEMA_MISMATCH = "SCHEMA_MISMATCH"
 GROUNDING_FAILURE = "GROUNDING_FAILURE"
 _HEX64 = re.compile(r"^[0-9a-f]{64}$")
+
+
+class GroundingLockError(RuntimeError):
+    """Raised when the protected registry-write lock cannot be acquired."""
+
+
+def _lock_path(repo_root: Path) -> Path:
+    key = _hash_bytes(str(repo_root.resolve()).encode("utf-8"))[:20]
+    return Path(tempfile.gettempdir()) / f"prompt-registry-{key}.lock"
+
+
+@contextmanager
+def registry_write_lock(
+    repo_root: Path, *, timeout_seconds: float = 10.0, poll_seconds: float = 0.05
+) -> Iterator[Path]:
+    """Serialize same-checkout registry adders with an OS-released process lock."""
+    if timeout_seconds < 0 or poll_seconds <= 0:
+        raise ValueError("lock timeout must be >= 0 and poll interval must be > 0")
+    path = _lock_path(repo_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle = path.open("a+b")
+    handle.seek(0, os.SEEK_END)
+    if handle.tell() == 0:
+        handle.write(b"\0")
+        handle.flush()
+    deadline = time.monotonic() + timeout_seconds
+    locked = False
+    try:
+        while not locked:
+            try:
+                handle.seek(0)
+                if os.name == "nt":
+                    import msvcrt
+
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                else:
+                    import fcntl
+
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                locked = True
+            except OSError as exc:
+                if time.monotonic() >= deadline:
+                    raise GroundingLockError(
+                        f"prompt registry write lock is busy: {path}"
+                    ) from exc
+                time.sleep(poll_seconds)
+        yield path
+    finally:
+        if locked:
+            handle.seek(0)
+            if os.name == "nt":
+                import msvcrt
+
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        handle.close()
 
 
 def _hash_bytes(value: bytes) -> str:
@@ -102,7 +165,16 @@ def build_packet(
     source_specs.extend(
         [
             ("prompt_overrides", registry_module.PROMPT_OVERRIDES),
+            ("display_order_policy", registry_module.DISPLAY_ORDER_POLICY),
             ("actionability_policy", registry_module.ACTIONABILITY_POLICY),
+            ("reference", registry_module.REFERENCE),
+            ("runtime:guided_recommendations", registry_module.GUIDED_RECOMMENDATIONS),
+            ("runtime:prompt_journey", registry_module.PROMPT_JOURNEY_RUNTIME),
+            ("runtime:polish", registry_module.POLISH_RUNTIME),
+            ("runtime:correspondence", registry_module.CORRESPONDENCE_RUNTIME),
+            ("runtime:management", registry_module.MANAGEMENT_RUNTIME),
+            ("runtime:spec_architecture", registry_module.SPEC_ARCHITECTURE_RUNTIME),
+            ("html_builder", Path(registry_module.build_prompt_kit.__file__).resolve()),
             ("builder", Path(registry_module.__file__).resolve()),
             ("helper", helper_path.resolve()),
         ]

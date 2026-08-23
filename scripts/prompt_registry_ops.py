@@ -369,7 +369,13 @@ def ground_prompt_proposal(
                 "selector": "$.registry_id",
             },
             "identity": {
-                "source_key": "combined_prompt_registry",
+                "source_keys": [
+                    item["source_key"]
+                    for item in current["sources"]
+                    if item["source_key"] == "base_registry"
+                    or item["source_key"].startswith("registry:")
+                    or item["source_key"].startswith("content_registry:")
+                ],
                 "selector": "max(P##)+1",
             },
             "draft_schema": {
@@ -459,48 +465,77 @@ def _apply_prompt_record(
     }
 
 
+def _raise_gate(block: dict[str, Any]) -> None:
+    raise SystemExit(json.dumps(block, indent=2, ensure_ascii=False))
+
+
+def _grounded_add_under_lock(
+    draft: dict[str, Any],
+    explicit_registry: str | None,
+    grounding_packet: dict[str, Any] | None,
+) -> dict[str, Any]:
+    gate = ground_prompt_proposal(draft, explicit_registry, grounding_packet)
+    if gate["status"] != grounding.GROUNDED_PASS:
+        _raise_gate(gate)
+
+    target_path, target_payload = _resolve_target(draft, explicit_registry)
+    record = gate["record"]
+    current_before_write = build_grounding_packet()
+    if current_before_write["packet_fingerprint"] != gate["packet_fingerprint"]:
+        _raise_gate(
+            grounding.gate_result(
+                grounding.CONTRADICTION_BLOCK,
+                "source_changed_after_gate",
+                gated_packet_fingerprint=gate["packet_fingerprint"],
+                current_packet_fingerprint=current_before_write["packet_fingerprint"],
+            )
+        )
+    return _apply_prompt_record(target_path, target_payload, record, gate)
+
+
 def add_prompt(
     draft: dict[str, Any],
     explicit_registry: str | None,
     dry_run: bool,
     grounding_packet: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    gate = ground_prompt_proposal(draft, explicit_registry, grounding_packet)
-    if gate["status"] != grounding.GROUNDED_PASS:
-        raise SystemExit(json.dumps(gate, indent=2, ensure_ascii=False))
-
-    target_path, target_payload = _resolve_target(draft, explicit_registry)
-    record = gate["record"]
-    gate_summary = {
-        key: gate[key]
-        for key in (
-            "status",
-            "gate_id",
-            "source_fingerprint",
-            "packet_fingerprint",
-            "attribution",
-        )
-    }
     if dry_run:
+        gate = ground_prompt_proposal(draft, explicit_registry, grounding_packet)
+        if gate["status"] != grounding.GROUNDED_PASS:
+            _raise_gate(gate)
+        target_path, target_payload = _resolve_target(draft, explicit_registry)
+        gate_summary = {
+            key: gate[key]
+            for key in (
+                "status",
+                "gate_id",
+                "source_fingerprint",
+                "packet_fingerprint",
+                "attribution",
+            )
+        }
         return {
             "status": "dry-run",
             "registry_id": target_payload["registry_id"],
             "registry_path": str(target_path.relative_to(REPO_ROOT)),
-            "record": record,
+            "record": gate["record"],
             "grounding_gate": gate_summary,
         }
 
-    current_before_write = build_grounding_packet()
-    if current_before_write["packet_fingerprint"] != gate["packet_fingerprint"]:
-        block = grounding.gate_result(
-            grounding.CONTRADICTION_BLOCK,
-            "source_changed_after_gate",
-            gated_packet_fingerprint=gate["packet_fingerprint"],
-            current_packet_fingerprint=current_before_write["packet_fingerprint"],
+    try:
+        with grounding.registry_write_lock(REPO_ROOT):
+            return _grounded_add_under_lock(
+                draft, explicit_registry, grounding_packet
+            )
+    except grounding.GroundingLockError as exc:
+        _raise_gate(
+            grounding.gate_result(
+                grounding.GROUNDING_FAILURE,
+                "registry_write_lock_unavailable",
+                detail=str(exc),
+            )
         )
-        raise SystemExit(json.dumps(block, indent=2, ensure_ascii=False))
-
-    return _apply_prompt_record(target_path, target_payload, record, gate)
+    raise AssertionError("unreachable")
 
 
 def validate_current() -> dict[str, Any]:
