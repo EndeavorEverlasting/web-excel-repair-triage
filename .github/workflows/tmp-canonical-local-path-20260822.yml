@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - feat/prompt-kit-artifact-risk-path-20260822
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -147,7 +150,11 @@ Report the root evidence, directory action actually executed, root and remote ve
               anchor = '    def test_policy_rejects_an_empty_next_step(self) -> None:\n'
               if anchor not in test_text:
                   raise SystemExit('Focused test insertion anchor missing')
-              method = '''    def test_p50_executes_directory_gate_without_absorbing_p07(self) -> None:\n        raw_prompts = json.loads(\n            (REPO_ROOT / "docs" / "prompts.json").read_text(encoding="utf-8")\n        )\n        raw_p50 = next(prompt for prompt in raw_prompts if prompt["id"] == "P50")\n        effective_p50 = {prompt["id"]: prompt for prompt in self.prompts}["P50"]\n\n        self.assertEqual(raw_p50["name"], "Directory-First Repository Command Guard")\n        self.assertEqual(raw_p50["type"], "ANALYZE + DIRECTORY")\n        self.assertEqual(raw_p50["class"], "STANDARD AI / LOCAL-FIRST REPOSITORY INTAKE")\n        self.assertEqual(raw_p50["copySheet"], "P50_COPY_SAFE")\n        self.assertEqual(raw_p50["category"], "standard")\n\n        for phrase in (\n            "PERFORM THE DIRECTORY GATE DIRECTLY",\n            "Do not merely print `Set-Location`, `cd`, or verification commands",\n            "execute the first safe repository-backed step needed to advance `xyz_task`",\n            "Ask the user only for a genuinely user-only fact",\n            "P50 remains the directory guard",\n            "a plausible path string is not proof",\n        ):\n            self.assertIn(phrase, raw_p50["copyContent"])\n\n        self.assertNotIn(self.policy["marker"], raw_p50["copyContent"])\n        self.assertIn(self.policy["marker"], effective_p50["copyContent"])\n        for donor_role in (\n            "ITERATIVE SPRINT FIXED-POINT",\n            "MAINLINE CONVERGENCE",\n            "merge the exact validated head",\n        ):\n            self.assertNotIn(donor_role, raw_p50["copyContent"])\n        self.assertLessEqual(len(raw_p50["copyContent"]), 3500)\n\n'''
+              method = '''    def test_p50_executes_directory_gate_without_absorbing_p07(self) -> None:\n        raw_prompts = json.loads(\n            (REPO_ROOT / "docs" / "prompts.json").read_text(encoding="utf-8")\n        )\n        raw_p50 = next(prompt for prompt in raw_prompts if prompt["id"] == "P50")\n        effective_p50 = {prompt["id"]: prompt for prompt in self.prompts}["P50"]\n\n        self.assertEqual(raw_p50["name"], "Directory-First Repository Command Guard")\n        self.assertEqual(raw_p50["type"], "ANALYZE + DIRECTORY")\n        self.assertEqual(raw_p50["class"], "STANDARD AI / LOCAL-FIRST REPOSITORY INTAKE")\n        self.assertEqual(raw_p50["copySheet"], "P50_COPY_SAFE")\n        self.assertEqual(raw_p50["category"], "standard")\n\n        for phrase in (\n            "PERFORM THE DIRECTORY GATE DIRECTLY",\n            "Do not merely print `Set-Location`, `cd`, or verification commands",\n            "execute the first safe repository-backed step needed to advance `xyz_task`",\n            "Ask the user only for a genuinely user-only fact",\n            "P50 remains the directory guard",\n            "a plausible path string is not proof",\n        ):\n            self.assertIn(phrase, raw_p50["copyContent"])\n\n        self.assertNotIn(self.policy["marker"], raw_p50["copyContent"])
+        self.assertIn(self.policy["marker"], effective_p50["copyContent"])
+        for donor_role in (\n            "ITERATIVE SPRINT FIXED-POINT",\n            "MAINLINE CONVERGENCE",\n            "merge the exact validated head",\n        ):\n            self.assertNotIn(donor_role, raw_p50["copyContent"])
+        self.assertLessEqual(len(raw_p50["copyContent"]), 3500)
+\n'''
               test_text = test_text.replace(anchor, method + anchor, 1)
               test_path.write_text(test_text, encoding='utf-8')
           PY
