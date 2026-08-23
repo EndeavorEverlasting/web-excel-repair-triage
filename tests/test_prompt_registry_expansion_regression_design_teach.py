@@ -64,8 +64,20 @@ class PromptRegistryExpansionTests(unittest.TestCase):
             "END THE JOURNEY AT USER VALUE, NOT AN INTERMEDIATE SCREEN",
             "OPTIONAL INSPECTION",
             "semantic completion telemetry",
+            "WIDEN THE DESIGN SPACE BEFORE CONVERGING",
+            "structurally analogous systems",
+            "2-4 materially different candidates",
+            "P97 Open-Source Prior-Art & Gap Analyst",
+            "Creativity is disciplined recombination",
         ):
             self.assertIn(phrase, content)
+        design = self.by_name["Program Design & Call-Stack Prototype Architect"]
+        self.assertEqual(design["id"], "P95")
+        self.assertEqual(design["profile"], "spec-architecture")
+        self.assertNotIn("BUILD THE SOLVED-BASELINE VS PRIORITIZED-GAP MAP", content)
+        raw_payload = json.loads((ROOT / "registry/prompts/spec-architecture-prompts.v1.json").read_text(encoding="utf-8"))
+        raw = next(p for p in raw_payload["prompts"] if p["id"] == "P95")
+        self.assertLessEqual(len(raw["copyContent"]), 9300)
 
     def test_teach_prompt_is_grounded_stateful_and_active(self) -> None:
         content = self.by_name["Stateful Socratic Technical Tutor Workspace"]["copyContent"]
