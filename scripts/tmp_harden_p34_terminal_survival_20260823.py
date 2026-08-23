@@ -41,14 +41,14 @@ p34["proofGate"] = (
     "disappear before acknowledgement; durable logs survive success and failure; noninteractive "
     "paths do not hang; and the original exit status is preserved."
 )
-p34["copyContent"] = """gnhf `
+p34["copyContent"] = '''gnhf `
 --agent opencode `
 --worktree `
 --max-iterations 4 `
 --max-tokens 350000 `
 --prevent-sleep on `
---stop-when \"The selected operator workflow has one clear validated entry point, human-launched terminals preserve visible completion evidence, durable logs survive success and failure, and no remaining owned usability blocker exists.\" `
-\"Repo: xyz_repo_or_path
+--stop-when "The selected operator workflow has one clear validated entry point, human-launched terminals preserve visible completion evidence, durable logs survive success and failure, and no remaining owned usability blocker exists." `
+"Repo: xyz_repo_or_path
 
 Sprint: Technician experience
 Lane: launcher, help, guide, examples
@@ -100,7 +100,7 @@ Report:
 - durable log/artifact location and exit-status proof
 - proof ceiling
 - field acceptance still required
-- git status\""" + "\n" * 24
+- git status"''' + "\n" * 24
 p34["keywords"] = [
     "technician experience",
     "ux",
