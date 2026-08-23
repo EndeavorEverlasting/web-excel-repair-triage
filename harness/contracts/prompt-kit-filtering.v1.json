@@ -21,8 +21,12 @@
       "expected": "All Types plus one unique control per prompt type is available."
     },
     {
+      "id": "progressive_type_disclosure",
+      "expected": "Prompt types are presented as subcategories inside the existing filter-header module: All Categories shows one compact instructional hint instead of the complete type wall; selecting a category or Favorites reveals only subcategories available in that scope; changing category clears an incompatible active subcategory so the new category cannot render empty by stale type state."
+    },
+    {
       "id": "all_view_full_reset",
-      "expected": "Selecting the top-level All view by click or keyboard shortcut 1 is an atomic reset: category becomes all, Favorites/category section scope is cleared, type and color filters are cleared, search is cleared, collapsed sections are expanded, All Categories and All Types are reselected, and the complete prompt stream is rendered. Favorites then All must never remain Favorites-filtered."
+      "expected": "Selecting the top-level All view by click or keyboard shortcut 1 is an atomic reset: category becomes all, Favorites/category section scope is cleared, type and color filters are cleared, search is cleared, collapsed sections are expanded, All Categories is reselected with the subcategory panel rebuilt from the cleared scope state, and the complete prompt stream is rendered. Favorites then All must never remain Favorites-filtered."
     },
     {
       "id": "sequential_with_gaps",
