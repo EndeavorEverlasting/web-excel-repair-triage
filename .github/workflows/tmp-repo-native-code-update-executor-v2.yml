@@ -37,7 +37,7 @@ jobs:
           git status --short
           git log --oneline --decorate -5
 
-      - name: Repair helper registry routing and execute contribution
+      - name: Repair helper routing and owner assertion, then execute contribution
         shell: bash
         run: |
           set -euo pipefail
@@ -45,11 +45,16 @@ jobs:
           from pathlib import Path
           path = Path('.prompt-contrib/repo_native_code_update_prompt_contribution.py')
           text = path.read_text(encoding='utf-8')
-          old = '        "--registry",\n        "spec-architecture",\n'
-          new = '        "--registry",\n        "spec-architecture-prompts",\n'
-          if old not in text:
+          old_registry = '        "--registry",\n        "spec-architecture",\n'
+          new_registry = '        "--registry",\n        "spec-architecture-prompts",\n'
+          if old_registry not in text:
               raise SystemExit('helper registry routing anchor missing')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          text = text.replace(old_registry, new_registry, 1)
+          old_p13 = '    if "SELF-IMPROVING" not in by_id["P13"]["copyContent"]:\n        raise SystemExit("P13 no longer provides repeated-pain self-improvement coverage")\n'
+          new_p13 = '    if by_id["P13"]["name"] != "Self-Improving Rules Review" or "repeated pain" not in by_id["P13"]["sprintRole"].casefold():\n        raise SystemExit("P13 no longer provides repeated-pain self-improvement coverage")\n'
+          if old_p13 not in text:
+              raise SystemExit('P13 second-pass assertion anchor missing')
+          path.write_text(text.replace(old_p13, new_p13, 1), encoding='utf-8')
           PY
           python .prompt-contrib/repo_native_code_update_prompt_contribution.py
 
