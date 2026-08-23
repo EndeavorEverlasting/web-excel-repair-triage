@@ -44,37 +44,61 @@ jobs:
                   raise SystemExit(f'{path}: expected {expected} anchor(s), found {count}: {old[:120]!r}')
               p.write_text(text.replace(old, new), encoding='utf-8', newline='\n')
 
+          def replace_known_legacy_count(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count not in (1, 2):
+                  raise SystemExit(f'{path}: expected one or two known legacy anchors, found {count}: {old[:120]!r}')
+              p.write_text(text.replace(old, new), encoding='utf-8', newline='\n')
+
           polish = 'docs/prompt-kit-polish.js'
-          replace_exact(polish,
+          replace_exact(
+              polish,
               ".prompt-card-actions .prompt-open-btn,.prompt-card-actions .prompt-copy-btn{padding:4px 8px;white-space:nowrap}",
-              ".prompt-card-actions .prompt-open-btn,.prompt-card-actions .prompt-copy-btn{padding:4px 8px;white-space:nowrap}.prompt-copy-btn.prompt-copy-keyboard-target{outline:none;border-color:var(--accent)!important;color:var(--text-primary)!important;background:rgba(14,116,144,.22)!important;box-shadow:0 0 0 3px var(--accent-glow),0 0 24px rgba(56,189,248,.45)!important}")
-          replace_exact(polish,
+              ".prompt-card-actions .prompt-open-btn,.prompt-card-actions .prompt-copy-btn{padding:4px 8px;white-space:nowrap}.prompt-copy-btn.prompt-copy-keyboard-target{outline:none;border-color:var(--accent)!important;color:var(--text-primary)!important;background:rgba(14,116,144,.22)!important;box-shadow:0 0 0 3px var(--accent-glow),0 0 24px rgba(56,189,248,.45)!important}"
+          )
+          replace_exact(
+              polish,
               "  {key:'/',label:'Focus search'},\n  {key:'R',label:'Reference panel'},",
-              "  {key:'/',label:'Focus search'},\n  {key:'C',label:'Copy focused / open prompt'},\n  {key:'R',label:'Reference panel'},")
-          replace_exact(polish,
+              "  {key:'/',label:'Focus search'},\n  {key:'C',label:'Copy focused / open prompt'},\n  {key:'R',label:'Reference panel'},"
+          )
+          replace_exact(
+              polish,
               "    var label=document.createElement('span');label.textContent='Open '+promptId;",
-              "    var label=document.createElement('span');label.textContent='Copy + reveal '+promptId;")
-          replace_exact(polish,
+              "    var label=document.createElement('span');label.textContent='Copy + reveal '+promptId;"
+          )
+          replace_exact(
+              polish,
               "function openPromptShortcutTarget(promptId){\n  var prompt=PROMPTS.find(function(item){return item.id===promptId});\n  if(!prompt)return false;\n  if(!isFavoritePrompt(promptId)){showToast(promptId+' is no longer a Favorite');return false}\n  showPromptDetail(promptId,null);\n  return true\n}\n",
-              "function clearPromptCopyKeyboardTarget(){\n  document.querySelectorAll('.prompt-copy-btn.prompt-copy-keyboard-target').forEach(function(button){button.classList.remove('prompt-copy-keyboard-target');button.removeAttribute('data-hotkey-target')})\n}\n\nfunction focusPromptCopyTarget(promptId){\n  var card=document.querySelector('[data-prompt-id=\"'+String(promptId||'').replace(/\"/g,'')+'\"]');\n  if(!card)return false;\n  var copyButton=card.querySelector('.prompt-copy-btn');\n  if(!copyButton)return false;\n  clearPromptCopyKeyboardTarget();\n  copyButton.classList.add('prompt-copy-keyboard-target');\n  copyButton.setAttribute('data-hotkey-target','true');\n  try{card.scrollIntoView({behavior:hotkeyScrollBehavior(),block:'center',inline:'nearest'})}catch(e){try{card.scrollIntoView()}catch(ignore){}}\n  try{copyButton.focus({preventScroll:true})}catch(e){copyButton.focus()}\n  copyButton.addEventListener('blur',function(){copyButton.classList.remove('prompt-copy-keyboard-target');copyButton.removeAttribute('data-hotkey-target')},{once:true});\n  return true\n}\n\nfunction revealPromptShortcutTarget(promptId){\n  activeCat='all';\n  activeSection=null;\n  clearTransientPromptFilters();\n  document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.dataset.cat==='all')});\n  document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__all__')});\n  render();\n  return focusPromptCopyTarget(promptId)\n}\n\nfunction activePromptIdForCopy(){\n  var overlay=document.getElementById('promptDetailOverlay');\n  if(overlay&&overlay.classList.contains('open')){\n    var detailId=document.querySelector('#promptDetail .pd-id');\n    var fromDetail=normalizePromptShortcutId(detailId&&detailId.textContent);\n    if(fromDetail)return fromDetail\n  }\n  var active=document.activeElement;\n  var card=active&&typeof active.closest==='function'?active.closest('[data-prompt-id]'):null;\n  return card&&card.dataset?normalizePromptShortcutId(card.dataset.promptId):null\n}\n\nfunction copyActivePrompt(){\n  var promptId=activePromptIdForCopy();\n  if(!promptId)return false;\n  copyPrompt(promptId);\n  return true\n}\n\nfunction activatePromptShortcutTarget(promptId){\n  var prompt=PROMPTS.find(function(item){return item.id===promptId});\n  if(!prompt)return false;\n  if(!isFavoritePrompt(promptId)){showToast(promptId+' is no longer a Favorite');return false}\n  if(!revealPromptShortcutTarget(promptId)){showToast(promptId+' could not be revealed');return false}\n  copyPrompt(promptId);\n  return true\n}\n")
+              "function clearPromptCopyKeyboardTarget(){\n  document.querySelectorAll('.prompt-copy-btn.prompt-copy-keyboard-target').forEach(function(button){button.classList.remove('prompt-copy-keyboard-target');button.removeAttribute('data-hotkey-target')})\n}\n\nfunction focusPromptCopyTarget(promptId){\n  var card=document.querySelector('[data-prompt-id=\"'+String(promptId||'').replace(/\"/g,'')+'\"]');\n  if(!card)return false;\n  var copyButton=card.querySelector('.prompt-copy-btn');\n  if(!copyButton)return false;\n  clearPromptCopyKeyboardTarget();\n  copyButton.classList.add('prompt-copy-keyboard-target');\n  copyButton.setAttribute('data-hotkey-target','true');\n  try{card.scrollIntoView({behavior:hotkeyScrollBehavior(),block:'center',inline:'nearest'})}catch(e){try{card.scrollIntoView()}catch(ignore){}}\n  try{copyButton.focus({preventScroll:true})}catch(e){copyButton.focus()}\n  copyButton.addEventListener('blur',function(){copyButton.classList.remove('prompt-copy-keyboard-target');copyButton.removeAttribute('data-hotkey-target')},{once:true});\n  return true\n}\n\nfunction revealPromptShortcutTarget(promptId){\n  activeCat='all';\n  activeSection=null;\n  clearTransientPromptFilters();\n  document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.dataset.cat==='all')});\n  document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__all__')});\n  render();\n  return focusPromptCopyTarget(promptId)\n}\n\nfunction activePromptIdForCopy(){\n  var overlay=document.getElementById('promptDetailOverlay');\n  if(overlay&&overlay.classList.contains('open')){\n    var detailId=document.querySelector('#promptDetail .pd-id');\n    var fromDetail=normalizePromptShortcutId(detailId&&detailId.textContent);\n    if(fromDetail)return fromDetail\n  }\n  var active=document.activeElement;\n  var card=active&&typeof active.closest==='function'?active.closest('[data-prompt-id]'):null;\n  return card&&card.dataset?normalizePromptShortcutId(card.dataset.promptId):null\n}\n\nfunction copyActivePrompt(){\n  var promptId=activePromptIdForCopy();\n  if(!promptId)return false;\n  copyPrompt(promptId);\n  return true\n}\n\nfunction activatePromptShortcutTarget(promptId){\n  var prompt=PROMPTS.find(function(item){return item.id===promptId});\n  if(!prompt)return false;\n  if(!isFavoritePrompt(promptId)){showToast(promptId+' is no longer a Favorite');return false}\n  if(!revealPromptShortcutTarget(promptId)){showToast(promptId+' could not be revealed');return false}\n  copyPrompt(promptId);\n  return true\n}\n"
+          )
           replace_exact(polish, "openPromptShortcutTarget(exact);return true", "activatePromptShortcutTarget(exact);return true", expected=2)
-          replace_exact(polish,
+          replace_exact(
+              polish,
               "    if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;\n    if(key==='1')",
-              "    if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;\n    if(key==='c'&&copyActivePrompt()){e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();return}\n    if(key==='1')")
-          replace_exact(polish,
+              "    if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;\n    if(key==='c'&&copyActivePrompt()){e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();return}\n    if(key==='1')"
+          )
+          replace_exact(
+              polish,
               "  card.setAttribute('aria-label',p.id+' '+p.name+'. Click or tap to copy. Double-click or press Enter to expand. Touch users may use Open.');",
-              "  card.setAttribute('aria-label',p.id+' '+p.name+'. Click or tap to copy. Double-click or press Enter to expand. Press C while this prompt is focused to copy. Touch users may use Open.');")
-          replace_exact(polish,
+              "  card.setAttribute('aria-label',p.id+' '+p.name+'. Click or tap to copy. Double-click or press Enter to expand. Press C while this prompt is focused to copy. Touch users may use Open.');"
+          )
+          replace_exact(
+              polish,
               "  copyBtn.setAttribute('aria-label','Copy '+p.id+' prompt');",
-              "  copyBtn.setAttribute('aria-label','Copy '+p.id+' prompt');\n  copyBtn.setAttribute('aria-keyshortcuts','Enter C');")
+              "  copyBtn.setAttribute('aria-label','Copy '+p.id+' prompt');\n  copyBtn.setAttribute('aria-keyshortcuts','Enter C');"
+          )
 
           base = 'docs/prompt-kit.js'
-          replace_exact(base,
+          replace_exact(
+              base,
               "var detailCopy=document.getElementById('promptDetailCopy');if(detailCopy){detailCopy.onclick=function(){copyPrompt(p.id);",
-              "var detailCopy=document.getElementById('promptDetailCopy');if(detailCopy){detailCopy.setAttribute('aria-keyshortcuts','C');detailCopy.onclick=function(){copyPrompt(p.id);")
+              "var detailCopy=document.getElementById('promptDetailCopy');if(detailCopy){detailCopy.setAttribute('aria-keyshortcuts','C');detailCopy.onclick=function(){copyPrompt(p.id);"
+          )
 
           prototype = 'docs/prompt-kit-hotkey-prototype.js'
-          for old, new in [
+          replacements = [
               ("constructor(reserved = ['`', 'f', '[', ']', '1', '4', '5'])", "constructor(reserved = ['`', 'c', 'f', '[', ']', '1', '4', '5'])"),
               ("if (binding.command !== 'OPEN_PROMPT') throw new HotkeyError('UNKNOWN_COMMAND', binding.command);", "if (binding.command !== 'COPY_PROMPT') throw new HotkeyError('UNKNOWN_COMMAND', binding.command);"),
               ("['`', {gesture: '`', command: 'HOTKEY_HELP_TOGGLE'}],", "['`', {gesture: '`', command: 'HOTKEY_HELP_TOGGLE'}],\n      ['c', {gesture: 'c', command: 'COPY_ACTIVE_PROMPT'}],"),
@@ -89,7 +113,8 @@ jobs:
               ("expectCode('UNKNOWN_PROMPT', () => program.registry.configure({gesture: 'p999', command: 'OPEN_PROMPT', promptId: 'P999'}));", "expectCode('UNKNOWN_PROMPT', () => program.registry.configure({gesture: 'p999', command: 'COPY_PROMPT', promptId: 'P999'}));"),
               ("expectCode('PERSISTENCE_FAILED', () => failing.registry.configure({gesture: 'p95', command: 'OPEN_PROMPT', promptId: 'P95'}));", "expectCode('PERSISTENCE_FAILED', () => failing.registry.configure({gesture: 'p95', command: 'COPY_PROMPT', promptId: 'P95'}));"),
               ("success_paths: ['HOTKEY_HELP_TOGGLE', 'FILTER_HIDE', 'FILTER_SHOW', 'FILTER_TOGGLE', 'OPEN_PROMPT(P95)', 'OPEN_PROMPT(P14)', 'VIEW_DOCTRINE']", "success_paths: ['HOTKEY_HELP_TOGGLE', 'FILTER_HIDE', 'FILTER_SHOW', 'FILTER_TOGGLE', 'COPY_REVEAL_PROMPT(P95)', 'COPY_ACTIVE_PROMPT(C)', 'ENTER_FOCUSED_COPY', 'COPY_REVEAL_PROMPT(P14)', 'VIEW_DOCTRINE']")
-          ]:
+          ]
+          for old, new in replacements:
               replace_exact(prototype, old, new)
 
           hotkey_test = 'tests/test_prompt_kit_hotkey_completion.py'
@@ -98,22 +123,20 @@ jobs:
           replace_exact(hotkey_test, 'self.assertTrue(any(item.get("promptId") == "P95" for item in proof["trace"]))', 'self.assertTrue(any(item.get("promptId") == "P95" for item in proof["trace"]))\n        self.assertTrue(any(item.get("event") == "prompt_copied_revealed_and_focused" for item in proof["trace"]))\n        self.assertTrue(any(item.get("event") == "active_prompt_copied" for item in proof["trace"]))\n        self.assertTrue(any(item.get("event") == "focused_copy_enter" for item in proof["trace"]))')
           replace_exact(hotkey_test, 'self.assertIn("opens canonical prompt detail immediately", design)', 'self.assertIn("copies the prompt automatically", design)\n        self.assertIn("centers the prompt card", design)\n        self.assertIn("focused Copy control", design)\n        self.assertIn("`C` copies", design)')
 
-          Path('tests/test_prompt_kit_favorite_invocation.py').write_text('''from __future__ import annotations\n\nimport unittest\nfrom pathlib import Path\n\nROOT = Path(__file__).resolve().parents[1]\nPOLISH = ROOT / "docs" / "prompt-kit-polish.js"\nBASE = ROOT / "docs" / "prompt-kit.js"\nDEPLOYED = ROOT / "web" / "prompt-kit" / "index.html"\nREADME = ROOT / "web" / "README.md"\nDESIGN = ROOT / "docs" / "PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md"\n\n\nclass PromptKitFavoriteInvocationTests(unittest.TestCase):\n    def test_typed_favorite_is_terminal_copy_reveal_focus_journey(self) -> None:\n        source = POLISH.read_text(encoding="utf-8")\n        for marker in (\n            "function activatePromptShortcutTarget(promptId)",\n            "if(!isFavoritePrompt(promptId))",\n            "revealPromptShortcutTarget(promptId)",\n            "copyPrompt(promptId)",\n            "card.scrollIntoView({behavior:hotkeyScrollBehavior(),block:'center',inline:'nearest'})",\n            "copyButton.classList.add('prompt-copy-keyboard-target')",\n            "copyButton.setAttribute('data-hotkey-target','true')",\n            "copyButton.focus({preventScroll:true})",\n            "copyBtn.setAttribute('aria-keyshortcuts','Enter C')",\n        ):\n            self.assertIn(marker, source)\n        self.assertNotIn("showPromptDetail(promptId,null)", source)\n\n    def test_c_copies_focused_card_or_open_detail_without_stealing_editable_typing(self) -> None:\n        source = POLISH.read_text(encoding="utf-8")\n        base = BASE.read_text(encoding="utf-8")\n        for marker in (\n            "{key:'C',label:'Copy focused / open prompt'}",\n            "function activePromptIdForCopy()",\n            "overlay&&overlay.classList.contains('open')",\n            "document.querySelector('#promptDetail .pd-id')",\n            "active.closest('[data-prompt-id]')",\n            "function copyActivePrompt()",\n            "if(key==='c'&&copyActivePrompt())",\n        ):\n            self.assertIn(marker, source)\n        self.assertLess(source.index("if(editable)return"), source.index("if(key==='c'&&copyActivePrompt())"))\n        self.assertIn("detailCopy.setAttribute('aria-keyshortcuts','C')", base)\n\n    def test_generated_site_contains_exact_favorite_invocation_runtime(self) -> None:\n        source = POLISH.read_text(encoding="utf-8")\n        deployed = DEPLOYED.read_text(encoding="utf-8")\n        start = source.index("function clearPromptCopyKeyboardTarget()")\n        end = source.index("\\n\\nfunction handleConfiguredPromptShortcutKey", start)\n        self.assertIn(source[start:end], deployed)\n        for marker in ("prompt-copy-keyboard-target", "Copy focused / open prompt", "aria-keyshortcuts','Enter C"):\n            self.assertIn(marker, deployed)\n\n    def test_human_contract_names_terminal_behavior_and_failure_boundary(self) -> None:\n        readme = README.read_text(encoding="utf-8")\n        design = DESIGN.read_text(encoding="utf-8")\n        for marker in ("automatically copies it", "scrolls that prompt card into view", "focuses and highlights its Copy control", "Press `C`", "Press **Enter** on that focused Copy control"):\n            self.assertIn(marker, readme)\n        for marker in ("copies the prompt automatically", "centers the prompt card", "focused Copy control", "`C` copies"):\n            self.assertIn(marker, design)\n\n\nif __name__ == "__main__":\n    unittest.main()\n''', encoding='utf-8', newline='\n')
+          favorite_test = '''from __future__ import annotations\n\nimport unittest\nfrom pathlib import Path\n\nROOT = Path(__file__).resolve().parents[1]\nPOLISH = ROOT / "docs" / "prompt-kit-polish.js"\nBASE = ROOT / "docs" / "prompt-kit.js"\nDEPLOYED = ROOT / "web" / "prompt-kit" / "index.html"\nREADME = ROOT / "web" / "README.md"\nDESIGN = ROOT / "docs" / "PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md"\n\n\nclass PromptKitFavoriteInvocationTests(unittest.TestCase):\n    def test_typed_favorite_is_terminal_copy_reveal_focus_journey(self) -> None:\n        source = POLISH.read_text(encoding="utf-8")\n        for marker in (\n            "function activatePromptShortcutTarget(promptId)",\n            "if(!isFavoritePrompt(promptId))",\n            "revealPromptShortcutTarget(promptId)",\n            "copyPrompt(promptId)",\n            "card.scrollIntoView({behavior:hotkeyScrollBehavior(),block:'center',inline:'nearest'})",\n            "copyButton.classList.add('prompt-copy-keyboard-target')",\n            "copyButton.setAttribute('data-hotkey-target','true')",\n            "copyButton.focus({preventScroll:true})",\n            "copyBtn.setAttribute('aria-keyshortcuts','Enter C')",\n        ):\n            self.assertIn(marker, source)\n        self.assertNotIn("showPromptDetail(promptId,null)", source)\n\n    def test_c_copies_focused_card_or_open_detail_without_stealing_editable_typing(self) -> None:\n        source = POLISH.read_text(encoding="utf-8")\n        base = BASE.read_text(encoding="utf-8")\n        for marker in (\n            "{key:'C',label:'Copy focused / open prompt'}",\n            "function activePromptIdForCopy()",\n            "overlay&&overlay.classList.contains('open')",\n            "document.querySelector('#promptDetail .pd-id')",\n            "active.closest('[data-prompt-id]')",\n            "function copyActivePrompt()",\n            "if(key==='c'&&copyActivePrompt())",\n        ):\n            self.assertIn(marker, source)\n        self.assertLess(source.index("if(editable)return"), source.index("if(key==='c'&&copyActivePrompt())"))\n        self.assertIn("detailCopy.setAttribute('aria-keyshortcuts','C')", base)\n\n    def test_generated_site_contains_exact_favorite_invocation_runtime(self) -> None:\n        source = POLISH.read_text(encoding="utf-8")\n        deployed = DEPLOYED.read_text(encoding="utf-8")\n        start = source.index("function clearPromptCopyKeyboardTarget()")\n        end = source.index("\\n\\nfunction handleConfiguredPromptShortcutKey", start)\n        self.assertIn(source[start:end], deployed)\n        for marker in ("prompt-copy-keyboard-target", "Copy focused / open prompt", "aria-keyshortcuts','Enter C"):\n            self.assertIn(marker, deployed)\n\n    def test_human_contract_names_terminal_behavior_and_failure_boundary(self) -> None:\n        readme = README.read_text(encoding="utf-8")\n        design = DESIGN.read_text(encoding="utf-8")\n        for marker in ("automatically copies it", "scrolls that prompt card into view", "focuses and highlights its Copy control", "Press `C`", "Press **Enter** on that focused Copy control"):\n            self.assertIn(marker, readme)\n        for marker in ("copies the prompt automatically", "centers the prompt card", "focused Copy control", "`C` copies"):\n            self.assertIn(marker, design)\n\n\nif __name__ == "__main__":\n    unittest.main()\n'''
+          Path('tests/test_prompt_kit_favorite_invocation.py').write_text(favorite_test, encoding='utf-8', newline='\n')
 
           design = 'docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md'
-          for old, new in [
-              ("`FILTER_HIDE`, `FILTER_SHOW`, `FILTER_TOGGLE`, or `OPEN_PROMPT`.", "`FILTER_HIDE`, `FILTER_SHOW`, `FILTER_TOGGLE`, `COPY_PROMPT`, or `COPY_ACTIVE_PROMPT`."),
-              ("**PromptNavigator**: port from PromptTarget to rendered prompt navigation/open behavior.", "**PromptNavigator**: port from PromptTarget to terminal copy + reveal + focus behavior."),
-              ("Public seam: `openPrompt(promptId)`.\n\nIt owns translation from PromptTarget to current Prompt Kit card/render behavior. The dispatcher supplies `P95`; the navigator decides how to reveal, focus, scroll, or open it through existing product functions.", "Public seam: `copyAndReveal(promptId)` plus active-prompt copy.\n\nIt owns translation from PromptTarget to the terminal favorite-shortcut journey. The dispatcher supplies `P95`; the navigator reveals the prompt in the canonical list, centers the prompt card, focuses and highlights its Copy control, and copies the prompt automatically. `C` copies the currently focused card or open prompt detail without creating a second selection model."),
-              ("Starting state: `P95` exists and `p95 → OPEN_PROMPT(P95)` is configured.", "Starting state: `P95` exists and `p95 → COPY_PROMPT(P95)` is configured."),
-              ("`5` → exact binding resolves → `PromptNavigator.openPrompt('P95')` → buffer clears → result/trace returns.", "`5` → exact binding resolves → prompt is made visible → its card is centered → Copy is highlighted/focused → clipboard copy is attempted → buffer clears → result/trace returns. The focused Copy control is a native button, so Enter repeats the copy. `C` copies the focused card or currently open detail panel."),
-              ("configure `f → OPEN_PROMPT(P95)`", "configure `f → COPY_PROMPT(P95)`"),
-              ("configure `p999 → OPEN_PROMPT(P999)`", "configure `p999 → COPY_PROMPT(P999)`"),
-              ("- success: hide, show, toggle, `OPEN_PROMPT(P95)`;", "- success: hide, show, toggle, `COPY_REVEAL_PROMPT(P95)`, `COPY_ACTIVE_PROMPT(C)`, and Enter on the focused Copy control;"),
-              ("- a completed prompt-ID shortcut opens canonical prompt detail immediately through `showPromptDetail`.", "- a completed prompt-ID shortcut copies the prompt automatically, resets transient filtering enough to reveal it, centers the prompt card, and leaves the native Copy control focused/highlighted so Enter repeats the copy.\n- `C` copies the focused prompt card or the currently open prompt detail; editable fields continue to suppress global hotkeys."),
-              ("canonical prompt-detail dispatch", "terminal copy/reveal/focus dispatch plus active/open-prompt `C` copy")
-          ]:
-              replace_exact(design, old, new)
+          replace_exact(design, "`FILTER_HIDE`, `FILTER_SHOW`, `FILTER_TOGGLE`, or `OPEN_PROMPT`.", "`FILTER_HIDE`, `FILTER_SHOW`, `FILTER_TOGGLE`, `COPY_PROMPT`, or `COPY_ACTIVE_PROMPT`.")
+          replace_exact(design, "**PromptNavigator**: port from PromptTarget to rendered prompt navigation/open behavior.", "**PromptNavigator**: port from PromptTarget to terminal copy + reveal + focus behavior.")
+          replace_exact(design, "Public seam: `openPrompt(promptId)`.\n\nIt owns translation from PromptTarget to current Prompt Kit card/render behavior. The dispatcher supplies `P95`; the navigator decides how to reveal, focus, scroll, or open it through existing product functions.", "Public seam: `copyAndReveal(promptId)` plus active-prompt copy.\n\nIt owns translation from PromptTarget to the terminal favorite-shortcut journey. The dispatcher supplies `P95`; the navigator reveals the prompt in the canonical list, centers the prompt card, focuses and highlights its Copy control, and copies the prompt automatically. `C` copies the currently focused card or open prompt detail without creating a second selection model.")
+          replace_exact(design, "Starting state: `P95` exists and `p95 → OPEN_PROMPT(P95)` is configured.", "Starting state: `P95` exists and `p95 → COPY_PROMPT(P95)` is configured.")
+          replace_exact(design, "`5` → exact binding resolves → `PromptNavigator.openPrompt('P95')` → buffer clears → result/trace returns.", "`5` → exact binding resolves → prompt is made visible → its card is centered → Copy is highlighted/focused → clipboard copy is attempted → buffer clears → result/trace returns. The focused Copy control is a native button, so Enter repeats the copy. `C` copies the focused card or currently open detail panel.")
+          replace_exact(design, "configure `f → OPEN_PROMPT(P95)`", "configure `f → COPY_PROMPT(P95)`")
+          replace_known_legacy_count(design, "configure `p999 → OPEN_PROMPT(P999)`", "configure `p999 → COPY_PROMPT(P999)`")
+          replace_exact(design, "- success: hide, show, toggle, `OPEN_PROMPT(P95)`;", "- success: hide, show, toggle, `COPY_REVEAL_PROMPT(P95)`, `COPY_ACTIVE_PROMPT(C)`, and Enter on the focused Copy control;")
+          replace_exact(design, "- a completed prompt-ID shortcut opens canonical prompt detail immediately through `showPromptDetail`.", "- a completed prompt-ID shortcut copies the prompt automatically, resets transient filtering enough to reveal it, centers the prompt card, and leaves the native Copy control focused/highlighted so Enter repeats the copy.\n- `C` copies the focused prompt card or the currently open prompt detail; editable fields continue to suppress global hotkeys.")
+          replace_exact(design, "canonical prompt-detail dispatch", "terminal copy/reveal/focus dispatch plus active/open-prompt `C` copy")
 
           readme = 'web/README.md'
           replace_exact(readme, "| `/` | Focus search |\n| `1` | All prompts |", "| `/` | Focus search |\n| `C` | Copy the focused prompt card or currently open prompt detail |\n| `1` | All prompts |")
@@ -142,17 +165,16 @@ jobs:
           python tests/test_prompt_kit_header_contract.py
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
-      - name: Commit durable repair and remove executor
+      - name: Commit non-workflow durable product slice
         shell: bash
         run: |
-          rm .github/workflows/tmp-favorite-invocation-focus-executor.yml
+          git checkout -- .github/workflows/prompt-kit-web.yml
           git diff --check
           git status --short
           git diff --stat
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
-            .github/workflows/prompt-kit-web.yml \
             docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md \
             docs/prompt-kit-hotkey-prototype.js \
             docs/prompt-kit-polish.js \
@@ -160,7 +182,6 @@ jobs:
             tests/test_prompt_kit_hotkey_completion.py \
             tests/test_prompt_kit_favorite_invocation.py \
             web/README.md \
-            web/prompt-kit/index.html \
-            .github/workflows/tmp-favorite-invocation-focus-executor.yml
+            web/prompt-kit/index.html
           git commit -m "fix(prompt-kit): make favorite shortcuts copy and reveal"
           git push origin HEAD:fix/prompt-kit-favorite-invocation-focus-20260823
