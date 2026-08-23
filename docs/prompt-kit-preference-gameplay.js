@@ -33,6 +33,7 @@ function saveState(){try{if(root.localStorage)root.localStorage.setItem(STORAGE_
 function promptById(id){return(root.PROMPTS||[]).find(function(prompt){return prompt.id===id})}
 function recordSuccessfulCopy(id,now){
   if(!promptById(id))return false;
+  state=loadState();
   var current=state.byPrompt[id]||{count:0,lastCopiedAt:null};
   current.count+=1;
   current.lastCopiedAt=now||new Date().toISOString();
@@ -94,7 +95,8 @@ var previousCopyPrompt=root.copyPrompt;
 root.copyPrompt=function(id){
   var prompt=promptById(id);
   if(!prompt||!prompt.copyContent)return previousCopyPrompt?previousCopyPrompt(id):undefined;
-  root.copyToClipboard(prompt.copyContent,function(){recordSuccessfulCopy(id);root.showCopyConfirmation(id)})
+  var recorded=false;
+  root.copyToClipboard(prompt.copyContent,function(){if(recorded)return;recorded=true;recordSuccessfulCopy(id);root.showCopyConfirmation(id)})
 };
 root.PromptKitPreferenceGameplay={schema:SCHEMA,storage_key:STORAGE_KEY,recordSuccessfulCopy:recordSuccessfulCopy,getState:function(){return JSON.parse(JSON.stringify(state))},getLevel:level,render:renderDashboard,open:function(){setOpen(true)}};
 initializeDashboard()
