@@ -1,0 +1,127 @@
+name: Temporary Prompt Kit Core Numeric View Owner
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-favorite-gameplay-20260822
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-core-numeric-view-owner-20260822
+  cancel-in-progress: true
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-favorite-gameplay-20260822
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Make base runtime own numeric views and repair contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p=Path(path); text=p.read_text(encoding='utf-8'); count=text.count(old)
+              if count != 1:
+                  raise RuntimeError(f'{path}: expected one anchor, found {count}: {old[:100]!r}')
+              p.write_text(text.replace(old,new,1),encoding='utf-8')
+
+          js=Path('docs/prompt-kit.js')
+          text=js.read_text(encoding='utf-8')
+          reset="function resetPromptKitView(){activeCat='all';activeSection=null;activeType=null;activeColor=null;activeProfile=null;collapsedSections={};var search=document.getElementById('search');if(search)search.value='';var clear=document.getElementById('searchClear');if(clear)clear.style.display='none';promptDetailOrigin=null;closePromptDetail(false);closeRef();var detail=document.getElementById('doctrineDetail');if(detail)detail.classList.remove('active');var list=document.getElementById('doctrineList');if(list)list.style.display='grid';syncLibraryTabs();renderSections();renderTypes();render();try{window.scrollTo({top:0,behavior:'smooth'})}catch(e){window.scrollTo(0,0)}showToast('Returned to all prompts')}"
+          owner=reset+"\nfunction activatePromptKitView(view){activeCat='all';activeSection=null;activeType=null;activeColor=null;activeProfile=null;if(view==='standard')activeCat='standard';else if(view==='favorites')activeSection='__favorites__';else if(view==='triage')activeProfile='triage-management';else if(view==='fun')activeProfile='fun-management';else if(view!=='all')return false;var search=document.getElementById('search');if(search)search.value='';var clear=document.getElementById('searchClear');if(clear)clear.style.display='none';document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.dataset.view===view||(view==='all'&&button.dataset.cat==='all')||(view==='standard'&&button.dataset.cat==='standard'))});renderSections();renderTypes();render();return true}"
+          if 'function activatePromptKitView(view)' not in text:
+              if text.count(reset)!=1: raise RuntimeError('reset anchor mismatch')
+              text=text.replace(reset,owner,1)
+          click_old="var ct=e.target.closest('.cat-tab[data-cat]');if(ct){activeProfile=null;activeCat=ct.dataset.cat;"
+          click_new="var view=e.target.closest('.cat-tab[data-view]');if(view){e.preventDefault();activatePromptKitView(view.dataset.view);return}var ct=e.target.closest('.cat-tab[data-cat]');if(ct){activeProfile=null;activeSection=null;activeCat=ct.dataset.cat;"
+          if click_new not in text:
+              if text.count(click_old)!=1: raise RuntimeError('click anchor mismatch')
+              text=text.replace(click_old,click_new,1)
+          key_old="document.addEventListener('keydown',function(e){if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;switch(e.key){case'1':activeProfile=null;activeCat='all';break;case'2':activeProfile=null;activeCat='standard';break;case'r':"
+          key_new="document.addEventListener('keydown',function(e){if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;if(e.key>='1'&&e.key<='5'){var views={'1':'all','2':'standard','3':'favorites','4':'triage','5':'fun'};if(activatePromptKitView(views[e.key])){e.preventDefault();return}}switch(e.key){case'r':"
+          if key_new not in text:
+              if text.count(key_old)!=1: raise RuntimeError('key anchor mismatch')
+              text=text.replace(key_old,key_new,1)
+          js.write_text(text,encoding='utf-8')
+
+          # P99 acceptance must reflect the actual runtime ordering.
+          p=Path('registry/prompts/spec-architecture-prompts.v1.json')
+          data=json.loads(p.read_text(encoding='utf-8'))
+          changed=0
+          for prompt in data.get('prompts',[]):
+              if prompt.get('id')!='P99': continue
+              old='Prove favorite shortcut -> successful clipboard write -> normal success toast -> exactly one semantic usage event -> live dashboard refresh.'
+              new='Prove favorite shortcut -> successful clipboard write -> exactly one semantic usage event -> live dashboard refresh -> normal success toast.'
+              content=prompt.get('copyContent','')
+              if old in content:
+                  prompt['copyContent']=content.replace(old,new,1); changed+=1
+          if changed!=1: raise RuntimeError(f'P99 runtime acceptance replacement count={changed}')
+          p.write_text(json.dumps(data,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
+
+          # Configured favorite sequences terminate in canonical copy, not detail-open.
+          readme=Path('web/README.md'); r=readme.read_text(encoding='utf-8')
+          candidates=[
+              'A valid configured sequence opens the prompt detail view.',
+              'A valid configured sequence opens prompt detail.',
+              'a valid configured sequence opens prompt detail',
+          ]
+          replaced=False
+          for old in candidates:
+              if old in r:
+                  replacement='A valid configured sequence copies the canonical prompt content and shows the standard clipboard feedback.' if old[0].isupper() else 'a valid configured sequence copies the canonical prompt content and shows the standard clipboard feedback'
+                  r=r.replace(old,replacement,1); replaced=True; break
+          if not replaced:
+              # Fail closed if the wording drifted; print nearby candidate lines for diagnosis without content secrets.
+              lines=[line for line in r.splitlines() if 'configured' in line.lower() and 'sequence' in line.lower()]
+              raise RuntimeError('README configured-sequence wording anchor missing: '+repr(lines[:3]))
+          readme.write_text(r,encoding='utf-8')
+
+          # Regression: the base builder/runtime must own data-view behavior without polish.
+          t=Path('tests/test_prompt_kit_header_contract.py'); s=t.read_text(encoding='utf-8')
+          anchor="    assert \"activateProfilePromptsView('fun-management','fun')\" in polish\n"
+          addition=(
+              "    assert \"function activatePromptKitView(view)\" in js\n"
+              "    assert \"var view=e.target.closest('.cat-tab[data-view]')\" in js\n"
+              "    assert \"'3':'favorites','4':'triage','5':'fun'\" in js\n"
+          )
+          if addition not in s:
+              if s.count(anchor)!=1: raise RuntimeError('header test anchor mismatch')
+              s=s.replace(anchor,anchor+addition,1)
+          t.write_text(s,encoding='utf-8')
+          PY
+
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          node --check docs/prompt-kit.js
+          node --check docs/prompt-kit-polish.js
+          python -m unittest \
+            tests.test_prompt_kit_hotkey_completion \
+            tests.test_prompt_kit_favorite_gameplay \
+            tests.test_prompt_kit_order_navigation_product \
+            tests.test_prompt_kit_product_interactions \
+            tests.test_management_operations_prompt_registry \
+            tests.test_spec_architecture_prompt_registry -v
+          python tests/test_prompt_kit_header_contract.py
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          git add docs/prompt-kit.js registry/prompts/spec-architecture-prompts.v1.json web/README.md tests/test_prompt_kit_header_contract.py web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'fix(prompt-kit): centralize numeric view filtering'
+          git push origin HEAD:feat/prompt-kit-favorite-gameplay-20260822
