@@ -91,3 +91,77 @@ jobs:
           path.write_text(text, encoding='utf-8')
           PY
           python .prompt-contrib/canonical_path_repair.py
+
+  hierarchical-filter-convergence:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feat/prompt-kit-hierarchical-filters-20260823'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-hierarchical-filters-20260823
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Refresh and reconcile current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/prompt-kit-hierarchical-filters-20260823 --prune
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/feat/prompt-kit-hierarchical-filters-20260823)"
+          echo "feature_pre=$(git rev-parse HEAD)"
+          echo "main=$(git rev-parse origin/main)"
+          git merge --no-edit origin/main
+
+      - name: Restrict hierarchy patch to owned product files
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.prompt-contrib/hierarchical_filter_patch.py')
+          text = path.read_text(encoding='utf-8')
+
+          anchor = 'test = test.replace("self.assertIn(\\"aria-label\x27,\x27Prompt types\\", js)", "self.assertIn(\\"aria-label\x27,\x27Prompt subcategories\\", js)")'
+          label_patch = 'test = test.replace(\x27        self.assertIn("All Types", js)\\n\x27, \x27        self.assertIn("All Subcategories", js)\\n\x27)'
+          if label_patch not in text:
+              if anchor not in text:
+                  raise SystemExit('hierarchical filter label-repair anchor missing')
+              text = text.replace(anchor, label_patch + '\n' + anchor, 1)
+
+          cleanup_old = '''if WORKFLOW.exists():\n    run("git", "rm", str(WORKFLOW.relative_to(ROOT)))\nrun("git", "rm", str(SELF.relative_to(ROOT)))'''
+          cleanup_new = '''for relative in (\n    ".github/workflows/prompt-kit-hierarchical-filter-repair.yml",\n    ".prompt-contrib/hierarchical_filter_patch.py",\n    ".prompt-contrib/hierarchical_filter_search_suppression.yml",\n    ".prompt-contrib/hierarchical_filter_trigger.txt",\n):\n    candidate = ROOT / relative\n    if candidate.exists():\n        run("git", "rm", relative)'''
+          if cleanup_new not in text:
+              if cleanup_old not in text:
+                  raise SystemExit('hierarchy transport-cleanup anchor missing')
+              text = text.replace(cleanup_old, cleanup_new, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Execute hierarchy repair with owning proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .prompt-contrib/hierarchical_filter_patch.py
+
+      - name: Verify pushed product state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main feat/prompt-kit-hierarchical-filters-20260823 --prune
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/feat/prompt-kit-hierarchical-filters-20260823)"
+          expected="docs/prompt-kit.js
+harness/contracts/prompt-kit-filtering.v1.json
+tests/test_prompt_kit_filtering_access.py
+web/prompt-kit/index.html"
+          actual="$(git diff --name-only origin/main...HEAD | sort)"
+          printf '%s\n' "$actual"
+          test "$actual" = "$expected"
+          git diff --check origin/main...HEAD
