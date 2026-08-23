@@ -1,0 +1,82 @@
+name: Temporary P07 parallel capacity repair
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.event.pull_request.head.ref == 'feat/p07-parallel-subagent-orchestration-20260823'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p07-parallel-subagent-orchestration-20260823
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Refresh exact floor
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main --prune --tags
+          test "$(git rev-parse origin/main)" = "df68536c8d6ebd8d6f66136f6ad9c71627f2b96c"
+      - name: Repair parallel capacity semantics
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('docs/prompts.json')
+          payload = json.loads(path.read_text(encoding='utf-8'))
+          p07 = next(p for p in payload if p.get('id') == 'P07')
+
+          old_copy = "When the execution environment exposes a sub-agent, child-agent, delegated-agent, or equivalent parallel-worker mechanism AND at least two meaningful lanes can proceed independently without a hard dependency or conflicting writes, you MUST dispatch those lanes concurrently. Parallelism is mandatory in that condition, not an optional optimization."
+          new_copy = "When the execution environment exposes a sub-agent, child-agent, delegated-agent, or equivalent parallel-worker mechanism, sufficient current parallel worker capacity exists to run at least two lanes concurrently, AND at least two meaningful lanes can proceed independently without a hard dependency or conflicting writes, you MUST dispatch those lanes concurrently. Parallelism is mandatory in that condition, not an optional optimization."
+          if p07['copyContent'].count(old_copy) != 1:
+              raise SystemExit('P07 mandatory parallel condition drifted')
+          p07['copyContent'] = p07['copyContent'].replace(old_copy, new_copy, 1)
+
+          anchor = "- Do not serialize safe independent agent-capable work merely because the coordinator could perform every task alone."
+          capacity_rule = "- Treat worker capacity as part of capability preflight. If the mechanism exists but fewer than two concurrent worker slots are currently available, record `parallel capacity unavailable` as the exact serial exception and proceed on the best safe serial lane rather than retrying impossible fan-out.\n"
+          if p07['copyContent'].count(anchor) != 1:
+              raise SystemExit('P07 serial exception anchor drifted')
+          p07['copyContent'] = p07['copyContent'].replace(anchor, capacity_rule + anchor, 1)
+
+          old_gate = "when a supported sub-agent mechanism and at least two meaningful independent lanes exist, those lanes are dispatched concurrently unless"
+          new_gate = "when a supported sub-agent mechanism, sufficient current parallel worker capacity, and at least two meaningful independent lanes exist, those lanes are dispatched concurrently unless"
+          if p07['proofGate'].count(old_gate) != 1:
+              raise SystemExit('P07 parallel proof gate drifted')
+          p07['proofGate'] = p07['proofGate'].replace(old_gate, new_gate, 1)
+
+          path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+          python scripts/build_prompt_kit_registry.py
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --check
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p07 = next(p for p in json.loads(Path('docs/prompts.json').read_text(encoding='utf-8')) if p.get('id') == 'P07')
+          assert 'sufficient current parallel worker capacity exists to run at least two lanes concurrently' in p07['copyContent']
+          assert '`parallel capacity unavailable`' in p07['copyContent']
+          assert 'sufficient current parallel worker capacity' in p07['proofGate']
+          assert 'PARALLEL SUB-AGENT EXECUTION CONTRACT' in Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
+          PY
+          git diff --check
+      - name: Remove transport and push durable repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/tmp-p07-parallel-capacity-repair.yml
+          git add -A
+          git diff --cached --check
+          git commit -m "fix(prompt-kit): gate P07 fan-out on worker capacity"
+          git push origin HEAD:feat/p07-parallel-subagent-orchestration-20260823
