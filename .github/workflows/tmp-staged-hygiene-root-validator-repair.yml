@@ -1,0 +1,62 @@
+name: Temporary staged hygiene root-validator repair
+
+on:
+  push:
+    branches:
+      - harness/local-hook-artifact-hygiene-20260806
+    paths:
+      - .github/workflows/tmp-staged-hygiene-root-validator-repair.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Refresh and verify branch floor
+        run: |
+          set -euo pipefail
+          git fetch --all --prune --tags
+          test "$(git branch --show-current)" = "harness/local-hook-artifact-hygiene-20260806"
+          git merge-base --is-ancestor origin/main HEAD
+      - name: Patch canonical validator owner
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('scripts/validate_harness.py')
+          source = path.read_text(encoding='utf-8')
+          old = '    "prompt-kit-parity",\n    "artifact-hygiene",\n'
+          new = '    "prompt-kit-parity",\n    "staged-artifact-hygiene",\n    "artifact-hygiene",\n'
+          count = source.count(old)
+          if count != 1:
+              raise RuntimeError(f'expected one REQUIRED_VALIDATOR_IDS anchor, found {count}')
+          path.write_text(source.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Validate repaired harness
+        run: |
+          set -euo pipefail
+          python -m py_compile scripts/validate_harness.py scripts/validate_staged_artifacts.py triage/artifact_hygiene_policy.py triage/gitignore_hygiene.py tests/test_staged_artifact_hygiene.py
+          python scripts/validate_harness.py --report "$RUNNER_TEMP/harness-completeness-report.json"
+          python -m unittest tests.test_harness_contract tests.test_staged_artifact_hygiene -v
+          python -m triage.gitignore_hygiene
+          git diff --check
+      - name: Commit durable repair and remove executor
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/tmp-staged-hygiene-root-validator-repair.yml
+          git add scripts/validate_harness.py
+          unexpected="$(git diff --cached --name-only | grep -v -E '^(scripts/validate_harness.py|\.github/workflows/tmp-staged-hygiene-root-validator-repair.yml)$' || true)"
+          test -z "$unexpected"
+          git diff --cached --check
+          git commit -m "fix(harness): register staged validator in root contract"
+          git push origin HEAD:harness/local-hook-artifact-hygiene-20260806
