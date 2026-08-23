@@ -21,12 +21,27 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Replay validated bounded repair on current main
+      - name: Replay search targeting and hierarchical filters on current main
         shell: bash
         run: |
           set -euo pipefail
           git fetch origin feat/prompt-kit-hierarchical-filters-20260823
           mkdir -p .prompt-contrib
+
+          git show origin/feat/prompt-kit-hierarchical-filters-20260823:.prompt-contrib/search_filter_suppression_patch.py > .prompt-contrib/search_filter_suppression_patch.py
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.prompt-contrib/search_filter_suppression_patch.py')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace(
+              'run("git", "rm", str(SELF.relative_to(ROOT)))',
+              'SELF.unlink()',
+          )
+          path.write_text(text, encoding='utf-8')
+          PY
+          python .prompt-contrib/search_filter_suppression_patch.py
+
           git show origin/feat/prompt-kit-hierarchical-filters-20260823:.prompt-contrib/hierarchical_filter_patch.py > .prompt-contrib/hierarchical_filter_patch.py
           python - <<'PY'
           from pathlib import Path
@@ -56,6 +71,44 @@ jobs:
           path.write_text(text, encoding='utf-8')
           PY
           python .prompt-contrib/hierarchical_filter_patch.py
+
+      - name: Deliberate second-pass combined-search critique
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          js = Path('docs/prompt-kit.js').read_text(encoding='utf-8')
+          contract = json.loads(Path('harness/contracts/prompt-kit-filtering.v1.json').read_text(encoding='utf-8'))
+          test = Path('tests/test_prompt_kit_filtering_access.py').read_text(encoding='utf-8')
+          required = (
+              "function syncSearchTargetedFilterPanel()",
+              "header.classList.toggle('search-targeted',targeted)",
+              "if(!q){",
+              "if(activeCat==='doctrine'&&!q)",
+              "function typeFilterScopePrompts(prompts,cat,section)",
+              "Select a category above to browse subcategories.",
+          )
+          missing = [item for item in required if item not in js]
+          ids = {item['id'] for item in contract['requirements']}
+          if missing:
+              raise SystemExit('combined search/filter JS gap: ' + repr(missing))
+          for required_id in ('search_targeting_suppresses_filters', 'progressive_type_disclosure'):
+              if required_id not in ids:
+                  raise SystemExit('missing filtering contract requirement: ' + required_id)
+          if 'test_search_temporarily_owns_targeting_and_hides_filter_panel' not in test:
+              raise SystemExit('missing focused search-targeting regression')
+          if 'test_type_subcategories_are_progressively_scoped_by_category' not in test:
+              raise SystemExit('missing focused hierarchy regression')
+          print('combined search/filter second-pass critique: PASS')
+          PY
+          node --check docs/prompt-kit.js
+          python -m unittest tests.test_prompt_kit_filtering_access -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
 
       - name: Export exact validated durable files
         uses: actions/upload-artifact@v4
