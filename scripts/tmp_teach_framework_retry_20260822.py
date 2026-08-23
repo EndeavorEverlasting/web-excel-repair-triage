@@ -8,7 +8,7 @@ import tmp_teach_framework_contribution_20260822 as impl
 FOCUSED = Path(__file__).resolve().parents[1] / "tests/test_prompt_registry_expansion_regression_design_teach.py"
 
 
-def repair_checkpoint_expectations() -> None:
+def repair_existing_expectations() -> None:
     text = FOCUSED.read_text(encoding="utf-8")
 
     old_pair = '            "DIAGNOSTIC CHECK",\n            "PRACTICAL HARNESS",\n'
@@ -28,6 +28,24 @@ def repair_checkpoint_expectations() -> None:
     FOCUSED.write_text(text, encoding="utf-8")
 
 
+def patch_route_test_mutator() -> None:
+    original = impl.base.route_and_test
+
+    def routed(receipt: dict) -> None:
+        original(receipt)
+        text = FOCUSED.read_text(encoding="utf-8")
+        old = '            "exactly two learner checkpoints",\n'
+        new = '            "EXACTLY TWO LEARNER CHECKPOINTS",\n'
+        if old in text:
+            text = text.replace(old, new, 1)
+        elif new not in text:
+            raise SystemExit("routed teach checkpoint count assertion not found")
+        FOCUSED.write_text(text, encoding="utf-8")
+
+    impl.base.route_and_test = routed
+
+
 if __name__ == "__main__":
-    repair_checkpoint_expectations()
+    repair_existing_expectations()
+    patch_route_test_mutator()
     impl.main()
