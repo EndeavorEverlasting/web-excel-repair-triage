@@ -145,20 +145,19 @@ class HookAndRegistrySafetyTests(unittest.TestCase):
         self.assertIn(checkout, hook)
         self.assertLess(hook.index(gate), hook.index(checkout))
 
-    def test_pre_commit_profile_registers_the_staged_gate(self) -> None:
+    def test_pre_commit_profile_routes_through_canonical_staged_gate(self) -> None:
         registry = json.loads(
             (ROOT / "harness" / "validators.v1.json").read_text(encoding="utf-8")
         )
         validators = {item["id"]: item for item in registry["validators"]}
+        staged = validators["patch-hygiene-staged"]
         self.assertEqual(
-            validators["staged-artifact-hygiene"]["command"],
-            "python scripts/validate_staged_artifacts.py",
+            staged["command"],
+            "python scripts/validate_staged_artifacts.py && git diff --cached --check",
         )
-        self.assertTrue(validators["staged-artifact-hygiene"]["blocking"])
-        self.assertIn(
-            "staged-artifact-hygiene",
-            registry["profiles"]["pre_commit"],
-        )
+        self.assertTrue(staged["blocking"])
+        self.assertIn("patch-hygiene-staged", registry["profiles"]["pre_commit"])
+        self.assertIn("validate_staged_artifacts.py", staged["command"])
 
     def test_validator_never_reads_staged_file_contents(self) -> None:
         validator = VALIDATOR.read_text(encoding="utf-8").lower()
