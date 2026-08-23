@@ -92,7 +92,10 @@ if test_marker not in text:
         self.assertTrue({"P68", "P100", "P101"}.issubset(ai_ids))
         spec = load_json("registry/prompts/spec-architecture-prompts.v1.json")
         spec_ids = {item["id"] for item in spec["prompts"]}
-        self.assertTrue({"P48", "P76"}.issubset(spec_ids))
+        self.assertIn("P76", spec_ids)
+        base = load_json("docs/prompts.json")
+        base_ids = {item["id"] for item in base}
+        self.assertIn("P48", base_ids)
         ledger = load_json("registry/prompts/repository-work-ledger-prompts.v1.json")
         ledger_ids = {item["id"] for item in ledger["prompts"]}
         self.assertIn("P83", ledger_ids)
