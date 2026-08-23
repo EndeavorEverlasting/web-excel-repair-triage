@@ -1,3 +1,2 @@
-Trigger P68 continuous convergence hardening on refreshed main.
-Retrigger after workflow registration.
-Retrigger through registered Artifact engine tests bridge.
+Superseded transport branch. Durable P68 hardening landed on main at 20e249c105c3237e85c09d26d368a155359ab06f.
+Do not merge this marker-only branch.
