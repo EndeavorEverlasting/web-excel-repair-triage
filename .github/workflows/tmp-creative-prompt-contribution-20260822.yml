@@ -6,6 +6,7 @@ on:
       - feat/prompt-kit-creative-workflows-p79-20260822
     paths:
       - scripts/tmp_prepare_creative_prompts_20260822.py
+      - scripts/tmp_repair_creative_prompt_prepare_20260822.py
       - .github/workflows/tmp-creative-prompt-contribution-20260822.yml
   pull_request:
     branches:
@@ -38,7 +39,11 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git merge --no-edit origin/main
       - name: Strengthen owners and prepare semantic drafts
-        run: python scripts/tmp_prepare_creative_prompts_20260822.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/tmp_prepare_creative_prompts_20260822.py
+          python scripts/tmp_repair_creative_prompt_prepare_20260822.py
       - name: Add genuinely missing prompts through canonical helper
         shell: bash
         run: |
