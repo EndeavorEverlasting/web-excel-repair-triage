@@ -208,10 +208,37 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("USE FEEDBACK WITHOUT TURNING THE USER INTO THE TEST RUNNER", content)
         self.assertIn("REMOVE PROTOTYPE DEBT BEFORE FINAL", content)
         self.assertIn("FINAL PROOF IS STRICTER THAN PROTOTYPE PROOF", content)
+        self.assertIn("WHEN USER FLOW IS THE UNKNOWN", content)
+        self.assertIn("terminal user value", content)
+        self.assertIn("semantic completion events", content)
+        self.assertIn("must not erase an active query", content)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+
+    def test_flow_friction_prompt_owns_terminal_actions_and_preference_telemetry(self) -> None:
+        prompt = self.full["P99"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["name"], "User-Flow Friction & Preference Telemetry Refiner")
+        self.assertEqual(prompt["class"], "PRODUCT / UX FLOW + TELEMETRY")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        for phrase in (
+            "DEFINE THE TERMINAL USER VALUE",
+            "PRESERVE ORTHOGONAL STATE",
+            "COLLAPSE REDUNDANT INTERMEDIATE STEPS",
+            "UNIFY ENTRYPOINTS ON SEMANTIC ACTIONS",
+            "INSTRUMENT SEMANTIC USAGE, NOT NOISE",
+            "DERIVE THE DASHBOARD FROM EVENTS",
+            "active search -> unrelated filter show/hide/toggle",
+            "favorite shortcut -> terminal action occurs once",
+            "duplicate event dispatch does not double-count one completion",
+        ):
+            self.assertIn(phrase, content)
+        self.assertNotEqual(prompt["id"], "P82")
+        self.assertNotEqual(prompt["id"], "P94")
+        self.assertNotEqual(prompt["id"], "P95")
         self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
 
     def test_new_source_prompts_are_intentionally_bounded(self) -> None:
-        for prompt_id in ("P78", "P79", "P80", "P81", "P82"):
+        for prompt_id in ("P78", "P79", "P80", "P81", "P82", "P99"):
             content = self.raw[prompt_id]["copyContent"]
             self.assertLess(len(content), 8000)
             self.assertGreater(len(content), 1800)
@@ -238,6 +265,7 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("Client Prompt Pack & Local Profile Builder", html)
         self.assertIn("Multi-Tier Cache Architecture & Invalidation Hardener", html)
         self.assertIn("Prototype-Measure-Refine Delivery Loop", html)
+        self.assertIn("User-Flow Friction & Preference Telemetry Refiner", html)
 
     def test_prompt_semantic_hardener_selectively_integrates_stronger_principles(self) -> None:
         matches = [
