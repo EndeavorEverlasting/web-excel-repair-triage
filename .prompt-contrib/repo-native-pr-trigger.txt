@@ -1,1 +1,1 @@
-trigger repo-native prompt contribution 2026-08-23 v3
+trigger repo-native prompt contribution 2026-08-23 v4
