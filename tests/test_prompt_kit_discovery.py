@@ -259,6 +259,37 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         self.assertIn("prompt-kit-journey-styles", deployed)
         self.assertIn("prompt-card-actions", deployed)
 
+    def test_tutorial_presents_one_find_use_prove_continue_experience(self) -> None:
+        guided = GUIDED_JS.read_text(encoding="utf-8")
+        journey = JOURNEY_JS.read_text(encoding="utf-8")
+        # The questionnaire results frame the path as one four-phase experience.
+        for marker in (
+            "Find → Use → Prove → Continue",
+            "phaseRailHtml",
+            "primaryPhaseBody",
+            "finder-phase-rail",
+            "finder-phase-block",
+            "Phase 1 · Found",
+            "Phase 2 · Use",
+            "Phase 3 · Prove",
+            "Phase 4 · Continue",
+        ):
+            self.assertIn(marker, guided)
+        # The prompt-detail journey panel carries the same four-phase rail and
+        # marks Find as complete (activePhase=1) so the user sees continuity.
+        for marker in (
+            "guidePhaseRailHtml",
+            "guide-phase-rail",
+            "Find → Use → Prove → Continue",
+            "Phase 2 · Use this prompt",
+            "PHASE 3 · PROVE",
+            "PHASE 4 · CONTINUE",
+        ):
+            self.assertIn(marker, journey)
+        # The finder-results inline phase body must suppress the legacy
+        # duplicate preview so the user sees one path, not two.
+        self.assertIn("finder-phase-rail", journey)
+
 
 if __name__ == "__main__":
     unittest.main()
