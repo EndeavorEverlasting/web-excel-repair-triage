@@ -79,6 +79,31 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
         self.assertIn("genuinely user-only dependency", prompt["proofGate"])
         self.assertIn("branch or PR alone is insufficient", prompt["proofGate"])
 
+    def test_p07_coerces_safe_parallel_subagents_and_rejoins(self) -> None:
+        prompt = self.raw["P07"]
+        content = prompt["copyContent"]
+        self.assertEqual("BUILD", prompt["type"])
+        self.assertEqual("PLAN", self.raw["P04"]["type"])
+        self.assertIn("[PARALLEL]", self.raw["P04"]["name"])
+        self.assertIn("parallel-safe sub-agent orchestration", prompt["sprintRole"])
+        self.assertIn("parallel sub-agents", prompt["expectedOutput"])
+        self.assertIn("dispatch safe parallel sub-agents", prompt["nextStep"])
+        self.assertIn("Parallel-execution proof requires", prompt["proofGate"])
+        for phrase in (
+            "PARALLEL SUB-AGENT EXECUTION CONTRACT",
+            "If a P04/P05 factoring or launch map exists",
+            "you MUST dispatch those lanes concurrently",
+            "Parallelism is mandatory in that condition",
+            "one writer per mutation surface",
+            "The coordinator owns synthesis and integration",
+            "treat sub-agent completion claims as hypotheses",
+            "Do not idle while sub-agents are running",
+            "continue independent safe lanes",
+            "Do not make the user manually create chats",
+            "parallelization disposition",
+        ):
+            self.assertIn(phrase, content)
+
     def test_effective_prompts_keep_shared_actionability_policy(self) -> None:
         policy = build_prompt_kit_registry.load_actionability_policy()
         for prompt_id in ("P02", "P07"):
