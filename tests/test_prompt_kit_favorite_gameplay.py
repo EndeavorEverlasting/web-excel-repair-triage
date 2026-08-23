@@ -1,0 +1,77 @@
+from __future__ import annotations
+
+import json
+import re
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+POLISH = ROOT / "docs" / "prompt-kit-polish.js"
+GAMEPLAY = ROOT / "docs" / "prompt-kit-preference-gameplay.js"
+DEPLOYED = ROOT / "web" / "prompt-kit" / "index.html"
+REGISTRY = ROOT / "registry" / "prompts" / "spec-architecture-prompts.v1.json"
+BUILDER = ROOT / "scripts" / "build_prompt_kit_registry.py"
+
+
+class PromptKitFavoriteGameplayTests(unittest.TestCase):
+    def test_favorite_shortcut_reaches_terminal_copy_instead_of_detail_panel(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        block = source[source.index("function openPromptShortcutTarget"):source.index("function handleConfiguredPromptShortcutKey")]
+        self.assertIn("copyPrompt(promptId);", block)
+        self.assertNotIn("showPromptDetail", block)
+        self.assertIn("label.textContent='Copy '+promptId;", source)
+        self.assertIn("to copy it immediately", source)
+
+    def test_semantic_usage_is_recorded_only_inside_success_callback(self) -> None:
+        source = GAMEPLAY.read_text(encoding="utf-8")
+        copy_block = re.search(r"root\.copyPrompt=function\(id\)\{.*?\n\};", source, re.S)
+        self.assertIsNotNone(copy_block)
+        block = copy_block.group(0)
+        self.assertIn("root.copyToClipboard(prompt.copyContent,function(){recordSuccessfulCopy(id);root.showCopyConfirmation(id)})", block)
+        self.assertNotIn("recordSuccessfulCopy(id);\n  root.copyToClipboard", block)
+        self.assertIn("STORAGE_KEY='promptKit.usage.v1'", source)
+        self.assertIn("SCHEMA='prompt-kit-usage/v1'", source)
+
+    def test_dashboard_is_interactive_game_like_and_badges_are_deferred(self) -> None:
+        source = GAMEPLAY.read_text(encoding="utf-8")
+        for marker in (
+            "Preference Dashboard",
+            "Prompt Playbook",
+            "LEVEL_SIZE=5",
+            "Most used prompts",
+            "Preference signals",
+            "Favorite loadout",
+            "data-dashboard-copy",
+            "Only successful clipboard writes earn progress",
+            "PromptKitPreferenceGameplay",
+        ):
+            self.assertIn(marker, source)
+        self.assertNotIn("Badge Cabinet", source)
+
+    def test_p99_makes_prompt_only_completion_invalid_for_runtime_requests(self) -> None:
+        payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
+        p99 = next(prompt for prompt in payload["prompts"] if prompt["id"] == "P99")
+        combined = "\n".join(str(p99.get(field, "")) for field in ("expectedOutput", "nextStep", "proofGate", "copyContent"))
+        for marker in (
+            "RUNTIME ACCEPTANCE WHEN THE USER ASKED FOR BEHAVIOR",
+            "successful clipboard write",
+            "exactly one semantic usage",
+            "live dashboard refresh",
+            "Prompt-only or contract-only work is incomplete",
+            "badges are a separate future capability",
+        ):
+            self.assertIn(marker, combined)
+
+    def test_builder_owns_gameplay_runtime_and_generated_site_contains_it(self) -> None:
+        builder = BUILDER.read_text(encoding="utf-8")
+        source = GAMEPLAY.read_text(encoding="utf-8")
+        deployed = DEPLOYED.read_text(encoding="utf-8")
+        self.assertIn("PREFERENCE_GAMEPLAY_RUNTIME", builder)
+        self.assertIn("preference_gameplay_script", builder)
+        self.assertIn(source, deployed)
+        self.assertIn("copyPrompt(promptId);", deployed)
+        self.assertIn("recordSuccessfulCopy(id);root.showCopyConfirmation(id)", deployed)
+
+
+if __name__ == "__main__":
+    unittest.main()

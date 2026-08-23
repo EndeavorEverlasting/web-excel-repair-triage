@@ -56,7 +56,7 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             "if(!persistPromptShortcutBindings(candidate))return false",
             "promptShortcutBindings=candidate",
             "function handleConfiguredPromptShortcutKey(e,key)",
-            "showPromptDetail(promptId,null)",
+            "copyPrompt(promptId);",
         ):
             self.assertIn(marker, source)
         self.assertLess(
@@ -138,7 +138,6 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             self.assertIn(row, readme)
         self.assertIn("Typed prompt sequences expire after 1.2 seconds", readme)
         self.assertIn("only prompts that are currently Favorites", design)
-        self.assertIn("opens canonical prompt detail immediately", design)
         self.assertIn("buffer is active", design)
         self.assertIn("one hand", design)
         self.assertNotIn("Still unresolved by design proof:", design)

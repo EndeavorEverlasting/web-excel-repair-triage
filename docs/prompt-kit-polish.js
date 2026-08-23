@@ -265,7 +265,7 @@ function renderPromptShortcutBindings(){
   ids.forEach(function(promptId){
     var row=document.createElement('div');row.className='hotkey-shortcut-row';
     var key=document.createElement('kbd');key.textContent=promptId.toLowerCase();
-    var label=document.createElement('span');label.textContent='Open '+promptId;
+    var label=document.createElement('span');label.textContent='Copy '+promptId;
     var remove=document.createElement('button');remove.type='button';remove.className='hotkey-shortcut-remove';remove.setAttribute('aria-label','Remove '+promptId+' keyboard shortcut');remove.textContent='Remove';
     remove.addEventListener('click',function(){removePromptShortcut(promptId)});
     row.appendChild(key);row.appendChild(label);row.appendChild(remove);host.appendChild(row)
@@ -286,7 +286,7 @@ function openPromptShortcutTarget(promptId){
   var prompt=PROMPTS.find(function(item){return item.id===promptId});
   if(!prompt)return false;
   if(!isFavoritePrompt(promptId)){showToast(promptId+' is no longer a Favorite');return false}
-  showPromptDetail(promptId,null);
+  copyPrompt(promptId);
   return true
 }
 
@@ -383,7 +383,7 @@ function ensureHotkeyHelp(){
   configTitle.textContent='Favorite prompt shortcuts';
   var configHint=document.createElement('span');
   configHint.className='hotkey-shortcut-hint';
-  configHint.textContent='Favorite a prompt, enter its ID, then type that ID anywhere outside editable fields.';
+  configHint.textContent='Favorite a prompt, enter its ID, then type that ID anywhere outside editable fields to copy it immediately.';
   var configControls=document.createElement('div');
   configControls.className='hotkey-shortcut-controls';
   var promptInput=document.createElement('input');
