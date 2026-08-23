@@ -97,6 +97,13 @@ class ManagementOperationsPromptRegistryTests(unittest.TestCase):
         self.assertIn("`dated_person_task` evidence scope", content)
         self.assertIn("FUN remains the vocabulary and evidence owner", content)
         self.assertIn("Triage may implement rendering", content)
+        self.assertIn("MANDATORY USER-FACING CLOSEOUT", content)
+        self.assertIn("Do not end silently after the last tool call", content)
+        self.assertIn("Tool calls, CI output, merge receipts, Drive writes", content)
+        self.assertIn("Summarize by lane: FUN, Triage, Drive, Prompt Kit", content)
+        self.assertIn("that final human-readable closeout has been emitted", prompt["proofGate"])
+        self.assertIn("emit the mandatory operator closeout before stopping", prompt["nextStep"])
+        self.assertEqual(content.count("MANDATORY USER-FACING CLOSEOUT"), 1)
         for keyword in ("activity aliases", "alias activities", "qualitative workstream language", "presentation variants"):
             self.assertIn(keyword, prompt["keywords"])
 
