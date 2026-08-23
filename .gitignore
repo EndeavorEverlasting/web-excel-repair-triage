@@ -9,7 +9,7 @@ __pycache__/
 dist/
 build/
 
-# ── Virtual environments ───────────────────────────────────────────────────────
+# ── Virtual environments ──────────────────────────────────────────────────────
 .venv/
 venv/
 env/
@@ -21,11 +21,14 @@ attached_assets/**
 !attached_assets/.gitkeep
 
 # ── Input folders ────────────────────────────────────────────────────────────
-# Candidates/ and Repaired/ are user drop-zones. Keep the folders tracked via
-# .gitkeep so users see them, but ignore all actual workbook contents.
+# Candidates/, Active/, and Repaired/ are operator/input drop-zones. Keep the
+# folder markers tracked, but ignore private workbook contents.
 Candidates/**
 !Candidates/
 !Candidates/.gitkeep
+Active/**
+!Active/
+!Active/.gitkeep
 ArtifactIntake/**
 !ArtifactIntake/
 !ArtifactIntake/.gitkeep
@@ -101,8 +104,7 @@ desktop.ini
 *.swp
 *.swo
 
-
-# ── Billing pipeline runtime outputs ────────────────────────────────────────
+# ── Billing pipeline runtime outputs ─────────────────────────────────────────
 billing_runs/
 
 # Generated billing report outputs
@@ -122,3 +124,49 @@ References/**/*.xlsx
 !References/
 !References/approved/
 !References/approved/.gitkeep
+
+# ── Local evidence, crash, save, and machine-tool hygiene ────────────────────
+# These are runtime/machine-local by default. Sanitized regression examples
+# belong under tests/fixtures/, harness/fixtures/, or docs/fixtures/.
+/logs/
+/saves/
+/crash_dumps/
+/.local-tools/
+/node_modules/
+.tox/
+.nox/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.coverage
+htmlcov/
+*.log
+*.trace
+*.stackdump
+*.dmp
+*.crash
+*.core
+*.pid
+*.pid.lock
+*.tmp
+*.temp
+*.autosave
+*.save
+*.bak
+
+# Secret/credential material stays local. Commit templates only.
+/.env
+/.env.*
+!/.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+*.kdbx
+credentials.json
+credential.json
+secrets.json
+secret.json
+tokens.json
+token.json
+auth.json

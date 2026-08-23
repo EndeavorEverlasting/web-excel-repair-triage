@@ -17,6 +17,7 @@ on:
       - harness/**
       - .ai/skills/**
       - .githooks/**
+      - .gitignore
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
       - scripts/validate_context_architecture.py
@@ -29,8 +30,12 @@ on:
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
+      - scripts/validate_staged_artifacts.py
+      - triage/artifact_hygiene_policy.py
+      - triage/gitignore_hygiene.py
       - tests/test_context_architecture.py
       - tests/test_governance_contract.py
+      - tests/test_gitignore_hygiene.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
       - tests/test_pr_merge_gate.py
@@ -41,6 +46,7 @@ on:
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_language_audit.py
+      - tests/test_staged_artifact_hygiene.py
       - .github/workflows/harness-contract.yml
   push:
     branches: [main]
@@ -59,6 +65,7 @@ on:
       - harness/**
       - .ai/skills/**
       - .githooks/**
+      - .gitignore
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
       - scripts/validate_context_architecture.py
@@ -71,8 +78,12 @@ on:
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
+      - scripts/validate_staged_artifacts.py
+      - triage/artifact_hygiene_policy.py
+      - triage/gitignore_hygiene.py
       - tests/test_context_architecture.py
       - tests/test_governance_contract.py
+      - tests/test_gitignore_hygiene.py
       - tests/test_harness_contract.py
       - tests/test_operator_command_envelope.py
       - tests/test_pr_merge_gate.py
@@ -83,6 +94,7 @@ on:
       - tests/test_prompt_kit_interactions_contract.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_language_audit.py
+      - tests/test_staged_artifact_hygiene.py
       - .github/workflows/harness-contract.yml
 
 permissions:
@@ -112,9 +124,13 @@ jobs:
             scripts/validate_prompt_kit_order_navigation.py \
             scripts/validate_prompt_kit_interactions.py \
             scripts/validate_prompt_kit_discovery.py \
+            scripts/validate_staged_artifacts.py \
             scripts/evaluate_prompt_language.py \
+            triage/artifact_hygiene_policy.py \
+            triage/gitignore_hygiene.py \
             tests/test_context_architecture.py \
             tests/test_governance_contract.py \
+            tests/test_gitignore_hygiene.py \
             tests/test_harness_contract.py \
             tests/test_operator_command_envelope.py \
             tests/test_pr_merge_gate.py \
@@ -124,7 +140,8 @@ jobs:
             tests/test_prompt_kit_order_navigation_contract.py \
             tests/test_prompt_kit_interactions_contract.py \
             tests/test_prompt_kit_discovery.py \
-            tests/test_prompt_language_audit.py
+            tests/test_prompt_language_audit.py \
+            tests/test_staged_artifact_hygiene.py
       - name: Validate context architecture and governance factoring
         run: |
           python scripts/validate_context_architecture.py --summary
@@ -210,6 +227,8 @@ jobs:
           python tests/test_prompt_kit_header_contract.py
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
       - name: Validate repository artifact hygiene
-        run: python -m triage.gitignore_hygiene
+        run: |
+          python -m triage.gitignore_hygiene
+          python -m unittest tests.test_staged_artifact_hygiene -v
       - name: Check patch hygiene
         run: git diff --check origin/main...HEAD

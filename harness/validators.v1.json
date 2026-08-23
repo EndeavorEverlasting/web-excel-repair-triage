@@ -106,6 +106,14 @@
       "proof_ceiling": "Deterministic source-to-generated-site parity."
     },
     {
+      "id": "staged-artifact-hygiene",
+      "class": "lint",
+      "command": "python scripts/validate_staged_artifacts.py",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Path-only staged-index proof for generated/runtime, binary, secret-like, and machine-local artifact policy."
+    },
+    {
       "id": "artifact-hygiene",
       "class": "lint",
       "command": "python -m triage.gitignore_hygiene",
@@ -182,6 +190,7 @@
       "patch-hygiene"
     ],
     "pre_commit": [
+      "staged-artifact-hygiene",
       "harness-completeness",
       "harness-contract-tests",
       "patch-hygiene-staged"

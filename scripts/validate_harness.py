@@ -100,6 +100,7 @@ REQUIRED_VALIDATOR_IDS = {
     "skill-prompt-registry-tests",
     "prompt-kit-header-contract",
     "prompt-kit-parity",
+    "staged-artifact-hygiene",
     "artifact-hygiene",
     "patch-hygiene",
     "patch-hygiene-staged",
