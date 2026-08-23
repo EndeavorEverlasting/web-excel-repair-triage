@@ -208,10 +208,39 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("USE FEEDBACK WITHOUT TURNING THE USER INTO THE TEST RUNNER", content)
         self.assertIn("REMOVE PROTOTYPE DEBT BEFORE FINAL", content)
         self.assertIn("FINAL PROOF IS STRICTER THAN PROTOTYPE PROOF", content)
+        self.assertIn("WHEN USER FLOW IS THE UNKNOWN", content)
+        self.assertIn("terminal user value", content)
+        self.assertIn("semantic completion events", content)
+        self.assertIn("must not erase an active query", content)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+
+    def test_flow_friction_prompt_owns_terminal_actions_and_preference_telemetry(self) -> None:
+        prompt = self.full["P99"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["name"], "User-Flow Friction & Preference Telemetry Refiner")
+        self.assertEqual(prompt["class"], "PRODUCT / UX FLOW + TELEMETRY")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        for phrase in (
+            "DEFINE THE TERMINAL USER VALUE",
+            "PRESERVE ORTHOGONAL STATE",
+            "COLLAPSE REDUNDANT INTERMEDIATE STEPS",
+            "UNIFY ENTRYPOINTS ON SEMANTIC ACTIONS",
+            "INSTRUMENT SEMANTIC USAGE, NOT NOISE",
+            "DERIVE THE DASHBOARD FROM EVENTS",
+            "active search -> unrelated filter show/hide/toggle",
+            "favorite shortcut -> terminal action occurs once",
+            "reuse the normal success toast/feedback",
+            "Before mutating a shared telemetry/preferences owner",
+            "duplicate event dispatch does not double-count one completion",
+        ):
+            self.assertIn(phrase, content)
+        self.assertNotEqual(prompt["id"], "P82")
+        self.assertNotEqual(prompt["id"], "P94")
+        self.assertNotEqual(prompt["id"], "P95")
         self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
 
     def test_new_source_prompts_are_intentionally_bounded(self) -> None:
-        for prompt_id in ("P78", "P79", "P80", "P81", "P82"):
+        for prompt_id in ("P78", "P79", "P80", "P81", "P82", "P99"):
             content = self.raw[prompt_id]["copyContent"]
             self.assertLess(len(content), 8000)
             self.assertGreater(len(content), 1800)
@@ -238,6 +267,7 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("Client Prompt Pack & Local Profile Builder", html)
         self.assertIn("Multi-Tier Cache Architecture & Invalidation Hardener", html)
         self.assertIn("Prototype-Measure-Refine Delivery Loop", html)
+        self.assertIn("User-Flow Friction & Preference Telemetry Refiner", html)
 
     def test_prompt_semantic_hardener_selectively_integrates_stronger_principles(self) -> None:
         matches = [
@@ -390,10 +420,73 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("UNKNOWN is not PASS", p93)
         self.assertIn("FALSIFY CLOSURE", p93)
         self.assertIn("NOT CERTIFIED", p93)
+        self.assertIn("CHECK FAITHFULNESS BEFORE FETCHING MORE", p93)
+        self.assertIn("FACTUALITY_MISSING_CONTEXT", p93)
+        self.assertIn("FAITHFULNESS_CONTEXT_IGNORED", p93)
+        self.assertIn("ATTENTION_SATURATION", p93)
+        self.assertIn("A confident, plausible, good-faith answer can still fail closure", p93)
+        self.assertIn("do not reflexively add more context", p93)
 
         html = build_prompt_kit_registry.render()
         for _, (name, _) in expected.items():
             self.assertIn(name, html)
+
+    def test_open_source_prior_art_prompt_separates_real_world_baseline_from_local_gap(self) -> None:
+        matches = [
+            prompt
+            for prompt in self.full.values()
+            if prompt["name"] == 'Open-Source Prior-Art & Gap Analyst'
+        ]
+        self.assertEqual(len(matches), 1)
+        prompt = matches[0]
+        content = prompt["copyContent"]
+        raw_content = self.raw[prompt["id"]]["copyContent"]
+        self.assertEqual(prompt["id"], 'P97')
+        self.assertEqual(prompt["seq"], '97')
+        self.assertEqual(prompt["copySheet"], 'P97_COPY_SAFE')
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["color"], "Cyan")
+        self.assertEqual(prompt["class"], "RESEARCH / REFERENCE ARCHITECTURE")
+        self.assertIn(
+            "ANALYZE OPEN-SOURCE REPOSITORIES THAT HAVE ALREADY DONE THINGS LIKE THIS SO THAT WE CAN EMULATE THAT",
+            content,
+        )
+        self.assertIn("WHAT IS ALREADY AVAILABLE IN THE REAL WORLD", content)
+        self.assertIn("WHAT PROJECT-SPECIFIC GAP IS STILL WORTH DEVELOPING", content)
+        self.assertIn("VERIFY IMPLEMENTATION, NOT MARKETING", content)
+        self.assertIn("A README can orient the search but cannot by itself prove an implementation claim", content)
+        for evidence_state in (
+            "OBSERVED_IMPLEMENTED",
+            "DOCUMENTED_UNVERIFIED",
+            "INFERRED",
+            "ABSENT",
+        ):
+            self.assertIn(evidence_state, content)
+        for disposition in ("ADOPT", "ADAPT", "REJECT", "UNKNOWN"):
+            self.assertIn(disposition, content)
+        for gap_state in (
+            "ALREADY_SOLVED_INTERNALLY",
+            "AVAILABLE_TO_EMULATE_EXTERNALLY",
+            "PROJECT_SPECIFIC_GAP",
+            "EVIDENCE_GAP",
+        ):
+            self.assertIn(gap_state, content)
+        self.assertIn("EMULATE MECHANISMS, NOT CODE BLINDLY", content)
+        self.assertIn("verify license compatibility", content)
+        self.assertIn("Search the current repo before the wider ecosystem", content)
+        self.assertIn("fresh current repository", content.lower())
+        self.assertIn("refresh the evidence", content.lower())
+        self.assertIn("ADVANCE, DON'T END WITH A RESEARCH ESSAY", content)
+        self.assertIn("not portfolio ranking", content.lower())
+        self.assertIn("do not primarily rank which of our internal repositories", content.lower())
+        self.assertIn("do not replace the repository's internal intent routing", content.lower())
+        self.assertGreater(len(raw_content), 4500)
+        self.assertLess(len(raw_content), 9000)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+        html = build_prompt_kit_registry.render()
+        self.assertIn('Open-Source Prior-Art & Gap Analyst', html)
+
 
 if __name__ == "__main__":
     unittest.main()

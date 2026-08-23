@@ -1,2 +1,0 @@
-trigger canonical path repair for PR 229
-execute after branch-local workflow installation

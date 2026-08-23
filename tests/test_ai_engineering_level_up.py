@@ -45,6 +45,63 @@ class AIEngineeringLevelUpTests(unittest.TestCase):
                 self.assertIn(phrase.lower(), text)
             self.assertIn("exact next command", text)
 
+    def test_hallucination_failure_modes_have_diagnostic_grounding_and_context_owners(self) -> None:
+        prompts = build_prompt_kit_registry.load_prompt_registry()
+        by_id = {item["id"]: item for item in prompts}
+        p67 = by_id["P67"]["copyContent"]
+        for phrase in (
+            "EVALUATE HALLUCINATION DIAGNOSIS",
+            "required truth is absent versus explicitly present",
+            "targeted grounding",
+            "re-anchoring/compaction",
+        ):
+            self.assertIn(phrase, p67)
+        p68 = by_id["P68"]["copyContent"]
+        for phrase in (
+            "RECOVER FROM ATTENTION SATURATION / THE DUMB ZONE",
+            "measured or system-defined budget threshold",
+            "rolling/sliding compaction",
+            "fresh session",
+            "do not add more context first",
+        ):
+            self.assertIn(phrase, p68)
+
+        by_name = {item["name"]: item for item in prompts}
+        diagnostic = by_name["Factuality vs Faithfulness Hallucination Diagnoser"]
+        grounding = by_name["Grounded Agent Output & Tool-Call Gate"]
+        self.assertNotEqual(diagnostic["id"], grounding["id"])
+        self.assertEqual(diagnostic["seq"], diagnostic["id"][1:])
+        self.assertEqual(grounding["seq"], grounding["id"][1:])
+        self.assertEqual(diagnostic["copySheet"], f"{diagnostic['id']}_COPY_SAFE")
+        self.assertEqual(grounding["copySheet"], f"{grounding['id']}_COPY_SAFE")
+        self.assertEqual(diagnostic["class"], "AI ENGINEERING / HALLUCINATION DIAGNOSIS")
+        self.assertEqual(grounding["class"], "AI ENGINEERING / GROUNDING")
+        for phrase in (
+            "FACTUALITY_MISSING_CONTEXT",
+            "FAITHFULNESS_CONTEXT_IGNORED",
+            "ATTENTION_SATURATION",
+            "MATCH THE REPAIR TO THE CAUSE",
+            "counterexample",
+        ):
+            self.assertIn(phrase, diagnostic["copyContent"])
+        for phrase in (
+            "BUILD JUST-IN-TIME GROUNDING",
+            "REQUIRE VERIFIABLE ATTRIBUTION WHERE IT MATTERS",
+            "FAIL-CLOSED INTERCEPTOR",
+            "GROUNDING_FAILURE",
+            "hallucinated identifier",
+            "critic cannot override a deterministic schema failure",
+        ):
+            self.assertIn(phrase, grounding["copyContent"])
+        policy = build_prompt_kit_registry.load_actionability_policy()
+        for item in (diagnostic, grounding):
+            self.assertEqual(item["actionabilityPolicy"], policy["policy_id"])
+            self.assertIn(policy["marker"], item["copyContent"])
+        raw = json.loads((ROOT / "registry/prompts/ai-engineering-level-up-prompts.v1.json").read_text(encoding="utf-8"))
+        raw_by_name = {item["name"]: item for item in raw["prompts"]}
+        self.assertLess(len(raw_by_name[diagnostic["name"]]["copyContent"]), 8000)
+        self.assertLess(len(raw_by_name[grounding["name"]]["copyContent"]), 8000)
+
     def test_prompt_finder_and_search_route_the_five_tracks(self) -> None:
         p65 = {item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()}["P65"]
         for prompt_id in self.IDS:
