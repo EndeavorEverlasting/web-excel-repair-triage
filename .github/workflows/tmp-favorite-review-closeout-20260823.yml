@@ -40,54 +40,58 @@ jobs:
           import json
           from pathlib import Path
 
-          def replace_once(path: str, old: str, new: str) -> None:
-              target = Path(path)
-              text = target.read_text(encoding='utf-8')
-              count = text.count(old)
-              if count != 1:
-                  raise RuntimeError(f'{path}: expected one repair anchor, found {count}')
-              target.write_text(text.replace(old, new, 1), encoding='utf-8')
-
           js = Path('docs/prompt-kit.js')
           text = js.read_text(encoding='utf-8')
           reset = "function resetPromptKitView(){activeCat='all';activeSection=null;activeType=null;activeColor=null;activeProfile=null;collapsedSections={};var search=document.getElementById('search');if(search)search.value='';var clear=document.getElementById('searchClear');if(clear)clear.style.display='none';promptDetailOrigin=null;closePromptDetail(false);closeRef();var detail=document.getElementById('doctrineDetail');if(detail)detail.classList.remove('active');var list=document.getElementById('doctrineList');if(list)list.style.display='grid';syncLibraryTabs();renderSections();renderTypes();render();try{window.scrollTo({top:0,behavior:'smooth'})}catch(e){window.scrollTo(0,0)}showToast('Returned to all prompts')}"
           owner = reset + "\nfunction activatePromptKitView(view){activeCat='all';activeSection=null;activeType=null;activeColor=null;activeProfile=null;if(view==='standard')activeCat='standard';else if(view==='favorites')activeSection='__favorites__';else if(view==='triage')activeProfile='triage-management';else if(view==='fun')activeProfile='fun-management';else if(view!=='all')return false;var search=document.getElementById('search');if(search)search.value='';var clear=document.getElementById('searchClear');if(clear)clear.style.display='none';document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.dataset.view===view||(view==='all'&&button.dataset.cat==='all')||(view==='standard'&&button.dataset.cat==='standard'))});renderSections();renderTypes();render();return true}"
           if 'function activatePromptKitView(view)' not in text:
               if text.count(reset) != 1:
-                  raise RuntimeError('resetPromptKitView anchor drifted')
+                  raise RuntimeError(f'resetPromptKitView anchor count={text.count(reset)}')
               text = text.replace(reset, owner, 1)
 
           click_old = "var ct=e.target.closest('.cat-tab[data-cat]');if(ct){activeProfile=null;activeCat=ct.dataset.cat;"
           click_new = "var view=e.target.closest('.cat-tab[data-view]');if(view){e.preventDefault();activatePromptKitView(view.dataset.view);return}var ct=e.target.closest('.cat-tab[data-cat]');if(ct){activeProfile=null;activeSection=null;activeCat=ct.dataset.cat;"
           if click_new not in text:
               if text.count(click_old) != 1:
-                  raise RuntimeError('category click anchor drifted')
+                  raise RuntimeError(f'category click anchor count={text.count(click_old)}')
               text = text.replace(click_old, click_new, 1)
 
           key_old = "document.addEventListener('keydown',function(e){if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;switch(e.key){case'1':activeProfile=null;activeCat='all';break;case'2':activeProfile=null;activeCat='standard';break;case'r':"
           key_new = "document.addEventListener('keydown',function(e){if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;if(e.key>='1'&&e.key<='5'){var views={'1':'all','2':'standard','3':'favorites','4':'triage','5':'fun'};if(activatePromptKitView(views[e.key])){e.preventDefault();return}}switch(e.key){case'r':"
           if key_new not in text:
               if text.count(key_old) != 1:
-                  raise RuntimeError('numeric key anchor drifted')
+                  raise RuntimeError(f'numeric key anchor count={text.count(key_old)}')
               text = text.replace(key_old, key_new, 1)
           js.write_text(text, encoding='utf-8')
 
           registry_path = Path('registry/prompts/spec-architecture-prompts.v1.json')
           registry = json.loads(registry_path.read_text(encoding='utf-8'))
-          old_acceptance = 'Prove favorite shortcut -> successful clipboard write -> normal success toast -> exactly one semantic usage event -> live dashboard refresh.'
-          new_acceptance = 'Prove favorite shortcut -> successful clipboard write -> exactly one semantic usage event -> live dashboard refresh -> normal success toast.'
-          changed = 0
-          for prompt in registry.get('prompts', []):
-              if prompt.get('id') != 'P99':
+          prompt99 = [prompt for prompt in registry.get('prompts', []) if prompt.get('id') == 'P99']
+          if len(prompt99) != 1:
+              raise RuntimeError(f'P99 owner count={len(prompt99)}')
+          prompt99 = prompt99[0]
+          replacements = {
+              'favorite shortcut -> successful clipboard write -> standard success toast -> exactly one semantic usage increment -> live dashboard refresh':
+                  'favorite shortcut -> successful clipboard write -> exactly one semantic usage increment -> live dashboard refresh -> standard success toast',
+              'favorite shortcut -> successful clipboard write -> normal success toast -> exactly one semantic usage event -> live dashboard refresh':
+                  'favorite shortcut -> successful clipboard write -> exactly one semantic usage event -> live dashboard refresh -> normal success toast',
+          }
+          changed_fields = []
+          for field, value in list(prompt99.items()):
+              if not isinstance(value, str):
                   continue
-              content = prompt.get('copyContent', '')
-              if old_acceptance in content:
-                  prompt['copyContent'] = content.replace(old_acceptance, new_acceptance, 1)
-                  changed += 1
-              elif new_acceptance in content:
-                  changed += 1
-          if changed != 1:
-              raise RuntimeError(f'P99 runtime acceptance owner count={changed}')
+              updated = value
+              for old, new in replacements.items():
+                  updated = updated.replace(old, new)
+              if updated != value:
+                  prompt99[field] = updated
+                  changed_fields.append(field)
+          if not changed_fields and not any(
+              'favorite shortcut -> successful clipboard write -> exactly one semantic usage increment -> live dashboard refresh -> standard success toast' in str(value)
+              or 'favorite shortcut -> successful clipboard write -> exactly one semantic usage event -> live dashboard refresh -> normal success toast' in str(value)
+              for value in prompt99.values()
+          ):
+              raise RuntimeError('P99 current acceptance wording did not match verified variants')
           registry_path.write_text(json.dumps(registry, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
           readme = Path('web/README.md')
@@ -96,7 +100,7 @@ jobs:
           new_readme = 'and copy the canonical prompt content immediately with the normal clipboard success feedback.'
           if new_readme not in readme_text:
               if readme_text.count(old_readme) != 1:
-                  raise RuntimeError('README configured-shortcut semantics anchor drifted')
+                  raise RuntimeError(f'README configured-shortcut anchor count={readme_text.count(old_readme)}')
               readme_text = readme_text.replace(old_readme, new_readme, 1)
           readme.write_text(readme_text, encoding='utf-8')
 
@@ -108,13 +112,13 @@ jobs:
           new_contract = '''    def test_interaction_contract_is_marked_implemented(self) -> None:\n        payload = json.loads(CONTRACT.read_text(encoding="utf-8"))\n        self.assertEqual(payload["status"], "implemented")\n'''
           if new_contract not in test_text:
               if test_text.count(old_contract) != 1:
-                  raise RuntimeError('interaction status test anchor drifted')
+                  raise RuntimeError(f'interaction status test anchor count={test_text.count(old_contract)}')
               test_text = test_text.replace(old_contract, new_contract, 1)
           old_strict = '''        report = module.evaluate_repository()\n        self.assertEqual(report["implementation_status"], "implemented")\n        self.assertEqual(report["missing_markers"], [])\n'''
           new_strict = '''        report = module.audit_implementation()\n        self.assertTrue(report["implementation_ready"], report["missing_static_markers"])\n        self.assertEqual(report["missing_static_markers"], [])\n'''
           if new_strict not in test_text:
               if test_text.count(old_strict) != 1:
-                  raise RuntimeError('strict interaction test anchor drifted')
+                  raise RuntimeError(f'strict interaction test anchor count={test_text.count(old_strict)}')
               test_text = test_text.replace(old_strict, new_strict, 1)
           product_test.write_text(test_text, encoding='utf-8')
 
@@ -128,7 +132,7 @@ jobs:
           )
           if addition not in header_text:
               if header_text.count(anchor) != 1:
-                  raise RuntimeError('header core-view assertion anchor drifted')
+                  raise RuntimeError(f'header core-view anchor count={header_text.count(anchor)}')
               header_text = header_text.replace(anchor, anchor + addition, 1)
           header.write_text(header_text, encoding='utf-8')
           PY
@@ -151,7 +155,7 @@ jobs:
 
           python - <<'PY'
           import subprocess
-          expected = {
+          allowed = {
               'docs/prompt-kit.js',
               'registry/prompts/spec-architecture-prompts.v1.json',
               'tests/test_prompt_kit_header_contract.py',
@@ -160,8 +164,16 @@ jobs:
               'web/prompt-kit/index.html',
           }
           changed = set(subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines())
-          if changed != expected:
-              raise RuntimeError(f'unexpected durable delta: {sorted(changed)}')
+          unexpected = changed - allowed
+          required = {
+              'docs/prompt-kit.js',
+              'tests/test_prompt_kit_header_contract.py',
+              'tests/test_prompt_kit_product_interactions.py',
+              'web/README.md',
+              'web/prompt-kit/index.html',
+          }
+          if unexpected or not required.issubset(changed):
+              raise RuntimeError(f'unexpected or incomplete durable delta: changed={sorted(changed)} unexpected={sorted(unexpected)}')
           PY
 
           git rm .github/workflows/tmp-favorite-review-closeout-20260823.yml
