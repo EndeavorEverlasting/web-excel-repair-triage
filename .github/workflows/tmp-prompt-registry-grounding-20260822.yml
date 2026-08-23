@@ -6,6 +6,7 @@ on:
       - feat/prompt-registry-grounding-gate-20260822
     paths:
       - scripts/tmp_apply_prompt_registry_grounding_20260822.py
+      - scripts/tmp_fix_prompt_registry_grounding_test_20260822.py
       - .github/workflows/tmp-prompt-registry-grounding-20260822.yml
   pull_request:
     branches:
@@ -38,8 +39,12 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git merge --no-edit origin/main
-      - name: Apply grounding gate
-        run: python scripts/tmp_apply_prompt_registry_grounding_20260822.py
+      - name: Repair bootstrap regression and apply grounding gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/tmp_fix_prompt_registry_grounding_test_20260822.py
+          python scripts/tmp_apply_prompt_registry_grounding_20260822.py
       - name: Prove focused boundary
         shell: bash
         run: |
@@ -55,7 +60,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git rm scripts/tmp_apply_prompt_registry_grounding_20260822.py .github/workflows/tmp-prompt-registry-grounding-20260822.yml
+          git rm scripts/tmp_apply_prompt_registry_grounding_20260822.py scripts/tmp_fix_prompt_registry_grounding_test_20260822.py .github/workflows/tmp-prompt-registry-grounding-20260822.yml
           git add scripts/prompt_registry_ops.py scripts/prompt_registry_grounding.py tests/test_prompt_registry_grounding.py harness/specs/prompt-operations.md .github/workflows/skill-prompt-registry.yml
           git diff --cached --check
           git commit -m 'feat(prompt-kit): ground exact registry operations'
