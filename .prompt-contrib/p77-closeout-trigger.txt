@@ -1,1 +1,1 @@
-trigger P77 closeout hardener against current main
+trigger P77 closeout hardener against current main — assertion repaired
