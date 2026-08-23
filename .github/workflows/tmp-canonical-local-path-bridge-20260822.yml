@@ -1,0 +1,205 @@
+name: Temporary canonical local path bridge
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  canonical-local-path:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-artifact-risk-path-20260822
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Reconcile stale owner onto current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main --prune --tags
+          echo "CURRENT_MAIN=$(git rev-parse origin/main)"
+          set +e
+          git merge --no-commit --no-ff origin/main
+          merge_rc=$?
+          set -e
+          echo "merge_rc=$merge_rc"
+          git checkout origin/main -- docs/prompts.json \
+            registry/prompts/spec-architecture-prompts.v1.json \
+            registry/prompts/tutorial-discovery-prompts.v1.json \
+            web/prompt-kit/index.html
+          git rm -f --ignore-unmatch tests/test_prompt_artifact_risk_path_prompts.py
+          unmerged="$(git diff --name-only --diff-filter=U)"
+          if [ -n "$unmerged" ]; then
+            echo "Unresolved merge paths remain:" >&2
+            echo "$unmerged" >&2
+            exit 1
+          fi
+
+      - name: Strengthen canonical path owners and routing
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('.')
+          docs_path = root / 'docs/prompts.json'
+          docs = json.loads(docs_path.read_text(encoding='utf-8'))
+          by_id = {p['id']: p for p in docs}
+
+          p50 = by_id['P50']
+          p50['name'] = 'Canonical Local Repository Path & Freshness Guard'
+          p50['type'] = 'SETUP + ANALYZE + DIRECTORY'
+          p50['class'] = 'STANDARD AI / CANONICAL LOCAL REPOSITORY INTAKE'
+          p50['sprintRole'] = 'Establish and reuse one canonical local checkout mapping per machine/execution profile, verify OS/shell/root/remote identity, and refresh remote truth before repository work'
+          p50['useWhen'] = 'The repository is known but agents may not know which box, operating system, shell, checkout, or worktree is canonical; a path is being guessed; multiple clones/worktrees exist; or local branch freshness is uncertain.'
+          p50['inspectFirst'] = 'Existing machine/profile path owners and local config; Hooks/Glossary/CODEBASE_MAP/AGENTS/trigger surfaces; actual OS/platform and shell; current directory; Git worktrees; candidate remotes; branch/tracking/default-branch state; remote freshness; and any operator-supplied path.'
+          p50['expectedOutput'] = 'One verified machine/execution-profile -> canonical repository-root mapping, one reused path authority, a lightweight discoverability pointer through an existing agent-facing route, root/remote/default-branch evidence, shell-correct entry commands, refreshed remote truth, and no duplicate checkout invented merely to continue work.'
+          p50['nextStep'] = 'If no matching checkout exists, run P61 and return here to register/verify the new checkout. If path discoverability infrastructure is absent and repository setup mutation is authorized, use P87 or the existing harness owner to install the smallest pointer to this canonical contract. After root and freshness gates pass, continue with the task-specific prompt without creating another clone or path registry.'
+          p50['proofGate'] = 'Exactly one canonical path authority is selected per machine/execution profile; the verified root matches the requested remote; OS/shell and worktree context are explicit; at least one existing Hooks/Glossary/CODEBASE_MAP/AGENTS/trigger front door points agents to the canonical path owner without duplicating absolute-path truth; git fetch --all --prune --tags refreshes reachable remote truth before branch-sensitive iteration; the actual remote default branch is resolved; clean behind-only state is fast-forwarded while dirty/diverged work is preserved; and no foreign-machine absolute path or unnecessary duplicate clone is treated as canonical.'
+
+          block = r'''
+
+CANONICAL LOCAL PATH CONTRACT
+Canonical means ONE AUTHORITATIVE REPOSITORY ROOT PER MACHINE / EXECUTION PROFILE for routine work. It does not mean one universal absolute path string copied across Windows, Linux, macOS, WSL, containers, admin boxes, CI runners, or different usernames. A path that was correct on another box is evidence about that box only.
+
+PATH AUTHORITY ORDER
+1. Reuse the repository's existing machine/profile path owner when one exists: machine profile, workspace manifest, local config, harness profile, environment contract, or equivalent. Do not create a second path registry because another representation is convenient.
+2. Validate the candidate checkout against the requested repository remote and `git rev-parse --show-toplevel`; inspect `git worktree list` when worktrees exist.
+3. If no approved mapping exists but a matching checkout can be proven, adopt that checkout as the canonical root for the current machine/profile instead of cloning another copy.
+4. If no matching checkout exists, route to P61 Existing Repository Clone + Working-Directory Bootstrapper. After P61 creates the checkout, return to P50 before task work.
+5. Remembered chat paths, Desktop guesses, drive letters, usernames, temp directories, newest-looking folders, and paths from another machine are never sufficient authority.
+
+LOCAL PERSISTENCE / INDOCTRINATION
+- Persist the absolute machine-specific root only through the repository's existing approved local/profile mechanism. Prefer an already-defined machine profile or ignored/local configuration surface.
+- If no machine-local path owner exists and repository setup mutation is authorized, establish the smallest compatible local-only record plus a tracked schema/pointer or routing note. The tracked repository may define HOW to resolve the path; it must not publish one person's absolute path as universal cross-machine truth.
+- Install or repair a lightweight discoverability pointer in an EXISTING front-door surface such as Hooks, Glossary, CODEBASE_MAP, AGENTS, trigger routing, or the repository's equivalent. The pointer routes `where is this repo?`, `wrong directory`, `which checkout?`, `which box?`, `stale checkout`, and `pull latest` intent to the canonical path owner/P50. Do not duplicate the path algorithm or absolute-path value into every hook and document.
+- Reverse ownership must also be obvious: inspecting the local-path record or route must reveal which contract owns updates to it.
+
+WORKSPACE / BLOAT GUARD
+- Do not create a fresh clone merely because the agent cannot remember the existing path. Discover and verify first.
+- Do not scatter repo copies across Desktop, Temp, home directories, alternate drives, containers, or sibling folders without an explicit isolated-worktree/clone reason.
+- When isolation is required, prefer the repository's approved worktree mechanism or workspace root, record the purpose, and keep the canonical routine-work checkout authoritative.
+- Do not let two agents silently treat different ordinary checkouts as the canonical writable root for the same machine/profile.
+
+MACHINE / OS / SHELL GATE
+Resolve the actual execution host before emitting path commands: OS/platform, active shell/command host, current directory, Git availability, and execution boundary (local, RDP/SSH target, WSL, container, CI, admin box). Do not infer path separators, drive letters, quoting, `cd` syntax, `Set-Location`, executable names, or privilege rules from prior chat context. If the host/shell changes, re-resolve the canonical mapping for that execution profile.
+
+REMOTE FRESHNESS IS PART OF PATH CORRECTNESS
+A correct directory with stale remote truth is not a ready repository floor. After proving the root and before branch-sensitive analysis, implementation, build/repair, or certification:
+- inspect status, HEAD, tracking branch, worktrees, and remotes;
+- run `git fetch --all --prune --tags` when reachable;
+- resolve the remote default branch from provider metadata or `refs/remotes/origin/HEAD` instead of assuming `main` or `master`;
+- compare current HEAD/tracking/default-branch floor and inspect overlapping work when relevant;
+- fast-forward only a clean behind-only tracking branch with `git pull --ff-only` or repository-approved equivalent;
+- preserve dirty, detached, diverged, or separately owned work and reconcile/isolate it instead of force-resetting;
+- if freshness cannot be proven, state that exact proof ceiling and do not certify branch-sensitive work from remembered SHAs.
+
+COMMAND / NEXT-COMMAND RULE
+The first executable repository action must resolve or enter the canonical root using syntax valid for the verified shell, prove `git rev-parse --show-toplevel` and remote identity, then refresh remote truth. A generic snippet such as `git switch main && git pull` from an assumed current directory is not a valid canonical-path handoff. Later command blocks must either remain anchored in the verified root or explicitly re-enter and re-verify it.
+
+FAIL-CLOSED
+If multiple plausible ordinary checkouts remain and repository/profile evidence cannot determine the intended canonical root, do bounded discovery only. Do not build, mutate, commit, clean, deploy, or ask the operator to run task commands in a guessed directory. Escalate only the smallest genuinely user-only choice after exhausting machine/profile, remote, worktree, hook, and repository evidence.
+'''
+          if 'CANONICAL LOCAL PATH CONTRACT' not in p50['copyContent']:
+              p50['copyContent'] = p50['copyContent'].rstrip() + block
+          for kw in ('canonical path','canonical repo path','local repository path','wrong directory','which checkout','which box','stale checkout','pull latest','remote freshness','machine profile','worktree'):
+              if kw not in p50['keywords']:
+                  p50['keywords'].append(kw)
+
+          p61 = by_id['P61']
+          handoff = r'''
+
+CANONICAL PATH REGISTRATION HANDOFF
+Creating or selecting a checkout is not closure. Before task-specific work, return to P50 Canonical Local Repository Path & Freshness Guard so the new root is verified against the remote, associated with the current machine/execution profile through the existing path authority, made discoverable through the repository's existing route surface when authorized, and refreshed against the actual remote default-branch floor. Do not leave an arbitrary clone as an undocumented new canonical location, and do not clone again when P50 can prove an existing checkout.
+'''
+          if 'CANONICAL PATH REGISTRATION HANDOFF' not in p61['copyContent']:
+              p61['copyContent'] = p61['copyContent'].rstrip() + handoff
+          p61['nextStep'] = 'After the checkout exists and its remote/root are verified, run P50 Canonical Local Repository Path & Freshness Guard to register/reuse the machine-profile mapping, establish discoverability, and refresh the remote floor before task-specific work.'
+          p61['proofGate'] = p61['proofGate'].rstrip('. ') + '; the resulting checkout is handed to P50 for canonical machine/profile registration and freshness proof rather than left as an undocumented arbitrary path.'
+          for kw in ('canonical path','machine profile','P50','path registration'):
+              if kw not in p61['keywords']:
+                  p61['keywords'].append(kw)
+          docs_path.write_text(json.dumps(docs, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          spec_path = root / 'registry/prompts/spec-architecture-prompts.v1.json'
+          spec = json.loads(spec_path.read_text(encoding='utf-8'))
+          p87 = next(p for p in spec['prompts'] if p['id'] == 'P87')
+          route_block = r'''
+
+CANONICAL LOCAL PATH ROUTE CASE
+Treat local repository location and freshness as a first-class bidirectional route, not incidental setup prose.
+- Intent-first hooks for `where is this repo`, `wrong directory`, `local repo path`, `which checkout`, `which box`, `OS/shell path mismatch`, `stale checkout`, or `pull latest before work` route to P50 Canonical Local Repository Path & Freshness Guard.
+- If P50 proves no checkout exists, route to P61 to create/select it, then return to P50 before task mutation.
+- Install the route in the smallest EXISTING agent front door that users/agents already inspect: Hooks, Glossary, CODEBASE_MAP, AGENTS, trigger map, capability map, or repository-equivalent. Prefer a pointer over repeating the path algorithm.
+- Implementation-first reverse lookup from the local path/profile record or hook must lead back to P50 as the semantic owner so future agents know where to repair path/freshness behavior.
+- Do not create a second capabilities registry, path registry, or glossary merely to advertise this route.
+'''
+          if 'CANONICAL LOCAL PATH ROUTE CASE' not in p87['copyContent']:
+              p87['copyContent'] = p87['copyContent'].rstrip() + route_block
+          p87['proofGate'] = p87['proofGate'].rstrip('. ') + '; canonical local-path/freshness intent is discoverable from an existing front door and reverse-routes to P50 without duplicating path truth.'
+          for kw in ('canonical path hook','local repo path route','P50 path owner','stale checkout route'):
+              if kw not in p87['keywords']:
+                  p87['keywords'].append(kw)
+          spec_path.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          tutorial_path = root / 'registry/prompts/tutorial-discovery-prompts.v1.json'
+          tutorial = json.loads(tutorial_path.read_text(encoding='utf-8'))
+          p65 = next(p for p in tutorial['prompts'] if p['id'] == 'P65')
+          route = '- P50 Canonical Local Repository Path & Freshness Guard: establish/reuse the machine-specific canonical checkout, verify OS/shell/root/remote identity, and fetch the current remote floor before repository work.'
+          if route not in p65['copyContent']:
+              anchor = 'PRIMARY ROUTING MAP\n'
+              if anchor not in p65['copyContent']:
+                  raise SystemExit('P65 routing anchor missing')
+              p65['copyContent'] = p65['copyContent'].replace(anchor, anchor + route + '\n', 1)
+          for kw in ('canonical path','local repo path','wrong directory','stale checkout','pull latest'):
+              if kw not in p65['keywords']:
+                  p65['keywords'].append(kw)
+          tutorial_path.write_text(json.dumps(tutorial, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          test_path = root / 'tests/test_prompt_canonical_path_contract.py'
+          test_path.write_text('''from __future__ import annotations\n\nimport unittest\n\nfrom scripts import build_prompt_kit_registry\n\n\nclass CanonicalPathPromptContractTests(unittest.TestCase):\n    @classmethod\n    def setUpClass(cls) -> None:\n        cls.prompts = build_prompt_kit_registry.load_prompt_kit_registry()\n        cls.by_id = {prompt["id"]: prompt for prompt in cls.prompts}\n\n    def test_p50_is_single_canonical_local_path_owner(self) -> None:\n        p50 = self.by_id["P50"]\n        self.assertEqual(p50["name"], "Canonical Local Repository Path & Freshness Guard")\n        self.assertEqual(p50["copySheet"], "P50_COPY_SAFE")\n        content = p50["copyContent"]\n        for phrase in (\n            "CANONICAL LOCAL PATH CONTRACT",\n            "ONE AUTHORITATIVE REPOSITORY ROOT PER MACHINE / EXECUTION PROFILE",\n            "LOCAL PERSISTENCE / INDOCTRINATION",\n            "WORKSPACE / BLOAT GUARD",\n            "MACHINE / OS / SHELL GATE",\n            "REMOTE FRESHNESS IS PART OF PATH CORRECTNESS",\n            "git fetch --all --prune --tags",\n            "refs/remotes/origin/HEAD",\n            "git pull --ff-only",\n            "Hooks, Glossary, CODEBASE_MAP, AGENTS",\n            "generic snippet such as `git switch main && git pull`",\n            "Do not create a fresh clone merely because the agent cannot remember the existing path",\n        ):\n            self.assertIn(phrase, content)\n        owners = [p for p in self.prompts if p["name"] == p50["name"]]\n        self.assertEqual([p["id"] for p in owners], ["P50"])\n\n    def test_p61_returns_new_checkout_to_p50_instead_of_stranding_a_path(self) -> None:\n        p61 = self.by_id["P61"]\n        self.assertEqual(p61["name"], "Existing Repository Clone + Working-Directory Bootstrapper")\n        self.assertIn("CANONICAL PATH REGISTRATION HANDOFF", p61["copyContent"])\n        self.assertIn("P50 Canonical Local Repository Path & Freshness Guard", p61["copyContent"])\n        self.assertIn("machine-profile mapping", p61["nextStep"])\n\n    def test_p87_installs_bidirectional_path_hook_without_second_registry(self) -> None:\n        p87 = self.by_id["P87"]\n        self.assertEqual(p87["name"], "Bidirectional Use-Case Hook & Repository Route Builder")\n        content = p87["copyContent"]\n        for phrase in (\n            "CANONICAL LOCAL PATH ROUTE CASE",\n            "route to P50 Canonical Local Repository Path & Freshness Guard",\n            "Hooks, Glossary, CODEBASE_MAP, AGENTS",\n            "reverse lookup",\n            "Do not create a second capabilities registry, path registry, or glossary",\n        ):\n            self.assertIn(phrase, content)\n\n    def test_p65_prompt_finder_exposes_canonical_path_owner(self) -> None:\n        p65 = self.by_id["P65"]\n        self.assertIn(\n            "P50 Canonical Local Repository Path & Freshness Guard: establish/reuse the machine-specific canonical checkout",\n            p65["copyContent"],\n        )\n\n    def test_prompt_count_and_generated_site_remain_connected(self) -> None:\n        self.assertEqual(len(self.prompts), 100)\n        html = build_prompt_kit_registry.render()\n        self.assertIn("Canonical Local Repository Path &amp; Freshness Guard", html)\n        self.assertIn("CANONICAL LOCAL PATH CONTRACT", html)\n        self.assertIn("CANONICAL LOCAL PATH ROUTE CASE", html)\n\n\nif __name__ == "__main__":\n    unittest.main()\n''', encoding='utf-8')
+          PY
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          git rm -f --ignore-unmatch .github/workflows/tmp-canonical-local-path-20260822.yml
+          git rm -f --ignore-unmatch .github/workflows/tmp-canonical-local-path-bridge-20260822.yml
+
+      - name: Validate contribution and parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_prompt_canonical_path_contract -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python -m unittest tests.test_prompt_kit_discovery -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --summary
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Commit and push durable contribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add docs/prompts.json \
+            registry/prompts/spec-architecture-prompts.v1.json \
+            registry/prompts/tutorial-discovery-prompts.v1.json \
+            tests/test_prompt_canonical_path_contract.py \
+            web/prompt-kit/index.html
+          git add -u
+          git diff --cached --check
+          git status --short
+          git commit -m "feat(prompt-kit): codify canonical local repository path"
+          git push origin HEAD:feat/prompt-kit-artifact-risk-path-20260822
