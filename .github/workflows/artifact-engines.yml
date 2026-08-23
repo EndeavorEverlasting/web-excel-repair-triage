@@ -69,7 +69,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Repair stale count assertion and execute bounded canonical path repair
+      - name: Repair bounded canonical path transport and execute
         shell: bash
         run: |
           set -euo pipefail
@@ -77,10 +77,16 @@ jobs:
           from pathlib import Path
           path = Path('.prompt-contrib/canonical_path_repair.py')
           text = path.read_text(encoding='utf-8')
-          old = 'self.assertEqual(len(self.prompts), 100)'
-          new = 'self.assertEqual(len(self.prompts), len(self.by_id))'
-          if old not in text and new not in text:
+          old_count = 'self.assertEqual(len(self.prompts), 100)'
+          new_count = 'self.assertEqual(len(self.prompts), len(self.by_id))'
+          if old_count not in text and new_count not in text:
               raise SystemExit('canonical-path count assertion anchor missing')
-          path.write_text(text.replace(old, new), encoding='utf-8')
+          text = text.replace(old_count, new_count)
+          old_heading = 'FAIL-CLOSED\nIf multiple plausible ordinary checkouts remain'
+          new_heading = 'UNPROVED PATH STOP CONDITION\nIf multiple plausible ordinary checkouts remain'
+          if old_heading not in text and new_heading not in text:
+              raise SystemExit('canonical-path stop-condition heading anchor missing')
+          text = text.replace(old_heading, new_heading)
+          path.write_text(text, encoding='utf-8')
           PY
           python .prompt-contrib/canonical_path_repair.py
