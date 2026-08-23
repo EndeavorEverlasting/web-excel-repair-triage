@@ -115,9 +115,9 @@ class SkillPromptRegistryTests(unittest.TestCase):
         self.assertEqual(legend["promptClass"], "IMPROVE / RULES + EXECUTION")
 
         guided = build_prompt_kit_registry.GUIDED_RECOMMENDATIONS.read_text(encoding="utf-8")
-        self.assertIn("id:'repeated-stall'", guided)
-        self.assertIn("work keeps stalling, urgency is being missed", guided)
-        self.assertIn("'sub-part agent'", guided)
+        self.assertIn("id:'discriminator'", guided)
+        self.assertIn("buildAdaptiveQuestion", guided)
+        self.assertIn("scorePromptFinderAnswers", guided)
 
     def test_prompt_override_registry_is_explicit_and_identity_preserving(self) -> None:
         payload = json.loads(build_prompt_kit_registry.PROMPT_OVERRIDES.read_text(encoding="utf-8"))

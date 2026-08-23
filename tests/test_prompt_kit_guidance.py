@@ -41,8 +41,7 @@ class PromptKitGuidanceTests(unittest.TestCase):
         node = shutil.which("node")
         if not node:
             self.skipTest("Node is not installed in this test environment")
-        script = f"""
-const fs=require('fs');
+        script = f"""const fs=require('fs');
 global.PROMPTS=[
  {{id:'P06',name:'Cleanup',nextStep:'Use P07 for feature work, P12 to close, or P07 again.',useWhen:'cleanup'}},
  {{id:'P07',name:'Sprint',nextStep:'Use P11 or P12.',useWhen:'build'}},
@@ -57,22 +56,29 @@ const model=global.buildPromptGuidanceModel('P07');
 if(!model || model.current.id!=='P07' || model.next.map(x=>x.id).join(',')!=='P11,P12') throw new Error('bad model');
 console.log('GUIDANCE_MODEL_PASS');
 """
-        completed = subprocess.run(
-            [node, "-e", script],
-            cwd=ROOT,
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertIn("GUIDANCE_MODEL_PASS", completed.stdout)
+        import tempfile
+        import os
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as tmp:
+            tmp.write(script)
+            tmp_path = tmp.name
+        try:
+            completed = subprocess.run(
+                [node, tmp_path],
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertIn("GUIDANCE_MODEL_PASS", completed.stdout)
+        finally:
+            os.unlink(tmp_path)
 
     def test_complex_next_step_preserves_every_registered_route(self) -> None:
         node = shutil.which("node")
         if not node:
             self.skipTest("Node is not installed in this test environment")
-        script = f"""
-const fs=require('fs');
+        script = f"""const fs=require('fs');
 global.PROMPTS=[
  {{id:'P03',name:'Intake',nextStep:'Use P06.',useWhen:'intake'}},
  {{id:'P06',name:'Cleanup',nextStep:'Use P07.',useWhen:'cleanup'}},
@@ -90,15 +96,23 @@ const expected=['P03','P06','P07','P14','P15','P20','P12'];
 if(JSON.stringify(ids)!==JSON.stringify(expected)) throw new Error(JSON.stringify(ids));
 console.log('GUIDANCE_COMPLEX_ROUTE_PASS');
 """
-        completed = subprocess.run(
-            [node, "-e", script],
-            cwd=ROOT,
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertIn("GUIDANCE_COMPLEX_ROUTE_PASS", completed.stdout)
+        import tempfile
+        import os
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as tmp:
+            tmp.write(script)
+            tmp_path = tmp.name
+        try:
+            completed = subprocess.run(
+                [node, tmp_path],
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertIn("GUIDANCE_COMPLEX_ROUTE_PASS", completed.stdout)
+        finally:
+            os.unlink(tmp_path)
 
     def test_builder_and_discovery_contract_register_journey_runtime(self) -> None:
         builder = BUILDER.read_text(encoding="utf-8")

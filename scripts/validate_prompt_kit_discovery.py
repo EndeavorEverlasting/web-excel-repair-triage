@@ -92,9 +92,9 @@ def audit() -> dict[str, object]:
     guided_markers = (
         "PROMPT_FINDER_QUESTIONS",
         "id:'startingPoint'",
-        "id:'problemKnown'",
-        "id:'goal'",
-        "id:'shape'",
+        "id:'intent'",
+        "id:'stage'",
+        "id:'discriminator'",
         "slice(0,3)",
         "promptFinderBtn",
         "✦ Tutorial · Find My Prompt",

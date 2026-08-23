@@ -126,14 +126,14 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         guided = GUIDED_JS.read_text(encoding="utf-8")
         for marker in (
             "id:'startingPoint'",
-            "I am just starting out or do not have the repository checked out",
-            "I am already inside an existing repository",
-            "id:'problemKnown'",
-            "Do you have a known problem you want to solve?",
-            "id:'goal'",
-            "id:'shape'",
+            "I do not have the repository checked out yet",
+            "I have a repository but it is unfamiliar",
+            "id:'intent'",
+            "What is your job to be done?",
+            "id:'stage'",
+            "id:'discriminator'",
             "filterPromptsForQuery(PROMPTS,query)",
-            "PROMPTS.find",
+            "(allPrompts||PROMPTS).find",
             "slice(0,3)",
             "copyPrompt(",
             "showPromptDetail(",
@@ -143,7 +143,7 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             self.assertIn(marker, guided)
         self.assertNotIn("var R=", guided)
         self.assertNotIn("replaceChild(button,old)", guided)
-        question_ids = ("startingPoint", "problemKnown", "goal", "shape")
+        question_ids = ("startingPoint", "intent", "stage", "discriminator")
         self.assertEqual(sum(guided.count(f"id:'{item}'") for item in question_ids), 4)
         self.assertLessEqual(len(question_ids), 5)
 
