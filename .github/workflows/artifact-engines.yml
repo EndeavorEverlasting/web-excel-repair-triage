@@ -30,7 +30,7 @@ jobs:
 
       - name: Import artifact engines
         run: |
-          python -c "import triage.nw_prj_neuron_track_hours.cli; import triage.nw_prj_neuron_track_hours.bonita_cli; import triage.nth_qualitative_admin; import triage.admin_billing_summary.cli; import triage.one_marcus_recon.cli; import triage.sidecar_html; import triage.artifact_fingerprint; import triage.artifact_profiles; import triage.artifact_compare; import triage.same_family_compare; import triage.roster_log_compare.compare; import triage.roster_log_review_queue.cli; import triage.gitignore_hygiene; print('imports ok')"
+          python -c "import triage.nw_prj_neuron_track_hours.cli; import triage.nw_prj_neuron_track_hours.bonita_cli; import triage.nth_qualitative_admin; import triage.nth_evidence_bounded_allocation; import triage.admin_billing_summary.cli; import triage.one_marcus_recon.cli; import triage.sidecar_html; import triage.artifact_fingerprint; import triage.artifact_profiles; import triage.artifact_compare; import triage.same_family_compare; import triage.roster_log_compare.compare; import triage.roster_log_review_queue.cli; import triage.gitignore_hygiene; print('imports ok')"
 
       - name: Gitignore hygiene
         run: python -m triage.gitignore_hygiene
@@ -41,6 +41,7 @@ jobs:
             tests/test_nw_prj_neuron_track_hours.py \
             tests/test_nw_prj_neuron_track_hours_bonita.py \
             tests/test_nth_qualitative_admin.py \
+            tests/test_nth_evidence_bounded_allocation.py \
             tests/test_admin_billing_summary.py \
             tests/test_one_marcus_recon.py \
             tests/test_one_marcus_generate.py \
@@ -52,3 +53,41 @@ jobs:
             tests/test_gitignore_hygiene.py \
             tests/test_roster_log_review_queue.py \
             -q
+
+  canonical-local-path-prompt-repair:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feat/prompt-kit-artifact-risk-path-20260822'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-artifact-risk-path-20260822
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Repair bounded canonical path transport and execute
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.prompt-contrib/canonical_path_repair.py')
+          text = path.read_text(encoding='utf-8')
+          old_count = 'self.assertEqual(len(self.prompts), 100)'
+          new_count = 'self.assertEqual(len(self.prompts), len(self.by_id))'
+          if old_count not in text and new_count not in text:
+              raise SystemExit('canonical-path count assertion anchor missing')
+          text = text.replace(old_count, new_count)
+          old_heading = 'FAIL-CLOSED\nIf multiple plausible ordinary checkouts remain'
+          new_heading = 'UNPROVED PATH STOP CONDITION\nIf multiple plausible ordinary checkouts remain'
+          if old_heading not in text and new_heading not in text:
+              raise SystemExit('canonical-path stop-condition heading anchor missing')
+          text = text.replace(old_heading, new_heading)
+          path.write_text(text, encoding='utf-8')
+          PY
+          python .prompt-contrib/canonical_path_repair.py

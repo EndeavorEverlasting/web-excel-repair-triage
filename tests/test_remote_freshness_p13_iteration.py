@@ -35,6 +35,10 @@ class RemoteFreshnessAndP13IterationTests(unittest.TestCase):
         self.assertIn("owning contracts/specs/profiles/registries/generators", appendix)
         self.assertIn("registered artifact manifests/reports", appendix)
         self.assertIn("versioned proof", appendix)
+        self.assertIn("Post-integration verification is containment-based, not head-equality-based", appendix)
+        self.assertIn("git merge-base --is-ancestor", appendix)
+        self.assertIn("Do not fail merely because the default branch advanced", appendix)
+        self.assertIn("not an ancestor of the refreshed default head", appendix)
 
         # Representative build/repair executors must inherit freshness from one shared owner.
         for prompt_id in ("P01", "P03", "P07", "P14", "P17", "P18", "P83"):

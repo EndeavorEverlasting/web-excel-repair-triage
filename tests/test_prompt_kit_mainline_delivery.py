@@ -38,6 +38,70 @@ class PromptKitMainlineDeliveryTests(unittest.TestCase):
         ):
             self.assertIn(phrase, copy)
 
+    def test_p13_requires_continuous_mainline_convergence(self):
+        payload = load_json("registry/prompts/prompt-overrides.v1.json")
+        p13 = next(item for item in payload["overrides"] if item["id"] == "P13")
+        copy = p13["copyContent"]
+        self.assertIn("recurring pain", p13["sprintRole"])
+        self.assertIn("current default branch", p13["expectedOutput"])
+        self.assertIn("bounded fixed point", p13["nextStep"])
+        self.assertIn("branch or PR alone is insufficient", p13["proofGate"])
+        for phrase in (
+            "P13 CONTINUOUS MAINLINE CONVERGENCE",
+            "REFRESH -> SELECT NEXT GATE -> EXECUTE -> PREVENT -> VALIDATE -> CRITIQUE -> INTEGRATE -> REFRESH -> CONTINUE",
+            "Do not create a feature branch merely because P13 fired",
+            "branch, worktree, commit, push, open PR, review-ready state, or green CI",
+            "merge the exact validated owned head into the current default branch",
+            "verify that the intended change is present there",
+            "deliberate second pass",
+            "Do not stop merely because one bounded slice merged",
+            "bounded fixed point",
+        ):
+            self.assertIn(phrase, copy)
+        self.assertLess(len(copy), 18000)
+
+    def test_p13_does_not_absorb_hallucination_diagnostic_role(self):
+        payload = load_json("registry/prompts/prompt-overrides.v1.json")
+        p13 = next(item for item in payload["overrides"] if item["id"] == "P13")
+        copy = p13["copyContent"].lower()
+        self.assertIn("recover the repeated failure from evidence", copy)
+        self.assertNotIn("factuality hallucination", copy)
+        self.assertNotIn("faithfulness hallucination", copy)
+        self.assertNotIn("dumb zone", copy)
+
+    def test_p13_routes_specialized_failures_without_absorbing_their_doctrine(self):
+        payload = load_json("registry/prompts/prompt-overrides.v1.json")
+        p13 = next(item for item in payload["overrides"] if item["id"] == "P13")
+        copy = p13["copyContent"]
+        self.assertIn("specialist repair routed", p13["expectedOutput"])
+        self.assertIn("specialist failure mode is routed to its canonical owner", p13["proofGate"])
+        for phrase in (
+            "SPECIALIZED OWNER ROUTING — REFER, DO NOT DUPLICATE",
+            "route diagnosis to P100",
+            "route the prevention layer to P101",
+            "route to P68",
+            "route to P76",
+            "route verification to P83",
+            "route certification to P48",
+            "Routing is not a stopping condition",
+            "Do not copy the specialist prompt's full checklist into P13",
+        ):
+            self.assertIn(phrase, copy)
+
+        ai = load_json("registry/prompts/ai-engineering-level-up-prompts.v1.json")
+        ai_ids = {item["id"] for item in ai["prompts"]}
+        self.assertTrue({"P68", "P100", "P101"}.issubset(ai_ids))
+        spec = load_json("registry/prompts/spec-architecture-prompts.v1.json")
+        spec_ids = {item["id"] for item in spec["prompts"]}
+        self.assertIn("P76", spec_ids)
+        base = load_json("docs/prompts.json")
+        base_ids = {item["id"] for item in base}
+        self.assertIn("P48", base_ids)
+        ledger = load_json("registry/prompts/repository-work-ledger-prompts.v1.json")
+        ledger_ids = {item["id"] for item in ledger["prompts"]}
+        self.assertIn("P83", ledger_ids)
+        self.assertLess(len(copy), 18000)
+
     def test_p65_can_route_repeated_friction_without_browser_finder(self):
         payload = load_json("registry/prompts/tutorial-discovery-prompts.v1.json")
         p65 = next(item for item in payload["prompts"] if item["id"] == "P65")
