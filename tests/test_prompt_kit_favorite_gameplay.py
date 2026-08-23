@@ -11,6 +11,7 @@ GAMEPLAY = ROOT / "docs" / "prompt-kit-preference-gameplay.js"
 DEPLOYED = ROOT / "web" / "prompt-kit" / "index.html"
 REGISTRY = ROOT / "registry" / "prompts" / "spec-architecture-prompts.v1.json"
 BUILDER = ROOT / "scripts" / "build_prompt_kit_registry.py"
+BASE_BUILDER = ROOT / "build_prompt_kit.py"
 
 
 class PromptKitFavoriteGameplayTests(unittest.TestCase):
@@ -64,10 +65,13 @@ class PromptKitFavoriteGameplayTests(unittest.TestCase):
 
     def test_builder_owns_gameplay_runtime_and_generated_site_contains_it(self) -> None:
         builder = BUILDER.read_text(encoding="utf-8")
+        base_builder = BASE_BUILDER.read_text(encoding="utf-8")
         source = GAMEPLAY.read_text(encoding="utf-8")
         deployed = DEPLOYED.read_text(encoding="utf-8")
         self.assertIn("PREFERENCE_GAMEPLAY_RUNTIME", builder)
         self.assertIn("preference_gameplay_script", builder)
+        self.assertIn("var PROMPTS=", base_builder)
+        self.assertIn("root.PROMPTS", source)
         self.assertIn(source, deployed)
         self.assertIn("copyPrompt(promptId);", deployed)
         self.assertIn("recordSuccessfulCopy(id);root.showCopyConfirmation(id)", deployed)
