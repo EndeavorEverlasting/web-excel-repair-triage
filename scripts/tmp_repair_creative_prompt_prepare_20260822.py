@@ -70,7 +70,7 @@ if start in p82["copyContent"]:
     concise_creative = """
 
 CREATIVE PROTOTYPE MODE
-For creative work, the user's brief, references, examples, and constraints stay authoritative; generated concepts are revisable working context. When divergence teaches something, make 2-4 materially distinct variants. Critique them against one brief and record KEEP / COMBINE / REVISE / DISCARD. Use creation tools directly when safe; ask only a focused taste fork after concrete candidates. Final proof separates fit-to-brief and deliverable integrity from human acceptance."""
+Keep the user's brief/references/constraints authoritative and generated concepts revisable. When divergence teaches something, make 2-4 materially distinct variants, critique them against one brief, and record KEEP / COMBINE / REVISE / DISCARD. Use creation tools directly when safe; ask only a focused taste fork after concrete candidates. Separate deliverable checks from human acceptance."""
     p82["copyContent"] = before + concise_creative + end + after
 
 REGISTRY.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -83,6 +83,10 @@ text = text.replace(
 text = text.replace(
     'self.assertIn("CREATIVE PROTOTYPE", plan["copyContent"])',
     'self.assertIn("HAND OFF TO CREATIVE PROTOTYPING", plan["copyContent"])',
+)
+text = text.replace(
+    'rendered = registry.render()',
+    'rendered = build_prompt_kit_registry.render()',
 )
 TEST.write_text(text, encoding="utf-8")
 
