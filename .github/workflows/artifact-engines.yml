@@ -211,7 +211,7 @@ jobs:
           node --check docs/prompt-kit-polish.js
           python -m unittest tests.test_prompt_kit_filtering_access -v
           python -m unittest tests.test_prompt_kit_product_interactions tests.test_prompt_kit_mobile -v
-          python -m unittest tests.test_prompt_kit_mainline_contract tests.test_prompt_kit_header_contract tests.test_prompt_kit_pages tests.test_prompt_kit_hotkey_completion -v
+          python -m unittest tests.test_prompt_kit_mainline_delivery tests.test_prompt_kit_header_contract tests.test_prompt_kit_pages tests.test_prompt_kit_hotkey_completion -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           python scripts/prompt_registry_ops.py validate
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
