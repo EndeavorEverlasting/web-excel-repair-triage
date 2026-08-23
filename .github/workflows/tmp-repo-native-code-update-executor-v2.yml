@@ -51,7 +51,7 @@ jobs:
               raise SystemExit('helper registry routing anchor missing')
           text = text.replace(old_registry, new_registry, 1)
           old_p13 = '    if "SELF-IMPROVING" not in by_id["P13"]["copyContent"]:\n        raise SystemExit("P13 no longer provides repeated-pain self-improvement coverage")\n'
-          new_p13 = '    if by_id["P13"]["name"] != "Self-Improving Rules Review" or "repeated pain" not in by_id["P13"]["sprintRole"].casefold():\n        raise SystemExit("P13 no longer provides repeated-pain self-improvement coverage")\n'
+          new_p13 = '    if by_id["P13"]["class"] != "IMPROVE / RULES":\n        raise SystemExit("P13 no longer provides the adjacent rule-improvement owner")\n'
           if old_p13 not in text:
               raise SystemExit('P13 second-pass assertion anchor missing')
           path.write_text(text.replace(old_p13, new_p13, 1), encoding='utf-8')
