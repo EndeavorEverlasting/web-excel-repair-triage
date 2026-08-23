@@ -1,4 +1,4 @@
-name: Temporary P77 auditable activity alias branch contribution
+name: Temporary repo-native code-update prompt contribution
 
 on:
   push:
@@ -10,133 +10,241 @@ permissions:
   contents: write
 
 concurrency:
-  group: p77-auditable-activity-alias-branch-contribution
+  group: prompt-kit-repo-native-code-update-contribution
   cancel-in-progress: false
 
 jobs:
   contribute:
-    if: contains(github.event.head_commit.message, 'execute p77 alias branch contribution')
+    if: contains(github.event.head_commit.message, 'execute repo-native prompt contribution')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: feat/p77-auditable-activity-aliases-20260823
+          ref: main
           fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Refresh branch and apply bounded P77 change
+      - name: Refresh exact repository floor
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch --all --prune --tags
-          git pull --ff-only origin feat/p77-auditable-activity-aliases-20260823
+          git pull --ff-only origin main
+          echo "BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          git status --short
+          git log --oneline --decorate -5
+
+      - name: Strengthen P07 generated-surface coexistence contract
+        shell: bash
+        run: |
+          set -euo pipefail
           python - <<'PY'
           import json
           from pathlib import Path
 
-          registry = Path('registry/prompts/management-operations-prompts.v1.json')
-          prompts = json.loads(registry.read_text(encoding='utf-8'))
-          p77 = next(prompt for prompt in prompts['prompts'] if prompt['id'] == 'P77')
+          path = Path('docs/prompts.json')
+          prompts = json.loads(path.read_text(encoding='utf-8'))
+          p07 = next(p for p in prompts if p['id'] == 'P07')
 
-          marker = 'AUDITABLE ACTIVITY ALIASES / OUTWARD LANGUAGE'
-          section = '\n'.join([
-              marker,
-              '- When a supported workstream repeats in outward artifacts, use the current FUN-owned qualitative workstream language catalog instead of hand-inventing synonyms.',
-              '- Keep one canonical workstream code and evidence identity internally, and allow only catalog-approved deterministic evidence-equivalent presentation variants for outward readability.',
-              '- Preserve canonical code, evidence references or row-basis references, risk tier, and KPI meaning in the Triage producer receipt/manifest. A visible phrase never creates paid time, task hours, person/date facts, new evidence, or a higher-risk execution claim.',
-              '- Activity aliases are a share-safe readability mechanism, not concealment or KPI reclassification. Do not use them to frustrate legitimate audit; random selection is forbidden where the deterministic rendering contract applies.',
-              '- High-risk labels such as deployment/field support or client correspondence still require the registered `dated_person_task` evidence scope. Lower-risk recurring-pattern language cannot smuggle in high-risk execution claims.',
-              '- FUN remains the vocabulary and evidence owner. Triage may implement rendering, consumer pins, and receipts, but must not fork or duplicate FUN law.',
-              '- Private Math Packet and internal evidence surfaces may retain canonical IDs, evidence references, and reconciliation mechanics; outward workbook projections normally show only the supported qualitative phrase unless the audience contract explicitly requires the receipt.',
-          ])
-          if marker not in p77['copyContent']:
-              anchor = 'DRIVE EVIDENCE / GLOSSARY DISCOVERY'
-              if anchor not in p77['copyContent']:
-                  raise SystemExit('P77 Drive glossary anchor missing')
-              p77['copyContent'] = p77['copyContent'].replace(anchor, section + '\n\n' + anchor, 1)
+          marker = 'REPOSITORY-GENERATED UPDATE COEXISTENCE CONTRACT'
+          section = '''REPOSITORY-GENERATED UPDATE COEXISTENCE CONTRACT
+- Treat repository-owned generators, derivation engines, codegen CLIs, and update workflows as first-class mutation lanes rather than invisible side effects. Resolve their canonical input, generator entrypoint, declared output surfaces, trigger, validator, and provenance before editing an output they own.
+- If a path is generated or derived, repair the canonical source input/template/generator and regenerate it. Do not hand-edit generated output merely because an agent can make the diff faster. If ownership is ambiguous, inspect the nearest manifest/registry/workflow/builder once and fail closed rather than creating competing truth.
+- Enforce one writer per generated mutation surface. While the repository-native generator owns a surface, human/agent lanes may inspect, test, falsify, or modify non-overlapping canonical inputs, but they must not race the generator or overwrite its output. Shared registries, manifests, lockfiles, and generated entrypoints require serialized ownership at the mutation seam.
+- A generated diff is proposed repository work, not automatic completion. Inspect the exact diff, run the owning validator/tests/build, preserve normal review/protection/integration gates, and prove the accepted default branch contains both the canonical source change and its required generated result.
+- Prefer the tracked canonical generator/CLI over ad-hoc workflow replay scripts. Provider automation should delegate to canonical repo-owned logic rather than becoming a second implementation of generation behavior.
+- On generator/input/output conflicts, stale base state, partial writes, or concurrent movement, preserve unique work and reconcile at the canonical source boundary; never force-reset or silently let generated output erase separately owned changes.
+'''
+          if marker not in p07['copyContent']:
+              anchor = 'AUTONOMOUS EXECUTION / USER-ONLY GATE'
+              if anchor not in p07['copyContent']:
+                  raise SystemExit('P07 autonomous-gate anchor missing')
+              p07['copyContent'] = p07['copyContent'].replace(anchor, section + '\n' + anchor, 1)
 
           additions = {
-              'inspectFirst': ' Current FUN qualitative-workstream-language catalog/overlay and the Triage evidence-backed qualitative renderer/receipt contract when outward activity wording is in scope.',
-              'expectedOutput': ' Outward activity wording may vary deterministically for readability only when each phrase remains tied to the same canonical workstream/evidence identity, risk tier, and KPI meaning.',
-              'proofGate': ' If the activity-alias layer is touched, proof additionally requires deterministic catalog-approved selection, canonical code and evidence-reference survival in the consumer receipt, no random/concealment semantics, and the registered high-risk evidence scopes.',
+              'expectedOutput': ' Repository-owned generators and derived-code mechanisms are coordinated as explicit mutation lanes: agents change canonical inputs/owners, generated outputs are regenerated and independently validated, and no competing writer silently overwrites those surfaces.',
+              'nextStep': ' If the next owned surface is generated, resolve and execute its canonical generator from the current floor instead of hand-editing the derived output.',
+              'proofGate': ' Generated-surface proof additionally requires canonical source/generator ownership, one writer per generated surface, regenerated output from the accepted inputs, exact-diff validation, and default-branch containment; an ad-hoc replay or hand-edited generated file is not equivalent proof.'
           }
           for field, addition in additions.items():
-              if addition.strip() not in p77[field]:
-                  p77[field] += addition
+              if addition.strip() not in p07[field]:
+                  p07[field] += addition
+          for keyword in ('generated code ownership', 'repo-native generator', 'generated surface'):
+              if keyword not in p07['keywords']:
+                  p07['keywords'].append(keyword)
 
-          for keyword in ('activity aliases', 'alias activities', 'qualitative workstream language', 'presentation variants'):
-              if keyword not in p77['keywords']:
-                  p77['keywords'].append(keyword)
-
-          registry.write_text(json.dumps(prompts, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
-
-          test_path = Path('tests/test_management_operations_prompt_registry.py')
-          text = test_path.read_text(encoding='utf-8')
-          if marker not in text:
-              anchor = '        self.assertIn("understand what it does not prove", content)\n'
-              addition = (
-                  '        self.assertIn("AUDITABLE ACTIVITY ALIASES / OUTWARD LANGUAGE", content)\n'
-                  '        self.assertIn("FUN-owned qualitative workstream language catalog", content)\n'
-                  '        self.assertIn("one canonical workstream code", content)\n'
-                  '        self.assertIn("deterministic evidence-equivalent presentation variants", content)\n'
-                  '        self.assertIn("KPI meaning", content)\n'
-                  '        self.assertIn("random selection is forbidden", content)\n'
-                  '        self.assertIn("`dated_person_task` evidence scope", content)\n'
-                  '        self.assertIn("FUN remains the vocabulary and evidence owner", content)\n'
-                  '        self.assertIn("Triage may implement rendering", content)\n'
-                  '        for keyword in ("activity aliases", "alias activities", "qualitative workstream language", "presentation variants"):\n'
-                  '            self.assertIn(keyword, prompt["keywords"])\n'
-              )
-              if anchor not in text:
-                  raise SystemExit('P77 focused-test anchor missing')
-              text = text.replace(anchor, anchor + addition, 1)
-              test_path.write_text(text, encoding='utf-8')
+          path.write_text(json.dumps(prompts, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
           PY
 
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
-          python -m unittest tests.test_management_operations_prompt_registry -v
+      - name: Add distinct repository-native update harness prompt through helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/repo-native-code-update-prompt.json" <<'JSON'
+          {
+            "name": "Repository-Native Code Update Harness Builder",
+            "type": "BUILD + HARNESS",
+            "class": "HARNESS / REPO-NATIVE CODE GENERATION",
+            "sprintRole": "Build or strengthen a repository-owned mechanism that deterministically generates bounded code updates from canonical inputs while coexisting safely with human and agent developers",
+            "progress": "YES",
+            "useWhen": "The repository should be able to generate or refresh owned code changes itself through a tracked generator, CLI, derivation engine, or provider workflow instead of relying exclusively on agent/human hand edits.",
+            "inspectFirst": "Fresh default-branch and overlapping-work truth; existing generators/builders/registries/manifests/workflows; source-vs-generated ownership; current codegen or derivation conventions; protected/forbidden paths; validators/tests/CI; branch protection and bot permissions; prior generation failures, replay scripts, and loop/collision risks.",
+            "expectedOutput": "A tracked repo-native update mechanism with canonical structured inputs, one authoritative generator entrypoint, explicit owned and forbidden output paths, deterministic/idempotent generation, provenance, collision and recursion guards, atomic/fail-closed writes, focused tests, provider or same-entrypoint execution proof, and normal Git/CI integration alongside agent developers.",
+            "nextStep": "Implement the smallest real generator seam and exercise it on one representative canary input, then rerun the same inputs to prove a clean zero-diff repeat before broadening its owned surfaces or triggers.",
+            "proofGate": "The real repository entrypoint generates only declared owned paths from pinned canonical inputs, rejects an out-of-scope mutation attempt, survives failure without partial destructive state, emits reviewable provenance, passes owning validators, produces the expected first-run diff and a zero-diff repeat run, cannot recursively trigger itself without a guard, and the exact accepted result is contained by the current default branch.",
+            "color": "Cyan",
+            "category": "standard",
+            "profile": "spec-architecture",
+            "copyContent": "BUILD A REPOSITORY-NATIVE CODE UPDATE MECHANISM. DO NOT TURN THIS INTO UNBOUNDED SELF-MODIFICATION OR ANOTHER AGENT PROMPT.\n\nRepo/product: xyz_repo_or_product\nMechanism scope: xyz_generated_surface_or_capability\nCanonical input(s), if known: xyz_input_registry_schema_template_or_source\nDesired trigger, if known: xyz_manual_pr_push_schedule_event_or_cli\nForbidden scope: xyz_forbidden_paths_or_actions\n\nMISSION\nAdd or strengthen a tracked mechanism by which the repository can deterministically generate bounded code updates from canonical inputs in addition to changes authored by human or agent developers. The repository-owned mechanism must have a smaller authority surface than a general coding agent: explicit inputs, a canonical generator entrypoint, declared output ownership, fail-closed boundaries, validation, provenance, and ordinary Git integration. Implement the mechanism and prove the real call path; do not stop at a workflow sketch.\n\n1. RECOVER EXISTING GENERATION AUTHORITY\nRefresh remote/default-branch truth first. Inspect existing builders, code generators, schemas, registries, manifests, derivation engines, workflows, hooks, generated-file banners, tests, and operator docs. Build a compact ownership map: canonical input -> generator -> generated surface -> trigger -> validator -> integration gate. Reuse a compatible owner instead of creating a second codegen system. An ad-hoc provider replay script is transport, not automatically the canonical generator.\n\n2. DRAW THE SOURCE / GENERATED BOUNDARY\nFor every generated surface define:\n- authoritative input(s) and schema/version;\n- one canonical generator/CLI/function;\n- exact owned output paths or path patterns;\n- forbidden paths and data classes;\n- whether outputs are committed, ephemeral, or both;\n- provenance linking generator version/head and material input identity;\n- validator/build/test that proves the output is acceptable.\nGenerated output must not become competing truth. Human and agent developers repair the canonical input/template/generator and regenerate unless repository policy explicitly names a different owner.\n\n3. MAKE GENERATION DETERMINISTIC AND IDEMPOTENT\nSame accepted inputs plus pinned generator/dependency versions must produce semantically identical output. Normalize unstable ordering, timestamps, machine-local paths, random identifiers, locale, and environment leakage unless those values are intentionally part of the contract. First execution may create a bounded diff; an immediate repeat with unchanged inputs must produce zero tracked diff. Where byte-for-byte determinism is impractical, define the narrower semantic equivalence and test it explicitly.\n\n4. FAIL CLOSED AT THE MUTATION BOUNDARY\nValidate inputs and resolve all destinations before destructive writes. Prefer staging plus atomic replacement, transaction-like commit, or rollback to last-known-good over partial multi-file mutation. Reject path traversal, symlink escape where relevant, undeclared output paths, malformed/partial inputs, missing required generator dependencies, and attempts to place secrets/private evidence into public generated surfaces. A failed run must report what did and did not change. Do not force-reset, force-push, or erase dirty/separately owned work to make generation convenient.\n\n5. COEXIST WITH AGENT AND HUMAN DEVELOPERS\nTreat the repository generator as a real mutation owner. Enforce one writer per generated surface at a time. If another branch, worktree, developer, or agent has changed the canonical input or generated output since the generation floor, refresh and reconcile before writing. On conflict, stop or rebase/reconcile at the canonical source boundary; do not let generated output silently overwrite separately owned work. Agent sprints may inspect or falsify generated surfaces in parallel, but mutation ownership of shared registries/manifests/lockfiles/generated entrypoints must be serialized.\n\n6. CHOOSE TRIGGERS WITHOUT CREATING A RECURSIVE BOT\nExpose the smallest useful real entrypoint first, usually a repo CLI/script that can also run in CI/provider automation. Then wire only justified triggers such as manual dispatch, relevant input-path changes, pull requests, schedules, or external events. Provider workflows should delegate to the same canonical generator instead of duplicating its logic. Add loop guards so a generation commit or generated-path change cannot trigger an infinite generate-commit-generate cycle. Use path filters, actor/event guards, provenance/correlation identity, concurrency control, or equivalent mechanisms appropriate to the provider.\n\n7. KEEP GENERATED CHANGES REVIEWABLE\nRepository-generated code is proposed code, not privileged truth. Produce a reviewable diff and concise generation receipt containing the canonical input identity, generator identity, owned outputs touched, validation result, and proof ceiling. Respect normal branch protection, required checks, review, and merge authority. Do not bypass protected integration merely because a bot produced the patch. If direct bot-to-main updates are already an explicit repository policy, prove the exact safeguards rather than assuming them.\n\n8. PROTOTYPE THE REAL CALL STACK\nExercise the real entrypoint on the smallest representative canary:\ncanonical input -> validation -> generator -> staged output -> owned-path guard -> write -> validator/test -> Git diff/receipt.\nThen exercise meaningful failures: malformed or partial input, out-of-scope destination, stale/conflicting state, and interrupted/failed generation where practical. Avoid ceremonial matrix volume; attack the failure modes most capable of corrupting or racing repository state.\n\n9. PROVE REPEATABILITY AND INTEGRATION\nRequired minimum proof for a mechanism claimed working:\n- first run from a clean known floor produces exactly the expected bounded diff;\n- focused generator tests and owning validators pass;\n- a second unchanged-input run produces zero tracked diff;\n- one undeclared-output attempt is rejected before unsafe mutation;\n- generated provenance/receipt identifies its inputs and generator;\n- provider workflow proof, when provider automation is claimed, executes the same canonical generator rather than a substitute path;\n- refresh before integration and rerun affected proof if the floor moved;\n- current default branch contains the accepted canonical generator/input change and required generated output.\nSeparate static/schema, unit/helper, same-entrypoint synthetic, provider runtime, and user/production proof. Do not call helper-only proof live automation.\n\n10. STOP AT A BOUNDED FIXED POINT\nAfter the first green run, inspect the diff, repeat-run behavior, failure receipts, trigger behavior, collision policy, generated artifacts, and CI/provider evidence once more. Repair concrete in-scope gaps immediately and rerun affected proof. Stop when the declared generated surface is safely reproducible and no practical in-scope corruption, recursion, stale-state, or competing-writer gap remains. Broaden authority only through a later explicit scope change.\n\nDELIVER\nReport the ownership map; canonical generator and trigger; canonical inputs; owned/forbidden outputs; first-run and repeat-run diff results; failure/collision/loop-guard proof; validators; generated receipt/provenance; commit/PR/integration state; proof ceiling; and the exact next generator command or external blocker. The mechanism is not closed merely because a workflow file exists or a bot produced one successful commit.",
+            "keywords": [
+              "repository self update",
+              "self updating repository",
+              "repo-native code generation",
+              "repository-native generator",
+              "generated code ownership",
+              "codegen harness",
+              "code update mechanism",
+              "deterministic code generation",
+              "idempotent generator",
+              "generated surface",
+              "generator workflow",
+              "bot generated code",
+              "one writer per generated surface",
+              "zero diff repeat run",
+              "generation provenance",
+              "code generation loop guard"
+            ]
+          }
+          JSON
+          python scripts/prompt_registry_ops.py inspect | tee "$RUNNER_TEMP/inspect.json"
+          python scripts/prompt_registry_ops.py add --input "$RUNNER_TEMP/repo-native-code-update-prompt.json" --registry spec-architecture | tee "$RUNNER_TEMP/add-receipt.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          receipt = json.loads(Path(os.environ['RUNNER_TEMP'], 'add-receipt.json').read_text(encoding='utf-8'))
+          record = receipt['record']
+          print(f"HELPER_ALLOCATED_ID={record['id']}")
+          print(f"HELPER_ALLOCATED_SEQ={record['seq']}")
+          print(f"HELPER_COPY_SHEET={record['copySheet']}")
+          print(f"HELPER_STATUS={receipt['status']}")
+          PY
+
+      - name: Add closest focused semantic regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          p07_test = Path('tests/test_p02_p07_autonomous_iteration.py')
+          text = p07_test.read_text(encoding='utf-8')
+          if 'def test_p07_coordinates_repository_generated_mutation_lanes' not in text:
+              anchor = '    def test_p07_serial_fallback_is_fail_closed_and_not_user_scheduled(self) -> None:\n'
+              addition = '''    def test_p07_coordinates_repository_generated_mutation_lanes(self) -> None:\n        prompt = self.effective["P07"]\n        content = prompt["copyContent"]\n        for phrase in (\n            "REPOSITORY-GENERATED UPDATE COEXISTENCE CONTRACT",\n            "first-class mutation lanes",\n            "repair the canonical source input/template/generator and regenerate it",\n            "one writer per generated mutation surface",\n            "A generated diff is proposed repository work, not automatic completion",\n            "Prefer the tracked canonical generator/CLI over ad-hoc workflow replay scripts",\n            "reconcile at the canonical source boundary",\n        ):\n            self.assertIn(phrase, content)\n        self.assertIn("generated-code mechanisms are coordinated as explicit mutation lanes", prompt["expectedOutput"])\n        self.assertIn("canonical generator", prompt["nextStep"])\n        self.assertIn("Generated-surface proof additionally requires", prompt["proofGate"])\n\n'''
+              if anchor not in text:
+                  raise SystemExit('P07 focused-test anchor missing')
+              text = text.replace(anchor, addition + anchor, 1)
+              p07_test.write_text(text, encoding='utf-8')
+
+          spec_test = Path('tests/test_spec_architecture_prompt_registry.py')
+          text = spec_test.read_text(encoding='utf-8')
+          if 'def test_repo_native_code_update_harness_has_bounded_generator_authority' not in text:
+              anchor = '    def test_new_source_prompts_are_intentionally_bounded(self) -> None:\n'
+              addition = '''    def test_repo_native_code_update_harness_has_bounded_generator_authority(self) -> None:\n        matches = [p for p in self.full.values() if p["name"] == "Repository-Native Code Update Harness Builder"]\n        self.assertEqual(len(matches), 1)\n        prompt = matches[0]\n        content = prompt["copyContent"]\n        raw = self.raw[prompt["id"]]\n        self.assertEqual(prompt["profile"], "spec-architecture")\n        self.assertEqual(prompt["color"], "Cyan")\n        self.assertEqual(prompt["class"], "HARNESS / REPO-NATIVE CODE GENERATION")\n        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])\n        self.assertIn(self.policy["marker"], content)\n        for phrase in (\n            "DO NOT TURN THIS INTO UNBOUNDED SELF-MODIFICATION",\n            "DRAW THE SOURCE / GENERATED BOUNDARY",\n            "MAKE GENERATION DETERMINISTIC AND IDEMPOTENT",\n            "FAIL CLOSED AT THE MUTATION BOUNDARY",\n            "COEXIST WITH AGENT AND HUMAN DEVELOPERS",\n            "RECURSIVE BOT",\n            "one writer per generated surface",\n            "zero tracked diff",\n            "Provider workflows should delegate to the same canonical generator",\n            "out-of-scope destination",\n            "generated provenance/receipt",\n            "The mechanism is not closed merely because a workflow file exists",\n        ):\n            self.assertIn(phrase, content)\n        self.assertNotEqual(prompt["id"], "P01")\n        self.assertNotEqual(prompt["id"], "P07")\n        self.assertNotEqual(prompt["id"], "P13")\n        self.assertGreater(len(raw["copyContent"]), 3500)\n        self.assertLess(len(raw["copyContent"]), 8000)\n        self.assertIn("Repository-Native Code Update Harness Builder", build_prompt_kit_registry.render())\n\n'''
+              if anchor not in text:
+                  raise SystemExit('spec-architecture focused-test anchor missing')
+              text = text.replace(anchor, addition + anchor, 1)
+              spec_test.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Whole-context second-pass semantic checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from scripts import build_prompt_kit_registry
+
+          prompts = build_prompt_kit_registry.load_prompt_kit_registry()
+          matches = [p for p in prompts if p['name'] == 'Repository-Native Code Update Harness Builder']
+          assert len(matches) == 1
+          new = matches[0]
+          by_id = {p['id']: p for p in prompts}
+          assert 'generator' in by_id['P01']['copyContent'].lower() or 'generators' in by_id['P01']['copyContent'].lower()
+          assert 'SELF-IMPROVING' in by_id['P13']['copyContent']
+          assert 'REPOSITORY-GENERATED UPDATE COEXISTENCE CONTRACT' in by_id['P07']['copyContent']
+          assert new['id'] not in {'P01','P07','P13'}
+          content = new['copyContent']
+          for phrase in ('last-known-good', 'partial', 'secrets/private evidence', 'one writer per generated surface', 'infinite generate-commit-generate cycle', 'same canonical generator', 'zero tracked diff', 'default branch contains'):
+              assert phrase in content, phrase
+          print(json.dumps({'new_id': new['id'], 'name': new['name'], 'distinct_from': ['P01','P07','P13']}, indent=2))
+          PY
+
+      - name: Focused and registry proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile tests/test_p02_p07_autonomous_iteration.py tests/test_spec_architecture_prompt_registry.py
+          python -m unittest tests.test_p02_p07_autonomous_iteration -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate | tee "$RUNNER_TEMP/validate-receipt.json"
           python -m unittest tests.test_prompt_language_audit -v
-          python scripts/validate_prompt_kit_interactions.py --require-implementation --output "$RUNNER_TEMP/prompt-kit-interaction-audit.json" --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
-          expected=$(printf '%s\n' \
-            registry/prompts/management-operations-prompts.v1.json \
-            tests/test_management_operations_prompt_registry.py \
-            web/prompt-kit/index.html | sort)
-          actual=$(git status --short | awk '{print $2}' | sort)
-          if [ "$actual" != "$expected" ]; then
-            echo 'Unexpected durable diff:' >&2
-            git status --short >&2
-            exit 1
-          fi
-          git add registry/prompts/management-operations-prompts.v1.json tests/test_management_operations_prompt_registry.py web/prompt-kit/index.html
-          git diff --cached --check
-          git commit -m 'feat(prompt-kit): add auditable activity alias contract'
-          git push origin HEAD:feat/p77-auditable-activity-aliases-20260823
+      - name: Verify helper parity and changed-surface boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          receipt = json.loads(Path(os.environ['RUNNER_TEMP'], 'validate-receipt.json').read_text(encoding='utf-8'))
+          assert receipt['status'] == 'valid'
+          assert receipt['site_parity'] is True
+          assert receipt['prompt_count'] > 0
+          print(json.dumps(receipt, indent=2))
+          PY
+          changed="$(git diff --name-only | sort)"
+          printf '%s\n' "$changed"
+          unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(docs/prompts.json|registry/prompts/spec-architecture-prompts.v1.json|tests/test_p02_p07_autonomous_iteration.py|tests/test_spec_architecture_prompt_registry.py|web/prompt-kit/index.html)$' || true)"
+          test -z "$unexpected" || { echo "Unexpected changed paths: $unexpected" >&2; exit 1; }
 
-      - name: Restore canonical temporary executor on main
-        if: always()
+      - name: Retire transport and commit validated durable contribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/tmp-repo-native-code-update-prompt-contrib.yml
+          git add docs/prompts.json registry/prompts/spec-architecture-prompts.v1.json tests/test_p02_p07_autonomous_iteration.py tests/test_spec_architecture_prompt_registry.py web/prompt-kit/index.html
+          git diff --cached --check
+          git status --short
+          git diff --cached --stat
+          git commit -m "feat(prompt-kit): add repository-native code update harness prompt"
+
+      - name: Reconcile moved main, rerun exact-head proof, and integrate
         shell: bash
         run: |
           set -euo pipefail
           git fetch origin main --prune
-          restore="$RUNNER_TEMP/main-restore"
-          git worktree add "$restore" origin/main
-          cd "$restore"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if [ "$(git rev-parse HEAD)" != "$GITHUB_SHA" ]; then
-            echo "main moved during executor run; refusing restoration push" >&2
-            exit 1
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
           fi
-          git checkout "${GITHUB_SHA}^" -- .github/workflows/tmp-repo-native-code-update-prompt-contrib.yml
-          git add .github/workflows/tmp-repo-native-code-update-prompt-contrib.yml
-          git diff --cached --check
-          git commit -m 'chore: restore repo-native prompt contribution executor'
+          python -m unittest tests.test_p02_p07_autonomous_iteration tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_prompt_language_audit -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check HEAD
+          final_sha="$(git rev-parse HEAD)"
           git push origin HEAD:main
+          echo "FINAL_SHA=$final_sha"
+          git status --short
