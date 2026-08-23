@@ -239,6 +239,35 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertNotEqual(prompt["id"], "P95")
         self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
 
+    def test_repository_automation_prompts_have_distinct_generation_and_promotion_roles(self) -> None:
+        generation = [p for p in self.full.values() if p["name"] == "Repository-Native Code Update Harness Builder"]
+        promotion = [p for p in self.full.values() if p["name"] == "Validated CI/CD Promotion Pipeline Builder"]
+        self.assertEqual(len(generation), 1)
+        self.assertEqual(len(promotion), 1)
+        generation = generation[0]
+        promotion = promotion[0]
+        self.assertNotEqual(generation["id"], promotion["id"])
+        self.assertEqual(generation["class"], "HARNESS / REPO-NATIVE CODE GENERATION")
+        self.assertEqual(promotion["class"], "HARNESS / CI-CD PROMOTION")
+        self.assertEqual(promotion["profile"], "spec-architecture")
+        self.assertEqual(promotion["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], promotion["copyContent"])
+        for phrase in (
+            "SEPARATE AUTHORING, VALIDATION, AND PROMOTION",
+            "KEEP HARNESS E2E AND APPLICATION E2E DISTINCT",
+            "PIN EVERY GATE TO ONE CANDIDATE IDENTITY",
+            "REQUIRED plus SKIP is not green",
+            "least-privilege",
+            "build-once/promote-the-same-artifact",
+            "recursively trigger another writer forever",
+            "PROVE POST-PROMOTION CONTAINMENT",
+            "provider run ID",
+        ):
+            self.assertIn(phrase, promotion["copyContent"])
+        self.assertIn("code already authored", promotion["copyContent"])
+        self.assertIn("repository-owned mechanism", generation["copyContent"])
+        self.assertIn("Validated CI/CD Promotion Pipeline Builder", build_prompt_kit_registry.render())
+
     def test_new_source_prompts_are_intentionally_bounded(self) -> None:
         for prompt_id in ("P78", "P79", "P80", "P81", "P82", "P99"):
             content = self.raw[prompt_id]["copyContent"]

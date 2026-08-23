@@ -176,6 +176,30 @@ class PromptKitMainlineDeliveryTests(unittest.TestCase):
             errors, _, _ = validator.validate(True, manifest, implemented, geometry)
             self.assertEqual([], errors)
 
+    def test_p11_and_p15_compose_with_canonical_cicd_without_role_collapse(self):
+        prompts = {item["id"]: item for item in load_json("docs/prompts.json")}
+        p11 = prompts["P11"]
+        p15 = prompts["P15"]
+        for phrase in (
+            "CI/CD COMPOSITION CONTRACT",
+            "same validation logic locally and in CI",
+            "offline/synthetic boundary",
+            "Application or product end-to-end tests",
+            "required validator reported SKIP is not a successful CI gate",
+        ):
+            self.assertIn(phrase, p11["copyContent"])
+        for phrase in (
+            "CANONICAL PROMOTION PIPELINE CONTRACT",
+            "canonical GitHub Actions/CI/CD promotion workflow",
+            "Pin the candidate head SHA",
+            "skipped required harness or E2E gates",
+            "Automated push/merge/release is permitted only",
+            "verify containment of the proven integration SHA",
+        ):
+            self.assertIn(phrase, p15["copyContent"])
+        self.assertEqual(p11["class"], "VALIDATE / GATE")
+        self.assertEqual(p15["class"], "MERGE / RELEASE")
+
     def test_repo_quick_access_explains_mainline_deployment_gate(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn("Open the Prompt Kit", readme)

@@ -104,6 +104,19 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
         ):
             self.assertIn(phrase, content)
 
+    def test_p07_coordinates_repository_generated_mutation_lanes(self) -> None:
+        prompt = self.effective["P07"]
+        content = prompt["copyContent"]
+        for phrase in (
+            "REPOSITORY-GENERATED UPDATE COEXISTENCE CONTRACT",
+            "first-class mutation lanes",
+            "repair the canonical source input/template/generator and regenerate it",
+            "one writer per generated mutation surface",
+            "A generated diff is proposed repository work, not automatic completion",
+            "canonical source boundary",
+        ):
+            self.assertIn(phrase, content)
+
     def test_p07_serial_fallback_is_fail_closed_and_not_user_scheduled(self) -> None:
         prompt = self.effective["P07"]
         content = prompt["copyContent"]
