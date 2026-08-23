@@ -158,7 +158,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git rm .prompt-contrib/ux_prompt_suite_executor.py
+          git rm -f .prompt-contrib/ux_prompt_suite_executor.py
+          if [ -f .prompt-contrib/ux-prompt-suite-retry.txt ]; then
+            git rm .prompt-contrib/ux-prompt-suite-retry.txt
+          fi
           git add \
             registry/prompts/spec-architecture-prompts.v1.json \
             registry/prompts/tutorial-discovery-prompts.v1.json \
