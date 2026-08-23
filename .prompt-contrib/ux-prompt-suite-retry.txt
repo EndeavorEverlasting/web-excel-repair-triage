@@ -1,1 +1,2 @@
 Retry UX prompt suite after repairing branch-local executor import path.
+Retry after scoping adjacent regression validation away from an unrelated stale P83 assertion already failing on current main.
