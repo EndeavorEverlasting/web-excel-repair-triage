@@ -1,0 +1,111 @@
+name: P77 closeout hardening bootstrap
+
+on:
+  push:
+    branches:
+      - fix/p77-mandatory-closeout-20260823
+    paths:
+      - .github/workflows/p77-closeout-hardening-bootstrap.yml
+
+permissions:
+  contents: write
+
+jobs:
+  harden-p77:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/p77-mandatory-closeout-20260823
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Harden P77 canonical source and focused regression
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          registry_path = Path('registry/prompts/management-operations-prompts.v1.json')
+          payload = json.loads(registry_path.read_text(encoding='utf-8'))
+          p77 = next(item for item in payload['prompts'] if item['id'] == 'P77')
+
+          expected_suffix = (
+              ' The sprint always ends with one user-facing closeout message that summarizes completed work by lane, '
+              'validation and integration state, checked-no-change surfaces, remaining gaps, risks, blockers, proof ceiling, '
+              'and the executable next action; tool output or a successful merge is not itself the final response.'
+          )
+          if expected_suffix.strip() not in p77['expectedOutput']:
+              p77['expectedOutput'] += expected_suffix
+
+          next_suffix = (
+              ' After the last executable gate is closed or a real blocker is reached, emit the mandatory operator '
+              'closeout before stopping.'
+          )
+          if next_suffix.strip() not in p77['nextStep']:
+              p77['nextStep'] += next_suffix
+
+          proof_suffix = (
+              ' Completion is not proven until that final human-readable closeout has been emitted to the operator; '
+              'the agent must not terminate on a tool call, CI result, merge result, Drive write, or silent success.'
+          )
+          if proof_suffix.strip() not in p77['proofGate']:
+              p77['proofGate'] += proof_suffix
+
+          marker = '\n\nMANDATORY USER-FACING CLOSEOUT\n'
+          block = (
+              'MANDATORY USER-FACING CLOSEOUT\n'
+              '- Tool calls, CI output, merge receipts, Drive writes, and successful mutations are intermediate evidence, not the final response.\n'
+              '- Before stopping for any reason, emit one compact human-readable closeout message to the operator. Do not end silently after the last tool call.\n'
+              '- Summarize by lane: FUN, Triage, Drive, Prompt Kit. Include exact changed artifacts/files, validation actually run, integration/merge state, checked-no-change surfaces, remaining gaps/risks/blockers, proof ceiling, and NEXT ACTION / NEXT STEPS.\n'
+              '- If all safe authorized work is complete, say so explicitly and use the shared no-work-remaining value rather than inventing future work.'
+          )
+          if marker not in p77['copyContent']:
+              anchor = '\n\nDELIVER\n'
+              if anchor not in p77['copyContent']:
+                  raise SystemExit('P77 DELIVER anchor missing')
+              p77['copyContent'] = p77['copyContent'].replace(anchor, '\n\n' + block + anchor, 1)
+
+          registry_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          test_path = Path('tests/test_management_operations_prompt_registry.py')
+          text = test_path.read_text(encoding='utf-8')
+          needle = '        self.assertIn("Triage may implement rendering", content)\n'
+          addition = (
+              needle
+              + '        self.assertIn("MANDATORY USER-FACING CLOSEOUT", content)\n'
+              + '        self.assertIn("Do not end silently after the last tool call", content)\n'
+              + '        self.assertIn("Tool calls, CI output, merge receipts, Drive writes", content)\n'
+              + '        self.assertIn("Summarize by lane: FUN, Triage, Drive, Prompt Kit", content)\n'
+              + '        self.assertIn("the final human-readable closeout has been emitted", prompt["proofGate"])\n'
+              + '        self.assertIn("emit the mandatory operator closeout before stopping", prompt["nextStep"])\n'
+              + '        self.assertEqual(content.count("MANDATORY USER-FACING CLOSEOUT"), 1)\n'
+          )
+          if 'self.assertIn("MANDATORY USER-FACING CLOSEOUT", content)' not in text:
+              if needle not in text:
+                  raise SystemExit('P77 focused-test anchor missing')
+              text = text.replace(needle, addition, 1)
+          test_path.write_text(text, encoding='utf-8')
+          PY
+      - name: Build canonical Prompt Kit website
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Validate focused Prompt Kit semantics and exact site parity
+        run: |
+          python -m unittest tests.test_management_operations_prompt_registry -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit canonical hardening and remove bootstrap
+        shell: bash
+        run: |
+          git rm .github/workflows/p77-closeout-hardening-bootstrap.yml
+          git add registry/prompts/management-operations-prompts.v1.json tests/test_management_operations_prompt_registry.py web/prompt-kit/index.html
+          if git diff --cached --quiet; then
+            echo 'No P77 hardening changes produced' >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(prompt-kit): require P77 operator closeout'
+          git push origin HEAD:fix/p77-mandatory-closeout-20260823
