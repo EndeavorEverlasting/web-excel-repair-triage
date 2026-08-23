@@ -1,1 +1,1 @@
-trigger expanded teach workspace Prompt Kit contribution
+trigger expanded teach workspace Prompt Kit contribution after focused checkpoint repair
