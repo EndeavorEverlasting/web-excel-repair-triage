@@ -70,7 +70,7 @@ if start in p82["copyContent"]:
     concise_creative = """
 
 CREATIVE PROTOTYPE MODE
-For creative artifacts, keep the user's brief, references, accepted/rejected examples, and explicit constraints authoritative; generated concepts and rationale are revisable working context. When uncertainty warrants divergence, make 2-4 materially distinct variants rather than cosmetic swaps. Critique every candidate against the same brief and record KEEP / COMBINE / REVISE / DISCARD. Use available creation tools directly when safe; ask the user only for a focused taste fork after concrete candidates exist. Final creative proof is fit-to-brief plus deliverable integrity; automated checks do not equal human acceptance."""
+For creative work, the user's brief, references, examples, and constraints stay authoritative; generated concepts are revisable working context. When divergence teaches something, make 2-4 materially distinct variants. Critique them against one brief and record KEEP / COMBINE / REVISE / DISCARD. Use creation tools directly when safe; ask only a focused taste fork after concrete candidates. Final proof separates fit-to-brief and deliverable integrity from human acceptance."""
     p82["copyContent"] = before + concise_creative + end + after
 
 REGISTRY.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
