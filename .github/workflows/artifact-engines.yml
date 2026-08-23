@@ -116,7 +116,6 @@ jobs:
                   tests/test_prompt_registry_expansion_regression_design_teach.py \
                   tests/test_prompt_kit_discovery.py \
                   web/prompt-kit/index.html
-          git add -u .prompt-contrib scripts
           git diff --cached --check
           git status --short
           git commit -m "feat(prompt-kit): add flow friction and preference telemetry guidance"
