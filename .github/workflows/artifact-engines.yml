@@ -115,10 +115,8 @@ jobs:
                   tests/test_spec_architecture_prompt_registry.py \
                   tests/test_prompt_registry_expansion_regression_design_teach.py \
                   tests/test_prompt_kit_discovery.py \
-                  web/prompt-kit/index.html \
-                  .prompt-contrib/flow-preference-telemetry-draft.json \
-                  scripts/tmp_flow_preference_prompt_contribution_20260822.py
-          git add -u .prompt-contrib
+                  web/prompt-kit/index.html
+          git add -u .prompt-contrib scripts
           git diff --cached --check
           git status --short
           git commit -m "feat(prompt-kit): add flow friction and preference telemetry guidance"
