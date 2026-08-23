@@ -48,6 +48,22 @@ def repository_root(start: Path) -> Path:
     return Path(_decode(result.stdout)).resolve()
 
 
+def require_single_worktree(root: Path) -> None:
+    result = _run_git(root, "worktree", "list", "--porcelain")
+    if result.returncode != 0:
+        raise HookInstallError(
+            f"could not inspect linked worktrees (exit {result.returncode})"
+        )
+    count = sum(
+        1 for line in _decode(result.stdout).splitlines() if line.startswith("worktree ")
+    )
+    if count != 1:
+        raise HookInstallError(
+            "repository has linked worktrees; refusing to change shared local "
+            "core.hooksPath because sibling checkouts could be affected"
+        )
+
+
 def current_hooks_path(root: Path) -> str | None:
     result = _run_git(root, "config", "--local", "--get", "core.hooksPath")
     if result.returncode == 1:
@@ -98,10 +114,39 @@ def verify_hook_files(root: Path) -> None:
         )
 
 
+def default_hook_path(root: Path, name: str) -> Path:
+    result = _run_git(root, "rev-parse", "--git-path", f"hooks/{name}")
+    if result.returncode != 0:
+        raise HookInstallError(
+            f"could not resolve default Git hook path for {name!r} "
+            f"(exit {result.returncode})"
+        )
+    value = Path(_decode(result.stdout))
+    return value if value.is_absolute() else root / value
+
+
+def existing_default_hooks(root: Path) -> list[str]:
+    existing: list[str] = []
+    for name in REQUIRED_HOOKS:
+        path = default_hook_path(root, name)
+        if path.exists() or path.is_symlink():
+            existing.append(name)
+    return existing
+
+
 def install_local_hooks(root: Path, *, replace: bool = False) -> str:
     root = repository_root(root)
+    require_single_worktree(root)
     verify_hook_files(root)
     existing = current_hooks_path(root)
+
+    if existing is None:
+        default_hooks = existing_default_hooks(root)
+        if default_hooks:
+            raise HookInstallError(
+                "default Git hook(s) already exist and would be bypassed by "
+                "core.hooksPath: " + ", ".join(default_hooks)
+            )
 
     if existing not in (None, HOOKS_PATH) and not replace:
         raise HookInstallError(
@@ -125,6 +170,7 @@ def install_local_hooks(root: Path, *, replace: bool = False) -> str:
 
 def check_local_hooks(root: Path) -> str:
     root = repository_root(root)
+    require_single_worktree(root)
     verify_hook_files(root)
     configured = current_hooks_path(root)
     if configured != HOOKS_PATH:
