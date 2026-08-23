@@ -13,7 +13,7 @@ var FIXED_PROMPT_FINDER_QUESTIONS=[
   {id:'discover',label:'Understand, discover, or investigate',queries:['discovery','understand repository','opportunity']},
   {id:'plan',label:'Plan, factor, or design the work',queries:['plan','factor','architecture']},
   {id:'coordinate',label:'Coordinate people, agents, lanes, or a work ledger',queries:['repository ledger','parallel','sequential']},
-  {id:'repeated-stall',label:'Recover repeated friction, missed urgency, or a workflow that keeps stalling',queries:['urgency','repeated pain','sub-part agent','stalled execution']},
+  {id:'repeated-stall',label:'The work keeps stalling, urgency is being missed, or I keep repeating the same correction',queries:['urgency','repeated pain','sub-part agent','stalled execution']},
   {id:'build',label:'Build, change, or repair repository behavior',queries:['implement','build','repair']},
   {id:'diagnose',label:'Diagnose a failure or find root cause',queries:['troubleshoot','root cause','failure']},
   {id:'artifact',label:'Create, transform, or repair a file or artifact',queries:['artifact builder','generate artifact','file transformation']},
