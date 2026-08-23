@@ -420,6 +420,12 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("UNKNOWN is not PASS", p93)
         self.assertIn("FALSIFY CLOSURE", p93)
         self.assertIn("NOT CERTIFIED", p93)
+        self.assertIn("CHECK FAITHFULNESS BEFORE FETCHING MORE", p93)
+        self.assertIn("FACTUALITY_MISSING_CONTEXT", p93)
+        self.assertIn("FAITHFULNESS_CONTEXT_IGNORED", p93)
+        self.assertIn("ATTENTION_SATURATION", p93)
+        self.assertIn("A confident, plausible, good-faith answer can still fail closure", p93)
+        self.assertIn("do not reflexively add more context", p93)
 
         html = build_prompt_kit_registry.render()
         for _, (name, _) in expected.items():
