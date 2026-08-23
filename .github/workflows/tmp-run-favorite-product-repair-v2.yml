@@ -1,0 +1,85 @@
+name: Temporary favorite product repair v2
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/tmp-run-favorite-product-repair-v2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.event.pull_request.head.ref == 'fix/prompt-kit-favorite-invocation-focus-20260823'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/prompt-kit-favorite-invocation-focus-20260823
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply bounded product patch from guarded executor
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+
+          executor = Path('.github/workflows/tmp-favorite-invocation-focus-executor.yml')
+          text = executor.read_text(encoding='utf-8')
+          start = "          python - <<'PY'\n"
+          end = "\n          PY\n"
+          if text.count(start) != 1 or text.count(end) != 1:
+              raise SystemExit('guarded executor Python body could not be isolated exactly once')
+          body = textwrap.dedent(text.split(start, 1)[1].split(end, 1)[0])
+          old = '    replace_exact(design, old, new)'
+          new = '''    expected = 1
+    if old == "configure `p999 → OPEN_PROMPT(P999)`":
+        observed = Path(design).read_text(encoding='utf-8').count(old)
+        if observed not in (1, 2):
+            raise SystemExit(f'{design}: unexpected p999 legacy anchor count {observed}')
+        expected = observed
+    replace_exact(design, old, new, expected=expected)'''
+          if body.count(old) != 1:
+              raise SystemExit(f'expected one design dispatcher after dedent, found {body.count(old)}')
+          body = body.replace(old, new, 1)
+          exec(compile(body, '<favorite-product-repair>', 'exec'), {'__name__': '__main__'})
+          PY
+      - name: Validate focused runtime and harness
+        shell: bash
+        run: |
+          node --check docs/prompt-kit.js
+          node --check docs/prompt-kit-polish.js
+          node --check docs/prompt-kit-hotkey-prototype.js
+          python -m py_compile tests/test_prompt_kit_hotkey_completion.py tests/test_prompt_kit_favorite_invocation.py
+          python -m unittest tests.test_prompt_kit_hotkey_completion tests.test_prompt_kit_favorite_invocation -v
+      - name: Rebuild and validate canonical Prompt Kit
+        shell: bash
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python -m unittest tests.test_prompt_kit_product_interactions tests.test_prompt_kit_filtering_access tests.test_prompt_kit_discovery -v
+          python tests/test_prompt_kit_header_contract.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Commit non-workflow durable product slice
+        shell: bash
+        run: |
+          git checkout -- .github/workflows/prompt-kit-web.yml
+          git diff --check
+          git status --short
+          git diff --stat
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md \
+            docs/prompt-kit-hotkey-prototype.js \
+            docs/prompt-kit-polish.js \
+            docs/prompt-kit.js \
+            tests/test_prompt_kit_hotkey_completion.py \
+            tests/test_prompt_kit_favorite_invocation.py \
+            web/README.md \
+            web/prompt-kit/index.html
+          git commit -m 'fix(prompt-kit): make favorite shortcuts copy and reveal'
+          git push origin HEAD:fix/prompt-kit-favorite-invocation-focus-20260823
