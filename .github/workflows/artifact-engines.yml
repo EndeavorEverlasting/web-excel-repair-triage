@@ -91,3 +91,27 @@ jobs:
           path.write_text(text, encoding='utf-8')
           PY
           python .prompt-contrib/canonical_path_repair.py
+
+  favorite-gameplay-runtime-repair:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feat/prompt-kit-favorite-gameplay-20260822'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-favorite-gameplay-20260822
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Execute bounded favorite gameplay semantic alignment
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python .prompt-contrib/favorite_gameplay_alignment.py
