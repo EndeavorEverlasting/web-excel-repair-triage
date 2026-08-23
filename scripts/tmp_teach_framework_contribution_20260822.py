@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts import tmp_teach_workspace_contribution_20260822 as base
+import tmp_teach_workspace_contribution_20260822 as base
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "registry/prompts/tutorial-discovery-prompts.v1.json"
