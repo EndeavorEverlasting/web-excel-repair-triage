@@ -1,0 +1,181 @@
+name: Temporary UX prompt suite bridge
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-ux-design-suite-20260823
+  cancel-in-progress: false
+
+jobs:
+  ux-prompt-suite:
+    if: github.event.pull_request.head.ref == 'feat/prompt-kit-ux-design-suite-20260823'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-ux-design-suite-20260823
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Refresh floor and reconcile current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --all --prune --tags
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+          fi
+          if [ ! -f .prompt-contrib/ux_prompt_suite_executor.py ]; then
+            echo "SKIP_EXECUTOR=1" >> "$GITHUB_ENV"
+            echo "Durable UX contribution already replaced temporary executor; nothing to rerun."
+          else
+            echo "SKIP_EXECUTOR=0" >> "$GITHUB_ENV"
+          fi
+          git status --short
+          git log --oneline --decorate -8
+
+      - name: Apply bounded executor preflight correction
+        if: env.SKIP_EXECUTOR != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.prompt-contrib/ux_prompt_suite_executor.py')
+          text = path.read_text(encoding='utf-8')
+          old = 'intentional deviations are explained; no screenshot-only fake substitutes for functionality; and representative live comparison plus regressions pass without importing unauthorized assets/content.'
+          new = 'intentional deviations are explained; unknown or unobservable reference behavior remains explicitly unproven; no screenshot-only fake substitutes for functionality; and representative live comparison plus regressions pass without importing unauthorized assets/content.'
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif new not in text:
+              raise SystemExit('reference-emulation proof-gate correction anchor missing')
+          old2 = 'Evidence from another head or materially different runtime is historical, not current proof.'
+          new2 = 'Evidence from another head or materially different runtime is historical, not current proof; acceptance must remain pinned to the exact head under test.'
+          if old2 in text:
+              text = text.replace(old2, new2, 1)
+          elif new2 not in text:
+              raise SystemExit('exact-head acceptance correction anchor missing')
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Execute helper-backed UX contribution set
+        if: env.SKIP_EXECUTOR != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .prompt-contrib/ux_prompt_suite_executor.py | tee "$RUNNER_TEMP/ux-prompt-suite-receipt.txt"
+
+      - name: Focused semantic and shared-owner validation
+        if: env.SKIP_EXECUTOR != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile tests/test_ux_design_prompt_suite.py
+          python -m unittest tests.test_ux_design_prompt_suite -v
+          python -m unittest tests.test_spec_architecture_prompt_registry tests.test_prompt_registry_expansion_regression_design_teach -v
+          python scripts/prompt_registry_ops.py validate | tee "$RUNNER_TEMP/ux-registry-validation.json"
+          python -m unittest tests.test_prompt_language_audit -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Whole-chat pass 2 and anti-bloat falsification
+        if: env.SKIP_EXECUTOR != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from scripts import build_prompt_kit_registry
+
+          full = {p['name']: p for p in build_prompt_kit_registry.load_prompt_kit_registry()}
+          names = (
+              'UX Product Designer & Interaction Architect',
+              'Reference UX Emulator & Adaptation Builder',
+              'UX Polish & Sophistication Refiner',
+              'Cross-App UX Design System & Pattern Factorer',
+              'UX Integrity & Cross-Viewport Acceptance Guard',
+          )
+          raw = json.loads(Path('registry/prompts/spec-architecture-prompts.v1.json').read_text(encoding='utf-8'))['prompts']
+          raw_by_name = {p['name']: p for p in raw}
+          for name in names:
+              if name not in full or name not in raw_by_name:
+                  raise SystemExit(f'missing UX owner after pass 2: {name}')
+              size = len(raw_by_name[name]['copyContent'])
+              if size >= 8000:
+                  raise SystemExit(f'UX prompt exceeds anti-bloat ceiling: {name} {size}')
+          p65 = {p['id']: p for p in build_prompt_kit_registry.load_prompt_registry()}['P65']
+          for name in names:
+              if name not in p65['copyContent']:
+                  raise SystemExit(f'P65 failed to route UX owner: {name}')
+          for prompt_id, phrase in (
+              ('P82', 'HYPOTHESIS -> BUILD -> MEASURE -> CRITIQUE -> DECIDE'),
+              ('P94', 'PROTECT COMPOSED UI STATE AND INTERACTION SEQUENCES'),
+              ('P95', 'PROTOTYPE FAILURE CALL STACKS TOO'),
+              ('P99', 'PRESERVE ORTHOGONAL STATE'),
+          ):
+              if phrase not in {p['id']: p for p in build_prompt_kit_registry.load_prompt_kit_registry()}[prompt_id]['copyContent']:
+                  raise SystemExit(f'adjacent owner drifted: {prompt_id}')
+          print(json.dumps({'whole_chat_pass_2':'bounded fixed point','ux_owner_count':5,'missed_material_insights':[]}, indent=2))
+          PY
+          python -m unittest tests.test_ux_design_prompt_suite -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          git diff --stat
+
+      - name: Remove temporary branch executor and commit durable UX suite
+        if: env.SKIP_EXECUTOR != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .prompt-contrib/ux_prompt_suite_executor.py
+          git add \
+            registry/prompts/spec-architecture-prompts.v1.json \
+            registry/prompts/tutorial-discovery-prompts.v1.json \
+            tests/test_ux_design_prompt_suite.py \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          echo '--- durable UX contribution ---'
+          git diff --cached --stat
+          git status --short
+          git commit -m "feat(prompt-kit): add UX design lifecycle suite"
+
+      - name: Refresh moved main and rerun exact-head proof
+        if: env.SKIP_EXECUTOR != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+            python -m unittest tests.test_ux_design_prompt_suite tests.test_spec_architecture_prompt_registry tests.test_prompt_registry_expansion_regression_design_teach -v
+            python scripts/prompt_registry_ops.py validate
+            python -m unittest tests.test_prompt_language_audit -v
+            python scripts/validate_prompt_kit_discovery.py --summary
+            python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
+            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+            git diff --check HEAD
+          fi
+          echo "PROVEN_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Push exact validated branch head
+        if: env.SKIP_EXECUTOR != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin HEAD:feat/prompt-kit-ux-design-suite-20260823
+          echo "PUSHED_HEAD=$PROVEN_HEAD"
