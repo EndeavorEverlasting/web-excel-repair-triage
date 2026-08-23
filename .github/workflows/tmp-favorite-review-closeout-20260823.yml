@@ -1,0 +1,139 @@
+name: Temporary Favorite Gameplay Review Closeout
+
+on:
+  push:
+    branches:
+      - fix/prompt-kit-favorite-review-closeout-20260823
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-favorite-review-closeout-20260823
+  cancel-in-progress: false
+
+jobs:
+  closeout:
+    if: github.event.head_commit.message == 'chore(prompt-kit): install isolated favorite review closeout'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Repair canonical owners, rebuild, prove, and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git log -1 --pretty=%s)" = 'chore(prompt-kit): install isolated favorite review closeout'
+          git fetch --all --prune --tags
+          git merge-base --is-ancestor origin/main HEAD
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              target = Path(path)
+              text = target.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise RuntimeError(f'{path}: expected one anchor, found {count}')
+              target.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          replace_once(
+              'build_prompt_kit.py',
+              'JS_PATH = os.path.join(DATA_DIR, "prompt-kit.js")\n',
+              'JS_PATH = os.path.join(DATA_DIR, "prompt-kit.js")\nPOLISH_JS_PATH = os.path.join(DATA_DIR, "prompt-kit-polish.js")\n',
+          )
+          replace_once(
+              'build_prompt_kit.py',
+              'def build_html(prompts, ref):\n',
+              'def build_html(prompts, ref, include_polish=True):\n',
+          )
+          replace_once(
+              'build_prompt_kit.py',
+              '    with open(JS_PATH, "r", encoding="utf-8") as f:\n        js_text = f.read()\n    html.append(js_text)\n\n    html.append(\'</script>\\n</body>\\n</html>\')\n',
+              '    with open(JS_PATH, "r", encoding="utf-8") as f:\n        js_text = f.read()\n    html.append(js_text)\n    if include_polish:\n        with open(POLISH_JS_PATH, "r", encoding="utf-8") as f:\n            polish_js_text = f.read()\n        html.append(polish_js_text)\n\n    html.append(\'</script>\\n</body>\\n</html>\')\n',
+          )
+
+          replace_once(
+              'scripts/build_prompt_kit_registry.py',
+              '    html = build_prompt_kit.build_html(prompts, reference)\n',
+              '    html = build_prompt_kit.build_html(prompts, reference, include_polish=False)\n',
+          )
+          replace_once(
+              'scripts/build_prompt_kit_registry.py',
+              '    polish_script = _read_runtime(POLISH_RUNTIME, "Prompt Kit polish behavior")\n',
+              '',
+          )
+          replace_once(
+              'scripts/build_prompt_kit_registry.py',
+              '        f"<script>\\n{polish_script}\\n</script>\\n"\n',
+              '',
+          )
+
+          old_callback = 'if(recorded)return;recorded=true;recordSuccessfulCopy(id);root.showCopyConfirmation(id)'
+          new_callback = 'if(recorded)return;recorded=true;root.showCopyConfirmation(id);recordSuccessfulCopy(id)'
+          replace_once('docs/prompt-kit-preference-gameplay.js', old_callback, new_callback)
+          test_path = Path('tests/test_prompt_kit_favorite_gameplay.py')
+          tests = test_path.read_text(encoding='utf-8')
+          if tests.count(old_callback) != 2:
+              raise RuntimeError(f'favorite gameplay callback assertion count={tests.count(old_callback)}')
+          test_path.write_text(tests.replace(old_callback, new_callback), encoding='utf-8')
+
+          replace_once(
+              'web/README.md',
+              'and open the canonical prompt detail immediately.',
+              'and copy the canonical prompt content immediately with the normal clipboard success feedback.',
+          )
+
+          header = Path('tests/test_prompt_kit_header_contract.py')
+          header_text = header.read_text(encoding='utf-8')
+          marker = 'def test_triage_fun_views_use_stable_prompt_profiles() -> None:\n'
+          if header_text.count(marker) != 1:
+              raise RuntimeError('header test insertion marker drifted')
+          executable = '''def test_standalone_builder_embeds_polish_runtime_for_numeric_views() -> None:\n    polish = POLISH.read_text(encoding="utf-8")\n    with tempfile.TemporaryDirectory() as temp_dir:\n        output = Path(temp_dir) / "prompt-kit.html"\n        completed = subprocess.run(\n            [sys.executable, str(BUILDER), "--output", str(output)],\n            cwd=ROOT,\n            text=True,\n            capture_output=True,\n            check=False,\n        )\n        assert completed.returncode == 0, completed.stdout + completed.stderr\n        built = output.read_text(encoding="utf-8")\n    assert polish in built, "standalone builder must load the runtime that owns data-view controls"\n    for marker in (\n        "id=\\\"favoritesShortcut\\\" data-view=\\\"favorites\\\"",\n        "id=\\\"triageShortcut\\\" data-view=\\\"triage\\\"",\n        "id=\\\"funShortcut\\\" data-view=\\\"fun\\\"",\n        "if(key==='3'){e.preventDefault();e.stopImmediatePropagation();activateFavoritesView();return}",\n        "if(key==='4'){e.preventDefault();e.stopImmediatePropagation();activateProfilePromptsView('triage-management','triage');return}",\n        "if(key==='5'){e.preventDefault();e.stopImmediatePropagation();activateProfilePromptsView('fun-management','fun');return}",\n    ):\n        assert marker in built\n\n\n'''
+          header.write_text(header_text.replace(marker, executable + marker, 1), encoding='utf-8')
+          PY
+
+          python build_prompt_kit.py --output /tmp/prompt-kit-standalone.html
+          node --check docs/prompt-kit-polish.js
+          node --check docs/prompt-kit-preference-gameplay.js
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python -m unittest tests.test_prompt_kit_favorite_gameplay tests.test_prompt_kit_hotkey_completion -v
+          python tests/test_prompt_kit_header_contract.py
+          python -m unittest tests.test_prompt_kit_product_interactions tests.test_prompt_kit_order_navigation_product -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+          python - <<'PY'
+          import subprocess
+          expected = {
+              'build_prompt_kit.py',
+              'docs/prompt-kit-preference-gameplay.js',
+              'scripts/build_prompt_kit_registry.py',
+              'tests/test_prompt_kit_favorite_gameplay.py',
+              'tests/test_prompt_kit_header_contract.py',
+              'web/README.md',
+              'web/prompt-kit/index.html',
+          }
+          changed = set(subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines())
+          if changed != expected:
+              raise RuntimeError(f'unexpected durable delta: {sorted(changed)}')
+          PY
+
+          git rm .github/workflows/tmp-favorite-review-closeout-20260823.yml
+          git add build_prompt_kit.py docs/prompt-kit-preference-gameplay.js scripts/build_prompt_kit_registry.py tests/test_prompt_kit_favorite_gameplay.py tests/test_prompt_kit_header_contract.py web/README.md web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'fix(prompt-kit): close favorite gameplay review gaps'
+          git push origin HEAD:fix/prompt-kit-favorite-review-closeout-20260823
