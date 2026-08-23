@@ -27,7 +27,9 @@ class LocalHookActivationTests(unittest.TestCase):
     def _repo_with_hooks(self, *, executable: bool = True, track: bool = True) -> Path:
         temp_dir = tempfile.TemporaryDirectory()
         self.addCleanup(temp_dir.cleanup)
-        repo = Path(temp_dir.name)
+        base = Path(temp_dir.name)
+        repo = base / "repo"
+        repo.mkdir()
         self._git(repo, "init")
         hooks = repo / HOOKS_PATH
         hooks.mkdir()
@@ -75,6 +77,53 @@ class LocalHookActivationTests(unittest.TestCase):
         self._git(repo, "config", "--local", "core.hooksPath", ".custom-hooks")
         self.assertEqual(install_local_hooks(repo, replace=True), HOOKS_PATH)
         self.assertEqual(check_local_hooks(repo), HOOKS_PATH)
+
+    def test_installer_preserves_default_hook_directory(self) -> None:
+        repo = self._repo_with_hooks()
+        default_hook = repo / ".git" / "hooks" / "pre-commit"
+        default_hook.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+
+        with self.assertRaisesRegex(HookInstallError, "would be bypassed"):
+            install_local_hooks(repo)
+
+        configured = self._git(
+            repo,
+            "config",
+            "--local",
+            "--get",
+            "core.hooksPath",
+            check=False,
+        )
+        self.assertEqual(configured.returncode, 1)
+        self.assertTrue(default_hook.is_file())
+
+    def test_installer_refuses_repository_with_linked_worktree(self) -> None:
+        repo = self._repo_with_hooks()
+        self._git(
+            repo,
+            "-c",
+            "user.name=Harness Test",
+            "-c",
+            "user.email=harness@example.invalid",
+            "commit",
+            "-m",
+            "fixture base",
+        )
+        sibling = repo.parent / "sibling"
+        self._git(repo, "worktree", "add", "--detach", str(sibling), "HEAD")
+
+        with self.assertRaisesRegex(HookInstallError, "linked worktrees"):
+            install_local_hooks(repo)
+
+        configured = self._git(
+            repo,
+            "config",
+            "--local",
+            "--get",
+            "core.hooksPath",
+            check=False,
+        )
+        self.assertEqual(configured.returncode, 1)
 
     def test_check_refuses_unconfigured_checkout(self) -> None:
         repo = self._repo_with_hooks()
