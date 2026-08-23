@@ -446,7 +446,7 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
             "ESTABLISH AND ENFORCE THE CANONICAL DEVELOPMENT AND PRODUCTION PATH",
             "CANONICAL DEVELOPMENT CHECKOUT",
             "CANONICAL PRODUCTION / USE PATH",
-            "harness/canonical-paths.v1.json",
+            "Do not standardize a filename across repositories",
             "PREVENT PATH SPRAWL AND COMPUTER BLOAT",
             "REMOTE INTEGRATION IS NOT LOCAL DEPLOYMENT",
             "REMOTE_INTEGRATED",
