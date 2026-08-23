@@ -10,6 +10,7 @@
     "synonym_source": "build_prompt_kit.py",
     "display_order_source": "registry/prompts/prompt-display-order.v1.json",
     "guided_prompt_source": "registry/prompts/tutorial-discovery-prompts.v1.json",
+    "tutorial_route_validator": "scripts/validate_prompt_kit_tutorial_routes.py",
     "tutorial": "docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md",
     "access_guide": "PROMPT_KIT_ACCESS.md",
     "repository_front_door": "README.md"
@@ -51,11 +52,19 @@
     },
     {
       "id": "guided_questionnaire",
-      "expected": "A separate visible Tutorial / Find My Prompt control preserves the existing Add Prompt action, asks no more than five bounded questions, and returns one primary recommendation with no more than two follow-on options."
+      "expected": "A separate visible Tutorial / Find My Prompt control preserves the existing Add Prompt action, uses three compact context questions plus one adaptive live-registry choice by default, asks no more than five bounded questions, and returns one primary recommendation with no more than two related options."
+    },
+    {
+      "id": "adaptive_questionnaire",
+      "expected": "The fourth question is generated from current registry/search evidence rather than a fixed prompt-ID map; an optional fifth specialist question appears only when the user asks to browse beyond the adaptive candidates."
+    },
+    {
+      "id": "tutorial_route_coverage",
+      "expected": "Every current Prompt Kit registry record is directly reachable through the optional specialist question, which renders the live PROMPTS collection and may filter it through the shared search engine without a hard-coded prompt-ID routing table."
     },
     {
       "id": "guided_uses_shared_search",
-      "expected": "Questionnaire answers are translated into normal search phrases and routed through filterPromptsForQuery against current PROMPTS; no hard-coded prompt-ID recommendation table is allowed."
+      "expected": "Questionnaire answers are translated into normal search phrases and routed through filterPromptsForQuery against current PROMPTS; per-question evidence is de-duplicated before accumulation, and the specialist fallback also uses the current registry rather than a hard-coded prompt-ID recommendation table."
     },
     {
       "id": "metadata_recommendations",
@@ -87,7 +96,7 @@
     },
     {
       "id": "registry_prompt_fallback",
-      "expected": "P65 provides the same bounded recommendation workflow as a copyable conversational fallback and P64 registers the repository tutorial-portfolio ranking prompt."
+      "expected": "P65 provides the bounded conversational recommendation workflow and P64 registers the repository tutorial-portfolio ranking prompt; browser route coverage remains live-registry-driven rather than duplicating P65's prompt vocabulary."
     },
     {
       "id": "distribution_front_door",
@@ -95,7 +104,7 @@
     },
     {
       "id": "generated_site_parity",
-      "expected": "The checked-in Prompt Kit website contains the exact canonical base, guided-questionnaire, journey-guidance, and polish behavior sources after regeneration."
+      "expected": "The checked-in Prompt Kit website contains the exact canonical base, adaptive guided-questionnaire, journey-guidance, and polish behavior sources after regeneration."
     }
   ],
   "validation": [
@@ -104,11 +113,13 @@
     "node --check docs/prompt-kit-journey.js",
     "node --check docs/prompt-kit-polish.js",
     "python scripts/validate_prompt_kit_discovery.py --summary",
+    "python scripts/validate_prompt_kit_tutorial_routes.py --summary",
+    "python -m unittest tests.test_prompt_kit_tutorial_route_coverage -v",
     "python -m unittest tests.test_prompt_kit_discovery -v",
     "python -m unittest tests.test_skill_prompt_registry -v",
     "python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary",
     "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
     "git diff --check"
   ],
-  "proof_ceiling": "Deterministic registry, shared-search recommendation, chronological display, explicit Favorites filtering, registry-owned next-step routing, session-only completion state, layout markers, Node syntax, generated-site parity, acquisition documentation, and CI proof. Physical browser rendering, clipboard permissions, assistive-technology coverage, device installation, and user acceptance remain field gates."
+  "proof_ceiling": "Deterministic registry, shared-search recommendation, adaptive route selection, all-prompt specialist reachability, chronological display, explicit Favorites filtering, registry-owned next-step routing, session-only completion state, layout markers, Node syntax, generated-site parity, acquisition documentation, and CI proof. Physical browser rendering, clipboard permissions, assistive-technology coverage, device installation, recommendation quality for every human phrasing, and user acceptance remain field gates."
 }
