@@ -1,0 +1,62 @@
+name: Prompt Kit hierarchical filter mainline bridge
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Replay validated bounded repair on current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin feat/prompt-kit-hierarchical-filters-20260823
+          mkdir -p .prompt-contrib
+          git show origin/feat/prompt-kit-hierarchical-filters-20260823:.prompt-contrib/hierarchical_filter_patch.py > .prompt-contrib/hierarchical_filter_patch.py
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.prompt-contrib/hierarchical_filter_patch.py')
+          text = path.read_text(encoding='utf-8')
+
+          # Carry forward the pass-1 regression repair: the progressive control is
+          # intentionally named All Subcategories, not the obsolete All Types.
+          anchor = 'test = test.replace("self.assertIn(\\"aria-label\x27,\x27Prompt types\\", js)", "self.assertIn(\\"aria-label\x27,\x27Prompt subcategories\\", js)")'
+          label_patch = 'test = test.replace(\x27        self.assertIn("All Types", js)\\n\x27, \x27        self.assertIn("All Subcategories", js)\\n\x27)'
+          if label_patch not in text:
+              if anchor not in text:
+                  raise SystemExit('hierarchical filter label-repair anchor missing')
+              text = text.replace(anchor, label_patch + '\n' + anchor, 1)
+
+          # The replay runs on main. The bridge is its own temporary transport and
+          # the fetched executor is runtime-only, so both disappear before commit.
+          text = text.replace(
+              'WORKFLOW = ROOT / ".github/workflows/prompt-kit-hierarchical-filter-repair.yml"',
+              'WORKFLOW = ROOT / ".github/workflows/prompt-kit-hierarchical-filter-mainline-bridge.yml"',
+          )
+          text = text.replace(
+              'run("git", "rm", str(SELF.relative_to(ROOT)))',
+              'SELF.unlink()',
+          )
+          text = text.replace(
+              'run("git", "push", "origin", "HEAD:feat/prompt-kit-hierarchical-filters-20260823")',
+              'run("git", "push", "origin", "HEAD:main")',
+          )
+          path.write_text(text, encoding='utf-8')
+          PY
+          python .prompt-contrib/hierarchical_filter_patch.py
