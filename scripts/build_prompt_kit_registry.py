@@ -34,6 +34,7 @@ DISPLAY_ORDER_POLICY = (
 GUIDED_RECOMMENDATIONS = REPO_ROOT / "docs" / "prompt-kit-guided-recommendations.js"
 PROMPT_JOURNEY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-journey.js"
 POLISH_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-polish.js"
+PREFERENCE_GAMEPLAY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-preference-gameplay.js"
 CORRESPONDENCE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-correspondence.js"
 MANAGEMENT_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-management.js"
 SPEC_ARCHITECTURE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-spec-architecture.js"
@@ -464,6 +465,9 @@ def render() -> str:
     guided_script = _read_runtime(GUIDED_RECOMMENDATIONS, "Guided recommendation behavior")
     journey_script = _read_runtime(PROMPT_JOURNEY_RUNTIME, "Guided next-step journey behavior")
     polish_script = _read_runtime(POLISH_RUNTIME, "Prompt Kit polish behavior")
+    preference_gameplay_script = _read_runtime(
+        PREFERENCE_GAMEPLAY_RUNTIME, "Prompt Kit preference gameplay behavior"
+    )
     correspondence_script = _read_runtime(
         CORRESPONDENCE_RUNTIME, "Prompt Kit correspondence profile behavior"
     )
@@ -480,6 +484,7 @@ def render() -> str:
         f"<script>\n{guided_script}\n</script>\n"
         f"<script>\n{journey_script}\n</script>\n"
         f"<script>\n{polish_script}\n</script>\n"
+        f"<script>\n{preference_gameplay_script}\n</script>\n"
         f"<script>\n{correspondence_script}\n</script>\n"
         f"<script>\n{management_script}\n</script>\n"
         f"<script>\n{spec_architecture_script}\n</script>\n"

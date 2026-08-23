@@ -17,13 +17,16 @@ COMBINED_BUILDER = ROOT / "scripts" / "build_prompt_kit_registry.py"
 JS = ROOT / "docs" / "prompt-kit.js"
 POLISH = ROOT / "docs" / "prompt-kit-polish.js"
 EXPECTED = [
-    ("all", "All", "1"),
-    ("standard", "Standard", "2"),
-    ("gnhf", "GNHF", "3"),
-    ("doctrine", "Doctrine", "4"),
+    ("data-cat", "all", "All", "1"),
+    ("data-cat", "standard", "Standard", "2"),
+    ("data-view", "favorites", "Favorites", "3"),
+    ("data-view", "triage", "Triage", "4"),
+    ("data-view", "fun", "Fun", "5"),
+    ("data-cat", "gnhf", "GNHF", None),
+    ("data-cat", "doctrine", "Doctrine", None),
 ]
 BUTTON_RE = re.compile(
-    r'<button class="cat-tab(?P<active> active)?" data-cat="(?P<cat>[^"]+)">(?P<body>.*?)</button>'
+    r'<button class="cat-tab(?P<active> active)?"[^>]*?(?P<attr>data-(?:cat|view))="(?P<value>[^"]+)"[^>]*>(?P<body>.*?)</button>'
 )
 KBD_RE = re.compile(r'<span class="kbd">(?P<key>[^<]+)</span>')
 TAG_RE = re.compile(r"<[^>]+>")
@@ -64,48 +67,69 @@ def parse_header_buttons(text: str) -> list[tuple[str, str, str, bool]]:
     for match in BUTTON_RE.finditer(region):
         body = match.group("body")
         key_match = KBD_RE.search(body)
-        assert key_match, f"{match.group('cat')} button is missing a hotkey label"
         label_source = re.sub(r'<span class="tab-icon">.*?</span>', "", body)
         label_source = KBD_RE.sub("", label_source)
         label = html.unescape(TAG_RE.sub("", label_source)).strip()
-        parsed.append((match.group("cat"), label, key_match.group("key"), bool(match.group("active"))))
+        parsed.append((match.group("attr"), match.group("value"), label, key_match.group("key") if key_match else None, bool(match.group("active"))))
     return parsed
 
 
 def test_exact_operator_artifact_header_order() -> None:
     buttons = parse_header_buttons(read_deployed())
-    assert [(cat, label, key) for cat, label, key, _ in buttons[:4]] == EXPECTED
-    assert buttons[0][3] is True, "All must remain the default active filter"
-    assert all(not active for *_, active in buttons[1:4])
+    assert [(attr, value, label, key) for attr, value, label, key, _ in buttons[:7]] == EXPECTED
+    assert buttons[0][4] is True, "All must remain the default active filter"
+    assert all(not active for *_, active in buttons[1:7])
 
 
 def test_gnhf_is_a_filter_not_a_stats_substitute() -> None:
     text = read_deployed()
     buttons = parse_header_buttons(text)
-    assert any(cat == "gnhf" and label == "GNHF" for cat, label, _, _ in buttons)
+    assert any(attr == "data-cat" and value == "gnhf" and label == "GNHF" and key is None for attr, value, label, key, _ in buttons)
+    assert any(attr == "data-cat" and value == "doctrine" and label == "Doctrine" and key is None for attr, value, label, key, _ in buttons)
     stats = text.split('<div class="stats">', 1)[1].split("</div>\n    </div>", 1)[0]
-    assert "> GNHF<" not in stats, "remove the stale GNHF legend once GNHF is restored as a filter"
+    assert "> GNHF<" not in stats
 
 
 def test_keyboard_routes_match_visible_contract() -> None:
     js = JS.read_text(encoding="utf-8")
-    for key, category in (("1", "all"), ("2", "standard"), ("3", "gnhf"), ("4", "doctrine")):
-        marker = f"case'{key}':activeCat='{category}';break;"
-        assert marker in js, f"missing keyboard route: {marker}"
-    assert "case'3':activeCat='doctrine';break;" not in js
+    polish = POLISH.read_text(encoding="utf-8")
+    assert "case'1':activeProfile=null;activeCat='all';break;" in js
+    assert "case'2':activeProfile=null;activeCat='standard';break;" in js
+    assert "case'3':activeCat='gnhf';break;" not in js
+    assert "case'4':activeCat='doctrine';break;" not in js
+    for marker in (
+        "if(key==='1')",
+        "if(key==='2')",
+        "if(key==='3'){e.preventDefault();e.stopImmediatePropagation();activateFavoritesView();return}",
+        "if(key==='4'){e.preventDefault();e.stopImmediatePropagation();activateProfilePromptsView('triage-management','triage');return}",
+        "if(key==='5'){e.preventDefault();e.stopImmediatePropagation();activateProfilePromptsView('fun-management','fun');return}",
+    ):
+        assert marker in polish
 
 
 def test_builder_owns_the_same_fixed_header() -> None:
     source = BUILDER.read_text(encoding="utf-8")
     header_source = source.split("html.append('      <div class=\"cat-tabs\">')", 1)[1].split("html.append('      </div>')", 1)[0]
     positions = []
-    for category, label, key in EXPECTED:
-        marker = f'data-cat="{category}"'
+    for attr, value, label, key in EXPECTED:
+        marker = f'{attr}="{value}"'
         position = header_source.find(marker)
-        assert position >= 0, f"builder missing {label} filter"
+        assert position >= 0, f"builder missing {label} view"
         positions.append(position)
-        assert f'>{label}<span class="kbd">{key}</span>' in header_source
-    assert positions == sorted(positions), "builder may not reorder the fixed header contract"
+        if key is None:
+            segment = header_source[position:header_source.find("</button>", position)]
+            assert '<span class="kbd">' not in segment, f"{label} must not claim a numeric hotkey"
+        else:
+            assert f'>{label}<span class="kbd">{key}</span>' in header_source
+    assert positions == sorted(positions), "builder may not reorder the numeric view cluster"
+
+
+def test_triage_fun_views_use_stable_prompt_profiles() -> None:
+    js = JS.read_text(encoding="utf-8")
+    polish = POLISH.read_text(encoding="utf-8")
+    assert "if(activeProfile)f=f.filter(function(p){return String(p.profile||'').toLowerCase()===activeProfile});" in js
+    assert "activateProfilePromptsView('triage-management','triage')" in polish
+    assert "activateProfilePromptsView('fun-management','fun')" in polish
 
 
 def test_responsive_header_reflows_before_collision() -> None:
@@ -141,8 +165,9 @@ def test_polish_hotkeys_and_glowing_help_are_source_and_deployed_contract() -> N
     required = (
         "var PROMPT_KIT_SHORTCUTS=[",
         "{key:'`',label:'Show / hide Hotkeys'}",
-        "{key:'4',label:'Favorites'}",
-        "{key:'5',label:'Doctrine'}",
+        "{key:'3',label:'Favorites'}",
+        "{key:'4',label:'Triage prompts'}",
+        "{key:'5',label:'Fun prompts'}",
         "{key:'F',label:'Show / hide filters'}",
         "{key:'T',label:'Scroll to top'}",
         "{key:'B',label:'Scroll to bottom'}",
@@ -178,16 +203,16 @@ def test_polish_hotkeys_and_glowing_help_are_source_and_deployed_contract() -> N
 def test_readme_records_exact_deployed_surface() -> None:
     text = README.read_text(encoding="utf-8")
     assert "### Header navigation contract" in text
-    assert "1. All\n2. Standard\n3. GNHF" in text
-    assert "The supplemental polish runtime assigns `4` to Favorites and remaps Doctrine to `5`" in text
+    assert "1. All (`1`)\n2. Standard (`2`)\n3. Favorites (`3`)\n4. Triage (`4`)\n5. Fun (`5`)" in text
+    assert "GNHF and Doctrine remain available as non-numeric library views" in text
     assert "`web/prompt-kit/index.html`" in text
     assert "| `` ` `` | Show / hide Hotkeys |" in text
     for key, label in (
         ("1", "All prompts"),
         ("2", "Standard prompts"),
-        ("3", "GNHF prompts"),
-        ("4", "Favorites"),
-        ("5", "Doctrine"),
+        ("3", "Favorites"),
+        ("4", "Triage prompts"),
+        ("5", "Fun prompts"),
         ("F", "Show / hide filters"),
         ("T", "Scroll to top"),
         ("B", "Scroll to bottom"),
@@ -233,6 +258,7 @@ def main() -> None:
         test_gnhf_is_a_filter_not_a_stats_substitute,
         test_keyboard_routes_match_visible_contract,
         test_builder_owns_the_same_fixed_header,
+        test_triage_fun_views_use_stable_prompt_profiles,
         test_responsive_header_reflows_before_collision,
         test_polish_hotkeys_and_glowing_help_are_source_and_deployed_contract,
         test_readme_records_exact_deployed_surface,

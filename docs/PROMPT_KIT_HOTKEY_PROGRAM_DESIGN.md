@@ -14,14 +14,14 @@ Design the keyboard-command subsystem before configurable prompt shortcuts are b
 
 ## Domain vocabulary
 - **ShortcutGesture**: normalized key or typed sequence (`f`, `[`, `]`, `p95`).
-- **ShortcutCommand**: semantic action such as `FILTER_HIDE`, `FILTER_SHOW`, `FILTER_TOGGLE`, or `OPEN_PROMPT`.
+- **ShortcutCommand**: semantic action such as `FILTER_HIDE`, `FILTER_SHOW`, `FILTER_TOGGLE`, or `COPY_PROMPT`.
 - **PromptTarget**: canonical prompt identity such as `P95`.
 - **ShortcutBinding**: gesture → command + optional PromptTarget.
 - **ShortcutPolicy**: normalization, reserved gestures, collisions, target validation, editable-target suppression.
 - **ShortcutRegistry**: canonical effective map of built-ins plus persisted user bindings.
 - **ShortcutDispatcher**: keyboard-event orchestration and typed-sequence buffer owner.
 - **FilterVisibility**: sole owner of visible/hidden filter state.
-- **PromptNavigator**: port from PromptTarget to rendered prompt navigation/open behavior.
+- **PromptAction**: port from PromptTarget to rendered prompt navigation/open behavior.
 - **ShortcutStore**: persistence port for user bindings; a namespaced/versioned `localStorage` adapter is the expected production implementation.
 
 ## Module and interface map
@@ -53,7 +53,7 @@ Public seam:
 - `handleKey(event)`
 - `resetSequence(reason)`
 
-Dependencies: ShortcutRegistry, ShortcutPolicy, FilterVisibility, PromptNavigator, and existing semantic navigation actions. It must not know card selectors or storage serialization.
+Dependencies: ShortcutRegistry, ShortcutPolicy, FilterVisibility, PromptAction, and existing semantic navigation actions. It must not know card selectors or storage serialization.
 
 ### FilterVisibility
 Owns the one filter visibility transaction.
@@ -66,10 +66,10 @@ Public seam:
 
 Production implementation should synchronize CSS class, `aria-expanded`, title, and control text in one setter. Pointer clicks and hotkeys call that setter rather than duplicating DOM mutations.
 
-### PromptNavigator
-Public seam: `openPrompt(promptId)`.
+### PromptAction
+Public seam: `copyPrompt(promptId)`.
 
-It owns translation from PromptTarget to current Prompt Kit card/render behavior. The dispatcher supplies `P95`; the navigator decides how to reveal, focus, scroll, or open it through existing product functions.
+It owns translation from PromptTarget to the canonical Prompt Kit terminal action. The dispatcher supplies `P95`; the action owner copies canonical prompt content through the existing copy/success-feedback path without requiring an intermediate detail panel.
 
 ### ShortcutStore
 Public seam: `load()` / `save(config)`.
@@ -103,25 +103,25 @@ No adapter may become a second policy or state owner.
 → handled result + trace.
 
 ## Success call stack: `p95`
-Starting state: `P95` exists and `p95 → OPEN_PROMPT(P95)` is configured.
+Starting state: `P95` exists and `p95 → COPY_PROMPT(P95)` is configured.
 
 `p` → dispatcher buffers `p` → no external side effect
 
 `9` → dispatcher buffers `p9` → no external side effect
 
-`5` → exact binding resolves → `PromptNavigator.openPrompt('P95')` → buffer clears → result/trace returns.
+`5` → exact binding resolves → `PromptAction.copyPrompt('P95')` → buffer clears → result/trace returns.
 
 Exact prompt identifiers therefore use the normal binding path; they do not require a second global search/router implementation.
 
 ## Failure call stacks
-- **Collision:** configure `f → OPEN_PROMPT(P95)` → policy sees reserved built-in → `RESERVED_COLLISION` → no store write.
-- **Unknown target:** configure `p999 → OPEN_PROMPT(P999)` → catalog rejection → `UNKNOWN_PROMPT` → no store write.
+- **Collision:** configure `f → COPY_PROMPT(P95)` → policy sees reserved built-in → `RESERVED_COLLISION` → no store write.
+- **Unknown target:** configure `p999 → COPY_PROMPT(P999)` → catalog rejection → `UNKNOWN_PROMPT` → no store write.
 - **Storage failure:** validated `p95` candidate → `ShortcutStore.save` fails → `PERSISTENCE_FAILED` → previous effective registry remains authoritative.
 - **Editable target:** key event from search/input → `EDITABLE_TARGET`/ignored → sequence state and product state unchanged.
 
 ## Executable seam prototype
 `docs/prompt-kit-hotkey-prototype.js` implements the domain seams without DOM coupling and self-tests:
-- success: hide, show, toggle, `OPEN_PROMPT(P95)`;
+- success: hide, show, toggle, `COPY_PROMPT(P95)`;
 - failure: editable target, reserved collision, unknown prompt, persistence failure.
 
 Run:
@@ -150,25 +150,26 @@ Do not create another shortcut registry, another filter visibility owner, or a g
 ## Second-pass critique
 Prototype and production evidence changed the initial sketch in five useful ways:
 - `p95` is an ordinary configured sequence, not a special prompt-ID handler.
-- sequence state belongs in the dispatcher, not storage or PromptNavigator.
+- sequence state belongs in the dispatcher, not storage or PromptAction.
 - persistence must succeed before a new binding becomes effective.
 - hide/show/toggle are three commands over one filter state owner, not three DOM paths.
-- when a prompt-ID buffer is active, that sequence gets first chance to consume later digits such as `1`, `4`, or `5`; built-in digit navigation retains priority only when no configured sequence is in progress.
+- when a prompt-ID buffer is active, that sequence gets first chance to consume later digits `1`–`5`; built-in digit navigation retains priority only when no configured sequence is in progress.
 
 Production decisions closed on 2026-08-22:
 - unmodified backtick `` ` `` toggles the Hotkeys surface. This keeps the core shortcut cluster reachable with one hand; `/` remains dedicated to Focus search.
 - modifier chords and editable fields suppress the backtick Hotkeys command.
 - `F` remains filter toggle; `[` explicitly hides filters and `]` explicitly shows filters.
+- the one-hand numeric browse cluster is `1` All, `2` Standard, `3` Favorites, `4` Triage (`triage-management`), and `5` Fun (`fun-management`); GNHF and Doctrine remain available as non-numeric library views.
 - configured prompt-ID sequences expire after 1.2 seconds.
 - only prompts that are currently Favorites may be assigned a prompt-ID shortcut.
-- a completed prompt-ID shortcut opens canonical prompt detail immediately through `showPromptDetail`.
+- a completed prompt-ID shortcut copies canonical prompt content immediately through `copyPrompt`, reusing the standard clipboard-success feedback path.
 - shortcut persistence uses versioned `promptKit.promptShortcuts.v1` storage and publishes only after a successful durable write.
 - configured shortcut rows sort by numeric prompt sequence rather than lexicographic ID text.
 
 These production choices preserve the selected seams and remove the prior UX-policy ambiguity.
 
 ## Proof ceiling
-Repository proof must cover the production source, generated-site parity, input/modifier suppression, filter commands, sequence collision ordering, timeout semantics, fail-closed persistence, target validation, and canonical prompt-detail dispatch. The user's direct browser exercise supplies additional live evidence that the existing visible hotkeys operate on the deployed UI.
+Repository proof must cover the production source, generated-site parity, input/modifier suppression, filter commands, sequence collision ordering, timeout semantics, fail-closed persistence, target validation, canonical prompt-copy dispatch, and clipboard-success feedback. The user's direct browser exercise supplies additional live evidence that the existing visible hotkeys operate on the deployed UI.
 
 The remaining ceiling is limited to environment diversity that cannot be exhaustively certified by this repository: every browser/keyboard-layout combination, future browser-storage policy changes, and subjective ergonomics on devices not exercised by the current operator. Those are not unresolved ownership or implementation gaps; future reports should name a concrete failing environment before reopening architecture.
 
