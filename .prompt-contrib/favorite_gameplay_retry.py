@@ -1,6 +1,7 @@
 from pathlib import Path
 import subprocess
 
+# Synchronize after the default-branch executor switched to this bounded retry.
 path = Path('.prompt-contrib/favorite_gameplay_repair.py')
 text = path.read_text(encoding='utf-8')
 old = '''runtime_section = """
