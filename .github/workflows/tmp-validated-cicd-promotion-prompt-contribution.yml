@@ -1,0 +1,339 @@
+name: Temporary validated CI/CD promotion prompt contribution
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/tmp-validated-cicd-promotion-prompt-contribution.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-validated-cicd-promotion-contribution
+  cancel-in-progress: false
+
+jobs:
+  contribute:
+    if: contains(github.event.head_commit.message, 'execute validated CI/CD promotion prompt contribution')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Refresh exact repository floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --all --prune --tags
+          git pull --ff-only origin main
+          echo "BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          git status --short
+          git log --oneline --decorate -8
+
+      - name: Strengthen canonical integration owners
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('docs/prompts.json')
+          prompts = json.loads(path.read_text(encoding='utf-8'))
+          by_id = {p['id']: p for p in prompts}
+
+          p07 = by_id['P07']
+          p07_marker = 'REPOSITORY-GENERATED UPDATE COEXISTENCE CONTRACT'
+          p07_section = '''REPOSITORY-GENERATED UPDATE COEXISTENCE CONTRACT
+- Treat repository-owned generators, derivation engines, codegen CLIs, and update workflows as first-class mutation lanes rather than invisible side effects. Resolve their canonical input, generator entrypoint, declared output surfaces, trigger, validator, and provenance before editing an output they own.
+- If a path is generated or derived, repair the canonical source input/template/generator and regenerate it. Do not hand-edit generated output merely because an agent can make the diff faster. If ownership is ambiguous, inspect the nearest manifest/registry/workflow/builder once and fail closed rather than creating competing truth.
+- Enforce one writer per generated mutation surface. While the repository-native generator owns a surface, human/agent lanes may inspect, test, falsify, or modify non-overlapping canonical inputs, but they must not race the generator or overwrite its output. Shared registries, manifests, lockfiles, and generated entrypoints require serialized ownership at the mutation seam.
+- A generated diff is proposed repository work, not automatic completion. Inspect the exact diff, run the owning validator/tests/build, preserve normal review/protection/integration gates, and prove the accepted default branch contains both the canonical source change and its required generated result.
+- Prefer the tracked canonical generator/CLI over ad-hoc workflow replay scripts. Provider automation should delegate to canonical repo-owned logic rather than becoming a second implementation of generation behavior.
+- On generator/input/output conflicts, stale base state, partial writes, or concurrent movement, preserve unique work and reconcile at the canonical source boundary; never force-reset or silently let generated output erase separately owned changes.
+'''
+          if p07_marker not in p07['copyContent']:
+              anchor = 'AUTONOMOUS EXECUTION / USER-ONLY GATE'
+              if anchor not in p07['copyContent']:
+                  raise SystemExit('P07 autonomous-gate anchor missing')
+              p07['copyContent'] = p07['copyContent'].replace(anchor, p07_section + '\n' + anchor, 1)
+          if 'generated code ownership' not in p07['keywords']:
+              p07['keywords'].extend(['generated code ownership', 'repo-native generator', 'generated surface'])
+          additions = {
+              'expectedOutput': ' Repository-owned generators and derived-code mechanisms are coordinated as explicit mutation lanes: agents change canonical inputs/owners, generated outputs are regenerated and independently validated, and no competing writer silently overwrites those surfaces.',
+              'nextStep': ' If the next owned surface is generated, resolve and execute its canonical generator from the current floor instead of hand-editing the derived output.',
+              'proofGate': ' Generated-surface proof additionally requires canonical source/generator ownership, one writer per generated surface, regenerated output from the accepted inputs, exact-diff validation, and default-branch containment; an ad-hoc replay or hand-edited generated file is not equivalent proof.'
+          }
+          for field, addition in additions.items():
+              if addition.strip() not in p07[field]:
+                  p07[field] += addition
+
+          p11 = by_id['P11']
+          p11_marker = 'CI/CD COMPOSITION CONTRACT'
+          p11_section = '''CI/CD COMPOSITION CONTRACT
+- Expose this harness validator through one canonical repository command that runs the same validation logic locally and in CI. A GitHub Actions job may invoke that command; the workflow must not reimplement the validator in YAML.
+- Treat the machine-readable PASS/SKIP/FAIL result as one CI gate with the exact repository head/commit it observed. If that head or a required harness dependency moves, rerun it; do not carry the earlier receipt forward as proof for a different revision.
+- Preserve this prompt's offline/synthetic boundary. Application or product end-to-end tests, browser/service/device workflows, deployment checks, and provider-runtime proof remain distinct gates that a CI/CD promotion pipeline may compose after this harness gate. Do not silently absorb them into P11 or call synthetic harness proof live E2E behavior.
+- A required validator reported SKIP is not a successful CI gate. The calling pipeline must distinguish required, optional, environment-blocked, and inapplicable checks and fail closed when a required proof cannot run.
+- Emit enough structured evidence for a promotion pipeline to correlate the harness receipt with head SHA, validator set, required/skipped checks, and final status without parsing optimistic prose.
+'''
+          if p11_marker not in p11['copyContent']:
+              p11['copyContent'] += '\n' + p11_section
+          if 'CI/CD harness gate' not in p11['keywords']:
+              p11['keywords'].extend(['CI/CD harness gate', 'harness E2E validation', 'machine-readable CI gate'])
+          p11_expected = ' The validator is also composable as a canonical CI gate without expanding its offline/synthetic proof boundary.'
+          if p11_expected.strip() not in p11['expectedOutput']:
+              p11['expectedOutput'] += p11_expected
+          p11_proof = ' CI use additionally pins the receipt to the exact head SHA and treats required SKIP as non-passing; application E2E and provider-runtime proof remain separate gates.'
+          if p11_proof.strip() not in p11['proofGate']:
+              p11['proofGate'] += p11_proof
+
+          p15 = by_id['P15']
+          p15_marker = 'CANONICAL PROMOTION PIPELINE CONTRACT'
+          p15_section = '''CANONICAL PROMOTION PIPELINE CONTRACT
+- When the repository has a canonical GitHub Actions/CI/CD promotion workflow, use that workflow as the normal integration path rather than manually pushing, merging, tagging, or deploying around it. P15 remains the integration executor; it does not duplicate the pipeline implementation.
+- Pin the candidate head SHA and required base/dependency floor before promotion. Required CI, harness validation, application E2E tests, artifact provenance, approvals, environments, and branch-protection/merge-queue gates must apply to that exact candidate. If the head/base moves, invalidate affected proof and rerun before promotion.
+- Never convert `workflow succeeded` into a broader claim than its jobs prove. A pipeline that ran static checks but skipped required harness or E2E gates is not promotion-ready.
+- Automated push/merge/release is permitted only when repository policy explicitly authorizes that destination and the exact required gates are green. Do not bypass review/protection with an automation token merely because the token can write.
+- After automated promotion, refresh the default branch and verify containment of the proven integration SHA plus the expected artifact/release identity; a later default head is acceptable when ancestry and affected proof remain valid.
+'''
+          if p15_marker not in p15['copyContent']:
+              p15['copyContent'] = p15['copyContent'].replace('VALIDATION\n', p15_section + '\nVALIDATION\n', 1)
+          if 'canonical promotion pipeline' not in p15['keywords']:
+              p15['keywords'].extend(['canonical promotion pipeline', 'CI/CD promotion', 'GitHub Actions integration gate'])
+          p15_expected = ' When a canonical promotion pipeline exists, integration proceeds through its exact-head gates and reports the resulting provider receipt and containment proof.'
+          if p15_expected.strip() not in p15['expectedOutput']:
+              p15['expectedOutput'] += p15_expected
+          p15_proof = ' A provider workflow is sufficient only for the exact candidate it validated and only when all required harness/E2E/protection gates actually ran and passed.'
+          if p15_proof.strip() not in p15['proofGate']:
+              p15['proofGate'] += p15_proof
+
+          path.write_text(json.dumps(prompts, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+      - name: Add repository-native generator owner when still missing
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from scripts import build_prompt_kit_registry
+          names = {p['name'] for p in build_prompt_kit_registry.load_prompt_kit_registry()}
+          raise SystemExit(0 if 'Repository-Native Code Update Harness Builder' in names else 42)
+          PY
+          status=$?
+          if [ "$status" -eq 0 ]; then
+            echo 'Repository-Native Code Update Harness Builder already exists; no duplicate add.'
+          elif [ "$status" -eq 42 ]; then
+            cat > "$RUNNER_TEMP/repo-native-code-update-prompt.json" <<'JSON'
+          {
+            "name": "Repository-Native Code Update Harness Builder",
+            "type": "BUILD + HARNESS",
+            "class": "HARNESS / REPO-NATIVE CODE GENERATION",
+            "sprintRole": "Build or strengthen a repository-owned mechanism that deterministically generates bounded code updates from canonical inputs while coexisting safely with human and agent developers",
+            "progress": "YES",
+            "useWhen": "The repository should be able to generate or refresh owned code changes itself through a tracked generator, CLI, derivation engine, or provider workflow instead of relying exclusively on agent/human hand edits.",
+            "inspectFirst": "Fresh default-branch and overlapping-work truth; existing generators/builders/registries/manifests/workflows; source-vs-generated ownership; current codegen or derivation conventions; protected/forbidden paths; validators/tests/CI; branch protection and bot permissions; prior generation failures, replay scripts, and loop/collision risks.",
+            "expectedOutput": "A tracked repo-native update mechanism with canonical structured inputs, one authoritative generator entrypoint, explicit owned and forbidden output paths, deterministic/idempotent generation, provenance, collision and recursion guards, atomic/fail-closed writes, focused tests, provider or same-entrypoint execution proof, and normal Git/CI integration alongside agent developers.",
+            "nextStep": "Implement the smallest real generator seam and exercise it on one representative canary input, then rerun the same inputs to prove a clean zero-diff repeat before broadening its owned surfaces or triggers.",
+            "proofGate": "The real repository entrypoint generates only declared owned paths from pinned canonical inputs, rejects an out-of-scope mutation attempt, survives failure without partial destructive state, emits reviewable provenance, passes owning validators, produces the expected first-run diff and a zero-diff repeat run, cannot recursively trigger itself without a guard, and the exact accepted result is contained by the current default branch.",
+            "color": "Cyan",
+            "category": "standard",
+            "profile": "spec-architecture",
+            "copyContent": "BUILD A REPOSITORY-NATIVE CODE UPDATE MECHANISM. DO NOT TURN THIS INTO UNBOUNDED SELF-MODIFICATION OR ANOTHER AGENT PROMPT.\n\nRepo/product: xyz_repo_or_product\nMechanism scope: xyz_generated_surface_or_capability\nCanonical input(s), if known: xyz_input_registry_schema_template_or_source\nDesired trigger, if known: xyz_manual_pr_push_schedule_event_or_cli\nForbidden scope: xyz_forbidden_paths_or_actions\n\nMISSION\nAdd or strengthen a tracked mechanism by which the repository can deterministically generate bounded code updates from canonical inputs in addition to changes authored by human or agent developers. The repository-owned mechanism must have a smaller authority surface than a general coding agent: explicit inputs, a canonical generator entrypoint, declared output ownership, fail-closed boundaries, validation, provenance, and ordinary Git integration. Implement the mechanism and prove the real call path; do not stop at a workflow sketch.\n\n1. RECOVER EXISTING GENERATION AUTHORITY\nRefresh remote/default-branch truth first. Inspect existing builders, code generators, schemas, registries, manifests, derivation engines, workflows, hooks, generated-file banners, tests, and operator docs. Build a compact ownership map: canonical input -> generator -> generated surface -> trigger -> validator -> integration gate. Reuse a compatible owner instead of creating a second codegen system. An ad-hoc provider replay script is transport, not automatically the canonical generator.\n\n2. DRAW THE SOURCE / GENERATED BOUNDARY\nFor every generated surface define authoritative inputs/schema/version, one canonical generator, exact owned output paths, forbidden paths/data classes, committed-vs-ephemeral status, provenance, and the validator/build/test that proves output acceptable. Generated output must not become competing truth. Humans and agents repair canonical input/template/generator and regenerate unless policy explicitly names a different owner.\n\n3. MAKE GENERATION DETERMINISTIC AND IDEMPOTENT\nSame accepted inputs plus pinned generator/dependency versions must produce semantically identical output. Normalize unstable ordering, timestamps, machine-local paths, random identifiers, locale, and environment leakage unless intentional. First execution may create a bounded diff; an immediate repeat with unchanged inputs must produce zero tracked diff.\n\n4. FAIL CLOSED AT THE MUTATION BOUNDARY\nValidate inputs and resolve destinations before destructive writes. Prefer staging plus atomic replacement, transaction-like commit, or rollback to last-known-good over partial mutation. Reject path traversal, symlink escape where relevant, undeclared outputs, malformed/partial inputs, missing dependencies, and secrets/private evidence entering public generated surfaces. Report what changed on failure. Never force-reset/push or erase separately owned work for convenience.\n\n5. COEXIST WITH AGENT AND HUMAN DEVELOPERS\nEnforce one writer per generated surface. Refresh/reconcile if another lane changed canonical input or generated output since the generation floor. On conflict, reconcile at the canonical source boundary; do not let generated output silently overwrite separately owned work.\n\n6. CHOOSE TRIGGERS WITHOUT CREATING A RECURSIVE BOT\nExpose the smallest real repo CLI/script first; provider workflows delegate to it rather than duplicating logic. Add only justified triggers and loop guards so generated commits cannot cause an infinite generate-commit-generate cycle.\n\n7. KEEP GENERATED CHANGES REVIEWABLE\nGenerated code is proposed code, not privileged truth. Produce a reviewable diff and concise generation receipt with input identity, generator identity, outputs, validation result, and proof ceiling. Respect branch protection/review/integration gates.\n\n8. PROTOTYPE THE REAL CALL STACK\nExercise canonical input -> validation -> generator -> staged output -> owned-path guard -> write -> validator/test -> Git diff/receipt. Also exercise malformed input, out-of-scope destination, stale/conflicting state, and failed/interrupted generation where practical.\n\n9. PROVE REPEATABILITY AND INTEGRATION\nProve expected bounded first-run diff, focused tests/validators, zero-diff unchanged repeat, rejection of undeclared output, provenance, same-entrypoint provider execution when claimed, and default-branch containment of accepted source plus generated output. Separate static/schema, unit/helper, same-entrypoint synthetic, provider runtime, and user/production proof.\n\n10. STOP AT A BOUNDED FIXED POINT\nInspect diff, repeat behavior, failure receipts, trigger behavior, collision policy, generated artifacts, and CI evidence again. Repair concrete in-scope gaps. Stop when the declared surface is reproducible and no practical corruption, recursion, stale-state, or competing-writer gap remains.\n\nDELIVER\nReport ownership map; generator/trigger; inputs; owned/forbidden outputs; first/repeat diff; failure/collision/loop proof; validators; receipt/provenance; commit/integration; proof ceiling; exact next generator command or blocker. A workflow file or one successful bot commit alone is not completion.",
+            "keywords": ["repository self update", "repo-native code generation", "repository-native generator", "generated code ownership", "codegen harness", "deterministic code generation", "idempotent generator", "generated surface", "bot generated code", "one writer per generated surface", "zero diff repeat run", "generation provenance", "code generation loop guard"]
+          }
+          JSON
+            python scripts/prompt_registry_ops.py add --input "$RUNNER_TEMP/repo-native-code-update-prompt.json" --registry spec-architecture-prompts | tee "$RUNNER_TEMP/repo-native-receipt.json"
+          else
+            exit "$status"
+          fi
+
+      - name: Add validated CI/CD promotion pipeline prompt through helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from scripts import build_prompt_kit_registry
+          names = {p['name'] for p in build_prompt_kit_registry.load_prompt_kit_registry()}
+          raise SystemExit(0 if 'Validated CI/CD Promotion Pipeline Builder' in names else 42)
+          PY
+          status=$?
+          if [ "$status" -eq 0 ]; then
+            echo 'Validated CI/CD Promotion Pipeline Builder already exists; no duplicate add.'
+          elif [ "$status" -eq 42 ]; then
+            cat > "$RUNNER_TEMP/validated-cicd-promotion-prompt.json" <<'JSON'
+          {
+            "name": "Validated CI/CD Promotion Pipeline Builder",
+            "type": "BUILD + HARNESS",
+            "class": "HARNESS / CI-CD PROMOTION",
+            "sprintRole": "Design and implement a repository-owned GitHub Actions/CI/CD promotion mechanism that validates the exact candidate head through canonical harness and end-to-end test gates before automated push, merge, release, or deployment",
+            "progress": "YES",
+            "useWhen": "A repository should automatically validate code authored by humans, agents, or repo-native generators and then safely push, merge, release, or deploy that exact code through GitHub Actions/CI/CD rather than relying on manual promotion steps.",
+            "inspectFirst": "Fresh default-branch/PR/workflow truth; current GitHub Actions and CI/CD files; branch protection, merge queue, environment/review rules and token permissions; canonical test/build/harness commands including P11-style harness validation; application E2E suites; artifact/package provenance; deployment/release paths; existing bot writers, concurrency groups, caches, retries, and prior pipeline failures.",
+            "expectedOutput": "A tracked promotion architecture and implemented pipeline that delegates to repo-owned validation commands, pins proof to one exact candidate SHA, runs required harness validation and application E2E gates distinctly, preserves artifact provenance, fails closed on stale/moved/skipped/failed proof, serializes write authority, uses least privilege and loop guards, and performs only repository-authorized push/merge/release/deploy actions with provider-runtime evidence.",
+            "nextStep": "Implement the smallest canary promotion path for one non-production candidate, trigger the real GitHub Actions workflow, prove one successful exact-head promotion and representative blocking failures, then broaden destinations only after those gates are stable.",
+            "proofGate": "The actual provider workflow validates one pinned candidate SHA through required static/unit/integration gates, the canonical harness validator, and applicable application E2E tests; required SKIP/FAIL/stale-head/moved-base/unauthorized-destination cases block promotion; artifacts are traceable to that SHA; concurrent/recursive writers are guarded; least-privilege permissions are explicit; and post-promotion default-branch/release/deployment evidence contains the proven candidate without bypassing repository protection.",
+            "color": "Cyan",
+            "category": "standard",
+            "profile": "spec-architecture",
+            "copyContent": "DESIGN AND IMPLEMENT A VALIDATED REPOSITORY PROMOTION PIPELINE. USE GITHUB ACTIONS / CI-CD TO PUSH OR PROMOTE CODE ONLY AFTER THE EXACT CANDIDATE PASSES ITS REQUIRED HARNESS AND END-TO-END GATES. DO NOT CONFUSE PIPELINE AUTOMATION WITH CODE GENERATION OR BYPASS REPOSITORY PROTECTION.\n\nRepo/product: xyz_repo_or_product\nPromotion destination(s): xyz_branch_merge_release_deploy_targets\nExisting CI/harness entrypoints, if known: xyz_commands_or_workflows\nRequired E2E surface, if known: xyz_cli_browser_service_device_or_other\nForbidden scope: xyz_forbidden_destinations_or_actions\n\nMISSION\nBuild or strengthen the repository-owned mechanism that takes code already authored by humans, agent developers, or bounded repo-native generators and safely advances that exact revision through GitHub Actions/CI/CD validation to an authorized push, merge, release, or deployment. The pipeline is an evidence-and-promotion system, not another source-code author. It must compose canonical repo commands rather than duplicate them in YAML, distinguish harness end-to-end validation from application end-to-end testing, pin proof to an exact candidate identity, fail closed when proof is stale or incomplete, and produce provider-runtime evidence for the real promotion path.\n\n1. RECOVER CURRENT PROMOTION AUTHORITY\nRefresh all remote refs/tags and resolve the actual default branch. Inspect open/recent overlapping PRs and workflows, current GitHub Actions, scripts/Makefiles/task runners, branch protection, merge queue, environments, required reviewers/checks, release/deploy machinery, bot identities, tokens/permissions, caches, artifacts, and current harness/test owners. Build a compact graph: event -> candidate SHA/base -> validation jobs -> artifacts -> approval/protection gates -> mutation/promotion action -> post-promotion proof. Reuse an existing compatible pipeline; do not create a second integration authority just because a new YAML file is easy.\n\n2. SEPARATE AUTHORING, VALIDATION, AND PROMOTION\nCode generation/authoring ends before promotion begins. A repo-native generator may propose a diff and humans/agents may author code, but this pipeline owns only validation and authorized advancement of the resulting candidate. Preserve generated-surface ownership and one-writer rules from the repository harness. Never let CI regenerate or rewrite source opportunistically unless a separately owned canonical generator explicitly requires that step.\n\n3. BUILD THE VALIDATION DAG FROM CANONICAL COMMANDS\nDefine the cheapest-to-strongest dependency graph appropriate to the repository: structural/schema/format -> lint/type/static -> unit -> integration -> build/package -> canonical harness E2E validator -> application/product E2E -> release/deploy-specific checks -> promotion. Do not require categories that the product does not have, but every required existing gate must have one owner, command, inputs, outputs, and blocking semantics. GitHub Actions should invoke repo-owned scripts/commands; YAML orchestrates, it does not become a second test implementation.\n\n4. KEEP HARNESS E2E AND APPLICATION E2E DISTINCT\nHarness E2E validates that repository contracts, validators, registries, fixtures, workflows, and proof machinery compose correctly. Application E2E validates user/system behavior through the real application entrypoint appropriate to the product: CLI, browser, API/service, packaged binary, device/runtime, or another owned interface. A synthetic/offline harness PASS cannot substitute for live/application E2E, and an application smoke test cannot substitute for harness integrity. Compose both when required and report each proof level separately.\n\n5. PIN EVERY GATE TO ONE CANDIDATE IDENTITY\nCapture candidate head SHA, required base/merge-base, dependency/lock identities, and artifact identity before promotion. Every required job/receipt must be attributable to that candidate. If the head, base, owning validator, required workflow, generated input, or artifact moves materially after proof, invalidate and rerun affected gates. Never promote `whatever is currently on the branch` after validating an earlier SHA. For merge queues or synthetic merge refs, record both source head and tested merge candidate.\n\n6. DESIGN GITHUB ACTIONS TRIGGERS AND DEPENDENCIES EXPLICITLY\nUse only justified events: pull_request for candidate validation, merge_group when the repository uses merge queue, push for post-integration/release work, workflow_dispatch for bounded operator initiation, schedule/external events only when the product needs them. Encode job dependencies so promotion cannot start before all required gates complete successfully. Path filters are optimization, not permission to skip a gate whose inputs changed indirectly. Reusable workflows/actions are preferred when they prevent duplicated orchestration while preserving one canonical implementation.\n\n7. FAIL CLOSED ON SKIP, STALE PROOF, AND PARTIAL SUCCESS\nClassify gates REQUIRED / OPTIONAL / INAPPLICABLE / ENVIRONMENT-BLOCKED. REQUIRED plus SKIP is not green. A cancelled, timed-out, neutral, stale, or missing required result must not accidentally satisfy promotion. Continue-on-error is forbidden for promotion-critical gates unless the downstream gate explicitly consumes and rejects the failure state. Bounded retries may address identified transient infrastructure failures; deterministic test failures do not become green by repetition.\n\n8. CONTROL WRITE AUTHORITY, CONCURRENCY, AND RECURSION\nUse least-privilege GitHub token/action permissions and environment-scoped credentials. Separate read/validate jobs from write/promote jobs. Serialize the mutation lane with concurrency or the repository's merge queue so two successful runs cannot race a branch/tag/deployment. Add actor/event/path/provenance guards so a bot promotion commit cannot recursively trigger another writer forever. Reject unauthorized destinations even if the token technically has permission. Never echo secrets or expose credentials in artifacts/logs.\n\n9. MAKE ARTIFACTS AND CACHES PART OF THE PROOF CHAIN\nPrefer build-once/promote-the-same-artifact when the repository produces deployable artifacts. Record source SHA, dependency/lock identity, build/run identity, checksums or equivalent immutable artifact identity, and destination. Cache hits may speed work but may not masquerade as fresh validation: cache keys/restoration rules must prevent stale artifacts or test outputs from satisfying a new candidate. Validate downloaded/reused artifacts before promotion when trust boundaries require it.\n\n10. DESIGN TEST ENVIRONMENT LIFECYCLE\nFor application E2E, define fixture/test-data creation, service/container/browser/runtime startup, readiness checks, isolated namespaces/accounts where applicable, bounded waits/retries, teardown, and cleanup. E2E tests must be repeatable and must not corrupt production/user state. When production-like infrastructure is unavailable, preserve the exact proof ceiling instead of silently downgrading the required gate.\n\n11. PROTOTYPE SUCCESS AND BLOCKING PATHS\nExercise the real provider workflow on the smallest safe canary candidate. Prove at minimum: green exact-head path reaches the authorized promotion action; harness-validator failure blocks it; application-E2E failure blocks it when required; required SKIP blocks; stale/moved candidate blocks; unauthorized target blocks; concurrent writer/merge-queue behavior is safe; recursion guard prevents a bot loop. Prefer targeted fault injection or fixtures over intentionally damaging real branches/environments.\n\n12. OBSERVE AND AUDIT THE PIPELINE\nEmit a concise workflow summary plus machine-readable promotion receipt containing provider run ID, event/actor, candidate SHA/base identity, required jobs and conclusions, harness receipt identity, E2E receipt/artifacts, promoted artifact identity, target, mutation result, final integration/deployment SHA, and proof ceiling. Logs must make the first failing gate obvious without requiring an operator to reconstruct the DAG manually.\n\n13. PROVE POST-PROMOTION CONTAINMENT\nAfter push/merge/release/deploy, refresh provider truth. For default-branch integration, verify the proven integration SHA is an ancestor of the refreshed default head; do not fail merely because later valid commits landed. For release/deploy, verify the published/deployed artifact resolves to the proven candidate/artifact identity and health/smoke checks required by that destination pass. Do not call a queued or accepted command a successful deployment.\n\n14. STOP AT A BOUNDED FIXED POINT\nInspect the successful run, negative-path runs, permissions, concurrency, trigger filters, artifact lineage, receipts, and post-promotion state once more. Repair concrete in-scope holes and rerun affected proof. Stop when one representative promotion path is reproducible, required failures reliably block it, and no practical bypass/stale-proof/race/recursive-writer gap remains. Expand to additional environments or destinations only through explicit scope.\n\nDELIVER\nReport the promotion graph; canonical commands/workflows; exact-head identity model; harness-vs-application-E2E gates; trigger/dependency design; permissions/concurrency/loop guards; artifact provenance; success and blocking-run evidence; provider run/receipt; post-promotion containment; commit/PR/mainline state; proof ceiling; and the exact next canary command or external authorization blocker. A green YAML syntax check, local-only test run, open PR, or workflow that can write without proving the required gates is not completion.",
+            "keywords": ["CI/CD pipeline", "GitHub Actions", "automated push", "validated promotion", "promotion pipeline", "harness E2E", "end-to-end testing", "application E2E", "exact head SHA", "required checks", "merge queue", "branch protection", "provider workflow", "artifact provenance", "least privilege CI", "workflow concurrency", "bot loop guard", "build once promote same artifact", "post-promotion containment"]
+          }
+          JSON
+            python scripts/prompt_registry_ops.py add --input "$RUNNER_TEMP/validated-cicd-promotion-prompt.json" --registry spec-architecture-prompts | tee "$RUNNER_TEMP/cicd-receipt.json"
+          else
+            exit "$status"
+          fi
+
+      - name: Add focused semantic regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          p07_test = Path('tests/test_p02_p07_autonomous_iteration.py')
+          text = p07_test.read_text(encoding='utf-8')
+          if 'def test_p07_coordinates_repository_generated_mutation_lanes' not in text:
+              anchor = '    def test_p07_serial_fallback_is_fail_closed_and_not_user_scheduled(self) -> None:\n'
+              addition = '''    def test_p07_coordinates_repository_generated_mutation_lanes(self) -> None:\n        prompt = self.effective["P07"]\n        content = prompt["copyContent"]\n        for phrase in (\n            "REPOSITORY-GENERATED UPDATE COEXISTENCE CONTRACT",\n            "first-class mutation lanes",\n            "repair the canonical source input/template/generator and regenerate it",\n            "one writer per generated mutation surface",\n            "A generated diff is proposed repository work, not automatic completion",\n            "canonical source boundary",\n        ):\n            self.assertIn(phrase, content)\n\n'''
+              if anchor not in text:
+                  raise SystemExit('P07 focused-test anchor missing')
+              p07_test.write_text(text.replace(anchor, addition + anchor, 1), encoding='utf-8')
+
+          spec_test = Path('tests/test_spec_architecture_prompt_registry.py')
+          text = spec_test.read_text(encoding='utf-8')
+          if 'def test_repository_automation_prompts_have_distinct_generation_and_promotion_roles' not in text:
+              anchor = '    def test_new_source_prompts_are_intentionally_bounded(self) -> None:\n'
+              addition = '''    def test_repository_automation_prompts_have_distinct_generation_and_promotion_roles(self) -> None:\n        generation = [p for p in self.full.values() if p["name"] == "Repository-Native Code Update Harness Builder"]\n        promotion = [p for p in self.full.values() if p["name"] == "Validated CI/CD Promotion Pipeline Builder"]\n        self.assertEqual(len(generation), 1)\n        self.assertEqual(len(promotion), 1)\n        generation = generation[0]\n        promotion = promotion[0]\n        self.assertNotEqual(generation["id"], promotion["id"])\n        self.assertEqual(generation["class"], "HARNESS / REPO-NATIVE CODE GENERATION")\n        self.assertEqual(promotion["class"], "HARNESS / CI-CD PROMOTION")\n        self.assertEqual(promotion["profile"], "spec-architecture")\n        self.assertEqual(promotion["actionabilityPolicy"], self.policy["policy_id"])\n        self.assertIn(self.policy["marker"], promotion["copyContent"])
+        for phrase in (\n            "SEPARATE AUTHORING, VALIDATION, AND PROMOTION",\n            "KEEP HARNESS E2E AND APPLICATION E2E DISTINCT",\n            "PIN EVERY GATE TO ONE CANDIDATE IDENTITY",\n            "REQUIRED plus SKIP is not green",\n            "least-privilege",\n            "build-once/promote-the-same-artifact",\n            "recursively trigger another writer forever",\n            "PROVE POST-PROMOTION CONTAINMENT",\n            "provider run ID",\n        ):\n            self.assertIn(phrase, promotion["copyContent"])\n        self.assertIn("code already authored", promotion["copyContent"])\n        self.assertIn("repository-owned mechanism", generation["copyContent"])\n        self.assertIn("Validated CI/CD Promotion Pipeline Builder", build_prompt_kit_registry.render())\n\n'''
+              if anchor not in text:
+                  raise SystemExit('spec-architecture focused-test anchor missing')
+              spec_test.write_text(text.replace(anchor, addition + anchor, 1), encoding='utf-8')
+
+          delivery_test = Path('tests/test_prompt_kit_mainline_delivery.py')
+          text = delivery_test.read_text(encoding='utf-8')
+          if 'def test_p11_and_p15_compose_with_canonical_cicd_without_role_collapse' not in text:
+              anchor = '    def test_repo_quick_access_explains_mainline_deployment_gate(self):\n'
+              addition = '''    def test_p11_and_p15_compose_with_canonical_cicd_without_role_collapse(self):\n        prompts = {item["id"]: item for item in load_json("docs/prompts.json")}\n        p11 = prompts["P11"]\n        p15 = prompts["P15"]\n        for phrase in (\n            "CI/CD COMPOSITION CONTRACT",\n            "same validation logic locally and in CI",\n            "offline/synthetic boundary",\n            "Application or product end-to-end tests",\n            "required validator reported SKIP is not a successful CI gate",\n        ):\n            self.assertIn(phrase, p11["copyContent"])\n        for phrase in (\n            "CANONICAL PROMOTION PIPELINE CONTRACT",\n            "canonical GitHub Actions/CI/CD promotion workflow",\n            "Pin the candidate head SHA",\n            "skipped required harness or E2E gates",\n            "Automated push/merge/release is permitted only",\n            "verify containment of the proven integration SHA",\n        ):\n            self.assertIn(phrase, p15["copyContent"])\n        self.assertEqual(p11["class"], "VALIDATE / GATE")\n        self.assertEqual(p15["class"], "MERGE / RELEASE")\n\n'''
+              if anchor not in text:
+                  raise SystemExit('mainline delivery focused-test anchor missing')
+              delivery_test.write_text(text.replace(anchor, addition + anchor, 1), encoding='utf-8')
+          PY
+
+      - name: Whole-chat reverse harvest semantic check
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from scripts import build_prompt_kit_registry
+          prompts = build_prompt_kit_registry.load_prompt_kit_registry()
+          by_name = {p['name']: p for p in prompts}
+          by_id = {p['id']: p for p in prompts}
+          generation = by_name['Repository-Native Code Update Harness Builder']
+          promotion = by_name['Validated CI/CD Promotion Pipeline Builder']
+          assert generation['id'] != promotion['id']
+          assert 'generate' in generation['sprintRole'].lower()
+          assert 'promotion' in promotion['sprintRole'].lower()
+          assert by_id['P11']['class'] == 'VALIDATE / GATE'
+          assert by_id['P15']['class'] == 'MERGE / RELEASE'
+          assert 'CI/CD COMPOSITION CONTRACT' in by_id['P11']['copyContent']
+          assert 'CANONICAL PROMOTION PIPELINE CONTRACT' in by_id['P15']['copyContent']
+          assert 'REPOSITORY-GENERATED UPDATE COEXISTENCE CONTRACT' in by_id['P07']['copyContent']
+          for phrase in ('GitHub Actions', 'harness end-to-end', 'application end-to-end', 'exact candidate', 'branch protection', 'merge queue', 'provider run ID', 'post-promotion'):
+              assert phrase.casefold() in promotion['copyContent'].casefold(), phrase
+          print({'generation_id': generation['id'], 'promotion_id': promotion['id'], 'prompt_count': len(prompts)})
+          PY
+
+      - name: Focused and registry proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile tests/test_p02_p07_autonomous_iteration.py tests/test_spec_architecture_prompt_registry.py tests/test_prompt_kit_mainline_delivery.py
+          python -m unittest tests.test_p02_p07_autonomous_iteration -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python -m unittest tests.test_prompt_kit_mainline_delivery -v
+          python scripts/prompt_registry_ops.py validate | tee "$RUNNER_TEMP/validate-receipt.json"
+          python -m unittest tests.test_prompt_language_audit -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Verify helper parity and bounded changed surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          receipt = json.loads(Path(os.environ['RUNNER_TEMP'], 'validate-receipt.json').read_text(encoding='utf-8'))
+          assert receipt['status'] == 'valid'
+          assert receipt['site_parity'] is True
+          assert receipt['prompt_count'] >= 2
+          print(json.dumps(receipt, indent=2))
+          PY
+          git diff --name-only | sort
+
+      - name: Fail closed if main moved during proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune
+          current="$(git rev-parse origin/main)"
+          if [ "$current" != "$BASE_SHA" ]; then
+            echo "main moved during proof: base=$BASE_SHA current=$current; rerun contribution from fresh floor" >&2
+            exit 75
+          fi
+
+      - name: Remove superseded temporary transport and commit durable contribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in \
+            .github/workflows/tmp-repo-native-code-update-prompt-contrib.yml \
+            .github/workflows/tmp-repo-native-code-update-executor.yml \
+            .github/workflows/tmp-repo-native-code-update-executor-v2.yml \
+            .prompt-contrib/repo_native_code_update_prompt_contribution.py \
+            .prompt-contrib/repo-native-code-update-trigger.txt \
+            .github/workflows/tmp-validated-cicd-promotion-prompt-contribution.yml
+          do
+            if [ -e "$path" ]; then git rm "$path"; fi
+          done
+          git add docs/prompts.json registry/prompts/spec-architecture-prompts.v1.json tests/test_p02_p07_autonomous_iteration.py tests/test_spec_architecture_prompt_registry.py tests/test_prompt_kit_mainline_delivery.py web/prompt-kit/index.html
+          git diff --cached --check
+          git status --short
+          git diff --cached --stat
+          git commit -m "feat(prompt-kit): add validated CI/CD promotion pipeline builder"
+
+      - name: Re-run exact-head proof after durable commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_p02_p07_autonomous_iteration tests.test_spec_architecture_prompt_registry tests.test_prompt_kit_mainline_delivery -v
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_prompt_language_audit -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check HEAD
+          echo "PROVEN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Integrate exact green head and verify containment
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin HEAD:main
+          git fetch origin main --prune
+          git merge-base --is-ancestor "$PROVEN_SHA" origin/main
+          echo "RESULTING_MAIN_SHA=$(git rev-parse origin/main)"
+          git status --short
