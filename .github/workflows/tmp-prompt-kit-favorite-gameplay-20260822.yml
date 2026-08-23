@@ -1,0 +1,332 @@
+name: Temporary Prompt Kit favorite gameplay executor
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-favorite-gameplay-20260822
+
+permissions:
+  contents: write
+
+jobs:
+  implement-validate-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-favorite-gameplay-20260822
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Reconcile current main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git merge --no-edit origin/main
+      - name: Implement favorite terminal action, telemetry dashboard, and P99 runtime gate
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('.')
+          polish_path = root / 'docs' / 'prompt-kit-polish.js'
+          source = polish_path.read_text(encoding='utf-8')
+
+          anchor = "var promptShortcutBufferTimer=null;\n"
+          if anchor not in source:
+              raise SystemExit('prompt shortcut buffer anchor missing')
+          if "PROMPT_KIT_USAGE_STORAGE_KEY='promptKit.usage.v1'" not in source:
+              gameplay = r'''
+var PROMPT_KIT_USAGE_STORAGE_KEY='promptKit.usage.v1';
+var PROMPT_KIT_USAGE_SCHEMA='prompt-kit-usage/v1';
+var PROMPT_KIT_LEVEL_SIZE=5;
+var promptUsageState=loadPromptUsageState();
+
+function emptyPromptUsageState(){return{schema:PROMPT_KIT_USAGE_SCHEMA,totalCopies:0,byPrompt:{},recent:[]}}
+
+function loadPromptUsageState(){
+  var state=emptyPromptUsageState();
+  try{
+    if(!window.localStorage)return state;
+    var raw=window.localStorage.getItem(PROMPT_KIT_USAGE_STORAGE_KEY);
+    if(!raw)return state;
+    var parsed=JSON.parse(raw);
+    if(!parsed||parsed.schema!==PROMPT_KIT_USAGE_SCHEMA)return state;
+    state.totalCopies=Math.max(0,Number(parsed.totalCopies)||0);
+    state.recent=Array.isArray(parsed.recent)?parsed.recent.filter(function(id){return /^P\d+$/.test(String(id||''))}).slice(0,12):[];
+    if(parsed.byPrompt&&typeof parsed.byPrompt==='object'){
+      Object.keys(parsed.byPrompt).forEach(function(id){
+        if(!/^P\d+$/.test(id))return;
+        var item=parsed.byPrompt[id]||{};
+        var count=Math.max(0,Number(item.count)||0);
+        if(count)state.byPrompt[id]={count:count,lastCopiedAt:item.lastCopiedAt||null}
+      })
+    }
+  }catch(e){}
+  return state
+}
+
+function savePromptUsageState(){
+  try{if(window.localStorage)window.localStorage.setItem(PROMPT_KIT_USAGE_STORAGE_KEY,JSON.stringify(promptUsageState));return true}catch(e){return false}
+}
+
+function recordPromptCopy(id){
+  var prompt=PROMPTS.find(function(item){return item.id===id});
+  if(!prompt)return false;
+  var now=new Date().toISOString();
+  var current=promptUsageState.byPrompt[id]||{count:0,lastCopiedAt:null};
+  current.count+=1;
+  current.lastCopiedAt=now;
+  promptUsageState.byPrompt[id]=current;
+  promptUsageState.totalCopies+=1;
+  promptUsageState.recent=[id].concat(promptUsageState.recent.filter(function(item){return item!==id})).slice(0,12);
+  savePromptUsageState();
+  renderPreferenceDashboard();
+  return true
+}
+
+function promptUsageRows(){
+  return Object.keys(promptUsageState.byPrompt).map(function(id){
+    var prompt=PROMPTS.find(function(item){return item.id===id});
+    return prompt?{prompt:prompt,count:promptUsageState.byPrompt[id].count}:null
+  }).filter(Boolean).sort(function(a,b){return b.count-a.count||Number(a.prompt.seq)-Number(b.prompt.seq)})
+}
+
+function favoritePromptCount(){
+  return PROMPTS.reduce(function(total,prompt){return total+(typeof isFavoritePrompt==='function'&&isFavoritePrompt(prompt.id)?1:0)},0)
+}
+
+function promptPreferenceSignals(){
+  var buckets={};
+  promptUsageRows().forEach(function(row){
+    var key=String(row.prompt.type||row.prompt.class||'Other');
+    buckets[key]=(buckets[key]||0)+row.count
+  });
+  return Object.keys(buckets).map(function(key){return{label:key,count:buckets[key]}}).sort(function(a,b){return b.count-a.count||a.label.localeCompare(b.label)}).slice(0,4)
+}
+
+function escapeDashboardHtml(value){return String(value==null?'':value).replace(/[&<>\"]/g,function(ch){return{'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[ch]})}
+
+function promptGameLevel(){
+  var total=promptUsageState.totalCopies;
+  var level=Math.floor(total/PROMPT_KIT_LEVEL_SIZE)+1;
+  var inLevel=total%PROMPT_KIT_LEVEL_SIZE;
+  return{level:level,inLevel:inLevel,remaining:PROMPT_KIT_LEVEL_SIZE-inLevel,percent:Math.round((inLevel/PROMPT_KIT_LEVEL_SIZE)*100)}
+}
+
+function ensurePreferenceDashboardStyles(){
+  if(document.getElementById('prompt-kit-preference-dashboard-styles'))return;
+  var style=document.createElement('style');
+  style.id='prompt-kit-preference-dashboard-styles';
+  style.textContent='.prompt-dashboard-toggle{min-height:32px;padding:6px 10px;border:1px solid rgba(168,85,247,.45);border-radius:7px;background:linear-gradient(135deg,rgba(88,28,135,.82),rgba(30,41,59,.96));color:#f3e8ff;font-size:11px;font-weight:800;cursor:pointer;box-shadow:0 0 14px rgba(168,85,247,.18)}.prompt-dashboard-toggle:hover,.prompt-dashboard-toggle:focus-visible{outline:none;border-color:#c084fc;box-shadow:0 0 0 2px rgba(192,132,252,.18),0 0 22px rgba(168,85,247,.3)}.prompt-game-dashboard{position:fixed;inset:0;z-index:340;display:grid;place-items:center;padding:18px;background:rgba(2,6,23,.76);backdrop-filter:blur(8px)}.prompt-game-dashboard[hidden]{display:none}.prompt-game-panel{width:min(820px,96vw);max-height:88vh;overflow:auto;border:1px solid rgba(168,85,247,.42);border-radius:18px;background:linear-gradient(145deg,#111827,#171426 58%,#0f172a);box-shadow:0 28px 80px rgba(0,0,0,.55),0 0 36px rgba(168,85,247,.2);padding:18px}.prompt-game-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.prompt-game-kicker{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:#c084fc;font-weight:800}.prompt-game-head h2{margin:2px 0 3px;font-size:22px}.prompt-game-subtitle{font-size:11px;color:var(--text-muted)}.prompt-game-close{width:36px;height:36px;border:1px solid var(--border);border-radius:9px;background:var(--bg-surface);color:var(--text-secondary);font-size:20px;cursor:pointer}.prompt-game-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:16px 0}.prompt-game-stat{padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(15,23,42,.75)}.prompt-game-stat strong{display:block;font-size:21px;color:#e9d5ff}.prompt-game-stat span{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em}.prompt-level-card{padding:13px;border:1px solid rgba(168,85,247,.35);border-radius:13px;background:linear-gradient(135deg,rgba(88,28,135,.28),rgba(15,23,42,.76));margin-bottom:14px}.prompt-level-row{display:flex;justify-content:space-between;gap:10px;font-size:11px}.prompt-level-row strong{color:#d8b4fe}.prompt-level-track{height:9px;margin-top:8px;border-radius:999px;background:#1e293b;overflow:hidden}.prompt-level-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,#8b5cf6,#c084fc,#22d3ee);box-shadow:0 0 14px rgba(192,132,252,.45)}.prompt-game-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}.prompt-game-section{border:1px solid var(--border);border-radius:13px;background:rgba(15,23,42,.62);padding:12px}.prompt-game-section h3{font-size:12px;margin:0 0 9px;color:var(--text-primary)}.prompt-game-empty{font-size:11px;color:var(--text-muted);line-height:1.5}.prompt-game-list{display:grid;gap:7px}.prompt-game-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px;border:1px solid rgba(51,65,85,.82);border-radius:9px;background:rgba(15,23,42,.78)}.prompt-game-row button{border:0;background:none;color:var(--accent);font:800 10px ui-monospace,SFMono-Regular,Consolas,monospace;cursor:pointer}.prompt-game-row .name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--text-secondary)}.prompt-game-row .count{font-size:10px;color:#e9d5ff;font-weight:800}.prompt-signal{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid rgba(51,65,85,.55);font-size:10px}.prompt-signal:last-child{border-bottom:0}.prompt-signal strong{color:#c4b5fd}.prompt-loadout{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.prompt-loadout button{padding:5px 7px;border:1px solid rgba(245,158,11,.3);border-radius:8px;background:rgba(120,53,15,.18);color:#fbbf24;font:700 10px ui-monospace,SFMono-Regular,Consolas,monospace;cursor:pointer}@media(max-width:760px){.prompt-game-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.prompt-game-grid{grid-template-columns:1fr}.prompt-dashboard-toggle{min-height:42px}}';
+  document.head.appendChild(style)
+}
+
+function renderPreferenceDashboard(){
+  var shell=document.getElementById('promptGameDashboard');
+  if(!shell)return;
+  var level=promptGameLevel();
+  var rows=promptUsageRows();
+  var signals=promptPreferenceSignals();
+  var favoriteIds=PROMPTS.filter(function(prompt){return typeof isFavoritePrompt==='function'&&isFavoritePrompt(prompt.id)}).map(function(prompt){return prompt.id}).slice(0,12);
+  var configured=typeof configuredPromptShortcutIds==='function'?configuredPromptShortcutIds():[];
+  var unique=rows.length;
+  var topHtml=rows.slice(0,6).map(function(row){return '<div class="prompt-game-row"><button type="button" data-dashboard-copy="'+escapeDashboardHtml(row.prompt.id)+'">'+escapeDashboardHtml(row.prompt.id)+'</button><span class="name">'+escapeDashboardHtml(row.prompt.name)+'</span><span class="count">'+row.count+'×</span></div>'}).join('');
+  var signalHtml=signals.map(function(item){return '<div class="prompt-signal"><span>'+escapeDashboardHtml(item.label)+'</span><strong>'+item.count+' copies</strong></div>'}).join('');
+  var loadoutHtml=favoriteIds.map(function(id){var shortcut=configured.indexOf(id)>=0?' · '+id.toLowerCase():'';return '<button type="button" data-dashboard-copy="'+escapeDashboardHtml(id)+'">★ '+escapeDashboardHtml(id+shortcut)+'</button>'}).join('');
+  var body=shell.querySelector('.prompt-game-body');
+  if(!body)return;
+  body.innerHTML='<div class="prompt-game-stats"><div class="prompt-game-stat"><strong>'+promptUsageState.totalCopies+'</strong><span>Successful copies</span></div><div class="prompt-game-stat"><strong>'+unique+'</strong><span>Prompts explored</span></div><div class="prompt-game-stat"><strong>'+favoritePromptCount()+'</strong><span>Favorites</span></div><div class="prompt-game-stat"><strong>'+level.level+'</strong><span>Prompt level</span></div></div><div class="prompt-level-card"><div class="prompt-level-row"><strong>Level '+level.level+'</strong><span>'+level.remaining+' successful '+(level.remaining===1?'copy':'copies')+' to Level '+(level.level+1)+'</span></div><div class="prompt-level-track"><div class="prompt-level-fill" style="width:'+level.percent+'%"></div></div></div><div class="prompt-game-grid"><section class="prompt-game-section"><h3>Most used prompts</h3>'+(topHtml?'<div class="prompt-game-list">'+topHtml+'</div>':'<div class="prompt-game-empty">Copy a prompt to start revealing your play style. Only successful clipboard writes earn progress.</div>')+'</section><section class="prompt-game-section"><h3>Preference signals</h3>'+(signalHtml||'<div class="prompt-game-empty">Your preferred prompt types will appear here as you use them.</div>')+'<h3 style="margin-top:14px">Favorite loadout</h3>'+(loadoutHtml?'<div class="prompt-loadout">'+loadoutHtml+'</div>':'<div class="prompt-game-empty">Star prompts to build a reusable loadout. Favorite shortcuts copy immediately.</div>')+'</section></div>';
+  body.querySelectorAll('[data-dashboard-copy]').forEach(function(button){button.addEventListener('click',function(){copyPrompt(button.getAttribute('data-dashboard-copy'))})})
+}
+
+function setPreferenceDashboardOpen(open){
+  var shell=document.getElementById('promptGameDashboard');
+  if(!shell)return;
+  shell.hidden=!open;
+  if(open){renderPreferenceDashboard();var close=shell.querySelector('.prompt-game-close');if(close)close.focus()}
+}
+
+function ensurePreferenceDashboard(){
+  if(document.getElementById('promptGameDashboard')){renderPreferenceDashboard();return}
+  ensurePreferenceDashboardStyles();
+  var controls=document.querySelector('.header-controls');
+  var addPrompt=document.getElementById('addPromptBtn');
+  if(controls&&!document.getElementById('promptGameDashboardToggle')){
+    var toggle=document.createElement('button');
+    toggle.type='button';toggle.id='promptGameDashboardToggle';toggle.className='prompt-dashboard-toggle';toggle.textContent='Dashboard';
+    toggle.setAttribute('aria-haspopup','dialog');toggle.setAttribute('aria-controls','promptGameDashboard');
+    toggle.addEventListener('click',function(){setPreferenceDashboardOpen(true)});
+    if(addPrompt&&addPrompt.parentNode===controls)controls.insertBefore(toggle,addPrompt);else controls.appendChild(toggle)
+  }
+  var shell=document.createElement('div');
+  shell.id='promptGameDashboard';shell.className='prompt-game-dashboard';shell.hidden=true;shell.setAttribute('role','dialog');shell.setAttribute('aria-modal','true');shell.setAttribute('aria-label','Prompt preference dashboard');
+  shell.innerHTML='<div class="prompt-game-panel"><div class="prompt-game-head"><div><div class="prompt-game-kicker">Prompt Playbook</div><h2>Preference Dashboard</h2><div class="prompt-game-subtitle">Every successful copy earns progress and sharpens your local preference signals.</div></div><button type="button" class="prompt-game-close" aria-label="Close preference dashboard">×</button></div><div class="prompt-game-body"></div></div>';
+  shell.querySelector('.prompt-game-close').addEventListener('click',function(){setPreferenceDashboardOpen(false)});
+  shell.addEventListener('click',function(event){if(event.target===shell)setPreferenceDashboardOpen(false)});
+  document.addEventListener('keydown',function(event){if(event.key==='Escape'&&!shell.hidden)setPreferenceDashboardOpen(false)});
+  document.body.appendChild(shell);
+  renderPreferenceDashboard()
+}
+'''
+              source = source.replace(anchor, anchor + gameplay + "\n", 1)
+
+          old_copy = "window.copyPrompt=function(id){\n  var p=PROMPTS.find(function(x){return x.id===id});\n  if(p&&p.copyContent)copyToClipboard(p.copyContent,function(){showCopyConfirmation(id)})\n};"
+          new_copy = "window.copyPrompt=function(id){\n  var p=PROMPTS.find(function(x){return x.id===id});\n  if(p&&p.copyContent)copyToClipboard(p.copyContent,function(){recordPromptCopy(id);showCopyConfirmation(id)})\n};"
+          if old_copy in source:
+              source = source.replace(old_copy, new_copy, 1)
+          elif new_copy not in source:
+              raise SystemExit('copyPrompt anchor missing')
+
+          old_target = "function openPromptShortcutTarget(promptId){\n  var prompt=PROMPTS.find(function(item){return item.id===promptId});\n  if(!prompt)return false;\n  if(!isFavoritePrompt(promptId)){showToast(promptId+' is no longer a Favorite');return false}\n  showPromptDetail(promptId,null);\n  return true\n}"
+          new_target = "function openPromptShortcutTarget(promptId){\n  var prompt=PROMPTS.find(function(item){return item.id===promptId});\n  if(!prompt)return false;\n  if(!isFavoritePrompt(promptId)){showToast(promptId+' is no longer a Favorite');return false}\n  copyPrompt(promptId);\n  return true\n}"
+          if old_target in source:
+              source = source.replace(old_target, new_target, 1)
+          elif new_target not in source:
+              raise SystemExit('shortcut target anchor missing')
+
+          source = source.replace("label.textContent='Open '+promptId;", "label.textContent='Copy '+promptId;", 1)
+          source = source.replace("configHint.textContent='Favorite a prompt, enter its ID, then type that ID anywhere outside editable fields.';", "configHint.textContent='Favorite a prompt, enter its ID, then type that ID anywhere outside editable fields to copy it immediately.';", 1)
+          init_anchor = "ensureHotkeyHelp();\ninstallCompactBrowsingViewSwitches();"
+          if init_anchor in source and "ensurePreferenceDashboard();\ninstallCompactBrowsingViewSwitches();" not in source:
+              source = source.replace(init_anchor, "ensureHotkeyHelp();\nensurePreferenceDashboard();\ninstallCompactBrowsingViewSwitches();", 1)
+          polish_path.write_text(source, encoding='utf-8')
+
+          registry_path = root / 'registry' / 'prompts' / 'spec-architecture-prompts.v1.json'
+          payload = json.loads(registry_path.read_text(encoding='utf-8'))
+          prompts = payload.get('prompts', [])
+          p99 = next((p for p in prompts if p.get('id') == 'P99'), None)
+          if not p99:
+              raise SystemExit('P99 missing')
+          additions = {
+              'expectedOutput': " When the operator asks for user-visible behavior, include the working runtime implementation and generated-site parity, not only prompt doctrine or design. Prove the observable journey: favorite shortcut -> successful clipboard write -> standard success toast -> exactly one semantic usage increment -> live dashboard refresh.",
+              'nextStep': " Do not stop after specifying the interaction. If runtime behavior was requested, implement it in the canonical runtime owner, regenerate the deployable site, and exercise the terminal user journey before closeout.",
+              'proofGate': " Runtime acceptance requires direct terminal-action proof on the deployed/generated surface: the configured favorite shortcut copies without opening an unnecessary detail panel, the existing success toast appears only after a successful clipboard write, usage increments once per successful copy, and the interactive most-used/preferences dashboard reflects the new event. Prompt-only or contract-only work is incomplete unless the sprint explicitly excludes runtime implementation.",
+          }
+          for field, addition in additions.items():
+              if addition.strip() not in p99.get(field, ''):
+                  p99[field] = p99.get(field, '').rstrip() + addition
+          runtime_section = """
+
+RUNTIME ACCEPTANCE WHEN THE USER ASKED FOR BEHAVIOR
+- Treat an observable product request as an implementation obligation, not merely a prompt/contract contribution.
+- Follow the real terminal path through the canonical runtime owner: configured favorite shortcut -> canonical prompt copy -> successful clipboard write -> existing success toast -> exactly one semantic usage event -> live dashboard refresh.
+- Do not count focus, hover, panel-open, detail-open, or failed copy attempts as usage.
+- The preference dashboard must be derived from successful semantic actions and remain local/privacy-bounded unless the operator explicitly authorizes a shared telemetry backend.
+- The dashboard should make accumulating use legible and rewarding through progress/levels, most-used prompts, preference signals, and favorite loadout; badges are a separate future capability unless requested now.
+- Before declaring completion, prove the generated/deployed surface contains the runtime change and add a regression that would fail if the shortcut regresses to detail-open, the toast disappears, usage double-counts, or the dashboard stops reflecting successful copies.
+""".rstrip()
+          if "RUNTIME ACCEPTANCE WHEN THE USER ASKED FOR BEHAVIOR" not in p99.get('copyContent', ''):
+              p99['copyContent'] = p99.get('copyContent', '').rstrip() + "\n\n" + runtime_section
+          registry_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          test_path = root / 'tests' / 'test_prompt_kit_favorite_gameplay.py'
+          test_path.write_text(r'''from __future__ import annotations
+
+import json
+import re
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+POLISH = ROOT / "docs" / "prompt-kit-polish.js"
+DEPLOYED = ROOT / "web" / "prompt-kit" / "index.html"
+REGISTRY = ROOT / "registry" / "prompts" / "spec-architecture-prompts.v1.json"
+
+
+class PromptKitFavoriteGameplayTests(unittest.TestCase):
+    def test_favorite_shortcut_reaches_terminal_copy_instead_of_detail_panel(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        block = source[source.index("function openPromptShortcutTarget"):source.index("function handleConfiguredPromptShortcutKey")]
+        self.assertIn("copyPrompt(promptId);", block)
+        self.assertNotIn("showPromptDetail", block)
+        self.assertIn("label.textContent='Copy '+promptId;", source)
+        self.assertIn("to copy it immediately", source)
+
+    def test_usage_counts_only_after_successful_clipboard_write(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        copy_block = re.search(r"window\.copyPrompt=function\(id\)\{.*?\n\};", source, re.S)
+        self.assertIsNotNone(copy_block)
+        text = copy_block.group(0)
+        self.assertIn("copyToClipboard(p.copyContent,function(){recordPromptCopy(id);showCopyConfirmation(id)})", text)
+        self.assertNotIn("recordPromptCopy(id);\n  copyToClipboard", text)
+        self.assertIn("PROMPT_KIT_USAGE_STORAGE_KEY='promptKit.usage.v1'", source)
+        self.assertIn("PROMPT_KIT_USAGE_SCHEMA='prompt-kit-usage/v1'", source)
+
+    def test_dashboard_is_interactive_and_game_like_without_badge_scope(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        for marker in (
+            "Preference Dashboard",
+            "Prompt Playbook",
+            "PROMPT_KIT_LEVEL_SIZE=5",
+            "Most used prompts",
+            "Preference signals",
+            "Favorite loadout",
+            "data-dashboard-copy",
+            "Only successful clipboard writes earn progress",
+            "ensurePreferenceDashboard();",
+        ):
+            self.assertIn(marker, source)
+        self.assertNotIn("Badge Cabinet", source)
+
+    def test_p99_forces_runtime_acceptance_for_runtime_requests(self) -> None:
+        payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
+        p99 = next(prompt for prompt in payload["prompts"] if prompt["id"] == "P99")
+        combined = "\n".join(str(p99.get(field, "")) for field in ("expectedOutput", "nextStep", "proofGate", "copyContent"))
+        for marker in (
+            "RUNTIME ACCEPTANCE WHEN THE USER ASKED FOR BEHAVIOR",
+            "successful clipboard write",
+            "exactly one semantic usage",
+            "live dashboard refresh",
+            "Prompt-only or contract-only work is incomplete",
+            "badges are a separate future capability",
+        ):
+            self.assertIn(marker, combined)
+
+    def test_generated_site_contains_the_exact_gameplay_runtime(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        deployed = DEPLOYED.read_text(encoding="utf-8")
+        self.assertIn(source, deployed)
+        for marker in ("Preference Dashboard", "recordPromptCopy(id);showCopyConfirmation(id)", "copyPrompt(promptId);"):
+            self.assertIn(marker, deployed)
+
+
+if __name__ == "__main__":
+    unittest.main()
+''', encoding='utf-8')
+
+          workflow_path = root / '.github' / 'workflows' / 'prompt-kit-web.yml'
+          workflow = workflow_path.read_text(encoding='utf-8')
+          if 'tests/test_prompt_kit_favorite_gameplay.py' not in workflow:
+              workflow = workflow.replace('      - tests/test_prompt_kit_hotkey_completion.py\n', '      - tests/test_prompt_kit_hotkey_completion.py\n      - tests/test_prompt_kit_favorite_gameplay.py\n')
+              workflow = workflow.replace('            tests/test_prompt_kit_hotkey_completion.py \\\n', '            tests/test_prompt_kit_hotkey_completion.py \\\n            tests/test_prompt_kit_favorite_gameplay.py \\\n')
+              workflow = workflow.replace('          python -m unittest tests.test_prompt_kit_hotkey_completion -v\n', '          python -m unittest tests.test_prompt_kit_hotkey_completion tests.test_prompt_kit_favorite_gameplay -v\n')
+          workflow_path.write_text(workflow, encoding='utf-8')
+
+          hotkey_test = root / 'tests' / 'test_prompt_kit_hotkey_completion.py'
+          hotkey_source = hotkey_test.read_text(encoding='utf-8')
+          hotkey_source = hotkey_source.replace('            "showPromptDetail(promptId,null)",', '            "copyPrompt(promptId);",')
+          hotkey_source = hotkey_source.replace('        self.assertIn("opens canonical prompt detail immediately", design)\n', '')
+          hotkey_test.write_text(hotkey_source, encoding='utf-8')
+          PY
+      - name: Rebuild and validate
+        run: |
+          node --check docs/prompt-kit-polish.js
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python -m unittest tests.test_prompt_kit_hotkey_completion tests.test_prompt_kit_favorite_gameplay tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit durable runtime slice and remove transport
+        run: |
+          rm .github/workflows/tmp-prompt-kit-favorite-gameplay-20260822.yml
+          git add docs/prompt-kit-polish.js registry/prompts/spec-architecture-prompts.v1.json tests/test_prompt_kit_hotkey_completion.py tests/test_prompt_kit_favorite_gameplay.py .github/workflows/prompt-kit-web.yml web/prompt-kit/index.html .github/workflows/tmp-prompt-kit-favorite-gameplay-20260822.yml
+          git diff --cached --check
+          git status --short
+          git diff --cached --stat
+          git commit -m "feat(prompt-kit): finish favorite gameplay dashboard"
+          git push origin HEAD:feat/prompt-kit-favorite-gameplay-20260822
