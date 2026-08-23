@@ -18,12 +18,14 @@ class PromptRegistryExpansionTests(unittest.TestCase):
     def test_new_prompts_are_distinct_and_visible(self) -> None:
         regression = self.by_name["Regression Test & Live Behavior Guard"]
         design = self.by_name["Program Design & Call-Stack Prototype Architect"]
+        bootstrap = self.by_name["Teach Workspace Protocol Bootstrapper"]
         teach = self.by_name["Stateful Socratic Technical Tutor Workspace"]
         self.assertEqual(regression["class"], "TESTING / REGRESSION")
         self.assertEqual(design["class"], "SOFTWARE ARCHITECTURE / PROGRAM DESIGN")
+        self.assertEqual(bootstrap["class"], "LEARNING / WORKSPACE BOOTSTRAP")
         self.assertEqual(teach["class"], "LEARNING / STATEFUL TUTOR")
-        self.assertEqual(len({regression["id"], design["id"], teach["id"]}), 3)
-        for prompt in (regression, design, teach):
+        self.assertEqual(len({regression["id"], design["id"], bootstrap["id"], teach["id"]}), 4)
+        for prompt in (regression, design, bootstrap, teach):
             self.assertRegex(prompt["id"], r"^P\d+$")
             self.assertEqual(prompt["copySheet"], f"{prompt['id']}_COPY_SAFE")
         html = build_prompt_kit_registry.render()
@@ -66,16 +68,48 @@ class PromptRegistryExpansionTests(unittest.TestCase):
             "GROUND BEFORE EXPLAINING",
             "Treat unsupported model memory as a hypothesis, not a citation",
             "DECOMPOSE FROM FIRST PRINCIPLES",
-            "DIAGNOSTIC CHECK",
-            "PRACTICAL HARNESS",
+            "CONCEPTUAL TRADE-OFF / MECHANISM",
+            "CODE DIAGNOSTIC / EDGE CASE",
             "ZERO BLACK-BOX PRODUCTION GENERATION DURING TEACHING",
             "USE TEST-DRIVEN LEARNING WHEN CODE IS THE SKILL",
             "self-contained HTML/JS visualizer",
             "Reuse components from existing `.teach/assets/`",
-            "MASTERED requires demonstrated retrieval and practical application",
-            "RECAP WITHOUT STARTING OVER",
+            "VERIFY BEFORE WRITING THE LEARNING RECORD",
+            "`/teach <topic>`",
+            "`/teach recap`",
+            "EXACTLY TWO LEARNER CHECKPOINTS",
+            ".teach/learning-records/<date>_<topic>.md",
+            "passive guide",
+            "single testable invariant",
+            "diagnostic is a progression gate",
+            "concurrency bugs",
+            "memory churn",
+            "canvas renders",
+            "roughly three-minute quiz",
         ):
             self.assertIn(phrase, content)
+
+    def test_teach_bootstrap_is_distinct_pure_workspace_setup(self) -> None:
+        bootstrap = self.by_name["Teach Workspace Protocol Bootstrapper"]
+        teach = self.by_name["Stateful Socratic Technical Tutor Workspace"]
+        self.assertNotEqual(bootstrap["id"], teach["id"])
+        self.assertIn("use P96 instead", bootstrap["useWhen"])
+        content = bootstrap["copyContent"]
+        for phrase in (
+            "NO PACKAGE OR CLONE DEPENDENCY", ".teach/", "MISSION.md", "RESOURCES.md",
+            "lessons/", "learning-records/", "`/teach <topic>`", "`/teach recap`",
+            "exactly one conceptual trade-off/mechanism question", "one code diagnostic or edge-case exercise",
+            "Do not silently cross into the lesson itself",
+            "version-controlled mental documentation",
+            "roughly three-minute refresher quiz",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_teach_owner_covers_non_code_structured_system_learning(self) -> None:
+        teach = self.by_name["Stateful Socratic Technical Tutor Workspace"]
+        self.assertIn("structured skill", teach["useWhen"])
+        self.assertIn("system understanding", teach["keywords"])
+        self.assertIn("Read teaching state before explaining", teach["nextStep"])
 
     def test_p79_harvests_whole_chat_twice_and_complements_utility(self) -> None:
         p79 = self.full["P79"]
@@ -125,6 +159,7 @@ class PromptRegistryExpansionTests(unittest.TestCase):
             "Regression Test & Live Behavior Guard",
             "Program Design & Call-Stack Prototype Architect",
             "Stateful Socratic Technical Tutor Workspace",
+            "Teach Workspace Protocol Bootstrapper",
         ):
             prompt = self.by_name[name]
             self.assertIn(f"{prompt['id']} {name}", p65)
