@@ -1,0 +1,150 @@
+name: Temporary P77 auditable activity alias sync
+
+on:
+  push:
+    branches:
+      - feat/p77-auditable-activity-aliases-20260823
+    paths:
+      - .github/workflows/tmp-p77-activity-alias-sync.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p77-auditable-activity-alias-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: contains(github.event.head_commit.message, 'execute p77 activity alias sync')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p77-auditable-activity-aliases-20260823
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Refresh exact branch floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --all --prune --tags
+          git pull --ff-only origin feat/p77-auditable-activity-aliases-20260823
+          git status --short
+          git log --oneline --decorate -5
+
+      - name: Harden P77 with auditable activity aliases
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          registry = Path('registry/prompts/management-operations-prompts.v1.json')
+          prompts = json.loads(registry.read_text(encoding='utf-8'))
+          p77 = next(prompt for prompt in prompts if prompt['id'] == 'P77')
+
+          marker = 'AUDITABLE ACTIVITY ALIASES / OUTWARD LANGUAGE'
+          section = '''AUDITABLE ACTIVITY ALIASES / OUTWARD LANGUAGE
+          - When a supported workstream repeats in outward artifacts, use the current FUN-owned qualitative workstream language catalog instead of hand-inventing synonyms.
+          - Keep one canonical workstream code and evidence identity internally, and allow only catalog-approved deterministic evidence-equivalent presentation variants for outward readability.
+          - Preserve canonical code, evidence references or row-basis references, risk tier, and KPI meaning in the Triage producer receipt/manifest. A visible phrase never creates paid time, task hours, person/date facts, new evidence, or a higher-risk execution claim.
+          - Activity aliases are a share-safe readability mechanism, not concealment or KPI reclassification. Do not use them to frustrate legitimate audit; random selection is forbidden where the deterministic rendering contract applies.
+          - High-risk labels such as deployment/field support or client correspondence still require the registered `dated_person_task` evidence scope. Lower-risk recurring-pattern language cannot smuggle in high-risk execution claims.
+          - FUN remains the vocabulary and evidence owner. Triage may implement rendering, consumer pins, and receipts, but must not fork or duplicate FUN law.
+          - Private Math Packet and internal evidence surfaces may retain canonical IDs, evidence references, and reconciliation mechanics; outward workbook projections normally show only the supported qualitative phrase unless the audience contract explicitly requires the receipt.
+          '''
+          if marker not in p77['copyContent']:
+              anchor = 'DRIVE EVIDENCE / GLOSSARY DISCOVERY'
+              if anchor not in p77['copyContent']:
+                  raise SystemExit('P77 Drive glossary anchor missing')
+              p77['copyContent'] = p77['copyContent'].replace(anchor, section + '\n' + anchor, 1)
+
+          additions = {
+              'inspectFirst': ' Current FUN qualitative-workstream-language catalog/overlay and the Triage evidence-backed qualitative renderer/receipt contract when outward activity wording is in scope.',
+              'expectedOutput': ' Outward activity wording may vary deterministically for readability only when each phrase remains tied to the same canonical workstream/evidence identity, risk tier, and KPI meaning.',
+              'proofGate': ' If the activity-alias layer is touched, proof additionally requires deterministic catalog-approved selection, canonical code and evidence-reference survival in the consumer receipt, no random/concealment semantics, and the registered high-risk evidence scopes.'
+          }
+          for field, addition in additions.items():
+              if addition.strip() not in p77[field]:
+                  p77[field] += addition
+
+          for keyword in (
+              'activity aliases',
+              'alias activities',
+              'qualitative workstream language',
+              'presentation variants',
+          ):
+              if keyword not in p77['keywords']:
+                  p77['keywords'].append(keyword)
+
+          registry.write_text(json.dumps(prompts, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+      - name: Extend focused P77 regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('tests/test_management_operations_prompt_registry.py')
+          text = path.read_text(encoding='utf-8')
+          marker = 'AUDITABLE ACTIVITY ALIASES / OUTWARD LANGUAGE'
+          if marker not in text:
+              anchor = '        self.assertIn("understand what it does not prove", content)\n'
+              addition = '''        self.assertIn("AUDITABLE ACTIVITY ALIASES / OUTWARD LANGUAGE", content)\n        self.assertIn("FUN-owned qualitative workstream language catalog", content)\n        self.assertIn("one canonical workstream code", content)\n        self.assertIn("deterministic evidence-equivalent presentation variants", content)\n        self.assertIn("KPI meaning", content)\n        self.assertIn("random selection is forbidden", content)\n        self.assertIn("`dated_person_task` evidence scope", content)\n        self.assertIn("FUN remains the vocabulary and evidence owner", content)\n        self.assertIn("Triage may implement rendering", content)\n        for keyword in (\n            "activity aliases",\n            "alias activities",\n            "qualitative workstream language",\n            "presentation variants",\n        ):\n            self.assertIn(keyword, prompt["keywords"])\n'''
+              if anchor not in text:
+                  raise SystemExit('P77 focused-test anchor missing')
+              text = text.replace(anchor, anchor + addition, 1)
+              path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Regenerate canonical Prompt Kit website
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+      - name: Validate focused management and language contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_management_operations_prompt_registry -v
+          python -m unittest tests.test_prompt_language_audit -v
+          python scripts/validate_prompt_kit_interactions.py \
+            --require-implementation \
+            --output "$RUNNER_TEMP/prompt-kit-interaction-audit.json" \
+            --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Commit only durable owned surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/tmp-p77-activity-alias-sync.yml
+          expected=$(printf '%s\n' \
+            registry/prompts/management-operations-prompts.v1.json \
+            tests/test_management_operations_prompt_registry.py \
+            web/prompt-kit/index.html | sort)
+          actual=$(git status --short | awk '{print $2}' | sort)
+          if [ "$actual" != "$expected" ]; then
+            echo 'Unexpected durable diff:' >&2
+            git status --short >&2
+            exit 1
+          fi
+          git add registry/prompts/management-operations-prompts.v1.json \
+            tests/test_management_operations_prompt_registry.py \
+            web/prompt-kit/index.html \
+            .github/workflows/tmp-p77-activity-alias-sync.yml
+          git diff --cached --check
+          git commit -m 'feat(prompt-kit): add auditable activity alias contract'
+          git push origin HEAD:feat/p77-auditable-activity-aliases-20260823
