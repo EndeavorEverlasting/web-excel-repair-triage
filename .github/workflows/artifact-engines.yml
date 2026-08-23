@@ -93,7 +93,7 @@ jobs:
           python .prompt-contrib/canonical_path_repair.py
 
   hierarchy-state-transition-repair:
-    if: github.event_name == 'push' && contains(github.event.head_commit.message, 'stage hierarchy state-transition carrier')
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'chore/hierarchy-state-transition-trigger-20260823'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -250,7 +250,7 @@ jobs:
           set -euo pipefail
           git fetch origin main --prune
           test "$(git rev-parse origin/main)" = "$BASE_SHA"
-          git show HEAD^:.github/workflows/artifact-engines.yml > .github/workflows/artifact-engines.yml
+          git show ea3002468931e2ee238f20a88597b21cee3ecb49:.github/workflows/artifact-engines.yml > .github/workflows/artifact-engines.yml
           git rm .github/workflows/tmp-hierarchy-state-transition-repair.yml
           git add \
             .github/workflows/artifact-engines.yml \
