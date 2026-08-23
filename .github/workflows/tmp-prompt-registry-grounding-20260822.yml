@@ -7,6 +7,9 @@ on:
     paths:
       - scripts/tmp_apply_prompt_registry_grounding_20260822.py
       - .github/workflows/tmp-prompt-registry-grounding-20260822.yml
+  pull_request:
+    branches:
+      - main
 
 concurrency:
   group: prompt-registry-grounding-gate-20260822
@@ -17,6 +20,7 @@ permissions:
 
 jobs:
   apply-and-prove:
+    if: github.event_name == 'push' || github.head_ref == 'feat/prompt-registry-grounding-gate-20260822'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
