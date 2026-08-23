@@ -7,7 +7,7 @@ PROTOTYPE = ROOT / 'docs' / 'prompt-kit-hotkey-prototype.js'
 TEST = ROOT / 'tests' / 'test_prompt_kit_hotkey_completion.py'
 SELF = Path(__file__)
 
-# Re-run after the default-branch bridge points at this semantic-alignment executor.
+# Trigger after workflow registration; keep design, executable seam, and runtime on one COPY semantic.
 # Favorite prompt shortcuts perform the terminal COPY action, not detail-open.
 design = DESIGN.read_text(encoding='utf-8')
 design = design.replace('OPEN_PROMPT', 'COPY_PROMPT')
