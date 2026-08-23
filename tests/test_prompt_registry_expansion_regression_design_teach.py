@@ -43,6 +43,9 @@ class PromptRegistryExpansionTests(unittest.TestCase):
             "impacted previously working control",
             "Do not modify expected results, snapshots, fixtures, mocks, or tolerances merely to fit the broken candidate",
             "What behavior could this change break that our selected tests would not notice?",
+            "PROTECT COMPOSED UI STATE AND INTERACTION SEQUENCES",
+            "visibility toggle should not erase an active search query",
+            "shortcut that is meant to complete a user action",
         ):
             self.assertIn(phrase, content)
 
@@ -58,6 +61,9 @@ class PromptRegistryExpansionTests(unittest.TestCase):
             "needs one canonical owner",
             "COMPARE SEAMS WHEN THE DESIGN IS UNCERTAIN",
             "This prompt may create design artifacts, thin prototypes",
+            "END THE JOURNEY AT USER VALUE, NOT AN INTERMEDIATE SCREEN",
+            "OPTIONAL INSPECTION",
+            "semantic completion telemetry",
         ):
             self.assertIn(phrase, content)
 
@@ -160,6 +166,8 @@ class PromptRegistryExpansionTests(unittest.TestCase):
             "Program Design & Call-Stack Prototype Architect",
             "Stateful Socratic Technical Tutor Workspace",
             "Teach Workspace Protocol Bootstrapper",
+            "Prototype-Measure-Refine Delivery Loop",
+            "User-Flow Friction & Preference Telemetry Refiner",
         ):
             prompt = self.by_name[name]
             self.assertIn(f"{prompt['id']} {name}", p65)
