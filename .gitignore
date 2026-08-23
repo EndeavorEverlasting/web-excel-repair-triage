@@ -101,8 +101,7 @@ desktop.ini
 *.swp
 *.swo
 
-
-# ── Billing pipeline runtime outputs ────────────────────────────────────────
+# ── Billing pipeline runtime outputs ─────────────────────────────────────────
 billing_runs/
 
 # Generated billing report outputs
@@ -122,3 +121,49 @@ References/**/*.xlsx
 !References/
 !References/approved/
 !References/approved/.gitkeep
+
+# ── Local evidence, crash, save, and machine-tool hygiene ────────────────────
+# These are runtime/machine-local by default. Sanitized regression examples
+# belong under tests/fixtures/, harness/fixtures/, or docs/fixtures/.
+/logs/
+/saves/
+/crash_dumps/
+/.local-tools/
+/node_modules/
+.tox/
+.nox/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.coverage
+htmlcov/
+*.log
+*.trace
+*.stackdump
+*.dmp
+*.crash
+*.core
+*.pid
+*.pid.lock
+*.tmp
+*.temp
+*.autosave
+*.save
+*.bak
+
+# Secret/credential material stays local. Commit templates only.
+/.env
+/.env.*
+!/.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+*.kdbx
+credentials.json
+credential.json
+secrets.json
+secret.json
+tokens.json
+token.json
+auth.json

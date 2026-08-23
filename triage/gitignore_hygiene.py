@@ -1,4 +1,4 @@
-"""Validate that git-tracked binary artifacts match repo ignore policy."""
+"""Validate that git-tracked artifacts match repository hygiene policy."""
 from __future__ import annotations
 
 import argparse
@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable, List, Sequence, Tuple
 
+from triage.artifact_hygiene_policy import scan_paths as scan_artifact_paths
 from triage.path_policy import repo_root
 
 _BINARY_EXTENSIONS = (".xlsx", ".xlsm", ".xls", ".docx", ".zip", ".doc")
@@ -99,10 +100,39 @@ def scan_tracked_binaries(
     return report
 
 
+def scan_tracked_artifacts(
+    paths: Iterable[str] | None = None,
+    *,
+    root: Path | None = None,
+) -> HygieneReport:
+    """Apply path-only runtime/secret hygiene plus the existing binary policy."""
+    root = root or repo_root()
+    tracked = list(paths) if paths is not None else _git_ls_files(root)
+    report = HygieneReport()
+
+    path_findings = scan_artifact_paths(tracked)
+    policy_blocked_paths = {finding.path for finding in path_findings}
+    report.findings.extend(
+        HygieneFinding(finding.path, finding.reason) for finding in path_findings
+    )
+
+    binary_report = scan_tracked_binaries(tracked, root=root)
+    report.findings.extend(
+        finding
+        for finding in binary_report.findings
+        if finding.path not in policy_blocked_paths
+    )
+    report.findings.sort(key=lambda finding: (finding.path.casefold(), finding.reason))
+    return report
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         prog="triage.gitignore_hygiene",
-        description="Fail if private/binary artifacts are tracked outside allowlisted fixture paths.",
+        description=(
+            "Fail if generated/runtime, secret-like, machine-local, or private binary "
+            "artifact paths are tracked outside approved fixture/control surfaces."
+        ),
     )
     ap.add_argument(
         "--json",
@@ -111,7 +141,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     args = ap.parse_args(list(argv) if argv is not None else None)
 
-    report = scan_tracked_binaries()
+    report = scan_tracked_artifacts()
     if args.json:
         import json
 

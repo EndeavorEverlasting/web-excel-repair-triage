@@ -1,6 +1,10 @@
 #!/bin/sh
 set -eu
 
+# Path-only staged gate: rejects generated/runtime/secret/local-junk paths
+# before the staged tree is materialized. It never reads staged file contents.
+python scripts/validate_staged_artifacts.py
+
 staged_tree="$(mktemp -d "${TMPDIR:-/tmp}/web-excel-harness-index.XXXXXX")"
 HARNESS_REPORT="${TMPDIR:-/tmp}/web-excel-harness-pre-commit.json"
 trap 'rm -rf "$staged_tree"' EXIT HUP INT TERM
