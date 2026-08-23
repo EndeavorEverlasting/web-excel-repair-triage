@@ -59,9 +59,9 @@ def main() -> int:
     section = """
 
 1A. WIDEN THE DESIGN SPACE BEFORE CONVERGING
-When design uncertainty is material, do not settle on the first familiar architecture. Inspect a small bounded set of relevant external repositories or structurally analogous systems when accessible. Prefer source/tests/config around the use case over README claims. Extract transferable mechanisms — ownership, interfaces, workflows, extension seams, failure handling, interaction patterns — not foreign file layouts.
+When design uncertainty is material, do not settle on the first familiar architecture. Inspect relevant external repositories or structurally analogous systems. Prefer source/tests/config over README claims. Extract transferable mechanisms — ownership, interfaces, workflows, extension seams, failure handling, interaction patterns — not foreign file layouts.
 
-Synthesize 2-4 materially different candidate designs: a simple local baseline plus, when useful, a reference-inspired and a cross-domain/compositional option. Creativity is disciplined recombination for the user's outcome, not novelty for its own sake. Compare candidates under the same acceptance criteria. Route broad ecosystem research to P97 Open-Source Prior-Art & Gap Analyst; verify license/security/dependency implications before direct reuse.
+Synthesize 2-4 materially different candidates: a simple local baseline plus, when useful, reference-inspired and cross-domain/compositional options. Creativity is disciplined recombination for the user's outcome, not novelty for its own sake. Compare them under the same acceptance criteria. Route broad ecosystem research to P97 Open-Source Prior-Art & Gap Analyst; check license/security/dependency implications before direct reuse.
 """
     if "1A. WIDEN THE DESIGN SPACE BEFORE CONVERGING" not in content:
         if content.count(anchor) != 1:
