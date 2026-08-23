@@ -135,6 +135,40 @@ class ActionablePromptRegistryTests(unittest.TestCase):
             self.assertNotIn(donor_role, raw_p50["copyContent"])
         self.assertLessEqual(len(raw_p50["copyContent"]), 2200)
 
+    def test_p34_preserves_terminal_evidence_without_hanging_automation(self) -> None:
+        raw_prompts = json.loads(
+            (REPO_ROOT / "docs" / "prompts.json").read_text(encoding="utf-8")
+        )
+        raw_p34 = next(prompt for prompt in raw_prompts if prompt["id"] == "P34")
+        effective_p34 = {prompt["id"]: prompt for prompt in self.prompts}["P34"]
+
+        self.assertEqual(raw_p34["name"], "GNHF Technician Experience")
+        self.assertEqual(raw_p34["type"], "ENABLEMENT + BUILD")
+        self.assertEqual(raw_p34["class"], "GNHF / TECHNICIAN UX")
+        self.assertEqual(raw_p34["copySheet"], "P34_COPY_SAFE")
+        self.assertEqual(raw_p34["category"], "gnhf")
+
+        for phrase in (
+            "TERMINAL SURVIVAL + EVIDENCE PERSISTENCE",
+            "keep the terminal/window open after BOTH success and failure",
+            "OUTER HUMAN LAUNCHER",
+            "Noninteractive execution must fail nonzero rather than waiting for input",
+            "real exit status",
+            "durable log path",
+            "noninteractive runs never hang",
+            "PowerShell or Bash launcher",
+        ):
+            self.assertIn(phrase, raw_p34["copyContent"])
+
+        self.assertIn("spawned/double-click", raw_p34["inspectFirst"])
+        self.assertIn("original exit status is preserved", raw_p34["proofGate"])
+        self.assertIn("terminal stays open", raw_p34["keywords"])
+        self.assertIn("persistent logs", raw_p34["keywords"])
+        self.assertNotIn(self.policy["marker"], raw_p34["copyContent"])
+        self.assertIn(self.policy["marker"], effective_p34["copyContent"])
+        self.assertNotIn("REMOTE FRESHNESS / BRANCH FLOOR CONTRACT", raw_p34["copyContent"])
+        self.assertLessEqual(len(raw_p34["copyContent"]), 4200)
+
     def test_policy_rejects_an_empty_next_step(self) -> None:
         sample = {
             "id": "PX",
