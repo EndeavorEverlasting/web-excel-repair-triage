@@ -1,0 +1,1 @@
+trigger canonical path repair on mergeable current-main floor
