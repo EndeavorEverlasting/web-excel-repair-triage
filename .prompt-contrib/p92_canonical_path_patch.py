@@ -5,6 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "registry/prompts/spec-architecture-prompts.v1.json"
+BASE_PROMPTS = ROOT / "docs/prompts.json"
 TEST = ROOT / "tests/test_spec_architecture_prompt_registry.py"
 BUILDER = ROOT / "build_prompt_kit.py"
 
@@ -172,8 +173,41 @@ The path problem is closed only when future agents and human operators can deriv
         ],
     }
 )
-
 REGISTRY.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+base_prompts = json.loads(BASE_PROMPTS.read_text(encoding="utf-8"))
+p01 = next(item for item in base_prompts if item["id"] == "P01")
+if p01["name"] != "Harness Infrastructure Builder":
+    raise SystemExit(f"P01 identity drift before hardening: {p01['name']!r}")
+if "CANONICAL PATH CONTRACT" in p01["copyContent"]:
+    raise SystemExit("P01 already contains canonical path contract; refuse duplicate insertion")
+p01["inspectFirst"] = (
+    "Existing AGENTS.md/governance contract, repo structure, test runners, validators, scripts, manifests, docs, generated-output policy, branch/PR conventions, "
+    "any partial harness artifacts, and existing machine/profile/path/launcher/install/update conventions so a harness does not invent a competing repository location."
+)
+p01["expectedOutput"] = (
+    "Implemented and validated harness components committed to the repository: codebase map, workflow specs, artifact registry, validators, hooks (where useful), scoped skills, operator reports, "
+    "and a machine-readable canonical development/production path contract or an explicit evidence-backed NOT-APPLICABLE disposition."
+)
+p01["proofGate"] = (
+    "Each required harness component is tracked and validated; the harness resolves or explicitly dispositioned canonical development/production paths per supported machine/profile without inventing competing locations; "
+    "remote integration is not promoted to local deployment proof; commit exists; push or PR state is reported."
+)
+anchor = "\n\nBUILD PROCEDURE\n"
+section = """
+
+8. CANONICAL PATH CONTRACT
+   - Every app harness must answer where normal development occurs and where the app is actually used/installed/served in production for each supported machine/profile, or record why that distinction is not applicable.
+   - Reuse an existing path/profile registry when one exists. Otherwise add one machine-readable canonical owner and route agents, launchers, updaters, worktree helpers, and operator status through it.
+   - Distinguish canonical development checkout, production/use path, temporary worktree root, and real operator entrypoint. Do not let a fresh agent choose a new directory from model preference.
+   - Prevent path sprawl: a second mutable clone is not a substitute for the canonical checkout; preserve unique/dirty work and use approved isolated worktrees for parallel writers.
+   - Treat `remote main contains SHA`, `canonical development checkout is current`, `production/use path is current`, and `real entrypoint observes it` as different proof states. GitHub merge success alone is not workstation deployment proof.
+   - P92 Canonical Path Prompt owns deep repair/audit of this contract; P01 must ensure the harness has the seam so P92 has one canonical owner to inspect and strengthen.
+"""
+if anchor not in p01["copyContent"]:
+    raise SystemExit("P01 build-procedure anchor missing")
+p01["copyContent"] = p01["copyContent"].replace(anchor, section + anchor, 1)
+BASE_PROMPTS.write_text(json.dumps(base_prompts, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 builder = BUILDER.read_text(encoding="utf-8")
 anchor = '    "set terminal directory": "P61", "set working directory": "P61", "repository checkout": "P61",\n'
@@ -237,6 +271,13 @@ new_assertions = '''        p92_prompt = self.full["P92"]
             "scattered clones",
         ):
             self.assertEqual(build_prompt_kit.SYNONYMS[synonym], "P92")
+
+        p01 = self.full["P01"]["copyContent"]
+        self.assertIn("CANONICAL PATH CONTRACT", p01)
+        self.assertIn("Every app harness must answer where normal development occurs", p01)
+        self.assertIn("Do not let a fresh agent choose a new directory from model preference", p01)
+        self.assertIn("GitHub merge success alone is not workstation deployment proof", p01)
+        self.assertIn("P92 Canonical Path Prompt owns deep repair/audit of this contract", p01)
 '''
 if old_assertions not in test:
     raise SystemExit("P92 focused assertion anchor missing")
@@ -245,8 +286,9 @@ TEST.write_text(test, encoding="utf-8")
 
 print(json.dumps({
     "status": "patched",
-    "prompt": "P92",
-    "name": p92["name"],
-    "class": p92["class"],
-    "copy_chars": len(p92["copyContent"]),
+    "strengthened": ["P01", "P92"],
+    "p92_name": p92["name"],
+    "p92_class": p92["class"],
+    "p92_copy_chars": len(p92["copyContent"]),
+    "p01_copy_chars": len(p01["copyContent"]),
 }, indent=2))
