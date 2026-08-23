@@ -79,7 +79,7 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
         self.assertIn("branch or PR alone is insufficient", prompt["proofGate"])
 
     def test_p07_coerces_safe_parallel_subagents_and_rejoins(self) -> None:
-        prompt = self.raw["P07"]
+        prompt = self.effective["P07"]
         content = prompt["copyContent"]
         self.assertEqual("BUILD", prompt["type"])
         self.assertEqual("PLAN", self.raw["P04"]["type"])
@@ -104,7 +104,7 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
             self.assertIn(phrase, content)
 
     def test_p07_serial_fallback_is_fail_closed_and_not_user_scheduled(self) -> None:
-        prompt = self.raw["P07"]
+        prompt = self.effective["P07"]
         content = prompt["copyContent"]
         for reason in (
             "hard dependency",
