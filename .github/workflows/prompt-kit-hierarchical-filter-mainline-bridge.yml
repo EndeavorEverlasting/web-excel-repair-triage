@@ -51,8 +51,20 @@ jobs:
           )
           text = text.replace(
               'run("git", "push", "origin", "HEAD:feat/prompt-kit-hierarchical-filters-20260823")',
-              'run("git", "push", "origin", "HEAD:main")',
+              'print("Provider API will publish the validated tree; skipping runner push.")',
           )
           path.write_text(text, encoding='utf-8')
           PY
           python .prompt-contrib/hierarchical_filter_patch.py
+
+      - name: Export exact validated durable files
+        uses: actions/upload-artifact@v4
+        with:
+          name: hierarchical-filter-validated-files
+          path: |
+            docs/prompt-kit.js
+            harness/contracts/prompt-kit-filtering.v1.json
+            tests/test_prompt_kit_filtering_access.py
+            web/prompt-kit/index.html
+          if-no-files-found: error
+          retention-days: 1
