@@ -52,3 +52,22 @@ jobs:
             tests/test_gitignore_hygiene.py \
             tests/test_roster_log_review_queue.py \
             -q
+
+  canonical-local-path-prompt-repair:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feat/prompt-kit-artifact-risk-path-20260822'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-artifact-risk-path-20260822
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Execute bounded canonical path repair
+        run: python .prompt-contrib/canonical_path_repair.py
