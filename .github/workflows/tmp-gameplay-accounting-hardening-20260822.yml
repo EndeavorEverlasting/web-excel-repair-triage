@@ -1,0 +1,85 @@
+name: Temporary Gameplay Accounting Hardening
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-gameplay-accounting-hardening-20260822
+  cancel-in-progress: true
+
+jobs:
+  harden:
+    if: github.head_ref == 'feat/prompt-kit-favorite-gameplay-20260822'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-favorite-gameplay-20260822
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Repair accounting and prove runtime behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --all --prune --tags
+          test "$(git rev-parse origin/main)" = "1bb6ed7307246828a408c168a14c2ecd12419a7c"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          python - <<'PY'
+          from pathlib import Path
+
+          gameplay = Path('docs/prompt-kit-preference-gameplay.js')
+          text = gameplay.read_text(encoding='utf-8')
+          old = "function recordSuccessfulCopy(id,now){\n  if(!promptById(id))return false;\n  var current=state.byPrompt[id]||{count:0,lastCopiedAt:null};"
+          new = "function recordSuccessfulCopy(id,now){\n  if(!promptById(id))return false;\n  state=loadState();\n  var current=state.byPrompt[id]||{count:0,lastCopiedAt:null};"
+          if text.count(old) != 1:
+              raise RuntimeError(f'recordSuccessfulCopy anchor count={text.count(old)}')
+          text = text.replace(old, new, 1)
+
+          old = "  root.copyToClipboard(prompt.copyContent,function(){recordSuccessfulCopy(id);root.showCopyConfirmation(id)})\n};"
+          new = "  var recorded=false;\n  root.copyToClipboard(prompt.copyContent,function(){if(recorded)return;recorded=true;recordSuccessfulCopy(id);root.showCopyConfirmation(id)})\n};"
+          if text.count(old) != 1:
+              raise RuntimeError(f'copy callback anchor count={text.count(old)}')
+          gameplay.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          test_path = Path('tests/test_prompt_kit_favorite_gameplay.py')
+          tests = test_path.read_text(encoding='utf-8')
+          tests = tests.replace('import re\nimport unittest\n', 'import re\nimport subprocess\nimport textwrap\nimport unittest\n', 1)
+          old = '''        self.assertIn("root.copyToClipboard(prompt.copyContent,function(){recordSuccessfulCopy(id);root.showCopyConfirmation(id)})", block)\n        self.assertNotIn("recordSuccessfulCopy(id);\\n  root.copyToClipboard", block)\n'''
+          new = '''        self.assertIn("var recorded=false", block)\n        self.assertIn("if(recorded)return;recorded=true;recordSuccessfulCopy(id);root.showCopyConfirmation(id)", block)\n        self.assertNotIn("recordSuccessfulCopy(id);\\n  root.copyToClipboard", block)\n        self.assertIn("state=loadState();", source[source.index("function recordSuccessfulCopy"):source.index("function rows")])\n'''
+          if tests.count(old) != 1:
+              raise RuntimeError('semantic callback test anchor missing')
+          tests = tests.replace(old, new, 1)
+
+          marker = '    def test_dashboard_is_interactive_game_like_and_badges_are_deferred(self) -> None:\n'
+          if marker not in tests:
+              raise RuntimeError('favorite gameplay test insertion marker missing')
+          executable = '''    def test_success_callback_is_exactly_once_and_tabs_merge_latest_storage(self) -> None:\n        source = GAMEPLAY.read_text(encoding="utf-8")\n        harness = textwrap.dedent(\n            r"""\n            const vm = require('vm');\n            const fs = require('fs');\n            const source = fs.readFileSync(process.argv[1], 'utf8');\n            const store = new Map();\n            const localStorage = {\n              getItem(key){ return store.has(key) ? store.get(key) : null; },\n              setItem(key,value){ store.set(key,String(value)); }\n            };\n            function tab(callbackMode){\n              let confirmations = 0;\n              const root = {\n                PROMPTS:[\n                  {id:'P01',seq:'1',name:'One',type:'BUILD',copyContent:'one'},\n                  {id:'P02',seq:'2',name:'Two',type:'VALIDATE',copyContent:'two'}\n                ],\n                localStorage,\n                copyToClipboard(text,success){\n                  if(callbackMode==='twice'){ success(); success(); return; }\n                  if(callbackMode==='once'){ success(); return; }\n                  if(callbackMode==='throw') throw new Error('clipboard failed');\n                },\n                showCopyConfirmation(){ confirmations += 1; },\n                configuredPromptShortcutIds(){ return []; },\n                isFavoritePrompt(){ return false; }\n              };\n              const context = {globalThis:root, console};\n              vm.runInNewContext(source, context);\n              return {root, confirmations:()=>confirmations};\n            }\n            const first = tab('twice');\n            const second = tab('once');\n            first.root.copyPrompt('P01');\n            let afterFirst = JSON.parse(localStorage.getItem('promptKit.usage.v1'));\n            if(afterFirst.totalCopies !== 1 || afterFirst.byPrompt.P01.count !== 1 || first.confirmations() !== 1){\n              throw new Error('duplicate success callback was not de-duplicated');\n            }\n            second.root.copyPrompt('P02');\n            let afterSecond = JSON.parse(localStorage.getItem('promptKit.usage.v1'));\n            if(afterSecond.totalCopies !== 2 || afterSecond.byPrompt.P01.count !== 1 || afterSecond.byPrompt.P02.count !== 1){\n              throw new Error('stale second tab overwrote latest usage state');\n            }\n            const failure = tab('never');\n            failure.root.copyPrompt('P01');\n            let afterFailure = JSON.parse(localStorage.getItem('promptKit.usage.v1'));\n            if(afterFailure.totalCopies !== 2){ throw new Error('failed copy changed usage'); }\n            const throwing = tab('throw');\n            try { throwing.root.copyPrompt('P01'); } catch(error) {}\n            let afterThrow = JSON.parse(localStorage.getItem('promptKit.usage.v1'));\n            if(afterThrow.totalCopies !== 2){ throw new Error('throwing copy changed usage'); }\n            console.log('gameplay runtime accounting: PASS');\n            """\n        )\n        completed = subprocess.run(\n            ["node", "-e", harness, str(GAMEPLAY)],\n            cwd=ROOT,\n            text=True,\n            capture_output=True,\n            check=False,\n        )\n        self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)\n        self.assertIn("gameplay runtime accounting: PASS", completed.stdout)\n        self.assertIn("state=loadState();", source)\n\n'''
+          tests = tests.replace(marker, executable + marker, 1)
+          tests = tests.replace('self.assertIn("recordSuccessfulCopy(id);root.showCopyConfirmation(id)", deployed)', 'self.assertIn("if(recorded)return;recorded=true;recordSuccessfulCopy(id);root.showCopyConfirmation(id)", deployed)', 1)
+          test_path.write_text(tests, encoding='utf-8')
+          PY
+
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          node --check docs/prompt-kit-preference-gameplay.js
+          python -m unittest tests.test_prompt_kit_favorite_gameplay tests.test_prompt_kit_hotkey_completion -v
+          python tests/test_prompt_kit_header_contract.py
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+          git add docs/prompt-kit-preference-gameplay.js tests/test_prompt_kit_favorite_gameplay.py web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'fix(prompt-kit): harden gameplay usage accounting'
+          git push origin HEAD:feat/prompt-kit-favorite-gameplay-20260822
