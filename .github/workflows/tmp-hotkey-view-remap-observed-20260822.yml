@@ -1,0 +1,54 @@
+name: Temporary Observed Prompt Kit Numeric View Remap
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-numeric-view-remap-observed-20260822
+  cancel-in-progress: true
+
+jobs:
+  remap:
+    if: github.head_ref == 'feat/prompt-kit-favorite-gameplay-20260822'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-favorite-gameplay-20260822
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Execute bounded remap and remove transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          source = Path('.github/workflows/tmp-hotkey-view-remap-20260822.yml')
+          lines = source.read_text(encoding='utf-8').splitlines()
+          start = next(i for i, line in enumerate(lines) if line.strip() == 'run: |') + 1
+          body = []
+          for line in lines[start:]:
+              if line.startswith('          '):
+                  body.append(line[10:])
+              elif not line.strip():
+                  body.append('')
+              else:
+                  break
+          if not body or not any('feat(prompt-kit): remap numeric prompt views' in line for line in body):
+              raise RuntimeError('Could not recover the bounded remap executor body')
+          Path('/tmp/remap.sh').write_text('\n'.join(body) + '\n', encoding='utf-8')
+          PY
+          bash /tmp/remap.sh
+          git rm .github/workflows/tmp-hotkey-view-remap-observed-20260822.yml
+          git commit -m 'chore(prompt-kit): remove numeric view remap transport'
+          git push origin HEAD:feat/prompt-kit-favorite-gameplay-20260822
