@@ -108,10 +108,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Execute bounded favorite gameplay runtime sprint
+      - name: Execute bounded favorite gameplay semantic alignment
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          python .prompt-contrib/favorite_gameplay_retry.py
+          python .prompt-contrib/favorite_gameplay_alignment.py
