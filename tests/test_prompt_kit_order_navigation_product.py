@@ -41,16 +41,17 @@ class PromptKitOrderNavigationProductTests(unittest.TestCase):
         self.assertIn("End of visible prompts", source)
         self.assertNotIn("After prompt '+visiblePromptIndex", source)
 
-    def test_compact_browsing_uses_favorites_hotkey_and_collapsible_filter_chrome(self) -> None:
+    def test_compact_browsing_uses_numeric_view_cluster_and_collapsible_filter_chrome(self) -> None:
         polish = (ROOT / "docs" / "prompt-kit-polish.js").read_text(encoding="utf-8")
+        builder = (ROOT / "build_prompt_kit.py").read_text(encoding="utf-8")
         for marker in (
             "function activateFavoritesView()",
             "activeSection='__favorites__'",
-            "id='favoritesShortcut'",
-            "data-view','favorites'",
-            "Favorites<span class=\"kbd\">4</span>",
-            "doctrineKbd.textContent='5'",
+            "bindPromptViewButton(document.getElementById('favoritesShortcut'),activateFavoritesView)",
+            "activateProfilePromptsView('triage-management','triage')",
+            "activateProfilePromptsView('fun-management','fun')",
             "var key=String(e.key||'').toLowerCase();",
+            "if(key==='3')",
             "if(key==='4')",
             "if(key==='5')",
             "e.stopImmediatePropagation()",
@@ -60,6 +61,16 @@ class PromptKitOrderNavigationProductTests(unittest.TestCase):
             "Show filters ↓",
         ):
             self.assertIn(marker, polish)
+        for marker in (
+            'id="favoritesShortcut" data-view="favorites"><span class="tab-icon">★</span>Favorites<span class="kbd">3</span>',
+            'id="triageShortcut" data-view="triage"><span class="tab-icon">▣</span>Triage<span class="kbd">4</span>',
+            'id="funShortcut" data-view="fun"><span class="tab-icon">◆</span>Fun<span class="kbd">5</span>',
+            'data-cat="gnhf"><span class="tab-icon">★</span>GNHF</button>',
+            'data-cat="doctrine"><span class="tab-icon">📜</span>Doctrine</button>',
+        ):
+            self.assertIn(marker, builder)
+        self.assertNotIn("Favorites<span class=\"kbd\">4</span>", polish)
+        self.assertNotIn("doctrineKbd.textContent='5'", polish)
         self.assertIn(
             ".header.filters-collapsed .search-container,.header.filters-collapsed .header-controls,.header.filters-collapsed .sections-nav,.header.filters-collapsed .type-nav{display:none!important}",
             polish,
