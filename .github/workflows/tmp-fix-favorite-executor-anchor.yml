@@ -1,0 +1,40 @@
+name: Temporary favorite executor anchor repair
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/tmp-fix-favorite-executor-anchor.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.event.pull_request.head.ref == 'fix/prompt-kit-favorite-invocation-focus-20260823'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/prompt-kit-favorite-invocation-focus-20260823
+          fetch-depth: 0
+      - name: Repair exact duplicate anchor expectation
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/workflows/tmp-favorite-invocation-focus-executor.yml')
+          text = path.read_text(encoding='utf-8')
+          old = '              replace_exact(design, old, new)'
+          new = '              replace_exact(design, old, new, expected=2 if old == "configure `p999 → OPEN_PROMPT(P999)`" else 1)'
+          if text.count(old) != 1:
+              raise SystemExit(f'expected one design replacement dispatcher, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8', newline='\n')
+          PY
+          rm .github/workflows/tmp-fix-favorite-executor-anchor.yml
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/tmp-favorite-invocation-focus-executor.yml .github/workflows/tmp-fix-favorite-executor-anchor.yml
+          git commit -m "chore(prompt-kit): repair favorite executor design anchor"
+          git push origin HEAD:fix/prompt-kit-favorite-invocation-focus-20260823
