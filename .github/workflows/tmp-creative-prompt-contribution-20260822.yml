@@ -7,6 +7,9 @@ on:
     paths:
       - scripts/tmp_prepare_creative_prompts_20260822.py
       - .github/workflows/tmp-creative-prompt-contribution-20260822.yml
+  pull_request:
+    branches:
+      - main
 
 concurrency:
   group: creative-prompt-contribution-20260822
