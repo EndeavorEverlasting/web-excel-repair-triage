@@ -88,6 +88,9 @@ class RepositoryWorkLedgerPromptTests(unittest.TestCase):
         for phrase in (
             "DO NOT TREAT THE HANDOFF OR COMPLETION CLAIM AS PROOF",
             "TREAT CLAIMS AS HYPOTHESES",
+            "CHECK SOURCE FAITHFULNESS",
+            "faithfulness hallucination",
+            "re-anchor/compact the authoritative context before fetching more",
             "VERIFIED, STALE, PARTIAL, CONTRADICTED, or UNPROVEN",
             "VERIFY -> CRITIQUE -> REPAIR OR ADVANCE -> VALIDATE -> INSPECT NEW EVIDENCE",
             "Pass 2: deliberately review",
