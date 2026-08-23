@@ -137,7 +137,7 @@ jobs:
               text = text.replace(anchor, label_patch + '\n' + anchor, 1)
 
           cleanup_old = '''if WORKFLOW.exists():\n    run("git", "rm", str(WORKFLOW.relative_to(ROOT)))\nrun("git", "rm", str(SELF.relative_to(ROOT)))'''
-          cleanup_new = '''for relative in (\n    ".github/workflows/prompt-kit-hierarchical-filter-repair.yml",\n    ".prompt-contrib/hierarchical_filter_patch.py",\n    ".prompt-contrib/hierarchical_filter_search_suppression.yml",\n    ".prompt-contrib/hierarchical_filter_trigger.txt",\n):\n    candidate = ROOT / relative\n    if candidate.exists():\n        run("git", "rm", relative)'''
+          cleanup_new = '''for relative in (\n    ".github/workflows/prompt-kit-hierarchical-filter-repair.yml",\n    ".prompt-contrib/hierarchical_filter_patch.py",\n    ".prompt-contrib/hierarchical_filter_search_suppression.yml",\n    ".prompt-contrib/hierarchical_filter_trigger.txt",\n    ".prompt-contrib/search_filter_suppression_patch.py",\n    ".prompt-contrib/tmp-filter-mainline-trigger.txt",\n):\n    candidate = ROOT / relative\n    if candidate.exists():\n        run("git", "rm", relative)'''
           if cleanup_new not in text:
               if cleanup_old not in text:
                   raise SystemExit('hierarchy transport-cleanup anchor missing')
