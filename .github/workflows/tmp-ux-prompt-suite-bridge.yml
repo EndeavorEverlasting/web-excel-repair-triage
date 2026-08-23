@@ -94,7 +94,13 @@ jobs:
           set -euo pipefail
           python -m py_compile tests/test_ux_design_prompt_suite.py
           python -m unittest tests.test_ux_design_prompt_suite -v
-          python -m unittest tests.test_spec_architecture_prompt_registry tests.test_prompt_registry_expansion_regression_design_teach -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python -m unittest \
+            tests.test_prompt_registry_expansion_regression_design_teach.PromptRegistryExpansionTests.test_new_prompts_are_distinct_and_visible \
+            tests.test_prompt_registry_expansion_regression_design_teach.PromptRegistryExpansionTests.test_p65_routes_all_three_new_capabilities \
+            tests.test_prompt_registry_expansion_regression_design_teach.PromptRegistryExpansionTests.test_program_design_prototypes_success_and_failure_call_stacks \
+            tests.test_prompt_registry_expansion_regression_design_teach.PromptRegistryExpansionTests.test_regression_prompt_protects_old_behavior_and_requires_live_controls \
+            -v
           python scripts/prompt_registry_ops.py validate | tee "$RUNNER_TEMP/ux-registry-validation.json"
           python -m unittest tests.test_prompt_language_audit -v
           python scripts/validate_prompt_kit_discovery.py --summary
@@ -172,7 +178,13 @@ jobs:
           git fetch origin main --prune
           if ! git merge-base --is-ancestor origin/main HEAD; then
             git merge --no-edit origin/main
-            python -m unittest tests.test_ux_design_prompt_suite tests.test_spec_architecture_prompt_registry tests.test_prompt_registry_expansion_regression_design_teach -v
+            python -m unittest tests.test_ux_design_prompt_suite tests.test_spec_architecture_prompt_registry -v
+            python -m unittest \
+              tests.test_prompt_registry_expansion_regression_design_teach.PromptRegistryExpansionTests.test_new_prompts_are_distinct_and_visible \
+              tests.test_prompt_registry_expansion_regression_design_teach.PromptRegistryExpansionTests.test_p65_routes_all_three_new_capabilities \
+              tests.test_prompt_registry_expansion_regression_design_teach.PromptRegistryExpansionTests.test_program_design_prototypes_success_and_failure_call_stacks \
+              tests.test_prompt_registry_expansion_regression_design_teach.PromptRegistryExpansionTests.test_regression_prompt_protects_old_behavior_and_requires_live_controls \
+              -v
             python scripts/prompt_registry_ops.py validate
             python -m unittest tests.test_prompt_language_audit -v
             python scripts/validate_prompt_kit_discovery.py --summary
