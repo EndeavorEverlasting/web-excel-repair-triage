@@ -69,6 +69,39 @@ class PromptKitMainlineDeliveryTests(unittest.TestCase):
         self.assertNotIn("faithfulness hallucination", copy)
         self.assertNotIn("dumb zone", copy)
 
+    def test_p13_routes_specialized_failures_without_absorbing_their_doctrine(self):
+        payload = load_json("registry/prompts/prompt-overrides.v1.json")
+        p13 = next(item for item in payload["overrides"] if item["id"] == "P13")
+        copy = p13["copyContent"]
+        self.assertIn("specialist repair routed", p13["expectedOutput"])
+        self.assertIn("specialist failure mode is routed to its canonical owner", p13["proofGate"])
+        for phrase in (
+            "SPECIALIZED OWNER ROUTING — REFER, DO NOT DUPLICATE",
+            "route diagnosis to P100",
+            "route the prevention layer to P101",
+            "route to P68",
+            "route to P76",
+            "route verification to P83",
+            "route certification to P48",
+            "Routing is not a stopping condition",
+            "Do not copy the specialist prompt's full checklist into P13",
+        ):
+            self.assertIn(phrase, copy)
+
+        ai = load_json("registry/prompts/ai-engineering-level-up-prompts.v1.json")
+        ai_ids = {item["id"] for item in ai["prompts"]}
+        self.assertTrue({"P68", "P100", "P101"}.issubset(ai_ids))
+        spec = load_json("registry/prompts/spec-architecture-prompts.v1.json")
+        spec_ids = {item["id"] for item in spec["prompts"]}
+        self.assertIn("P76", spec_ids)
+        base = load_json("docs/prompts.json")
+        base_ids = {item["id"] for item in base}
+        self.assertIn("P48", base_ids)
+        ledger = load_json("registry/prompts/repository-work-ledger-prompts.v1.json")
+        ledger_ids = {item["id"] for item in ledger["prompts"]}
+        self.assertIn("P83", ledger_ids)
+        self.assertLess(len(copy), 18000)
+
     def test_p65_can_route_repeated_friction_without_browser_finder(self):
         payload = load_json("registry/prompts/tutorial-discovery-prompts.v1.json")
         p65 = next(item for item in payload["prompts"] if item["id"] == "P65")

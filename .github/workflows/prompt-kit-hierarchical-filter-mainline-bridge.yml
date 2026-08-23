@@ -1,0 +1,70 @@
+name: Prompt Kit hierarchical filter mainline bridge
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.event.pull_request.head.ref == 'feat/prompt-kit-hierarchical-filters-20260823'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Replay validated bounded repair on current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin feat/prompt-kit-hierarchical-filters-20260823
+          mkdir -p .prompt-contrib
+          git show origin/feat/prompt-kit-hierarchical-filters-20260823:.prompt-contrib/hierarchical_filter_patch.py > .prompt-contrib/hierarchical_filter_patch.py
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.prompt-contrib/hierarchical_filter_patch.py')
+          text = path.read_text(encoding='utf-8')
+
+          anchor = 'test = test.replace("self.assertIn(\\"aria-label\x27,\x27Prompt types\\", js)", "self.assertIn(\\"aria-label\x27,\x27Prompt subcategories\\", js)")'
+          label_patch = 'test = test.replace(\x27        self.assertIn("All Types", js)\\n\x27, \x27        self.assertIn("All Subcategories", js)\\n\x27)'
+          if label_patch not in text:
+              if anchor not in text:
+                  raise SystemExit('hierarchical filter label-repair anchor missing')
+              text = text.replace(anchor, label_patch + '\n' + anchor, 1)
+
+          text = text.replace(
+              'WORKFLOW = ROOT / ".github/workflows/prompt-kit-hierarchical-filter-repair.yml"',
+              'WORKFLOW = ROOT / ".github/workflows/prompt-kit-hierarchical-filter-mainline-bridge.yml"',
+          )
+          text = text.replace(
+              'run("git", "rm", str(SELF.relative_to(ROOT)))',
+              'SELF.unlink()',
+          )
+          text = text.replace(
+              'run("git", "push", "origin", "HEAD:feat/prompt-kit-hierarchical-filters-20260823")',
+              'print("Provider API will publish the validated tree; skipping runner push.")',
+          )
+          path.write_text(text, encoding='utf-8')
+          PY
+          python .prompt-contrib/hierarchical_filter_patch.py
+
+      - name: Export exact validated durable files
+        uses: actions/upload-artifact@v4
+        with:
+          name: hierarchical-filter-validated-files
+          path: |
+            docs/prompt-kit.js
+            harness/contracts/prompt-kit-filtering.v1.json
+            tests/test_prompt_kit_filtering_access.py
+            web/prompt-kit/index.html
+          if-no-files-found: error
+          retention-days: 1

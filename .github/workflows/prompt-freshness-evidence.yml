@@ -36,7 +36,7 @@ on:
       - '.github/workflows/prompt-freshness-evidence.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   freshness-evidence:
@@ -74,18 +74,3 @@ jobs:
         run: |
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check origin/main...HEAD
-
-  p50-hardening:
-    if: github.event_name == 'pull_request' && github.head_ref == 'feat/prompt-kit-artifact-risk-path-20260822'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: feat/prompt-kit-artifact-risk-path-20260822
-          fetch-depth: 0
-          persist-credentials: true
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Reconcile, harden, validate, and push exact P50 result
-        run: python .prompt-contrib/canonical_path_repair.py
