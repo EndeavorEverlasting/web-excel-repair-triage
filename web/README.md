@@ -54,7 +54,7 @@ Use the glowing **Tutorial · Find My Prompt** control when the correct prompt i
 
 There are three separate browsing layers:
 
-1. **Library view:** All / Standard / GNHF / Doctrine.
+1. **Library view:** All / Standard / Favorites / Triage / Fun, with GNHF and Doctrine retained as non-numeric library views.
 2. **Category:** All Categories, Foundation, Discover & Plan, Build & Repair, Validate & Protect, Integrate & Ship, or Autonomy & Night Shift.
 3. **Type:** All Types or one concrete prompt type.
 
@@ -159,9 +159,9 @@ The glowing **Hotkeys** module beside the floating reference control is the in-p
 | `/` | Focus search |
 | `1` | All prompts |
 | `2` | Standard prompts |
-| `3` | GNHF prompts |
-| `4` | Favorites |
-| `5` | Doctrine |
+| `3` | Favorites |
+| `4` | Triage prompts |
+| `5` | Fun prompts |
 | `R` | Toggle reference panel |
 | `F` | Show / hide filters |
 | `[` | Hide filters |
@@ -170,7 +170,7 @@ The glowing **Hotkeys** module beside the floating reference control is the in-p
 | `B` | Scroll to bottom |
 | `Esc` | Close the active surface or clear filters |
 
-Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prompt first, enter its canonical ID such as `P95`, and save it; the persisted binding is then the lower-case prompt ID (`p95`). Typed prompt sequences expire after 1.2 seconds, are ignored in editable fields, and open the canonical prompt detail immediately. A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it receives the next digit before built-in `1`, `4`, or `5` navigation so valid prompt IDs cannot be interrupted; built-in digit shortcuts keep their normal meaning when no sequence is active.
+Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prompt first, enter its canonical ID such as `P95`, and save it; the persisted binding is then the lower-case prompt ID (`p95`). Typed prompt sequences expire after 1.2 seconds, are ignored in editable fields, and open the canonical prompt detail immediately. A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it receives the next digit before built-in `1`–`5` navigation so valid prompt IDs cannot be interrupted; built-in digit shortcuts keep their normal meaning when no sequence is active.
 
 Navigation shortcuts are ignored while typing in an input, textarea, select, or content-editable surface. Modified backtick chords are ignored. Top/bottom scrolling respects reduced-motion preferences.
 
@@ -178,11 +178,13 @@ Navigation shortcuts are ignored while typing in an input, textarea, select, or 
 
 The first three library-view filters are fixed and ordered:
 
-1. All
-2. Standard
-3. GNHF
+1. All (`1`)
+2. Standard (`2`)
+3. Favorites (`3`)
+4. Triage (`4`)
+5. Fun (`5`)
 
-Their keyboard shortcuts are `1`, `2`, and `3` respectively. The generated base header still carries Doctrine's legacy `4` label before supplemental runtime enhancement. The supplemental polish runtime assigns `4` to Favorites and remaps Doctrine to `5`; the visible Hotkeys module and effective dispatcher must remain aligned without displacing GNHF.
+GNHF and Doctrine remain available as non-numeric library views; they no longer consume the one-hand numeric cluster. `4` filters prompts with the stable `triage-management` profile, and `5` filters prompts with the stable `fun-management` profile. The visible header, Hotkeys module, dispatcher, and generated artifact must remain aligned.
 
 ### Validation
 

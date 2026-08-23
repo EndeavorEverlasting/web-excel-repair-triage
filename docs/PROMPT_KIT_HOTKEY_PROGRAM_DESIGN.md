@@ -153,12 +153,13 @@ Prototype and production evidence changed the initial sketch in five useful ways
 - sequence state belongs in the dispatcher, not storage or PromptAction.
 - persistence must succeed before a new binding becomes effective.
 - hide/show/toggle are three commands over one filter state owner, not three DOM paths.
-- when a prompt-ID buffer is active, that sequence gets first chance to consume later digits such as `1`, `4`, or `5`; built-in digit navigation retains priority only when no configured sequence is in progress.
+- when a prompt-ID buffer is active, that sequence gets first chance to consume later digits `1`–`5`; built-in digit navigation retains priority only when no configured sequence is in progress.
 
 Production decisions closed on 2026-08-22:
 - unmodified backtick `` ` `` toggles the Hotkeys surface. This keeps the core shortcut cluster reachable with one hand; `/` remains dedicated to Focus search.
 - modifier chords and editable fields suppress the backtick Hotkeys command.
 - `F` remains filter toggle; `[` explicitly hides filters and `]` explicitly shows filters.
+- the one-hand numeric browse cluster is `1` All, `2` Standard, `3` Favorites, `4` Triage (`triage-management`), and `5` Fun (`fun-management`); GNHF and Doctrine remain available as non-numeric library views.
 - configured prompt-ID sequences expire after 1.2 seconds.
 - only prompts that are currently Favorites may be assigned a prompt-ID shortcut.
 - a completed prompt-ID shortcut copies canonical prompt content immediately through `copyPrompt`, reusing the standard clipboard-success feedback path.

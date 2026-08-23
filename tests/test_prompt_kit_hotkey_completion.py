@@ -68,10 +68,26 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         source = POLISH.read_text(encoding="utf-8")
         buffered = "if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;"
         self.assertIn(buffered, source)
-        for built_in in ("if(key==='1')", "if(key==='4')", "if(key==='5')"):
+        for built_in in ("if(key==='1')", "if(key==='2')", "if(key==='3')", "if(key==='4')", "if(key==='5')"):
             self.assertLess(source.index(buffered), source.index(built_in))
         self.assertIn("var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');", source)
         self.assertIn("if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)", source)
+
+    def test_numeric_views_filter_by_semantic_owner(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        core = (ROOT / "docs" / "prompt-kit.js").read_text(encoding="utf-8")
+        for marker in (
+            "{key:'3',label:'Favorites'}",
+            "{key:'4',label:'Triage prompts'}",
+            "{key:'5',label:'Fun prompts'}",
+            "activateProfilePromptsView('triage-management','triage')",
+            "activateProfilePromptsView('fun-management','fun')",
+        ):
+            self.assertIn(marker, source)
+        self.assertIn("if(activeProfile)f=f.filter", core)
+        self.assertIn("String(p.profile||'').toLowerCase()===activeProfile", core)
+        self.assertNotIn("case'3':activeCat='gnhf'", core)
+        self.assertNotIn("case'4':activeCat='doctrine'", core)
 
     def test_executable_prototype_proves_success_failure_and_digit_collision_paths(self) -> None:
         completed = subprocess.run(
@@ -90,7 +106,11 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             "FILTER_TOGGLE",
             "COPY_PROMPT(P95)",
             "COPY_PROMPT(P14)",
-            "VIEW_DOCTRINE",
+            "VIEW_ALL",
+            "VIEW_STANDARD",
+            "VIEW_FAVORITES",
+            "VIEW_TRIAGE",
+            "VIEW_FUN",
         ):
             self.assertIn(path, proof["success_paths"])
         for path in (

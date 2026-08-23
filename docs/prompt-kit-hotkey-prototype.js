@@ -20,7 +20,7 @@ const isEditableTarget = target => {
 };
 
 class ShortcutPolicy {
-  constructor(reserved = ['`', 'f', '[', ']', '1', '4', '5']) {
+  constructor(reserved = ['`', 'f', '[', ']', '1', '2', '3', '4', '5']) {
     this.reserved = new Set(reserved.map(normalizeGesture));
   }
   validateBinding(binding, effectiveBindings, promptCatalog) {
@@ -45,8 +45,10 @@ class ShortcutRegistry {
     this.builtIns = new Map([
       ['`', {gesture: '`', command: 'HOTKEY_HELP_TOGGLE'}],
       ['1', {gesture: '1', command: 'VIEW_ALL'}],
-      ['4', {gesture: '4', command: 'VIEW_FAVORITES'}],
-      ['5', {gesture: '5', command: 'VIEW_DOCTRINE'}],
+      ['2', {gesture: '2', command: 'VIEW_STANDARD'}],
+      ['3', {gesture: '3', command: 'VIEW_FAVORITES'}],
+      ['4', {gesture: '4', command: 'VIEW_TRIAGE'}],
+      ['5', {gesture: '5', command: 'VIEW_FUN'}],
       ['f', {gesture: 'f', command: 'FILTER_TOGGLE'}],
       ['[', {gesture: '[', command: 'FILTER_HIDE'}],
       [']', {gesture: ']', command: 'FILTER_SHOW'}],
@@ -133,8 +135,10 @@ class ShortcutDispatcher {
     else if (binding.command === 'FILTER_TOGGLE') result = this.filterVisibility.toggle();
     else if (binding.command === 'COPY_PROMPT') result = this.promptAction.copyPrompt(binding.promptId);
     else if (binding.command === 'VIEW_ALL') result = this.viewNavigator.open('all');
+    else if (binding.command === 'VIEW_STANDARD') result = this.viewNavigator.open('standard');
     else if (binding.command === 'VIEW_FAVORITES') result = this.viewNavigator.open('favorites');
-    else if (binding.command === 'VIEW_DOCTRINE') result = this.viewNavigator.open('doctrine');
+    else if (binding.command === 'VIEW_TRIAGE') result = this.viewNavigator.open('triage');
+    else if (binding.command === 'VIEW_FUN') result = this.viewNavigator.open('fun');
     else throw new HotkeyError('UNKNOWN_COMMAND', binding.command);
     this.trace.push({layer: 'dispatcher', event: 'dispatched', command: binding.command, promptId: binding.promptId || null});
     return {handled: true, result};
@@ -250,8 +254,10 @@ function runSelfTest() {
   assert(program.dispatcher.handleKey({key: '4'}).handled, 'p14 dispatch must beat built-ins 1 and 4');
   assert(program.promptAction.copied[1] === 'P14', 'P14 target');
   assert(program.viewNavigator.views.length === 0, 'built-in digits must not steal buffered P14');
-  program.dispatcher.handleKey({key: '5'});
-  assert(program.viewNavigator.views[0] === 'doctrine', 'built-in 5 remains active with no sequence buffer');
+  [['1','all'],['2','standard'],['3','favorites'],['4','triage'],['5','fun']].forEach(function(pair){
+    program.dispatcher.handleKey({key: pair[0]});
+    assert(program.viewNavigator.views[program.viewNavigator.views.length-1] === pair[1], 'built-in '+pair[0]+' opens '+pair[1]);
+  });
 
   const editable = program.dispatcher.handleKey({key: 'p', target: {tagName: 'INPUT'}});
   assert(editable.reason === 'EDITABLE_TARGET', 'editable suppression');
@@ -265,7 +271,7 @@ function runSelfTest() {
 
   return {
     status: 'PASS',
-    success_paths: ['HOTKEY_HELP_TOGGLE', 'FILTER_HIDE', 'FILTER_SHOW', 'FILTER_TOGGLE', 'COPY_PROMPT(P95)', 'COPY_PROMPT(P14)', 'VIEW_DOCTRINE'],
+    success_paths: ['HOTKEY_HELP_TOGGLE', 'FILTER_HIDE', 'FILTER_SHOW', 'FILTER_TOGGLE', 'COPY_PROMPT(P95)', 'COPY_PROMPT(P14)', 'VIEW_ALL', 'VIEW_STANDARD', 'VIEW_FAVORITES', 'VIEW_TRIAGE', 'VIEW_FUN'],
     failure_paths: ['EDITABLE_TARGET', 'MODIFIED_OR_PREVENTED', 'RESERVED_COLLISION', 'UNKNOWN_PROMPT', 'PERSISTENCE_FAILED'],
     trace: program.trace,
   };

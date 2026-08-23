@@ -70,13 +70,40 @@ function activateAllPromptsView(){
   resetPromptKitView();
 }
 
+function activateStandardPromptsView(){
+  activeCat='standard';
+  activeSection=null;
+  activeProfile=null;
+  clearTransientPromptFilters();
+  document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.dataset.cat==='standard')});
+  document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__all__')});
+  render();
+}
+
 function activateFavoritesView(){
   activeCat='all';
   activeSection='__favorites__';
+  activeProfile=null;
   clearTransientPromptFilters();
   document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.id==='favoritesShortcut')});
   document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__favorites__')});
   render();
+}
+
+function activateProfilePromptsView(profile,view){
+  activeCat='all';
+  activeSection=null;
+  activeProfile=profile;
+  clearTransientPromptFilters();
+  document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.dataset.view===view)});
+  document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__all__')});
+  render();
+}
+
+function bindPromptViewButton(button,handler){
+  if(!button||button.dataset.promptViewBound==='true')return;
+  button.dataset.promptViewBound='true';
+  button.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();handler()});
 }
 
 function ensureCompactBrowsingControls(){
@@ -86,23 +113,9 @@ function ensureCompactBrowsingControls(){
   var catTabs=document.querySelector('.cat-tabs');
   if(!header||!headerTop||!catTabs)return;
 
-  var doctrineButton=catTabs.querySelector('.cat-tab[data-cat="doctrine"]');
-  if(doctrineButton){
-    var doctrineKbd=doctrineButton.querySelector('.kbd');
-    if(doctrineKbd)doctrineKbd.textContent='5';
-  }
-
-  if(!document.getElementById('favoritesShortcut')){
-    var favoritesButton=document.createElement('button');
-    favoritesButton.className='cat-tab';
-    favoritesButton.id='favoritesShortcut';
-    favoritesButton.type='button';
-    favoritesButton.setAttribute('data-view','favorites');
-    favoritesButton.setAttribute('aria-label','Show saved favorite prompts');
-    favoritesButton.innerHTML='<span class="tab-icon">★</span>Favorites<span class="kbd">4</span>';
-    favoritesButton.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();activateFavoritesView()});
-    if(doctrineButton)catTabs.insertBefore(favoritesButton,doctrineButton);else catTabs.appendChild(favoritesButton)
-  }
+  bindPromptViewButton(document.getElementById('favoritesShortcut'),activateFavoritesView);
+  bindPromptViewButton(document.getElementById('triageShortcut'),function(){activateProfilePromptsView('triage-management','triage')});
+  bindPromptViewButton(document.getElementById('funShortcut'),function(){activateProfilePromptsView('fun-management','fun')});
 
   if(!document.getElementById('filterPanelToggle')){
     var toggle=document.createElement('button');
@@ -135,9 +148,9 @@ var PROMPT_KIT_SHORTCUTS=[
   {key:'`',label:'Show / hide Hotkeys'},
   {key:'1',label:'All prompts'},
   {key:'2',label:'Standard prompts'},
-  {key:'3',label:'GNHF prompts'},
-  {key:'4',label:'Favorites'},
-  {key:'5',label:'Doctrine'},
+  {key:'3',label:'Favorites'},
+  {key:'4',label:'Triage prompts'},
+  {key:'5',label:'Fun prompts'},
   {key:'/',label:'Focus search'},
   {key:'R',label:'Reference panel'},
   {key:'F',label:'Show / hide filters'},
@@ -440,12 +453,10 @@ function installCompactBrowsingHotkeys(){
     }
     if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;
     if(key==='1'){e.preventDefault();e.stopImmediatePropagation();activateAllPromptsView();return}
-    if(key==='4'){e.preventDefault();e.stopImmediatePropagation();activateFavoritesView();return}
-    if(key==='5'){
-      var doctrine=document.querySelector('.cat-tab[data-cat="doctrine"]');
-      if(doctrine){e.preventDefault();e.stopImmediatePropagation();doctrine.click()}
-      return
-    }
+    if(key==='2'){e.preventDefault();e.stopImmediatePropagation();activateStandardPromptsView();return}
+    if(key==='3'){e.preventDefault();e.stopImmediatePropagation();activateFavoritesView();return}
+    if(key==='4'){e.preventDefault();e.stopImmediatePropagation();activateProfilePromptsView('triage-management','triage');return}
+    if(key==='5'){e.preventDefault();e.stopImmediatePropagation();activateProfilePromptsView('fun-management','fun');return}
     if(key==='f'){e.preventDefault();e.stopImmediatePropagation();toggleCompactFilters();return}
     if(key==='['){e.preventDefault();e.stopImmediatePropagation();hideCompactFilters();return}
     if(key===']'){e.preventDefault();e.stopImmediatePropagation();showCompactFilters();return}
