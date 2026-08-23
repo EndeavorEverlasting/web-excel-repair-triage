@@ -1,9 +1,6 @@
 name: Temporary Hallucination Prompt Contribution
 
 on:
-  push:
-    branches:
-      - feat/prompt-kit-hallucination-grounding-20260822
   pull_request:
     branches:
       - main
@@ -11,9 +8,13 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: hallucination-prompt-contribution-20260822
+  cancel-in-progress: true
+
 jobs:
   contribute:
-    if: github.event_name == 'push' || github.head_ref == 'feat/prompt-kit-hallucination-grounding-20260822'
+    if: github.head_ref == 'feat/prompt-kit-hallucination-grounding-20260822'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
