@@ -30,6 +30,9 @@ jobs:
           git status --short
           git log --oneline --decorate -5
 
+      - name: Install focused test dependency
+        run: python -m pip install pytest
+
       - name: Inspect registry routing and allocate through helper
         shell: bash
         run: |
