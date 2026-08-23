@@ -1,0 +1,77 @@
+name: Temporary P07 parallel sub-agent hardening
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  strengthen:
+    if: github.event.pull_request.head.ref == 'feat/p07-parallel-subagent-orchestration-20260823'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p07-parallel-subagent-orchestration-20260823
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Configure contributor identity and refresh floor
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main --prune --tags
+          git status --short
+          git log --oneline --decorate -5
+          test "$(git rev-parse origin/main)" = "df68536c8d6ebd8d6f66136f6ad9c71627f2b96c"
+
+      - name: Install focused test dependency
+        run: python -m pip install pytest
+
+      - name: Strengthen canonical P07 and focused regression
+        run: python .prompt-contrib/patch_p07_parallel_subagents.py
+
+      - name: Rebuild and prove Prompt Kit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py
+          python scripts/prompt_registry_ops.py validate
+          python -m pytest \
+            tests/test_p02_p07_autonomous_iteration.py \
+            tests/test_agentic_loop_prompts.py \
+            tests/test_operational_closeout_contract.py \
+            tests/test_green_branch_integration_policy.py \
+            -q
+          python scripts/build_prompt_kit_registry.py --check
+          git diff --check
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          prompts = json.loads(Path('docs/prompts.json').read_text(encoding='utf-8'))
+          p07 = next(p for p in prompts if p['id'] == 'P07')
+          html = Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
+          assert 'PARALLEL SUB-AGENT EXECUTION CONTRACT' in p07['copyContent']
+          assert 'you MUST dispatch those lanes concurrently' in p07['copyContent']
+          assert 'Prompt Registry Classification Refiner' in html
+          assert 'Repo Sprint Executor' in html
+          assert 'PARALLEL SUB-AGENT EXECUTION CONTRACT' in html
+          print(f"P07 parallel-subagent contract rendered; prompt count={len(prompts)} base prompts")
+          PY
+
+      - name: Remove temporary transport and push durable strengthening
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .prompt-contrib/patch_p07_parallel_subagents.py
+          rm -f .github/workflows/tmp-p07-parallel-subagent-strengthen.yml
+          git add -A
+          git diff --cached --check
+          git commit -m "feat(prompt-kit): make P07 parallel-subagent aware"
+          git push origin HEAD:feat/p07-parallel-subagent-orchestration-20260823
