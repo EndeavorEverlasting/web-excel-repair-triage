@@ -1,42 +1,31 @@
 # Find the Right Prompt with the Prompt Kit Tutorial
 
-The Prompt Kit contains many specialized prompts. You do not need to know their IDs or scroll through the entire library before beginning work.
+The Prompt Kit tutorial is one continuous **Find → Use → Prove → Continue** experience. You do not need to know prompt IDs or scroll the whole library before beginning work. Four short questions route you to one prompt; that prompt's registry-owned `nextStep` carries you forward through the rest of the path.
 
-Use the glowing **Tutorial · Find My Prompt** control to answer four short questions. The Prompt Kit then recommends one prompt to start with and, when useful, up to two follow-on prompts. The questionnaire runs entirely in the generated page, does not send answers to a server, and does not retain them after the page is reset or closed.
+The experience runs entirely in the generated page. It does not send answers to a server and does not retain them after the page is reset or closed.
 
-## Start the questionnaire
+## The four phases
+
+### Phase 1 · Find
 
 1. Open the generated Prompt Kit website at `web/prompt-kit/index.html` or the public Prompt Kit URL.
 2. Select the glowing **Tutorial · Find My Prompt** control in the header.
-3. Answer four bounded questions:
-   - whether you are just starting out, already inside a repository, or looking at an app/artifact;
-   - whether you already know the problem or task you want to solve;
-   - what outcome you are trying to accomplish;
-   - whether the work is one sprint, parallel, sequential, or moving toward runtime proof.
-4. Review the **Primary recommendation** first.
-5. Read the **After the recommendation** path to see what the current registry says should follow that prompt.
-6. Select **Open** to read the full prompt or **Copy** to place it on the clipboard.
-7. Complete the current prompt's expected output or proof before moving to the next registered step.
+3. Answer four bounded questions: where you are starting, your job to be done, your stage or work shape, and an adaptive discriminator built from the candidate pool.
+4. The result names one **Phase 1 · Found** primary prompt and, when useful, follow-on options. Inline below the primary card, the same frame shows the **Use → Prove → Continue** phases so you see the whole path before you commit.
 
-The questionnaire does not invent prompt text or maintain a private prompt-ID routing table. Each answer is translated into ordinary search phrases and passed through the same `filterPromptsForQuery(PROMPTS, query)` function used by the Prompt Kit search box. That means the tutorial reuses the current registry, synonym dictionary, metadata ranking, and filtering behavior instead of creating a second recommendation engine.
+The questionnaire does not invent prompt text or maintain a private prompt-ID routing table. Each answer becomes ordinary search phrases passed through the same `filterPromptsForQuery(PROMPTS, query)` function used by the Prompt Kit search box, so the tutorial reuses the current registry, synonym dictionary, metadata ranking, and filtering behavior instead of a second recommendation engine.
 
-## Use → prove → continue
+### Phase 2 · Use
 
-The recommendation is a starting point, not the end of the tutorial. The current Prompt Kit restores the useful sequencing principle from the earlier spreadsheet-era Prompt Sequence while keeping the experience web-native.
+Select **Copy** on the found prompt and run it in a new chat. Fill its concrete variables and execute the bounded sprint it describes. **Open** lets you inspect the full prompt first. When you open any prompt, its detail view includes a guided workflow panel that carries the same four-phase rail with **Find** marked complete and **Use** active, so the experience stays continuous instead of restarting.
 
-When you open any prompt, its detail view includes a **Guided workflow** panel:
+### Phase 3 · Prove
 
-1. **Now** identifies the prompt you are about to use.
-2. **Next-step contract** shows that prompt's current `nextStep` registry guidance.
-3. **Ready to continue when** shows the prompt's registered expected output or proof gate.
-4. **Next** or **Option** cards appear only for prompt IDs actually referenced by the current prompt's `nextStep` and present in the current registry.
-5. **Open** lets you inspect the next prompt before committing to it; **Copy** copies that registered prompt directly.
-6. **Mark this step complete** gives you lightweight session progress. Completion is stored only in browser `sessionStorage`; it is cleared with the browsing session and never changes the repository or your saved Favorites.
-7. If the prompt has no explicit registered successor, use **Re-run Find My Prompt** after the current result changes your context.
+The guided workflow panel's **READY TO CONTINUE WHEN** section shows the prompt's registered `expectedOutput` or `proofGate`. Finish that proof before advancing. Do not stop at a summary, plan, or status-only report while the prompt's owned executable work remains.
 
-This is deliberately not a new routing database. The browser reads the same `nextStep`, `expectedOutput`, `proofGate`, `useWhen`, IDs, and names already produced by the canonical prompt registry. Updating prompt guidance therefore remains a registry concern instead of requiring a second UI-specific sequence map.
+### Phase 4 · Continue
 
-The workflow rail uses subtle motion to make progression visible. Browsers requesting reduced motion receive the same structure and state without the movement. Mobile layouts keep the path horizontally readable and make the workflow actions touch-sized.
+The panel's **NEXT-STEP CONTRACT** section shows the prompt's current `nextStep` registry guidance, and **Next** or **Option** cards appear only for prompt IDs actually referenced by that `nextStep` and present in the current registry. Select **Open** to inspect the next prompt or **Copy** to run it. **Mark this step complete** gives you lightweight session progress stored only in browser `sessionStorage` — cleared with the browsing session, never changing the repository or your saved Favorites. If the prompt has no explicit registered successor, use **Re-run Find My Prompt** after the current result changes your context.
 
 ## Common paths
 
@@ -79,7 +68,7 @@ The Prompt Kit has additional browser guardrails around the tutorial workflow:
 
 - Favorite, Open, and Copy live in one explicit prompt-card action rail. Desktop cards reserve space for the rail; mobile cards move the rail into its own touch-sized row. This prevents action buttons from occupying overlapping absolute positions.
 - A successful copy produces both a green glowing confirmation toast and a brief green card flash. Reduced-motion preferences disable the movement while preserving visible confirmation.
-- Guided workflow panels use an animated current-to-next rail, distinct current/next states, and compact successor cards. Reduced-motion preferences preserve the structure while disabling movement.
+- The four-phase rail and guided workflow panels use an animated current-to-next progression. Reduced-motion preferences preserve the structure and state while disabling movement.
 - Workflow completion is intentionally session-scoped; it does not compete with Favorites, which remain persistent browser-local preferences.
 
 ## Tutorial-planning prompts
@@ -106,8 +95,9 @@ python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 python scripts/validate_prompt_kit_discovery.py --summary
 python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance tests.test_skill_prompt_registry -v
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+node scripts/analyze_prompt_finder_routes.js
 ```
 
 ## Proof ceiling
 
-Repository validation can prove registry integrity, shared-search recommendation routing, registry-owned next-step extraction, session-only completion state, JavaScript syntax, action-rail structure, generated-site parity, and focused test behavior. It does not prove every browser or assistive-technology combination, clipboard permissions on every device, organizational acceptance of the recommendations, or that a recommended prompt will succeed without the environment and permissions required by that prompt.
+Repository validation can prove registry integrity, shared-search recommendation routing, registry-owned next-step extraction, session-only completion state, JavaScript syntax, action-rail structure, the four-phase Find → Use → Prove → Continue frame, generated-site parity, transitive route coverage, and focused test behavior. It does not prove every browser or assistive-technology combination, clipboard permissions on every device, organizational acceptance of the recommendations, or that a recommended prompt will succeed without the environment and permissions required by that prompt.

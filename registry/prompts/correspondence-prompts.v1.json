@@ -48,7 +48,7 @@
       "useWhen": "A draft is factually useful but reads like internal notes, engineering narration, an AI work log, or a behind-the-scenes handoff and needs to become clean client-, partner-, executive-, or public-facing correspondence.",
       "inspectFirst": "The source draft and intended external audience. Identify the actual outcome, current status, recipient-visible impact, material limitations or risks, decisions, dependencies, requested actions, dates, and commitments before removing internal mechanics.",
       "expectedOutput": "One external-facing message that communicates outcomes, relevant status, impact, risks, dependencies, and actions without exposing irrelevant AI, repository, debugging, harness, validation, planning, or artifact-generation mechanics; material problems remain disclosed accurately.",
-      "nextStep": "Return the external-facing copy only so it can be reviewed or sent; retain any internal detail that is genuinely necessary for the recipient to understand a material risk, obligation, decision, or requested action.",
+      "nextStep": "Return the external-facing copy only so it can be reviewed or sent; retain any internal detail that is genuinely necessary for the recipient to understand a material risk, obligation, decision, or requested action. When an internal draft only needs tighter wording or confidence before it is sent, polish it with P72.",
       "proofGate": "The recipient can understand what happened, what matters to them, what remains constrained, and what action is needed without seeing irrelevant internal machinery; no material failure, uncertainty, dependency, or accountability fact is hidden or converted into false certainty.",
       "color": "Magenta",
       "copySheet": "P73_COPY_SAFE",

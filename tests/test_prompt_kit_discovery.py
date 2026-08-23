@@ -126,14 +126,14 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         guided = GUIDED_JS.read_text(encoding="utf-8")
         for marker in (
             "id:'startingPoint'",
-            "I am just starting out or do not have the repository checked out",
-            "I am already inside an existing repository",
-            "id:'problemKnown'",
-            "Do you have a known problem you want to solve?",
-            "id:'goal'",
-            "id:'shape'",
+            "I do not have the repository checked out yet",
+            "I have a repository but it is unfamiliar",
+            "id:'intent'",
+            "What is your job to be done?",
+            "id:'stage'",
+            "id:'discriminator'",
             "filterPromptsForQuery(PROMPTS,query)",
-            "PROMPTS.find",
+            "(allPrompts||PROMPTS).find",
             "slice(0,3)",
             "copyPrompt(",
             "showPromptDetail(",
@@ -143,7 +143,7 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             self.assertIn(marker, guided)
         self.assertNotIn("var R=", guided)
         self.assertNotIn("replaceChild(button,old)", guided)
-        question_ids = ("startingPoint", "problemKnown", "goal", "shape")
+        question_ids = ("startingPoint", "intent", "stage", "discriminator")
         self.assertEqual(sum(guided.count(f"id:'{item}'") for item in question_ids), 4)
         self.assertLessEqual(len(question_ids), 5)
 
@@ -258,6 +258,37 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         self.assertIn("✦ Tutorial · Find My Prompt", deployed)
         self.assertIn("prompt-kit-journey-styles", deployed)
         self.assertIn("prompt-card-actions", deployed)
+
+    def test_tutorial_presents_one_find_use_prove_continue_experience(self) -> None:
+        guided = GUIDED_JS.read_text(encoding="utf-8")
+        journey = JOURNEY_JS.read_text(encoding="utf-8")
+        # The questionnaire results frame the path as one four-phase experience.
+        for marker in (
+            "Find → Use → Prove → Continue",
+            "phaseRailHtml",
+            "primaryPhaseBody",
+            "finder-phase-rail",
+            "finder-phase-block",
+            "Phase 1 · Found",
+            "Phase 2 · Use",
+            "Phase 3 · Prove",
+            "Phase 4 · Continue",
+        ):
+            self.assertIn(marker, guided)
+        # The prompt-detail journey panel carries the same four-phase rail and
+        # marks Find as complete (activePhase=1) so the user sees continuity.
+        for marker in (
+            "guidePhaseRailHtml",
+            "guide-phase-rail",
+            "Find → Use → Prove → Continue",
+            "Phase 2 · Use this prompt",
+            "PHASE 3 · PROVE",
+            "PHASE 4 · CONTINUE",
+        ):
+            self.assertIn(marker, journey)
+        # The finder-results inline phase body must suppress the legacy
+        # duplicate preview so the user sees one path, not two.
+        self.assertIn("finder-phase-rail", journey)
 
 
 if __name__ == "__main__":
