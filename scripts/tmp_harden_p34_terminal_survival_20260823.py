@@ -117,7 +117,7 @@ p34["keywords"] = [
 serialized = json.dumps(p34, indent=2, ensure_ascii=False)
 pattern = re.compile(r'  \{\n    "id": "P34",.*?\n  \},\n  \{\n    "id": "P35",', re.S)
 replacement = "  " + serialized.replace("\n", "\n  ") + ",\n  {\n    \"id\": \"P35\","
-updated, count = pattern.subn(replacement, raw_text, count=1)
+updated, count = pattern.subn(lambda _: replacement, raw_text, count=1)
 if count != 1:
     raise SystemExit(f"expected one P34 block replacement, got {count}")
 PROMPTS.write_text(updated, encoding="utf-8")
