@@ -1,64 +1,15 @@
-name: Artifact engine tests
+name: Temporary canonical local path bridge
 
 on:
-  pull_request:
   push:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
-  artifact-engines:
+  canonical-local-path:
     runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            python -m pip install -r requirements.txt
-          else
-            python -m pip install openpyxl
-          fi
-          python -m pip install pytest
-
-      - name: Import artifact engines
-        run: |
-          python -c "import triage.nw_prj_neuron_track_hours.cli; import triage.nw_prj_neuron_track_hours.bonita_cli; import triage.nth_qualitative_admin; import triage.admin_billing_summary.cli; import triage.one_marcus_recon.cli; import triage.sidecar_html; import triage.artifact_fingerprint; import triage.artifact_profiles; import triage.artifact_compare; import triage.same_family_compare; import triage.roster_log_compare.compare; import triage.roster_log_review_queue.cli; import triage.gitignore_hygiene; print('imports ok')"
-
-      - name: Gitignore hygiene
-        run: python -m triage.gitignore_hygiene
-
-      - name: Run artifact engine tests
-        run: |
-          python -m pytest \
-            tests/test_nw_prj_neuron_track_hours.py \
-            tests/test_nw_prj_neuron_track_hours_bonita.py \
-            tests/test_nth_qualitative_admin.py \
-            tests/test_admin_billing_summary.py \
-            tests/test_one_marcus_recon.py \
-            tests/test_one_marcus_generate.py \
-            tests/test_one_marcus_immutability.py \
-            tests/test_sidecar_html_portal.py \
-            tests/test_artifact_compare.py \
-            tests/test_roster_log_compare.py \
-            tests/test_same_family_compare.py \
-            tests/test_gitignore_hygiene.py \
-            tests/test_roster_log_review_queue.py \
-            -q
-
-  canonical-local-path-prompt-repair:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feat/prompt-kit-artifact-risk-path-20260822'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
       - uses: actions/checkout@v4
         with:
@@ -87,7 +38,6 @@ jobs:
             registry/prompts/tutorial-discovery-prompts.v1.json \
             web/prompt-kit/index.html
           git rm -f --ignore-unmatch tests/test_prompt_artifact_risk_path_prompts.py
-          git rm -f --ignore-unmatch .prompt-contrib/tmp-canonical-path-trigger.txt
           unmerged="$(git diff --name-only --diff-filter=U)"
           if [ -n "$unmerged" ]; then
             echo "Unresolved merge paths remain:" >&2
@@ -118,6 +68,7 @@ jobs:
           p50['expectedOutput'] = 'One verified machine/execution-profile -> canonical repository-root mapping, one reused path authority, a lightweight discoverability pointer through an existing agent-facing route, root/remote/default-branch evidence, shell-correct entry commands, refreshed remote truth, and no duplicate checkout invented merely to continue work.'
           p50['nextStep'] = 'If no matching checkout exists, run P61 and return here to register/verify the new checkout. If path discoverability infrastructure is absent and repository setup mutation is authorized, use P87 or the existing harness owner to install the smallest pointer to this canonical contract. After root and freshness gates pass, continue with the task-specific prompt without creating another clone or path registry.'
           p50['proofGate'] = 'Exactly one canonical path authority is selected per machine/execution profile; the verified root matches the requested remote; OS/shell and worktree context are explicit; at least one existing Hooks/Glossary/CODEBASE_MAP/AGENTS/trigger front door points agents to the canonical path owner without duplicating absolute-path truth; git fetch --all --prune --tags refreshes reachable remote truth before branch-sensitive iteration; the actual remote default branch is resolved; clean behind-only state is fast-forwarded while dirty/diverged work is preserved; and no foreign-machine absolute path or unnecessary duplicate clone is treated as canonical.'
+
           block = r'''
 
 CANONICAL LOCAL PATH CONTRACT
@@ -177,6 +128,9 @@ Creating or selecting a checkout is not closure. Before task-specific work, retu
               p61['copyContent'] = p61['copyContent'].rstrip() + handoff
           p61['nextStep'] = 'After the checkout exists and its remote/root are verified, run P50 Canonical Local Repository Path & Freshness Guard to register/reuse the machine-profile mapping, establish discoverability, and refresh the remote floor before task-specific work.'
           p61['proofGate'] = p61['proofGate'].rstrip('. ') + '; the resulting checkout is handed to P50 for canonical machine/profile registration and freshness proof rather than left as an undocumented arbitrary path.'
+          for kw in ('canonical path','machine profile','P50','path registration'):
+              if kw not in p61['keywords']:
+                  p61['keywords'].append(kw)
           docs_path.write_text(json.dumps(docs, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
           spec_path = root / 'registry/prompts/spec-architecture-prompts.v1.json'
@@ -195,6 +149,9 @@ Treat local repository location and freshness as a first-class bidirectional rou
           if 'CANONICAL LOCAL PATH ROUTE CASE' not in p87['copyContent']:
               p87['copyContent'] = p87['copyContent'].rstrip() + route_block
           p87['proofGate'] = p87['proofGate'].rstrip('. ') + '; canonical local-path/freshness intent is discoverable from an existing front door and reverse-routes to P50 without duplicating path truth.'
+          for kw in ('canonical path hook','local repo path route','P50 path owner','stale checkout route'):
+              if kw not in p87['keywords']:
+                  p87['keywords'].append(kw)
           spec_path.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
           tutorial_path = root / 'registry/prompts/tutorial-discovery-prompts.v1.json'
@@ -206,15 +163,19 @@ Treat local repository location and freshness as a first-class bidirectional rou
               if anchor not in p65['copyContent']:
                   raise SystemExit('P65 routing anchor missing')
               p65['copyContent'] = p65['copyContent'].replace(anchor, anchor + route + '\n', 1)
+          for kw in ('canonical path','local repo path','wrong directory','stale checkout','pull latest'):
+              if kw not in p65['keywords']:
+                  p65['keywords'].append(kw)
           tutorial_path.write_text(json.dumps(tutorial, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
-          Path('tests/test_prompt_canonical_path_contract.py').write_text('''from __future__ import annotations\n\nimport unittest\n\nfrom scripts import build_prompt_kit_registry\n\n\nclass CanonicalPathPromptContractTests(unittest.TestCase):\n    @classmethod\n    def setUpClass(cls) -> None:\n        cls.prompts = build_prompt_kit_registry.load_prompt_kit_registry()\n        cls.by_id = {prompt["id"]: prompt for prompt in cls.prompts}\n\n    def test_p50_is_single_canonical_local_path_owner(self) -> None:\n        p50 = self.by_id["P50"]\n        self.assertEqual(p50["name"], "Canonical Local Repository Path & Freshness Guard")\n        content = p50["copyContent"]\n        for phrase in ("CANONICAL LOCAL PATH CONTRACT", "ONE AUTHORITATIVE REPOSITORY ROOT PER MACHINE / EXECUTION PROFILE", "LOCAL PERSISTENCE / INDOCTRINATION", "WORKSPACE / BLOAT GUARD", "MACHINE / OS / SHELL GATE", "REMOTE FRESHNESS IS PART OF PATH CORRECTNESS", "git fetch --all --prune --tags", "refs/remotes/origin/HEAD", "git pull --ff-only", "Hooks, Glossary, CODEBASE_MAP, AGENTS", "generic snippet such as `git switch main && git pull`", "Do not create a fresh clone merely because the agent cannot remember the existing path"):\n            self.assertIn(phrase, content)\n        self.assertEqual([p["id"] for p in self.prompts if p["name"] == p50["name"]], ["P50"])\n\n    def test_p61_returns_new_checkout_to_p50(self) -> None:\n        p61 = self.by_id["P61"]\n        self.assertEqual(p61["name"], "Existing Repository Clone + Working-Directory Bootstrapper")\n        self.assertIn("CANONICAL PATH REGISTRATION HANDOFF", p61["copyContent"])\n        self.assertIn("P50 Canonical Local Repository Path & Freshness Guard", p61["copyContent"])\n\n    def test_p87_exposes_bidirectional_path_hook(self) -> None:\n        p87 = self.by_id["P87"]\n        self.assertEqual(p87["name"], "Bidirectional Use-Case Hook & Repository Route Builder")\n        for phrase in ("CANONICAL LOCAL PATH ROUTE CASE", "route to P50 Canonical Local Repository Path & Freshness Guard", "Hooks, Glossary, CODEBASE_MAP, AGENTS", "reverse lookup", "Do not create a second capabilities registry, path registry, or glossary"):\n            self.assertIn(phrase, p87["copyContent"])\n\n    def test_p65_prompt_finder_exposes_p50(self) -> None:\n        self.assertIn("P50 Canonical Local Repository Path & Freshness Guard: establish/reuse the machine-specific canonical checkout", self.by_id["P65"]["copyContent"])\n\n    def test_prompt_count_and_rendered_parity(self) -> None:\n        self.assertEqual(len(self.prompts), 100)\n        html = build_prompt_kit_registry.render()\n        self.assertIn("Canonical Local Repository Path &amp; Freshness Guard", html)\n        self.assertIn("CANONICAL LOCAL PATH CONTRACT", html)\n        self.assertIn("CANONICAL LOCAL PATH ROUTE CASE", html)\n\n\nif __name__ == "__main__":\n    unittest.main()\n''', encoding='utf-8')
+          test_path = root / 'tests/test_prompt_canonical_path_contract.py'
+          test_path.write_text('''from __future__ import annotations\n\nimport unittest\n\nfrom scripts import build_prompt_kit_registry\n\n\nclass CanonicalPathPromptContractTests(unittest.TestCase):\n    @classmethod\n    def setUpClass(cls) -> None:\n        cls.prompts = build_prompt_kit_registry.load_prompt_kit_registry()\n        cls.by_id = {prompt["id"]: prompt for prompt in cls.prompts}\n\n    def test_p50_is_single_canonical_local_path_owner(self) -> None:\n        p50 = self.by_id["P50"]\n        self.assertEqual(p50["name"], "Canonical Local Repository Path & Freshness Guard")\n        self.assertEqual(p50["copySheet"], "P50_COPY_SAFE")\n        content = p50["copyContent"]\n        for phrase in (\n            "CANONICAL LOCAL PATH CONTRACT",\n            "ONE AUTHORITATIVE REPOSITORY ROOT PER MACHINE / EXECUTION PROFILE",\n            "LOCAL PERSISTENCE / INDOCTRINATION",\n            "WORKSPACE / BLOAT GUARD",\n            "MACHINE / OS / SHELL GATE",\n            "REMOTE FRESHNESS IS PART OF PATH CORRECTNESS",\n            "git fetch --all --prune --tags",\n            "refs/remotes/origin/HEAD",\n            "git pull --ff-only",\n            "Hooks, Glossary, CODEBASE_MAP, AGENTS",\n            "generic snippet such as `git switch main && git pull`",\n            "Do not create a fresh clone merely because the agent cannot remember the existing path",\n        ):\n            self.assertIn(phrase, content)\n        owners = [p for p in self.prompts if p["name"] == p50["name"]]\n        self.assertEqual([p["id"] for p in owners], ["P50"])\n\n    def test_p61_returns_new_checkout_to_p50_instead_of_stranding_a_path(self) -> None:\n        p61 = self.by_id["P61"]\n        self.assertEqual(p61["name"], "Existing Repository Clone + Working-Directory Bootstrapper")\n        self.assertIn("CANONICAL PATH REGISTRATION HANDOFF", p61["copyContent"])\n        self.assertIn("P50 Canonical Local Repository Path & Freshness Guard", p61["copyContent"])\n        self.assertIn("machine-profile mapping", p61["nextStep"])\n\n    def test_p87_installs_bidirectional_path_hook_without_second_registry(self) -> None:\n        p87 = self.by_id["P87"]\n        self.assertEqual(p87["name"], "Bidirectional Use-Case Hook & Repository Route Builder")\n        content = p87["copyContent"]\n        for phrase in (\n            "CANONICAL LOCAL PATH ROUTE CASE",\n            "route to P50 Canonical Local Repository Path & Freshness Guard",\n            "Hooks, Glossary, CODEBASE_MAP, AGENTS",\n            "reverse lookup",\n            "Do not create a second capabilities registry, path registry, or glossary",\n        ):\n            self.assertIn(phrase, content)\n\n    def test_p65_prompt_finder_exposes_canonical_path_owner(self) -> None:\n        p65 = self.by_id["P65"]\n        self.assertIn(\n            "P50 Canonical Local Repository Path & Freshness Guard: establish/reuse the machine-specific canonical checkout",\n            p65["copyContent"],\n        )\n\n    def test_prompt_count_and_generated_site_remain_connected(self) -> None:\n        self.assertEqual(len(self.prompts), 100)\n        html = build_prompt_kit_registry.render()\n        self.assertIn("Canonical Local Repository Path &amp; Freshness Guard", html)\n        self.assertIn("CANONICAL LOCAL PATH CONTRACT", html)\n        self.assertIn("CANONICAL LOCAL PATH ROUTE CASE", html)\n\n\nif __name__ == "__main__":\n    unittest.main()\n''', encoding='utf-8')
           PY
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           git rm -f --ignore-unmatch .github/workflows/tmp-canonical-local-path-20260822.yml
           git rm -f --ignore-unmatch .github/workflows/tmp-canonical-local-path-bridge-20260822.yml
 
-      - name: Validate canonical path contribution
+      - name: Validate contribution and parity
         shell: bash
         run: |
           set -euo pipefail
@@ -228,12 +189,17 @@ Treat local repository location and freshness as a first-class bidirectional rou
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
-      - name: Commit and push durable canonical path contribution
+      - name: Commit and push durable contribution
         shell: bash
         run: |
           set -euo pipefail
-          git add docs/prompts.json registry/prompts/spec-architecture-prompts.v1.json registry/prompts/tutorial-discovery-prompts.v1.json tests/test_prompt_canonical_path_contract.py web/prompt-kit/index.html
+          git add docs/prompts.json \
+            registry/prompts/spec-architecture-prompts.v1.json \
+            registry/prompts/tutorial-discovery-prompts.v1.json \
+            tests/test_prompt_canonical_path_contract.py \
+            web/prompt-kit/index.html
           git add -u
           git diff --cached --check
+          git status --short
           git commit -m "feat(prompt-kit): codify canonical local repository path"
           git push origin HEAD:feat/prompt-kit-artifact-risk-path-20260822
