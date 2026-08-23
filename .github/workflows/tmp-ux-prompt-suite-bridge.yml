@@ -55,18 +55,28 @@ jobs:
           from pathlib import Path
           path = Path('.prompt-contrib/ux_prompt_suite_executor.py')
           text = path.read_text(encoding='utf-8')
+
+          old_root = "ROOT = Path(__file__).resolve().parents[1]\nREGISTRY = \"spec-architecture-prompts\""
+          new_root = "ROOT = Path(__file__).resolve().parents[1]\nif str(ROOT) not in sys.path:\n    sys.path.insert(0, str(ROOT))\nREGISTRY = \"spec-architecture-prompts\""
+          if old_root in text:
+              text = text.replace(old_root, new_root, 1)
+          elif new_root not in text:
+              raise SystemExit('executor root import correction anchor missing')
+
           old = 'intentional deviations are explained; no screenshot-only fake substitutes for functionality; and representative live comparison plus regressions pass without importing unauthorized assets/content.'
           new = 'intentional deviations are explained; unknown or unobservable reference behavior remains explicitly unproven; no screenshot-only fake substitutes for functionality; and representative live comparison plus regressions pass without importing unauthorized assets/content.'
           if old in text:
               text = text.replace(old, new, 1)
           elif new not in text:
               raise SystemExit('reference-emulation proof-gate correction anchor missing')
+
           old2 = 'Evidence from another head or materially different runtime is historical, not current proof.'
           new2 = 'Evidence from another head or materially different runtime is historical, not current proof; acceptance must remain pinned to the exact head under test.'
           if old2 in text:
               text = text.replace(old2, new2, 1)
           elif new2 not in text:
               raise SystemExit('exact-head acceptance correction anchor missing')
+
           path.write_text(text, encoding='utf-8')
           PY
 
