@@ -71,3 +71,29 @@ jobs:
 
       - name: Execute bounded canonical path repair
         run: python .prompt-contrib/canonical_path_repair.py
+
+  p13-specialized-owner-routing-repair:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feat/p13-specialized-owner-routing-20260822'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p13-specialized-owner-routing-20260822
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Execute bounded P13 owner-routing repair when transport exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f .prompt-contrib/p13_specialized_owner_routing.py ]; then
+            python .prompt-contrib/p13_specialized_owner_routing.py
+          else
+            echo 'P13 owner-routing transport already consumed; no mutation required.'
+          fi
