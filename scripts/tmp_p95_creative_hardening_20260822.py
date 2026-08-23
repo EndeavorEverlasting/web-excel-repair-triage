@@ -96,7 +96,7 @@ Synthesize 2-4 materially different candidates: a simple local baseline plus, wh
         phrase_anchor
         + '            "WIDEN THE DESIGN SPACE BEFORE CONVERGING",\n'
         + '            "structurally analogous systems",\n'
-        + '            "2-4 materially different candidate designs",\n'
+        + '            "2-4 materially different candidates",\n'
         + '            "P97 Open-Source Prior-Art & Gap Analyst",\n'
         + '            "Creativity is disciplined recombination",\n'
     )
