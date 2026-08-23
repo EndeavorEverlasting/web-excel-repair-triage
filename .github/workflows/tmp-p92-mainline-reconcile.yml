@@ -1,0 +1,224 @@
+name: Temporary P92 mainline reconcile
+
+on:
+  push:
+    branches: [feat/p92-canonical-path-prompt-20260823]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-p92-mainline-reconcile
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p92-canonical-path-prompt-20260823
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Reconcile latest main without losing generated or prompt work
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --all --prune --tags
+          set +e
+          git merge --no-edit origin/main
+          rc=$?
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+            if [ "${#conflicts[@]}" -ne 1 ] || [ "${conflicts[0]}" != "web/prompt-kit/index.html" ]; then
+              printf 'Unexpected merge conflicts:\n'
+              printf '%s\n' "${conflicts[@]}"
+              exit 1
+            fi
+            git checkout --theirs -- web/prompt-kit/index.html
+            git add web/prompt-kit/index.html
+            git commit --no-edit
+          fi
+          echo "RECONCILED_BASE=$(git rev-parse origin/main)" >> "$GITHUB_ENV"
+
+      - name: Second-pass repair — repository-native path authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          registry_path = Path('registry/prompts/spec-architecture-prompts.v1.json')
+          payload = json.loads(registry_path.read_text(encoding='utf-8'))
+          p92 = next(p for p in payload['prompts'] if p['id'] == 'P92')
+          old = "Reuse an existing machine/profile/path registry when one already owns this data. Otherwise create the repository's normal minimal versioned path contract, preferring `harness/canonical-paths.v1.json` when no stronger local convention exists. The durable contract must be machine-readable and discoverable from the harness entrypoint."
+          new = "Reuse an existing machine/profile/path registry or contract when one already owns this data. Otherwise create one machine-readable owner in the repository's existing versioned harness contract/registry convention and register that owner in the harness map. Do not standardize a filename across repositories or create a second path authority merely because another agent prefers a different harness layout. The durable owner must be discoverable from the harness entrypoint."
+          if old not in p92['copyContent']:
+              raise SystemExit('P92 repository-native authority anchor missing')
+          p92['copyContent'] = p92['copyContent'].replace(old, new, 1)
+          registry_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          test_path = Path('tests/test_spec_architecture_prompt_registry.py')
+          test = test_path.read_text(encoding='utf-8')
+          old_assert = '            "harness/canonical-paths.v1.json",\n'
+          new_assert = '            "Do not standardize a filename across repositories",\n'
+          if old_assert not in test:
+              raise SystemExit('P92 focused filename assertion anchor missing')
+          test = test.replace(old_assert, new_assert, 1)
+          test_path.write_text(test, encoding='utf-8')
+          PY
+
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          git rm .github/workflows/tmp-p92-mainline-reconcile.yml
+          git add registry/prompts/spec-architecture-prompts.v1.json tests/test_spec_architecture_prompt_registry.py web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m "fix(prompt-kit): keep canonical path authority repository-native"
+
+      - name: Validate exact candidate and contribution ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile tests/test_spec_architecture_prompt_registry.py build_prompt_kit.py
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate | tee "$RUNNER_TEMP/p92-registry-validation.json"
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
+          python -m unittest tests.test_prompt_language_audit -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          test -z "$(git status --short)"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          import build_prompt_kit
+          from scripts import build_prompt_kit_registry
+
+          spec = json.loads(Path('registry/prompts/spec-architecture-prompts.v1.json').read_text(encoding='utf-8'))
+          p92s = [p for p in spec['prompts'] if p['id'] == 'P92']
+          if len(p92s) != 1:
+              raise SystemExit(f'expected one P92, found {len(p92s)}')
+          p92 = p92s[0]
+          base = json.loads(Path('docs/prompts.json').read_text(encoding='utf-8'))
+          p01 = next(p for p in base if p['id'] == 'P01')
+          full = {p['id']: p for p in build_prompt_kit_registry.load_prompt_kit_registry()}
+
+          for phrase in (
+              'Canonical Path Prompt',
+              'CANONICAL DEVELOPMENT CHECKOUT',
+              'CANONICAL PRODUCTION / USE PATH',
+              'CANONICAL WORKTREE ROOT',
+              'CANONICAL ENTRYPOINT',
+              'PREVENT PATH SPRAWL AND COMPUTER BLOAT',
+              'REMOTE INTEGRATION IS NOT LOCAL DEPLOYMENT',
+              'REMOTE_INTEGRATED',
+              'DEV_CHECKOUT_CURRENT',
+              'PROD_PATH_CURRENT',
+              'ENTRYPOINT_PROVED',
+              'Do not standardize a filename across repositories',
+              'MAP BOTH PATHS WHEN TEST PROOF IS INVOLVED',
+              'Green helper tests do not prove a production wrapper',
+          ):
+              if phrase not in (p92['name'] + '\n' + p92['copyContent']):
+                  raise SystemExit('missing P92 semantic: ' + phrase)
+          if 'harness/canonical-paths.v1.json' in p92['copyContent']:
+              raise SystemExit('P92 still prescribes a competing universal contract path')
+
+          for phrase in (
+              'CANONICAL PATH CONTRACT',
+              'Every app harness must answer where normal development occurs',
+              'P92 Canonical Path Prompt owns deep repair/audit of this contract',
+              'GitHub merge success alone is not workstation deployment proof',
+          ):
+              if phrase not in p01['copyContent']:
+                  raise SystemExit('missing P01 harness seam: ' + phrase)
+
+          if build_prompt_kit.SYNONYMS['clone repo'] != 'P61' or build_prompt_kit.SYNONYMS['repository checkout'] != 'P61':
+              raise SystemExit('P61 bootstrap ownership drifted')
+          for alias in ('canonical path', 'canonical repository path', 'canonical checkout', 'development path', 'production path', 'local deployment path', 'path drift', 'scattered clones'):
+              if build_prompt_kit.SYNONYMS[alias] != 'P92':
+                  raise SystemExit('P92 discovery alias missing: ' + alias)
+          for neighbor in ('P61', 'P91', 'P93', 'P94'):
+              if neighbor not in full:
+                  raise SystemExit('neighbor owner missing: ' + neighbor)
+
+          for literal in ('CheeksMcClappeth', 'pa_rperez26', 'AgentSwitchBoard-Live', 'C:\\Users\\'):
+              if literal in p92['copyContent'] or literal in p01['copyContent']:
+                  raise SystemExit('operator-specific literal leaked: ' + literal)
+
+          receipt = json.loads((Path(os.environ['RUNNER_TEMP']) / 'p92-registry-validation.json').read_text(encoding='utf-8'))
+          if receipt.get('status') != 'valid' or receipt.get('site_parity') is not True:
+              raise SystemExit('registry receipt is not valid/parity true')
+          if receipt.get('prompt_count') != len(full):
+              raise SystemExit('prompt count receipt mismatch')
+          print(json.dumps({
+              'contribution_ledger': {
+                  'P92': 'STRENGTHEN — canonical path definition/enforcement + deployment proof',
+                  'P01': 'STRENGTHEN — every app harness exposes one canonical path ownership seam',
+                  'P61': 'ALREADY COVERED — generic clone/working-directory bootstrap remains distinct',
+                  'P91/P93/P94': 'ALREADY COVERED — failure-class, closure, and regression roles remain distinct',
+                  'new_ids': [],
+              },
+              'prompt_count': len(full),
+              'site_parity': True,
+              'fixed_point': 'repository-native path owner; no universal filename; old P92 production/test audit retained',
+          }, indent=2))
+          PY
+
+      - name: Reconcile one more moved main and rerun affected proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            set +e
+            git merge --no-edit origin/main
+            rc=$?
+            set -e
+            if [ "$rc" -ne 0 ]; then
+              mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+              if [ "${#conflicts[@]}" -ne 1 ] || [ "${conflicts[0]}" != "web/prompt-kit/index.html" ]; then
+                printf 'Unexpected late merge conflicts:\n'
+                printf '%s\n' "${conflicts[@]}"
+                exit 1
+              fi
+              git checkout --theirs -- web/prompt-kit/index.html
+              git add web/prompt-kit/index.html
+              git commit --no-edit
+            fi
+            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+            if ! git diff --quiet -- web/prompt-kit/index.html; then
+              git add web/prompt-kit/index.html
+              git commit -m "chore(prompt-kit): regenerate canonical path on refreshed main"
+            fi
+            python -m unittest tests.test_spec_architecture_prompt_registry -v
+            python scripts/prompt_registry_ops.py validate
+            python scripts/validate_prompt_kit_discovery.py --summary
+            python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
+            python -m unittest tests.test_prompt_language_audit -v
+            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+            git diff --check
+            test -z "$(git status --short)"
+          fi
+          echo "VALIDATED_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "VALIDATED_BASE=$(git rev-parse origin/main)" >> "$GITHUB_ENV"
+
+      - name: Publish exact green head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git merge-base --is-ancestor origin/main HEAD
+          test -z "$(git status --short)"
+          test "$(git rev-parse HEAD)" = "$VALIDATED_HEAD"
+          git push origin HEAD:feat/p92-canonical-path-prompt-20260823
+          printf 'P92_MAINLINE_RECONCILED\nhead=%s\nbase=%s\n' "$VALIDATED_HEAD" "$(git rev-parse origin/main)"
