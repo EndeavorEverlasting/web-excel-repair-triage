@@ -63,6 +63,7 @@ class PromptRegistryGroundingTests(unittest.TestCase):
             "runtime:correspondence",
             "runtime:management",
             "runtime:spec_architecture",
+            "runtime:base_prompt_kit",
             "html_builder",
         ):
             self.assertIn(source_key, sources)

@@ -13,7 +13,7 @@ Binding for Prompt Kit prompt addition/repair, language audit, generated Prompt 
 
 ## Exact prompt-contribution grounding
 
-Exact registry mechanics are a deterministic tool boundary, not model-memory work. `scripts/prompt_registry_ops.py` owns a compact JIT grounding packet containing current registry IDs/paths, next auto-owned identity, draft-field contract, actionability policy identity, builder/output identity, and SHA-256 provenance for only the canonical structural sources that can affect those values. It does **not** load prompt bodies into the grounding packet. The fingerprint also covers every current builder input consumed by the protected site rebuild: display-order policy, reference data, supplemental runtime JavaScript, the HTML builder module, the combined registry builder, and its policy/registry inputs.
+Exact registry mechanics are a deterministic tool boundary, not model-memory work. `scripts/prompt_registry_ops.py` owns a compact JIT grounding packet containing current registry IDs/paths, next auto-owned identity, draft-field contract, actionability policy identity, builder/output identity, and SHA-256 provenance for only the canonical structural sources that can affect those values. It does **not** load prompt bodies into the grounding packet. The fingerprint also covers every current builder input consumed by the protected site rebuild: display-order policy, reference data, base and supplemental runtime JavaScript, the HTML builder module, the combined registry builder, and its policy/registry inputs.
 
 For an agent or tool that needs exact structure before composing a contribution, use:
 

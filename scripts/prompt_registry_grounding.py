@@ -174,6 +174,7 @@ def build_packet(
             ("runtime:correspondence", registry_module.CORRESPONDENCE_RUNTIME),
             ("runtime:management", registry_module.MANAGEMENT_RUNTIME),
             ("runtime:spec_architecture", registry_module.SPEC_ARCHITECTURE_RUNTIME),
+            ("runtime:base_prompt_kit", Path(registry_module.build_prompt_kit.JS_PATH)),
             ("html_builder", Path(registry_module.build_prompt_kit.__file__).resolve()),
             ("builder", Path(registry_module.__file__).resolve()),
             ("helper", helper_path.resolve()),
