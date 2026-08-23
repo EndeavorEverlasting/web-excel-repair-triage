@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 import math
 from typing import Iterable
 
@@ -60,8 +60,22 @@ def _evidence_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, ...]
     return cleaned
 
 
+def _calendar_date(value: date, field_name: str = "work_date") -> date:
+    """Normalize datetime inputs to their calendar day before identity checks."""
+
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    raise ValueError(f"{field_name} must be a date")
+
+
 def _staff_date_key(staff_key: str, work_date: date) -> tuple[str, str]:
-    return (_non_empty(staff_key, "staff_key").casefold(), work_date.isoformat())
+    normalized_date = _calendar_date(work_date)
+    return (
+        _non_empty(staff_key, "staff_key").casefold(),
+        normalized_date.isoformat(),
+    )
 
 
 @dataclass(frozen=True)
@@ -267,8 +281,7 @@ class AllocationComponent:
     def __post_init__(self) -> None:
         _non_empty(self.allocation_id, "allocation_id")
         _non_empty(self.staff_key, "staff_key")
-        if not isinstance(self.work_date, date):
-            raise ValueError("work_date must be a date")
+        _calendar_date(self.work_date)
         _non_empty(self.workstream, "workstream")
         _positive_finite(self.hours, "hours")
         if self.authority not in ALLOCATION_AUTHORITIES:
@@ -298,7 +311,7 @@ class AllocationComponent:
         return {
             "allocation_id": self.allocation_id,
             "staff_key": self.staff_key,
-            "work_date": self.work_date.isoformat(),
+            "work_date": _calendar_date(self.work_date).isoformat(),
             "workstream": self.workstream,
             "hours": float(self.hours),
             "authority": self.authority,
@@ -369,8 +382,7 @@ class ClosedAttendanceAllocation:
 
     def __post_init__(self) -> None:
         _non_empty(self.staff_key, "staff_key")
-        if not isinstance(self.work_date, date):
-            raise ValueError("work_date must be a date")
+        _calendar_date(self.work_date)
         attendance = _positive_finite(self.attendance_hours, "attendance_hours")
         _evidence_tuple(self.attendance_evidence_refs, "attendance_evidence_refs")
         if not isinstance(self.components, tuple) or not self.components:
@@ -410,7 +422,7 @@ class ClosedAttendanceAllocation:
         return {
             "status": "closed",
             "staff_key": self.staff_key,
-            "work_date": self.work_date.isoformat(),
+            "work_date": _calendar_date(self.work_date).isoformat(),
             "attendance_hours": float(self.attendance_hours),
             "attendance_evidence_refs": list(self.attendance_evidence_refs),
             "allocated_hours": self.allocated_hours,
@@ -433,9 +445,10 @@ def validate_closed_allocation_set(
             raise ValueError(f"duplicate closed allocation for staff/date: {staff}/{work_date}")
         seen_staff_dates.add(day.staff_date_key)
         for component in day.components:
-            if component.allocation_id in seen_allocation_ids:
+            allocation_id = _non_empty(component.allocation_id, "allocation_id")
+            if allocation_id in seen_allocation_ids:
                 raise ValueError(
-                    f"duplicate allocation_id across closed records: {component.allocation_id}"
+                    f"duplicate allocation_id across closed records: {allocation_id}"
                 )
-            seen_allocation_ids.add(component.allocation_id)
+            seen_allocation_ids.add(allocation_id)
     return closed_days
