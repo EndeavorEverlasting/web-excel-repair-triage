@@ -17,6 +17,7 @@ REMEDIATION = (
 PROTECTED_PREFIXES: tuple[str, ...] = (
     "attached_assets/",
     "Candidates/",
+    "Active/",
     "ArtifactIntake/",
     "artifacts/",
     "outputs/",
@@ -39,6 +40,19 @@ APPROVED_SANITIZED_PREFIXES: tuple[str, ...] = (
     "tests/fixtures/",
     "harness/fixtures/",
     "docs/fixtures/",
+)
+
+TRACKED_BINARY_ALLOWLIST_PREFIXES: tuple[str, ...] = (
+    "tests/fixtures/",
+)
+
+BINARY_ARTIFACT_SUFFIXES: tuple[str, ...] = (
+    ".xlsx",
+    ".xlsm",
+    ".xls",
+    ".docx",
+    ".zip",
+    ".doc",
 )
 
 MACHINE_LOCAL_SEGMENTS: frozenset[str] = frozenset(
@@ -120,15 +134,19 @@ def normalize_path(path: str) -> str:
 
 
 def _under_prefix(path: str, prefixes: tuple[str, ...]) -> bool:
-    return any(path.startswith(prefix) for prefix in prefixes)
+    folded = path.casefold()
+    return any(folded.startswith(prefix.casefold()) for prefix in prefixes)
 
 
 def _has_machine_segment(path: str) -> bool:
-    return any(part in MACHINE_LOCAL_SEGMENTS for part in PurePosixPath(path).parts)
+    return any(
+        part.casefold() in MACHINE_LOCAL_SEGMENTS
+        for part in PurePosixPath(path).parts
+    )
 
 
 def _is_secret_like(path: str) -> bool:
-    name = PurePosixPath(path).name.lower()
+    name = PurePosixPath(path).name.casefold()
     if name in SECRET_BASENAMES:
         return True
     if name.startswith(".env."):
@@ -136,6 +154,10 @@ def _is_secret_like(path: str) -> bool:
     if any(name.endswith(suffix) for suffix in SECRET_SUFFIXES):
         return True
     return name.startswith("credentials.") or name.startswith("secrets.")
+
+
+def _is_binary_artifact(path: str) -> bool:
+    return path.casefold().endswith(BINARY_ARTIFACT_SUFFIXES)
 
 
 def classify_path(path: str) -> HygieneFinding | None:
@@ -153,16 +175,21 @@ def classify_path(path: str) -> HygieneFinding | None:
     if _has_machine_segment(normalized):
         return HygieneFinding(normalized, "machine_local_tool_or_cache")
 
-    if _under_prefix(normalized, APPROVED_SANITIZED_PREFIXES):
-        return None
-
     name = PurePosixPath(normalized).name
     if _under_prefix(normalized, PROTECTED_PREFIXES):
         if name in ALLOWED_PROTECTED_METADATA:
             return None
         return HygieneFinding(normalized, "generated_or_runtime_artifact")
 
-    lower = normalized.lower()
+    if _is_binary_artifact(normalized):
+        if not _under_prefix(normalized, TRACKED_BINARY_ALLOWLIST_PREFIXES):
+            return HygieneFinding(normalized, "binary_artifact_outside_fixture_allowlist")
+        return None
+
+    if _under_prefix(normalized, APPROVED_SANITIZED_PREFIXES):
+        return None
+
+    lower = normalized.casefold()
     if any(lower.endswith(suffix) for suffix in RUNTIME_SUFFIXES):
         return HygieneFinding(normalized, "runtime_log_save_or_crash_artifact")
 
@@ -174,9 +201,10 @@ def scan_paths(paths: Iterable[str]) -> list[HygieneFinding]:
     seen: set[str] = set()
     for raw in paths:
         normalized = normalize_path(raw)
-        if normalized in seen:
+        dedupe_key = normalized.casefold()
+        if dedupe_key in seen:
             continue
-        seen.add(normalized)
+        seen.add(dedupe_key)
         finding = classify_path(normalized)
         if finding is not None:
             findings.append(finding)

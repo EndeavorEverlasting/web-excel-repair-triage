@@ -1,6 +1,7 @@
 """Focused regressions for staged and tracked artifact hygiene."""
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import unittest
@@ -29,9 +30,44 @@ class ArtifactHygienePolicyTests(unittest.TestCase):
             sorted(blocked, key=str.casefold),
         )
 
-    def test_sanitized_fixtures_code_and_env_template_are_allowed(self) -> None:
+    def test_case_variants_cannot_bypass_protected_or_machine_local_rules(self) -> None:
+        cases = {
+            "OUTPUTS/live-report.json": "generated_or_runtime_artifact",
+            "active/private.xlsx": "generated_or_runtime_artifact",
+            ".VENV/Lib/site-packages/local.py": "machine_local_tool_or_cache",
+        }
+        for path, reason in cases.items():
+            with self.subTest(path=path):
+                finding = classify_path(path)
+                self.assertIsNotNone(finding)
+                assert finding is not None
+                self.assertEqual(finding.reason, reason)
+
+    def test_active_operator_input_surface_is_protected(self) -> None:
+        finding = classify_path("Active/private.xlsx")
+        self.assertIsNotNone(finding)
+        assert finding is not None
+        self.assertEqual(finding.reason, "generated_or_runtime_artifact")
+
+    def test_binary_artifacts_remain_restricted_to_test_fixtures(self) -> None:
+        blocked = (
+            "report.xlsx",
+            "docs/private.docx",
+            "harness/fixtures/private.zip",
+        )
+        for path in blocked:
+            with self.subTest(path=path):
+                finding = classify_path(path)
+                self.assertIsNotNone(finding)
+                assert finding is not None
+                self.assertEqual(
+                    finding.reason,
+                    "binary_artifact_outside_fixture_allowlist",
+                )
+        self.assertIsNone(classify_path("tests/fixtures/sanitized/sample.xlsx"))
+
+    def test_sanitized_nonbinary_fixtures_code_and_env_template_are_allowed(self) -> None:
         allowed = (
-            "tests/fixtures/sanitized/sample.xlsx",
             "harness/fixtures/runtime-log/example.log",
             "docs/fixtures/example-output.json",
             "docs/operator-guide.md",
@@ -100,7 +136,7 @@ class StagedValidatorCliTests(unittest.TestCase):
         self.assertIn("staged artifact hygiene: PASS", result.stdout)
 
 
-class HookSourceSafetyTests(unittest.TestCase):
+class HookAndRegistrySafetyTests(unittest.TestCase):
     def test_pre_commit_runs_path_gate_before_staged_tree_validation(self) -> None:
         hook = (ROOT / ".githooks" / "pre-commit").read_text(encoding="utf-8")
         gate = "python scripts/validate_staged_artifacts.py"
@@ -109,15 +145,31 @@ class HookSourceSafetyTests(unittest.TestCase):
         self.assertIn(checkout, hook)
         self.assertLess(hook.index(gate), hook.index(checkout))
 
+    def test_pre_commit_profile_registers_the_staged_gate(self) -> None:
+        registry = json.loads(
+            (ROOT / "harness" / "validators.v1.json").read_text(encoding="utf-8")
+        )
+        validators = {item["id"]: item for item in registry["validators"]}
+        self.assertEqual(
+            validators["staged-artifact-hygiene"]["command"],
+            "python scripts/validate_staged_artifacts.py",
+        )
+        self.assertTrue(validators["staged-artifact-hygiene"]["blocking"])
+        self.assertIn(
+            "staged-artifact-hygiene",
+            registry["profiles"]["pre_commit"],
+        )
+
     def test_validator_never_reads_staged_file_contents(self) -> None:
         validator = VALIDATOR.read_text(encoding="utf-8").lower()
         self.assertNotIn("git show", validator)
         self.assertNotIn("read_text(", validator)
         self.assertNotIn("open(", validator)
 
-    def test_ignore_policy_covers_local_evidence_and_secret_material(self) -> None:
+    def test_ignore_policy_covers_active_local_evidence_and_secret_material(self) -> None:
         ignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
         for marker in (
+            "Active/**",
             "/logs/",
             "/saves/",
             "/crash_dumps/",
