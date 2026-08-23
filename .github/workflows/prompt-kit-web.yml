@@ -33,6 +33,7 @@ on:
       - docs/prompt-kit-guided-recommendations.js
       - docs/prompt-kit-journey.js
       - docs/prompt-kit-polish.js
+      - docs/prompt-kit-preference-gameplay.js
       - docs/prompt-kit-correspondence.js
       - docs/prompt-kit-management.js
       - docs/prompt-kit-spec-architecture.js
@@ -51,6 +52,7 @@ on:
       - tests/Test-PromptKitQuickOpenPathResolution.ps1
       - tests/test_prompt_kit_header_contract.py
       - tests/test_prompt_kit_hotkey_completion.py
+      - tests/test_prompt_kit_favorite_gameplay.py
       - tests/test_prompt_kit_product_interactions.py
       - tests/test_prompt_kit_filtering_access.py
       - tests/test_prompt_kit_mobile.py
@@ -101,6 +103,7 @@ on:
       - docs/prompt-kit-guided-recommendations.js
       - docs/prompt-kit-journey.js
       - docs/prompt-kit-polish.js
+      - docs/prompt-kit-preference-gameplay.js
       - docs/prompt-kit-correspondence.js
       - docs/prompt-kit-management.js
       - docs/prompt-kit-spec-architecture.js
@@ -119,6 +122,7 @@ on:
       - tests/Test-PromptKitQuickOpenPathResolution.ps1
       - tests/test_prompt_kit_header_contract.py
       - tests/test_prompt_kit_hotkey_completion.py
+      - tests/test_prompt_kit_favorite_gameplay.py
       - tests/test_prompt_kit_product_interactions.py
       - tests/test_prompt_kit_filtering_access.py
       - tests/test_prompt_kit_mobile.py
@@ -163,6 +167,7 @@ jobs:
             triage/prompt_library_portability.py \
             tests/test_prompt_kit_header_contract.py \
             tests/test_prompt_kit_hotkey_completion.py \
+            tests/test_prompt_kit_favorite_gameplay.py \
             tests/test_prompt_kit_product_interactions.py \
             tests/test_prompt_kit_filtering_access.py \
             tests/test_prompt_kit_mobile.py \
@@ -185,6 +190,7 @@ jobs:
           node --check docs/prompt-kit-guided-recommendations.js
           node --check docs/prompt-kit-journey.js
           node --check docs/prompt-kit-polish.js
+          node --check docs/prompt-kit-preference-gameplay.js
           node --check docs/prompt-kit-correspondence.js
           node --check docs/prompt-kit-management.js
           node --check docs/prompt-kit-spec-architecture.js
@@ -253,7 +259,7 @@ jobs:
           if-no-files-found: error
       - name: Validate search favorites tutorial journey and polish contract
         run: |
-          python -m unittest tests.test_prompt_kit_hotkey_completion -v
+          python -m unittest tests.test_prompt_kit_hotkey_completion tests.test_prompt_kit_favorite_gameplay -v
           python scripts/validate_prompt_kit_discovery.py --summary
           python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
       - name: Validate combined prompt registry
