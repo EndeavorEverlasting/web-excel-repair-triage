@@ -114,4 +114,4 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          python .prompt-contrib/favorite_gameplay_repair.py
+          python .prompt-contrib/favorite_gameplay_retry.py
