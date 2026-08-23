@@ -1,1 +1,1 @@
-trigger canonical path repair after language-gate heading fix
+trigger bounded P50 hardening proof against current main
