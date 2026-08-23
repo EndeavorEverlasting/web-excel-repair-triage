@@ -8,7 +8,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: prompt-kit-filter-search-mainline-bridge
+  group: prompt-kit-hierarchy-mainline-bridge
   cancel-in-progress: false
 
 jobs:
@@ -18,382 +18,75 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: feat/prompt-kit-hierarchical-filters-20260823
           fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Refresh exact main floor
+      - name: Refresh and reconcile exact heads
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main --prune
-          base_sha="$(git rev-parse HEAD)"
-          test "$base_sha" = "$(git rev-parse origin/main)"
-          echo "BASE_SHA=$base_sha" >> "$GITHUB_ENV"
-          git status --short
-          git log --oneline --decorate -5
+          git fetch origin main feat/prompt-kit-hierarchical-filters-20260823 --prune
+          feature_sha="$(git rev-parse HEAD)"
+          remote_feature_sha="$(git rev-parse origin/feat/prompt-kit-hierarchical-filters-20260823)"
+          main_sha="$(git rev-parse origin/main)"
+          echo "feature=$feature_sha"
+          echo "main=$main_sha"
+          test "$feature_sha" = "$remote_feature_sha"
+          git merge --no-edit origin/main
 
-      - name: Replay existing search targeting and hierarchical filter slices
+      - name: Bound transport to hierarchy-only product change
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin feat/prompt-kit-hierarchical-filters-20260823
-          mkdir -p .prompt-contrib
-
-          git show origin/feat/prompt-kit-hierarchical-filters-20260823:.prompt-contrib/search_filter_suppression_patch.py > .prompt-contrib/search_filter_suppression_patch.py
           python - <<'PY'
           from pathlib import Path
-          path = Path('.prompt-contrib/search_filter_suppression_patch.py')
-          text = path.read_text(encoding='utf-8').replace(
-              'run("git", "rm", str(SELF.relative_to(ROOT)))',
-              'SELF.unlink()',
-          )
-          path.write_text(text, encoding='utf-8')
-          PY
-          python .prompt-contrib/search_filter_suppression_patch.py
 
-          git show origin/feat/prompt-kit-hierarchical-filters-20260823:.prompt-contrib/hierarchical_filter_patch.py > .prompt-contrib/hierarchical_filter_patch.py
-          python - <<'PY'
-          from pathlib import Path
           path = Path('.prompt-contrib/hierarchical_filter_patch.py')
+          if not path.exists():
+              raise SystemExit('hierarchical filter patch transport is missing')
           text = path.read_text(encoding='utf-8')
+
           anchor = 'test = test.replace("self.assertIn(\\"aria-label\x27,\x27Prompt types\\", js)", "self.assertIn(\\"aria-label\x27,\x27Prompt subcategories\\", js)")'
           label_patch = 'test = test.replace(\x27        self.assertIn("All Types", js)\\n\x27, \x27        self.assertIn("All Subcategories", js)\\n\x27)'
           if label_patch not in text:
               if anchor not in text:
                   raise SystemExit('hierarchical filter label-repair anchor missing')
               text = text.replace(anchor, label_patch + '\n' + anchor, 1)
-          text = text.replace(
-              'WORKFLOW = ROOT / ".github/workflows/prompt-kit-hierarchical-filter-repair.yml"',
-              'WORKFLOW = ROOT / ".prompt-contrib/provider-cleanup-owns-workflows"',
-          )
-          text = text.replace(
-              'run("git", "rm", str(SELF.relative_to(ROOT)))',
-              'SELF.unlink()',
-          )
-          text = text.replace(
-              'run("git", "push", "origin", "HEAD:feat/prompt-kit-hierarchical-filters-20260823")',
-              'print("Mainline bridge owns final push; skipping feature-branch push.")',
-          )
+
+          cleanup_old = '''if WORKFLOW.exists():\n    run("git", "rm", str(WORKFLOW.relative_to(ROOT)))\nrun("git", "rm", str(SELF.relative_to(ROOT)))'''
+          cleanup_new = '''for relative in (\n    ".github/workflows/prompt-kit-hierarchical-filter-repair.yml",\n    ".prompt-contrib/hierarchical_filter_patch.py",\n    ".prompt-contrib/hierarchical_filter_search_suppression.yml",\n    ".prompt-contrib/hierarchical_filter_trigger.txt",\n):\n    candidate = ROOT / relative\n    if candidate.exists():\n        run("git", "rm", relative)'''
+          if cleanup_new not in text:
+              if cleanup_old not in text:
+                  raise SystemExit('hierarchy transport-cleanup anchor missing')
+              text = text.replace(cleanup_old, cleanup_new, 1)
+
           path.write_text(text, encoding='utf-8')
           PY
+
+      - name: Apply hierarchy and run owning proof
+        shell: bash
+        run: |
+          set -euo pipefail
           python .prompt-contrib/hierarchical_filter_patch.py
 
-      - name: Repair search closure gaps exposed by falsification
+      - name: Prove remote convergence and bounded diff
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
-          from __future__ import annotations
-          import json
-          from pathlib import Path
-
-          def replace_once(text: str, old: str, new: str, label: str) -> str:
-              if new in text:
-                  return text
-              if old not in text:
-                  raise SystemExit(f'{label}: anchor missing')
-              return text.replace(old, new, 1)
-
-          builder_path = Path('build_prompt_kit.py')
-          js_path = Path('docs/prompt-kit.js')
-          polish_path = Path('docs/prompt-kit-polish.js')
-          contract_path = Path('harness/contracts/prompt-kit-filtering.v1.json')
-          filtering_test_path = Path('tests/test_prompt_kit_filtering_access.py')
-          hotkey_test_path = Path('tests/test_prompt_kit_hotkey_completion.py')
-          readme_path = Path('web/README.md')
-
-          builder = builder_path.read_text(encoding='utf-8')
-          builder = replace_once(
-              builder,
-              ".search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text-muted);cursor:pointer;display:none;z-index:2;width:20px;height:20px;text-align:center;line-height:20px;border-radius:50%;transition:all 0.2s}",
-              ".search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text-muted);cursor:pointer;display:none;z-index:2;width:20px;height:20px;padding:0;border:0;background:transparent;font-family:inherit;text-align:center;line-height:20px;border-radius:50%;transition:all 0.2s}",
-              'search clear CSS',
-          )
-          builder = replace_once(
-              builder,
-              "    html.append('      <span class=\"search-clear\" id=\"searchClear\">&times;</span>')",
-              "    html.append('      <button class=\"search-clear\" id=\"searchClear\" type=\"button\" aria-label=\"Clear search\">&times;</button>')",
-              'accessible search clear control',
-          )
-          builder_path.write_text(builder, encoding='utf-8')
-
-          js = js_path.read_text(encoding='utf-8')
-          start = js.index('function syncSearchTargetedFilterPanel()')
-          end = js.index('\nfunction clearSearch()', start)
-          helpers = r'''function syncSearchAffordanceState(){
-            var search=document.getElementById('search'),clear=document.getElementById('searchClear');
-            if(!search)return false;
-            var hasQuery=search.value.trim().length>0;
-            if(clear)clear.style.display=hasQuery?'block':'none';
-            var container=typeof search.closest==='function'?search.closest('.search-container'):null;
-            if(container)container.classList.toggle('has-value',hasQuery);
-            return hasQuery
-          }
-          function syncSearchTargetedFilterPanel(){
-            var search=document.getElementById('search'),header=document.querySelector('.header');
-            if(!search||!header)return false;
-            if(!document.getElementById('prompt-kit-search-targeted-styles')){
-              var style=document.createElement('style');
-              style.id='prompt-kit-search-targeted-styles';
-              style.textContent='.header.search-targeted .filter-panel-toggle,.header.search-targeted .header-controls .cat-tabs,.header.search-targeted .header-controls .add-prompt-btn,.header.search-targeted .sections-nav,.header.search-targeted .type-nav{display:none!important}.header.search-targeted .header-top>.search-container{grid-column:2/4}.header.search-targeted .header-controls{grid-column:1/-1;justify-content:flex-end}.header.filters-collapsed.search-targeted .search-container{display:block!important}.header.filters-collapsed.search-targeted .header-controls{display:flex!important}@media(max-width:980px){.header.search-targeted .header-top>.search-container{grid-column:1/-1}}@media(max-width:760px){.header.filters-collapsed.search-targeted .header-controls{display:grid!important}}';
-              document.head.appendChild(style)
-            }
-            var targeted=syncSearchAffordanceState();
-            header.classList.toggle('search-targeted',targeted);
-            return targeted
-          }'''
-          js = js[:start] + helpers + js[end:]
-          js = replace_once(
-              js,
-              "function clearSearch(){document.getElementById('search').value='';document.getElementById('searchClear').style.display='none';render()}",
-              "function clearSearch(){document.getElementById('search').value='';syncSearchTargetedFilterPanel();render()}",
-              'search clear restore',
-          )
-          js = replace_once(
-              js,
-              "document.getElementById('search').addEventListener('input',function(){var v=this.value;document.getElementById('searchClear').style.display=v?'block':'none';render()});",
-              "document.getElementById('search').addEventListener('input',function(){syncSearchTargetedFilterPanel();render()});",
-              'search input affordance synchronization',
-          )
-          js_path.write_text(js, encoding='utf-8')
-
-          polish = polish_path.read_text(encoding='utf-8')
-          polish = replace_once(
-              polish,
-              "  {key:'/',label:'Focus search'},\n  {key:'R',label:'Reference panel'},",
-              "  {key:'/',label:'Focus search'},\n  {key:'Ctrl/⌘ K',label:'Focus search'},\n  {key:'R',label:'Reference panel'},",
-              'search chord help',
-          )
-          polish = replace_once(
-              polish,
-              "  if(!header||!headerTop||!catTabs)return;\n\n  var doctrineButton=catTabs.querySelector('.cat-tab[data-cat=\"doctrine\"]');",
-              "  if(!header||!headerTop||!catTabs)return;\n  var searchInput=document.getElementById('search');\n  if(searchInput)searchInput.setAttribute('aria-keyshortcuts','/ Control+K Meta+K');\n\n  var doctrineButton=catTabs.querySelector('.cat-tab[data-cat=\"doctrine\"]');",
-              'search aria keyshortcuts',
-          )
-          old = """    var editable=!!(target&&(target.tagName==='INPUT'||target.tagName==='TEXTAREA'||target.tagName==='SELECT'||target.isContentEditable));
-            if(e.defaultPrevented||e.altKey||e.metaKey||e.ctrlKey)return;
-            if(editable)return;
-          """
-          new = """    var editable=!!(target&&(target.tagName==='INPUT'||target.tagName==='TEXTAREA'||target.tagName==='SELECT'||target.isContentEditable));
-            var search=document.getElementById('search');
-            if((e.ctrlKey||e.metaKey)&&!e.altKey&&!e.shiftKey&&key==='k'){
-              e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();
-              if(search){search.focus();if(typeof search.select==='function')search.select()}
-              return
-            }
-            if(key==='escape'&&search&&target===search&&search.value){
-              e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();clearSearch();return
-            }
-            if(e.defaultPrevented||e.altKey||e.metaKey||e.ctrlKey)return;
-            if(editable)return;
-          """
-          polish = replace_once(polish, old, new, 'search keyboard precedence')
-          polish_path.write_text(polish, encoding='utf-8')
-
-          contract = json.loads(contract_path.read_text(encoding='utf-8'))
-          requirements = contract['requirements']
-          for item in requirements:
-              if item['id'] == 'search_targeting_suppresses_filters':
-                  item['expected'] = ('A non-empty Prompt Kit search temporarily owns targeting across the full prompt library: library/category/Favorites/type/color/doctrine filters do not constrain results; filter controls hide while the search field and Showing/Total stats remain visible; browse/filter state is preserved and resumes when the query clears.')
-          additions = [
-              {'id':'search_clear_restore','expected':'The right-side Clear search button and Escape from a focused non-empty search both clear the query, remove search-targeted chrome, hide the clear affordance, restore the slash hint, and restore the exact prior browse/filter visibility state.'},
-              {'id':'search_keyboard_access','expected':'Unmodified slash and Ctrl+K on Windows/Linux or Command+K on macOS focus the canonical search input. Escape clears a focused non-empty search before the generic editable-field guard while unrelated modified/editable shortcuts remain ignored.'},
-              {'id':'search_result_count','expected':'Search updates Showing to the number of matching prompts while Total remains the complete prompt-library count, and those stats remain visible while search targeting suppresses filter controls.'},
-          ]
-          ids = {item['id'] for item in requirements}
-          insert_at = next((i+1 for i,item in enumerate(requirements) if item['id']=='search_targeting_suppresses_filters'), len(requirements))
-          for item in reversed(additions):
-              if item['id'] not in ids:
-                  requirements.insert(insert_at, item)
-          contract_path.write_text(json.dumps(contract, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
-
-          test = filtering_test_path.read_text(encoding='utf-8')
-          test = replace_once(
-              test,
-              '                "search_targeting_suppresses_filters",\n                "sequential_with_gaps",',
-              '                "search_targeting_suppresses_filters",\n                "search_clear_restore",\n                "search_keyboard_access",\n                "search_result_count",\n                "sequential_with_gaps",',
-              'search certification requirement ids',
-          )
-          test = replace_once(
-              test,
-              '        self.assertIn("filter controls hide while the search input remains visible", expected["search_targeting_suppresses_filters"])\n',
-              '        self.assertIn("Showing/Total stats remain visible", expected["search_targeting_suppresses_filters"])\n        self.assertIn("Clear search button", expected["search_clear_restore"])\n        self.assertIn("Command+K", expected["search_keyboard_access"])\n        self.assertIn("Showing", expected["search_result_count"])\n',
-              'search certification requirement semantics',
-          )
-          test = replace_once(
-              test,
-              '        self.assertIn("document.getElementById(\'searchClear\').style.display=\'none\'", js)\n',
-              '        self.assertIn("clear.style.display=hasQuery?\'block\':\'none\'", js)\n',
-              'search clear regression update',
-          )
-          if 'def test_search_affordance_runtime_restores_chrome_and_preserves_visible_counts' not in test:
-              anchor = '\n\nif __name__ == "__main__":\n'
-              addition = r'''
-              def test_search_affordance_runtime_restores_chrome_and_preserves_visible_counts(self) -> None:
-                  js = JS.read_text(encoding="utf-8")
-                  self.assertIn("function syncSearchAffordanceState()", js)
-                  self.assertIn(".header.search-targeted .header-controls .cat-tabs", js)
-                  self.assertNotIn(".header.search-targeted .header-controls{display:none", js)
-                  self.assertIn(".header.filters-collapsed.search-targeted .header-controls{display:flex!important}", js)
-                  self.assertIn("document.getElementById('showing').textContent=f.length", js)
-                  self.assertIn("document.getElementById('total').textContent=PROMPTS.length", js)
-                  self.assertIn("function clearSearch(){document.getElementById('search').value='';syncSearchTargetedFilterPanel();render()}", js)
-                  self.assertIn("document.getElementById('search').addEventListener('input',function(){syncSearchTargetedFilterPanel();render()});", js)
-
-                  start = js.index("function syncSearchAffordanceState()")
-                  end = js.index("\nfunction clearSearch()", start)
-                  helpers = js[start:end]
-                  script = r'''
-              function makeClassList(){var values={};return{toggle:function(name,force){if(force)values[name]=true;else delete values[name]},contains:function(name){return !!values[name]}}}
-              var styles={};
-              var container={classList:makeClassList()};
-              var search={value:'artifact',closest:function(){return container}};
-              var clear={style:{display:'none'}};
-              var header={classList:makeClassList()};
-              var document={head:{appendChild:function(node){styles[node.id]=node}},createElement:function(){return{id:'',textContent:''}},getElementById:function(id){if(id==='search')return search;if(id==='searchClear')return clear;return styles[id]||null},querySelector:function(selector){return selector==='.header'?header:null}};
-              ''' + helpers + r'''
-              var activeResult=syncSearchTargetedFilterPanel();
-              var active={result:activeResult,header:header.classList.contains('search-targeted'),input:container.classList.contains('has-value'),clear:clear.style.display,css:styles['prompt-kit-search-targeted-styles'].textContent};
-              search.value='';
-              var clearedResult=syncSearchTargetedFilterPanel();
-              var cleared={result:clearedResult,header:header.classList.contains('search-targeted'),input:container.classList.contains('has-value'),clear:clear.style.display};
-              process.stdout.write(JSON.stringify({active:active,cleared:cleared}));
-              '''
-                  completed = subprocess.run(["node", "-e", script], check=True, capture_output=True, text=True)
-                  proof = json.loads(completed.stdout)
-                  self.assertEqual(proof["active"]["result"], True)
-                  self.assertEqual(proof["active"]["header"], True)
-                  self.assertEqual(proof["active"]["input"], True)
-                  self.assertEqual(proof["active"]["clear"], "block")
-                  self.assertIn(".header.search-targeted .header-controls .cat-tabs", proof["active"]["css"])
-                  self.assertEqual(proof["cleared"], {"result": False, "header": False, "input": False, "clear": "none"})
-
-                  builder = BUILDER.read_text(encoding="utf-8") if 'BUILDER' in globals() else (ROOT / "build_prompt_kit.py").read_text(encoding="utf-8")
-                  self.assertIn('class=\\"search-clear\\" id=\\"searchClear\\" type=\\"button\\" aria-label=\\"Clear search\\"', builder)
-              '''
-              test = test.replace(anchor, '\n' + addition + anchor, 1)
-          filtering_test_path.write_text(test, encoding='utf-8')
-
-          hotkey_test = hotkey_test_path.read_text(encoding='utf-8')
-          if 'def test_search_shortcuts_precede_generic_editable_and_modifier_guards' not in hotkey_test:
-              anchor = '\n\nif __name__ == "__main__":\n'
-              addition = r'''
-              def test_search_shortcuts_precede_generic_editable_and_modifier_guards(self) -> None:
-                  source = POLISH.read_text(encoding="utf-8")
-                  for marker in (
-                      "{key:'/',label:'Focus search'}",
-                      "{key:'Ctrl/⌘ K',label:'Focus search'}",
-                      "searchInput.setAttribute('aria-keyshortcuts','/ Control+K Meta+K')",
-                      "if((e.ctrlKey||e.metaKey)&&!e.altKey&&!e.shiftKey&&key==='k')",
-                      "if(search){search.focus();if(typeof search.select==='function')search.select()}",
-                      "if(key==='escape'&&search&&target===search&&search.value)",
-                  ):
-                      self.assertIn(marker, source)
-                  hotkeys = source[source.index("function installCompactBrowsingHotkeys()") : source.index("window.appendPromptCard")]
-                  command = hotkeys.index("if((e.ctrlKey||e.metaKey)&&!e.altKey&&!e.shiftKey&&key==='k')")
-                  escape = hotkeys.index("if(key==='escape'&&search&&target===search&&search.value)")
-                  modifier = hotkeys.index("if(e.defaultPrevented||e.altKey||e.metaKey||e.ctrlKey)return;")
-                  editable = hotkeys.index("if(editable)return;")
-                  self.assertLess(command, modifier)
-                  self.assertLess(escape, modifier)
-                  self.assertLess(escape, editable)
-              '''
-              hotkey_test = hotkey_test.replace(anchor, '\n' + addition + anchor, 1)
-          hotkey_test_path.write_text(hotkey_test, encoding='utf-8')
-
-          readme = readme_path.read_text(encoding='utf-8')
-          readme = replace_once(readme, '- Search, library-view, category, and type filters compose without duplicate category headings.\n', '- Outside active search, library-view, category, and type filters compose without duplicate category headings. A non-empty search temporarily supersedes those targeting filters and restores them when cleared.\n', 'category/search docs')
-          readme = replace_once(readme, '- Search still composes with library, category, and type filters.\n', '- A non-empty query temporarily targets the full prompt library rather than being constrained by the current library/category/Favorites/type/color/Doctrine filters; those browse choices are preserved and resume when the query clears.\n- While search owns targeting, filter controls hide to recover screen space, while the search field and **Showing / Total** result stats remain visible. The right-side **Clear search** control replaces the `/` hint.\n- Use `/`, **Ctrl+K** on Windows/Linux, or **Command+K** on macOS to focus search. Press **Esc** from a focused non-empty search, or use **Clear search**, to restore the prior browse state.\n', 'search docs')
-          readme = replace_once(readme, '- Active library/category/type/search filters still apply before Favorites are promoted.\n', '- Favorites remains an explicit browse view. Starting a non-empty search temporarily targets the full library; clearing that query restores the Favorites view and its prior browse state.\n', 'favorites/search docs')
-          readme = replace_once(readme, 'Backtick joins `1`–`5` as the one-hand core shortcut cluster, while `/` remains dedicated to Focus search.\n', 'Backtick joins `1`–`5` as the one-hand core shortcut cluster, while `/` remains the one-hand Focus search key and **Ctrl+K / Command+K** provides the familiar search chord.\n', 'hotkey prose')
-          readme = replace_once(readme, '| `/` | Focus search |\n| `1` | All prompts |', '| `/` | Focus search |\n| `Ctrl+K` / `Command+K` | Focus search |\n| `1` | All prompts |', 'hotkey table')
-          readme = replace_once(readme, '| `Esc` | Close the active surface or clear filters |\n', '| `Esc` | Clear an active search, otherwise close/clear the active surface |\n', 'escape docs')
-          readme = replace_once(readme, 'Navigation shortcuts are ignored while typing in an input, textarea, select, or content-editable surface. Modified backtick chords are ignored. Top/bottom scrolling respects reduced-motion preferences.\n', 'Navigation shortcuts are ignored while typing in an input, textarea, select, or content-editable surface. The deliberate exceptions are Ctrl+K / Command+K to focus search and Esc to clear a focused non-empty search. Modified backtick chords are ignored. Top/bottom scrolling respects reduced-motion preferences.\n', 'editable exception docs')
-          readme_path.write_text(readme, encoding='utf-8')
-          PY
-
-      - name: Rebuild canonical generated entrypoint
-        shell: bash
-        run: |
-          set -euo pipefail
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
-
-      - name: Validate final user-facing search obligations
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m py_compile tests/test_prompt_kit_filtering_access.py tests/test_prompt_kit_hotkey_completion.py
-          node --check docs/prompt-kit.js
-          node --check docs/prompt-kit-polish.js
-          python -m unittest tests.test_prompt_kit_filtering_access -v
-          python -m unittest tests.test_prompt_kit_hotkey_completion -v
-          python -m unittest tests.test_prompt_kit_discovery -v
-          python -m unittest tests.test_prompt_kit_product_interactions tests.test_prompt_kit_mobile -v
-          python tests/test_prompt_kit_header_contract.py
-          python scripts/validate_prompt_kit_interactions.py --require-implementation --summary
-          python scripts/validate_prompt_kit_discovery.py --summary
-          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
-          python scripts/prompt_registry_ops.py validate
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-          git diff --check
-
-      - name: Deliberate second-pass falsification
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          import json
-          js = Path('docs/prompt-kit.js').read_text(encoding='utf-8')
-          polish = Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
-          deployed = Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
-          contract = json.loads(Path('harness/contracts/prompt-kit-filtering.v1.json').read_text(encoding='utf-8'))
-          readme = Path('web/README.md').read_text(encoding='utf-8')
-          ids = {item['id'] for item in contract['requirements']}
-          required_ids = {'search_targeting_suppresses_filters','search_clear_restore','search_keyboard_access','search_result_count','progressive_type_disclosure'}
-          assert required_ids <= ids
-          render = js[js.index('function render()'):js.index('\n\nfunction renderDoctrineList')]
-          assert 'if(!q){' in render and "if(q)f=filterPromptsForQuery(f,q);" in render
-          assert "if(activeCat==='doctrine'&&!q)" in render
-          assert "document.getElementById('showing').textContent=f.length" in render
-          assert '.header.search-targeted .header-controls .cat-tabs' in js
-          assert '.header.search-targeted .header-controls{display:none' not in js
-          assert '.header.filters-collapsed.search-targeted .search-container{display:block!important}' in js
-          assert 'function typeFilterScopePrompts(prompts,cat,section)' in js
-          assert 'Select a category above to browse subcategories.' in js
-          handler = polish[polish.index('function installCompactBrowsingHotkeys()'):polish.index('window.appendPromptCard')]
-          assert handler.index("if((e.ctrlKey||e.metaKey)&&!e.altKey&&!e.shiftKey&&key==='k')") < handler.index('if(e.defaultPrevented||e.altKey||e.metaKey||e.ctrlKey)return;')
-          assert handler.index("if(key==='escape'&&search&&target===search&&search.value)") < handler.index('if(editable)return;')
-          assert 'Ctrl+K` / `Command+K' in readme
-          assert js in deployed
-          assert polish in deployed
-          print('SECOND PASS: PASS — no practical in-scope search closure contradiction remains')
-          PY
-          git diff --check
-
-      - name: Commit exact validated search polish
-        shell: bash
-        run: |
-          set -euo pipefail
-          git status --short
-          git diff --stat
-          git add build_prompt_kit.py docs/prompt-kit.js docs/prompt-kit-polish.js harness/contracts/prompt-kit-filtering.v1.json tests/test_prompt_kit_filtering_access.py tests/test_prompt_kit_hotkey_completion.py web/README.md web/prompt-kit/index.html
-          git diff --cached --check
-          git commit -m "fix(prompt-kit): polish search targeting and keyboard closure"
-
-      - name: Re-fetch and integrate exact validated commits into main
-        shell: bash
-        run: |
-          set -euo pipefail
-          git fetch origin main --prune
-          test "$(git rev-parse origin/main)" = "$BASE_SHA"
-          final_sha="$(git rev-parse HEAD)"
-          git push origin HEAD:main
-          echo "FINAL_SHA=$final_sha"
-          git status --short
+          git fetch origin main feat/prompt-kit-hierarchical-filters-20260823 --prune
+          remote_feature="$(git rev-parse origin/feat/prompt-kit-hierarchical-filters-20260823)"
+          test "$(git rev-parse HEAD)" = "$remote_feature"
+          expected="docs/prompt-kit.js
+harness/contracts/prompt-kit-filtering.v1.json
+tests/test_prompt_kit_filtering_access.py
+web/prompt-kit/index.html"
+          actual="$(git diff --name-only origin/main...HEAD | sort)"
+          printf '%s\n' "$actual"
+          test "$actual" = "$expected"
+          git diff --check origin/main...HEAD
