@@ -1,9 +1,4 @@
-"""Branch coverage for triage.neuron_work_context_rules.classify_neuron_work_context.
-
-Pure-time tests pass empty text so no explicit signal fires; the resolved
-project deliberately omits "Neuron Deployments" because the word "deployment"
-is itself a DEPLOYMENTS signal.
-"""
+"""Branch coverage for triage.neuron_work_context_rules.classify_neuron_work_context."""
 from __future__ import annotations
 
 from datetime import date
@@ -56,11 +51,37 @@ def test_explicit_documentation_signal():
     assert d.assignment_type == DOCUMENTATION
 
 
-def test_explicit_deploy_note_beats_time_heuristic():
-    # Wednesday morning would otherwise be ticket forwarding.
+def test_direct_deployment_execution_note_beats_time_heuristic():
     d = _c(date(2026, 3, 4), 10.0, 14.0, notes="go-live cutover")
     assert d.assignment_type == DEPLOYMENTS
-    assert d.rule == "explicit-deployment"
+    assert d.rule == "direct-deployment-execution-evidence"
+
+
+def test_direct_deployed_verb_is_deployment():
+    d = _c(date(2026, 6, 5), 9.0, 17.0, notes="deployed Cybernet in OR room")
+    assert d.assignment_type == DEPLOYMENTS
+    assert d.rule == "direct-deployment-execution-evidence"
+
+
+def test_bare_deployment_worked_label_does_not_create_deployment():
+    d = _c(date(2026, 6, 5), 9.0, 17.0, worked_label="Deployment")
+    assert d.assignment_type != DEPLOYMENTS
+
+
+def test_deployment_project_name_does_not_create_deployment():
+    d = _c(date(2026, 6, 5), 9.0, 17.0, resolved_project="Neuron Deployment")
+    assert d.assignment_type != DEPLOYMENTS
+
+
+def test_deployment_tracker_reconciliation_uses_lower_profile_inventory():
+    d = _c(date(2026, 6, 30), 10.0, 14.0, notes="deployment tracker reconciliation")
+    assert d.assignment_type == INVENTORY_MANAGEMENT
+    assert d.rule == "explicit-inventory-management"
+
+
+def test_package_level_deployment_support_does_not_create_deployment():
+    d = _c(date(2026, 6, 30), 10.0, 14.0, notes="field/deployment support package review")
+    assert d.assignment_type != DEPLOYMENTS
 
 
 # ── April month rules ──────────────────────────────────────────────────────────
