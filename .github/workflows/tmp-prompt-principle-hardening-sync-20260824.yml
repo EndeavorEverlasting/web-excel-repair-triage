@@ -34,6 +34,7 @@ jobs:
           if ! git merge-base --is-ancestor origin/main HEAD; then git merge --no-edit origin/main; fi
           test -f .prompt-contrib/prompt_principle_hardening.py
           python .prompt-contrib/prompt_principle_hardening.py
+          if [ -f .prompt-contrib/p86_legacy_phrase_patch.py ]; then python .prompt-contrib/p86_legacy_phrase_patch.py; fi
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           python scripts/prompt_registry_ops.py validate
           python -m unittest tests.test_actionable_prompt_registry tests.test_spec_architecture_prompt_registry tests.test_correspondence_prompt_registry -v
@@ -44,6 +45,7 @@ jobs:
           git diff --check
           git rm -f .prompt-contrib/prompt_principle_hardening.py
           if [ -f .prompt-contrib/retrigger-prompt-hardening.txt ]; then git rm -f .prompt-contrib/retrigger-prompt-hardening.txt; fi
+          if [ -f .prompt-contrib/p86_legacy_phrase_patch.py ]; then git rm -f .prompt-contrib/p86_legacy_phrase_patch.py; fi
           git add docs/prompts.json registry/prompts/actionable-next-step-policy.v1.json registry/prompts/spec-architecture-prompts.v1.json registry/prompts/correspondence-prompts.v1.json tests/test_actionable_prompt_registry.py tests/test_spec_architecture_prompt_registry.py tests/test_correspondence_prompt_registry.py web/prompt-kit/index.html
           git diff --cached --check
           git commit -m "feat(prompt-kit): bind prompts to source-grounded completion"
