@@ -1,6 +1,6 @@
 # Agent Governance Contract
 
-This file is the single repository governance authority for `EndeavorEverlasting/web-excel-repair-triage`. Domain law is incorporated by reference in section 7.
+This file is the single repository governance authority for `EndeavorEverlasting/web-excel-repair-triage`.
 
 ## 1. Agent operating principles
 
@@ -28,6 +28,8 @@ Before tracked writes state: repository and branch or worktree; lane and mission
 
 Preserve dirty, conflicted, stale, or separately owned work and isolate the sprint. Never discard unrelated work merely to become current.
 
+Before modifying or integrating overlapping prior work, refresh the default branch and prove every required integrated slice remains contained with `git merge-base --is-ancestor <required-sha> <refreshed-default>`. Failed containment requires reconciliation and fresh proof before mutation or integration.
+
 ## 4. Completion standard
 
 Report exact files changed, validations run, commit SHA, push state, PR/integration state, blockers/skips, proof ceiling, final Git state, and one exact next command.
@@ -40,7 +42,7 @@ Use `none; no safe actionable work remains` only after authorized implementation
 
 Agents must not:
 
-- substitute acknowledgment/planning for an authorized safe mutation;
+- substitute acknowledgment, plans, or summaries for authorized safe mutation and proof;
 - claim completion without checks;
 - expose secrets, credentials, private workbook data, protected inputs, or machine-local evidence;
 - force-push, rewrite default history, destructively clean unknown work, or delete unique work without authority;
@@ -53,13 +55,11 @@ Material behavior changes require implementation and proof. Run focused checks a
 
 ## 6. Repository identity and product boundary
 
-This repository's core product domain is **spreadsheet intelligence**: inspect, validate, repair, transform, and safely deliver spreadsheet artifacts. Web Excel compatibility, billing, roster/time evidence, and triage are first-class concerns.
+This repository's core product domain is **spreadsheet intelligence**: spreadsheet inspection, validation, repair, transformation, and safe delivery. Web Excel compatibility, billing, roster/time evidence, and triage are first-class.
 
-The Prompt Kit began here as a spreadsheet and evolved into a website/app, but it is now separable. Its intended long-term core home is a dedicated repository under `UnderDeskDev`. That repository is not yet named or created; agents must not invent its name or claim migration is complete.
+The Prompt Kit began here as a spreadsheet and is now separable. Its intended core home is a dedicated repository under `UnderDeskDev`, not yet named or created; agents must not invent its name or claim migration is complete.
 
-Until that repository exists and migration/integration is proven, Prompt Kit sources here remain operationally authoritative and must not be silently moved. After external authority is established, this repo may source, pin, mirror, package, link to, or consume Prompt Kit releases, but must not become a competing Prompt Kit authority.
-
-Deepen spreadsheet intelligence here. Move Prompt Kit product identity/evolution to its dedicated repo once established; keep cross-repo dependencies explicit and versioned.
+Until migration/integration is proven, Prompt Kit sources here remain operationally authoritative and must not be silently moved. After external authority exists, this repo may source, pin, mirror, package, link to, or consume Prompt Kit releases, but must not become a competing Prompt Kit authority. Keep cross-repo dependencies explicit and versioned.
 
 ## 7. Progressive disclosure and binding domain law
 
@@ -67,9 +67,9 @@ Default orientation is exactly:
 
 1. `AGENTS.md` — universal governance.
 2. `harness/CONTEXT.md` — 50,000-foot router.
-3. Select one task domain, then load only its routed 30,000-foot map/contract and one 15,000-foot workflow/skill/spec as needed.
+3. Select one task domain, then load only its routed map/contract and one workflow/skill/spec as needed.
 
-Do **not** preload `CODEBASE_MAP.md`, `WORKFLOW.md`, `CAPABILITIES.md`, `SKILLS.md`, `TRIGGERS.md`, the harness manifest, every skill, or historical reports as a bundle. Escalate context only when evidence, ownership, validation, or safety requires it.
+Do **not** preload the full harness, every skill, or historical reports. Escalate context only when evidence, ownership, validation, or safety requires it.
 
 Binding only in the selected domain:
 
