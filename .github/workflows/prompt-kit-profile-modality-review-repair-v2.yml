@@ -1,0 +1,389 @@
+name: Prompt Kit profile modality ownership repair
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/prompt-kit-profile-modality-review-repair-v2.yml
+      - docs/PROMPT_KIT_PROFILE_MODALITY_PROGRAM_DESIGN.md
+      - docs/prompt-kit-profile-modality-prototype.js
+      - docs/prompt-kit-hotkey-prototype.js
+      - tests/test_prompt_kit_profile_modality_prototype.py
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'design/prompt-kit-profile-modality-seams-20260824'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Apply ownership and projection repairs
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_exact(text: str, old: str, new: str, expected: int = 1) -> str:
+              count = text.count(old)
+              if count != expected:
+                  raise SystemExit(f'expected {expected} copies of {old!r}, observed {count}')
+              return text.replace(old, new)
+
+          hotkey_path = Path('docs/prompt-kit-hotkey-prototype.js')
+          hotkey = hotkey_path.read_text(encoding='utf-8')
+          hotkey = replace_exact(
+              hotkey,
+              '  constructor({policy, store, promptCatalog, trace}) {',
+              '  constructor({policy, store, promptCatalog, trace, initialBindings = []}) {',
+          )
+          hotkey = replace_exact(
+              hotkey,
+              '    this.userBindings = new Map();\n  }\n  effectiveBindings() {',
+              "    this.userBindings = new Map();\n    for (const binding of initialBindings) {\n      const candidate = this.policy.validateBinding(binding, this.effectiveBindings(), this.promptCatalog);\n      this.userBindings.set(candidate.gesture, candidate);\n    }\n    if (this.userBindings.size) {\n      this.trace.push({layer: 'registry', event: 'bindings_hydrated', count: this.userBindings.size});\n    }\n  }\n  effectiveBindings() {",
+          )
+          hotkey_path.write_text(hotkey, encoding='utf-8')
+
+          prototype_path = Path('docs/prompt-kit-profile-modality-prototype.js')
+          prototype = prototype_path.read_text(encoding='utf-8')
+          prototype = replace_exact(
+              prototype,
+              '  MemoryClipboard,\n  UsageLedger,',
+              '  MemoryClipboard,\n  FavoritePreferences,\n  UsageLedger,',
+          )
+          prototype = replace_exact(
+              prototype,
+              "} = require('./prompt-kit-program-prototype.js');\n\nconst VALID_MODALITIES",
+              "} = require('./prompt-kit-program-prototype.js');\n\nconst {\n  HotkeyError,\n  ShortcutPolicy,\n  ShortcutRegistry,\n  ShortcutDispatcher,\n  FilterVisibility,\n  HotkeyHelpVisibility,\n  ViewNavigatorFake,\n  PromptNavigatorFake,\n} = require('./prompt-kit-hotkey-prototype.js');\n\nconst VALID_MODALITIES",
+          )
+          old_favorites = '''class ProfiledFavoritePreferences {
+  constructor(trace, store) {
+    this.trace = trace;
+    this.store = store;
+  }
+  snapshot(profileId) {
+    return this.store.loadFavorites(profileId).sort();
+  }
+  has(profileId, promptId) {
+    return this.snapshot(profileId).includes(promptId);
+  }
+  toggle(profileId, promptId) {
+    const current = new Set(this.store.loadFavorites(profileId));
+    const candidate = new Set(current);
+    if (candidate.has(promptId)) candidate.delete(promptId); else candidate.add(promptId);
+    const next = [...candidate].sort();
+    this.store.saveFavorites(profileId, next);
+    const favorite = candidate.has(promptId);
+    this.trace.push({
+      layer: 'profiled_favorites',
+      event: 'favorite_published',
+      profileId,
+      promptId,
+      favorite,
+    });
+    return {profileId, promptId, favorite, favorites: next};
+  }
+}
+'''
+          new_favorites = '''class BoundProfileFavoriteStore {
+  constructor(rootStore, profileId) {
+    this.rootStore = rootStore;
+    this.profileId = profileId;
+  }
+  loadFavorites() {
+    return this.rootStore.loadFavorites(this.profileId);
+  }
+  saveFavorites(candidate) {
+    return this.rootStore.saveFavorites(this.profileId, candidate);
+  }
+}
+
+class FavoritePreferenceContexts {
+  constructor(trace, rootStore) {
+    this.trace = trace;
+    this.rootStore = rootStore;
+    this.contexts = new Map();
+  }
+  forProfile(profileId) {
+    if (!this.contexts.has(profileId)) {
+      const store = new BoundProfileFavoriteStore(this.rootStore, profileId);
+      this.contexts.set(profileId, new FavoritePreferences(this.trace, store));
+      this.trace.push({layer: 'favorite_contexts', event: 'canonical_owner_bound', profileId});
+    }
+    return this.contexts.get(profileId);
+  }
+  snapshot(profileId) {
+    return this.forProfile(profileId).snapshot();
+  }
+  has(profileId, promptId) {
+    return this.forProfile(profileId).has(promptId);
+  }
+  toggle(profileId, promptId) {
+    const owner = this.forProfile(profileId);
+    const result = owner.toggle(promptId);
+    return {profileId, ...result, favorites: owner.snapshot()};
+  }
+}
+
+class MemoryProfileShortcutStore {
+  constructor(trace, {profileBindings = {}, failProfileIds = []} = {}) {
+    this.trace = trace;
+    this.profileBindings = Object.fromEntries(
+      Object.entries(profileBindings || {}).map(([profileId, bindings]) => [profileId, clone(bindings)])
+    );
+    this.failProfileIds = new Set(failProfileIds);
+  }
+  load(profileId) {
+    const value = clone(this.profileBindings[profileId] || []);
+    this.trace.push({layer: 'profile_shortcut_store', event: 'bindings_loaded', profileId, count: value.length});
+    return value;
+  }
+  save(profileId, value) {
+    const candidate = clone(value);
+    this.trace.push({layer: 'profile_shortcut_store', event: 'save_attempted', profileId, count: candidate.length});
+    if (this.failProfileIds.has(profileId)) {
+      this.trace.push({layer: 'profile_shortcut_store', event: 'save_failed', profileId});
+      throw new Error(`shortcut storage unavailable for ${profileId}`);
+    }
+    this.profileBindings[profileId] = candidate;
+    this.trace.push({layer: 'profile_shortcut_store', event: 'save_succeeded', profileId, count: candidate.length});
+  }
+}
+
+class BoundProfileShortcutStore {
+  constructor(rootStore, profileId) {
+    this.rootStore = rootStore;
+    this.profileId = profileId;
+  }
+  load() {
+    return this.rootStore.load(this.profileId);
+  }
+  save(value) {
+    return this.rootStore.save(this.profileId, value);
+  }
+}
+
+class ShortcutRegistryContexts {
+  constructor({trace, rootStore, promptCatalog}) {
+    this.trace = trace;
+    this.rootStore = rootStore;
+    this.promptCatalog = promptCatalog;
+    this.contexts = new Map();
+  }
+  forProfile(profileId) {
+    if (!this.contexts.has(profileId)) {
+      const store = new BoundProfileShortcutStore(this.rootStore, profileId);
+      const registry = new ShortcutRegistry({
+        policy: new ShortcutPolicy(),
+        store,
+        promptCatalog: this.promptCatalog,
+        trace: this.trace,
+        initialBindings: store.load(),
+      });
+      this.contexts.set(profileId, registry);
+      this.trace.push({layer: 'shortcut_contexts', event: 'canonical_owner_bound', profileId});
+    }
+    return this.contexts.get(profileId);
+  }
+}
+
+class ActiveShortcutRegistry {
+  constructor(activeProfile, contexts) {
+    this.activeProfile = activeProfile;
+    this.contexts = contexts;
+  }
+  current() {
+    return this.contexts.forProfile(this.activeProfile.current());
+  }
+  effectiveBindings() {
+    return this.current().effectiveBindings();
+  }
+  configure(binding) {
+    return this.current().configure(binding);
+  }
+}
+'''
+          prototype = replace_exact(prototype, old_favorites, new_favorites)
+          prototype = replace_exact(
+              prototype,
+              "    this.favoriteProjection = new Map();\n    this.profileProjection = [];",
+              "    this.favoriteProjection = new Map();\n    this.activeFavoriteProfileId = null;\n    this.activeFavoriteProjection = new Set();\n    this.profileProjection = [];",
+          )
+          prototype = replace_exact(
+              prototype,
+              "  projectFavorite(profileId, promptId, favorite) {\n    this.favoriteProjection.set(`${profileId}:${promptId}`, favorite);",
+              "  projectFavoriteSet(profileId, favorites) {\n    this.activeFavoriteProfileId = profileId;\n    this.activeFavoriteProjection = new Set(favorites);\n    this.trace.push({layer: 'surface', event: 'favorite_set_projected', profileId, count: this.activeFavoriteProjection.size});\n  }\n  projectFavorite(profileId, promptId, favorite) {\n    this.favoriteProjection.set(`${profileId}:${promptId}`, favorite);\n    if (this.activeFavoriteProfileId === profileId) {\n      if (favorite) this.activeFavoriteProjection.add(promptId); else this.activeFavoriteProjection.delete(promptId);\n    }",
+          )
+          prototype = replace_exact(
+              prototype,
+              "  profileFavorites = {work: ['P95']},\n  failProfileIds = [],\n  clipboardFail = false,",
+              "  profileFavorites = {work: ['P95']},\n  failProfileIds = [],\n  profileShortcutBindings = {},\n  failShortcutProfileIds = [],\n  clipboardFail = false,",
+          )
+          prototype = replace_exact(
+              prototype,
+              "  const favorites = new ProfiledFavoritePreferences(trace, preferenceStore);",
+              "  const favorites = new FavoritePreferenceContexts(trace, preferenceStore);",
+          )
+          prototype = replace_exact(
+              prototype,
+              "  const surface = new ModalityAwarePromptSurface(trace);\n  const kernel = new CommandKernel(trace);",
+              "  const surface = new ModalityAwarePromptSurface(trace);\n  surface.projectFavoriteSet(activeProfile.current(), favorites.snapshot(activeProfile.current()));\n  const shortcutStore = new MemoryProfileShortcutStore(trace, {profileBindings: profileShortcutBindings, failProfileIds: failShortcutProfileIds});\n  const shortcutContexts = new ShortcutRegistryContexts({trace, rootStore: shortcutStore, promptCatalog: new Set(['P07', 'P95'])});\n  const activeShortcuts = new ActiveShortcutRegistry(activeProfile, shortcutContexts);\n  const shortcutPromptNavigator = new PromptNavigatorFake(trace);\n  const shortcutDispatcher = new ShortcutDispatcher({\n    registry: activeShortcuts,\n    filterVisibility: new FilterVisibility(trace),\n    hotkeyHelpVisibility: new HotkeyHelpVisibility(trace),\n    promptNavigator: shortcutPromptNavigator,\n    viewNavigator: new ViewNavigatorFake(trace),\n    trace,\n  });\n  const kernel = new CommandKernel(trace);",
+          )
+          prototype = replace_exact(
+              prototype,
+              "    activeProfile.activate(target.id);\n    surface.projectProfile(target);",
+              "    activeProfile.activate(target.id);\n    surface.projectProfile(target);\n    surface.projectFavoriteSet(target.id, favorites.snapshot(target.id));",
+          )
+          prototype = replace_exact(
+              prototype,
+              "    preferenceStore,\n    favorites,\n    clipboard,",
+              "    preferenceStore,\n    favorites,\n    shortcutStore,\n    shortcutContexts,\n    activeShortcuts,\n    shortcutDispatcher,\n    shortcutPromptNavigator,\n    clipboard,",
+          )
+          prototype = replace_exact(
+              prototype,
+              "async function runSelfTest() {",
+              "function expectHotkeyCode(expected, fn) {\n  try {\n    fn();\n  } catch (error) {\n    assert(error instanceof HotkeyError, `expected HotkeyError for ${expected}`);\n    assert(error.code === expected, `expected ${expected}, observed ${error.code}`);\n    return error;\n  }\n  throw new Error(`ASSERTION_FAILED: expected ${expected}`);\n}\n\nasync function runSelfTest() {",
+          )
+          prototype = replace_exact(
+              prototype,
+              "  assert(JSON.stringify(multiProfile.session.snapshot()) === JSON.stringify(sessionBeforeSwitch), 'profile activation does not reset transient browsing state');\n\n  const workFavoriteBefore",
+              "  assert(JSON.stringify(multiProfile.session.snapshot()) === JSON.stringify(sessionBeforeSwitch), 'profile activation does not reset transient browsing state');\n  assert([...multiProfile.surface.activeFavoriteProjection].sort().join(',') === 'P95', 'profile activation replaces stale Favorite projection with the active profile set');\n\n  const workFavoriteBefore",
+          )
+          prototype = replace_exact(
+              prototype,
+              "  const keyboardSwitch = await multiProfile.profileSwitcher.activate('default', 'keyboard');\n  assert(keyboardSwitch.status === 'PROFILE_ACTIVE' && multiProfile.activeProfile.current() === 'default', 'keyboard profile activation reaches same semantic command');\n\n  const invalidProfile",
+              "  const keyboardSwitch = await multiProfile.profileSwitcher.activate('default', 'keyboard');\n  assert(keyboardSwitch.status === 'PROFILE_ACTIVE' && multiProfile.activeProfile.current() === 'default', 'keyboard profile activation reaches same semantic command');\n  assert([...multiProfile.surface.activeFavoriteProjection].sort().join(',') === 'P07', 'switching back reprojects the default Favorite set without stale work Favorites');\n\n  const shortcutProfiles = buildProfileModalityProgram();\n  shortcutProfiles.activeShortcuts.configure({gesture: 'p95', command: 'COPY_REVEAL_PROMPT', promptId: 'P95'});\n  assert(shortcutProfiles.shortcutStore.load('default')[0].gesture === 'p95', 'default profile shortcut persists through the canonical ShortcutRegistry');\n  shortcutProfiles.shortcutDispatcher.handleKey({key: 'p'});\n  shortcutProfiles.shortcutDispatcher.handleKey({key: '9'});\n  shortcutProfiles.shortcutDispatcher.handleKey({key: '5'});\n  assert(shortcutProfiles.shortcutPromptNavigator.copied[0] === 'P95', 'default profile shortcut dispatches through the existing ShortcutDispatcher');\n  await shortcutProfiles.profileSwitcher.activate('work', 'pointer');\n  assert(!shortcutProfiles.activeShortcuts.effectiveBindings().has('p95'), 'default shortcut is absent from the work profile');\n  shortcutProfiles.activeShortcuts.configure({gesture: 'p07', command: 'COPY_REVEAL_PROMPT', promptId: 'P07'});\n  assert(shortcutProfiles.shortcutStore.load('work')[0].gesture === 'p07', 'work profile stores its own shortcut binding');\n  await shortcutProfiles.profileSwitcher.activate('default', 'keyboard');\n  assert(shortcutProfiles.activeShortcuts.effectiveBindings().has('p95'), 'default shortcut returns after profile switch');\n  assert(!shortcutProfiles.activeShortcuts.effectiveBindings().has('p07'), 'work shortcut does not leak into default profile');\n  const rehydratedShortcutContexts = new ShortcutRegistryContexts({\n    trace: shortcutProfiles.trace,\n    rootStore: shortcutProfiles.shortcutStore,\n    promptCatalog: new Set(['P07', 'P95']),\n  });\n  assert(rehydratedShortcutContexts.forProfile('default').effectiveBindings().has('p95'), 'persisted default shortcut rehydrates through the canonical ShortcutRegistry');\n\n  const failedShortcuts = buildProfileModalityProgram({failShortcutProfileIds: ['work']});\n  await failedShortcuts.profileSwitcher.activate('work', 'pointer');\n  expectHotkeyCode('PERSISTENCE_FAILED', () => failedShortcuts.activeShortcuts.configure({gesture: 'p95', command: 'COPY_REVEAL_PROMPT', promptId: 'P95'}));\n  assert(!failedShortcuts.activeShortcuts.effectiveBindings().has('p95'), 'failed work shortcut save does not publish a binding');\n  await failedShortcuts.profileSwitcher.activate('default', 'keyboard');\n  assert(!failedShortcuts.activeShortcuts.effectiveBindings().has('p95'), 'failed work shortcut save cannot mutate the default profile');\n\n  const invalidProfile",
+          )
+          prototype = replace_exact(
+              prototype,
+              "      profileFavoriteIsolation: 'PASS',\n      unknownProfileFailure: 'PASS',",
+              "      profileFavoriteIsolation: 'PASS',\n      profileFavoriteProjectionRefresh: 'PASS',\n      profileShortcutIsolation: 'PASS',\n      profileShortcutRehydration: 'PASS',\n      profileShortcutPersistenceFailure: 'PASS',\n      unknownProfileFailure: 'PASS',",
+          )
+          prototype = replace_exact(
+              prototype,
+              "  MemoryProfilePreferenceStore,\n  ProfiledFavoritePreferences,\n  CopyPresentationPolicy,",
+              "  MemoryProfilePreferenceStore,\n  BoundProfileFavoriteStore,\n  FavoritePreferenceContexts,\n  MemoryProfileShortcutStore,\n  BoundProfileShortcutStore,\n  ShortcutRegistryContexts,\n  ActiveShortcutRegistry,\n  CopyPresentationPolicy,",
+          )
+          prototype_path.write_text(prototype, encoding='utf-8')
+
+          test_path = Path('tests/test_prompt_kit_profile_modality_prototype.py')
+          test = test_path.read_text(encoding='utf-8')
+          test = replace_exact(
+              test,
+              '        self.assertIn("class ProfiledFavoritePreferences", text)\n',
+              '        self.assertIn("FavoritePreferences,", text)\n        self.assertIn("class FavoritePreferenceContexts", text)\n        self.assertIn("new FavoritePreferences", text)\n        self.assertNotIn("class ProfiledFavoritePreferences", text)\n        self.assertIn("class ShortcutRegistryContexts", text)\n        self.assertIn("new ShortcutRegistry", text)\n',
+          )
+          test = replace_exact(
+              test,
+              '        self.assertEqual(report["journeys"]["profileFavoriteIsolation"], "PASS")\n        self.assertEqual(report["journeys"]["profilePersistenceFailureIsolation"], "PASS")',
+              '        self.assertEqual(report["journeys"]["profileFavoriteIsolation"], "PASS")\n        self.assertEqual(report["journeys"]["profileFavoriteProjectionRefresh"], "PASS")\n        self.assertEqual(report["journeys"]["profileShortcutIsolation"], "PASS")\n        self.assertEqual(report["journeys"]["profileShortcutRehydration"], "PASS")\n        self.assertEqual(report["journeys"]["profileShortcutPersistenceFailure"], "PASS")\n        self.assertEqual(report["journeys"]["profilePersistenceFailureIsolation"], "PASS")',
+          )
+          test_path.write_text(test, encoding='utf-8')
+
+          design_path = Path('docs/PROMPT_KIT_PROFILE_MODALITY_PROGRAM_DESIGN.md')
+          design = design_path.read_text(encoding='utf-8')
+          design = replace_exact(
+              design,
+              '- **ProfiledFavoritePreferences** — prototype proof that the existing Favorite semantic owner can operate over a profile-scoped persistence port without becoming a second Favorite system.',
+              '- **FavoritePreferenceContexts** — profile selector that binds the existing canonical `FavoritePreferences` owner to a profile-scoped store; it owns no Favorite-set semantics itself.',
+          )
+          design = replace_exact(
+              design,
+              '| existing `ShortcutRegistry` semantic owner | effective bindings for active profile | existing registry API over a profile-scoped store | collision/target policy remains unchanged | existing ShortcutStore via profile namespace | existing hotkey contract | existing hotkey prototype + future profile fixture |',
+              '| existing `ShortcutRegistry` semantic owner | effective bindings for active profile | existing registry API over a profile-scoped store | collision/target policy and binding hydration remain in the canonical registry | existing ShortcutStore via profile namespace | existing hotkey contract | existing hotkey prototype + executable profile isolation/rehydration fixture |',
+          )
+          design = replace_exact(
+              design,
+              'The default profile Favorite set is untouched.\n\n## Failure call stacks',
+              '''The default profile Favorite set is untouched.
+
+## Success call stack — profile-scoped shortcut configuration and dispatch
+
+```text
+USER CONFIGURES SHORTCUT IN ACTIVE PROFILE
+  -> existing ShortcutRegistry.configure(binding)
+  -> profile-bound ShortcutStore.save(candidate)          [TRANSACTION BOUNDARY]
+  -> canonical ShortcutRegistry publishes userBindings
+  <- CONFIGURED
+
+USER TYPES SHORTCUT
+  -> existing ShortcutDispatcher
+  -> ActiveShortcutRegistry selects canonical registry for ActiveProfile
+  -> existing effective binding / sequence policy
+  -> semantic prompt navigation/command target
+```
+
+Switching profiles selects another canonical `ShortcutRegistry` context hydrated from that profile's persisted bindings. Built-in collision rules remain shared; only durable user bindings are scoped.
+
+## Failure call stacks''',
+          )
+          design = replace_exact(
+              design,
+              '### Async copy while user switches profile\n',
+              '''### Profile-scoped shortcut persistence failure
+
+```text
+ShortcutRegistry.configure while work profile is active
+  -> profile-bound ShortcutStore.save(work, candidate)
+  -> PERSISTENCE_FAILED
+  -> canonical ShortcutRegistry does not publish candidate
+  -> work binding set remains prior truth
+  -> default profile binding set remains untouched
+```
+
+### Async copy while user switches profile
+''',
+          )
+          design = replace_exact(
+              design,
+              '- profile isolation;\n- unknown-profile rejection;',
+              '- Favorite isolation and active-profile Favorite projection refresh;\n- shortcut isolation, persisted rehydration, and persistence-failure isolation through the existing `ShortcutRegistry`;\n- unknown-profile rejection;',
+          )
+          design = replace_exact(
+              design,
+              '9. **Keep semantic traces privacy-bounded.** Profile attribution uses an opaque initiating ID only; display names and prompt bodies remain outside trace payloads.\n\nNo safer bounded design improvement remains',
+              '''9. **Keep semantic traces privacy-bounded.** Profile attribution uses an opaque initiating ID only; display names and prompt bodies remain outside trace payloads.
+10. **Do not prototype a second Favorite authority.** Review correctly found that `ProfiledFavoritePreferences` duplicated canonical set semantics. The repair replaces it with `FavoritePreferenceContexts`, which only selects a profile-bound store and instantiates the already-merged `FavoritePreferences` owner.
+11. **A scoped-storage claim needs an executable ShortcutRegistry path.** Running the hotkey prototype beside this prototype was insufficient proof. The repaired slice exercises the existing `ShortcutRegistry` and `ShortcutDispatcher` across profile configuration, switching, rehydration, and failed persistence.
+12. **Profile activation must refresh preference projection before success.** Merely changing `ActiveProfile` can leave stale stars on screen. `ACTIVATE_PROFILE` now loads the target profile through the canonical Favorite owner and replaces the active Favorite projection before returning `PROFILE_ACTIVE`.
+
+No safer bounded design improvement remains''',
+          )
+          design = replace_exact(
+              design,
+              '- profile-scoped Favorite isolation and fail-closed persistence;',
+              '- profile-scoped Favorite isolation, canonical-owner reuse, active projection refresh, and fail-closed persistence;\n- profile-scoped shortcut isolation, hydration, dispatch, and failure behavior through the existing `ShortcutRegistry`/`ShortcutDispatcher`;',
+          )
+          design_path.write_text(design, encoding='utf-8')
+
+      - name: Prove repaired ownership seams
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check docs/prompt-kit-hotkey-prototype.js
+          node --check docs/prompt-kit-profile-modality-prototype.js
+          node docs/prompt-kit-hotkey-prototype.js >/tmp/hotkey.json
+          node docs/prompt-kit-profile-modality-prototype.js >/tmp/profile-modality.json
+          python -m unittest tests.test_prompt_kit_profile_modality_prototype -v
+          python -m unittest tests.test_prompt_kit_program_prototype tests.test_prompt_kit_hotkey_completion -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Commit durable review repairs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/PROMPT_KIT_PROFILE_MODALITY_PROGRAM_DESIGN.md docs/prompt-kit-profile-modality-prototype.js docs/prompt-kit-hotkey-prototype.js tests/test_prompt_kit_profile_modality_prototype.py
+          test -n "$(git diff --cached --name-only)"
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = "docs/PROMPT_KIT_PROFILE_MODALITY_PROGRAM_DESIGN.md docs/prompt-kit-hotkey-prototype.js docs/prompt-kit-profile-modality-prototype.js tests/test_prompt_kit_profile_modality_prototype.py "
+          git commit -m 'design(prompt-kit): close profile ownership review gaps'
+          git push origin HEAD:design/prompt-kit-profile-modality-seams-20260824
