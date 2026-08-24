@@ -78,6 +78,47 @@ class DeterministicTestFloorTests(unittest.TestCase):
         self.assertTrue(workflow_imports)
         self.assertEqual(workflow_imports, set(self.manifest["artifact_imports"]))
 
+    def test_artifact_skip_allowlist_matches_private_input_boundaries(self) -> None:
+        self.assertEqual(
+            set(self.manifest["allowed_artifact_skip_reasons"]),
+            {
+                "private operator reference workbook not present",
+                "private real workbook not present",
+                "Real roster log not present",
+            },
+        )
+        source_text = "\n".join(
+            (REPO_ROOT / path).read_text(encoding="utf-8")
+            for path in self.manifest["artifact_tests"]
+        )
+        for reason in self.manifest["allowed_artifact_skip_reasons"]:
+            self.assertIn(f'reason="{reason}"', source_text)
+
+    def test_skip_parser_accepts_only_registered_reasons(self) -> None:
+        output = """173 passed, 3 skipped in 8.39s
+SKIPPED [1] tests/test_one.py:10: private operator reference workbook not present
+SKIPPED [1] tests/test_two.py:20: private real workbook not present
+SKIPPED [1] tests/test_three.py:30: Real roster log not present
+"""
+        observed = floor.validate_artifact_skip_reasons(
+            output, self.manifest["allowed_artifact_skip_reasons"]
+        )
+        self.assertEqual(len(observed), 3)
+        unexpected = output.replace(
+            "Real roster log not present", "required service unexpectedly unavailable"
+        )
+        with self.assertRaisesRegex(floor.ContractError, "unregistered artifact-test skip"):
+            floor.validate_artifact_skip_reasons(
+                unexpected, self.manifest["allowed_artifact_skip_reasons"]
+            )
+
+    def test_skip_parser_fails_if_pytest_hides_skip_reason(self) -> None:
+        with self.assertRaisesRegex(floor.ContractError, "exposed 0 parseable reasons"):
+            floor.validate_artifact_skip_reasons(
+                "173 passed, 1 skipped in 8.39s\n",
+                self.manifest["allowed_artifact_skip_reasons"],
+            )
+
     def test_registered_validator_profile_is_blocking_and_complete(self) -> None:
         profile_name = self.manifest["validator_profile"]
         profile = self.validators["profiles"][profile_name]
