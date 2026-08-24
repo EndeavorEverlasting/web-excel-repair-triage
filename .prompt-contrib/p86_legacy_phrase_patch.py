@@ -16,6 +16,18 @@ replacements = (
         "Adopt only what strengthens that job; do not transform P03 into those owners.",
         "Adopt only what strengthens that job; do not transform P03 into P07, P13, P48, P76, P83, P84, or P85.",
     ),
+    (
+        "Refresh before final exact-head conclusions and invalidate affected evidence when the floor moves.",
+        "Refresh again immediately before final exact-head conclusions and invalidate affected evidence when the floor moves.",
+    ),
+    (
+        "Reject changes justified only by `another prompt has this`.",
+        "Do not copy every strong rule into every prompt. Reject changes justified only by `another prompt has this`.",
+    ),
+    (
+        "Extend the closest focused test for each changed owner, or one family-level test for a shared owner.",
+        "Extend the closest existing focused test for each changed owner, or one family-level test for a shared owner.",
+    ),
 )
 for old, new in replacements:
     if old not in p86["copyContent"]:
@@ -25,4 +37,13 @@ for old, new in replacements:
 if len(p86["copyContent"]) >= 7600:
     raise SystemExit(f"P86 raw copyContent exceeded anti-bloat gate: {len(p86['copyContent'])}")
 path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-print(json.dumps({"P86_raw_size": len(p86["copyContent"]), "legacy_semantics": ["disposition vocabulary", "P03 role boundary"]}, indent=2))
+print(json.dumps({
+    "P86_raw_size": len(p86["copyContent"]),
+    "legacy_semantics": [
+        "disposition vocabulary",
+        "P03 role boundary",
+        "final exact-head refresh",
+        "anti-copy-every-rule guard",
+        "closest existing focused test",
+    ],
+}, indent=2))
