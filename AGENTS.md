@@ -28,7 +28,7 @@ Before tracked writes state: repository and branch or worktree; lane and mission
 
 Preserve dirty, conflicted, stale, or separately owned work and isolate the sprint. Never discard unrelated work merely to become current.
 
-Before modifying or integrating overlapping prior work, refresh the default branch and prove every required integrated slice remains contained with `git merge-base --is-ancestor <required-sha> <refreshed-default>`. Failed containment requires reconciliation and fresh proof before mutation or integration.
+Before modifying or integrating overlapping prior work, refresh the default branch. Prove each required integrated slice is an ancestor with `git merge-base --is-ancestor <required-sha> <refreshed-default>` and still materially present using current content plus its owning validator. Ancestry alone cannot prove current content after a revert. Any failed check requires reconciliation and fresh proof before mutation or integration.
 
 ## 4. Completion standard
 
