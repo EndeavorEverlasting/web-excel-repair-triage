@@ -1,1 +1,1 @@
-activate canonical Prompt freshness scope-exhaustion hardening job; remove in durable commit
+rerun repaired scope-exhaustion hardening with preserved evidence-bearing closeout; remove in durable commit
