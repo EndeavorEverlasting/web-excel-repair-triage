@@ -49,8 +49,13 @@
     "tests/test_gitignore_hygiene.py",
     "tests/test_roster_log_review_queue.py"
   ],
+  "allowed_artifact_skip_reasons": [
+    "private operator reference workbook not present",
+    "private real workbook not present",
+    "Real roster log not present"
+  ],
   "validator_registry": "harness/validators.v1.json",
   "validator_profile": "pre_push",
   "required_canary_failure": "validator:skill-prompt-registry-tests",
-  "proof_ceiling": "Deterministic clean-checkout Python, pinned direct CI dependencies, test-floor self-contract, artifact-engine, harness, Prompt Kit static/generated-parity, repository hygiene, and exact-candidate provider-workflow proof on the observed SHA. It does not prove browser/device/operator/production behavior or private protected inputs."
+  "proof_ceiling": "Deterministic clean-checkout Python, pinned direct CI dependencies, test-floor self-contract, public/synthetic artifact-engine tests with fail-closed registered private-input skips, harness, Prompt Kit static/generated-parity, repository hygiene, and exact-candidate provider-workflow proof on the observed SHA. It does not prove browser/device/operator/production behavior or the three registered private-input regressions."
 }
