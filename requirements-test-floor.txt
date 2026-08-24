@@ -1,0 +1,7 @@
+# Direct dependencies observed and proven in GitHub Actions on 2026-08-24.
+# Product/runtime requirements remain owned by requirements.txt; this file stabilizes the AFK test floor.
+streamlit==1.62.0
+mcp[cli]==2.1.0
+openpyxl==3.1.5
+python-docx==1.2.0
+pytest==9.1.1
