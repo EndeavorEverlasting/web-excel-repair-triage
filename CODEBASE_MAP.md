@@ -27,13 +27,14 @@ Do **not** preload `WORKFLOW.md`, `CAPABILITIES.md`, `SKILLS.md`, `TRIGGERS.md`,
 | `Candidates/`, `Active/` | protected operator inputs | read only when domain requires |
 | `Outputs/` | generated runtime evidence/artifacts | validator/generator output |
 
-Machine control-plane entry points are `harness/manifest.v1.json`, `harness/workflows.v1.json`, `harness/artifacts.v1.json`, and `harness/validators.v1.json`. Focused overlays may additionally own a scoped manifest/registry after `harness/CONTEXT.md` routes the task there.
+Machine control-plane entry points are `harness/manifest.v1.json`, `harness/workflows.v1.json`, `harness/artifacts.v1.json`, `harness/validators.v1.json`, and the focused path authority `harness/canonical-paths.v1.json`. Focused overlays may additionally own a scoped manifest/registry after `harness/CONTEXT.md` routes the task there.
 
 ## Primary entry points
 
 | Need | Canonical entry |
 |---|---|
 | orient/rout task | `harness/CONTEXT.md` |
+| canonical development/use/worktree/entrypoint paths | `harness/canonical-paths.v1.json` + `harness/workflows/canonical-paths.md` |
 | workbook repair/analysis | selected `triage/` engine + artifact contract |
 | human alias/download handoff | `harness/artifact-handoff/CODEBASE_MAP.md` + `scripts/validate_artifact_handoff_harness.py` |
 | Prompt Kit build | `scripts/build_prompt_kit_registry.py` |
@@ -55,6 +56,13 @@ python -m unittest tests.test_context_architecture tests.test_harness_contract -
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 python -m triage.gitignore_hygiene
 git diff --check
+```
+
+Canonical path/profile gate:
+
+```bash
+python scripts/validate_canonical_paths.py --summary
+python -m unittest tests.test_canonical_paths -v
 ```
 
 Artifact alias/download handoff uses:
@@ -90,6 +98,8 @@ Prompt Kit copy behavior is registry-driven. Copy-safe prompt bodies and index/r
 - Never create an actual alias/download file whose basename contains URL escapes such as `%20`; URL encoding is transport metadata, not a filename convention.
 - Never make the operator manually rename an alias copy when the agent can materialize the correct literal filename and verify byte identity.
 - Never create a second authority because the first is large; factor it and retain one canonical owner.
+- Never invent a checkout, install/use, worktree, or entrypoint path from model preference. Resolve `harness/canonical-paths.v1.json`; a second mutable clone is not parallel-writer isolation.
+- Never promote `remote main contains SHA` into workstation/deployment proof. Canonical checkout current, production/use path current, and real entrypoint observation are separate gates.
 - Historical reports describe evidence, not current law.
 - A green CI/build check is not live browser/device/production proof.
 - If ownership becomes unclear, return to `harness/CONTEXT.md` instead of loading every document.
