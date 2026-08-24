@@ -30,7 +30,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact candidate and current main floor
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          test -n "$(git rev-parse origin/main)"
+          echo "prototype candidate sha=$(git rev-parse HEAD)"
+          echo "prototype main floor=$(git rev-parse origin/main)"
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
