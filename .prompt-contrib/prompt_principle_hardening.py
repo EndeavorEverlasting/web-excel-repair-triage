@@ -12,8 +12,7 @@ def load(path: str):
 
 def save(path: str, payload) -> None:
     (ROOT / path).write_text(
-        json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
 
 
@@ -29,8 +28,7 @@ def append_unittest(path: str, method_name: str, body: str) -> None:
     marker = '\n\nif __name__ == "__main__":'
     if marker not in text:
         raise SystemExit(f"unittest insertion marker missing: {path}")
-    text = text.replace(marker, "\n" + body.rstrip() + marker, 1)
-    target.write_text(text, encoding="utf-8")
+    target.write_text(text.replace(marker, "\n" + body.rstrip() + marker, 1), encoding="utf-8")
 
 
 def harden_shared_policy() -> None:
@@ -45,10 +43,9 @@ def harden_shared_policy() -> None:
 - DEFINITION OF DONE: Before mutation, translate the mission, owned scope, explicit user constraints, acceptance requirements, and proof requirements into a compact observable done checklist. Output existence alone is not completion; every material criterion needs evidence or an explicit UNKNOWN/blocker.
 - SELF-CHECK: Before any completion claim, re-read the current source evidence and verify every material factual or quantitative claim, path, file/artifact identity, SHA/version, validator/test result, and completion statement against the evidence that supports it. Flag unsupported or stale claims instead of filling gaps from memory."""
     needle = "REMOTE FRESHNESS / BRANCH FLOOR CONTRACT"
-    appendix = policy["copy_content_appendix"]
-    if needle not in appendix:
+    if needle not in policy["copy_content_appendix"]:
         raise SystemExit("shared actionability insertion point missing")
-    policy["copy_content_appendix"] = appendix.replace(
+    policy["copy_content_appendix"] = policy["copy_content_appendix"].replace(
         needle, block + "\n\n" + needle, 1
     )
     save(path, policy)
@@ -61,10 +58,10 @@ def harden_p07() -> None:
     marker = "EXECUTION BRIEF / EVIDENCE BINDING"
     if marker not in prompt["copyContent"]:
         block = """EXECUTION BRIEF / EVIDENCE BINDING
-- ROLE: Act as the senior repository execution engineer/coordinator for this sprint. Own the bounded implementation, verification, integration, and handoff rather than merely advising the operator.
-- WHERE TO LOOK: Start with `Context or plan path` when supplied, then current repository governance/harness, canonical owner files, tests/validators/CI/artifacts, and overlapping work from refreshed provider truth. Resolve technical facts from those sources before asking the user to repeat or inspect them.
-- DEFINITION OF DONE: Before mutation, turn the owned scope, requested behavior/artifacts, explicit user constraints, repository acceptance gates, and proof requirements into a compact observable checklist. Keep that checklist stable unless current evidence or the user changes the requirement.
-- SELF-CHECK: Before claiming completion, verify each material claim—including counts, paths, SHAs, branch/PR state, test or validator results, artifact identities, and unresolved gaps—against current evidence. Unsupported items are UNKNOWN or blockers, not plausible fill-ins."""
+- ROLE: Act as the senior repository execution engineer/coordinator for this sprint. Own bounded implementation, verification, integration, and handoff rather than merely advising the operator.
+- WHERE TO LOOK: Start with `Context or plan path` when supplied, then current governance/harness, canonical owner files, tests/validators/CI/artifacts, and overlapping work from refreshed provider truth. Resolve technical facts there before asking the user to repeat or inspect them.
+- DEFINITION OF DONE: Before mutation, turn owned scope, requested behavior/artifacts, explicit constraints, repository acceptance gates, and proof requirements into a compact observable checklist.
+- SELF-CHECK: Before claiming completion, verify material claims—including counts, paths, SHAs, branch/PR state, test/validator results, artifact identities, and unresolved gaps—against current evidence. Unsupported items are UNKNOWN or blockers, not plausible fill-ins."""
         needle = "REMOTE FRESHNESS / BRANCH FLOOR CONTRACT"
         if needle not in prompt["copyContent"]:
             raise SystemExit("P07 insertion point missing")
@@ -79,28 +76,22 @@ def harden_p86() -> None:
     payload = load(path)
     prompt = prompt_by_id(payload["prompts"], "P86")
     prompt["sprintRole"] = (
-        "Audit one existing Prompt Kit prompt or a bounded family of candidate prompts against a supplied or discovered principle, "
-        "then harden only the compatible canonical owners without duplicating shared policy or changing stable identities unnecessarily."
+        "Audit one existing Prompt Kit prompt or a bounded family of candidate prompts against a supplied or discovered principle, then harden only compatible canonical owners without duplicating shared policy or changing stable identities unnecessarily."
     )
     prompt["useWhen"] = (
-        "An existing prompt is semantically weaker than current Prompt Kit patterns, or a newly learned prompt-design principle should be evaluated "
-        "across every relevant existing prompt rather than applied only to the first obvious target."
+        "An existing prompt is weaker than current Prompt Kit patterns, or a learned prompt-design principle should be evaluated across every relevant existing prompt rather than only the first obvious target."
     )
     prompt["inspectFirst"] = (
-        "Current main/PR/evidence floor; the supplied principle/source example and the reusable behavior it actually demonstrates; the named target or candidate target set; "
-        "each candidate in raw and effective form; registry/profile owners; shared prompt policies; focused tests; generated Prompt Kit parity; and overlapping prompt/PR work."
+        "Current main/PR/evidence floor; supplied principle/source example; named target or candidate target set; each candidate in raw and effective form; registry/profile and shared-policy owners; focused tests; generated parity; overlapping prompt/PR work."
     )
     prompt["expectedOutput"] = (
-        "The same canonical prompt identities selectively hardened through a campaign/target ledger and per-target principle-applicability matrix, minimal compatible raw or shared-owner edits, "
-        "focused semantic regressions, bounded source growth, exact generated-site parity, and mainline integration when authorized."
+        "Existing canonical identities selectively hardened through a target ledger and principle-applicability matrix, minimal raw/shared-owner edits, focused semantic regressions, bounded growth, exact generated-site parity, and authorized mainline integration."
     )
     prompt["nextStep"] = (
-        "Resolve whether this is a single-target hardening or a principle-propagation campaign; normalize the source into atomic reusable principles, sweep the bounded candidate set, "
-        "disposition every relevant prompt, patch the smallest canonical owners, prove old plus new semantics, and converge the exact green result to main."
+        "Resolve single-target versus principle-propagation campaign mode, normalize the source into reusable principles, disposition the bounded candidate set, patch the smallest canonical owners, prove old plus new semantics, and converge the exact green result to main."
     )
     prompt["proofGate"] = (
-        "Every relevant candidate is dispositioned rather than silently skipped; changed prompts retain identity and primary role; every added principle has a source/donor or policy owner plus a concrete applicability reason; "
-        "literal example wording and inherited policy are not cargo-cult copied; incompatible targets are rejected explicitly; old required semantics and new semantics are tested; raw growth stays bounded; generated-site parity and exact-head integration proof pass."
+        "Every relevant candidate is dispositioned; changed prompts retain identity/role; accepted principles have a source and concrete applicability reason; inherited policy and literal example wording are not cargo-cult copied; incompatible targets are rejected; old/new semantics are tested; raw growth stays bounded; parity and exact-head integration proof pass."
     )
     prompt["copyContent"] = """HARDEN ONE OR MORE EXISTING PROMPTS USING THE STRONGEST COMPATIBLE PRINCIPLES PROVEN BY THE CURRENT PROMPT KIT OR SUPPLIED SOURCE MATERIAL. MODIFY CANONICAL OWNERS; DO NOT CREATE DUPLICATE PROMPTS JUST TO PROPAGATE A PRINCIPLE.
 
@@ -109,74 +100,55 @@ Principle/source to integrate: xyz_principle_example_reference_or_infer_from_con
 Specific weakness, if known: xyz_known_gap_or_infer_from_evidence
 
 MISSION
-Make the relevant existing prompts materially stronger without turning the Prompt Kit into a collage of universal boilerplate. This prompt supports either SINGLE TARGET hardening or a bounded PRINCIPLE PROPAGATION CAMPAIGN. Preserve prompt identities, roles, profiles, and useful semantics. Normalize the source principle, discover every genuinely relevant target, decide where the behavior belongs, patch only canonical owners, prove the result semantically, rebuild through canonical machinery, and integrate the exact validated result.
+Strengthen the relevant existing prompts without turning the Prompt Kit into universal boilerplate. Operate as SINGLE TARGET hardening or a bounded PRINCIPLE PROPAGATION CAMPAIGN. Preserve identity, role, profile, and useful semantics. Normalize the source principle, discover relevant targets, choose canonical owners, patch minimally, prove semantics, rebuild canonically, and integrate the exact validated result.
 
 EXECUTION BRIEF
 - ROLE: Act as a senior prompt-systems engineer responsible for prompt architecture, semantic regression, and anti-bloat ownership decisions.
-- WHERE TO LOOK: Start with the supplied source/example and named targets, then current raw/effective registries, shared policy owners, focused tests, generated output, and refreshed overlapping PR/branch evidence.
-- DEFINITION OF DONE: Every material candidate target is dispositioned; every accepted change is minimal and proven; generated output matches canonical sources; integration is complete or an exact gate is named.
-- SELF-CHECK: Before finalizing, verify every target ID, donor/source claim, raw/effective classification, size claim, validator/test result, generated artifact identity, commit/PR state, and rejection reason against current evidence.
+- WHERE TO LOOK: Start with supplied source/example and named targets, then current raw/effective registries, shared policy owners, focused tests, generated output, and refreshed overlapping work.
+- DEFINITION OF DONE: Every material candidate is dispositioned; every accepted change is minimal and proven; generated output matches canonical sources; integration is complete or an exact gate is named.
+- SELF-CHECK: Verify target IDs, donor/source claims, raw/effective classification, size claims, validator/test results, generated identity, commit/PR state, and rejection reasons against current evidence.
 
-1. RESOLVE CAMPAIGN SHAPE AND CURRENT TRUTH
-Work from current repository/provider truth, not remembered prompt text. Determine whether the request names one target or asks to propagate a principle across a family. If a principle is supplied but the target set is not, do not stop at the first obvious prompt: search the combined registry for prompts whose mission, failure modes, output contract, or proof behavior could materially benefit. Resolve each candidate's raw record, effective built form, registry/profile owner, shared policy owners, focused tests, generated site, and overlapping prompt/PR work. Reuse or repair an existing owning hardening lane instead of opening a competing one. Refresh again immediately before final exact-head conclusions; if main, a target, donor/source, or shared owner moves materially, reclassify affected evidence and rerun the decisions it could change.
+1. RESOLVE CURRENT TRUTH AND CAMPAIGN SHAPE
+Determine whether the request names one target or asks to propagate a principle. If a principle is supplied without a complete target set, do not stop at the first obvious prompt: search the combined registry for prompts whose mission, failure modes, output contract, or proof behavior could materially benefit. Resolve raw/effective forms, owners, focused tests, generated site, and overlapping work. Reuse an existing owning lane when safe. Refresh before final exact-head conclusions and invalidate affected evidence when the floor moves.
 
 2. RAW VS EFFECTIVE PROMPT
-Read both forms before editing. Raw records own prompt-specific semantics; effective prompts may inherit shared policy. Separate those layers so global actionability, freshness, integration, evidence-binding, or closeout doctrine is not pasted back into every source record. Count inherited behavior as present unless a direct-consumer prompt has a concrete reason to carry a compact local version.
+Raw records own prompt-specific semantics; effective prompts may inherit shared policy. Do not paste inherited actionability, freshness, integration, evidence-binding, or closeout doctrine into every raw record. Count effective inherited behavior as present unless a direct-consumer prompt has a concrete reason for a compact local version.
 
 3. NORMALIZE THE SOURCE PRINCIPLE
-Translate the supplied example, article, donor prompt, incident, or user observation into atomic reusable behaviors before searching targets. Distinguish principle from costume. For example, a source may demonstrate role/competence anchoring, an explicit source map or `where to look`, an observable definition of done, and a final self-check against evidence. Preserve those behaviors without blindly copying literal domain wording, invented tenure, emotional urgency, `take a deep breath` style filler, or source-specific formatting unless evidence shows those details are themselves required.
+Translate the example, article, donor prompt, incident, or observation into atomic reusable behaviors. Distinguish principle from costume. A source may demonstrate role/competence anchoring, an explicit source map, observable definition of done, and final self-check against evidence. Preserve those behaviors without copying literal domain wording, invented tenure, emotional urgency, `take a deep breath` style filler, or source-specific formatting unless required by evidence.
 
-4. HARVEST ONLY RELEVANT DONORS AND TARGETS
-Inspect the smallest useful set of current donors/shared owners plus the candidate prompts that overlap the principle. Candidate principles may include fresh repository/evidence floors; exact artifact identity; evidence-version invalidation; bounded implement/validate/critique iteration; continuous acceptance-gate progression; autonomous agent work with a user-only gate; fail-closed safety; source-of-truth precedence; role anchoring; explicit evidence/source locations; observable completion criteria; source-grounded self-check; proof ceilings; existing-work reuse; progressive disclosure; interruption recovery; dirty-work preservation; anti-fabrication boundaries; canonical-owner selection; and focused semantic regression. A strong principle is not automatically relevant to every prompt.
+4. HARVEST RELEVANT DONORS AND TARGETS
+Inspect only the useful donors/shared owners and candidate prompts. Strong principles can include fresh evidence floors, exact artifact identity, stale-proof invalidation, bounded iteration, autonomous progression, fail-closed safety, source-of-truth precedence, role anchoring, explicit evidence locations, observable completion criteria, source-grounded self-check, proof ceilings, existing-work reuse, progressive disclosure, interruption recovery, dirty-work preservation, anti-fabrication, canonical-owner selection, and focused semantic regression. Strength elsewhere is evidence, not automatic applicability here.
 
 5. BUILD THE PRINCIPLE APPLICABILITY MATRIX
-Before mutation, record one row per candidate target and principle:
-- target prompt
-- principle
-- source/donor or canonical policy owner
-- already present in RAW, EFFECTIVE, BOTH, or ABSENT
-- concrete target-specific gap/failure mode
-- COMPATIBLE, INCOMPATIBLE, or NOT NEEDED
-- RAW CHANGE, SHARED-OWNER CHANGE, or NO CHANGE
-- focused proof for the decision
-Every material candidate must receive a disposition. `Not changed` is valid only with evidence; silent omission is not.
+For each material candidate record: target prompt; principle; source/donor or canonical policy owner; RAW/EFFECTIVE/BOTH/ABSENT; concrete gap; COMPATIBLE/INCOMPATIBLE/NOT NEEDED; RAW CHANGE/SHARED-OWNER CHANGE/NO CHANGE; focused proof. Every material candidate must receive a disposition. Silent omission is invalid.
 
 6. CHOOSE THE CANONICAL OWNER
-Prefer one shared owner when the behavior is truly universal to the governed prompt family. Prefer a raw prompt edit when the behavior is role-specific, direct-consumer critical, or intentionally excluded from shared policy. Do not create a new global policy for a narrow use case. Do not copy a shared policy block into multiple raw prompts merely to make the diff look comprehensive.
+Prefer a shared owner only when behavior is truly common to the governed family. Prefer a raw edit for role-specific or direct-consumer-critical behavior. Do not create global policy for a narrow case or duplicate shared blocks merely to look comprehensive.
 
-7. HARDEN THE CANONICAL TARGETS
-Patch existing records rather than renumbering or cloning them. Update only semantic fields that need strengthening—typically inspectFirst, sprintRole, useWhen, expectedOutput, nextStep, proofGate, copyContent, or keywords. Keep profile/color/category/copySheet and stable identity unchanged unless separate evidence requires otherwise. Reuse concise named concepts instead of copying whole donor sections.
+7. HARDEN CANONICAL TARGETS
+Patch existing records rather than renumbering/cloning. Change only semantic fields that need strengthening. Keep stable identity/profile/color/category/copySheet unless separate evidence requires change. Use concise concepts rather than donor-section copies.
 
 8. P03 REFERENCE CASE
-When P03 / Repository Evidence + First Sprint Executor is a target, explicitly compare its older evidence-harvest/execution semantics with applicable current principles from P07 (iterative autonomous repo execution and convergence), P13 (bounded self-improvement and evidence critique), P48 (fresh subject/evidence pinning and stale-proof invalidation where certification-like proof is claimed), P76 (progressive disclosure/context restraint), P83 (treat completion/handoff claims as hypotheses until verified), P84 (continuous acceptance-gate progression, green-slice convergence, anti-spin, resumable checkpoints), P85 (canonical-owner hardening and focused failure regressions), and current shared policies. Adopt only what strengthens P03's discovery-plus-first-sprint job; do not transform P03 into P07, P13, P48, P76, P83, P84, or P85.
+For P03, compare its discovery-plus-first-sprint job with applicable current P07, P13, P48, P76, P83, P84, P85, and shared-policy principles. Adopt only what strengthens that job; do not transform P03 into those owners.
 
 9. ANTI-BLOAT / ANTI-CARGO-CULT GATE
-Do not copy every strong rule into every prompt. Reject changes whose only rationale is `another prompt has this`. Prefer inherited shared policy, a shared-family owner, or one target-specific sentence when equivalent. If a raw target grows materially, justify the growth against a concrete failure mode and try a smaller formulation before accepting it. A campaign succeeds by correct coverage, not by number of edited prompts.
+Reject changes justified only by `another prompt has this`. Prefer inheritance, a shared-family owner, or one target-specific sentence. If a raw target grows materially, tie each addition to a concrete failure mode and seek a smaller formulation. A campaign succeeds by correct coverage, not by number of edited prompts.
 
 10. SEMANTIC REGRESSION PROOF
-Extend the closest existing focused test for each changed owner or a compact family-level test when one shared owner governs them. Prove prior defining behavior remains and the selected principle is now effective. Add a negative/boundary assertion when useful so the test proves the target did not absorb an incompatible donor role. Check raw-source size or another anti-bloat boundary when practical. Do not replace semantic proof with generated-site presence alone.
+Extend the closest focused test for each changed owner, or one family-level test for a shared owner. Prove old defining behavior remains and new behavior is effective; add negative/boundary assertions where useful. Check source size when practical. Generated-site presence alone is not semantic proof.
 
 11. VALIDATE AND ITERATE
-Run target/shared-owner registry validation, focused semantic tests, applicable prompt-language/order/discovery/build checks, exact generated-site parity, and patch hygiene. Inspect the resulting diff and evidence for one deliberate second pass. Repair duplicated policy, identity drift, weakened old behavior, stale generated output, untested targets, unnecessary growth, or moved donor/base evidence, then rerun affected checks. Stop only when the bounded candidate set is fully dispositioned and no practical in-scope semantic improvement or regression remains.
+Run owner/registry validation, focused semantic tests, applicable language/order/discovery/build checks, exact generated-site parity, and patch hygiene. Perform one deliberate second pass for duplicated policy, identity drift, weakened old behavior, stale output, missed targets, unnecessary growth, or moved evidence. Stop at a bounded fixed point.
 
 DELIVER
-Report campaign mode; normalized source principles; targets changed, shared owners changed, targets rejected/not-needed and why; semantic fields changed; focused proof; raw-size impact; registry/helper/build validation; generated-site parity; commit/PR/merge state; and resulting main SHA or exact blocker. Keep the report compact. The success condition is correct principle coverage with stronger proof, not a larger Prompt Kit."""
-    prompt["keywords"] = list(
-        dict.fromkeys(
-            prompt["keywords"]
-            + [
-                "multi prompt hardening",
-                "principle propagation",
-                "prompt campaign hardening",
-                "cross prompt audit",
-                "role source done self check",
-            ]
-        )
-    )
+Report campaign mode; normalized principles; targets changed; targets rejected/not-needed and why; shared owners changed; semantic fields; focused proof; raw-size impact; registry/helper/build validation; generated parity; commit/PR/merge state; and resulting main SHA or exact blocker. Success is correct principle coverage with stronger proof, not a larger Prompt Kit."""
+    prompt["keywords"] = list(dict.fromkeys(prompt["keywords"] + [
+        "multi prompt hardening", "principle propagation", "prompt campaign hardening",
+        "cross prompt audit", "role source done self check",
+    ]))
     if len(prompt["copyContent"]) >= 7600:
-        raise SystemExit(
-            f"P86 raw copyContent exceeded anti-bloat gate: {len(prompt['copyContent'])}"
-        )
+        raise SystemExit(f"P86 raw copyContent exceeded anti-bloat gate: {len(prompt['copyContent'])}")
     save(path, payload)
 
 
@@ -189,21 +161,17 @@ def harden_correspondence() -> None:
     if marker not in p72["copyContent"]:
         block = """ROLE / SOURCE / DONE / SELF-CHECK
 - ROLE: Act as a senior correspondence editor. Optimize for clarity, fidelity, actionability, and relationship-preserving tone—not generic polish.
-- SOURCE: Treat the supplied draft, audience/context, and explicit facts as authoritative. Do not invent names, dates, numbers, owners, deadlines, commitments, approvals, or motives.
-- DEFINITION OF DONE: One send-ready message preserves every material fact and boundary, makes the supported ask/action clear, removes avoidable friction, and contains no meta commentary.
+- SOURCE: Treat supplied draft, audience/context, and explicit facts as authoritative. Do not invent names, dates, numbers, owners, deadlines, commitments, approvals, or motives.
+- DEFINITION OF DONE: One send-ready message preserves every material fact/boundary, makes the supported ask clear, removes avoidable friction, and contains no meta commentary.
 - SELF-CHECK: Before output, compare the final message back to the source and verify every factual or quantitative claim, name, date, commitment, owner, deadline, and material boundary. Preserve ambiguity or omit unsupported detail rather than guessing."""
-        p72["copyContent"] = p72["copyContent"].replace(
-            "OBJECTIVE\n", block + "\n\nOBJECTIVE\n", 1
-        )
+        p72["copyContent"] = p72["copyContent"].replace("OBJECTIVE\n", block + "\n\nOBJECTIVE\n", 1)
     if marker not in p73["copyContent"]:
         block = """ROLE / SOURCE / DONE / SELF-CHECK
 - ROLE: Act as a senior client-communications editor. Translate internal work into recipient-relevant truth without exposing irrelevant machinery or sanitizing material bad news.
-- SOURCE: Treat the supplied draft, audience/context, and supported underlying facts as authoritative. Internal implementation detail may be translated or removed only when doing so does not alter a material outcome, risk, dependency, obligation, date, or requested action.
-- DEFINITION OF DONE: One external-facing message lets the recipient understand what happened, what matters to them, what remains constrained, and what action is required without irrelevant process narration.
+- SOURCE: Treat supplied draft, audience/context, and supported facts as authoritative. Translate/remove implementation detail only when no material outcome, risk, dependency, obligation, date, or requested action changes.
+- DEFINITION OF DONE: One external-facing message explains what happened, what matters, remaining constraints, and required action without irrelevant process narration.
 - SELF-CHECK: Before output, compare the final message with the source and verify every material status, number, date, commitment, risk, dependency, limitation, and requested action. If source evidence is uncertain, preserve that uncertainty instead of manufacturing confidence."""
-        p73["copyContent"] = p73["copyContent"].replace(
-            "MISSION\n", block + "\n\nMISSION\n", 1
-        )
+        p73["copyContent"] = p73["copyContent"].replace("MISSION\n", block + "\n\nMISSION\n", 1)
     save(path, payload)
 
 
@@ -229,9 +197,7 @@ def add_tests() -> None:
                 self.assertIn(marker, prompt["copyContent"])
 
     def test_p07_carries_direct_execution_brief_for_raw_consumers(self) -> None:
-        raw_prompts = json.loads(
-            (REPO_ROOT / "docs" / "prompts.json").read_text(encoding="utf-8")
-        )
+        raw_prompts = json.loads((REPO_ROOT / "docs" / "prompts.json").read_text(encoding="utf-8"))
         p07 = next(prompt for prompt in raw_prompts if prompt["id"] == "P07")
         for phrase in (
             "EXECUTION BRIEF / EVIDENCE BINDING",
@@ -304,15 +270,7 @@ def main() -> None:
     harden_p86()
     harden_correspondence()
     add_tests()
-    print(
-        json.dumps(
-            {
-                "status": "mutated canonical sources and focused tests",
-                "targets": ["shared operational policy", "P07", "P86", "P72", "P73"],
-            },
-            indent=2,
-        )
-    )
+    print(json.dumps({"status": "mutated canonical sources and focused tests", "targets": ["shared operational policy", "P07", "P86", "P72", "P73"]}, indent=2))
 
 
 if __name__ == "__main__":
