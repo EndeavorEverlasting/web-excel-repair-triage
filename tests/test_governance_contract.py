@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -13,10 +14,19 @@ class GovernanceContractTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.text = GOVERNANCE.read_text(encoding="utf-8")
 
-    def test_canonical_governance_is_universal_and_bounded(self) -> None:
+    def test_canonical_governance_is_universal_bounded_and_tracked(self) -> None:
+        self.assertTrue(GOVERNANCE.is_file())
         self.assertTrue(self.text.startswith("# Agent Governance Contract"))
         self.assertIn("single repository governance authority", self.text)
         self.assertLessEqual(len(self.text), 5200)
+        tracked = subprocess.run(
+            ["git", "ls-files", "--error-unmatch", "AGENTS.md"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(tracked.returncode, 0, tracked.stderr or tracked.stdout)
 
     def test_required_operating_principles_are_explicit(self) -> None:
         for principle in (
@@ -44,7 +54,9 @@ class GovernanceContractTests(unittest.TestCase):
         declaration = self._section("## 3. Mandatory sprint declaration", "## 4.")
         for phrase in (
             "repository and branch or worktree",
+            "lane and mission",
             "owned scope and forbidden scope",
+            "expected artifacts",
             "validation commands and their order",
             "proof ceiling",
         ):
@@ -52,8 +64,10 @@ class GovernanceContractTests(unittest.TestCase):
         completion = self._section("## 4. Completion standard", "## 5.")
         for phrase in (
             "exact files changed",
+            "validations run",
             "commit SHA",
             "push state",
+            "PR/integration state",
             "one exact next command",
             "fetch without force",
             "isolated worktree",
@@ -61,6 +75,30 @@ class GovernanceContractTests(unittest.TestCase):
             "must not execute production by default",
         ):
             self.assertIn(phrase, completion)
+
+    def test_overlapping_work_requires_fresh_ancestry_proof(self) -> None:
+        section = self._section("## 3. Mandatory sprint declaration", "## 4.")
+        for phrase in (
+            "Before modifying or integrating overlapping prior work",
+            "refresh the default branch",
+            "Prove each required integrated slice is an ancestor",
+            "git merge-base --is-ancestor <required-sha> <refreshed-default>",
+            "still materially present using current content plus its owning validator",
+            "Ancestry alone cannot prove current content after a revert",
+            "Any failed check requires reconciliation",
+            "fresh proof before mutation or integration",
+        ):
+            self.assertIn(phrase, section)
+
+    def test_forbidden_behaviors_remain_explicit(self) -> None:
+        section = self._section("## 5. Safety and mutation boundaries", "## 6.")
+        for phrase in (
+            "acknowledgment, plans, or summaries",
+            "claim completion without checks",
+            "expose secrets, credentials",
+            "weaken tests/validators/fixtures",
+        ):
+            self.assertIn(phrase, section)
 
     def test_repository_identity_keeps_triage_spreadsheet_first(self) -> None:
         section = self._section(
