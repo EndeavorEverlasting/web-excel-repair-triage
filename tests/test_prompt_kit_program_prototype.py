@@ -38,8 +38,20 @@ class PromptKitProgramPrototypeTests(unittest.TestCase):
         self.assertEqual(report["status"], "PASS")
         self.assertEqual(report["selectedDesign"], "COMMAND_KERNEL_WITH_OWNED_STATE_AND_PORTS")
         self.assertTrue(all(value == "PASS" for value in report["journeys"].values()))
+        self.assertEqual(report["journeys"]["asyncCopyRejection"], "PASS")
+        self.assertEqual(report["journeys"]["invalidCommandResult"], "PASS")
+        self.assertIn("await execute(command)", report["comparison"]["commandKernel"]["publicExecutionSeam"])
         self.assertIn("precommit/postcommit", report["comparison"]["reducerEffect"]["effectOrdering"])
         self.assertIn("command-heavy", report["comparison"]["decision"])
+
+    def test_async_clipboard_and_result_validation_are_owned_by_kernel_seam(self) -> None:
+        text = PROTOTYPE.read_text(encoding="utf-8")
+        self.assertIn("async execute(command)", text)
+        self.assertIn("validateCommandResult(await handler(command), command.type)", text)
+        self.assertIn("await clipboard.writeText(prompt.copyContent)", text)
+        self.assertIn("INVALID_COMMAND_RESULT", text)
+        self.assertIn("completion telemetry is absent while async clipboard write is pending", text)
+        self.assertIn("rejected async clipboard write does not create completion telemetry", text)
 
     def test_copy_completion_is_terminal_and_inspection_is_not_copy(self) -> None:
         report = self.run_prototype()
@@ -95,6 +107,7 @@ class PromptKitProgramPrototypeTests(unittest.TestCase):
         self.assertIn("Inspection is not completion telemetry", text)
         self.assertIn("Durable preference writes publish after persistence", text)
         self.assertIn("Telemetry is subordinate to user value", text)
+        self.assertIn("Promise<CommandResult>", text)
         self.assertIn("do not add Redux", text)
         self.assertIn("do not add a generic event bus", text)
 
