@@ -35,6 +35,7 @@ jobs:
             git merge --no-edit origin/main
           fi
           git show origin/main:.github/scripts/tmp_scope_exhaustion_closeout_patch.py > /tmp/scope_exhaustion_patch.py
+          sed -i 's#ROOT = Path(__file__).resolve().parents\[2\]#ROOT = Path.cwd()#' /tmp/scope_exhaustion_patch.py
       - name: Apply, build, and validate
         shell: bash
         run: |
