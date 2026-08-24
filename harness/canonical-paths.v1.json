@@ -125,22 +125,22 @@
   "proof_states": [
     {
       "id": "remote_main_contains_sha",
-      "requires": ["provider default-branch ref plus ancestry/containment evidence"],
+      "requires": ["provider_default_branch_ref", "commit_ancestry"],
       "does_not_prove": ["canonical_development_checkout_current", "production_use_path_current", "operator_entrypoint_observes_current"]
     },
     {
       "id": "canonical_development_checkout_current",
-      "requires": ["runtime-resolved checkout root", "canonical origin", "clean/current branch or explicitly isolated worktree", "fetched remote containment evidence"],
+      "requires": ["runtime_git_root", "canonical_remote", "worktree_state", "remote_containment"],
       "does_not_prove": ["production_use_path_current", "operator_entrypoint_observes_current"]
     },
     {
       "id": "production_use_path_current",
-      "requires": ["profile-specific deployed/served/generated path evidence bound to the intended source commit or artifact"],
+      "requires": ["profile_use_surface_identity", "source_commit_or_artifact_binding"],
       "does_not_prove": ["operator_entrypoint_observes_current"]
     },
     {
       "id": "operator_entrypoint_observes_current",
-      "requires": ["the real profile entrypoint was executed or observed against the intended current artifact/path"],
+      "requires": ["real_entrypoint_observation", "intended_artifact_or_path_binding"],
       "does_not_prove": []
     }
   ]
