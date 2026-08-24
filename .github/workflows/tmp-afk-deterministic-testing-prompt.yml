@@ -56,7 +56,6 @@ jobs:
           from __future__ import annotations
 
           import json
-          import re
           import unittest
           from pathlib import Path
 
@@ -74,11 +73,13 @@ jobs:
                   cls.full = build_prompt_kit_registry.load_prompt_kit_registry()
                   cls.by_id = {prompt["id"]: prompt for prompt in cls.full}
                   matches = [prompt for prompt in cls.full if prompt.get("name") == TARGET_NAME]
-                  cls.assertEqual(cls, len(matches), 1)
+                  if len(matches) != 1:
+                      raise AssertionError(f"expected one {TARGET_NAME!r}, found {len(matches)}")
                   cls.target = matches[0]
                   raw_prompts = json.loads(RAW_REGISTRY.read_text(encoding="utf-8"))["prompts"]
                   raw_matches = [prompt for prompt in raw_prompts if prompt.get("name") == TARGET_NAME]
-                  cls.assertEqual(cls, len(raw_matches), 1)
+                  if len(raw_matches) != 1:
+                      raise AssertionError(f"expected one raw {TARGET_NAME!r}, found {len(raw_matches)}")
                   cls.raw = raw_matches[0]
 
               def test_helper_owned_identity_and_profile(self) -> None:
@@ -87,7 +88,8 @@ jobs:
                   self.assertEqual(self.target["copySheet"], f"{self.target['id']}_COPY_SAFE")
                   self.assertEqual(self.target["profile"], "spec-architecture")
                   self.assertEqual(self.target["class"], "HARNESS / AUTOMATED TESTING")
-                  self.assertNotIn("id", {key for key in self.raw if key not in self.target})
+                  self.assertEqual(self.raw["id"], self.target["id"])
+                  self.assertEqual(self.raw["copySheet"], self.target["copySheet"])
 
               def test_low_context_repo_first_entry(self) -> None:
                   content = self.target["copyContent"]
