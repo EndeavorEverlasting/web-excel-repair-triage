@@ -1,6 +1,8 @@
 name: Temporary P65 verifier-routing repair
 
 on:
+  push:
+    branches: [main]
   issue_comment:
     types: [created]
 
@@ -13,7 +15,7 @@ concurrency:
 
 jobs:
   repair:
-    if: github.event.issue.number == 268 && github.event.comment.body == '/repair-p65-verifier-routing'
+    if: github.event_name == 'push' || (github.event.issue.number == 268 && github.event.comment.body == '/repair-p65-verifier-routing')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
