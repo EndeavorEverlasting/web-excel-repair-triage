@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -51,6 +52,12 @@ def load_contract(manifest_path: Path) -> tuple[dict[str, Any], list[dict[str, A
         values = manifest.get(field)
         if not isinstance(values, list) or not values or any(not isinstance(v, str) or not v.strip() for v in values):
             raise ContractError(f"{field} must be a non-empty list of strings")
+
+    allowed_skips = manifest.get("allowed_artifact_skip_reasons")
+    if not isinstance(allowed_skips, list) or any(not isinstance(v, str) or not v.strip() for v in allowed_skips):
+        raise ContractError("allowed_artifact_skip_reasons must be a list of non-empty strings")
+    if len(allowed_skips) != len(set(allowed_skips)):
+        raise ContractError("allowed_artifact_skip_reasons must be unique")
 
     for rel in manifest["compile_targets"] + manifest["self_tests"] + manifest["artifact_tests"]:
         if not (REPO_ROOT / rel).exists():
@@ -137,6 +144,30 @@ def run_step(label: str, argv: list[str], env: dict[str, str]) -> dict[str, Any]
     }
 
 
+def validate_artifact_skip_reasons(stdout: str, allowed: list[str]) -> list[str]:
+    summary_matches = re.findall(r"\b(\d+) skipped\b", stdout)
+    skipped_count = int(summary_matches[-1]) if summary_matches else 0
+    observed: list[str] = []
+    for line in stdout.splitlines():
+        if not line.startswith("SKIPPED ["):
+            continue
+        match = re.match(r"SKIPPED \[(\d+)\] (.+)", line)
+        if not match or ": " not in match.group(2):
+            raise ContractError(f"cannot parse pytest skip summary: {line}")
+        count = int(match.group(1))
+        reason = match.group(2).rsplit(": ", 1)[1].strip()
+        observed.extend([reason] * count)
+
+    if skipped_count != len(observed):
+        raise ContractError(
+            f"pytest reported {skipped_count} skips but exposed {len(observed)} parseable reasons; run must fail closed"
+        )
+    unexpected = sorted({reason for reason in observed if reason not in set(allowed)})
+    if unexpected:
+        raise ContractError("unregistered artifact-test skip reason(s): " + "; ".join(unexpected))
+    return observed
+
+
 def build_steps(manifest: dict[str, Any], validators: list[dict[str, Any]]) -> list[tuple[str, list[str]]]:
     imports = "; ".join(f"import {name}" for name in manifest["artifact_imports"]) + "; print('artifact imports ok')"
     steps: list[tuple[str, list[str]]] = [
@@ -151,7 +182,7 @@ def build_steps(manifest: dict[str, Any], validators: list[dict[str, Any]]) -> l
         ("artifact-import-smoke", [sys.executable, "-c", imports]),
         (
             "artifact-engine-tests",
-            [sys.executable, "-m", "pytest", *manifest["artifact_tests"], "-q"],
+            [sys.executable, "-m", "pytest", *manifest["artifact_tests"], "-q", "-rs"],
         ),
     ]
     for validator in validators:
@@ -198,6 +229,7 @@ def run(manifest_path: Path, report_path: Path) -> int:
         "validator_profile": manifest["validator_profile"],
         "self_test_count": len(manifest["self_tests"]),
         "artifact_test_count": len(manifest["artifact_tests"]),
+        "allowed_artifact_skip_reasons": manifest["allowed_artifact_skip_reasons"],
         "proof_ceiling": manifest.get("proof_ceiling"),
         "steps": [],
     }
@@ -205,6 +237,18 @@ def run(manifest_path: Path, report_path: Path) -> int:
     for label, argv in steps:
         print(f"\n=== {label} ===")
         step = run_step(label, argv, env)
+        if label == "artifact-engine-tests" and step["returncode"] == 0:
+            try:
+                observed_skips = validate_artifact_skip_reasons(
+                    step["stdout_tail"], manifest["allowed_artifact_skip_reasons"]
+                )
+                step["observed_skip_reasons"] = observed_skips
+            except ContractError as exc:
+                message = str(exc)
+                print(f"ARTIFACT SKIP CONTRACT FAIL: {message}", file=sys.stderr)
+                step["returncode"] = 4
+                step["status"] = "FAIL"
+                step["stderr_tail"] = (step["stderr_tail"] + "\n" + message).strip()
         report["steps"].append(step)
         if step["returncode"] != 0:
             report["status"] = "FAIL"
