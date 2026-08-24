@@ -135,6 +135,17 @@
       "artifact_registry": "harness/browser-proof-cleanup/artifacts.v1.json",
       "operator_report": "harness/browser-proof-cleanup/reports/CURRENT_STATE.md"
     },
+    "canonical_paths": {
+      "contract": "harness/canonical-paths.v1.json",
+      "validator": "scripts/validate_canonical_paths.py",
+      "contract_tests": "tests/test_canonical_paths.py",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "harness_gate": "python scripts/validate_canonical_paths.py --summary",
+      "workflow_spec": "harness/workflows/canonical-paths.md",
+      "skill": ".ai/skills/harness-infrastructure-maintenance/SKILL.md",
+      "operator_report": "harness/reports/CANONICAL_PATHS.md",
+      "deep_repair_owner": "P92"
+    },
     "prompt_kit_responsive_layout": {
       "contract": "harness/prompt-kit-layout/contracts/responsive-header-overlap.v1.json",
       "validator": "scripts/validate_prompt_kit_layout_harness.py",
