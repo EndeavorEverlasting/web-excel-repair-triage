@@ -1,10 +1,10 @@
 name: Temporary P65 verifier-routing repair
 
 on:
-  push:
-    branches: [main]
-  issue_comment:
-    types: [created]
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .prompt-contrib/p65-verifier-routing-trigger.txt
 
 permissions:
   contents: write
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   repair:
-    if: github.event_name == 'push' || (github.event.issue.number == 268 && github.event.comment.body == '/repair-p65-verifier-routing')
+    if: github.event.pull_request.head.ref == 'fix/p65-verifier-routing-trigger-20260824'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
