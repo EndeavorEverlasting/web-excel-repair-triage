@@ -1,0 +1,124 @@
+name: Temporary scope exhaustion after Prompt Kit CI
+
+on:
+  workflow_run:
+    workflows: ['Prompt freshness and evidence contracts']
+    types: [completed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: scope-exhaustion-after-ci-20260824
+  cancel-in-progress: false
+
+jobs:
+  mutate-pr272:
+    if: >-
+      github.event.workflow_run.head_branch == 'feat/prompt-closeout-evidence-hardening-20260824' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-closeout-evidence-hardening-20260824
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Detect active carrier
+        id: carrier
+        shell: bash
+        run: |
+          if [ -f .prompt-contrib/scope_exhaustion_after_ci.txt ]; then
+            echo 'active=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'active=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Refresh and patch
+        if: steps.carrier.outputs.active == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch --all --prune --tags
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+          fi
+          python .github/scripts/tmp_scope_exhaustion_closeout_patch.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Validate exact changed surface
+        if: steps.carrier.outputs.active == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_operational_closeout_contract -v
+          python -m unittest tests.test_repository_work_ledger_prompt -v
+          python -m unittest tests.test_actionable_prompt_registry -v
+          python -m unittest tests.test_prompt_language_audit -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Falsify premature closure
+        if: steps.carrier.outputs.active == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from scripts import build_prompt_kit_registry
+          policy = json.loads(Path('registry/prompts/actionable-next-step-policy.v1.json').read_text(encoding='utf-8'))
+          ledger = json.loads(Path('registry/prompts/repository-work-ledger-prompts.v1.json').read_text(encoding='utf-8'))
+          p83 = next(p for p in ledger['prompts'] if p['id'] == 'P83')
+          effective = {p['id']: p for p in build_prompt_kit_registry.load_prompt_registry()}
+          checks = {
+              'safe residual invalidates none': 'SAFE & EXECUTABLE means work remains' in policy['copy_content_appendix'],
+              'unsafe is evidence-bounded': 'UNSAFE is a narrow evidence-bearing classification' in policy['copy_content_appendix'],
+              'blocked differs from unsafe': 'Missing access is not evidence that the work is unsafe' in policy['copy_content_appendix'],
+              'out of scope needs boundary': 'Do not move unfinished requested work out of scope' in policy['copy_content_appendix'],
+              'P83 reusable audit': 'SCOPE-EXHAUSTION AUDIT — CHALLENGE `NONE`' in p83['copyContent'],
+              'shared appendix once': effective['P83']['copyContent'].count(policy['marker']) == 1,
+          }
+          failed = [name for name, ok in checks.items() if not ok]
+          if failed:
+              raise SystemExit(f'scope-exhaustion falsification failed: {failed}')
+          print(json.dumps({'pass_two': 'bounded fixed point', **checks}, indent=2))
+          PY
+      - name: Commit and push exact proven head
+        if: steps.carrier.outputs.active == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -f .prompt-contrib/scope_exhaustion_after_ci.txt
+          git add \
+            registry/prompts/actionable-next-step-policy.v1.json \
+            registry/prompts/repository-work-ledger-prompts.v1.json \
+            tests/test_operational_closeout_contract.py \
+            docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          git status --short
+          git diff --cached --stat
+          git commit -m 'fix(prompt-kit): make scope exhaustion evidence-bearing'
+          git fetch origin main --prune
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+            python scripts/prompt_registry_ops.py validate
+            python -m unittest tests.test_operational_closeout_contract tests.test_repository_work_ledger_prompt tests.test_actionable_prompt_registry -v
+            python -m unittest tests.test_prompt_language_audit -v
+            python scripts/validate_prompt_kit_discovery.py --summary
+            python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
+            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+            git add web/prompt-kit/index.html
+            if ! git diff --cached --quiet; then
+              git commit -m 'chore(prompt-kit): refresh scope closeout site after main reconciliation'
+            fi
+          fi
+          git diff --check HEAD
+          git push origin HEAD:feat/prompt-closeout-evidence-hardening-20260824
+          echo "PROVEN_HEAD=$(git rev-parse HEAD)"
