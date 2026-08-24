@@ -193,17 +193,16 @@ jobs:
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
-      - name: Reconfirm main did not move and integrate exact proven repair
+      - name: Reconfirm floor and publish exact validated candidate
         shell: bash
         run: |
           set -euo pipefail
           proven_base="$(git rev-parse HEAD)"
           git fetch origin main --prune
           test "$proven_base" = "$(git rev-parse origin/main)"
-          git rm .github/workflows/tmp-p65-verifier-routing-repair.yml
           git add registry/prompts/tutorial-discovery-prompts.v1.json tests/test_prompt_kit_discovery.py web/prompt-kit/index.html
           git diff --cached --check
           echo '--- staged durable files ---'
           git diff --cached --name-only
           git commit -m "fix(prompt-kit): route claimed completion to P83"
-          git push origin HEAD:main
+          git push origin HEAD:fix/p65-verifier-routing-validated-20260824
