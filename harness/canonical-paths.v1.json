@@ -1,0 +1,147 @@
+{
+  "schema_version": "web-excel-canonical-paths/v1",
+  "repository": "EndeavorEverlasting/web-excel-repair-triage",
+  "canonical_remote": "https://github.com/EndeavorEverlasting/web-excel-repair-triage.git",
+  "default_branch": "main",
+  "deep_repair_owner": {
+    "prompt_id": "P92",
+    "name": "Canonical Path Prompt",
+    "role": "Deep path/profile audit and repair. This registry is the one canonical harness seam P92 inspects and strengthens."
+  },
+  "policy": {
+    "path_authority": "harness/canonical-paths.v1.json",
+    "model_chosen_paths": false,
+    "second_mutable_clone_allowed": false,
+    "parallel_writer_strategy": "git-worktree",
+    "canonical_checkout_resolution": "existing checkout with canonical origin; resolve its runtime root with git rev-parse --show-toplevel",
+    "temporary_worktree_root_strategy": "sibling-under-canonical-parent",
+    "proof_implication": "none"
+  },
+  "profiles": [
+    {
+      "id": "repository-development",
+      "purpose": "Edit, test, commit, push, inspect source, or run repository tooling.",
+      "supported_machines": ["windows", "linux", "macos", "android-termux"],
+      "canonical_development_checkout": {
+        "applicable": true,
+        "kind": "runtime-resolved-git-root",
+        "resolver": "git rev-parse --show-toplevel",
+        "required_remote": "https://github.com/EndeavorEverlasting/web-excel-repair-triage.git",
+        "canonical_branch": "main",
+        "allow_isolated_feature_worktree": true,
+        "hardcoded_absolute_path": false,
+        "when_missing": "Do not invent a directory. Route through the registered technician acquisition workflow or an explicit operator-selected parent."
+      },
+      "production_use_path": {
+        "applicable": false,
+        "reason": "This profile is the source-development path; application use/served paths are separate profiles."
+      },
+      "temporary_worktree_root": {
+        "applicable": true,
+        "kind": "derived-sibling-worktree-root",
+        "template": "<canonical-checkout-parent>/.worktrees/web-excel-repair-triage/<branch-slug>",
+        "second_mutable_clone_allowed": false,
+        "rule": "Parallel writers use git worktree from the proven canonical checkout; a second mutable clone is not an isolation mechanism."
+      },
+      "operator_entrypoint": {
+        "kind": "repository-command",
+        "value": "git rev-parse --show-toplevel"
+      }
+    },
+    {
+      "id": "public-web",
+      "purpose": "Normal Prompt Kit browser use without a repository checkout.",
+      "supported_machines": ["browser-capable"],
+      "canonical_development_checkout": {
+        "applicable": true,
+        "reference_profile": "repository-development",
+        "consumer_requires_checkout": false
+      },
+      "production_use_path": {
+        "applicable": true,
+        "kind": "https",
+        "value": "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
+        "source_artifact": "web/prompt-kit/index.html"
+      },
+      "temporary_worktree_root": {
+        "applicable": false,
+        "reason": "Consumer route; no writer worktree is involved."
+      },
+      "operator_entrypoint": {
+        "kind": "url",
+        "value": "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/"
+      }
+    },
+    {
+      "id": "windows-portable",
+      "purpose": "Windows stable local Prompt Kit with portable Favorites and loopback serving.",
+      "supported_machines": ["windows"],
+      "canonical_development_checkout": {
+        "applicable": true,
+        "reference_profile": "repository-development",
+        "checkout_management": "Open-Latest-PromptKit.cmd and scripts/Open-LatestPromptKitPortable.ps1 own safe acquisition/update; callers do not guess a checkout path."
+      },
+      "production_use_path": {
+        "applicable": true,
+        "kind": "generated-local-artifact",
+        "value": "Outputs/prompt-kit-portable/index.html",
+        "served_at": "http://127.0.0.1:8765/",
+        "source_artifact": "web/prompt-kit/index.html"
+      },
+      "temporary_worktree_root": {
+        "applicable": false,
+        "reason": "Ordinary launcher-owned use is not a parallel writer lane."
+      },
+      "operator_entrypoint": {
+        "kind": "launcher",
+        "value": "Open-Latest-PromptKit.cmd"
+      }
+    },
+    {
+      "id": "phone-tablet-pwa",
+      "purpose": "Open, install, or share the Prompt Kit from a phone or tablet system browser.",
+      "supported_machines": ["ios", "android"],
+      "canonical_development_checkout": {
+        "applicable": true,
+        "reference_profile": "repository-development",
+        "consumer_requires_checkout": false
+      },
+      "production_use_path": {
+        "applicable": true,
+        "kind": "https",
+        "value": "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
+        "source_artifact": "web/prompt-kit/index.html"
+      },
+      "temporary_worktree_root": {
+        "applicable": false,
+        "reason": "Consumer route; source-work isolation is a separate repository-development profile."
+      },
+      "operator_entrypoint": {
+        "kind": "system-browser-url",
+        "value": "https://endeavoreverlasting.github.io/web-excel-repair-triage/"
+      }
+    }
+  ],
+  "proof_states": [
+    {
+      "id": "remote_main_contains_sha",
+      "requires": ["provider default-branch ref plus ancestry/containment evidence"],
+      "does_not_prove": ["canonical_development_checkout_current", "production_use_path_current", "operator_entrypoint_observes_current"]
+    },
+    {
+      "id": "canonical_development_checkout_current",
+      "requires": ["runtime-resolved checkout root", "canonical origin", "clean/current branch or explicitly isolated worktree", "fetched remote containment evidence"],
+      "does_not_prove": ["production_use_path_current", "operator_entrypoint_observes_current"]
+    },
+    {
+      "id": "production_use_path_current",
+      "requires": ["profile-specific deployed/served/generated path evidence bound to the intended source commit or artifact"],
+      "does_not_prove": ["operator_entrypoint_observes_current"]
+    },
+    {
+      "id": "operator_entrypoint_observes_current",
+      "requires": ["the real profile entrypoint was executed or observed against the intended current artifact/path"],
+      "does_not_prove": []
+    }
+  ]
+}
