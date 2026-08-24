@@ -48,7 +48,21 @@ jobs:
               "    this.trace = trace;\n    this.legacyFavorites = [...legacyFavorites].sort();",
               "    this.trace = trace;\n    if (typeof defaultProfileId !== 'string' || !defaultProfileId.trim()) {\n      throw new PromptKitProgramError('INVALID_DEFAULT_PROFILE_ID', 'Profile preference storage requires the catalog default profile id.');\n    }\n    this.defaultProfileId = defaultProfileId;\n    this.legacyFavorites = [...legacyFavorites].sort();",
           )
-          prototype = replace_exact(prototype, "profileId === 'default'", "profileId === this.defaultProfileId", expected=3)
+          prototype = replace_exact(
+              prototype,
+              "    return profileId === 'default' ? 'legacy-default-slot' : `named-profile:${profileId}`;",
+              "    return profileId === this.defaultProfileId ? 'legacy-default-slot' : `named-profile:${profileId}`;",
+          )
+          prototype = replace_exact(
+              prototype,
+              "    const favorites = profileId === 'default'\n      ? this.legacyFavorites",
+              "    const favorites = profileId === this.defaultProfileId\n      ? this.legacyFavorites",
+          )
+          prototype = replace_exact(
+              prototype,
+              "    if (profileId === 'default') {\n      this.legacyFavorites = [...next];",
+              "    if (profileId === this.defaultProfileId) {\n      this.legacyFavorites = [...next];",
+          )
           prototype = replace_exact(
               prototype,
               "  const preferenceStore = new MemoryProfilePreferenceStore(trace, {\n    legacyFavorites,\n    profileFavorites,\n    failProfileIds,\n  });",
@@ -76,7 +90,7 @@ jobs:
           test = replace_exact(
               test,
               '        self.assertIn("PROFILE_PREFERENCE_PERSISTENCE_FAILED", text)\n',
-              '        self.assertIn("PROFILE_PREFERENCE_PERSISTENCE_FAILED", text)\n        self.assertIn("defaultProfileId: profileCatalog.defaultProfile().id", text)\n        self.assertNotIn("profileId === \'default\'", text)\n',
+              '        self.assertIn("PROFILE_PREFERENCE_PERSISTENCE_FAILED", text)\n        self.assertIn("defaultProfileId: profileCatalog.defaultProfile().id", text)\n        self.assertNotIn("return profileId === \'default\' ?", text)\n        self.assertNotIn("const favorites = profileId === \'default\'", text)\n        self.assertNotIn("if (profileId === \'default\') {", text)\n',
           )
           test_path.write_text(test, encoding='utf-8')
 
