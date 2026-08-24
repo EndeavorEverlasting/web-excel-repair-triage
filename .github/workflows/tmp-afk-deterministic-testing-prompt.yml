@@ -1,0 +1,259 @@
+name: Temporary AFK deterministic testing prompt contribution
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  contribute:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/prompt-kit-afk-deterministic-testing-20260824'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-afk-deterministic-testing-20260824
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Refresh and reconcile current main floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main --prune --tags
+          echo "MAIN_BEFORE=$(git rev-parse origin/main)" >> "$GITHUB_ENV"
+          echo "BRANCH_BEFORE=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+          fi
+          git status --short
+          git log --oneline --decorate -8
+
+      - name: Run canonical helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p Outputs
+          python scripts/prompt_registry_ops.py inspect | tee Outputs/afk-testing-prompt-inspect.json
+          python scripts/prompt_registry_ops.py add \
+            --input .prompt-contrib/afk-deterministic-testing-draft.json \
+            --registry spec-architecture-prompts \
+            | tee Outputs/afk-testing-prompt-add-receipt.json
+
+      - name: Add focused semantic regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > tests/test_afk_deterministic_testing_prompt.py <<'PY'
+          from __future__ import annotations
+
+          import json
+          import re
+          import unittest
+          from pathlib import Path
+
+          from scripts import build_prompt_kit_registry
+
+
+          REPO_ROOT = Path(__file__).resolve().parents[1]
+          RAW_REGISTRY = REPO_ROOT / "registry" / "prompts" / "spec-architecture-prompts.v1.json"
+          TARGET_NAME = "AFK Deterministic Automated Test Harness Builder"
+
+
+          class AfkDeterministicTestingPromptTests(unittest.TestCase):
+              @classmethod
+              def setUpClass(cls) -> None:
+                  cls.full = build_prompt_kit_registry.load_prompt_kit_registry()
+                  cls.by_id = {prompt["id"]: prompt for prompt in cls.full}
+                  matches = [prompt for prompt in cls.full if prompt.get("name") == TARGET_NAME]
+                  cls.assertEqual(cls, len(matches), 1)
+                  cls.target = matches[0]
+                  raw_prompts = json.loads(RAW_REGISTRY.read_text(encoding="utf-8"))["prompts"]
+                  raw_matches = [prompt for prompt in raw_prompts if prompt.get("name") == TARGET_NAME]
+                  cls.assertEqual(cls, len(raw_matches), 1)
+                  cls.raw = raw_matches[0]
+
+              def test_helper_owned_identity_and_profile(self) -> None:
+                  self.assertRegex(self.target["id"], r"^P\d+$")
+                  self.assertEqual(self.target["seq"], self.target["id"][1:])
+                  self.assertEqual(self.target["copySheet"], f"{self.target['id']}_COPY_SAFE")
+                  self.assertEqual(self.target["profile"], "spec-architecture")
+                  self.assertEqual(self.target["class"], "HARNESS / AUTOMATED TESTING")
+                  self.assertNotIn("id", {key for key in self.raw if key not in self.target})
+
+              def test_low_context_repo_first_entry(self) -> None:
+                  content = self.target["copyContent"]
+                  for phrase in (
+                      "LOW-CONTEXT, REPO-FIRST ENTRY",
+                      "Detect the project's language/framework/test tooling",
+                      "Do not ask the user to choose Jest vs Pytest vs Go test",
+                      "genuinely user-only preference",
+                  ):
+                      self.assertIn(phrase, content)
+
+              def test_iterative_prototype_and_falsification_loop(self) -> None:
+                  content = self.target["copyContent"]
+                  for phrase in (
+                      "ITERATIVE PROTOTYPING LOOP",
+                      "BASELINE -> PROTOTYPE -> RUN -> INJECT OR SELECT A REPRESENTATIVE FAILURE",
+                      "CRITIQUE -> REVISE",
+                      "bounded fixed point",
+                      "negative canary",
+                      "SECOND PASS",
+                  ):
+                      self.assertIn(phrase, content)
+
+              def test_deterministic_test_floor_and_false_green_guards(self) -> None:
+                  content = self.target["copyContent"]
+                  for phrase in (
+                      "Fail closed on false-green states",
+                      "discovers zero required tests",
+                      "random seeds",
+                      "clocks, timezone/locale",
+                      "external-network tests",
+                      "Do not add retries that turn assertion failures into green",
+                  ):
+                      self.assertIn(phrase, content)
+
+              def test_github_actions_afk_contract(self) -> None:
+                  content = self.target["copyContent"]
+                  for phrase in (
+                      "CANONICAL COMMAND FIRST, CI YAML SECOND",
+                      "`push` and `pull_request` triggers",
+                      "`schedule`/cron trigger only when unattended periodic revalidation has real value",
+                      "best-effort",
+                      "least-privilege workflow permissions",
+                      "exact candidate revision",
+                  ):
+                      self.assertIn(phrase, content)
+                  self.assertIn("GitHub Actions should orchestrate those commands", content)
+
+              def test_provider_runtime_requires_real_positive_and_negative_proof(self) -> None:
+                  content = self.target["copyContent"]
+                  self.assertIn("Trigger the actual GitHub Actions workflow", content)
+                  self.assertIn("observe the target gate fail for the right reason", content)
+                  self.assertIn("observe the exact final head pass", content)
+                  self.assertIn("PROVIDER-RUNTIME BLOCKED", content)
+                  self.assertIn("Do not call test automation complete merely because a workflow file exists", content)
+
+              def test_neighbor_owners_remain_distinct(self) -> None:
+                  self.assertEqual(self.by_id["P51"]["name"], "Zero-Token Local Test Planner")
+                  self.assertEqual(self.by_id["P32"]["name"], "GNHF Validation and CI Repair")
+                  self.assertEqual(self.by_id["P105"]["name"], "Validated CI/CD Promotion Pipeline Builder")
+                  self.assertNotEqual(self.target["id"], "P51")
+                  self.assertNotEqual(self.target["id"], "P32")
+                  self.assertNotEqual(self.target["id"], "P105")
+                  self.assertIn("P105 owns validated promotion after that floor exists", self.target["copyContent"])
+                  self.assertIn("Route a failing established CI lane to P32", self.target["nextStep"])
+
+              def test_generated_site_contains_exact_prompt_identity(self) -> None:
+                  html = build_prompt_kit_registry.DEFAULT_OUTPUT.read_text(encoding="utf-8")
+                  self.assertIn(self.target["id"], html)
+                  self.assertIn(TARGET_NAME, html)
+
+
+          if __name__ == "__main__":
+              unittest.main()
+          PY
+
+      - name: Validate pass 1
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_afk_deterministic_testing_prompt -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python -m unittest tests.test_actionable_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Whole-context pass 2 falsification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from scripts import build_prompt_kit_registry
+
+          prompts = build_prompt_kit_registry.load_prompt_kit_registry()
+          by_id = {p['id']: p for p in prompts}
+          target = next(p for p in prompts if p.get('name') == 'AFK Deterministic Automated Test Harness Builder')
+          content = target['copyContent']
+          required = {
+              'novice context minimization': "Do not ask the user to choose Jest vs Pytest vs Go test",
+              'repo-native command ownership': 'CANONICAL COMMAND FIRST, CI YAML SECOND',
+              'event automation': '`push` and `pull_request` triggers',
+              'schedule restraint': 'Add a `schedule`/cron trigger only when unattended periodic revalidation has real value',
+              'schedule timing honesty': 'best-effort',
+              'iterative prototype': 'ITERATIVE PROTOTYPING LOOP',
+              'negative proof': 'negative canary',
+              'false-green guard': 'discovers zero required tests',
+              'real provider proof': 'Trigger the actual GitHub Actions workflow',
+              'promotion boundary': 'P105 owns validated promotion after that floor exists',
+          }
+          missing = [label for label, marker in required.items() if marker not in content]
+          if missing:
+              raise SystemExit(f'pass-2 semantic gaps: {missing}')
+          if by_id['P51']['name'] != 'Zero-Token Local Test Planner':
+              raise SystemExit('P51 ownership drifted')
+          if by_id['P32']['name'] != 'GNHF Validation and CI Repair':
+              raise SystemExit('P32 ownership drifted')
+          if by_id['P105']['name'] != 'Validated CI/CD Promotion Pipeline Builder':
+              raise SystemExit('P105 ownership drifted')
+          print(f"pass-2 bounded fixed point: {target['id']} {target['name']}")
+          PY
+          python -m unittest tests.test_afk_deterministic_testing_prompt -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Remove transport and commit durable contribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .prompt-contrib/afk-deterministic-testing-draft.json
+          git rm .github/workflows/tmp-afk-deterministic-testing-prompt.yml
+          git add registry/prompts/spec-architecture-prompts.v1.json tests/test_afk_deterministic_testing_prompt.py web/prompt-kit/index.html
+          git diff --cached --check
+          echo '--- durable staged paths ---'
+          git diff --cached --name-only
+          git commit -m 'feat(prompt-kit): add AFK deterministic automated testing builder'
+
+      - name: Refresh final floor and rerun exact-head proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune --tags
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+          fi
+          python -m unittest tests.test_afk_deterministic_testing_prompt -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python -m unittest tests.test_actionable_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          test -z "$(git status --porcelain)"
+          echo "FINAL_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "FINAL_MAIN=$(git rev-parse origin/main)" >> "$GITHUB_ENV"
+
+      - name: Push exact validated branch head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin HEAD:feat/prompt-kit-afk-deterministic-testing-20260824
+          echo "validated_head=$FINAL_HEAD"
+          echo "validated_main_floor=$FINAL_MAIN"
