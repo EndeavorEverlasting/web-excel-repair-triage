@@ -1,0 +1,103 @@
+name: Deterministic repository test floor
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deterministic-test-floor-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONHASHSEED: "0"
+  TZ: UTC
+  LC_ALL: C.UTF-8
+  LANG: C.UTF-8
+  CI: "true"
+
+jobs:
+  deterministic-test-floor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Verify exact candidate and fetch shallow main evidence
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$EXPECTED_SHA"
+          git fetch --no-tags --depth=1 origin \
+            +refs/heads/main:refs/remotes/origin/main
+          test "$(git rev-parse origin/main)" != ""
+          echo "deterministic test-floor candidate sha=$actual"
+          echo "deterministic test-floor main floor=$(git rev-parse origin/main)"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pinned repository test dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-test-floor.txt
+
+      - name: Negative generated-site canary must fail closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp web/prompt-kit/index.html "$RUNNER_TEMP/prompt-kit-index.clean.html"
+          printf '\n<!-- deterministic-test-floor-negative-canary -->\n' >> web/prompt-kit/index.html
+          set +e
+          python scripts/run_deterministic_test_floor.py \
+            --report "$RUNNER_TEMP/negative-canary-report.json"
+          status=$?
+          set -e
+          mv "$RUNNER_TEMP/prompt-kit-index.clean.html" web/prompt-kit/index.html
+          if [ "$status" -eq 0 ]; then
+            echo "Negative canary unexpectedly passed" >&2
+            exit 1
+          fi
+          python - "$RUNNER_TEMP/negative-canary-report.json" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          report = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+          expected = 'validator:skill-prompt-registry-tests'
+          if report.get('status') != 'FAIL' or report.get('failed_step') != expected:
+              raise SystemExit(
+                  f"negative canary failed at {report.get('failed_step')!r}; expected {expected!r}"
+              )
+          print(f"negative canary proved earliest registered failure gate: {expected}")
+          PY
+
+      - name: Run clean deterministic test floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/run_deterministic_test_floor.py \
+            --report "$RUNNER_TEMP/deterministic-test-floor-report.json"
+
+      - name: Upload deterministic test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deterministic-test-floor-reports
+          path: |
+            ${{ runner.temp }}/negative-canary-report.json
+            ${{ runner.temp }}/deterministic-test-floor-report.json
+          if-no-files-found: error
