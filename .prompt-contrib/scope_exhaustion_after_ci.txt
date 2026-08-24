@@ -1,0 +1,1 @@
+trigger scope-exhaustion patch after Prompt Kit freshness CI; remove in durable commit
