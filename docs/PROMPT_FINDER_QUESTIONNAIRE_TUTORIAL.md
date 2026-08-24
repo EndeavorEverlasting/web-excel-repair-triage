@@ -2,23 +2,25 @@
 
 The Prompt Kit contains many specialized prompts. You do not need to know their IDs or scroll through the entire library before beginning work.
 
-Use the glowing **Tutorial · Find My Prompt** control to answer four short questions. The Prompt Kit then recommends one prompt to start with and, when useful, up to two follow-on prompts. The questionnaire runs entirely in the generated page, does not send answers to a server, and does not retain them after the page is reset or closed.
+Use the glowing **Tutorial · Find My Prompt** control to answer three short context questions and one adaptive fourth question. The Prompt Kit then recommends one prompt to start with and up to two related options. If none of the adaptive choices fits, an optional fifth question exposes the full live prompt registry without requiring you to know prompt IDs. The questionnaire runs entirely in the generated page, does not send answers to a server, and does not retain them after the page is reset or closed.
 
 ## Start the questionnaire
 
 1. Open the generated Prompt Kit website at `web/prompt-kit/index.html` or the public Prompt Kit URL.
 2. Select the glowing **Tutorial · Find My Prompt** control in the header.
-3. Answer four bounded questions:
-   - whether you are just starting out, already inside a repository, or looking at an app/artifact;
-   - whether you already know the problem or task you want to solve;
-   - what outcome you are trying to accomplish;
-   - whether the work is one sprint, parallel, sequential, or moving toward runtime proof.
-4. Review the **Primary recommendation** first.
-5. Read the **After the recommendation** path to see what the current registry says should follow that prompt.
-6. Select **Open** to read the full prompt or **Copy** to place it on the clipboard.
-7. Complete the current prompt's expected output or proof before moving to the next registered step.
+3. Answer three compact context questions:
+   - where you are starting, including no checkout, unfamiliar repo, known repo, active failure, open PR/review, or an app/artifact already open;
+   - what you need to accomplish, with distinct choices for discovery, planning, coordination, repeated friction/urgency recovery, implementation, diagnosis, artifacts, proof, shipping, teaching, agent/harness work, management/correspondence, and closeout;
+   - what proof/result level you actually need.
+4. Use the adaptive fourth question to choose the closest current prompt route. Those choices are computed from the live registry and shared search evidence, not from a private prompt-ID table.
+5. If none fits, choose **Something else — show every prompt**. The optional fifth question renders every current registry prompt and lets you filter the list with ordinary Prompt Kit search terms.
+6. Review the **Primary recommendation** first.
+7. Select **Open** to read the full prompt or **Copy** to place it on the clipboard.
+8. Complete the current prompt's expected output or proof before moving through its registry-owned **Guided workflow**.
 
-The questionnaire does not invent prompt text or maintain a private prompt-ID routing table. Each answer is translated into ordinary search phrases and passed through the same `filterPromptsForQuery(PROMPTS, query)` function used by the Prompt Kit search box. That means the tutorial reuses the current registry, synonym dictionary, metadata ranking, and filtering behavior instead of creating a second recommendation engine.
+The default experience still ends after four questions. The fifth question exists as a coverage escape hatch, so newly added or highly specialized prompts remain reachable without making every user answer a longer questionnaire.
+
+The finder does not maintain a second prompt-ID recommendation database. The first three answers contribute ordinary search phrases through `filterPromptsForQuery(PROMPTS, query)`, with overlapping evidence de-duplicated per question. The adaptive fourth question presents live registry records. The optional fifth question renders `PROMPTS` itself and uses the same shared search function only when you type a filter. This gives every current prompt a tutorial route while keeping prompt identity and semantics owned by the canonical registry.
 
 ## Use → prove → continue
 

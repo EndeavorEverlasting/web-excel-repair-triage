@@ -28,6 +28,8 @@ REQUIRED_IDS = {
     "favorites_first",
     "favorite_accessibility",
     "guided_questionnaire",
+    "adaptive_questionnaire",
+    "tutorial_route_coverage",
     "guided_uses_shared_search",
     "metadata_recommendations",
     "guided_next_step_journey",
@@ -90,22 +92,31 @@ def audit() -> dict[str, object]:
         missing.append("favorites_first")
 
     guided_markers = (
-        "PROMPT_FINDER_QUESTIONS",
+        "FIXED_PROMPT_FINDER_QUESTIONS",
         "id:'startingPoint'",
-        "id:'problemKnown'",
         "id:'goal'",
-        "id:'shape'",
-        "slice(0,3)",
+        "id:'proofNeed'",
+        "id:'repeated-stall'",
+        "work keeps stalling, urgency is being missed",
+        "function renderAdaptiveQuestion()",
+        "Something else — show every prompt",
+        "function renderSpecialistQuestion()",
+        "function specialistPrompts(query)",
+        "if(!q)return PROMPTS.slice().sort",
+        "filterPromptsForQuery(PROMPTS,query)",
         "promptFinderBtn",
         "✦ Tutorial · Find My Prompt",
         "prompt-finder-beacon",
         "prefers-reduced-motion:reduce",
-        "filterPromptsForQuery(PROMPTS,query)",
         "actions.appendChild(addButton)",
     )
     if any(marker not in guided_js for marker in guided_markers):
         missing.append("guided_questionnaire")
-    if "filterPromptsForQuery(PROMPTS,query)" not in guided_js or "var R=" in guided_js:
+    if any(marker not in guided_js for marker in ("renderAdaptiveQuestion", "ADAPTIVE_CANDIDATE_LIMIT=6", "usually final")):
+        missing.append("adaptive_questionnaire")
+    if any(marker not in guided_js for marker in ("Something else — show every prompt", "PROMPTS.slice().sort", "data-finder-specialist-prompt")):
+        missing.append("tutorial_route_coverage")
+    if "filterPromptsForQuery(PROMPTS,query)" not in guided_js or "var R=" in guided_js or "sharedSearch(query).slice(0,5)" in guided_js:
         missing.append("guided_uses_shared_search")
     if any(marker not in guided_js for marker in ("PROMPTS.find", "copyPrompt(", "showPromptDetail(")):
         missing.append("metadata_recommendations")

@@ -38,6 +38,8 @@ class PromptKitDiscoveryTests(unittest.TestCase):
                 "favorites_first",
                 "favorite_accessibility",
                 "guided_questionnaire",
+                "adaptive_questionnaire",
+                "tutorial_route_coverage",
                 "guided_uses_shared_search",
                 "metadata_recommendations",
                 "guided_next_step_journey",
@@ -125,16 +127,17 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
     def test_guided_questionnaire_uses_shared_search_and_no_prompt_id_router(self) -> None:
         guided = GUIDED_JS.read_text(encoding="utf-8")
         for marker in (
+            "FIXED_PROMPT_FINDER_QUESTIONS",
             "id:'startingPoint'",
-            "I am just starting out or do not have the repository checked out",
-            "I am already inside an existing repository",
-            "id:'problemKnown'",
-            "Do you have a known problem you want to solve?",
             "id:'goal'",
-            "id:'shape'",
+            "id:'proofNeed'",
+            "id:'repeated-stall'",
+            "work keeps stalling, urgency is being missed",
+            "renderAdaptiveQuestion",
+            "Something else — show every prompt",
+            "renderSpecialistQuestion",
             "filterPromptsForQuery(PROMPTS,query)",
             "PROMPTS.find",
-            "slice(0,3)",
             "copyPrompt(",
             "showPromptDetail(",
             "promptFinderBtn",
@@ -143,9 +146,10 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             self.assertIn(marker, guided)
         self.assertNotIn("var R=", guided)
         self.assertNotIn("replaceChild(button,old)", guided)
-        question_ids = ("startingPoint", "problemKnown", "goal", "shape")
-        self.assertEqual(sum(guided.count(f"id:'{item}'") for item in question_ids), 4)
-        self.assertLessEqual(len(question_ids), 5)
+        self.assertNotIn("sharedSearch(query).slice(0,5)", guided)
+        question_ids = ("startingPoint", "goal", "proofNeed")
+        self.assertEqual(sum(guided.count(f"id:'{item}'") for item in question_ids), 3)
+        self.assertIn("PROMPT_FINDER_MAX_QUESTIONS=5", guided)
 
     def test_guided_journey_uses_registry_next_step_and_session_state(self) -> None:
         journey = JOURNEY_JS.read_text(encoding="utf-8")
