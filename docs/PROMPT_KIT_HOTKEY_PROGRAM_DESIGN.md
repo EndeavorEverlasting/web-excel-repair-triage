@@ -161,7 +161,7 @@ Production decisions closed on 2026-08-22:
 - `F` remains filter toggle; `[` explicitly hides filters and `]` explicitly shows filters.
 - configured prompt-ID sequences expire after 1.2 seconds.
 - only prompts that are currently Favorites may be assigned a prompt-ID shortcut.
-- a completed prompt-ID shortcut opens canonical prompt detail immediately through `showPromptDetail`.
+- a completed prompt-ID shortcut copies the canonical prompt and scrolls its card into view without opening prompt detail through `showPromptDetail`.
 - shortcut persistence uses versioned `promptKit.promptShortcuts.v1` storage and publishes only after a successful durable write.
 - configured shortcut rows sort by numeric prompt sequence rather than lexicographic ID text.
 

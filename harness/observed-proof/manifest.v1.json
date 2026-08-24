@@ -1,0 +1,13 @@
+{
+  "schema_version": "observed-behavior-proof-harness/v1",
+  "contract": "harness/observed-proof/CONTRACT.md",
+  "validator": "scripts/validate_observed_behavior_receipt.py",
+  "contract_tests": "tests/test_observed_behavior_proof_harness.py",
+  "browser_proof": "tests/prompt_kit_favorite_browser_proof.py",
+  "ci": ".github/workflows/prompt-kit-observed-browser-proof.yml",
+  "receipt_schema": "observed-behavior-proof/v1",
+  "pass_requires_observed_events": true,
+  "missing_artifact_fails_closed": true,
+  "evidence_tiers_are_ordered": true,
+  "stale_on_subject_or_artifact_change": true
+}

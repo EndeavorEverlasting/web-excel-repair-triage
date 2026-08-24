@@ -56,7 +56,10 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             "if(!persistPromptShortcutBindings(candidate))return false",
             "promptShortcutBindings=candidate",
             "function handleConfiguredPromptShortcutKey(e,key)",
-            "showPromptDetail(promptId,null)",
+            "function activatePromptShortcutTarget(promptId)",
+            "revealPromptShortcutTarget(promptId)",
+            "renderTypes();",
+            "copyPrompt(promptId)",
         ):
             self.assertIn(marker, source)
         self.assertLess(
@@ -88,8 +91,8 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             "FILTER_HIDE",
             "FILTER_SHOW",
             "FILTER_TOGGLE",
-            "OPEN_PROMPT(P95)",
-            "OPEN_PROMPT(P14)",
+            "COPY_REVEAL_PROMPT(P95)",
+            "COPY_REVEAL_PROMPT(P14)",
             "VIEW_DOCTRINE",
         ):
             self.assertIn(path, proof["success_paths"])
@@ -103,6 +106,7 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             self.assertIn(path, proof["failure_paths"])
         self.assertTrue(any(item.get("promptId") == "P95" for item in proof["trace"]))
         self.assertTrue(any(item.get("promptId") == "P14" for item in proof["trace"]))
+        self.assertTrue(any(item.get("event") == "prompt_copied_and_revealed" for item in proof["trace"]))
 
     def test_shortcut_rows_are_numeric_and_generated_runtime_matches_source(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
@@ -138,7 +142,7 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             self.assertIn(row, readme)
         self.assertIn("Typed prompt sequences expire after 1.2 seconds", readme)
         self.assertIn("only prompts that are currently Favorites", design)
-        self.assertIn("opens canonical prompt detail immediately", design)
+        self.assertIn("copies the canonical prompt and scrolls its card into view without opening prompt detail", design)
         self.assertIn("buffer is active", design)
         self.assertIn("one hand", design)
         self.assertNotIn("Still unresolved by design proof:", design)
