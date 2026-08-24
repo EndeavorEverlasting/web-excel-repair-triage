@@ -60,7 +60,7 @@ This extension is design-ready only when executable evidence proves:
 
 ### One-profile user
 
-- The application exposes an implicit `default` Prompt Profile.
+- The application exposes one implicit default Prompt Profile; defaultness is catalog metadata, not a magic profile ID.
 - No profile switcher is required when only one profile exists.
 - Existing durable Favorite/shortcut storage can remain the default profile's backing store through a compatibility adapter.
 - Prompt catalog, generated artifact, and transient browsing behavior remain unchanged merely because profile-capable architecture exists.
@@ -83,11 +83,12 @@ This extension is design-ready only when executable evidence proves:
 6. **Prompt catalog is profile-independent.** A profile does not duplicate canonical prompts or generated HTML.
 7. **Transient browsing state is not profile-owned by default.** Search/filter/detail/current location remain `SessionState` until a separate user requirement proves they should persist per profile.
 8. **Preference semantics keep their owners.** Favorites remain owned by `FavoritePreferences`; shortcuts remain owned by the existing `ShortcutRegistry`. Profiles change persistence namespace, not semantic ownership.
-9. **Default profile is a compatibility boundary.** Production may map the default profile to today's existing storage keys; named profiles may use namespaced records. The prototype does not invent new production key names.
+9. **Default profile is a compatibility boundary, not a magic ID.** Production may map whichever profile `ProfileCatalog` marks default to today's existing storage keys; named profiles may use namespaced records. The prototype does not invent new production key names.
 10. **Profile activation is reversible session state.** Activating another profile changes the active preference context, not the prompt registry or current page location.
 11. **Fail closed on scoped persistence.** A failed write publishes no new Favorite/shortcut state for the target profile and touches no other profile.
 12. **Async commands retain initiation context.** A profile switch during a pending clipboard write does not rewrite that command's profile attribution.
 13. **Presentation differences stay at the presentation seam.** Focus/scroll/reveal policy may inspect interaction context; clipboard, persistence, catalog validation, and completion semantics may not fork by modality.
+14. **Profile attribution is privacy-bounded.** If semantic usage is enabled, traces/events carry only the initiating opaque profile ID plus semantic action metadata; they do not record profile display names or prompt bodies.
 
 ## Domain vocabulary
 
@@ -541,6 +542,8 @@ Prototype design changed the initial intuition in several useful ways:
 5. **Do not require migration before value.** A default-profile compatibility adapter lets current users retain existing preference storage while named profiles get a namespace.
 6. **Do not read active profile at command completion.** Async actions keep the profile snapshot captured at initiation so telemetry and scoped mutation cannot drift.
 7. **Do not persist last active profile yet.** Session-only activation is sufficient to prove architecture; durable resume semantics need an explicit product decision.
+8. **Green tests exposed a hidden default-ID coupling on review.** The first executable fake treated `isDefault` as catalog metadata but independently hard-coded the literal ID `default` in storage. The second pass removed that split-brain assumption: `ProfileCatalog.defaultProfile().id` now configures the compatibility store, and the executable one-profile journey uses `solo` to prove the role is not tied to a magic identifier.
+9. **Keep semantic traces privacy-bounded.** Profile attribution uses an opaque initiating ID only; display names and prompt bodies remain outside trace payloads.
 
 No safer bounded design improvement remains in this prototype scope without crossing into broad production implementation or inventing unrequested profile lifecycle semantics.
 

@@ -84,6 +84,10 @@ class PromptKitProfileModalityPrototypeTests(unittest.TestCase):
         self.assertIn("class ProfiledFavoritePreferences", text)
         self.assertIn("legacy-default-slot", text)
         self.assertIn("PROFILE_PREFERENCE_PERSISTENCE_FAILED", text)
+        self.assertIn("defaultProfileId: profileCatalog.defaultProfile().id", text)
+        self.assertNotIn("return profileId === 'default' ?", text)
+        self.assertNotIn("const favorites = profileId === 'default'", text)
+        self.assertNotIn("if (profileId === 'default') {", text)
 
     def test_failure_boundaries_are_observable_and_do_not_leak_prompt_bodies(self) -> None:
         report = self.run_prototype()

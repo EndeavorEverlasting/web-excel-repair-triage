@@ -133,8 +133,13 @@ class MemoryProfilePreferenceStore {
     legacyFavorites = ['P07'],
     profileFavorites = {work: ['P95']},
     failProfileIds = [],
+    defaultProfileId = 'default',
   } = {}) {
     this.trace = trace;
+    if (typeof defaultProfileId !== 'string' || !defaultProfileId.trim()) {
+      throw new PromptKitProgramError('INVALID_DEFAULT_PROFILE_ID', 'Profile preference storage requires the catalog default profile id.');
+    }
+    this.defaultProfileId = defaultProfileId;
     this.legacyFavorites = [...legacyFavorites].sort();
     this.profileFavorites = Object.fromEntries(
       Object.entries(profileFavorites || {}).map(([profileId, favorites]) => [profileId, [...favorites].sort()])
@@ -143,10 +148,10 @@ class MemoryProfilePreferenceStore {
     this.saveCalls = [];
   }
   storageSlot(profileId) {
-    return profileId === 'default' ? 'legacy-default-slot' : `named-profile:${profileId}`;
+    return profileId === this.defaultProfileId ? 'legacy-default-slot' : `named-profile:${profileId}`;
   }
   loadFavorites(profileId) {
-    const favorites = profileId === 'default'
+    const favorites = profileId === this.defaultProfileId
       ? this.legacyFavorites
       : (this.profileFavorites[profileId] || []);
     this.trace.push({
@@ -181,7 +186,7 @@ class MemoryProfilePreferenceStore {
         {profileId}
       );
     }
-    if (profileId === 'default') {
+    if (profileId === this.defaultProfileId) {
       this.legacyFavorites = [...next];
     } else {
       this.profileFavorites[profileId] = [...next];
@@ -370,6 +375,7 @@ function buildProfileModalityProgram({
     legacyFavorites,
     profileFavorites,
     failProfileIds,
+    defaultProfileId: profileCatalog.defaultProfile().id,
   });
   const favorites = new ProfiledFavoritePreferences(trace, preferenceStore);
   const clipboard = new MemoryClipboard(trace, {fail: clipboardFail, defer: clipboardDefer});
@@ -485,14 +491,14 @@ async function expectCode(expected, fn) {
 
 async function runSelfTest() {
   const singleProfile = buildProfileModalityProgram({
-    profiles: [{id: 'default', name: 'Default', isDefault: true}],
+    profiles: [{id: 'solo', name: 'Default', isDefault: true}],
     profileFavorites: {},
   });
   assert(singleProfile.profileCatalog.needsSwitcher() === false, 'single-profile user needs no profile switcher');
 
   const pointerCopy = await singleProfile.controls.copy('P07', 'pointer');
   assert(pointerCopy.status === 'COPIED', 'pointer control reaches terminal clipboard value');
-  assert(pointerCopy.profileId === 'default', 'single-profile pointer command uses implicit default profile');
+  assert(pointerCopy.profileId === 'solo', 'single-profile pointer command uses the catalog-defined default profile identity');
   assert(pointerCopy.presentation.preserveOriginFocus === true, 'pointer control does not receive keyboard-only focus movement');
   assert(singleProfile.surface.focusedCopy.length === 0, 'pointer control path does not force Copy focus');
 
@@ -504,7 +510,8 @@ async function runSelfTest() {
   const defaultFavorite = await singleProfile.controls.toggleFavorite('P95', 'pointer');
   assert(defaultFavorite.favorite === true, 'default profile Favorite mutation succeeds');
   assert(singleProfile.preferenceStore.legacyFavorites.includes('P95'), 'default profile writes through legacy compatibility slot');
-  assert(!Object.prototype.hasOwnProperty.call(singleProfile.preferenceStore.profileFavorites, 'default'), 'default profile does not invent a named-profile storage slot');
+  assert(singleProfile.preferenceStore.storageSlot('solo') === 'legacy-default-slot', 'catalog-defined default profile uses the legacy compatibility slot');
+  assert(!Object.prototype.hasOwnProperty.call(singleProfile.preferenceStore.profileFavorites, 'solo'), 'default profile does not invent a named-profile storage slot');
 
   const multiProfile = buildProfileModalityProgram({clipboardDefer: true});
   assert(multiProfile.profileCatalog.needsSwitcher() === true, 'multi-profile user exposes profile-switch capability');
