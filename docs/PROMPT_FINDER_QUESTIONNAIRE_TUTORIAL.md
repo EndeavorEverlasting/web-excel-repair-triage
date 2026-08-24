@@ -56,6 +56,22 @@ This is deliberately not a second routing database. The browser reads the same `
 
 Marking a step complete is navigation state, not validation. It does not prove a test, runtime, deployment, merge, or operator-acceptance gate.
 
+### Evidence-bearing closeout
+
+Effective Prompt Kit prompts inherit the shared operational closeout contract. Before a legitimate stop, the agent should spend words on decisions, evidence, uncertainty, and continuation—not on narrating tool use or repeating the plan.
+
+A useful closeout distinguishes:
+
+- **completed / proven** work, changed surfaces, produced artifacts, and validation actually observed;
+- **commands / examples verified** only when they actually ran or have independent execution evidence;
+- **unproven runtime / field steps** that static or CI checks cannot promote into browser, device, production, or operator acceptance;
+- **review / reconciliation** when a finding, failed check, or earlier design changed the work: finding → repair/disposition → rerun proof;
+- **integration state** for repository work, including target branch, PR/merge state, and refreshed-main evidence;
+- **remaining gaps, risks, blockers, and proof ceiling** without hiding uncertainty behind `green` or `ready`;
+- the first executable **next action**, or `none; no safe actionable work remains` only when the owned work is genuinely complete.
+
+A copy-paste handoff is useful when work must continue in another chat or agent. It should carry the exact repo/source, branch/PR/SHA or artifact identity, proven floor, remaining gap or blocker, forbidden scope, and first executable action. Do not add a ceremonial handoff when no continuation remains.
+
 ## Common paths
 
 | Situation | Typical starting prompt | Why |
