@@ -13,6 +13,10 @@ POLISH_JS = ROOT / "docs" / "prompt-kit-polish.js"
 CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-discovery.v1.json"
 DISPLAY_ORDER = ROOT / "registry" / "prompts" / "prompt-display-order.v1.json"
 TUTORIAL_PROMPTS = ROOT / "registry" / "prompts" / "tutorial-discovery-prompts.v1.json"
+P83_REGISTRY = ROOT / "registry" / "prompts" / "repository-work-ledger-prompts.v1.json"
+FINDER_TUTORIAL = ROOT / "docs" / "PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md"
+OPERATOR_GUIDE = ROOT / "docs" / "PROMPT_KIT_OPERATOR_GUIDE.md"
+WEB_README = ROOT / "web" / "README.md"
 ACCESS_GUIDE = ROOT / "PROMPT_KIT_ACCESS.md"
 README = ROOT / "README.md"
 DEPLOYED = ROOT / "web" / "prompt-kit" / "index.html"
@@ -227,6 +231,51 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         self.assertEqual(by_id["P96"]["name"], "Stateful Socratic Technical Tutor Workspace")
         self.assertIn("active retrieval", by_id["P96"]["copyContent"].lower())
         self.assertEqual(by_id["P98"]["name"], "Teach Workspace Protocol Bootstrapper")
+
+    def test_operator_docs_match_current_finder_p83_favorites_and_shortcuts(self) -> None:
+        guide = OPERATOR_GUIDE.read_text(encoding="utf-8")
+        tutorial = FINDER_TUTORIAL.read_text(encoding="utf-8")
+        web = WEB_README.read_text(encoding="utf-8")
+        guided = GUIDED_JS.read_text(encoding="utf-8")
+        polish = POLISH_JS.read_text(encoding="utf-8")
+        payload = json.loads(P83_REGISTRY.read_text(encoding="utf-8"))
+        p83 = next(item for item in payload["prompts"] if item["id"] == "P83")
+
+        question_ids = ("startingPoint", "problemKnown", "goal", "shape")
+        self.assertEqual(sum(guided.count(f"id:'{item}'") for item in question_ids), 4)
+        self.assertIn("slice(0,5)", guided)
+        self.assertIn("slice(0,3)", guided)
+        self.assertIn("Answer the **four** current questions", guide)
+        self.assertIn("first five shared-search results", guide)
+        self.assertIn("returns at most three recommendations", guide)
+        self.assertIn("Answer the four current questions", tutorial)
+
+        self.assertEqual(p83["name"], "Agent Work Verifier & Iterative Advancer")
+        self.assertIn("claims work is complete or partially complete", p83["useWhen"])
+        self.assertIn("P83 — Agent Work Verifier & Iterative Advancer", guide)
+        self.assertIn("search **`P83`**", guide)
+        self.assertIn("P83 — Agent Work Verifier & Iterative Advancer", tutorial)
+        self.assertIn("Another agent claims work is complete or partially complete", tutorial)
+
+        start = polish.index("function activatePromptShortcutTarget")
+        end = polish.index("\n\nfunction handleConfiguredPromptShortcutKey", start)
+        activation = polish[start:end]
+        self.assertIn("revealPromptShortcutTarget(promptId)", activation)
+        self.assertIn("copyPrompt(promptId)", activation)
+        self.assertNotIn("showPromptDetail", activation)
+        self.assertIn("Copy + reveal '+promptId", polish)
+        self.assertIn("**does not open prompt detail**", guide)
+        self.assertIn("**without opening prompt detail**", web)
+        self.assertNotIn("open the canonical prompt detail immediately", web)
+
+        self.assertIn("Favorites do **not** reorder the normal library", guide)
+        self.assertIn("Favorites remain in the normal chronological/numeric library order by default", web)
+        self.assertNotIn(
+            "Visible favorited prompts are promoted into one **Favorites** section before the normal sections.",
+            web,
+        )
+        self.assertIn("PROMPT_KIT_OPERATOR_GUIDE.md", tutorial)
+        self.assertIn("PROMPT_KIT_OPERATOR_GUIDE.md", web)
 
     def test_repo_front_door_exposes_browser_phone_zip_cmd_and_clone(self) -> None:
         readme = README.read_text(encoding="utf-8")
