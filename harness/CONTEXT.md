@@ -9,14 +9,14 @@ Load only:
 1. `AGENTS.md`
 2. this file
 
-Then choose one domain. Do not eagerly read every root contract, every skill, the full manifest, reports, schemas, fixtures, or implementation files.
+Then choose one domain. Do not eagerly read root contracts, skills, manifests, reports, schemas, fixtures, or implementation files.
 
 ## Route by task
 
 | Task | 30,000-foot owner | 15,000-foot detail only when needed |
 |---|---|---|
 | Harness/spec structure, context bloat | `CODEBASE_MAP.md` | `.ai/skills/harness-infrastructure-maintenance/SKILL.md`, selected harness contract/validator |
-| Canonical checkout, install/use/served path, writer worktree root, or real operator entrypoint | `harness/canonical-paths.v1.json` | `harness/workflows/canonical-paths.md`; P92 only for deep path audit/repair |
+| Checkout/use/worktree/entrypoint path | `harness/canonical-paths.v1.json` | `harness/workflows/canonical-paths.md`; P92 for deep repair |
 | **Artifact creation / derivation** | `harness/artifact-derivation/CODEBASE_MAP.md` | `.ai/skills/artifact-derivation/SKILL.md`, `harness/artifact-derivation/contracts/create-new-from-source.v1.json` |
 | Human-facing artifact alias/download handoff | `harness/artifact-handoff/CODEBASE_MAP.md` | `.ai/skills/share-artifact-alias-handoff/SKILL.md`, `harness/artifact-handoff/contracts/share-alias-download.v1.json` |
 | Prompt Kit use/acquisition | `PROMPT_KIT_ACCESS.md` | `.ai/skills/technician-prompt-kit-acquisition/SKILL.md` |
