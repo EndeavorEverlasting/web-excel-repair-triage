@@ -27,6 +27,7 @@ on:
       - registry/prompts/prompt-display-order.v1.json
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
       - docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md
+      - docs/PROMPT_KIT_OPERATOR_GUIDE.md
       - docs/PROMPT_KIT_PORTABILITY.md
       - docs/prompt-kit-order-navigation.md
       - docs/prompt-kit.js
@@ -56,6 +57,7 @@ on:
       - tests/test_prompt_kit_mobile.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_kit_guidance.py
+      - tests/test_prompt_kit_operator_docs.py
       - tests/test_prompt_kit_order_navigation_contract.py
       - tests/test_prompt_kit_order_navigation_product.py
       - tests/test_prompt_kit_portability.py
@@ -95,6 +97,7 @@ on:
       - registry/prompts/prompt-display-order.v1.json
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
       - docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md
+      - docs/PROMPT_KIT_OPERATOR_GUIDE.md
       - docs/PROMPT_KIT_PORTABILITY.md
       - docs/prompt-kit-order-navigation.md
       - docs/prompt-kit.js
@@ -124,6 +127,7 @@ on:
       - tests/test_prompt_kit_mobile.py
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_kit_guidance.py
+      - tests/test_prompt_kit_operator_docs.py
       - tests/test_prompt_kit_order_navigation_contract.py
       - tests/test_prompt_kit_order_navigation_product.py
       - tests/test_prompt_kit_portability.py
@@ -168,6 +172,7 @@ jobs:
             tests/test_prompt_kit_mobile.py \
             tests/test_prompt_kit_discovery.py \
             tests/test_prompt_kit_guidance.py \
+            tests/test_prompt_kit_operator_docs.py \
             tests/test_prompt_kit_order_navigation_contract.py \
             tests/test_prompt_kit_order_navigation_product.py \
             tests/test_prompt_kit_portability.py \
@@ -251,11 +256,11 @@ jobs:
             Outputs/prompt-kit-portable/manifest.json
             Outputs/prompt-kit-portability-validation.json
           if-no-files-found: error
-      - name: Validate search favorites tutorial journey and polish contract
+      - name: Validate search favorites tutorial journey and operator docs
         run: |
           python -m unittest tests.test_prompt_kit_hotkey_completion -v
           python scripts/validate_prompt_kit_discovery.py --summary
-          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
+          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance tests.test_prompt_kit_operator_docs -v
       - name: Validate combined prompt registry
         run: |
           python -m unittest tests.test_skill_prompt_registry -v
