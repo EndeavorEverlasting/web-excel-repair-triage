@@ -69,6 +69,10 @@ class PromptRegistryExpansionTests(unittest.TestCase):
             "2-4 materially different candidates",
             "P97 Open-Source Prior-Art & Gap Analyst",
             "Creativity is disciplined recombination",
+            "ACQUIRE COHESIVE REPOSITORY CONTEXT",
+            "Do not treat a single pasted file as sufficient evidence",
+            "Repomix/code2prompt",
+            "root manifests/configuration",
         ):
             self.assertIn(phrase, content)
         design = self.by_name["Program Design & Call-Stack Prototype Architect"]
@@ -77,7 +81,7 @@ class PromptRegistryExpansionTests(unittest.TestCase):
         self.assertNotIn("BUILD THE SOLVED-BASELINE VS PRIORITIZED-GAP MAP", content)
         raw_payload = json.loads((ROOT / "registry/prompts/spec-architecture-prompts.v1.json").read_text(encoding="utf-8"))
         raw = next(p for p in raw_payload["prompts"] if p["id"] == "P95")
-        self.assertLessEqual(len(raw["copyContent"]), 9300)
+        self.assertLessEqual(len(raw["copyContent"]), 10000)
 
     def test_teach_prompt_is_grounded_stateful_and_active(self) -> None:
         content = self.by_name["Stateful Socratic Technical Tutor Workspace"]["copyContent"]
