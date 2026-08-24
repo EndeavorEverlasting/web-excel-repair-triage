@@ -7,6 +7,12 @@ on:
     paths:
       - .prompt-contrib/test-floor-evolution-draft.json
       - .github/workflows/tmp-test-floor-evolution-prompt.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .prompt-contrib/test-floor-evolution-draft.json
+      - .github/workflows/tmp-test-floor-evolution-prompt.yml
   workflow_dispatch:
 
 permissions:
