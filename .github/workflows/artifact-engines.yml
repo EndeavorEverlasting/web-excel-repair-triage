@@ -43,6 +43,31 @@ jobs:
         run: |
           set -euo pipefail
           python .prompt-contrib/favorite_observed_proof_repair.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/prompt_kit_favorite_browser_proof.py')
+          text = path.read_text(encoding='utf-8')
+          old = """            page.keyboard.press('9')
+            page.wait_for_timeout(250)
+            toast_text = page.locator('#toast').inner_text()
+"""
+          new = """            page.keyboard.press('9')
+            try:
+                page.wait_for_function(\"\"\"() => {
+                  const card=document.querySelector('[data-prompt-id=\\\"P79\\\"]');
+                  if(!card)return false;
+                  const r=card.getBoundingClientRect();
+                  return r.bottom>0 && r.top<innerHeight;
+                }\"\"\", timeout=4000)
+            except Exception:
+                pass
+            toast_text = page.locator('#toast').inner_text()
+"""
+          if text.count(old) != 1:
+              raise SystemExit('browser scroll synchronization anchor mismatch')
+          path.write_text(text.replace(old, new), encoding='utf-8', newline='\n')
+          print('browser proof now waits for the observed scroll destination rather than a fixed animation delay')
+          PY
 
       - name: Pass 1 deterministic validation
         shell: bash
@@ -88,6 +113,9 @@ jobs:
           for marker in ('UNKNOWN', 'occurred: true', 'passed: true', 'clipboard', 'focus/keyboard'):
               if marker not in contract:
                   raise SystemExit('observed-proof contract missing: ' + marker)
+          proof = Path('tests/prompt_kit_favorite_browser_proof.py').read_text(encoding='utf-8')
+          if 'wait_for_function' not in proof or 'timeout=4000' not in proof:
+              raise SystemExit('browser proof does not wait for scroll destination observation')
           print('Second-pass falsification: PASS')
           PY
           python -m unittest \
