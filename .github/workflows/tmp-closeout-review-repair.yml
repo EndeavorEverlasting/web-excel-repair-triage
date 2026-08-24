@@ -1,0 +1,81 @@
+name: Temporary closeout review repair
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/tmp-closeout-review-repair.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-closeout-review-repair
+  cancel-in-progress: false
+
+jobs:
+  repair-and-prove:
+    if: github.event.pull_request.head.ref == 'feat/prompt-closeout-evidence-hardening-20260824'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-closeout-evidence-hardening-20260824
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Apply review repairs, rebuild, validate, and remove carrier
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/prompt-closeout-evidence-hardening-20260824 --prune
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/feat/prompt-closeout-evidence-hardening-20260824)"
+          python - <<'PY'
+          from __future__ import annotations
+          import json
+          from pathlib import Path
+
+          policy_path = Path('registry/prompts/actionable-next-step-policy.v1.json')
+          policy = json.loads(policy_path.read_text(encoding='utf-8'))
+          suffix = policy['next_step_suffix']
+          old = 'If the owned branch or pull request is mergeable and all required checks, owning harness validators, dependency gates, and blocking reviews are green, merge it into the current default branch in the same run using a repository-accepted merge method; do not stop at PR-open or green-status reporting unless a named external gate actually blocks integration.'
+          new = 'If the exact current head is the head that was validated, the owned branch or pull request is mergeable, all required checks and owning harness validators are green, dependencies are satisfied, no blocking review, conflict, branch-protection, or required-approval gate remains, the acting agent has merge authority, and the user has not prohibited merge, merge it into the current default branch in the same run using a repository-accepted merge method; do not stop at PR-open or green-status reporting unless a named external gate actually blocks integration.'
+          if new not in suffix:
+              if old not in suffix:
+                  raise SystemExit('next_step_suffix merge-gate anchor missing')
+              suffix = suffix.replace(old, new, 1)
+          policy['next_step_suffix'] = suffix
+          policy_path.write_text(json.dumps(policy, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          test_path = Path('tests/test_operational_closeout_contract.py')
+          text = test_path.read_text(encoding='utf-8')
+          anchor = '''        for phrase in (\n            "EVIDENCE-BEARING CLOSEOUT",\n            "CHANGED SURFACES / ARTIFACTS",\n            "COMMANDS / EXAMPLES VERIFIED",\n            "UNPROVEN RUNTIME / FIELD STEPS",\n            "REVIEW / RECONCILIATION",\n            "pre/post default-branch SHA",\n            "HANDOFF",\n            "Spend words on decisions, evidence, uncertainty, and continuation",\n            "Do not add a ceremonial handoff when no continuation remains",\n        ):\n            self.assertIn(phrase, appendix)\n'''
+          replacement = anchor + '''        suffix = self.policy["next_step_suffix"]\n        for phrase in (\n            "exact current head is the head that was validated",\n            "no blocking review, conflict, branch-protection, or required-approval gate remains",\n            "acting agent has merge authority",\n            "user has not prohibited merge",\n            "compact evidence-bearing closeout",\n            "commands/examples actually verified",\n        ):\n            self.assertIn(phrase, suffix)\n'''
+          if 'suffix = self.policy["next_step_suffix"]' not in text:
+              if anchor not in text:
+                  raise SystemExit('suffix assertion insertion anchor missing')
+              text = text.replace(anchor, replacement, 1)
+
+          marker_anchor = '                self.assertEqual(content.count(MARKER), 1)\n'
+          marker_new = marker_anchor + '                self.assertEqual(content.count(self.policy["marker"]), 1)\n'
+          if 'content.count(self.policy["marker"])' not in text:
+              if marker_anchor not in text:
+                  raise SystemExit('primary marker assertion anchor missing')
+              text = text.replace(marker_anchor, marker_new, 1)
+          test_path.write_text(text, encoding='utf-8')
+          PY
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_operational_closeout_contract -v
+          python -m unittest tests.test_actionable_prompt_registry -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          rm .github/workflows/tmp-closeout-review-repair.yml
+          git add registry/prompts/actionable-next-step-policy.v1.json tests/test_operational_closeout_contract.py web/prompt-kit/index.html .github/workflows/tmp-closeout-review-repair.yml
+          git commit -m 'fix(prompt-kit): harden closeout merge gates and regressions'
+          git push origin HEAD:feat/prompt-closeout-evidence-hardening-20260824
