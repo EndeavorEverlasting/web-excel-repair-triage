@@ -98,6 +98,33 @@ class OperationalCloseoutContractTests(unittest.TestCase):
         self.assertEqual(upgraded["copyContent"].count(MARKER), 1)
         self.assertIn("EVIDENCE-BEARING CLOSEOUT", upgraded["copyContent"])
 
+
+    def test_scope_exhaustion_requires_supported_residual_classification(self) -> None:
+        appendix = self.policy["copy_content_appendix"]
+        for phrase in (
+            "Reconstruct the original request, owned scope",
+            "PROVEN DONE, SAFE & EXECUTABLE, BLOCKED, UNSAFE, or OUT OF SCOPE",
+            "SAFE & EXECUTABLE means work remains",
+            "Missing access is not evidence that the work is unsafe",
+            "UNSAFE is a narrow evidence-bearing classification",
+            "OUT OF SCOPE requires an explicit scope boundary",
+            "Do not move unfinished requested work out of scope",
+            "no SAFE & EXECUTABLE item remains",
+        ):
+            self.assertIn(phrase, appendix)
+
+        p83 = self.ledger["P83"]
+        for phrase in (
+            "SCOPE-EXHAUSTION AUDIT — CHALLENGE `NONE`",
+            "Any SAFE & EXECUTABLE item disproves closure",
+            "Missing tools, credentials, approval, or access is BLOCKED—not unsafe",
+            "OUT OF SCOPE requires an explicit boundary",
+        ):
+            self.assertIn(phrase, p83["copyContent"])
+        self.assertIn("no safe actionable work remains", p83["keywords"])
+        self.assertIn("scope exhaustion", p83["keywords"])
+        self.assertLess(len(p83["copyContent"]), 8000)
+
     def test_live_cert_domain_law_requires_actionable_closeout(self) -> None:
         text = (ROOT / "harness" / "specs" / "operator-delivery.md").read_text(encoding="utf-8")
         self.assertIn("## Actionable runtime / live-cert closeout", text)

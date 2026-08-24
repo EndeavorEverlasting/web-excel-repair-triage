@@ -1,1 +1,0 @@
-rerun repaired scope-exhaustion hardening with preserved evidence-bearing closeout; remove in durable commit
