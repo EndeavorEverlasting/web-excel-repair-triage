@@ -27,8 +27,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
           fetch-depth: 0
+
+      - name: Verify exact candidate SHA
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$EXPECTED_SHA"
+          echo "deterministic test-floor candidate sha=$actual"
 
       - uses: actions/setup-python@v5
         with:
@@ -42,7 +53,7 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install pytest
 
-      - name: Negative canary must fail at generated-site parity
+      - name: Negative generated-site canary must fail closed
         shell: bash
         run: |
           set -euo pipefail
@@ -63,12 +74,12 @@ jobs:
           import sys
           from pathlib import Path
           report = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
-          expected = 'validator:prompt-kit-parity'
+          expected = 'validator:skill-prompt-registry-tests'
           if report.get('status') != 'FAIL' or report.get('failed_step') != expected:
               raise SystemExit(
                   f"negative canary failed at {report.get('failed_step')!r}; expected {expected!r}"
               )
-          print(f"negative canary proved required failure gate: {expected}")
+          print(f"negative canary proved earliest registered failure gate: {expected}")
           PY
 
       - name: Run clean deterministic test floor
