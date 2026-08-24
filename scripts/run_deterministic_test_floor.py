@@ -43,6 +43,10 @@ def load_contract(manifest_path: Path) -> tuple[dict[str, Any], list[dict[str, A
             f"test-floor Python mismatch: expected {expected_python or '<missing>'}, observed {current_python}"
         )
 
+    dependency_file = str(manifest.get("dependency_file", "")).strip()
+    if not dependency_file or not (REPO_ROOT / dependency_file).is_file():
+        raise ContractError(f"test-floor dependency file is missing: {dependency_file or '<missing>'}")
+
     for field in ("compile_targets", "self_tests", "artifact_imports", "artifact_tests"):
         values = manifest.get(field)
         if not isinstance(values, list) or not values or any(not isinstance(v, str) or not v.strip() for v in values):
@@ -154,7 +158,7 @@ def build_steps(manifest: dict[str, Any], validators: list[dict[str, Any]]) -> l
         steps.append((f"validator:{validator['id']}", command_argv(str(validator["command"]))))
 
     if _git_value("rev-parse", "--verify", "origin/main"):
-        steps.append(("branch-patch-hygiene", ["git", "diff", "--check", "origin/main...HEAD"]))
+        steps.append(("branch-patch-hygiene", ["git", "diff", "--check", "origin/main", "HEAD"]))
     else:
         steps.append(("branch-patch-hygiene", ["git", "diff", "--check"]))
     return steps
@@ -190,6 +194,7 @@ def run(manifest_path: Path, report_path: Path) -> int:
         "branch": _git_value("rev-parse", "--abbrev-ref", "HEAD"),
         "python": sys.version.split()[0],
         "manifest": str(manifest_path.relative_to(REPO_ROOT)) if manifest_path.is_relative_to(REPO_ROOT) else str(manifest_path),
+        "dependency_file": manifest["dependency_file"],
         "validator_profile": manifest["validator_profile"],
         "self_test_count": len(manifest["self_tests"]),
         "artifact_test_count": len(manifest["artifact_tests"]),
