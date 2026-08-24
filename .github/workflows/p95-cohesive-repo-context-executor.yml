@@ -1,0 +1,131 @@
+name: Temporary P95 cohesive repo context executor
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  execute:
+    if: github.event.pull_request.head.ref == 'feat/p95-cohesive-repo-context-20260824'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Refresh main and preserve current branch work
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+          fi
+          echo "candidate=$(git rev-parse HEAD)"
+          echo "main=$(git rev-parse origin/main)"
+
+      - name: Strengthen P95 and focused regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+          import json
+          from pathlib import Path
+
+          registry = Path('registry/prompts/spec-architecture-prompts.v1.json')
+          payload = json.loads(registry.read_text(encoding='utf-8'))
+          p95 = next(p for p in payload['prompts'] if p['id'] == 'P95')
+
+          inspect_clause = (
+              ' Do not infer whole-program architecture from one isolated file: acquire cohesive repository context '
+              'covering the relevant tree, root manifests/configuration, entrypoints, state owners, composition/routing, '
+              'tests, and dependency declarations before making repository-wide claims. If direct repository access is '
+              'unavailable, use a bounded repo bundle or tree-plus-root-config fallback and state the resulting proof limit.'
+          )
+          if 'Do not infer whole-program architecture from one isolated file' not in p95['inspectFirst']:
+              p95['inspectFirst'] = p95['inspectFirst'].rstrip('.') + '.' + inspect_clause
+
+          section = '''\n\n1B. ACQUIRE COHESIVE REPOSITORY CONTEXT — NOT ONE ISOLATED FILE\nBefore architecture conclusions, inspect the repository as a connected system. Prefer direct repository access and read the relevant file tree, root manifests/configuration, entrypoints, composition/routing, state owners, dependency declarations, tests, and persistence/external boundaries together. If direct repo access is unavailable, use a bounded repository bundle such as Repomix/code2prompt or a generated tree plus root configs and architecture/dependency maps. Exclude secrets, vendor/generated bulk, binaries, and unrelated paths. Do not treat a single pasted file as sufficient evidence for application-wide state, dependency, lifecycle, or configuration claims; narrow the claim explicitly when only partial context is available.\n'''
+          marker = '\n\n2. BUILD A PRECISE DOMAIN VOCABULARY\n'
+          if '1B. ACQUIRE COHESIVE REPOSITORY CONTEXT' not in p95['copyContent']:
+              if marker not in p95['copyContent']:
+                  raise SystemExit('P95 insertion marker not found')
+              p95['copyContent'] = p95['copyContent'].replace(marker, section + marker, 1)
+
+          proof = (
+              ' Repository-wide architecture claims are grounded in cohesive repository context, or are explicitly '
+              'limited when only partial context is available.'
+          )
+          if 'Repository-wide architecture claims are grounded in cohesive repository context' not in p95['proofGate']:
+              p95['proofGate'] = p95['proofGate'].rstrip('.') + '.' + proof
+
+          for keyword in ('whole repository context', 'repository bundle', 'repomix', 'code2prompt'):
+              if keyword not in p95['keywords']:
+                  p95['keywords'].append(keyword)
+
+          registry.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          test_path = Path('tests/test_prompt_registry_expansion_regression_design_teach.py')
+          text = test_path.read_text(encoding='utf-8')
+          anchor = '            "Creativity is disciplined recombination",\n'
+          additions = (
+              '            "ACQUIRE COHESIVE REPOSITORY CONTEXT",\n'
+              '            "Do not treat a single pasted file as sufficient evidence",\n'
+              '            "Repomix/code2prompt",\n'
+              '            "root manifests/configuration",\n'
+          )
+          if '"ACQUIRE COHESIVE REPOSITORY CONTEXT"' not in text:
+              if anchor not in text:
+                  raise SystemExit('P95 regression insertion anchor not found')
+              text = text.replace(anchor, anchor + additions, 1)
+          old_limit = '        self.assertLessEqual(len(raw["copyContent"]), 9300)\n'
+          new_limit = '        self.assertLessEqual(len(raw["copyContent"]), 10000)\n'
+          if old_limit in text:
+              text = text.replace(old_limit, new_limit, 1)
+          test_path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Rebuild canonical Prompt Kit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+      - name: Validate focused prompt semantics and generated parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_prompt_registry_expansion_regression_design_teach -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/evaluate_prompt_language.py --summary
+          git diff --check
+
+      - name: Commit durable result and remove executor
+        shell: bash
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          rm .github/workflows/p95-cohesive-repo-context-executor.yml
+          git add registry/prompts/spec-architecture-prompts.v1.json \
+                  tests/test_prompt_registry_expansion_regression_design_teach.py \
+                  web/prompt-kit/index.html \
+                  .github/workflows/p95-cohesive-repo-context-executor.yml
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo 'No durable changes produced' >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'feat(prompt-kit): ground P95 in cohesive repo context'
+          git push origin "HEAD:${BRANCH}"
