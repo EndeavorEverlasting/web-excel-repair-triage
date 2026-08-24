@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - .prompt-contrib/p65-verifier-routing-trigger.txt
+      - .github/workflows/tmp-p65-verifier-routing-repair.yml
 
 permissions:
   contents: write
