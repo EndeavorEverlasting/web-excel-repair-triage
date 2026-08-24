@@ -5,6 +5,7 @@ import re
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from scripts import run_deterministic_test_floor as floor
 
@@ -25,10 +26,18 @@ class DeterministicTestFloorTests(unittest.TestCase):
     def test_manifest_is_nonempty_and_all_owned_paths_exist(self) -> None:
         self.assertEqual(self.manifest["schema_version"], "deterministic-test-floor/v1")
         self.assertEqual(self.manifest["python_version"], "3.11")
+        self.assertGreater(len(self.manifest["self_tests"]), 0)
         self.assertGreater(len(self.manifest["artifact_imports"]), 0)
         self.assertGreater(len(self.manifest["artifact_tests"]), 0)
-        for rel in self.manifest["compile_targets"] + self.manifest["artifact_tests"]:
+        for rel in self.manifest["compile_targets"] + self.manifest["self_tests"] + self.manifest["artifact_tests"]:
             self.assertTrue((REPO_ROOT / rel).exists(), rel)
+
+    def test_test_floor_runs_its_own_regression_before_product_lanes(self) -> None:
+        manifest, validators = floor.load_contract(MANIFEST)
+        labels = [label for label, _ in floor.build_steps(manifest, validators)]
+        self.assertIn("test-floor-self-tests", labels)
+        self.assertLess(labels.index("test-floor-self-tests"), labels.index("artifact-engine-tests"))
+        self.assertLess(labels.index("test-floor-self-tests"), labels.index("validator:harness-completeness"))
 
     def test_artifact_suite_stays_in_sync_with_existing_ci_owner(self) -> None:
         workflow = ARTIFACT_WORKFLOW.read_text(encoding="utf-8")
@@ -51,13 +60,24 @@ class DeterministicTestFloorTests(unittest.TestCase):
             self.assertIs(by_id[validator_id]["blocking"], True)
             self.assertTrue(by_id[validator_id]["command"].strip())
 
-    def test_empty_required_test_list_fails_closed(self) -> None:
+    def test_empty_required_test_lists_fail_closed(self) -> None:
+        for field in ("self_tests", "artifact_tests"):
+            with self.subTest(field=field):
+                broken = dict(self.manifest)
+                broken[field] = []
+                with tempfile.TemporaryDirectory() as tmp:
+                    path = Path(tmp) / "manifest.json"
+                    path.write_text(json.dumps(broken), encoding="utf-8")
+                    with self.assertRaises(floor.ContractError):
+                        floor.load_contract(path)
+
+    def test_wrong_python_minor_fails_closed(self) -> None:
         broken = dict(self.manifest)
-        broken["artifact_tests"] = []
+        broken["python_version"] = "0.0"
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "manifest.json"
             path.write_text(json.dumps(broken), encoding="utf-8")
-            with self.assertRaises(floor.ContractError):
+            with self.assertRaisesRegex(floor.ContractError, "Python mismatch"):
                 floor.load_contract(path)
 
     def test_unknown_validator_id_fails_closed(self) -> None:
@@ -74,6 +94,10 @@ class DeterministicTestFloorTests(unittest.TestCase):
             manifest_path.write_text(json.dumps(broken), encoding="utf-8")
             with self.assertRaises(floor.ContractError):
                 floor.load_contract(manifest_path)
+
+    def test_python_validator_commands_use_active_interpreter(self) -> None:
+        argv = floor.command_argv("python -m unittest tests.test_harness_contract -v")
+        self.assertEqual(argv[0], floor.sys.executable)
 
     def test_workflow_is_thin_read_only_and_has_no_unrequested_schedule(self) -> None:
         workflow = FLOOR_WORKFLOW.read_text(encoding="utf-8")
