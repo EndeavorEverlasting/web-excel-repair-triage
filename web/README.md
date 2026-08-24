@@ -4,6 +4,8 @@
 
 **Canonical access guide:** [`../PROMPT_KIT_ACCESS.md`](../PROMPT_KIT_ACCESS.md)
 
+**Operator guide and tutorials:** [`../docs/PROMPT_KIT_OPERATOR_GUIDE.md`](../docs/PROMPT_KIT_OPERATOR_GUIDE.md)
+
 The fastest normal Windows path is `Open-Latest-PromptKit.cmd`. It finds or creates a safe canonical checkout, syncs `main`, validates exact Prompt Kit parity, generates a portable runtime artifact, and opens the stable origin `http://127.0.0.1:8765/` without a configuration dialog.
 
 The stable origin preserves the browser's Favorites storage across repository and website upgrades. The generated runtime artifact and hash receipt are written to:
@@ -48,7 +50,9 @@ A short click-delay continues to distinguish desktop single-click from double-cl
 
 ### Guided prompt tutorial
 
-Use the glowing **Tutorial · Find My Prompt** control when the correct prompt is not obvious. The questionnaire uses the same registry/search/synonym ranking functions as the normal search box, asks no more than five questions, and returns one primary recommendation with no more than two follow-ons. Its behavior is owned by `docs/prompt-kit-guided-recommendations.js`; it does not create a second prompt database or private routing table.
+Use the glowing **Tutorial · Find My Prompt** control when the correct prompt is not obvious. The current browser questionnaire asks exactly four questions, uses the same registry/search/synonym ranking functions as the normal search box, and returns one primary recommendation with no more than two additional candidates. Its behavior is owned by `docs/prompt-kit-guided-recommendations.js`; it does not create a second prompt database or private routing table.
+
+For the full current workflow—including the direct **P83** path when another agent claims work is complete—see [`../docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md`](../docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md) and [`../docs/PROMPT_KIT_OPERATOR_GUIDE.md`](../docs/PROMPT_KIT_OPERATOR_GUIDE.md).
 
 ### Category and type filtering
 
@@ -84,9 +88,9 @@ This specifically prevents common policy words such as `artifact` from making ne
 The current browser stores Favorites under `promptKit.favoritePromptIds.v1`. The Windows portable launcher keeps that storage under the stable loopback origin `http://127.0.0.1:8765/`, so ordinary Prompt Kit upgrades retain the saved collection automatically.
 
 - Select the star on any prompt card to save or remove it.
-- Visible favorited prompts are promoted into one **Favorites** section before the normal sections.
-- A favorited prompt appears only once during a render.
-- Active library/category/type/search filters still apply before Favorites are promoted.
+- Favorites remain in the normal chronological/numeric library order by default; saving a Favorite does not promote that prompt ahead of the ordinary library.
+- Use the explicit **Favorites** header view or press **4** to clear the transient search/category/type restrictions and show the complete saved Favorites collection.
+- A favorited prompt still renders once; Favorites are stored user state, not a second prompt registry.
 - **Export Favorites** downloads a portable JSON backup using schema `prompt-kit-favorites/v1`.
 - **Import Favorites** validates, normalizes, deduplicates, and merges a backup without deleting Favorites already saved in the current browser.
 - Legacy browser keys and legacy array backups are merged into current Favorites rather than being skipped when current Favorites already exist.
@@ -170,7 +174,9 @@ The glowing **Hotkeys** module beside the floating reference control is the in-p
 | `B` | Scroll to bottom |
 | `Esc` | Close the active surface or clear filters |
 
-Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prompt first, enter its canonical ID such as `P95`, and save it; the persisted binding is then the lower-case prompt ID (`p95`). Typed prompt sequences expire after 1.2 seconds, are ignored in editable fields, and open the canonical prompt detail immediately. A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it receives the next digit before built-in `1`, `4`, or `5` navigation so valid prompt IDs cannot be interrupted; built-in digit shortcuts keep their normal meaning when no sequence is active.
+Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prompt first, enter its canonical ID such as `P95`, and save it; the persisted binding is then the lower-case prompt ID (`p95`). Typed prompt sequences expire after 1.2 seconds and are ignored in editable fields. Completing a configured sequence clears the transient restrictions needed to reveal the target, scrolls the canonical prompt card into view, and copies the canonical prompt through the normal copy path **without opening prompt detail**. The Hotkeys panel labels configured rows as **Copy + reveal P##**.
+
+A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it receives the next digit before built-in `1`, `4`, or `5` navigation so valid prompt IDs cannot be interrupted; built-in digit shortcuts keep their normal meaning when no sequence is active.
 
 Navigation shortcuts are ignored while typing in an input, textarea, select, or content-editable surface. Modified backtick chords are ignored. Top/bottom scrolling respects reduced-motion preferences.
 
@@ -186,7 +192,7 @@ Their keyboard shortcuts are `1`, `2`, and `3` respectively. The generated base 
 
 ### Validation
 
-The owning `Prompt Kit web contracts` workflow compiles and runs `tests/test_prompt_kit_hotkey_completion.py`; shortcut changes must keep that focused contract green in addition to the broader interaction, discovery, ordering, filtering, mobile, portability, and generated-parity gates.
+The owning `Prompt Kit web contracts` workflow compiles and runs `tests/test_prompt_kit_hotkey_completion.py`; shortcut changes must keep that focused contract green in addition to the broader interaction, discovery, ordering, filtering, mobile, portability, and generated-parity gates. Operator-documentation assertions live in the existing `tests/test_prompt_kit_discovery.py` discovery owner.
 
 ```powershell
 node --check docs\prompt-kit.js
@@ -200,11 +206,11 @@ python tests\test_prompt_kit_header_contract.py
 python -m unittest tests.test_prompt_kit_product_interactions -v
 python -m unittest tests.test_prompt_kit_filtering_access -v
 python -m unittest tests.test_prompt_kit_mobile -v
-python -m unittest tests.test_prompt_kit_discovery -v
+python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
 python -m unittest tests.test_prompt_kit_hotkey_completion -v
 python scripts\validate_prompt_kit_interactions.py --require-implementation --output Outputs\prompt-kit-interaction-audit.json --summary
 python scripts\validate_prompt_kit_discovery.py --summary
 python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
 ```
 
-Repository validation does not substitute for physical browser download/file-picker behavior, browser-profile transfer, cross-device acceptance, phone/tablet touch acceptance, or a Windows field run of the quick launcher.
+Repository validation does not substitute for physical browser download/file-picker behavior, browser-profile transfer, cross-device acceptance, phone/tablet touch acceptance, clipboard permissions in every browser, live Pages publication, or a Windows field run of the quick launcher.
