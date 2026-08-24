@@ -1,0 +1,49 @@
+name: Temporary closeout evidence generated-site build
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/tmp-closeout-evidence-build.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-closeout-evidence-build
+  cancel-in-progress: false
+
+jobs:
+  build-and-commit:
+    if: github.event.pull_request.head.ref == 'feat/prompt-closeout-evidence-hardening-20260824'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-closeout-evidence-hardening-20260824
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build and prove canonical Prompt Kit site
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/prompt-closeout-evidence-hardening-20260824 --prune
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/feat/prompt-closeout-evidence-hardening-20260824)"
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_operational_closeout_contract -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          git add web/prompt-kit/index.html
+          if git diff --cached --quiet; then
+            echo 'Canonical site already exact; no generated commit required.'
+          else
+            git commit -m 'build(prompt-kit): regenerate evidence-bearing closeout site'
+            git push origin HEAD:feat/prompt-closeout-evidence-hardening-20260824
+          fi
