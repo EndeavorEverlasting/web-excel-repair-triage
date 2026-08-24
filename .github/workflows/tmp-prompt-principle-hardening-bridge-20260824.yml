@@ -1,12 +1,12 @@
 name: Temporary prompt principle hardening bridge
 
 on:
-  pull_request_target:
+  pull_request:
+    branches: [main]
     types: [reopened]
 
 permissions:
   contents: write
-  pull-requests: read
 
 concurrency:
   group: prompt-principle-hardening-20260824
@@ -14,9 +14,7 @@ concurrency:
 
 jobs:
   prompt-principle-hardening:
-    if: >-
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.head.ref == 'feat/prompt-kit-execution-brief-hardening-20260824'
+    if: github.event.pull_request.head.ref == 'feat/prompt-kit-execution-brief-hardening-20260824'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
