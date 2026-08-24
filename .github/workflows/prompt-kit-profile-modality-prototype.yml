@@ -1,0 +1,104 @@
+name: Prompt Kit profile and modality prototype
+
+on:
+  pull_request:
+    paths:
+      - docs/PROMPT_KIT_PROFILE_MODALITY_PROGRAM_DESIGN.md
+      - docs/prompt-kit-profile-modality-prototype.js
+      - docs/PROMPT_KIT_PROGRAM_ARCHITECTURE.md
+      - docs/prompt-kit-program-prototype.js
+      - docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md
+      - docs/prompt-kit-hotkey-prototype.js
+      - tests/test_prompt_kit_profile_modality_prototype.py
+      - tests/test_prompt_kit_program_prototype.py
+      - tests/test_prompt_kit_hotkey_completion.py
+      - .github/workflows/prompt-kit-profile-modality-prototype.yml
+  push:
+    branches: [main]
+    paths:
+      - docs/PROMPT_KIT_PROFILE_MODALITY_PROGRAM_DESIGN.md
+      - docs/prompt-kit-profile-modality-prototype.js
+      - docs/PROMPT_KIT_PROGRAM_ARCHITECTURE.md
+      - docs/prompt-kit-program-prototype.js
+      - docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md
+      - docs/prompt-kit-hotkey-prototype.js
+      - tests/test_prompt_kit_profile_modality_prototype.py
+      - tests/test_prompt_kit_program_prototype.py
+      - tests/test_prompt_kit_hotkey_completion.py
+      - .github/workflows/prompt-kit-profile-modality-prototype.yml
+
+permissions:
+  contents: read
+
+jobs:
+  profile-modality-prototype:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact candidate and current main floor
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          test -n "$(git rev-parse origin/main)"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git merge-base --is-ancestor origin/main HEAD
+          fi
+          echo "profile-modality candidate sha=$(git rev-parse HEAD)"
+          echo "profile-modality main floor=$(git rev-parse origin/main)"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Verify JavaScript prototype syntax
+        run: |
+          node --check docs/prompt-kit-program-prototype.js
+          node --check docs/prompt-kit-profile-modality-prototype.js
+          node --check docs/prompt-kit-hotkey-prototype.js
+
+      - name: Execute parent program architecture prototype
+        run: node docs/prompt-kit-program-prototype.js
+
+      - name: Execute profile and modality architecture prototype
+        run: |
+          mkdir -p "$RUNNER_TEMP/prompt-kit-profile-modality"
+          node docs/prompt-kit-profile-modality-prototype.js | tee "$RUNNER_TEMP/prompt-kit-profile-modality/prototype-report.json"
+
+      - name: Execute adjacent hotkey seam prototype
+        run: node docs/prompt-kit-hotkey-prototype.js
+
+      - name: Run focused architecture regressions
+        run: |
+          python -m unittest tests.test_prompt_kit_program_prototype -v
+          python -m unittest tests.test_prompt_kit_profile_modality_prototype -v
+          python -m unittest tests.test_prompt_kit_hotkey_completion -v
+
+      - name: Verify canonical Prompt Kit generated parity
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+
+      - name: Verify patch hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git diff --check origin/main...HEAD
+          else
+            git diff --check HEAD^ HEAD
+          fi
+
+      - name: Upload executable profile and modality design trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-profile-modality-prototype-report
+          path: ${{ runner.temp }}/prompt-kit-profile-modality/prototype-report.json
+          if-no-files-found: error
