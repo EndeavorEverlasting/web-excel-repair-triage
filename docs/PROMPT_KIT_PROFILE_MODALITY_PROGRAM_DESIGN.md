@@ -2,598 +2,581 @@
 
 ## Purpose
 
-This document is a bounded program-design extension to `docs/PROMPT_KIT_PROGRAM_ARCHITECTURE.md`. The parent architecture remains the canonical owner for the Prompt Kit command kernel, state-owner boundaries, terminal-value semantics, and external ports. This extension answers two unresolved product questions before broad implementation:
+This document is a bounded program-design extension to `docs/PROMPT_KIT_PROGRAM_ARCHITECTURE.md`. The parent architecture remains the canonical owner for the Prompt Kit command kernel, terminal-value semantics, state-owner boundaries, and external ports. This extension answers two product questions before broad implementation:
 
-1. how the same Prompt Kit capability remains productive for mouse/pointer-only and keyboard-only users without branching business logic by input device;
-2. how a user can operate with one Prompt Profile or assume one of many Prompt Profiles without duplicating the catalog, resetting transient browsing state, or corrupting Favorites/shortcut preferences across profiles.
+1. how the same capability remains productive for mouse/pointer-only and keyboard-only users without branching domain behavior by input device;
+2. how one user can operate with one Prompt Profile or assume one of many Prompt Profiles without duplicating prompts, resetting browsing state, or leaking Favorites and custom shortcuts across profiles.
 
-This is **program design + executable prototype**, not broad production migration. It must not become a second hotkey registry, a second Favorite owner, a generated-HTML patch, a dashboard/gameplay expansion, or a framework rewrite.
+This is **program design + executable prototype**, not broad production migration. It must not become a second command system, second Favorite owner, second shortcut authority, generated-site patch, dashboard/gameplay expansion, or framework rewrite.
 
-## Fresh evidence floor
-
-Design extension floor: `main@bf4af1d40ccf4801e60317675ba7be83319dfc22` on 2026-08-24.
-
-That mainline already contains the prototype-earned async `CommandKernel` architecture from PR #282. Current evidence also establishes:
-
-- `docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md` is the existing shortcut-program owner;
-- configured prompt shortcuts are accelerators over semantic prompt actions, not a separate feature system;
-- `FavoritePreferences` and the existing `ShortcutRegistry` are the semantic preference owners;
-- `SessionState` owns transient browsing state;
-- `PromptSurfacePort` owns DOM/focus/scroll projection;
-- production browser geometry, real Clipboard API policy, pointer ergonomics, keyboard layout diversity, and storage migration remain live-runtime proof ceilings.
-
-No open PR discovered at this floor owns this program-design extension. Existing broader Favorite/gameplay and guided-discovery PRs do not justify duplicating or replacing the merged command architecture.
+Initial design floor: `main@bf4af1d40ccf4801e60317675ba7be83319dfc22`, which already contains the async `CommandKernel` architecture from PR #282. The final integration floor must be refreshed again before merge.
 
 ## Observable done checklist
 
-This extension is design-ready only when executable evidence proves:
+The design is prototype-earned only when executable evidence proves all of the following:
 
-1. essential user actions have both a visible pointer path and a keyboard-operable path;
-2. hotkeys remain accelerators rather than the only way to reach an essential capability;
-3. pointer and keyboard entrypoints dispatch the same semantic command rather than owning separate business rules;
-4. input modality is an invocation fact, not global mutable application state;
-5. keyboard shortcut copy may reveal/focus a recovery target without forcing equivalent focus movement on a pointer click whose target is already visible;
-6. one-profile users can remain on an implicit/default profile with no required profile-switching ceremony;
-7. named profiles scope durable user preferences without cloning the canonical prompt catalog or transient browsing state;
-8. the default profile can delegate to the current legacy preference storage seam, avoiding a mandatory migration merely to adopt the architecture;
-9. a profile-scoped persistence failure leaves that profile and all other profiles truthful and unchanged;
-10. an unknown profile cannot become active;
-11. an in-flight asynchronous command remains attributed to the profile that initiated it rather than being silently retargeted after a profile switch;
-12. the selected seam extends the existing `CommandKernel` architecture and broad production wiring remains a later build sprint.
+1. essential actions have a visible pointer path and a keyboard-operable path;
+2. shortcuts accelerate visible capabilities rather than becoming exclusive capability owners;
+3. pointer and keyboard entrypoints converge on the same semantic command;
+4. modality is invocation context, not global mutable app state;
+5. a keyboard shortcut may reveal/focus Copy as recovery without imposing that focus jump on a pointer click or already-focused native Copy control;
+6. one-profile users can remain on an implicit default profile without profile-switch ceremony;
+7. defaultness is `ProfileCatalog` metadata, not a magic profile ID;
+8. the catalog-defined default profile can delegate existing preference storage, avoiding a forced migration merely to adopt the architecture;
+9. named profiles isolate durable Favorites and custom shortcuts;
+10. canonical `FavoritePreferences` remains the Favorite semantic owner;
+11. canonical `ShortcutRegistry` remains the shortcut semantic owner and hydrates scoped persisted bindings through its existing policy;
+12. switching profile refreshes profile-dependent projection before reporting `PROFILE_ACTIVE`;
+13. switching profile does not reset transient search/filter/detail/location state;
+14. failed profile persistence does not publish candidate state or contaminate another profile;
+15. unknown profiles cannot become active;
+16. an asynchronous command remains attributed to the profile that initiated it even if another profile becomes active before completion;
+17. semantic traces contain opaque profile IDs/action metadata, not profile display names or prompt bodies;
+18. the slice stays prototype-only and leaves broad production wiring to the normal build executor.
 
 ## Primary user outcomes
 
-### Mouse / pointer-only user
+### Mouse / pointer-only
 
-- Every essential command exposed through a shortcut also has a visible native control or equivalent pointer-reachable action.
-- Clicking a visible Copy control reaches clipboard value directly; the architecture does not require the user to enter a keyboard-navigation mode.
-- A pointer-originated action does not receive an unnecessary keyboard-style focus jump merely because keyboard users need a recovery target for a different entrypoint.
-- Profile activation is reachable from a visible profile control when more than one profile exists.
+- Every essential command exposed through a shortcut also exists as a visible control or equivalent pointer-reachable action.
+- Clicking visible Copy reaches the clipboard terminal value directly.
+- A pointer-originated Copy does not suffer a keyboard-recovery focus jump when its control is already visible.
+- When multiple profiles eventually become productized, profile activation must be available from a visible pointer-reachable control.
 
-### Keyboard-only user
+### Keyboard-only
 
-- Visible controls remain naturally reachable/activatable through native keyboard semantics.
-- Configured shortcuts accelerate existing semantic commands rather than bypassing the program architecture.
-- A shortcut that targets a prompt may reveal the prompt and focus its Copy control so `Enter` remains an immediate recovery/repeat action.
-- Editable-field suppression and existing shortcut collision policy remain owned by the hotkey subsystem.
-- Profile activation can traverse the same semantic `ACTIVATE_PROFILE` command from a keyboard-operable profile control.
+- Native controls remain keyboard-operable through their normal semantics.
+- Configured shortcuts are accelerators over the same semantic commands used by visible controls.
+- A typed prompt shortcut may reveal the prompt and focus Copy so `Enter` remains an immediate recovery/repeat action.
+- Existing editable-field suppression and collision rules stay in the hotkey subsystem.
+- Profile activation traverses the same `ACTIVATE_PROFILE` command whether initiated through keyboard or pointer.
 
-### One-profile user
+### One-profile
 
-- The application exposes one implicit default Prompt Profile; defaultness is catalog metadata, not a magic profile ID.
-- No profile switcher is required when only one profile exists.
-- Existing durable Favorite/shortcut storage can remain the default profile's backing store through a compatibility adapter.
-- Prompt catalog, generated artifact, and transient browsing behavior remain unchanged merely because profile-capable architecture exists.
+- Exactly one catalog-defined default profile can remain implicit.
+- No switcher is required when `ProfileCatalog.needsSwitcher()` is false.
+- Current Favorite/shortcut storage can remain the default profile's compatibility namespace.
+- Adding profile-capable architecture does not clone prompts or persist transient view state.
 
-### Multi-profile user
+### Multi-profile
 
-- The user can assume a named Prompt Profile without cloning the whole application state.
-- Favorites and configured shortcuts can be scoped by active profile.
-- Switching profile does not silently clear the current search, filters, prompt location, or detail state.
-- Mutating Favorites in one profile cannot change another profile's Favorite set.
-- Semantic completion telemetry, if enabled, records the profile that initiated the command.
+- A user can assume a named profile without cloning the whole application.
+- Favorites and custom shortcuts remain isolated per profile.
+- Profile activation reprojects the target profile's Favorite state before success returns.
+- Search/filter/detail/current-location state remains intact unless a later explicit product decision says otherwise.
+- In-flight command attribution cannot drift to a profile activated later.
 
 ## Core invariants
 
-1. **Capability parity, not input-mode parity.** Pointer and keyboard may use different entrypoints or presentation recovery, but must converge on the same terminal domain command.
-2. **No global input mode.** The application never stores `mouseMode` or `keyboardMode`. Hybrid users may alternate input devices freely; modality belongs to one invocation.
-3. **Visible controls are canonical capability surfaces.** Shortcuts accelerate them; shortcuts do not become exclusive access paths.
-4. **Native semantics first.** Production controls should prefer native buttons/selects/links so mouse, keyboard, and assistive technology behavior does not require custom reimplementation.
-5. **Profile identity is explicit at command initiation.** Profile-scoped mutations and semantic usage attribution use the initiating profile snapshot carried in `InteractionContext`.
-6. **Prompt catalog is profile-independent.** A profile does not duplicate canonical prompts or generated HTML.
-7. **Transient browsing state is not profile-owned by default.** Search/filter/detail/current location remain `SessionState` until a separate user requirement proves they should persist per profile.
-8. **Preference semantics keep their owners.** Favorites remain owned by `FavoritePreferences`; shortcuts remain owned by the existing `ShortcutRegistry`. Profiles change persistence namespace, not semantic ownership.
-9. **Default profile is a compatibility boundary, not a magic ID.** Production may map whichever profile `ProfileCatalog` marks default to today's existing storage keys; named profiles may use namespaced records. The prototype does not invent new production key names.
-10. **Profile activation is reversible session state.** Activating another profile changes the active preference context, not the prompt registry or current page location.
-11. **Fail closed on scoped persistence.** A failed write publishes no new Favorite/shortcut state for the target profile and touches no other profile.
-12. **Async commands retain initiation context.** A profile switch during a pending clipboard write does not rewrite that command's profile attribution.
-13. **Presentation differences stay at the presentation seam.** Focus/scroll/reveal policy may inspect interaction context; clipboard, persistence, catalog validation, and completion semantics may not fork by modality.
-14. **Profile attribution is privacy-bounded.** If semantic usage is enabled, traces/events carry only the initiating opaque profile ID plus semantic action metadata; they do not record profile display names or prompt bodies.
+1. **Capability parity, not input-mode parity.** Pointer and keyboard may differ at entrypoint/presentation recovery but converge on terminal domain behavior.
+2. **No global input mode.** No `mouseMode`, `keyboardMode`, or mutable `currentModality`; modality belongs to one `InteractionContext`.
+3. **Visible controls are canonical capability surfaces.** Shortcuts accelerate them.
+4. **Native semantics first.** Production should prefer native buttons/selects/links over recreating basic keyboard/pointer semantics.
+5. **Profile identity is snapshotted at initiation.** Profile-scoped mutation and semantic completion use the initiating context.
+6. **Prompt catalog is shared.** Profiles do not duplicate canonical prompt records or generated HTML.
+7. **Transient browsing state is not profile-owned by default.** `SessionState` remains shared until user evidence proves workspace restoration is valuable.
+8. **Favorites keep one semantic owner.** Profile adapters select storage; canonical `FavoritePreferences` decides Favorite set mutation/publication.
+9. **Shortcuts keep one semantic owner.** Profile adapters select storage; canonical `ShortcutRegistry` owns validation, collision policy, publication, and hydration.
+10. **Default profile is a compatibility boundary, not a magic ID.** The catalog-defined default maps to legacy storage.
+11. **Profile activation is a projection transaction.** Validate target -> activate -> refresh profile-dependent projection -> report success.
+12. **Fail closed on persistence.** Candidate state becomes visible only after the owning persistence call succeeds.
+13. **Presentation differences stay at the presentation seam.** Focus/scroll/reveal policy may inspect interaction context; clipboard, catalog, persistence, and command semantics may not fork by modality.
+14. **Profile attribution is privacy-bounded.** Traces/events may carry opaque initiating profile ID and semantic action metadata, but not prompt bodies or profile display names.
 
 ## Domain vocabulary
 
 ### Interaction records
 
-- **InteractionModality** — invocation-level value: `pointer` or `keyboard` for the current prototype. It is not durable state.
+- **InteractionModality** — `pointer` or `keyboard` for this prototype; invocation-only.
 - **InteractionSource** — semantic UI origin such as `prompt-control`, `favorite-shortcut`, or `profile-switcher`.
-- **InteractionContext** — immutable snapshot `{source, modality, profileId}` attached before a command enters the kernel.
-- **PresentationPlan** — adapter-level decision describing whether this invocation needs reveal/focus recovery. It never changes terminal domain semantics.
-- **CapabilityParity** — invariant that every essential semantic action has a pointer-reachable visible control and a keyboard-operable route.
+- **InteractionContext** — immutable `{source, modality, profileId}` snapshot created before command dispatch.
+- **PresentationPlan** — adapter-level decision about reveal/focus recovery; never changes terminal command semantics.
+- **CapabilityParity** — essential action reachable through visible pointer and keyboard-operable surfaces.
 
 ### Profile records and owners
 
-- **PromptProfile** — stable user-facing profile identity (`id`, `name`, `isDefault`). It scopes selected durable preferences; it does not clone prompts or DOM/session state.
-- **ProfileCatalog** — canonical runtime list of available Prompt Profiles and the one default profile.
-- **ActiveProfile** — session owner of the currently assumed profile ID.
-- **ProfilePreferenceStore** — persistence port that loads/saves preference records for one profile namespace.
-- **DefaultProfileCompatibilityAdapter** — production adapter concept that maps the default profile to existing preference storage so adopting profiles does not force a migration first.
-- **ProfiledFavoritePreferences** — prototype proof that the existing Favorite semantic owner can operate over a profile-scoped persistence port without becoming a second Favorite system.
+- **PromptProfile** — stable identity `{id, name, isDefault}` that scopes selected durable preferences.
+- **ProfileCatalog** — validates profiles, owns exactly one default, resolves target identity.
+- **ActiveProfile** — session owner of currently assumed profile ID.
+- **MemoryProfilePreferenceStore / production ProfilePreferenceStore** — persistence namespace boundary for Favorites.
+- **BoundProfileFavoriteStore** — tiny adapter exposing canonical `FavoritePreferences`' existing `loadFavorites()/saveFavorites()` contract for one profile.
+- **FavoritePreferenceContexts** — profile-to-canonical-owner selector/cache. It owns no Favorite set semantics.
+- **MemoryProfileShortcutStore / production profile-aware ShortcutStore** — persistence namespace boundary for custom bindings.
+- **BoundProfileShortcutStore** — one-profile adapter exposing canonical shortcut store `load()/save()` behavior.
+- **ShortcutRegistryContexts** — profile-to-canonical-`ShortcutRegistry` selector/cache; hydration remains inside the canonical registry.
+- **ActiveShortcutRegistry** — resolves the active canonical registry for dispatcher calls; owns no collision/binding semantics.
 
-### Existing parent-architecture records retained
+### Parent architecture retained
 
 - `PromptCatalog`
 - `PromptCommand`
 - `CommandResult`
-- `ProgramError`
+- `PromptKitProgramError`
 - `CommandKernel`
 - `SessionState`
-- `FavoritePreferences`
-- existing `ShortcutRegistry`
+- canonical `FavoritePreferences`
+- canonical `ShortcutRegistry`
+- canonical `ShortcutDispatcher`
 - `ClipboardPort`
 - `PromptSurfacePort`
 - `UsageLedger`
 
 ## External prior-art inspection
 
-The extension inspected mechanisms only; it copies no external implementation and adds no dependency.
+No external code is copied and no new dependency is introduced.
 
-### VS Code user-data profiles
+### `microsoft/vscode` user-data profiles
 
-Source inspected: `microsoft/vscode`, `src/vs/platform/userDataProfile/common/userDataProfile.ts`.
-
-Transferable mechanisms:
-
-- a stable default profile exists alongside named profiles;
-- resource ownership is explicit rather than represented as one opaque cloned application snapshot;
-- profile identity is stable and separate from the resources that may be scoped by that profile.
-
-License implication: VS Code is MIT licensed. No code is copied.
-
-### WAI-ARIA Authoring Practices toolbar pattern
-
-Source inspected: `w3c/aria-practices`, `content/patterns/toolbar/toolbar-pattern.html` and repository `LICENSE.md`.
+Inspected source: `src/vs/platform/userDataProfile/common/userDataProfile.ts`.
 
 Transferable mechanisms:
+- stable default profile plus named profiles;
+- profile identity separate from the resources scoped by that profile;
+- resource ownership is explicit rather than represented as a cloned opaque application snapshot.
 
-- visible grouped controls remain actual controls;
-- focus management exists to make keyboard use efficient, not to replace pointer operation;
-- keyboard navigation should reduce friction while keeping controls discoverable.
+License: MIT. No implementation copied.
 
-License implication: the repository documents are under the W3C Software and Document License. No code or markup is copied.
+### `w3c/aria-practices` toolbar pattern
 
-Security/dependency implication: this design introduces no library, browser permission, remote service, or third-party runtime dependency.
+Inspected source: `content/patterns/toolbar/toolbar-pattern.html` and repository license.
+
+Transferable mechanisms:
+- visible grouped actions remain actual controls;
+- keyboard focus management improves efficiency without replacing pointer access;
+- keyboard navigation reduces friction while preserving discoverability.
+
+License: W3C Software and Document License. No markup or implementation copied.
 
 ## Candidate designs
 
-### Candidate A — per-entrypoint branching with one global active profile variable
+### Candidate A — per-entrypoint branching + global active variables
 
-Each click/hotkey handler decides whether to focus/scroll/copy and reads a global `activeProfileId`; each preference helper appends the profile ID to storage keys.
+Each click/hotkey handler implements copy/focus/profile rules and reads global input/profile state.
 
-**Advantage:** smallest initial diff.
+**Benefit:** tiny initial patch.
 
-**Failure:** modality logic and profile storage policy leak into every caller. An async handler can observe a different global profile at completion than at initiation. Pointer and keyboard business behavior can silently diverge. Storage naming becomes a distributed convention rather than an owned port.
+**Failure:** domain behavior forks by caller, global modality becomes stale for hybrid users, async commands can observe the wrong profile, and storage-key conventions leak everywhere.
 
 **Disposition:** rejected.
 
-### Candidate B — clone the complete app state per profile
+### Candidate B — clone the complete application state per profile
 
-Each profile owns prompt catalog, view/search/filter state, Favorites, shortcuts, usage, and presentation state. Switching profile swaps the entire snapshot.
+Each profile owns catalog, view/search/filter/detail, Favorites, shortcuts, and presentation state.
 
-**Advantage:** intuitive mental model if every state truly belongs to a workspace.
+**Benefit:** superficially simple workspace mental model.
 
-**Failure:** the current requirements do not justify duplicating canonical prompts or transient browsing state. It creates unnecessary reset behavior, larger persistence/migration surface, stale catalog copies, and pressure to persist incidental UI state merely because profiles exist.
+**Failure:** duplicates canonical prompt state, turns transient UI into durable truth without evidence, causes surprising navigation resets, and multiplies migration/invalidation surface.
 
 **Disposition:** rejected.
 
 ### Candidate C — explicit InteractionContext + profile-scoped preference ports
 
-Every user event is normalized into immutable `InteractionContext` before calling the existing semantic command kernel. `ActiveProfile` supplies the profile snapshot. The prompt catalog and transient `SessionState` remain shared. Existing preference owners operate through a profile-scoped persistence port. The default profile delegates to legacy preference storage; named profiles use their own namespace.
+Each user event snapshots `{source, modality, profileId}` before entering the existing `CommandKernel`. `PromptCatalog` and transient `SessionState` stay shared. Profile adapters bind **existing semantic preference owners** to scoped persistence. The catalog-defined default profile delegates current/legacy storage; named profiles use isolated namespaces.
 
-**Advantages:**
-
-- no second command system;
+**Benefits:**
+- one command system;
 - no global input mode;
 - no duplicated prompt registry;
-- no forced session reset on profile switch;
-- pointer/keyboard differences are limited to presentation recovery;
-- existing Favorite and Shortcut semantic owners remain authoritative;
-- asynchronous operations retain initiation context;
-- single-profile users incur almost no product complexity;
-- named profiles become a bounded productivity extension instead of an app fork.
+- no forced browsing reset;
+- pointer/keyboard differences local to presentation recovery;
+- canonical Favorite/Shortcut owners remain authoritative;
+- async attribution is stable;
+- one-profile users incur almost no visible complexity.
 
 **Disposition:** selected and executable.
 
-### Candidate D — persistent “workspace profile” including filters/view/layout
+### Candidate D — persistent workspace profile including view/filter/layout
 
-Persist the current search/filter/view/detail state alongside Favorites and shortcuts and restore all of it whenever a profile is assumed.
+Persist and restore search/filter/layout/detail with preferences.
 
-**Advantage:** could eventually support deeply customized workspaces.
+**Benefit:** potentially useful deep workspaces later.
 
-**Failure at current evidence floor:** it converts transient state into durable product truth without a demonstrated user requirement and increases migration, invalidation, and surprising-navigation risk.
+**Failure at current evidence floor:** no user requirement proves that switching profile should move the user around the page. It expands persistence and invalidation risk before value is established.
 
-**Disposition:** deferred. Reconsider only when actual user evidence says profile switching should restore browsing/layout state.
+**Disposition:** deferred.
 
 ## Selected module/interface map
 
-| Module | Responsibility / owned state | Public interface | Hidden complexity | Side effects | Failure contract | Test seam |
-| --- | --- | --- | --- | --- | --- | --- |
-| `InteractionContextFactory` | snapshots source, modality, active profile | `create(source, modality)` | validates allowed modality/source and resolves current profile | none | `INVALID_INTERACTION_CONTEXT`, `INVALID_INTERACTION_MODALITY`, `UNKNOWN_PROFILE` | pure + trace |
-| `ProfileCatalog` | available profiles + one default | `require(id)`, `defaultProfile()`, `needsSwitcher()` | duplicate/default validation | none | `UNKNOWN_PROFILE`, `INVALID_PROFILE_CATALOG` | fixture |
-| `ActiveProfile` | current assumed profile ID | `current()`, `activate(profileId)` | reversible transition trace | none | target must be validated before activation | pure/component |
-| existing `CommandKernel` | semantic command dispatch | `execute(command)` | handler/result/error normalization | none directly | parent architecture | existing prototype |
-| existing `SessionState` | transient search/filter/detail/location | existing intention-level transitions | does **not** reset on profile activation | none | parent architecture | snapshot comparison |
-| `ProfilePreferenceStore` | profile namespace persistence boundary | `loadFavorites(profileId)`, `saveFavorites(profileId, candidate)` prototype seam; analogous namespace for shortcuts | default-legacy compatibility vs named namespace | browser storage in production | scoped persistence failure | memory/failing fake |
-| existing `FavoritePreferences` semantic owner | Favorite set semantics per profile context | `has/toggle/snapshot(profileId)` after production adaptation | validation + candidate publication | ProfilePreferenceStore | failed save publishes nothing | memory/failing fake |
-| existing `ShortcutRegistry` semantic owner | effective bindings for active profile | existing registry API over a profile-scoped store | collision/target policy remains unchanged | existing ShortcutStore via profile namespace | existing hotkey contract | existing hotkey prototype + future profile fixture |
-| `PromptSurfacePort` | DOM projection and focus/reveal policy | `prepareCopy(promptId, context)`, profile projection | native focus/scroll/visibility details | DOM/focus/scroll | presentation recovery classified by command | fake + browser proof |
-| `UsageLedger` | semantic completion events | existing `recordCompletion` | event adds initiating `profileId`/modality when productized | local/private store if enabled | degradation cannot negate user value | memory/failing fake |
+| Module | Responsibility / owned state | Interface | Side effects | Failure contract | Test seam |
+| --- | --- | --- | --- | --- | --- |
+| `InteractionContextFactory` | snapshot source/modality/active profile | `create(source, modality)` | none | invalid modality/context/profile rejected before kernel | pure/trace |
+| `ProfileCatalog` | available profiles + exactly one default | `require`, `defaultProfile`, `needsSwitcher` | none | `UNKNOWN_PROFILE`, invalid catalog | fixture |
+| `ActiveProfile` | currently assumed profile ID | `current`, `activate` | session mutation | target validated first | component |
+| existing `CommandKernel` | semantic dispatch/result normalization | `execute(command)` | through handlers only | parent contract | existing prototype |
+| existing `SessionState` | transient browsing | existing transitions | session mutation | parent contract | snapshot comparison |
+| profile Favorite store adapters | choose profile persistence namespace | canonical `loadFavorites/saveFavorites` | storage in production | scoped persistence error | memory/failing fake |
+| canonical `FavoritePreferences` | Favorite set semantics + publish-after-save | existing `has/toggle/snapshot` | adapter persistence | candidate unpublished on fail | canonical owner fixture |
+| profile shortcut store adapters | choose profile binding namespace | canonical `load/save` | storage in production | adapter failure | memory/failing fake |
+| canonical `ShortcutRegistry` | binding validation/collision/publication/hydration | existing `effectiveBindings/configure` + optional initial hydration | adapter persistence | canonical `HotkeyError` | canonical owner fixture |
+| `ActiveShortcutRegistry` | select registry for active profile | `effectiveBindings/configure` | none itself | delegated | profile switch fixture |
+| `PromptSurfacePort` | DOM/focus/scroll/profile-dependent projection | `applyCopyPlan`, Favorite-set projection, profile projection | DOM/focus/scroll in production | presentation error stays presentation-owned | fake + later browser |
+| `ClipboardPort` | clipboard terminal side effect | `writeText` | browser clipboard | classified copy failure | fake + later browser |
+| `UsageLedger` | optional semantic completion | existing record/reset | local/private store if productized | degradation cannot negate completed value | memory/failing fake |
 
 ## State and data ownership
 
-| State/data | Canonical owner | Profile-scoped? | Persistence | Notes |
-| --- | --- | --- | --- | --- |
-| effective prompt records | PromptCatalog / registry builder | no | tracked registry → generated site | same prompts for every profile |
-| active assumed profile ID | ActiveProfile | n/a | session-only initially | explicit durable “remember last profile” is a later product decision |
-| profile definitions | ProfileCatalog | n/a | future ProfileStore if productized | prototype uses fixtures |
-| search/filter/detail/current prompt | SessionState | no by default | none | profile switch must not reset it |
-| Favorites | FavoritePreferences | yes | ProfilePreferenceStore | default may map to legacy store |
-| configured shortcuts | existing ShortcutRegistry | yes | existing ShortcutStore through profile namespace | no second shortcut registry |
-| semantic usage events | UsageLedger | event records initiating profile | local/private only if enabled | not a state owner for Favorites/shortcuts |
-| focus/scroll/highlight | PromptSurface adapter | no durable scope | none | invocation-specific presentation |
-| clipboard contents | ClipboardPort/browser | no | external | same terminal action for every profile/modality |
+| State/data | Canonical owner | Profile-scoped? | Persistence policy |
+| --- | --- | --- | --- |
+| prompt records | PromptCatalog / registry builder | no | tracked registry -> generated site |
+| active assumed profile | ActiveProfile | n/a | session-only in this design |
+| profile definitions | ProfileCatalog | n/a | future product decision |
+| search/filter/detail/current location | SessionState | no | transient |
+| Favorites | canonical FavoritePreferences | yes through adapter | default compatibility + named namespace |
+| custom shortcuts | canonical ShortcutRegistry | yes through adapter | scoped binding records |
+| built-in shortcuts/collision policy | canonical ShortcutRegistry/ShortcutPolicy | no | code/config |
+| semantic usage event | UsageLedger | event carries initiating profile ID | local/private only if enabled |
+| focus/scroll/highlight | PromptSurface adapter | invocation-specific, not durable | none |
+| clipboard contents | Clipboard/browser | no | external |
 
 ## Dependency direction
 
 ```text
-MOUSE CLICK / KEYBOARD CONTROL / HOTKEY
+POINTER / KEYBOARD CONTROL / HOTKEY
   -> ENTRYPOINT
   -> InteractionContextFactory
        -> ActiveProfile.current()
-       -> ProfileCatalog.require(activeProfileId)
+       -> ProfileCatalog.require(profileId)
   -> existing CommandKernel.execute(command + InteractionContext)
   -> semantic handler
        -> PromptCatalog
-       -> SessionState (only if the journey needs transient reveal/detail state)
-       -> FavoritePreferences / existing ShortcutRegistry
-            -> ProfilePreferenceStore(profileId)
-       -> PromptSurfacePort(context)        [presentation only]
+       -> SessionState only when journey needs reveal/navigation state
+       -> canonical FavoritePreferences
+            -> BoundProfileFavoriteStore -> ProfilePreferenceStore(profileId)
+       -> canonical ShortcutRegistry / ShortcutDispatcher
+            -> BoundProfileShortcutStore -> ShortcutStore(profileId)
+       -> PromptSurfacePort(context)
        -> ClipboardPort / UsageLedger
-  <- CommandResult or classified ProgramError
-  -> native completion feedback
+  <- CommandResult or classified error
 ```
 
-Profile activation is separate:
+Profile activation:
 
 ```text
-VISIBLE PROFILE CONTROL (pointer or keyboard)
+VISIBLE PROFILE CONTROL
   -> ProfileSwitcherEntrypoint
-  -> InteractionContextFactory captures OLD initiating profile
-  -> CommandKernel.execute(ACTIVATE_PROFILE targetProfileId)
-  -> ProfileCatalog.require(targetProfileId)
-  -> ActiveProfile.activate(targetProfileId)
-  -> PromptSurface projects active-profile label/control
+  -> InteractionContextFactory captures initiating context
+  -> CommandKernel.execute(ACTIVATE_PROFILE target)
+  -> ProfileCatalog.require(target)
+  -> ActiveProfile.activate(target)
+  -> canonical FavoritePreferences(target).snapshot()
+  -> PromptSurface.projectFavoriteSet(target, snapshot)
+  -> PromptSurface.projectProfile(target)
   <- PROFILE_ACTIVE
 ```
 
-The command that activates a profile does not clear `SessionState` and does not rewrite preference records.
+`SessionState` is deliberately absent from the profile-activation mutation chain.
 
-## Executable prototype
+## Executable prototypes and call stacks
 
-Executable: `docs/prompt-kit-profile-modality-prototype.js`.
+Executable program: `docs/prompt-kit-profile-modality-prototype.js`.
+Adjacent canonical shortcut seam: `docs/prompt-kit-hotkey-prototype.js`.
 
-It imports the already-merged program-kernel prototype and extends it without changing production runtime code. External boundaries remain fakes; the command seam, profile decisions, context snapshot, and failure ordering are real prototype logic.
+The prototype imports the merged program architecture and canonical hotkey classes. External browser/storage boundaries are faked; the ownership seams being evaluated are not faked.
 
-## Success call stack — mouse/pointer Copy control
+### Pointer visible Copy
 
-**Starting state:** visible prompt card exists; default profile active.
-
-**Terminal user value:** canonical prompt text is on the clipboard.
+**Terminal value:** canonical prompt text on clipboard.
 
 ```text
-MOUSE CLICK ON VISIBLE COPY BUTTON                       [ENTRYPOINT]
+CLICK VISIBLE COPY                                       [ENTRYPOINT]
   -> PromptControlEntrypoint.copy(P07, pointer)
-  -> InteractionContextFactory
-       -> {source:prompt-control, modality:pointer, profileId:default}
-  -> CommandKernel.execute(COPY_REVEAL_PROMPT)
+  -> InteractionContextFactory {prompt-control,pointer,profile}
+  -> CommandKernel COPY_REVEAL_PROMPT
   -> PromptCatalog.require(P07)
-  -> PromptSurface.prepareCopy
-       -> preserve current pointer-origin focus; no keyboard-only focus jump
-  -> await ClipboardPort.writeText(copyContent)          [TERMINAL ACTION]
-  -> UsageLedger records PROMPT_COPIED + initiating profile
-  <- COPIED / PROMPT_TEXT_ON_CLIPBOARD
-```
-
-No shortcut is required.
-
-## Success call stack — keyboard activation of visible Copy control
-
-**Terminal user value:** same clipboard result.
-
-```text
-TAB / NATIVE FOCUS -> ENTER ON COPY BUTTON               [ENTRYPOINT]
-  -> PromptControlEntrypoint.copy(P07, keyboard)
-  -> InteractionContextFactory
-  -> same COPY_REVEAL_PROMPT command
-  -> same catalog/clipboard/completion owners
-  <- COPIED
-```
-
-Because the native Copy control is already the keyboard focus target, the presentation adapter does not perform a redundant reveal/focus cycle.
-
-## Success call stack — configured favorite shortcut
-
-```text
-USER TYPES CONFIGURED FAVORITE SHORTCUT                  [ENTRYPOINT]
-  -> FavoriteShortcutEntrypoint.copy(P07)
-  -> InteractionContextFactory
-       -> {source:favorite-shortcut, modality:keyboard, profileId:<active>}
-  -> CommandKernel.execute(COPY_REVEAL_PROMPT)
-  -> PromptCatalog.require(P07)
-  -> SessionState.revealPrompt(P07)                       [REQUIRED INTERMEDIATE]
-  -> PromptSurface.revealPrompt(P07)
-  -> PromptSurface.focusCopy(P07)                         [RECOVERY TARGET]
+  -> presentation plan preserves existing pointer origin
   -> await ClipboardPort.writeText(copyContent)           [TERMINAL ACTION]
-  -> UsageLedger completion attributed to initiating profile
+  -> UsageLedger PROMPT_COPIED(profileId)
   <- COPIED
 ```
 
-Shortcut acceleration reaches the same terminal command; it does not own copy policy.
-
-## Success call stack — assume a named profile
+### Keyboard activation of visible Copy
 
 ```text
-POINTER CLICK OR KEYBOARD ACTIVATE PROFILE CONTROL       [ENTRYPOINT]
-  -> ProfileSwitcherEntrypoint.activate(work, modality)
-  -> InteractionContextFactory captures current profile
-  -> CommandKernel.execute(ACTIVATE_PROFILE, target=work)
-  -> ProfileCatalog.require(work)
-  -> ActiveProfile.activate(work)
-  -> PromptSurface.projectProfile(work)
-  <- PROFILE_ACTIVE / ACTIVE_PROFILE_CHANGED              [TERMINAL VALUE]
+TAB / FOCUS -> ENTER ON NATIVE COPY CONTROL              [ENTRYPOINT]
+  -> same PromptControlEntrypoint
+  -> InteractionContext modality=keyboard
+  -> same COPY_REVEAL_PROMPT handler
+  -> same ClipboardPort
+  <- COPIED                                               [TERMINAL VALUE]
 ```
 
-The current search/filter/detail location remains intact.
+No redundant reveal/focus is required because the native Copy control is already the focus target.
 
-## Success call stack — profile-scoped Favorite mutation
+### Typed favorite shortcut
 
 ```text
-USER TOGGLES FAVORITE IN ACTIVE WORK PROFILE
-  -> PromptControlEntrypoint.toggleFavorite(P07, modality)
-  -> InteractionContextFactory profileId=work
-  -> CommandKernel.execute(TOGGLE_FAVORITE)
+CONFIGURED PROMPT SHORTCUT                               [ENTRYPOINT]
+  -> InteractionContext {favorite-shortcut,keyboard,profile}
+  -> same COPY_REVEAL_PROMPT
+  -> SessionState.revealPrompt(P07)                      [REQUIRED INTERMEDIATE]
+  -> PromptSurface reveal + focus Copy                  [RECOVERY TARGET]
+  -> await ClipboardPort.writeText(copyContent)          [TERMINAL ACTION]
+  -> semantic completion
+  <- COPIED
+```
+
+### Profile-scoped Favorite mutation
+
+```text
+TOGGLE FAVORITE IN ACTIVE WORK PROFILE
+  -> command context profileId=work
   -> PromptCatalog.require(P07)
-  -> FavoritePreferences builds work-profile candidate
-  -> ProfilePreferenceStore.saveFavorites(work, candidate) [TRANSACTION BOUNDARY]
-  -> publish work-profile Favorite state
-  -> PromptSurface.projectFavorite(work, P07, true)
-  -> UsageLedger FAVORITE_CHANGED profileId=work
+  -> FavoritePreferenceContexts selects canonical FavoritePreferences(work)
+  -> canonical FavoritePreferences.toggle(P07)
+  -> BoundProfileFavoriteStore.saveFavorites(candidate) [TRANSACTION]
+  -> canonical owner publishes only after save
+  -> PromptSurface.projectFavorite(work,P07,true)
   <- FAVORITE_CHANGED
 ```
 
-The default profile Favorite set is untouched.
+### Profile-scoped shortcut configuration and dispatch
+
+```text
+CONFIGURE P95 SHORTCUT IN ACTIVE PROFILE
+  -> ActiveShortcutRegistry.current()
+  -> canonical ShortcutRegistry.configure(binding)
+  -> ShortcutPolicy validates collision/target
+  -> BoundProfileShortcutStore.save(candidate)           [TRANSACTION]
+  -> canonical registry publishes userBindings
+  <- CONFIGURED
+
+TYPE P 9 5
+  -> canonical ShortcutDispatcher
+  -> ActiveShortcutRegistry selects active canonical registry
+  -> canonical buffered-sequence precedence
+  -> semantic prompt action
+```
+
+The executable prototype then switches profile and proves that the first profile's binding is absent, configures another profile, switches back, and creates fresh registry contexts to prove persisted bindings hydrate through canonical `ShortcutRegistry` policy rather than through a parallel registry implementation.
 
 ## Failure call stacks
 
-### Invalid interaction modality
+### Invalid modality
 
 ```text
-ENTRYPOINT supplies unsupported modality
+ENTRYPOINT provides unsupported modality
   -> InteractionContextFactory
   -> INVALID_INTERACTION_MODALITY
-  -> kernel is not invoked
-  -> no DOM/storage/clipboard mutation
+  -> kernel never starts
+  -> no clipboard/storage/DOM mutation
 ```
 
-No fallback global mode is inferred.
-
-### Unknown profile activation
+### Unknown profile
 
 ```text
-ACTIVATE_PROFILE(target=missing)
+ACTIVATE_PROFILE(missing)
   -> ProfileCatalog.require(missing)
   -> UNKNOWN_PROFILE
-  -> ActiveProfile remains previous value
-  -> no preference mutation
+  -> ActiveProfile unchanged
+  -> no preference projection
 ```
 
-### Profile-scoped persistence failure
+### Favorite persistence failure
 
 ```text
-TOGGLE_FAVORITE while work profile is active
-  -> candidate built for work
-  -> ProfilePreferenceStore.saveFavorites(work, candidate)
+canonical FavoritePreferences.toggle in work profile
+  -> BoundProfileFavoriteStore.saveFavorites(candidate)
   -> PROFILE_PREFERENCE_PERSISTENCE_FAILED
-  -> work prior set remains authoritative
-  -> default profile remains untouched
-  -> no Favorite projection / no completion event
+  -> canonical owner keeps prior set
+  -> no Favorite projection / completion event
+  -> default profile untouched
 ```
 
-### Async copy while user switches profile
+### Shortcut persistence failure
 
-The prototype deliberately begins a deferred clipboard command in `default`, activates `work` while the write is pending, and then completes the copy.
+```text
+canonical ShortcutRegistry.configure in work profile
+  -> BoundProfileShortcutStore.save(candidate)
+  -> storage failure
+  -> canonical registry transforms to PERSISTENCE_FAILED
+  -> candidate userBinding not published
+  -> default profile registry untouched
+```
+
+### Async copy while profile switches
 
 ```text
 COPY starts with InteractionContext.profileId=default
-  -> Clipboard Promise pending
+  -> clipboard Promise pending
   -> ACTIVATE_PROFILE(work) completes
   -> original clipboard Promise resolves
-  -> PROMPT_COPIED event remains profileId=default
+  -> result / PROMPT_COPIED remain profileId=default
 ```
 
-This is intentional snapshot semantics. A running command is not silently reassigned to whatever profile happens to be active at completion time.
+The initiating snapshot, not later global state, owns attribution.
 
 ## State model
 
-### Profile catalog cardinality
+### Profile catalog
 
 ```text
 DEFAULT_ONLY
-  -> named profile created later -> MULTI_PROFILE
+  -> named profiles introduced -> MULTI_PROFILE
 MULTI_PROFILE
-  -> profiles may be added/removed later through a future profile-management owner
+  -> activation changes current preference context only
 ```
 
-The prototype does not implement profile creation/deletion because those lifecycle requirements were not requested. It proves activation and scoped preference use only.
+Profile create/rename/delete is intentionally not prototyped because lifecycle semantics were not requested or evidenced.
 
-### Active profile transition
+### Active profile
 
 ```text
-ACTIVE(default)
-  -- ACTIVATE_PROFILE(work) / valid --> ACTIVE(work)
-  -- ACTIVATE_PROFILE(missing) ------> ACTIVE(default) + UNKNOWN_PROFILE
+ACTIVE(A)
+  -- ACTIVATE_PROFILE(B), valid --> ACTIVE(B) + B Favorite projection
+  -- ACTIVATE_PROFILE(missing) --> ACTIVE(A) + UNKNOWN_PROFILE
 ```
 
-A valid activation does not imply a `SessionState` transition.
-
-### Interaction context lifecycle
+### Interaction context
 
 ```text
 USER EVENT
   -> snapshot {source, modality, current profileId}
-  -> immutable for command lifetime
-  -> discarded after terminal result/error
+  -> immutable through async command lifetime
+  -> discard after terminal result/error
 ```
 
 No interaction context is persisted.
 
-## Prototype comparison result
+## Tests and traces
 
-The executable comparison is intentionally narrower than the parent command-kernel-vs-reducer comparison. The parent architecture already selected the async command kernel.
+Owning proof commands:
 
-The remaining profile/modality choice is:
+```text
+node --check docs/prompt-kit-program-prototype.js
+node --check docs/prompt-kit-hotkey-prototype.js
+node --check docs/prompt-kit-profile-modality-prototype.js
+node docs/prompt-kit-program-prototype.js
+node docs/prompt-kit-hotkey-prototype.js
+node docs/prompt-kit-profile-modality-prototype.js
+python -m unittest tests.test_prompt_kit_program_prototype -v
+python -m unittest tests.test_prompt_kit_profile_modality_prototype -v
+python -m unittest tests.test_prompt_kit_hotkey_completion -v
+python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+```
 
-| Criterion | Global mode + cloned profile state | Explicit InteractionContext + scoped preferences |
-| --- | --- | --- |
-| pointer/keyboard policy locality | leaks across callers | presentation seam only |
-| hybrid input | global mode can become stale | every invocation independent |
-| single-profile complexity | profile machinery still visible | default profile can stay implicit |
-| profile switch effect | swaps/reset broad app state | changes preference context only |
-| prompt catalog ownership | pressure to duplicate | remains canonical/global |
-| async attribution | can observe later active profile | initiating snapshot is stable |
-| preference isolation | distributed key convention | one profile persistence port |
-| migration risk | high | default compatibility adapter bounds it |
+The JSON report exposes PASS markers for:
+- all four requested archetypes;
+- pointer/keyboard terminal copy convergence;
+- keyboard shortcut reveal/focus recovery;
+- catalog-defined default legacy compatibility;
+- canonical Favorite owner reuse;
+- Favorite isolation and active projection refresh;
+- canonical ShortcutRegistry isolation, dispatch, rehydration, and persistence failure;
+- invalid modality and unknown profile rejection;
+- in-flight profile snapshot attribution;
+- privacy-bounded traces.
 
-**Selected:** explicit `InteractionContext` + `ActiveProfile` + profile-scoped preference ports over the already-selected async command kernel.
+Traces record layer, semantic event, opaque profile ID, prompt ID where needed, source/modality, and counts. They intentionally omit prompt body text and profile display names.
 
 ## Productivity feature admission
 
-This architecture gives future feature work a concrete admission test instead of feature brainstorming by intuition alone.
-
-A proposed feature is safe enough for a build prototype only when it can answer:
+Future feature proposals should answer these before a build sprint:
 
 1. What is the terminal user value?
 2. What visible pointer path reaches it?
 3. What keyboard-operable path reaches it?
-4. Is the keyboard shortcut merely an accelerator of a visible capability?
-5. Is its state global catalog data, transient session state, or profile-scoped durable preference?
-6. Which module is the one state owner?
-7. Which external side effects need ports?
-8. What is the consequential failure path and truthful recovery state?
-9. Does a one-profile/default user retain existing behavior and storage?
-10. Does switching profile leave unrelated transient UI untouched?
-11. What semantic completion event, if any, belongs in the UsageLedger?
-12. What repository proof is possible, and what still requires a real browser/operator?
+4. Is any shortcut merely an accelerator of that visible capability?
+5. Is state canonical catalog data, transient session state, or profile-scoped durable preference?
+6. Who is the one semantic owner?
+7. Which external side effects require ports/adapters?
+8. What consequential failure path leaves truthful state?
+9. Does the one-profile/default user retain existing behavior/storage?
+10. Does profile switching leave unrelated transient browsing untouched?
+11. What semantic completion event, if any, is justified and privacy-bounded?
+12. What can repository CI prove, and what still requires a browser/operator?
 
 ## Feature shortlist after this design session
 
 ### Admit next: profile-specific Favorite + shortcut worksets
 
-**Why:** directly improves prompt retrieval productivity for users with multiple contexts while reusing existing Favorite and Shortcut owners.
+This directly advances prompt retrieval productivity for users who assume different contexts while reusing existing preference owners.
 
-**Safe boundary:** scope only durable Favorite/shortcut preference storage by profile; preserve the default profile as compatibility behavior; do not persist search/filter/layout merely because profiles exist.
+Safe boundary:
+- default-only compatibility first;
+- then named profile activation;
+- only Favorites/custom shortcuts scoped initially;
+- prompt catalog and transient browsing stay shared;
+- no full profile CRUD or workspace restore in the first build.
 
-### Admit later: universal Actions surface as a projection of semantic commands
+### Admit later: universal Actions surface as a projection
 
-A visible Actions control could project the same semantic command catalog for mouse users while a documented keyboard accelerator opens the same surface. This can improve discovery without inventing a second action owner.
+A visible Actions control could project the same semantic command catalog for pointer users while a keyboard accelerator opens that same surface. It must never become a second command registry.
 
-**Gate:** build only after the command catalog/entrypoint projection contract is explicit; the Actions surface must never become a second command registry.
+### Defer: profile-specific search/filter/layout restoration
 
-### Defer: full profile-specific view/filter/layout restoration
+There is no current evidence that a profile switch should reposition the user or restore an old view. Persisting it now would blur transient and durable state.
 
-Current evidence does not prove that users want profile switching to move or reset their browsing context. Persisting it now would blur transient and durable state.
+### Defer: recommendations/gameplay from usage
 
-### Defer: automatic recommendations/gameplay from usage
+`UsageLedger` remains optional/local/private. Recommendation or gameplay behavior should wait until retention, reset, privacy, and user-control semantics are explicitly productized.
 
-The parent architecture intentionally keeps `UsageLedger` optional/local/private. Recommendation or gameplay features should wait until retention/privacy/reset semantics are explicitly productized and tested.
+## Second-pass architecture critique and reconciliation
 
-## Tests and traces
+Executable proof and PR review materially changed the first design. Findings are retained here rather than disappearing after repair.
 
-Focused repository proof should execute:
+1. **Invocation modality beats durable user mode.** A user can alternate pointer and keyboard between consecutive actions. The design removed any reason for global input-mode state.
+2. **Shortcut recovery should not become universal focus behavior.** Typed shortcut reveal/focus is useful; clicking or pressing Enter on an already-targeted Copy control should not bounce focus elsewhere.
+3. **Profile is not whole-app snapshot.** Only evidenced durable preferences are scoped; catalog and transient browsing remain shared.
+4. **Default role must not be a magic ID.** First prototype incorrectly hard-coded `default` in persistence selection while `ProfileCatalog` allowed another ID to be marked default. Repair: the store receives `ProfileCatalog.defaultProfile().id`; the one-profile executable fixture uses `solo` to prove compatibility is role-based.
+5. **Do not prototype a second Favorite authority.** Automated review correctly found that the first `ProfiledFavoritePreferences` duplicated set semantics. Repair: it was removed. `FavoritePreferenceContexts` only selects a bound store and instantiates canonical `FavoritePreferences`.
+6. **Shortcut scoping needs an actual canonical registry journey.** Running the hotkey prototype beside the profile prototype did not prove scoped persistence. Repair: canonical `ShortcutRegistry` gained bounded initial-binding hydration and is now exercised through configure, `ShortcutDispatcher`, profile switch, rehydration, and failed persistence.
+7. **Profile activation must refresh dependent projection.** Merely changing `ActiveProfile` could leave stale Favorite stars. Repair: activation snapshots canonical target-profile Favorites and replaces the active Favorite projection before `PROFILE_ACTIVE` returns.
+8. **Async work must retain initiating profile.** Completion attribution reads immutable `InteractionContext`, not current profile at completion.
+9. **Semantic traces stay privacy-bounded.** Opaque profile IDs are sufficient for attribution; profile display names and prompt bodies remain outside trace payloads.
+10. **Do not persist last active profile yet.** Session-only activation proves architecture without inventing resume semantics.
 
-```text
-node --check docs/prompt-kit-profile-modality-prototype.js
-node docs/prompt-kit-profile-modality-prototype.js
-python -m unittest tests.test_prompt_kit_profile_modality_prototype -v
-python -m unittest tests.test_prompt_kit_program_prototype tests.test_prompt_kit_hotkey_completion -v
-python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-```
-
-The prototype JSON report must expose:
-
-- selected extension identity;
-- mouse/pointer, keyboard, single-profile, and multi-profile archetype PASS markers;
-- pointer/keyboard command parity;
-- keyboard-shortcut reveal/focus recovery;
-- default-profile compatibility behavior;
-- profile isolation;
-- unknown-profile rejection;
-- profile persistence failure isolation;
-- in-flight profile snapshot attribution;
-- trace events naming interaction source/modality/profile without logging prompt bodies.
-
-## Second-pass architecture critique
-
-Prototype design changed the initial intuition in several useful ways:
-
-1. **Do not model “mouse user” and “keyboard user” as durable modes.** The same person can switch devices between consecutive actions; modality belongs to the invocation.
-2. **Do not force shortcut focus behavior onto visible-control clicks.** Reveal/focus is valuable recovery for a typed shortcut, but a pointer click or keyboard activation on an already-focused native Copy control should not be bounced elsewhere.
-3. **Do not make Profile a synonym for whole-app snapshot.** Current evidence only justifies durable preference scoping. Catalog and transient navigation stay shared.
-4. **Do not mint `ProfiledShortcutRegistry`.** The existing `ShortcutRegistry` remains the semantic owner; only its persistence namespace becomes profile-aware in a later build.
-5. **Do not require migration before value.** A default-profile compatibility adapter lets current users retain existing preference storage while named profiles get a namespace.
-6. **Do not read active profile at command completion.** Async actions keep the profile snapshot captured at initiation so telemetry and scoped mutation cannot drift.
-7. **Do not persist last active profile yet.** Session-only activation is sufficient to prove architecture; durable resume semantics need an explicit product decision.
-8. **Green tests exposed a hidden default-ID coupling on review.** The first executable fake treated `isDefault` as catalog metadata but independently hard-coded the literal ID `default` in storage. The second pass removed that split-brain assumption: `ProfileCatalog.defaultProfile().id` now configures the compatibility store, and the executable one-profile journey uses `solo` to prove the role is not tied to a magic identifier.
-9. **Keep semantic traces privacy-bounded.** Profile attribution uses an opaque initiating ID only; display names and prompt bodies remain outside trace payloads.
-
-No safer bounded design improvement remains in this prototype scope without crossing into broad production implementation or inventing unrequested profile lifecycle semantics.
+After these repairs, no safe bounded design improvement remains without crossing into broad production implementation or inventing profile lifecycle requirements.
 
 ## Exact implementation seam ready for the next build sprint
 
-The next production build should be intentionally narrower than “add profiles everywhere.”
+The next production build should be narrower than “add profiles everywhere”:
 
-1. Add one production `PromptProfileContext`/`InteractionContextFactory` owner near the existing Prompt Kit runtime.
-2. Ship **default-only behavior first**: one implicit default profile, no new profile-switcher UI, and no visible behavior change.
-3. Route existing Favorite and Shortcut persistence through a profile-aware storage adapter whose default namespace delegates to the current storage contract.
-4. Stamp semantic commands with `{source, modality, profileId}` at entrypoint boundaries; do not create global modality state.
-5. Keep prompt catalog and `SessionState` unchanged.
-6. Add named profile activation and a visible keyboard-operable profile control only after default compatibility and persistence isolation are proven.
-7. Reuse the existing `CommandKernel`, `FavoritePreferences`, `ShortcutRegistry`, and PromptSurface owners; do not introduce parallel owners.
+1. add one production `PromptProfileContext` / `InteractionContextFactory` near the existing Prompt Kit runtime;
+2. ship **default-only compatibility first** — one implicit default profile, no new switcher UI, no visible behavior change;
+3. route current Favorite persistence through a profile-aware adapter whose catalog-defined default delegates the existing storage contract;
+4. route current custom shortcut persistence through a profile-aware adapter and hydrate the existing `ShortcutRegistry` through the proved seam;
+5. stamp semantic commands with `{source, modality, profileId}` at entrypoint boundaries; never create global modality state;
+6. keep `PromptCatalog` and `SessionState` ownership unchanged;
+7. prove default compatibility and scoped failure isolation against current production storage before exposing named profiles;
+8. add named profile activation plus one visible native keyboard-operable profile control;
+9. on activation, refresh all profile-dependent projections before success;
+10. reuse existing `CommandKernel`, canonical `FavoritePreferences`, canonical `ShortcutRegistry`, `ShortcutDispatcher`, and PromptSurface owners.
 
-Broad production profile management (create/rename/delete/import/export), profile-specific layout persistence, dashboards, and recommendations are outside that next seam.
+Broad profile management CRUD/import/export, profile-specific layouts/search, dashboards, recommendations, and telemetry productization are outside that implementation seam.
 
 ## Unresolved decisions
 
-These are deliberately not guessed by this design sprint:
+These are intentionally not guessed:
 
-- whether users should be able to create/rename/delete profiles inside Prompt Kit or only import predefined profiles;
-- whether last active profile should persist across browser sessions;
-- whether any preferences beyond Favorites and configured shortcuts should become profile-scoped;
-- whether profile switching should eventually restore a saved view/search/filter workspace;
-- exact visible profile-switcher placement and responsive layout;
-- whether usage history should be global, profile-partitioned, or disabled by default if productized.
+- whether profiles can be created/renamed/deleted inside Prompt Kit or arrive through predefined/imported configuration;
+- whether last active profile persists across browser sessions;
+- whether any preference beyond Favorites and configured shortcuts becomes profile-scoped;
+- whether a future profile switch should restore a saved search/filter/layout workspace;
+- exact profile-switcher placement and responsive treatment;
+- whether usage history, if productized, is global, profile-partitioned, or disabled by default.
 
-Each requires either explicit product preference or browser/user evidence; none blocks the current executable architecture seam.
+None blocks the proved program seam.
 
 ## Proof ceiling
 
-Repository/Node/Python/CI proof can establish:
+Repository/Node/Python/CI can prove:
+- one semantic copy command for pointer and keyboard entrypoints;
+- invocation-only modality context;
+- default-only and multi-profile ownership;
+- role-based default legacy compatibility;
+- canonical `FavoritePreferences` reuse, isolation, publish-after-save failure behavior, and profile activation projection refresh;
+- canonical `ShortcutRegistry` validation, scoped persistence, `ShortcutDispatcher` dispatch, rehydration, and failure isolation;
+- shared prompt catalog and transient `SessionState`;
+- initiating-profile attribution across async profile switching;
+- privacy-bounded trace payloads;
+- compatibility with parent program/hotkey prototypes and canonical generated-site parity.
 
-- one semantic command path for pointer and keyboard entrypoints;
-- no global interaction modality state in the prototype;
-- default-only and multi-profile state ownership;
-- default-legacy compatibility seam in the fake store;
-- profile-scoped Favorite isolation and fail-closed persistence;
-- unknown-profile rejection;
-- initiating-profile attribution across an async profile switch;
-- compatibility with the existing program/hotkey prototypes and generated Prompt Kit parity.
+It cannot prove:
+- real-browser focus/scroll geometry;
+- mouse, touch, screen-reader, switch-device, or keyboard-layout ergonomics;
+- migration against a user's actual existing browser storage;
+- subjective productivity improvement;
+- ideal profile-switcher placement;
+- production behavior until a later build sprint wires these seams into `docs/prompt-kit*.js` and the canonical generated site.
 
-It cannot establish:
-
-- real browser focus behavior or whether every native control receives focus identically across browsers/platforms;
-- real mouse, touch, screen-reader, keyboard-layout, or switch-device ergonomics;
-- actual localStorage migration against a user's existing browser data;
-- subjective productivity improvement for real users;
-- ideal profile-switcher placement or profile lifecycle UX;
-- production behavior until the later build sprint wires these seams into `docs/prompt-kit*.js` and the canonical generated site.
-
-Those are live/browser/product proof gates, not reasons to duplicate the architecture now.
+Those are browser/product/runtime gates, not reasons to duplicate the architecture now.
