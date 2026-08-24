@@ -177,6 +177,18 @@ class UXDesignPromptSuiteTests(unittest.TestCase):
         for name in NAMES.values():
             self.assertIn(name, actual)
 
+    def test_ux_specialists_declare_owned_and_forbidden_scope(self) -> None:
+        for prompt_id in ("P106", "P107", "P108", "P109", "P110"):
+            content = self.full[prompt_id]["copyContent"]
+            with self.subTest(prompt=prompt_id):
+                self.assertIn("OWNED SCOPE", content)
+                self.assertIn("FORBIDDEN SCOPE", content)
+        self.assertIn("P95 runtime/call-stack architecture", self.full["P106"]["copyContent"])
+        self.assertIn("when no reference drives the work (P106)", self.full["P107"]["copyContent"])
+        self.assertIn("route structural defects to their owning prompt", self.full["P108"]["copyContent"])
+        self.assertIn("must not erase product-specific semantics", self.full["P109"]["copyContent"])
+        self.assertIn("hand it to the correct owner", self.full["P110"]["copyContent"])
+
 
 if __name__ == "__main__":
     unittest.main()
