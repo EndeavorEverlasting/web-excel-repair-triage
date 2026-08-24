@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document is the program-design owner for the browser Prompt Kit. It sits between repository governance/harness and broad feature implementation. It defines runtime vocabulary, state ownership, dependency direction, command/query seams, side-effect ports, failure contracts, and the executable prototypes that must stay coherent as new Prompt Kit features are proposed.
+This document is the program-design owner for the browser Prompt Kit. It sits between repository governance/harness and broad feature implementation. It defines runtime vocabulary, state ownership, dependency direction, command/query seams, side-effect ports, failure contracts, and executable prototypes that must stay coherent as new Prompt Kit features are proposed.
 
 It does **not** replace:
 
@@ -11,35 +11,38 @@ It does **not** replace:
 - full production implementation in `docs/prompt-kit*.js`;
 - generated `web/prompt-kit/index.html`, which remains builder-owned.
 
+Broad production migration is intentionally outside this design sprint.
+
 ## Fresh evidence floor for this design session
 
-Design floor: `main@f36de4f4f8c40ee6d29bfa9127dd3b2085823b13` on 2026-08-24.
+Initial design floor: `main@f36de4f4f8c40ee6d29bfa9127dd3b2085823b13` on 2026-08-24.
 
-Current evidence already establishes:
+Before final proof the branch was reconciled non-destructively with `main@9c5639ff4d01268c034cc36344cfae1843bce494`, which includes the current P113 generated-site parity hardening. The focused prototype workflow must prove the reconciled candidate SHA explicitly rather than GitHub's synthetic pull-request merge ref.
 
-- the Prompt Kit has one canonical generated web artifact and builder;
-- `docs/prompt-kit-polish.js` currently contains substantial view, filter, clipboard, favorites, and keyboard behavior;
-- configured prompt-ID shortcuts have already converged on the terminal behavior **copy + reveal prompt**, rather than opening prompt detail;
-- the hotkey subsystem already has a bounded design/prototype seam in `docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md` and `docs/prompt-kit-hotkey-prototype.js`;
-- favorites and shortcut persistence are browser-local concerns;
-- browser geometry, clipboard policy, and operator ergonomics remain separate runtime proof ceilings from repository/static proof.
+Current evidence establishes:
 
-This program design therefore does not reopen the solved hotkey architecture. It generalizes the next layer up: how **any entrypoint** reaches a semantic Prompt Kit action without becoming a second state or side-effect owner.
+- one canonical Prompt Kit registry/build path and generated web artifact;
+- `docs/prompt-kit-polish.js` currently owns substantial view, filter, clipboard, favorites, and keyboard behavior;
+- configured prompt-ID shortcuts have already converged on **copy + reveal prompt** rather than opening detail;
+- the existing hotkey design/prototype remains the single shortcut owner;
+- browser geometry, real Clipboard API policy, and operator ergonomics remain runtime proof ceilings.
 
-## Observable done checklist for this design sprint
+This design therefore generalizes the layer above individual hotkeys: how any entrypoint reaches semantic Prompt Kit behavior without becoming a second state, persistence, or side-effect owner.
 
-The architecture is design-ready only when repository evidence proves all of the following:
+## Observable done checklist
+
+The architecture is design-ready only when evidence proves:
 
 1. user outcomes and invariants are named independently of DOM implementation;
-2. transient session state, durable preferences, semantic completion usage, catalog data, and generated artifacts each have one owner;
+2. transient session state, durable preferences, semantic completion usage, catalog data, shortcuts, and generated artifacts each have one owner;
 3. at least two materially different execution seams are compared with executable code;
-4. copy/reveal and favorite mutation traverse real domain decisions and fake only external boundaries;
-5. clipboard and preference-persistence failure paths execute and retain truthful state;
+4. copy/reveal and Favorite mutation traverse real domain decisions and fake only external boundaries;
+5. asynchronous clipboard rejection and preference-persistence failure retain truthful state;
 6. opening/inspecting a prompt is not falsely counted as copying it;
-7. telemetry degradation cannot retroactively turn a successful user action into failure;
-8. a new command can be registered without changing every entrypoint;
-9. the selected design has a focused CI-owned regression seam;
-10. broad production migration is explicitly deferred to a later build sprint.
+7. telemetry degradation cannot retroactively turn successful user value into failure;
+8. command handlers must return a validated `CommandResult`;
+9. a new command can register without changing every entrypoint;
+10. the selected design has exact-head CI proof and broad production migration remains deferred.
 
 ## User outcomes
 
@@ -47,207 +50,170 @@ The Prompt Kit should let a user reach the intended prompt outcome from multiple
 
 Current user-value journeys include:
 
-- copy a prompt and receive normal completion feedback;
-- reveal/locate a prompt in the library when a command targets it;
-- inspect a prompt in detail when inspection is the intended terminal action;
-- save/remove Favorites durably and fail closed if browser persistence fails;
-- navigate/search/filter without those transient view choices becoming durable preference truth;
-- invoke semantic commands from keyboard, cards, finder/tutorial surfaces, or future command surfaces without duplicating business rules;
+- copy a prompt and receive completion only after the clipboard write resolves successfully;
+- reveal/locate a prompt when a command targets it;
+- inspect a prompt when inspection is the intended terminal action;
+- save/remove Favorites durably and fail closed when persistence fails;
+- search/filter/navigate without transient view choices becoming durable preference truth;
+- invoke semantic commands from keyboard, cards, finder/tutorial surfaces, or future surfaces without duplicating business rules;
 - preserve keyboard accessibility and editable-field safety;
-- let future personalization use semantic completion events rather than incidental focus/view events.
+- optionally project semantic completion events without counting incidental views/focus as product usage.
 
 ## Core invariants
 
-1. **Terminal value beats intermediate UI.** A command named copy is complete only after clipboard success; revealing or focusing is required support, not terminal success.
+1. **Terminal value beats intermediate UI.** A copy command is complete only after the asynchronous clipboard write resolves; reveal/focus are supporting states, not success.
 2. **Inspection is not completion telemetry.** Opening detail must never count as a copied prompt.
-3. **Durable preference writes publish after persistence.** A failed Favorite/shortcut save leaves the previous in-memory preference authoritative.
-4. **Transient view state is not preference state.** Search text, category/type/color filters, selected section, active detail, and current copy target are session-owned.
-5. **One semantic completion ledger.** If usage/personalization is enabled, it records completed domain actions after success; dashboards/recommendations are projections, never second writers.
-6. **Telemetry is subordinate to user value.** A telemetry write failure may degrade observability, but it cannot undo a successful clipboard write or durable preference mutation.
-7. **Catalog identity is canonical.** Commands target prompt IDs resolved by the canonical effective prompt registry; UI labels are presentation.
+3. **Durable preference writes publish after persistence.** A failed Favorite/shortcut save leaves the prior in-memory state authoritative.
+4. **Transient view state is not preference state.** Search text, filters, selected section, active detail, and copy target are session-owned.
+5. **One semantic completion ledger.** If usage/personalization ships, it records completed domain actions; dashboards/recommendations are projections, never writers.
+6. **Telemetry is subordinate to user value.** Telemetry degradation cannot undo a completed clipboard write or durable preference mutation.
+7. **Catalog identity is canonical.** Commands target prompt IDs resolved by the effective prompt registry.
 8. **Generated HTML is not a state owner.** Production source changes flow through the registered builder.
 9. **Entrypoints translate; they do not own policy.** Hotkeys, cards, finder/tutorial UI, and future surfaces create commands/queries and render results.
-10. **External boundaries stay explicit.** Clipboard, browser storage, DOM projection, browser history/URL state, and future network/export integrations deserve ports only where behavior is volatile or independently fallible.
+10. **Async boundaries are awaited.** External Promise-returning ports must settle before a command reports terminal success.
+11. **Command results are typed at runtime.** The kernel validates a handler result before recording `command_completed`; invalid results fail as `INVALID_COMMAND_RESULT` rather than crashing after the fact.
 
 ## Domain vocabulary
 
 ### Core records
 
-- **PromptRecord** — canonical prompt identity plus copyable content and metadata.
+- **PromptRecord** — canonical prompt identity, copyable content, and metadata.
 - **PromptTarget** — validated prompt identity used by runtime commands.
 - **PromptCommand** — imperative request for terminal behavior, e.g. `COPY_REVEAL_PROMPT`, `TOGGLE_FAVORITE`, `OPEN_PROMPT_DETAIL`.
-- **PromptQuery** — read-only request for data/projection, e.g. search/filter/list/finder ranking. Queries must not silently create product side effects.
-- **CommandResult** — typed terminal outcome such as `COPIED`, `DETAIL_OPEN`, or `FAVORITE_CHANGED`.
-- **ProgramError** — classified failure with stable code, user-safe message/recovery metadata, and original cause hidden behind the boundary.
+- **PromptQuery** — read-only request for search/filter/list/ranking projections.
+- **CommandResult** — validated terminal outcome such as `COPIED`, `DETAIL_OPEN`, or `FAVORITE_CHANGED`.
+- **ProgramError** — classified failure with stable code and safe recovery metadata.
 
 ### State owners
 
-- **PromptCatalog** — read-only effective prompt records produced by the canonical registry/builder pipeline.
-- **SessionState** — transient browsing state: current view, search text, filters, active prompt, open detail, keyboard copy target.
-- **FavoritePreferences** — durable Favorite set, with fail-closed publication after the PreferenceStore succeeds.
-- **ShortcutRegistry** — durable configured shortcut bindings; remains owned by the existing hotkey seam rather than being folded into generic session state.
-- **UsageLedger** — semantic completed-action events only, local/private/resettable if enabled.
+- **PromptCatalog** — read-only effective prompt records produced by the registry/build pipeline.
+- **SessionState** — transient browsing state: view, search, filters, active prompt, open detail, keyboard copy target.
+- **FavoritePreferences** — authoritative Favorite set after successful persistence.
+- **ShortcutRegistry** — existing durable configured shortcut owner; it is not duplicated here.
+- **UsageLedger** — semantic completed-action events only, local/private/resettable if productized.
 
 ### Runtime services and ports
 
-- **CommandKernel** — application seam that maps command IDs to deep handlers and provides `execute(command)`.
-- **PromptActionHandler** — owns the complete success/failure orchestration for one semantic action.
-- **ClipboardPort** — external clipboard write boundary.
-- **PreferenceStore** — external durable local-storage boundary for Favorites/preferences.
+- **CommandKernel** — application seam mapping command IDs to handlers; public interface is `execute(command) -> Promise<CommandResult>`.
+- **PromptActionHandler** — owns complete success/failure ordering for one semantic action.
+- **ClipboardPort** — asynchronous external boundary: `writeText(text) -> Promise`.
+- **PreferenceStore** — durable browser storage boundary for Favorites/preferences.
 - **PromptSurfacePort** — DOM/presentation adapter for reveal, focus, detail, and preference projection.
-- **UsageLedger** — semantic completion event sink; should own storage/privacy/reset rules if productionized.
+- **UsageLedger** — semantic completion sink; owns retention/privacy/reset if ever productionized.
 
 ### Entrypoints
 
 - **HotkeyEntrypoint** — keyboard resolution → PromptCommand.
 - **PromptCardEntrypoint** — card control → PromptCommand.
 - **FinderEntrypoint** — finder/tutorial result → PromptCommand or PromptQuery.
-- Future entrypoints must translate to these same semantic interfaces rather than call persistence/clipboard/DOM internals directly.
+
+Future entrypoints must translate to the same semantic interfaces rather than call persistence, clipboard, or DOM internals directly.
 
 ## External prior-art inspection
 
-The design session inspected mechanisms rather than copying foreign architecture.
+The session inspected mechanisms, not foreign file layouts or implementation code.
 
 ### VS Code command registry/service
 
-Source: `microsoft/vscode`, `src/vs/platform/commands/common/commands.ts`.
+Source inspected: `microsoft/vscode`, `src/vs/platform/commands/common/commands.ts`.
 
-Transferable mechanism:
-
-- a small `executeCommand(id, ...args)` service;
-- a registry mapping stable command IDs to handlers;
-- command metadata/argument validation at registration/execution boundaries;
-- callers do not need to know handler internals.
-
-This is structurally compatible with a vanilla-JavaScript Prompt Kit because it centralizes semantic action routing without requiring a UI framework or global state library.
+Transferable mechanism: a small execute-command service, stable command IDs, handler registration, and boundary validation. Callers do not need handler internals.
 
 ### Redux store/reducer
 
-Source: `reduxjs/redux`, `src/createStore.ts`.
+Source inspected: `reduxjs/redux`, `src/createStore.ts`.
 
-Transferable mechanism:
+Transferable mechanism: one dispatch seam, explicit state ownership, serializable action identity, and guarded state mutation.
 
-- one dispatch seam;
-- explicit state ownership;
-- serializable action identity;
-- guarded mutation during dispatch.
-
-The design prototype uses this as the materially different alternative: a reducer computes pending state plus explicit effects, and an effect runner separates precommit from postcommit work.
-
-### License/dependency disposition
-
-Both inspected repositories use MIT licenses. This design copies no implementation and adds no third-party dependency. Only architectural mechanisms are compared, so there is no direct code-reuse, supply-chain, bundle-size, or runtime-security implication.
+Both inspected repositories are MIT licensed. This design copies no external implementation and adds no dependency.
 
 ## Candidate architectures
 
 ### Candidate A — existing local handlers, made slightly more disciplined
 
-Each UI surface continues calling existing functions such as copy, detail, Favorite, render, and localStorage helpers directly.
+Each UI surface continues calling copy/detail/Favorite/render/storage helpers directly.
 
-**Strengths**
-- smallest first patch;
-- zero migration layer;
-- easy to understand inside one function.
+**Advantage:** smallest first patch.
 
-**Weaknesses**
-- terminal semantics remain scattered across entrypoints;
-- adding another surface can duplicate ordering rules (reveal → focus → copy → completion feedback);
-- error classification and usage-event ownership drift easily;
-- mutable globals remain implicit state owners.
+**Failure:** terminal semantics and failure ordering remain scattered; new surfaces can duplicate reveal → focus → clipboard → completion rules and create split-brain state ownership.
 
-**Disposition:** baseline only. Good for tiny isolated UI behavior; insufficient as the program-level expansion seam.
+**Disposition:** baseline only.
 
 ### Candidate B — global reducer + effect runner
 
-Every interaction dispatches a serializable action. A reducer computes pending state and effect descriptors. A runner executes critical precommit effects, commits state, then runs presentation/telemetry effects.
+Every interaction dispatches an action. A reducer computes pending state and effect descriptors. A runner executes critical precommit effects, commits state, then postcommit presentation/telemetry.
 
-**Strengths**
-- explicit state transitions;
-- excellent replay/debug story;
-- natural single-state-tree discipline;
-- future complex multi-step state machines can be modeled deterministically.
+**Advantages:** explicit state transition model and replay/debug discipline.
 
-**Prototype cost revealed**
-- copy is primarily an external terminal action, not a state transition;
-- fail-closed Favorite persistence requires precommit effects before publishing state;
-- clipboard, persistence, presentation, and telemetry need phase/criticality metadata;
-- the reducer becomes an effect-plan DSL rather than a simple state reducer.
+**Prototype cost:** copy is principally an asynchronous terminal side effect, not a state transition. Fail-closed Favorite persistence requires precommit effects, and clipboard/persistence/presentation/telemetry require phase and criticality metadata. The reducer becomes an effect-plan protocol rather than a simple reducer.
 
-**Disposition:** viable but rejected for the current Prompt Kit. It introduces a global runtime protocol larger than the product currently needs.
+**Disposition:** executable and viable, but rejected for current Prompt Kit.
 
 ### Candidate C — command kernel + deep state owners + ports
 
-Entrypoints translate user intent into semantic commands. `CommandKernel.execute(command)` resolves one command handler. The handler owns ordering and coordinates the specific state owner(s) and external ports required for that terminal action.
+Entrypoints translate user intent into semantic commands. `await CommandKernel.execute(command)` resolves one handler. The handler owns ordering and coordinates only the state owners/ports required for that terminal action.
 
-**Strengths**
-- one small application seam for keyboard/card/finder/future entrypoints;
-- failure ordering stays local to the command that owns it;
+**Advantages:**
+- one small seam for hotkeys/cards/finder/future entrypoints;
+- async failure ordering remains local to the command;
 - durable preferences and transient session state remain separate;
-- external adapters are explicit without wrapping every helper in abstraction;
-- a future command can register without rewriting each entrypoint;
-- matches the existing hotkey design direction rather than replacing it.
+- external adapters are explicit without framework ceremony;
+- a future command registers without rewriting every entrypoint;
+- aligns with the existing hotkey architecture instead of replacing it.
 
 **Disposition:** selected.
 
 ### Candidate D — generic publish/subscribe event bus
 
-Surfaces publish events and independent subscribers react.
+**Advantage:** loose coupling.
 
-**Strengths**
-- loose coupling;
-- easy to add observers.
+**Failure:** terminal action ownership, ordering, error propagation, and compensation become implicit subscriber behavior. Commands and semantic completion events become easy to confuse.
 
-**Weaknesses**
-- terminal action ownership becomes ambiguous;
-- execution order matters for clipboard/persistence/presentation but becomes implicit subscriber order;
-- error propagation/compensation is harder;
-- semantic events and imperative commands become easy to conflate.
-
-**Disposition:** rejected as primary orchestration. A completion-event stream may exist behind UsageLedger later, but it must not replace command ownership.
+**Disposition:** rejected as primary orchestration. A completion event stream may later live behind UsageLedger, but it cannot replace command ownership.
 
 ## Selected module/interface map
 
-| Module | Responsibility / owned state | Public interface | Hidden complexity | Side effects | Failure contract | Observability / test seam |
-| --- | --- | --- | --- | --- | --- | --- |
-| `PromptCatalog` | canonical effective prompt records | `require(promptId)`; later query methods | registry record shape, lookup/indexing | none | `UNKNOWN_PROMPT` | fake catalog or real generated registry fixture |
-| `CommandKernel` | command registration and application dispatch | `register(type, handler)`, `execute(command)` | handler lookup, error normalization, lifecycle trace | none directly | `INVALID_COMMAND`, `UNKNOWN_COMMAND`, `COMMAND_ALREADY_REGISTERED`, normalized handler errors | deterministic command trace |
-| `SessionState` | transient browsing/navigation/copy-target state | intention-level state transitions and `snapshot()` | clearing incompatible transient filters without touching preferences | none until projected | illegal/unknown transition if a future state machine needs one | pure/component tests |
-| `FavoritePreferences` | authoritative in-memory Favorite set after persistence | `has`, `toggle`, `snapshot` | candidate creation and publish-after-save | through PreferenceStore | `PREFERENCE_PERSISTENCE_FAILED`; prior state retained | memory store fake + persistence-failure tests |
-| existing `ShortcutRegistry` | configured shortcut bindings and sequence mapping | existing hotkey design seam | timeout, collisions, persisted bindings | local storage | existing hotkey error contract | existing hotkey prototype/tests |
-| `ClipboardPort` | external clipboard write | `writeText(text)` | Clipboard API/fallback/policy | clipboard | `CLIPBOARD_WRITE_FAILED` | memory/failing fake; later browser proof |
-| `PromptSurfacePort` | render/projection actions only | `revealPrompt`, `focusCopy`, `openDetail`, `projectFavorite` | DOM selectors, focus, scroll, animation | DOM/focus/scroll | presentation failure classified by handler if consequential | fake surface; browser geometry/accessibility later |
-| `UsageLedger` | semantic completion events if enabled | `recordCompletion`, `reset` | local schema, retention, privacy/reset | local durable storage if productionized | degradation is reported but does not negate completed user value | memory/failing fake; event-count tests |
+| Module | Responsibility / state | Public interface | Side effects | Failure contract | Test seam |
+| --- | --- | --- | --- | --- | --- |
+| `PromptCatalog` | effective prompt records | `require(promptId)` | none | `UNKNOWN_PROMPT` | fake/registry fixture |
+| `CommandKernel` | registration + application dispatch | `register(type, handler)`, `execute(command) -> Promise<CommandResult>` | none directly | invalid/unknown/duplicate command, `INVALID_COMMAND_RESULT`, normalized handler error | deterministic trace |
+| `SessionState` | transient browsing/navigation/copy target | intention-level transitions + `snapshot()` | none until projected | future illegal transition classification | pure/component test |
+| `FavoritePreferences` | authoritative Favorites after persistence | `has`, `toggle`, `snapshot` | PreferenceStore | `PREFERENCE_PERSISTENCE_FAILED`; prior state retained | memory/failing store |
+| existing `ShortcutRegistry` | configured shortcuts | existing hotkey seam | browser storage | existing hotkey contract | existing prototype/tests |
+| `ClipboardPort` | external clipboard | `writeText(text) -> Promise` | clipboard | `CLIPBOARD_WRITE_FAILED` | resolving/rejecting fake |
+| `PromptSurfacePort` | DOM projection | reveal/focus/detail/favorite projection | DOM/focus/scroll | handler classifies consequential presentation failure | fake surface + browser proof |
+| `UsageLedger` | semantic completion events | `recordCompletion`, `reset` | local storage if enabled | degradation does not negate terminal success | memory/failing fake |
 
 ## State/data ownership
 
-| State/data | Canonical owner | Persistence | Who may mutate it |
+| State/data | Canonical owner | Persistence | Mutator |
 | --- | --- | --- | --- |
-| effective prompt records | PromptCatalog / canonical registry build | tracked registry → generated site | registry/build pipeline only |
-| current view/search/filter/detail/copy target | SessionState | none by default | command/query handlers through explicit transitions |
-| Favorite set | FavoritePreferences | PreferenceStore (`localStorage` adapter expected) | FavoritePreferences only |
-| configured prompt shortcuts | existing ShortcutRegistry | versioned shortcut store | existing shortcut owner only |
-| semantic completed-use events | UsageLedger | local/private if enabled | domain command handlers after terminal success |
-| DOM focus/classes/scroll | PromptSurface adapter | none | presentation adapter only |
-| clipboard contents | ClipboardPort / browser | browser external | ClipboardPort only |
+| effective prompt records | PromptCatalog / canonical registry build | tracked registry → generated site | registry/build pipeline |
+| view/search/filter/detail/copy target | SessionState | none by default | explicit transitions |
+| Favorite set | FavoritePreferences | PreferenceStore | FavoritePreferences only |
+| configured prompt shortcuts | existing ShortcutRegistry | versioned shortcut store | shortcut owner only |
+| completed usage events | UsageLedger, if enabled | local/private | successful domain commands only |
+| DOM focus/classes/scroll | PromptSurface adapter | none | presentation adapter |
+| clipboard contents | ClipboardPort/browser | external | ClipboardPort |
 | generated website bytes | canonical builder | repository artifact | builder only |
 
-No dashboard, help panel, finder, or recommendation feature may become a second writer for any row above. They consume projections or issue commands/queries.
+No dashboard, help panel, finder, or recommendation feature may become a second writer for these records.
 
 ## Dependency direction
 
 ```text
 USER / BROWSER EVENT
   -> ENTRYPOINT CONTROLLER
-  -> CommandKernel.execute(command)
+  -> await CommandKernel.execute(command)
   -> PromptActionHandler
        -> PromptCatalog
        -> SessionState / FavoritePreferences / existing ShortcutRegistry
        -> ClipboardPort / PreferenceStore / PromptSurfacePort / UsageLedger
-  <- CommandResult or classified ProgramError
+  <- Promise<CommandResult> or classified ProgramError
   -> PRESENTATION FEEDBACK
 ```
 
-Query direction remains separate:
+Read paths stay separate:
 
 ```text
 SEARCH / FINDER / FILTER INPUT
@@ -257,187 +223,158 @@ SEARCH / FINDER / FILTER INPUT
   -> render result
 ```
 
-A query may lead to a later command when the user chooses a terminal action, but the query itself must not smuggle copy/persistence side effects.
+A query may lead to a later command when the user chooses a terminal action, but the query must not smuggle copy/persistence side effects.
 
-## Prototype A: selected command-kernel vertical slice
+## Prototype A — selected command-kernel vertical slice
 
-Executable file: `docs/prompt-kit-program-prototype.js`.
+Executable: `docs/prompt-kit-program-prototype.js`.
 
-It uses real domain decisions and interfaces while faking only external boundaries (clipboard, durable preference storage, DOM projection, optional usage storage).
+It uses real domain decisions and fakes only external boundaries.
 
-### Journey 1 — favorite shortcut copies and reveals a prompt
+### Copy/reveal journey
 
 **Terminal user value:** canonical prompt text is on the clipboard.
 
-UI-state classification:
-- typed shortcut: **ENTRYPOINT**;
-- prompt reveal/center state: **REQUIRED INTERMEDIATE**;
-- focused Copy control: **REQUIRED INTERMEDIATE / recovery target**;
-- clipboard success: **TERMINAL ACTION**;
-- toast/glow: presentation feedback after success.
-
-Call stack:
+- typed shortcut/card action: **ENTRYPOINT**
+- reveal/center state: **REQUIRED INTERMEDIATE**
+- focused Copy control: **REQUIRED INTERMEDIATE / recovery target**
+- resolved clipboard write: **TERMINAL ACTION**
+- toast/glow: completion feedback
 
 ```text
 USER TYPES CONFIGURED FAVORITE SHORTCUT
   -> HotkeyEntrypoint.copyFavorite(P07)
-  -> CommandKernel.execute(COPY_REVEAL_PROMPT)
-  -> COPY_REVEAL_PROMPT handler
+  -> await CommandKernel.execute(COPY_REVEAL_PROMPT)
   -> PromptCatalog.require(P07)
   -> SessionState.revealPrompt(P07)
   -> PromptSurface.revealPrompt(P07)
   -> PromptSurface.focusCopy(P07)
-  -> ClipboardPort.writeText(canonical copyContent)
-  -> UsageLedger.recordCompletion(PROMPT_COPIED, source=hotkey)
-  -> CommandResult {status:COPIED, terminalValue:PROMPT_TEXT_ON_CLIPBOARD}
-  -> normal success feedback
+  -> await ClipboardPort.writeText(copyContent)
+  -> UsageLedger.recordCompletion(PROMPT_COPIED)
+  -> validate CommandResult
+  -> {status:COPIED, terminalValue:PROMPT_TEXT_ON_CLIPBOARD}
 ```
 
-The same command is invoked by `PromptCardEntrypoint.copy(P07)`. The entrypoint changes; terminal ownership does not.
+The card invokes the same command. Entrypoint changes; terminal ownership does not.
 
-### Journey 2 — finder opens a prompt for inspection
-
-**Terminal user value:** prompt detail is ready for inspection.
+### Finder inspection journey
 
 ```text
 USER CHOOSES FINDER RESULT
   -> FinderEntrypoint.inspect(P95)
-  -> CommandKernel.execute(OPEN_PROMPT_DETAIL)
+  -> await CommandKernel.execute(OPEN_PROMPT_DETAIL)
   -> PromptCatalog.require(P95)
   -> SessionState.openDetail(P95)
   -> PromptSurface.openDetail(P95)
-  -> CommandResult {status:DETAIL_OPEN, terminalValue:PROMPT_INSPECTION_READY}
+  -> validate {status:DETAIL_OPEN}
 ```
 
-Invariant proved by the prototype: this path does **not** record `PROMPT_COPIED`.
+No `PROMPT_COPIED` event is recorded.
 
-### Journey 3 — Favorite preference mutation
-
-**Terminal user value:** the Favorite preference is durably changed and accurately projected.
+### Favorite mutation journey
 
 ```text
 USER TOGGLES FAVORITE
   -> PromptCardEntrypoint.toggleFavorite(P95)
-  -> CommandKernel.execute(TOGGLE_FAVORITE)
+  -> await CommandKernel.execute(TOGGLE_FAVORITE)
   -> PromptCatalog.require(P95)
-  -> FavoritePreferences creates candidate set
+  -> FavoritePreferences constructs candidate
   -> PreferenceStore.saveFavorites(candidate)       [transaction boundary]
   -> FavoritePreferences publishes candidate
   -> PromptSurface.projectFavorite(P95, true)
   -> UsageLedger.recordCompletion(FAVORITE_CHANGED)
-  -> CommandResult {status:FAVORITE_CHANGED, terminalValue:DURABLE_PREFERENCE_CHANGED}
+  -> validate CommandResult
 ```
 
 ## Failure call stacks
 
-### Clipboard failure after reveal/focus
+### Async clipboard rejection
 
 ```text
 COPY_REVEAL_PROMPT
-  -> prompt validated
-  -> session target/reveal established
-  -> Copy control focused
-  -> ClipboardPort.writeText
-  -> CLIPBOARD_WRITE_FAILED
-  -> no PROMPT_COPIED completion event
-  -> ProgramError includes recovery=COPY_CONTROL_FOCUSED
-  -> user can activate the already-focused native Copy control again
+  -> target validated
+  -> reveal + Copy focus established
+  -> await ClipboardPort.writeText
+  -> Promise rejects / CLIPBOARD_WRITE_FAILED
+  -> no PROMPT_COPIED event
+  -> no COPIED result
+  -> ProgramError recovery=COPY_CONTROL_FOCUSED
 ```
 
-This intentionally preserves a truthful recovery state: the command failed to reach its terminal value, but the UI remains positioned for manual retry.
+The executable prototype deliberately defers its clipboard fake one microtask and proves there is still zero completion telemetry while the Promise is pending.
 
 ### Favorite persistence failure
 
 ```text
-TOGGLE_FAVORITE(P95)
-  -> candidate Favorite set constructed
+TOGGLE_FAVORITE
+  -> candidate constructed
   -> PreferenceStore.saveFavorites(candidate)
   -> PREFERENCE_PERSISTENCE_FAILED
-  -> candidate is NOT published
-  -> Favorite projection is NOT changed
+  -> candidate NOT published
+  -> UI Favorite projection NOT changed
   -> no false durable success
 ```
 
-### Telemetry/storage degradation
+### Telemetry degradation
 
 ```text
 COPY_REVEAL_PROMPT
-  -> clipboard succeeds                    [terminal value achieved]
-  -> UsageLedger.recordCompletion fails/degrades
-  -> result remains COPIED
-  -> result reports telemetry.degraded=true
+  -> awaited clipboard write resolves            [terminal value achieved]
+  -> UsageLedger degrades
+  -> CommandResult remains COPIED
+  -> telemetry.degraded=true
 ```
 
-The usage layer cannot redefine user success after the terminal side effect completed.
+### Invalid handler result
 
-### Unknown command / extension collision
+```text
+CommandKernel.execute(BAD_RESULT)
+  -> handler resolves undefined/null/malformed value
+  -> validateCommandResult rejects it
+  -> INVALID_COMMAND_RESULT
+  -> command_completed is never emitted
+```
 
-- missing command ID → `UNKNOWN_COMMAND`;
-- duplicate command registration → `COMMAND_ALREADY_REGISTERED`;
-- unknown PromptTarget → `UNKNOWN_PROMPT` before external side effects.
+This does not pretend the kernel can roll back arbitrary side effects performed by a malformed extension handler. The contract instead makes the handler's invalid result explicit and prevents the kernel from dereferencing an undefined result or falsely reporting a completed command. Production command registration should remain internal/trusted unless an extension system later requires stronger pre-execution capability contracts.
 
-## Prototype B: reducer + effect-plan comparison
+## Prototype B — reducer + effect-plan comparison
 
-The same executable file contains `ReducerEffectProgram` and `reducerPlan`.
+The same executable contains `ReducerEffectProgram` and `reducerPlan`.
 
-For `COPY_REVEAL_PROMPT`, it must produce four effects:
-
-1. critical precommit clipboard write;
+For copy it requires:
+1. critical precommit awaited clipboard write;
 2. postcommit reveal;
 3. postcommit focus-copy;
 4. postcommit semantic usage record.
 
-For `TOGGLE_FAVORITE`, durable storage becomes a critical precommit effect so failed persistence cannot commit the candidate state.
+For Favorites it requires critical precommit persistence before state publication.
 
-The prototype passes the same persistence-failure invariant, but it exposes extra machinery that the command-kernel handler does not need:
-
-- effect descriptor schema;
-- precommit/postcommit phases;
-- criticality metadata;
-- state commit protocol;
-- effect-runner routing.
-
-That machinery is useful when state transition/replay is the dominant problem. Prompt Kit's highest-risk current journeys are instead **terminal side-effect ordering** (clipboard, persistence, focus/scroll), so the command kernel is the smaller deep seam.
+It satisfies the same invariants, but introduces effect descriptors, phases, criticality metadata, a state-commit protocol, and an asynchronous effect runner. That machinery is justified when replayable state transitions dominate; Prompt Kit's current risk is terminal side-effect ordering, so the async command kernel is the smaller deep module.
 
 ## Executable evidence
 
-Run directly:
-
 ```text
 node docs/prompt-kit-program-prototype.js
-```
-
-Expected top-level fields:
-
-- `status: PASS`;
-- `selectedDesign: COMMAND_KERNEL_WITH_OWNED_STATE_AND_PORTS`;
-- PASS journeys for copy success/failure, Favorite success/failure, inspection telemetry separation, telemetry degradation, extension collision, and reducer comparison;
-- traces showing layer/event order for the selected kernel and reducer alternative.
-
-Focused repository contract:
-
-```text
 python -m unittest tests.test_prompt_kit_program_prototype -v
 ```
 
-## State model
+Expected prototype report:
+- `status: PASS`;
+- selected design `COMMAND_KERNEL_WITH_OWNED_STATE_AND_PORTS`;
+- PASS for async copy success/rejection, Favorite success/failure, inspection telemetry separation, telemetry degradation, extension collision, invalid CommandResult, and reducer comparison;
+- structured kernel/reducer traces.
 
-The program should avoid one giant state enum, but significant state transitions must still be explicit.
+The dedicated workflow additionally runs the adjacent hotkey prototype/tests, generated-site parity, patch hygiene, emits a JSON trace artifact, and verifies the exact pull-request head SHA.
+
+## State model
 
 ### Session projection
 
-Legal independent dimensions:
+Independent transient dimensions: view, search text, category/section/type/color filters, active prompt, detail prompt, copy target.
 
-- `view`: all / favorites / doctrine / other existing registered views;
-- search text;
-- category / section / type / color filters;
-- active prompt;
-- detail prompt (nullable);
-- copy target prompt (nullable).
+`COPY_REVEAL_PROMPT(Pxx)` changes only transient dimensions needed to reveal the target. It must not modify Favorites or configured shortcuts. Usage changes only after awaited clipboard success.
 
-`COPY_REVEAL_PROMPT(Pxx)` transitions only the transient dimensions required to reveal the target. It must not modify Favorites, configured shortcuts, or semantic usage except the completion event after clipboard success.
-
-### Favorite mutation lifecycle
+### Favorite lifecycle
 
 ```text
 AUTHORITATIVE(old)
@@ -447,114 +384,93 @@ AUTHORITATIVE(old)
      -> FAILED    -> AUTHORITATIVE(old)
 ```
 
-There is no legal state where the UI declares the new Favorite authoritative before storage succeeds.
-
 ### Copy lifecycle
 
 ```text
 TARGET_RESOLVED
   -> REVEALED_AND_FOCUSED
-  -> CLIPBOARD_ATTEMPT
-     -> COPIED -> completion event + success feedback
-     -> FAILED -> focused-copy recovery, no copy completion event
+  -> AWAITING_CLIPBOARD
+     -> RESOLVED -> COPIED -> completion event + success feedback
+     -> REJECTED -> focused-copy recovery, no copy completion event
 ```
 
 ## Testability and observability
 
-### Unit/component proof
+Unit/component proof covers target validation, registration/collision, result validation, session transitions, Favorite publish-after-save, deferred/rejected clipboard Promises, semantic completion counts, and reducer transaction semantics.
 
-- PromptCatalog target validation;
-- CommandKernel registration/collision/unknown command;
-- SessionState transitions;
-- FavoritePreferences publish-after-save;
-- semantic event counts and non-events;
-- reducer comparison transaction semantics.
+Repository integration proof covers exact-head execution, adjacent hotkey compatibility, canonical generated-site parity, and patch hygiene.
 
-### Integration/static product proof
+Browser proof remains required for real Clipboard API permissions/fallback behavior, scroll/focus visibility, keyboard layouts/native Enter, responsive geometry, and browser-storage policy/quota/private-mode behavior.
 
-Later build work should connect production entrypoints to the selected seam and prove source/generated parity through existing Prompt Kit validators/builders.
-
-### Browser proof
-
-A browser is still required for evidence that repository logic maps correctly to:
-
-- real Clipboard API permissions/fallback behavior;
-- scroll positioning and focus visibility;
-- keyboard layouts and native Enter activation;
-- DOM geometry/responsive behavior;
-- localStorage policy/quota/private-mode differences.
-
-### Trace shape
-
-The prototype uses structured records such as:
-
-```json
-{"layer":"kernel","event":"command_started","commandType":"COPY_REVEAL_PROMPT","source":"hotkey"}
-```
-
-Production logging should stay sparse, local, and free of prompt bodies or sensitive user-entered text. Semantic usage events should contain prompt identity/action/source only if the product actually enables that feature.
+Structured traces identify the decision layer without logging prompt bodies or user-entered text.
 
 ## Second-pass architecture critique
 
-Prototype evidence changed the initial design in six ways:
+Executable and review evidence changed the design in eight concrete ways:
 
-1. **Do not introduce a global reducer now.** The reducer only becomes fail-closed after inventing an effect phase/criticality protocol, which is larger than the present problem.
-2. **Command handlers are orchestration owners, not thin relays.** The copy handler must know terminal ordering and telemetry timing; hiding that across generic subscribers would weaken correctness.
-3. **UsageLedger must be subordinate.** The first sketch treated usage storage like another required effect. The failure prototype showed that would incorrectly turn a successful clipboard copy into failure.
-4. **Reveal/focus on clipboard failure is useful recovery, not false success.** Session/presentation state may advance even though the copy command returns failure, as long as completion telemetry remains absent and the focused Copy control makes retry obvious.
-5. **Favorites need a dedicated preference owner.** A generic UI store would make it too easy to publish before persistence.
-6. **Queries stay outside the command kernel.** Search/finder ranking are read paths; only the user's selected action enters the command execution seam.
+1. **No global reducer now.** Fail-closed behavior requires a larger effect-phase protocol than the current product needs.
+2. **Command handlers own orchestration.** Terminal ordering should not be spread across generic subscribers.
+3. **UsageLedger is subordinate.** Telemetry failure cannot negate already-achieved user value.
+4. **Reveal/focus survives clipboard failure as recovery.** This is useful intermediate state, not false completion.
+5. **Favorites have a dedicated owner.** A generic UI store would make publish-before-persist mistakes easy.
+6. **Queries remain outside the command kernel.** Search/ranking are read paths until a user chooses an action.
+7. **Clipboard completion is asynchronous.** Review caught that a synchronous prototype would falsely pass against a Promise-returning browser API; the seam is now `await execute(...)` and awaits `ClipboardPort.writeText` before telemetry/result completion.
+8. **CommandResult is validated.** Review caught that an undefined handler result could be dereferenced after side effects; the kernel now emits `INVALID_COMMAND_RESULT` and never records `command_completed` for malformed output.
 
-The design has reached a bounded fixed point for the next build: the remaining uncertainty is production migration order and live browser behavior, not ownership of commands, state, or failures.
+A separate proof review also found that GitHub's default pull-request checkout used a synthetic merge ref. The workflow was hardened to checkout and assert the exact candidate SHA, fetch current main independently, and rerun after main moved.
+
+The design has reached a bounded architectural fixed point when these repaired seams pass on the reconciled head. Remaining uncertainty belongs to production migration order and live browser behavior, not state/command/failure ownership.
 
 ## Feature admission checklist
 
-Before a new Prompt Kit feature receives broad implementation, its design note or PR should answer these questions:
+Before broad implementation of a new Prompt Kit feature, answer:
 
 1. What is the terminal user value?
-2. Is the request a **command**, **query**, or pure **presentation projection**?
-3. Which existing state owner changes, if any?
-4. Which external side effect occurs, if any?
-5. Which module owns success/failure ordering?
-6. What stable error codes/recovery states matter?
-7. Does it create semantic completion telemetry? If yes, after exactly which terminal condition?
-8. Which existing entrypoints can invoke it?
-9. Can a new entrypoint invoke the same behavior without copying policy?
-10. What is the thinnest executable success and failure call stack?
-11. Which proof is unit/component, generated-site/static, browser, or operator-only?
+2. Is it a command, query, or presentation projection?
+3. Which canonical state owner changes?
+4. Which external side effect occurs?
+5. Is that side effect synchronous or Promise-returning?
+6. Which handler owns ordering and compensation/recovery?
+7. Which stable error codes matter?
+8. Does it create semantic completion telemetry, and after exactly which terminal condition?
+9. Can every relevant entrypoint invoke the same semantic behavior without copying policy?
+10. What valid `CommandResult` returns?
+11. What are the thinnest executable success and failure stacks?
+12. Which proof is component, generated-site, browser, or operator-only?
 
-A proposal that cannot answer these yet belongs in a prototype/design lane, not broad production implementation.
+A proposal that cannot answer these belongs in a prototype/design lane, not broad implementation.
 
 ## Exact implementation seam ready for the next build sprint
 
-The next production implementation should introduce the **smallest CommandKernel-compatible seam around existing runtime behavior**, not rewrite Prompt Kit into a framework.
-
-Recommended first migration boundary:
+The next production build should introduce the smallest async CommandKernel-compatible seam around existing behavior, not rewrite Prompt Kit into a framework:
 
 ```text
 existing hotkey/card copy entrypoint
-  -> executePromptCommand({type:'COPY_REVEAL_PROMPT', promptId, source})
-  -> existing reveal/focus/copy functions through a single handler
+  -> await executePromptCommand({type:'COPY_REVEAL_PROMPT', promptId, source})
+  -> one handler
+       -> existing reveal/focus functions
+       -> await existing clipboard path
+       -> existing completion feedback only after resolution
+  -> validated CommandResult
 ```
 
-Then migrate `TOGGLE_FAVORITE` only after the copy seam is proved. Search/filter/finder queries should remain on their existing read paths until a concrete duplication/problem justifies a query-service extraction.
+Then migrate `TOGGLE_FAVORITE` only after copy is proved.
 
-Do not migrate all runtime globals at once, do not add Redux, do not add a generic event bus, and do not create a second shortcut registry.
+Do not migrate all globals at once, do not add Redux, do not add a generic event bus, and do not create a second shortcut registry. Search/filter/finder query extraction waits for a concrete duplication or complexity problem.
 
 ## Unresolved decisions
 
-These are intentionally not guessed in this design sprint:
+Intentionally unresolved until a feature needs them:
 
-- whether semantic usage/personalization should ship at all, and its exact retention/reset UX;
-- whether active prompt/view should eventually be shareable through URL/hash state;
-- whether future search/finder complexity warrants a dedicated PromptQueryService;
-- whether presentation adapter failures after a successful terminal side effect need user-visible degraded status beyond existing toast/focus behavior;
-- production file/module split for CommandKernel after the first bounded migration proves the seam.
-
-Each is separable from the selected execution architecture and should be decided only when a concrete feature requires it.
+- whether semantic usage/personalization ships at all and its retention/reset UX;
+- whether active prompt/view becomes shareable URL/hash state;
+- whether future finder complexity warrants a dedicated PromptQueryService;
+- presentation-degradation UX after a terminal side effect has already succeeded;
+- production file/module split for CommandKernel after the first bounded migration proves the seam;
+- whether a future third-party extension system would require stronger handler capability/result schemas before registration.
 
 ## Proof ceiling
 
-This sprint can prove program vocabulary, ownership, dependency direction, command/reducer alternatives, representative success/failure orchestration, fail-closed preference mutation, semantic completion timing, extension collision behavior, and CI execution of the prototype.
+This sprint can prove vocabulary, ownership, dependency direction, command/reducer alternatives, representative success/failure orchestration, asynchronous clipboard completion ordering, fail-closed Favorite mutation, CommandResult validation, semantic completion timing, extension collision behavior, exact-head CI execution, and compatibility with the current generated Prompt Kit floor.
 
-It cannot prove production DOM wiring because broad runtime migration is intentionally deferred. It also cannot prove real clipboard permissions, browser focus/scroll ergonomics, mobile behavior, private-mode storage, or operator acceptance until a later build/browser sprint exercises those environments.
+It cannot prove production DOM wiring because broad runtime migration is deliberately deferred. It also cannot prove real browser clipboard permissions, focus/scroll ergonomics, mobile behavior, private-mode storage, or operator acceptance until a later build/browser sprint exercises those environments.
