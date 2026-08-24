@@ -45,13 +45,16 @@ jobs:
           python .prompt-contrib/favorite_observed_proof_repair.py
           python - <<'PY'
           from pathlib import Path
-          path = Path('tests/prompt_kit_favorite_browser_proof.py')
-          text = path.read_text(encoding='utf-8')
-          old = """            page.keyboard.press('9')
+
+          # Runtime motion is asynchronous when the page's CSS scroll behavior is smooth.
+          # Observe the destination instead of guessing that a fixed delay was long enough.
+          proof_path = Path('tests/prompt_kit_favorite_browser_proof.py')
+          proof = proof_path.read_text(encoding='utf-8')
+          old_scroll = """            page.keyboard.press('9')
             page.wait_for_timeout(250)
             toast_text = page.locator('#toast').inner_text()
 """
-          new = """            page.keyboard.press('9')
+          new_scroll = """            page.keyboard.press('9')
             try:
                 page.wait_for_function(\"\"\"() => {
                   const card=document.querySelector('[data-prompt-id=\\\"P79\\\"]');
@@ -63,10 +66,43 @@ jobs:
                 pass
             toast_text = page.locator('#toast').inner_text()
 """
-          if text.count(old) != 1:
+          if proof.count(old_scroll) != 1:
               raise SystemExit('browser scroll synchronization anchor mismatch')
-          path.write_text(text.replace(old, new), encoding='utf-8', newline='\n')
-          print('browser proof now waits for the observed scroll destination rather than a fixed animation delay')
+          proof_path.write_text(proof.replace(old_scroll, new_scroll), encoding='utf-8', newline='\n')
+
+          # A FAIL/UNKNOWN receipt is useful evidence, but it is never a successful proof validation.
+          validator_path = Path('scripts/validate_observed_behavior_receipt.py')
+          validator = validator_path.read_text(encoding='utf-8')
+          old_verdict = """    if receipt.get(\"verdict\") == \"PASS\" and any(c.get(\"status\") != \"PASS\" for c in claims):
+        errors.append(\"overall PASS requires every claim to PASS\")
+    return errors
+"""
+          new_verdict = """    verdict = receipt.get(\"verdict\")
+    if verdict != \"PASS\":
+        errors.append(f\"receipt verdict is {verdict}, not PASS\")
+    elif any(c.get(\"status\") != \"PASS\" for c in claims):
+        errors.append(\"overall PASS requires every claim to PASS\")
+    return errors
+"""
+          if validator.count(old_verdict) != 1:
+              raise SystemExit('validator verdict anchor mismatch')
+          validator_path.write_text(validator.replace(old_verdict, new_verdict), encoding='utf-8', newline='\n')
+
+          harness_test_path = Path('tests/test_observed_behavior_proof_harness.py')
+          harness_test = harness_test_path.read_text(encoding='utf-8')
+          anchor = """    def test_prompt_owners_require_observed_outcome_gate(self):
+"""
+          addition = """    def test_non_pass_receipt_cannot_validate_as_success(self):
+        for verdict in (\"FAIL\", \"UNKNOWN\", \"UNPROVEN\", None):
+            receipt = self.base_receipt()
+            receipt[\"verdict\"] = verdict
+            self.assertTrue(any(\"not PASS\" in e for e in MOD.validate(receipt)))
+
+"""
+          if harness_test.count(anchor) != 1:
+              raise SystemExit('harness non-pass test anchor mismatch')
+          harness_test_path.write_text(harness_test.replace(anchor, addition + anchor), encoding='utf-8', newline='\n')
+          print('proof synchronization and fail-closed verdict checks applied')
           PY
 
       - name: Pass 1 deterministic validation
@@ -98,17 +134,19 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           polish = Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
-          start = polish.index('function activatePromptShortcutTarget(promptId)')
+          start = polish.index('function revealPromptShortcutTarget(promptId)')
           end = polish.index('function handleConfiguredPromptShortcutKey', start)
+          if end <= start:
+              raise SystemExit('unexpected Favorite shortcut function order')
           activation = polish[start:end]
-          required = ['revealPromptShortcutTarget(promptId)', 'copyPrompt(promptId)']
+          required = ['function activatePromptShortcutTarget(promptId)', 'revealPromptShortcutTarget(promptId)', 'copyPrompt(promptId)']
           missing = [item for item in required if item not in activation]
           if missing:
               raise SystemExit('favorite activation missing required behavior: ' + repr(missing))
           if 'showPromptDetail(' in activation:
-              raise SystemExit('favorite activation still opens prompt detail')
+              raise SystemExit('favorite reveal/activation still opens prompt detail')
           if '.focus(' in activation:
-              raise SystemExit('favorite activation introduces a keyboard focus target')
+              raise SystemExit('favorite reveal/activation introduces a keyboard focus target')
           contract = Path('harness/observed-proof/CONTRACT.md').read_text(encoding='utf-8')
           for marker in ('UNKNOWN', 'occurred: true', 'passed: true', 'clipboard', 'focus/keyboard'):
               if marker not in contract:
@@ -116,6 +154,9 @@ jobs:
           proof = Path('tests/prompt_kit_favorite_browser_proof.py').read_text(encoding='utf-8')
           if 'wait_for_function' not in proof or 'timeout=4000' not in proof:
               raise SystemExit('browser proof does not wait for scroll destination observation')
+          validator = Path('scripts/validate_observed_behavior_receipt.py').read_text(encoding='utf-8')
+          if 'receipt verdict is {verdict}, not PASS' not in validator:
+              raise SystemExit('receipt validator can still certify non-PASS evidence')
           print('Second-pass falsification: PASS')
           PY
           python -m unittest \
