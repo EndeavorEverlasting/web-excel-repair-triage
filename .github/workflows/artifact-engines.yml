@@ -264,3 +264,158 @@ jobs:
           git diff --cached --name-only
           git commit -m "fix(prompt-kit): refresh hierarchy on state transitions"
           git push origin HEAD:main
+
+  p65-verifier-routing-repair:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'fix/p65-verifier-routing-trigger-20260824'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Pin current main floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main --prune
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+          echo "BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          git status --short
+          git log --oneline --decorate -5
+
+      - name: Harden canonical P65 routing
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          registry_path = Path('registry/prompts/tutorial-discovery-prompts.v1.json')
+          payload = json.loads(registry_path.read_text(encoding='utf-8'))
+          p65 = next(p for p in payload['prompts'] if p['id'] == 'P65')
+
+          def append_once(field: str, sentence: str) -> None:
+              current = p65[field]
+              if sentence not in current:
+                  p65[field] = current.rstrip() + ' ' + sentence
+
+          append_once('useWhen', 'It also covers the high-risk handoff case where another agent, chat, branch, PR, report, artifact, or implementation claims work is complete, fixed, green, passed, done, or partially complete but the user needs that claim independently verified and advanced from evidence rather than trusted.')
+          append_once('inspectFirst', 'When prior work or a completion claim exists, also inspect who made the claim, what exact work/head/artifact it refers to, whether observed behavior contradicts it, and what proof actually supports it; do not ask the user to restate recoverable prior-work context.')
+          append_once('expectedOutput', "A prior-agent completion-verification signal routes primarily to P83 Agent Work Verifier & Iterative Advancer; experimentation, regression, runtime-proof, and integration prompts remain follow-ons unless they are independently the user's primary need.")
+          append_once('proofGate', "If the user is checking another agent's claimed completion and that claim is unverified, contradicted, or distrusted, P83 is selected as primary and later answers about prototyping, regression proof, runtime proof, or integration do not silently erase that stronger routing signal.")
+
+          content = p65['copyContent']
+          old_start = '1. Starting state: no checkout, unfamiliar repository, known repository, active failure, open PR floor, or app currently in front of me.'
+          new_start = '1. Starting state: no checkout, unfamiliar repository, known repository, active failure, open PR floor, app currently in front of me, or prior work that another agent/chat/branch/PR/report claims is complete or partially complete.'
+          if new_start not in content:
+              if old_start not in content: raise SystemExit('P65 starting-state anchor missing')
+              content = content.replace(old_start, new_start, 1)
+          old_outcome = '2. Desired outcome: recover repeated friction or urgency, understand, plan, coordinate or maintain a repository work ledger, build or repair, diagnose, validate, integrate or deploy, document or teach, or close out and hand off.'
+          new_outcome = "2. Desired outcome: verify/correct/advance another agent's claimed work or claimed completion, recover repeated friction or urgency, understand, plan, coordinate or maintain a repository work ledger, build or repair, diagnose, validate, integrate or deploy, document or teach, or close out and hand off."
+          if new_outcome not in content:
+              if old_outcome not in content: raise SystemExit('P65 desired-outcome anchor missing')
+              content = content.replace(old_outcome, new_outcome, 1)
+
+          p83_route = "- P83 Agent Work Verifier & Iterative Advancer: independently verify another agent's claimed complete/partial work, repair what is wrong or missing, advance unfinished work, revalidate, and integrate bounded proven slices instead of trusting the handoff."
+          if p83_route not in content:
+              anchor = '- P82 Prototype-Measure-Refine Delivery Loop: iterate a broadly uncertain feature/interface through measured working candidates when the main question is experimentation rather than a specific flow defect.'
+              if anchor not in content: raise SystemExit('P65 P82 routing anchor missing')
+              content = content.replace(anchor, anchor + '\n' + p83_route, 1)
+
+          precedence = """PRIOR-AGENT COMPLETION CLAIM OVERRIDE
+- If the user is checking work that another agent, chat, branch, PR, report, artifact, or implementation says is complete, fixed, green, passed, done, or partially complete—and that claim is unverified, contradicted by observed behavior, or explicitly distrusted—recommend P83 Agent Work Verifier & Iterative Advancer as the primary prompt.
+- This signal outranks generic repair, broad experimentation, regression proof, runtime proof, or integration because the first job is to independently verify inherited claims against current evidence and advance the actual state.
+- Do not let a later answer such as “iterate prototypes,” “prove it live,” “guard regressions,” or “land it on main” silently replace P83 as primary when those are methods or downstream gates for verifying prior claimed work.
+- P82 may be a follow-on only if P83 establishes that genuine solution uncertainty requires iterative candidate experimentation. P94 or P08 may follow for regression/live proof, and P15 may follow for integration after the exact work is proven.
+- Distinguish P13: use P13 when the primary problem is recurring process friction, missed urgency, proof-floor looping, or omitted safe parallelism without a specific inherited completion claim that needs independent verification. If the user specifically says the agent keeps telling them it is complete and it is not, P83 wins.
+- If current chat context already establishes a prior completion claim, treat that questionnaire fact as answered. Do not spend a question making the user repeat it; use the remaining questions to resolve the smallest missing distinction.
+"""
+          if 'PRIOR-AGENT COMPLETION CLAIM OVERRIDE' not in content:
+              anchor = '\n\nRECOMMENDATION CONTRACT'
+              if anchor not in content: raise SystemExit('P65 recommendation-contract anchor missing')
+              content = content.replace(anchor, '\n\n' + precedence.rstrip() + anchor, 1)
+          p65['copyContent'] = content
+          keywords = p65.setdefault('keywords', [])
+          for keyword in ('another agent says complete','agent said done','claimed complete','false completion','verify agent work','verify prior agent'):
+              if keyword not in keywords: keywords.append(keyword)
+          registry_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          test_path = Path('tests/test_prompt_kit_discovery.py')
+          tests = test_path.read_text(encoding='utf-8')
+          if 'test_guided_finder_prior_agent_completion_claim_routes_to_p83' not in tests:
+              anchor = '    def test_repo_front_door_exposes_browser_phone_zip_cmd_and_clone(self) -> None:\n'
+              if anchor not in tests: raise SystemExit('focused discovery test insertion anchor missing')
+              block = '''    def test_guided_finder_prior_agent_completion_claim_routes_to_p83(self) -> None:\n        payload = json.loads(TUTORIAL_PROMPTS.read_text(encoding="utf-8"))\n        p65 = next(item for item in payload["prompts"] if item["id"] == "P65")\n        content = p65["copyContent"]\n        self.assertIn("PRIOR-AGENT COMPLETION CLAIM OVERRIDE", content)\n        self.assertIn("- P83 Agent Work Verifier & Iterative Advancer:", content)\n        self.assertIn("recommend P83 Agent Work Verifier & Iterative Advancer as the primary prompt", content)\n        self.assertIn("This signal outranks generic repair, broad experimentation, regression proof, runtime proof, or integration", content)\n        self.assertIn("Do not let a later answer such as", content)\n        self.assertIn("P82 may be a follow-on only if P83", content)\n        self.assertIn("the agent keeps telling them it is complete and it is not, P83 wins", content)\n        self.assertIn("treat that questionnaire fact as answered", content)\n        self.assertIn("completion claim", p65["useWhen"].lower())\n        self.assertIn("P83", p65["proofGate"])\n\n'''
+              test_path.write_text(tests.replace(anchor, block + anchor, 1), encoding='utf-8')
+          PY
+
+      - name: Build and validate pass 1
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_prompt_kit_discovery -v
+          python -m unittest tests.test_agentic_loop_prompts -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Deliberate pass 2 falsification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          tutorial = json.loads(Path('registry/prompts/tutorial-discovery-prompts.v1.json').read_text(encoding='utf-8'))
+          ledger = json.loads(Path('registry/prompts/repository-work-ledger-prompts.v1.json').read_text(encoding='utf-8'))
+          p65 = next(p for p in tutorial['prompts'] if p['id'] == 'P65')
+          p83 = next(p for p in ledger['prompts'] if p['id'] == 'P83')
+          html = Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
+          checks = {
+              'P83 canonical identity': p83['name'] == 'Agent Work Verifier & Iterative Advancer',
+              'P83 already owns completion claims': 'claims work is complete or partially complete' in p83['useWhen'],
+              'P65 exact P83 route': '- P83 Agent Work Verifier & Iterative Advancer:' in p65['copyContent'],
+              'P65 precedence rule': 'PRIOR-AGENT COMPLETION CLAIM OVERRIDE' in p65['copyContent'],
+              'P83 wins false completion case': 'the agent keeps telling them it is complete and it is not, P83 wins' in p65['copyContent'],
+              'prototype cannot erase verifier': 'Do not let a later answer such as' in p65['copyContent'] and 'P82 may be a follow-on only if P83' in p65['copyContent'],
+              'P13 distinction': 'Distinguish P13' in p65['copyContent'],
+              'context is not re-asked': 'treat that questionnaire fact as answered' in p65['copyContent'],
+              'generated-site parity marker': 'PRIOR-AGENT COMPLETION CLAIM OVERRIDE' in html,
+          }
+          failed = [name for name, ok in checks.items() if not ok]
+          if failed: raise SystemExit(f'P65 second-pass falsification failed: {failed}')
+          PY
+          git diff --quiet -- registry/prompts/repository-work-ledger-prompts.v1.json
+          changed="$(git diff --name-only | sort)"
+          unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(registry/prompts/tutorial-discovery-prompts.v1.json|tests/test_prompt_kit_discovery.py|web/prompt-kit/index.html)$' || true)"
+          test -z "$unexpected"
+          python -m unittest tests.test_prompt_kit_discovery.PromptKitDiscoveryTests.test_guided_finder_prior_agent_completion_claim_routes_to_p83 -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Recheck floor, commit exact proven slice, and publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+          git add registry/prompts/tutorial-discovery-prompts.v1.json tests/test_prompt_kit_discovery.py web/prompt-kit/index.html
+          git diff --cached --check
+          echo '--- final staged durable files ---'
+          git diff --cached --name-only
+          git commit -m "fix(prompt-kit): route claimed completion to P83"
+          git push origin HEAD:fix/p65-verifier-routing-validated-20260824

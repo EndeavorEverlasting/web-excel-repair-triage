@@ -1,5 +1,4 @@
 name: Temporary P65 verifier-routing repair
-# execution-only trigger branch copy; do not merge
 
 on:
   pull_request:
