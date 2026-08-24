@@ -5,262 +5,166 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
-  artifact-engines:
+  favorite-observed-proof-executor:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'fix/prompt-kit-favorite-observed-proof-20260824'
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            python -m pip install -r requirements.txt
-          else
-            python -m pip install openpyxl
-          fi
-          python -m pip install pytest
-
-      - name: Import artifact engines
-        run: |
-          python -c "import triage.nw_prj_neuron_track_hours.cli; import triage.nw_prj_neuron_track_hours.bonita_cli; import triage.nth_qualitative_admin; import triage.nth_evidence_bounded_allocation; import triage.admin_billing_summary.cli; import triage.one_marcus_recon.cli; import triage.sidecar_html; import triage.artifact_fingerprint; import triage.artifact_profiles; import triage.artifact_compare; import triage.same_family_compare; import triage.roster_log_compare.compare; import triage.roster_log_review_queue.cli; import triage.gitignore_hygiene; print('imports ok')"
-
-      - name: Gitignore hygiene
-        run: python -m triage.gitignore_hygiene
-
-      - name: Run artifact engine tests
-        run: |
-          python -m pytest \
-            tests/test_nw_prj_neuron_track_hours.py \
-            tests/test_nw_prj_neuron_track_hours_bonita.py \
-            tests/test_nth_qualitative_admin.py \
-            tests/test_nth_evidence_bounded_allocation.py \
-            tests/test_admin_billing_summary.py \
-            tests/test_one_marcus_recon.py \
-            tests/test_one_marcus_generate.py \
-            tests/test_one_marcus_immutability.py \
-            tests/test_sidecar_html_portal.py \
-            tests/test_artifact_compare.py \
-            tests/test_roster_log_compare.py \
-            tests/test_same_family_compare.py \
-            tests/test_gitignore_hygiene.py \
-            tests/test_roster_log_review_queue.py \
-            -q
-
-  canonical-local-path-prompt-repair:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feat/prompt-kit-artifact-risk-path-20260822'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: feat/prompt-kit-artifact-risk-path-20260822
+          ref: fix/prompt-kit-favorite-observed-proof-20260824
           fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
-      - name: Repair bounded canonical path transport and execute
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('.prompt-contrib/canonical_path_repair.py')
-          text = path.read_text(encoding='utf-8')
-          old_count = 'self.assertEqual(len(self.prompts), 100)'
-          new_count = 'self.assertEqual(len(self.prompts), len(self.by_id))'
-          if old_count not in text and new_count not in text:
-              raise SystemExit('canonical-path count assertion anchor missing')
-          text = text.replace(old_count, new_count)
-          old_heading = 'FAIL-CLOSED\nIf multiple plausible ordinary checkouts remain'
-          new_heading = 'UNPROVED PATH STOP CONDITION\nIf multiple plausible ordinary checkouts remain'
-          if old_heading not in text and new_heading not in text:
-              raise SystemExit('canonical-path stop-condition heading anchor missing')
-          text = text.replace(old_heading, new_heading)
-          path.write_text(text, encoding='utf-8')
-          PY
-          python .prompt-contrib/canonical_path_repair.py
-
-  hierarchy-state-transition-repair:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'chore/hierarchy-state-transition-trigger-20260823'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Pin current main floor
+      - name: Pin fresh main evidence floor
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main --prune
-          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
-          echo "BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          BASE_SHA="$(git rev-parse origin/main)"
+          MERGE_BASE="$(git merge-base HEAD origin/main)"
+          test "$BASE_SHA" = "$MERGE_BASE"
+          echo "BASE_SHA=$BASE_SHA" >> "$GITHUB_ENV"
+          echo "EXECUTOR_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           git status --short
           git log --oneline --decorate -5
 
-      - name: Repair hierarchy state transitions
+      - name: Apply bounded product harness and prompt repair
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
-          from __future__ import annotations
-          import json
-          from pathlib import Path
+          python .prompt-contrib/favorite_observed_proof_repair.py
 
-          def replace_once(text: str, old: str, new: str, label: str) -> str:
-              if new in text:
-                  return text
-              if old not in text:
-                  raise SystemExit(f'{label}: anchor missing')
-              return text.replace(old, new, 1)
-
-          js_path = Path('docs/prompt-kit.js')
-          polish_path = Path('docs/prompt-kit-polish.js')
-          contract_path = Path('harness/contracts/prompt-kit-filtering.v1.json')
-          test_path = Path('tests/test_prompt_kit_filtering_access.py')
-
-          js = js_path.read_text(encoding='utf-8')
-          js = replace_once(
-              js,
-              "function toggleFavoritePrompt(id){var key=String(id||'').toUpperCase();if(!key)return;if(isFavoritePrompt(key)){delete favoritePromptIds[key];showToast('Removed '+key+' from Favorites')}else{favoritePromptIds[key]=true;showToast('Saved '+key+' to Favorites')}saveFavoritePromptIds();render()}",
-              "function toggleFavoritePrompt(id){var key=String(id||'').toUpperCase();if(!key)return;if(isFavoritePrompt(key)){delete favoritePromptIds[key];showToast('Removed '+key+' from Favorites')}else{favoritePromptIds[key]=true;showToast('Saved '+key+' to Favorites')}saveFavoritePromptIds();if(activeSection==='__favorites__')renderTypes();render()}",
-              'favorite membership refresh',
-          )
-          js = replace_once(
-              js,
-              "if(activeSection){activeSection=null;render();return}",
-              "if(activeSection){activeSection=null;activeType=null;renderTypes();render();return}",
-              'Escape section reset refresh',
-          )
-          js_path.write_text(js, encoding='utf-8')
-
-          polish = polish_path.read_text(encoding='utf-8')
-          old = """function activateFavoritesView(){
-            activeCat='all';
-            activeSection='__favorites__';
-            clearTransientPromptFilters();
-            document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.id==='favoritesShortcut')});
-            document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__favorites__')});
-            render();
-          }"""
-          new = """function activateFavoritesView(){
-            activeCat='all';
-            activeSection='__favorites__';
-            clearTransientPromptFilters();
-            document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.id==='favoritesShortcut')});
-            document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__favorites__')});
-            renderTypes();
-            render();
-          }"""
-          polish = replace_once(polish, old, new, 'Favorites activation refresh')
-          polish_path.write_text(polish, encoding='utf-8')
-
-          contract = json.loads(contract_path.read_text(encoding='utf-8'))
-          requirement = next((item for item in contract['requirements'] if item['id'] == 'progressive_type_disclosure'), None)
-          if requirement is None:
-              raise SystemExit('progressive_type_disclosure contract owner missing')
-          sentence = ' Favorites activation, favorite membership changes while Favorites is active, and Escape section reset refresh subordinate navigation so controls cannot describe a stale scope.'
-          if sentence.strip() not in requirement['expected']:
-              requirement['expected'] = requirement['expected'].rstrip() + sentence
-          contract_path.write_text(json.dumps(contract, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
-
-          test = test_path.read_text(encoding='utf-8')
-          contract_anchor = '        self.assertIn("only subcategories available in that scope", expected["progressive_type_disclosure"])\n'
-          contract_assert = '        self.assertIn("favorite membership changes while Favorites is active", expected["progressive_type_disclosure"])\n        self.assertIn("Escape section reset", expected["progressive_type_disclosure"])\n'
-          if contract_assert not in test:
-              if contract_anchor not in test:
-                  raise SystemExit('contract regression anchor missing')
-              test = test.replace(contract_anchor, contract_anchor + contract_assert, 1)
-
-          if 'def test_hierarchy_refreshes_on_non_click_state_transitions' not in test:
-              anchor = '    def test_all_view_is_an_atomic_reset_after_favorites(self) -> None:\n'
-              addition = '''    def test_hierarchy_refreshes_on_non_click_state_transitions(self) -> None:\n        js = JS.read_text(encoding="utf-8")\n        polish = POLISH.read_text(encoding="utf-8")\n\n        toggle_start = js.index("function toggleFavoritePrompt")\n        toggle_end = js.index("\\n\\nfunction syncLibraryTabs", toggle_start)\n        toggle = js[toggle_start:toggle_end]\n        self.assertIn("if(activeSection==='__favorites__')renderTypes();render()", toggle)\n\n        favorites_start = polish.index("function activateFavoritesView()")\n        favorites_end = polish.index("function ensureCompactBrowsingControls()", favorites_start)\n        favorites = polish[favorites_start:favorites_end]\n        self.assertIn("renderTypes();", favorites)\n        self.assertLess(favorites.index("renderTypes();"), favorites.index("render();"))\n\n        self.assertIn("if(activeSection){activeSection=null;activeType=null;renderTypes();render();return}", js)\n\n'''
-              if anchor not in test:
-                  raise SystemExit('hierarchy transition test insertion anchor missing')
-              test = test.replace(anchor, addition + anchor, 1)
-          test_path.write_text(test, encoding='utf-8')
-          PY
-
-      - name: Validate pass 1
+      - name: Pass 1 deterministic validation
         shell: bash
         run: |
           set -euo pipefail
-          node --check docs/prompt-kit.js
           node --check docs/prompt-kit-polish.js
-          python -m unittest tests.test_prompt_kit_filtering_access -v
-          python -m unittest tests.test_prompt_kit_product_interactions tests.test_prompt_kit_mobile -v
-          python -m unittest tests.test_prompt_kit_mainline_delivery tests.test_prompt_kit_header_contract tests.test_prompt_kit_pages tests.test_prompt_kit_hotkey_completion -v
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
-          python scripts/prompt_registry_ops.py validate
+          node --check docs/prompt-kit-hotkey-prototype.js
+          python -m py_compile \
+            scripts/validate_observed_behavior_receipt.py \
+            tests/prompt_kit_favorite_browser_proof.py \
+            tests/test_observed_behavior_proof_harness.py
+          python -m unittest \
+            tests.test_observed_behavior_proof_harness \
+            tests.test_prompt_kit_hotkey_completion \
+            tests.test_ai_engineering_level_up \
+            -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-          python scripts/validate_prompt_kit_order_navigation.py --summary
+          python scripts/validate_prompt_kit_interactions.py \
+            --require-implementation \
+            --output "$RUNNER_TEMP/prompt-kit-interactions.json" \
+            --summary
           git diff --check
 
-      - name: Deliberate pass 2 falsification
+      - name: Pass 2 deliberate falsification
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          js = Path('docs/prompt-kit.js').read_text(encoding='utf-8')
           polish = Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
-          test = Path('tests/test_prompt_kit_filtering_access.py').read_text(encoding='utf-8')
-          html = Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
-          favorites = polish[polish.index('function activateFavoritesView()'):polish.index('function ensureCompactBrowsingControls()')]
-          checks = {
-              'Favorites activation refresh': 'renderTypes();' in favorites and favorites.index('renderTypes();') < favorites.index('render();'),
-              'favorite membership refresh': "if(activeSection==='__favorites__')renderTypes();render()" in js,
-              'Escape section refresh': "if(activeSection){activeSection=null;activeType=null;renderTypes();render();return}" in js,
-              'focused regression': 'test_hierarchy_refreshes_on_non_click_state_transitions' in test,
-              'generated parity': "if(activeSection==='__favorites__')renderTypes();render()" in html,
-          }
-          failed = [name for name, ok in checks.items() if not ok]
-          if failed:
-              raise SystemExit(f'hierarchy second-pass falsification failed: {failed}')
+          start = polish.index('function activatePromptShortcutTarget(promptId)')
+          end = polish.index('function handleConfiguredPromptShortcutKey', start)
+          activation = polish[start:end]
+          required = ['revealPromptShortcutTarget(promptId)', 'copyPrompt(promptId)']
+          missing = [item for item in required if item not in activation]
+          if missing:
+              raise SystemExit('favorite activation missing required behavior: ' + repr(missing))
+          if 'showPromptDetail(' in activation:
+              raise SystemExit('favorite activation still opens prompt detail')
+          if '.focus(' in activation:
+              raise SystemExit('favorite activation introduces a keyboard focus target')
+          contract = Path('harness/observed-proof/CONTRACT.md').read_text(encoding='utf-8')
+          for marker in ('UNKNOWN', 'occurred: true', 'passed: true', 'clipboard', 'focus/keyboard'):
+              if marker not in contract:
+                  raise SystemExit('observed-proof contract missing: ' + marker)
+          print('Second-pass falsification: PASS')
           PY
-          python -m unittest tests.test_prompt_kit_filtering_access -v
+          python -m unittest \
+            tests.test_observed_behavior_proof_harness \
+            tests.test_prompt_kit_hotkey_completion \
+            tests.test_ai_engineering_level_up \
+            -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
-      - name: Recheck floor, self-clean, commit, and push
+      - name: Restore bootstrap surface and create exact candidate commit
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin main --prune
-          test "$(git rev-parse origin/main)" = "$BASE_SHA"
-          git show ea3002468931e2ee238f20a88597b21cee3ecb49:.github/workflows/artifact-engines.yml > .github/workflows/artifact-engines.yml
-          git rm .github/workflows/tmp-hierarchy-state-transition-repair.yml
+          git show "$BASE_SHA":.github/workflows/artifact-engines.yml > .github/workflows/artifact-engines.yml
+          git rm .github/workflows/tmp-apply-favorite-observed-proof.yml
+          git rm .prompt-contrib/favorite_observed_proof_repair.py
+          rm -rf Outputs/observed-proof
           git add \
             .github/workflows/artifact-engines.yml \
-            docs/prompt-kit.js \
+            .github/workflows/prompt-kit-observed-browser-proof.yml \
+            docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md \
+            docs/prompt-kit-hotkey-prototype.js \
             docs/prompt-kit-polish.js \
-            harness/contracts/prompt-kit-filtering.v1.json \
-            tests/test_prompt_kit_filtering_access.py \
+            docs/prompts.json \
+            harness/observed-proof \
+            registry/prompts/ai-engineering-level-up-prompts.v1.json \
+            scripts/validate_observed_behavior_receipt.py \
+            tests/prompt_kit_favorite_browser_proof.py \
+            tests/test_observed_behavior_proof_harness.py \
+            tests/test_prompt_kit_hotkey_completion.py \
             web/prompt-kit/index.html
           git diff --cached --check
-          echo '--- final staged files ---'
+          echo '--- candidate staged files ---'
           git diff --cached --name-only
-          git commit -m "fix(prompt-kit): refresh hierarchy on state transitions"
-          git push origin HEAD:main
+          git diff --cached --stat
+          git commit -m "fix(prompt-kit): prove favorite copy and scroll before pass"
+          echo "CANDIDATE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          git status --short
+
+      - name: Install observed browser proof runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check playwright==1.55.0
+          python -m playwright install --with-deps chromium
+
+      - name: Observe exact candidate Favorite interaction
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          mkdir -p Outputs/observed-proof
+          python tests/prompt_kit_favorite_browser_proof.py \
+            --receipt Outputs/observed-proof/favorite-shortcut-receipt.json \
+            --screenshot Outputs/observed-proof/favorite-shortcut.png
+          python scripts/validate_observed_behavior_receipt.py \
+            Outputs/observed-proof/favorite-shortcut-receipt.json \
+            --expected-sha "$CANDIDATE_SHA" \
+            --summary
+          git diff --exit-code
+          git diff --cached --exit-code
+
+      - name: Upload exact-head observed evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-favorite-observed-proof
+          path: Outputs/observed-proof/
+          if-no-files-found: error
+
+      - name: Re-fetch floor and push exact proven candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          git fetch origin main --prune
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+          test "$(git merge-base HEAD origin/main)" = "$BASE_SHA"
+          git push origin "$CANDIDATE_SHA":fix/prompt-kit-favorite-observed-proof-20260824
+          git status --short
