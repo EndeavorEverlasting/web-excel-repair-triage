@@ -36,12 +36,19 @@ def load_contract(manifest_path: Path) -> tuple[dict[str, Any], list[dict[str, A
     if manifest.get("schema_version") != "deterministic-test-floor/v1":
         raise ContractError("unsupported deterministic test-floor schema")
 
-    for field in ("compile_targets", "artifact_imports", "artifact_tests"):
+    expected_python = str(manifest.get("python_version", "")).strip()
+    current_python = f"{sys.version_info.major}.{sys.version_info.minor}"
+    if not expected_python or current_python != expected_python:
+        raise ContractError(
+            f"test-floor Python mismatch: expected {expected_python or '<missing>'}, observed {current_python}"
+        )
+
+    for field in ("compile_targets", "self_tests", "artifact_imports", "artifact_tests"):
         values = manifest.get(field)
         if not isinstance(values, list) or not values or any(not isinstance(v, str) or not v.strip() for v in values):
             raise ContractError(f"{field} must be a non-empty list of strings")
 
-    for rel in manifest["compile_targets"] + manifest["artifact_tests"]:
+    for rel in manifest["compile_targets"] + manifest["self_tests"] + manifest["artifact_tests"]:
         if not (REPO_ROOT / rel).exists():
             raise ContractError(f"required test-floor path is missing: {rel}")
 
@@ -133,6 +140,10 @@ def build_steps(manifest: dict[str, Any], validators: list[dict[str, Any]]) -> l
             "python-compile",
             [sys.executable, "-m", "compileall", "-q", *manifest["compile_targets"]],
         ),
+        (
+            "test-floor-self-tests",
+            [sys.executable, "-m", "pytest", *manifest["self_tests"], "-q"],
+        ),
         ("artifact-import-smoke", [sys.executable, "-c", imports]),
         (
             "artifact-engine-tests",
@@ -180,6 +191,7 @@ def run(manifest_path: Path, report_path: Path) -> int:
         "python": sys.version.split()[0],
         "manifest": str(manifest_path.relative_to(REPO_ROOT)) if manifest_path.is_relative_to(REPO_ROOT) else str(manifest_path),
         "validator_profile": manifest["validator_profile"],
+        "self_test_count": len(manifest["self_tests"]),
         "artifact_test_count": len(manifest["artifact_tests"]),
         "proof_ceiling": manifest.get("proof_ceiling"),
         "steps": [],
