@@ -107,14 +107,14 @@ Use P64 before P18 when the team has several possible tutorials and does not yet
 From the repository root:
 
 ```powershell
-python -m py_compile scripts/build_prompt_kit_registry.py scripts/validate_prompt_kit_discovery.py tests/test_prompt_kit_discovery.py tests/test_prompt_kit_guidance.py tests/test_prompt_kit_operator_docs.py
+python -m py_compile scripts/build_prompt_kit_registry.py scripts/validate_prompt_kit_discovery.py tests/test_prompt_kit_discovery.py tests/test_prompt_kit_guidance.py
 node --check docs/prompt-kit.js
 node --check docs/prompt-kit-guided-recommendations.js
 node --check docs/prompt-kit-journey.js
 node --check docs/prompt-kit-polish.js
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 python scripts/validate_prompt_kit_discovery.py --summary
-python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance tests.test_prompt_kit_operator_docs -v
+python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 ```
 
