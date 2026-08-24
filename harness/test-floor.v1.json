@@ -12,6 +12,9 @@
     "triage",
     "scripts"
   ],
+  "self_tests": [
+    "tests/test_deterministic_test_floor.py"
+  ],
   "artifact_engine_workflow": ".github/workflows/artifact-engines.yml",
   "artifact_imports": [
     "triage.nw_prj_neuron_track_hours.cli",
@@ -48,5 +51,5 @@
   "validator_registry": "harness/validators.v1.json",
   "validator_profile": "pre_push",
   "required_canary_failure": "validator:prompt-kit-parity",
-  "proof_ceiling": "Deterministic clean-checkout Python, artifact-engine, harness, Prompt Kit static/generated-parity, repository hygiene, and provider-workflow proof on the observed SHA. It does not prove browser/device/operator/production behavior or private protected inputs."
+  "proof_ceiling": "Deterministic clean-checkout Python, test-floor self-contract, artifact-engine, harness, Prompt Kit static/generated-parity, repository hygiene, and provider-workflow proof on the observed SHA. It does not prove browser/device/operator/production behavior or private protected inputs."
 }
