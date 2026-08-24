@@ -192,7 +192,7 @@ Their keyboard shortcuts are `1`, `2`, and `3` respectively. The generated base 
 
 ### Validation
 
-The owning `Prompt Kit web contracts` workflow compiles and runs `tests/test_prompt_kit_hotkey_completion.py`; shortcut changes must keep that focused contract green in addition to the broader interaction, discovery, ordering, filtering, mobile, portability, and generated-parity gates. Operator-documentation assertions are owned by `tests/test_prompt_kit_operator_docs.py`.
+The owning `Prompt Kit web contracts` workflow compiles and runs `tests/test_prompt_kit_hotkey_completion.py`; shortcut changes must keep that focused contract green in addition to the broader interaction, discovery, ordering, filtering, mobile, portability, and generated-parity gates. Operator-documentation assertions live in the existing `tests/test_prompt_kit_discovery.py` discovery owner.
 
 ```powershell
 node --check docs\prompt-kit.js
@@ -207,7 +207,7 @@ python -m unittest tests.test_prompt_kit_product_interactions -v
 python -m unittest tests.test_prompt_kit_filtering_access -v
 python -m unittest tests.test_prompt_kit_mobile -v
 python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
-python -m unittest tests.test_prompt_kit_hotkey_completion tests.test_prompt_kit_operator_docs -v
+python -m unittest tests.test_prompt_kit_hotkey_completion -v
 python scripts\validate_prompt_kit_interactions.py --require-implementation --output Outputs\prompt-kit-interaction-audit.json --summary
 python scripts\validate_prompt_kit_discovery.py --summary
 python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
