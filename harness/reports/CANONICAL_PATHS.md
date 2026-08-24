@@ -1,8 +1,8 @@
 # Canonical Path Operator State
 
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Machine authority:** `harness/canonical-paths.v1.json`  
-**Focused validator:** `scripts/validate_canonical_paths.py`  
+**Repository:** `EndeavorEverlasting/web-excel-repair-triage`
+**Machine authority:** `harness/canonical-paths.v1.json`
+**Focused validator:** `scripts/validate_canonical_paths.py`
 **Deep repair owner:** P92 Canonical Path Prompt
 
 ## Working
