@@ -1,1 +1,1 @@
-trigger scope-exhaustion patch after Prompt Kit freshness CI; remove in durable commit
+trigger PR272 scope-exhaustion executor; remove in durable commit
