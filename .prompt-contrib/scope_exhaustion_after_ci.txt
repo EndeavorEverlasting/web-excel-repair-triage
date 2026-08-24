@@ -1,1 +1,1 @@
-trigger PR272 scope-exhaustion executor; remove in durable commit
+activate canonical Prompt freshness scope-exhaustion hardening job; remove in durable commit
