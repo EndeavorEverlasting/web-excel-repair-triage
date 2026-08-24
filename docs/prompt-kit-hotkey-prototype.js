@@ -37,7 +37,7 @@ class ShortcutPolicy {
 }
 
 class ShortcutRegistry {
-  constructor({policy, store, promptCatalog, trace}) {
+  constructor({policy, store, promptCatalog, trace, initialBindings = []}) {
     this.policy = policy;
     this.store = store;
     this.promptCatalog = promptCatalog;
@@ -52,6 +52,13 @@ class ShortcutRegistry {
       [']', {gesture: ']', command: 'FILTER_SHOW'}],
     ]);
     this.userBindings = new Map();
+    for (const binding of initialBindings) {
+      const candidate = this.policy.validateBinding(binding, this.effectiveBindings(), this.promptCatalog);
+      this.userBindings.set(candidate.gesture, candidate);
+    }
+    if (this.userBindings.size) {
+      this.trace.push({layer: 'registry', event: 'bindings_hydrated', count: this.userBindings.size});
+    }
   }
   effectiveBindings() {
     return new Map([...this.builtIns, ...this.userBindings]);
