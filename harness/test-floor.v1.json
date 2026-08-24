@@ -1,0 +1,52 @@
+{
+  "schema_version": "deterministic-test-floor/v1",
+  "python_version": "3.11",
+  "environment": {
+    "PYTHONHASHSEED": "0",
+    "TZ": "UTC",
+    "LC_ALL": "C.UTF-8",
+    "LANG": "C.UTF-8",
+    "CI": "true"
+  },
+  "compile_targets": [
+    "triage",
+    "scripts"
+  ],
+  "artifact_engine_workflow": ".github/workflows/artifact-engines.yml",
+  "artifact_imports": [
+    "triage.nw_prj_neuron_track_hours.cli",
+    "triage.nw_prj_neuron_track_hours.bonita_cli",
+    "triage.nth_qualitative_admin",
+    "triage.nth_evidence_bounded_allocation",
+    "triage.admin_billing_summary.cli",
+    "triage.one_marcus_recon.cli",
+    "triage.sidecar_html",
+    "triage.artifact_fingerprint",
+    "triage.artifact_profiles",
+    "triage.artifact_compare",
+    "triage.same_family_compare",
+    "triage.roster_log_compare.compare",
+    "triage.roster_log_review_queue.cli",
+    "triage.gitignore_hygiene"
+  ],
+  "artifact_tests": [
+    "tests/test_nw_prj_neuron_track_hours.py",
+    "tests/test_nw_prj_neuron_track_hours_bonita.py",
+    "tests/test_nth_qualitative_admin.py",
+    "tests/test_nth_evidence_bounded_allocation.py",
+    "tests/test_admin_billing_summary.py",
+    "tests/test_one_marcus_recon.py",
+    "tests/test_one_marcus_generate.py",
+    "tests/test_one_marcus_immutability.py",
+    "tests/test_sidecar_html_portal.py",
+    "tests/test_artifact_compare.py",
+    "tests/test_roster_log_compare.py",
+    "tests/test_same_family_compare.py",
+    "tests/test_gitignore_hygiene.py",
+    "tests/test_roster_log_review_queue.py"
+  ],
+  "validator_registry": "harness/validators.v1.json",
+  "validator_profile": "pre_push",
+  "required_canary_failure": "validator:prompt-kit-parity",
+  "proof_ceiling": "Deterministic clean-checkout Python, artifact-engine, harness, Prompt Kit static/generated-parity, repository hygiene, and provider-workflow proof on the observed SHA. It does not prove browser/device/operator/production behavior or private protected inputs."
+}
