@@ -5,7 +5,6 @@ import re
 import tempfile
 import unittest
 from pathlib import Path
-from unittest import mock
 
 from scripts import run_deterministic_test_floor as floor
 
@@ -99,7 +98,7 @@ class DeterministicTestFloorTests(unittest.TestCase):
         argv = floor.command_argv("python -m unittest tests.test_harness_contract -v")
         self.assertEqual(argv[0], floor.sys.executable)
 
-    def test_workflow_is_thin_read_only_and_has_no_unrequested_schedule(self) -> None:
+    def test_workflow_is_thin_read_only_exact_head_and_has_no_unrequested_schedule(self) -> None:
         workflow = FLOOR_WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("pull_request:", workflow)
         self.assertIn("push:", workflow)
@@ -109,17 +108,24 @@ class DeterministicTestFloorTests(unittest.TestCase):
         self.assertIn("cancel-in-progress: true", workflow)
         self.assertIn("PYTHONHASHSEED: \"0\"", workflow)
         self.assertIn("TZ: UTC", workflow)
+        self.assertIn("ref: ${{ github.event.pull_request.head.sha || github.sha }}", workflow)
+        self.assertIn("Verify exact candidate SHA", workflow)
+        self.assertIn('test "$actual" = "$EXPECTED_SHA"', workflow)
         self.assertEqual(workflow.count("scripts/run_deterministic_test_floor.py"), 2)
         self.assertNotIn("tests/test_nw_prj_neuron_track_hours.py", workflow)
         self.assertNotIn("tests.test_harness_contract", workflow)
 
-    def test_workflow_negative_canary_targets_real_generated_parity_gate(self) -> None:
+    def test_workflow_negative_canary_uses_earliest_real_generated_parity_blocker(self) -> None:
         workflow = FLOOR_WORKFLOW.read_text(encoding="utf-8")
         expected = self.manifest["required_canary_failure"]
-        self.assertEqual(expected, "validator:prompt-kit-parity")
+        self.assertEqual(expected, "validator:skill-prompt-registry-tests")
+        manifest, validators = floor.load_contract(MANIFEST)
+        labels = [label for label, _ in floor.build_steps(manifest, validators)]
+        self.assertLess(labels.index(expected), labels.index("validator:prompt-kit-parity"))
         self.assertIn("web/prompt-kit/index.html", workflow)
         self.assertIn("negative-canary-report.json", workflow)
         self.assertIn(expected, workflow)
+        self.assertIn("earliest registered failure gate", workflow)
         self.assertIn("if [ \"$status\" -eq 0 ]; then", workflow)
 
 
