@@ -1,6 +1,8 @@
 name: Temporary P95 cohesive repo context executor
 
 on:
+  push:
+    branches: [feat/p95-cohesive-repo-context-20260824]
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
@@ -10,12 +12,12 @@ permissions:
 
 jobs:
   execute:
-    if: github.event.pull_request.head.ref == 'feat/p95-cohesive-repo-context-20260824'
+    if: github.ref_name == 'feat/p95-cohesive-repo-context-20260824' || github.event.pull_request.head.ref == 'feat/p95-cohesive-repo-context-20260824'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: feat/p95-cohesive-repo-context-20260824
           fetch-depth: 0
           persist-credentials: true
 
@@ -111,15 +113,15 @@ jobs:
 
       - name: Commit durable result and remove executor
         shell: bash
-        env:
-          BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
           rm .github/workflows/p95-cohesive-repo-context-executor.yml
+          rm -f .github/p95-executor-trigger.txt
           git add registry/prompts/spec-architecture-prompts.v1.json \
                   tests/test_prompt_registry_expansion_regression_design_teach.py \
                   web/prompt-kit/index.html \
-                  .github/workflows/p95-cohesive-repo-context-executor.yml
+                  .github/workflows/p95-cohesive-repo-context-executor.yml \
+                  .github/p95-executor-trigger.txt
           git diff --cached --check
           if git diff --cached --quiet; then
             echo 'No durable changes produced' >&2
@@ -128,4 +130,4 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'feat(prompt-kit): ground P95 in cohesive repo context'
-          git push origin "HEAD:${BRANCH}"
+          git push origin HEAD:feat/p95-cohesive-repo-context-20260824
