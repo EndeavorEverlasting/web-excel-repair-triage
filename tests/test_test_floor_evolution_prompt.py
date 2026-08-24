@@ -101,6 +101,7 @@ class TestFloorEvolutionPromptTests(unittest.TestCase):
 
     def test_generated_site_contains_exact_prompt_identity(self) -> None:
         html = build_prompt_kit_registry.DEFAULT_OUTPUT.read_text(encoding="utf-8")
+        self.assertEqual(html, build_prompt_kit_registry.render())
         self.assertIn(self.target["id"], html)
         self.assertIn(TARGET_NAME, html)
 
