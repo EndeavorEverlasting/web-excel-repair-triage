@@ -10,6 +10,7 @@ PROTOTYPE = ROOT / "docs" / "prompt-kit-profile-modality-prototype.js"
 DESIGN = ROOT / "docs" / "PROMPT_KIT_PROFILE_MODALITY_PROGRAM_DESIGN.md"
 PARENT_PROTOTYPE = ROOT / "docs" / "prompt-kit-program-prototype.js"
 PARENT_DESIGN = ROOT / "docs" / "PROMPT_KIT_PROGRAM_ARCHITECTURE.md"
+HOTKEY_PROTOTYPE = ROOT / "docs" / "prompt-kit-hotkey-prototype.js"
 
 
 class PromptKitProfileModalityPrototypeTests(unittest.TestCase):
@@ -25,16 +26,13 @@ class PromptKitProfileModalityPrototypeTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
         return json.loads(result.stdout)
 
-    def test_extension_is_executable_and_covers_all_requested_archetypes(self) -> None:
-        syntax = subprocess.run(
-            ["node", "--check", str(PROTOTYPE)],
-            cwd=ROOT,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=False,
-        )
-        self.assertEqual(syntax.returncode, 0, syntax.stderr or syntax.stdout)
+    def test_extension_is_executable_and_covers_requested_archetypes(self) -> None:
+        for script in (PROTOTYPE, HOTKEY_PROTOTYPE):
+            syntax = subprocess.run(
+                ["node", "--check", str(script)], cwd=ROOT, text=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+            )
+            self.assertEqual(syntax.returncode, 0, syntax.stderr or syntax.stdout)
 
         report = self.run_prototype()
         self.assertEqual(report["status"], "PASS")
@@ -44,12 +42,10 @@ class PromptKitProfileModalityPrototypeTests(unittest.TestCase):
         )
         self.assertTrue(all(value == "PASS" for value in report["archetypeSupport"].values()))
         self.assertTrue(all(value == "PASS" for value in report["journeys"].values()))
-        self.assertEqual(report["archetypeSupport"]["mousePointerOnly"], "PASS")
-        self.assertEqual(report["archetypeSupport"]["keyboardOnly"], "PASS")
-        self.assertEqual(report["archetypeSupport"]["singleProfile"], "PASS")
-        self.assertEqual(report["archetypeSupport"]["multiProfile"], "PASS")
+        for archetype in ("mousePointerOnly", "keyboardOnly", "singleProfile", "multiProfile"):
+            self.assertEqual(report["archetypeSupport"][archetype], "PASS")
 
-    def test_pointer_and_keyboard_share_terminal_commands_without_global_input_mode(self) -> None:
+    def test_pointer_and_keyboard_converge_without_global_input_mode(self) -> None:
         text = PROTOTYPE.read_text(encoding="utf-8")
         self.assertIn("class InteractionContextFactory", text)
         self.assertIn("class InteractionCommandGateway", text)
@@ -67,42 +63,70 @@ class PromptKitProfileModalityPrototypeTests(unittest.TestCase):
         self.assertEqual(report["journeys"]["keyboardShortcutRevealFocus"], "PASS")
         self.assertIn("never global mutable mode", report["statePolicy"]["interactionModality"])
 
-    def test_profile_state_is_scoped_without_cloning_catalog_or_session(self) -> None:
+    def test_profiles_scope_preferences_through_canonical_owners(self) -> None:
         report = self.run_prototype()
-        self.assertEqual(report["journeys"]["defaultProfileLegacyCompatibility"], "PASS")
-        self.assertEqual(report["journeys"]["profileFavoriteIsolation"], "PASS")
-        self.assertEqual(report["journeys"]["profilePersistenceFailureIsolation"], "PASS")
-        self.assertEqual(report["journeys"]["inFlightProfileSnapshot"], "PASS")
+        expected = (
+            "defaultProfileLegacyCompatibility",
+            "canonicalFavoriteOwnerReuse",
+            "profileFavoriteIsolation",
+            "profileFavoriteProjectionRefresh",
+            "profileShortcutIsolation",
+            "profileShortcutRehydration",
+            "profileShortcutPersistenceFailure",
+            "profilePersistenceFailureIsolation",
+            "inFlightProfileSnapshot",
+        )
+        for journey in expected:
+            self.assertEqual(report["journeys"][journey], "PASS")
+
         self.assertEqual(report["statePolicy"]["promptCatalog"], "shared across profiles")
         self.assertIn("does not reset", report["statePolicy"]["sessionState"])
+        self.assertIn("FavoritePreferences", report["statePolicy"]["favorites"])
+        self.assertIn("ShortcutRegistry", report["statePolicy"]["shortcuts"])
         self.assertIn("legacy preference storage", report["statePolicy"]["defaultProfile"])
 
         text = PROTOTYPE.read_text(encoding="utf-8")
-        self.assertIn("class ProfileCatalog", text)
-        self.assertIn("class ActiveProfile", text)
-        self.assertIn("class MemoryProfilePreferenceStore", text)
-        self.assertIn("class ProfiledFavoritePreferences", text)
-        self.assertIn("legacy-default-slot", text)
-        self.assertIn("PROFILE_PREFERENCE_PERSISTENCE_FAILED", text)
+        hotkey = HOTKEY_PROTOTYPE.read_text(encoding="utf-8")
+        self.assertIn("FavoritePreferences,", text)
+        self.assertIn("class FavoritePreferenceContexts", text)
+        self.assertIn("new FavoritePreferences", text)
+        self.assertNotIn("class ProfiledFavoritePreferences", text)
+        self.assertIn("class ShortcutRegistryContexts", text)
+        self.assertIn("new ShortcutRegistry", text)
+        self.assertIn("initialBindings: boundStore.load()", text)
+        self.assertIn("initialBindings = []", hotkey)
+        self.assertIn("bindings_hydrated", hotkey)
+        self.assertIn("projectFavoriteSet(target.id, favorites.snapshot(target.id))", text)
+
+    def test_default_role_is_catalog_owned_not_a_magic_id(self) -> None:
+        text = PROTOTYPE.read_text(encoding="utf-8")
         self.assertIn("defaultProfileId: profileCatalog.defaultProfile().id", text)
+        self.assertIn("profiles: [{id: 'solo', name: 'Default', isDefault: true}]", text)
+        self.assertIn("legacy-default-slot", text)
         self.assertNotIn("return profileId === 'default' ?", text)
         self.assertNotIn("const favorites = profileId === 'default'", text)
         self.assertNotIn("if (profileId === 'default') {", text)
 
-    def test_failure_boundaries_are_observable_and_do_not_leak_prompt_bodies(self) -> None:
+    def test_failure_and_trace_boundaries_are_explicit_and_private(self) -> None:
         report = self.run_prototype()
-        self.assertEqual(report["journeys"]["unknownProfileFailure"], "PASS")
-        self.assertEqual(report["journeys"]["invalidModalityBoundary"], "PASS")
-        self.assertEqual(report["journeys"]["profilePersistenceFailureIsolation"], "PASS")
+        for journey in (
+            "unknownProfileFailure",
+            "invalidModalityBoundary",
+            "profilePersistenceFailureIsolation",
+            "profileShortcutPersistenceFailure",
+            "privacyBoundedTrace",
+        ):
+            self.assertEqual(report["journeys"][journey], "PASS")
 
         encoded = json.dumps(report, sort_keys=True)
         self.assertNotIn("EXECUTE THE REPO SPRINT.", encoded)
         self.assertNotIn("EXAMPLE PROMPT CONTENT.", encoded)
+        self.assertNotIn("Repo Sprint Executor", encoded)
         self.assertIn("interaction_context", encoded)
         self.assertIn("profileId", encoded)
         self.assertIn("modality", encoded)
 
-    def test_design_extends_canonical_program_owner_and_defers_broad_build(self) -> None:
+    def test_design_extends_parent_architecture_and_stays_prototype_bounded(self) -> None:
         text = DESIGN.read_text(encoding="utf-8")
         parent = PARENT_DESIGN.read_text(encoding="utf-8")
         parent_prototype = PARENT_PROTOTYPE.read_text(encoding="utf-8")
@@ -123,12 +147,12 @@ class PromptKitProfileModalityPrototypeTests(unittest.TestCase):
             "## Selected module/interface map",
             "## State and data ownership",
             "## Dependency direction",
-            "## Executable prototype",
+            "## Executable prototypes and call stacks",
             "## Failure call stacks",
             "## State model",
             "## Productivity feature admission",
             "## Feature shortlist after this design session",
-            "## Second-pass architecture critique",
+            "## Second-pass architecture critique and reconciliation",
             "## Exact implementation seam ready for the next build sprint",
             "## Unresolved decisions",
             "## Proof ceiling",
@@ -136,14 +160,19 @@ class PromptKitProfileModalityPrototypeTests(unittest.TestCase):
         for marker in required:
             self.assertIn(marker, text)
 
-        self.assertIn("No global input mode", text)
-        self.assertIn("Visible controls are canonical capability surfaces", text)
-        self.assertIn("Default profile is a compatibility boundary", text)
-        self.assertIn("Transient browsing state is not profile-owned by default", text)
-        self.assertIn("profile-specific Favorite + shortcut worksets", text)
-        self.assertIn("microsoft/vscode", text)
-        self.assertIn("w3c/aria-practices", text)
-        self.assertIn("broad production migration", text)
+        for phrase in (
+            "No global input mode",
+            "Visible controls are canonical capability surfaces",
+            "Default profile is a compatibility boundary",
+            "Transient browsing state is not profile-owned by default",
+            "profile-specific Favorite + shortcut worksets",
+            "canonical `FavoritePreferences`",
+            "canonical `ShortcutRegistry`",
+            "microsoft/vscode",
+            "w3c/aria-practices",
+            "broad production migration",
+        ):
+            self.assertIn(phrase, text)
 
 
 if __name__ == "__main__":
