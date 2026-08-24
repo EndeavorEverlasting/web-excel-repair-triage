@@ -36,6 +36,16 @@ jobs:
           fi
           git show origin/main:.github/scripts/tmp_scope_exhaustion_closeout_patch.py > /tmp/scope_exhaustion_patch.py
           sed -i 's#ROOT = Path(__file__).resolve().parents\[2\]#ROOT = Path.cwd()#' /tmp/scope_exhaustion_patch.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('/tmp/scope_exhaustion_patch.py')
+          text = path.read_text(encoding='utf-8')
+          old = 'anchor = "\\n\\nSTOP ONLY AT THE REAL FIXED POINT"'
+          new = 'anchor = "\\n\\n10. STOP ONLY AT THE REAL FIXED POINT"'
+          if old not in text:
+              raise SystemExit('stale P83 anchor patch target missing')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
       - name: Apply, build, and validate
         shell: bash
         run: |
