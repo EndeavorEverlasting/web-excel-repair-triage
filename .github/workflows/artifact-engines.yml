@@ -266,7 +266,7 @@ jobs:
           git push origin HEAD:main
 
   p65-verifier-routing-repair:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'fix/p65-verifier-routing-trigger-20260824'
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'fix/p65-verifier-routing-trigger-20260824')
     runs-on: ubuntu-latest
     permissions:
       contents: write
