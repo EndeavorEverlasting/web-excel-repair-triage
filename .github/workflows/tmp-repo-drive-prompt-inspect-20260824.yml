@@ -1,0 +1,24 @@
+name: Temporary repo Drive prompt routing inspect
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-routing:
+    if: github.event.pull_request.head.ref == 'feat/prompt-kit-repo-drive-artifact-sync-20260824'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Inspect Prompt Kit routing
+        run: python scripts/prompt_registry_ops.py inspect
