@@ -1,6 +1,6 @@
 # Artifact Registry
 
-This registry defines repository artifacts that agents, CI, and operators may produce or consume. The machine-readable authority is `harness/artifacts.v1.json`; component ownership lives in `harness/manifest.v1.json`; validator ownership lives in `harness/validators.v1.json`.
+This registry defines repository artifacts that agents, CI, and operators may produce or consume. The machine-readable authority is `harness/artifacts.v1.json`; component ownership lives in `harness/manifest.v1.json`; validator ownership lives in `harness/validators.v1.json`. Path/profile authority lives in `harness/canonical-paths.v1.json` and is deliberately separate from artifact identity.
 
 ## Tracked control-plane artifacts
 
@@ -11,7 +11,8 @@ This registry defines repository artifacts that agents, CI, and operators may pr
 | Workflow specification | `WORKFLOW.md` | edited Markdown | `harness-completeness` | Tracked human workflow source. |
 | Workflow registry | `harness/workflows.v1.json` | edited versioned JSON | `harness-completeness` and contract tests | Machine-readable triggers, scope, failure, validation, and handoff ownership. |
 | Artifact registry | `ARTIFACT_REGISTRY.md` | edited Markdown | `harness-completeness` | Human-readable artifact contract. |
-| Machine artifact registry | `harness/artifacts.v1.json` | edited versioned JSON | `harness-completeness` and contract tests | Canonical paths, producers, validators, naming, tracking, delivery surfaces, and proof ceilings. |
+| Machine artifact registry | `harness/artifacts.v1.json` | edited versioned JSON | `harness-completeness` and contract tests | Canonical artifact paths, producers, validators, naming, tracking, delivery surfaces, and proof ceilings. |
+| Canonical path contract | `harness/canonical-paths.v1.json` | edited versioned JSON | `scripts/validate_canonical_paths.py` plus focused tests | Single machine owner for development checkout resolution, production/use paths, temporary worktree root, real operator entrypoints, and evidence-state separation; P92 owns deep repair/audit. |
 | Validator registry | `harness/validators.v1.json` | edited versioned JSON | `harness-completeness` and contract tests | Validator commands, outputs, profiles, and hook bindings. |
 | Skill index | `SKILLS.md` | edited Markdown | harness validator | Indexes every active skill. |
 | Capability index | `CAPABILITIES.md` | edited Markdown | harness validator | Mirrors the capability registry. |
@@ -21,6 +22,7 @@ This registry defines repository artifacts that agents, CI, and operators may pr
 | Trigger registry | `harness/triggers.v1.json` | edited JSON | harness validator/tests | Deterministic conditions and forbidden conditions with one capability/skill owner. |
 | Scoped skills | `.ai/skills/*/SKILL.md` | edited Markdown | harness validator/tests | Repeatable procedures; deterministic behavior remains in code/contracts. |
 | Operator report | `harness/reports/CURRENT_STATE.md` | edited Markdown | harness validator | Current working, broken, missing, validation, and proof state. |
+| Canonical path operator report | `harness/reports/CANONICAL_PATHS.md` | edited Markdown | focused canonical-path gate | Human-readable path/profile state and proof ceiling; never a deployment receipt. |
 | Prompt Kit interaction contract | `harness/contracts/prompt-kit-interactions.v1.json` | edited versioned JSON | focused tests and audit | Harness owns the requirement; product lane owns implementation. |
 | Prompt Kit discovery contract | `harness/contracts/prompt-kit-discovery.v1.json` | edited versioned JSON | focused tests and audit | Tracked discovery requirement and proof boundary. |
 | Prompt Kit cross-device access contract | `harness/contracts/prompt-kit-cross-device-access.v1.json` | edited versioned JSON | `scripts/validate_prompt_kit_cross_device_access.py` plus focused tests | Routes normal use/install to public browser surfaces and reserves Git checkout for edit/commit/push/local-tooling intent. |
@@ -42,6 +44,19 @@ The artifact ID `prompt-kit-website` always resolves to the tracked canonical ar
 | Source snapshot without Git | repository `main.zip` | No; snapshot only |
 
 Android users who need an editable checkout use Termux from F-Droid and Git. They should not be routed there merely to open or install the Prompt Kit.
+
+## Canonical path contract
+
+`harness/canonical-paths.v1.json` is the path authority. Fresh agents must resolve it before selecting a checkout, use/install path, temporary writer location, launcher, or URL. The development checkout is runtime-resolved from a canonical-origin Git checkout rather than a person-specific absolute path; parallel writers use the registered Git-worktree family, never a second mutable clone.
+
+The contract keeps four proof states deliberately separate: `remote_main_contains_sha`, `canonical_development_checkout_current`, `production_use_path_current`, and `operator_entrypoint_observes_current`. Passing an earlier state never silently proves a later one. P92 may deepen/audit this contract, but must strengthen this owner rather than creating another path registry.
+
+Focused proof:
+
+```bash
+python scripts/validate_canonical_paths.py --summary
+python -m unittest tests.test_canonical_paths -v
+```
 
 ## Generated runtime artifacts
 
@@ -70,12 +85,13 @@ Android users who need an editable checkout use Termux from F-Droid and Git. The
 ## Artifact lifecycle
 
 1. Resolve the artifact ID from `harness/artifacts.v1.json`; do not guess from a generic filename.
-2. Declare artifact owner, source, destination, schema/profile, validator, delivery surface when relevant, and proof ceiling.
-3. Generate through the registered script, module, launcher, workflow, or CI job.
-4. Validate structural, semantic, parity, safety, path, and delivery-routing requirements appropriate to the artifact.
-5. Deliver only from the registry-defined canonical path, registered delivery surface, or CI artifact.
-6. Record commit/PR evidence for tracked artifacts and path/checksum/run ID for runtime artifacts.
-7. Clean only known generated outputs; never apply broad deletion to unknown work.
+2. Resolve the active path/profile through `harness/canonical-paths.v1.json` before assuming where development, generation, serving, or operator use occurs.
+3. Declare artifact owner, source, destination, schema/profile, validator, delivery surface when relevant, and proof ceiling.
+4. Generate through the registered script, module, launcher, workflow, or CI job.
+5. Validate structural, semantic, parity, safety, path, and delivery-routing requirements appropriate to the artifact.
+6. Deliver only from the registry-defined canonical artifact path plus the profile-defined use/entrypoint surface, or from the registered CI artifact.
+7. Record commit/PR evidence for tracked artifacts and path/checksum/run ID for runtime artifacts without promoting one proof state into another.
+8. Clean only known generated outputs; never apply broad deletion to unknown work.
 
 ## Naming conventions
 
@@ -87,6 +103,13 @@ Android users who need an editable checkout use Termux from F-Droid and Git. The
 - Generated product artifacts: use the focused contract or manifest; do not infer “latest” from modification time alone.
 
 ## Generation and validation commands
+
+Canonical path/profile routing:
+
+```bash
+python scripts/validate_canonical_paths.py --summary
+python -m unittest tests.test_canonical_paths -v
+```
 
 Cross-device Prompt Kit routing:
 
@@ -121,4 +144,4 @@ git diff --check
 
 ## Proof boundaries
 
-File and registry presence prove repository integration only. The cross-device validator proves the repository routes normal browser/phone use to the public surfaces, preserves an explicit editable-checkout route, and documents safe commands; it does not prove device menus, PWA installation, Termux/F-Droid availability, Git credentials, network, browser storage, clipboard behavior, or push success. A harness completeness report proves the registered static checks executed on one checkout and commit. Deterministic builder parity proves source-to-generated identity, not browser acceptance. Interaction/discovery audits prove only their documented static surfaces. Prompt-language audit proves canonical/effective coverage and findings, not provider obedience. CI proves only the commands and fixtures exercised by that workflow. Excel for Web, native Windows GUI, protected targets, technician acceptance, deployment, and production success require separate observed proof.
+File and registry presence prove repository integration only. The canonical-path validator proves that development/use/worktree/entrypoint routing is explicit and that weaker proof states cannot certify stronger runtime states; it does not prove a specific checkout, deployed surface, portable artifact, or operator entrypoint is current. The cross-device validator proves the repository routes normal browser/phone use to the public surfaces, preserves an explicit editable-checkout route, and documents safe commands; it does not prove device menus, PWA installation, Termux/F-Droid availability, Git credentials, network, browser storage, clipboard behavior, or push success. A harness completeness report proves the registered static checks executed on one checkout and commit. Deterministic builder parity proves source-to-generated identity, not browser acceptance. Interaction/discovery audits prove only their documented static surfaces. Prompt-language audit proves canonical/effective coverage and findings, not provider obedience. CI proves only the commands and fixtures exercised by that workflow. Excel for Web, native Windows GUI, protected targets, technician acceptance, deployment, and production success require separate observed proof.
