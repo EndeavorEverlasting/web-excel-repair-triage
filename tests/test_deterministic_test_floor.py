@@ -1,0 +1,103 @@
+from __future__ import annotations
+
+import json
+import re
+import tempfile
+import unittest
+from pathlib import Path
+
+from scripts import run_deterministic_test_floor as floor
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+MANIFEST = REPO_ROOT / "harness" / "test-floor.v1.json"
+VALIDATORS = REPO_ROOT / "harness" / "validators.v1.json"
+ARTIFACT_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "artifact-engines.yml"
+FLOOR_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "deterministic-test-floor.yml"
+
+
+class DeterministicTestFloorTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        cls.validators = json.loads(VALIDATORS.read_text(encoding="utf-8"))
+
+    def test_manifest_is_nonempty_and_all_owned_paths_exist(self) -> None:
+        self.assertEqual(self.manifest["schema_version"], "deterministic-test-floor/v1")
+        self.assertEqual(self.manifest["python_version"], "3.11")
+        self.assertGreater(len(self.manifest["artifact_imports"]), 0)
+        self.assertGreater(len(self.manifest["artifact_tests"]), 0)
+        for rel in self.manifest["compile_targets"] + self.manifest["artifact_tests"]:
+            self.assertTrue((REPO_ROOT / rel).exists(), rel)
+
+    def test_artifact_suite_stays_in_sync_with_existing_ci_owner(self) -> None:
+        workflow = ARTIFACT_WORKFLOW.read_text(encoding="utf-8")
+        primary_job = workflow.split("\n  canonical-local-path-prompt-repair:", 1)[0]
+        workflow_tests = set(re.findall(r"tests/test_[A-Za-z0-9_]+\.py", primary_job))
+        self.assertTrue(workflow_tests)
+        self.assertEqual(workflow_tests, set(self.manifest["artifact_tests"]))
+
+        workflow_imports = set(re.findall(r"\bimport (triage\.[A-Za-z0-9_.]+)", primary_job))
+        self.assertTrue(workflow_imports)
+        self.assertEqual(workflow_imports, set(self.manifest["artifact_imports"]))
+
+    def test_registered_validator_profile_is_blocking_and_complete(self) -> None:
+        profile_name = self.manifest["validator_profile"]
+        profile = self.validators["profiles"][profile_name]
+        self.assertTrue(profile)
+        by_id = {item["id"]: item for item in self.validators["validators"]}
+        for validator_id in profile:
+            self.assertIn(validator_id, by_id)
+            self.assertIs(by_id[validator_id]["blocking"], True)
+            self.assertTrue(by_id[validator_id]["command"].strip())
+
+    def test_empty_required_test_list_fails_closed(self) -> None:
+        broken = dict(self.manifest)
+        broken["artifact_tests"] = []
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "manifest.json"
+            path.write_text(json.dumps(broken), encoding="utf-8")
+            with self.assertRaises(floor.ContractError):
+                floor.load_contract(path)
+
+    def test_unknown_validator_id_fails_closed(self) -> None:
+        registry = json.loads(VALIDATORS.read_text(encoding="utf-8"))
+        registry["profiles"]["deterministic-test-fixture"] = ["does-not-exist"]
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            registry_path = tmp_path / "validators.json"
+            registry_path.write_text(json.dumps(registry), encoding="utf-8")
+            broken = dict(self.manifest)
+            broken["validator_registry"] = str(registry_path)
+            broken["validator_profile"] = "deterministic-test-fixture"
+            manifest_path = tmp_path / "manifest.json"
+            manifest_path.write_text(json.dumps(broken), encoding="utf-8")
+            with self.assertRaises(floor.ContractError):
+                floor.load_contract(manifest_path)
+
+    def test_workflow_is_thin_read_only_and_has_no_unrequested_schedule(self) -> None:
+        workflow = FLOOR_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("pull_request:", workflow)
+        self.assertIn("push:", workflow)
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("schedule:", workflow)
+        self.assertIn("permissions:\n  contents: read", workflow)
+        self.assertIn("cancel-in-progress: true", workflow)
+        self.assertIn("PYTHONHASHSEED: \"0\"", workflow)
+        self.assertIn("TZ: UTC", workflow)
+        self.assertEqual(workflow.count("scripts/run_deterministic_test_floor.py"), 2)
+        self.assertNotIn("tests/test_nw_prj_neuron_track_hours.py", workflow)
+        self.assertNotIn("tests.test_harness_contract", workflow)
+
+    def test_workflow_negative_canary_targets_real_generated_parity_gate(self) -> None:
+        workflow = FLOOR_WORKFLOW.read_text(encoding="utf-8")
+        expected = self.manifest["required_canary_failure"]
+        self.assertEqual(expected, "validator:prompt-kit-parity")
+        self.assertIn("web/prompt-kit/index.html", workflow)
+        self.assertIn("negative-canary-report.json", workflow)
+        self.assertIn(expected, workflow)
+        self.assertIn("if [ \"$status\" -eq 0 ]; then", workflow)
+
+
+if __name__ == "__main__":
+    unittest.main()
