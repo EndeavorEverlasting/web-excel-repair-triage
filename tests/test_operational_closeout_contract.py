@@ -44,6 +44,16 @@ class OperationalCloseoutContractTests(unittest.TestCase):
             "Do not add a ceremonial handoff when no continuation remains",
         ):
             self.assertIn(phrase, appendix)
+        suffix = self.policy["next_step_suffix"]
+        for phrase in (
+            "exact current head is the head that was validated",
+            "no blocking review, conflict, branch-protection, or required-approval gate remains",
+            "acting agent has merge authority",
+            "user has not prohibited merge",
+            "compact evidence-bearing closeout",
+            "commands/examples actually verified",
+        ):
+            self.assertIn(phrase, suffix)
 
     def test_operational_effective_prompts_inherit_closeout_contract(self) -> None:
         tokens = ("BUILD", "REPAIR", "ARTIFACT", "RUNTIME", "CERT", "DEPLOY", "VERIFY", "ADVANCE")
@@ -62,6 +72,7 @@ class OperationalCloseoutContractTests(unittest.TestCase):
             with self.subTest(prompt_id=prompt_id):
                 content = self.effective[prompt_id]["copyContent"]
                 self.assertEqual(content.count(MARKER), 1)
+                self.assertEqual(content.count(self.policy["marker"]), 1)
                 self.assertIn("EVIDENCE-BEARING CLOSEOUT", content)
                 self.assertIn("CHANGED SURFACES / ARTIFACTS", content)
                 self.assertIn("UNPROVEN RUNTIME / FIELD STEPS", content)
