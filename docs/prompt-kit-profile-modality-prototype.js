@@ -5,9 +5,21 @@ const {
   PromptCatalog,
   SessionState,
   MemoryClipboard,
+  FavoritePreferences,
   UsageLedger,
   CommandKernel,
 } = require('./prompt-kit-program-prototype.js');
+
+const {
+  HotkeyError,
+  ShortcutPolicy,
+  ShortcutRegistry,
+  ShortcutDispatcher,
+  FilterVisibility,
+  HotkeyHelpVisibility,
+  ViewNavigatorFake,
+  PromptNavigatorFake,
+} = require('./prompt-kit-hotkey-prototype.js');
 
 const VALID_MODALITIES = new Set(['pointer', 'keyboard']);
 
@@ -171,62 +183,136 @@ class MemoryProfilePreferenceStore {
       event: 'save_attempted',
       profileId,
       storageSlot,
-      favorites: [...next],
     });
     if (this.failProfileIds.has(profileId)) {
-      this.trace.push({
-        layer: 'profile_preference_store',
-        event: 'save_failed',
-        profileId,
-        storageSlot,
-      });
+      this.trace.push({layer: 'profile_preference_store', event: 'save_failed', profileId, storageSlot});
       throw new PromptKitProgramError(
         'PROFILE_PREFERENCE_PERSISTENCE_FAILED',
         `Favorite persistence failed for PromptProfile ${profileId}.`,
         {profileId}
       );
     }
-    if (profileId === this.defaultProfileId) {
-      this.legacyFavorites = [...next];
-    } else {
-      this.profileFavorites[profileId] = [...next];
-    }
-    this.trace.push({
-      layer: 'profile_preference_store',
-      event: 'save_succeeded',
-      profileId,
-      storageSlot,
-      favorites: [...next],
-    });
+    if (profileId === this.defaultProfileId) this.legacyFavorites = [...next];
+    else this.profileFavorites[profileId] = [...next];
+    this.trace.push({layer: 'profile_preference_store', event: 'save_succeeded', profileId, storageSlot});
   }
 }
 
-class ProfiledFavoritePreferences {
-  constructor(trace, store) {
+class BoundProfileFavoriteStore {
+  constructor(rootStore, profileId) {
+    this.rootStore = rootStore;
+    this.profileId = profileId;
+  }
+  loadFavorites() {
+    return this.rootStore.loadFavorites(this.profileId);
+  }
+  saveFavorites(candidate) {
+    return this.rootStore.saveFavorites(this.profileId, candidate);
+  }
+}
+
+class FavoritePreferenceContexts {
+  constructor(trace, rootStore) {
     this.trace = trace;
-    this.store = store;
+    this.rootStore = rootStore;
+    this.contexts = new Map();
+  }
+  forProfile(profileId) {
+    if (!this.contexts.has(profileId)) {
+      const boundStore = new BoundProfileFavoriteStore(this.rootStore, profileId);
+      this.contexts.set(profileId, new FavoritePreferences(this.trace, boundStore));
+      this.trace.push({layer: 'favorite_contexts', event: 'canonical_owner_bound', profileId});
+    }
+    return this.contexts.get(profileId);
   }
   snapshot(profileId) {
-    return this.store.loadFavorites(profileId).sort();
+    return this.forProfile(profileId).snapshot();
   }
   has(profileId, promptId) {
-    return this.snapshot(profileId).includes(promptId);
+    return this.forProfile(profileId).has(promptId);
   }
   toggle(profileId, promptId) {
-    const current = new Set(this.store.loadFavorites(profileId));
-    const candidate = new Set(current);
-    if (candidate.has(promptId)) candidate.delete(promptId); else candidate.add(promptId);
-    const next = [...candidate].sort();
-    this.store.saveFavorites(profileId, next);
-    const favorite = candidate.has(promptId);
-    this.trace.push({
-      layer: 'profiled_favorites',
-      event: 'favorite_published',
-      profileId,
-      promptId,
-      favorite,
-    });
-    return {profileId, promptId, favorite, favorites: next};
+    const owner = this.forProfile(profileId);
+    const result = owner.toggle(promptId);
+    return {profileId, ...result, favorites: owner.snapshot()};
+  }
+}
+
+class MemoryProfileShortcutStore {
+  constructor(trace, {profileBindings = {}, failProfileIds = []} = {}) {
+    this.trace = trace;
+    this.profileBindings = Object.fromEntries(
+      Object.entries(profileBindings || {}).map(([profileId, bindings]) => [profileId, clone(bindings)])
+    );
+    this.failProfileIds = new Set(failProfileIds);
+  }
+  load(profileId) {
+    const value = clone(this.profileBindings[profileId] || []);
+    this.trace.push({layer: 'profile_shortcut_store', event: 'bindings_loaded', profileId, count: value.length});
+    return value;
+  }
+  save(profileId, value) {
+    const candidate = clone(value);
+    this.trace.push({layer: 'profile_shortcut_store', event: 'save_attempted', profileId, count: candidate.length});
+    if (this.failProfileIds.has(profileId)) {
+      this.trace.push({layer: 'profile_shortcut_store', event: 'save_failed', profileId});
+      throw new Error(`shortcut storage unavailable for ${profileId}`);
+    }
+    this.profileBindings[profileId] = candidate;
+    this.trace.push({layer: 'profile_shortcut_store', event: 'save_succeeded', profileId, count: candidate.length});
+  }
+}
+
+class BoundProfileShortcutStore {
+  constructor(rootStore, profileId) {
+    this.rootStore = rootStore;
+    this.profileId = profileId;
+  }
+  load() {
+    return this.rootStore.load(this.profileId);
+  }
+  save(value) {
+    return this.rootStore.save(this.profileId, value);
+  }
+}
+
+class ShortcutRegistryContexts {
+  constructor({trace, rootStore, promptCatalog}) {
+    this.trace = trace;
+    this.rootStore = rootStore;
+    this.promptCatalog = promptCatalog;
+    this.contexts = new Map();
+  }
+  forProfile(profileId) {
+    if (!this.contexts.has(profileId)) {
+      const boundStore = new BoundProfileShortcutStore(this.rootStore, profileId);
+      const registry = new ShortcutRegistry({
+        policy: new ShortcutPolicy(),
+        store: boundStore,
+        promptCatalog: this.promptCatalog,
+        trace: this.trace,
+        initialBindings: boundStore.load(),
+      });
+      this.contexts.set(profileId, registry);
+      this.trace.push({layer: 'shortcut_contexts', event: 'canonical_owner_bound', profileId});
+    }
+    return this.contexts.get(profileId);
+  }
+}
+
+class ActiveShortcutRegistry {
+  constructor(activeProfile, contexts) {
+    this.activeProfile = activeProfile;
+    this.contexts = contexts;
+  }
+  current() {
+    return this.contexts.forProfile(this.activeProfile.current());
+  }
+  effectiveBindings() {
+    return this.current().effectiveBindings();
+  }
+  configure(binding) {
+    return this.current().configure(binding);
   }
 }
 
@@ -259,6 +345,8 @@ class ModalityAwarePromptSurface {
     this.focusedCopy = [];
     this.preservedOrigins = [];
     this.favoriteProjection = new Map();
+    this.activeFavoriteProfileId = null;
+    this.activeFavoriteProjection = new Set();
     this.profileProjection = [];
   }
   applyCopyPlan(promptId, context, plan) {
@@ -271,32 +359,25 @@ class ModalityAwarePromptSurface {
       this.trace.push({layer: 'surface', event: 'copy_control_focused', promptId, source: context.source});
     } else if (plan.preserveOriginFocus) {
       this.preservedOrigins.push({promptId, source: context.source, modality: context.modality});
-      this.trace.push({
-        layer: 'surface',
-        event: 'origin_focus_preserved',
-        promptId,
-        source: context.source,
-        modality: context.modality,
-      });
+      this.trace.push({layer: 'surface', event: 'origin_focus_preserved', promptId, source: context.source, modality: context.modality});
     }
+  }
+  projectFavoriteSet(profileId, favorites) {
+    this.activeFavoriteProfileId = profileId;
+    this.activeFavoriteProjection = new Set(favorites);
+    this.trace.push({layer: 'surface', event: 'favorite_set_projected', profileId, count: this.activeFavoriteProjection.size});
   }
   projectFavorite(profileId, promptId, favorite) {
     this.favoriteProjection.set(`${profileId}:${promptId}`, favorite);
-    this.trace.push({
-      layer: 'surface',
-      event: 'favorite_projected',
-      profileId,
-      promptId,
-      favorite,
-    });
+    if (this.activeFavoriteProfileId === profileId) {
+      if (favorite) this.activeFavoriteProjection.add(promptId);
+      else this.activeFavoriteProjection.delete(promptId);
+    }
+    this.trace.push({layer: 'surface', event: 'favorite_projected', profileId, promptId, favorite});
   }
   projectProfile(profile) {
     this.profileProjection.push(profile.id);
-    this.trace.push({
-      layer: 'surface',
-      event: 'active_profile_projected',
-      profileId: profile.id,
-    });
+    this.trace.push({layer: 'surface', event: 'active_profile_projected', profileId: profile.id});
   }
 }
 
@@ -321,9 +402,7 @@ class InteractionCommandGateway {
 }
 
 class PromptControlEntrypoint {
-  constructor(gateway) {
-    this.gateway = gateway;
-  }
+  constructor(gateway) { this.gateway = gateway; }
   copy(promptId, modality) {
     return this.gateway.execute({type: 'COPY_REVEAL_PROMPT', promptId}, 'prompt-control', modality);
   }
@@ -333,18 +412,14 @@ class PromptControlEntrypoint {
 }
 
 class FavoriteShortcutEntrypoint {
-  constructor(gateway) {
-    this.gateway = gateway;
-  }
+  constructor(gateway) { this.gateway = gateway; }
   copy(promptId) {
     return this.gateway.execute({type: 'COPY_REVEAL_PROMPT', promptId}, 'favorite-shortcut', 'keyboard');
   }
 }
 
 class ProfileSwitcherEntrypoint {
-  constructor(gateway) {
-    this.gateway = gateway;
-  }
+  constructor(gateway) { this.gateway = gateway; }
   activate(profileId, modality) {
     return this.gateway.execute({type: 'ACTIVATE_PROFILE', targetProfileId: profileId}, 'profile-switcher', modality);
   }
@@ -358,6 +433,8 @@ function buildProfileModalityProgram({
   legacyFavorites = ['P07'],
   profileFavorites = {work: ['P95']},
   failProfileIds = [],
+  profileShortcutBindings = {},
+  failShortcutProfileIds = [],
   clipboardFail = false,
   clipboardDefer = false,
   usageFail = false,
@@ -377,11 +454,33 @@ function buildProfileModalityProgram({
     failProfileIds,
     defaultProfileId: profileCatalog.defaultProfile().id,
   });
-  const favorites = new ProfiledFavoritePreferences(trace, preferenceStore);
+  const favorites = new FavoritePreferenceContexts(trace, preferenceStore);
   const clipboard = new MemoryClipboard(trace, {fail: clipboardFail, defer: clipboardDefer});
   const usageLedger = new UsageLedger(trace, {fail: usageFail});
   const presentationPolicy = new CopyPresentationPolicy();
   const surface = new ModalityAwarePromptSurface(trace);
+  surface.projectFavoriteSet(activeProfile.current(), favorites.snapshot(activeProfile.current()));
+
+  const shortcutStore = new MemoryProfileShortcutStore(trace, {
+    profileBindings: profileShortcutBindings,
+    failProfileIds: failShortcutProfileIds,
+  });
+  const shortcutContexts = new ShortcutRegistryContexts({
+    trace,
+    rootStore: shortcutStore,
+    promptCatalog: new Set(['P07', 'P95']),
+  });
+  const activeShortcuts = new ActiveShortcutRegistry(activeProfile, shortcutContexts);
+  const shortcutPromptNavigator = new PromptNavigatorFake(trace);
+  const shortcutDispatcher = new ShortcutDispatcher({
+    registry: activeShortcuts,
+    filterVisibility: new FilterVisibility(trace),
+    hotkeyHelpVisibility: new HotkeyHelpVisibility(trace),
+    promptNavigator: shortcutPromptNavigator,
+    viewNavigator: new ViewNavigatorFake(trace),
+    trace,
+  });
+
   const kernel = new CommandKernel(trace);
 
   kernel.register('COPY_REVEAL_PROMPT', async command => {
@@ -449,6 +548,7 @@ function buildProfileModalityProgram({
     const target = profileCatalog.require(command.targetProfileId);
     activeProfile.activate(target.id);
     surface.projectProfile(target);
+    surface.projectFavoriteSet(target.id, favorites.snapshot(target.id));
     return {
       status: 'PROFILE_ACTIVE',
       profileId: target.id,
@@ -466,6 +566,11 @@ function buildProfileModalityProgram({
     session,
     preferenceStore,
     favorites,
+    shortcutStore,
+    shortcutContexts,
+    activeShortcuts,
+    shortcutDispatcher,
+    shortcutPromptNavigator,
     clipboard,
     usageLedger,
     presentationPolicy,
@@ -489,6 +594,17 @@ async function expectCode(expected, fn) {
   throw new Error(`ASSERTION_FAILED: expected ${expected}`);
 }
 
+function expectHotkeyCode(expected, fn) {
+  try {
+    fn();
+  } catch (error) {
+    assert(error instanceof HotkeyError, `expected HotkeyError for ${expected}`);
+    assert(error.code === expected, `expected ${expected}, observed ${error.code}`);
+    return error;
+  }
+  throw new Error(`ASSERTION_FAILED: expected ${expected}`);
+}
+
 async function runSelfTest() {
   const singleProfile = buildProfileModalityProgram({
     profiles: [{id: 'solo', name: 'Default', isDefault: true}],
@@ -498,28 +614,28 @@ async function runSelfTest() {
 
   const pointerCopy = await singleProfile.controls.copy('P07', 'pointer');
   assert(pointerCopy.status === 'COPIED', 'pointer control reaches terminal clipboard value');
-  assert(pointerCopy.profileId === 'solo', 'single-profile pointer command uses the catalog-defined default profile identity');
+  assert(pointerCopy.profileId === 'solo', 'single-profile pointer command uses catalog-defined default identity');
   assert(pointerCopy.presentation.preserveOriginFocus === true, 'pointer control does not receive keyboard-only focus movement');
   assert(singleProfile.surface.focusedCopy.length === 0, 'pointer control path does not force Copy focus');
 
   const keyboardControlCopy = await singleProfile.controls.copy('P95', 'keyboard');
   assert(keyboardControlCopy.status === 'COPIED', 'keyboard activation of visible control reaches same terminal command');
-  assert(keyboardControlCopy.presentation.preserveOriginFocus === true, 'already-focused keyboard control does not receive redundant focus movement');
+  assert(keyboardControlCopy.presentation.preserveOriginFocus === true, 'already-focused keyboard control avoids redundant focus movement');
   assert(singleProfile.clipboard.writes.length === 2, 'pointer and keyboard visible controls share clipboard owner');
 
   const defaultFavorite = await singleProfile.controls.toggleFavorite('P95', 'pointer');
-  assert(defaultFavorite.favorite === true, 'default profile Favorite mutation succeeds');
+  assert(defaultFavorite.favorite === true, 'default profile Favorite mutation succeeds through canonical owner');
   assert(singleProfile.preferenceStore.legacyFavorites.includes('P95'), 'default profile writes through legacy compatibility slot');
-  assert(singleProfile.preferenceStore.storageSlot('solo') === 'legacy-default-slot', 'catalog-defined default profile uses the legacy compatibility slot');
-  assert(!Object.prototype.hasOwnProperty.call(singleProfile.preferenceStore.profileFavorites, 'solo'), 'default profile does not invent a named-profile storage slot');
+  assert(singleProfile.preferenceStore.storageSlot('solo') === 'legacy-default-slot', 'catalog-defined default profile uses legacy compatibility slot');
+  assert(!Object.prototype.hasOwnProperty.call(singleProfile.preferenceStore.profileFavorites, 'solo'), 'default profile does not invent named storage slot');
 
   const multiProfile = buildProfileModalityProgram({clipboardDefer: true});
   assert(multiProfile.profileCatalog.needsSwitcher() === true, 'multi-profile user exposes profile-switch capability');
 
-  const shortcutResult = await multiProfile.favoriteShortcut.copy('P07');
-  assert(shortcutResult.status === 'COPIED', 'configured keyboard shortcut reaches terminal clipboard value');
-  assert(shortcutResult.presentation.reveal === true, 'keyboard shortcut reveals target prompt');
-  assert(shortcutResult.presentation.focusCopy === true, 'keyboard shortcut focuses Copy recovery target');
+  const shortcutCopy = await multiProfile.favoriteShortcut.copy('P07');
+  assert(shortcutCopy.status === 'COPIED', 'configured keyboard shortcut journey reaches terminal clipboard value');
+  assert(shortcutCopy.presentation.reveal === true, 'keyboard shortcut reveals target prompt');
+  assert(shortcutCopy.presentation.focusCopy === true, 'keyboard shortcut focuses Copy recovery target');
   assert(multiProfile.surface.revealed[0] === 'P07', 'shortcut surface reveal is projected');
   assert(multiProfile.surface.focusedCopy[0] === 'P07', 'shortcut Copy focus is projected');
 
@@ -527,16 +643,51 @@ async function runSelfTest() {
   const pointerSwitch = await multiProfile.profileSwitcher.activate('work', 'pointer');
   assert(pointerSwitch.status === 'PROFILE_ACTIVE' && multiProfile.activeProfile.current() === 'work', 'pointer profile activation succeeds');
   assert(JSON.stringify(multiProfile.session.snapshot()) === JSON.stringify(sessionBeforeSwitch), 'profile activation does not reset transient browsing state');
+  assert([...multiProfile.surface.activeFavoriteProjection].sort().join(',') === 'P95', 'profile activation replaces stale Favorite projection with active profile set');
 
   const workFavoriteBefore = multiProfile.favorites.snapshot('work');
-  assert(workFavoriteBefore.length === 1 && workFavoriteBefore[0] === 'P95', 'work profile starts with isolated Favorite state');
+  assert(workFavoriteBefore.join(',') === 'P95', 'work profile starts with isolated Favorite state');
   const workFavorite = await multiProfile.controls.toggleFavorite('P07', 'pointer');
   assert(workFavorite.favorite === true && workFavorite.profileId === 'work', 'Favorite mutation is scoped to active work profile');
   assert(multiProfile.favorites.snapshot('work').join(',') === 'P07,P95', 'work Favorite candidate is published');
   assert(multiProfile.favorites.snapshot('default').join(',') === 'P07', 'default Favorite state is unchanged by work mutation');
+  assert([...multiProfile.surface.activeFavoriteProjection].sort().join(',') === 'P07,P95', 'active work projection follows canonical Favorite owner after mutation');
 
   const keyboardSwitch = await multiProfile.profileSwitcher.activate('default', 'keyboard');
   assert(keyboardSwitch.status === 'PROFILE_ACTIVE' && multiProfile.activeProfile.current() === 'default', 'keyboard profile activation reaches same semantic command');
+  assert([...multiProfile.surface.activeFavoriteProjection].sort().join(',') === 'P07', 'switching back removes stale work Favorite projection');
+
+  const shortcutProfiles = buildProfileModalityProgram();
+  shortcutProfiles.activeShortcuts.configure({gesture: 'p95', command: 'COPY_REVEAL_PROMPT', promptId: 'P95'});
+  assert(shortcutProfiles.shortcutStore.load('default')[0].gesture === 'p95', 'default shortcut persists through canonical ShortcutRegistry');
+  assert(shortcutProfiles.shortcutDispatcher.handleKey({key: 'p'}).pending, 'profile shortcut sequence starts');
+  assert(shortcutProfiles.shortcutDispatcher.handleKey({key: '9'}).pending, 'profile shortcut sequence continues');
+  assert(shortcutProfiles.shortcutDispatcher.handleKey({key: '5'}).handled, 'profile shortcut dispatches');
+  assert(shortcutProfiles.shortcutPromptNavigator.copied[0] === 'P95', 'existing ShortcutDispatcher reaches configured prompt action');
+
+  await shortcutProfiles.profileSwitcher.activate('work', 'pointer');
+  assert(!shortcutProfiles.activeShortcuts.effectiveBindings().has('p95'), 'default shortcut is absent from work profile');
+  shortcutProfiles.activeShortcuts.configure({gesture: 'p07', command: 'COPY_REVEAL_PROMPT', promptId: 'P07'});
+  assert(shortcutProfiles.shortcutStore.load('work')[0].gesture === 'p07', 'work profile stores its own shortcut binding');
+
+  await shortcutProfiles.profileSwitcher.activate('default', 'keyboard');
+  assert(shortcutProfiles.activeShortcuts.effectiveBindings().has('p95'), 'default shortcut returns after profile switch');
+  assert(!shortcutProfiles.activeShortcuts.effectiveBindings().has('p07'), 'work shortcut does not leak into default profile');
+
+  const rehydratedShortcutContexts = new ShortcutRegistryContexts({
+    trace: shortcutProfiles.trace,
+    rootStore: shortcutProfiles.shortcutStore,
+    promptCatalog: new Set(['P07', 'P95']),
+  });
+  assert(rehydratedShortcutContexts.forProfile('default').effectiveBindings().has('p95'), 'persisted default shortcut rehydrates through canonical ShortcutRegistry');
+  assert(rehydratedShortcutContexts.forProfile('work').effectiveBindings().has('p07'), 'persisted work shortcut rehydrates through canonical ShortcutRegistry');
+
+  const failedShortcuts = buildProfileModalityProgram({failShortcutProfileIds: ['work']});
+  await failedShortcuts.profileSwitcher.activate('work', 'pointer');
+  expectHotkeyCode('PERSISTENCE_FAILED', () => failedShortcuts.activeShortcuts.configure({gesture: 'p95', command: 'COPY_REVEAL_PROMPT', promptId: 'P95'}));
+  assert(!failedShortcuts.activeShortcuts.effectiveBindings().has('p95'), 'failed work shortcut save does not publish binding');
+  await failedShortcuts.profileSwitcher.activate('default', 'keyboard');
+  assert(!failedShortcuts.activeShortcuts.effectiveBindings().has('p95'), 'failed work shortcut save cannot mutate default profile');
 
   const invalidProfile = buildProfileModalityProgram();
   const invalidStart = invalidProfile.activeProfile.current();
@@ -552,9 +703,9 @@ async function runSelfTest() {
   const failedDefaultBefore = failedProfileStore.favorites.snapshot('default');
   const failedWorkBefore = failedProfileStore.favorites.snapshot('work');
   await expectCode('PROFILE_PREFERENCE_PERSISTENCE_FAILED', () => failedProfileStore.controls.toggleFavorite('P07', 'keyboard'));
-  assert(JSON.stringify(failedProfileStore.favorites.snapshot('work')) === JSON.stringify(failedWorkBefore), 'failed work persistence leaves work state unchanged');
-  assert(JSON.stringify(failedProfileStore.favorites.snapshot('default')) === JSON.stringify(failedDefaultBefore), 'failed work persistence leaves default state unchanged');
-  assert(!failedProfileStore.surface.favoriteProjection.has('work:P07'), 'failed profile persistence does not project false Favorite success');
+  assert(JSON.stringify(failedProfileStore.favorites.snapshot('work')) === JSON.stringify(failedWorkBefore), 'failed work Favorite persistence leaves work owner unchanged');
+  assert(JSON.stringify(failedProfileStore.favorites.snapshot('default')) === JSON.stringify(failedDefaultBefore), 'failed work Favorite persistence leaves default owner unchanged');
+  assert(!failedProfileStore.surface.favoriteProjection.has('work:P07'), 'failed Favorite persistence does not project false success');
 
   const inFlight = buildProfileModalityProgram({clipboardDefer: true});
   const pendingDefaultCopy = inFlight.favoriteShortcut.copy('P07');
@@ -563,7 +714,17 @@ async function runSelfTest() {
   assert(inFlight.activeProfile.current() === 'work', 'profile switch can complete while prior command is in flight');
   assert(completedDefaultCopy.profileId === 'default', 'in-flight command retains initiating profile snapshot');
   const copiedEvents = inFlight.usageLedger.events.filter(event => event.type === 'PROMPT_COPIED');
-  assert(copiedEvents.length === 1 && copiedEvents[0].profileId === 'default', 'semantic completion attribution uses initiating profile, not later active profile');
+  assert(copiedEvents.length === 1 && copiedEvents[0].profileId === 'default', 'semantic completion attribution uses initiating profile');
+
+  const privacyPayload = JSON.stringify({
+    singleProfile: singleProfile.trace,
+    multiProfile: multiProfile.trace,
+    shortcutProfiles: shortcutProfiles.trace,
+    persistenceFailure: failedProfileStore.trace,
+    inFlightSwitch: inFlight.trace,
+  });
+  assert(!privacyPayload.includes('Repo Sprint Executor'), 'trace excludes profile/prompt display text');
+  assert(!privacyPayload.includes('EXECUTE THE REPO SPRINT.'), 'trace excludes prompt bodies');
 
   return {
     status: 'PASS',
@@ -581,23 +742,33 @@ async function runSelfTest() {
       defaultProfileLegacyCompatibility: 'PASS',
       pointerProfileActivation: 'PASS',
       keyboardProfileActivation: 'PASS',
+      canonicalFavoriteOwnerReuse: 'PASS',
       profileFavoriteIsolation: 'PASS',
+      profileFavoriteProjectionRefresh: 'PASS',
+      profileShortcutIsolation: 'PASS',
+      profileShortcutRehydration: 'PASS',
+      profileShortcutPersistenceFailure: 'PASS',
       unknownProfileFailure: 'PASS',
       invalidModalityBoundary: 'PASS',
       profilePersistenceFailureIsolation: 'PASS',
       inFlightProfileSnapshot: 'PASS',
+      privacyBoundedTrace: 'PASS',
     },
     statePolicy: {
       interactionModality: 'invocation-only; never global mutable mode',
       promptCatalog: 'shared across profiles',
       sessionState: 'shared transient state; profile switch does not reset it',
-      durablePreferences: 'semantic owners remain Favorites/ShortcutRegistry; persistence namespace is profile-scoped',
-      defaultProfile: 'delegates to legacy preference storage seam',
+      favorites: 'canonical FavoritePreferences bound to a profile-scoped store',
+      shortcuts: 'canonical ShortcutRegistry bound to a profile-scoped store and hydrated through its policy',
+      defaultProfile: 'catalog-defined default delegates to legacy preference storage seam',
+      tracePrivacy: 'opaque profile id plus semantic metadata; no display names or prompt bodies',
     },
-    implementationBoundary: 'prototype only; broad docs/prompt-kit*.js wiring intentionally deferred',
+    implementationBoundary: 'prototype only; broad docs/prompt-kit*.js production wiring intentionally deferred',
     traces: {
       singleProfile: singleProfile.trace,
       multiProfile: multiProfile.trace,
+      shortcutProfiles: shortcutProfiles.trace,
+      shortcutPersistenceFailure: failedShortcuts.trace,
       persistenceFailure: failedProfileStore.trace,
       inFlightSwitch: inFlight.trace,
     },
@@ -620,7 +791,12 @@ module.exports = {
   ActiveProfile,
   InteractionContextFactory,
   MemoryProfilePreferenceStore,
-  ProfiledFavoritePreferences,
+  BoundProfileFavoriteStore,
+  FavoritePreferenceContexts,
+  MemoryProfileShortcutStore,
+  BoundProfileShortcutStore,
+  ShortcutRegistryContexts,
+  ActiveShortcutRegistry,
   CopyPresentationPolicy,
   ModalityAwarePromptSurface,
   InteractionCommandGateway,
