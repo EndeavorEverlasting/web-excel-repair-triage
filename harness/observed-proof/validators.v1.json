@@ -1,0 +1,11 @@
+{
+  "schema_version": "observed-behavior-proof-validators/v1",
+  "validators": [
+    {
+      "id": "observed-behavior-receipt",
+      "command": "python scripts/validate_observed_behavior_receipt.py <receipt> --summary",
+      "fails_closed": true,
+      "purpose": "Reject PASS claims without current artifacts, sufficient evidence tier, and observations that actually occurred and passed."
+    }
+  ]
+}

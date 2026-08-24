@@ -265,7 +265,7 @@ function renderPromptShortcutBindings(){
   ids.forEach(function(promptId){
     var row=document.createElement('div');row.className='hotkey-shortcut-row';
     var key=document.createElement('kbd');key.textContent=promptId.toLowerCase();
-    var label=document.createElement('span');label.textContent='Open '+promptId;
+    var label=document.createElement('span');label.textContent='Copy + reveal '+promptId;
     var remove=document.createElement('button');remove.type='button';remove.className='hotkey-shortcut-remove';remove.setAttribute('aria-label','Remove '+promptId+' keyboard shortcut');remove.textContent='Remove';
     remove.addEventListener('click',function(){removePromptShortcut(promptId)});
     row.appendChild(key);row.appendChild(label);row.appendChild(remove);host.appendChild(row)
@@ -282,11 +282,27 @@ function schedulePromptShortcutBufferReset(){
   promptShortcutBufferTimer=setTimeout(resetPromptShortcutBuffer,PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS)
 }
 
-function openPromptShortcutTarget(promptId){
+function revealPromptShortcutTarget(promptId){
+  activeCat='all';
+  activeSection=null;
+  clearTransientPromptFilters();
+  document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.dataset.cat==='all')});
+  document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__all__')});
+  renderTypes();
+  render();
+  var selector='[data-prompt-id="'+String(promptId||'').replace(/"/g,'')+'"]';
+  var card=document.querySelector(selector);
+  if(!card)return false;
+  try{card.scrollIntoView({behavior:hotkeyScrollBehavior(),block:'center',inline:'nearest'})}catch(e){try{card.scrollIntoView()}catch(ignore){}}
+  return true
+}
+
+function activatePromptShortcutTarget(promptId){
   var prompt=PROMPTS.find(function(item){return item.id===promptId});
   if(!prompt)return false;
   if(!isFavoritePrompt(promptId)){showToast(promptId+' is no longer a Favorite');return false}
-  showPromptDetail(promptId,null);
+  if(!revealPromptShortcutTarget(promptId)){showToast(promptId+' could not be revealed');return false}
+  copyPrompt(promptId);
   return true
 }
 
@@ -296,13 +312,13 @@ function handleConfiguredPromptShortcutKey(e,key){
   if(!gestures.length){resetPromptShortcutBuffer();return false}
   var candidate=promptShortcutBuffer+key;
   var exact=promptShortcutBindings[candidate];
-  if(exact){e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();openPromptShortcutTarget(exact);return true}
+  if(exact){e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();activatePromptShortcutTarget(exact);return true}
   var prefix=gestures.some(function(gesture){return gesture.indexOf(candidate)===0});
   if(prefix){e.preventDefault();e.stopImmediatePropagation();promptShortcutBuffer=candidate;schedulePromptShortcutBufferReset();return true}
   resetPromptShortcutBuffer();
   candidate=key;
   exact=promptShortcutBindings[candidate];
-  if(exact){e.preventDefault();e.stopImmediatePropagation();openPromptShortcutTarget(exact);return true}
+  if(exact){e.preventDefault();e.stopImmediatePropagation();activatePromptShortcutTarget(exact);return true}
   prefix=gestures.some(function(gesture){return gesture.indexOf(candidate)===0});
   if(prefix){e.preventDefault();e.stopImmediatePropagation();promptShortcutBuffer=candidate;schedulePromptShortcutBufferReset();return true}
   return false

@@ -1,0 +1,67 @@
+name: Prompt Kit observed browser proof
+
+on:
+  pull_request:
+    paths:
+      - docs/prompt-kit-polish.js
+      - docs/prompt-kit-hotkey-prototype.js
+      - docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md
+      - docs/prompts.json
+      - registry/prompts/ai-engineering-level-up-prompts.v1.json
+      - harness/observed-proof/**
+      - scripts/validate_observed_behavior_receipt.py
+      - tests/prompt_kit_favorite_browser_proof.py
+      - tests/test_observed_behavior_proof_harness.py
+      - tests/test_prompt_kit_hotkey_completion.py
+      - web/prompt-kit/index.html
+      - .github/workflows/prompt-kit-observed-browser-proof.yml
+  push:
+    branches: [main]
+    paths:
+      - docs/prompt-kit-polish.js
+      - docs/prompt-kit-hotkey-prototype.js
+      - docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md
+      - docs/prompts.json
+      - registry/prompts/ai-engineering-level-up-prompts.v1.json
+      - harness/observed-proof/**
+      - scripts/validate_observed_behavior_receipt.py
+      - tests/prompt_kit_favorite_browser_proof.py
+      - tests/test_observed_behavior_proof_harness.py
+      - tests/test_prompt_kit_hotkey_completion.py
+      - web/prompt-kit/index.html
+      - .github/workflows/prompt-kit-observed-browser-proof.yml
+
+permissions:
+  contents: read
+
+jobs:
+  observed-browser-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate harness and deterministic contracts
+        run: |
+          python -m unittest tests.test_observed_behavior_proof_harness tests.test_prompt_kit_hotkey_completion tests.test_ai_engineering_level_up -v
+          node --check docs/prompt-kit-polish.js
+          node --check docs/prompt-kit-hotkey-prototype.js
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Install browser proof runtime
+        run: |
+          python -m pip install --disable-pip-version-check playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Observe Favorite copy scroll and Enter behavior
+        run: |
+          mkdir -p Outputs/observed-proof
+          python tests/prompt_kit_favorite_browser_proof.py --receipt Outputs/observed-proof/favorite-shortcut-receipt.json --screenshot Outputs/observed-proof/favorite-shortcut.png
+          python scripts/validate_observed_behavior_receipt.py Outputs/observed-proof/favorite-shortcut-receipt.json --expected-sha "$(git rev-parse HEAD)" --summary
+      - name: Upload observed proof receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-favorite-observed-proof
+          path: Outputs/observed-proof/
+          if-no-files-found: error

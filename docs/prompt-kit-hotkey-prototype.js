@@ -29,7 +29,7 @@ class ShortcutPolicy {
     if (this.reserved.has(gesture) || effectiveBindings.has(gesture)) {
       throw new HotkeyError('RESERVED_COLLISION', 'Gesture collides with an effective binding.');
     }
-    if (binding.command !== 'OPEN_PROMPT') throw new HotkeyError('UNKNOWN_COMMAND', binding.command);
+    if (binding.command !== 'COPY_REVEAL_PROMPT') throw new HotkeyError('UNKNOWN_COMMAND', binding.command);
     const promptId = normalizePromptId(binding.promptId);
     if (!promptCatalog.has(promptId)) throw new HotkeyError('UNKNOWN_PROMPT', promptId);
     return {gesture, command: binding.command, promptId};
@@ -131,7 +131,7 @@ class ShortcutDispatcher {
     else if (binding.command === 'FILTER_HIDE') result = this.filterVisibility.hide();
     else if (binding.command === 'FILTER_SHOW') result = this.filterVisibility.show();
     else if (binding.command === 'FILTER_TOGGLE') result = this.filterVisibility.toggle();
-    else if (binding.command === 'OPEN_PROMPT') result = this.promptNavigator.openPrompt(binding.promptId);
+    else if (binding.command === 'COPY_REVEAL_PROMPT') result = this.promptNavigator.copyAndReveal(binding.promptId);
     else if (binding.command === 'VIEW_ALL') result = this.viewNavigator.open('all');
     else if (binding.command === 'VIEW_FAVORITES') result = this.viewNavigator.open('favorites');
     else if (binding.command === 'VIEW_DOCTRINE') result = this.viewNavigator.open('doctrine');
@@ -190,11 +190,12 @@ class MemoryStore {
   }
 }
 class PromptNavigatorFake {
-  constructor(trace) { this.trace = trace; this.opened = []; }
-  openPrompt(promptId) {
-    this.opened.push(promptId);
-    this.trace.push({layer: 'navigator', event: 'prompt_opened', promptId});
-    return {promptId};
+  constructor(trace) { this.trace = trace; this.copied = []; this.revealed = []; this.detailOpened = false; }
+  copyAndReveal(promptId) {
+    this.copied.push(promptId);
+    this.revealed.push(promptId);
+    this.trace.push({layer: 'navigator', event: 'prompt_copied_and_revealed', promptId});
+    return {promptId, copied: true, revealed: true, detailOpened: false};
   }
 }
 
@@ -237,35 +238,38 @@ function runSelfTest() {
   program.dispatcher.handleKey({key: 'f'});
   assert(program.filterVisibility.visible === false, 'toggle');
 
-  program.registry.configure({gesture: 'p95', command: 'OPEN_PROMPT', promptId: 'p95'});
+  program.registry.configure({gesture: 'p95', command: 'COPY_REVEAL_PROMPT', promptId: 'p95'});
   assert(program.dispatcher.handleKey({key: 'p'}).pending, 'p prefix');
   assert(program.dispatcher.handleKey({key: '9'}).pending, 'p9 prefix');
   assert(program.dispatcher.handleKey({key: '5'}).handled, 'p95 dispatch must beat built-in 5');
-  assert(program.promptNavigator.opened[0] === 'P95', 'P95 target');
+  assert(program.promptNavigator.copied[0] === 'P95', 'P95 copied automatically');
+  assert(program.promptNavigator.revealed[0] === 'P95', 'P95 revealed');
+  assert(program.promptNavigator.detailOpened === false, 'P95 must not open detail');
   assert(program.viewNavigator.views.length === 0, 'built-in 5 must not steal buffered P95');
 
-  program.registry.configure({gesture: 'p14', command: 'OPEN_PROMPT', promptId: 'p14'});
+  program.registry.configure({gesture: 'p14', command: 'COPY_REVEAL_PROMPT', promptId: 'p14'});
   program.dispatcher.handleKey({key: 'p'});
   program.dispatcher.handleKey({key: '1'});
   assert(program.dispatcher.handleKey({key: '4'}).handled, 'p14 dispatch must beat built-ins 1 and 4');
-  assert(program.promptNavigator.opened[1] === 'P14', 'P14 target');
+  assert(program.promptNavigator.copied[1] === 'P14', 'P14 copied');
+  assert(program.promptNavigator.revealed[1] === 'P14', 'P14 revealed');
   assert(program.viewNavigator.views.length === 0, 'built-in digits must not steal buffered P14');
   program.dispatcher.handleKey({key: '5'});
   assert(program.viewNavigator.views[0] === 'doctrine', 'built-in 5 remains active with no sequence buffer');
 
   const editable = program.dispatcher.handleKey({key: 'p', target: {tagName: 'INPUT'}});
   assert(editable.reason === 'EDITABLE_TARGET', 'editable suppression');
-  expectCode('RESERVED_COLLISION', () => program.registry.configure({gesture: '`', command: 'OPEN_PROMPT', promptId: 'P95'}));
-  expectCode('RESERVED_COLLISION', () => program.registry.configure({gesture: 'f', command: 'OPEN_PROMPT', promptId: 'P95'}));
-  expectCode('UNKNOWN_PROMPT', () => program.registry.configure({gesture: 'p999', command: 'OPEN_PROMPT', promptId: 'P999'}));
+  expectCode('RESERVED_COLLISION', () => program.registry.configure({gesture: '`', command: 'COPY_REVEAL_PROMPT', promptId: 'P95'}));
+  expectCode('RESERVED_COLLISION', () => program.registry.configure({gesture: 'f', command: 'COPY_REVEAL_PROMPT', promptId: 'P95'}));
+  expectCode('UNKNOWN_PROMPT', () => program.registry.configure({gesture: 'p999', command: 'COPY_REVEAL_PROMPT', promptId: 'P999'}));
 
   const failing = buildProgram({promptIds: ['P95'], store: new MemoryStore(true)});
-  expectCode('PERSISTENCE_FAILED', () => failing.registry.configure({gesture: 'p95', command: 'OPEN_PROMPT', promptId: 'P95'}));
+  expectCode('PERSISTENCE_FAILED', () => failing.registry.configure({gesture: 'p95', command: 'COPY_REVEAL_PROMPT', promptId: 'P95'}));
   assert(!failing.registry.userBindings.has('p95'), 'failed save must not publish');
 
   return {
     status: 'PASS',
-    success_paths: ['HOTKEY_HELP_TOGGLE', 'FILTER_HIDE', 'FILTER_SHOW', 'FILTER_TOGGLE', 'OPEN_PROMPT(P95)', 'OPEN_PROMPT(P14)', 'VIEW_DOCTRINE'],
+    success_paths: ['HOTKEY_HELP_TOGGLE', 'FILTER_HIDE', 'FILTER_SHOW', 'FILTER_TOGGLE', 'COPY_REVEAL_PROMPT(P95)', 'COPY_REVEAL_PROMPT(P14)', 'VIEW_DOCTRINE'],
     failure_paths: ['EDITABLE_TARGET', 'MODIFIED_OR_PREVENTED', 'RESERVED_COLLISION', 'UNKNOWN_PROMPT', 'PERSISTENCE_FAILED'],
     trace: program.trace,
   };
