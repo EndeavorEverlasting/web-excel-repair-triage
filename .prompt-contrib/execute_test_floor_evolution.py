@@ -12,6 +12,10 @@ TEMP_CARRIERS = (
     ROOT / ".github" / "workflows" / "tmp-p95-cohesive-context-repair.yml",
     ROOT / ".github" / "workflows" / "tmp-p95-cohesive-context-command.yml",
 )
+P95_TEST = (
+    "tests.test_prompt_registry_expansion_regression_design_teach."
+    "PromptRegistryExpansionTests.test_program_design_prototypes_success_and_failure_call_stacks"
+)
 
 
 def run(*args: str) -> None:
@@ -118,7 +122,7 @@ def main() -> None:
             path.unlink()
 
     run("python", "scripts/build_prompt_kit_registry.py", "--output", "web/prompt-kit/index.html")
-    run("python", "-m", "unittest", "tests.test_prompt_registry_expansion_regression_design_teach", "-v")
+    run("python", "-m", "unittest", P95_TEST, "-v")
     run("python", "-m", "unittest", "tests.test_spec_architecture_prompt_registry", "-v")
     run("python", "-m", "unittest", "tests.test_actionable_prompt_registry", "-v")
     run("python", "scripts/prompt_registry_ops.py", "validate")
@@ -144,7 +148,7 @@ def main() -> None:
     run("git", "diff", "--cached", "--check")
     run("git", "commit", "-m", "feat(prompt-kit): ground P95 in cohesive repo context")
 
-    run("python", "-m", "unittest", "tests.test_prompt_registry_expansion_regression_design_teach", "-v")
+    run("python", "-m", "unittest", P95_TEST, "-v")
     run("python", "scripts/prompt_registry_ops.py", "validate")
     run("python", "scripts/build_prompt_kit_registry.py", "--output", "web/prompt-kit/index.html", "--check")
     run("git", "diff", "--check")
