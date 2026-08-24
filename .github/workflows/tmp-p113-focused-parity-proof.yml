@@ -1,0 +1,44 @@
+name: Temporary P113 focused parity proof
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  prove:
+    if: github.head_ref == 'fix/p113-focused-site-parity-20260824'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/p113-focused-site-parity-20260824
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Prove focused repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_test_floor_evolution_prompt -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Remove transport and prove durable head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/tmp-p113-focused-parity-proof.yml
+          git commit -m 'chore(prompt-kit): remove P113 focused proof carrier'
+          python -m unittest tests.test_test_floor_evolution_prompt -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          test -z "$(git status --porcelain)"
+          echo "validated_durable_head=$(git rev-parse HEAD)"
+          git push origin HEAD:fix/p113-focused-site-parity-20260824
