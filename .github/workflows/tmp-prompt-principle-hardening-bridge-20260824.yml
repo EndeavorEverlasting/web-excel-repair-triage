@@ -1,0 +1,219 @@
+name: Temporary prompt principle hardening bridge
+
+on:
+  pull_request_target:
+    types: [reopened]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: prompt-principle-hardening-20260824
+  cancel-in-progress: false
+
+jobs:
+  prompt-principle-hardening:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'feat/prompt-kit-execution-brief-hardening-20260824'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-execution-brief-hardening-20260824
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Refresh floor and enforce predecessor containment
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --all --prune --tags
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+          fi
+          if ! git show origin/main:registry/prompts/spec-architecture-prompts.v1.json | grep -Fq 'UX Product Designer & Interaction Architect'; then
+            echo 'BLOCKED: predecessor PR #262 is not yet contained in origin/main; refusing shared-registry mutation.' >&2
+            exit 42
+          fi
+          if [ ! -f .prompt-contrib/prompt_principle_hardening.py ]; then
+            echo 'SKIP_EXECUTOR=1' >> "$GITHUB_ENV"
+            echo 'Durable hardening already replaced temporary executor.'
+          else
+            echo 'SKIP_EXECUTOR=0' >> "$GITHUB_ENV"
+          fi
+          git status --short
+          git log --oneline --decorate -8
+
+      - name: Capture pre-hardening raw sizes
+        if: env.SKIP_EXECUTOR != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path('.')
+          base = {p['id']: p for p in json.loads((root / 'docs/prompts.json').read_text(encoding='utf-8'))}
+          spec = {p['id']: p for p in json.loads((root / 'registry/prompts/spec-architecture-prompts.v1.json').read_text(encoding='utf-8'))['prompts']}
+          corr = {p['id']: p for p in json.loads((root / 'registry/prompts/correspondence-prompts.v1.json').read_text(encoding='utf-8'))['prompts']}
+          policy = json.loads((root / 'registry/prompts/actionable-next-step-policy.v1.json').read_text(encoding='utf-8'))
+          sizes = {
+              'shared_policy_appendix': len(policy['copy_content_appendix']),
+              'P07': len(base['P07']['copyContent']),
+              'P86': len(spec['P86']['copyContent']),
+              'P72': len(corr['P72']['copyContent']),
+              'P73': len(corr['P73']['copyContent']),
+          }
+          path = Path(os.environ['RUNNER_TEMP']) / 'prompt-size-before.json'
+          path.write_text(json.dumps(sizes), encoding='utf-8')
+          print(json.dumps({'raw_sizes_before': sizes}, indent=2))
+          PY
+
+      - name: Apply canonical prompt hardening
+        if: env.SKIP_EXECUTOR != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .prompt-contrib/prompt_principle_hardening.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+      - name: Focused semantic and generated-site validation
+        if: env.SKIP_EXECUTOR != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_actionable_prompt_registry -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python -m unittest tests.test_correspondence_prompt_registry -v
+          python -m unittest tests.test_prompt_kit_discovery -v
+          python -m unittest tests.test_prompt_language_audit -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Deliberate pass two and anti-cargo-cult check
+        if: env.SKIP_EXECUTOR != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from scripts import build_prompt_kit_registry
+
+          root = Path('.')
+          operational = build_prompt_kit_registry.load_prompt_registry()
+          full = {p['id']: p for p in build_prompt_kit_registry.load_prompt_kit_registry()}
+          raw_base = {p['id']: p for p in json.loads((root / 'docs/prompts.json').read_text(encoding='utf-8'))}
+          raw_spec = {p['id']: p for p in json.loads((root / 'registry/prompts/spec-architecture-prompts.v1.json').read_text(encoding='utf-8'))['prompts']}
+          raw_corr = {p['id']: p for p in json.loads((root / 'registry/prompts/correspondence-prompts.v1.json').read_text(encoding='utf-8'))['prompts']}
+          policy = json.loads((root / 'registry/prompts/actionable-next-step-policy.v1.json').read_text(encoding='utf-8'))
+
+          marker = 'EXECUTION BRIEF / SOURCE / DONE / SELF-CHECK CONTRACT'
+          missing = [p['id'] for p in operational if marker not in p['copyContent']]
+          if missing:
+            raise SystemExit(f'operational prompts missing shared execution brief: {missing}')
+
+          if 'EXECUTION BRIEF / EVIDENCE BINDING' not in raw_base['P07']['copyContent']:
+            raise SystemExit('P07 raw direct-consumer execution brief missing')
+          if 'PRINCIPLE PROPAGATION CAMPAIGN' not in raw_spec['P86']['copyContent']:
+            raise SystemExit('P86 campaign hardening missing')
+          if len(raw_spec['P86']['copyContent']) >= 7600:
+            raise SystemExit('P86 raw anti-bloat ceiling exceeded')
+          for pid in ('P72', 'P73'):
+            if 'ROLE / SOURCE / DONE / SELF-CHECK' not in raw_corr[pid]['copyContent']:
+              raise SystemExit(f'{pid} content-safe source binding missing')
+            if 'ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT' in raw_corr[pid]['copyContent']:
+              raise SystemExit(f'{pid} incorrectly absorbed operational repository policy')
+          if 'take a deep breath' in raw_spec['P86']['copyContent'].lower():
+            if 'style filler' not in raw_spec['P86']['copyContent']:
+              raise SystemExit('P86 cargo-culted source filler')
+          for pid in ('P07', 'P86', 'P72', 'P73'):
+            if pid not in full:
+              raise SystemExit(f'target disappeared from effective Prompt Kit: {pid}')
+
+          before = json.loads((Path(os.environ['RUNNER_TEMP']) / 'prompt-size-before.json').read_text(encoding='utf-8'))
+          after = {
+              'shared_policy_appendix': len(policy['copy_content_appendix']),
+              'P07': len(raw_base['P07']['copyContent']),
+              'P86': len(raw_spec['P86']['copyContent']),
+              'P72': len(raw_corr['P72']['copyContent']),
+              'P73': len(raw_corr['P73']['copyContent']),
+          }
+          impact = {
+              key: {'before': before[key], 'after': after[key], 'delta': after[key] - before[key]}
+              for key in after
+          }
+          print(json.dumps({
+              'pass_two': 'bounded fixed point',
+              'operational_prompts_with_shared_contract': len(operational),
+              'raw_direct_targets': ['P07', 'P86', 'P72', 'P73'],
+              'cargo_cult_rejected': ['invented tenure', 'emotional urgency', 'literal copywriter wording'],
+              'raw_size_impact': impact,
+          }, indent=2))
+          PY
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Remove branch executor and commit durable hardening
+        if: env.SKIP_EXECUTOR != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -f .prompt-contrib/prompt_principle_hardening.py
+          git add \
+            docs/prompts.json \
+            registry/prompts/actionable-next-step-policy.v1.json \
+            registry/prompts/spec-architecture-prompts.v1.json \
+            registry/prompts/correspondence-prompts.v1.json \
+            tests/test_actionable_prompt_registry.py \
+            tests/test_spec_architecture_prompt_registry.py \
+            tests/test_correspondence_prompt_registry.py \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          git status --short
+          git diff --cached --stat
+          git commit -m "feat(prompt-kit): bind prompts to source-grounded completion"
+
+      - name: Refresh moved main and rerun exact-head proof
+        if: env.SKIP_EXECUTOR != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+            python scripts/prompt_registry_ops.py validate
+            python -m unittest tests.test_actionable_prompt_registry tests.test_spec_architecture_prompt_registry tests.test_correspondence_prompt_registry -v
+            python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_language_audit -v
+            python scripts/validate_prompt_kit_discovery.py --summary
+            python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
+            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+            git add web/prompt-kit/index.html
+            if ! git diff --cached --quiet; then
+              git commit -m "chore(prompt-kit): refresh generated site after main reconciliation"
+            fi
+            git diff --check HEAD
+          fi
+          echo "PROVEN_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Push exact validated branch head
+        if: env.SKIP_EXECUTOR != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin HEAD:feat/prompt-kit-execution-brief-hardening-20260824
+          echo "PUSHED_HEAD=$PROVEN_HEAD"
