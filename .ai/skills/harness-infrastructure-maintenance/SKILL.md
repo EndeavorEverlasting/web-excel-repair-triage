@@ -2,7 +2,7 @@
 
 ## Trigger
 
-Use when harness maps, workflows, capabilities, triggers, registries, reports, skills, validators, or context architecture are missing, duplicated, stale, or inconsistent. For token/spec bloat, route through `harness/CONTEXT.md` and `harness/contracts/context-architecture.v1.json`.
+Use when harness maps, workflows, capabilities, triggers, registries, reports, skills, validators, canonical path/profile routing, or context architecture are missing, duplicated, stale, or inconsistent. For token/spec bloat, route through `harness/CONTEXT.md` and `harness/contracts/context-architecture.v1.json`.
 
 Do not use this skill for workbook/product behavior unless the sprint explicitly owns that product surface.
 
@@ -12,6 +12,7 @@ Do not use this skill for workbook/product behavior unless the sprint explicitly
 - `harness/CONTEXT.md` plus only the selected harness contract/registry involved.
 - Owned/forbidden scope and expected artifact/proof.
 - Existing validators/tests for the changed harness component.
+- `harness/canonical-paths.v1.json` whenever the task depends on where development, use/serving, isolated worktrees, or the real operator entrypoint live.
 
 Do not load every root harness document by default.
 
@@ -28,22 +29,24 @@ A coherent tracked harness change with:
 
 1. **Route before reading.** Use `harness/CONTEXT.md` to select the affected control-plane surface.
 2. **Inspect canonical ownership.** Read the selected registry/contract plus recent overlapping Git/PR evidence. Reuse or repair existing ownership.
-3. **Measure the defect.** For context work, record file size/default-load cost and duplication before changing it.
-4. **Factor by authority.**
+3. **Resolve paths before mutation.** When path/profile state matters, read `harness/canonical-paths.v1.json`; never pick a directory from model preference. Preserve the four independent proof states and route deep path repair through P92.
+4. **Measure the defect.** For context work, record file size/default-load cost and duplication before changing it.
+5. **Factor by authority.**
    - `AGENTS.md`: universal governance/precedence only.
    - maps/indexes: routing and ownership only.
    - `SKILL.md`: repeatable procedure/judgment only.
    - code/schema/registry/validator: deterministic behavior/truth.
    - reports: evidence/state only, never current law.
-5. **Mutate the minimum connected set.** Update machine/human twins only when the existing contract requires them; do not create parallel authorities.
-6. **Validate focused first.** Run the owning validator/tests, then the harness completeness gate and patch hygiene.
-7. **Integrate.** Commit coherently, push, open/update PR, resolve exact-head findings, and merge when the repository merge gate authorizes it.
+6. **Mutate the minimum connected set.** Update machine/human twins only when the existing contract requires them; do not create parallel authorities.
+7. **Validate focused first.** Run the owning validator/tests, then the harness completeness gate and patch hygiene.
+8. **Integrate.** Commit coherently, push, open/update PR, resolve exact-head findings, and merge when the repository merge gate authorizes it.
 
-For Prompt Kit release identity, browser proof, acquisition, or layout, follow the dedicated registered contract/skill instead of copying its procedure here.
+For Prompt Kit release identity, browser proof, acquisition, layout, or deep canonical-path repair, follow the dedicated registered contract/P92 owner instead of copying its procedure here.
 
 ## Guardrails
 
 - Preserve dirty/unrelated work; never use destructive cleanup to simplify a harness sprint.
+- Do not create a second mutable clone for parallel work, hard-code a person-specific checkout path, or treat provider merge evidence as workstation/deployment proof.
 - Do not modify product engines merely to satisfy a harness validator.
 - Do not weaken required components/proof to get green.
 - Do not duplicate a rule across AGENTS/maps/skills/specs. Keep one authority and references.
@@ -52,6 +55,13 @@ For Prompt Kit release identity, browser proof, acquisition, or layout, follow t
 - A passing harness proves repository structure/contracts, not live operator or production behavior.
 
 ## Validation
+
+Canonical path/profile changes:
+
+```bash
+python scripts/validate_canonical_paths.py --summary
+python -m unittest tests.test_canonical_paths -v
+```
 
 Context-architecture changes:
 
@@ -73,4 +83,4 @@ Run additional registered domain gates for every other harness component changed
 
 ## Proof ceiling
 
-These checks prove tracked ownership, progressive-disclosure budgets/routes, registered harness completeness, and tested static behavior on the validated commit. They do not prove external provider, browser, device, protected-network, or production runtime behavior unless that runtime was separately exercised.
+These checks prove tracked ownership, progressive-disclosure budgets/routes, registered harness completeness, canonical path/profile contract structure, and tested static behavior on the validated commit. They do not prove external provider, browser, device, protected-network, workstation path freshness, deployment, or production runtime behavior unless that runtime was separately exercised.
