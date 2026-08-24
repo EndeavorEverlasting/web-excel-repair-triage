@@ -150,3 +150,5 @@ jobs:
           git diff --cached --quiet && { echo "No durable changes produced"; exit 1; }
           git commit -m "fix(prompt-kit): route claimed completion to P83"
           git push origin HEAD:fix/p65-verifier-routing-20260824
+
+# Activation commit: workflow existed before this push, so this push is eligible to trigger it.
