@@ -50,6 +50,6 @@
   ],
   "validator_registry": "harness/validators.v1.json",
   "validator_profile": "pre_push",
-  "required_canary_failure": "validator:prompt-kit-parity",
-  "proof_ceiling": "Deterministic clean-checkout Python, test-floor self-contract, artifact-engine, harness, Prompt Kit static/generated-parity, repository hygiene, and provider-workflow proof on the observed SHA. It does not prove browser/device/operator/production behavior or private protected inputs."
+  "required_canary_failure": "validator:skill-prompt-registry-tests",
+  "proof_ceiling": "Deterministic clean-checkout Python, test-floor self-contract, artifact-engine, harness, Prompt Kit static/generated-parity, repository hygiene, and exact-candidate provider-workflow proof on the observed SHA. It does not prove browser/device/operator/production behavior or private protected inputs."
 }
