@@ -1,64 +1,52 @@
 name: Temporary test-floor evolution prompt contribution
 
 on:
-  push:
-    branches:
-      - feat/prompt-kit-test-floor-evolution-20260824
-    paths:
-      - .prompt-contrib/test-floor-evolution-draft.json
-      - .github/workflows/tmp-test-floor-evolution-prompt.yml
   pull_request:
-    branches:
-      - main
-    paths:
-      - .prompt-contrib/test-floor-evolution-draft.json
-      - .github/workflows/tmp-test-floor-evolution-prompt.yml
-  workflow_dispatch:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
 
-concurrency:
-  group: tmp-test-floor-evolution-prompt-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
   contribute:
-    if: github.actor != 'github-actions[bot]'
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/prompt-kit-test-floor-evolution-20260824'
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
         with:
           ref: feat/prompt-kit-test-floor-evolution-20260824
           fetch-depth: 0
-          persist-credentials: true
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Reconcile current main floor
+      - name: Refresh and reconcile current main floor
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch origin main --prune --tags
-          git merge --no-edit origin/main
-          echo "candidate floor=$(git rev-parse HEAD)"
-          echo "main floor=$(git rev-parse origin/main)"
+          echo "MAIN_BEFORE=$(git rev-parse origin/main)" >> "$GITHUB_ENV"
+          echo "BRANCH_BEFORE=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+          fi
+          git status --short
+          git log --oneline --decorate -8
 
-      - name: Inspect canonical registry helper
-        run: python scripts/prompt_registry_ops.py inspect
-
-      - name: Add post-bootstrap test-floor owner through helper
+      - name: Run canonical helper
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p Outputs
+          python scripts/prompt_registry_ops.py inspect | tee Outputs/test-floor-evolution-prompt-inspect.json
           python scripts/prompt_registry_ops.py add \
             --input .prompt-contrib/test-floor-evolution-draft.json \
             --registry spec-architecture-prompts \
-            | tee /tmp/test-floor-evolution-helper-receipt.json
+            | tee Outputs/test-floor-evolution-prompt-add-receipt.json
 
       - name: Strengthen P112 continuation routing
         shell: bash
@@ -85,9 +73,7 @@ jobs:
           )
 
           content = p112['copyContent']
-          old_stop = (
-              "further expansion would be a separate test-coverage project rather than this bootstrap."
-          )
+          old_stop = "further expansion would be a separate test-coverage project rather than this bootstrap."
           new_stop = (
               f"further expansion is a separate test-evolution project: hand the established floor to {new_id} Risk-Driven Test Floor Evolution Executor rather than stretching this bootstrap indefinitely."
           )
@@ -241,7 +227,7 @@ if __name__ == "__main__":
       - name: Rebuild canonical Prompt Kit after strengthening
         run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 
-      - name: Validation pass 1
+      - name: Validate pass 1
         shell: bash
         run: |
           set -euo pipefail
@@ -292,24 +278,31 @@ if __name__ == "__main__":
           for name in checks:
               print('PASS', name)
           PY
+          python -m unittest tests.test_afk_deterministic_testing_prompt tests.test_test_floor_evolution_prompt -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
 
-      - name: Remove transport-only files and commit durable contribution
+      - name: Remove transport and commit durable contribution
         shell: bash
         run: |
           set -euo pipefail
-          rm -f .prompt-contrib/test-floor-evolution-draft.json
-          rm -f .github/workflows/tmp-test-floor-evolution-prompt.yml
-          rmdir .prompt-contrib 2>/dev/null || true
-          git add -A
+          git rm .prompt-contrib/test-floor-evolution-draft.json
+          git rm .github/workflows/tmp-test-floor-evolution-prompt.yml
+          git add registry/prompts/spec-architecture-prompts.v1.json tests/test_afk_deterministic_testing_prompt.py tests/test_test_floor_evolution_prompt.py web/prompt-kit/index.html
           git diff --cached --check
-          git commit -m "feat(prompt-kit): add risk-driven test floor evolution"
+          echo '--- durable staged paths ---'
+          git diff --cached --name-only
+          git commit -m 'feat(prompt-kit): add risk-driven test floor evolution'
 
       - name: Refresh final floor and rerun exact-head proof
         shell: bash
         run: |
           set -euo pipefail
           git fetch origin main --prune --tags
-          git merge --no-edit origin/main
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+          fi
           python -m unittest tests.test_afk_deterministic_testing_prompt tests.test_test_floor_evolution_prompt -v
           python -m unittest tests.test_spec_architecture_prompt_registry -v
           python -m unittest tests.test_actionable_prompt_registry -v
@@ -319,12 +312,14 @@ if __name__ == "__main__":
           python scripts/evaluate_prompt_language.py --summary
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
-          git status --short
-          echo "validated head=$(git rev-parse HEAD)"
-          echo "validated main floor=$(git rev-parse origin/main)"
+          test -z "$(git status --porcelain)"
+          echo "FINAL_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "FINAL_MAIN=$(git rev-parse origin/main)" >> "$GITHUB_ENV"
 
-      - name: Push exact validated durable head
+      - name: Push exact validated branch head
         shell: bash
         run: |
           set -euo pipefail
           git push origin HEAD:feat/prompt-kit-test-floor-evolution-20260824
+          echo "validated_head=$FINAL_HEAD"
+          echo "validated_main_floor=$FINAL_MAIN"
