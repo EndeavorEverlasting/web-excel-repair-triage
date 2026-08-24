@@ -81,9 +81,11 @@ class GovernanceContractTests(unittest.TestCase):
         for phrase in (
             "Before modifying or integrating overlapping prior work",
             "refresh the default branch",
-            "every required integrated slice remains contained",
+            "Prove each required integrated slice is an ancestor",
             "git merge-base --is-ancestor <required-sha> <refreshed-default>",
-            "Failed containment requires reconciliation",
+            "still materially present using current content plus its owning validator",
+            "Ancestry alone cannot prove current content after a revert",
+            "Any failed check requires reconciliation",
             "fresh proof before mutation or integration",
         ):
             self.assertIn(phrase, section)
