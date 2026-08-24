@@ -100,6 +100,13 @@ class AfkDeterministicTestingPromptTests(unittest.TestCase):
         self.assertNotEqual(self.target["id"], "P105")
         self.assertIn("P105 owns validated promotion after that floor exists", self.target["copyContent"])
         self.assertIn("Route a failing established CI lane to P32", self.target["nextStep"])
+        evolution = [
+            prompt for prompt in self.full
+            if prompt.get("name") == "Risk-Driven Test Floor Evolution Executor"
+        ]
+        self.assertEqual(len(evolution), 1)
+        self.assertIn(evolution[0]["id"], self.target["nextStep"])
+        self.assertIn(evolution[0]["id"], self.target["copyContent"])
 
     def test_generated_site_contains_exact_prompt_identity(self) -> None:
         html = build_prompt_kit_registry.DEFAULT_OUTPUT.read_text(encoding="utf-8")
