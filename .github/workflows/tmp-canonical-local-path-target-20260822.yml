@@ -51,6 +51,33 @@ jobs:
           git status --short
           git log --oneline --decorate -8
 
+      - name: Capture pre-hardening raw sizes
+        if: env.SKIP_EXECUTOR != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path('.')
+          base = {p['id']: p for p in json.loads((root / 'docs/prompts.json').read_text(encoding='utf-8'))}
+          spec = {p['id']: p for p in json.loads((root / 'registry/prompts/spec-architecture-prompts.v1.json').read_text(encoding='utf-8'))['prompts']}
+          corr = {p['id']: p for p in json.loads((root / 'registry/prompts/correspondence-prompts.v1.json').read_text(encoding='utf-8'))['prompts']}
+          policy = json.loads((root / 'registry/prompts/actionable-next-step-policy.v1.json').read_text(encoding='utf-8'))
+          sizes = {
+              'shared_policy_appendix': len(policy['copy_content_appendix']),
+              'P07': len(base['P07']['copyContent']),
+              'P86': len(spec['P86']['copyContent']),
+              'P72': len(corr['P72']['copyContent']),
+              'P73': len(corr['P73']['copyContent']),
+          }
+          path = Path(os.environ['RUNNER_TEMP']) / 'prompt-size-before.json'
+          path.write_text(json.dumps(sizes), encoding='utf-8')
+          print(json.dumps({'raw_sizes_before': sizes}, indent=2))
+          PY
+
       - name: Apply canonical prompt hardening
         if: env.SKIP_EXECUTOR != '1'
         shell: bash
@@ -82,6 +109,7 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
           from scripts import build_prompt_kit_registry
 
@@ -91,6 +119,7 @@ jobs:
           raw_base = {p['id']: p for p in json.loads((root / 'docs/prompts.json').read_text(encoding='utf-8'))}
           raw_spec = {p['id']: p for p in json.loads((root / 'registry/prompts/spec-architecture-prompts.v1.json').read_text(encoding='utf-8'))['prompts']}
           raw_corr = {p['id']: p for p in json.loads((root / 'registry/prompts/correspondence-prompts.v1.json').read_text(encoding='utf-8'))['prompts']}
+          policy = json.loads((root / 'registry/prompts/actionable-next-step-policy.v1.json').read_text(encoding='utf-8'))
 
           marker = 'EXECUTION BRIEF / SOURCE / DONE / SELF-CHECK CONTRACT'
           missing = [p['id'] for p in operational if marker not in p['copyContent']]
@@ -109,17 +138,30 @@ jobs:
             if 'ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT' in raw_corr[pid]['copyContent']:
               raise SystemExit(f'{pid} incorrectly absorbed operational repository policy')
           if 'take a deep breath' in raw_spec['P86']['copyContent'].lower():
-            # P86 may mention the source phrase only as an explicitly rejected costume.
             if 'style filler' not in raw_spec['P86']['copyContent']:
               raise SystemExit('P86 cargo-culted source filler')
           for pid in ('P07', 'P86', 'P72', 'P73'):
             if pid not in full:
               raise SystemExit(f'target disappeared from effective Prompt Kit: {pid}')
+
+          before = json.loads((Path(os.environ['RUNNER_TEMP']) / 'prompt-size-before.json').read_text(encoding='utf-8'))
+          after = {
+              'shared_policy_appendix': len(policy['copy_content_appendix']),
+              'P07': len(raw_base['P07']['copyContent']),
+              'P86': len(raw_spec['P86']['copyContent']),
+              'P72': len(raw_corr['P72']['copyContent']),
+              'P73': len(raw_corr['P73']['copyContent']),
+          }
+          impact = {
+              key: {'before': before[key], 'after': after[key], 'delta': after[key] - before[key]}
+              for key in after
+          }
           print(json.dumps({
               'pass_two': 'bounded fixed point',
               'operational_prompts_with_shared_contract': len(operational),
               'raw_direct_targets': ['P07', 'P86', 'P72', 'P73'],
               'cargo_cult_rejected': ['invented tenure', 'emotional urgency', 'literal copywriter wording'],
+              'raw_size_impact': impact,
           }, indent=2))
           PY
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
