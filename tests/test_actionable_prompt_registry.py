@@ -218,6 +218,37 @@ class ActionablePromptRegistryTests(unittest.TestCase):
         ):
             self.assertIn(phrase, joined)
 
+    def test_execution_brief_contract_is_global_for_operational_prompts(self) -> None:
+        marker = "EXECUTION BRIEF / SOURCE / DONE / SELF-CHECK CONTRACT"
+        appendix = self.policy["copy_content_appendix"]
+        for phrase in (
+            marker,
+            "ROLE: Operate as the senior practitioner and execution owner",
+            "WHERE TO LOOK: Start with explicit source, repository, context, plan, artifact, or path inputs",
+            "DEFINITION OF DONE: Before mutation",
+            "SELF-CHECK: Before any completion claim",
+            "verify every material factual or quantitative claim",
+            "Flag unsupported or stale claims",
+        ):
+            self.assertIn(phrase, appendix)
+        for prompt in self.prompts:
+            with self.subTest(prompt=prompt["id"]):
+                self.assertIn(marker, prompt["copyContent"])
+
+    def test_p07_carries_direct_execution_brief_for_raw_consumers(self) -> None:
+        raw_prompts = json.loads((REPO_ROOT / "docs" / "prompts.json").read_text(encoding="utf-8"))
+        p07 = next(prompt for prompt in raw_prompts if prompt["id"] == "P07")
+        for phrase in (
+            "EXECUTION BRIEF / EVIDENCE BINDING",
+            "senior repository execution engineer/coordinator",
+            "WHERE TO LOOK: Start with `Context or plan path`",
+            "DEFINITION OF DONE: Before mutation",
+            "SELF-CHECK: Before claiming completion",
+            "Unsupported items are UNKNOWN or blockers",
+        ):
+            self.assertIn(phrase, p07["copyContent"])
+        self.assertIn("current/open/recent overlapping branches and PRs", p07["inspectFirst"])
+        self.assertIn("fixed point", p07["proofGate"])
 
 if __name__ == "__main__":
     unittest.main()

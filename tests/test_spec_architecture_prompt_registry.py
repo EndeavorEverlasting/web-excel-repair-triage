@@ -610,6 +610,33 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         html = build_prompt_kit_registry.render()
         self.assertIn("Lua Flagging + Host Enforcement Repair Loop", html)
 
+    def test_p86_supports_bounded_multi_prompt_principle_campaign(self) -> None:
+        prompt = self.full["P86"]
+        raw = self.raw["P86"]
+        content = raw["copyContent"]
+        for phrase in (
+            "HARDEN ONE OR MORE EXISTING PROMPTS",
+            "SINGLE TARGET hardening or a bounded PRINCIPLE PROPAGATION CAMPAIGN",
+            "do not stop at the first obvious prompt",
+            "NORMALIZE THE SOURCE PRINCIPLE",
+            "Distinguish principle from costume",
+            "role/competence anchoring",
+            "explicit source map",
+            "observable definition of done",
+            "final self-check against evidence",
+            "literal domain wording, invented tenure, emotional urgency",
+            "Every material candidate must receive a disposition",
+            "CHOOSE THE CANONICAL OWNER",
+            "A campaign succeeds by correct coverage, not by number of edited prompts",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("one existing Prompt Kit prompt or a bounded family", raw["sprintRole"])
+        self.assertIn("every relevant existing prompt", raw["useWhen"])
+        self.assertIn("candidate target set", raw["inspectFirst"])
+        self.assertIn("targets changed", content)
+        self.assertLess(len(content), 7600)
+        self.assertEqual(prompt["id"], "P86")
+        self.assertEqual(prompt["copySheet"], "P86_COPY_SAFE")
 
 if __name__ == "__main__":
     unittest.main()
