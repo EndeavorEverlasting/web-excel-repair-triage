@@ -133,6 +133,39 @@ class PromptRegistryExpansionTests(unittest.TestCase):
         self.assertIn("system understanding", teach["keywords"])
         self.assertIn("Read teaching state before explaining", teach["nextStep"])
 
+    def test_teach_repo_data_structure_grill_upscales_the_human(self) -> None:
+        teach = self.by_name["Stateful Socratic Technical Tutor Workspace"]
+        content = teach["copyContent"]
+        for phrase in (
+            "REPOSITORY DATA-STRUCTURE GRILL MODE",
+            "MATT POCOCK'S `grill-me` DISCIPLINE",
+            "GROUND THE STRUCTURE MAP BEFORE ASKING FACT QUESTIONS",
+            "identity and keys",
+            "ownership and lifecycle",
+            "serializers/deserializers",
+            "If a question can be answered by exploring the codebase",
+            "SKILL_UNAVAILABLE",
+            "Ask exactly one data-structure question at a time",
+            "TRACE REAL DATA THROUGH THE REPOSITORY",
+            "COMPLEMENT-AI MASTERY GATE",
+            "predict which structures and boundaries",
+            "challenge an AI-generated design or diff",
+            "the human must upscale enough",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("repository data-structure grilling", teach["useWhen"])
+        self.assertIn("evidence-backed structure map", teach["expectedOutput"])
+        self.assertIn("critically review an AI-generated change", teach["proofGate"])
+        self.assertIn("repository data structures", teach["keywords"])
+
+    def test_p65_routes_repository_data_structure_grilling_to_p96(self) -> None:
+        p65 = self.full["P65"]
+        content = p65["copyContent"]
+        self.assertIn("Explicit requests to be grilled on a repository’s data structures", content)
+        self.assertIn("P65’s own grilling is only for selecting the right Prompt Kit route", content)
+        self.assertIn("repository data structure grill", p65["keywords"])
+        self.assertIn("grill repo data model", p65["keywords"])
+
     def test_p79_harvests_whole_chat_twice_and_complements_utility(self) -> None:
         p79 = self.full["P79"]
         content = p79["copyContent"]
