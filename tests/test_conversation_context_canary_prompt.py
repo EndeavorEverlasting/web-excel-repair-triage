@@ -90,7 +90,7 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
     def test_neighbor_owners_remain_distinct(self) -> None:
         self.assertEqual(
             self.by_id["P02"]["name"],
-            "Conversation Closeout + Executable Harness-Build Sprint Mapper",
+            "Previous Chat → Active Sprint Executor",
         )
         self.assertEqual(
             self.by_id["P76"]["name"],
@@ -98,7 +98,7 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
         )
         self.assertNotEqual(self.target["id"], "P02")
         self.assertNotEqual(self.target["id"], "P76")
-        self.assertIn("P02 owns full conversation closeout", self.target["copyContent"])
+        self.assertIn("P02 owns previous-chat recovery and active sprint execution", self.target["copyContent"])
         self.assertIn("P76 owns repository spec/harness progressive disclosure", self.target["copyContent"])
 
     def test_semantic_falsification_cases_are_explicit(self) -> None:
