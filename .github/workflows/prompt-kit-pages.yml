@@ -35,7 +35,6 @@ jobs:
           if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             git merge-base --is-ancestor origin/main HEAD
           fi
-          echo "candidate_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "candidate sha=$(git rev-parse HEAD)"
           echo "main floor=$(git rev-parse origin/main)"
       - uses: actions/setup-python@v5
@@ -51,6 +50,8 @@ jobs:
           node docs/prompt-kit-feedback-prototype.js > Outputs/prompt-kit-feedback-prototype.json
           python -m unittest tests.test_prompt_kit_feedback_prototype tests.test_prompt_kit_feedback_production -v
           python scripts/prompt_kit_feedback_hook.py --input feedback/inbox --output Outputs/prompt-kit-feedback-maintenance.json
+      - name: Promotion fail-closed regression gate
+        run: python -m unittest tests.test_prompt_kit_promotion_pipeline -v
       - name: Validate exact checked-in Prompt Kit
         run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
       - name: Application browser E2E gate
@@ -107,7 +108,7 @@ jobs:
           test -s "$SITE_ROOT/qr-prompt-kit.png"
           test -s "$SITE_ROOT/prompt-kit/index.html"
           cmp "$SITE_ROOT/prompt-kit/index.html" web/prompt-kit/index.html
-          find "$SITE_ROOT" -type f -print0 | sort -z | xargs -0 sha256sum > Outputs/prompt-kit-pages-manifest.sha256
+          (cd "$SITE_ROOT" && find . -type f -print0 | sort -z | xargs -0 sha256sum) > Outputs/prompt-kit-pages-manifest.sha256
       - name: Write exact-candidate promotion receipt
         env:
           CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
