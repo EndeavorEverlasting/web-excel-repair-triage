@@ -1,0 +1,43 @@
+name: Prompt Kit feedback maintenance hook
+
+on:
+  pull_request:
+    paths:
+      - docs/prompt-kit-feedback-production.js
+      - scripts/prompt_kit_feedback_hook.py
+      - tests/test_prompt_kit_feedback_production.py
+      - feedback/inbox/**
+      - .github/workflows/prompt-kit-feedback-hook.yml
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prompt-kit-feedback-hook-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  inspect-feedback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate production feedback runtime and hook
+        run: python -m unittest tests.test_prompt_kit_feedback_production -v
+      - name: Process explicit feedback ingest boundary
+        run: python scripts/prompt_kit_feedback_hook.py --input feedback/inbox --output Outputs/prompt-kit-feedback-maintenance.json
+      - name: Publish maintenance evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-feedback-maintenance-${{ github.sha }}
+          path: Outputs/prompt-kit-feedback-maintenance.json
+          if-no-files-found: error
+          retention-days: 14
