@@ -40,7 +40,14 @@ class CommandKernelGroundingSource {
     const commandTypes = [...this.kernel.handlers.keys()].sort();
     const promptIds = [...this.catalog.byId.keys()].sort();
     if (!commandTypes.length || !promptIds.length) throw new PromptKitProgramError('GROUNDING_FAILURE', 'Live command/catalog structure is empty.');
-    return {contractSchemaVersion: contract.schema_version, commandTypes, promptIds, allowedSources: [...contract.exact_fields.source.allowed].sort()};
+    return {
+      contractSchemaVersion: contract.schema_version,
+      packetSchemaVersion: contract.packet_schema_version,
+      proposalSchemaVersion: contract.proposal_schema_version,
+      commandTypes,
+      promptIds,
+      allowedSources: [...contract.exact_fields.source.allowed].sort()
+    };
   }
   buildPacket(operationName) {
     const contract = this.loadContract();
@@ -48,6 +55,7 @@ class CommandKernelGroundingSource {
     if (typeof operationName !== 'string' || !structure.commandTypes.includes(operationName)) return fail('UNSOURCED_BLOCK', 'Operation is absent from the live command registry.', {proposedOperation: operationName, sourceKey: contract.exact_fields.type.source_key});
     const packet = {
       schemaVersion: contract.packet_schema_version,
+      proposalSchemaVersion: contract.proposal_schema_version,
       source: {id: contract.source_id, version: digest(structure), contractSchemaVersion: contract.schema_version, contractPath: path.relative(path.join(__dirname, '..'), this.contractPath).replaceAll('\\', '/')},
       operation: {name: operationName, sourceKey: `${contract.exact_fields.type.source_key}.${operationName}`},
       fields: {
@@ -119,7 +127,7 @@ class AgentCommandGroundingInterceptor {
 }
 
 function proposalFromPacket(packet, command) {
-  return {schemaVersion: 'prompt-kit-grounded-command/v1', command: {...command}, grounding: {sourceId: packet.source.id, sourceVersion: packet.source.version, attributions: Object.fromEntries(Object.entries(packet.fields).map(([field, spec]) => [field, spec.sourceKey]))}};
+  return {schemaVersion: packet.proposalSchemaVersion, command: {...command}, grounding: {sourceId: packet.source.id, sourceVersion: packet.source.version, attributions: Object.fromEntries(Object.entries(packet.fields).map(([field, spec]) => [field, spec.sourceKey]))}};
 }
 async function expectBlocked(expectedStatus, fn) {
   try { await fn(); } catch (error) { if (!(error instanceof PromptKitProgramError) || error.code !== expectedStatus) throw error; return error; }
