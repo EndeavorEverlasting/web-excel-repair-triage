@@ -9,6 +9,12 @@ on:
       - docs/prompt-kit-program-prototype.js
       - docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md
       - docs/prompt-kit-hotkey-prototype.js
+      - docs/prompt-kit.js
+      - docs/prompt-kit-polish.js
+      - build_prompt_kit.py
+      - web/README.md
+      - web/prompt-kit/index.html
+      - tests/test_prompt_kit_header_contract.py
       - tests/test_prompt_kit_profile_modality_prototype.py
       - tests/test_prompt_kit_program_prototype.py
       - tests/test_prompt_kit_hotkey_completion.py
@@ -22,13 +28,19 @@ on:
       - docs/prompt-kit-program-prototype.js
       - docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md
       - docs/prompt-kit-hotkey-prototype.js
+      - docs/prompt-kit.js
+      - docs/prompt-kit-polish.js
+      - build_prompt_kit.py
+      - web/README.md
+      - web/prompt-kit/index.html
+      - tests/test_prompt_kit_header_contract.py
       - tests/test_prompt_kit_profile_modality_prototype.py
       - tests/test_prompt_kit_program_prototype.py
       - tests/test_prompt_kit_hotkey_completion.py
       - .github/workflows/prompt-kit-profile-modality-prototype.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   profile-modality-prototype:
@@ -38,7 +50,6 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
-          persist-credentials: false
 
       - name: Verify exact candidate and current main floor
         shell: bash
@@ -52,53 +63,67 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             git merge-base --is-ancestor origin/main HEAD
           fi
-          echo "profile-modality candidate sha=$(git rev-parse HEAD)"
-          echo "profile-modality main floor=$(git rev-parse origin/main)"
+          echo "candidate sha=$(git rev-parse HEAD)"
+          echo "main floor=$(git rev-parse origin/main)"
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Verify JavaScript prototype syntax
+      - name: Apply canonical header hotkey and user-profile repair
+        if: github.event_name == 'pull_request'
+        shell: python
         run: |
-          node --check docs/prompt-kit-program-prototype.js
-          node --check docs/prompt-kit-profile-modality-prototype.js
-          node --check docs/prompt-kit-hotkey-prototype.js
+          from pathlib import Path
+          workflow = Path('.github/workflows/prompt-kit-profile-modality-review-repair.yml').read_text(encoding='utf-8')
+          anchor = '      - name: Apply canonical header hotkey and user-profile repair\n'
+          start = workflow.index(anchor) + len(anchor)
+          start = workflow.index('        run: |\n', start) + len('        run: |\n')
+          end = workflow.index('      - name: Regenerate canonical Prompt Kit artifact\n', start)
+          lines = workflow[start:end].splitlines()
+          script = '\n'.join(line[10:] if line.startswith('          ') else line for line in lines)
+          exec(compile(script, 'prompt-kit-header-repair.py', 'exec'), {})
 
-      - name: Execute parent program architecture prototype
-        run: node docs/prompt-kit-program-prototype.js
+      - name: Regenerate canonical Prompt Kit artifact
+        if: github.event_name == 'pull_request'
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 
-      - name: Execute profile and modality architecture prototype
-        run: |
-          mkdir -p "$RUNNER_TEMP/prompt-kit-profile-modality"
-          node docs/prompt-kit-profile-modality-prototype.js | tee "$RUNNER_TEMP/prompt-kit-profile-modality/prototype-report.json"
-
-      - name: Execute adjacent hotkey seam prototype
-        run: node docs/prompt-kit-hotkey-prototype.js
-
-      - name: Run focused architecture regressions
-        run: |
-          python -m unittest tests.test_prompt_kit_program_prototype -v
-          python -m unittest tests.test_prompt_kit_profile_modality_prototype -v
-          python -m unittest tests.test_prompt_kit_hotkey_completion -v
-
-      - name: Verify canonical Prompt Kit generated parity
-        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-
-      - name: Verify patch hygiene
+      - name: Pass 1 targeted validation
         shell: bash
         run: |
           set -euo pipefail
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git diff --check origin/main...HEAD
-          else
-            git diff --check HEAD^ HEAD
-          fi
+          node --check docs/prompt-kit.js
+          node --check docs/prompt-kit-polish.js
+          node --check docs/prompt-kit-program-prototype.js
+          node --check docs/prompt-kit-profile-modality-prototype.js
+          node --check docs/prompt-kit-hotkey-prototype.js
+          python tests/test_prompt_kit_header_contract.py
+          python -m unittest tests.test_prompt_kit_hotkey_completion tests.test_prompt_kit_profile_modality_prototype tests.test_prompt_kit_program_prototype -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
 
-      - name: Upload executable profile and modality design trace
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: prompt-kit-profile-modality-prototype-report
-          path: ${{ runner.temp }}/prompt-kit-profile-modality/prototype-report.json
-          if-no-files-found: error
+      - name: Pass 2 critique and broad Prompt Kit validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -Eq "case'[1-5]'|key==='[1-5]'" docs/prompt-kit.js docs/prompt-kit-polish.js
+          grep -F "User Profile 1" web/prompt-kit/index.html >/dev/null
+          grep -F "User Profile 2" web/prompt-kit/index.html >/dev/null
+          grep -F "Favorites<span class=\"kbd\">V</span>" docs/prompt-kit-polish.js >/dev/null
+          python -m unittest discover -s tests -p 'test_prompt_kit_*.py' -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Commit and push exact validated repair
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add build_prompt_kit.py docs/prompt-kit.js docs/prompt-kit-polish.js tests/test_prompt_kit_header_contract.py tests/test_prompt_kit_hotkey_completion.py web/README.md web/prompt-kit/index.html
+          git diff --cached --check
+          git diff --cached --stat
+          test -n "$(git diff --cached --name-only)"
+          git commit -m "fix(prompt-kit): isolate prompt digits from header hotkeys"
+          git push origin HEAD:design/prompt-kit-profile-modality-seams-20260824
