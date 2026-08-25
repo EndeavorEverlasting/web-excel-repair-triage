@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, json
+import argparse, json, sys
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
+
+REPO_ROOT=Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path: sys.path.insert(0,str(REPO_ROOT))
+from scripts import build_prompt_kit_registry as registry
 
 EVENT_SCHEMA='prompt-feedback-event/v1'
 EXPORT_SCHEMA='prompt-feedback-export/v1'
 REPORT_SCHEMA='prompt-feedback-maintenance-report/v1'
 SENSITIVE_MARKERS=('prompt_body','clipboard','secret','token','password','credential')
+
+def canonical_prompt_ids() -> set[str]:
+    return {str(prompt.get('id','')).strip().upper() for prompt in registry.load_prompt_kit_registry() if isinstance(prompt,dict) and str(prompt.get('id','')).strip()}
 
 def require_text(value: object, field: str, maximum: int) -> str:
     if not isinstance(value,str) or not value.strip(): raise SystemExit(f'{field} must be a non-empty string')
@@ -43,7 +50,7 @@ def load_events(root: Path) -> list[dict]:
             events.append(row)
     return events
 
-def validate_event(event: dict) -> dict:
+def validate_event(event: dict, prompt_ids: set[str]) -> dict:
     if not isinstance(event,dict): raise SystemExit('feedback event must be an object')
     reject_sensitive_payload(event)
     required={'event_id','prompt_id','event_type','value','timestamp','schema_version','source'}
@@ -51,6 +58,7 @@ def validate_event(event: dict) -> dict:
     normalized=dict(event)
     normalized['event_id']=require_text(event['event_id'],'event_id',160)
     normalized['prompt_id']=require_text(event['prompt_id'],'prompt_id',40).upper()
+    if normalized['prompt_id'] not in prompt_ids: raise SystemExit(f'unknown prompt identity: {normalized["prompt_id"]}')
     normalized['source']=require_text(event['source'],'source',120)
     normalized['event_type']=require_text(event['event_type'],'event_type',40)
     normalized['_timestamp']=parse_timestamp(event['timestamp'])
@@ -70,10 +78,11 @@ def validate_event(event: dict) -> dict:
     if supersedes is not None: normalized['supersedes_event_id']=require_text(supersedes,'supersedes_event_id',160)
     return normalized
 
-def aggregate(events: list[dict], minimum_dislikes: int) -> dict:
+def aggregate(events: list[dict], minimum_dislikes: int, prompt_ids: set[str] | None=None) -> dict:
+    prompt_ids=prompt_ids or canonical_prompt_ids()
     seen={}; latest_votes={}; comments=defaultdict(list); normalized_events=[]
     for raw in events:
-        event=validate_event(raw)
+        event=validate_event(raw,prompt_ids)
         eid=event['event_id']
         canonical=json.dumps(raw,sort_keys=True,separators=(',',':'))
         if eid in seen:
@@ -85,9 +94,9 @@ def aggregate(events: list[dict], minimum_dislikes: int) -> dict:
         pid=event['prompt_id']; source=event['source']
         if event['event_type']=='prompt_vote': latest_votes[(pid,source)]=event
         else: comments[pid].append(event)
-    prompt_ids=sorted({pid for pid,_ in latest_votes}|set(comments))
+    prompt_ids_with_evidence=sorted({pid for pid,_ in latest_votes}|set(comments))
     rows=[]
-    for pid in prompt_ids:
+    for pid in prompt_ids_with_evidence:
         votes=[e for (p,_),e in latest_votes.items() if p==pid]
         row={'prompt_id':pid,'likes':sum(e['value']=='like' for e in votes),'dislikes':sum(e['value']=='dislike' for e in votes),'feedback_count':len(comments[pid])}
         if row['dislikes']>=minimum_dislikes: row['disposition']='REVIEW_CANDIDATE'
