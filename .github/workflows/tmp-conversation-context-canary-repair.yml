@@ -1,0 +1,152 @@
+name: Temporary conversation context Canary repair
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: prompt-kit-conversation-context-canary-repair
+  cancel-in-progress: false
+
+jobs:
+  repair-prove-publish:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/p114-conversation-context-canary-20260825'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p114-conversation-context-canary-20260825
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Establish fresh exact floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main --prune
+          test "$(git rev-parse origin/main)" = "9ddd91a979a5b155b9adf0dd84c72cd07afb4777"
+          test "$(git merge-base HEAD origin/main)" = "$(git rev-parse origin/main)"
+          echo "main-floor=$(git rev-parse origin/main)"
+          echo "transport-head=$(git rev-parse HEAD)"
+
+      - name: Allocate Canary through canonical helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py add \
+            --input .github/tmp-conversation-context-canary-draft.json \
+            --registry spec-architecture-prompts | tee /tmp/canary-helper-receipt.json
+          python - <<'PY'
+          import json
+          receipt = json.load(open('/tmp/canary-helper-receipt.json', encoding='utf-8'))
+          assert receipt['status'] == 'added', receipt
+          assert receipt['name'] == 'Conversation Context Canary & Handoff Guard', receipt
+          assert receipt['registry_id'] == 'spec-architecture-prompts', receipt
+          assert receipt['site_parity'] is True, receipt
+          print('HELPER_RECEIPT=' + json.dumps(receipt, sort_keys=True))
+          PY
+
+      - name: Remove transport surfaces before proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/tmp-conversation-context-canary-draft.json
+          rm -f .github/workflows/tmp-conversation-context-canary.yml
+          rm -f .github/workflows/tmp-conversation-context-canary-repair.yml
+
+      - name: Focused semantic proof and owning validators
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_conversation_context_canary_prompt -v
+          python -m unittest tests.test_deterministic_test_floor -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python -m unittest tests.test_skill_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --output /tmp/canary-order-navigation.json --summary
+          python scripts/evaluate_prompt_language.py --output /tmp/canary-language-audit.json --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Whole-chat pass-two semantic falsification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path('registry/prompts/spec-architecture-prompts.v1.json').read_text(encoding='utf-8'))
+          matches = [p for p in payload['prompts'] if p.get('name') == 'Conversation Context Canary & Handoff Guard']
+          if len(matches) != 1:
+              raise SystemExit(f'Canary owner count invalid: {len(matches)}')
+          p = matches[0]
+          c = p['copyContent']
+          checks = {
+              'profile every response': 'Before every response, emit one compact first line' in c,
+              'computer profile is primary signal': 'CANARY | PROFILE=<canonical computer profile>' in c,
+              'unknown fails closed': 'CANARY | PROFILE=UNKNOWN' in c,
+              'no fake context telemetry': 'not mathematical proof that the context window is exhausted' in c,
+              'one bounded re-anchor': 'RE-ANCHOR ONCE' in c,
+              'repeat failure hands off': 'HANDOFF ON REPEATED OR UNRECOVERABLE DRIFT' in c,
+              'one canonical owner': 'ONE CANONICAL CONTRACT, LIGHTWEIGHT EMBEDDING' in c,
+              'light embedded stub': 'CANARY STUB — Before every response emit CANARY | PROFILE=<canonical computer profile>' in c,
+              'P02 boundary': 'P02 owns full conversation closeout' in c,
+              'P76 boundary': 'P76 owns repository spec/harness progressive disclosure' in c,
+              'agent control limit': 'Do not pretend that the agent can terminate the current chat or open the next one itself' in c,
+          }
+          failed = [name for name, ok in checks.items() if not ok]
+          if failed:
+              raise SystemExit(f'Canary semantic falsification failed: {failed}')
+          print(f'SEMANTIC_FALSIFICATION=PASS checks={len(checks)} id={p["id"]}')
+          PY
+
+      - name: Run repository pre-push proof on desired durable tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          sh .githooks/pre-push
+
+      - name: Commit bounded durable result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune
+          test "$(git rev-parse origin/main)" = "9ddd91a979a5b155b9adf0dd84c72cd07afb4777"
+          git add -A
+          git diff --cached --check
+          changed="$(git diff --cached --name-only origin/main...HEAD; git diff --cached --name-only)"
+          printf 'staged-now:\n%s\n' "$(git diff --cached --name-only | sort -u)"
+          git commit -m "feat(prompt-kit): add conversation context Canary"
+          echo "durable-head=$(git rev-parse HEAD)"
+
+      - name: Re-prove exact committed durable head
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_conversation_context_canary_prompt -v
+          python -m unittest tests.test_deterministic_test_floor -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          sh .githooks/pre-push
+          test -z "$(git status --porcelain)"
+          git fetch origin main --prune
+          test "$(git rev-parse origin/main)" = "9ddd91a979a5b155b9adf0dd84c72cd07afb4777"
+          echo "EXACT_PROVEN_HEAD=$(git rev-parse HEAD)"
+
+      - name: Publish exact validated feature head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin HEAD:feat/p114-conversation-context-canary-20260825
