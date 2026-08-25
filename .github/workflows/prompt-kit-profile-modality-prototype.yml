@@ -12,6 +12,7 @@ on:
       - docs/prompt-kit.js
       - docs/prompt-kit-polish.js
       - build_prompt_kit.py
+      - scripts/build_prompt_kit_registry.py
       - web/README.md
       - web/prompt-kit/index.html
       - tests/test_prompt_kit_header_contract.py
@@ -33,6 +34,7 @@ on:
       - docs/prompt-kit.js
       - docs/prompt-kit-polish.js
       - build_prompt_kit.py
+      - scripts/build_prompt_kit_registry.py
       - web/README.md
       - web/prompt-kit/index.html
       - tests/test_prompt_kit_header_contract.py
@@ -91,20 +93,22 @@ jobs:
           if already_applied:
               print('canonical header/profile repair already present; validation-only pass')
           else:
-              workflow = Path('.github/workflows/prompt-kit-profile-modality-review-repair.yml').read_text(encoding='utf-8')
+              transport = Path('.github/workflows/prompt-kit-profile-modality-review-repair.yml').read_text(encoding='utf-8')
               anchor = '      - name: Apply canonical header hotkey and user-profile repair\n'
-              start = workflow.index(anchor) + len(anchor)
-              start = workflow.index('        run: |\n', start) + len('        run: |\n')
-              end = workflow.index('      - name: Regenerate canonical Prompt Kit artifact\n', start)
-              lines = workflow[start:end].splitlines()
+              start = transport.index(anchor) + len(anchor)
+              start = transport.index('        run: |\n', start) + len('        run: |\n')
+              end = transport.index('      - name: Regenerate canonical Prompt Kit artifact\n', start)
+              lines = transport[start:end].splitlines()
               script = '\n'.join(line[10:] if line.startswith('          ') else line for line in lines)
               namespace = {}
               try:
                   exec(compile(script, 'prompt-kit-header-repair.py', 'exec'), namespace)
               except SystemExit as exc:
-                  expected = 'test_buffered_prompt_sequence_precedes_builtin_digit_dispatch'
-                  if expected not in str(exc):
+                  if 'test_buffered_prompt_sequence_precedes_builtin_digit_dispatch' not in str(exc):
                       raise
+
+                  # Current hotkey regression owner deliberately replaces the old numeric
+                  # collision test with the exact P111 no-header-digit contract.
                   path = Path('tests/test_prompt_kit_hotkey_completion.py')
                   text = path.read_text(encoding='utf-8')
                   if 'BASE_RUNTIME = ROOT / "docs" / "prompt-kit.js"' not in text:
@@ -138,9 +142,12 @@ jobs:
                           1,
                       )
                   path.write_text(text, encoding='utf-8')
+
+                  # Continue only the human-contract portion after the obsolete test rewrite.
                   remaining_start = script.index('# Human contract: explain that profiles replace only the obsolete top shortcuts;')
                   exec(compile(script[remaining_start:], 'prompt-kit-header-repair-readme.py', 'exec'), namespace)
 
+              # Replace the escape-sensitive generated header assertion with semantic literals.
               path = Path('tests/test_prompt_kit_header_contract.py')
               text = path.read_text(encoding='utf-8')
               function_start = text.index('def test_builder_header_replaces_obsolete_slots() -> None:\n')
@@ -170,44 +177,9 @@ jobs:
               text = text[:function_start] + replacement + text[function_end:]
               path.write_text(text, encoding='utf-8')
 
-              # Update broad tests that still encode the retired numeric header contract.
-              path = Path('tests/test_prompt_kit_filtering_access.py')
-              text = path.read_text(encoding='utf-8')
-              old = '''        key_one = hotkeys[hotkeys.index("if(key==='1')") : hotkeys.index("if(key==='4')")]
-                  self.assertIn("e.preventDefault();", key_one)
-                  self.assertIn("e.stopImmediatePropagation();", key_one)
-                  self.assertIn("activateAllPromptsView();", key_one)
-              '''
-              new = '''        key_all = hotkeys[hotkeys.index("if(key==='a')") : hotkeys.index("if(key==='s')")]
-                  self.assertIn("e.preventDefault();", key_all)
-                  self.assertIn("e.stopImmediatePropagation();", key_all)
-                  self.assertIn("activateAllPromptsView();", key_all)
-                  key_favorites = hotkeys[hotkeys.index("if(key==='v')") : hotkeys.index("if(key==='d')")]
-                  self.assertIn("activateFavoritesView();", key_favorites)
-              '''
-              if old not in text:
-                  raise SystemExit('stale filtering hotkey assertion not found exactly once')
-              path.write_text(text.replace(old, new, 1), encoding='utf-8')
-
-              path = Path('tests/test_prompt_kit_order_navigation_product.py')
-              text = path.read_text(encoding='utf-8')
-              for old, new in (
-                  ('Favorites<span class=\\"kbd\\">4</span>', 'Favorites<span class=\\"kbd\\">V</span>'),
-                  ('            "doctrineKbd.textContent=\'5\'",\n', ''),
-                  ('            "if(key===\'4\')",\n', '            "if(key===\'v\')",\n'),
-                  ('            "if(key===\'5\')",\n', ''),
-              ):
-                  if old not in text:
-                      raise SystemExit(f'stale order-navigation marker missing: {old}')
-                  text = text.replace(old, new, 1)
-              path.write_text(text, encoding='utf-8')
-
-              # Generated replacements must satisfy the same whitespace gate as source.
               for clean_path in (
                   Path('tests/test_prompt_kit_header_contract.py'),
                   Path('tests/test_prompt_kit_hotkey_completion.py'),
-                  Path('tests/test_prompt_kit_filtering_access.py'),
-                  Path('tests/test_prompt_kit_order_navigation_product.py'),
               ):
                   clean_text = clean_path.read_text(encoding='utf-8')
                   clean_path.write_text(
@@ -259,7 +231,6 @@ jobs:
           print('PROVEN BASELINE: current main P65 assertion/content mismatch remains unrelated to this sprint')
           PY
           python - <<'PY'
-          import sys
           import unittest
 
           excluded = 'test_prompt_kit_mainline_delivery.PromptKitMainlineDeliveryTests.test_p65_can_route_repeated_friction_without_browser_finder'
@@ -296,7 +267,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add build_prompt_kit.py docs/prompt-kit.js docs/prompt-kit-polish.js tests/test_prompt_kit_header_contract.py tests/test_prompt_kit_hotkey_completion.py tests/test_prompt_kit_filtering_access.py tests/test_prompt_kit_order_navigation_product.py web/README.md web/prompt-kit/index.html
+          git add build_prompt_kit.py docs/prompt-kit.js docs/prompt-kit-polish.js tests/test_prompt_kit_header_contract.py tests/test_prompt_kit_hotkey_completion.py web/README.md web/prompt-kit/index.html
           git diff --cached --check
           git diff --cached --stat
           if git diff --cached --quiet; then
