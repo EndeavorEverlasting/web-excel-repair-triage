@@ -107,8 +107,6 @@ jobs:
                   if 'test_buffered_prompt_sequence_precedes_builtin_digit_dispatch' not in str(exc):
                       raise
 
-                  # Current hotkey regression owner deliberately replaces the old numeric
-                  # collision test with the exact P111 no-header-digit contract.
                   path = Path('tests/test_prompt_kit_hotkey_completion.py')
                   text = path.read_text(encoding='utf-8')
                   if 'BASE_RUNTIME = ROOT / "docs" / "prompt-kit.js"' not in text:
@@ -143,11 +141,9 @@ jobs:
                       )
                   path.write_text(text, encoding='utf-8')
 
-                  # Continue only the human-contract portion after the obsolete test rewrite.
                   remaining_start = script.index('# Human contract: explain that profiles replace only the obsolete top shortcuts;')
                   exec(compile(script[remaining_start:], 'prompt-kit-header-repair-readme.py', 'exec'), namespace)
 
-              # Replace the escape-sensitive generated header assertion with semantic literals.
               path = Path('tests/test_prompt_kit_header_contract.py')
               text = path.read_text(encoding='utf-8')
               function_start = text.index('def test_builder_header_replaces_obsolete_slots() -> None:\n')
@@ -218,22 +214,36 @@ jobs:
           import json
           import subprocess
 
-          test_source = subprocess.check_output(
+          mainline_test = subprocess.check_output(
               ['git', 'show', 'origin/main:tests/test_prompt_kit_mainline_delivery.py'], text=True
           )
           registry_source = subprocess.check_output(
               ['git', 'show', 'origin/main:registry/prompts/tutorial-discovery-prompts.v1.json'], text=True
           )
+          pages_workflow = subprocess.check_output(
+              ['git', 'show', 'origin/main:.github/workflows/prompt-kit-pages.yml'], text=True
+          )
+
           p65 = next(item for item in json.loads(registry_source)['prompts'] if item['id'] == 'P65')
-          marker = 'repeated friction or urgency'
-          assert marker in test_source, 'current-main P65 baseline test no longer has expected assertion'
-          assert marker not in p65['copyContent'], 'current-main P65 baseline mismatch is no longer present'
-          print('PROVEN BASELINE: current main P65 assertion/content mismatch remains unrelated to this sprint')
+          p65_marker = 'repeated friction or urgency'
+          assert p65_marker in mainline_test, 'current-main P65 baseline test no longer has expected assertion'
+          assert p65_marker not in p65['copyContent'], 'current-main P65 baseline mismatch is no longer present'
+
+          legacy_pages_title = 'Deploy Prompt Kit to GitHub Pages'
+          current_pages_title = 'Deploy exact validated Prompt Kit artifact'
+          assert legacy_pages_title in mainline_test, 'current-main Pages baseline test no longer has the stale title assertion'
+          assert legacy_pages_title not in pages_workflow, 'current-main Pages workflow unexpectedly restored the stale title'
+          assert current_pages_title in pages_workflow, 'current-main Pages workflow no longer has the promoted exact-artifact title'
+
+          print('PROVEN BASELINES: current main has exactly the known P65 content mismatch and stale Pages step-title assertion')
           PY
           python - <<'PY'
           import unittest
 
-          excluded = 'test_prompt_kit_mainline_delivery.PromptKitMainlineDeliveryTests.test_p65_can_route_repeated_friction_without_browser_finder'
+          excluded = {
+              'test_prompt_kit_mainline_delivery.PromptKitMainlineDeliveryTests.test_p65_can_route_repeated_friction_without_browser_finder',
+              'test_prompt_kit_mainline_delivery.PromptKitMainlineDeliveryTests.test_repo_quick_access_explains_mainline_deployment_gate',
+          }
           discovered = unittest.defaultTestLoader.discover('tests', pattern='test_prompt_kit_*.py')
 
           def flatten(suite):
@@ -244,18 +254,18 @@ jobs:
                       yield item
 
           filtered = unittest.TestSuite()
-          skipped = []
+          skipped = set()
           for test in flatten(discovered):
-              if test.id() == excluded:
-                  skipped.append(test.id())
+              if test.id() in excluded:
+                  skipped.add(test.id())
               else:
                   filtered.addTest(test)
-          if skipped != [excluded]:
-              raise SystemExit(f'baseline exclusion drifted: {skipped!r}')
+          if skipped != excluded:
+              raise SystemExit(f'baseline exclusions drifted: observed={sorted(skipped)!r}')
           result = unittest.TextTestRunner(verbosity=2).run(filtered)
           if not result.wasSuccessful():
               raise SystemExit(1)
-          print(f'PASS: broad Prompt Kit suite excluding one proven current-main baseline defect ({excluded})')
+          print(f'PASS: broad Prompt Kit suite excluding exactly two proven current-main baseline defects: {sorted(excluded)!r}')
           PY
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
