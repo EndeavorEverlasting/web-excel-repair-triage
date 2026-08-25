@@ -16,6 +16,15 @@
   "self_tests": [
     "tests/test_deterministic_test_floor.py"
   ],
+  "prompt_semantic_test_globs": [
+    "tests/test_*_prompt.py",
+    "tests/test_*_prompts.py",
+    "tests/test_*_prompt_registry.py",
+    "tests/test_*_prompt_suite.py"
+  ],
+  "prompt_semantic_test_excludes": [
+    "tests/test_skill_prompt_registry.py"
+  ],
   "artifact_engine_workflow": ".github/workflows/artifact-engines.yml",
   "artifact_imports": [
     "triage.nw_prj_neuron_track_hours.cli",
@@ -56,6 +65,6 @@
   ],
   "validator_registry": "harness/validators.v1.json",
   "validator_profile": "pre_push",
-  "required_canary_failure": "validator:skill-prompt-registry-tests",
-  "proof_ceiling": "Deterministic clean-checkout Python, pinned direct CI dependencies, test-floor self-contract, public/synthetic artifact-engine tests with fail-closed registered private-input skips, harness, Prompt Kit static/generated-parity, repository hygiene, and exact-candidate provider-workflow proof on the observed SHA. It does not prove browser/device/operator/production behavior or the three registered private-input regressions."
+  "required_canary_failure": "prompt-semantic-tests",
+  "proof_ceiling": "Deterministic clean-checkout Python, pinned direct CI dependencies, test-floor self-contract, convention-discovered Prompt Kit semantic regressions with zero silent skips, public/synthetic artifact-engine tests with fail-closed registered private-input skips, harness, Prompt Kit static/generated-parity, repository hygiene, and exact-candidate provider-workflow proof on the observed SHA. It does not prove browser/device/operator/production behavior or the three registered private-input regressions."
 }
