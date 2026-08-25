@@ -1,0 +1,117 @@
+name: Temporary P96 repository data-structure grill PR carrier
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-p96-repo-data-structure-grill-pr
+  cancel-in-progress: false
+
+jobs:
+  strengthen:
+    if: github.event.pull_request.head.ref == 'feat/p96-repo-data-structure-grill-20260825'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p96-repo-data-structure-grill-20260825
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Reconcile exact current main floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main --prune --tags
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+          fi
+          echo "MAIN_FLOOR=$(git rev-parse origin/main)" >> "$GITHUB_ENV"
+          git status --short
+
+      - name: Apply bounded canonical semantic patch and rebuild
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .github/p96_repo_data_structure_grill_executor.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+      - name: Focused semantic and convergence proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_prompt_registry_expansion_regression_design_teach -v
+          python -m unittest tests.test_prompt_kit_discovery -v
+          python -m unittest tests.test_skill_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/evaluate_prompt_language.py --summary
+          node scripts/analyze_prompt_finder_routes.js
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Whole-chat pass two scope and overlap falsification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from scripts import build_prompt_kit_registry
+
+          prompts = build_prompt_kit_registry.load_prompt_kit_registry()
+          by_id = {p['id']: p for p in prompts}
+          p65 = by_id['P65']
+          p95 = by_id['P95']
+          p96 = by_id['P96']
+          assert p96['name'] == 'Stateful Socratic Technical Tutor Workspace'
+          assert 'repository data-structure grilling' in p96['useWhen']
+          assert 'COMPLEMENT-AI MASTERY GATE' in p96['copyContent']
+          assert 'P65’s own grilling is only for selecting the right Prompt Kit route' in p65['copyContent']
+          assert 'ACQUIRE COHESIVE REPOSITORY CONTEXT' in p95['copyContent']
+          assert 'grill me' in p65['keywords']
+          assert 'repository data structures' in p96['keywords']
+          raw = json.loads(Path('registry/prompts/tutorial-discovery-prompts.v1.json').read_text(encoding='utf-8'))
+          assert len([p for p in raw['prompts'] if p['id'] in {'P65', 'P96'}]) == 2
+          PY
+
+      - name: Remove transport and commit exact durable change
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/p96_repo_data_structure_grill_executor.py
+          rm -f .github/workflows/temp-p96-repo-data-structure-grill-pr.yml
+          git diff --check
+          git status --short
+          git add registry/prompts/tutorial-discovery-prompts.v1.json \
+                  tests/test_prompt_registry_expansion_regression_design_teach.py \
+                  web/prompt-kit/index.html \
+                  .github/p96_repo_data_structure_grill_executor.py \
+                  .github/workflows/temp-p96-repo-data-structure-grill-pr.yml
+          git diff --cached --check
+          git commit -m 'feat(prompt-kit): grill repository data structures for human mastery'
+          git push origin HEAD:feat/p96-repo-data-structure-grill-20260825
+
+      - name: Prove durable head scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin feat/p96-repo-data-structure-grill-20260825 main --prune
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/feat/p96-repo-data-structure-grill-20260825)"
+          test ! -e .github/p96_repo_data_structure_grill_executor.py
+          test ! -e .github/workflows/temp-p96-repo-data-structure-grill-pr.yml
+          changed="$(git diff --name-only origin/main...HEAD | sort)"
+          printf '%s\n' "$changed"
+          allowed=$'registry/prompts/tutorial-discovery-prompts.v1.json\ntests/test_prompt_registry_expansion_regression_design_teach.py\nweb/prompt-kit/index.html'
+          test "$changed" = "$allowed"
+          git log -1 --oneline
