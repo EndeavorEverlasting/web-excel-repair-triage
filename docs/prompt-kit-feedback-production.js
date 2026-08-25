@@ -6,7 +6,7 @@
   var SOURCE_KEY='promptKit.feedbackSource.v1';
 
   function safeStorage(){try{return root&&root.localStorage?root.localStorage:null}catch(e){return null}}
-  function readEvents(){var storage=safeStorage();if(!storage)return[];try{var raw=storage.getItem(STORAGE_KEY);var value=raw?JSON.parse(raw):[];return Array.isArray(value)?value:[]}catch(e){return[]}}
+  function readEvents(){var storage=safeStorage();if(!storage)return[];var raw;try{raw=storage.getItem(STORAGE_KEY)}catch(e){throw new Error('FEEDBACK_PERSISTENCE_UNAVAILABLE')}if(raw===null||raw==='')return[];var value;try{value=JSON.parse(raw)}catch(e){throw new Error('FEEDBACK_STORAGE_CORRUPT')}if(!Array.isArray(value))throw new Error('FEEDBACK_STORAGE_CORRUPT');return value}
   function writeEvents(events){var storage=safeStorage();if(!storage)throw new Error('FEEDBACK_PERSISTENCE_UNAVAILABLE');try{storage.setItem(STORAGE_KEY,JSON.stringify(events))}catch(e){throw new Error('FEEDBACK_STORAGE_FULL')}}
   function sourceId(){var storage=safeStorage();if(!storage)return'browser-local:ephemeral';var current=storage.getItem(SOURCE_KEY);if(current)return current;var token=(root.crypto&&typeof root.crypto.randomUUID==='function')?root.crypto.randomUUID():('src-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));current='browser-local:'+token;storage.setItem(SOURCE_KEY,current);return current}
   function eventId(){return(root.crypto&&typeof root.crypto.randomUUID==='function')?root.crypto.randomUUID():('evt-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2))}
