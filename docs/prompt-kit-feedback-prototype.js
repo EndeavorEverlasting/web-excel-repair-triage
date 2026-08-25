@@ -96,7 +96,8 @@ class FeedbackEventStore {
   _append(event) {
     const existing = this.byEventId.get(event.event_id);
     if (existing) {
-      if (stableJson(existing) !== stableJson(event)) {
+      const {sequence, ...existingPayload} = existing;
+      if (stableJson(existingPayload) !== stableJson(event)) {
         throw new FeedbackError('EVENT_ID_CONFLICT', `event_id ${event.event_id} already exists with different content.`, {eventId: event.event_id});
       }
       return existing;
@@ -115,11 +116,12 @@ class FeedbackEventStore {
     }
     const voteKey = `${common.prompt_id}\u0000${common.source}`;
     const previous = this.latestVoteByPromptSource.get(voteKey);
+    const metadata = sanitizeMetadata(input.metadata);
     const candidate = {
       ...common,
       value,
-      ...(previous ? {supersedes_event_id: previous.event_id} : {}),
-      ...(sanitizeMetadata(input.metadata) ? {metadata: sanitizeMetadata(input.metadata)} : {}),
+      ...(previous && previous.event_id !== common.event_id ? {supersedes_event_id: previous.event_id} : {}),
+      ...(metadata ? {metadata} : {}),
     };
     const stored = this._append(candidate);
     this.latestVoteByPromptSource.set(voteKey, stored);
