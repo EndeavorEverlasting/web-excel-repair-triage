@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 POLISH = ROOT / "docs" / "prompt-kit-polish.js"
+BASE_RUNTIME = ROOT / "docs" / "prompt-kit.js"
 DEPLOYED = ROOT / "web" / "prompt-kit" / "index.html"
 README = ROOT / "web" / "README.md"
 DESIGN = ROOT / "docs" / "PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md"
@@ -67,14 +68,19 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             source.index("promptShortcutBindings=candidate"),
         )
 
-    def test_buffered_prompt_sequence_precedes_builtin_digit_dispatch(self) -> None:
-        source = POLISH.read_text(encoding="utf-8")
-        buffered = "if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;"
-        self.assertIn(buffered, source)
-        for built_in in ("if(key==='1')", "if(key==='4')", "if(key==='5')"):
-            self.assertLess(source.index(buffered), source.index(built_in))
-        self.assertIn("var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');", source)
-        self.assertIn("if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)", source)
+    def test_p111_digits_cannot_fall_through_to_header_navigation(self) -> None:
+            source = POLISH.read_text(encoding="utf-8")
+            base = BASE_RUNTIME.read_text(encoding="utf-8")
+            buffered = "if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;"
+            self.assertIn(buffered, source)
+            for digit in "12345":
+                self.assertNotIn(f"if(key==='{digit}')", source)
+                self.assertNotIn(f"case'{digit}'", base)
+            for header in ("if(key==='a')", "if(key==='s')", "if(key==='g')", "if(key==='v')", "if(key==='d')"):
+                self.assertIn(header, source)
+                self.assertLess(source.index(buffered), source.index(header))
+            self.assertIn("var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');", source)
+            self.assertIn("if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)", source)
 
     def test_executable_prototype_proves_success_failure_and_digit_collision_paths(self) -> None:
         completed = subprocess.run(
@@ -127,6 +133,10 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             "promptShortcutBindings",
             "Favorite a prompt, enter its ID",
             "Save favorite prompt keyboard shortcut",
+            "User profiles",
+            "User Profile 1",
+            "User Profile 2",
+            "hotkey-profile-choice",
         ):
             self.assertIn(marker, source)
             self.assertIn(marker, deployed)
