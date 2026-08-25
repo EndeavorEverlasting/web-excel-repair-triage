@@ -49,4 +49,12 @@ class PromptKitExactGroundingTests(unittest.TestCase):
         self.assertIn("second.packetDigest !== first.packetDigest", source)
         self.assertIn("second.sourceVersion !== first.sourceVersion", source)
 
+    def test_proposal_schema_version_is_grounded_not_remembered(self) -> None:
+        source = SCRIPT.read_text(encoding="utf-8")
+        helper = source[source.index("function proposalFromPacket"):source.index("async function expectBlocked")]
+        self.assertIn("schemaVersion: packet.proposalSchemaVersion", helper)
+        self.assertNotIn("'prompt-kit-grounded-command/v1'", helper)
+        self.assertIn("proposalSchemaVersion: contract.proposal_schema_version", source)
+        self.assertIn("packetSchemaVersion: contract.packet_schema_version", source)
+
 if __name__ == "__main__": unittest.main()
