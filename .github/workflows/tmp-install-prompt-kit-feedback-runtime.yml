@@ -1,0 +1,51 @@
+name: Temporary Prompt Kit feedback runtime installer
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-production-feedback-promotion-20260825
+    paths:
+      - scripts/install_prompt_kit_feedback_runtime.py
+      - .github/workflows/tmp-install-prompt-kit-feedback-runtime.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-prompt-kit-feedback-runtime-installer
+  cancel-in-progress: false
+
+jobs:
+  install-generate-verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install runtime in canonical builder
+        run: python scripts/install_prompt_kit_feedback_runtime.py
+      - name: Regenerate canonical Prompt Kit
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Verify generated parity and production runtime
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python -m unittest tests.test_prompt_kit_feedback_prototype tests.test_prompt_kit_feedback_production tests.test_prompt_kit_pages -v
+          node --check docs/prompt-kit-feedback-production.js
+          grep -F 'data-prompt-kit-feedback-runtime' web/prompt-kit/index.html >/dev/null
+          git diff --check
+      - name: Remove temporary authoring transport and commit generated result
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm scripts/install_prompt_kit_feedback_runtime.py
+          rm .github/workflows/tmp-install-prompt-kit-feedback-runtime.yml
+          git add scripts/build_prompt_kit_registry.py web/prompt-kit/index.html scripts/install_prompt_kit_feedback_runtime.py .github/workflows/tmp-install-prompt-kit-feedback-runtime.yml
+          test -n "$(git status --short)"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'build(prompt-kit): register production feedback runtime'
+          git push origin HEAD:feat/prompt-kit-production-feedback-promotion-20260825
