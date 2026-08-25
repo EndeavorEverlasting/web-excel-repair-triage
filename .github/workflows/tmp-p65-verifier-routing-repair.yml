@@ -1,4 +1,4 @@
-name: Temporary P65 verifier-routing repair
+name: Temporary P65 granular prompt-finder repair
 
 on:
   pull_request:
@@ -10,115 +10,154 @@ permissions:
   contents: write
 
 concurrency:
-  group: prompt-kit-p65-verifier-routing-repair
+  group: prompt-kit-p65-granular-finder-repair
   cancel-in-progress: false
 
 jobs:
   repair:
-    if: github.event.pull_request.head.ref == 'fix/p65-verifier-routing-trigger-20260824'
+    if: github.event.pull_request.head.ref == 'feat/p65-granular-grill-routing-20260825'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
+          persist-credentials: true
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Refresh exact main floor
+      - name: Establish exact main floor
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main --prune
+          git fetch origin main --prune --tags
           test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+          echo "BASE_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           git status --short
-          git log --oneline --decorate -5
 
-      - name: Harden canonical P65 routing
+      - name: Strengthen canonical P65 with adaptive decision-tree assessment
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
+          from __future__ import annotations
           import json
           from pathlib import Path
 
           registry_path = Path('registry/prompts/tutorial-discovery-prompts.v1.json')
           payload = json.loads(registry_path.read_text(encoding='utf-8'))
-          p65 = next(p for p in payload['prompts'] if p['id'] == 'P65')
+          matches = [p for p in payload['prompts'] if p.get('id') == 'P65']
+          if len(matches) != 1:
+              raise SystemExit(f'expected one canonical P65, found {len(matches)}')
+          p65 = matches[0]
+          if p65.get('name') != 'Guided Prompt Finder Questionnaire':
+              raise SystemExit(f'unexpected P65 identity: {p65.get("name")!r}')
 
-          def append_once(field: str, sentence: str) -> None:
-              current = p65[field]
-              if sentence not in current:
-                  p65[field] = current.rstrip() + ' ' + sentence
+          p65['sprintRole'] = (
+              'Run an adaptive, bounded decision-tree interview that granularly resolves the user need and desired prompt behavior, '
+              'then recommend the smallest useful Prompt Kit route'
+          )
 
-          append_once(
-              'useWhen',
-              'It also covers the high-risk handoff case where another agent, chat, branch, PR, report, artifact, or implementation claims work is complete, fixed, green, passed, done, or partially complete but the user needs that claim independently verified and advanced from evidence rather than trusted.',
+          use_add = (
+              ' It also applies when the initial request is underspecified and the user wants the finder to probe granularly rather '
+              'than force the request through a fixed questionnaire.'
           )
-          append_once(
-              'inspectFirst',
-              'When prior work or a completion claim exists, also inspect who made the claim, what exact work/head/artifact it refers to, whether observed behavior contradicts it, and what proof actually supports it; do not ask the user to restate recoverable prior-work context.',
+          if 'probe granularly rather than force the request through a fixed questionnaire' not in p65['useWhen']:
+              p65['useWhen'] = p65['useWhen'].rstrip() + use_add
+
+          inspect_add = (
+              ' Recover facts already available from the conversation, repository, runtime, tools, or current Prompt Kit before '
+              'asking the user; reserve questions for user-owned decisions and unresolved routing distinctions.'
           )
-          append_once(
-              'expectedOutput',
-              'A prior-agent completion-verification signal routes primarily to P83 Agent Work Verifier & Iterative Advancer; experimentation, regression, runtime-proof, and integration prompts remain follow-ons unless they are independently the user\'s primary need.',
+          if 'reserve questions for user-owned decisions and unresolved routing distinctions' not in p65['inspectFirst']:
+              p65['inspectFirst'] = p65['inspectFirst'].rstrip() + inspect_add
+
+          output_add = (
+              ' The recommendation is preceded by a compact resolved-need model that distinguishes the user outcome from the desired '
+              'prompt behavior and identifies any remaining ambiguity that materially changes the route.'
           )
-          append_once(
-              'proofGate',
-              'If the user is checking another agent\'s claimed completion and that claim is unverified, contradicted, or distrusted, P83 is selected as primary and later answers about prototyping, regression proof, runtime proof, or integration do not silently erase that stronger routing signal.',
+          if 'compact resolved-need model' not in p65['expectedOutput']:
+              p65['expectedOutput'] = p65['expectedOutput'].rstrip() + output_add
+
+          p65['proofGate'] = (
+              'The interview asks one decision-shaping question at a time, reuses recoverable context instead of making the user repeat '
+              'facts, gives a provisional/recommended answer for each question, and recomputes only the unresolved routing frontier after '
+              'each response. It normally resolves in 2-4 questions and may continue up to six only while materially different primary '
+              'routes remain plausible. Recommendations use current prompt IDs and names, distinguish user outcome from desired prompt '
+              'behavior, remain minimal and dependency-aware, and assume no deployment or runtime proof from questionnaire answers.'
           )
 
           content = p65['copyContent']
-          replacements = [
-              (
-                  '1. Starting state: no checkout, unfamiliar repository, known repository, active failure, open PR floor, or app currently in front of me.',
-                  '1. Starting state: no checkout, unfamiliar repository, known repository, active failure, open PR floor, app currently in front of me, or prior work that another agent/chat/branch/PR/report claims is complete or partially complete.',
-              ),
-              (
-                  '2. Desired outcome: recover repeated friction or urgency, understand, plan, coordinate or maintain a repository work ledger, build or repair, diagnose, validate, integrate or deploy, document or teach, or close out and hand off.',
-                  '2. Desired outcome: verify/correct/advance another agent\'s claimed work or claimed completion, recover repeated friction or urgency, understand, plan, coordinate or maintain a repository work ledger, build or repair, diagnose, validate, integrate or deploy, document or teach, or close out and hand off.',
-              ),
-          ]
-          for old, new in replacements:
-              if new not in content:
-                  if old not in content:
-                      raise SystemExit(f'P65 anchor missing: {old[:70]}')
-                  content = content.replace(old, new, 1)
+          old_intro = (
+              'Use the AI Harness Prompt Kit prompt IDs and names below as the recommendation vocabulary. Ask one concise question at a time, '
+              'wait for my answer, and ask no more than four questions. Do not assume that I have a repository checkout, a known task, a clean '
+              'branch, a working runtime, or permission to deploy.'
+          )
+          new_intro = (
+              'Use the AI Harness Prompt Kit prompt IDs and names below as the recommendation vocabulary. Run an adaptive, granular routing '
+              'interview: ask one concise question at a time, wait for my answer, and choose the next question from the unresolved decision '
+              'tree instead of marching through a fixed script. Do not assume that I have a repository checkout, a known task, a clean branch, '
+              'a working runtime, or permission to deploy.'
+          )
+          if new_intro not in content:
+              if old_intro not in content:
+                  raise SystemExit('P65 intro anchor missing')
+              content = content.replace(old_intro, new_intro, 1)
 
-          p83_route = "- P83 Agent Work Verifier & Iterative Advancer: independently verify another agent's claimed complete/partial work, repair what is wrong or missing, advance unfinished work, revalidate, and integrate bounded proven slices instead of trusting the handoff."
-          if p83_route not in content:
-              anchor = '- P82 Prototype-Measure-Refine Delivery Loop: iterate a broadly uncertain feature/interface through measured working candidates when the main question is experimentation rather than a specific flow defect.'
-              if anchor not in content:
-                  raise SystemExit('P65 P82 routing anchor missing')
-              content = content.replace(anchor, anchor + '\n' + p83_route, 1)
+          old_dims = '''QUESTIONNAIRE DIMENSIONS
+1. Starting state: no checkout, unfamiliar repository, known repository, active failure, open PR floor, or app currently in front of me.
+2. Desired outcome: recover repeated friction or urgency, understand, plan, coordinate or maintain a repository work ledger, build or repair, diagnose, validate, integrate or deploy, document or teach, or close out and hand off.
+3. Work shape: one bounded task, several parallel lanes, strict sequential lanes, tutorial portfolio, artifact creation, or immediate coaching.
+4. Proof need: static validation, generated artifact, live runtime observation, production or field acceptance, or not yet known.
+'''
+          new_dims = '''ADAPTIVE ROUTING INTERVIEW
+Build a small routing decision tree from the user's actual request. A branch exists only when its answer can materially change the primary prompt or the dependency order. Resolve prerequisites before dependent questions, and after every answer recompute the unresolved frontier.
 
-          precedence = """PRIOR-AGENT COMPLETION CLAIM OVERRIDE
-- If the user is checking work that another agent, chat, branch, PR, report, artifact, or implementation says is complete, fixed, green, passed, done, or partially complete—and that claim is unverified, contradicted by observed behavior, or explicitly distrusted—recommend P83 Agent Work Verifier & Iterative Advancer as the primary prompt.
-- This signal outranks generic repair, broad experimentation, regression proof, runtime proof, or integration because the first job is to independently verify inherited claims against current evidence and advance the actual state.
-- Do not let a later answer such as “iterate prototypes,” “prove it live,” “guard regressions,” or “land it on main” silently replace P83 as primary when those are methods or downstream gates for verifying prior claimed work.
-- P82 may be a follow-on only if P83 establishes that genuine solution uncertainty requires iterative candidate experimentation. P94 or P08 may follow for regression/live proof, and P15 may follow for integration after the exact work is proven.
-- Distinguish P13: use P13 when the primary problem is recurring process friction, missed urgency, proof-floor looping, or omitted safe parallelism without a specific inherited completion claim that needs independent verification. If the user specifically says the agent keeps telling them it is complete and it is not, P83 wins.
-- If current chat context already establishes a prior completion claim, treat that questionnaire fact as answered. Do not spend a question making the user repeat it; use the remaining questions to resolve the smallest missing distinction.
-"""
-          if 'PRIOR-AGENT COMPLETION CLAIM OVERRIDE' not in content:
-              anchor = '\n\nRECOMMENDATION CONTRACT'
+QUESTION POOL — ASK ONLY UNRESOLVED BRANCHES
+1. Starting state: no checkout, unfamiliar repository, known repository, active failure, inherited/claimed work, open PR floor, or app currently in front of me.
+2. User outcome: what useful state should exist when the work is done — understand, decide, plan, build/repair, diagnose, verify/review, coordinate, teach, create an artifact, deploy, integrate, or hand off.
+3. Desired prompt behavior: should the agent execute now, investigate first, design/plan, critique or verify existing work, coach interactively, teach over time, create a reusable artifact, or orchestrate multiple lanes.
+4. Work shape: one bounded task, several parallel lanes, strict sequential lanes, tutorial portfolio, artifact creation, immediate coaching, or an uncertain idea that needs refinement before execution.
+5. Evidence and proof need: static validation, generated artifact, live runtime observation, production/field acceptance, external research, or not yet known.
+6. Constraints and authority: repository/runtime access, permissions, destructive-risk tolerance, required human decisions, deadlines, or explicit forbidden scope.
+
+GRANULAR GRILLING DISCIPLINE
+- Ask one decision-shaping question at a time. Do not dump the whole pool or a batch of generic questions on the user.
+- If a fact can be recovered from the current conversation, repository, runtime, Prompt Kit registry, or tools, recover it yourself rather than asking the user to act as a context courier.
+- Facts are agent-owned; decisions are user-owned. Never silently decide a genuine preference, authority boundary, risk tolerance, or desired outcome on the user's behalf.
+- For each question, state your current read and recommended answer in one short sentence so the user can react to a concrete proposal instead of a blank prompt.
+- After each answer, recompute the unresolved frontier. A question whose answer depends on an unresolved prerequisite waits; questions made irrelevant by the answer disappear.
+- Do not ask a question merely because it appears in the pool. If earlier context already resolves a branch, mark it resolved internally and spend the next question on the highest-information remaining distinction.
+- Default to 2-4 questions. You may continue up to six only when materially different primary routes are still plausible; stop early as soon as one primary route and any necessary follow-ons are decision-complete.
+- Granularity is for route accuracy, not interrogation theater. Do not keep questioning once additional answers would not change the recommended Prompt Kit path.
+'''
+          if 'ADAPTIVE ROUTING INTERVIEW' not in content:
+              if old_dims not in content:
+                  raise SystemExit('P65 questionnaire-dimensions anchor missing')
+              content = content.replace(old_dims, new_dims, 1)
+
+          gate = '''ROUTE CONFIDENCE GATE
+Before recommending, state the resolved need model in one compact line: `starting state | user outcome | desired prompt behavior | work shape | proof need | material constraints`. If a missing user-owned decision could change the primary prompt, ask it before routing. If remaining uncertainty would change only a follow-on detail, recommend the primary prompt now and name that uncertainty instead of prolonging the interview.
+'''
+          if 'ROUTE CONFIDENCE GATE' not in content:
+              anchor = '\n\nPRIMARY ROUTING MAP'
               if anchor not in content:
-                  raise SystemExit('P65 recommendation-contract anchor missing')
-              content = content.replace(anchor, '\n\n' + precedence.rstrip() + anchor, 1)
+                  raise SystemExit('P65 primary-routing-map anchor missing')
+              content = content.replace(anchor, '\n\n' + gate.rstrip() + anchor, 1)
 
           p65['copyContent'] = content
           keywords = p65.setdefault('keywords', [])
           for keyword in (
-              'another agent says complete',
-              'agent said done',
-              'claimed complete',
-              'false completion',
-              'verify agent work',
-              'verify prior agent',
+              'grill me',
+              'granular prompt finder',
+              'adaptive questionnaire',
+              'decision tree interview',
+              'prompt intent assessment',
+              'desired prompt behavior',
           ):
               if keyword not in keywords:
                   keywords.append(keyword)
@@ -127,12 +166,12 @@ jobs:
 
           test_path = Path('tests/test_prompt_kit_discovery.py')
           tests = test_path.read_text(encoding='utf-8')
-          test_name = 'test_guided_finder_prior_agent_completion_claim_routes_to_p83'
+          test_name = 'test_guided_finder_granularly_resolves_need_and_prompt_behavior'
           if test_name not in tests:
               anchor = '    def test_repo_front_door_exposes_browser_phone_zip_cmd_and_clone(self) -> None:\n'
               if anchor not in tests:
                   raise SystemExit('focused discovery test insertion anchor missing')
-              block = '''    def test_guided_finder_prior_agent_completion_claim_routes_to_p83(self) -> None:\n        payload = json.loads(TUTORIAL_PROMPTS.read_text(encoding="utf-8"))\n        p65 = next(item for item in payload["prompts"] if item["id"] == "P65")\n        content = p65["copyContent"]\n        self.assertIn("PRIOR-AGENT COMPLETION CLAIM OVERRIDE", content)\n        self.assertIn("- P83 Agent Work Verifier & Iterative Advancer:", content)\n        self.assertIn("recommend P83 Agent Work Verifier & Iterative Advancer as the primary prompt", content)\n        self.assertIn("This signal outranks generic repair, broad experimentation, regression proof, runtime proof, or integration", content)\n        self.assertIn("Do not let a later answer such as", content)\n        self.assertIn("P82 may be a follow-on only if P83", content)\n        self.assertIn("the agent keeps telling them it is complete and it is not, P83 wins", content)\n        self.assertIn("treat that questionnaire fact as answered", content)\n        self.assertIn("completion claim", p65["useWhen"].lower())\n        self.assertIn("P83", p65["proofGate"])\n\n'''
+              block = '''    def test_guided_finder_granularly_resolves_need_and_prompt_behavior(self) -> None:\n        payload = json.loads(TUTORIAL_PROMPTS.read_text(encoding="utf-8"))\n        p65 = next(item for item in payload["prompts"] if item["id"] == "P65")\n        content = p65["copyContent"]\n        for marker in (\n            "ADAPTIVE ROUTING INTERVIEW",\n            "QUESTION POOL — ASK ONLY UNRESOLVED BRANCHES",\n            "User outcome:",\n            "Desired prompt behavior:",\n            "GRANULAR GRILLING DISCIPLINE",\n            "If a fact can be recovered from the current conversation, repository, runtime, Prompt Kit registry, or tools",\n            "Facts are agent-owned; decisions are user-owned",\n            "state your current read and recommended answer",\n            "recompute the unresolved frontier",\n            "Do not ask a question merely because it appears in the pool",\n            "Default to 2-4 questions",\n            "continue up to six only when materially different primary routes are still plausible",\n            "ROUTE CONFIDENCE GATE",\n            "starting state | user outcome | desired prompt behavior | work shape | proof need | material constraints",\n        ):\n            self.assertIn(marker, content)\n        self.assertNotIn("ask no more than four questions", content.lower())\n        self.assertIn("adaptive", p65["sprintRole"].lower())\n        self.assertIn("probe granularly", p65["useWhen"].lower())\n        self.assertIn("2-4 questions", p65["proofGate"])\n        self.assertIn("up to six", p65["proofGate"])\n        self.assertIn("desired prompt behavior", p65["proofGate"].lower())\n        self.assertIn("grill me", p65["keywords"])\n\n'''
               tests = tests.replace(anchor, block + anchor, 1)
               test_path.write_text(tests, encoding='utf-8')
           PY
@@ -147,15 +186,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_prompt_kit_discovery.PromptKitDiscoveryTests.test_guided_finder_granularly_resolves_need_and_prompt_behavior -v
           python -m unittest tests.test_prompt_kit_discovery -v
-          python -m unittest tests.test_agentic_loop_prompts -v
+          python scripts/prompt_registry_ops.py validate
           python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
           python scripts/evaluate_prompt_language.py --summary
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
-      - name: Deliberate second-pass falsification
+      - name: Whole-chat pass two falsification and scope guard
         shell: bash
         run: |
           set -euo pipefail
@@ -163,46 +203,62 @@ jobs:
           import json
           from pathlib import Path
 
-          tutorial = json.loads(Path('registry/prompts/tutorial-discovery-prompts.v1.json').read_text(encoding='utf-8'))
-          ledger = json.loads(Path('registry/prompts/repository-work-ledger-prompts.v1.json').read_text(encoding='utf-8'))
-          p65 = next(p for p in tutorial['prompts'] if p['id'] == 'P65')
-          p83 = next(p for p in ledger['prompts'] if p['id'] == 'P83')
+          payload = json.loads(Path('registry/prompts/tutorial-discovery-prompts.v1.json').read_text(encoding='utf-8'))
+          by_id = {p['id']: p for p in payload['prompts']}
+          p65 = by_id['P65']
+          p96 = by_id['P96']
           html = Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
-
           checks = {
-              'P83 canonical identity': p83['name'] == 'Agent Work Verifier & Iterative Advancer',
-              'P83 already owns completion claims': 'claims work is complete or partially complete' in p83['useWhen'],
-              'P65 exact P83 route': '- P83 Agent Work Verifier & Iterative Advancer:' in p65['copyContent'],
-              'P65 precedence rule': 'PRIOR-AGENT COMPLETION CLAIM OVERRIDE' in p65['copyContent'],
-              'P83 wins false completion case': 'the agent keeps telling them it is complete and it is not, P83 wins' in p65['copyContent'],
-              'prototype cannot erase verifier': 'Do not let a later answer such as' in p65['copyContent'] and 'P82 may be a follow-on only if P83' in p65['copyContent'],
-              'P13 distinction': 'Distinguish P13' in p65['copyContent'],
-              'context is not re-asked': 'treat that questionnaire fact as answered' in p65['copyContent'],
-              'generated-site parity marker': 'PRIOR-AGENT COMPLETION CLAIM OVERRIDE' in html,
+              'P65 identity preserved': p65['name'] == 'Guided Prompt Finder Questionnaire',
+              'adaptive routing': 'ADAPTIVE ROUTING INTERVIEW' in p65['copyContent'],
+              'granular need and prompt behavior': 'User outcome:' in p65['copyContent'] and 'Desired prompt behavior:' in p65['copyContent'],
+              'facts vs decisions': 'Facts are agent-owned; decisions are user-owned' in p65['copyContent'],
+              'recommended answer': 'state your current read and recommended answer' in p65['copyContent'],
+              'adaptive frontier': 'recompute the unresolved frontier' in p65['copyContent'],
+              'bounded finder role': 'Default to 2-4 questions' in p65['copyContent'] and 'up to six only' in p65['copyContent'],
+              'route confidence': 'ROUTE CONFIDENCE GATE' in p65['copyContent'],
+              'P96 remains teaching owner': p96['name'] == 'Stateful Socratic Technical Tutor Workspace',
+              'generated site parity marker': 'GRANULAR GRILLING DISCIPLINE' in html,
           }
           failed = [name for name, ok in checks.items() if not ok]
           if failed:
-              raise SystemExit(f'P65 second-pass falsification failed: {failed}')
+              raise SystemExit(f'P65 granular finder falsification failed: {failed}')
+          print('P65 granular finder falsification: PASS')
           PY
-          git diff --quiet -- registry/prompts/repository-work-ledger-prompts.v1.json
           changed="$(git diff --name-only | sort)"
           printf '%s\n' "$changed"
           unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(.github/workflows/tmp-p65-verifier-routing-repair.yml|registry/prompts/tutorial-discovery-prompts.v1.json|tests/test_prompt_kit_discovery.py|web/prompt-kit/index.html)$' || true)"
           test -z "$unexpected"
-          python -m unittest tests.test_prompt_kit_discovery.PromptKitDiscoveryTests.test_guided_finder_prior_agent_completion_claim_routes_to_p83 -v
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
-      - name: Reconfirm floor and publish exact validated candidate
+      - name: Publish exact validated candidate and self-remove carrier
         shell: bash
         run: |
           set -euo pipefail
-          proven_base="$(git rev-parse HEAD)"
-          git fetch origin main --prune
-          test "$proven_base" = "$(git rev-parse origin/main)"
-          git add registry/prompts/tutorial-discovery-prompts.v1.json tests/test_prompt_kit_discovery.py web/prompt-kit/index.html
+          git fetch origin main --prune --tags
+          test "$BASE_HEAD" = "$(git rev-parse origin/main)"
+          rm .github/workflows/tmp-p65-verifier-routing-repair.yml
+          git add registry/prompts/tutorial-discovery-prompts.v1.json \
+                  tests/test_prompt_kit_discovery.py \
+                  web/prompt-kit/index.html \
+                  .github/workflows/tmp-p65-verifier-routing-repair.yml
           git diff --cached --check
-          echo '--- staged durable files ---'
-          git diff --cached --name-only
-          git commit -m "fix(prompt-kit): route claimed completion to P83"
-          git push origin HEAD:fix/p65-verifier-routing-validated-20260824
+          changed="$(git diff --cached --name-only | sort)"
+          printf '%s\n' "$changed"
+          unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(.github/workflows/tmp-p65-verifier-routing-repair.yml|registry/prompts/tutorial-discovery-prompts.v1.json|tests/test_prompt_kit_discovery.py|web/prompt-kit/index.html)$' || true)"
+          test -z "$unexpected"
+          git commit -m "feat(prompt-kit): make P65 a granular adaptive finder"
+          python -m unittest tests.test_prompt_kit_discovery.PromptKitDiscoveryTests.test_guided_finder_granularly_resolves_need_and_prompt_behavior -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          test -z "$(git status --porcelain)"
+          git push origin HEAD:feat/p65-granular-grill-routing-candidate-20260825
+          echo "VALIDATED_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Report exact validated head
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "validated_head=$VALIDATED_HEAD"
+          echo "validated_main_floor=$BASE_HEAD"
