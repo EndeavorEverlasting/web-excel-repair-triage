@@ -298,9 +298,28 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             "starting state | user outcome | desired prompt behavior | work shape | proof need | material constraints",
         ):
             self.assertIn(marker, content)
+        question_pool = content.split("QUESTION POOL — ASK ONLY UNRESOLVED BRANCHES", 1)[1].split(
+            "GRANULAR GRILLING DISCIPLINE", 1
+        )[0]
+        grilling = content.split("GRANULAR GRILLING DISCIPLINE", 1)[1].split(
+            "ROUTE CONFIDENCE GATE", 1
+        )[0]
+        confidence = content.split("ROUTE CONFIDENCE GATE", 1)[1].split(
+            "PRIMARY ROUTING MAP", 1
+        )[0]
+
+        self.assertIn("2. User outcome:", question_pool)
+        self.assertIn("3. Desired prompt behavior:", question_pool)
+        self.assertIn("For each question, state your current read and recommended answer", grilling)
+        self.assertIn("After each answer, recompute the unresolved frontier", grilling)
+        self.assertIn("stop early as soon as one primary route", grilling)
+        self.assertIn("If a missing user-owned decision could change the primary prompt, ask it before routing", confidence)
+        self.assertIn("If remaining uncertainty would change only a follow-on detail, recommend the primary prompt now", confidence)
         self.assertNotIn("ask no more than four questions", content.lower())
+        self.assertNotIn("marching through a fixed script", question_pool)
         self.assertIn("adaptive", p65["sprintRole"].lower())
         self.assertIn("probe granularly", p65["useWhen"].lower())
+        self.assertIn("recomputes only the unresolved routing frontier after each response", p65["proofGate"])
         self.assertIn("2-4 questions", p65["proofGate"])
         self.assertIn("up to six", p65["proofGate"])
         self.assertIn("desired prompt behavior", p65["proofGate"].lower())
