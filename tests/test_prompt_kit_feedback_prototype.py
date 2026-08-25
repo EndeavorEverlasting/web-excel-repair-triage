@@ -104,10 +104,10 @@ class PromptKitFeedbackPrototypeTests(unittest.TestCase):
 
         design = DESIGN.read_text(encoding="utf-8")
         for phrase in (
-            "Favorite: keep this prompt readily accessible",
-            "Semantic usage: the prompt/workflow was actually used/completed",
-            "Like/dislike: explicit quality/usefulness judgment",
-            "Written feedback: qualitative explanation or suggestion",
+            "**Favorite:** keep this prompt readily accessible.",
+            "**Semantic usage:** the prompt/workflow was actually used/completed.",
+            "**Like/dislike:** explicit quality/usefulness judgment.",
+            "**Written feedback:** qualitative explanation or suggestion.",
         ):
             self.assertIn(phrase, design)
         self.assertIn("must not collapse them into one counter", design)
