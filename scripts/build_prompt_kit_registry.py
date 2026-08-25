@@ -37,6 +37,7 @@ POLISH_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-polish.js"
 CORRESPONDENCE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-correspondence.js"
 MANAGEMENT_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-management.js"
 SPEC_ARCHITECTURE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-spec-architecture.js"
+FEEDBACK_PRODUCTION_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-feedback-production.js"
 ACTIONABILITY_POLICY = (
     REPO_ROOT / "registry" / "prompts" / "actionable-next-step-policy.v1.json"
 )
@@ -473,6 +474,9 @@ def render() -> str:
     spec_architecture_script = _read_runtime(
         SPEC_ARCHITECTURE_RUNTIME, "Prompt Kit spec architecture profile behavior"
     )
+    feedback_production_script = _read_runtime(
+        FEEDBACK_PRODUCTION_RUNTIME, "Prompt Kit production feedback behavior"
+    )
     closing = "</body>"
     if closing not in html:
         raise SystemExit("Prompt Kit builder output is missing </body>")
@@ -483,6 +487,7 @@ def render() -> str:
         f"<script>\n{correspondence_script}\n</script>\n"
         f"<script>\n{management_script}\n</script>\n"
         f"<script>\n{spec_architecture_script}\n</script>\n"
+        f"<script>\n{feedback_production_script}\n</script>\n"
     )
     return html.replace(closing, supplemental + closing, 1)
 
