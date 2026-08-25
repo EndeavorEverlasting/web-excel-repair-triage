@@ -48,11 +48,13 @@ class PromptKitOrderNavigationProductTests(unittest.TestCase):
             "activeSection='__favorites__'",
             "id='favoritesShortcut'",
             "data-view','favorites'",
-            "Favorites<span class=\"kbd\">4</span>",
-            "doctrineKbd.textContent='5'",
+            "Favorites<span class=\"kbd\">V</span>",
             "var key=String(e.key||'').toLowerCase();",
-            "if(key==='4')",
-            "if(key==='5')",
+            "if(key==='a')",
+            "if(key==='s')",
+            "if(key==='g')",
+            "if(key==='v')",
+            "if(key==='d')",
             "e.stopImmediatePropagation()",
             "filterPanelToggle",
             "filters-collapsed",
@@ -60,6 +62,14 @@ class PromptKitOrderNavigationProductTests(unittest.TestCase):
             "Show filters ↓",
         ):
             self.assertIn(marker, polish)
+        for retired in (
+            "Favorites<span class=\"kbd\">4</span>",
+            "doctrineKbd.textContent='5'",
+            "if(key==='1')",
+            "if(key==='4')",
+            "if(key==='5')",
+        ):
+            self.assertNotIn(retired, polish)
         self.assertIn(
             ".header.filters-collapsed .search-container,.header.filters-collapsed .header-controls,.header.filters-collapsed .sections-nav,.header.filters-collapsed .type-nav{display:none!important}",
             polish,
