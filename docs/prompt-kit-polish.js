@@ -1,7 +1,15 @@
 (function(){
 'use strict';
 var copyToastTimer=null;
-var PROMPT_KIT_SHORTCUT_STORAGE_KEY='promptKit.promptShortcuts.v1';
+var PROMPT_KIT_PROFILE_STORAGE_KEY='promptKit.activeUserProfile.v1';
+var PROMPT_KIT_PROFILE_CONFIG={
+  profile1:{label:'User Profile 1',favorites:'promptKit.favoritePromptIds.v1',shortcuts:'promptKit.promptShortcuts.v1'},
+  profile2:{label:'User Profile 2',favorites:'promptKit.profile.profile2.favoritePromptIds.v1',shortcuts:'promptKit.profile.profile2.promptShortcuts.v1'}
+};
+var activePromptKitProfile=loadActivePromptKitProfile();
+FAVORITES_STORAGE_KEY=PROMPT_KIT_PROFILE_CONFIG[activePromptKitProfile].favorites;
+favoritePromptIds=loadFavoritePromptIds();
+var PROMPT_KIT_SHORTCUT_STORAGE_KEY=PROMPT_KIT_PROFILE_CONFIG[activePromptKitProfile].shortcuts;
 var PROMPT_KIT_SHORTCUT_SCHEMA='prompt-kit-shortcuts/v1';
 var PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS=1200;
 var promptShortcutBindings=loadPromptShortcutBindings();
@@ -55,6 +63,71 @@ window.copyPrompt=function(id){
   if(p&&p.copyContent)copyToClipboard(p.copyContent,function(){showCopyConfirmation(id)})
 };
 
+function loadActivePromptKitProfile(){
+  try{
+    if(window.localStorage){
+      var stored=window.localStorage.getItem(PROMPT_KIT_PROFILE_STORAGE_KEY);
+      if(stored&&PROMPT_KIT_PROFILE_CONFIG[stored])return stored
+    }
+  }catch(e){}
+  return 'profile1'
+}
+
+function persistActivePromptKitProfile(profileId){
+  try{
+    if(!window.localStorage)throw new Error('localStorage unavailable');
+    window.localStorage.setItem(PROMPT_KIT_PROFILE_STORAGE_KEY,profileId);
+    return true
+  }catch(e){showToast('User profile switch could not be saved');return false}
+}
+
+function setActiveUserProfileButtons(){
+  document.querySelectorAll('[data-profile="profile1"],[data-profile="profile2"]').forEach(function(button){
+    var active=button.dataset.profile===activePromptKitProfile;
+    button.classList.toggle('profile-active',active);
+    button.setAttribute('aria-pressed',active?'true':'false')
+  })
+}
+
+function activateUserProfile(profileId){
+  var target=PROMPT_KIT_PROFILE_CONFIG[profileId];
+  if(!target)return false;
+  if(profileId===activePromptKitProfile){setActiveUserProfileButtons();return true}
+  if(!persistPromptShortcutBindings(promptShortcutBindings))return false;
+  saveFavoritePromptIds();
+  if(!persistActivePromptKitProfile(profileId))return false;
+  activePromptKitProfile=profileId;
+  FAVORITES_STORAGE_KEY=target.favorites;
+  PROMPT_KIT_SHORTCUT_STORAGE_KEY=target.shortcuts;
+  favoritePromptIds=loadFavoritePromptIds();
+  promptShortcutBindings=loadPromptShortcutBindings();
+  resetPromptShortcutBuffer();
+  setActiveUserProfileButtons();
+  renderPromptShortcutBindings();
+  render();
+  showToast(target.label+' active','success');
+  return true
+}
+
+function ensureUserProfileStyles(){
+  if(document.getElementById('prompt-kit-user-profile-styles'))return;
+  var style=document.createElement('style');
+  style.id='prompt-kit-user-profile-styles';
+  style.textContent='.profile-tab.profile-active{border-color:rgba(56,189,248,.72);color:var(--text-primary);box-shadow:inset 0 0 0 1px rgba(56,189,248,.28),0 0 12px rgba(56,189,248,.18)}.hotkey-profile-switcher{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:grid;gap:7px}.hotkey-profile-switcher strong{color:var(--text-primary);font-size:11px}.hotkey-profile-choices{display:grid;grid-template-columns:1fr 1fr;gap:6px}.hotkey-profile-choice{min-height:34px;border:1px solid var(--border);border-radius:7px;background:var(--bg-surface);color:var(--text-secondary);font:inherit;font-size:10px;cursor:pointer}.hotkey-profile-choice.profile-active{border-color:var(--accent);color:var(--text-primary);box-shadow:0 0 0 2px var(--accent-glow)}';
+  document.head.appendChild(style)
+}
+
+function installUserProfileButtons(){
+  document.addEventListener('click',function(e){
+    var target=e.target;
+    if(!target||typeof target.closest!=='function')return;
+    var button=target.closest('.profile-tab[data-profile]');
+    if(!button)return;
+    e.preventDefault();e.stopImmediatePropagation();activateUserProfile(button.dataset.profile)
+  },true);
+  setActiveUserProfileButtons()
+}
+
 function clearTransientPromptFilters(){
   activeType=null;
   activeColor=null;
@@ -86,12 +159,7 @@ function ensureCompactBrowsingControls(){
   var catTabs=document.querySelector('.cat-tabs');
   if(!header||!headerTop||!catTabs)return;
 
-  var doctrineButton=catTabs.querySelector('.cat-tab[data-cat="doctrine"]');
-  if(doctrineButton){
-    var doctrineKbd=doctrineButton.querySelector('.kbd');
-    if(doctrineKbd)doctrineKbd.textContent='5';
-  }
-
+  var profileTwoButton=catTabs.querySelector('.profile-tab[data-profile="profile2"]');
   if(!document.getElementById('favoritesShortcut')){
     var favoritesButton=document.createElement('button');
     favoritesButton.className='cat-tab';
@@ -99,10 +167,12 @@ function ensureCompactBrowsingControls(){
     favoritesButton.type='button';
     favoritesButton.setAttribute('data-view','favorites');
     favoritesButton.setAttribute('aria-label','Show saved favorite prompts');
-    favoritesButton.innerHTML='<span class="tab-icon">★</span>Favorites<span class="kbd">4</span>';
+    favoritesButton.setAttribute('aria-keyshortcuts','V');
+    favoritesButton.innerHTML='<span class="tab-icon">★</span>Favorites<span class="kbd">V</span>';
     favoritesButton.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();activateFavoritesView()});
-    if(doctrineButton)catTabs.insertBefore(favoritesButton,doctrineButton);else catTabs.appendChild(favoritesButton)
+    if(profileTwoButton)catTabs.insertBefore(favoritesButton,profileTwoButton);else catTabs.appendChild(favoritesButton)
   }
+  setActiveUserProfileButtons();
 
   if(!document.getElementById('filterPanelToggle')){
     var toggle=document.createElement('button');
@@ -133,11 +203,11 @@ function installCompactBrowsingViewSwitches(){
 
 var PROMPT_KIT_SHORTCUTS=[
   {key:'`',label:'Show / hide Hotkeys'},
-  {key:'1',label:'All prompts'},
-  {key:'2',label:'Standard prompts'},
-  {key:'3',label:'GNHF prompts'},
-  {key:'4',label:'Favorites'},
-  {key:'5',label:'Doctrine'},
+  {key:'A',label:'All prompts'},
+  {key:'S',label:'Standard prompts'},
+  {key:'G',label:'User Profile 1'},
+  {key:'V',label:'Favorites'},
+  {key:'D',label:'User Profile 2'},
   {key:'/',label:'Focus search'},
   {key:'R',label:'Reference panel'},
   {key:'F',label:'Show / hide filters'},
@@ -393,6 +463,15 @@ function ensureHotkeyHelp(){
   });
   panel.appendChild(list);
 
+  var profileSwitcher=document.createElement('div');
+  profileSwitcher.className='hotkey-profile-switcher';
+  var profileTitle=document.createElement('strong');profileTitle.textContent='User profiles';
+  var profileChoices=document.createElement('div');profileChoices.className='hotkey-profile-choices';
+  [['profile1','User Profile 1','G'],['profile2','User Profile 2','D']].forEach(function(item){
+    var choice=document.createElement('button');choice.type='button';choice.className='hotkey-profile-choice';choice.dataset.profile=item[0];choice.textContent=item[1]+' · '+item[2];choice.setAttribute('aria-keyshortcuts',item[2]);choice.addEventListener('click',function(){activateUserProfile(item[0])});profileChoices.appendChild(choice)
+  });
+  profileSwitcher.appendChild(profileTitle);profileSwitcher.appendChild(profileChoices);panel.appendChild(profileSwitcher);
+
   var config=document.createElement('div');
   config.className='hotkey-shortcut-config';
   var configTitle=document.createElement('strong');
@@ -455,13 +534,15 @@ function installCompactBrowsingHotkeys(){
       e.preventDefault();e.stopImmediatePropagation();setHotkeyHelpOpen(false,true);return
     }
     if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;
-    if(key==='1'){e.preventDefault();e.stopImmediatePropagation();activateAllPromptsView();return}
-    if(key==='4'){e.preventDefault();e.stopImmediatePropagation();activateFavoritesView();return}
-    if(key==='5'){
-      var doctrine=document.querySelector('.cat-tab[data-cat="doctrine"]');
-      if(doctrine){e.preventDefault();e.stopImmediatePropagation();doctrine.click()}
+    if(key==='a'){e.preventDefault();e.stopImmediatePropagation();activateAllPromptsView();return}
+    if(key==='s'){
+      var standard=document.querySelector('.cat-tab[data-cat="standard"]');
+      if(standard){e.preventDefault();e.stopImmediatePropagation();standard.click()}
       return
     }
+    if(key==='g'){e.preventDefault();e.stopImmediatePropagation();activateUserProfile('profile1');return}
+    if(key==='v'){e.preventDefault();e.stopImmediatePropagation();activateFavoritesView();return}
+    if(key==='d'){e.preventDefault();e.stopImmediatePropagation();activateUserProfile('profile2');return}
     if(key==='f'){e.preventDefault();e.stopImmediatePropagation();toggleCompactFilters();return}
     if(key==='['){e.preventDefault();e.stopImmediatePropagation();hideCompactFilters();return}
     if(key===']'){e.preventDefault();e.stopImmediatePropagation();showCompactFilters();return}
@@ -518,8 +599,10 @@ window.appendPromptCard=function(grid,p){
 };
 
 ensurePromptKitPolishStyles();
+ensureUserProfileStyles();
 ensureCompactBrowsingControls();
 ensureHotkeyHelp();
+installUserProfileButtons();
 installCompactBrowsingViewSwitches();
 installCompactBrowsingHotkeys();
 render();

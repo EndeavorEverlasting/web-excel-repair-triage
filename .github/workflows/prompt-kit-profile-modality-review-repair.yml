@@ -1,0 +1,537 @@
+name: Prompt Kit header hotkey profile repair
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/prompt-kit-profile-modality-review-repair.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'design/prompt-kit-profile-modality-seams-20260824'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Apply canonical header hotkey and user-profile repair
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_exact(text: str, old: str, new: str, expected: int = 1) -> str:
+              count = text.count(old)
+              if count != expected:
+                  raise SystemExit(f'expected {expected} copies of {old!r}, observed {count}')
+              return text.replace(old, new)
+
+          # Canonical header markup: numeric navigation is retired. GNHF and Doctrine
+          # remain prompt content/classifications, while their former header slots become
+          # two independently persisted user profiles.
+          path = Path('build_prompt_kit.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''    html.append('        <button class="cat-tab active" data-cat="all"><span class="tab-icon">&#128203;</span>All<span class="kbd">1</span></button>')
+    html.append('        <button class="cat-tab" data-cat="standard"><span class="tab-icon">&#128196;</span>Standard<span class="kbd">2</span></button>')
+    html.append('        <button class="cat-tab" data-cat="gnhf"><span class="tab-icon">&#9733;</span>GNHF<span class="kbd">3</span></button>')
+    html.append('        <button class="cat-tab" data-cat="doctrine"><span class="tab-icon">&#128220;</span>Doctrine<span class="kbd">4</span></button>')'''
+          new = '''    html.append('        <button class="cat-tab active" data-cat="all" aria-keyshortcuts="A"><span class="tab-icon">&#128203;</span>All<span class="kbd">A</span></button>')
+    html.append('        <button class="cat-tab" data-cat="standard" aria-keyshortcuts="S"><span class="tab-icon">&#128196;</span>Standard<span class="kbd">S</span></button>')
+    html.append('        <button class="cat-tab profile-tab" data-profile="profile1" aria-keyshortcuts="G" aria-pressed="true"><span class="tab-icon">&#128100;</span>User Profile 1<span class="kbd">G</span></button>')
+    html.append('        <button class="cat-tab profile-tab" data-profile="profile2" aria-keyshortcuts="D" aria-pressed="false"><span class="tab-icon">&#128101;</span>User Profile 2<span class="kbd">D</span></button>')'''
+          path.write_text(replace_exact(text, old, new), encoding='utf-8')
+
+          # Base runtime owns only the two true library filters. Digits are deliberately
+          # not header commands so P-prefixed prompt IDs can consume every digit safely.
+          path = Path('docs/prompt-kit.js')
+          text = path.read_text(encoding='utf-8')
+          old = "switch(e.key){case'1':activeCat='all';break;case'2':activeCat='standard';break;case'3':activeCat='gnhf';break;case'4':activeCat='doctrine';break;case'r':case'R':toggleRef();return;"
+          new = "switch(e.key){case'a':case'A':activeCat='all';break;case's':case'S':activeCat='standard';break;case'r':case'R':toggleRef();return;"
+          path.write_text(replace_exact(text, old, new), encoding='utf-8')
+
+          # Production polish runtime: profile-scoped Favorites + prompt shortcuts,
+          # letter-only header actions, and profile selectors in both header/help UI.
+          path = Path('docs/prompt-kit-polish.js')
+          text = path.read_text(encoding='utf-8')
+          old = """var copyToastTimer=null;
+var PROMPT_KIT_SHORTCUT_STORAGE_KEY='promptKit.promptShortcuts.v1';
+var PROMPT_KIT_SHORTCUT_SCHEMA='prompt-kit-shortcuts/v1';
+var PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS=1200;
+var promptShortcutBindings=loadPromptShortcutBindings();
+var promptShortcutBuffer='';
+var promptShortcutBufferTimer=null;
+"""
+          new = """var copyToastTimer=null;
+var PROMPT_KIT_PROFILE_STORAGE_KEY='promptKit.activeUserProfile.v1';
+var PROMPT_KIT_PROFILE_CONFIG={
+  profile1:{label:'User Profile 1',favorites:'promptKit.favoritePromptIds.v1',shortcuts:'promptKit.promptShortcuts.v1'},
+  profile2:{label:'User Profile 2',favorites:'promptKit.profile.profile2.favoritePromptIds.v1',shortcuts:'promptKit.profile.profile2.promptShortcuts.v1'}
+};
+var activePromptKitProfile=loadActivePromptKitProfile();
+FAVORITES_STORAGE_KEY=PROMPT_KIT_PROFILE_CONFIG[activePromptKitProfile].favorites;
+favoritePromptIds=loadFavoritePromptIds();
+var PROMPT_KIT_SHORTCUT_STORAGE_KEY=PROMPT_KIT_PROFILE_CONFIG[activePromptKitProfile].shortcuts;
+var PROMPT_KIT_SHORTCUT_SCHEMA='prompt-kit-shortcuts/v1';
+var PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS=1200;
+var promptShortcutBindings=loadPromptShortcutBindings();
+var promptShortcutBuffer='';
+var promptShortcutBufferTimer=null;
+"""
+          text = replace_exact(text, old, new)
+
+          marker = """function clearTransientPromptFilters(){
+"""
+          helpers = """function loadActivePromptKitProfile(){
+  try{
+    if(window.localStorage){
+      var stored=window.localStorage.getItem(PROMPT_KIT_PROFILE_STORAGE_KEY);
+      if(stored&&PROMPT_KIT_PROFILE_CONFIG[stored])return stored
+    }
+  }catch(e){}
+  return 'profile1'
+}
+
+function persistActivePromptKitProfile(profileId){
+  try{
+    if(!window.localStorage)throw new Error('localStorage unavailable');
+    window.localStorage.setItem(PROMPT_KIT_PROFILE_STORAGE_KEY,profileId);
+    return true
+  }catch(e){showToast('User profile switch could not be saved');return false}
+}
+
+function setActiveUserProfileButtons(){
+  document.querySelectorAll('[data-profile="profile1"],[data-profile="profile2"]').forEach(function(button){
+    var active=button.dataset.profile===activePromptKitProfile;
+    button.classList.toggle('profile-active',active);
+    button.setAttribute('aria-pressed',active?'true':'false')
+  })
+}
+
+function activateUserProfile(profileId){
+  var target=PROMPT_KIT_PROFILE_CONFIG[profileId];
+  if(!target)return false;
+  if(profileId===activePromptKitProfile){setActiveUserProfileButtons();return true}
+  if(!persistPromptShortcutBindings(promptShortcutBindings))return false;
+  saveFavoritePromptIds();
+  if(!persistActivePromptKitProfile(profileId))return false;
+  activePromptKitProfile=profileId;
+  FAVORITES_STORAGE_KEY=target.favorites;
+  PROMPT_KIT_SHORTCUT_STORAGE_KEY=target.shortcuts;
+  favoritePromptIds=loadFavoritePromptIds();
+  promptShortcutBindings=loadPromptShortcutBindings();
+  resetPromptShortcutBuffer();
+  setActiveUserProfileButtons();
+  renderPromptShortcutBindings();
+  render();
+  showToast(target.label+' active','success');
+  return true
+}
+
+function ensureUserProfileStyles(){
+  if(document.getElementById('prompt-kit-user-profile-styles'))return;
+  var style=document.createElement('style');
+  style.id='prompt-kit-user-profile-styles';
+  style.textContent='.profile-tab.profile-active{border-color:rgba(56,189,248,.72);color:var(--text-primary);box-shadow:inset 0 0 0 1px rgba(56,189,248,.28),0 0 12px rgba(56,189,248,.18)}.hotkey-profile-switcher{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:grid;gap:7px}.hotkey-profile-switcher strong{color:var(--text-primary);font-size:11px}.hotkey-profile-choices{display:grid;grid-template-columns:1fr 1fr;gap:6px}.hotkey-profile-choice{min-height:34px;border:1px solid var(--border);border-radius:7px;background:var(--bg-surface);color:var(--text-secondary);font:inherit;font-size:10px;cursor:pointer}.hotkey-profile-choice.profile-active{border-color:var(--accent);color:var(--text-primary);box-shadow:0 0 0 2px var(--accent-glow)}';
+  document.head.appendChild(style)
+}
+
+function installUserProfileButtons(){
+  document.addEventListener('click',function(e){
+    var target=e.target;
+    if(!target||typeof target.closest!=='function')return;
+    var button=target.closest('.profile-tab[data-profile]');
+    if(!button)return;
+    e.preventDefault();e.stopImmediatePropagation();activateUserProfile(button.dataset.profile)
+  },true);
+  setActiveUserProfileButtons()
+}
+
+function clearTransientPromptFilters(){
+"""
+          text = replace_exact(text, marker, helpers)
+
+          old = """  var doctrineButton=catTabs.querySelector('.cat-tab[data-cat=\"doctrine\"]');
+  if(doctrineButton){
+    var doctrineKbd=doctrineButton.querySelector('.kbd');
+    if(doctrineKbd)doctrineKbd.textContent='5';
+  }
+
+  if(!document.getElementById('favoritesShortcut')){
+    var favoritesButton=document.createElement('button');
+    favoritesButton.className='cat-tab';
+    favoritesButton.id='favoritesShortcut';
+    favoritesButton.type='button';
+    favoritesButton.setAttribute('data-view','favorites');
+    favoritesButton.setAttribute('aria-label','Show saved favorite prompts');
+    favoritesButton.innerHTML='<span class=\"tab-icon\">★</span>Favorites<span class=\"kbd\">4</span>';
+    favoritesButton.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();activateFavoritesView()});
+    if(doctrineButton)catTabs.insertBefore(favoritesButton,doctrineButton);else catTabs.appendChild(favoritesButton)
+  }
+"""
+          new = """  var profileTwoButton=catTabs.querySelector('.profile-tab[data-profile=\"profile2\"]');
+  if(!document.getElementById('favoritesShortcut')){
+    var favoritesButton=document.createElement('button');
+    favoritesButton.className='cat-tab';
+    favoritesButton.id='favoritesShortcut';
+    favoritesButton.type='button';
+    favoritesButton.setAttribute('data-view','favorites');
+    favoritesButton.setAttribute('aria-label','Show saved favorite prompts');
+    favoritesButton.setAttribute('aria-keyshortcuts','V');
+    favoritesButton.innerHTML='<span class=\"tab-icon\">★</span>Favorites<span class=\"kbd\">V</span>';
+    favoritesButton.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();activateFavoritesView()});
+    if(profileTwoButton)catTabs.insertBefore(favoritesButton,profileTwoButton);else catTabs.appendChild(favoritesButton)
+  }
+  setActiveUserProfileButtons();
+"""
+          text = replace_exact(text, old, new)
+
+          old = """var PROMPT_KIT_SHORTCUTS=[
+  {key:'`',label:'Show / hide Hotkeys'},
+  {key:'1',label:'All prompts'},
+  {key:'2',label:'Standard prompts'},
+  {key:'3',label:'GNHF prompts'},
+  {key:'4',label:'Favorites'},
+  {key:'5',label:'Doctrine'},
+  {key:'/',label:'Focus search'},
+"""
+          new = """var PROMPT_KIT_SHORTCUTS=[
+  {key:'`',label:'Show / hide Hotkeys'},
+  {key:'A',label:'All prompts'},
+  {key:'S',label:'Standard prompts'},
+  {key:'G',label:'User Profile 1'},
+  {key:'V',label:'Favorites'},
+  {key:'D',label:'User Profile 2'},
+  {key:'/',label:'Focus search'},
+"""
+          text = replace_exact(text, old, new)
+
+          old = """  panel.appendChild(list);
+
+  var config=document.createElement('div');
+"""
+          new = """  panel.appendChild(list);
+
+  var profileSwitcher=document.createElement('div');
+  profileSwitcher.className='hotkey-profile-switcher';
+  var profileTitle=document.createElement('strong');profileTitle.textContent='User profiles';
+  var profileChoices=document.createElement('div');profileChoices.className='hotkey-profile-choices';
+  [['profile1','User Profile 1','G'],['profile2','User Profile 2','D']].forEach(function(item){
+    var choice=document.createElement('button');choice.type='button';choice.className='hotkey-profile-choice';choice.dataset.profile=item[0];choice.textContent=item[1]+' · '+item[2];choice.setAttribute('aria-keyshortcuts',item[2]);choice.addEventListener('click',function(){activateUserProfile(item[0])});profileChoices.appendChild(choice)
+  });
+  profileSwitcher.appendChild(profileTitle);profileSwitcher.appendChild(profileChoices);panel.appendChild(profileSwitcher);
+
+  var config=document.createElement('div');
+"""
+          text = replace_exact(text, old, new)
+
+          old = """    if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;
+    if(key==='1'){e.preventDefault();e.stopImmediatePropagation();activateAllPromptsView();return}
+    if(key==='4'){e.preventDefault();e.stopImmediatePropagation();activateFavoritesView();return}
+    if(key==='5'){
+      var doctrine=document.querySelector('.cat-tab[data-cat=\"doctrine\"]');
+      if(doctrine){e.preventDefault();e.stopImmediatePropagation();doctrine.click()}
+      return
+    }
+"""
+          new = """    if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;
+    if(key==='a'){e.preventDefault();e.stopImmediatePropagation();activateAllPromptsView();return}
+    if(key==='s'){
+      var standard=document.querySelector('.cat-tab[data-cat=\"standard\"]');
+      if(standard){e.preventDefault();e.stopImmediatePropagation();standard.click()}
+      return
+    }
+    if(key==='g'){e.preventDefault();e.stopImmediatePropagation();activateUserProfile('profile1');return}
+    if(key==='v'){e.preventDefault();e.stopImmediatePropagation();activateFavoritesView();return}
+    if(key==='d'){e.preventDefault();e.stopImmediatePropagation();activateUserProfile('profile2');return}
+"""
+          text = replace_exact(text, old, new)
+          old = """ensurePromptKitPolishStyles();
+ensureCompactBrowsingControls();
+ensureHotkeyHelp();
+installCompactBrowsingViewSwitches();
+installCompactBrowsingHotkeys();
+"""
+          new = """ensurePromptKitPolishStyles();
+ensureUserProfileStyles();
+ensureCompactBrowsingControls();
+ensureHotkeyHelp();
+installUserProfileButtons();
+installCompactBrowsingViewSwitches();
+installCompactBrowsingHotkeys();
+"""
+          text = replace_exact(text, old, new)
+          path.write_text(text, encoding='utf-8')
+
+          # Replace the stale header owner test with the new fail-closed contract.
+          Path('tests/test_prompt_kit_header_contract.py').write_text(r'''#!/usr/bin/env python3
+from __future__ import annotations
+
+import re
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+DEPLOYED = ROOT / 'web' / 'prompt-kit' / 'index.html'
+README = ROOT / 'web' / 'README.md'
+BUILDER = ROOT / 'build_prompt_kit.py'
+COMBINED_BUILDER = ROOT / 'scripts' / 'build_prompt_kit_registry.py'
+JS = ROOT / 'docs' / 'prompt-kit.js'
+POLISH = ROOT / 'docs' / 'prompt-kit-polish.js'
+HEADER_KEYS = {'A':'All prompts','S':'Standard prompts','G':'User Profile 1','V':'Favorites','D':'User Profile 2'}
+
+
+def read_deployed() -> str:
+    assert DEPLOYED.is_file(), f'missing exact deployed artifact: {DEPLOYED}'
+    return DEPLOYED.read_text(encoding='utf-8')
+
+
+def test_builder_header_replaces_obsolete_slots() -> None:
+    source = BUILDER.read_text(encoding='utf-8')
+    region = source.split("html.append('      <div class=\\\"cat-tabs\\\">')",1)[1].split("html.append('      </div>')",1)[0]
+    expected = [
+        ('data-cat=\\\"all\\\"','All','A'),
+        ('data-cat=\\\"standard\\\"','Standard','S'),
+        ('data-profile=\\\"profile1\\\"','User Profile 1','G'),
+        ('data-profile=\\\"profile2\\\"','User Profile 2','D'),
+    ]
+    positions=[]
+    for marker,label,key in expected:
+        position=region.find(marker); assert position>=0, f'missing {label}'
+        positions.append(position)
+        assert f'>{label}<span class=\\\"kbd\\\">{key}</span>' in region
+    assert positions == sorted(positions)
+    assert 'GNHF<span class=\\\"kbd\\\">' not in region
+    assert 'Doctrine<span class=\\\"kbd\\\">' not in region
+    assert not re.search(r'<span class=\\\"kbd\\\">[1-5]</span>', region)
+
+
+def test_runtime_header_keys_are_single_letters_and_not_prompt_prefix() -> None:
+    source = POLISH.read_text(encoding='utf-8')
+    deployed = read_deployed()
+    for key,label in HEADER_KEYS.items():
+        marker=f"{{key:'{key}',label:'{label}'}}"
+        assert marker in source and marker in deployed
+        assert len(key)==1 and key.upper()!='P'
+    for obsolete in ("{key:'1',label:'All prompts'}","{key:'2',label:'Standard prompts'}","{key:'3',label:'GNHF prompts'}","{key:'4',label:'Favorites'}","{key:'5',label:'Doctrine'}"):
+        assert obsolete not in source
+    assert "aria-keyshortcuts','V'" in source
+    assert "User profiles" in source
+    assert "hotkey-profile-choice" in source
+
+
+def test_digits_are_never_header_navigation() -> None:
+    base = JS.read_text(encoding='utf-8')
+    polish = POLISH.read_text(encoding='utf-8')
+    for digit in '12345':
+        assert f"case'{digit}'" not in base
+        assert f"key==='{digit}'" not in polish
+    assert "case'a':case'A':activeCat='all';break;case's':case'S':activeCat='standard';break;" in base
+    buffered="if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;"
+    assert buffered in polish
+    for marker in ("if(key==='a')","if(key==='s')","if(key==='g')","if(key==='v')","if(key==='d')"):
+        assert marker in polish
+        assert polish.index(buffered) < polish.index(marker)
+
+
+def test_profiles_isolate_favorites_and_shortcuts_while_profile1_preserves_legacy_keys() -> None:
+    source = POLISH.read_text(encoding='utf-8')
+    for marker in (
+        "profile1:{label:'User Profile 1',favorites:'promptKit.favoritePromptIds.v1',shortcuts:'promptKit.promptShortcuts.v1'}",
+        "profile2:{label:'User Profile 2',favorites:'promptKit.profile.profile2.favoritePromptIds.v1',shortcuts:'promptKit.profile.profile2.promptShortcuts.v1'}",
+        "FAVORITES_STORAGE_KEY=target.favorites",
+        "PROMPT_KIT_SHORTCUT_STORAGE_KEY=target.shortcuts",
+        "favoritePromptIds=loadFavoritePromptIds()",
+        "promptShortcutBindings=loadPromptShortcutBindings()",
+        "saveFavoritePromptIds()",
+        "persistPromptShortcutBindings(promptShortcutBindings)",
+    ):
+        assert marker in source
+
+
+def test_gnhf_and_doctrine_content_owners_remain_available() -> None:
+    base = JS.read_text(encoding='utf-8')
+    builder = BUILDER.read_text(encoding='utf-8')
+    assert "p.category==='gnhf'" in base
+    assert 'build_doctrine' in builder
+
+
+def test_readme_matches_header_and_profile_contract() -> None:
+    text=README.read_text(encoding='utf-8')
+    assert 'A / S / G / V / D' in text
+    assert '| `G` | User Profile 1 |' in text
+    assert '| `D` | User Profile 2 |' in text
+    assert '| `V` | Favorites |' in text
+    assert 'Digits are intentionally not header shortcuts' in text
+    assert 'Profile 1 preserves the legacy Favorites and prompt-shortcut keys' in text
+
+
+def test_deployed_artifact_is_current_combined_registry_output() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        rebuilt=Path(tmp)/'index.html'
+        subprocess.run([sys.executable,str(COMBINED_BUILDER),'--output',str(rebuilt)],cwd=ROOT,check=True,capture_output=True,text=True)
+        assert rebuilt.read_bytes()==DEPLOYED.read_bytes()
+
+
+def main() -> None:
+    tests=[test_builder_header_replaces_obsolete_slots,test_runtime_header_keys_are_single_letters_and_not_prompt_prefix,test_digits_are_never_header_navigation,test_profiles_isolate_favorites_and_shortcuts_while_profile1_preserves_legacy_keys,test_gnhf_and_doctrine_content_owners_remain_available,test_readme_matches_header_and_profile_contract,test_deployed_artifact_is_current_combined_registry_output]
+    for test in tests:test()
+    print(f'PASS: {len(tests)} prompt-kit header/profile contracts')
+
+if __name__ == '__main__':main()
+''', encoding='utf-8')
+
+          # Strengthen the focused hotkey regression around the exact live P111 failure.
+          path = Path('tests/test_prompt_kit_hotkey_completion.py')
+          text = path.read_text(encoding='utf-8')
+          text = replace_exact(text, "POLISH = ROOT / \"docs\" / \"prompt-kit-polish.js\"\n", "POLISH = ROOT / \"docs\" / \"prompt-kit-polish.js\"\nBASE_RUNTIME = ROOT / \"docs\" / \"prompt-kit.js\"\n")
+          old = '''    def test_buffered_prompt_sequence_precedes_builtin_digit_dispatch(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        buffered = "if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;"
+        self.assertIn(buffered, source)
+        for built_in in ("if(key==='1')", "if(key==='4')", "if(key==='5')"):
+            self.assertLess(source.index(buffered), source.index(built_in))
+        self.assertIn("var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');", source)
+        self.assertIn("if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)", source)
+'''
+          new = '''    def test_p111_digits_cannot_fall_through_to_header_navigation(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        base = BASE_RUNTIME.read_text(encoding="utf-8")
+        buffered = "if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;"
+        self.assertIn(buffered, source)
+        for digit in "12345":
+            self.assertNotIn(f"if(key==='{digit}')", source)
+            self.assertNotIn(f"case'{digit}'", base)
+        for header in ("if(key==='a')", "if(key==='s')", "if(key==='g')", "if(key==='v')", "if(key==='d')"):
+            self.assertIn(header, source)
+            self.assertLess(source.index(buffered), source.index(header))
+        self.assertIn("var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');", source)
+        self.assertIn("if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)", source)
+'''
+          text = replace_exact(text, old, new)
+          old = '''        for marker in (
+            "Favorite prompt shortcuts",
+            "promptShortcutPromptId",
+            "promptShortcutBindings",
+            "Favorite a prompt, enter its ID",
+            "Save favorite prompt keyboard shortcut",
+        ):
+'''
+          new = '''        for marker in (
+            "Favorite prompt shortcuts",
+            "promptShortcutPromptId",
+            "promptShortcutBindings",
+            "Favorite a prompt, enter its ID",
+            "Save favorite prompt keyboard shortcut",
+            "User profiles",
+            "User Profile 1",
+            "User Profile 2",
+            "hotkey-profile-choice",
+        ):
+'''
+          text = replace_exact(text, old, new)
+          path.write_text(text, encoding='utf-8')
+
+          # Human contract: explain that profiles replace only the obsolete top shortcuts;
+          # GNHF/Doctrine prompt content remains available in the catalog.
+          path = Path('web/README.md')
+          text = path.read_text(encoding='utf-8')
+          text = replace_exact(text, '1. **Library view:** All / Standard / GNHF / Doctrine.', '1. **Header quick controls:** All / Standard / User Profile 1 / Favorites / User Profile 2. GNHF and Doctrine content remains in the prompt catalog; those obsolete top-level shortcuts are no longer navigation destinations.')
+          text = replace_exact(text, 'Use the explicit **Favorites** header view or press **4** to clear the transient search/category/type restrictions and show the complete saved Favorites collection.', 'Use the explicit **Favorites** header view or press **V** to clear the transient search/category/type restrictions and show the complete saved Favorites collection for the active user profile.')
+          old = '''The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference and favorite-prompt shortcut configurator. Select it or press the unmodified **backtick** key (`` ` ``) to toggle it; select outside it, use its close control, or press **Esc** to dismiss it. Backtick joins `1`–`5` as the one-hand core shortcut cluster, while `/` remains dedicated to Focus search.
+
+| Key | Action |
+|---|---|
+| `` ` `` | Show / hide Hotkeys |
+| `/` | Focus search |
+| `1` | All prompts |
+| `2` | Standard prompts |
+| `3` | GNHF prompts |
+| `4` | Favorites |
+| `5` | Doctrine |
+| `R` | Toggle reference panel |
+'''
+          new = '''The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference, user-profile selector, and favorite-prompt shortcut configurator. Select it or press the unmodified **backtick** key (`` ` ``) to toggle it; select outside it, use its close control, or press **Esc** to dismiss it. Header navigation is the single-letter cluster **A / S / G / V / D**; digits are intentionally not header shortcuts so `P` + digits always belongs to prompt-ID shortcut completion. No header shortcut may use `P`.
+
+| Key | Action |
+|---|---|
+| `` ` `` | Show / hide Hotkeys |
+| `/` | Focus search |
+| `A` | All prompts |
+| `S` | Standard prompts |
+| `G` | User Profile 1 |
+| `V` | Favorites |
+| `D` | User Profile 2 |
+| `R` | Toggle reference panel |
+'''
+          text = replace_exact(text, old, new)
+          old = '''A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it receives the next digit before built-in `1`, `4`, or `5` navigation so valid prompt IDs cannot be interrupted; built-in digit shortcuts keep their normal meaning when no sequence is active.
+'''
+          new = '''A configured shortcut is rejected when its target is unknown or not currently a Favorite. Profile 1 preserves the legacy Favorites and prompt-shortcut keys (`promptKit.favoritePromptIds.v1` and `promptKit.promptShortcuts.v1`) so existing operator state survives the upgrade. Profile 2 uses isolated versioned keys. Switching profiles persists the outgoing Favorites/shortcut projection, loads the selected projection, refreshes prompt cards and shortcut rows, and leaves transient browsing/search state shared. Digits are intentionally not header shortcuts: after `P` begins a configured prompt-ID sequence, every following digit is reserved for that sequence rather than leaking into header navigation.
+'''
+          text = replace_exact(text, old, new)
+          old = '''### Header navigation contract
+
+The first three library-view filters are fixed and ordered:
+
+1. All
+2. Standard
+3. GNHF
+
+Their keyboard shortcuts are `1`, `2`, and `3` respectively. The generated base header still carries Doctrine's legacy `4` label before supplemental runtime enhancement. The supplemental polish runtime assigns `4` to Favorites and remaps Doctrine to `5`; the visible Hotkeys module and effective dispatcher must remain aligned without displacing GNHF.
+'''
+          new = '''### Header navigation contract
+
+The top control rail is fixed and ordered as **All / Standard / User Profile 1 / Favorites / User Profile 2** after runtime enhancement. Its hotkeys are **A / S / G / V / D**. All header keys are single letters and **P is reserved exclusively for prompt-ID sequences**; the numeric keys `1`–`5` have no header-navigation meaning.
+
+The third and fifth legacy header destinations (GNHF and Doctrine) are repurposed as User Profile 1 and User Profile 2. This changes only the quick-control surface: GNHF-tagged prompts and Doctrine content remain in the canonical catalog/reference behavior. The two user profiles share the prompt catalog and transient browsing state while keeping Favorites and configured prompt shortcuts isolated. Profile 1 uses the legacy storage keys for backward compatibility.
+'''
+          text = replace_exact(text, old, new)
+          path.write_text(text, encoding='utf-8')
+
+      - name: Regenerate canonical Prompt Kit artifact
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+      - name: Pass 1 targeted validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check docs/prompt-kit.js
+          node --check docs/prompt-kit-polish.js
+          python tests/test_prompt_kit_header_contract.py
+          python -m unittest tests.test_prompt_kit_hotkey_completion tests.test_prompt_kit_profile_modality_prototype -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Pass 2 review and broader Prompt Kit validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -Eq "case'[1-5]'|key==='[1-5]'" docs/prompt-kit.js docs/prompt-kit-polish.js
+          grep -F "User Profile 1" web/prompt-kit/index.html >/dev/null
+          grep -F "User Profile 2" web/prompt-kit/index.html >/dev/null
+          grep -F "Favorites<span class=\"kbd\">V</span>" docs/prompt-kit-polish.js >/dev/null
+          python -m unittest discover -s tests -p 'test_prompt_kit_*.py' -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Commit repaired canonical sources and generated artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/prompt-kit-profile-modality-review-repair.yml
+          git add build_prompt_kit.py docs/prompt-kit.js docs/prompt-kit-polish.js tests/test_prompt_kit_header_contract.py tests/test_prompt_kit_hotkey_completion.py web/README.md web/prompt-kit/index.html
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m "fix(prompt-kit): isolate prompt digits from header hotkeys"
+          git push origin HEAD:design/prompt-kit-profile-modality-seams-20260824

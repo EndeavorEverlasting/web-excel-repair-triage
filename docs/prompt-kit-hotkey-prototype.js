@@ -20,7 +20,7 @@ const isEditableTarget = target => {
 };
 
 class ShortcutPolicy {
-  constructor(reserved = ['`', 'f', '[', ']', '1', '4', '5']) {
+  constructor(reserved = ['`', 'f', '[', ']', 'a', 's', 'g', 'v', 'd']) {
     this.reserved = new Set(reserved.map(normalizeGesture));
   }
   validateBinding(binding, effectiveBindings, promptCatalog) {
@@ -37,21 +37,46 @@ class ShortcutPolicy {
 }
 
 class ShortcutRegistry {
-  constructor({policy, store, promptCatalog, trace}) {
+  constructor({policy, store, promptCatalog, trace, initialBindings = []}) {
     this.policy = policy;
     this.store = store;
     this.promptCatalog = promptCatalog;
     this.trace = trace;
     this.builtIns = new Map([
       ['`', {gesture: '`', command: 'HOTKEY_HELP_TOGGLE'}],
-      ['1', {gesture: '1', command: 'VIEW_ALL'}],
-      ['4', {gesture: '4', command: 'VIEW_FAVORITES'}],
-      ['5', {gesture: '5', command: 'VIEW_DOCTRINE'}],
+      ['a', {gesture: 'a', command: 'VIEW_ALL'}],
+      ['s', {gesture: 's', command: 'VIEW_STANDARD'}],
+      ['g', {gesture: 'g', command: 'ACTIVATE_PROFILE', profileId: 'profile1'}],
+      ['v', {gesture: 'v', command: 'VIEW_FAVORITES'}],
+      ['d', {gesture: 'd', command: 'ACTIVATE_PROFILE', profileId: 'profile2'}],
       ['f', {gesture: 'f', command: 'FILTER_TOGGLE'}],
       ['[', {gesture: '[', command: 'FILTER_HIDE'}],
       [']', {gesture: ']', command: 'FILTER_SHOW'}],
     ]);
     this.userBindings = new Map();
+    let rejected = 0;
+    for (const binding of initialBindings) {
+      try {
+        const candidate = this.policy.validateBinding(binding, this.effectiveBindings(), this.promptCatalog);
+        this.userBindings.set(candidate.gesture, candidate);
+      } catch (error) {
+        rejected += 1;
+        this.trace.push({
+          layer: 'registry',
+          event: 'binding_hydration_rejected',
+          code: error instanceof HotkeyError ? error.code : 'INVALID_PERSISTED_BINDING',
+          gesture: normalizeGesture(binding && binding.gesture),
+        });
+      }
+    }
+    if (initialBindings.length) {
+      this.trace.push({
+        layer: 'registry',
+        event: 'bindings_hydrated',
+        count: this.userBindings.size,
+        rejected,
+      });
+    }
   }
   effectiveBindings() {
     return new Map([...this.builtIns, ...this.userBindings]);
@@ -133,10 +158,17 @@ class ShortcutDispatcher {
     else if (binding.command === 'FILTER_TOGGLE') result = this.filterVisibility.toggle();
     else if (binding.command === 'COPY_REVEAL_PROMPT') result = this.promptNavigator.copyAndReveal(binding.promptId);
     else if (binding.command === 'VIEW_ALL') result = this.viewNavigator.open('all');
+    else if (binding.command === 'VIEW_STANDARD') result = this.viewNavigator.open('standard');
     else if (binding.command === 'VIEW_FAVORITES') result = this.viewNavigator.open('favorites');
-    else if (binding.command === 'VIEW_DOCTRINE') result = this.viewNavigator.open('doctrine');
+    else if (binding.command === 'ACTIVATE_PROFILE') result = this.viewNavigator.open(binding.profileId);
     else throw new HotkeyError('UNKNOWN_COMMAND', binding.command);
-    this.trace.push({layer: 'dispatcher', event: 'dispatched', command: binding.command, promptId: binding.promptId || null});
+    this.trace.push({
+      layer: 'dispatcher',
+      event: 'dispatched',
+      command: binding.command,
+      promptId: binding.promptId || null,
+      profileId: binding.profileId || null,
+    });
     return {handled: true, result};
   }
   consumeBufferedKey(key, bindings) {
@@ -199,10 +231,10 @@ class PromptNavigatorFake {
   }
 }
 
-function buildProgram({promptIds = ['P95'], store = new MemoryStore()} = {}) {
+function buildProgram({promptIds = ['P95'], store = new MemoryStore(), initialBindings = []} = {}) {
   const trace = [];
   const policy = new ShortcutPolicy();
-  const registry = new ShortcutRegistry({policy, store, promptCatalog: new Set(promptIds), trace});
+  const registry = new ShortcutRegistry({policy, store, promptCatalog: new Set(promptIds), trace, initialBindings});
   const filterVisibility = new FilterVisibility(trace);
   const hotkeyHelpVisibility = new HotkeyHelpVisibility(trace);
   const promptNavigator = new PromptNavigatorFake(trace);
@@ -238,30 +270,58 @@ function runSelfTest() {
   program.dispatcher.handleKey({key: 'f'});
   assert(program.filterVisibility.visible === false, 'toggle');
 
+  const headerViews = [
+    ['a', 'all'],
+    ['s', 'standard'],
+    ['g', 'profile1'],
+    ['v', 'favorites'],
+    ['d', 'profile2'],
+  ];
+  for (const [key, view] of headerViews) {
+    assert(program.dispatcher.handleKey({key}).handled, `${key} header command handled`);
+    assert(program.viewNavigator.views.at(-1) === view, `${key} opens ${view}`);
+  }
+  const directHeaderCount = program.viewNavigator.views.length;
+  assert(program.dispatcher.handleKey({key: '1'}).reason === 'NO_MATCH', 'digit 1 has no header meaning');
+  assert(program.dispatcher.handleKey({key: '5'}).reason === 'NO_MATCH', 'digit 5 has no header meaning');
+
   program.registry.configure({gesture: 'p95', command: 'COPY_REVEAL_PROMPT', promptId: 'p95'});
   assert(program.dispatcher.handleKey({key: 'p'}).pending, 'p prefix');
   assert(program.dispatcher.handleKey({key: '9'}).pending, 'p9 prefix');
-  assert(program.dispatcher.handleKey({key: '5'}).handled, 'p95 dispatch must beat built-in 5');
+  assert(program.dispatcher.handleKey({key: '5'}).handled, 'p95 sequence consumes final digit');
   assert(program.promptNavigator.copied[0] === 'P95', 'P95 copied automatically');
   assert(program.promptNavigator.revealed[0] === 'P95', 'P95 revealed');
   assert(program.promptNavigator.detailOpened === false, 'P95 must not open detail');
-  assert(program.viewNavigator.views.length === 0, 'built-in 5 must not steal buffered P95');
+  assert(program.viewNavigator.views.length === directHeaderCount, 'P95 digits cannot activate header commands');
 
   program.registry.configure({gesture: 'p14', command: 'COPY_REVEAL_PROMPT', promptId: 'p14'});
   program.dispatcher.handleKey({key: 'p'});
   program.dispatcher.handleKey({key: '1'});
-  assert(program.dispatcher.handleKey({key: '4'}).handled, 'p14 dispatch must beat built-ins 1 and 4');
+  assert(program.dispatcher.handleKey({key: '4'}).handled, 'p14 dispatch consumes all prompt digits');
   assert(program.promptNavigator.copied[1] === 'P14', 'P14 copied');
   assert(program.promptNavigator.revealed[1] === 'P14', 'P14 revealed');
-  assert(program.viewNavigator.views.length === 0, 'built-in digits must not steal buffered P14');
-  program.dispatcher.handleKey({key: '5'});
-  assert(program.viewNavigator.views[0] === 'doctrine', 'built-in 5 remains active with no sequence buffer');
+  assert(program.viewNavigator.views.length === directHeaderCount, 'P14 digits cannot activate header commands');
 
   const editable = program.dispatcher.handleKey({key: 'p', target: {tagName: 'INPUT'}});
   assert(editable.reason === 'EDITABLE_TARGET', 'editable suppression');
   expectCode('RESERVED_COLLISION', () => program.registry.configure({gesture: '`', command: 'COPY_REVEAL_PROMPT', promptId: 'P95'}));
-  expectCode('RESERVED_COLLISION', () => program.registry.configure({gesture: 'f', command: 'COPY_REVEAL_PROMPT', promptId: 'P95'}));
+  expectCode('RESERVED_COLLISION', () => program.registry.configure({gesture: 'a', command: 'COPY_REVEAL_PROMPT', promptId: 'P95'}));
+  expectCode('RESERVED_COLLISION', () => program.registry.configure({gesture: 'v', command: 'COPY_REVEAL_PROMPT', promptId: 'P95'}));
   expectCode('UNKNOWN_PROMPT', () => program.registry.configure({gesture: 'p999', command: 'COPY_REVEAL_PROMPT', promptId: 'P999'}));
+
+  const hydrated = buildProgram({
+    promptIds: ['P95'],
+    initialBindings: [
+      {gesture: 'p95', command: 'COPY_REVEAL_PROMPT', promptId: 'P95'},
+      {gesture: 'a', command: 'COPY_REVEAL_PROMPT', promptId: 'P95'},
+      {gesture: 'p999', command: 'COPY_REVEAL_PROMPT', promptId: 'P999'},
+    ],
+  });
+  assert(hydrated.registry.userBindings.has('p95'), 'valid persisted binding hydrates');
+  assert(!hydrated.registry.userBindings.has('a'), 'reserved persisted binding is skipped');
+  assert(hydrated.trace.filter(item => item.event === 'binding_hydration_rejected').length === 2, 'invalid persisted bindings are traced and skipped');
+  const hydrationSummary = hydrated.trace.find(item => item.event === 'bindings_hydrated');
+  assert(hydrationSummary && hydrationSummary.count === 1 && hydrationSummary.rejected === 2, 'hydration summary stays truthful');
 
   const failing = buildProgram({promptIds: ['P95'], store: new MemoryStore(true)});
   expectCode('PERSISTENCE_FAILED', () => failing.registry.configure({gesture: 'p95', command: 'COPY_REVEAL_PROMPT', promptId: 'P95'}));
@@ -269,9 +329,28 @@ function runSelfTest() {
 
   return {
     status: 'PASS',
-    success_paths: ['HOTKEY_HELP_TOGGLE', 'FILTER_HIDE', 'FILTER_SHOW', 'FILTER_TOGGLE', 'COPY_REVEAL_PROMPT(P95)', 'COPY_REVEAL_PROMPT(P14)', 'VIEW_DOCTRINE'],
-    failure_paths: ['EDITABLE_TARGET', 'MODIFIED_OR_PREVENTED', 'RESERVED_COLLISION', 'UNKNOWN_PROMPT', 'PERSISTENCE_FAILED'],
-    trace: program.trace,
+    success_paths: [
+      'HOTKEY_HELP_TOGGLE',
+      'FILTER_HIDE',
+      'FILTER_SHOW',
+      'FILTER_TOGGLE',
+      'VIEW_ALL',
+      'VIEW_STANDARD',
+      'ACTIVATE_PROFILE(profile1)',
+      'VIEW_FAVORITES',
+      'ACTIVATE_PROFILE(profile2)',
+      'COPY_REVEAL_PROMPT(P95)',
+      'COPY_REVEAL_PROMPT(P14)',
+    ],
+    failure_paths: [
+      'EDITABLE_TARGET',
+      'MODIFIED_OR_PREVENTED',
+      'RESERVED_COLLISION',
+      'UNKNOWN_PROMPT',
+      'PERSISTENCE_FAILED',
+      'HYDRATION_REJECTED',
+    ],
+    trace: [...program.trace, ...hydrated.trace],
   };
 }
 

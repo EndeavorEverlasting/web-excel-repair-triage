@@ -58,7 +58,7 @@ For the full current workflow—including the direct **P83** path when another a
 
 There are three separate browsing layers:
 
-1. **Library view:** All / Standard / GNHF / Doctrine.
+1. **Header quick controls:** All / Standard / User Profile 1 / Favorites / User Profile 2. GNHF and Doctrine content remains in the prompt catalog; those obsolete top-level shortcuts are no longer navigation destinations.
 2. **Category:** All Categories, Foundation, Discover & Plan, Build & Repair, Validate & Protect, Integrate & Ship, or Autonomy & Night Shift.
 3. **Type:** All Types or one concrete prompt type.
 
@@ -89,7 +89,7 @@ The current browser stores Favorites under `promptKit.favoritePromptIds.v1`. The
 
 - Select the star on any prompt card to save or remove it.
 - Favorites remain in the normal chronological/numeric library order by default; saving a Favorite does not promote that prompt ahead of the ordinary library.
-- Use the explicit **Favorites** header view or press **4** to clear the transient search/category/type restrictions and show the complete saved Favorites collection.
+- Use the explicit **Favorites** header view or press **V** to clear the transient search/category/type restrictions and show the complete saved Favorites collection for the active user profile.
 - A favorited prompt still renders once; Favorites are stored user state, not a second prompt registry.
 - **Export Favorites** downloads a portable JSON backup using schema `prompt-kit-favorites/v1`.
 - **Import Favorites** validates, normalizes, deduplicates, and merges a backup without deleting Favorites already saved in the current browser.
@@ -155,17 +155,17 @@ These remain touch-usable and do not reset library view, category, type, search 
 
 ### Hotkeys
 
-The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference and favorite-prompt shortcut configurator. Select it or press the unmodified **backtick** key (`` ` ``) to toggle it; select outside it, use its close control, or press **Esc** to dismiss it. Backtick joins `1`–`5` as the one-hand core shortcut cluster, while `/` remains dedicated to Focus search.
+The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference, user-profile selector, and favorite-prompt shortcut configurator. Select it or press the unmodified **backtick** key (`` ` ``) to toggle it; select outside it, use its close control, or press **Esc** to dismiss it. Header navigation is the single-letter cluster **A / S / G / V / D**; digits are intentionally not header shortcuts so `P` + digits always belongs to prompt-ID shortcut completion. No header shortcut may use `P`.
 
 | Key | Action |
 |---|---|
 | `` ` `` | Show / hide Hotkeys |
 | `/` | Focus search |
-| `1` | All prompts |
-| `2` | Standard prompts |
-| `3` | GNHF prompts |
-| `4` | Favorites |
-| `5` | Doctrine |
+| `A` | All prompts |
+| `S` | Standard prompts |
+| `G` | User Profile 1 |
+| `V` | Favorites |
+| `D` | User Profile 2 |
 | `R` | Toggle reference panel |
 | `F` | Show / hide filters |
 | `[` | Hide filters |
@@ -176,19 +176,15 @@ The glowing **Hotkeys** module beside the floating reference control is the in-p
 
 Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prompt first, enter its canonical ID such as `P95`, and save it; the persisted binding is then the lower-case prompt ID (`p95`). Typed prompt sequences expire after 1.2 seconds and are ignored in editable fields. Completing a configured sequence clears the transient restrictions needed to reveal the target, scrolls the canonical prompt card into view, and copies the canonical prompt through the normal copy path **without opening prompt detail**. The Hotkeys panel labels configured rows as **Copy + reveal P##**.
 
-A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it receives the next digit before built-in `1`, `4`, or `5` navigation so valid prompt IDs cannot be interrupted; built-in digit shortcuts keep their normal meaning when no sequence is active.
+A configured shortcut is rejected when its target is unknown or not currently a Favorite. Profile 1 preserves the legacy Favorites and prompt-shortcut keys (`promptKit.favoritePromptIds.v1` and `promptKit.promptShortcuts.v1`) so existing operator state survives the upgrade. Profile 2 uses isolated versioned keys. Switching profiles persists the outgoing Favorites/shortcut projection, loads the selected projection, refreshes prompt cards and shortcut rows, and leaves transient browsing/search state shared. Digits are intentionally not header shortcuts: after `P` begins a configured prompt-ID sequence, every following digit is reserved for that sequence rather than leaking into header navigation.
 
 Navigation shortcuts are ignored while typing in an input, textarea, select, or content-editable surface. Modified backtick chords are ignored. Top/bottom scrolling respects reduced-motion preferences.
 
 ### Header navigation contract
 
-The first three library-view filters are fixed and ordered:
+The top control rail is fixed and ordered as **All / Standard / User Profile 1 / Favorites / User Profile 2** after runtime enhancement. Its hotkeys are **A / S / G / V / D**. All header keys are single letters and **P is reserved exclusively for prompt-ID sequences**; the numeric keys `1`–`5` have no header-navigation meaning.
 
-1. All
-2. Standard
-3. GNHF
-
-Their keyboard shortcuts are `1`, `2`, and `3` respectively. The generated base header still carries Doctrine's legacy `4` label before supplemental runtime enhancement. The supplemental polish runtime assigns `4` to Favorites and remaps Doctrine to `5`; the visible Hotkeys module and effective dispatcher must remain aligned without displacing GNHF.
+The third and fifth legacy header destinations (GNHF and Doctrine) are repurposed as User Profile 1 and User Profile 2. This changes only the quick-control surface: GNHF-tagged prompts and Doctrine content remain in the canonical catalog/reference behavior. The two user profiles share the prompt catalog and transient browsing state while keeping Favorites and configured prompt shortcuts isolated. Profile 1 uses the legacy storage keys for backward compatibility.
 
 ### Validation
 
