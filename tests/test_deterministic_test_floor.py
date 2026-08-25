@@ -35,11 +35,35 @@ class DeterministicTestFloorTests(unittest.TestCase):
         self.assertEqual(self.manifest["python_version"], "3.11")
         self.assertEqual(self.manifest["dependency_file"], "requirements-test-floor.txt")
         self.assertGreater(len(self.manifest["self_tests"]), 0)
+        self.assertGreater(len(self.manifest["prompt_semantic_test_globs"]), 0)
         self.assertGreater(len(self.manifest["artifact_imports"]), 0)
         self.assertGreater(len(self.manifest["artifact_tests"]), 0)
         self.assertTrue(TEST_REQUIREMENTS.is_file())
         for rel in self.manifest["compile_targets"] + self.manifest["self_tests"] + self.manifest["artifact_tests"]:
             self.assertTrue((REPO_ROOT / rel).exists(), rel)
+
+    def test_prompt_semantic_convention_is_fully_registered_without_duplicate_skill_owner(self) -> None:
+        discovered: set[str] = set()
+        for pattern in self.manifest["prompt_semantic_test_globs"]:
+            matches = {
+                path.relative_to(REPO_ROOT).as_posix()
+                for path in REPO_ROOT.glob(pattern)
+                if path.is_file()
+            }
+            self.assertTrue(matches, f"prompt semantic glob matched no tests: {pattern}")
+            discovered.update(matches)
+
+        excludes = set(self.manifest["prompt_semantic_test_excludes"])
+        self.assertEqual(len(excludes), len(self.manifest["prompt_semantic_test_excludes"]))
+        self.assertTrue(excludes.issubset(discovered))
+        discovered.difference_update(excludes)
+
+        registered = set(self.manifest["self_tests"])
+        registered.remove("tests/test_deterministic_test_floor.py")
+        self.assertEqual(discovered, registered)
+        self.assertIn("tests/test_afk_deterministic_testing_prompt.py", registered)
+        self.assertIn("tests/test_test_floor_evolution_prompt.py", registered)
+        self.assertNotIn("tests/test_skill_prompt_registry.py", registered)
 
     def test_direct_test_dependencies_are_exact_and_cover_product_requirements(self) -> None:
         test_lines = [
@@ -197,18 +221,22 @@ SKIPPED [1] tests/test_three.py:30: Real roster log not present
         self.assertNotIn("tests/test_nw_prj_neuron_track_hours.py", workflow)
         self.assertNotIn("tests.test_harness_contract", workflow)
 
-    def test_workflow_negative_canary_uses_earliest_real_generated_parity_blocker(self) -> None:
+    def test_workflow_negative_canary_uses_current_manifest_owned_failure_gate(self) -> None:
         workflow = FLOOR_WORKFLOW.read_text(encoding="utf-8")
         expected = self.manifest["required_canary_failure"]
-        self.assertEqual(expected, "validator:skill-prompt-registry-tests")
+        self.assertEqual(expected, "test-floor-self-tests")
         manifest, validators = floor.load_contract(MANIFEST)
         labels = [label for label, _ in floor.build_steps(manifest, validators)]
+        self.assertIn(expected, labels)
+        self.assertLess(labels.index(expected), labels.index("validator:skill-prompt-registry-tests"))
         self.assertLess(labels.index(expected), labels.index("validator:prompt-kit-parity"))
         self.assertIn("web/prompt-kit/index.html", workflow)
         self.assertIn("negative-canary-report.json", workflow)
-        self.assertIn(expected, workflow)
+        self.assertIn("harness/test-floor.v1.json", workflow)
+        self.assertIn("manifest['required_canary_failure']", workflow)
         self.assertIn("earliest registered failure gate", workflow)
         self.assertIn("if [ \"$status\" -eq 0 ]; then", workflow)
+        self.assertNotIn("expected = 'validator:skill-prompt-registry-tests'", workflow)
 
 
 if __name__ == "__main__":
