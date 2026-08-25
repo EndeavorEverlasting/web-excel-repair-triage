@@ -75,55 +75,82 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-          workflow = Path('.github/workflows/prompt-kit-profile-modality-review-repair.yml').read_text(encoding='utf-8')
-          anchor = '      - name: Apply canonical header hotkey and user-profile repair\n'
-          start = workflow.index(anchor) + len(anchor)
-          start = workflow.index('        run: |\n', start) + len('        run: |\n')
-          end = workflow.index('      - name: Regenerate canonical Prompt Kit artifact\n', start)
-          lines = workflow[start:end].splitlines()
-          script = '\n'.join(line[10:] if line.startswith('          ') else line for line in lines)
-          namespace = {}
-          try:
-              exec(compile(script, 'prompt-kit-header-repair.py', 'exec'), namespace)
-          except SystemExit as exc:
-              expected = 'test_buffered_prompt_sequence_precedes_builtin_digit_dispatch'
-              if expected not in str(exc):
-                  raise
-              path = Path('tests/test_prompt_kit_hotkey_completion.py')
+
+          builder_source = Path('build_prompt_kit.py').read_text(encoding='utf-8')
+          polish_source = Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
+          already_applied = (
+              'data-profile="profile1"' in builder_source
+              and "{key:'A',label:'All prompts'}" in polish_source
+              and "{key:'D',label:'User Profile 2'}" in polish_source
+          )
+
+          if already_applied:
+              print('canonical header/profile repair already present; validation-only pass')
+          else:
+              workflow = Path('.github/workflows/prompt-kit-profile-modality-review-repair.yml').read_text(encoding='utf-8')
+              anchor = '      - name: Apply canonical header hotkey and user-profile repair\n'
+              start = workflow.index(anchor) + len(anchor)
+              start = workflow.index('        run: |\n', start) + len('        run: |\n')
+              end = workflow.index('      - name: Regenerate canonical Prompt Kit artifact\n', start)
+              lines = workflow[start:end].splitlines()
+              script = '\n'.join(line[10:] if line.startswith('          ') else line for line in lines)
+              namespace = {}
+              try:
+                  exec(compile(script, 'prompt-kit-header-repair.py', 'exec'), namespace)
+              except SystemExit as exc:
+                  expected = 'test_buffered_prompt_sequence_precedes_builtin_digit_dispatch'
+                  if expected not in str(exc):
+                      raise
+                  path = Path('tests/test_prompt_kit_hotkey_completion.py')
+                  text = path.read_text(encoding='utf-8')
+                  if 'BASE_RUNTIME = ROOT / "docs" / "prompt-kit.js"' not in text:
+                      text = text.replace(
+                          'POLISH = ROOT / "docs" / "prompt-kit-polish.js"\n',
+                          'POLISH = ROOT / "docs" / "prompt-kit-polish.js"\nBASE_RUNTIME = ROOT / "docs" / "prompt-kit.js"\n',
+                          1,
+                      )
+                  function_start = text.index('    def test_buffered_prompt_sequence_precedes_builtin_digit_dispatch(self) -> None:\n')
+                  function_end = text.index('\n    def test_executable_prototype_proves_success_failure_and_digit_collision_paths', function_start)
+                  replacement = '''    def test_p111_digits_cannot_fall_through_to_header_navigation(self) -> None:
+                      source = POLISH.read_text(encoding="utf-8")
+                      base = BASE_RUNTIME.read_text(encoding="utf-8")
+                      buffered = "if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;"
+                      self.assertIn(buffered, source)
+                      for digit in "12345":
+                          self.assertNotIn(f"if(key==='{digit}')", source)
+                          self.assertNotIn(f"case'{digit}'", base)
+                      for header in ("if(key==='a')", "if(key==='s')", "if(key==='g')", "if(key==='v')", "if(key==='d')"):
+                          self.assertIn(header, source)
+                          self.assertLess(source.index(buffered), source.index(header))
+                      self.assertIn("var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');", source)
+                      self.assertIn("if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)", source)
+                  '''
+                  text = text[:function_start] + replacement + text[function_end:]
+                  marker = '            "Save favorite prompt keyboard shortcut",\n'
+                  if '            "User profiles",\n' not in text:
+                      text = text.replace(
+                          marker,
+                          marker + '            "User profiles",\n            "User Profile 1",\n            "User Profile 2",\n            "hotkey-profile-choice",\n',
+                          1,
+                      )
+                  path.write_text(text, encoding='utf-8')
+                  remaining_start = script.index('# Human contract: explain that profiles replace only the obsolete top shortcuts;')
+                  exec(compile(script[remaining_start:], 'prompt-kit-header-repair-readme.py', 'exec'), namespace)
+
+              # The first sprint pass exposed that the generated header test searched
+              # for literal backslashes rather than the source's HTML marker. Bound the
+              # region by semantic substrings instead so quoting style cannot reintroduce
+              # the false negative.
+              path = Path('tests/test_prompt_kit_header_contract.py')
               text = path.read_text(encoding='utf-8')
-              if 'BASE_RUNTIME = ROOT / "docs" / "prompt-kit.js"' not in text:
-                  text = text.replace(
-                      'POLISH = ROOT / "docs" / "prompt-kit-polish.js"\n',
-                      'POLISH = ROOT / "docs" / "prompt-kit-polish.js"\nBASE_RUNTIME = ROOT / "docs" / "prompt-kit.js"\n',
-                      1,
-                  )
-              function_start = text.index('    def test_buffered_prompt_sequence_precedes_builtin_digit_dispatch(self) -> None:\n')
-              function_end = text.index('\n    def test_executable_prototype_proves_success_failure_and_digit_collision_paths', function_start)
-              replacement = '''    def test_p111_digits_cannot_fall_through_to_header_navigation(self) -> None:
-                  source = POLISH.read_text(encoding="utf-8")
-                  base = BASE_RUNTIME.read_text(encoding="utf-8")
-                  buffered = "if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;"
-                  self.assertIn(buffered, source)
-                  for digit in "12345":
-                      self.assertNotIn(f"if(key==='{digit}')", source)
-                      self.assertNotIn(f"case'{digit}'", base)
-                  for header in ("if(key==='a')", "if(key==='s')", "if(key==='g')", "if(key==='v')", "if(key==='d')"):
-                      self.assertIn(header, source)
-                      self.assertLess(source.index(buffered), source.index(header))
-                  self.assertIn("var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');", source)
-                  self.assertIn("if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)", source)
-              '''
-              text = text[:function_start] + replacement + text[function_end:]
-              marker = '            "Save favorite prompt keyboard shortcut",\n'
-              if '            "User profiles",\n' not in text:
-                  text = text.replace(
-                      marker,
-                      marker + '            "User profiles",\n            "User Profile 1",\n            "User Profile 2",\n            "hotkey-profile-choice",\n',
-                      1,
-                  )
+              function_start = text.index('def test_builder_header_replaces_obsolete_slots() -> None:\n')
+              region_start = text.index('    region = ', function_start)
+              region_end = text.index('\n', region_start)
+              replacement = '''    start = source.index('<div class="cat-tabs">')
+              end = source.index("html.append('      </div>')", start)
+              region = source[start:end]'''
+              text = text[:region_start] + replacement + text[region_end:]
               path.write_text(text, encoding='utf-8')
-              remaining_start = script.index('# Human contract: explain that profiles replace only the obsolete top shortcuts;')
-              exec(compile(script[remaining_start:], 'prompt-kit-header-repair-readme.py', 'exec'), namespace)
 
       - name: Regenerate canonical Prompt Kit artifact
         if: github.event_name == 'pull_request'
@@ -165,6 +192,9 @@ jobs:
           git add build_prompt_kit.py docs/prompt-kit.js docs/prompt-kit-polish.js tests/test_prompt_kit_header_contract.py tests/test_prompt_kit_hotkey_completion.py web/README.md web/prompt-kit/index.html
           git diff --cached --check
           git diff --cached --stat
-          test -n "$(git diff --cached --name-only)"
+          if git diff --cached --quiet; then
+            echo "validated source/artifact already committed; no mutation required"
+            exit 0
+          fi
           git commit -m "fix(prompt-kit): isolate prompt digits from header hotkeys"
           git push origin HEAD:design/prompt-kit-profile-modality-seams-20260824
