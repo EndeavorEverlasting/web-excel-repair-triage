@@ -226,7 +226,8 @@ class SkillPromptRegistryTests(unittest.TestCase):
         content = prompt["copyContent"]
         for phrase in (
             "Ask one concise question at a time",
-            "ask no more than four questions",
+            "Default to 2-4 questions",
+            "continue up to six only when materially different primary routes are still plausible",
             "recommend exactly one primary prompt",
             "up to two optional follow-on prompts",
             "Do not invent prompt IDs",
