@@ -21,26 +21,36 @@ def png_size(path: Path) -> tuple[int, int]:
 
 
 class PromptKitPagesContractTests(unittest.TestCase):
-    def test_pages_workflow_builds_mobile_launcher_and_canonical_prompt_kit(self):
+    def test_pages_workflow_is_exact_candidate_validation_then_promotion(self):
         text = WORKFLOW.read_text(encoding="utf-8")
         required = (
             "name: Prompt Kit GitHub Pages",
             "branches: [main]",
             "workflow_dispatch:",
-            "fetch-depth: 0",
-            "git diff --check",
+            "ref: ${{ github.event.pull_request.head.sha || github.sha }}",
+            "persist-credentials: false",
+            "git merge-base --is-ancestor origin/main HEAD",
+            "name: Harness E2E gate",
+            "python scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
+            "name: Explicit feedback contract gate",
+            "name: Application browser E2E gate",
+            "bash scripts/run_prompt_kit_browser_e2e.sh",
+            "name: Release identity gate",
             "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
             'python scripts/build_prompt_kit_registry.py --output "$SITE_ROOT/prompt-kit/index.html"',
-            'cp -R web/prompt-kit-mobile/. "$SITE_ROOT/"',
             'cmp "$SITE_ROOT/prompt-kit/index.html" web/prompt-kit/index.html',
-            "web/prompt-kit-mobile/**",
-            "OPEN_PROMPT_KIT_ON_PHONE.md",
+            "write_prompt_kit_promotion_receipt.py",
+            "if: github.event_name == 'push' && github.ref == 'refs/heads/main'",
+            "name: Prove deployed canonical bytes",
+            "cmp deployed-prompt-kit.html web/prompt-kit/index.html",
         )
         for marker in required:
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)
+        self.assertNotIn("continue-on-error", text)
+        self.assertNotIn("contents: write", text)
 
-    def test_pages_workflow_uses_github_pages_permissions_and_actions(self):
+    def test_pages_workflow_uses_least_privilege_deploy_permissions(self):
         text = WORKFLOW.read_text(encoding="utf-8")
         required = (
             "contents: read",
@@ -50,11 +60,11 @@ class PromptKitPagesContractTests(unittest.TestCase):
             "actions/configure-pages@v5",
             "actions/upload-pages-artifact@v4",
             "actions/deploy-pages@v4",
-            "if: github.event_name != 'pull_request'",
         )
         for marker in required:
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)
+        self.assertIn("needs: [validate, package]", text)
 
     def test_existing_access_guide_retains_public_prompt_surface(self):
         text = ACCESS_GUIDE.read_text(encoding="utf-8")

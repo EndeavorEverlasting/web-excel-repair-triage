@@ -2,59 +2,63 @@ name: Prompt Kit GitHub Pages
 
 on:
   pull_request:
-    paths:
-      - OPEN_PROMPT_KIT_ON_PHONE.md
-      - PROMPT_KIT_ACCESS.md
-      - build_prompt_kit.py
-      - scripts/build_prompt_kit_registry.py
-      - registry/prompts/**
-      - docs/prompt-kit.js
-      - docs/prompts.json
-      - docs/reference.json
-      - web/prompt-kit/index.html
-      - web/prompt-kit-mobile/**
-      - tests/test_prompt_kit_pages.py
-      - .github/workflows/prompt-kit-pages.yml
   push:
     branches: [main]
-    paths:
-      - OPEN_PROMPT_KIT_ON_PHONE.md
-      - PROMPT_KIT_ACCESS.md
-      - build_prompt_kit.py
-      - scripts/build_prompt_kit_registry.py
-      - registry/prompts/**
-      - docs/prompt-kit.js
-      - docs/prompts.json
-      - docs/reference.json
-      - web/prompt-kit/index.html
-      - web/prompt-kit-mobile/**
-      - tests/test_prompt_kit_pages.py
-      - .github/workflows/prompt-kit-pages.yml
   workflow_dispatch:
 
 concurrency:
-  group: prompt-kit-pages
+  group: prompt-kit-pages-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout exact candidate
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
           fetch-depth: 0
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Verify exact candidate and current main floor
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          test -n "$(git rev-parse origin/main)"
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            git merge-base --is-ancestor origin/main HEAD
+          fi
+          echo "candidate sha=$(git rev-parse HEAD)"
+          echo "main floor=$(git rev-parse origin/main)"
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Compile Pages contract
-        run: python -m py_compile scripts/build_prompt_kit_registry.py tests/test_prompt_kit_pages.py
-      - name: Validate Pages publishing contract
+      - name: Harness E2E gate
+        run: |
+          python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
+          python -m unittest tests.test_harness_contract -v
+      - name: Explicit feedback contract gate
+        run: |
+          node --check docs/prompt-kit-feedback-prototype.js
+          node docs/prompt-kit-feedback-prototype.js > Outputs/prompt-kit-feedback-prototype.json
+          python -m unittest tests.test_prompt_kit_feedback_prototype tests.test_prompt_kit_feedback_production -v
+          python scripts/prompt_kit_feedback_hook.py --input feedback/inbox --output Outputs/prompt-kit-feedback-maintenance.json
+      - name: Promotion fail-closed regression gate
+        run: python -m unittest tests.test_prompt_kit_promotion_pipeline -v
+      - name: Validate exact checked-in Prompt Kit
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Application browser E2E gate
+        run: bash scripts/run_prompt_kit_browser_e2e.sh | tee Outputs/prompt-kit-browser-e2e.json
+      - name: Release identity gate
+        run: python scripts/validate_prompt_kit_release_identity.py --output Outputs/prompt-kit-release-identity.json --summary
+      - name: Pages contract gate
         run: python -m unittest tests.test_prompt_kit_pages -v
       - name: Validate committed patch hygiene
         shell: bash
@@ -67,14 +71,33 @@ jobs:
           else
             git diff --check HEAD^..HEAD
           fi
-      - name: Validate exact checked-in Prompt Kit
-        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Upload validation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-validation-${{ github.event.pull_request.head.sha || github.sha }}
+          path: Outputs/
+          if-no-files-found: error
+          retention-days: 14
+
+  package:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
       - name: Build Pages bundle from canonical registry
         env:
           SITE_ROOT: ${{ runner.temp }}/prompt-kit-pages
         run: |
           set -euo pipefail
-          mkdir -p "$SITE_ROOT/prompt-kit"
+          mkdir -p "$SITE_ROOT/prompt-kit" Outputs
           python scripts/build_prompt_kit_registry.py --output "$SITE_ROOT/prompt-kit/index.html"
           cp -R web/prompt-kit-mobile/. "$SITE_ROOT/"
           test -s "$SITE_ROOT/index.html"
@@ -85,17 +108,33 @@ jobs:
           test -s "$SITE_ROOT/qr-prompt-kit.png"
           test -s "$SITE_ROOT/prompt-kit/index.html"
           cmp "$SITE_ROOT/prompt-kit/index.html" web/prompt-kit/index.html
+          (cd "$SITE_ROOT" && find . -type f -print0 | sort -z | xargs -0 sha256sum) > Outputs/prompt-kit-pages-manifest.sha256
+      - name: Write exact-candidate promotion receipt
+        env:
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: python scripts/write_prompt_kit_promotion_receipt.py --candidate "$CANDIDATE_SHA" --base "$BASE_SHA" --target github-pages --output Outputs/prompt-kit-promotion-receipt.json
+      - name: Upload promotion evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-promotion-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            Outputs/prompt-kit-promotion-receipt.json
+            Outputs/prompt-kit-pages-manifest.sha256
+          if-no-files-found: error
+          retention-days: 30
       - name: Configure GitHub Pages
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/configure-pages@v5
       - name: Upload GitHub Pages artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v4
         with:
           path: ${{ runner.temp }}/prompt-kit-pages
 
   deploy:
-    if: github.event_name != 'pull_request'
-    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [validate, package]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -104,7 +143,33 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy Prompt Kit to GitHub Pages
+      - name: Deploy exact validated Prompt Kit artifact
         id: deployment
         uses: actions/deploy-pages@v4
+
+  post-deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout deployed candidate
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Prove deployed canonical bytes
+        shell: bash
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          test -n "$PAGE_URL"
+          curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors "${PAGE_URL}prompt-kit/" --output deployed-prompt-kit.html
+          cmp deployed-prompt-kit.html web/prompt-kit/index.html
+          echo "deployed_sha=${GITHUB_SHA}"
+          echo "page_url=${PAGE_URL}prompt-kit/"
