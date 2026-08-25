@@ -30,7 +30,7 @@ PR / main push
 
 **Application E2E** is separate. `scripts/run_prompt_kit_browser_e2e.sh` serves the real `web/prompt-kit/index.html` entrypoint and loads it in headless Chrome/Chromium. If a browser executable is unavailable, the required job fails with `APPLICATION_E2E_BLOCKED`; it is not downgraded to a synthetic PASS.
 
-Focused Node/Python tests exercise feedback persistence, replacement semantics, cursor behavior, strict imported-event validation, out-of-order vote handling, and promotion fail-closed paths. Those tests complement rather than replace the browser E2E gate.
+Focused Node/Python tests exercise feedback persistence, replacement semantics, cursor behavior, strict imported-event validation, out-of-order vote handling, corrupt-storage handling, canonical prompt identity enforcement, and promotion fail-closed paths. Those tests complement rather than replace the browser E2E gate.
 
 ## Candidate and artifact identity
 
@@ -42,11 +42,11 @@ Pull-request validation checks out `${{ github.event.pull_request.head.sha }}` d
 
 Validation and scheduled feedback processing use `contents: read`. Only the Pages deploy job receives `pages: write` and `id-token: write`, and only on a push to `main`. Pull requests and manual dispatches can validate/package but cannot deploy. No durable promotion workflow has repository-content write permission.
 
-The feedback maintenance hook is read-only. It consumes explicitly ingested `prompt-feedback-export/v1` batches and may emit `REVIEW_CANDIDATE`; it has no prompt-registry or source mutation authority.
+The feedback maintenance hook is read-only. It consumes explicitly ingested `prompt-feedback-export/v1` batches and may emit `REVIEW_CANDIDATE`; it has no prompt-registry or source mutation authority. Imported prompt identities must resolve through the canonical Prompt Kit registry, so arbitrary or stale identities fail closed instead of polluting maintenance evidence.
 
 ## Feedback persistence boundary
 
-The static GitHub Pages client keeps append-only feedback history in browser `localStorage`. It does not embed a repository credential or make a repository-write network request. If browser storage cannot accept the complete append-only history, the write fails closed with `FEEDBACK_STORAGE_FULL` rather than silently deleting older events.
+The static GitHub Pages client keeps append-only feedback history in browser `localStorage`. It does not embed a repository credential or make a repository-write network request. If browser storage cannot accept the complete append-only history, the write fails closed with `FEEDBACK_STORAGE_FULL` rather than silently deleting older events. If stored feedback JSON is malformed or corrupted, reads and subsequent writes fail closed with `FEEDBACK_STORAGE_CORRUPT`; the client does not reinterpret corruption as an empty history and overwrite it.
 
 Cross-device or server-side automatic feedback ingestion requires a separately authorized backend identity. Until such an owner exists, the supported trust boundary is explicit browser export followed by repository-side ingestion.
 
