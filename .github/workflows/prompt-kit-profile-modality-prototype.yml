@@ -137,19 +137,35 @@ jobs:
                   remaining_start = script.index('# Human contract: explain that profiles replace only the obsolete top shortcuts;')
                   exec(compile(script[remaining_start:], 'prompt-kit-header-repair-readme.py', 'exec'), namespace)
 
-              # The first sprint pass exposed that the generated header test searched
-              # for literal backslashes rather than the source's HTML marker. Bound the
-              # region by semantic substrings instead so quoting style cannot reintroduce
-              # the false negative.
+              # Replace the whole generated builder-header assertion with semantic
+              # source literals. This avoids false negatives from Python-string escaping.
               path = Path('tests/test_prompt_kit_header_contract.py')
               text = path.read_text(encoding='utf-8')
               function_start = text.index('def test_builder_header_replaces_obsolete_slots() -> None:\n')
-              region_start = text.index('    region = ', function_start)
-              region_end = text.index('\n', region_start)
-              replacement = '''    start = source.index('<div class="cat-tabs">')
-              end = source.index("html.append('      </div>')", start)
-              region = source[start:end]'''
-              text = text[:region_start] + replacement + text[region_end:]
+              function_end = text.index('\n\ndef test_runtime_header_keys_are_single_letters_and_not_prompt_prefix', function_start)
+              replacement = '''def test_builder_header_replaces_obsolete_slots() -> None:
+                  source = BUILDER.read_text(encoding='utf-8')
+                  start = source.index('<div class="cat-tabs">')
+                  end = source.index("html.append('      </div>')", start)
+                  region = source[start:end]
+                  expected = [
+                      ('data-cat="all"', 'All', 'A'),
+                      ('data-cat="standard"', 'Standard', 'S'),
+                      ('data-profile="profile1"', 'User Profile 1', 'G'),
+                      ('data-profile="profile2"', 'User Profile 2', 'D'),
+                  ]
+                  positions = []
+                  for marker, label, key in expected:
+                      position = region.find(marker)
+                      assert position >= 0, f'missing {label}'
+                      positions.append(position)
+                      assert f'>{label}<span class="kbd">{key}</span>' in region
+                  assert positions == sorted(positions)
+                  assert 'GNHF<span class="kbd">' not in region
+                  assert 'Doctrine<span class="kbd">' not in region
+                  assert not re.search(r'<span class="kbd">[1-5]</span>', region)
+              '''
+              text = text[:function_start] + replacement + text[function_end:]
               path.write_text(text, encoding='utf-8')
 
       - name: Regenerate canonical Prompt Kit artifact
