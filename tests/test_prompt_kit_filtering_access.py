@@ -128,10 +128,12 @@ process.stdout.write(JSON.stringify(result));
 
         hotkeys = polish[polish.index("function installCompactBrowsingHotkeys()") : polish.index("window.appendPromptCard")]
         self.assertIn("var key=String(e.key||'').toLowerCase();", hotkeys)
-        key_one = hotkeys[hotkeys.index("if(key==='1')") : hotkeys.index("if(key==='4')")]
-        self.assertIn("e.preventDefault();", key_one)
-        self.assertIn("e.stopImmediatePropagation();", key_one)
-        self.assertIn("activateAllPromptsView();", key_one)
+        key_all = hotkeys[hotkeys.index("if(key==='a')") : hotkeys.index("if(key==='s')")]
+        self.assertIn("e.preventDefault();", key_all)
+        self.assertIn("e.stopImmediatePropagation();", key_all)
+        self.assertIn("activateAllPromptsView();", key_all)
+        key_favorites = hotkeys[hotkeys.index("if(key==='v')") : hotkeys.index("if(key==='d')")]
+        self.assertIn("activateFavoritesView();", key_favorites)
 
         self.assertIn("installCompactBrowsingViewSwitches();", polish)
         self.assertIn("installCompactBrowsingHotkeys();", polish)
