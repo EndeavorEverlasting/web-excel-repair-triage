@@ -1,0 +1,47 @@
+name: Temporary Prompt Kit feedback runtime regeneration
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-production-feedback-promotion-20260825
+    paths:
+      - .github/workflows/tmp-regenerate-prompt-kit-feedback-runtime.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-prompt-kit-feedback-runtime-regeneration
+  cancel-in-progress: false
+
+jobs:
+  regenerate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Regenerate from canonical builder
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Validate regenerated candidate
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python -m unittest tests.test_prompt_kit_feedback_production tests.test_prompt_kit_feedback_prototype tests.test_prompt_kit_pages -v
+          node --check docs/prompt-kit-feedback-production.js
+          grep -F 'STALE_CURSOR' web/prompt-kit/index.html >/dev/null
+          git diff --check
+      - name: Self-remove authoring transport and commit output
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/tmp-regenerate-prompt-kit-feedback-runtime.yml
+          git add web/prompt-kit/index.html .github/workflows/tmp-regenerate-prompt-kit-feedback-runtime.yml
+          test -n "$(git status --short)"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'build(prompt-kit): refresh production feedback runtime'
+          git push origin HEAD:feat/prompt-kit-production-feedback-promotion-20260825
