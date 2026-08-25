@@ -137,8 +137,6 @@ jobs:
                   remaining_start = script.index('# Human contract: explain that profiles replace only the obsolete top shortcuts;')
                   exec(compile(script[remaining_start:], 'prompt-kit-header-repair-readme.py', 'exec'), namespace)
 
-              # Replace the whole generated builder-header assertion with semantic
-              # source literals. This avoids false negatives from Python-string escaping.
               path = Path('tests/test_prompt_kit_header_contract.py')
               text = path.read_text(encoding='utf-8')
               function_start = text.index('def test_builder_header_replaces_obsolete_slots() -> None:\n')
@@ -167,6 +165,18 @@ jobs:
               '''
               text = text[:function_start] + replacement + text[function_end:]
               path.write_text(text, encoding='utf-8')
+
+              # Generated replacements must satisfy the same whitespace gate as
+              # hand-authored source. Normalize only the two generated test owners.
+              for clean_path in (
+                  Path('tests/test_prompt_kit_header_contract.py'),
+                  Path('tests/test_prompt_kit_hotkey_completion.py'),
+              ):
+                  clean_text = clean_path.read_text(encoding='utf-8')
+                  clean_path.write_text(
+                      '\n'.join(line.rstrip() for line in clean_text.splitlines()) + '\n',
+                      encoding='utf-8',
+                  )
 
       - name: Regenerate canonical Prompt Kit artifact
         if: github.event_name == 'pull_request'
