@@ -122,3 +122,13 @@ git diff --check
 ## Proof boundaries
 
 File and registry presence prove repository integration only. The cross-device validator proves the repository routes normal browser/phone use to the public surfaces, preserves an explicit editable-checkout route, and documents safe commands; it does not prove device menus, PWA installation, Termux/F-Droid availability, Git credentials, network, browser storage, clipboard behavior, or push success. A harness completeness report proves the registered static checks executed on one checkout and commit. Deterministic builder parity proves source-to-generated identity, not browser acceptance. Interaction/discovery audits prove only their documented static surfaces. Prompt-language audit proves canonical/effective coverage and findings, not provider obedience. CI proves only the commands and fixtures exercised by that workflow. Excel for Web, native Windows GUI, protected targets, technician acceptance, deployment, and production success require separate observed proof.
+
+
+## One-command P11 synthetic harness receipt
+
+- Owner: **P11 · End-to-End Harness Validator — one-command offline/synthetic repository harness proof.**
+- Canonical command: `python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json`.
+- Machine authority: `harness/artifacts.v1.json` (`app-harness-validation-report`) and `harness/validators.v1.json` (`app-harness-validation`).
+- Receipt schema: `app-harness-validation/v2`; records exact head SHA, validator set, requirement/status per check, skipped reasons, final status, and proof ceiling.
+- CI invokes the same command; it does not reproduce validation logic in workflow YAML.
+- A green receipt is offline/synthetic harness proof only, not browser/application E2E, provider-runtime, deployment, or production proof.
