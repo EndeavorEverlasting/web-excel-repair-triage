@@ -14,6 +14,17 @@ Binding for Prompt Kit prompt addition/repair, language audit, generated Prompt 
 
 Canonical Prompt Kit records live in registered sources such as `docs/prompts.json` and extension registries. Reference metadata belongs in the registered reference surface. Copy-safe content must follow the repository allowlist/registry contract; index-only or reference-only material must not be silently promoted into copyable prompt bodies.
 
+## External expert-insight intake
+
+Expert knowledge captured outside Git may feed Prompt Kit work only through an explicit authority boundary. A Google Sheet or other collaboration source remains authoritative for its raw knowledge rows; Git remains authoritative for Prompt Kit implementation, review history, validation, and integration.
+
+- Normalize external insight rows through a validated schema before repository use. Do not track private source IDs, credentials, raw private exports, or lossy round-trip copies merely to make CI convenient.
+- Captured/untriaged rows are evidence only. Their full text must not be promoted into repository review artifacts until an explicit publication state and canonical owner are present.
+- Repository-ready rows must identify an existing owner or a deliberate ADD decision plus acceptance/proof criteria and validation lenses. `UNKNOWN` ownership is not mergeable input.
+- Intake/eval automation may emit review candidates, summaries, failure cases, or evidence. It must declare `mutation_authority: false` and must not allocate prompt IDs, edit registries, or rewrite prompt templates autonomously.
+- Approved additions use `scripts/prompt_registry_ops.py`; approved strengthening edits the proven canonical owner and then runs that owner's focused validators and generated-site parity.
+- The current Google Sheet contract, fixture/live CI modes, and credential gate are documented in `docs/PROMPT_KIT_EXPERT_INSIGHT_INTAKE.md`.
+
 ## Prompt-language quality
 
 Run the canonical audit:

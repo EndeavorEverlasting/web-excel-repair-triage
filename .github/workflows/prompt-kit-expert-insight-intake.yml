@@ -1,0 +1,139 @@
+name: Prompt Kit expert insight intake
+
+on:
+  pull_request:
+    paths:
+      - docs/PROMPT_KIT_EXPERT_INSIGHT_INTAKE.md
+      - harness/specs/prompt-operations.md
+      - scripts/prompt_kit_expert_insight_intake.py
+      - scripts/fetch_google_sheet_tab.py
+      - tests/test_prompt_kit_expert_insight_intake.py
+      - fixtures/prompt-kit-expert-insights/**
+      - .github/workflows/prompt-kit-expert-insight-intake.yml
+  push:
+    branches: [main]
+    paths:
+      - docs/PROMPT_KIT_EXPERT_INSIGHT_INTAKE.md
+      - harness/specs/prompt-operations.md
+      - scripts/prompt_kit_expert_insight_intake.py
+      - scripts/fetch_google_sheet_tab.py
+      - tests/test_prompt_kit_expert_insight_intake.py
+      - fixtures/prompt-kit-expert-insights/**
+      - .github/workflows/prompt-kit-expert-insight-intake.yml
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Intake source to exercise
+        required: true
+        default: fixture
+        type: choice
+        options:
+          - fixture
+          - live
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prompt-kit-expert-insight-intake-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify exact candidate and current main floor
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          test -n "$(git rev-parse origin/main)"
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            git merge-base --is-ancestor origin/main HEAD
+          fi
+          echo "candidate sha=$(git rev-parse HEAD)"
+          echo "main floor=$(git rev-parse origin/main)"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate review-only intake contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p Outputs
+          python -m py_compile scripts/prompt_kit_expert_insight_intake.py scripts/fetch_google_sheet_tab.py tests/test_prompt_kit_expert_insight_intake.py
+          python -m unittest tests.test_prompt_kit_expert_insight_intake -v
+          python scripts/prompt_kit_expert_insight_intake.py \
+            --input fixtures/prompt-kit-expert-insights/sample.csv \
+            --output Outputs/prompt-kit-expert-insight-intake.json \
+            --source-ref synthetic-fixture
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('Outputs/prompt-kit-expert-insight-intake.json').read_text())
+          assert report['mutation_authority'] is False
+          assert report['raw_source_authority']=='DRIVE-AUTHORITATIVE'
+          assert report['repo_candidate_authority']=='REVIEW-ONLY'
+          assert report['candidate_count']==1
+          assert 'PRIVATE_SENTINEL_SHOULD_NOT_APPEAR_IN_REPORT' not in json.dumps(report)
+          PY
+          ! grep -Eq 'prompt_registry_ops|registry/prompts|writeRegistry|updatePrompt' scripts/prompt_kit_expert_insight_intake.py
+          git diff --check
+      - name: Upload fixture intake evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-expert-insight-intake-${{ github.event.pull_request.head.sha || github.sha }}
+          path: Outputs/prompt-kit-expert-insight-intake.json
+          if-no-files-found: error
+          retention-days: 14
+
+  live-intake:
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'live'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify private Google access gate
+        shell: bash
+        env:
+          PROMPT_KIT_EXPERT_INSIGHTS_SHEET_ID: ${{ secrets.PROMPT_KIT_EXPERT_INSIGHTS_SHEET_ID }}
+          PROMPT_KIT_EXPERT_INSIGHTS_GOOGLE_CREDENTIALS: ${{ secrets.PROMPT_KIT_EXPERT_INSIGHTS_GOOGLE_CREDENTIALS }}
+        run: |
+          set -euo pipefail
+          test -n "$PROMPT_KIT_EXPERT_INSIGHTS_SHEET_ID" || { echo 'LIVE_INTAKE_BLOCKED: missing sheet-id secret' >&2; exit 20; }
+          test -n "$PROMPT_KIT_EXPERT_INSIGHTS_GOOGLE_CREDENTIALS" || { echo 'LIVE_INTAKE_BLOCKED: missing Google service-account secret' >&2; exit 21; }
+      - name: Install read-only Google client dependencies
+        run: python -m pip install --disable-pip-version-check 'google-auth>=2,<3' 'requests>=2.31,<3'
+      - name: Read Insights tab and emit review candidates
+        shell: bash
+        env:
+          PROMPT_KIT_EXPERT_INSIGHTS_SHEET_ID: ${{ secrets.PROMPT_KIT_EXPERT_INSIGHTS_SHEET_ID }}
+          PROMPT_KIT_EXPERT_INSIGHTS_GOOGLE_CREDENTIALS: ${{ secrets.PROMPT_KIT_EXPERT_INSIGHTS_GOOGLE_CREDENTIALS }}
+        run: |
+          set -euo pipefail
+          mkdir -p Outputs
+          python scripts/fetch_google_sheet_tab.py --sheet-name Insights --output "$RUNNER_TEMP/prompt-kit-expert-insights.csv"
+          python scripts/prompt_kit_expert_insight_intake.py \
+            --input "$RUNNER_TEMP/prompt-kit-expert-insights.csv" \
+            --output Outputs/prompt-kit-expert-insight-intake-live.json \
+            --source-ref google-sheet-live
+      - name: Upload live review-only evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-expert-insight-intake-live-${{ github.sha }}
+          path: Outputs/prompt-kit-expert-insight-intake-live.json
+          if-no-files-found: error
+          retention-days: 14
