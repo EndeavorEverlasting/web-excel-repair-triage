@@ -168,12 +168,12 @@ class PromptRegistryExpansionTests(unittest.TestCase):
 
     def test_agent_verifier_independently_derives_regressions_and_live_proof(self) -> None:
         p83 = self.full["P83"]
-        self.assertIn("green test/live run is historical evidence", p83["copyContent"])
-        self.assertIn("Re-derive impacted regression controls", p83["copyContent"])
-        self.assertIn("canonical path yourself", p83["copyContent"])
+        self.assertIn("Re-derive regression controls", p83["copyContent"])
+        self.assertIn("run safe runtime proof yourself or keep it UNPROVEN", p83["copyContent"])
         self.assertIn("UNPROVEN", p83["copyContent"])
         self.assertIn("impacted callers/call stacks", p83["inspectFirst"])
         self.assertIn("independently derives a regression/control set", p83["proofGate"])
+        self.assertIn("canonical live proof when safely executable", p83["proofGate"])
 
     def test_p65_routes_all_three_new_capabilities(self) -> None:
         p65 = self.full["P65"]["copyContent"]
