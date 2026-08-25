@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "registry" / "prompts" / "tutorial-discovery-prompts.v1.json"
+SKILL_TEST = ROOT / "tests" / "test_skill_prompt_registry.py"
 GENERATED = ROOT / "web" / "prompt-kit" / "index.html"
 LEGACY_CARRIER = ROOT / ".github" / "workflows" / "tmp-p65-legacy-marker-repair.yml"
 
@@ -41,6 +42,8 @@ def repair_marker() -> None:
         "GRANULAR GRILLING DISCIPLINE",
         "Facts are agent-owned; decisions are user-owned",
         "Desired prompt behavior:",
+        "Default to 2-4 questions",
+        "continue up to six only when materially different primary routes are still plausible",
         "ROUTE CONFIDENCE GATE",
     )
     missing = [phrase for phrase in required if phrase not in p65["copyContent"]]
@@ -50,8 +53,20 @@ def repair_marker() -> None:
     REGISTRY.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def evolve_legacy_boundedness_test() -> None:
+    text = SKILL_TEST.read_text(encoding="utf-8")
+    old = '''            "Ask one concise question at a time",\n            "ask no more than four questions",\n            "recommend exactly one primary prompt",\n'''
+    new = '''            "Ask one concise question at a time",\n            "Default to 2-4 questions",\n            "continue up to six only when materially different primary routes are still plausible",\n            "recommend exactly one primary prompt",\n'''
+    if new not in text:
+        if old not in text:
+            raise SystemExit("P65 skill-test boundedness anchor missing")
+        text = text.replace(old, new, 1)
+    SKILL_TEST.write_text(text, encoding="utf-8")
+
+
 def main() -> None:
     repair_marker()
+    evolve_legacy_boundedness_test()
     if LEGACY_CARRIER.exists():
         LEGACY_CARRIER.unlink()
 
@@ -79,19 +94,21 @@ def main() -> None:
     run(
         "git", "add", "--",
         "registry/prompts/tutorial-discovery-prompts.v1.json",
+        "tests/test_skill_prompt_registry.py",
         "web/prompt-kit/index.html",
         ".github/workflows/tmp-p65-legacy-marker-repair.yml",
     )
     staged = subprocess.check_output(["git", "diff", "--cached", "--name-only"], cwd=ROOT, text=True).splitlines()
     allowed = {
         "registry/prompts/tutorial-discovery-prompts.v1.json",
+        "tests/test_skill_prompt_registry.py",
         "web/prompt-kit/index.html",
         ".github/workflows/tmp-p65-legacy-marker-repair.yml",
     }
     if not staged or not set(staged).issubset(allowed):
         raise SystemExit(f"unexpected P65 repair staged paths: {staged!r}")
     run("git", "diff", "--cached", "--check")
-    run("git", "commit", "-m", "fix(prompt-kit): preserve P65 concise-question marker")
+    run("git", "commit", "-m", "fix(prompt-kit): evolve P65 boundedness contract")
 
     run(
         "python", "-m", "unittest",
