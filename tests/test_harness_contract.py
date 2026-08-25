@@ -15,6 +15,7 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import evaluate_prompt_language
+import validate_canonical_paths
 import validate_harness
 import validate_operator_command_envelope
 import validate_prompt_kit_cross_device_access
@@ -85,6 +86,17 @@ class HarnessContractTests(unittest.TestCase):
                 )["capabilities"]
             },
         )
+
+    def test_canonical_path_contract_is_registered_and_executable(self) -> None:
+        manifest = self.load("harness/manifest.v1.json")
+        contract = manifest["domain_contracts"]["canonical_paths"]
+        self.assertEqual(contract["contract"], "harness/canonical-paths.v1.json")
+        self.assertEqual(contract["validator"], "scripts/validate_canonical_paths.py")
+        self.assertEqual(contract["contract_tests"], "tests/test_canonical_paths.py")
+        self.assertEqual(contract["workflow_spec"], "harness/workflows/canonical-paths.md")
+        self.assertEqual(contract["operator_report"], "harness/reports/CANONICAL_PATHS.md")
+        self.assertEqual(contract["deep_repair_owner"], "P92")
+        self.assertEqual(validate_canonical_paths.main([]), 0)
 
     def test_cross_device_prompt_kit_access_is_registered_and_executable(self) -> None:
         manifest = self.load("harness/manifest.v1.json")
@@ -266,6 +278,8 @@ class HarnessContractTests(unittest.TestCase):
             'cd "$staged_tree"',
             "python scripts/validate_prompt_kit_cross_device_access.py --summary",
             "python -m unittest tests.test_prompt_kit_cross_device_access -v",
+            "python scripts/validate_canonical_paths.py --summary",
+            "python -m unittest tests.test_canonical_paths -v",
             'python scripts/validate_harness.py --report "$HARNESS_REPORT"',
             "git diff --cached --check",
         ):
@@ -282,6 +296,8 @@ class HarnessContractTests(unittest.TestCase):
             "python -m unittest tests.test_prompt_kit_cross_device_access -v",
             pre_push,
         )
+        self.assertIn("python scripts/validate_canonical_paths.py --summary", pre_push)
+        self.assertIn("python -m unittest tests.test_canonical_paths -v", pre_push)
         for validator_id in validators["profiles"]["pre_push"]:
             command = {
                 item["id"]: item["command"]
