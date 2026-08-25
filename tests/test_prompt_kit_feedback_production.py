@@ -8,7 +8,7 @@ HOOK=ROOT/'scripts/prompt_kit_feedback_hook.py'
 class PromptKitFeedbackProductionTests(unittest.TestCase):
     def test_runtime_contract_and_ui_are_present(self):
         text=RUNTIME.read_text(encoding='utf-8')
-        for marker in ('promptKit.feedbackEvents.v1','promptKit.feedbackSource.v1','prompt-feedback-event/v1','prompt-feedback-cursor/v1','data-prompt-kit-feedback-ui','👍 Like','👎 Dislike','Copy feedback export','localStorage','supersedes_event_id','STALE_CURSOR','latestSequence','FEEDBACK_STORAGE_FULL'):
+        for marker in ('promptKit.feedbackEvents.v1','promptKit.feedbackSource.v1','prompt-feedback-event/v1','prompt-feedback-cursor/v1','data-prompt-kit-feedback-ui','👍 Like','👎 Dislike','Copy feedback export','localStorage','supersedes_event_id','STALE_CURSOR','latestSequence','FEEDBACK_STORAGE_FULL','FEEDBACK_STORAGE_CORRUPT'):
             self.assertIn(marker,text)
         self.assertNotIn('slice(-MAX_EVENTS)',text)
         self.assertNotIn('fetch(',text)
@@ -23,6 +23,10 @@ class PromptKitFeedbackProductionTests(unittest.TestCase):
         r=subprocess.run(['node','-e',script],cwd=ROOT,text=True,capture_output=True)
         self.assertEqual(r.returncode,0,r.stderr or r.stdout)
         report=json.loads(r.stdout); self.assertEqual(report['sequence'],2101); self.assertEqual(report['count'],2101)
+    def test_corrupt_browser_storage_is_not_silently_overwritten(self):
+        script=r'''global.window=global;const m=new Map([['promptKit.feedbackEvents.v1','{broken']]);global.localStorage={getItem:k=>m.has(k)?m.get(k):null,setItem:(k,v)=>m.set(k,v)};global.crypto={randomUUID:()=>`id-new`};global.PROMPTS=[{id:'P99'}];global.dispatchEvent=()=>{};global.CustomEvent=function(){};const api=require('./docs/prompt-kit-feedback-production.js');try{api.append({prompt_id:'P99',event_type:'prompt_feedback',comment:'new'});process.exit(2)}catch(err){if(String(err.message)!=='FEEDBACK_STORAGE_CORRUPT')process.exit(3)}if(m.get('promptKit.feedbackEvents.v1')!=='{broken')process.exit(4);console.log('PASS');'''
+        r=subprocess.run(['node','-e',script],cwd=ROOT,text=True,capture_output=True)
+        self.assertEqual(r.returncode,0,r.stderr or r.stdout)
     def test_scheduled_hook_aggregates_without_mutation_authority(self):
         with tempfile.TemporaryDirectory() as td:
             root=Path(td); inbox=root/'inbox'; inbox.mkdir(); out=root/'report.json'
@@ -43,12 +47,13 @@ class PromptKitFeedbackProductionTests(unittest.TestCase):
             r=subprocess.run(['python',str(HOOK),'--input',str(inbox),'--output',str(out)],cwd=ROOT,text=True,capture_output=True)
             self.assertEqual(r.returncode,0,r.stderr or r.stdout)
             row=json.loads(out.read_text())['summaries'][0]; self.assertEqual(row['likes'],0); self.assertEqual(row['dislikes'],1)
-    def test_hook_rejects_malformed_and_nested_sensitive_feedback(self):
+    def test_hook_rejects_malformed_sensitive_and_unknown_prompt_feedback(self):
         cases=[
             [None],
             [{'event_id':'x','prompt_id':'P99','event_type':'prompt_feedback','value':'comment','comment':'','timestamp':'2026-08-25T12:00:00Z','schema_version':'prompt-feedback-event/v1','source':'a'}],
             [{'event_id':'x','prompt_id':'P99','event_type':'prompt_feedback','value':'comment','comment':'ok','timestamp':'not-a-time','schema_version':'prompt-feedback-event/v1','source':'a'}],
             [{'event_id':'x','prompt_id':'P99','event_type':'prompt_feedback','value':'comment','comment':'ok','timestamp':'2026-08-25T12:00:00Z','schema_version':'prompt-feedback-event/v1','source':'a','metadata':{'credential':'nope'}}],
+            [{'event_id':'x','prompt_id':'P404','event_type':'prompt_feedback','value':'comment','comment':'ok','timestamp':'2026-08-25T12:00:00Z','schema_version':'prompt-feedback-event/v1','source':'a'}],
         ]
         for events in cases:
             with self.subTest(events=events), tempfile.TemporaryDirectory() as td:
