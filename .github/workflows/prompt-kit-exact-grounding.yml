@@ -1,0 +1,61 @@
+name: Prompt Kit exact grounding gate
+
+on:
+  pull_request:
+    paths:
+      - 'docs/prompt-kit-exact-grounding.js'
+      - 'docs/PROMPT_KIT_EXACT_GROUNDING.md'
+      - 'harness/exact-grounding/**'
+      - 'tests/test_prompt_kit_exact_grounding.py'
+      - 'docs/prompt-kit-program-prototype.js'
+      - '.github/workflows/prompt-kit-exact-grounding.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/prompt-kit-exact-grounding.js'
+      - 'docs/PROMPT_KIT_EXACT_GROUNDING.md'
+      - 'harness/exact-grounding/**'
+      - 'tests/test_prompt_kit_exact_grounding.py'
+      - 'docs/prompt-kit-program-prototype.js'
+      - '.github/workflows/prompt-kit-exact-grounding.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  exact-grounding:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact candidate checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          observed="$(git rev-parse HEAD)"
+          test "$observed" = "$expected"
+      - name: Run current program seam self-test
+        run: node docs/prompt-kit-program-prototype.js >/tmp/prompt-kit-program.json
+      - name: Run JIT grounding self-test
+        run: node docs/prompt-kit-exact-grounding.js >/tmp/prompt-kit-exact-grounding.json
+      - name: Run focused deterministic regressions
+        run: python -m unittest tests.test_prompt_kit_exact_grounding -v
+      - name: Compile Python regression
+        run: python -m py_compile tests/test_prompt_kit_exact_grounding.py
+      - name: Check patch hygiene
+        run: git diff --check origin/${{ github.base_ref || 'main' }}...HEAD
+      - name: Upload grounding proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-exact-grounding-report
+          path: /tmp/prompt-kit-exact-grounding.json
+          if-no-files-found: error
