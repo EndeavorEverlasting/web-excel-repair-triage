@@ -1,0 +1,67 @@
+name: Prompt Kit feedback polling prototype
+
+on:
+  pull_request:
+    paths:
+      - docs/PROMPT_KIT_FEEDBACK_POLLING_DESIGN.md
+      - docs/prompt-kit-feedback-prototype.js
+      - tests/test_prompt_kit_feedback_prototype.py
+      - .github/workflows/prompt-kit-feedback-prototype.yml
+  push:
+    branches: [main]
+    paths:
+      - docs/PROMPT_KIT_FEEDBACK_POLLING_DESIGN.md
+      - docs/prompt-kit-feedback-prototype.js
+      - tests/test_prompt_kit_feedback_prototype.py
+      - .github/workflows/prompt-kit-feedback-prototype.yml
+
+permissions:
+  contents: read
+
+jobs:
+  feedback-prototype:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Verify exact candidate and current main floor
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          test -n "$(git rev-parse origin/main)"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git merge-base --is-ancestor origin/main HEAD
+          fi
+          echo "candidate sha=$(git rev-parse HEAD)"
+          echo "main floor=$(git rev-parse origin/main)"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Pass 1 executable prototype proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check docs/prompt-kit-feedback-prototype.js
+          node docs/prompt-kit-feedback-prototype.js > /tmp/prompt-kit-feedback-report.json
+          python -m unittest tests.test_prompt_kit_feedback_prototype -v
+          git diff --check
+
+      - name: Pass 2 bounded falsification
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F '"maintenanceEvidenceWithoutRewriteAuthority": "PASS"' /tmp/prompt-kit-feedback-report.json >/dev/null
+          grep -F '"checkpointFailureAtomicity": "PASS"' /tmp/prompt-kit-feedback-report.json >/dev/null
+          grep -F '"replacementVoteAggregation": "PASS"' /tmp/prompt-kit-feedback-report.json >/dev/null
+          grep -F 'Feedback is **evidence, not mutation authority**' docs/PROMPT_KIT_FEEDBACK_POLLING_DESIGN.md >/dev/null
+          ! grep -Eq 'rewritePrompt\(|updatePrompt\(|writeRegistry\(' docs/prompt-kit-feedback-prototype.js
+          git diff --check
