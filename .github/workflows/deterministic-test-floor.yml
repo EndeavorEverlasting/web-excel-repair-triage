@@ -72,12 +72,13 @@ jobs:
             echo "Negative canary unexpectedly passed" >&2
             exit 1
           fi
-          python - "$RUNNER_TEMP/negative-canary-report.json" <<'PY'
+          python - "$RUNNER_TEMP/negative-canary-report.json" harness/test-floor.v1.json <<'PY'
           import json
           import sys
           from pathlib import Path
           report = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
-          expected = 'validator:skill-prompt-registry-tests'
+          manifest = json.loads(Path(sys.argv[2]).read_text(encoding='utf-8'))
+          expected = manifest['required_canary_failure']
           if report.get('status') != 'FAIL' or report.get('failed_step') != expected:
               raise SystemExit(
                   f"negative canary failed at {report.get('failed_step')!r}; expected {expected!r}"
