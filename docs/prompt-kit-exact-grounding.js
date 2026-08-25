@@ -19,6 +19,13 @@ function exactKeys(value, expected) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   return JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...expected].sort());
 }
+function sameStringSet(value, expected) {
+  return Array.isArray(value)
+    && value.length === expected.length
+    && value.every(item => typeof item === 'string' && item.trim())
+    && new Set(value).size === value.length
+    && JSON.stringify([...value].sort()) === JSON.stringify([...expected].sort());
+}
 function fail(status, reason, details = {}) { return {status, reason, details}; }
 
 class CommandKernelGroundingSource {
@@ -32,7 +39,21 @@ class CommandKernelGroundingSource {
     const required = ['schema_version','packet_schema_version','proposal_schema_version','source_id','required_proposal_fields','required_command_fields','required_grounding_fields','exact_fields','outcomes','execution_authority','model_authority','proof_ceiling'];
     if (!exactKeys(contract, required)) throw new PromptKitProgramError('GROUNDING_FAILURE', 'Grounding contract shape is malformed.');
     if (contract.schema_version !== 'prompt-kit-agent-grounding-contract/v1') throw new PromptKitProgramError('GROUNDING_FAILURE', 'Unsupported grounding contract version.');
+    if (![contract.packet_schema_version, contract.proposal_schema_version, contract.source_id, contract.proof_ceiling].every(value => typeof value === 'string' && value.trim())) throw new PromptKitProgramError('GROUNDING_FAILURE', 'Grounding contract identities must be non-empty strings.');
+    if (!sameStringSet(contract.required_proposal_fields, ['schemaVersion', 'command', 'grounding'])) throw new PromptKitProgramError('GROUNDING_FAILURE', 'Grounding proposal field contract drifted.');
+    if (!sameStringSet(contract.required_command_fields, ['type', 'promptId', 'source'])) throw new PromptKitProgramError('GROUNDING_FAILURE', 'Grounding command field contract drifted.');
+    if (!sameStringSet(contract.required_grounding_fields, ['sourceId', 'sourceVersion', 'attributions'])) throw new PromptKitProgramError('GROUNDING_FAILURE', 'Grounding provenance field contract drifted.');
+    if (!sameStringSet(contract.outcomes, [PASS, ...BLOCK_OUTCOMES])) throw new PromptKitProgramError('GROUNDING_FAILURE', 'Grounding outcome contract drifted.');
+    if (contract.execution_authority !== 'host_command_kernel' || contract.model_authority !== 'proposal_only') throw new PromptKitProgramError('GROUNDING_FAILURE', 'Grounding authority boundary drifted.');
     if (!contract.exact_fields || !exactKeys(contract.exact_fields, contract.required_command_fields)) throw new PromptKitProgramError('GROUNDING_FAILURE', 'Exact-field authority map does not match command fields.');
+    for (const field of contract.required_command_fields) {
+      const spec = contract.exact_fields[field];
+      const requiredSpecKeys = field === 'source' ? ['authority', 'source_key', 'constraint', 'allowed'] : ['authority', 'source_key', 'constraint'];
+      if (!exactKeys(spec, requiredSpecKeys)) throw new PromptKitProgramError('GROUNDING_FAILURE', `Exact-field authority record is malformed: ${field}.`);
+      for (const key of ['authority', 'source_key', 'constraint']) if (typeof spec[key] !== 'string' || !spec[key].trim()) throw new PromptKitProgramError('GROUNDING_FAILURE', `Exact-field authority value is malformed: ${field}.${key}.`);
+    }
+    const allowed = contract.exact_fields.source.allowed;
+    if (!sameStringSet(allowed, ['agent'])) throw new PromptKitProgramError('GROUNDING_FAILURE', 'Agent boundary allowed-source enum is malformed.');
     return contract;
   }
   currentStructure(contract) {
@@ -179,6 +200,11 @@ async function runSelfTest() {
   {
     const program = freshProgram(); const badSource = new CommandKernelGroundingSource({kernel: program.kernel, catalog: program.catalog, contractLoader: () => ({schema_version: 'broken'})}); const gate = new AgentCommandGroundingInterceptor({kernel: program.kernel, catalog: program.catalog, trace: program.trace, groundingSource: badSource});
     const prepared = gate.prepare('COPY_REVEAL_PROMPT'); if (prepared.status !== 'GROUNDING_FAILURE') throw new Error('Malformed grounding contract must fail closed'); checks.push({case: 'malformed_grounding_source', outcome: 'GROUNDING_FAILURE'});
+  }
+  {
+    const program = freshProgram(); const malformed = JSON.parse(fs.readFileSync(DEFAULT_CONTRACT_PATH, 'utf8')); malformed.exact_fields.source.allowed = 'agent';
+    const badSource = new CommandKernelGroundingSource({kernel: program.kernel, catalog: program.catalog, contractLoader: () => malformed}); const gate = new AgentCommandGroundingInterceptor({kernel: program.kernel, catalog: program.catalog, trace: program.trace, groundingSource: badSource});
+    const prepared = gate.prepare('COPY_REVEAL_PROMPT'); if (prepared.status !== 'GROUNDING_FAILURE') throw new Error('Malformed nested source enum must fail closed'); checks.push({case: 'malformed_nested_contract', outcome: 'GROUNDING_FAILURE'});
   }
   return {status: 'PASS', boundary: 'agent proposal -> JIT grounding -> deterministic host interceptor -> existing CommandKernel side effects', exactnessCriticalFields: ['type','promptId','source'], outcomes: [PASS, ...BLOCK_OUTCOMES], checks, proofCeiling: 'Repository prototype proof for current Prompt Kit command/catalog structure; no claim of arbitrary external API or production browser interception.'};
 }
