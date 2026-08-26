@@ -9,13 +9,11 @@ def replace_once(path: str, old: str, new: str) -> None:
     text = target.read_text(encoding="utf-8")
     count = text.count(old)
     if count != 1:
-        raise SystemExit(f"{path}: expected one replacement, found {count}")
+        raise SystemExit(f"{path}: expected one replacement, found {count}: {old[:90]!r}")
     target.write_text(text.replace(old, new, 1), encoding="utf-8")
 
 
-# If a shorter exact prompt identity is pending because it prefixes a longer one,
-# an unrelated key must settle that exact prompt without swallowing the unrelated
-# header/global command carried by the same key event.
+# Pending exact prompt identity must settle without swallowing an unrelated header/global key.
 replace_once(
     "docs/prompt-kit-polish.js",
     """function handleConfiguredPromptShortcutKey(e,key){
@@ -60,54 +58,61 @@ replace_once(
 }""",
 )
 
-runtime = ROOT / "tests" / "test_prompt_kit_hotkey_identity_runtime.py"
-text = runtime.read_text(encoding="utf-8")
-old = """  resetProbe();
-  ['p','1','.','1','1'].forEach(press);
-  assert(JSON.stringify(activations)==='[\"P111\"]','p1.11 dotted longer resolution');
+# A-E are the complete header namespace. Page navigation uses the native Home/End pair.
+replace_once("docs/prompt-kit-polish.js", "{key:'T',label:'Scroll to top'}", "{key:'Home',label:'Scroll to top'}")
+replace_once("docs/prompt-kit-polish.js", "if(key==='t'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('top');return}", "if(key==='home'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('top');return}")
+replace_once("docs/prompt-kit-profiles.js", "['T','Scroll to top']", "['Home','Scroll to top']")
+replace_once(
+    "docs/PROMPT_KIT_FIVE_TAB_PROFILES.md",
+    "The former `B` bottom-of-page shortcut moves to `End`; `T` remains the top shortcut.",
+    "Page navigation uses the native pair: `Home` scrolls to the top and `End` scrolls to the bottom. No letter in `A`–`E` is reused for page navigation.",
+)
+replace_once("web/README.md", "| `T` | Scroll to top |", "| `Home` | Scroll to top |")
 
-  console.log(JSON.stringify({status:'PASS',cases:['p11','p13','p111','p1.1','p1.11']}));
+# Focused static/runtime contract for the agreed namespace.
+header_test = ROOT / "tests" / "test_prompt_kit_header_contract.py"
+text = header_test.read_text(encoding="utf-8")
+text = text.replace(
+    "def test_effective_hotkey_help_uses_profile_slots_and_end_for_bottom() -> None:\n",
+    "def test_effective_hotkey_help_uses_profile_slots_and_home_end_navigation() -> None:\n",
+    1,
+)
+old = """    assert "['End','Scroll to bottom']" in profiles
+    assert "{key:'End',label:'Scroll to bottom'}" in polish
+    assert "{key:'B',label:'Scroll to bottom'}" not in polish
 """
-new = """  resetProbe();
-  ['p','1','.','1','1'].forEach(press);
-  assert(JSON.stringify(activations)==='[\"P111\"]','p1.11 dotted longer resolution');
-
-  resetProbe();
-  var headerActivations=[];
-  function dispatch(key){
-    var event=eventStub();
-    if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(event,key))return;
-    if('abcde'.indexOf(key)!==-1){headerActivations.push(key.toUpperCase());return}
-    handleConfiguredPromptShortcutKey(event,key)
-  }
-  ['p','1','1'].forEach(dispatch);
-  dispatch('a');
-  assert(JSON.stringify(activations)==='[\"P11\"]','pending p11 was lost on header A handoff');
-  assert(JSON.stringify(headerActivations)==='[\"A\"]','header A was swallowed after pending p11');
-
-  resetProbe();headerActivations=[];
-  ['p','1'].forEach(dispatch);
-  dispatch('b');
-  assert(activations.length===0,'incomplete p1 incorrectly activated a prompt on header B');
-  assert(JSON.stringify(headerActivations)==='[\"B\"]','header B was swallowed after incomplete prefix');
-
-  console.log(JSON.stringify({status:'PASS',cases:['p11','p13','p111','p1.1','p1.11','p11-then-a','p1-then-b']}));
+new = """    assert "['Home','Scroll to top']" in profiles
+    assert "['End','Scroll to bottom']" in profiles
+    assert "{key:'Home',label:'Scroll to top'}" in polish
+    assert "{key:'End',label:'Scroll to bottom'}" in polish
+    assert "{key:'T',label:'Scroll to top'}" not in polish
+    assert "{key:'B',label:'Scroll to bottom'}" not in polish
+    assert "if(key==='home')" in polish
+    assert "if(key==='end')" in polish
 """
 if text.count(old) != 1:
-    raise SystemExit("runtime identity marker drifted")
+    raise SystemExit("header contract Home/End assertion block drifted")
 text = text.replace(old, new, 1)
-old_assert = 'self.assertEqual(proof["cases"], ["p11", "p13", "p111", "p1.1", "p1.11"])'
-new_assert = 'self.assertEqual(proof["cases"], ["p11", "p13", "p111", "p1.1", "p1.11", "p11-then-a", "p1-then-b"])'
-if text.count(old_assert) != 1:
-    raise SystemExit("runtime identity result assertion drifted")
-runtime.write_text(text.replace(old_assert, new_assert, 1), encoding="utf-8")
+text = text.replace(
+    "assert \"| `End` | Scroll to bottom |\" in text\n",
+    "assert \"| `Home` | Scroll to top |\" in text\n    assert \"| `End` | Scroll to bottom |\" in text\n    assert \"| `T` | Scroll to top |\" not in text\n",
+    1,
+)
+text = text.replace(
+    "test_effective_hotkey_help_uses_profile_slots_and_end_for_bottom,",
+    "test_effective_hotkey_help_uses_profile_slots_and_home_end_navigation,",
+    1,
+)
+header_test.write_text(text, encoding="utf-8")
 
+# Browser proof: pending exact/incomplete prompt prefixes must hand control back to A-E,
+# and native Home/End must perform page navigation without changing the active profile.
 browser = ROOT / "tests" / "prompt_kit_hotkey_identity_browser_proof.py"
 text = browser.read_text(encoding="utf-8")
 marker = """            # Numeric input must never activate A-E header slots.
             active_slot = page.evaluate("window.PromptKitProfiles && window.PromptKitProfiles.getState().activeKey")
 """
-insert = """            # A pending shorter exact identity settles before the same key continues to the A-E header.
+insert = """            # A pending shorter exact identity settles before the same key continues to A-E header navigation.
             set_clipboard("sentinel-p11-a")
             press("p11")
             page.keyboard.press("a")
@@ -123,7 +128,6 @@ insert = """            # A pending shorter exact identity settles before the sa
                 "active_slot": slot_after_a,
             })
 
-            # An incomplete prefix has no exact prompt to settle and must not swallow B.
             set_clipboard("sentinel-p1-b")
             press("p1")
             page.keyboard.press("b")
@@ -138,6 +142,26 @@ insert = """            # A pending shorter exact identity settles before the sa
                 "clipboard_unchanged": p1_then_b == "sentinel-p1-b",
                 "active_slot": slot_after_b,
             })
+
+            # Home/End are page navigation only and do not alter the header/profile namespace.
+            page.keyboard.press("End")
+            page.wait_for_timeout(80)
+            end_y = page.evaluate("window.scrollY")
+            end_slot = page.evaluate("window.PromptKitProfiles && window.PromptKitProfiles.getState().activeKey")
+            page.keyboard.press("Home")
+            page.wait_for_timeout(80)
+            home_y = page.evaluate("window.scrollY")
+            home_slot = page.evaluate("window.PromptKitProfiles && window.PromptKitProfiles.getState().activeKey")
+            observations.append({
+                "id": "home_end_page_navigation",
+                "event": "End scrolls down and Home returns to top without changing the active profile",
+                "occurred": True,
+                "passed": end_y > home_y and home_y <= 2 and end_slot == "B" and home_slot == "B",
+                "end_y": end_y,
+                "home_y": home_y,
+                "end_slot": end_slot,
+                "home_slot": home_slot,
+            })
             page.keyboard.press("a")
             page.wait_for_timeout(50)
 
@@ -147,3 +171,89 @@ insert = """            # A pending shorter exact identity settles before the sa
 if text.count(marker) != 1:
     raise SystemExit("browser identity handoff marker drifted")
 browser.write_text(text.replace(marker, insert, 1), encoding="utf-8")
+
+# Dedicated production-function runtime regression for exact-prefix handoff.
+runtime = ROOT / "tests" / "test_prompt_kit_hotkey_header_handoff.py"
+runtime.write_text(r'''from __future__ import annotations
+
+import subprocess
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+POLISH = ROOT / "docs" / "prompt-kit-polish.js"
+
+
+def function_block(text: str, name: str) -> str:
+    start = text.index(f"function {name}(")
+    brace = text.index("{", start)
+    depth = 0
+    quote = None
+    escaped = False
+    for index in range(brace, len(text)):
+        char = text[index]
+        if quote:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+            continue
+        if char in ("'", '"', "`"):
+            quote = char
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : index + 1]
+    raise AssertionError(name)
+
+
+class PromptKitHotkeyHeaderHandoffTests(unittest.TestCase):
+    def test_pending_prompt_identity_hands_back_to_header_key(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        blocks = "\n\n".join(function_block(source, name) for name in (
+            "resetPromptShortcutBuffer",
+            "schedulePromptShortcutBufferReset",
+            "promptShortcutHasLongerPrefix",
+            "handleConfiguredPromptShortcutKey",
+        ))
+        script = f"""
+var PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS=25;
+var promptShortcutBindings={{p11:'P11',p111:'P111'}};
+var promptShortcutBuffer='';
+var promptShortcutBufferTimer=null;
+var activations=[];
+function activatePromptShortcutTarget(id){{activations.push(id);return true}}
+{blocks}
+function eventStub(){{return{{preventDefault:function(){{}},stopImmediatePropagation:function(){{}}}}}}
+var header=[];
+function dispatch(key){{
+  var e=eventStub();
+  if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;
+  if('abcde'.indexOf(key)!==-1){{header.push(key.toUpperCase());return}}
+  handleConfiguredPromptShortcutKey(e,key);
+}}
+['p','1','1'].forEach(dispatch);dispatch('a');
+if(JSON.stringify(activations)!=='["P11"]'||JSON.stringify(header)!=='["A"]')process.exit(1);
+resetPromptShortcutBuffer();activations=[];header=[];
+['p','1'].forEach(dispatch);dispatch('b');
+if(activations.length!==0||JSON.stringify(header)!=='["B"]')process.exit(2);
+"""
+        subprocess.run(["node", "-e", script], cwd=ROOT, check=True)
+
+    def test_home_end_own_page_navigation_and_t_is_free(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        self.assertIn("{key:'Home',label:'Scroll to top'}", source)
+        self.assertIn("{key:'End',label:'Scroll to bottom'}", source)
+        self.assertIn("if(key==='home')", source)
+        self.assertIn("if(key==='end')", source)
+        self.assertNotIn("{key:'T',label:'Scroll to top'}", source)
+        self.assertNotIn("if(key==='t')", source)
+
+
+if __name__ == "__main__":
+    unittest.main()
+''', encoding="utf-8")
