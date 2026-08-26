@@ -1,0 +1,97 @@
+name: Temporary hotkey focus escape PR executor
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  execute:
+    if: github.event.pull_request.head.ref == 'fix/prompt-kit-hotkey-favorite-focus-escape-20260825'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/prompt-kit-hotkey-favorite-focus-escape-20260825
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Refresh current floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch --all --prune --tags
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+          fi
+      - name: Apply canonical hotkey repair and rebuild
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .github/scripts/tmp_hotkey_focus_escape_patch.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Run focused synthetic and source proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check docs/prompt-kit-polish.js
+          python -m py_compile tests/prompt_kit_favorite_browser_proof.py tests/test_prompt_kit_hotkey_completion.py
+          python -m unittest tests.test_prompt_kit_hotkey_completion -v
+          python -m unittest tests.test_prompt_kit_header_contract tests.test_prompt_kit_filtering_access -v
+          python scripts/validate_harness.py --report Outputs/hotkey-focus-harness-completeness.json
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Falsify regression and push durable head
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          source=Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
+          deployed=Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
+          checks={
+            'open focuses favorite input': "if(focusFavoritePromptShortcutInput(panel))return" in source,
+            'open reveals favorite input': "promptInput.scrollIntoView({block:'nearest',inline:'nearest'})" in source,
+            'escape precedes editable suppression': source.index("if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)") < source.index("if(editable)return;"),
+            'backtick remains suppressed in editable fields': source.index("if(editable)return;") < source.index("if(key==='`')"),
+            'escape restores toggle focus': "resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return" in source,
+            'generated runtime matches repair': "function focusFavoritePromptShortcutInput(panel)" in deployed and "resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return" in deployed,
+          }
+          failed=[name for name,passed in checks.items() if not passed]
+          if failed: raise SystemExit(f'hotkey focus/escape falsification failed: {failed}')
+          print({'pass_two':'bounded fixed point', **checks})
+          PY
+          git rm -f \
+            .github/workflows/tmp-hotkey-favorite-focus-escape-executor-20260825.yml \
+            .github/workflows/tmp-hotkey-focus-escape-pr-executor-20260825.yml \
+            .github/scripts/tmp_hotkey_focus_escape_patch.py
+          git add \
+            docs/prompt-kit-polish.js \
+            docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md \
+            tests/test_prompt_kit_hotkey_completion.py \
+            tests/prompt_kit_favorite_browser_proof.py \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          git status --short
+          git diff --cached --stat
+          git commit -m 'fix(prompt-kit): focus favorite shortcut input and honor escape'
+          git fetch origin main --prune
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+            node --check docs/prompt-kit-polish.js
+            python -m unittest tests.test_prompt_kit_hotkey_completion tests.test_prompt_kit_header_contract tests.test_prompt_kit_filtering_access -v
+            python scripts/validate_harness.py --report Outputs/hotkey-focus-harness-completeness.json
+            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+            git add web/prompt-kit/index.html
+            if ! git diff --cached --quiet; then git commit -m 'chore(prompt-kit): refresh hotkey site after main reconciliation'; fi
+          fi
+          git diff --check HEAD
+          git push origin HEAD:fix/prompt-kit-hotkey-favorite-focus-escape-20260825
+          echo "PROVEN_HEAD=$(git rev-parse HEAD)"
