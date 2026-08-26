@@ -24,11 +24,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install deterministic floor dependency
+      - name: Install deterministic floor dependencies
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install --disable-pip-version-check pytest
+          python -m pip install --disable-pip-version-check -r requirements-test-floor.txt
 
       - name: Refresh and reconcile current main
         shell: bash
