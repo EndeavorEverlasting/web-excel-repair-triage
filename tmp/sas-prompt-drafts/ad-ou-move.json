@@ -1,0 +1,28 @@
+{
+  "name": "SysAdminSuite Active Directory Computer OU Move & Verification",
+  "type": "MOVE + VERIFY",
+  "class": "SYSADMINSUITE / DIRECTORY OPERATIONS",
+  "sprintRole": "Move one or many existing computer objects to an explicitly resolved Active Directory organizational unit through SysAdminSuite with a pre-mutation old-to-new plan, idempotent skips, bounded directory authority, and post-move distinguished-name verification",
+  "useWhen": "Managed computer objects must be moved between Active Directory OUs as an intentional administrative change, including repeated batch moves where technicians should supply hosts and a destination without editing a local script or guessing distinguished names.",
+  "inspectFirst": "Current SysAdminSuite directory/OU command owner; repository governance and authorization boundary; target computer inventory; directory connectivity and current object lookup; exact destination OU resolver; current distinguished names; duplicate/missing object handling; batch/evidence schema; and restrictions on rename, create/delete, group membership, GPO, trust, DNS, or unrelated directory mutation.",
+  "expectedOutput": "A resolved directory move plan and receipt containing each computer identity, current distinguished name/OU, exact destination OU, intended or skipped action, mutation result, post-move distinguished name, failure class, and evidence pointer, with aggregate counts that never hide missing or ambiguous objects.",
+  "nextStep": "Execute only the explicitly requested moves whose source objects and destination OU resolve uniquely, then re-read every affected computer object and close only when its distinguished name proves the intended OU; unresolved or unauthorized objects remain blocked without collateral directory changes.",
+  "proofGate": "Every moved computer object existed and resolved uniquely before mutation; the destination OU was resolved from authoritative current evidence rather than guessed; already-correct objects were skipped idempotently; no object was created, deleted, renamed, rejoined, or had group/GPO/trust/DNS state changed; and post-move directory reads prove the new OU for every PASS.",
+  "profile": "sysadminsuite",
+  "color": "Cyan",
+  "category": "standard",
+  "copyContent": "MOVE ACTIVE DIRECTORY COMPUTER OBJECTS THROUGH SYSADMINSUITE WITH AN EXACT OLD-OU -> NEW-OU PLAN AND POST-MOVE VERIFICATION. DO NOT GUESS DISTINGUISHED NAMES OR BUNDLE RENAME, DOMAIN-JOIN, GROUP, GPO, TRUST, OR DNS CHANGES INTO AN OU MOVE.\n\nRepo/product: SysAdminSuite or resolve the active SAS repository from context.\nTargets: xyz_one_or_many_computer_names_or_inventory\nDestination OU: xyz_operator_requested_ou_name_or_authoritative_identifier\n\nMISSION\nPerform the smallest authorized directory mutation: move existing computer objects to one explicitly resolved destination OU and prove the result. Keep the technician surface short; hide directory lookup and verification behind the canonical SAS wrapper when one exists.\n\n1. RESOLVE THE CANONICAL DIRECTORY OWNER\nRead current SAS governance, directory/OU command implementation, target resolver, authorization model, evidence schema, and batch conventions. Use the repository-owned wrapper rather than pasting a one-off directory script when the owner exists.\n\n2. LOOK UP SOURCE OBJECTS READ-ONLY\nResolve each requested computer object uniquely. Capture its canonical identity and current distinguished name/OU. Classify NOT_FOUND, DUPLICATE_OR_AMBIGUOUS, DIRECTORY_UNREACHABLE, PERMISSION_BLOCKED, or UNKNOWN separately. Do not create a missing computer object to make the move succeed.\n\n3. RESOLVE THE DESTINATION OU EXACTLY\nResolve the requested OU to its authoritative distinguished name through current directory/repository evidence. A friendly label with multiple matches is ambiguous and blocks mutation. Never guess a DN from naming conventions.\n\n4. SHOW THE MOVE PLAN\nBefore mutation, emit one line per target: computer -> current OU -> destination OU -> MOVE or ALREADY_CORRECT / BLOCKED. For batches, detect duplicate targets and conflicting destination instructions before changing anything.\n\n5. MOVE ONLY THE COMPUTER OBJECT\nExecute the repository-authorized move operation for READY objects. Skip already-correct objects idempotently. Do not rename the object, recreate it, rejoin the endpoint, change groups, modify GPOs, alter trust, change DNS, or perform unrelated cleanup. Do not expose directory credentials or tokens in logs or prompt output.\n\n6. VERIFY FROM DIRECTORY TRUTH\nRe-read every attempted computer object after mutation and compare its distinguished name/parent OU to the resolved destination. A successful command exit without a confirming directory read is not closure. Record exact per-object result and evidence pointer.\n\n7. BATCH + RECOVERY\nFor many computers, keep per-object receipts and a rollup. A repeat/resume run must skip objects already proven in the requested OU and retry only failures the repository classifies as safe/retryable. UNKNOWN partial state requires a fresh directory read before another move.\n\nDELIVER\nResolved destination OU, source-object ledger, old-to-new plan, mutation results, post-move distinguished names, blocked/ambiguous objects, evidence path, proof ceiling, and the exact next safe action for any remainder.",
+  "keywords": [
+    "sysadminsuite",
+    "sysadmin suite",
+    "Active Directory",
+    "AD OU move",
+    "computer OU",
+    "organizational unit",
+    "Move-ADObject",
+    "directory administration",
+    "batch OU move",
+    "distinguished name",
+    "windows administration"
+  ]
+}
