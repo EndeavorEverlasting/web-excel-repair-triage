@@ -24,31 +24,65 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Refresh and pin current owner branch
+      - name: Refresh and reconcile current main
         shell: bash
         run: |
           set -euo pipefail
           git fetch --all --prune --tags
           test "$(git rev-parse HEAD)" = "$(git rev-parse origin/feat/prompt-kit-five-tab-named-profiles-20260825)"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            set +e
+            git merge --no-commit --no-ff origin/main
+            rc=$?
+            set -e
+            if [ "$rc" -ne 0 ]; then
+              conflicts="$(git diff --name-only --diff-filter=U)"
+              for f in $conflicts; do
+                case "$f" in
+                  build_prompt_kit.py|web/prompt-kit/index.html) git checkout --ours -- "$f" ;;
+                  *) echo "unexpected merge conflict: $f" >&2; exit 1 ;;
+                esac
+              done
+            fi
+            python - <<'PY'
+          from pathlib import Path
+          p=Path('build_prompt_kit.py')
+          text=p.read_text(encoding='utf-8')
+          anchor='    "repo location": "P92", "repository location": "P92", "path drift": "P92", "scattered clones": "P92",\n'
+          addition=(
+              '    "onedrive path": "P92", "onedrive repository path": "P92", "onedrive desktop": "P92",\n'
+              '    "known folder redirection": "P92", "user profile path": "P92", "home directory path": "P92",\n'
+              '    "os path resolution": "P92", "environment-derived path": "P92", "path input receipt": "P92",\n'
+          )
+          if '"onedrive path": "P92"' not in text:
+              if text.count(anchor)!=1: raise SystemExit('P92 builder merge anchor drifted')
+              text=text.replace(anchor,anchor+addition,1)
+              p.write_text(text,encoding='utf-8')
+          PY
+            git add build_prompt_kit.py web/prompt-kit/index.html registry/prompts/spec-architecture-prompts.v1.json tests/test_spec_architecture_prompt_registry.py
+            test -z "$(git diff --name-only --diff-filter=U)"
+            git commit -m 'merge current main into five-tab hotkey sprint'
+          fi
           git merge-base --is-ancestor origin/main HEAD
           echo "candidate=$(git rev-parse HEAD)"
           echo "main=$(git rev-parse origin/main)"
 
-      - name: Apply identity and review repairs then regenerate canonical site
+      - name: Apply complete hotkey namespace repair
         shell: bash
         run: |
           set -euo pipefail
-          python -m py_compile \
-            scripts/repair_prompt_kit_hotkey_identity.py \
-            scripts/repair_prompt_kit_profile_review.py \
-            scripts/repair_prompt_kit_hotkey_identity_handoff.py
+          python -m py_compile scripts/repair_prompt_kit_hotkey_identity.py scripts/repair_prompt_kit_profile_review.py scripts/repair_prompt_kit_hotkey_identity_handoff.py
           python scripts/repair_prompt_kit_hotkey_identity.py
           python scripts/repair_prompt_kit_profile_review.py
           python scripts/repair_prompt_kit_hotkey_identity_handoff.py
           python -m py_compile \
             tests/test_prompt_kit_hotkey_identity_runtime.py \
+            tests/test_prompt_kit_hotkey_header_handoff.py \
             tests/test_prompt_kit_hotkey_completion.py \
             tests/test_prompt_kit_profiles.py \
+            tests/test_prompt_kit_header_contract.py \
             tests/prompt_kit_hotkey_identity_browser_proof.py \
             tests/prompt_kit_favorite_browser_proof.py
           node --check docs/prompt-kit-polish.js
@@ -57,13 +91,18 @@ jobs:
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           git diff --check
 
-      - name: Pass 1 focused runtime identity and profile proof
+      - name: Pass 1 focused product proof
         shell: bash
         run: |
           set -euo pipefail
-          python -m unittest tests.test_prompt_kit_hotkey_identity_runtime tests.test_prompt_kit_hotkey_completion -v
           python tests/test_prompt_kit_header_contract.py
-          python -m unittest tests.test_prompt_kit_profiles tests.test_prompt_kit_filtering_access tests.test_prompt_kit_order_navigation_product -v
+          python -m unittest \
+            tests.test_prompt_kit_hotkey_identity_runtime \
+            tests.test_prompt_kit_hotkey_header_handoff \
+            tests.test_prompt_kit_hotkey_completion \
+            tests.test_prompt_kit_profiles \
+            tests.test_prompt_kit_filtering_access \
+            tests.test_prompt_kit_order_navigation_product -v
           python scripts/prompt_registry_ops.py validate
           python scripts/validate_prompt_kit_discovery.py --summary
           python scripts/evaluate_prompt_language.py --summary
@@ -85,30 +124,28 @@ jobs:
           for digit in '12345':
               assert f"if(key==='{digit}')" not in polish
               assert f"case'{digit}'" not in base
-          for marker in (
-              "replace(/\\./g,'')",
-              "promptShortcutHasLongerPrefix(candidate,gestures)",
-              "if(key==='.'&&promptShortcutBuffer)",
-              "var pendingExact=promptShortcutBindings[promptShortcutBuffer]||null",
-              "if(pendingExact){activatePromptShortcutTarget(pendingExact);return false}",
-          ):
-              assert marker in polish
-              assert marker in deployed
-          for marker in (
-              "try{storage=root.localStorage}catch(e){storage=null}",
-              "var baseResetPromptKitView=root.resetPromptKitView",
-              "activeKey='A';",
-          ):
-              assert marker in profiles
-              assert marker in deployed
           for key in 'ABCDE':
               assert f'data-profile-slot="{key}"' in deployed
-          for identity in ('p11','p13','p111','p1.1','p1.11'):
-              assert identity in readme or identity in design
-          assert 'Their keyboard shortcuts are `1`, `2`, and `3` respectively.' not in readme
-          proof=Path('tests/prompt_kit_hotkey_identity_browser_proof.py').read_text(encoding='utf-8')
-          assert 'pending_p11_hands_off_to_header_a' in proof
-          assert 'incomplete_prefix_hands_off_to_header_b' in proof
+          for marker in (
+              "{key:'Home',label:'Scroll to top'}",
+              "{key:'End',label:'Scroll to bottom'}",
+              "if(key==='home')",
+              "if(key==='end')",
+              "replace(/\\./g,'')",
+              "promptShortcutHasLongerPrefix(candidate,gestures)",
+              "var pendingExact=promptShortcutBindings[promptShortcutBuffer]||null",
+          ):
+              assert marker in polish and marker in deployed
+          assert "{key:'T',label:'Scroll to top'}" not in polish
+          assert "if(key==='t')" not in polish
+          assert "['Home','Scroll to top']" in profiles
+          assert "['End','Scroll to bottom']" in profiles
+          assert '| `Home` | Scroll to top |' in readme
+          assert '| `End` | Scroll to bottom |' in readme
+          assert '| `T` | Scroll to top |' not in readme
+          assert '`Home` scrolls to the top' in design
+          assert '`End` scrolls to the bottom' in design
+          assert '"onedrive path": "P92"' in Path('build_prompt_kit.py').read_text(encoding='utf-8')
           PY
           python scripts/run_deterministic_test_floor.py --report "$RUNNER_TEMP/deterministic-test-floor-report.json"
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
@@ -124,21 +161,25 @@ jobs:
           set -euo pipefail
           git fetch origin main
           git merge-base --is-ancestor origin/main HEAD
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add \
+            build_prompt_kit.py \
             docs/prompt-kit-polish.js \
             docs/prompt-kit-profiles.js \
             docs/PROMPT_KIT_FIVE_TAB_PROFILES.md \
             docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md \
+            registry/prompts/spec-architecture-prompts.v1.json \
+            tests/test_spec_architecture_prompt_registry.py \
             tests/test_prompt_kit_hotkey_identity_runtime.py \
+            tests/test_prompt_kit_hotkey_header_handoff.py \
             tests/prompt_kit_hotkey_identity_browser_proof.py \
+            tests/test_prompt_kit_hotkey_completion.py \
             tests/test_prompt_kit_profiles.py \
+            tests/test_prompt_kit_header_contract.py \
             web/README.md \
             web/prompt-kit/index.html
           git diff --cached --check
           git diff --cached --stat
-          git commit -m 'fix(prompt-kit): disambiguate prompt identity hotkeys'
+          git commit -m 'fix(prompt-kit): reserve A-E and use Home-End navigation'
 
       - name: Install observed browser runtime
         shell: bash
@@ -147,7 +188,7 @@ jobs:
           python -m pip install --disable-pip-version-check playwright==1.55.0
           python -m playwright install --with-deps chromium
 
-      - name: Observe A-E and overlapping prompt identities in Chromium
+      - name: Observe A-E Home-End and prompt identity behavior
         shell: bash
         run: |
           set -euo pipefail
@@ -177,5 +218,5 @@ jobs:
             scripts/repair_prompt_kit_profile_review.py \
             scripts/repair_prompt_kit_hotkey_identity_handoff.py
           git diff --cached --check
-          git commit -m 'chore(prompt-kit): remove hotkey identity repair transport'
+          git commit -m 'chore(prompt-kit): remove hotkey repair transport'
           git push origin HEAD:feat/prompt-kit-five-tab-named-profiles-20260825
