@@ -278,6 +278,22 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
             "provider run ID",
         ):
             self.assertIn(phrase, promotion["copyContent"])
+        self.assertLess(
+            promotion["copyContent"].index("MCP / SEMANTIC REPOSITORY RETRIEVAL CONTRACT"),
+            promotion["copyContent"].index("\nMISSION\n"),
+        )
+        for phrase in (
+            "FIRST EVIDENCE ACTION",
+            "Augment Context Engine MCP",
+            "Resolve the active MCP server/tool identity from Cursor",
+            "promotion authority, validation owners, proof/provenance, and write authority",
+            "Do not satisfy this contract with one vague or ceremonial MCP call",
+            "MCP maps architecture; it does not prove current SHA/base",
+            "MCP_RETRIEVAL_BLOCKED",
+            "Do not claim MCP-backed discovery or silently substitute assumptions",
+        ):
+            self.assertIn(phrase, promotion["copyContent"])
+        self.assertIn("augment mcp", promotion["keywords"])
         self.assertIn("code already authored", promotion["copyContent"])
         self.assertIn("repository-owned mechanism", generation["copyContent"])
         self.assertIn("Validated CI/CD Promotion Pipeline Builder", build_prompt_kit_registry.render())
