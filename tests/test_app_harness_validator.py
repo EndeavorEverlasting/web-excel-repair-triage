@@ -104,6 +104,14 @@ class AppHarnessValidatorTests(unittest.TestCase):
         self.assertNotIn("playwright", workflow.lower())
         self.assertNotIn("start-process", workflow.lower())
 
+    def test_ci_gate_runs_for_every_candidate_head(self):
+        workflow = (ROOT / ".github" / "workflows" / "app-harness-validation.yml").read_text(encoding="utf-8")
+        self.assertIn("pull_request:\n", workflow)
+        self.assertIn("push:\n    branches: [main]", workflow)
+        self.assertNotIn("paths:", workflow)
+        self.assertIn("ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}", workflow)
+        self.assertIn("app-harness-validation-${{ github.event.pull_request.head.sha || github.sha }}", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
