@@ -84,12 +84,17 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             source.index("promptShortcutBindings=candidate"),
         )
 
-    def test_buffered_prompt_sequence_precedes_builtin_digit_dispatch(self) -> None:
+    def test_prompt_sequence_owns_digits_and_header_navigation_is_letter_only(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
+        base = (ROOT / "docs" / "prompt-kit.js").read_text(encoding="utf-8")
         buffered = "if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;"
         self.assertIn(buffered, source)
-        for built_in in ("if(key==='1')", "if(key==='4')", "if(key==='5')"):
-            self.assertLess(source.index(buffered), source.index(built_in))
+        for digit in "12345":
+            self.assertNotIn(f"if(key==='{digit}')", source)
+            self.assertNotIn(f"case'{digit}'", base)
+        self.assertIn("{key:'A',label:'All'}", source)
+        self.assertIn("{key:'E',label:'PM'}", source)
+        self.assertIn("{key:'End',label:'Scroll to bottom'}", source)
         self.assertIn("var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');", source)
         self.assertIn("if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)", source)
 

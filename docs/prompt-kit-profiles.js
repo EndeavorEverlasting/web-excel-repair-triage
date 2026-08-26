@@ -299,10 +299,17 @@ function install(root){
   if(typeof baseRenderTypes==='function')root.renderTypes=function(){return projectCall(baseRenderTypes,arguments)};
   if(typeof baseRenderSections==='function')root.renderSections=function(){return projectCall(baseRenderSections,arguments)};
 
-  function setBuiltinView(slot){
+  function clearTransientBrowserFilters(){
     if(typeof root.activeType!=='undefined')root.activeType=null;
     if(typeof root.activeColor!=='undefined')root.activeColor=null;
     if(typeof root.collapsedSections!=='undefined')root.collapsedSections={};
+    var search=doc.getElementById('search');
+    if(search)search.value='';
+    var clear=doc.getElementById('searchClear');
+    if(clear)clear.style.display='none'
+  }
+  function setBuiltinView(slot){
+    clearTransientBrowserFilters();
     if(slot.mode==='all'){
       root.activeCat='all';
       root.activeSection=null
@@ -328,7 +335,7 @@ function install(root){
       button.dataset.profileSlot=slot.key;
       if(slot.key==='A')button.dataset.cat='all';
       if(slot.key==='B')button.dataset.cat='standard';
-      if(slot.key==='C')button.id='favoritesShortcut';
+      if(slot.key==='C'){button.id='favoritesShortcut';button.dataset.view='favorites'}
       button.setAttribute('aria-keyshortcuts',slot.key);
       button.setAttribute('aria-pressed',slot.key===activeKey?'true':'false');
       button.setAttribute('title',slot.name+' ('+slot.key+')');

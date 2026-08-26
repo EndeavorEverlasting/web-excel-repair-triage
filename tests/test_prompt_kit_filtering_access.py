@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 JS = ROOT / "docs" / "prompt-kit.js"
 POLISH = ROOT / "docs" / "prompt-kit-polish.js"
+PROFILES = ROOT / "docs" / "prompt-kit-profiles.js"
 ACCESS = ROOT / "PROMPT_KIT_ACCESS.md"
 WEB_README = ROOT / "web" / "README.md"
 CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-filtering.v1.json"
@@ -97,6 +98,7 @@ process.stdout.write(JSON.stringify(result));
     def test_all_view_is_an_atomic_reset_after_favorites(self) -> None:
         js = JS.read_text(encoding="utf-8")
         polish = POLISH.read_text(encoding="utf-8")
+        profiles = PROFILES.read_text(encoding="utf-8")
 
         start = js.index("function resetPromptKitView()")
         end = js.index("\n\nfunction showAddPrompt", start)
@@ -117,22 +119,21 @@ process.stdout.write(JSON.stringify(result));
 
         favorites = polish[polish.index("function activateFavoritesView()") : polish.index("function ensureCompactBrowsingControls()")]
         self.assertIn("activeSection='__favorites__'", favorites)
-
         all_view = polish[polish.index("function activateAllPromptsView()") : polish.index("function activateFavoritesView()")]
         self.assertIn("resetPromptKitView();", all_view)
 
-        switches = polish[polish.index("function installCompactBrowsingViewSwitches()") : polish.index("function installCompactBrowsingHotkeys()")]
-        self.assertIn(".cat-tab[data-cat=\"all\"]", switches)
-        self.assertIn("e.stopImmediatePropagation();", switches)
-        self.assertIn("activateAllPromptsView();", switches)
+        self.assertIn("function clearTransientBrowserFilters()", profiles)
+        self.assertIn("search.value=''", profiles)
+        self.assertIn("if(slot.mode==='all')", profiles)
+        self.assertIn("root.activeCat='all'", profiles)
+        self.assertIn("if(slot.mode==='favorites')", profiles)
+        self.assertIn("root.activeSection='__favorites__'", profiles)
+        self.assertIn("SLOT_KEYS.indexOf(key)===-1", profiles)
+        self.assertIn("activateSlot(key)", profiles)
 
         hotkeys = polish[polish.index("function installCompactBrowsingHotkeys()") : polish.index("window.appendPromptCard")]
-        self.assertIn("var key=String(e.key||'').toLowerCase();", hotkeys)
-        key_one = hotkeys[hotkeys.index("if(key==='1')") : hotkeys.index("if(key==='4')")]
-        self.assertIn("e.preventDefault();", key_one)
-        self.assertIn("e.stopImmediatePropagation();", key_one)
-        self.assertIn("activateAllPromptsView();", key_one)
-
+        for digit in "12345":
+            self.assertNotIn(f"if(key==='{digit}')", hotkeys)
         self.assertIn("installCompactBrowsingViewSwitches();", polish)
         self.assertIn("installCompactBrowsingHotkeys();", polish)
 

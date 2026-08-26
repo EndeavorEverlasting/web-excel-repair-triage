@@ -86,22 +86,18 @@ function ensureCompactBrowsingControls(){
   var catTabs=document.querySelector('.cat-tabs');
   if(!header||!headerTop||!catTabs)return;
 
-  var doctrineButton=catTabs.querySelector('.cat-tab[data-cat="doctrine"]');
-  if(doctrineButton){
-    var doctrineKbd=doctrineButton.querySelector('.kbd');
-    if(doctrineKbd)doctrineKbd.textContent='5';
-  }
-
   if(!document.getElementById('favoritesShortcut')){
     var favoritesButton=document.createElement('button');
-    favoritesButton.className='cat-tab';
+    favoritesButton.className='cat-tab profile-slot';
     favoritesButton.id='favoritesShortcut';
     favoritesButton.type='button';
+    favoritesButton.dataset.profileSlot='C';
     favoritesButton.setAttribute('data-view','favorites');
     favoritesButton.setAttribute('aria-label','Show saved favorite prompts');
-    favoritesButton.innerHTML='<span class="tab-icon">★</span>Favorites<span class="kbd">4</span>';
+    favoritesButton.setAttribute('aria-keyshortcuts','C');
+    favoritesButton.innerHTML='<span class="tab-icon">★</span>Favorites<span class="kbd">C</span>';
     favoritesButton.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();activateFavoritesView()});
-    if(doctrineButton)catTabs.insertBefore(favoritesButton,doctrineButton);else catTabs.appendChild(favoritesButton)
+    catTabs.appendChild(favoritesButton)
   }
 
   if(!document.getElementById('filterPanelToggle')){
@@ -133,18 +129,18 @@ function installCompactBrowsingViewSwitches(){
 
 var PROMPT_KIT_SHORTCUTS=[
   {key:'`',label:'Show / hide Hotkeys'},
-  {key:'1',label:'All prompts'},
-  {key:'2',label:'Standard prompts'},
-  {key:'3',label:'GNHF prompts'},
-  {key:'4',label:'Favorites'},
-  {key:'5',label:'Doctrine'},
+  {key:'A',label:'All'},
+  {key:'B',label:'Standard'},
+  {key:'C',label:'Favorites'},
+  {key:'D',label:'SAS'},
+  {key:'E',label:'PM'},
   {key:'/',label:'Focus search'},
   {key:'R',label:'Reference panel'},
   {key:'F',label:'Show / hide filters'},
   {key:'[',label:'Hide filters'},
   {key:']',label:'Show filters'},
   {key:'T',label:'Scroll to top'},
-  {key:'B',label:'Scroll to bottom'},
+  {key:'End',label:'Scroll to bottom'},
   {key:'Esc',label:'Close / clear active surface'}
 ];
 
@@ -464,18 +460,11 @@ function installCompactBrowsingHotkeys(){
     }
     if(key==='escape')resetPromptShortcutBuffer();
     if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;
-    if(key==='1'){e.preventDefault();e.stopImmediatePropagation();activateAllPromptsView();return}
-    if(key==='4'){e.preventDefault();e.stopImmediatePropagation();activateFavoritesView();return}
-    if(key==='5'){
-      var doctrine=document.querySelector('.cat-tab[data-cat="doctrine"]');
-      if(doctrine){e.preventDefault();e.stopImmediatePropagation();doctrine.click()}
-      return
-    }
     if(key==='f'){e.preventDefault();e.stopImmediatePropagation();toggleCompactFilters();return}
     if(key==='['){e.preventDefault();e.stopImmediatePropagation();hideCompactFilters();return}
     if(key===']'){e.preventDefault();e.stopImmediatePropagation();showCompactFilters();return}
     if(key==='t'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('top');return}
-    if(key==='b'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('bottom');return}
+    if(key==='end'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('bottom');return}
     handleConfiguredPromptShortcutKey(e,key)
   },true)
 }

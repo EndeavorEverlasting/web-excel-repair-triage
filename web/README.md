@@ -54,11 +54,17 @@ Use the glowing **Tutorial · Find My Prompt** control when the correct prompt i
 
 For the full current workflow—including the direct **P83** path when another agent claims work is complete—see [`../docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md`](../docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md) and [`../docs/PROMPT_KIT_OPERATOR_GUIDE.md`](../docs/PROMPT_KIT_OPERATOR_GUIDE.md).
 
+### Five-tab named profiles
+
+The top rail exposes five persistent keyboard slots, `A` through `E`. Every slot can be renamed and assigned a built-in view or a custom union of profile packs from the Hotkeys panel. Defaults are **All / Standard / Favorites / SAS / PM**; SAS selects the SAS pack, while PM composes PM + FUN + TRIAGE + H&H. Built-in packs also include CYBERSEC, AGENTIC LOOPING, Gardening, and Future Projects.
+
+Imported profile packs use `prompt-kit-profile-import/v1` JSON and pass a bounded parse → validate → compile evaluator. Imports are data only: JavaScript `eval`, `Function`, and `new Function` are not used. The runtime caps import size, pack count, installed pack count, rule nodes/depth, matcher length, and packs selected per tab, and rejects malformed or unknown operators before persistence. See `docs/PROMPT_KIT_FIVE_TAB_PROFILES.md`.
+
 ### Category and type filtering
 
 There are three separate browsing layers:
 
-1. **Library view:** All / Standard / GNHF / Doctrine.
+1. **Profile tab:** five configurable slots A–E, defaulting to All / Standard / Favorites / SAS / PM.
 2. **Category:** All Categories, Foundation, Discover & Plan, Build & Repair, Validate & Protect, Integrate & Ship, or Autonomy & Night Shift.
 3. **Type:** All Types or one concrete prompt type.
 
@@ -89,7 +95,7 @@ The current browser stores Favorites under `promptKit.favoritePromptIds.v1`. The
 
 - Select the star on any prompt card to save or remove it.
 - Favorites remain in the normal chronological/numeric library order by default; saving a Favorite does not promote that prompt ahead of the ordinary library.
-- Use the explicit **Favorites** header view or press **4** to clear the transient search/category/type restrictions and show the complete saved Favorites collection.
+- Use the explicit **Favorites** profile tab or press **C** to show the complete saved Favorites collection.
 - A favorited prompt still renders once; Favorites are stored user state, not a second prompt registry.
 - **Export Favorites** downloads a portable JSON backup using schema `prompt-kit-favorites/v1`.
 - **Import Favorites** validates, normalizes, deduplicates, and merges a backup without deleting Favorites already saved in the current browser.
@@ -155,28 +161,28 @@ These remain touch-usable and do not reset library view, category, type, search 
 
 ### Hotkeys
 
-The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference and favorite-prompt shortcut configurator. Select it or press the unmodified **backtick** key (`` ` ``) to toggle it; select outside it, use its close control, or press **Esc** to dismiss it. Backtick joins `1`–`5` as the one-hand core shortcut cluster, while `/` remains dedicated to Focus search.
+The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference, five-tab profile editor, profile-pack importer, and favorite-prompt shortcut configurator. Select it or press the unmodified **backtick** key (`` ` ``) to toggle it; select outside it, use its close control, or press **Esc** to dismiss it. The five header identities are always `A`–`E`; their visible names and profile compositions are user configuration. Numeric keys are not header navigation, and no header key uses `P`, so configured prompt sequences such as `P111` retain the digit stream.
 
 | Key | Action |
 |---|---|
 | `` ` `` | Show / hide Hotkeys |
 | `/` | Focus search |
-| `1` | All prompts |
-| `2` | Standard prompts |
-| `3` | GNHF prompts |
-| `4` | Favorites |
-| `5` | Doctrine |
+| `A` | All |
+| `B` | Standard |
+| `C` | Favorites |
+| `D` | SAS |
+| `E` | PM |
 | `R` | Toggle reference panel |
 | `F` | Show / hide filters |
 | `[` | Hide filters |
 | `]` | Show filters |
 | `T` | Scroll to top |
-| `B` | Scroll to bottom |
+| `End` | Scroll to bottom |
 | `Esc` | Close the active surface or clear filters |
 
 Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prompt first, enter its canonical ID such as `P95`, and save it; the persisted binding is then the lower-case prompt ID (`p95`). Typed prompt sequences expire after 1.2 seconds and are ignored in editable fields. Completing a configured sequence clears the transient restrictions needed to reveal the target, scrolls the canonical prompt card into view, and copies the canonical prompt through the normal copy path **without opening prompt detail**. The Hotkeys panel labels configured rows as **Copy + reveal P##**.
 
-A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it receives the next digit before built-in `1`, `4`, or `5` navigation so valid prompt IDs cannot be interrupted; built-in digit shortcuts keep their normal meaning when no sequence is active.
+A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it owns the following digits. Numeric keys have no header-navigation meaning, so `P111` and other configured prompt IDs cannot fall through into a tab command.
 
 Navigation shortcuts are ignored while typing in an input, textarea, select, or content-editable surface. Modified backtick chords are ignored. Top/bottom scrolling respects reduced-motion preferences.
 
