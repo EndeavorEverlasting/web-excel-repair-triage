@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from scripts import run_deterministic_test_floor as floor
+from scripts import run_private_input_test_floor as private_floor
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -218,6 +219,7 @@ SKIPPED [1] tests/test_three.py:30: Real roster log not present
         self.assertIn("python -m pip install -r requirements-test-floor.txt", workflow)
         self.assertNotIn("python -m pip install -r requirements.txt", workflow)
         self.assertEqual(workflow.count("scripts/run_deterministic_test_floor.py"), 2)
+        self.assertEqual(workflow.count("scripts/run_private_input_test_floor.py"), 1)
         self.assertNotIn("tests/test_nw_prj_neuron_track_hours.py", workflow)
         self.assertNotIn("tests.test_harness_contract", workflow)
 
@@ -237,6 +239,61 @@ SKIPPED [1] tests/test_three.py:30: Real roster log not present
         self.assertIn("earliest registered failure gate", workflow)
         self.assertIn("if [ \"$status\" -eq 0 ]; then", workflow)
         self.assertNotIn("expected = 'validator:skill-prompt-registry-tests'", workflow)
+
+    def test_private_input_requirements_exactly_own_registered_skips(self) -> None:
+        manifest, records = private_floor.load_requirements(MANIFEST)
+        self.assertEqual(len(records), 3)
+        self.assertEqual(
+            {record["missing_reason"] for record in records},
+            set(manifest["allowed_artifact_skip_reasons"]),
+        )
+        self.assertEqual(
+            {record["id"] for record in records},
+            {"neuron-real-roster", "one-marcus-real-recon", "one-marcus-operator-reference"},
+        )
+        for record in records:
+            self.assertIn(record["test_selector"].split("::", 1)[0], manifest["artifact_tests"])
+
+    def test_private_input_gate_is_fail_closed_and_can_become_ready(self) -> None:
+        _manifest, records = private_floor.load_requirements(MANIFEST)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.assertEqual(len(private_floor.missing_requirements(records, root)), 3)
+            for record in records:
+                target = root / record["input_path"]
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(b"fixture")
+            self.assertEqual(private_floor.missing_requirements(records, root), [])
+            argv = private_floor.pytest_argv(records)
+            self.assertEqual(argv[0], private_floor.sys.executable)
+            for record in records:
+                self.assertIn(record["test_selector"], argv)
+
+    def test_private_input_contract_rejects_path_escape(self) -> None:
+        broken = dict(self.manifest)
+        broken["private_input_requirements"] = [
+            dict(item) for item in self.manifest["private_input_requirements"]
+        ]
+        broken["private_input_requirements"][0]["input_path"] = "../secret.xlsx"
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "manifest.json"
+            path.write_text(json.dumps(broken), encoding="utf-8")
+            with self.assertRaisesRegex(private_floor.ContractError, "repository-relative"):
+                private_floor.load_requirements(path)
+
+    def test_private_input_skip_counter_is_explicit(self) -> None:
+        self.assertEqual(private_floor._pytest_skip_count("3 passed in 0.2s\n"), 0)
+        self.assertEqual(private_floor._pytest_skip_count("2 passed, 1 skipped in 0.2s\n"), 1)
+        self.assertEqual(private_floor._pytest_skip_count("1 passed, 2 skipped in 0.2s\n"), 2)
+
+    def test_public_workflow_proves_private_gate_blocks_without_acquiring_secrets(self) -> None:
+        workflow = FLOOR_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("Private-input gate must block on clean public runner", workflow)
+        self.assertIn("scripts/run_private_input_test_floor.py", workflow)
+        self.assertIn("private-input-blocked-report.json", workflow)
+        self.assertIn("report.get('status') != 'BLOCKED'", workflow)
+        self.assertIn("permissions:\n  contents: read", workflow)
+        self.assertNotIn("secrets.", workflow)
 
 
 if __name__ == "__main__":
