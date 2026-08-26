@@ -129,7 +129,12 @@ jobs:
             web/prompt-kit/index.html | sort)
           actual=$(git diff --cached --name-only | sort)
           test "$actual" = "$expected"
-          test -z "$(git status --porcelain --untracked-files=all | grep -vE '^(D | D) (\.prompt-contrib/p92_environment_path_resolution.py|\.github/workflows/tmp-p92-environment-path-resolution-20260826.yml)$' || true)" || {
+          expected_unstaged=$(printf '%s\n' \
+            .github/workflows/tmp-p92-environment-path-resolution-20260826.yml \
+            .prompt-contrib/p92_environment_path_resolution.py | sort)
+          actual_unstaged=$(git diff --name-only | sort)
+          test "$actual_unstaged" = "$expected_unstaged" || {
+            echo "Unexpected unstaged surface:" >&2
             git status --short
             exit 42
           }
