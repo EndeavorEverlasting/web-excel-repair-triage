@@ -279,6 +279,9 @@ function schedulePromptShortcutBufferReset(){
 }
 
 function revealPromptShortcutTarget(promptId){
+  if(window.PromptKitProfiles&&typeof window.PromptKitProfiles.activateSlot==='function'){
+    window.PromptKitProfiles.activateSlot('A',true)
+  }
   activeCat='all';
   activeSection=null;
   clearTransientPromptFilters();

@@ -170,8 +170,15 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             "github_actions_headless_browser",
             "local_headless_browser",
             '"kind": execution_environment_kind()',
+            'for slot_key in "ABCDE":',
+            'profile_header_hotkeys_a_to_e',
+            'page.keyboard.press("d")',
+            'D custom profile hotkey activates and excludes P79 before shortcut',
         ):
             self.assertIn(marker, proof)
+        self.assertNotIn('.cat-tab[data-cat="doctrine"]', proof)
+        source = POLISH.read_text(encoding="utf-8")
+        self.assertIn("window.PromptKitProfiles.activateSlot('A',true)", source)
 
     def test_configuration_ui_and_generated_parity_are_present(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
