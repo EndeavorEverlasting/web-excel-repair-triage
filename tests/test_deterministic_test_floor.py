@@ -5,6 +5,7 @@ import re
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from scripts import run_deterministic_test_floor as floor
 from scripts import run_private_input_test_floor as private_floor
@@ -285,6 +286,50 @@ SKIPPED [1] tests/test_three.py:30: Real roster log not present
         self.assertEqual(private_floor._pytest_skip_count("3 passed in 0.2s\n"), 0)
         self.assertEqual(private_floor._pytest_skip_count("2 passed, 1 skipped in 0.2s\n"), 1)
         self.assertEqual(private_floor._pytest_skip_count("1 passed, 2 skipped in 0.2s\n"), 2)
+
+    def test_private_input_ready_path_reports_pass_only_after_zero_skip_test_result(self) -> None:
+        completed = private_floor.subprocess.CompletedProcess(
+            args=["pytest"],
+            returncode=0,
+            stdout="3 passed in 0.10s\n",
+            stderr="",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            report_path = Path(tmp) / "private-pass.json"
+            with (
+                mock.patch.object(private_floor, "missing_requirements", return_value=[]),
+                mock.patch.object(private_floor, "_git_value", side_effect=["deadbeef", "synthetic"]),
+                mock.patch.object(private_floor.subprocess, "run", return_value=completed),
+            ):
+                status = private_floor.run(MANIFEST, report_path)
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+        self.assertEqual(status, 0)
+        self.assertEqual(report["status"], "PASS")
+        self.assertIsNone(report["failed_step"])
+        self.assertEqual(report["test"]["returncode"], 0)
+        self.assertEqual(report["test"]["skip_count"], 0)
+
+    def test_private_input_ready_path_rejects_even_successful_pytest_with_a_skip(self) -> None:
+        completed = private_floor.subprocess.CompletedProcess(
+            args=["pytest"],
+            returncode=0,
+            stdout="2 passed, 1 skipped in 0.10s\n",
+            stderr="",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            report_path = Path(tmp) / "private-skip.json"
+            with (
+                mock.patch.object(private_floor, "missing_requirements", return_value=[]),
+                mock.patch.object(private_floor, "_git_value", side_effect=["deadbeef", "synthetic"]),
+                mock.patch.object(private_floor.subprocess, "run", return_value=completed),
+            ):
+                status = private_floor.run(MANIFEST, report_path)
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+        self.assertEqual(status, 1)
+        self.assertEqual(report["status"], "FAIL")
+        self.assertEqual(report["failed_step"], "private-input-regressions")
+        self.assertEqual(report["test"]["returncode"], 0)
+        self.assertEqual(report["test"]["skip_count"], 1)
 
     def test_public_workflow_proves_private_gate_blocks_without_acquiring_secrets(self) -> None:
         workflow = FLOOR_WORKFLOW.read_text(encoding="utf-8")
