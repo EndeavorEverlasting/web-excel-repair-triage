@@ -667,6 +667,49 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertLess(len(content), 7600)
         self.assertEqual(prompt["id"], "P86")
         self.assertEqual(prompt["copySheet"], "P86_COPY_SAFE")
+    def test_afk_feedback_executor_connects_real_work_to_existing_owners(self) -> None:
+        matches = [p for p in self.full.values() if p.get("name") == 'AFK Feedback-Driven Development Loop Executor']
+        self.assertEqual(len(matches), 1)
+        owner = matches[0]
+        self.assertEqual(owner["id"], 'P115')
+        self.assertEqual(owner["class"], "HARNESS / AFK DEVELOPMENT")
+        content = owner["copyContent"]
+        for phrase in (
+            "FEEDBACK IS A WORK QUEUE, NOT A REPORT ENDPOINT",
+            "P07-STYLE NONTERMINAL WORK LOOP",
+            "REFRESH -> INGEST SIGNALS -> SELECT SAFE HIGHEST-VALUE WORK -> EXECUTE -> VALIDATE -> INGEST NEW FEEDBACK -> CRITIQUE -> IMPROVE -> INTEGRATE -> REFRESH -> REPEAT",
+            "A status-only pass is a failed pass when safe agent-capable work exists",
+            "developers, scripts, agents, models, PRs",
+            "AFK WAKEUPS ARE NOT AFK WORK",
+            "COERCE REAL WORK, NOT STATUS THEATER",
+            "one writer per mutation surface",
+            "Prove the operator did not have to relay ordinary logs",
+            "An open PR, green CI, generated report",
+        ):
+            self.assertIn(phrase, content)
+        for neighbor in ("P07", "P32", "P104", "P105", "P112", "P113"):
+            self.assertIn(neighbor, content)
+        self.assertEqual(self.full["P104"]["class"], "HARNESS / REPO-NATIVE CODE GENERATION")
+        self.assertEqual(self.full["P105"]["class"], "HARNESS / CI-CD PROMOTION")
+        self.assertEqual(self.full["P112"]["class"], "HARNESS / AUTOMATED TESTING")
+        self.assertEqual(self.full["P113"]["class"], "HARNESS / TEST EVOLUTION")
+
+    def test_p105_failed_gate_routes_to_afk_repair_without_gaining_authoring(self) -> None:
+        owner = [p for p in self.full.values() if p.get("name") == 'AFK Feedback-Driven Development Loop Executor'][0]
+        promotion = self.full["P105"]
+        self.assertIn(owner["id"], promotion["nextStep"])
+        self.assertIn(owner["id"], promotion["copyContent"])
+        self.assertIn("FAILED PROMOTION GATES FEED DEVELOPMENT", promotion["copyContent"])
+        content = promotion["copyContent"]
+        self.assertIn("This pipeline remains promotion-only", content)
+        self.assertIn("Emit candidate SHA/base, failing job/check/command", content)
+        self.assertIn("artifact/log or review-thread identity", content)
+        self.assertIn("owning surface, required acceptance condition, and proof ceiling", content)
+        self.assertIn("hand that exact signal to P115", content)
+        self.assertIn("keep promotion blocked", content)
+        self.assertIn("The repair owner must create a new exact candidate", content)
+        self.assertIn("re-enter this P105 pipeline from the beginning", content)
+        self.assertIn("never reuse proof from the failed candidate", content)
 
 if __name__ == "__main__":
     unittest.main()
