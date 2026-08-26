@@ -29,11 +29,19 @@ def replace_region(relative: str, start_marker: str, end_marker: str, replacemen
     path.write_text(text[:start] + replacement + text[end:], encoding="utf-8")
 
 
+def replace_test_function(relative: str, function_name: str, next_function: str, replacement: str) -> None:
+    path = ROOT / relative
+    text = path.read_text(encoding="utf-8")
+    start = text.index(f"    def {function_name}")
+    end = text.index(f"\n    def {next_function}", start)
+    path.write_text(text[:start] + replacement.rstrip() + "\n" + text[end:], encoding="utf-8")
+
+
 def migrate_builder() -> None:
     buttons = [
         "    html.append('        <button class=\"cat-tab active profile-slot\" data-profile-slot=\"A\" data-cat=\"all\" aria-keyshortcuts=\"A\" aria-pressed=\"true\">All<span class=\"kbd\">A</span></button>')",
         "    html.append('        <button class=\"cat-tab profile-slot\" data-profile-slot=\"B\" data-cat=\"standard\" aria-keyshortcuts=\"B\" aria-pressed=\"false\">Standard<span class=\"kbd\">B</span></button>')",
-        "    html.append('        <button class=\"cat-tab profile-slot\" id=\"favoritesShortcut\" data-profile-slot=\"C\" aria-keyshortcuts=\"C\" aria-pressed=\"false\">Favorites<span class=\"kbd\">C</span></button>')",
+        "    html.append('        <button class=\"cat-tab profile-slot\" id=\"favoritesShortcut\" data-profile-slot=\"C\" data-view=\"favorites\" aria-keyshortcuts=\"C\" aria-pressed=\"false\">Favorites<span class=\"kbd\">C</span></button>')",
         "    html.append('        <button class=\"cat-tab profile-slot\" data-profile-slot=\"D\" aria-keyshortcuts=\"D\" aria-pressed=\"false\">SAS<span class=\"kbd\">D</span></button>')",
         "    html.append('        <button class=\"cat-tab profile-slot\" data-profile-slot=\"E\" aria-keyshortcuts=\"E\" aria-pressed=\"false\">PM<span class=\"kbd\">E</span></button>')",
     ]
@@ -51,6 +59,60 @@ def migrate_base_runtime() -> None:
         "switch(e.key){case'1':activeCat='all';break;case'2':activeCat='standard';break;case'3':activeCat='gnhf';break;case'4':activeCat='doctrine';break;case'r':case'R':toggleRef();return;",
         "switch(e.key){case'r':case'R':toggleRef();return;",
     )
+
+
+def migrate_profile_runtime() -> None:
+    replace_once(
+        "docs/prompt-kit-profiles.js",
+        "      if(slot.key==='C')button.id='favoritesShortcut';",
+        "      if(slot.key==='C'){button.id='favoritesShortcut';button.dataset.view='favorites'}",
+    )
+    old = """  function setBuiltinView(slot){
+    if(typeof root.activeType!=='undefined')root.activeType=null;
+    if(typeof root.activeColor!=='undefined')root.activeColor=null;
+    if(typeof root.collapsedSections!=='undefined')root.collapsedSections={};
+    if(slot.mode==='all'){
+      root.activeCat='all';
+      root.activeSection=null
+    }else if(slot.mode==='standard'){
+      root.activeCat='standard';
+      root.activeSection=null
+    }else if(slot.mode==='favorites'){
+      root.activeCat='all';
+      root.activeSection='__favorites__'
+    }else{
+      root.activeCat='all';
+      root.activeSection=null
+    }
+  }
+"""
+    new = """  function clearTransientBrowserFilters(){
+    if(typeof root.activeType!=='undefined')root.activeType=null;
+    if(typeof root.activeColor!=='undefined')root.activeColor=null;
+    if(typeof root.collapsedSections!=='undefined')root.collapsedSections={};
+    var search=doc.getElementById('search');
+    if(search)search.value='';
+    var clear=doc.getElementById('searchClear');
+    if(clear)clear.style.display='none'
+  }
+  function setBuiltinView(slot){
+    clearTransientBrowserFilters();
+    if(slot.mode==='all'){
+      root.activeCat='all';
+      root.activeSection=null
+    }else if(slot.mode==='standard'){
+      root.activeCat='standard';
+      root.activeSection=null
+    }else if(slot.mode==='favorites'){
+      root.activeCat='all';
+      root.activeSection='__favorites__'
+    }else{
+      root.activeCat='all';
+      root.activeSection=null
+    }
+  }
+"""
+    replace_once("docs/prompt-kit-profiles.js", old, new)
 
 
 def migrate_generator() -> None:
@@ -74,6 +136,25 @@ def migrate_generator() -> None:
 def migrate_polish_runtime() -> None:
     path = ROOT / "docs/prompt-kit-polish.js"
     text = path.read_text(encoding="utf-8")
+
+    fallback_start = text.index("  var doctrineButton=catTabs.querySelector")
+    fallback_end = text.index("  if(!document.getElementById('filterPanelToggle')){", fallback_start)
+    fallback = """  if(!document.getElementById('favoritesShortcut')){
+    var favoritesButton=document.createElement('button');
+    favoritesButton.className='cat-tab profile-slot';
+    favoritesButton.id='favoritesShortcut';
+    favoritesButton.type='button';
+    favoritesButton.dataset.profileSlot='C';
+    favoritesButton.setAttribute('data-view','favorites');
+    favoritesButton.setAttribute('aria-label','Show saved favorite prompts');
+    favoritesButton.setAttribute('aria-keyshortcuts','C');
+    favoritesButton.innerHTML='<span class=\"tab-icon\">★</span>Favorites<span class=\"kbd\">C</span>';
+    favoritesButton.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();activateFavoritesView()});
+    catTabs.appendChild(favoritesButton)
+  }
+
+"""
+    text = text[:fallback_start] + fallback + text[fallback_end:]
 
     shortcut_start = text.index("var PROMPT_KIT_SHORTCUTS=[")
     shortcut_end = text.index("];", shortcut_start) + 2
@@ -116,15 +197,6 @@ def migrate_polish_runtime() -> None:
 
 
 def migrate_hotkey_test() -> None:
-    path = ROOT / "tests/test_prompt_kit_hotkey_completion.py"
-    text = path.read_text(encoding="utf-8")
-    start = text.index(
-        "    def test_buffered_prompt_sequence_precedes_builtin_digit_dispatch(self) -> None:\n"
-    )
-    end = text.index(
-        "\n    def test_executable_prototype_proves_success_failure_and_digit_collision_paths",
-        start,
-    )
     replacement = '''    def test_prompt_sequence_owns_digits_and_header_navigation_is_letter_only(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         base = (ROOT / "docs" / "prompt-kit.js").read_text(encoding="utf-8")
@@ -139,7 +211,111 @@ def migrate_hotkey_test() -> None:
         self.assertIn("var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');", source)
         self.assertIn("if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)", source)
 '''
-    path.write_text(text[:start] + replacement + text[end:], encoding="utf-8")
+    replace_test_function(
+        "tests/test_prompt_kit_hotkey_completion.py",
+        "test_buffered_prompt_sequence_precedes_builtin_digit_dispatch(self) -> None:",
+        "test_executable_prototype_proves_success_failure_and_digit_collision_paths",
+        replacement,
+    )
+
+
+def migrate_filtering_test() -> None:
+    replace_once(
+        "tests/test_prompt_kit_filtering_access.py",
+        'POLISH = ROOT / "docs" / "prompt-kit-polish.js"\n',
+        'POLISH = ROOT / "docs" / "prompt-kit-polish.js"\nPROFILES = ROOT / "docs" / "prompt-kit-profiles.js"\n',
+    )
+    replacement = '''    def test_all_view_is_an_atomic_reset_after_favorites(self) -> None:
+        js = JS.read_text(encoding="utf-8")
+        polish = POLISH.read_text(encoding="utf-8")
+        profiles = PROFILES.read_text(encoding="utf-8")
+
+        start = js.index("function resetPromptKitView()")
+        end = js.index("\n\nfunction showAddPrompt", start)
+        reset = js[start:end]
+        for marker in (
+            "activeCat='all'",
+            "activeSection=null",
+            "activeType=null",
+            "activeColor=null",
+            "collapsedSections={}",
+            "search.value=''",
+            "syncLibraryTabs()",
+            "renderSections()",
+            "renderTypes()",
+            "render()",
+        ):
+            self.assertIn(marker, reset)
+
+        favorites = polish[polish.index("function activateFavoritesView()") : polish.index("function ensureCompactBrowsingControls()")]
+        self.assertIn("activeSection='__favorites__'", favorites)
+        all_view = polish[polish.index("function activateAllPromptsView()") : polish.index("function activateFavoritesView()")]
+        self.assertIn("resetPromptKitView();", all_view)
+
+        self.assertIn("function clearTransientBrowserFilters()", profiles)
+        self.assertIn("search.value=''", profiles)
+        self.assertIn("if(slot.mode==='all')", profiles)
+        self.assertIn("root.activeCat='all'", profiles)
+        self.assertIn("if(slot.mode==='favorites')", profiles)
+        self.assertIn("root.activeSection='__favorites__'", profiles)
+        self.assertIn("SLOT_KEYS.indexOf(key)===-1", profiles)
+        self.assertIn("activateSlot(key)", profiles)
+
+        hotkeys = polish[polish.index("function installCompactBrowsingHotkeys()") : polish.index("window.appendPromptCard")]
+        for digit in "12345":
+            self.assertNotIn(f"if(key==='{digit}')", hotkeys)
+        self.assertIn("installCompactBrowsingViewSwitches();", polish)
+        self.assertIn("installCompactBrowsingHotkeys();", polish)
+'''
+    replace_test_function(
+        "tests/test_prompt_kit_filtering_access.py",
+        "test_all_view_is_an_atomic_reset_after_favorites(self) -> None:",
+        "test_render_uses_unique_category_metadata_without_reordering_cards",
+        replacement,
+    )
+
+
+def migrate_order_navigation_test() -> None:
+    replacement = '''    def test_compact_browsing_uses_favorites_hotkey_and_collapsible_filter_chrome(self) -> None:
+        polish = (ROOT / "docs" / "prompt-kit-polish.js").read_text(encoding="utf-8")
+        profiles = (ROOT / "docs" / "prompt-kit-profiles.js").read_text(encoding="utf-8")
+        for marker in (
+            "function activateFavoritesView()",
+            "activeSection='__favorites__'",
+            "id='favoritesShortcut'",
+            "data-view','favorites'",
+            "Favorites<span class=\"kbd\">C</span>",
+            "aria-keyshortcuts','C'",
+            "var key=String(e.key||'').toLowerCase();",
+            "e.stopImmediatePropagation()",
+            "filterPanelToggle",
+            "filters-collapsed",
+            "Hide filters ↑",
+            "Show filters ↓",
+        ):
+            self.assertIn(marker, polish)
+        self.assertNotIn("doctrineKbd.textContent='5'", polish)
+        self.assertNotIn("Favorites<span class=\"kbd\">4</span>", polish)
+        for digit in "12345":
+            self.assertNotIn(f"if(key==='{digit}')", polish)
+        for marker in (
+            "SLOT_KEYS=['A','B','C','D','E']",
+            "button.dataset.profileSlot=slot.key",
+            "button.dataset.view='favorites'",
+            "activateSlot(key)",
+        ):
+            self.assertIn(marker, profiles)
+        self.assertIn(
+            ".header.filters-collapsed .search-container,.header.filters-collapsed .header-controls,.header.filters-collapsed .sections-nav,.header.filters-collapsed .type-nav{display:none!important}",
+            polish,
+        )
+'''
+    replace_test_function(
+        "tests/test_prompt_kit_order_navigation_product.py",
+        "test_compact_browsing_uses_favorites_hotkey_and_collapsible_filter_chrome(self) -> None:",
+        "test_visible_version_is_consistently_v40",
+        replacement,
+    )
 
 
 def migrate_readme() -> None:
@@ -230,9 +406,12 @@ Imported profile packs use `prompt-kit-profile-import/v1` JSON and pass a bounde
 def main() -> int:
     migrate_builder()
     migrate_base_runtime()
+    migrate_profile_runtime()
     migrate_generator()
     migrate_polish_runtime()
     migrate_hotkey_test()
+    migrate_filtering_test()
+    migrate_order_navigation_test()
     migrate_readme()
     return 0
 
