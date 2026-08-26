@@ -700,8 +700,16 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn(owner["id"], promotion["nextStep"])
         self.assertIn(owner["id"], promotion["copyContent"])
         self.assertIn("FAILED PROMOTION GATES FEED DEVELOPMENT", promotion["copyContent"])
-        self.assertIn("This pipeline remains promotion-only", promotion["copyContent"])
-        self.assertIn("new exact candidate", promotion["copyContent"])
+        content = promotion["copyContent"]
+        self.assertIn("This pipeline remains promotion-only", content)
+        self.assertIn("Emit candidate SHA/base, failing job/check/command", content)
+        self.assertIn("artifact/log or review-thread identity", content)
+        self.assertIn("owning surface, required acceptance condition, and proof ceiling", content)
+        self.assertIn("hand that exact signal to P115", content)
+        self.assertIn("keep promotion blocked", content)
+        self.assertIn("The repair owner must create a new exact candidate", content)
+        self.assertIn("re-enter this P105 pipeline from the beginning", content)
+        self.assertIn("never reuse proof from the failed candidate", content)
 
 if __name__ == "__main__":
     unittest.main()

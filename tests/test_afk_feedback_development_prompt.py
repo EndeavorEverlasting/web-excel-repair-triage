@@ -51,10 +51,13 @@ class AfkFeedbackDevelopmentPromptTests(unittest.TestCase):
     def test_feedback_reaches_capable_workers_with_provenance(self) -> None:
         content = self.target["copyContent"]
         for phrase in (
+            "SIGNAL -> CURRENT OWNER -> CAPABLE WORKER -> MUTATION SURFACE -> VALIDATION -> INTEGRATION GATE -> NEXT SIGNAL",
             "provider run/job/check ID and candidate SHA",
+            "failing command/test and first useful error",
             "PR review thread/comment/path/line",
+            "runtime receipt; or moved-base/stale-proof evidence",
             "developers, scripts, agents, models, PRs",
-            "exact target, owned surface, evidence, acceptance condition",
+            "exact target, owned surface, evidence, acceptance condition, forbidden scope, and command or mutation entrypoint",
             "Do not force the operator to shuttle CI logs",
             "Deduplicate already-consumed signal identities",
         ):
@@ -75,14 +78,37 @@ class AfkFeedbackDevelopmentPromptTests(unittest.TestCase):
             self.assertIn(prompt_id, content)
             self.assertNotEqual(self.target["id"], prompt_id)
         self.assertIn("Use existing specialized owners rather than teaching this loop to impersonate every subsystem", content)
+        for boundary in (
+            "P07 owns general bounded repository execution and its fixed-point/mainline discipline",
+            "P32 owns repair of an established failing CI lane",
+            "P112 owns bootstrap of a missing deterministic automated-test floor",
+            "P113 owns proactive risk-driven evolution of an already trustworthy floor",
+            "P104 owns bounded deterministic repository-native code generation from canonical inputs",
+            "P105 owns validation and authorized promotion of an already-authored exact candidate",
+            "Route other domain work to its current repository owner, developer, agent, model, script, generator, or workflow",
+        ):
+            self.assertIn(boundary, content)
+        self.assertIn("one writer per mutation surface", content)
 
     def test_p112_p113_and_p105_feed_the_new_loop(self) -> None:
         for prompt_id in ("P112", "P113", "P105"):
             self.assertIn(self.target["id"], self.full[prompt_id]["nextStep"])
             self.assertIn(self.target["id"], self.full[prompt_id]["copyContent"])
-        self.assertIn("This pipeline remains promotion-only", self.full["P105"]["copyContent"])
-        self.assertIn("This prompt still owns test-floor bootstrap", self.full["P112"]["copyContent"])
-        self.assertIn("This prompt owns test evolution", self.full["P113"]["copyContent"])
+        p105 = self.full["P105"]["copyContent"]
+        p112 = self.full["P112"]["copyContent"]
+        p113 = self.full["P113"]["copyContent"]
+        self.assertIn("This pipeline remains promotion-only", p105)
+        self.assertIn("failed promotion gate must produce an actionable repair signal", p105)
+        self.assertIn("hand that exact signal to P115", p105)
+        self.assertIn("keep promotion blocked", p105)
+        self.assertIn("new exact candidate; re-enter this P105 pipeline from the beginning", p105)
+        self.assertIn("never reuse proof from the failed candidate", p105)
+        self.assertIn("This prompt still owns test-floor bootstrap", p112)
+        self.assertIn("route generalized feedback-driven repair to P115", p112)
+        self.assertIn("This prompt owns test evolution", p113)
+        self.assertIn("Preserve the regression, bind the exact failure evidence", p113)
+        self.assertIn("route the bounded product repair through P115", p113)
+        self.assertIn("rerun the regression and provider gate", p113)
 
     def test_generated_site_contains_exact_prompt_and_parity(self) -> None:
         html = build_prompt_kit_registry.DEFAULT_OUTPUT.read_text(encoding="utf-8")

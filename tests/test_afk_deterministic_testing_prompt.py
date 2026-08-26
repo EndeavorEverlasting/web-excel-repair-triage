@@ -120,8 +120,13 @@ class AfkDeterministicTestingPromptTests(unittest.TestCase):
         self.assertEqual(owner["id"], 'P115')
         self.assertIn(owner["id"], self.target["nextStep"])
         self.assertIn(owner["id"], self.target["copyContent"])
-        self.assertIn("A scheduled wake-up is not work by itself", self.target["copyContent"])
-        self.assertIn("This prompt still owns test-floor bootstrap", self.target["copyContent"])
+        content = self.target["copyContent"]
+        self.assertIn("A scheduled wake-up is not work by itself", content)
+        self.assertIn("This prompt still owns test-floor bootstrap", content)
+        self.assertIn("route generalized feedback-driven repair to P115", content)
+        self.assertIn("Missing or weak regression coverage belongs to P113", content)
+        self.assertIn("a red established CI lane belongs to P32", content)
+        self.assertIn("an authored exact-green candidate belongs to P105 for promotion", content)
 
 if __name__ == "__main__":
     unittest.main()

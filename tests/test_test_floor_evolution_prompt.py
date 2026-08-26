@@ -112,8 +112,13 @@ class TestFloorEvolutionPromptTests(unittest.TestCase):
         self.assertEqual(owner["id"], 'P115')
         self.assertIn(owner["id"], self.target["nextStep"])
         self.assertIn(owner["id"], self.target["copyContent"])
-        self.assertIn("PRODUCT DEFECTS MUST ESCAPE THE TEST LANE", self.target["copyContent"])
-        self.assertIn("Preserve the regression", self.target["copyContent"])
+        content = self.target["copyContent"]
+        self.assertIn("PRODUCT DEFECTS MUST ESCAPE THE TEST LANE", content)
+        self.assertIn("Preserve the regression, bind the exact failure evidence", content)
+        self.assertIn("route the bounded product repair through P115", content)
+        self.assertIn("After the repair, rerun the regression and provider gate", content)
+        self.assertIn("ingest the new feedback, and continue the next justified pass", content)
+        self.assertIn("This prompt owns test evolution; it does not gain arbitrary product ownership", content)
 
 if __name__ == "__main__":
     unittest.main()
