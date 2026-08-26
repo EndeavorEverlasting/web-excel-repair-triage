@@ -3,20 +3,34 @@ name: App harness validation
 on:
   pull_request:
     paths:
+      - 'AGENTS.md'
+      - 'CODEBASE_MAP.md'
+      - 'WORKFLOW.md'
+      - 'ARTIFACT_REGISTRY.md'
       - 'scripts/validate_app_harness.py'
+      - 'scripts/validate_harness.py'
       - 'tests/test_app_harness_validator.py'
       - 'harness/**'
       - '.githooks/**'
+      - 'triage/gitignore_hygiene.py'
       - 'docs/prompts.json'
+      - 'mcp_server.py'
       - '.github/workflows/app-harness-validation.yml'
   push:
     branches: [main]
     paths:
+      - 'AGENTS.md'
+      - 'CODEBASE_MAP.md'
+      - 'WORKFLOW.md'
+      - 'ARTIFACT_REGISTRY.md'
       - 'scripts/validate_app_harness.py'
+      - 'scripts/validate_harness.py'
       - 'tests/test_app_harness_validator.py'
       - 'harness/**'
       - '.githooks/**'
+      - 'triage/gitignore_hygiene.py'
       - 'docs/prompts.json'
+      - 'mcp_server.py'
       - '.github/workflows/app-harness-validation.yml'
 
 permissions:
