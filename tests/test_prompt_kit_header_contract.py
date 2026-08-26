@@ -138,14 +138,22 @@ def test_responsive_header_contract_survives_profile_upgrade() -> None:
         assert marker in deployed
 
 
-def test_effective_hotkey_help_uses_profile_slots_and_end_for_bottom() -> None:
+def test_effective_hotkey_help_uses_profile_slots_and_home_end_navigation() -> None:
     polish = POLISH.read_text(encoding="utf-8")
     profiles = PROFILES.read_text(encoding="utf-8")
     assert "slots.forEach(function(slot)" in profiles
     assert "label.textContent=slot.name" in profiles
+    assert "['Home','Scroll to top']" in profiles
     assert "['End','Scroll to bottom']" in profiles
+    assert "{key:'Home',label:'Scroll to top'}" in polish
     assert "{key:'End',label:'Scroll to bottom'}" in polish
+    assert "{key:'T',label:'Scroll to top'}" not in polish
     assert "{key:'B',label:'Scroll to bottom'}" not in polish
+    assert "if(key==='home')" in polish
+    assert "if(key==='end')" in polish
+    assert "var top=edge==='top'?0:height" in polish
+    assert "doc.addEventListener('keydown'" not in profiles
+    assert "window.PromptKitProfiles.activateSlot(key.toUpperCase())" in polish
 
 
 def test_readme_records_profile_header_and_collision_contract() -> None:
@@ -154,7 +162,9 @@ def test_readme_records_profile_header_and_collision_contract() -> None:
     assert "`A`–`E`" in text or "`A` through `E`" in text
     assert "| `A` | All |" in text
     assert "| `E` | PM |" in text
+    assert "| `Home` | Scroll to top |" in text
     assert "| `End` | Scroll to bottom |" in text
+    assert "| `T` | Scroll to top |" not in text
     assert "numeric keys are not header navigation" in text.lower()
     assert "P111" in text
 
@@ -196,7 +206,7 @@ def main() -> None:
         test_profile_runtime_is_loaded_before_polish,
         test_profile_runtime_owns_dynamic_names_and_editor,
         test_responsive_header_contract_survives_profile_upgrade,
-        test_effective_hotkey_help_uses_profile_slots_and_end_for_bottom,
+        test_effective_hotkey_help_uses_profile_slots_and_home_end_navigation,
         test_readme_records_profile_header_and_collision_contract,
         test_effective_p07_requires_mainline_convergence,
         test_deployed_artifact_is_current_combined_registry_output,

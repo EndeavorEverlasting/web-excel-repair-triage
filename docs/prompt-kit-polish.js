@@ -139,7 +139,7 @@ var PROMPT_KIT_SHORTCUTS=[
   {key:'F',label:'Show / hide filters'},
   {key:'[',label:'Hide filters'},
   {key:']',label:'Show filters'},
-  {key:'T',label:'Scroll to top'},
+  {key:'Home',label:'Scroll to top'},
   {key:'End',label:'Scroll to bottom'},
   {key:'Esc',label:'Close / clear active surface'}
 ];
@@ -149,11 +149,7 @@ function hotkeyScrollBehavior(){
 }
 
 function scrollPromptKitTo(edge){
-  var anchor=document.getElementById(edge==='top'?'page-top':'page-bottom');
   var behavior=hotkeyScrollBehavior();
-  if(anchor&&typeof anchor.scrollIntoView==='function'){
-    try{anchor.scrollIntoView({behavior:behavior,block:edge==='top'?'start':'end'});return}catch(e){}
-  }
   var height=Math.max(document.documentElement?document.documentElement.scrollHeight:0,document.body?document.body.scrollHeight:0);
   var top=edge==='top'?0:height;
   try{window.scrollTo({top:top,behavior:behavior})}catch(e){window.scrollTo(0,top)}
@@ -180,7 +176,7 @@ function toggleCompactFilters(){
 }
 
 function normalizePromptShortcutId(raw){
-  var value=String(raw||'').trim().toUpperCase();
+  var value=String(raw||'').trim().toUpperCase().replace(/\./g,'');
   return /^P\d+$/.test(value)?value:null
 }
 
@@ -275,7 +271,15 @@ function resetPromptShortcutBuffer(){
 
 function schedulePromptShortcutBufferReset(){
   if(promptShortcutBufferTimer)clearTimeout(promptShortcutBufferTimer);
-  promptShortcutBufferTimer=setTimeout(resetPromptShortcutBuffer,PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS)
+  promptShortcutBufferTimer=setTimeout(function(){
+    var exact=promptShortcutBindings[promptShortcutBuffer];
+    resetPromptShortcutBuffer();
+    if(exact)activatePromptShortcutTarget(exact)
+  },PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS)
+}
+
+function promptShortcutHasLongerPrefix(candidate,gestures){
+  return gestures.some(function(gesture){return gesture!==candidate&&gesture.indexOf(candidate)===0})
 }
 
 function revealPromptShortcutTarget(promptId){
@@ -306,21 +310,27 @@ function activatePromptShortcutTarget(promptId){
 }
 
 function handleConfiguredPromptShortcutKey(e,key){
-  if(!/^[a-z0-9]$/.test(key)){resetPromptShortcutBuffer();return false}
   var gestures=Object.keys(promptShortcutBindings);
   if(!gestures.length){resetPromptShortcutBuffer();return false}
+  if(key==='.'&&promptShortcutBuffer){e.preventDefault();e.stopImmediatePropagation();schedulePromptShortcutBufferReset();return true}
+  var pendingExact=promptShortcutBindings[promptShortcutBuffer]||null;
+  if(!/^[a-z0-9]$/.test(key)){
+    resetPromptShortcutBuffer();
+    if(pendingExact)activatePromptShortcutTarget(pendingExact);
+    return false
+  }
+  function acceptCandidate(candidate){
+    var exact=promptShortcutBindings[candidate];
+    var prefix=gestures.some(function(gesture){return gesture.indexOf(candidate)===0});
+    if(exact&&!promptShortcutHasLongerPrefix(candidate,gestures)){e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();activatePromptShortcutTarget(exact);return true}
+    if(prefix){e.preventDefault();e.stopImmediatePropagation();promptShortcutBuffer=candidate;schedulePromptShortcutBufferReset();return true}
+    return false
+  }
   var candidate=promptShortcutBuffer+key;
-  var exact=promptShortcutBindings[candidate];
-  if(exact){e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();activatePromptShortcutTarget(exact);return true}
-  var prefix=gestures.some(function(gesture){return gesture.indexOf(candidate)===0});
-  if(prefix){e.preventDefault();e.stopImmediatePropagation();promptShortcutBuffer=candidate;schedulePromptShortcutBufferReset();return true}
+  if(acceptCandidate(candidate))return true;
   resetPromptShortcutBuffer();
-  candidate=key;
-  exact=promptShortcutBindings[candidate];
-  if(exact){e.preventDefault();e.stopImmediatePropagation();activatePromptShortcutTarget(exact);return true}
-  prefix=gestures.some(function(gesture){return gesture.indexOf(candidate)===0});
-  if(prefix){e.preventDefault();e.stopImmediatePropagation();promptShortcutBuffer=candidate;schedulePromptShortcutBufferReset();return true}
-  return false
+  if(pendingExact){activatePromptShortcutTarget(pendingExact);return false}
+  return acceptCandidate(key)
 }
 
 function focusFavoritePromptShortcutInput(panel){
@@ -463,10 +473,13 @@ function installCompactBrowsingHotkeys(){
     }
     if(key==='escape')resetPromptShortcutBuffer();
     if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;
+    if(/^[a-e]$/.test(key)&&window.PromptKitProfiles&&typeof window.PromptKitProfiles.activateSlot==='function'){
+      e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();window.PromptKitProfiles.activateSlot(key.toUpperCase());return
+    }
     if(key==='f'){e.preventDefault();e.stopImmediatePropagation();toggleCompactFilters();return}
     if(key==='['){e.preventDefault();e.stopImmediatePropagation();hideCompactFilters();return}
     if(key===']'){e.preventDefault();e.stopImmediatePropagation();showCompactFilters();return}
-    if(key==='t'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('top');return}
+    if(key==='home'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('top');return}
     if(key==='end'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('bottom');return}
     handleConfiguredPromptShortcutKey(e,key)
   },true)

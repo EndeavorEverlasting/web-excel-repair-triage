@@ -176,11 +176,11 @@ The glowing **Hotkeys** module beside the floating reference control is the in-p
 | `F` | Show / hide filters |
 | `[` | Hide filters |
 | `]` | Show filters |
-| `T` | Scroll to top |
+| `Home` | Scroll to top |
 | `End` | Scroll to bottom |
 | `Esc` | Close the active surface or clear filters |
 
-Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prompt first, enter its canonical ID such as `P95`, and save it; the persisted binding is then the lower-case prompt ID (`p95`). Typed prompt sequences expire after 1.2 seconds and are ignored in editable fields. Completing a configured sequence clears the transient restrictions needed to reveal the target, scrolls the canonical prompt card into view, and copies the canonical prompt through the normal copy path **without opening prompt detail**. The Hotkeys panel labels configured rows as **Copy + reveal P##**.
+Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prompt first, enter its canonical ID such as `P95`, and save it; the persisted binding is then the lower-case prompt ID (`p95`). Typed prompt sequences expire after 1.2 seconds and are ignored in editable fields. If one configured ID prefixes another, the shorter exact match waits for that boundary and continued typing selects the longer exact ID. Dots may be typed as separators inside an active sequence (`p1.1` → `P11`, `p1.11` → `P111`). Completing a configured sequence clears the transient restrictions needed to reveal the target, scrolls the canonical prompt card into view, and copies the canonical prompt through the normal copy path **without opening prompt detail**. The Hotkeys panel labels configured rows as **Copy + reveal P##**.
 
 A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it owns the following digits. Numeric keys have no header-navigation meaning, so `P111` and other configured prompt IDs cannot fall through into a tab command.
 
@@ -188,13 +188,7 @@ Navigation shortcuts are ignored while typing in an input, textarea, select, or 
 
 ### Header navigation contract
 
-The first three library-view filters are fixed and ordered:
-
-1. All
-2. Standard
-3. GNHF
-
-Their keyboard shortcuts are `1`, `2`, and `3` respectively. The generated base header still carries Doctrine's legacy `4` label before supplemental runtime enhancement. The supplemental polish runtime assigns `4` to Favorites and remaps Doctrine to `5`; the visible Hotkeys module and effective dispatcher must remain aligned without displacing GNHF.
+The five visible profile slots have stable letter identities: `A` All, `B` Standard, `C` Favorites, `D` SAS, and `E` PM by default. Their labels/profile packs may be customized without changing those key identities. Header navigation has no numeric shortcuts and does not reserve `P`, leaving digit-bearing prompt sequences such as `p11`, `p13`, and `p111` exclusively to the prompt shortcut dispatcher.
 
 ### Validation
 

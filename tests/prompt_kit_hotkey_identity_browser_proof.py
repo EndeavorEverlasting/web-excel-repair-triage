@@ -7,6 +7,7 @@ import json
 import os
 import subprocess
 import threading
+import time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -143,6 +144,71 @@ def observe(port: int, screenshot: Path) -> list[dict]:
                 "passed": dotted_long_final == expected["P111"],
                 "final_matches": dotted_long_final == expected["P111"],
             })
+
+            # A pending shorter exact identity settles before the same key continues to A-E header navigation.
+            set_clipboard("sentinel-p11-a")
+            press("p11")
+            page.keyboard.press("a")
+            deadline = time.monotonic() + 1.5
+            p11_then_a = clipboard()
+            while p11_then_a != expected["P11"] and time.monotonic() < deadline:
+                page.wait_for_timeout(25)
+                p11_then_a = clipboard()
+            slot_after_a = page.evaluate("window.PromptKitProfiles && window.PromptKitProfiles.getState().activeKey")
+            observations.append({
+                "id": "pending_p11_hands_off_to_header_a",
+                "event": "A settles pending P11 and still activates the All profile",
+                "occurred": True,
+                "passed": p11_then_a == expected["P11"] and slot_after_a == "A",
+                "prompt_matches": p11_then_a == expected["P11"],
+                "active_slot": slot_after_a,
+            })
+
+            set_clipboard("sentinel-p1-b")
+            press("p1")
+            page.keyboard.press("b")
+            page.wait_for_timeout(250)
+            p1_then_b = clipboard()
+            slot_after_b = page.evaluate("window.PromptKitProfiles && window.PromptKitProfiles.getState().activeKey")
+            observations.append({
+                "id": "incomplete_prefix_hands_off_to_header_b",
+                "event": "B abandons incomplete p1 without firing a prompt and activates Standard",
+                "occurred": True,
+                "passed": p1_then_b == "sentinel-p1-b" and slot_after_b == "B",
+                "clipboard_unchanged": p1_then_b == "sentinel-p1-b",
+                "active_slot": slot_after_b,
+            })
+
+            # Home/End are page navigation only and do not alter the header/profile namespace.
+            page.keyboard.press("End")
+            deadline = time.monotonic() + 1.0
+            max_scroll = page.evaluate("Math.max(0, document.documentElement.scrollHeight - window.innerHeight)")
+            end_y = page.evaluate("window.scrollY")
+            while end_y < max_scroll - 2 and time.monotonic() < deadline:
+                page.wait_for_timeout(20)
+                max_scroll = page.evaluate("Math.max(0, document.documentElement.scrollHeight - window.innerHeight)")
+                end_y = page.evaluate("window.scrollY")
+            end_slot = page.evaluate("window.PromptKitProfiles && window.PromptKitProfiles.getState().activeKey")
+            page.keyboard.press("Home")
+            deadline = time.monotonic() + 1.0
+            home_y = page.evaluate("window.scrollY")
+            while home_y > 2 and time.monotonic() < deadline:
+                page.wait_for_timeout(20)
+                home_y = page.evaluate("window.scrollY")
+            home_slot = page.evaluate("window.PromptKitProfiles && window.PromptKitProfiles.getState().activeKey")
+            observations.append({
+                "id": "home_end_page_navigation",
+                "event": "End reaches the document bottom and Home returns to the true top without changing the active profile",
+                "occurred": True,
+                "passed": end_y >= max_scroll - 2 and home_y <= 2 and end_slot == "B" and home_slot == "B",
+                "end_y": end_y,
+                "max_scroll": max_scroll,
+                "home_y": home_y,
+                "end_slot": end_slot,
+                "home_slot": home_slot,
+            })
+            page.keyboard.press("a")
+            page.wait_for_timeout(50)
 
             # Numeric input must never activate A-E header slots.
             active_slot = page.evaluate("window.PromptKitProfiles && window.PromptKitProfiles.getState().activeKey")

@@ -15,6 +15,7 @@ POLISH = ROOT / "docs" / "prompt-kit-polish.js"
 BASE = ROOT / "docs" / "prompt-kit.js"
 DEPLOYED = ROOT / "web" / "prompt-kit" / "index.html"
 DESIGN = ROOT / "docs" / "PROMPT_KIT_FIVE_TAB_PROFILES.md"
+ACCESS = ROOT / "PROMPT_KIT_ACCESS.md"
 
 
 def node_json(script: str) -> dict:
@@ -187,6 +188,117 @@ console.log(JSON.stringify({
                 text=True,
             )
             self.assertEqual(rebuilt.read_bytes(), DEPLOYED.read_bytes())
+
+    def test_install_guards_storage_access_and_base_reset_clears_custom_profile(self) -> None:
+        proof = node_json(
+            r"""
+const api=require('./docs/prompt-kit-profiles.js');
+function makeDoc(){
+  return {
+    getElementById(id){return id==='prompt-kit-profile-styles'?{}:null},
+    querySelector(){return null},
+    addEventListener(){},
+    head:{appendChild(){}},
+    body:{}
+  };
+}
+function makeRoot(){
+  const root={
+    document:makeDoc(),
+    PROMPTS:[
+      {id:'P1',name:'SysAdminSuite SAS PowerShell network probe',type:'REPAIR',category:'standard',keywords:['sas','sysadminsuite','powershell']},
+      {id:'P2',name:'General prompt',type:'BUILD',category:'standard',keywords:['general']}
+    ],
+    activeCat:'all',
+    activeSection:null,
+    render:function(){root.lastRender=root.PROMPTS.map(item=>item.id)},
+    renderTypes:function(){},
+    renderSections:function(){},
+    setTimeout:function(){},
+    showToast:function(){}
+  };
+  return root;
+}
+const blocked=makeRoot();
+Object.defineProperty(blocked,'localStorage',{get(){throw new Error('blocked storage')}});
+const blockedApi=api.install(blocked);
+const blockedState=blockedApi.getState();
+
+const stored=makeRoot();
+const memory={};
+stored.localStorage={
+  getItem(key){return Object.prototype.hasOwnProperty.call(memory,key)?memory[key]:null},
+  setItem(key,value){memory[key]=String(value)}
+};
+stored.resetPromptKitView=function(){
+  this.activeCat='all';this.activeSection=null;this.render();return 'reset';
+};
+const installed=api.install(stored);
+installed.activateSlot('D',true);
+const before=installed.getState().activeKey;
+const result=stored.resetPromptKitView();
+const after=installed.getState().activeKey;
+console.log(JSON.stringify({
+  blockedActive:blockedState.activeKey,
+  before,
+  after,
+  persisted:memory[api.STORAGE_KEYS.active],
+  result,
+  rendered:stored.lastRender
+}));
+"""
+        )
+        self.assertEqual(proof["blockedActive"], "A")
+        self.assertEqual(proof["before"], "D")
+        self.assertEqual(proof["after"], "A")
+        self.assertEqual(proof["persisted"], "A")
+        self.assertEqual(proof["result"], "reset")
+        self.assertEqual(proof["rendered"], ["P1", "P2"])
+
+    def test_configuring_active_slot_reapplies_new_mode(self) -> None:
+        proof = node_json(
+            r"""
+const api=require('./docs/prompt-kit-profiles.js');
+const memory={};
+const doc={
+  getElementById(id){return id==='prompt-kit-profile-styles'?{}:null},
+  querySelector(){return null},
+  addEventListener(){},
+  head:{appendChild(){}},
+  body:{}
+};
+const root={
+  document:doc,
+  localStorage:{getItem(k){return memory[k]||null},setItem(k,v){memory[k]=String(v)}},
+  PROMPTS:[],activeCat:'all',activeSection:null,
+  render(){},renderTypes(){},renderSections(){},setTimeout(){},showToast(){}
+};
+const installed=api.install(root);
+installed.activateSlot('B',true);
+const candidate=installed.getState().slots;
+candidate[1]={key:'B',name:'Saved Favorites',mode:'favorites',packIds:[]};
+installed.configureSlots(candidate);
+console.log(JSON.stringify({active:installed.getState().activeKey,cat:root.activeCat,section:root.activeSection}));
+"""
+        )
+        self.assertEqual(proof["active"], "B")
+        self.assertEqual(proof["cat"], "all")
+        self.assertEqual(proof["section"], "__favorites__")
+
+    def test_retired_header_views_remain_profile_packs(self) -> None:
+        proof = node_json(
+            """
+const api=require('./docs/prompt-kit-profiles.js');
+console.log(JSON.stringify({ids:Object.keys(api.PREDEFINED_PACKS).sort()}));
+"""
+        )
+        self.assertIn("GNHF", proof["ids"])
+        self.assertIn("DOCTRINE", proof["ids"])
+        access = ACCESS.read_text(encoding="utf-8")
+        self.assertIn("`GNHF` and `DOCTRINE` profile packs", access)
+        self.assertIn("Press **Home** for the true document top", access)
+        self.assertNotIn("Press **4** or use the header **Favorites**", access)
+        self.assertNotIn("Doctrine** remains available in the header", access)
 
     def test_design_records_import_limits_and_hotkey_collision_rule(self) -> None:
         text = DESIGN.read_text(encoding="utf-8")

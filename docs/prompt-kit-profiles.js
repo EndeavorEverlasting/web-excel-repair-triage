@@ -135,7 +135,9 @@ var PREDEFINED_PACKS={
   SAS:{id:'SAS',label:'SAS',rule:anyKeywords(['sysadminsuite','sysadmin suite','network probe','powershell','windows administration',' sas '])},
   GARDENING:{id:'GARDENING',label:'Gardening',rule:anyKeywords(['garden','gardening','greenhouse','plant','watering'])},
   H_AND_H:{id:'H_AND_H',label:'H&H',rule:anyKeywords(['h&h','health and hospital','health & hospital','hospital'])},
-  FUTURE_PROJECTS:{id:'FUTURE_PROJECTS',label:'Future Projects',rule:anyKeywords(['future project','roadmap','backlog'])}
+  FUTURE_PROJECTS:{id:'FUTURE_PROJECTS',label:'Future Projects',rule:anyKeywords(['future project','roadmap','backlog'])},
+  GNHF:{id:'GNHF',label:'GNHF',rule:{op:'category',value:'gnhf'}},
+  DOCTRINE:{id:'DOCTRINE',label:'Doctrine',rule:{op:'category',value:'doctrine'}}
 };
 Object.keys(PREDEFINED_PACKS).forEach(function(id){
   PREDEFINED_PACKS[id].rule=validateRule(PREDEFINED_PACKS[id].rule,{nodes:0},0)
@@ -210,7 +212,8 @@ function install(root){
   if(root.__promptKitProfilesInstalled)return root.PromptKitProfiles;
   root.__promptKitProfilesInstalled=true;
   var doc=root.document;
-  var storage=root.localStorage;
+  var storage=null;
+  try{storage=root.localStorage}catch(e){storage=null}
   var imported=[];
   var slots=defaultSlots();
   var activeKey='A';
@@ -298,6 +301,15 @@ function install(root){
   if(typeof baseRender==='function')root.render=function(){return projectCall(baseRender,arguments)};
   if(typeof baseRenderTypes==='function')root.renderTypes=function(){return projectCall(baseRenderTypes,arguments)};
   if(typeof baseRenderSections==='function')root.renderSections=function(){return projectCall(baseRenderSections,arguments)};
+  var baseResetPromptKitView=root.resetPromptKitView;
+  if(typeof baseResetPromptKitView==='function')root.resetPromptKitView=function(){
+    activeKey='A';
+    try{persistActive('A')}catch(e){}
+    var result=baseResetPromptKitView.apply(root,arguments);
+    refreshHeader();
+    updateEditor();
+    return result
+  };
 
   function clearTransientBrowserFilters(){
     if(typeof root.activeType!=='undefined')root.activeType=null;
@@ -364,6 +376,7 @@ function install(root){
   }
   function configureSlots(candidate){
     saveSlots(candidate);
+    setBuiltinView(currentSlot());
     refreshHeader();
     renderAll();
     updateEditor();
@@ -408,7 +421,7 @@ function install(root){
       ['F','Show / hide filters'],
       ['[','Hide filters'],
       [']','Show filters'],
-      ['T','Scroll to top'],
+      ['Home','Scroll to top'],
       ['End','Scroll to bottom'],
       ['Esc','Close / clear active surface']
     ];
@@ -497,14 +510,7 @@ function install(root){
     event.preventDefault();event.stopImmediatePropagation();
     activateSlot(button.dataset.profileSlot)
   },true);
-  doc.addEventListener('keydown',function(event){
-    var target=event.target;
-    var editable=!!(target&&(target.tagName==='INPUT'||target.tagName==='TEXTAREA'||target.tagName==='SELECT'||target.isContentEditable));
-    if(editable||event.altKey||event.ctrlKey||event.metaKey)return;
-    var key=String(event.key||'').toUpperCase();
-    if(SLOT_KEYS.indexOf(key)===-1)return;
-    event.preventDefault();event.stopImmediatePropagation();activateSlot(key)
-  },true);
+  // A-E keydown ownership lives in prompt-kit-polish.js so prompt-ID sequences settle before profile navigation.
   installEditorWhenReady();
   activateSlot(activeKey,true);
 

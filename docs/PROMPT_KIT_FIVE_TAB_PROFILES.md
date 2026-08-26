@@ -73,7 +73,10 @@ Prompt Kit registries and generated artifact.
 
 `A` through `E` are reserved for the five profile tabs. Header navigation uses no numeric shortcut and
 no header shortcut uses `P`. Digits remain available to configured prompt-ID sequences such as `P111`.
-The former `B` bottom-of-page shortcut moves to `End`; `T` remains the top shortcut.
+When one configured prompt ID is a prefix of another (for example `P11` and `P111`), the shorter exact
+match waits for the existing 1.2-second sequence boundary; continued typing selects the longer match.
+Dots are accepted only as separators inside an active prompt sequence, so `p1.1` resolves as `P11` and
+`p1.11` resolves as `P111`. Page navigation uses the native pair: `Home` scrolls to the true document top and `End` scrolls to the document bottom. No letter in `A`–`E` is reused for page navigation.
 
 ## Persistence
 
