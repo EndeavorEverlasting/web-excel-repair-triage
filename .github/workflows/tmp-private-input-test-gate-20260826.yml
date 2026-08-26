@@ -40,7 +40,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          test "$(git rev-parse HEAD)" = '93be7dfc139d3b8a68e9fb8934ec7dc00f3b2485' || {
+          test "$(git rev-parse HEAD^)" = 'bcbffa1b5a839bb19e9f026804b281fabfe8f293' || {
             echo "Unexpected builder parent; refusing stale execution" >&2
             exit 1
           }
