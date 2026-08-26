@@ -1,0 +1,107 @@
+name: Temporary Prompt Kit hotkey identity repair
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-five-tab-named-profiles-20260825
+
+permissions:
+  contents: write
+
+jobs:
+  repair-validate-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/prompt-kit-five-tab-named-profiles-20260825
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Refresh and pin current owner branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --all --prune --tags
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/feat/prompt-kit-five-tab-named-profiles-20260825)"
+          git merge-base --is-ancestor origin/main HEAD
+          echo "candidate=$(git rev-parse HEAD)"
+          echo "main=$(git rev-parse origin/main)"
+
+      - name: Apply identity repair and regenerate canonical site
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile scripts/repair_prompt_kit_hotkey_identity.py
+          python scripts/repair_prompt_kit_hotkey_identity.py
+          python -m py_compile tests/test_prompt_kit_hotkey_identity_runtime.py tests/test_prompt_kit_hotkey_completion.py
+          node --check docs/prompt-kit-polish.js
+          node --check docs/prompt-kit.js
+          node --check docs/prompt-kit-profiles.js
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          git diff --check
+
+      - name: Pass 1 focused runtime identity proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_prompt_kit_hotkey_identity_runtime tests.test_prompt_kit_hotkey_completion -v
+          python tests/test_prompt_kit_header_contract.py
+          python -m unittest tests.test_prompt_kit_profiles tests.test_prompt_kit_filtering_access tests.test_prompt_kit_order_navigation_product -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Pass 2 fixed-point and deterministic floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          polish=Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
+          base=Path('docs/prompt-kit.js').read_text(encoding='utf-8')
+          deployed=Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
+          readme=Path('web/README.md').read_text(encoding='utf-8')
+          design=Path('docs/PROMPT_KIT_FIVE_TAB_PROFILES.md').read_text(encoding='utf-8')
+          for digit in '12345':
+              assert f"if(key==='{digit}')" not in polish
+              assert f"case'{digit}'" not in base
+          for marker in ("replace(/\\./g,'')","promptShortcutHasLongerPrefix(candidate,gestures)","if(key==='.'&&promptShortcutBuffer)","if(exact&&!promptShortcutHasLongerPrefix(candidate,gestures))"):
+              assert marker in polish
+              assert marker in deployed
+          for key in 'ABCDE':
+              assert f'data-profile-slot="{key}"' in deployed
+          for identity in ('p11','p13','p111','p1.1','p1.11'):
+              assert identity in readme or identity in design
+          assert 'Their keyboard shortcuts are `1`, `2`, and `3` respectively.' not in readme
+          PY
+          python scripts/run_deterministic_test_floor.py --report "$RUNNER_TEMP/deterministic-test-floor-report.json"
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          git fetch origin main
+          git merge-base --is-ancestor origin/main HEAD
+          git status --short
+          git diff --stat
+
+      - name: Commit exact validated product slice
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/temp-prompt-kit-hotkey-identity-repair.yml scripts/repair_prompt_kit_hotkey_identity.py
+          git add \
+            docs/prompt-kit-polish.js \
+            docs/PROMPT_KIT_FIVE_TAB_PROFILES.md \
+            docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md \
+            tests/test_prompt_kit_hotkey_identity_runtime.py \
+            web/README.md \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m 'fix(prompt-kit): disambiguate prompt identity hotkeys'
+          git push origin HEAD:feat/prompt-kit-five-tab-named-profiles-20260825
