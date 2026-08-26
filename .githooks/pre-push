@@ -38,4 +38,5 @@ python tests/test_prompt_kit_header_contract.py
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 python -m triage.gitignore_hygiene
 python -m unittest tests.test_staged_artifact_hygiene -v
+python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json
 git diff --check

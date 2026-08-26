@@ -87,6 +87,7 @@ REQUIRED_ARTIFACT_IDS = {
     "prompt-language-audit-report",
     "workbook-engine-output",
     "prompt-kit-browser-proof-cleanup-report",
+    "app-harness-validation-report",
 }
 REQUIRED_VALIDATOR_IDS = {
     "harness-completeness",
@@ -109,6 +110,7 @@ REQUIRED_VALIDATOR_IDS = {
     "prompt-kit-browser-proof-cleanup-powershell-smoke",
     "prompt-kit-responsive-layout-audit",
     "prompt-kit-responsive-layout-tests",
+    "app-harness-validation",
 }
 REQUIRED_CAPABILITY_IDS = {
     "harness-infrastructure-maintenance",
