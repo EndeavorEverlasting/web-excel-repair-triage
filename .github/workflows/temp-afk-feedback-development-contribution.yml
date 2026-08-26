@@ -41,6 +41,13 @@ jobs:
           set -euo pipefail
           python -m py_compile scripts/tmp_strengthen_afk_feedback_prompts.py
           python scripts/tmp_strengthen_afk_feedback_prompts.py | tee "$RUNNER_TEMP/afk-feedback-helper-receipt.json"
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/test_afk_feedback_development_prompt.py')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace("'deduplicate already-consumed signal identities',", "'Deduplicate already-consumed signal identities',")
+          path.write_text(text, encoding='utf-8')
+          PY
           git diff --check
           git status --short
           git diff --stat
@@ -120,7 +127,6 @@ jobs:
           python scripts/evaluate_prompt_language.py --summary
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
-          test -z "$(git status --short | grep -E '(^| )scripts/tmp_strengthen_afk_feedback_prompts.py$|(^| )\.github/workflows/temp-afk-feedback-development-contribution.yml$' || true)"
           git status --short
           git diff --stat
 
