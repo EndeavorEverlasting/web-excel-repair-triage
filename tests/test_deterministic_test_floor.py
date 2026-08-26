@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import tempfile
@@ -243,20 +244,56 @@ SKIPPED [1] tests/test_three.py:30: Real roster log not present
 
     def test_private_input_requirements_exactly_own_registered_skips(self) -> None:
         manifest, records = private_floor.load_requirements(MANIFEST)
-        self.assertEqual(len(records), 3)
+        expected = {
+            "neuron-real-roster": {
+                "input_path": "Candidates/attendacne artifacts 6-1-2026/INTERNAL_May_Billing_Active_Roster_Log_2026-06-01-update so that partial hours are flagged before submission.xlsx",
+                "test_selector": "tests/test_nw_prj_neuron_track_hours.py::test_neuron_track_totals_match_reference_targets",
+                "missing_reason": "Real roster log not present",
+            },
+            "one-marcus-real-recon": {
+                "input_path": "Candidates/inventory recon/WEBSAFE_Tab-Linked_1_Marcus_Compiled_Recon_Integrated_5-28-2026_PARTNUMBERS_LINKED_CANDIDATE_v2.xlsx",
+                "test_selector": "tests/test_one_marcus_recon.py::test_real_workbook_idempotent_regression",
+                "missing_reason": "private real workbook not present",
+            },
+            "one-marcus-operator-reference": {
+                "input_path": "Candidates/inventory recon/1M_Recon_READY.xlsx",
+                "test_selector": "tests/test_one_marcus_generate.py::test_generate_from_operator_reference",
+                "missing_reason": "private operator reference workbook not present",
+            },
+        }
+        observed = {
+            record["id"]: {
+                "input_path": record["input_path"],
+                "test_selector": record["test_selector"],
+                "missing_reason": record["missing_reason"],
+            }
+            for record in records
+        }
+        self.assertEqual(observed, expected)
         self.assertEqual(
             {record["missing_reason"] for record in records},
             set(manifest["allowed_artifact_skip_reasons"]),
         )
-        self.assertEqual(
-            {record["id"] for record in records},
-            {"neuron-real-roster", "one-marcus-real-recon", "one-marcus-operator-reference"},
-        )
         for record in records:
             self.assertIn(record["test_selector"].split("::", 1)[0], manifest["artifact_tests"])
 
+    def test_private_input_selector_must_bind_declared_input_and_skip_boundary(self) -> None:
+        broken = dict(self.manifest)
+        broken["private_input_requirements"] = [
+            dict(item) for item in self.manifest["private_input_requirements"]
+        ]
+        broken["private_input_requirements"][0]["test_selector"] = (
+            "tests/test_nw_prj_neuron_track_hours.py::fixtures"
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "manifest.json"
+            path.write_text(json.dumps(broken), encoding="utf-8")
+            with self.assertRaisesRegex(private_floor.ContractError, "registered skip reason"):
+                private_floor.load_requirements(path)
+
     def test_private_input_gate_is_fail_closed_and_can_become_ready(self) -> None:
         _manifest, records = private_floor.load_requirements(MANIFEST)
+        expected_hash = hashlib.sha256(b"fixture").hexdigest()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.assertEqual(len(private_floor.missing_requirements(records, root)), 3)
@@ -265,6 +302,9 @@ SKIPPED [1] tests/test_three.py:30: Real roster log not present
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(b"fixture")
             self.assertEqual(private_floor.missing_requirements(records, root), [])
+            artifacts = private_floor.input_artifacts(records, root)
+            self.assertEqual({item["sha256"] for item in artifacts}, {expected_hash})
+            self.assertEqual({item["id"] for item in artifacts}, {record["id"] for record in records})
             argv = private_floor.pytest_argv(records)
             self.assertEqual(argv[0], private_floor.sys.executable)
             for record in records:
@@ -294,11 +334,16 @@ SKIPPED [1] tests/test_three.py:30: Real roster log not present
             stdout="3 passed in 0.10s\n",
             stderr="",
         )
+        artifacts = [
+            {"id": "synthetic", "path": "private.xlsx", "sha256": "a" * 64}
+        ]
         with tempfile.TemporaryDirectory() as tmp:
             report_path = Path(tmp) / "private-pass.json"
             with (
                 mock.patch.object(private_floor, "missing_requirements", return_value=[]),
                 mock.patch.object(private_floor, "_git_value", side_effect=["deadbeef", "synthetic"]),
+                mock.patch.object(private_floor, "tracked_dirty_paths", return_value=[]),
+                mock.patch.object(private_floor, "input_artifacts", side_effect=[artifacts, artifacts]),
                 mock.patch.object(private_floor.subprocess, "run", return_value=completed),
             ):
                 status = private_floor.run(MANIFEST, report_path)
@@ -306,30 +351,82 @@ SKIPPED [1] tests/test_three.py:30: Real roster log not present
         self.assertEqual(status, 0)
         self.assertEqual(report["status"], "PASS")
         self.assertIsNone(report["failed_step"])
+        self.assertEqual(report["input_artifacts"], artifacts)
         self.assertEqual(report["test"]["returncode"], 0)
         self.assertEqual(report["test"]["skip_count"], 0)
+        self.assertIs(report["test"]["output_redacted"], True)
+        self.assertNotIn("stdout_tail", report["test"])
+        self.assertNotIn("stderr_tail", report["test"])
 
-    def test_private_input_ready_path_rejects_even_successful_pytest_with_a_skip(self) -> None:
+    def test_private_input_ready_path_rejects_skip_without_persisting_private_output(self) -> None:
         completed = private_floor.subprocess.CompletedProcess(
             args=["pytest"],
             returncode=0,
-            stdout="2 passed, 1 skipped in 0.10s\n",
-            stderr="",
+            stdout="PRIVATE_TOTAL=12345\n2 passed, 1 skipped in 0.10s\n",
+            stderr="PRIVATE_SHEET=Billing",
         )
+        artifacts = [
+            {"id": "synthetic", "path": "private.xlsx", "sha256": "b" * 64}
+        ]
         with tempfile.TemporaryDirectory() as tmp:
             report_path = Path(tmp) / "private-skip.json"
             with (
                 mock.patch.object(private_floor, "missing_requirements", return_value=[]),
                 mock.patch.object(private_floor, "_git_value", side_effect=["deadbeef", "synthetic"]),
+                mock.patch.object(private_floor, "tracked_dirty_paths", return_value=[]),
+                mock.patch.object(private_floor, "input_artifacts", side_effect=[artifacts, artifacts]),
+                mock.patch.object(private_floor.subprocess, "run", return_value=completed),
+            ):
+                status = private_floor.run(MANIFEST, report_path)
+            serialized = report_path.read_text(encoding="utf-8")
+            report = json.loads(serialized)
+        self.assertEqual(status, 1)
+        self.assertEqual(report["status"], "FAIL")
+        self.assertEqual(report["failed_step"], "private-input-regressions")
+        self.assertEqual(report["test"]["returncode"], 0)
+        self.assertEqual(report["test"]["skip_count"], 1)
+        self.assertIs(report["test"]["output_redacted"], True)
+        self.assertNotIn("PRIVATE_TOTAL", serialized)
+        self.assertNotIn("PRIVATE_SHEET", serialized)
+
+    def test_private_input_ready_path_rejects_dirty_tracked_state_before_pass(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            report_path = Path(tmp) / "private-dirty.json"
+            with (
+                mock.patch.object(private_floor, "missing_requirements", return_value=[]),
+                mock.patch.object(private_floor, "_git_value", side_effect=["deadbeef", "synthetic"]),
+                mock.patch.object(
+                    private_floor,
+                    "tracked_dirty_paths",
+                    return_value=["scripts/run_private_input_test_floor.py"],
+                ),
+            ):
+                status = private_floor.run(MANIFEST, report_path)
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+        self.assertEqual(status, 4)
+        self.assertEqual(report["status"], "BLOCKED")
+        self.assertEqual(report["failed_step"], "tracked-state-dirty")
+
+    def test_private_input_ready_path_rejects_input_mutation(self) -> None:
+        completed = private_floor.subprocess.CompletedProcess(
+            args=["pytest"], returncode=0, stdout="3 passed in 0.10s\n", stderr=""
+        )
+        before = [{"id": "synthetic", "path": "private.xlsx", "sha256": "a" * 64}]
+        after = [{"id": "synthetic", "path": "private.xlsx", "sha256": "b" * 64}]
+        with tempfile.TemporaryDirectory() as tmp:
+            report_path = Path(tmp) / "private-mutated.json"
+            with (
+                mock.patch.object(private_floor, "missing_requirements", return_value=[]),
+                mock.patch.object(private_floor, "_git_value", side_effect=["deadbeef", "synthetic"]),
+                mock.patch.object(private_floor, "tracked_dirty_paths", return_value=[]),
+                mock.patch.object(private_floor, "input_artifacts", side_effect=[before, after]),
                 mock.patch.object(private_floor.subprocess, "run", return_value=completed),
             ):
                 status = private_floor.run(MANIFEST, report_path)
             report = json.loads(report_path.read_text(encoding="utf-8"))
         self.assertEqual(status, 1)
         self.assertEqual(report["status"], "FAIL")
-        self.assertEqual(report["failed_step"], "private-input-regressions")
-        self.assertEqual(report["test"]["returncode"], 0)
-        self.assertEqual(report["test"]["skip_count"], 1)
+        self.assertEqual(report["failed_step"], "private-input-mutated")
 
     def test_public_workflow_proves_private_gate_blocks_without_acquiring_secrets(self) -> None:
         workflow = FLOOR_WORKFLOW.read_text(encoding="utf-8")
