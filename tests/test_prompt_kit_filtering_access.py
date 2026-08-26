@@ -129,7 +129,8 @@ process.stdout.write(JSON.stringify(result));
         self.assertIn("if(slot.mode==='favorites')", profiles)
         self.assertIn("root.activeSection='__favorites__'", profiles)
         self.assertIn("SLOT_KEYS.indexOf(key)===-1", profiles)
-        self.assertIn("activateSlot(key)", profiles)
+        self.assertNotIn("doc.addEventListener('keydown'", profiles)
+        self.assertIn("window.PromptKitProfiles.activateSlot(key.toUpperCase())", polish)
 
         hotkeys = polish[polish.index("function installCompactBrowsingHotkeys()") : polish.index("window.appendPromptCard")]
         for digit in "12345":
