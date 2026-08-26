@@ -27,6 +27,7 @@
     "tests/test_prompt_registry_expansion_regression_design_teach.py",
     "tests/test_repository_work_ledger_prompt.py",
     "tests/test_spec_architecture_prompt_registry.py",
+    "tests/test_sysadminsuite_prompt_registry.py",
     "tests/test_test_floor_evolution_prompt.py",
     "tests/test_ux_design_prompt_suite.py"
   ],
