@@ -14,7 +14,8 @@ The default configuration is:
 | E | PM | custom packs | PM + FUN + TRIAGE + H&H |
 
 The slot key is stable; the visible name and selected mode/packs are user configuration. A user may
-rename every slot. A custom slot is the union of its selected profile packs.
+rename every slot. Built-in modes are All, Standard, Favorites, and Doctrine; a custom slot is the union
+of its selected profile packs. Doctrine is a dedicated rendered surface, not a normal PROMPTS filter.
 
 Favorites and favorite prompt shortcuts retain their existing canonical owners and storage keys. This
 feature changes the header/profile projection only; it does not fork Favorite semantics or create a
@@ -23,8 +24,9 @@ second prompt registry.
 ## Predefined packs
 
 The runtime ships declarative packs for `TRIAGE`, `FUN`, `PM`, `CYBERSEC`, `AGENTIC_LOOPING`, `SAS`,
-`GARDENING`, `H_AND_H`, and `FUTURE_PROJECTS`. Packs match prompt metadata and text fields. They are
-building blocks rather than cloned prompt collections.
+`GARDENING`, `H_AND_H`, `FUTURE_PROJECTS`, and `GNHF`. Packs match prompt metadata and text fields. They
+are building blocks rather than cloned prompt collections. Doctrine stays outside this list because it
+is a dedicated profile mode backed by the canonical Doctrine renderer.
 
 The default PM slot intentionally composes `PM`, `FUN`, `TRIAGE`, and `H_AND_H`. The default SAS slot
 selects `SAS`.

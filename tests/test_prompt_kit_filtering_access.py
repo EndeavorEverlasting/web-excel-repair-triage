@@ -138,6 +138,17 @@ process.stdout.write(JSON.stringify(result));
         self.assertIn("installCompactBrowsingViewSwitches();", polish)
         self.assertIn("installCompactBrowsingHotkeys();", polish)
 
+    def test_escape_resynchronizes_visible_navigation_after_filter_clear(self) -> None:
+        js = JS.read_text(encoding="utf-8")
+        self.assertIn(
+            "if(activeSection){activeSection=null;renderSections();renderTypes();render();return}",
+            js,
+        )
+        self.assertIn(
+            "if(activeCat!=='all'){activeCat='all';syncLibraryTabs();renderTypes();render();return}",
+            js,
+        )
+
     def test_render_uses_unique_category_metadata_without_reordering_cards(self) -> None:
         js = JS.read_text(encoding="utf-8")
         self.assertIn("function groupPromptsBySection(prompts)", js)

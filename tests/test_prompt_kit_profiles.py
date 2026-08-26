@@ -285,20 +285,62 @@ console.log(JSON.stringify({active:installed.getState().activeKey,cat:root.activ
         self.assertEqual(proof["cat"], "all")
         self.assertEqual(proof["section"], "__favorites__")
 
-    def test_retired_header_views_remain_profile_packs(self) -> None:
+    def test_retired_header_views_keep_correct_profile_owned_routes(self) -> None:
         proof = node_json(
             """
 const api=require('./docs/prompt-kit-profiles.js');
-console.log(JSON.stringify({ids:Object.keys(api.PREDEFINED_PACKS).sort()}));
+console.log(JSON.stringify({ids:Object.keys(api.PREDEFINED_PACKS).sort(),modes:api.MODES}));
 """
         )
         self.assertIn("GNHF", proof["ids"])
-        self.assertIn("DOCTRINE", proof["ids"])
+        self.assertNotIn("DOCTRINE", proof["ids"])
+        self.assertIn("doctrine", proof["modes"])
         access = ACCESS.read_text(encoding="utf-8")
-        self.assertIn("`GNHF` and `DOCTRINE` profile packs", access)
+        self.assertIn("**Doctrine** remains a first-class built-in profile mode", access)
+        self.assertIn("**GNHF** remains available as a predefined profile pack", access)
         self.assertIn("Press **Home** for the true document top", access)
         self.assertNotIn("Press **4** or use the header **Favorites**", access)
         self.assertNotIn("Doctrine** remains available in the header", access)
+
+    def test_doctrine_mode_uses_dedicated_renderer_and_persists_active_slot(self) -> None:
+        proof = node_json(
+            r"""
+const api=require('./docs/prompt-kit-profiles.js');
+const memory={};
+const doc={
+  getElementById(id){return id==='prompt-kit-profile-styles'?{}:null},
+  querySelector(){return null},
+  addEventListener(){},
+  head:{appendChild(){}},
+  body:{}
+};
+const root={
+  document:doc,
+  localStorage:{getItem(k){return memory[k]||null},setItem(k,v){memory[k]=String(v)}},
+  PROMPTS:[{id:'P1',category:'standard'}],activeCat:'all',activeSection:null,
+  render(){root.renderedCat=root.activeCat},renderTypes(){},renderSections(){},setTimeout(){},showToast(){}
+};
+const installed=api.install(root);
+const candidate=installed.getState().slots;
+candidate[3]={key:'D',name:'Doctrine',mode:'doctrine',packIds:[]};
+installed.configureSlots(candidate);
+installed.activateSlot('D',true);
+console.log(JSON.stringify({
+  active:installed.getState().activeKey,
+  mode:installed.getState().slots[3].mode,
+  cat:root.activeCat,
+  renderedCat:root.renderedCat,
+  persistedActive:memory[api.STORAGE_KEYS.active],
+  persistedSlots:JSON.parse(memory[api.STORAGE_KEYS.slots]).slots[3]
+}));
+"""
+        )
+        self.assertEqual(proof["active"], "D")
+        self.assertEqual(proof["mode"], "doctrine")
+        self.assertEqual(proof["cat"], "doctrine")
+        self.assertEqual(proof["renderedCat"], "doctrine")
+        self.assertEqual(proof["persistedActive"], "D")
+        self.assertEqual(proof["persistedSlots"]["mode"], "doctrine")
 
     def test_design_records_import_limits_and_hotkey_collision_rule(self) -> None:
         text = DESIGN.read_text(encoding="utf-8")
@@ -310,6 +352,7 @@ console.log(JSON.stringify({ids:Object.keys(api.PREDEFINED_PACKS).sort()}));
             "never calls JavaScript `eval`, `Function`, or `new Function`",
             "`A` through `E` are reserved",
             "Digits remain available to configured prompt-ID sequences such as `P111`",
+            "Built-in modes are All, Standard, Favorites, and Doctrine",
         ):
             self.assertIn(marker, text)
 

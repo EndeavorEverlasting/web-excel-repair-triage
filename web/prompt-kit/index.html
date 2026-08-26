@@ -543,7 +543,7 @@ var LIMITS=Object.freeze({
   ruleListLength:16
 });
 var SLOT_KEYS=['A','B','C','D','E'];
-var MODES=['all','standard','favorites','packs'];
+var MODES=['all','standard','favorites','doctrine','packs'];
 
 function ProfileError(code,message){
   this.name='PromptKitProfileError';
@@ -649,8 +649,7 @@ var PREDEFINED_PACKS={
   GARDENING:{id:'GARDENING',label:'Gardening',rule:anyKeywords(['garden','gardening','greenhouse','plant','watering'])},
   H_AND_H:{id:'H_AND_H',label:'H&H',rule:anyKeywords(['h&h','health and hospital','health & hospital','hospital'])},
   FUTURE_PROJECTS:{id:'FUTURE_PROJECTS',label:'Future Projects',rule:anyKeywords(['future project','roadmap','backlog'])},
-  GNHF:{id:'GNHF',label:'GNHF',rule:{op:'category',value:'gnhf'}},
-  DOCTRINE:{id:'DOCTRINE',label:'Doctrine',rule:{op:'category',value:'doctrine'}}
+  GNHF:{id:'GNHF',label:'GNHF',rule:{op:'category',value:'gnhf'}}
 };
 Object.keys(PREDEFINED_PACKS).forEach(function(id){
   PREDEFINED_PACKS[id].rule=validateRule(PREDEFINED_PACKS[id].rule,{nodes:0},0)
@@ -844,6 +843,9 @@ function install(root){
     }else if(slot.mode==='favorites'){
       root.activeCat='all';
       root.activeSection='__favorites__'
+    }else if(slot.mode==='doctrine'){
+      root.activeCat='doctrine';
+      root.activeSection=null
     }else{
       root.activeCat='all';
       root.activeSection=null
@@ -958,7 +960,7 @@ function install(root){
     var editor=doc.createElement('section');
     editor.className='prompt-profile-editor';
     editor.setAttribute('aria-label','Profile tab configuration');
-    editor.innerHTML='<h4>Profile tabs A–E</h4><div class="prompt-profile-editor-note">Rename any tab. All, Standard, and Favorites preserve their built-in views; Custom composes one or more safe profile packs.</div><div class="prompt-profile-slot-list"></div><div class="prompt-profile-editor-actions"><button type="button" data-profile-save>Save tabs</button><button type="button" data-profile-reset>Reset defaults</button></div><div class="prompt-profile-import"><strong>Import profile packs</strong><span class="prompt-profile-editor-note">JSON only. Max 32 KB, 32 packs/import, 64 installed packs, 64 rule nodes/pack, depth 4. Imported data is validated and compiled without eval.</span><textarea data-profile-import-text placeholder=\'{"schema":"prompt-kit-profile-import/v1","packs":[{"id":"MY_PACK","label":"My Pack","rule":{"op":"keyword","value":"example"}}]}\'></textarea><button type="button" data-profile-import>Import validated pack set</button></div><div class="prompt-profile-status" role="status" aria-live="polite"></div>';
+    editor.innerHTML='<h4>Profile tabs A–E</h4><div class="prompt-profile-editor-note">Rename any tab. All, Standard, Favorites, and Doctrine are built-in views; Custom composes one or more safe profile packs.</div><div class="prompt-profile-slot-list"></div><div class="prompt-profile-editor-actions"><button type="button" data-profile-save>Save tabs</button><button type="button" data-profile-reset>Reset defaults</button></div><div class="prompt-profile-import"><strong>Import profile packs</strong><span class="prompt-profile-editor-note">JSON only. Max 32 KB, 32 packs/import, 64 installed packs, 64 rule nodes/pack, depth 4. Imported data is validated and compiled without eval.</span><textarea data-profile-import-text placeholder=\'{"schema":"prompt-kit-profile-import/v1","packs":[{"id":"MY_PACK","label":"My Pack","rule":{"op":"keyword","value":"example"}}]}\'></textarea><button type="button" data-profile-import>Import validated pack set</button></div><div class="prompt-profile-status" role="status" aria-live="polite"></div>';
     panel.appendChild(editor);
     editor.querySelector('[data-profile-save]').addEventListener('click',function(){
       try{
@@ -998,7 +1000,7 @@ function install(root){
       var key=doc.createElement('span');key.className='prompt-profile-slot-key';key.textContent=slot.key;
       var name=doc.createElement('input');name.type='text';name.value=slot.name;name.maxLength=LIMITS.slotNameLength;name.dataset.slotName='';name.setAttribute('aria-label','Tab '+slot.key+' name');
       var mode=doc.createElement('select');mode.dataset.slotMode='';mode.setAttribute('aria-label','Tab '+slot.key+' mode');
-      [['all','All prompts'],['standard','Standard prompts'],['favorites','Favorites'],['packs','Custom profile packs']].forEach(function(item){var option=doc.createElement('option');option.value=item[0];option.textContent=item[1];option.selected=slot.mode===item[0];mode.appendChild(option)});
+      [['all','All prompts'],['standard','Standard prompts'],['favorites','Favorites'],['doctrine','Doctrine'],['packs','Custom profile packs']].forEach(function(item){var option=doc.createElement('option');option.value=item[0];option.textContent=item[1];option.selected=slot.mode===item[0];mode.appendChild(option)});
       var packs=doc.createElement('select');packs.multiple=true;packs.className='prompt-profile-pack-select';packs.setAttribute('aria-label','Tab '+slot.key+' profile packs');
       packIds.forEach(function(id){var option=doc.createElement('option');option.value=id;option.textContent=available[id].label+' · '+id;option.selected=slot.packIds.indexOf(id)!==-1;packs.appendChild(option)});
       row.appendChild(key);row.appendChild(name);row.appendChild(mode);row.appendChild(packs);list.appendChild(row)

@@ -56,7 +56,7 @@ For the full current workflow—including the direct **P83** path when another a
 
 ### Five-tab named profiles
 
-The top rail exposes five persistent keyboard slots, `A` through `E`. Every slot can be renamed and assigned a built-in view or a custom union of profile packs from the Hotkeys panel. Defaults are **All / Standard / Favorites / SAS / PM**; SAS selects the SAS pack, while PM composes PM + FUN + TRIAGE + H&H. Built-in packs also include CYBERSEC, AGENTIC LOOPING, Gardening, and Future Projects.
+The top rail exposes five persistent keyboard slots, `A` through `E`. Every slot can be renamed and assigned the built-in All, Standard, Favorites, or Doctrine view, or a custom union of profile packs from the Hotkeys panel. Defaults are **All / Standard / Favorites / SAS / PM**; SAS selects the SAS pack, while PM composes PM + FUN + TRIAGE + H&H. Built-in packs also include CYBERSEC, AGENTIC LOOPING, GNHF, Gardening, and Future Projects. Doctrine is a dedicated view mode rather than a prompt-filter pack, so assigning it to a slot opens the canonical Doctrine renderer instead of filtering the normal prompt list.
 
 Imported profile packs use `prompt-kit-profile-import/v1` JSON and pass a bounded parse → validate → compile evaluator. Imports are data only: JavaScript `eval`, `Function`, and `new Function` are not used. The runtime caps import size, pack count, installed pack count, rule nodes/depth, matcher length, and packs selected per tab, and rejects malformed or unknown operators before persistence. See `docs/PROMPT_KIT_FIVE_TAB_PROFILES.md`.
 

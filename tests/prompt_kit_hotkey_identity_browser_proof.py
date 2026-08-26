@@ -220,6 +220,61 @@ def observe(port: int, screenshot: Path) -> list[dict]:
                 "active_slot": active_slot,
             })
 
+            # Falsify the removed-header regression through the real user configuration UI: Doctrine
+            # must remain reachable without stealing an A-E slot or masquerading as a PROMPTS pack.
+            page.locator('#hotkeyHelpToggle').click()
+            page.wait_for_timeout(75)
+            doctrine_row = page.locator('.prompt-profile-slot-row[data-key="D"]')
+            doctrine_row.locator('[data-slot-name]').fill('Doctrine')
+            doctrine_row.locator('[data-slot-mode]').select_option('doctrine')
+            page.locator('[data-profile-save]').click()
+            page.wait_for_timeout(100)
+            saved_doctrine = 'Saved five profile tabs.' in page.locator('.prompt-profile-status').inner_text()
+            page.locator('.hotkey-help-close').click()
+            page.evaluate("document.activeElement && document.activeElement.blur()")
+            page.keyboard.press('d')
+            page.wait_for_timeout(120)
+            doctrine_active = page.evaluate("""() => {
+              const state=window.PromptKitProfiles&&window.PromptKitProfiles.getState();
+              const view=document.getElementById('doctrineView');
+              const cards=document.querySelectorAll('#doctrineList .doctrine-card');
+              return {
+                slot:state&&state.activeKey,
+                mode:state&&state.slots&&state.slots[3]&&state.slots[3].mode,
+                activeCat:window.activeCat,
+                viewActive:!!(view&&view.classList.contains('active')),
+                doctrineCards:cards.length
+              };
+            }""")
+            observations.append({
+                "id": "doctrine_profile_mode_reaches_dedicated_view",
+                "event": "D is configured to Doctrine through the Hotkeys UI and opens the dedicated Doctrine renderer",
+                "occurred": True,
+                "passed": bool(saved_doctrine and doctrine_active.get('slot') == 'D' and doctrine_active.get('mode') == 'doctrine' and doctrine_active.get('activeCat') == 'doctrine' and doctrine_active.get('viewActive') and doctrine_active.get('doctrineCards', 0) > 0),
+                "saved": bool(saved_doctrine),
+                **doctrine_active,
+            })
+
+            page.reload(wait_until='domcontentloaded')
+            page.wait_for_timeout(150)
+            doctrine_reload = page.evaluate("""() => {
+              const state=window.PromptKitProfiles&&window.PromptKitProfiles.getState();
+              const view=document.getElementById('doctrineView');
+              return {
+                slot:state&&state.activeKey,
+                mode:state&&state.slots&&state.slots[3]&&state.slots[3].mode,
+                activeCat:window.activeCat,
+                viewActive:!!(view&&view.classList.contains('active'))
+              };
+            }""")
+            observations.append({
+                "id": "doctrine_profile_mode_survives_reload",
+                "event": "The configured Doctrine slot and active D state survive a same-origin reload",
+                "occurred": True,
+                "passed": bool(doctrine_reload.get('slot') == 'D' and doctrine_reload.get('mode') == 'doctrine' and doctrine_reload.get('activeCat') == 'doctrine' and doctrine_reload.get('viewActive')),
+                **doctrine_reload,
+            })
+
             screenshot.parent.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(screenshot), full_page=False)
             browser.close()
