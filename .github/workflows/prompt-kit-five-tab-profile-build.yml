@@ -35,66 +35,56 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-          import re
 
-          def replace_exact(path, old, new, expected=1):
+          def replace_once(path, old, new):
               p=Path(path)
               text=p.read_text(encoding='utf-8')
-              count=text.count(old)
-              if count != expected:
-                  raise SystemExit(f"{path}: expected {expected} copies, found {count}: {old[:120]!r}")
-              p.write_text(text.replace(old,new),encoding='utf-8')
+              if text.count(old)!=1:
+                  raise SystemExit(f'{path}: expected one marker, found {text.count(old)}: {old[:100]!r}')
+              p.write_text(text.replace(old,new,1),encoding='utf-8')
 
-          old = '''    html.append('        <button class="cat-tab active" data-cat="all"><span class="tab-icon">&#128203;</span>All<span class="kbd">1</span></button>')
-          html.append('        <button class="cat-tab" data-cat="standard"><span class="tab-icon">&#128196;</span>Standard<span class="kbd">2</span></button>')
-          html.append('        <button class="cat-tab" data-cat="gnhf"><span class="tab-icon">&#9733;</span>GNHF<span class="kbd">3</span></button>')
-          html.append('        <button class="cat-tab" data-cat="doctrine"><span class="tab-icon">&#128220;</span>Doctrine<span class="kbd">4</span></button>')'''
-          new = '''    html.append('        <button class="cat-tab active profile-slot" data-profile-slot="A" data-cat="all" aria-keyshortcuts="A" aria-pressed="true">All<span class="kbd">A</span></button>')
+          # Canonical generated header owner: replace only the old tab-button region.
+          p=Path('build_prompt_kit.py')
+          text=p.read_text(encoding='utf-8')
+          start=text.index("    html.append('        <button class=\"cat-tab active\" data-cat=\"all\"")
+          end=text.index("    html.append('      </div>')",start)
+          replacement='''    html.append('        <button class="cat-tab active profile-slot" data-profile-slot="A" data-cat="all" aria-keyshortcuts="A" aria-pressed="true">All<span class="kbd">A</span></button>')
           html.append('        <button class="cat-tab profile-slot" data-profile-slot="B" data-cat="standard" aria-keyshortcuts="B" aria-pressed="false">Standard<span class="kbd">B</span></button>')
           html.append('        <button class="cat-tab profile-slot" id="favoritesShortcut" data-profile-slot="C" aria-keyshortcuts="C" aria-pressed="false">Favorites<span class="kbd">C</span></button>')
           html.append('        <button class="cat-tab profile-slot" data-profile-slot="D" aria-keyshortcuts="D" aria-pressed="false">SAS<span class="kbd">D</span></button>')
-          html.append('        <button class="cat-tab profile-slot" data-profile-slot="E" aria-keyshortcuts="E" aria-pressed="false">PM<span class="kbd">E</span></button>')'''
-          replace_exact('build_prompt_kit.py', old, new)
+          html.append('        <button class="cat-tab profile-slot" data-profile-slot="E" aria-keyshortcuts="E" aria-pressed="false">PM<span class="kbd">E</span></button>')
+          '''
+          p.write_text(text[:start]+replacement+text[end:],encoding='utf-8')
 
-          replace_exact(
+          # Digits are prompt-sequence data, never header navigation.
+          replace_once(
               'docs/prompt-kit.js',
               "switch(e.key){case'1':activeCat='all';break;case'2':activeCat='standard';break;case'3':activeCat='gnhf';break;case'4':activeCat='doctrine';break;case'r':case'R':toggleRef();return;",
               "switch(e.key){case'r':case'R':toggleRef();return;"
           )
 
-          replace_exact(
+          # The profile runtime must register its capture listeners before polish.
+          replace_once(
               'scripts/build_prompt_kit_registry.py',
               'PROMPT_JOURNEY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-journey.js"\nPOLISH_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-polish.js"',
               'PROMPT_JOURNEY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-journey.js"\nPROFILE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-profiles.js"\nPOLISH_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-polish.js"'
           )
-          replace_exact(
+          replace_once(
               'scripts/build_prompt_kit_registry.py',
               '    journey_script = _read_runtime(PROMPT_JOURNEY_RUNTIME, "Guided next-step journey behavior")\n    polish_script = _read_runtime(POLISH_RUNTIME, "Prompt Kit polish behavior")',
               '    journey_script = _read_runtime(PROMPT_JOURNEY_RUNTIME, "Guided next-step journey behavior")\n    profile_script = _read_runtime(PROFILE_RUNTIME, "Prompt Kit named profile behavior")\n    polish_script = _read_runtime(POLISH_RUNTIME, "Prompt Kit polish behavior")'
           )
-          replace_exact(
+          replace_once(
               'scripts/build_prompt_kit_registry.py',
               '        f"<script>\\n{journey_script}\\n</script>\\n"\n        f"<script>\\n{polish_script}\\n</script>\\n"',
               '        f"<script>\\n{journey_script}\\n</script>\\n"\n        f"<script>\\n{profile_script}\\n</script>\\n"\n        f"<script>\\n{polish_script}\\n</script>\\n"'
           )
 
-          old = '''var PROMPT_KIT_SHORTCUTS=[
-            {key:'`',label:'Show / hide Hotkeys'},
-            {key:'1',label:'All prompts'},
-            {key:'2',label:'Standard prompts'},
-            {key:'3',label:'GNHF prompts'},
-            {key:'4',label:'Favorites'},
-            {key:'5',label:'Doctrine'},
-            {key:'/',label:'Focus search'},
-            {key:'R',label:'Reference panel'},
-            {key:'F',label:'Show / hide filters'},
-            {key:'[',label:'Hide filters'},
-            {key:']',label:'Show filters'},
-            {key:'T',label:'Scroll to top'},
-            {key:'B',label:'Scroll to bottom'},
-            {key:'Esc',label:'Close / clear active surface'}
-          ];'''
-          new = '''var PROMPT_KIT_SHORTCUTS=[
+          p=Path('docs/prompt-kit-polish.js')
+          text=p.read_text(encoding='utf-8')
+          shortcut_start=text.index('var PROMPT_KIT_SHORTCUTS=[')
+          shortcut_end=text.index('];',shortcut_start)+2
+          shortcut_block='''var PROMPT_KIT_SHORTCUTS=[
             {key:'`',label:'Show / hide Hotkeys'},
             {key:'A',label:'All'},
             {key:'B',label:'Standard'},
@@ -110,26 +100,16 @@ jobs:
             {key:'End',label:'Scroll to bottom'},
             {key:'Esc',label:'Close / clear active surface'}
           ];'''
-          replace_exact('docs/prompt-kit-polish.js', old, new)
+          text=text[:shortcut_start]+shortcut_block+text[shortcut_end:]
+          numeric_start=text.index("    if(key==='1'){",text.index('function installCompactBrowsingHotkeys'))
+          next_non_numeric=text.index("    if(key==='f'){",numeric_start)
+          text=text[:numeric_start]+text[next_non_numeric:]
+          old_bottom="    if(key==='b'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('bottom');return}"
+          if text.count(old_bottom)!=1:raise SystemExit('docs/prompt-kit-polish.js: bottom hotkey marker missing')
+          text=text.replace(old_bottom,"    if(key==='end'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('bottom');return}",1)
+          p.write_text(text,encoding='utf-8')
 
-          old = '''    if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;
-            if(key==='1'){e.preventDefault();e.stopImmediatePropagation();activateAllPromptsView();return}
-            if(key==='4'){e.preventDefault();e.stopImmediatePropagation();activateFavoritesView();return}
-            if(key==='5'){
-              var doctrine=document.querySelector('.cat-tab[data-cat="doctrine"]');
-              if(doctrine){e.preventDefault();e.stopImmediatePropagation();doctrine.click()}
-              return
-            }
-            if(key==='f'){e.preventDefault();e.stopImmediatePropagation();toggleCompactFilters();return}'''
-          new = '''    if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;
-            if(key==='f'){e.preventDefault();e.stopImmediatePropagation();toggleCompactFilters();return}'''
-          replace_exact('docs/prompt-kit-polish.js', old, new)
-          replace_exact(
-              'docs/prompt-kit-polish.js',
-              "    if(key==='b'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('bottom');return}",
-              "    if(key==='end'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('bottom');return}"
-          )
-
+          # Replace the one obsolete test function by boundaries, preserving newer tests around it.
           p=Path('tests/test_prompt_kit_hotkey_completion.py')
           text=p.read_text(encoding='utf-8')
           start=text.index('    def test_buffered_prompt_sequence_precedes_builtin_digit_dispatch(self) -> None:\n')
@@ -152,16 +132,12 @@ jobs:
 
           p=Path('web/README.md')
           text=p.read_text(encoding='utf-8')
-          text=text.replace(
-              '1. **Library view:** All / Standard / GNHF / Doctrine.',
-              '1. **Profile tab:** five configurable slots A–E, defaulting to All / Standard / Favorites / SAS / PM.',
-              1
-          )
-          text=text.replace(
-              '- Use the explicit **Favorites** header view or press **4** to clear the transient search/category/type restrictions and show the complete saved Favorites collection.',
-              '- Use the explicit **Favorites** profile tab or press **C** to show the complete saved Favorites collection.',
-              1
-          )
+          old='1. **Library view:** All / Standard / GNHF / Doctrine.'
+          if old not in text:raise SystemExit('web/README.md: library view marker missing')
+          text=text.replace(old,'1. **Profile tab:** five configurable slots A–E, defaulting to All / Standard / Favorites / SAS / PM.',1)
+          old='- Use the explicit **Favorites** header view or press **4** to clear the transient search/category/type restrictions and show the complete saved Favorites collection.'
+          if old not in text:raise SystemExit('web/README.md: Favorites hotkey marker missing')
+          text=text.replace(old,'- Use the explicit **Favorites** profile tab or press **C** to show the complete saved Favorites collection.',1)
           hotkey_start=text.index('The glowing **Hotkeys** module beside the floating reference control')
           configured_start=text.index('Favorite-prompt shortcuts are configured from the Hotkeys panel.',hotkey_start)
           new_hotkeys='''The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference, five-tab profile editor, profile-pack importer, and favorite-prompt shortcut configurator. Select it or press the unmodified **backtick** key (`` ` ``) to toggle it; select outside it, use its close control, or press **Esc** to dismiss it. The five header identities are always `A`–`E`; their visible names and profile compositions are user configuration. Numeric keys are not header navigation, and no header key uses `P`, so configured prompt sequences such as `P111` retain the digit stream.
@@ -187,8 +163,7 @@ jobs:
           text=text[:hotkey_start]+new_hotkeys+text[configured_start:]
           old_tail='A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it receives the next digit before built-in `1`, `4`, or `5` navigation so valid prompt IDs cannot be interrupted; built-in digit shortcuts keep their normal meaning when no sequence is active.'
           new_tail='A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it owns the following digits. Numeric keys have no header-navigation meaning, so `P111` and other configured prompt IDs cannot fall through into a tab command.'
-          if old_tail not in text:
-              raise SystemExit('web/README.md: old prompt sequence paragraph missing')
+          if old_tail not in text:raise SystemExit('web/README.md: prompt sequence paragraph missing')
           text=text.replace(old_tail,new_tail,1)
           marker='### Category and type filtering\n'
           addition='''### Five-tab named profiles
@@ -198,8 +173,7 @@ jobs:
           Imported profile packs use `prompt-kit-profile-import/v1` JSON and pass a bounded parse → validate → compile evaluator. Imports are data only: JavaScript `eval`, `Function`, and `new Function` are not used. The runtime caps import size, pack count, installed pack count, rule nodes/depth, matcher length, and packs selected per tab, and rejects malformed or unknown operators before persistence. See `docs/PROMPT_KIT_FIVE_TAB_PROFILES.md`.
 
           '''
-          if marker not in text:
-              raise SystemExit('web/README.md: category marker missing')
+          if marker not in text:raise SystemExit('web/README.md: category marker missing')
           text=text.replace(marker,addition+marker,1)
           p.write_text(text,encoding='utf-8')
 
