@@ -1,0 +1,243 @@
+name: Prompt Kit five-tab profile sprint
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-five-tab-named-profiles-20260825
+
+permissions:
+  contents: write
+
+jobs:
+  implement-validate-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-five-tab-named-profiles-20260825
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Refresh and prove branch floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --all --prune --tags
+          git merge-base --is-ancestor origin/main HEAD
+          echo "head=$(git rev-parse HEAD)"
+          echo "main=$(git rev-parse origin/main)"
+
+      - name: Apply five-tab header integration
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          def replace_exact(path, old, new, expected=1):
+              p=Path(path)
+              text=p.read_text(encoding='utf-8')
+              count=text.count(old)
+              if count != expected:
+                  raise SystemExit(f"{path}: expected {expected} copies, found {count}: {old[:120]!r}")
+              p.write_text(text.replace(old,new),encoding='utf-8')
+
+          old = '''    html.append('        <button class="cat-tab active" data-cat="all"><span class="tab-icon">&#128203;</span>All<span class="kbd">1</span></button>')
+          html.append('        <button class="cat-tab" data-cat="standard"><span class="tab-icon">&#128196;</span>Standard<span class="kbd">2</span></button>')
+          html.append('        <button class="cat-tab" data-cat="gnhf"><span class="tab-icon">&#9733;</span>GNHF<span class="kbd">3</span></button>')
+          html.append('        <button class="cat-tab" data-cat="doctrine"><span class="tab-icon">&#128220;</span>Doctrine<span class="kbd">4</span></button>')'''
+          new = '''    html.append('        <button class="cat-tab active profile-slot" data-profile-slot="A" data-cat="all" aria-keyshortcuts="A" aria-pressed="true">All<span class="kbd">A</span></button>')
+          html.append('        <button class="cat-tab profile-slot" data-profile-slot="B" data-cat="standard" aria-keyshortcuts="B" aria-pressed="false">Standard<span class="kbd">B</span></button>')
+          html.append('        <button class="cat-tab profile-slot" id="favoritesShortcut" data-profile-slot="C" aria-keyshortcuts="C" aria-pressed="false">Favorites<span class="kbd">C</span></button>')
+          html.append('        <button class="cat-tab profile-slot" data-profile-slot="D" aria-keyshortcuts="D" aria-pressed="false">SAS<span class="kbd">D</span></button>')
+          html.append('        <button class="cat-tab profile-slot" data-profile-slot="E" aria-keyshortcuts="E" aria-pressed="false">PM<span class="kbd">E</span></button>')'''
+          replace_exact('build_prompt_kit.py', old, new)
+
+          replace_exact(
+              'docs/prompt-kit.js',
+              "switch(e.key){case'1':activeCat='all';break;case'2':activeCat='standard';break;case'3':activeCat='gnhf';break;case'4':activeCat='doctrine';break;case'r':case'R':toggleRef();return;",
+              "switch(e.key){case'r':case'R':toggleRef();return;"
+          )
+
+          replace_exact(
+              'scripts/build_prompt_kit_registry.py',
+              'PROMPT_JOURNEY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-journey.js"\nPOLISH_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-polish.js"',
+              'PROMPT_JOURNEY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-journey.js"\nPROFILE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-profiles.js"\nPOLISH_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-polish.js"'
+          )
+          replace_exact(
+              'scripts/build_prompt_kit_registry.py',
+              '    journey_script = _read_runtime(PROMPT_JOURNEY_RUNTIME, "Guided next-step journey behavior")\n    polish_script = _read_runtime(POLISH_RUNTIME, "Prompt Kit polish behavior")',
+              '    journey_script = _read_runtime(PROMPT_JOURNEY_RUNTIME, "Guided next-step journey behavior")\n    profile_script = _read_runtime(PROFILE_RUNTIME, "Prompt Kit named profile behavior")\n    polish_script = _read_runtime(POLISH_RUNTIME, "Prompt Kit polish behavior")'
+          )
+          replace_exact(
+              'scripts/build_prompt_kit_registry.py',
+              '        f"<script>\\n{journey_script}\\n</script>\\n"\n        f"<script>\\n{polish_script}\\n</script>\\n"',
+              '        f"<script>\\n{journey_script}\\n</script>\\n"\n        f"<script>\\n{profile_script}\\n</script>\\n"\n        f"<script>\\n{polish_script}\\n</script>\\n"'
+          )
+
+          old = '''var PROMPT_KIT_SHORTCUTS=[
+            {key:'`',label:'Show / hide Hotkeys'},
+            {key:'1',label:'All prompts'},
+            {key:'2',label:'Standard prompts'},
+            {key:'3',label:'GNHF prompts'},
+            {key:'4',label:'Favorites'},
+            {key:'5',label:'Doctrine'},
+            {key:'/',label:'Focus search'},
+            {key:'R',label:'Reference panel'},
+            {key:'F',label:'Show / hide filters'},
+            {key:'[',label:'Hide filters'},
+            {key:']',label:'Show filters'},
+            {key:'T',label:'Scroll to top'},
+            {key:'B',label:'Scroll to bottom'},
+            {key:'Esc',label:'Close / clear active surface'}
+          ];'''
+          new = '''var PROMPT_KIT_SHORTCUTS=[
+            {key:'`',label:'Show / hide Hotkeys'},
+            {key:'A',label:'All'},
+            {key:'B',label:'Standard'},
+            {key:'C',label:'Favorites'},
+            {key:'D',label:'SAS'},
+            {key:'E',label:'PM'},
+            {key:'/',label:'Focus search'},
+            {key:'R',label:'Reference panel'},
+            {key:'F',label:'Show / hide filters'},
+            {key:'[',label:'Hide filters'},
+            {key:']',label:'Show filters'},
+            {key:'T',label:'Scroll to top'},
+            {key:'End',label:'Scroll to bottom'},
+            {key:'Esc',label:'Close / clear active surface'}
+          ];'''
+          replace_exact('docs/prompt-kit-polish.js', old, new)
+
+          old = '''    if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;
+            if(key==='1'){e.preventDefault();e.stopImmediatePropagation();activateAllPromptsView();return}
+            if(key==='4'){e.preventDefault();e.stopImmediatePropagation();activateFavoritesView();return}
+            if(key==='5'){
+              var doctrine=document.querySelector('.cat-tab[data-cat="doctrine"]');
+              if(doctrine){e.preventDefault();e.stopImmediatePropagation();doctrine.click()}
+              return
+            }
+            if(key==='f'){e.preventDefault();e.stopImmediatePropagation();toggleCompactFilters();return}'''
+          new = '''    if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;
+            if(key==='f'){e.preventDefault();e.stopImmediatePropagation();toggleCompactFilters();return}'''
+          replace_exact('docs/prompt-kit-polish.js', old, new)
+          replace_exact(
+              'docs/prompt-kit-polish.js',
+              "    if(key==='b'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('bottom');return}",
+              "    if(key==='end'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('bottom');return}"
+          )
+
+          p=Path('tests/test_prompt_kit_hotkey_completion.py')
+          text=p.read_text(encoding='utf-8')
+          start=text.index('    def test_buffered_prompt_sequence_precedes_builtin_digit_dispatch(self) -> None:\n')
+          end=text.index('\n    def test_executable_prototype_proves_success_failure_and_digit_collision_paths',start)
+          replacement='''    def test_prompt_sequence_owns_digits_and_header_navigation_is_letter_only(self) -> None:
+              source = POLISH.read_text(encoding="utf-8")
+              base = (ROOT / "docs" / "prompt-kit.js").read_text(encoding="utf-8")
+              buffered = "if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;"
+              self.assertIn(buffered, source)
+              for digit in "12345":
+                  self.assertNotIn(f"if(key==='{digit}')", source)
+                  self.assertNotIn(f"case'{digit}'", base)
+              self.assertIn("{key:'A',label:'All'}", source)
+              self.assertIn("{key:'E',label:'PM'}", source)
+              self.assertIn("{key:'End',label:'Scroll to bottom'}", source)
+              self.assertIn("var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');", source)
+              self.assertIn("if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)", source)
+          '''
+          p.write_text(text[:start]+replacement+text[end:],encoding='utf-8')
+
+          p=Path('web/README.md')
+          text=p.read_text(encoding='utf-8')
+          text=text.replace(
+              '1. **Library view:** All / Standard / GNHF / Doctrine.',
+              '1. **Profile tab:** five configurable slots A–E, defaulting to All / Standard / Favorites / SAS / PM.',
+              1
+          )
+          text=text.replace(
+              '- Use the explicit **Favorites** header view or press **4** to clear the transient search/category/type restrictions and show the complete saved Favorites collection.',
+              '- Use the explicit **Favorites** profile tab or press **C** to show the complete saved Favorites collection.',
+              1
+          )
+          hotkey_start=text.index('The glowing **Hotkeys** module beside the floating reference control')
+          configured_start=text.index('Favorite-prompt shortcuts are configured from the Hotkeys panel.',hotkey_start)
+          new_hotkeys='''The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference, five-tab profile editor, profile-pack importer, and favorite-prompt shortcut configurator. Select it or press the unmodified **backtick** key (`` ` ``) to toggle it; select outside it, use its close control, or press **Esc** to dismiss it. The five header identities are always `A`–`E`; their visible names and profile compositions are user configuration. Numeric keys are not header navigation, and no header key uses `P`, so configured prompt sequences such as `P111` retain the digit stream.
+
+          | Key | Action |
+          |---|---|
+          | `` ` `` | Show / hide Hotkeys |
+          | `/` | Focus search |
+          | `A` | All |
+          | `B` | Standard |
+          | `C` | Favorites |
+          | `D` | SAS |
+          | `E` | PM |
+          | `R` | Toggle reference panel |
+          | `F` | Show / hide filters |
+          | `[` | Hide filters |
+          | `]` | Show filters |
+          | `T` | Scroll to top |
+          | `End` | Scroll to bottom |
+          | `Esc` | Close the active surface or clear filters |
+
+          '''
+          text=text[:hotkey_start]+new_hotkeys+text[configured_start:]
+          old_tail='A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it receives the next digit before built-in `1`, `4`, or `5` navigation so valid prompt IDs cannot be interrupted; built-in digit shortcuts keep their normal meaning when no sequence is active.'
+          new_tail='A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it owns the following digits. Numeric keys have no header-navigation meaning, so `P111` and other configured prompt IDs cannot fall through into a tab command.'
+          if old_tail not in text:
+              raise SystemExit('web/README.md: old prompt sequence paragraph missing')
+          text=text.replace(old_tail,new_tail,1)
+          marker='### Category and type filtering\n'
+          addition='''### Five-tab named profiles
+
+          The top rail exposes five persistent keyboard slots, `A` through `E`. Every slot can be renamed and assigned a built-in view or a custom union of profile packs from the Hotkeys panel. Defaults are **All / Standard / Favorites / SAS / PM**; SAS selects the SAS pack, while PM composes PM + FUN + TRIAGE + H&H. Built-in packs also include CYBERSEC, AGENTIC LOOPING, Gardening, and Future Projects.
+
+          Imported profile packs use `prompt-kit-profile-import/v1` JSON and pass a bounded parse → validate → compile evaluator. Imports are data only: JavaScript `eval`, `Function`, and `new Function` are not used. The runtime caps import size, pack count, installed pack count, rule nodes/depth, matcher length, and packs selected per tab, and rejects malformed or unknown operators before persistence. See `docs/PROMPT_KIT_FIVE_TAB_PROFILES.md`.
+
+          '''
+          if marker not in text:
+              raise SystemExit('web/README.md: category marker missing')
+          text=text.replace(marker,addition+marker,1)
+          p.write_text(text,encoding='utf-8')
+
+      - name: Regenerate canonical Prompt Kit
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+      - name: Pass 1 targeted validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check docs/prompt-kit.js
+          node --check docs/prompt-kit-polish.js
+          node --check docs/prompt-kit-profiles.js
+          python tests/test_prompt_kit_header_contract.py
+          python -m unittest tests.test_prompt_kit_profiles tests.test_prompt_kit_hotkey_completion -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Pass 2 broad Prompt Kit validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p 'test_prompt_kit_*.py' -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          ! grep -Eq "case'[1-5]'|key==='[1-5]'" docs/prompt-kit.js docs/prompt-kit-polish.js
+          grep -F 'data-profile-slot="A"' web/prompt-kit/index.html >/dev/null
+          grep -F 'data-profile-slot="E"' web/prompt-kit/index.html >/dev/null
+          git diff --check
+
+      - name: Commit exact validated candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/prompt-kit-five-tab-profile-build.yml
+          git add build_prompt_kit.py docs/prompt-kit.js docs/prompt-kit-polish.js docs/prompt-kit-profiles.js docs/PROMPT_KIT_FIVE_TAB_PROFILES.md scripts/build_prompt_kit_registry.py tests/test_prompt_kit_header_contract.py tests/test_prompt_kit_hotkey_completion.py tests/test_prompt_kit_profiles.py web/README.md web/prompt-kit/index.html
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m "feat(prompt-kit): add five named profile tabs"
+          git push origin HEAD:feat/prompt-kit-five-tab-named-profiles-20260825
