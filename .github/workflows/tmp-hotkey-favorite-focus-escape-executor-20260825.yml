@@ -1,0 +1,276 @@
+name: Temporary hotkey favorite focus escape executor
+
+on:
+  push:
+    branches:
+      - fix/prompt-kit-hotkey-favorite-focus-escape-20260825
+
+permissions:
+  contents: write
+
+jobs:
+  execute:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/prompt-kit-hotkey-favorite-focus-escape-20260825
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Refresh floor and apply bounded runtime repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch --all --prune --tags
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+          fi
+          python - <<'PY'
+          from pathlib import Path
+
+          polish = Path('docs/prompt-kit-polish.js')
+          source = polish.read_text(encoding='utf-8')
+
+          old_open = """function setHotkeyHelpOpen(open,restoreFocus){
+            var panel=document.getElementById('hotkeyHelpPanel');
+            var toggle=document.getElementById('hotkeyHelpToggle');
+            if(!panel||!toggle)return;
+            panel.hidden=!open;
+            toggle.setAttribute('aria-expanded',open?'true':'false');
+            if(open){
+              var close=panel.querySelector('.hotkey-help-close');
+              if(close){try{close.focus({preventScroll:true})}catch(e){close.focus()}}
+              return;
+            }
+            if(restoreFocus){try{toggle.focus({preventScroll:true})}catch(e){toggle.focus()}}
+          }
+          """
+          new_open = """function focusFavoritePromptShortcutInput(panel){
+            var promptInput=document.getElementById('promptShortcutPromptId');
+            if(!panel||!promptInput||!panel.contains(promptInput))return false;
+            try{promptInput.focus()}catch(e){return false}
+            try{promptInput.scrollIntoView({block:'nearest',inline:'nearest'})}catch(e){try{promptInput.scrollIntoView()}catch(ignore){}}
+            return document.activeElement===promptInput
+          }
+
+          function setHotkeyHelpOpen(open,restoreFocus){
+            var panel=document.getElementById('hotkeyHelpPanel');
+            var toggle=document.getElementById('hotkeyHelpToggle');
+            if(!panel||!toggle)return;
+            panel.hidden=!open;
+            toggle.setAttribute('aria-expanded',open?'true':'false');
+            if(open){
+              if(focusFavoritePromptShortcutInput(panel))return;
+              var close=panel.querySelector('.hotkey-help-close');
+              if(close){try{close.focus({preventScroll:true})}catch(e){close.focus()}}
+              return;
+            }
+            if(restoreFocus){try{toggle.focus({preventScroll:true})}catch(e){toggle.focus()}}
+          }
+          """
+          if old_open not in source:
+              raise SystemExit('setHotkeyHelpOpen anchor drifted')
+          source = source.replace(old_open, new_open, 1)
+
+          old_dispatch = """    if(e.defaultPrevented||e.altKey||e.metaKey||e.ctrlKey)return;
+              if(editable)return;
+              if(key==='`'){
+                e.preventDefault();e.stopImmediatePropagation();
+                var helpPanel=document.getElementById('hotkeyHelpPanel');
+                setHotkeyHelpOpen(helpPanel?helpPanel.hidden:true,false);
+                resetPromptShortcutBuffer();
+                return
+              }
+              if(key==='escape')resetPromptShortcutBuffer();
+              var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');
+              if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden){
+                e.preventDefault();e.stopImmediatePropagation();setHotkeyHelpOpen(false,true);return
+              }
+          """
+          new_dispatch = """    if(e.defaultPrevented||e.altKey||e.metaKey||e.ctrlKey)return;
+              var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');
+              if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden){
+                e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return
+              }
+              if(editable)return;
+              if(key==='`'){
+                e.preventDefault();e.stopImmediatePropagation();
+                var helpPanel=document.getElementById('hotkeyHelpPanel');
+                setHotkeyHelpOpen(helpPanel?helpPanel.hidden:true,false);
+                resetPromptShortcutBuffer();
+                return
+              }
+              if(key==='escape')resetPromptShortcutBuffer();
+          """
+          if old_dispatch not in source:
+              raise SystemExit('hotkey dispatcher anchor drifted')
+          source = source.replace(old_dispatch, new_dispatch, 1)
+          polish.write_text(source, encoding='utf-8')
+
+          test_path = Path('tests/test_prompt_kit_hotkey_completion.py')
+          tests = test_path.read_text(encoding='utf-8')
+          method_anchor = """    def test_favorite_prompt_shortcuts_are_persisted_fail_closed(self) -> None:
+          """
+          new_test = '''    def test_hotkey_open_focuses_favorite_input_and_escape_recovers_from_editable(self) -> None:\n        source = POLISH.read_text(encoding="utf-8")\n        for marker in (\n            "function focusFavoritePromptShortcutInput(panel)",\n            "document.getElementById('promptShortcutPromptId')",\n            "promptInput.focus()",\n            "promptInput.scrollIntoView({block:'nearest',inline:'nearest'})",\n            "if(focusFavoritePromptShortcutInput(panel))return",\n        ):\n            self.assertIn(marker, source)\n        escape_guard = "if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)"\n        editable_guard = "if(editable)return;"\n        backtick = "if(key==='`')"\n        self.assertLess(source.index(escape_guard), source.index(editable_guard))\n        self.assertLess(source.index(editable_guard), source.index(backtick))\n        self.assertIn("resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return", source)\n\n'''
+          if 'def test_hotkey_open_focuses_favorite_input_and_escape_recovers_from_editable' not in tests:
+              if method_anchor not in tests:
+                  raise SystemExit('hotkey static test insertion anchor drifted')
+              tests = tests.replace(method_anchor, new_test + method_anchor, 1)
+
+          parity_marker = '            "Save favorite prompt keyboard shortcut",\n'
+          parity_add = '            "function focusFavoritePromptShortcutInput(panel)",\n            "promptInput.scrollIntoView({block:\'nearest\',inline:\'nearest\'})",\n            "resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return",\n'
+          if '"function focusFavoritePromptShortcutInput(panel)",' not in tests[tests.find('def test_configuration_ui_and_generated_parity_are_present'):]:
+              if parity_marker not in tests:
+                  raise SystemExit('generated parity marker drifted')
+              tests = tests.replace(parity_marker, parity_marker + parity_add, 1)
+          test_path.write_text(tests, encoding='utf-8')
+
+          browser_path = Path('tests/prompt_kit_favorite_browser_proof.py')
+          browser = browser_path.read_text(encoding='utf-8')
+          click_anchor = """            page.locator('#hotkeyHelpToggle').click()
+                      page.locator('#promptShortcutPromptId').fill('P79')
+          """
+          click_replacement = """            page.locator('#hotkeyHelpToggle').click()
+                      page.wait_for_timeout(50)
+                      click_focus = page.evaluate("document.activeElement && document.activeElement.id === 'promptShortcutPromptId'")
+                      click_visible = page.evaluate("""() => {
+                        const input=document.getElementById('promptShortcutPromptId');
+                        const panel=document.getElementById('hotkeyHelpPanel');
+                        if(!input||!panel||panel.hidden)return false;
+                        const r=input.getBoundingClientRect();
+                        const pr=panel.getBoundingClientRect();
+                        return r.bottom>pr.top && r.top<pr.bottom && r.bottom>0 && r.top<innerHeight;
+                      }""")
+                      page.keyboard.press('Escape')
+                      page.wait_for_timeout(50)
+                      escape_closed = page.evaluate("document.getElementById('hotkeyHelpPanel').hidden")
+                      escape_focus_returned = page.evaluate("document.activeElement && document.activeElement.id === 'hotkeyHelpToggle'")
+                      page.keyboard.press('Backquote')
+                      page.wait_for_timeout(50)
+                      backtick_focus = page.evaluate("document.activeElement && document.activeElement.id === 'promptShortcutPromptId'")
+                      backtick_visible = page.evaluate("""() => {
+                        const input=document.getElementById('promptShortcutPromptId');
+                        const panel=document.getElementById('hotkeyHelpPanel');
+                        if(!input||!panel||panel.hidden)return false;
+                        const r=input.getBoundingClientRect();
+                        const pr=panel.getBoundingClientRect();
+                        return r.bottom>pr.top && r.top<pr.bottom && r.bottom>0 && r.top<innerHeight;
+                      }""")
+                      page.locator('#promptShortcutPromptId').fill('P79')
+          """
+          if click_anchor not in browser:
+              raise SystemExit('browser focus insertion anchor drifted')
+          browser = browser.replace(click_anchor, click_replacement, 1)
+
+          obs_anchor = """            observations = [
+                          {"id": "favorite_setup_saved", "event": "P79 favorited and p79 shortcut saved through product UI", "occurred": True, "passed": bool(setup_saved)},
+          """
+          obs_replacement = """            observations = [
+                          {"id": "hotkey_click_focuses_favorite_input", "event": "Hotkeys button opens the panel with Favorite prompt ID input focused and revealed", "occurred": True, "passed": bool(click_focus and click_visible), "focused": bool(click_focus), "visible": bool(click_visible)},
+                          {"id": "escape_closes_hotkeys_from_favorite_input", "event": "Escape closes Hotkeys while Favorite prompt ID input owns focus and returns focus to Hotkeys toggle", "occurred": True, "passed": bool(escape_closed and escape_focus_returned), "closed": bool(escape_closed), "toggle_focused": bool(escape_focus_returned)},
+                          {"id": "hotkey_backtick_focuses_favorite_input", "event": "Backtick opens Hotkeys with Favorite prompt ID input focused and revealed", "occurred": True, "passed": bool(backtick_focus and backtick_visible), "focused": bool(backtick_focus), "visible": bool(backtick_visible)},
+                          {"id": "favorite_setup_saved", "event": "P79 favorited and p79 shortcut saved through product UI", "occurred": True, "passed": bool(setup_saved)},
+          """
+          if obs_anchor not in browser:
+              raise SystemExit('browser observations anchor drifted')
+          browser = browser.replace(obs_anchor, obs_replacement, 1)
+
+          calc_anchor = """    auto_copy = all(by_id[item]['passed'] for item in ('favorite_setup_saved', 'favorite_shortcut_dispatched', 'clipboard_exact_match'))
+              reveal = all(by_id[item]['passed'] for item in ('alternate_scope_precondition', 'favorite_shortcut_dispatched', 'prompt_card_scrolled_visible'))
+          """
+          calc_replacement = """    hotkey_config_recovery = all(by_id[item]['passed'] for item in ('hotkey_click_focuses_favorite_input', 'escape_closes_hotkeys_from_favorite_input', 'hotkey_backtick_focuses_favorite_input'))
+              auto_copy = all(by_id[item]['passed'] for item in ('favorite_setup_saved', 'favorite_shortcut_dispatched', 'clipboard_exact_match'))
+              reveal = all(by_id[item]['passed'] for item in ('alternate_scope_precondition', 'favorite_shortcut_dispatched', 'prompt_card_scrolled_visible'))
+          """
+          if calc_anchor not in browser:
+              raise SystemExit('browser claim calculation anchor drifted')
+          browser = browser.replace(calc_anchor, calc_replacement, 1)
+
+          scenario_old = '"scenario": "favorite-shortcut-copy-reveal-focus"'
+          scenario_new = '"scenario": "hotkey-config-focus-escape-and-favorite-shortcut-copy-reveal"'
+          if scenario_old not in browser:
+              raise SystemExit('browser scenario anchor drifted')
+          browser = browser.replace(scenario_old, scenario_new, 1)
+
+          claims_anchor = """        "claims": [
+                      {"id": "favorite_auto_copy", "statement": "Typing configured Favorite P79 automatically copies canonical prompt content", "status": "PASS" if auto_copy else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["favorite_setup_saved", "favorite_shortcut_dispatched", "clipboard_exact_match"]},
+          """
+          claims_replacement = """        "claims": [
+                      {"id": "hotkey_config_focus_escape", "statement": "Opening Hotkeys by button or backtick focuses and reveals the Favorite prompt ID field, and Escape closes Hotkeys from that field", "status": "PASS" if hotkey_config_recovery else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["hotkey_click_focuses_favorite_input", "escape_closes_hotkeys_from_favorite_input", "hotkey_backtick_focuses_favorite_input"]},
+                      {"id": "favorite_auto_copy", "statement": "Typing configured Favorite P79 automatically copies canonical prompt content", "status": "PASS" if auto_copy else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["favorite_setup_saved", "favorite_shortcut_dispatched", "clipboard_exact_match"]},
+          """
+          if claims_anchor not in browser:
+              raise SystemExit('browser claims anchor drifted')
+          browser = browser.replace(claims_anchor, claims_replacement, 1)
+          browser_path.write_text(browser, encoding='utf-8')
+
+          design_path = Path('docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md')
+          design = design_path.read_text(encoding='utf-8')
+          design_anchor = "- shortcut persistence uses versioned `promptKit.promptShortcuts.v1` storage and publishes only after a successful durable write.\n"
+          design_line = "- opening Hotkeys by either the visible button or unmodified backtick reveals and focuses the Favorite prompt ID input; `Escape` closes Hotkeys even while that editable input owns focus and restores focus to the Hotkeys toggle.\n"
+          if design_line not in design:
+              if design_anchor not in design:
+                  raise SystemExit('hotkey design insertion anchor drifted')
+              design = design.replace(design_anchor, design_anchor + design_line, 1)
+          design_path.write_text(design, encoding='utf-8')
+          PY
+
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+      - name: Validate source, focused contracts, harness, and generated parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check docs/prompt-kit-polish.js
+          python -m py_compile tests/prompt_kit_favorite_browser_proof.py tests/test_prompt_kit_hotkey_completion.py
+          python -m unittest tests.test_prompt_kit_hotkey_completion -v
+          python -m unittest tests.test_prompt_kit_header_contract tests.test_prompt_kit_filtering_access -v
+          python scripts/validate_harness.py --report Outputs/hotkey-focus-harness-completeness.json
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Deliberate second pass and durable push
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          source=Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
+          deployed=Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
+          checks={
+            'open focuses favorite input': "if(focusFavoritePromptShortcutInput(panel))return" in source,
+            'open reveals favorite input': "promptInput.scrollIntoView({block:'nearest',inline:'nearest'})" in source,
+            'escape precedes editable suppression': source.index("if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)") < source.index("if(editable)return;"),
+            'backtick remains suppressed in editable fields': source.index("if(editable)return;") < source.index("if(key==='`')"),
+            'escape restores toggle focus': "setHotkeyHelpOpen(false,true)" in source,
+            'generated runtime contains repair': "function focusFavoritePromptShortcutInput(panel)" in deployed and "resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return" in deployed,
+          }
+          failed=[name for name,passed in checks.items() if not passed]
+          if failed: raise SystemExit(f'hotkey focus/escape falsification failed: {failed}')
+          print({'pass_two':'bounded fixed point', **checks})
+          PY
+          git rm -f .github/workflows/tmp-hotkey-favorite-focus-escape-executor-20260825.yml
+          git add docs/prompt-kit-polish.js docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md tests/test_prompt_kit_hotkey_completion.py tests/prompt_kit_favorite_browser_proof.py web/prompt-kit/index.html
+          git diff --cached --check
+          git status --short
+          git diff --cached --stat
+          git commit -m 'fix(prompt-kit): focus favorite shortcut input and honor escape'
+          git fetch origin main --prune
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+            node --check docs/prompt-kit-polish.js
+            python -m unittest tests.test_prompt_kit_hotkey_completion tests.test_prompt_kit_header_contract tests.test_prompt_kit_filtering_access -v
+            python scripts/validate_harness.py --report Outputs/hotkey-focus-harness-completeness.json
+            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+            git add web/prompt-kit/index.html
+            if ! git diff --cached --quiet; then git commit -m 'chore(prompt-kit): refresh hotkey focus site after main reconciliation'; fi
+          fi
+          git diff --check HEAD
+          git push origin HEAD:fix/prompt-kit-hotkey-favorite-focus-escape-20260825
+          echo "PROVEN_HEAD=$(git rev-parse HEAD)"
