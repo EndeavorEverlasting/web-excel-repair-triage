@@ -1,0 +1,102 @@
+name: Temporary hotkey post-P11 convergence
+
+on:
+  pull_request:
+    types: [synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  converge:
+    if: github.event.pull_request.head.ref == 'fix/prompt-kit-hotkey-favorite-focus-escape-20260825'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/prompt-kit-hotkey-favorite-focus-escape-20260825
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reconcile current main and rebuild canonical site
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch --all --prune --tags
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            set +e
+            git merge --no-edit origin/main
+            rc=$?
+            set -e
+            if [ "$rc" -ne 0 ]; then
+              conflicts="$(git diff --name-only --diff-filter=U)"
+              if [ "$conflicts" = "web/prompt-kit/index.html" ]; then
+                git checkout --ours web/prompt-kit/index.html
+                git add web/prompt-kit/index.html
+                git commit --no-edit
+              else
+                echo "unexpected merge conflicts:" >&2
+                printf '%s\n' "$conflicts" >&2
+                exit 1
+              fi
+            fi
+          fi
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+      - name: Run composed synthetic and focused static gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check docs/prompt-kit-polish.js
+          python -m unittest tests.test_prompt_kit_hotkey_completion -v
+          python -m unittest tests.test_prompt_kit_header_contract tests.test_prompt_kit_filtering_access -v
+          python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json
+          python scripts/validate_harness.py --report Outputs/hotkey-post-p11-harness.json
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_prompt_language_audit -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Falsify combined floor, self-clean, and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          source=Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
+          site=Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
+          p11=Path('scripts/validate_app_harness.py').read_text(encoding='utf-8')
+          checks={
+            'favorite input focused on open': "if(focusFavoritePromptShortcutInput(panel))return" in source,
+            'favorite input revealed on open': "promptInput.scrollIntoView({block:'nearest',inline:'nearest'})" in source,
+            'escape handled before editable suppression': source.index("if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)") < source.index("if(editable)return;"),
+            'backtick remains protected in editable field': source.index("if(editable)return;") < source.index("if(key==='`')"),
+            'escape restores hotkeys toggle': "resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return" in source,
+            'P11 synthetic owner present': 'PROOF_LEVEL = "offline_synthetic"' in p11 and 'runtime_proof' in p11,
+            'combined generated site contains hotkey repair': 'function focusFavoritePromptShortcutInput(panel)' in site,
+            'combined generated site contains P11': 'End-to-End Harness Validator' in site,
+          }
+          failed=[name for name,ok in checks.items() if not ok]
+          if failed: raise SystemExit(f'post-P11 hotkey convergence failed: {failed}')
+          print(json.dumps({'pass_two':'combined floor fixed point', **checks}, indent=2))
+          PY
+          git rm -f .github/workflows/tmp-hotkey-post-p11-convergence-20260825.yml
+          git add web/prompt-kit/index.html
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git commit -m 'chore(prompt-kit): reconcile hotkey runtime with P11 floor'
+          fi
+          git fetch origin main --prune
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            echo 'main moved after composed proof; refusing stale push' >&2
+            exit 1
+          fi
+          git push origin HEAD:fix/prompt-kit-hotkey-favorite-focus-escape-20260825
+          echo "PROVEN_HEAD=$(git rev-parse HEAD)"
