@@ -57,9 +57,9 @@ class PromptKitPagesContractTests(unittest.TestCase):
             "pages: write",
             "id-token: write",
             "name: github-pages",
-            "actions/configure-pages@v5",
-            "actions/upload-pages-artifact@v4",
-            "actions/deploy-pages@v4",
+            "actions/configure-pages@v6",
+            "actions/upload-pages-artifact@v5",
+            "actions/deploy-pages@v5",
         )
         for marker in required:
             with self.subTest(marker=marker):
