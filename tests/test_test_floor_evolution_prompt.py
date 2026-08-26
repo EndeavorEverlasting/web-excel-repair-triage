@@ -105,6 +105,15 @@ class TestFloorEvolutionPromptTests(unittest.TestCase):
         self.assertIn(self.target["id"], html)
         self.assertIn(TARGET_NAME, html)
 
+    def test_product_defect_feedback_routes_to_afk_development(self) -> None:
+        matches = [p for p in self.full if p.get("name") == 'AFK Feedback-Driven Development Loop Executor']
+        self.assertEqual(len(matches), 1)
+        owner = matches[0]
+        self.assertEqual(owner["id"], 'P115')
+        self.assertIn(owner["id"], self.target["nextStep"])
+        self.assertIn(owner["id"], self.target["copyContent"])
+        self.assertIn("PRODUCT DEFECTS MUST ESCAPE THE TEST LANE", self.target["copyContent"])
+        self.assertIn("Preserve the regression", self.target["copyContent"])
 
 if __name__ == "__main__":
     unittest.main()
