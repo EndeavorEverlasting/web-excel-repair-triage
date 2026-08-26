@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from copy import deepcopy
 from typing import Any, Mapping
 
@@ -17,6 +18,23 @@ ALLOWED_SCOPES = {"recurring_pattern", "dated_context", "dated_person_task"}
 SCOPE_RANK = {"recurring_pattern": 1, "dated_context": 2, "dated_person_task": 3}
 ALLOWED_RISKS = {"lower", "high"}
 _RESERVED_RECEIPT = "_evidence_backed_context_receipt"
+
+# Triage does not own producer workstream vocabulary, but it does own the safety
+# boundary on what the generated outward language may assert. Phrases that claim
+# deployment execution must not be smuggled through a producer catalog as a
+# lower-risk recurring-pattern or dated-context term. Generic wording such as
+# "deployment support" is intentionally not matched because it does not, by
+# itself, assert that a person/date deployment occurred.
+_DEPLOYMENT_EXECUTION_CLAIM_PATTERN = re.compile(
+    r"\bdeployment\s+(?:execution|installation|go[-\s]?live|cutover|completed|performed|executed)\b"
+    r"|\b(?:performed|completed|executed)\s+(?:the\s+)?(?:endpoint\s+|device\s+)?(?:deployment|installation|go[-\s]?live|cutover)\b"
+    r"|\b(?:deployed|deploying|installed|installing)\s+(?:the\s+)?(?:assigned\s+)?(?:endpoint|endpoints|device|devices|workstation|workstations|terminal|terminals|system|systems)\b"
+    r"|\b(?:endpoint|endpoints|device|devices)\s+(?:deployment|installation)\s+(?:completed|performed|executed)\b"
+    r"|\b(?:go[-\s]?live|cutover)\s+(?:completed|performed|executed)\b"
+    r"|\bwent\s+live\b"
+    r"|\bcut\s+over\b",
+    re.I,
+)
 
 
 def _clean_string(value: Any, field: str) -> str:
@@ -63,6 +81,11 @@ def _term_contract(code: str, term: Mapping[str, Any]) -> tuple[str, str, bool, 
         raise QualitativeAdminError(
             f"high-risk qualitative phrase term {code!r} must forbid pattern evidence and require dated_person_task"
         )
+    if any(_DEPLOYMENT_EXECUTION_CLAIM_PATTERN.search(value) for value in cleaned):
+        if risk != "high" or pattern_allowed or required_scope != "dated_person_task":
+            raise QualitativeAdminError(
+                f"deployment-execution phrase term {code!r} must be high risk, forbid pattern evidence, and require dated_person_task"
+            )
     return risk, required_scope, pattern_allowed, cleaned
 
 
