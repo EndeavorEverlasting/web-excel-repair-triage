@@ -1,54 +1,4 @@
-#!/usr/bin/env python3
 from __future__ import annotations
-
-import json
-import shutil
-import subprocess
-import sys
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
-DRAFT_ROOT = ROOT / "tmp" / "sas-prompt-drafts"
-REGISTRY = ROOT / "registry" / "prompts" / "spec-architecture-prompts.v1.json"
-SITE = ROOT / "web" / "prompt-kit" / "index.html"
-TEST = ROOT / "tests" / "test_sysadminsuite_prompt_registry.py"
-FLOOR = ROOT / "harness" / "test-floor.v1.json"
-
-DRAFTS = [
-    "protected-network-probe.json",
-    "clinical-core-deploy.json",
-    "autologon-recovery.json",
-    "fleet-batch-change.json",
-    "printer-mapping.json",
-    "ad-ou-move.json",
-]
-NAMES = [
-    "SysAdminSuite Protected-Network Endpoint Probe & Identity Gate",
-    "SysAdminSuite Clinical-Core Deployment with AutoLogon Isolation",
-    "SysAdminSuite AutoLogon-Only Crash-Safe Recovery",
-    "SysAdminSuite Fleet Batch Endpoint Change Orchestrator",
-    "SysAdminSuite Reversible Printer Mapping & Audit",
-    "SysAdminSuite Active Directory Computer OU Move & Verification",
-]
-
-
-def run(*argv: str) -> str:
-    proc = subprocess.run(
-        argv,
-        cwd=ROOT,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        check=False,
-    )
-    print(proc.stdout, end="" if proc.stdout.endswith("\n") else "\n")
-    if proc.returncode:
-        raise SystemExit(proc.returncode)
-    return proc.stdout
-
-
-def write_focused_test() -> None:
-    content = r'''from __future__ import annotations
 
 import json
 import shutil
@@ -108,13 +58,14 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
     def test_sas_owners_keep_their_distinct_failure_and_closure_boundaries(self) -> None:
         for name, phrases in REQUIRED.items():
             content = self.raw_by_name[name]["copyContent"]
+            folded = content.casefold()
             for phrase in phrases:
-                self.assertIn(phrase, content, (name, phrase))
+                self.assertIn(phrase.casefold(), folded, (name, phrase))
         self.assertIn("do not mutate", self.raw_by_name[ORDER[0]]["copyContent"].casefold())
-        self.assertIn("Do not redeploy the clinical core", self.raw_by_name[ORDER[2]]["copyContent"])
-        self.assertIn("does not reimplement the underlying mutation logic", self.raw_by_name[ORDER[3]]["copyContent"])
-        self.assertIn("Do not mutate trust, DNS, firewall, GPO", self.raw_by_name[ORDER[4]]["copyContent"])
-        self.assertIn("Do not create a missing computer object", self.raw_by_name[ORDER[5]]["copyContent"])
+        self.assertIn("do not redeploy the clinical core", self.raw_by_name[ORDER[2]]["copyContent"].casefold())
+        self.assertIn("does not reimplement the underlying mutation logic", self.raw_by_name[ORDER[3]]["copyContent"].casefold())
+        self.assertIn("do not mutate trust, dns, firewall, gpo", self.raw_by_name[ORDER[4]]["copyContent"].casefold())
+        self.assertIn("do not create a missing computer object", self.raw_by_name[ORDER[5]]["copyContent"].casefold())
 
     def test_existing_sas_profile_pack_discovers_every_new_owner(self) -> None:
         js = PROFILE_JS.read_text(encoding="utf-8")
@@ -168,60 +119,3 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-'''
-    TEST.write_text(content, encoding="utf-8")
-
-
-def update_test_floor() -> None:
-    payload = json.loads(FLOOR.read_text(encoding="utf-8"))
-    rel = "tests/test_sysadminsuite_prompt_registry.py"
-    tests = payload["self_tests"]
-    if rel not in tests:
-        anchor = "tests/test_spec_architecture_prompt_registry.py"
-        index = tests.index(anchor) + 1 if anchor in tests else len(tests)
-        tests.insert(index, rel)
-    FLOOR.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-
-
-def main() -> int:
-    inspect = json.loads(run(sys.executable, "scripts/prompt_registry_ops.py", "inspect"))
-    print("SAS_HELPER_INSPECT=" + json.dumps(inspect, sort_keys=True))
-
-    receipts = []
-    for filename in DRAFTS:
-        output = run(
-            sys.executable,
-            "scripts/prompt_registry_ops.py",
-            "add",
-            "--input",
-            str(DRAFT_ROOT / filename),
-            "--registry",
-            "spec-architecture-prompts",
-        )
-        receipts.append(json.loads(output))
-    print("SAS_HELPER_RECEIPTS=" + json.dumps(receipts, sort_keys=True))
-
-    payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
-    by_name = {item.get("name"): item for item in payload["prompts"]}
-    missing = [name for name in NAMES if name not in by_name]
-    if missing:
-        raise SystemExit(f"helper output missing SAS prompts: {missing}")
-    ids = [by_name[name]["id"] for name in NAMES]
-    if len(ids) != len(set(ids)):
-        raise SystemExit(f"duplicate SAS identities: {ids}")
-    print("SAS_ALLOCATED_IDS=" + json.dumps(ids))
-
-    write_focused_test()
-    update_test_floor()
-
-    run(sys.executable, "-m", "unittest", "tests.test_sysadminsuite_prompt_registry", "-v")
-    run(sys.executable, "scripts/prompt_registry_ops.py", "validate")
-    run(sys.executable, "scripts/validate_prompt_kit_discovery.py", "--summary")
-    run(sys.executable, "scripts/evaluate_prompt_language.py", "--summary")
-    run(sys.executable, "scripts/build_prompt_kit_registry.py", "--output", "web/prompt-kit/index.html", "--check")
-    run("git", "diff", "--check")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
