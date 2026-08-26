@@ -112,10 +112,10 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
             for phrase in phrases:
                 self.assertIn(phrase.casefold(), folded, (name, phrase))
         self.assertIn("do not mutate", self.raw_by_name[ORDER[0]]["copyContent"].casefold())
-        self.assertIn("Do not redeploy the clinical core", self.raw_by_name[ORDER[2]]["copyContent"])
-        self.assertIn("does not reimplement the underlying mutation logic", self.raw_by_name[ORDER[3]]["copyContent"])
-        self.assertIn("Do not mutate trust, DNS, firewall, GPO", self.raw_by_name[ORDER[4]]["copyContent"])
-        self.assertIn("Do not create a missing computer object", self.raw_by_name[ORDER[5]]["copyContent"])
+        self.assertIn("do not redeploy the clinical core", self.raw_by_name[ORDER[2]]["copyContent"].casefold())
+        self.assertIn("does not reimplement the underlying mutation logic", self.raw_by_name[ORDER[3]]["copyContent"].casefold())
+        self.assertIn("do not mutate trust, dns, firewall, gpo", self.raw_by_name[ORDER[4]]["copyContent"].casefold())
+        self.assertIn("do not create a missing computer object", self.raw_by_name[ORDER[5]]["copyContent"].casefold())
 
     def test_existing_sas_profile_pack_discovers_every_new_owner(self) -> None:
         js = PROFILE_JS.read_text(encoding="utf-8")
