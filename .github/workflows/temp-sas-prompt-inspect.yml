@@ -1,0 +1,39 @@
+name: Temporary SAS prompt ownership inspect
+on:
+  push:
+    branches:
+      - feat/prompt-kit-sas-use-case-prompts-20260826
+    paths:
+      - .github/workflows/temp-sas-prompt-inspect.yml
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Refresh and inspect registry routing
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --all --prune --tags
+          test "$(git rev-parse origin/main)" = "3c6607e15a7303f881c718d49a8ae5c48f928943"
+          python scripts/prompt_registry_ops.py inspect
+          python - <<'PY'
+          from scripts import build_prompt_kit_registry as r
+          terms = ['sysadmin','sysadminsuite','network probe','clinical core','autologon','s4u','printer','fleet','batch endpoint','active directory','ou move','windows administration']
+          prompts = r.load_prompt_kit_registry()
+          for term in terms:
+              hits=[]
+              t=term.casefold()
+              for p in prompts:
+                  blob=' '.join(str(p.get(k,'')) for k in ('id','name','class','sprintRole','useWhen','inspectFirst','expectedOutput','nextStep','proofGate','copyContent','keywords','profile')).casefold()
+                  if t in blob:
+                      hits.append((p['id'],p['name'],p.get('profile'),p.get('category')))
+              print('TERM', term, 'HITS', hits[:20])
+          PY
