@@ -78,3 +78,13 @@ Binding only in the selected domain:
 - billing/artifact safety: `harness/specs/billing-artifact-safety.md`.
 
 `harness/contracts/context-architecture.v1.json` defines context budgets/routes. `scripts/validate_context_architecture.py --summary` fails closed on bloat or routing drift.
+
+## 8. Repository-local `/teach` workspace protocol
+
+`/teach` is repository-local learning state, not a package, clone, or production-feature lane. The canonical core is `.teach/MISSION.md`, `.teach/RESOURCES.md`, `.teach/lessons/`, and `.teach/learning-records/`. Preserve existing valid teaching state; never fabricate lessons, resources, verification, or mastery, and never commit secrets, private data, or sensitive learning evidence.
+
+- `/teach <topic>` routes to the Stateful Socratic Technical Tutor Workspace behavior. Read and update `.teach/MISSION.md`; ground the session from `.teach/RESOURCES.md` plus current repository truth; create or reuse `.teach/lessons/<number>_<topic>.md` (or `.html` only when a visual simulator materially helps); teach from first principles without jumping to final production code; and end the atomic lesson with exactly one conceptual trade-off/mechanism question plus one code diagnostic or edge-case exercise.
+- After those two checkpoints, stop for the learner response. Evaluate demonstrated understanding before writing `.teach/learning-records/<date>_<topic>.md`; mark VERIFIED or MASTERED only when the learner has actually demonstrated the corresponding understanding.
+- `/teach recap` reads `.teach/learning-records/` first, runs a quick roughly three-minute refresher quiz, and resumes at the first weak, decayed, or unmastered frontier.
+
+Bootstrap/setup work must stop after establishing or repairing this protocol and its state. Actual `/teach <topic>` and `/teach recap` sessions belong to the Stateful Socratic Technical Tutor Workspace.
