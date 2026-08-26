@@ -160,6 +160,14 @@
       "blocking": true,
       "output": "Outputs/prompt-kit-browser-proof-cleanup-report.json",
       "proof_ceiling": "PowerShell preview execution on the current host; not P-Top cleanup proof."
+    },
+    {
+      "id": "app-harness-validation",
+      "class": "contract",
+      "command": "python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json",
+      "blocking": true,
+      "output": "Outputs/app-harness-validation.json",
+      "proof_ceiling": "Exact-head offline/synthetic harness readiness with explicit requirement classes and honest optional skips; no application/runtime proof."
     }
   ],
   "profiles": {
@@ -178,6 +186,7 @@
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",
+      "app-harness-validation",
       "patch-hygiene"
     ],
     "artifact-engine": [
@@ -210,6 +219,7 @@
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",
+      "app-harness-validation",
       "patch-hygiene"
     ]
   },

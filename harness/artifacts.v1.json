@@ -91,6 +91,17 @@
       "naming": "Stable latest receipt; previous receipt is preserved under Outputs/backups/prompt-kit-browser-proof-cleanup/ with UTC timestamp.",
       "tracking_policy": "Gitignored operator evidence; never commit scratch directories or cleanup receipts.",
       "proof_ceiling": "Filesystem classification and cleanup receipt only; no browser-profile/localStorage/Favorites proof."
+    },
+    {
+      "id": "app-harness-validation-report",
+      "kind": "runtime",
+      "canonical_path": "Outputs/app-harness-validation.json",
+      "producer": "python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json",
+      "validator": "app-harness-validation",
+      "naming": "Stable exact-head synthetic harness receipt; CI artifact name includes the observed head SHA.",
+      "tracking_policy": "Gitignored runtime evidence or CI artifact; never treat it as live/runtime proof.",
+      "schema": "app-harness-validation/v2",
+      "proof_ceiling": "Offline/synthetic repository harness proof only; no live runtime, browser, launcher, network, target, save/account, provider-runtime, deployment, or production proof."
     }
   ]
 }
