@@ -111,6 +111,63 @@ class PromptRegistryExpansionTests(unittest.TestCase):
         ):
             self.assertIn(phrase, content)
 
+    def test_teach_immersive_local_html_demos_are_first_class_learning_tools(self) -> None:
+        teach = self.by_name["Stateful Socratic Technical Tutor Workspace"]
+        content = teach["copyContent"]
+        for phrase in (
+            "BUILD IMMERSIVE LOCAL HTML/JS LEARNING DEMOS WHEN INTERACTION CAN CARRY THE CONCEPT",
+            "Do not treat interactive artifacts as a rare flourish",
+            ".teach/lessons/<NN>-<topic>.html",
+            "IMMERSIVE DEMO LOOP — PREDICT -> MANIPULATE -> OBSERVE -> EXPLAIN",
+            "step/back/reset",
+            "Design for active causality, not passive animation",
+            "meaningful agency, visible causality, and rapid feedback",
+            "Keep demos local-first and self-contained when practical",
+            "exact local path and launch/open command",
+            "one reset/failure path",
+            "keep that interaction UNPROVEN",
+            "Do not build decorative UI that does not improve comprehension",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("immersive local HTML/JS learning demos", teach["sprintRole"])
+        self.assertIn("local self-contained HTML/JS learning demo", teach["expectedOutput"])
+        self.assertIn("interactive demo materially lowers abstraction cost", teach["proofGate"])
+        for keyword in ("immersive teaching demos", "local html learning demo", "interactive html lesson"):
+            self.assertIn(keyword, teach["keywords"])
+
+        bootstrap = self.by_name["Teach Workspace Protocol Bootstrapper"]
+        self.assertIn("folders + Markdown/HTML lesson artifacts", bootstrap["copyContent"])
+        self.assertIn("`.html` is allowed when a visual simulator materially helps", bootstrap["copyContent"])
+
+    def test_teach_mermaid_is_optional_structural_layer_not_interactive_replacement(self) -> None:
+        teach = self.by_name["Stateful Socratic Technical Tutor Workspace"]
+        content = teach["copyContent"]
+        for phrase in (
+            "OFFER MERMAID AS AN OPTIONAL STRUCTURAL LAYER",
+            "Treat Mermaid as a layer or option, not a mandatory artifact",
+            "Mermaid plus HTML/JS only when the static map genuinely helps",
+            "architecture/dependency maps",
+            "sequence/call flows",
+            "entity/class relationships",
+            "ownership/lifecycle boundaries",
+            "ask the learner to predict a missing edge",
+            "Do not install a Mermaid package, add a CDN",
+            "visual rendering is UNPROVEN",
+            "Do not create Mermaid for ceremony",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("optional Mermaid structural overlays", teach["sprintRole"])
+        self.assertIn("compact Mermaid diagram as an optional explanatory layer", teach["expectedOutput"])
+        self.assertIn("Mermaid structural overlay first", teach["nextStep"])
+        self.assertIn("A Mermaid layer is optional and evidence-grounded", teach["proofGate"])
+        for keyword in ("mermaid diagram", "mermaid teaching", "architecture diagram", "data flow diagram"):
+            self.assertIn(keyword, teach["keywords"])
+
+        # Preserve the immersive-demo owner and bootstrap boundary while adding a diagram layer.
+        self.assertIn("IMMERSIVE DEMO LOOP — PREDICT -> MANIPULATE -> OBSERVE -> EXPLAIN", content)
+        bootstrap = self.by_name["Teach Workspace Protocol Bootstrapper"]
+        self.assertIn("folders + Markdown/HTML lesson artifacts", bootstrap["copyContent"])
+
     def test_teach_bootstrap_is_distinct_pure_workspace_setup(self) -> None:
         bootstrap = self.by_name["Teach Workspace Protocol Bootstrapper"]
         teach = self.by_name["Stateful Socratic Technical Tutor Workspace"]
