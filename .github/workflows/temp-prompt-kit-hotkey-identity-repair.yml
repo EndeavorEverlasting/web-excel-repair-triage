@@ -149,8 +149,8 @@ jobs:
           assert '| `Home` | Scroll to top |' in readme
           assert '| `End` | Scroll to bottom |' in readme
           assert '| `T` | Scroll to top |' not in readme
-          assert '`Home` scrolls to the top' in design
-          assert '`End` scrolls to the bottom' in design
+          assert '`Home` scrolls to the true document top' in design
+          assert '`End` scrolls to the document bottom' in design
           assert '"onedrive path": "P92"' in Path('build_prompt_kit.py').read_text(encoding='utf-8')
           PY
           python scripts/run_deterministic_test_floor.py --report "$RUNNER_TEMP/deterministic-test-floor-report.json"
