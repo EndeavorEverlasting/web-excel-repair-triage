@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: deterministic-test-floor-${{ github.workflow }}-${{ github.ref }}
@@ -28,10 +28,10 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: true
-          fetch-depth: 0
+          persist-credentials: false
+          fetch-depth: 1
 
-      - name: Verify exact candidate and fetch main evidence
+      - name: Verify exact candidate and fetch shallow main evidence
         shell: bash
         env:
           EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -39,7 +39,8 @@ jobs:
           set -euo pipefail
           actual="$(git rev-parse HEAD)"
           test "$actual" = "$EXPECTED_SHA"
-          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          git fetch --no-tags --depth=1 origin \
+            +refs/heads/main:refs/remotes/origin/main
           test "$(git rev-parse origin/main)" != ""
           echo "deterministic test-floor candidate sha=$actual"
           echo "deterministic test-floor main floor=$(git rev-parse origin/main)"
@@ -54,80 +55,6 @@ jobs:
           set -euo pipefail
           python -m pip install --upgrade pip
           python -m pip install -r requirements-test-floor.txt
-
-      - name: One-shot P114 network contribution carrier
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feat/p114-canary-network-20260826'
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          python scripts/tmp_p114_network_patch.py
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('tests/test_conversation_context_canary_prompt.py')
-          text = path.read_text(encoding='utf-8')
-          old = '        self.assertIn("NETWORK=&lt;WAB|Guest|Hardwire|Local|Arbitrary/N/A&gt;", html)'
-          new = '        self.assertIn("WAB|Guest|Hardwire|Local|Arbitrary/N/A", html)'
-          if old not in text:
-              raise SystemExit('expected brittle generated-site assertion was not found')
-          path.write_text(text.replace(old, new), encoding='utf-8')
-          PY
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
-
-          python scripts/prompt_registry_ops.py validate
-          python -m unittest tests.test_conversation_context_canary_prompt -v
-          python scripts/evaluate_prompt_language.py --summary
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-          git diff --check
-
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          data = json.loads(Path('registry/prompts/spec-architecture-prompts.v1.json').read_text(encoding='utf-8'))
-          matches = [x for x in data['prompts'] if x.get('id') == 'P114']
-          if len(matches) != 1:
-              raise SystemExit(f'P114 ownership drift: {len(matches)} matches')
-          c = matches[0]['copyContent']
-          labels = ('WAB', 'Guest', 'Hardwire', 'Local', 'Arbitrary/N/A')
-          checks = {
-              'exact network vocabulary': all(x in c for x in labels),
-              'unknown distinct from n/a': 'It must never be used as a synonym for unknown' in c and 'NETWORK=UNKNOWN' in c,
-              'required vs observed': 'network the user should be on for the current task' in c and 'observed live network' in c,
-              'lightweight stub': 'CANARY STUB — Before every response emit CANARY | PROFILE=<canonical computer profile> | NETWORK=<WAB|Guest|Hardwire|Local|Arbitrary/N/A>' in c,
-              'neighbor boundary': 'must not create a competing profile or network registry' in c,
-          }
-          failed = [name for name, ok in checks.items() if not ok]
-          if failed:
-              raise SystemExit(f'P114 pass-2 semantic falsification failed: {failed}')
-          ordered = ('1. STABLE BASELINE', '2. RECOVERY CASE', '3. LEGITIMATE CHANGE', '4. REPEATED DRIFT', '5. UNRECOVERABLE STATE')
-          positions = [c.index(x) for x in ordered]
-          if positions != sorted(positions):
-              raise SystemExit('P114 semantic validation order is not monotonic')
-          print('P114 pass-2 semantic falsification: PASS')
-          PY
-
-          python -m unittest tests.test_conversation_context_canary_prompt -v
-          python scripts/prompt_registry_ops.py validate
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-          git diff --check
-
-          git checkout origin/main -- .github/workflows/deterministic-test-floor.yml
-          git reset HEAD -- .github/workflows/tmp-p114-canary-network-strengthen.yml .github/workflows/tmp-p114-canary-network-push.yml scripts/tmp_p114_network_patch.py || true
-          rm -f .github/workflows/tmp-p114-canary-network-strengthen.yml .github/workflows/tmp-p114-canary-network-push.yml scripts/tmp_p114_network_patch.py
-          git add -A .github/workflows/deterministic-test-floor.yml .github/workflows/tmp-p114-canary-network-strengthen.yml .github/workflows/tmp-p114-canary-network-push.yml scripts/tmp_p114_network_patch.py registry/prompts/spec-architecture-prompts.v1.json tests/test_conversation_context_canary_prompt.py web/prompt-kit/index.html
-          git diff --cached --check
-
-          final_diff="$(git diff --name-only origin/main --cached)"
-          printf '%s\n' '--- final durable diff vs main ---' "$final_diff"
-          test "$(printf '%s\n' "$final_diff" | sed '/^$/d' | wc -l)" -eq 3
-          printf '%s\n' "$final_diff" | grep -Fx 'registry/prompts/spec-architecture-prompts.v1.json'
-          printf '%s\n' "$final_diff" | grep -Fx 'tests/test_conversation_context_canary_prompt.py'
-          printf '%s\n' "$final_diff" | grep -Fx 'web/prompt-kit/index.html'
-
-          git commit -m "feat(prompt-kit): add network posture to P114 canary"
-          git push origin HEAD:feat/p114-canary-network-20260826
 
       - name: Negative generated-site canary must fail closed
         shell: bash
