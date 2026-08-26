@@ -1,96 +1,13 @@
-name: Temporary P114 Canary network push executor
+name: Temporary P114 Canary network push executor disabled
 
 on:
-  push:
-    branches:
-      - feat/p114-canary-network-20260826
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  strengthen:
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-          fetch-depth: 0
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Verify current floor
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
-          git fetch origin main --prune
-          test "$(git merge-base HEAD origin/main)" = "$(git rev-parse origin/main)"
-          git status --short
-
-      - name: Apply canonical P114 strengthening
-        shell: bash
-        run: |
-          set -euo pipefail
-          python scripts/tmp_p114_network_patch.py
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
-
-      - name: Validate pass 1
-        shell: bash
-        run: |
-          set -euo pipefail
-          python scripts/prompt_registry_ops.py validate
-          python -m unittest tests.test_conversation_context_canary_prompt -v
-          python scripts/evaluate_prompt_language.py --summary
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-          git diff --check
-
-      - name: Whole-chat pass 2 and ordered semantic falsification
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          data = json.loads(Path('registry/prompts/spec-architecture-prompts.v1.json').read_text(encoding='utf-8'))
-          matches = [x for x in data['prompts'] if x.get('id') == 'P114']
-          if len(matches) != 1:
-              raise SystemExit(f'P114 ownership drift: {len(matches)} matches')
-          c = matches[0]['copyContent']
-          labels = ('WAB', 'Guest', 'Hardwire', 'Local', 'Arbitrary/N/A')
-          checks = {
-              'exact network vocabulary': all(x in c for x in labels),
-              'unknown distinct from n/a': 'It must never be used as a synonym for unknown' in c and 'NETWORK=UNKNOWN' in c,
-              'required vs observed': 'network the user should be on for the current task' in c and 'observed live network' in c,
-              'lightweight stub': 'CANARY STUB — Before every response emit CANARY | PROFILE=<canonical computer profile> | NETWORK=<WAB|Guest|Hardwire|Local|Arbitrary/N/A>' in c,
-              'neighbor boundary': 'must not create a competing profile or network registry' in c,
-          }
-          failed = [name for name, ok in checks.items() if not ok]
-          if failed:
-              raise SystemExit(f'P114 pass-2 semantic falsification failed: {failed}')
-          ordered = ('1. STABLE BASELINE', '2. RECOVERY CASE', '3. LEGITIMATE CHANGE', '4. REPEATED DRIFT', '5. UNRECOVERABLE STATE')
-          positions = [c.index(x) for x in ordered]
-          if positions != sorted(positions):
-              raise SystemExit('P114 semantic validation order is not monotonic')
-          print('P114 pass-2 semantic falsification: PASS')
-          PY
-          python -m unittest tests.test_conversation_context_canary_prompt -v
-          python scripts/prompt_registry_ops.py validate
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-          git diff --check
-
-      - name: Commit durable three-file contribution
-        shell: bash
-        run: |
-          set -euo pipefail
-          git add registry/prompts/spec-architecture-prompts.v1.json tests/test_conversation_context_canary_prompt.py web/prompt-kit/index.html
-          git diff --cached --check
-          test "$(git diff --cached --name-only | wc -l)" -eq 3
-          printf '%s\n' '--- durable staged files ---'
-          git diff --cached --name-only
-          git commit -m "feat(prompt-kit): add network posture to P114 canary"
-          git push origin HEAD:feat/p114-canary-network-20260826
+      - run: echo "disabled; existing deterministic-floor carrier owns the remaining P114 mutation"
