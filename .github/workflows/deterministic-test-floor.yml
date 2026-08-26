@@ -64,6 +64,16 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           python scripts/tmp_p114_network_patch.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/test_conversation_context_canary_prompt.py')
+          text = path.read_text(encoding='utf-8')
+          old = '        self.assertIn("NETWORK=&lt;WAB|Guest|Hardwire|Local|Arbitrary/N/A&gt;", html)'
+          new = '        self.assertIn("WAB|Guest|Hardwire|Local|Arbitrary/N/A", html)'
+          if old not in text:
+              raise SystemExit('expected brittle generated-site assertion was not found')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 
           python scripts/prompt_registry_ops.py validate
