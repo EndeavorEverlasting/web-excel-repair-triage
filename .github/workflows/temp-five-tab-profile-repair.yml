@@ -31,7 +31,7 @@ jobs:
           echo "HEAD=$(git rev-parse HEAD)"
           echo "MAIN=$(git rev-parse origin/main)"
 
-      - name: Apply canonical migration and repair moved-floor test literal
+      - name: Apply canonical migration and repair transport literals
         shell: bash
         run: |
           set -euo pipefail
@@ -39,21 +39,37 @@ jobs:
           python scripts/apply_prompt_kit_five_tab_migration.py
           python - <<'PY'
           from pathlib import Path
-          path = Path('tests/test_prompt_kit_filtering_access.py')
-          text = path.read_text(encoding='utf-8')
+
+          filtering = Path('tests/test_prompt_kit_filtering_access.py')
+          text = filtering.read_text(encoding='utf-8')
           broken = 'end = js.index("\n\nfunction showAddPrompt", start)'
           fixed = 'end = js.index("\\n\\nfunction showAddPrompt", start)'
           count = text.count(broken)
           if count != 1:
-              raise SystemExit(f'expected one moved-floor literal repair, found {count}')
-          path.write_text(text.replace(broken, fixed, 1), encoding='utf-8')
+              raise SystemExit(f'expected one filtering literal repair, found {count}')
+          filtering.write_text(text.replace(broken, fixed, 1), encoding='utf-8')
+
+          order = Path('tests/test_prompt_kit_order_navigation_product.py')
+          text = order.read_text(encoding='utf-8')
+          repairs = {
+              '            "Favorites<span class="kbd">C</span>",': '            \'Favorites<span class="kbd">C</span>\',',
+              '        self.assertNotIn("Favorites<span class="kbd">4</span>", polish)': '        self.assertNotIn(\'Favorites<span class="kbd">4</span>\', polish)',
+          }
+          for broken, fixed in repairs.items():
+              count = text.count(broken)
+              if count != 1:
+                  raise SystemExit(f'expected one order-navigation literal repair, found {count}: {broken}')
+              text = text.replace(broken, fixed, 1)
+          order.write_text(text, encoding='utf-8')
           PY
           python -m py_compile \
             build_prompt_kit.py \
             scripts/build_prompt_kit_registry.py \
             tests/test_prompt_kit_filtering_access.py \
             tests/test_prompt_kit_header_contract.py \
-            tests/test_prompt_kit_profiles.py
+            tests/test_prompt_kit_hotkey_completion.py \
+            tests/test_prompt_kit_profiles.py \
+            tests/test_prompt_kit_order_navigation_product.py
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           git diff --check
 
