@@ -1,32 +1,34 @@
-name: Temporary SAS prompt ownership inspect
+name: Temporary SAS prompt helper materialization
 on:
-  push:
-    branches:
-      - feat/prompt-kit-sas-use-case-prompts-20260826
+  pull_request:
     paths:
       - .github/workflows/temp-sas-prompt-inspect.yml
+      - tmp/sas-prompt-drafts/**
 permissions:
   contents: read
 jobs:
-  inspect:
+  materialize:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
-      - name: Refresh and inspect registry routing
+      - name: Refresh floor and inspect ownership/routing
         shell: bash
         run: |
           set -euo pipefail
           git fetch --all --prune --tags
-          test "$(git rev-parse origin/main)" = "3c6607e15a7303f881c718d49a8ae5c48f928943"
-          python scripts/prompt_registry_ops.py inspect
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          git merge-base --is-ancestor origin/main HEAD
+          python scripts/prompt_registry_ops.py inspect | tee "$RUNNER_TEMP/inspect.json"
           python - <<'PY'
           from scripts import build_prompt_kit_registry as r
-          terms = ['sysadmin','sysadminsuite','network probe','clinical core','autologon','s4u','printer','fleet','batch endpoint','active directory','ou move','windows administration']
+          terms = ['sysadminsuite','network probe','clinical core','autologon','s4u','printer queue','fleet','batch endpoint','computer ou']
           prompts = r.load_prompt_kit_registry()
           for term in terms:
               hits=[]
@@ -35,5 +37,96 @@ jobs:
                   blob=' '.join(str(p.get(k,'')) for k in ('id','name','class','sprintRole','useWhen','inspectFirst','expectedOutput','nextStep','proofGate','copyContent','keywords','profile')).casefold()
                   if t in blob:
                       hits.append((p['id'],p['name'],p.get('profile'),p.get('category')))
-              print('TERM', term, 'HITS', hits[:20])
+              print('PRE-ADD', term, hits[:20])
           PY
+      - name: Add six distinct SAS owners through canonical helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/sas-helper-receipts"
+          i=0
+          for draft in \
+            tmp/sas-prompt-drafts/protected-network-probe.json \
+            tmp/sas-prompt-drafts/clinical-core-deploy.json \
+            tmp/sas-prompt-drafts/autologon-recovery.json \
+            tmp/sas-prompt-drafts/fleet-batch-change.json \
+            tmp/sas-prompt-drafts/printer-mapping.json \
+            tmp/sas-prompt-drafts/ad-ou-move.json
+          do
+            i=$((i+1))
+            python scripts/prompt_registry_ops.py add --input "$draft" --registry spec-architecture-prompts | tee "$RUNNER_TEMP/sas-helper-receipts/$i.json"
+          done
+          python scripts/prompt_registry_ops.py validate | tee "$RUNNER_TEMP/validate.json"
+      - name: Focused SAS semantic assertions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          from scripts import build_prompt_kit_registry as r
+          expected={
+            'SysAdminSuite Protected-Network Endpoint Probe & Identity Gate': ['network probe','endpoint identity','read-only'],
+            'SysAdminSuite Clinical-Core Deployment with AutoLogon Isolation': ['clinical core','autologon','SHA-256'],
+            'SysAdminSuite AutoLogon-Only Crash-Safe Recovery': ['S4U','blindly rerun','sas context'],
+            'SysAdminSuite Fleet Batch Endpoint Change Orchestrator': ['bounded concurrency','crash','per-host'],
+            'SysAdminSuite Reversible Printer Mapping & Audit': ['UNMAP','system-wide','GPO'],
+            'SysAdminSuite Active Directory Computer OU Move & Verification': ['destination OU','distinguished name','idempotent'],
+          }
+          prompts=r.load_prompt_kit_registry()
+          by_name={p['name']:p for p in prompts}
+          ids=[]
+          for name, needles in expected.items():
+              assert name in by_name, name
+              p=by_name[name]
+              ids.append(p['id'])
+              assert p.get('profile')=='sysadminsuite', (name,p.get('profile'))
+              blob=json.dumps(p, ensure_ascii=False).casefold()
+              for needle in needles:
+                  assert needle.casefold() in blob, (name,needle)
+          assert len(ids)==len(set(ids))==6, ids
+          assert all(p.get('profile')!='sysadminsuite' for p in prompts if p['id'] not in ids)
+          print(json.dumps({'sas_ids':ids,'names':list(expected)}))
+          # The current SAS profile pack must include every new owner through its existing sysadminsuite keyword.
+          node = r'''const api=require('./docs/prompt-kit-profiles.js');
+          const fs=require('fs');
+          const prompts=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));
+          const ids=JSON.parse(process.argv[2]);
+          const test=api.compileRule(api.PREDEFINED_PACKS.SAS.rule);
+          const missing=ids.filter(id=>!test(prompts.find(p=>p.id===id)));
+          if(missing.length){console.error(JSON.stringify({missing}));process.exit(1)}
+          console.log(JSON.stringify({sasPackMatched:ids}));'''
+          tmp=Path('/tmp/sas-combined.json')
+          tmp.write_text(json.dumps(prompts),encoding='utf-8')
+          subprocess.run(['node','-e',node,str(tmp),json.dumps(ids)],check=True)
+          PY
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Stage helper-produced artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/sas-materialized/registry/prompts" "$RUNNER_TEMP/sas-materialized/web/prompt-kit" "$RUNNER_TEMP/sas-materialized/receipts"
+          cp registry/prompts/spec-architecture-prompts.v1.json "$RUNNER_TEMP/sas-materialized/registry/prompts/"
+          cp web/prompt-kit/index.html "$RUNNER_TEMP/sas-materialized/web/prompt-kit/"
+          cp "$RUNNER_TEMP"/sas-helper-receipts/*.json "$RUNNER_TEMP/sas-materialized/receipts/"
+          cp "$RUNNER_TEMP/inspect.json" "$RUNNER_TEMP/sas-materialized/receipts/inspect.json"
+          cp "$RUNNER_TEMP/validate.json" "$RUNNER_TEMP/sas-materialized/receipts/validate.json"
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'sas-materialized'
+          files=[]
+          for p in sorted(root.rglob('*')):
+              if p.is_file(): files.append({'path':str(p.relative_to(root)),'sha256':hashlib.sha256(p.read_bytes()).hexdigest()})
+          (root/'receipts'/'manifest.json').write_text(json.dumps({'files':files},indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sas-prompt-helper-materialization-${{ github.event.pull_request.head.sha }}
+          path: ${{ runner.temp }}/sas-materialized
+          if-no-files-found: error
+          retention-days: 14
