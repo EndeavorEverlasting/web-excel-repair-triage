@@ -151,6 +151,11 @@ def observe(port: int, screenshot: Path):
     return observations
 
 
+def execution_environment_kind(env=None) -> str:
+    runtime_env = os.environ if env is None else env
+    return "github_actions_headless_browser" if str(runtime_env.get("GITHUB_ACTIONS", "")).lower() == "true" else "local_headless_browser"
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--receipt', required=True)
@@ -178,7 +183,7 @@ def main(argv=None) -> int:
                 "sha256": hashlib.sha256(ARTIFACT.read_bytes()).hexdigest(),
             },
         },
-        "environment": {"kind": "github_actions_headless_browser", "engine": "chromium", "scenario": "hotkey-config-focus-escape-and-favorite-shortcut-copy-reveal"},
+        "environment": {"kind": execution_environment_kind(), "engine": "chromium", "scenario": "hotkey-config-focus-escape-and-favorite-shortcut-copy-reveal"},
         "claims": [
             {"id": "hotkey_config_focus_escape", "statement": "Opening Hotkeys by button or backtick focuses and reveals the Favorite prompt ID field, and Escape closes Hotkeys from that field", "status": "PASS" if hotkey_config_recovery else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["hotkey_click_focuses_favorite_input", "escape_closes_hotkeys_from_favorite_input", "hotkey_backtick_focuses_favorite_input"]},
             {"id": "favorite_auto_copy", "statement": "Typing configured Favorite P79 automatically copies canonical prompt content", "status": "PASS" if auto_copy else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["favorite_setup_saved", "favorite_shortcut_dispatched", "clipboard_exact_match"]},

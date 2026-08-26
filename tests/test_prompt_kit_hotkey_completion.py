@@ -135,6 +135,39 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         deployed_block = deployed[deployed.index(start_marker) : deployed.index(end_marker)]
         self.assertEqual(source_block, deployed_block)
 
+        def function_block(text: str, name: str) -> str:
+            start = text.index(f"function {name}(")
+            brace = text.index("{", start)
+            depth = 0
+            for index in range(brace, len(text)):
+                if text[index] == "{":
+                    depth += 1
+                elif text[index] == "}":
+                    depth -= 1
+                    if depth == 0:
+                        return text[start : index + 1]
+            self.fail(f"unterminated JavaScript function: {name}")
+
+        for function_name in ("focusFavoritePromptShortcutInput", "setHotkeyHelpOpen"):
+            self.assertEqual(function_block(source, function_name), function_block(deployed, function_name))
+
+        escape_start = "var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');"
+        escape_end = "if(editable)return;"
+        source_escape = source[source.index(escape_start) : source.index(escape_end) + len(escape_end)]
+        deployed_escape = deployed[deployed.index(escape_start) : deployed.index(escape_end) + len(escape_end)]
+        self.assertEqual(source_escape, deployed_escape)
+
+    def test_browser_proof_reports_actual_execution_topology(self) -> None:
+        proof = (ROOT / "tests" / "prompt_kit_favorite_browser_proof.py").read_text(encoding="utf-8")
+        for marker in (
+            "def execution_environment_kind(env=None)",
+            "GITHUB_ACTIONS",
+            "github_actions_headless_browser",
+            "local_headless_browser",
+            '"kind": execution_environment_kind()',
+        ):
+            self.assertIn(marker, proof)
+
     def test_configuration_ui_and_generated_parity_are_present(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         deployed = DEPLOYED.read_text(encoding="utf-8")
