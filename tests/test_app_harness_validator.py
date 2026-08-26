@@ -104,6 +104,27 @@ class AppHarnessValidatorTests(unittest.TestCase):
         self.assertNotIn("playwright", workflow.lower())
         self.assertNotIn("start-process", workflow.lower())
 
+    def test_ci_reruns_when_required_harness_dependencies_move(self):
+        workflow = (ROOT / ".github" / "workflows" / "app-harness-validation.yml").read_text(encoding="utf-8")
+        dependencies = (
+            "AGENTS.md",
+            "CODEBASE_MAP.md",
+            "WORKFLOW.md",
+            "ARTIFACT_REGISTRY.md",
+            "scripts/validate_app_harness.py",
+            "scripts/validate_harness.py",
+            "tests/test_app_harness_validator.py",
+            "harness/**",
+            ".githooks/**",
+            "triage/gitignore_hygiene.py",
+            "docs/prompts.json",
+            "mcp_server.py",
+            ".github/workflows/app-harness-validation.yml",
+        )
+        for dependency in dependencies:
+            with self.subTest(dependency=dependency):
+                self.assertEqual(2, workflow.count(f"- '{dependency}'"))
+
 
 if __name__ == "__main__":
     unittest.main()
