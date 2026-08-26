@@ -4,13 +4,16 @@ on:
   push:
     branches:
       - feat/prompt-kit-five-tab-named-profiles-20260825
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
   repair-validate-commit:
-    if: github.actor != 'github-actions[bot]'
+    if: github.actor != 'github-actions[bot]' && (github.event_name != 'pull_request' || github.head_ref == 'feat/prompt-kit-five-tab-named-profiles-20260825')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
