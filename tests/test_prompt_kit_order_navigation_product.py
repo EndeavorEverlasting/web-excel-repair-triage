@@ -67,9 +67,11 @@ class PromptKitOrderNavigationProductTests(unittest.TestCase):
             "SLOT_KEYS=['A','B','C','D','E']",
             "button.dataset.profileSlot=slot.key",
             "button.dataset.view='favorites'",
-            "activateSlot(key)",
+            "activateSlot(button.dataset.profileSlot)",
         ):
             self.assertIn(marker, profiles)
+        self.assertNotIn("doc.addEventListener('keydown'", profiles)
+        self.assertIn("window.PromptKitProfiles.activateSlot(key.toUpperCase())", polish)
         self.assertIn(
             ".header.filters-collapsed .search-container,.header.filters-collapsed .header-controls,.header.filters-collapsed .sections-nav,.header.filters-collapsed .type-nav{display:none!important}",
             polish,
