@@ -2,22 +2,8 @@ name: App harness validation
 
 on:
   pull_request:
-    paths:
-      - 'scripts/validate_app_harness.py'
-      - 'tests/test_app_harness_validator.py'
-      - 'harness/**'
-      - '.githooks/**'
-      - 'docs/prompts.json'
-      - '.github/workflows/app-harness-validation.yml'
   push:
     branches: [main]
-    paths:
-      - 'scripts/validate_app_harness.py'
-      - 'tests/test_app_harness_validator.py'
-      - 'harness/**'
-      - '.githooks/**'
-      - 'docs/prompts.json'
-      - '.github/workflows/app-harness-validation.yml'
 
 permissions:
   contents: read
