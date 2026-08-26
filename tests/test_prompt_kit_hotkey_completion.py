@@ -45,6 +45,23 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         self.assertNotIn("key==='/'&&e.ctrlKey", source)
         self.assertNotIn("key==='/'&&e.metaKey", source)
 
+    def test_hotkey_open_focuses_favorite_input_and_escape_recovers_from_editable(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        for marker in (
+            "function focusFavoritePromptShortcutInput(panel)",
+            "document.getElementById('promptShortcutPromptId')",
+            "promptInput.focus()",
+            "promptInput.scrollIntoView({block:'nearest',inline:'nearest'})",
+            "if(focusFavoritePromptShortcutInput(panel))return",
+        ):
+            self.assertIn(marker, source)
+        escape_guard = "if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)"
+        editable_guard = "if(editable)return;"
+        backtick = "if(key==='`')"
+        self.assertLess(source.index(escape_guard), source.index(editable_guard))
+        self.assertLess(source.index(editable_guard), source.index(backtick))
+        self.assertIn("resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return", source)
+
     def test_favorite_prompt_shortcuts_are_persisted_fail_closed(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         for marker in (
@@ -118,6 +135,39 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         deployed_block = deployed[deployed.index(start_marker) : deployed.index(end_marker)]
         self.assertEqual(source_block, deployed_block)
 
+        def function_block(text: str, name: str) -> str:
+            start = text.index(f"function {name}(")
+            brace = text.index("{", start)
+            depth = 0
+            for index in range(brace, len(text)):
+                if text[index] == "{":
+                    depth += 1
+                elif text[index] == "}":
+                    depth -= 1
+                    if depth == 0:
+                        return text[start : index + 1]
+            self.fail(f"unterminated JavaScript function: {name}")
+
+        for function_name in ("focusFavoritePromptShortcutInput", "setHotkeyHelpOpen"):
+            self.assertEqual(function_block(source, function_name), function_block(deployed, function_name))
+
+        escape_start = "var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');"
+        escape_end = "if(editable)return;"
+        source_escape = source[source.index(escape_start) : source.index(escape_end) + len(escape_end)]
+        deployed_escape = deployed[deployed.index(escape_start) : deployed.index(escape_end) + len(escape_end)]
+        self.assertEqual(source_escape, deployed_escape)
+
+    def test_browser_proof_reports_actual_execution_topology(self) -> None:
+        proof = (ROOT / "tests" / "prompt_kit_favorite_browser_proof.py").read_text(encoding="utf-8")
+        for marker in (
+            "def execution_environment_kind(env=None)",
+            "GITHUB_ACTIONS",
+            "github_actions_headless_browser",
+            "local_headless_browser",
+            '"kind": execution_environment_kind()',
+        ):
+            self.assertIn(marker, proof)
+
     def test_configuration_ui_and_generated_parity_are_present(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         deployed = DEPLOYED.read_text(encoding="utf-8")
@@ -127,6 +177,9 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             "promptShortcutBindings",
             "Favorite a prompt, enter its ID",
             "Save favorite prompt keyboard shortcut",
+            "function focusFavoritePromptShortcutInput(panel)",
+            "promptInput.scrollIntoView({block:'nearest',inline:'nearest'})",
+            "resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return",
         ):
             self.assertIn(marker, source)
             self.assertIn(marker, deployed)

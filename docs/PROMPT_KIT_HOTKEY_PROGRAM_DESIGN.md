@@ -163,6 +163,7 @@ Production decisions closed on 2026-08-22:
 - only prompts that are currently Favorites may be assigned a prompt-ID shortcut.
 - a completed prompt-ID shortcut copies the canonical prompt and scrolls its card into view without opening prompt detail through `showPromptDetail`.
 - shortcut persistence uses versioned `promptKit.promptShortcuts.v1` storage and publishes only after a successful durable write.
+- opening Hotkeys by either the visible button or unmodified backtick reveals and focuses the Favorite prompt ID input; `Escape` closes Hotkeys even while that editable input owns focus and restores focus to the Hotkeys toggle.
 - configured shortcut rows sort by numeric prompt sequence rather than lexicographic ID text.
 
 These production choices preserve the selected seams and remove the prior UX-policy ambiguity.
