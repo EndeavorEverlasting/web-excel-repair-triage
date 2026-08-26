@@ -86,6 +86,32 @@ jobs:
           print(f"negative canary proved earliest registered failure gate: {expected}")
           PY
 
+      - name: Private-input gate must block on clean public runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          python scripts/run_private_input_test_floor.py \
+            --report "$RUNNER_TEMP/private-input-blocked-report.json"
+          status=$?
+          set -e
+          if [ "$status" -ne 3 ]; then
+            echo "Expected private-input readiness blocker (exit 3), observed $status" >&2
+            exit 1
+          fi
+          python - "$RUNNER_TEMP/private-input-blocked-report.json" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          report = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+          if report.get('status') != 'BLOCKED' or report.get('failed_step') != 'private-input-readiness':
+              raise SystemExit(f"unexpected private-input gate receipt: {report}")
+          missing = report.get('missing_input_ids') or []
+          if len(missing) != 3:
+              raise SystemExit(f"expected three unavailable private inputs, observed {missing!r}")
+          print("private-input gate proved fail-closed on clean public runner: " + ", ".join(missing))
+          PY
+
       - name: Run clean deterministic test floor
         shell: bash
         run: |
@@ -100,5 +126,6 @@ jobs:
           name: deterministic-test-floor-reports
           path: |
             ${{ runner.temp }}/negative-canary-report.json
+            ${{ runner.temp }}/private-input-blocked-report.json
             ${{ runner.temp }}/deterministic-test-floor-report.json
           if-no-files-found: error
