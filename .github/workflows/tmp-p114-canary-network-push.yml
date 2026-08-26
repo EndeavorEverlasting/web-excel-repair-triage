@@ -8,13 +8,8 @@ on:
 permissions:
   contents: write
 
-concurrency:
-  group: p114-canary-network-push
-  cancel-in-progress: false
-
 jobs:
   strengthen:
-    if: github.event.head_commit.message == 'chore(prompt-kit): trigger P114 network executor'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
