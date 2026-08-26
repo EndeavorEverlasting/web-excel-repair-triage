@@ -489,9 +489,18 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
             "Green helper tests do not prove a production wrapper",
             "same-entrypoint synthetic proof",
             "Could another agent entering fresh still choose a different directory?",
+            "ENVIRONMENT-DERIVED MACHINE / PROFILE PATH RESOLUTION",
+            "PATH INPUT RECEIPT",
+            "TARGET_FOLDER_REDIRECTED",
+            "An installed/running client is not proof",
+            "do not assume `%USERPROFILE%\\Desktop`",
+            "Ambiguous roots/redirection -> CONFLICT/UNKNOWN",
+            "tracked canonical-path/profile contract -> authorized machine/profile override",
         ):
             self.assertIn(phrase, p92)
         self.assertIn("remote merged SHA is never treated as local deployment proof", p92_prompt["proofGate"])
+        self.assertIn("OneDrive/cloud roots", p92_prompt["inspectFirst"])
+        self.assertIn("hard-coded username", p92_prompt["proofGate"])
         self.assertLess(len(self.raw["P92"]["copyContent"]), 9000)
         for synonym in (
             "canonical path",
@@ -502,6 +511,11 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
             "local deployment path",
             "path drift",
             "scattered clones",
+            "onedrive path",
+            "onedrive repository path",
+            "known folder redirection",
+            "user profile path",
+            "os path resolution",
         ):
             self.assertEqual(build_prompt_kit.SYNONYMS[synonym], "P92")
 
