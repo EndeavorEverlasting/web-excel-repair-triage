@@ -212,6 +212,17 @@ def test_deployment_execution_phrase_cannot_be_declared_lower_risk() -> None:
         resolve_evidence_backed_contexts(spec)
 
 
+def test_noun_form_deployment_execution_phrase_cannot_be_declared_lower_risk() -> None:
+    spec = _spec()
+    term = spec["qualitative_phrase_catalog"]["terms"]["inventory_reconciliation"]
+    term["outward_variants"] = [
+        "Performed endpoint installation for assigned devices",
+        "Deployment completed for assigned endpoints",
+    ]
+    with pytest.raises(QualitativeAdminError, match="deployment-execution phrase term"):
+        resolve_evidence_backed_contexts(spec)
+
+
 def test_deployment_execution_phrase_requires_dated_person_task_contract() -> None:
     spec = _spec()
     term = spec["qualitative_phrase_catalog"]["terms"]["inventory_reconciliation"]
@@ -230,12 +241,13 @@ def test_deployment_execution_phrase_requires_dated_person_task_contract() -> No
     assert receipt_item["evidence_scope"] == "dated_person_task"
 
 
-def test_generic_deployment_support_wording_does_not_claim_execution() -> None:
+def test_generic_deployment_context_wording_does_not_claim_execution() -> None:
     spec = _spec()
     term = spec["qualitative_phrase_catalog"]["terms"]["inventory_reconciliation"]
     term["outward_variants"] = [
         "Deployment support coordination and readiness review",
-        "Field-support planning and deployment-readiness follow-up",
+        "Installed-base reconciliation and inventory review",
+        "Deployed support model readiness review",
     ]
     resolved = resolve_evidence_backed_contexts(spec)
     assert resolved["_evidence_backed_context_receipt"]["rows"]
