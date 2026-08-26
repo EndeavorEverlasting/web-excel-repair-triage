@@ -7,6 +7,7 @@ The qualitative NTH builder supports an optional evidence-backed presentation la
 - The producer (for example FUN) owns canonical workstream codes, risk tiers, evidence authority, and phrase variants.
 - Triage validates the supplied catalog, requires evidence references, and deterministically selects a visible phrase.
 - Triage does not infer a workstream from attendance, device counts, program phase, or a synonym.
+- Triage still owns outward safety invariants. A producer catalog cannot declare wording that asserts deployment execution as a lower-risk term merely by choosing a different code or label.
 
 ## Input seam
 
@@ -23,6 +24,8 @@ The top-level `qualitative_phrase_catalog` supplies each code's risk tier, minim
 
 Evidence strength is monotonic: `recurring_pattern < dated_context < dated_person_task`. A supplied scope may never be weaker than the term's minimum. High-risk terms must require `dated_person_task` and must forbid recurring-pattern fallback.
 
+Deployment-execution wording is a repository-owned high-risk claim family. Variants that assert deployment execution, endpoint installation, completed go-live/cutover, or equivalent direct execution must be declared `high`, require `dated_person_task`, and forbid recurring-pattern evidence. Generic phrases such as `deployment support coordination` remain distinct because they do not by themselves assert that a person/date deployment occurred.
+
 The generated field `_evidence_backed_context_receipt` is reserved output metadata. Caller-supplied receipts are rejected rather than trusted.
 
 ## Deterministic presentation variation
@@ -36,6 +39,8 @@ The generated manifest preserves a receipt containing canonical codes, evidence 
 ## Safety boundary
 
 Presentation wording never creates attendance, exact task minutes, a new person/date fact, or a higher-risk claim. Recurring-pattern evidence can enrich a row only when its own producer-defined minimum permits it **and** the row supplies a separate compatibility basis. The workbook remains an audience projection of producer-supplied evidence; the manifest retains the auditable semantic/evidence mapping.
+
+The phrase catalog is not a privilege-escalation mechanism. Producer-owned codes and labels remain authoritative for vocabulary, but Triage rejects catalog metadata that would weaken a repository-owned safety gate on the actual outward wording.
 
 ## Validation
 

@@ -199,3 +199,43 @@ def test_invalid_catalog_cannot_smuggle_high_risk_pattern_use() -> None:
     item["evidence_scope"] = "dated_person_task"
     with pytest.raises(QualitativeAdminError, match="must forbid pattern evidence"):
         resolve_evidence_backed_contexts(spec)
+
+
+def test_deployment_execution_phrase_cannot_be_declared_lower_risk() -> None:
+    spec = _spec()
+    term = spec["qualitative_phrase_catalog"]["terms"]["inventory_reconciliation"]
+    term["outward_variants"] = [
+        "Deployment execution completed for the assigned endpoints",
+        "Installed endpoints during the cutover window",
+    ]
+    with pytest.raises(QualitativeAdminError, match="deployment-execution phrase term"):
+        resolve_evidence_backed_contexts(spec)
+
+
+def test_deployment_execution_phrase_requires_dated_person_task_contract() -> None:
+    spec = _spec()
+    term = spec["qualitative_phrase_catalog"]["terms"]["inventory_reconciliation"]
+    term["risk_tier"] = "high"
+    term["required_evidence_scope"] = "dated_person_task"
+    term["pattern_evidence_allowed"] = False
+    term["outward_variants"] = [
+        "Deployment execution completed for the assigned endpoints",
+        "Installed endpoints during the cutover window",
+    ]
+    for row in spec["detail_rows"]:
+        row["workstream_evidence"][0]["evidence_scope"] = "dated_person_task"
+    resolved = resolve_evidence_backed_contexts(spec)
+    receipt_item = resolved["_evidence_backed_context_receipt"]["rows"][0]["workstreams"][0]
+    assert receipt_item["risk_tier"] == "high"
+    assert receipt_item["evidence_scope"] == "dated_person_task"
+
+
+def test_generic_deployment_support_wording_does_not_claim_execution() -> None:
+    spec = _spec()
+    term = spec["qualitative_phrase_catalog"]["terms"]["inventory_reconciliation"]
+    term["outward_variants"] = [
+        "Deployment support coordination and readiness review",
+        "Field-support planning and deployment-readiness follow-up",
+    ]
+    resolved = resolve_evidence_backed_contexts(spec)
+    assert resolved["_evidence_backed_context_receipt"]["rows"]
