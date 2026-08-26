@@ -104,14 +104,11 @@ jobs:
           git diff --check
 
           git checkout origin/main -- .github/workflows/deterministic-test-floor.yml
-          git rm -f .github/workflows/tmp-p114-canary-network-strengthen.yml
-          git rm -f .github/workflows/tmp-p114-canary-network-push.yml
-          git rm -f scripts/tmp_p114_network_patch.py
-          git add .github/workflows/deterministic-test-floor.yml registry/prompts/spec-architecture-prompts.v1.json tests/test_conversation_context_canary_prompt.py web/prompt-kit/index.html
+          git reset HEAD -- .github/workflows/tmp-p114-canary-network-strengthen.yml .github/workflows/tmp-p114-canary-network-push.yml scripts/tmp_p114_network_patch.py || true
+          rm -f .github/workflows/tmp-p114-canary-network-strengthen.yml .github/workflows/tmp-p114-canary-network-push.yml scripts/tmp_p114_network_patch.py
+          git add -A .github/workflows/deterministic-test-floor.yml .github/workflows/tmp-p114-canary-network-strengthen.yml .github/workflows/tmp-p114-canary-network-push.yml scripts/tmp_p114_network_patch.py registry/prompts/spec-architecture-prompts.v1.json tests/test_conversation_context_canary_prompt.py web/prompt-kit/index.html
           git diff --cached --check
 
-          mapfile -t changed < <(git diff --name-only origin/main HEAD -- registry/prompts/spec-architecture-prompts.v1.json tests/test_conversation_context_canary_prompt.py web/prompt-kit/index.html)
-          test "${#changed[@]}" -eq 0 || true
           final_diff="$(git diff --name-only origin/main --cached)"
           printf '%s\n' '--- final durable diff vs main ---' "$final_diff"
           test "$(printf '%s\n' "$final_diff" | sed '/^$/d' | wc -l)" -eq 3
