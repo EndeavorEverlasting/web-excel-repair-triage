@@ -31,20 +31,21 @@ jobs:
           echo "candidate=$(git rev-parse HEAD)"
           echo "main=$(git rev-parse origin/main)"
 
-      - name: Apply identity repair and regenerate canonical site
+      - name: Apply identity and review repairs then regenerate canonical site
         shell: bash
         run: |
           set -euo pipefail
-          python -m py_compile scripts/repair_prompt_kit_hotkey_identity.py
+          python -m py_compile scripts/repair_prompt_kit_hotkey_identity.py scripts/repair_prompt_kit_profile_review.py
           python scripts/repair_prompt_kit_hotkey_identity.py
-          python -m py_compile tests/test_prompt_kit_hotkey_identity_runtime.py tests/test_prompt_kit_hotkey_completion.py
+          python scripts/repair_prompt_kit_profile_review.py
+          python -m py_compile tests/test_prompt_kit_hotkey_identity_runtime.py tests/test_prompt_kit_hotkey_completion.py tests/test_prompt_kit_profiles.py tests/prompt_kit_hotkey_identity_browser_proof.py
           node --check docs/prompt-kit-polish.js
           node --check docs/prompt-kit.js
           node --check docs/prompt-kit-profiles.js
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           git diff --check
 
-      - name: Pass 1 focused runtime identity proof
+      - name: Pass 1 focused runtime identity and profile proof
         shell: bash
         run: |
           set -euo pipefail
@@ -56,6 +57,31 @@ jobs:
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
+      - name: Install observed browser runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check playwright==1.55.0
+          python -m playwright install --with-deps chromium
+
+      - name: Observe A-E and overlapping prompt identities in Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p Outputs/observed-proof
+          python tests/prompt_kit_favorite_browser_proof.py \
+            --receipt Outputs/observed-proof/five-tab-favorite-shortcut-receipt.json \
+            --screenshot Outputs/observed-proof/five-tab-favorite-shortcut.png
+          python scripts/validate_observed_behavior_receipt.py \
+            Outputs/observed-proof/five-tab-favorite-shortcut-receipt.json \
+            --expected-sha "$(git rev-parse HEAD)" --summary
+          python tests/prompt_kit_hotkey_identity_browser_proof.py \
+            --receipt Outputs/observed-proof/prompt-hotkey-identity-receipt.json \
+            --screenshot Outputs/observed-proof/prompt-hotkey-identity.png
+          python scripts/validate_observed_behavior_receipt.py \
+            Outputs/observed-proof/prompt-hotkey-identity-receipt.json \
+            --expected-sha "$(git rev-parse HEAD)" --summary
+
       - name: Pass 2 fixed-point and deterministic floor
         shell: bash
         run: |
@@ -64,6 +90,7 @@ jobs:
           from pathlib import Path
           polish=Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
           base=Path('docs/prompt-kit.js').read_text(encoding='utf-8')
+          profiles=Path('docs/prompt-kit-profiles.js').read_text(encoding='utf-8')
           deployed=Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
           readme=Path('web/README.md').read_text(encoding='utf-8')
           design=Path('docs/PROMPT_KIT_FIVE_TAB_PROFILES.md').read_text(encoding='utf-8')
@@ -72,6 +99,9 @@ jobs:
               assert f"case'{digit}'" not in base
           for marker in ("replace(/\\./g,'')","promptShortcutHasLongerPrefix(candidate,gestures)","if(key==='.'&&promptShortcutBuffer)","if(exact&&!promptShortcutHasLongerPrefix(candidate,gestures))"):
               assert marker in polish
+              assert marker in deployed
+          for marker in ("try{storage=root.localStorage}catch(e){storage=null}","var baseResetPromptKitView=root.resetPromptKitView","activeKey='A';"):
+              assert marker in profiles
               assert marker in deployed
           for key in 'ABCDE':
               assert f'data-profile-slot="{key}"' in deployed
@@ -93,12 +123,15 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm .github/workflows/temp-prompt-kit-hotkey-identity-repair.yml scripts/repair_prompt_kit_hotkey_identity.py
+          git rm .github/workflows/temp-prompt-kit-hotkey-identity-repair.yml scripts/repair_prompt_kit_hotkey_identity.py scripts/repair_prompt_kit_profile_review.py
           git add \
             docs/prompt-kit-polish.js \
+            docs/prompt-kit-profiles.js \
             docs/PROMPT_KIT_FIVE_TAB_PROFILES.md \
             docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md \
             tests/test_prompt_kit_hotkey_identity_runtime.py \
+            tests/prompt_kit_hotkey_identity_browser_proof.py \
+            tests/test_prompt_kit_profiles.py \
             web/README.md \
             web/prompt-kit/index.html
           git diff --cached --check
