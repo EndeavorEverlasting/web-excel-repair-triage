@@ -45,6 +45,23 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         self.assertNotIn("key==='/'&&e.ctrlKey", source)
         self.assertNotIn("key==='/'&&e.metaKey", source)
 
+    def test_hotkey_open_focuses_favorite_input_and_escape_recovers_from_editable(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        for marker in (
+            "function focusFavoritePromptShortcutInput(panel)",
+            "document.getElementById('promptShortcutPromptId')",
+            "promptInput.focus()",
+            "promptInput.scrollIntoView({block:'nearest',inline:'nearest'})",
+            "if(focusFavoritePromptShortcutInput(panel))return",
+        ):
+            self.assertIn(marker, source)
+        escape_guard = "if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)"
+        editable_guard = "if(editable)return;"
+        backtick = "if(key==='`')"
+        self.assertLess(source.index(escape_guard), source.index(editable_guard))
+        self.assertLess(source.index(editable_guard), source.index(backtick))
+        self.assertIn("resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return", source)
+
     def test_favorite_prompt_shortcuts_are_persisted_fail_closed(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         for marker in (
@@ -127,6 +144,9 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             "promptShortcutBindings",
             "Favorite a prompt, enter its ID",
             "Save favorite prompt keyboard shortcut",
+            "function focusFavoritePromptShortcutInput(panel)",
+            "promptInput.scrollIntoView({block:'nearest',inline:'nearest'})",
+            "resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return",
         ):
             self.assertIn(marker, source)
             self.assertIn(marker, deployed)

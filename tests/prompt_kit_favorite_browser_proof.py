@@ -44,6 +44,31 @@ def observe(port: int, screenshot: Path):
             card = page.locator('[data-prompt-id="P79"]')
             card.locator('.prompt-favorite-btn').click()
             page.locator('#hotkeyHelpToggle').click()
+            page.wait_for_timeout(50)
+            click_focus = page.evaluate("document.activeElement && document.activeElement.id === 'promptShortcutPromptId'")
+            click_visible = page.evaluate("""() => {
+              const input=document.getElementById('promptShortcutPromptId');
+              const panel=document.getElementById('hotkeyHelpPanel');
+              if(!input||!panel||panel.hidden)return false;
+              const r=input.getBoundingClientRect();
+              const pr=panel.getBoundingClientRect();
+              return r.bottom>pr.top && r.top<pr.bottom && r.bottom>0 && r.top<innerHeight;
+            }""")
+            page.keyboard.press('Escape')
+            page.wait_for_timeout(50)
+            escape_closed = page.evaluate("document.getElementById('hotkeyHelpPanel').hidden")
+            escape_focus_returned = page.evaluate("document.activeElement && document.activeElement.id === 'hotkeyHelpToggle'")
+            page.keyboard.press('Backquote')
+            page.wait_for_timeout(50)
+            backtick_focus = page.evaluate("document.activeElement && document.activeElement.id === 'promptShortcutPromptId'")
+            backtick_visible = page.evaluate("""() => {
+              const input=document.getElementById('promptShortcutPromptId');
+              const panel=document.getElementById('hotkeyHelpPanel');
+              if(!input||!panel||panel.hidden)return false;
+              const r=input.getBoundingClientRect();
+              const pr=panel.getBoundingClientRect();
+              return r.bottom>pr.top && r.top<pr.bottom && r.bottom>0 && r.top<innerHeight;
+            }""")
             page.locator('#promptShortcutPromptId').fill('P79')
             page.get_by_role('button', name='Save favorite prompt keyboard shortcut').click()
             page.wait_for_timeout(100)
@@ -108,6 +133,9 @@ def observe(port: int, screenshot: Path):
             screenshot.parent.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(screenshot), full_page=False)
             observations = [
+                {"id": "hotkey_click_focuses_favorite_input", "event": "Hotkeys button opens the panel with Favorite prompt ID input focused and revealed", "occurred": True, "passed": bool(click_focus and click_visible), "focused": bool(click_focus), "visible": bool(click_visible)},
+                {"id": "escape_closes_hotkeys_from_favorite_input", "event": "Escape closes Hotkeys while Favorite prompt ID input owns focus and returns focus to Hotkeys toggle", "occurred": True, "passed": bool(escape_closed and escape_focus_returned), "closed": bool(escape_closed), "toggle_focused": bool(escape_focus_returned)},
+                {"id": "hotkey_backtick_focuses_favorite_input", "event": "Backtick opens Hotkeys with Favorite prompt ID input focused and revealed", "occurred": True, "passed": bool(backtick_focus and backtick_visible), "focused": bool(backtick_focus), "visible": bool(backtick_visible)},
                 {"id": "favorite_setup_saved", "event": "P79 favorited and p79 shortcut saved through product UI", "occurred": True, "passed": bool(setup_saved)},
                 {"id": "alternate_scope_precondition", "event": "P79 absent from Doctrine scope before shortcut", "occurred": True, "passed": not before_present, "present_before": bool(before_present)},
                 {"id": "favorite_shortcut_dispatched", "event": "typed favorite shortcut p79", "occurred": True, "passed": bool(shortcut_copied), "toast": toast_text},
@@ -133,6 +161,7 @@ def main(argv=None) -> int:
     screenshot = Path(args.screenshot)
     observations = observe(args.port, screenshot)
     by_id = {item['id']: item for item in observations}
+    hotkey_config_recovery = all(by_id[item]['passed'] for item in ('hotkey_click_focuses_favorite_input', 'escape_closes_hotkeys_from_favorite_input', 'hotkey_backtick_focuses_favorite_input'))
     auto_copy = all(by_id[item]['passed'] for item in ('favorite_setup_saved', 'favorite_shortcut_dispatched', 'clipboard_exact_match'))
     reveal = all(by_id[item]['passed'] for item in ('alternate_scope_precondition', 'favorite_shortcut_dispatched', 'prompt_card_scrolled_visible'))
     focus_safe = all(by_id[item]['passed'] for item in ('detail_modal_closed', 'enter_does_not_close_prompt'))
@@ -149,8 +178,9 @@ def main(argv=None) -> int:
                 "sha256": hashlib.sha256(ARTIFACT.read_bytes()).hexdigest(),
             },
         },
-        "environment": {"kind": "github_actions_headless_browser", "engine": "chromium", "scenario": "favorite-shortcut-copy-reveal-focus"},
+        "environment": {"kind": "github_actions_headless_browser", "engine": "chromium", "scenario": "hotkey-config-focus-escape-and-favorite-shortcut-copy-reveal"},
         "claims": [
+            {"id": "hotkey_config_focus_escape", "statement": "Opening Hotkeys by button or backtick focuses and reveals the Favorite prompt ID field, and Escape closes Hotkeys from that field", "status": "PASS" if hotkey_config_recovery else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["hotkey_click_focuses_favorite_input", "escape_closes_hotkeys_from_favorite_input", "hotkey_backtick_focuses_favorite_input"]},
             {"id": "favorite_auto_copy", "statement": "Typing configured Favorite P79 automatically copies canonical prompt content", "status": "PASS" if auto_copy else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["favorite_setup_saved", "favorite_shortcut_dispatched", "clipboard_exact_match"]},
             {"id": "favorite_scroll", "statement": "Typing configured Favorite P79 exits an alternate scope and scrolls the P79 card into view", "status": "PASS" if reveal else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["alternate_scope_precondition", "favorite_shortcut_dispatched", "prompt_card_scrolled_visible"]},
             {"id": "non_destructive_focus", "statement": "Shortcut does not open detail with close focused; Enter cannot immediately close the prompt", "status": "PASS" if focus_safe else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["detail_modal_closed", "enter_does_not_close_prompt"]},

@@ -836,6 +836,14 @@ function handleConfiguredPromptShortcutKey(e,key){
   return false
 }
 
+function focusFavoritePromptShortcutInput(panel){
+  var promptInput=document.getElementById('promptShortcutPromptId');
+  if(!panel||!promptInput||!panel.contains(promptInput))return false;
+  try{promptInput.focus()}catch(e){return false}
+  try{promptInput.scrollIntoView({block:'nearest',inline:'nearest'})}catch(e){try{promptInput.scrollIntoView()}catch(ignore){}}
+  return document.activeElement===promptInput
+}
+
 function setHotkeyHelpOpen(open,restoreFocus){
   var panel=document.getElementById('hotkeyHelpPanel');
   var toggle=document.getElementById('hotkeyHelpToggle');
@@ -843,6 +851,7 @@ function setHotkeyHelpOpen(open,restoreFocus){
   panel.hidden=!open;
   toggle.setAttribute('aria-expanded',open?'true':'false');
   if(open){
+    if(focusFavoritePromptShortcutInput(panel))return;
     var close=panel.querySelector('.hotkey-help-close');
     if(close){try{close.focus({preventScroll:true})}catch(e){close.focus()}}
     return;
@@ -953,6 +962,10 @@ function installCompactBrowsingHotkeys(){
     var target=e.target;
     var editable=!!(target&&(target.tagName==='INPUT'||target.tagName==='TEXTAREA'||target.tagName==='SELECT'||target.isContentEditable));
     if(e.defaultPrevented||e.altKey||e.metaKey||e.ctrlKey)return;
+    var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');
+    if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden){
+      e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return
+    }
     if(editable)return;
     if(key==='`'){
       e.preventDefault();e.stopImmediatePropagation();
@@ -962,10 +975,6 @@ function installCompactBrowsingHotkeys(){
       return
     }
     if(key==='escape')resetPromptShortcutBuffer();
-    var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');
-    if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden){
-      e.preventDefault();e.stopImmediatePropagation();setHotkeyHelpOpen(false,true);return
-    }
     if(promptShortcutBuffer&&handleConfiguredPromptShortcutKey(e,key))return;
     if(key==='1'){e.preventDefault();e.stopImmediatePropagation();activateAllPromptsView();return}
     if(key==='4'){e.preventDefault();e.stopImmediatePropagation();activateFavoritesView();return}
