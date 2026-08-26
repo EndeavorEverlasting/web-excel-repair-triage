@@ -13,12 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout exact candidate
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Parse validator and focused tests
@@ -30,7 +30,7 @@ jobs:
       - name: Patch hygiene
         run: git diff --check
       - name: Upload exact-head synthetic harness receipt
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app-harness-validation-${{ github.event.pull_request.head.sha || github.sha }}
           path: Outputs/app-harness-validation.json

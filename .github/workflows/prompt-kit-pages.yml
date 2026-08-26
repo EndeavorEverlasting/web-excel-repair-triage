@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout exact candidate
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
@@ -37,7 +37,7 @@ jobs:
           fi
           echo "candidate sha=$(git rev-parse HEAD)"
           echo "main floor=$(git rev-parse origin/main)"
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - name: Harness E2E gate
@@ -72,7 +72,7 @@ jobs:
             git diff --check HEAD^..HEAD
           fi
       - name: Upload validation evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: prompt-kit-validation-${{ github.event.pull_request.head.sha || github.sha }}
           path: Outputs/
@@ -84,12 +84,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout exact candidate
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - name: Build Pages bundle from canonical registry
@@ -115,7 +115,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: python scripts/write_prompt_kit_promotion_receipt.py --candidate "$CANDIDATE_SHA" --base "$BASE_SHA" --target github-pages --output Outputs/prompt-kit-promotion-receipt.json
       - name: Upload promotion evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: prompt-kit-promotion-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
@@ -125,10 +125,10 @@ jobs:
           retention-days: 30
       - name: Configure GitHub Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
       - name: Upload GitHub Pages artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ${{ runner.temp }}/prompt-kit-pages
 
@@ -148,7 +148,7 @@ jobs:
     steps:
       - name: Deploy exact validated Prompt Kit artifact
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   post-deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -158,7 +158,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout deployed candidate
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
