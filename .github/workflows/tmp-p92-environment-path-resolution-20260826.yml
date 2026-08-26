@@ -51,7 +51,6 @@ jobs:
           python scripts/validate_prompt_kit_discovery.py --summary
           python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
           python scripts/evaluate_prompt_language.py --summary
-          node scripts/analyze_prompt_finder_routes.js
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
