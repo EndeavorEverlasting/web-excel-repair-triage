@@ -45,7 +45,7 @@ jobs:
           from pathlib import Path
           path = Path('tests/test_afk_feedback_development_prompt.py')
           text = path.read_text(encoding='utf-8')
-          text = text.replace("'deduplicate already-consumed signal identities',", "'Deduplicate already-consumed signal identities',")
+          text = text.replace('deduplicate already-consumed signal identities', 'Deduplicate already-consumed signal identities')
           path.write_text(text, encoding='utf-8')
           PY
           git diff --check
