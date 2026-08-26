@@ -1,0 +1,18 @@
+{
+  "schema_version": "prompt-kit-agent-grounding-contract/v1",
+  "packet_schema_version": "prompt-kit-grounding-packet/v1",
+  "proposal_schema_version": "prompt-kit-grounded-command/v1",
+  "source_id": "prompt-kit-command-kernel-live-structure",
+  "required_proposal_fields": ["schemaVersion", "command", "grounding"],
+  "required_command_fields": ["type", "promptId", "source"],
+  "required_grounding_fields": ["sourceId", "sourceVersion", "attributions"],
+  "exact_fields": {
+    "type": {"authority": "runtime_registry", "source_key": "kernel.handlers", "constraint": "registered_operation"},
+    "promptId": {"authority": "runtime_registry", "source_key": "catalog.byId", "constraint": "registered_identifier"},
+    "source": {"authority": "agent_boundary_contract", "source_key": "boundary.allowedSources", "constraint": "enum", "allowed": ["agent"]}
+  },
+  "outcomes": ["GROUNDED_PASS", "UNSOURCED_BLOCK", "CONTRADICTION_BLOCK", "SCHEMA_MISMATCH", "GROUNDING_FAILURE"],
+  "execution_authority": "host_command_kernel",
+  "model_authority": "proposal_only",
+  "proof_ceiling": "Exact command type, prompt identifier, boundary source, attribution, and structural-version validation for the Prompt Kit agent-to-CommandKernel prototype. This does not decide whether a command is semantically wise, prove arbitrary external API schemas, or certify production browser wiring."
+}
