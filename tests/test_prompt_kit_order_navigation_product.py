@@ -43,16 +43,15 @@ class PromptKitOrderNavigationProductTests(unittest.TestCase):
 
     def test_compact_browsing_uses_favorites_hotkey_and_collapsible_filter_chrome(self) -> None:
         polish = (ROOT / "docs" / "prompt-kit-polish.js").read_text(encoding="utf-8")
+        profiles = (ROOT / "docs" / "prompt-kit-profiles.js").read_text(encoding="utf-8")
         for marker in (
             "function activateFavoritesView()",
             "activeSection='__favorites__'",
             "id='favoritesShortcut'",
             "data-view','favorites'",
-            "Favorites<span class=\"kbd\">4</span>",
-            "doctrineKbd.textContent='5'",
+            'Favorites<span class="kbd">C</span>',
+            "aria-keyshortcuts','C'",
             "var key=String(e.key||'').toLowerCase();",
-            "if(key==='4')",
-            "if(key==='5')",
             "e.stopImmediatePropagation()",
             "filterPanelToggle",
             "filters-collapsed",
@@ -60,6 +59,19 @@ class PromptKitOrderNavigationProductTests(unittest.TestCase):
             "Show filters ↓",
         ):
             self.assertIn(marker, polish)
+        self.assertNotIn("doctrineKbd.textContent='5'", polish)
+        self.assertNotIn('Favorites<span class="kbd">4</span>', polish)
+        for digit in "12345":
+            self.assertNotIn(f"if(key==='{digit}')", polish)
+        for marker in (
+            "SLOT_KEYS=['A','B','C','D','E']",
+            "button.dataset.profileSlot=slot.key",
+            "button.dataset.view='favorites'",
+            "activateSlot(button.dataset.profileSlot)",
+        ):
+            self.assertIn(marker, profiles)
+        self.assertNotIn("doc.addEventListener('keydown'", profiles)
+        self.assertIn("window.PromptKitProfiles.activateSlot(key.toUpperCase())", polish)
         self.assertIn(
             ".header.filters-collapsed .search-container,.header.filters-collapsed .header-controls,.header.filters-collapsed .sections-nav,.header.filters-collapsed .type-nav{display:none!important}",
             polish,
