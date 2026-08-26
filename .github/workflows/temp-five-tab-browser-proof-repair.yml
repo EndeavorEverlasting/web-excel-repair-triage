@@ -1,0 +1,159 @@
+name: Temporary five-tab browser proof repair
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-five-tab-named-profiles-20260825
+
+permissions:
+  contents: write
+
+jobs:
+  repair-proof-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-five-tab-named-profiles-20260825
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Refresh exact floor and patch canonical owners
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --all --prune --tags
+          test "$(git rev-parse origin/main)" = "c75abc97ce3ad91fa93b03f4c596aa4475e74a6b"
+          git merge-base --is-ancestor origin/main HEAD
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: Path, old: str, new: str) -> None:
+              text = path.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one replacement, found {count}: {old[:80]!r}')
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          polish = Path('docs/prompt-kit-polish.js')
+          replace_once(
+              polish,
+              "function revealPromptShortcutTarget(promptId){\n  activeCat='all';",
+              "function revealPromptShortcutTarget(promptId){\n  if(window.PromptKitProfiles&&typeof window.PromptKitProfiles.activateSlot==='function'){\n    window.PromptKitProfiles.activateSlot('A',true)\n  }\n  activeCat='all';",
+          )
+
+          proof = Path('tests/prompt_kit_favorite_browser_proof.py')
+          replace_once(
+              proof,
+              '    after_enter = ""\n',
+              '    after_enter = ""\n    profile_hotkeys = {}\n',
+          )
+          replace_once(
+              proof,
+              '''            expected = page.evaluate("PROMPTS.find(p => p.id === 'P79').copyContent")\n\n            # Configure the Favorite through the actual product UI, not closure internals.\n''',
+              '''            expected = page.evaluate("PROMPTS.find(p => p.id === 'P79').copyContent")\n\n            # Exercise the actual five-slot header hotkeys before configuring the Favorite.\n            for slot_key in "ABCDE":\n                page.keyboard.press(slot_key.lower())\n                page.wait_for_timeout(50)\n                profile_hotkeys[slot_key] = page.evaluate(\n                    """slot => {\n                      const button=document.querySelector('.cat-tab[data-profile-slot="'+slot+'"]');\n                      return !!(button && button.classList.contains('active') && button.getAttribute('aria-pressed')==='true');\n                    }""",\n                    slot_key,\n                )\n            page.keyboard.press("a")\n            page.wait_for_timeout(50)\n\n            # Configure the Favorite through the actual product UI, not closure internals.\n''',
+          )
+          replace_once(
+              proof,
+              '''            # Enter another scope so the shortcut must restore navigation and reveal P79.\n            page.locator('.cat-tab[data-cat="doctrine"]').click()\n            page.wait_for_timeout(100)\n            before_present = page.locator('[data-prompt-id="P79"]').count() > 0\n''',
+              '''            # Enter custom profile D through its real hotkey so the Favorite shortcut must restore All and reveal P79.\n            page.keyboard.press("d")\n            page.wait_for_timeout(100)\n            d_active = page.evaluate(\n                """() => {\n                  const button=document.querySelector('.cat-tab[data-profile-slot="D"]');\n                  return !!(button && button.classList.contains('active') && button.getAttribute('aria-pressed')==='true');\n                }"""\n            )\n            before_present = page.locator('[data-prompt-id="P79"]').count() > 0\n''',
+          )
+          replace_once(
+              proof,
+              '''            observations = [\n                {"id": "hotkey_click_focuses_favorite_input",''',
+              '''            observations = [\n                {"id": "profile_header_hotkeys_a_to_e", "event": "A-E header hotkeys activate their matching profile slots", "occurred": True, "passed": bool(set(profile_hotkeys) == set("ABCDE") and all(profile_hotkeys.values())), "slots": profile_hotkeys},\n                {"id": "hotkey_click_focuses_favorite_input",''',
+          )
+          replace_once(
+              proof,
+              '''                {"id": "alternate_scope_precondition", "event": "P79 absent from Doctrine scope before shortcut", "occurred": True, "passed": not before_present, "present_before": bool(before_present)},''',
+              '''                {"id": "alternate_scope_precondition", "event": "D custom profile hotkey activates and excludes P79 before shortcut", "occurred": True, "passed": bool(d_active and not before_present), "profile_d_active": bool(d_active), "present_before": bool(before_present)},''',
+          )
+          replace_once(
+              proof,
+              '''    hotkey_config_recovery = all(by_id[item]['passed'] for item in ('hotkey_click_focuses_favorite_input', 'escape_closes_hotkeys_from_favorite_input', 'hotkey_backtick_focuses_favorite_input'))\n''',
+              '''    profile_header_navigation = by_id['profile_header_hotkeys_a_to_e']['passed']\n    hotkey_config_recovery = all(by_id[item]['passed'] for item in ('hotkey_click_focuses_favorite_input', 'escape_closes_hotkeys_from_favorite_input', 'hotkey_backtick_focuses_favorite_input'))\n''',
+          )
+          replace_once(
+              proof,
+              '''        "environment": {"kind": execution_environment_kind(), "engine": "chromium", "scenario": "hotkey-config-focus-escape-and-favorite-shortcut-copy-reveal"},\n        "claims": [\n            {"id": "hotkey_config_focus_escape",''',
+              '''        "environment": {"kind": execution_environment_kind(), "engine": "chromium", "scenario": "profile-tabs-a-e-and-favorite-shortcut-copy-reveal"},\n        "claims": [\n            {"id": "profile_header_navigation", "statement": "A-E header hotkeys activate their matching profile slots in the browser", "status": "PASS" if profile_header_navigation else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["profile_header_hotkeys_a_to_e"]},\n            {"id": "hotkey_config_focus_escape",''',
+          )
+
+          hotkey_test = Path('tests/test_prompt_kit_hotkey_completion.py')
+          replace_once(
+              hotkey_test,
+              '''            '"kind": execution_environment_kind()',\n        ):\n            self.assertIn(marker, proof)\n\n    def test_configuration_ui_and_generated_parity_are_present(self) -> None:\n''',
+              '''            '"kind": execution_environment_kind()',\n            'for slot_key in "ABCDE":',\n            'profile_header_hotkeys_a_to_e',\n            'page.keyboard.press("d")',\n            'D custom profile hotkey activates and excludes P79 before shortcut',\n        ):\n            self.assertIn(marker, proof)\n        self.assertNotIn('.cat-tab[data-cat="doctrine"]', proof)\n        source = POLISH.read_text(encoding="utf-8")\n        self.assertIn("window.PromptKitProfiles.activateSlot('A',true)", source)\n\n    def test_configuration_ui_and_generated_parity_are_present(self) -> None:\n''',
+          )
+          PY
+          python -m py_compile tests/prompt_kit_favorite_browser_proof.py tests/test_prompt_kit_hotkey_completion.py
+          node --check docs/prompt-kit-polish.js
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          git diff --check
+
+      - name: Targeted five-tab and shortcut regression proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tests/test_prompt_kit_header_contract.py
+          python -m unittest \
+            tests.test_prompt_kit_hotkey_completion \
+            tests.test_prompt_kit_profiles \
+            tests.test_prompt_kit_filtering_access \
+            tests.test_prompt_kit_order_navigation_product -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Install observed browser runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check playwright==1.55.0
+          python -m playwright install --with-deps chromium
+
+      - name: Observe A-E header and custom-profile shortcut recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p Outputs/observed-proof
+          python tests/prompt_kit_favorite_browser_proof.py \
+            --receipt Outputs/observed-proof/five-tab-favorite-shortcut-receipt.json \
+            --screenshot Outputs/observed-proof/five-tab-favorite-shortcut.png
+          python scripts/validate_observed_behavior_receipt.py \
+            Outputs/observed-proof/five-tab-favorite-shortcut-receipt.json \
+            --expected-sha "$(git rev-parse HEAD)" --summary
+
+      - name: Second-pass fixed-point proof and durable commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          polish = Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
+          proof = Path('tests/prompt_kit_favorite_browser_proof.py').read_text(encoding='utf-8')
+          deployed = Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
+          assert "window.PromptKitProfiles.activateSlot('A',true)" in polish
+          assert "window.PromptKitProfiles.activateSlot('A',true)" in deployed
+          assert 'for slot_key in "ABCDE":' in proof
+          assert 'page.keyboard.press("d")' in proof
+          assert 'profile_header_hotkeys_a_to_e' in proof
+          assert '.cat-tab[data-cat="doctrine"]' not in proof
+          PY
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "c75abc97ce3ad91fa93b03f4c596aa4475e74a6b"
+          git merge-base --is-ancestor origin/main HEAD
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/temp-five-tab-browser-proof-repair.yml
+          git add docs/prompt-kit-polish.js tests/prompt_kit_favorite_browser_proof.py tests/test_prompt_kit_hotkey_completion.py web/prompt-kit/index.html
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m 'fix(prompt-kit): prove A-E header shortcut recovery in browser'
+          git push origin HEAD:feat/prompt-kit-five-tab-named-profiles-20260825
