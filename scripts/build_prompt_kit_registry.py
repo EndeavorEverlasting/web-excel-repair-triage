@@ -33,6 +33,7 @@ DISPLAY_ORDER_POLICY = (
 )
 GUIDED_RECOMMENDATIONS = REPO_ROOT / "docs" / "prompt-kit-guided-recommendations.js"
 PROMPT_JOURNEY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-journey.js"
+PROFILE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-profiles.js"
 POLISH_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-polish.js"
 CORRESPONDENCE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-correspondence.js"
 MANAGEMENT_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-management.js"
@@ -464,6 +465,7 @@ def render() -> str:
     html = build_prompt_kit.build_html(prompts, reference)
     guided_script = _read_runtime(GUIDED_RECOMMENDATIONS, "Guided recommendation behavior")
     journey_script = _read_runtime(PROMPT_JOURNEY_RUNTIME, "Guided next-step journey behavior")
+    profile_script = _read_runtime(PROFILE_RUNTIME, "Prompt Kit named profile behavior")
     polish_script = _read_runtime(POLISH_RUNTIME, "Prompt Kit polish behavior")
     correspondence_script = _read_runtime(
         CORRESPONDENCE_RUNTIME, "Prompt Kit correspondence profile behavior"
@@ -483,6 +485,7 @@ def render() -> str:
     supplemental = (
         f"<script>\n{guided_script}\n</script>\n"
         f"<script>\n{journey_script}\n</script>\n"
+        f"<script>\n{profile_script}\n</script>\n"
         f"<script>\n{polish_script}\n</script>\n"
         f"<script>\n{correspondence_script}\n</script>\n"
         f"<script>\n{management_script}\n</script>\n"

@@ -28,6 +28,7 @@ def observe(port: int, screenshot: Path):
     expected = ""
     actual = ""
     after_enter = ""
+    profile_hotkeys = {}
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)
@@ -39,6 +40,20 @@ def observe(port: int, screenshot: Path):
             page = context.new_page()
             page.goto(f"http://127.0.0.1:{port}/web/prompt-kit/index.html", wait_until="domcontentloaded")
             expected = page.evaluate("PROMPTS.find(p => p.id === 'P79').copyContent")
+
+            # Exercise the actual five-slot header hotkeys before configuring the Favorite.
+            for slot_key in "ABCDE":
+                page.keyboard.press(slot_key.lower())
+                page.wait_for_timeout(50)
+                profile_hotkeys[slot_key] = page.evaluate(
+                    """slot => {
+                      const button=document.querySelector('.cat-tab[data-profile-slot="'+slot+'"]');
+                      return !!(button && button.classList.contains('active') && button.getAttribute('aria-pressed')==='true');
+                    }""",
+                    slot_key,
+                )
+            page.keyboard.press("a")
+            page.wait_for_timeout(50)
 
             # Configure the Favorite through the actual product UI, not closure internals.
             card = page.locator('[data-prompt-id="P79"]')
@@ -75,9 +90,15 @@ def observe(port: int, screenshot: Path):
             setup_saved = 'Shortcut p79 saved' in page.locator('#toast').inner_text()
             page.locator('.hotkey-help-close').click()
 
-            # Enter another scope so the shortcut must restore navigation and reveal P79.
-            page.locator('.cat-tab[data-cat="doctrine"]').click()
+            # Enter custom profile D through its real hotkey so the Favorite shortcut must restore All and reveal P79.
+            page.keyboard.press("d")
             page.wait_for_timeout(100)
+            d_active = page.evaluate(
+                """() => {
+                  const button=document.querySelector('.cat-tab[data-profile-slot="D"]');
+                  return !!(button && button.classList.contains('active') && button.getAttribute('aria-pressed')==='true');
+                }"""
+            )
             before_present = page.locator('[data-prompt-id="P79"]').count() > 0
             page.evaluate("document.activeElement && document.activeElement.blur()")
 
@@ -133,11 +154,12 @@ def observe(port: int, screenshot: Path):
             screenshot.parent.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(screenshot), full_page=False)
             observations = [
+                {"id": "profile_header_hotkeys_a_to_e", "event": "A-E header hotkeys activate their matching profile slots", "occurred": True, "passed": bool(set(profile_hotkeys) == set("ABCDE") and all(profile_hotkeys.values())), "slots": profile_hotkeys},
                 {"id": "hotkey_click_focuses_favorite_input", "event": "Hotkeys button opens the panel with Favorite prompt ID input focused and revealed", "occurred": True, "passed": bool(click_focus and click_visible), "focused": bool(click_focus), "visible": bool(click_visible)},
                 {"id": "escape_closes_hotkeys_from_favorite_input", "event": "Escape closes Hotkeys while Favorite prompt ID input owns focus and returns focus to Hotkeys toggle", "occurred": True, "passed": bool(escape_closed and escape_focus_returned), "closed": bool(escape_closed), "toggle_focused": bool(escape_focus_returned)},
                 {"id": "hotkey_backtick_focuses_favorite_input", "event": "Backtick opens Hotkeys with Favorite prompt ID input focused and revealed", "occurred": True, "passed": bool(backtick_focus and backtick_visible), "focused": bool(backtick_focus), "visible": bool(backtick_visible)},
                 {"id": "favorite_setup_saved", "event": "P79 favorited and p79 shortcut saved through product UI", "occurred": True, "passed": bool(setup_saved)},
-                {"id": "alternate_scope_precondition", "event": "P79 absent from Doctrine scope before shortcut", "occurred": True, "passed": not before_present, "present_before": bool(before_present)},
+                {"id": "alternate_scope_precondition", "event": "D custom profile hotkey activates and excludes P79 before shortcut", "occurred": True, "passed": bool(d_active and not before_present), "profile_d_active": bool(d_active), "present_before": bool(before_present)},
                 {"id": "favorite_shortcut_dispatched", "event": "typed favorite shortcut p79", "occurred": True, "passed": bool(shortcut_copied), "toast": toast_text},
                 {"id": "prompt_card_scrolled_visible", "event": "P79 card exists and intersects viewport after shortcut", "occurred": True, "passed": bool(target_present and visible), "present": bool(target_present), "visible": bool(visible)},
                 {"id": "clipboard_exact_match", "event": "clipboard equals canonical P79 copyContent", "occurred": bool(clipboard_read), "passed": bool(clipboard_read and actual == expected), "actual_length": len(actual), "expected_length": len(expected)},
@@ -166,6 +188,7 @@ def main(argv=None) -> int:
     screenshot = Path(args.screenshot)
     observations = observe(args.port, screenshot)
     by_id = {item['id']: item for item in observations}
+    profile_header_navigation = by_id['profile_header_hotkeys_a_to_e']['passed']
     hotkey_config_recovery = all(by_id[item]['passed'] for item in ('hotkey_click_focuses_favorite_input', 'escape_closes_hotkeys_from_favorite_input', 'hotkey_backtick_focuses_favorite_input'))
     auto_copy = all(by_id[item]['passed'] for item in ('favorite_setup_saved', 'favorite_shortcut_dispatched', 'clipboard_exact_match'))
     reveal = all(by_id[item]['passed'] for item in ('alternate_scope_precondition', 'favorite_shortcut_dispatched', 'prompt_card_scrolled_visible'))
@@ -183,8 +206,9 @@ def main(argv=None) -> int:
                 "sha256": hashlib.sha256(ARTIFACT.read_bytes()).hexdigest(),
             },
         },
-        "environment": {"kind": execution_environment_kind(), "engine": "chromium", "scenario": "hotkey-config-focus-escape-and-favorite-shortcut-copy-reveal"},
+        "environment": {"kind": execution_environment_kind(), "engine": "chromium", "scenario": "profile-tabs-a-e-and-favorite-shortcut-copy-reveal"},
         "claims": [
+            {"id": "profile_header_navigation", "statement": "A-E header hotkeys activate their matching profile slots in the browser", "status": "PASS" if profile_header_navigation else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["profile_header_hotkeys_a_to_e"]},
             {"id": "hotkey_config_focus_escape", "statement": "Opening Hotkeys by button or backtick focuses and reveals the Favorite prompt ID field, and Escape closes Hotkeys from that field", "status": "PASS" if hotkey_config_recovery else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["hotkey_click_focuses_favorite_input", "escape_closes_hotkeys_from_favorite_input", "hotkey_backtick_focuses_favorite_input"]},
             {"id": "favorite_auto_copy", "statement": "Typing configured Favorite P79 automatically copies canonical prompt content", "status": "PASS" if auto_copy else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["favorite_setup_saved", "favorite_shortcut_dispatched", "clipboard_exact_match"]},
             {"id": "favorite_scroll", "statement": "Typing configured Favorite P79 exits an alternate scope and scrolls the P79 card into view", "status": "PASS" if reveal else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["alternate_scope_precondition", "favorite_shortcut_dispatched", "prompt_card_scrolled_visible"]},

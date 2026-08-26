@@ -102,16 +102,20 @@ No adapter may become a second policy or state owner.
 → one state/DOM synchronization transaction
 → handled result + trace.
 
-## Success call stack: `p95`
-Starting state: `P95` exists and `p95 → OPEN_PROMPT(P95)` is configured.
+## Success call stack: prompt identities
+Starting state: `P11`, `P13`, and `P111` exist and their canonical lower-case sequences are configured.
 
-`p` → dispatcher buffers `p` → no external side effect
+`p13` → exact non-prefix binding resolves immediately → `PromptNavigator.openPrompt('P13')`.
 
-`9` → dispatcher buffers `p9` → no external side effect
+`p11` → exact binding is also a prefix of `p111` → dispatcher holds the candidate → the existing
+1.2-second boundary expires with no continuation → `PromptNavigator.openPrompt('P11')`.
 
-`5` → exact binding resolves → `PromptNavigator.openPrompt('P95')` → buffer clears → result/trace returns.
+`p111` → the buffered `p11` candidate receives the final `1` before timeout → the longer exact binding
+resolves → the pending shorter match is cancelled → `PromptNavigator.openPrompt('P111')`.
 
-Exact prompt identifiers therefore use the normal binding path; they do not require a second global search/router implementation.
+Dots are visual separators, not identity characters, while a prompt-ID buffer is active: `p1.1` follows
+the `P11` path and `p1.11` follows the `P111` path. Exact prompt identifiers therefore use the normal
+binding path; they do not require a second global search/router implementation.
 
 ## Failure call stacks
 - **Collision:** configure `f → OPEN_PROMPT(P95)` → policy sees reserved built-in → `RESERVED_COLLISION` → no store write.
@@ -153,7 +157,7 @@ Prototype and production evidence changed the initial sketch in five useful ways
 - sequence state belongs in the dispatcher, not storage or PromptNavigator.
 - persistence must succeed before a new binding becomes effective.
 - hide/show/toggle are three commands over one filter state owner, not three DOM paths.
-- when a prompt-ID buffer is active, that sequence gets first chance to consume later digits such as `1`, `4`, or `5`; built-in digit navigation retains priority only when no configured sequence is in progress.
+- header navigation is letter-only (`A`–`E`), so digits never double as header commands; when one configured prompt ID prefixes another, the dispatcher delays the shorter exact match until the sequence boundary or a longer exact match resolves.
 
 Production decisions closed on 2026-08-22:
 - unmodified backtick `` ` `` toggles the Hotkeys surface. This keeps the core shortcut cluster reachable with one hand; `/` remains dedicated to Focus search.
