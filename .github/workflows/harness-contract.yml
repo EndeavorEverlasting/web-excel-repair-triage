@@ -104,11 +104,11 @@ jobs:
   operational-harness:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - name: Compile harness validators, eval runners, and contracts
@@ -170,7 +170,7 @@ jobs:
           python scripts/validate_prompt_kit_release_identity.py --output "$RUNNER_TEMP/prompt-kit-release-identity.json" --summary
           python -m unittest tests.test_prompt_kit_release_identity -v
       - name: Upload Prompt Kit release identity report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: prompt-kit-release-identity-report
           path: ${{ runner.temp }}/prompt-kit-release-identity.json
@@ -180,7 +180,7 @@ jobs:
           python scripts/validate_prompt_kit_order_navigation.py --output "$RUNNER_TEMP/prompt-kit-order-navigation-audit.json" --summary
           python -m unittest tests.test_prompt_kit_order_navigation_contract -v
       - name: Upload Prompt Kit order/navigation audit
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: prompt-kit-order-navigation-audit
           path: ${{ runner.temp }}/prompt-kit-order-navigation-audit.json
@@ -192,7 +192,7 @@ jobs:
       - name: Validate harness completeness
         run: python scripts/validate_harness.py --report "$RUNNER_TEMP/harness-completeness-report.json"
       - name: Upload harness completeness report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: harness-completeness-report
           path: ${{ runner.temp }}/harness-completeness-report.json
@@ -206,7 +206,7 @@ jobs:
       - name: Audit Prompt Kit interaction contract
         run: python scripts/validate_prompt_kit_interactions.py --output "$RUNNER_TEMP/prompt-kit-interaction-audit.json" --summary
       - name: Upload Prompt Kit interaction audit
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: prompt-kit-interaction-audit-report
           path: ${{ runner.temp }}/prompt-kit-interaction-audit.json
@@ -216,7 +216,7 @@ jobs:
       - name: Run exhaustive prompt-language audit
         run: python scripts/evaluate_prompt_language.py --output "$RUNNER_TEMP/prompt-language-audit.json" --summary
       - name: Upload prompt-language audit report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: prompt-language-audit-report
           path: ${{ runner.temp }}/prompt-language-audit.json
