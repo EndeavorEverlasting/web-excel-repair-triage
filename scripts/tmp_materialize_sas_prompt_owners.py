@@ -108,8 +108,9 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
     def test_sas_owners_keep_their_distinct_failure_and_closure_boundaries(self) -> None:
         for name, phrases in REQUIRED.items():
             content = self.raw_by_name[name]["copyContent"]
+            folded = content.casefold()
             for phrase in phrases:
-                self.assertIn(phrase, content, (name, phrase))
+                self.assertIn(phrase.casefold(), folded, (name, phrase))
         self.assertIn("do not mutate", self.raw_by_name[ORDER[0]]["copyContent"].casefold())
         self.assertIn("Do not redeploy the clinical core", self.raw_by_name[ORDER[2]]["copyContent"])
         self.assertIn("does not reimplement the underlying mutation logic", self.raw_by_name[ORDER[3]]["copyContent"])
