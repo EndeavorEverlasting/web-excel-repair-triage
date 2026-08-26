@@ -26,10 +26,10 @@ _RESERVED_RECEIPT = "_evidence_backed_context_receipt"
 # "deployment support" is intentionally not matched because it does not, by
 # itself, assert that a person/date deployment occurred.
 _DEPLOYMENT_EXECUTION_CLAIM_PATTERN = re.compile(
-    r"\bdeployment\s+(?:execution|installation|go[-\s]?live|cutover)\b"
-    r"|\bdeploy(?:ed|ing)\b"
-    r"|\binstall(?:ed|ing)\b"
-    r"|\b(?:performed|completed|executed)\s+(?:the\s+)?(?:go[-\s]?live|cutover)\b"
+    r"\bdeployment\s+(?:execution|installation|go[-\s]?live|cutover|completed|performed|executed)\b"
+    r"|\b(?:performed|completed|executed)\s+(?:the\s+)?(?:endpoint\s+|device\s+)?(?:deployment|installation|go[-\s]?live|cutover)\b"
+    r"|\b(?:deployed|deploying|installed|installing)\s+(?:the\s+)?(?:assigned\s+)?(?:endpoint|endpoints|device|devices|workstation|workstations|terminal|terminals|system|systems)\b"
+    r"|\b(?:endpoint|endpoints|device|devices)\s+(?:deployment|installation)\s+(?:completed|performed|executed)\b"
     r"|\b(?:go[-\s]?live|cutover)\s+(?:completed|performed|executed)\b"
     r"|\bwent\s+live\b"
     r"|\bcut\s+over\b",
