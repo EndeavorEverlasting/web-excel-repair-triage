@@ -17,6 +17,7 @@
     "tests/test_deterministic_test_floor.py",
     "tests/test_actionable_prompt_registry.py",
     "tests/test_afk_deterministic_testing_prompt.py",
+    "tests/test_afk_feedback_development_prompt.py",
     "tests/test_agentic_loop_prompts.py",
     "tests/test_conversation_context_canary_prompt.py",
     "tests/test_correspondence_prompt_registry.py",
