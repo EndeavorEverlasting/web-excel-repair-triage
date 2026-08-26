@@ -12,5 +12,3 @@ This file stores the current teaching objective and frontier. `/teach` sessions 
 
 
 ## Current frontier
-
-
