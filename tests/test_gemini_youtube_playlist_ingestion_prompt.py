@@ -217,6 +217,9 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
             "DONOR EVIDENCE / VERSION CONTRACT",
             "BACKEND-NEUTRAL NORMALIZATION CONTRACT",
             "RUNNABILITY GATE",
+            "OUTPUT PATH SAFETY CONTRACT",
+            "one writer per mutation surface",
+            "`git diff --check`",
             "PRE-MUTATION MISSION DECLARATION",
         ):
             self.assertIn(marker, deployed)
