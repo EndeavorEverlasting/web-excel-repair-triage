@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 
+import build_prompt_kit as prompt_site
 from scripts import build_prompt_kit_registry as prompt_registry
 
 
@@ -73,6 +74,23 @@ class PromptClassificationRefinerPromptTests(unittest.TestCase):
         self.assertIn(TARGET_NAME, html)
         self.assertIn("PROMPT KIT / CLASSIFICATION ARCHITECTURE", html)
         self.assertIn("classification prototype", html.casefold())
+
+    def test_every_effective_type_has_one_lifecycle_section(self) -> None:
+        memberships: dict[str, list[str]] = {}
+        for section in prompt_site.SECTIONS:
+            section_name = section["name"]
+            for prompt_type in section["types"]:
+                memberships.setdefault(prompt_type, []).append(section_name)
+
+        effective_types = {str(prompt["type"]).strip() for prompt in self.prompts}
+        unmapped = sorted(prompt_type for prompt_type in effective_types if prompt_type not in memberships)
+        multiply_mapped = {
+            prompt_type: sections
+            for prompt_type, sections in sorted(memberships.items())
+            if len(sections) != 1
+        }
+        self.assertEqual([], unmapped, f"effective prompt types without lifecycle section: {unmapped}")
+        self.assertEqual({}, multiply_mapped, f"prompt types mapped to multiple lifecycle sections: {multiply_mapped}")
 
 
 if __name__ == "__main__":
