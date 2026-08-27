@@ -22,4 +22,4 @@ The tracked generated website identity is `web\prompt-kit\index.html`; its build
 - **Administrator box:** use the administrator verification runbook.
 - **Remote target machine / Target machine:** Prompt Kit documentation does not authorize unrelated target mutation.
 
-Repository documentation and CI do not prove Windows GUI behavior, physical-device field acceptance, or operator acceptance. Use the owning runtime/field proof when that level is required.
+Repository documentation and CI do not prove Windows GUI behavior, physical-device field acceptance, or operator acceptance. **Windows field proof** requires the owning real Windows procedure; use the owning runtime/field proof whenever that evidence level is required.
