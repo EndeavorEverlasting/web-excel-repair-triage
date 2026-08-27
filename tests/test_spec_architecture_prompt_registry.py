@@ -496,12 +496,25 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
             "do not assume `%USERPROFILE%\\Desktop`",
             "Ambiguous roots/redirection -> CONFLICT/UNKNOWN",
             "tracked canonical-path/profile contract -> authorized machine/profile override",
+            "5A. EXECUTION CONTEXT RECEIPT BEFORE PATH-SENSITIVE COMMANDS",
+            "A terminal application is not the shell",
+            "EXECUTION_CONTEXT=UNKNOWN",
+            "5B. DEVELOPMENT MUTATION VS ACTIVE PRODUCTION USE",
+            "Production/use path is a consumer path, not the default development mutation target",
+            "PROD_USE_STATE",
+            "UNKNOWN is not idle",
+            "same physical path",
+            "Any write is production-impacting",
+            "prevents partial candidate state",
         ):
             self.assertIn(phrase, p92)
         self.assertIn("remote merged SHA is never treated as local deployment proof", p92_prompt["proofGate"])
+        self.assertIn("production/use path is not the default development mutation target", p92_prompt["proofGate"])
+        self.assertIn("UNKNOWN production use state blocks production mutation", p92_prompt["proofGate"])
+        self.assertIn("running processes, services, launchers", p92_prompt["inspectFirst"])
         self.assertIn("OneDrive/cloud roots", p92_prompt["inspectFirst"])
         self.assertIn("hard-coded username", p92_prompt["proofGate"])
-        self.assertLess(len(self.raw["P92"]["copyContent"]), 9000)
+        self.assertLess(len(self.raw["P92"]["copyContent"]), 12000)
         for synonym in (
             "canonical path",
             "canonical repository path",
