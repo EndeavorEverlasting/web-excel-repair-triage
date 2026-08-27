@@ -2,45 +2,41 @@
 from pathlib import Path
 
 
-def add_after(text: str, anchor: str, addition: str, label: str) -> str:
-    if addition.strip() in text:
+def ensure_set_item(text: str, header: str, item: str) -> str:
+    start = text.find(header)
+    if start < 0:
+        raise SystemExit(f'set header missing: {header!r}')
+    close = text.find('\n}', start)
+    if close < 0:
+        raise SystemExit(f'set closing brace missing after: {header!r}')
+    block = text[start:close]
+    marker = f'    "{item}",'
+    if marker in block:
         return text
-    if anchor not in text:
-        raise SystemExit(f'{label} anchor missing: {anchor!r}')
-    return text.replace(anchor, anchor + addition, 1)
+    return text[:close] + f'\n{marker}' + text[close:]
+
+
+def ensure_nested_set_item(text: str, header: str, item: str) -> str:
+    start = text.find(header)
+    if start < 0:
+        raise SystemExit(f'nested set header missing: {header!r}')
+    close = text.find('\n    }', start)
+    if close < 0:
+        raise SystemExit(f'nested set closing brace missing after: {header!r}')
+    block = text[start:close]
+    marker = f'        "{item}",'
+    if marker in block:
+        return text
+    return text[:close] + f'\n{marker}' + text[close:]
 
 validator_path = Path('scripts/validate_harness.py')
 validator = validator_path.read_text(encoding='utf-8')
-validator = add_after(
-    validator,
-    '    "prompt-kit-browser-proof-cleanup",\n',
-    '    "prompt-kit-feedback-afk-routing",\n',
-    'required workflow id',
-)
-validator = add_after(
-    validator,
-    '    "app-harness-validation",\n',
-    '    "prompt-kit-feedback-afk-routing-audit",\n    "prompt-kit-feedback-afk-routing-tests",\n',
-    'required validator ids',
-)
-validator = add_after(
-    validator,
-    '    "prompt-kit-responsive-layout",\n',
-    '    "prompt-kit-feedback-afk-routing",\n',
-    'required capability id',
-)
-validator = add_after(
-    validator,
-    '    "prompt-kit-responsive-overlap",\n',
-    '    "prompt-kit-actionable-feedback",\n',
-    'required trigger id',
-)
-validator = add_after(
-    validator,
-    '        "h-prompt-kit-browser-proof-scratch-cleanup",\n',
-    '        "i-prompt-kit-feedback-afk-routing",\n',
-    'allowed workflow anchor',
-)
+validator = ensure_set_item(validator, 'REQUIRED_WORKFLOW_IDS = {', 'prompt-kit-feedback-afk-routing')
+validator = ensure_set_item(validator, 'REQUIRED_VALIDATOR_IDS = {', 'prompt-kit-feedback-afk-routing-audit')
+validator = ensure_set_item(validator, 'REQUIRED_VALIDATOR_IDS = {', 'prompt-kit-feedback-afk-routing-tests')
+validator = ensure_set_item(validator, 'REQUIRED_CAPABILITY_IDS = {', 'prompt-kit-feedback-afk-routing')
+validator = ensure_set_item(validator, 'REQUIRED_TRIGGER_IDS = {', 'prompt-kit-actionable-feedback')
+validator = ensure_nested_set_item(validator, '    allowed_anchors = {', 'i-prompt-kit-feedback-afk-routing')
 validator_path.write_text(validator, encoding='utf-8')
 
 hook_path = Path('.githooks/pre-push')
