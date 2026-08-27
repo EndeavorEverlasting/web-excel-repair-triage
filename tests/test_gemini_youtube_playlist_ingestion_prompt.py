@@ -40,6 +40,20 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
         self.assertGreaterEqual(len(self.content), 300)
         self.assertLessEqual(len(self.content), 12000)
 
+    def test_review_repair_requires_path_safety_and_repo_closeout(self) -> None:
+        self.assert_markers(
+            "OUTPUT PATH SAFETY CONTRACT",
+            "under `Outputs/` by default",
+            "reject equal resolved input/output paths",
+            "source fixture remains byte-identical",
+            "timestamped backup under `Outputs/backups/`",
+            "repository governance and current Git/PR state",
+            "one writer per mutation surface",
+            "`git diff --check`",
+            "normal commit and push when authorized",
+            "changed files, executed checks and results, commit SHA, push/PR state, blockers, Git status, proof ceiling, and the exact next command",
+        )
+
     def test_gemini_no_repo_access_boundary_is_operational(self) -> None:
         self.assert_markers(
             "GEMINI CAPABILITY BOUNDARY",
