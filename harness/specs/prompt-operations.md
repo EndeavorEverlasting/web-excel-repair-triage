@@ -1,6 +1,6 @@
 # Prompt Operations Contract
 
-Binding for Prompt Kit prompt addition/repair, language audit, generated Prompt Kit parity, and prompt-panel/chat orchestration.
+Binding for Prompt Kit prompt addition/repair, language audit, generated Prompt Kit parity, and prompt-panel/chat orchestration. For vocabulary and navigation, use `GLOSSARY.md`; it is not a second behavior specification.
 
 ## Canonical contribution path
 
