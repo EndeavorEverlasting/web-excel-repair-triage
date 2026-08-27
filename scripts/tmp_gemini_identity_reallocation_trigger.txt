@@ -1,1 +1,1 @@
-reconcile Gemini prompt identity with simplified carrier via prompt_registry_ops.py
+reconcile Gemini identity after current-main SAS replay fix and generated-site conflict handling
