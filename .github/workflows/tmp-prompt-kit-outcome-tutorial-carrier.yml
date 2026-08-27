@@ -1,24 +1,24 @@
 name: Temporary Prompt Kit outcome tutorial carrier
 
 on:
-  pull_request:
-    types: [synchronize]
+  push:
+    branches: [main]
 
 permissions:
   contents: write
 
 concurrency:
-  group: prompt-kit-p122-gemini-regression-${{ github.event.pull_request.number }}
+  group: prompt-kit-p122-gemini-regression
   cancel-in-progress: false
 
 jobs:
   execute:
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/gemini-youtube-ingestion-prompt-20260827'
+    if: github.repository == 'EndeavorEverlasting/web-excel-repair-triage' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: feat/gemini-youtube-ingestion-prompt-20260827
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
