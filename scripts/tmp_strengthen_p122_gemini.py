@@ -30,7 +30,7 @@ def main() -> None:
         "IDENTITY / OCCURRENCE INVARIANTS",
         """IDENTITY / OCCURRENCE INVARIANTS
 - A unique source/video entity represents stable video identity when a usable video ID is present. A playlist occurrence is ordered membership and references source identity; these are not the same record type.
-- A repeated video ID must not duplicate the canonical source entity merely because it appears again. Preserve every observed occurrence separately and preserve its order.
+- A repeated video ID must not duplicate the canonical source entity merely because it appears again. For repeated entries, preserve every observed occurrence separately and preserve its order.
 - Normalize YouTube identity independently from share/tracking query parameters. A share/tracking parameter such as `si=` must not create a new video identity.
 - When explicit source URLs are supplied, emit a source-list census before implementation: input_occurrence_count, unique_video_count, repeated IDs with occurrence positions, and unparseable entries. Do not collapse repeated input occurrences.
 
