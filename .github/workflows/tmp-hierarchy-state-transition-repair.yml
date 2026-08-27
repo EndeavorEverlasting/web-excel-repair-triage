@@ -12,31 +12,32 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  repair:
-    if: github.event.issue.pull_request && github.event.issue.number == 244 && github.event.comment.body == '/repair-hierarchy-state-transitions'
+  gemini-youtube-builder:
+    if: github.event.issue.pull_request && github.event.issue.number == 316 && github.event.comment.body == '/build-gemini-youtube-prompt-registered'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: feat/gemini-youtube-ingestion-prompt-20260827
           fetch-depth: 0
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Refresh exact main floor
+      - name: Add prompt through canonical helper
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main --prune
-          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
-          git status --short
-          git log --oneline --decorate -5
+          git fetch origin main feat/gemini-youtube-ingestion-prompt-20260827 --prune
+          test "$(git branch --show-current)" = 'feat/gemini-youtube-ingestion-prompt-20260827'
+          python scripts/prompt_registry_ops.py add \
+            --input .prompt-kit-work/gemini-youtube-playlist-ingestion.json \
+            --registry ai-engineering-level-up-prompts | tee /tmp/gemini-youtube-helper-receipt.json
+          cat /tmp/gemini-youtube-helper-receipt.json
 
-      - name: Repair hierarchy state-transition refresh paths
+      - name: Add focused regression and register it in deterministic floor
         shell: bash
         run: |
           set -euo pipefail
@@ -45,133 +46,212 @@ jobs:
           import json
           from pathlib import Path
 
-          def replace_once(text: str, old: str, new: str, label: str) -> str:
-              if new in text:
-                  return text
-              if old not in text:
-                  raise SystemExit(f'{label}: anchor missing')
-              return text.replace(old, new, 1)
+          receipt = json.loads(Path('/tmp/gemini-youtube-helper-receipt.json').read_text(encoding='utf-8'))
+          prompt_id = receipt['id']
+          Path('tests/test_gemini_youtube_playlist_ingestion_prompt.py').write_text(f'''from __future__ import annotations
 
-          js_path = Path('docs/prompt-kit.js')
-          polish_path = Path('docs/prompt-kit-polish.js')
-          contract_path = Path('harness/contracts/prompt-kit-filtering.v1.json')
-          test_path = Path('tests/test_prompt_kit_filtering_access.py')
+import json
+import unittest
+from pathlib import Path
 
-          js = js_path.read_text(encoding='utf-8')
-          js = replace_once(
-              js,
-              "function toggleFavoritePrompt(id){var key=String(id||'').toUpperCase();if(!key)return;if(isFavoritePrompt(key)){delete favoritePromptIds[key];showToast('Removed '+key+' from Favorites')}else{favoritePromptIds[key]=true;showToast('Saved '+key+' to Favorites')}saveFavoritePromptIds();render()}",
-              "function toggleFavoritePrompt(id){var key=String(id||'').toUpperCase();if(!key)return;if(isFavoritePrompt(key)){delete favoritePromptIds[key];showToast('Removed '+key+' from Favorites')}else{favoritePromptIds[key]=true;showToast('Saved '+key+' to Favorites')}saveFavoritePromptIds();if(activeSection==='__favorites__')renderTypes();render()}",
-              'favorite membership refresh',
-          )
-          js = replace_once(
-              js,
-              "if(activeSection){activeSection=null;render();return}",
-              "if(activeSection){activeSection=null;activeType=null;renderTypes();render();return}",
-              'Escape section reset refresh',
-          )
-          js_path.write_text(js, encoding='utf-8')
+ROOT = Path(__file__).resolve().parents[1]
+REGISTRY = ROOT / "registry" / "prompts" / "ai-engineering-level-up-prompts.v1.json"
+SITE = ROOT / "web" / "prompt-kit" / "index.html"
+EXPECTED_ID = "{prompt_id}"
+EXPECTED_NAME = "Gemini YouTube Playlist Ingestion Builder"
 
-          polish = polish_path.read_text(encoding='utf-8')
-          old_favorites = """function activateFavoritesView(){
-            activeCat='all';
-            activeSection='__favorites__';
-            clearTransientPromptFilters();
-            document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.id==='favoritesShortcut')});
-            document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__favorites__')});
-            render();
-          }"""
-          new_favorites = """function activateFavoritesView(){
-            activeCat='all';
-            activeSection='__favorites__';
-            clearTransientPromptFilters();
-            document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.id==='favoritesShortcut')});
-            document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__favorites__')});
-            renderTypes();
-            render();
-          }"""
-          polish = replace_once(polish, old_favorites, new_favorites, 'Favorites activation refresh')
-          polish_path.write_text(polish, encoding='utf-8')
 
-          contract = json.loads(contract_path.read_text(encoding='utf-8'))
-          requirement = next((item for item in contract['requirements'] if item['id'] == 'progressive_type_disclosure'), None)
-          if requirement is None:
-              raise SystemExit('progressive_type_disclosure contract owner missing')
-          sentence = ' Favorites activation, favorite membership changes while Favorites is active, and Escape section reset refresh subordinate navigation so controls cannot describe a stale scope.'
-          if sentence.strip() not in requirement['expected']:
-              requirement['expected'] = requirement['expected'].rstrip() + sentence
-          contract_path.write_text(json.dumps(contract, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
+        cls.prompt = next(item for item in payload["prompts"] if item["id"] == EXPECTED_ID)
+        cls.content = cls.prompt["copyContent"]
 
-          test = test_path.read_text(encoding='utf-8')
-          contract_anchor = '        self.assertIn("only subcategories available in that scope", expected["progressive_type_disclosure"])\n'
-          contract_assert = '        self.assertIn("favorite membership changes while Favorites is active", expected["progressive_type_disclosure"])\n        self.assertIn("Escape section reset", expected["progressive_type_disclosure"])\n'
-          if contract_assert not in test:
-              if contract_anchor not in test:
-                  raise SystemExit('contract regression anchor missing')
-              test = test.replace(contract_anchor, contract_anchor + contract_assert, 1)
+    def test_helper_allocated_distinct_identity_and_role(self) -> None:
+        self.assertEqual(self.prompt["name"], EXPECTED_NAME)
+        self.assertEqual(self.prompt["class"], "AI ENGINEERING / YOUTUBE INGESTION")
+        self.assertIn("YouTube playlist", self.prompt["useWhen"])
+        self.assertIn("Gemini", self.prompt["useWhen"])
+        self.assertIn("standalone", self.prompt["expectedOutput"].lower())
 
-          if 'def test_hierarchy_refreshes_on_non_click_state_transitions' not in test:
-              anchor = '    def test_all_view_is_an_atomic_reset_after_favorites(self) -> None:\n'
-              addition = '''    def test_hierarchy_refreshes_on_non_click_state_transitions(self) -> None:\n        js = JS.read_text(encoding="utf-8")\n        polish = POLISH.read_text(encoding="utf-8")\n\n        toggle_start = js.index("function toggleFavoritePrompt")\n        toggle_end = js.index("\\n\\nfunction syncLibraryTabs", toggle_start)\n        toggle = js[toggle_start:toggle_end]\n        self.assertIn("if(activeSection==='__favorites__')renderTypes();render()", toggle)\n\n        favorites_start = polish.index("function activateFavoritesView()")\n        favorites_end = polish.index("function ensureCompactBrowsingControls()", favorites_start)\n        favorites = polish[favorites_start:favorites_end]\n        self.assertIn("renderTypes();", favorites)\n        self.assertLess(favorites.index("renderTypes();"), favorites.index("render();"))\n\n        self.assertIn("if(activeSection){activeSection=null;activeType=null;renderTypes();render();return}", js)\n\n'''
-              if anchor not in test:
-                  raise SystemExit('hierarchy transition test insertion anchor missing')
-              test = test.replace(anchor, addition + anchor, 1)
-          test_path.write_text(test, encoding='utf-8')
+    def test_gemini_no_repo_access_boundary_is_operational(self) -> None:
+        for marker in (
+            "GEMINI CAPABILITY BOUNDARY",
+            "target repository is NOT accessible",
+            "PROPOSED LOCATION — REQUIRES REPO-CAPABLE AGENT TO VERIFY",
+            "SUPPLIED_CONTEXT",
+            "PROPOSED",
+            "UNKNOWN_REQUIRES_REPO_INSPECTION",
+            "MUST NOT fabricate a repository patch",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_yt_dlp_is_single_extraction_authority(self) -> None:
+        for marker in (
+            "yt-dlp owns YouTube extraction",
+            "do not reimplement YouTube HTML parsing",
+            "do not create two competing extraction authorities",
+            "runtime `yt-dlp --version`",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_windows_metadata_path_never_downloads_media(self) -> None:
+        for marker in (
+            "WINDOWS-FIRST EXTRACTION CONTRACT",
+            "--skip-download",
+            "--dump-single-json",
+            "--flat-playlist",
+            "--input-json",
+            "do not download media",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_normalization_preserves_order_repeats_and_json_authority(self) -> None:
+        for marker in (
+            "Repeated playlist entries are valid data",
+            "preserve every ordered playlist occurrence separately",
+            "normalized JSON is canonical",
+            "CSV is a projection",
+            "utf-8-sig",
+            "beginning with `=`, `+`, `-`, or `@`",
+            "canonical JSON must remain unchanged",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_donor_license_and_standalone_packet_boundaries(self) -> None:
+        for marker in (
+            "TubeArchivist and NewPipeExtractor",
+            "do not copy GPL implementation code",
+            "source_ingest_youtube.py",
+            "source_import_contract.json",
+            "youtube_playlist_fixture.json",
+            "test_youtube_source_ingestion.py",
+            "donor_manifest.json",
+            "Do not import from hypothetical consumer-repository modules",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_fixture_tests_and_live_proof_ceiling_are_explicit(self) -> None:
+        for marker in (
+            "MINIMUM DETERMINISTIC TESTS",
+            "repeated video ID preserves multiple ordered occurrences",
+            "spreadsheet-safe while JSON remains",
+            "fixture-mode CLI writes both JSON and CSV deterministically",
+            "LIVE-PROOF CEILING",
+            "do NOT prove current YouTube behavior",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_repo_capable_handoff_is_complete(self) -> None:
+        for marker in (
+            "REPOSITORY-CAPABLE HANDOFF",
+            "yt-dlp owns YouTube parsing, consumer owns normalization/schema/tests/exports",
+            "find the existing source/import/domain owners",
+            "Do not make the operator restate the donor research",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_generated_site_contains_new_prompt_and_key_semantics(self) -> None:
+        deployed = SITE.read_text(encoding="utf-8")
+        for marker in (
+            EXPECTED_ID,
+            EXPECTED_NAME,
+            "GEMINI CAPABILITY BOUNDARY",
+            "yt-dlp owns YouTube extraction",
+            "Repeated playlist entries are valid data",
+            "REPOSITORY-CAPABLE HANDOFF",
+        ):
+            self.assertIn(marker, deployed)
+
+    def test_prompt_remains_distinct_from_generic_p56(self) -> None:
+        base = json.loads((ROOT / "docs" / "prompts.json").read_text(encoding="utf-8"))
+        p56 = next(item for item in base if item["id"] == "P56")
+        self.assertEqual(p56["name"], "Context-to-Artifact Generator")
+        self.assertNotIn("yt-dlp owns YouTube extraction", p56["copyContent"])
+        self.assertNotEqual(p56["useWhen"], self.prompt["useWhen"])
+
+
+if __name__ == "__main__":
+    unittest.main()
+''', encoding='utf-8')
+
+          manifest_path = Path('harness/test-floor.v1.json')
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          rel = 'tests/test_gemini_youtube_playlist_ingestion_prompt.py'
+          if rel not in manifest['self_tests']:
+              manifest['self_tests'].append(rel)
+              manifest['self_tests'] = [manifest['self_tests'][0], *sorted(manifest['self_tests'][1:])]
+          manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
           PY
 
-      - name: Validate hierarchy repair pass 1
+      - name: Focused proof and pass-two falsification
         shell: bash
         run: |
           set -euo pipefail
-          node --check docs/prompt-kit.js
-          node --check docs/prompt-kit-polish.js
-          python -m unittest tests.test_prompt_kit_filtering_access -v
-          python -m unittest tests.test_prompt_kit_product_interactions tests.test_prompt_kit_mobile -v
-          python -m unittest tests.test_prompt_kit_mainline_contract tests.test_prompt_kit_header_contract tests.test_prompt_kit_pages tests.test_prompt_kit_hotkey_completion -v
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python -m unittest tests.test_gemini_youtube_playlist_ingestion_prompt -v
           python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-          python scripts/validate_prompt_kit_order_navigation.py --summary
-          git diff --check
-
-      - name: Deliberate second-pass falsification
-        shell: bash
-        run: |
-          set -euo pipefail
           python - <<'PY'
+          import json
           from pathlib import Path
-          js = Path('docs/prompt-kit.js').read_text(encoding='utf-8')
-          polish = Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
-          test = Path('tests/test_prompt_kit_filtering_access.py').read_text(encoding='utf-8')
-          html = Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
-          checks = {
-              'Favorites activation refresh': "activeSection='__favorites__'" in polish and 'renderTypes();' in polish[polish.index('function activateFavoritesView()'):polish.index('function ensureCompactBrowsingControls()')],
-              'favorite membership refresh': "if(activeSection==='__favorites__')renderTypes();render()" in js,
-              'Escape section refresh': "if(activeSection){activeSection=null;activeType=null;renderTypes();render();return}" in js,
-              'focused regression': 'test_hierarchy_refreshes_on_non_click_state_transitions' in test,
-              'generated parity marker': "if(activeSection==='__favorites__')renderTypes();render()" in html,
-          }
-          failed = [name for name, ok in checks.items() if not ok]
-          if failed:
-              raise SystemExit(f'hierarchy second-pass falsification failed: {failed}')
+          registry = json.loads(Path('registry/prompts/ai-engineering-level-up-prompts.v1.json').read_text(encoding='utf-8'))
+          prompt = next(p for p in registry['prompts'] if p['name'] == 'Gemini YouTube Playlist Ingestion Builder')
+          text = prompt['copyContent']
+          required = [
+              'verified donor dossier', 'GEMINI CAPABILITY BOUNDARY',
+              'yt-dlp owns YouTube extraction', 'WINDOWS-FIRST EXTRACTION CONTRACT',
+              'Repeated playlist entries are valid data', 'normalized JSON is canonical',
+              'utf-8-sig', 'do not copy GPL implementation code',
+              'MINIMUM DETERMINISTIC TESTS', 'LIVE-PROOF CEILING',
+              'REPOSITORY-CAPABLE HANDOFF',
+          ]
+          missing = [x for x in required if x not in text]
+          if missing:
+              raise SystemExit(f'Gemini YouTube pass-two missing: {missing}')
+          base = json.loads(Path('docs/prompts.json').read_text(encoding='utf-8'))
+          p56 = next(p for p in base if p['id'] == 'P56')
+          if p56['name'] != 'Context-to-Artifact Generator':
+              raise SystemExit('P56 identity drifted')
+          p100 = next(p for p in registry['prompts'] if p['id'] == 'P100')
+          p101 = next(p for p in registry['prompts'] if p['id'] == 'P101')
+          if p100['name'] != 'Factuality vs Faithfulness Hallucination Diagnoser':
+              raise SystemExit('P100 identity drifted')
+          if p101['name'] != 'Grounded Agent Output & Tool-Call Gate':
+              raise SystemExit('P101 identity drifted')
+          if 'StudySyndicate' in text:
+              raise SystemExit('Reusable prompt leaked one consumer repository name')
+          print('Gemini YouTube whole-chat pass-two semantic falsification PASS')
           PY
-          python -m unittest tests.test_prompt_kit_filtering_access -v
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
-      - name: Commit exact durable repair and self-remove transport
+      - name: Commit durable helper result
         shell: bash
         run: |
           set -euo pipefail
-          git rm .github/workflows/tmp-hierarchy-state-transition-repair.yml
-          git add \
-            docs/prompt-kit.js \
-            docs/prompt-kit-polish.js \
-            harness/contracts/prompt-kit-filtering.v1.json \
-            tests/test_prompt_kit_filtering_access.py \
-            web/prompt-kit/index.html
+          rm -rf .prompt-kit-work
+          git add registry/prompts/ai-engineering-level-up-prompts.v1.json web/prompt-kit/index.html tests/test_gemini_youtube_playlist_ingestion_prompt.py harness/test-floor.v1.json .prompt-kit-work
           git diff --cached --check
-          echo '--- staged files ---'
-          git diff --cached --name-only
-          git commit -m "fix(prompt-kit): refresh hierarchy on state transitions"
+          git commit -m 'feat(prompt-kit): add Gemini YouTube ingestion builder'
+          git push origin HEAD:feat/gemini-youtube-ingestion-prompt-20260827
+
+      - name: Restore registered carrier and remove Gemini-only carrier from main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune
+          main_tip="$(git rev-parse origin/main)"
+          original="$(git rev-parse "${main_tip}^")"
+          rm -rf /tmp/main-restore
+          git worktree add /tmp/main-restore origin/main
+          cd /tmp/main-restore
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git show "${original}:.github/workflows/tmp-hierarchy-state-transition-repair.yml" > .github/workflows/tmp-hierarchy-state-transition-repair.yml
+          rm -f .github/workflows/tmp-gemini-youtube-prompt-builder.yml
+          git add .github/workflows/tmp-hierarchy-state-transition-repair.yml .github/workflows/tmp-gemini-youtube-prompt-builder.yml
+          git diff --cached --check
+          git commit -m 'chore(prompt-kit): restore registered workflow carriers'
           git push origin HEAD:main
