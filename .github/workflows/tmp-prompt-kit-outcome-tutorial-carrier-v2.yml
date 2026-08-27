@@ -33,12 +33,15 @@ jobs:
           export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main feat/p114-canary-network-20260826 feat/prompt-kit-outcome-tutorial-exec-context-20260826 --prune
+          git fetch origin main feat/prompt-kit-outcome-tutorial-exec-context-20260826 --prune
           if [ ! -f scripts/tmp_apply_prompt_kit_outcome_tutorial_exec_context.py ]; then
             echo 'outcome tutorial already materialized; no transport work remains'
             exit 0
           fi
           git merge --no-edit origin/main
+          if [ -f scripts/tmp_patch_outcome_mutator_v3.py ]; then
+            python scripts/tmp_patch_outcome_mutator_v3.py
+          fi
           python scripts/tmp_apply_prompt_kit_outcome_tutorial_exec_context.py
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           node --check docs/prompt-kit-guided-recommendations.js
@@ -56,7 +59,7 @@ jobs:
           python scripts/prompt_registry_ops.py validate
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
-          git rm -f .github/workflows/tmp-prompt-kit-outcome-tutorial-exec-context.yml scripts/tmp_apply_prompt_kit_outcome_tutorial_exec_context.py scripts/tmp_outcome_tutorial_trigger.txt
+          git rm -f .github/workflows/tmp-prompt-kit-outcome-tutorial-exec-context.yml scripts/tmp_apply_prompt_kit_outcome_tutorial_exec_context.py scripts/tmp_patch_outcome_mutator_v3.py scripts/tmp_outcome_tutorial_trigger.txt
           git add registry/prompts/spec-architecture-prompts.v1.json tests/test_spec_architecture_prompt_registry.py tests/test_conversation_context_canary_prompt.py docs/prompt-kit-guided-recommendations.js docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md docs/PROMPT_KIT_OPERATOR_GUIDE.md scripts/validate_prompt_finder_outcomes.js tests/test_prompt_kit_guidance.py tests/test_prompt_kit_discovery.py harness/test-floor.v1.json .github/workflows/prompt-kit-pages.yml web/prompt-kit/index.html
           git diff --cached --check
           git commit -m 'feat(prompt-kit): make tutorial outcome-driven'
