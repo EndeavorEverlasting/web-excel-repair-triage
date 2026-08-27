@@ -1,0 +1,65 @@
+name: Temporary Gemini prompt identity reallocation carrier
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/tmp_gemini_identity_reallocation_trigger.txt
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gemini-prompt-identity-reallocation
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/gemini-youtube-ingestion-prompt-20260827
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Reconcile main and reallocate Gemini prompt identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/gemini-youtube-ingestion-prompt-20260827 --prune
+          test "$(git branch --show-current)" = 'feat/gemini-youtube-ingestion-prompt-20260827'
+          set +e
+          git merge --no-edit origin/main
+          merge_rc=$?
+          set -e
+          if [ "$merge_rc" -ne 0 ]; then
+            mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+            printf 'merge conflicts: %s\n' "${conflicts[*]}"
+            expected=(tests/test_sysadminsuite_prompt_registry.py web/prompt-kit/index.html)
+            if [ "${#conflicts[@]}" -ne "${#expected[@]}" ] || [ "${conflicts[0]}" != "${expected[0]}" ] || [ "${conflicts[1]}" != "${expected[1]}" ]; then
+              echo 'unexpected merge conflict surface; refusing automatic reconciliation' >&2
+              exit 1
+            fi
+            git checkout --theirs -- tests/test_sysadminsuite_prompt_registry.py web/prompt-kit/index.html
+            git add tests/test_sysadminsuite_prompt_registry.py web/prompt-kit/index.html
+            git commit --no-edit
+          fi
+          python scripts/tmp_apply_gemini_identity_reallocation.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python -m unittest tests.test_gemini_youtube_playlist_ingestion_prompt -v
+          python -m unittest tests.test_sysadminsuite_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output "$RUNNER_TEMP/prompt-kit-order-navigation-audit.json" --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          git rm -f .github/workflows/tmp-gemini-identity-reallocation-carrier.yml scripts/tmp_gemini_identity_reallocation_trigger.txt scripts/tmp_apply_gemini_identity_reallocation.py
+          git add registry/prompts/ai-engineering-level-up-prompts.v1.json tests/test_gemini_youtube_playlist_ingestion_prompt.py tests/test_sysadminsuite_prompt_registry.py harness/test-floor.v1.json web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'fix(prompt-kit): reallocate Gemini prompt after P122 collision'
+          git push origin HEAD:feat/gemini-youtube-ingestion-prompt-20260827

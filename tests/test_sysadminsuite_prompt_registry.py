@@ -79,7 +79,7 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
             ).casefold()
             self.assertIn("sysadminsuite", searchable)
 
-    def test_helper_replays_semantic_records_with_fresh_ids_and_site_parity(self) -> None:
+    def test_helper_readds_historical_semantic_records_with_fresh_append_only_identity_and_site_parity(self) -> None:
         allowed = prompt_registry_ops.REQUIRED_DRAFT_FIELDS | prompt_registry_ops.OPTIONAL_DRAFT_FIELDS
         with tempfile.TemporaryDirectory(prefix="sas-prompt-helper-") as tmp:
             sandbox = Path(tmp) / "repo"
@@ -94,6 +94,18 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
             self.assertEqual(set(records), set(ORDER))
             payload["prompts"] = [item for item in payload["prompts"] if item.get("name") not in ORDER]
             sandbox_raw.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+            inspect_proc = subprocess.run(
+                [sys.executable, "scripts/prompt_registry_ops.py", "inspect"],
+                cwd=sandbox,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            self.assertEqual(inspect_proc.returncode, 0, inspect_proc.stdout)
+            inspect_receipt = json.loads(inspect_proc.stdout)
+            floor = int(str(inspect_receipt["next_id"])[1:]) - 1
 
             receipts = []
             for index, name in enumerate(ORDER, start=1):
@@ -111,41 +123,21 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
                 self.assertEqual(proc.returncode, 0, proc.stdout)
                 receipts.append(json.loads(proc.stdout))
 
-            receipt_numbers = [int(receipt["id"][1:]) for receipt in receipts]
-            self.assertEqual(
-                receipt_numbers,
-                list(range(receipt_numbers[0], receipt_numbers[0] + len(ORDER))),
-            )
-            self.assertEqual(len(receipt_numbers), len(set(receipt_numbers)))
+            expected_ids = [f"P{floor + offset}" for offset in range(1, len(ORDER) + 1)]
+            self.assertEqual([receipt["id"] for receipt in receipts], expected_ids)
             self.assertTrue(all(receipt["site_parity"] for receipt in receipts))
 
             replayed = json.loads(sandbox_raw.read_text(encoding="utf-8"))["prompts"]
             replayed_by_name = {item["name"]: item for item in replayed if item.get("name") in ORDER}
             self.assertEqual(set(replayed_by_name), set(ORDER))
             for name in ORDER:
-                expected_semantics = {key: records[name][key] for key in allowed if key in records[name]}
-                actual_semantics = {
-                    key: replayed_by_name[name][key]
-                    for key in allowed
-                    if key in replayed_by_name[name]
-                }
-                self.assertEqual(actual_semantics, expected_semantics, name)
+                original_semantics = {key: value for key, value in records[name].items() if key in allowed}
+                replayed_semantics = {key: value for key, value in replayed_by_name[name].items() if key in allowed}
+                self.assertEqual(replayed_semantics, original_semantics)
 
-            check = subprocess.run(
-                [
-                    sys.executable,
-                    "scripts/build_prompt_kit_registry.py",
-                    "--output",
-                    "web/prompt-kit/index.html",
-                    "--check",
-                ],
-                cwd=sandbox,
-                text=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                check=False,
-            )
-            self.assertEqual(check.returncode, 0, check.stdout)
+            replayed_site = (sandbox / "web" / "prompt-kit" / "index.html").read_text(encoding="utf-8")
+            for name in ORDER:
+                self.assertIn(name, replayed_site)
 
 
 if __name__ == "__main__":
