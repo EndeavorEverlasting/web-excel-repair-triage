@@ -39,6 +39,7 @@ jobs:
           git merge --no-edit origin/main
           python scripts/tmp_factor_feedback_afk_harness.py
           python scripts/tmp_fix_feedback_afk_workflow.py
+          python scripts/tmp_fix_feedback_afk_workflow_whitespace.py
           python scripts/tmp_reconcile_feedback_afk_root_harness.py
           python scripts/validate_prompt_kit_feedback_afk_routing.py --summary
           python -m unittest tests.test_prompt_kit_feedback_afk_routing tests.test_prompt_kit_feedback_production -v
@@ -47,7 +48,7 @@ jobs:
           python -m unittest tests.test_harness_contract -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
-          git rm -f .github/workflows/tmp-feedback-afk-factor-carrier.yml scripts/tmp_factor_feedback_afk_harness.py scripts/tmp_fix_feedback_afk_workflow.py scripts/tmp_reconcile_feedback_afk_root_harness.py scripts/tmp_feedback_afk_factor_trigger.txt
+          git rm -f .github/workflows/tmp-feedback-afk-factor-carrier.yml scripts/tmp_factor_feedback_afk_harness.py scripts/tmp_fix_feedback_afk_workflow.py scripts/tmp_fix_feedback_afk_workflow_whitespace.py scripts/tmp_reconcile_feedback_afk_root_harness.py scripts/tmp_feedback_afk_factor_trigger.txt
           git add .ai/skills/prompt-kit-feedback-afk-routing/SKILL.md CAPABILITIES.md SKILLS.md TRIGGERS.md WORKFLOW.md \
             .githooks/pre-push .github/workflows/prompt-kit-web.yml harness/contracts/prompt-kit-feedback-afk-routing.v1.json \
             harness/capabilities.v1.json harness/triggers.v1.json harness/workflows.v1.json harness/validators.v1.json harness/manifest.v1.json \
