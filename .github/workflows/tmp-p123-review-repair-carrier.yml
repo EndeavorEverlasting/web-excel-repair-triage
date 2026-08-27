@@ -1,0 +1,49 @@
+name: Temporary P123 review repair carrier
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/tmp_p123_review_repair_trigger.txt
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p123-review-repair
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/gemini-youtube-ingestion-prompt-20260827
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Repair review findings, prove, and update feature branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/gemini-youtube-ingestion-prompt-20260827 --prune
+          test "$(git branch --show-current)" = 'feat/gemini-youtube-ingestion-prompt-20260827'
+          git merge --no-edit origin/main
+          python scripts/tmp_apply_p123_review_repair.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python -m unittest tests.test_gemini_youtube_playlist_ingestion_prompt -v
+          python -m unittest tests.test_sysadminsuite_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          git rm -f .github/workflows/tmp-p123-review-repair-carrier.yml scripts/tmp_apply_p123_review_repair.py scripts/tmp_p123_review_repair_trigger.txt
+          git add registry/prompts/ai-engineering-level-up-prompts.v1.json tests/test_gemini_youtube_playlist_ingestion_prompt.py web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'fix(prompt-kit): address P123 review feedback'
+          git push origin HEAD:feat/gemini-youtube-ingestion-prompt-20260827
