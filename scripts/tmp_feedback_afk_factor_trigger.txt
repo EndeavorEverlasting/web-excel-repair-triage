@@ -1,2 +1,2 @@
 factor private Prompt Kit feedback AFK routing from fresh main
-retry=4 root reconciliation plus patch-hygiene normalization
+retry=5 trusted workflow mutation; carrier pushes non-workflow state only
