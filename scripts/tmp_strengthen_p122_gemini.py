@@ -1,0 +1,113 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+REGISTRY = Path("registry/prompts/ai-engineering-level-up-prompts.v1.json")
+
+
+def insert_before(text: str, anchor: str, marker: str, block: str) -> str:
+    if marker in text:
+        return text
+    if anchor not in text:
+        raise SystemExit(f"P122 insertion anchor missing: {anchor}")
+    return text.replace(anchor, block.rstrip() + "\n\n" + anchor, 1)
+
+
+def main() -> None:
+    payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    p122 = next((item for item in payload["prompts"] if item.get("id") == "P122"), None)
+    if p122 is None or p122.get("name") != "Gemini YouTube Playlist Ingestion Builder":
+        raise SystemExit("P122 canonical owner missing or mismatched")
+    if p122.get("seq") != "122" or p122.get("copySheet") != "P122_COPY_SAFE":
+        raise SystemExit("P122 helper-allocated identity mismatch")
+
+    text = p122["copyContent"]
+
+    text = insert_before(
+        text,
+        "JSON + CSV CONTRACT",
+        "IDENTITY / OCCURRENCE INVARIANTS",
+        """IDENTITY / OCCURRENCE INVARIANTS
+- A unique source/video entity represents stable video identity when a usable video ID is present. A playlist occurrence is ordered membership and references source identity; these are not the same record type.
+- A repeated video ID must not duplicate the canonical source entity merely because it appears again. Preserve every observed occurrence separately and preserve its order.
+- Normalize YouTube identity independently from share/tracking query parameters. A share/tracking parameter such as `si=` must not create a new video identity.
+- When explicit source URLs are supplied, emit a source-list census before implementation: input_occurrence_count, unique_video_count, repeated IDs with occurrence positions, and unparseable entries. Do not collapse repeated input occurrences.
+
+SOURCE-LIST REGRESSION EXAMPLE
+The supplied regression corpus contains 25 URL occurrences and 23 unique video IDs. `_CuibYl_Fh0` occurs twice and `bBdq2hf5R0I` occurs twice with different `si=` values. A correct normalization keeps 25 ordered occurrences, reuses 23 unique source identities, and does not let differing share parameters manufacture new source identities.""",
+    )
+
+    text = insert_before(
+        text,
+        "JSON + CSV CONTRACT",
+        "UNAVAILABLE / COMPLETENESS CONTRACT",
+        """UNAVAILABLE / COMPLETENESS CONTRACT
+- If extraction proves a playlist slot existed but the video is null, deleted, private, unavailable, or otherwise lacks a usable source entity, preserve an occurrence tombstone with the observed position/index and the strongest available availability/reason evidence. The occurrence count must not silently shrink because metadata is unavailable.
+- Record an explicit completeness state such as COMPLETE, PARTIAL, EMPTY_CONFIRMED, EMPTY_UNPROVEN, or FAILED. Do not label partial evidence complete.
+- Zero usable entries are not automatically a valid empty playlist. Write/certify a normal complete empty import only when extractor evidence proves genuine emptiness or an explicit operator override such as `--allow-empty` accepts the lower proof. Otherwise fail closed or emit clearly marked EMPTY_UNPROVEN/PARTIAL evidence.
+- Suspected truncation, malformed output, missing continuation evidence, or unavailable slots must remain visible in provenance/completeness rather than being silently normalized away.
+- Prefer extractor-supplied `playlist_index` or equivalent position when valid. Use encounter-order fallback only when no reliable extractor position exists, and record `position_source` so the fallback is auditable.""",
+    )
+
+    text = insert_before(
+        text,
+        "IMPLEMENTATION PACKET — PRODUCE ALL APPLICABLE FILES",
+        "DONOR EVIDENCE / VERSION CONTRACT",
+        """DONOR EVIDENCE / VERSION CONTRACT
+- Never invent a donor commit, release, version, date range, license conclusion, or runtime observation. When the dossier does not supply a value, record NOT_SUPPLIED or UNKNOWN rather than filling the gap with a plausible value.
+- Distinguish reference evidence from runtime evidence: a pinned donor/reference commit identifies implementation evidence studied; the observed runtime `yt-dlp --version` identifies the executable that actually performed a live extraction. Do not imply they are the same unless the runtime is genuinely pinned and proved.
+- Preserve supplied donor dispositions exactly as ADOPT / ADAPT / REFERENCE_ONLY / REJECT / DEFER. The implementation may propose a disposition change only when it cites new evidence and explains the change; it must not silently change a supplied donor disposition.
+- Version the normalized contract independently from adapter code. Record `normalization_schema_version` and `adapter_version` separately.
+- `donor_manifest.json` is a distinct machine-readable artifact containing donor repository identity, supplied pin/reference, license evidence/status, authority role, disposition, and runtime-evidence status. Do not substitute only an embedded provenance node when the packet requires the manifest.""",
+    )
+
+    text = insert_before(
+        text,
+        "MINIMUM DETERMINISTIC TESTS",
+        "RUNNABILITY GATE",
+        """RUNNABILITY GATE
+Before calling reference implementation code or tests complete, actually run the deterministic suite when execution is available; otherwise label it UNRUN and state exactly what was not executed. A code-looking response is not runtime proof.
+The standalone packet must self-check the mundane failures models often miss: import `subprocess` when tests reference it; create or validate the output directory; use an actual non-ASCII Unicode fixture; include an embedded quote plus commas and newlines in CSV fixtures; exercise all four formula prefixes; verify the UTF-8 BOM bytes for spreadsheet CSV; expose a fixture-mode CLI such as `--input-json`; use the same normalization/export path for fixture and live input; support a deterministic timestamp/clock override for stable fixtures; and prove the fixture-mode CLI writes both JSON and CSV plus the separate donor manifest. Every claimed deterministic test case must exist and be runnable.""",
+    )
+
+    text = insert_before(
+        text,
+        "LIVE-PROOF CEILING",
+        "BACKEND-NEUTRAL NORMALIZATION CONTRACT",
+        """BACKEND-NEUTRAL NORMALIZATION CONTRACT
+Raw extractor responses are backend-local adapter inputs and must not be the shared domain contract. The yt-dlp adapter normalizes yt-dlp-native output into the canonical source schema; a future YouTube Data API adapter normalizes API-native output into that same canonical source schema. The YouTube Data API adapter must not impersonate yt-dlp JSON merely to reuse a raw-shape normalizer. Canonical normalized source records are the shared boundary; JSON serialization and CSV projection consume that canonical boundary.""",
+    )
+
+    if "actual UTF-8 BOM bytes" not in text:
+        old = "Prefer UTF-8 with BOM (`utf-8-sig`) for spreadsheet-facing CSV unless the supplied consumer contract says otherwise."
+        if old not in text:
+            raise SystemExit("P122 UTF-8 BOM anchor missing")
+        text = text.replace(
+            old,
+            old + " The implementation and deterministic tests must verify the actual UTF-8 BOM bytes rather than merely naming the encoding.",
+            1,
+        )
+
+    if "PRE-MUTATION MISSION DECLARATION" not in text:
+        old = """REPOSITORY-CAPABLE HANDOFF
+End with one copy-paste handoff for an agent that DOES have access to the consumer repository. Include:
+- exact consumer/repository identity as supplied;"""
+        new = """REPOSITORY-CAPABLE HANDOFF
+End with one copy-paste handoff for an agent that DOES have access to the consumer repository.
+
+PRE-MUTATION MISSION DECLARATION
+Before modifying any tracked file, the repository-capable agent must declare the repository and branch/worktree, lane and mission, owned and forbidden scope, expected artifacts, validation order, proof ceiling, and mutation authority. Do not mutate tracked files until this declaration is complete.
+
+Then include:
+- exact consumer/repository identity as supplied;"""
+        if old not in text:
+            raise SystemExit("P122 handoff anchor missing")
+        text = text.replace(old, new, 1)
+
+    p122["copyContent"] = text
+    REGISTRY.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()
