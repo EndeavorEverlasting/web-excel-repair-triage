@@ -1,2 +1,2 @@
 factor private Prompt Kit feedback AFK routing from fresh main
-retry=2 idempotent portability marker preservation
+retry=3 reconcile root harness pinned registries and pre-push execution
