@@ -13,6 +13,7 @@ This file describes deterministic routing into repository skills and capabilitie
 | `skill-boundary-defect` | A skill is oversized, overlapping, ambiguous, prompt-only, or owns unrelated triggers. | `skill-factoring` | The boundary is healthy and the change is cosmetic only. |
 | `technician-needs-latest-prompt-kit` | A user needs to open/use the Prompt Kit in a browser, install it on a phone/tablet, launch the Windows stable local app, obtain a source snapshot, or create/update an editable checkout for edit/commit/push work. | `technician-prompt-kit-acquisition` | Destructive Git cleanup or credential automation is proposed; or an editable checkout update is unsafe because the checkout is dirty, divergent, non-main, or has the wrong origin. |
 | `prompt-kit-browser-proof-temp-path` | An operator supplies a `prompt-kit-browser-proof-*` path under OS Temp or asks to classify/remove detached Prompt Kit browser-proof scratch. | `prompt-kit-browser-proof-scratch-cleanup` | The real request is browser-site data/Favorites deletion, broad Temp cleanup, canonical-repo cleanup, or durable evidence deletion. |
+| `prompt-kit-actionable-feedback` | Accepted written feedback or a dislike has an unconsumed actionable Prompt Kit signal. | `prompt-kit-feedback-afk-routing` | The signal is like/usage-only, malformed/sensitive/already consumed, requires a second scheduler, or the only remaining gate is P105 promotion. |
 
 ## Prompt Kit acquisition routing rule
 
@@ -29,6 +30,10 @@ The focused owner is `harness/contracts/prompt-kit-cross-device-access.v1.json`.
 ## Browser-proof cleanup routing rule
 
 A `file:///.../Temp/prompt-kit-browser-proof-<hex>/web/prompt-kit/index.html` path routes to the cleanup capability only after filesystem classification. Preview first. Do not translate this trigger into browser localStorage/Favorites deletion or generic Temp cleanup.
+
+## Prompt Kit feedback AFK routing rule
+
+Explicit written feedback and dislikes may create one bounded P115 work request after validation and deduplication. Likes and usage are informational by default. The private bridge may sanitize and transport; it does not schedule or merge. A validated candidate leaves this capability and enters P105 / `pr-floor-integration`. No local infinite poller is authorized.
 
 ## Routing procedure
 

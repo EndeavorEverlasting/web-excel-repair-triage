@@ -1,2 +1,0 @@
-factor private Prompt Kit feedback AFK routing from fresh main
-retry=5 trusted workflow mutation; carrier pushes non-workflow state only

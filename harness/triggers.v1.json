@@ -135,6 +135,23 @@
         "request is unrelated to Prompt Kit layout",
         "browser geometry is claimed from static source assertions alone"
       ]
+    },
+    {
+      "id": "prompt-kit-actionable-feedback",
+      "capability_id": "prompt-kit-feedback-afk-routing",
+      "skill": ".ai/skills/prompt-kit-feedback-afk-routing/SKILL.md",
+      "workflow": "WORKFLOW.md#i-prompt-kit-feedback-afk-routing",
+      "conditions": [
+        "accepted Prompt Kit written feedback requires follow-through",
+        "accepted Prompt Kit dislike vote requires follow-through",
+        "a sanitized prompt-kit-feedback provider wakeup maps to an unconsumed local actionable signal"
+      ],
+      "forbidden_conditions": [
+        "signal is only a like or usage observation",
+        "signal is malformed, sensitive, unknown, or already consumed",
+        "the next action is only PR promotion or merge; route that gate to P105/pr-floor-integration",
+        "routing would require a second polling scheduler"
+      ]
     }
   ]
 }
