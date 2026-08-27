@@ -1,0 +1,334 @@
+name: Temporary Prompt Kit classification policy carrier
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-classification-hooks-20260827
+    paths:
+      - .github/workflows/temporary-classification-policy-carrier.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/prompt-kit-classification-hooks-20260827
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Apply classification policy and hooks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+          import json, re
+          from pathlib import Path
+
+          root = Path('.')
+          policy = {
+            'schema_version': 'prompt-classification/v1',
+            'policy_id': 'prompt-kit-lifecycle-sections-v1',
+            'fallback_section': 'Other',
+            'field_semantics': {
+              'identity': ['id', 'seq', 'name', 'copySheet'],
+              'library_family': ['category'],
+              'taxonomy': ['type'],
+              'descriptive_semantics': ['class'],
+              'routing_ownership': ['profile'],
+              'presentation': ['color', 'displayOrderPolicy'],
+              'discovery': ['keywords', 'useWhen', 'synonyms']
+            },
+            'sections': [
+              {'id':'foundation','name':'Foundation','glow':'#64748b','definition':'Workspace, teaching, harvest, and closure primitives that establish or preserve usable context.','types':['SETUP','HARVEST','CLOSEOUT','CLOSEOUT + VALIDATE','TEACH + PRACTICE','TEACH SETUP']},
+              {'id':'discover-plan','name':'Discover & Plan','glow':'#f59e0b','definition':'Read-oriented discovery, research, analysis, and design/prototype work that establishes what should be done before implementation.','types':['DISCOVERY + BUILD','PLAN','PORTFOLIO PLAN','TUTORIAL PLAN','CONSOLIDATE + EXECUTE','ANALYZE + DIRECTORY','ANALYZE + FACTOR','ANALYZE + TEST','LEVERAGE','DESIGN + PROTOTYPE','RESEARCH + EVIDENCE','RESEARCH + GAP']},
+              {'id':'build-repair','name':'Build & Repair','glow':'#22c55e','definition':'Creation, implementation, refactoring, refinement, or direct repair of product, harness, route, or architecture artifacts.','types':['BUILD','CLEANUP','REPAIR','REVIEW + REPAIR','REVIEW + BUILD','BUILD + FACTOR','BUILD + ARTIFACT','BUILD + BOOTSTRAP','BUILD + SAFETY','BUILD + HARDEN','BUILD + HARNESS','BUILD + ITERATE','BUILD + PRODUCT','BUILD + REFINE','BUILD + ROUTE','BUILD + VALIDATE','DESIGN + BUILD','EMULATE + BUILD','REFINE + POLISH','REPAIR + RECOVER','SYSTEM + FACTOR']},
+              {'id':'validate-protect','name':'Validate & Protect','glow':'#14b8a6','definition':'Audit, diagnosis, testing, certification, acceptance, grounding, regression, and protective enforcement whose closure is evidence about correctness or safety.','types':['VALIDATE','VALIDATE + CLOSE','SAFETY','RUNTIME PROOF','IMPROVE','AUDIT + REPAIR','CERTIFY + REPAIR','DIAGNOSE + REPAIR','HARDEN + ENFORCE','TEST + HARDEN','VERIFY + ADVANCE','VERIFY + FIELD','VERIFY + REGRESSION','VERIFY + REPAIR','VERIFY + UX ACCEPTANCE']},
+              {'id':'integrate-ship','name':'Integrate & Ship','glow':'#6366f1','definition':'Synchronization, maintenance, operations, deployment, environment mutation, integration, and verified movement of durable state across boundaries.','types':['INTEGRATE','INTEROP','MAINTENANCE','MAINTENANCE + BUILD','ENABLEMENT','ENABLEMENT + BUILD','OPERATE','OPPORTUNITY','COMPILE ONLY','INSTALL + ENFORCE','ENVIRONMENT + CONFIGURE','DEPLOY + VERIFY','EXECUTE + ORCHESTRATE','MAINTENANCE + CROSS-REPO','MAINTENANCE + FACTOR','MAINTENANCE + HARDEN','MAINTENANCE + HARNESS','MAINTENANCE + REGISTRY','MAP + VERIFY','MOVE + VERIFY','SYNC + ARTIFACT']},
+              {'id':'autonomy','name':'Autonomy & Night Shift','glow':'#7c3aed','definition':'Autonomous, continuous, unattended, monitoring, recovery, queue, or agent-loop execution whose control semantics differ from ordinary bounded work.','types':['AUTONOMY + VALIDATE','AUTONOMY + BUILD','AUTONOMY + PLAN','AUTONOMY + PREFLIGHT','AUTONOMY + QUEUE','RECOVER + BUILD','RECOVER + COMMIT','HARNESS + BUILD','HARNESS + EXECUTE','CURSOR + LIVE CERT','AUTONOMY + EXECUTE','EXECUTE + LOOP + INTEGRATE','MONITOR + HANDOFF','REPAIR + AUTONOMY']}
+            ]
+          }
+          policy_path = root/'registry/prompts/prompt-classification.v1.json'
+          policy_path.write_text(json.dumps(policy, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
+
+          module = '''#!/usr/bin/env python3
+          """Canonical Prompt Kit lifecycle classification policy and fail-closed hooks."""
+          from __future__ import annotations
+          import json
+          from pathlib import Path
+          from typing import Any
+
+          REPO_ROOT = Path(__file__).resolve().parents[1]
+          POLICY_PATH = REPO_ROOT / "registry" / "prompts" / "prompt-classification.v1.json"
+
+          def load_policy() -> dict[str, Any]:
+              payload = json.loads(POLICY_PATH.read_text(encoding="utf-8"))
+              if payload.get("schema_version") != "prompt-classification/v1":
+                  raise SystemExit(f"Unsupported prompt classification schema: {POLICY_PATH}")
+              sections = payload.get("sections")
+              if not isinstance(sections, list) or not sections:
+                  raise SystemExit("Prompt classification policy must define sections")
+              seen_names: set[str] = set()
+              seen_ids: set[str] = set()
+              memberships: dict[str, str] = {}
+              for section in sections:
+                  if not isinstance(section, dict):
+                      raise SystemExit("Prompt classification sections must be objects")
+                  for field in ("id", "name", "glow", "definition", "types"):
+                      if field not in section:
+                          raise SystemExit(f"Prompt classification section missing {field}")
+                  sid = str(section["id"]).strip()
+                  name = str(section["name"]).strip()
+                  if not sid or sid in seen_ids or not name or name in seen_names:
+                      raise SystemExit("Prompt classification section ids/names must be unique and non-empty")
+                  seen_ids.add(sid); seen_names.add(name)
+                  types = section["types"]
+                  if not isinstance(types, list) or not types:
+                      raise SystemExit(f"Prompt classification section {name} must define types")
+                  for value in types:
+                      prompt_type = str(value).strip()
+                      if not prompt_type:
+                          raise SystemExit(f"Prompt classification section {name} has an empty type")
+                      if prompt_type in memberships:
+                          raise SystemExit(f"Prompt type {prompt_type!r} maps to multiple lifecycle sections")
+                      memberships[prompt_type] = name
+              return payload
+
+          def type_to_section() -> dict[str, str]:
+              mapping: dict[str, str] = {}
+              for section in load_policy()["sections"]:
+                  for prompt_type in section["types"]:
+                      mapping[str(prompt_type).strip()] = str(section["name"]).strip()
+              return mapping
+
+          def site_sections() -> list[dict[str, Any]]:
+              return [
+                  {"name": str(section["name"]), "glow": str(section["glow"]), "types": list(section["types"])}
+                  for section in load_policy()["sections"]
+              ]
+
+          def require_known_prompt_type(prompt_type: str) -> str:
+              value = str(prompt_type).strip()
+              mapping = type_to_section()
+              if value not in mapping:
+                  raise SystemExit(
+                      f"Unclassified prompt type {value!r}; classify it in {POLICY_PATH.relative_to(REPO_ROOT)} before adding the prompt"
+                  )
+              return mapping[value]
+
+          def validate_prompt_classification(prompts: list[dict[str, Any]], label: str = "Prompt Kit") -> None:
+              mapping = type_to_section()
+              unmapped: dict[str, list[str]] = {}
+              for prompt in prompts:
+                  prompt_type = str(prompt.get("type", "")).strip()
+                  if prompt_type not in mapping:
+                      unmapped.setdefault(prompt_type or "<empty>", []).append(
+                          f"{prompt.get('id', '?')}:{prompt.get('name', '?')}"
+                      )
+              if unmapped:
+                  raise SystemExit(f"{label} contains prompt types without lifecycle classification: {unmapped}")
+
+          def classification_summary(prompts: list[dict[str, Any]]) -> dict[str, Any]:
+              validate_prompt_classification(prompts)
+              mapping = type_to_section()
+              counts = {section["name"]: 0 for section in load_policy()["sections"]}
+              used: set[str] = set()
+              for prompt in prompts:
+                  prompt_type = str(prompt["type"]).strip()
+                  used.add(prompt_type)
+                  counts[mapping[prompt_type]] += 1
+              return {
+                  "policy_id": load_policy()["policy_id"],
+                  "prompt_counts_by_section": counts,
+                  "unused_mapped_types": sorted(set(mapping) - used),
+              }
+          '''
+          import textwrap
+          (root/'scripts/prompt_classification.py').write_text(textwrap.dedent(module), encoding='utf-8')
+
+          path = root/'build_prompt_kit.py'
+          text = path.read_text(encoding='utf-8')
+          if 'from scripts.prompt_classification import site_sections' not in text:
+              text = text.replace('import sys\n', 'import sys\n\nfrom scripts.prompt_classification import site_sections\n', 1)
+          text, n = re.subn(r'SECTIONS = \[.*?\n\]\n\nSYNONYMS =', 'SECTIONS = site_sections()\n\nSYNONYMS =', text, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('failed to replace build_prompt_kit.SECTIONS owner')
+          path.write_text(text, encoding='utf-8')
+
+          path = root/'scripts/build_prompt_kit_registry.py'
+          text = path.read_text(encoding='utf-8')
+          if 'from scripts import prompt_classification' not in text:
+              text = text.replace('import build_prompt_kit  # noqa: E402\n', 'import build_prompt_kit  # noqa: E402\nfrom scripts import prompt_classification  # noqa: E402\n', 1)
+          text = text.replace('_validate_unique_prompt_identity(prompts, "operational")\n    actionability_policy', '_validate_unique_prompt_identity(prompts, "operational")\n    prompt_classification.validate_prompt_classification(prompts, "operational")\n    actionability_policy', 1)
+          text = text.replace('_validate_unique_prompt_identity(prompts, "content")\n    prepared:', '_validate_unique_prompt_identity(prompts, "content")\n    prompt_classification.validate_prompt_classification(prompts, "content")\n    prepared:', 1)
+          text = text.replace('_validate_unique_prompt_identity(prompts, "Prompt Kit")\n    annotated_prompts', '_validate_unique_prompt_identity(prompts, "Prompt Kit")\n    prompt_classification.validate_prompt_classification(prompts, "Prompt Kit")\n    annotated_prompts', 1)
+          path.write_text(text, encoding='utf-8')
+
+          path = root/'scripts/prompt_registry_ops.py'
+          text = path.read_text(encoding='utf-8')
+          needle = '    copy_content = str(draft["copyContent"]).strip()\n'
+          if 'registry.prompt_classification.require_known_prompt_type' not in text:
+              text = text.replace(needle, '    registry.prompt_classification.require_known_prompt_type(str(draft["type"]).strip())\n' + needle, 1)
+          old = '        "auto_fields": sorted(AUTO_FIELDS),\n    }'
+          new = '        "auto_fields": sorted(AUTO_FIELDS),\n        "classification": registry.prompt_classification.classification_summary(registry.load_prompt_kit_registry()),\n    }'
+          if old not in text:
+              raise SystemExit('prompt_registry_ops inspect anchor missing')
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+
+          # Strengthen P77 without changing identity/class/type.
+          path = root/'registry/prompts/management-operations-prompts.v1.json'
+          payload = json.loads(path.read_text(encoding='utf-8'))
+          p77 = next(p for p in payload['prompts'] if p['id'] == 'P77')
+          marker = 'DATASET -> COMPONENT -> CLIENT ARTIFACT HOOK CONTRACT'
+          block = '''\n\nDATASET -> COMPONENT -> CLIENT ARTIFACT HOOK CONTRACT\n- When an outward/client artifact depends on mutable dataset or application/provider state, maintain a per-claim dependency map: source dataset/field or evidence owner; current source identity/version; dependent app/provider component; outward artifact and exact field/section; transform/derivation; invalidation trigger; recheck action; and proof/status.\n- Treat dataset facts, application state, provider state, and client presentation as distinct representations. A source or component change invalidates downstream claims until they are re-derived and read back.\n- Preserve component-versus-complete-solution semantics. A healthy individual component must not be projected as whole-solution readiness unless every required dependency and completion gate is proven.\n- If both the source dataset and the outward artifact materially changed since common proof, mark CONFLICT and preserve both truths; timestamp recency is not a merge rule.\n- Implement deterministic hooks where the relation is provable: require source-to-artifact mappings, explicit component status, invalidation/recheck ownership, proof ceilings, and fail-closed stale-state handling.\n- Client-artifact writes remain governed by their actual authority. Do not turn Drive, a workbook, or a presentation into source control.''' 
+          if marker not in p77['copyContent']:
+              p77['copyContent'] = p77['copyContent'].rstrip() + block
+          for keyword in ['dataset artifact synchronization','client artifact state','application state synchronization','component state hooks','truth propagation hooks']:
+              if keyword not in p77['keywords']:
+                  p77['keywords'].append(keyword)
+          path.write_text(json.dumps(payload, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
+
+          # Filtering contract names the new executable classification boundary.
+          path = root/'harness/contracts/prompt-kit-filtering.v1.json'
+          contract = json.loads(path.read_text(encoding='utf-8'))
+          contract['surface']['classification_source'] = 'registry/prompts/prompt-classification.v1.json'
+          if not any(r.get('id') == 'exhaustive_lifecycle_type_mapping' for r in contract['requirements']):
+              contract['requirements'].insert(3, {
+                  'id':'exhaustive_lifecycle_type_mapping',
+                  'expected':'Every effective Prompt Kit type maps to exactly one declared lifecycle section; registry loading and prompt addition fail closed on an unmapped type instead of silently placing canonical prompts in Other.'
+              })
+          cmd = 'python scripts/prompt_registry_ops.py validate'
+          if cmd not in contract['validation']:
+              contract['validation'].append(cmd)
+          path.write_text(json.dumps(contract, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
+
+          # Replace prototype test with fixed policy/hook/boundary proof.
+          test = '''from __future__ import annotations
+
+          import unittest
+
+          import build_prompt_kit as prompt_site
+          from scripts import build_prompt_kit_registry as prompt_registry
+          from scripts import prompt_classification
+          from scripts import prompt_registry_ops
+
+          TARGET_ID = "P103"
+          TARGET_NAME = "Prompt Registry Classification Refiner"
+
+          class PromptClassificationRefinerPromptTests(unittest.TestCase):
+              @classmethod
+              def setUpClass(cls) -> None:
+                  cls.prompts = prompt_registry.load_prompt_kit_registry()
+                  matches = [prompt for prompt in cls.prompts if prompt.get("name") == TARGET_NAME]
+                  if len(matches) != 1:
+                      raise AssertionError(f"expected exactly one {TARGET_NAME!r}, found {len(matches)}")
+                  cls.prompt = matches[0]
+                  cls.copy = cls.prompt["copyContent"]
+
+              def test_identity_is_distinct_and_helper_allocated(self) -> None:
+                  self.assertEqual(TARGET_ID, self.prompt["id"])
+                  self.assertEqual("103", self.prompt["seq"])
+                  self.assertEqual("P103_COPY_SAFE", self.prompt["copySheet"])
+                  self.assertEqual("MAINTENANCE + HARNESS", self.prompt["type"])
+                  self.assertEqual("PROMPT KIT / CLASSIFICATION ARCHITECTURE", self.prompt["class"])
+                  self.assertEqual("spec-architecture", self.prompt["profile"])
+
+              def test_iteration_is_prototype_driven_and_mainline_convergent(self) -> None:
+                  for marker in (
+                      "BASELINE -> HYPOTHESIS -> SMALLEST PROTOTYPE -> REBUILD -> USE/FALSIFY -> HOOK -> MIGRATE NEXT SLICE -> REFRESH -> CONTINUE",
+                      "A prototype is evidence; it is not automatically the final taxonomy.",
+                      "SECOND-PASS FALSIFICATION", "CONVERGE TO MAIN", "prove containment of the integrated SHA",
+                  ):
+                      self.assertIn(marker, self.copy)
+
+              def test_hooks_are_created_from_proven_invariants_not_subjective_judgment(self) -> None:
+                  self.assertIn("IMPLEMENT HOOKS AS YOU LEARN THE RULES", self.copy)
+                  self.assertIn("Whenever an iteration establishes a deterministic invariant, enforce it immediately", self.copy)
+                  self.assertIn("Do not add a hook for subjective judgment that cannot be checked reliably.", self.copy)
+
+              def test_classification_does_not_conflate_identity_aliases_or_synonyms(self) -> None:
+                  self.assertIn("KEEP IDENTITY, TAXONOMY, PRESENTATION, AND DISCOVERY DISTINCT", self.copy)
+                  self.assertIn("Preserve canonical prompt IDs and useful prompt names", self.copy)
+                  self.assertIn("human aliases/display titles are presentation identity, not canonical taxonomy", self.copy)
+                  self.assertIn("keywords, triggers, and intent synonyms primarily serve discovery/routing", self.copy)
+
+              def test_classification_compares_behavior_and_closure_not_title_alone(self) -> None:
+                  self.assertIn("CLASSIFY BY BEHAVIOR AND CLOSURE, NOT TITLE ALONE", self.copy)
+                  for field in ("trigger", "mission", "owned scope", "expected output", "proof gate", "closure condition"):
+                      self.assertIn(field, self.copy.casefold())
+
+              def test_prompt_has_actionable_classification_keywords(self) -> None:
+                  keywords = {item.casefold() for item in self.prompt["keywords"]}
+                  for expected in ("prompt classification", "prompt taxonomy", "classification hooks", "classification prototype", "registry taxonomy"):
+                      self.assertIn(expected, keywords)
+
+              def test_generated_prompt_kit_exposes_helper_allocated_prompt(self) -> None:
+                  html = prompt_registry.render()
+                  self.assertIn(TARGET_ID, html)
+                  self.assertIn(TARGET_NAME, html)
+                  self.assertIn("PROMPT KIT / CLASSIFICATION ARCHITECTURE", html)
+
+              def test_every_effective_type_has_one_lifecycle_section(self) -> None:
+                  prompt_classification.validate_prompt_classification(self.prompts)
+                  self.assertEqual(prompt_site.SECTIONS, prompt_classification.site_sections())
+                  effective_types = {str(prompt["type"]).strip() for prompt in self.prompts}
+                  self.assertTrue(effective_types <= set(prompt_classification.type_to_section()))
+
+              def test_representative_boundary_prompts_land_in_behavioral_sections(self) -> None:
+                  expected = {
+                      "P77": "Integrate & Ship", "P79": "Integrate & Ship", "P83": "Validate & Protect",
+                      "P96": "Foundation", "P97": "Discover & Plan", "P103": "Integrate & Ship",
+                      "P115": "Autonomy & Night Shift", "P122": "Build & Repair",
+                  }
+                  by_id = {prompt["id"]: prompt for prompt in self.prompts}
+                  mapping = prompt_classification.type_to_section()
+                  for prompt_id, section in expected.items():
+                      self.assertEqual(section, mapping[by_id[prompt_id]["type"]], prompt_id)
+
+              def test_registry_helper_rejects_unclassified_new_type(self) -> None:
+                  draft = {
+                      "name":"Synthetic classification canary", "type":"UNMAPPED + TYPE", "class":"TEST / CANARY",
+                      "sprintRole":"test", "useWhen":"test", "inspectFirst":"test", "expectedOutput":"test",
+                      "nextStep":"test", "proofGate":"test", "copyContent":"x" * 301, "keywords":["classification canary"],
+                  }
+                  with self.assertRaisesRegex(SystemExit, "Unclassified prompt type"):
+                      prompt_registry_ops._validate_draft(draft)
+
+          if __name__ == "__main__":
+              unittest.main()
+          '''
+          (root/'tests/test_prompt_classification_refiner_prompt.py').write_text(textwrap.dedent(test), encoding='utf-8')
+
+          # Add workbook-driven P77 regression without rewriting its existing identity assertions.
+          path = root/'tests/test_management_operations_prompt_registry.py'
+          text = path.read_text(encoding='utf-8')
+          anchor = '    def test_generated_site_contains_management_prompts(self) -> None:\n'
+          if 'test_p77_dataset_component_client_artifact_hooks' not in text:
+              method = '''    def test_p77_dataset_component_client_artifact_hooks(self) -> None:\n        prompt = self.by_id["P77"]\n        copy = prompt["copyContent"]\n        for marker in (\n            "DATASET -> COMPONENT -> CLIENT ARTIFACT HOOK CONTRACT",\n            "per-claim dependency map",\n            "source or component change invalidates downstream claims",\n            "component-versus-complete-solution semantics",\n            "mark CONFLICT and preserve both truths",\n            "fail-closed stale-state handling",\n        ):\n            self.assertIn(marker, copy)\n        keywords = {item.casefold() for item in prompt["keywords"]}\n        for expected in (\n            "dataset artifact synchronization",\n            "client artifact state",\n            "application state synchronization",\n            "component state hooks",\n            "truth propagation hooks",\n        ):\n            self.assertIn(expected, keywords)\n\n'''
+              if anchor not in text:
+                  raise SystemExit('management test insertion anchor missing')
+              text = text.replace(anchor, method + anchor, 1)
+              path.write_text(text, encoding='utf-8')
+          PY
+
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python -m unittest tests.test_prompt_classification_refiner_prompt -v
+          python -m unittest tests.test_management_operations_prompt_registry -v
+          python -m unittest tests.test_prompt_kit_filtering_access -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          node --check docs/prompt-kit.js
+          git diff --check
+
+          git rm .github/workflows/temporary-classification-policy-carrier.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add build_prompt_kit.py scripts/build_prompt_kit_registry.py scripts/prompt_registry_ops.py scripts/prompt_classification.py registry/prompts/prompt-classification.v1.json registry/prompts/management-operations-prompts.v1.json tests/test_prompt_classification_refiner_prompt.py tests/test_management_operations_prompt_registry.py harness/contracts/prompt-kit-filtering.v1.json web/prompt-kit/index.html .github/workflows/temporary-classification-policy-carrier.yml
+          git commit -m 'feat(prompt-kit): enforce lifecycle classification hooks'
+          git push origin HEAD:feat/prompt-kit-classification-hooks-20260827
