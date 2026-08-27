@@ -93,8 +93,16 @@ new_discovery_mutation = '''    text = require_replace(text, marker, marker_new,
     )
     text = require_replace(
         text,
-        '            "slice(0,3)",\\n            "copyPrompt(",\\n',
-        '            "slice(0,2)",\\n            "resolvePromptFinderOutcome",\\n            "promptFinderRouteIsActionable",\\n            "ownerId:\'P79\'",\\n            "ownerId:\'P23\'",\\n            "copyPrompt(",\\n',
+        """            "slice(0,3)",
+            "copyPrompt(",
+""",
+        """            "slice(0,2)",
+            "resolvePromptFinderOutcome",
+            "promptFinderRouteIsActionable",
+            "ownerId:'P79'",
+            "ownerId:'P23'",
+            "copyPrompt(",
+""",
         "discovery retired weighted-primary assertion",
     )
     text = require_replace(
