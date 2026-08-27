@@ -30,6 +30,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main feat/p114-canary-network-20260826 feat/prompt-kit-outcome-tutorial-exec-context-20260826 --prune
