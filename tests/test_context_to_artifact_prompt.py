@@ -64,6 +64,9 @@ class ContextToArtifactPromptTests(unittest.TestCase):
             "CAPABILITY BOUNDARY — CHOOSE ONE MODE",
             "DOSSIER-ONLY REPOSITORY-CAPABLE HANDOFF",
             "UNKNOWN_REQUIRES_REPO_INSPECTION",
+            "complete standalone code/schemas/tests/examples",
+            "Never inflate proof",
+            "PROPOSED LOCATION — REQUIRES REPO-CAPABLE AGENT TO VERIFY",
         ):
             self.assertIn(marker, deployed)
 
