@@ -1,0 +1,247 @@
+name: Temporary Gemini YouTube Prompt Helper Carrier
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-gemini-youtube-builder
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event.issue.pull_request && github.event.issue.number == 316 && github.event.comment.body == '/build-gemini-youtube-prompt'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/gemini-youtube-ingestion-prompt-20260827
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Refresh exact branch and add prompt through canonical helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main feat/gemini-youtube-ingestion-prompt-20260827 --prune
+          test "$(git branch --show-current)" = 'feat/gemini-youtube-ingestion-prompt-20260827'
+          python scripts/prompt_registry_ops.py add \
+            --input .prompt-kit-work/gemini-youtube-playlist-ingestion.json \
+            --registry ai-engineering-level-up-prompts | tee /tmp/gemini-youtube-helper-receipt.json
+          cat /tmp/gemini-youtube-helper-receipt.json
+
+      - name: Add focused semantic regression and deterministic-floor registration
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+          import json
+          from pathlib import Path
+
+          receipt = json.loads(Path('/tmp/gemini-youtube-helper-receipt.json').read_text(encoding='utf-8'))
+          prompt_id = receipt['id']
+          test_path = Path('tests/test_gemini_youtube_playlist_ingestion_prompt.py')
+          test_path.write_text(f'''from __future__ import annotations
+
+import json
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+REGISTRY = ROOT / "registry" / "prompts" / "ai-engineering-level-up-prompts.v1.json"
+SITE = ROOT / "web" / "prompt-kit" / "index.html"
+EXPECTED_ID = "{prompt_id}"
+EXPECTED_NAME = "Gemini YouTube Playlist Ingestion Builder"
+
+
+class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
+        cls.prompt = next(item for item in payload["prompts"] if item["id"] == EXPECTED_ID)
+        cls.content = cls.prompt["copyContent"]
+
+    def test_helper_allocated_distinct_identity_and_role(self) -> None:
+        self.assertEqual(self.prompt["name"], EXPECTED_NAME)
+        self.assertEqual(self.prompt["class"], "AI ENGINEERING / YOUTUBE INGESTION")
+        self.assertIn("YouTube playlist", self.prompt["useWhen"])
+        self.assertIn("Gemini", self.prompt["useWhen"])
+        self.assertIn("standalone", self.prompt["expectedOutput"].lower())
+
+    def test_gemini_no_repo_access_boundary_is_operational(self) -> None:
+        for marker in (
+            "GEMINI CAPABILITY BOUNDARY",
+            "target repository is NOT accessible",
+            "PROPOSED LOCATION — REQUIRES REPO-CAPABLE AGENT TO VERIFY",
+            "SUPPLIED_CONTEXT",
+            "PROPOSED",
+            "UNKNOWN_REQUIRES_REPO_INSPECTION",
+            "MUST NOT fabricate a repository patch",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_yt_dlp_is_single_extraction_authority(self) -> None:
+        for marker in (
+            "yt-dlp owns YouTube extraction",
+            "do not reimplement YouTube HTML parsing",
+            "do not create two competing extraction authorities",
+            "runtime `yt-dlp --version`",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_windows_metadata_path_never_downloads_media(self) -> None:
+        for marker in (
+            "WINDOWS-FIRST EXTRACTION CONTRACT",
+            "--skip-download",
+            "--dump-single-json",
+            "--flat-playlist",
+            "--input-json",
+            "do not download media",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_normalization_preserves_order_repeats_and_json_authority(self) -> None:
+        for marker in (
+            "Repeated playlist entries are valid data",
+            "preserve every ordered playlist occurrence separately",
+            "normalized JSON is canonical",
+            "CSV is a projection",
+            "utf-8-sig",
+            "beginning with `=`, `+`, `-`, or `@`",
+            "canonical JSON must remain unchanged",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_donor_license_and_standalone_packet_boundaries(self) -> None:
+        for marker in (
+            "TubeArchivist and NewPipeExtractor",
+            "do not copy GPL implementation code",
+            "source_ingest_youtube.py",
+            "source_import_contract.json",
+            "youtube_playlist_fixture.json",
+            "test_youtube_source_ingestion.py",
+            "donor_manifest.json",
+            "Do not import from hypothetical consumer-repository modules",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_fixture_tests_and_live_proof_ceiling_are_explicit(self) -> None:
+        for marker in (
+            "MINIMUM DETERMINISTIC TESTS",
+            "repeated video ID preserves multiple ordered occurrences",
+            "spreadsheet-safe while JSON remains",
+            "fixture-mode CLI writes both JSON and CSV deterministically",
+            "LIVE-PROOF CEILING",
+            "do NOT prove current YouTube behavior",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_repo_capable_handoff_is_complete_and_does_not_make_operator_context_courier(self) -> None:
+        for marker in (
+            "REPOSITORY-CAPABLE HANDOFF",
+            "yt-dlp owns YouTube parsing, consumer owns normalization/schema/tests/exports",
+            "find the existing source/import/domain owners",
+            "Do not make the operator restate the donor research",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_generated_site_contains_new_prompt_and_key_semantics(self) -> None:
+        deployed = SITE.read_text(encoding="utf-8")
+        for marker in (
+            EXPECTED_ID,
+            EXPECTED_NAME,
+            "GEMINI CAPABILITY BOUNDARY",
+            "yt-dlp owns YouTube extraction",
+            "Repeated playlist entries are valid data",
+            "REPOSITORY-CAPABLE HANDOFF",
+        ):
+            self.assertIn(marker, deployed)
+
+    def test_prompt_remains_distinct_from_generic_p56(self) -> None:
+        base = json.loads((ROOT / "docs" / "prompts.json").read_text(encoding="utf-8"))
+        p56 = next(item for item in base if item["id"] == "P56")
+        self.assertEqual(p56["name"], "Context-to-Artifact Generator")
+        self.assertNotIn("yt-dlp owns YouTube extraction", p56["copyContent"])
+        self.assertNotEqual(p56["useWhen"], self.prompt["useWhen"])
+
+
+if __name__ == "__main__":
+    unittest.main()
+''', encoding='utf-8')
+
+          manifest_path = Path('harness/test-floor.v1.json')
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          rel = 'tests/test_gemini_youtube_playlist_ingestion_prompt.py'
+          if rel not in manifest['self_tests']:
+              manifest['self_tests'].append(rel)
+              manifest['self_tests'] = [manifest['self_tests'][0], *sorted(manifest['self_tests'][1:])]
+          manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+      - name: Focused proof and whole-chat pass two
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_gemini_youtube_playlist_ingestion_prompt -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          registry = json.loads(Path('registry/prompts/ai-engineering-level-up-prompts.v1.json').read_text(encoding='utf-8'))
+          prompt = next(p for p in registry['prompts'] if p['name'] == 'Gemini YouTube Playlist Ingestion Builder')
+          text = prompt['copyContent']
+          required = [
+              'verified donor dossier',
+              'GEMINI CAPABILITY BOUNDARY',
+              'yt-dlp owns YouTube extraction',
+              'WINDOWS-FIRST EXTRACTION CONTRACT',
+              'Repeated playlist entries are valid data',
+              'normalized JSON is canonical',
+              'utf-8-sig',
+              'do not copy GPL implementation code',
+              'MINIMUM DETERMINISTIC TESTS',
+              'LIVE-PROOF CEILING',
+              'REPOSITORY-CAPABLE HANDOFF',
+          ]
+          missing = [marker for marker in required if marker not in text]
+          if missing:
+              raise SystemExit(f'Gemini YouTube pass-two missing: {missing}')
+          base = json.loads(Path('docs/prompts.json').read_text(encoding='utf-8'))
+          p56 = next(p for p in base if p['id'] == 'P56')
+          if p56['name'] != 'Context-to-Artifact Generator':
+              raise SystemExit('P56 identity drifted')
+          p100 = next(p for p in registry['prompts'] if p['id'] == 'P100')
+          p101 = next(p for p in registry['prompts'] if p['id'] == 'P101')
+          if p100['name'] != 'Factuality vs Faithfulness Hallucination Diagnoser':
+              raise SystemExit('P100 identity drifted')
+          if p101['name'] != 'Grounded Agent Output & Tool-Call Gate':
+              raise SystemExit('P101 identity drifted')
+          if 'StudySyndicate' in text:
+              raise SystemExit('Reusable prompt leaked one consumer repository name')
+          print('Gemini YouTube whole-chat pass-two semantic falsification PASS')
+          PY
+          git diff --check
+
+      - name: Commit durable helper result and remove semantic draft
+        shell: bash
+        env:
+          BRANCH: feat/gemini-youtube-ingestion-prompt-20260827
+        run: |
+          set -euo pipefail
+          rm -rf .prompt-kit-work
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add registry/prompts/ai-engineering-level-up-prompts.v1.json web/prompt-kit/index.html tests/test_gemini_youtube_playlist_ingestion_prompt.py harness/test-floor.v1.json .prompt-kit-work
+          git diff --cached --check
+          git commit -m 'feat(prompt-kit): add Gemini YouTube ingestion builder'
+          git push origin "HEAD:${BRANCH}"
