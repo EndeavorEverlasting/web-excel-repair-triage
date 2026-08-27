@@ -39,6 +39,7 @@ jobs:
           git merge --no-edit origin/main
           python scripts/tmp_factor_feedback_afk_harness.py
           python scripts/tmp_fix_feedback_afk_workflow.py
+          python scripts/tmp_reconcile_feedback_afk_root_harness.py
           python scripts/validate_prompt_kit_feedback_afk_routing.py --summary
           python -m unittest tests.test_prompt_kit_feedback_afk_routing tests.test_prompt_kit_feedback_production -v
           python -m unittest tests.test_prompt_kit_portability tests.test_prompt_kit_portability_regressions tests.test_prompt_kit_portable_health -v
@@ -46,11 +47,11 @@ jobs:
           python -m unittest tests.test_harness_contract -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
-          git rm -f .github/workflows/tmp-feedback-afk-factor-carrier.yml scripts/tmp_factor_feedback_afk_harness.py scripts/tmp_fix_feedback_afk_workflow.py scripts/tmp_feedback_afk_factor_trigger.txt
+          git rm -f .github/workflows/tmp-feedback-afk-factor-carrier.yml scripts/tmp_factor_feedback_afk_harness.py scripts/tmp_fix_feedback_afk_workflow.py scripts/tmp_reconcile_feedback_afk_root_harness.py scripts/tmp_feedback_afk_factor_trigger.txt
           git add .ai/skills/prompt-kit-feedback-afk-routing/SKILL.md CAPABILITIES.md SKILLS.md TRIGGERS.md WORKFLOW.md \
-            .github/workflows/prompt-kit-web.yml harness/contracts/prompt-kit-feedback-afk-routing.v1.json \
+            .githooks/pre-push .github/workflows/prompt-kit-web.yml harness/contracts/prompt-kit-feedback-afk-routing.v1.json \
             harness/capabilities.v1.json harness/triggers.v1.json harness/workflows.v1.json harness/validators.v1.json harness/manifest.v1.json \
-            scripts/prompt_kit_afk_signal_router.py scripts/validate_prompt_kit_feedback_afk_routing.py tests/test_prompt_kit_feedback_afk_routing.py
+            scripts/prompt_kit_afk_signal_router.py scripts/validate_harness.py scripts/validate_prompt_kit_feedback_afk_routing.py tests/test_prompt_kit_feedback_afk_routing.py
           git diff --cached --check
           git commit -m 'refactor(prompt-kit): factor private feedback AFK routing'
           git push origin HEAD:refactor/prompt-kit-private-afk-feedback-factor-20260827
