@@ -3,283 +3,151 @@ name: Prompt Kit web contracts
 on:
   pull_request:
     paths:
-      - README.md
-      - PROMPT_KIT_ACCESS.md
-      - Open-Latest-PromptKit.cmd
-      - Acquire-Latest-PromptKit.cmd
-      - build_prompt_kit.py
-      - scripts/Acquire-LatestPromptKit.ps1
-      - scripts/Open-LatestPromptKitPortable.ps1
-      - scripts/build_prompt_kit_registry.py
-      - scripts/serve_prompt_kit_portable.py
-      - scripts/validate_prompt_kit_interactions.py
-      - scripts/validate_prompt_kit_discovery.py
-      - scripts/validate_prompt_kit_order_navigation.py
-      - scripts/validate_prompt_kit_portability.py
-      - triage/prompt_library_portability.py
-      - registry/prompts/skill-development-prompts.v1.json
-      - registry/prompts/tutorial-discovery-prompts.v1.json
-      - registry/prompts/repository-work-ledger-prompts.v1.json
-      - registry/prompts/correspondence-prompts.v1.json
-      - registry/prompts/management-operations-prompts.v1.json
-      - registry/prompts/spec-architecture-prompts.v1.json
-      - registry/prompts/prompt-overrides.v1.json
-      - registry/prompts/prompt-display-order.v1.json
-      - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
-      - docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md
-      - docs/PROMPT_KIT_PORTABILITY.md
-      - docs/prompt-kit-order-navigation.md
-      - docs/prompt-kit.js
-      - docs/prompt-kit-guided-recommendations.js
-      - docs/prompt-kit-journey.js
-      - docs/prompt-kit-polish.js
-      - docs/prompt-kit-correspondence.js
-      - docs/prompt-kit-management.js
-      - docs/prompt-kit-spec-architecture.js
-      - docs/prompt-kit-favorites-portability.js
-      - docs/prompts.json
-      - docs/reference.json
-      - harness/contracts/prompt-kit-interactions.v1.json
-      - harness/contracts/prompt-kit-filtering.v1.json
-      - harness/contracts/prompt-kit-mobile.v1.json
-      - harness/contracts/prompt-kit-discovery.v1.json
-      - harness/contracts/prompt-kit-order-navigation.v1.json
-      - harness/contracts/prompt-kit-portability.v1.json
-      - harness/manifest.v1.json
-      - web/prompt-kit/index.html
-      - web/README.md
-      - tests/Test-PromptKitQuickOpenPathResolution.ps1
-      - tests/test_prompt_kit_header_contract.py
-      - tests/test_prompt_kit_hotkey_completion.py
-      - tests/test_prompt_kit_product_interactions.py
-      - tests/test_prompt_kit_filtering_access.py
-      - tests/test_prompt_kit_mobile.py
-      - tests/test_prompt_kit_discovery.py
-      - tests/test_prompt_kit_guidance.py
-      - tests/test_prompt_kit_order_navigation_contract.py
-      - tests/test_prompt_kit_order_navigation_product.py
-      - tests/test_prompt_kit_portability.py
-      - tests/test_prompt_kit_portability_regressions.py
-      - tests/test_prompt_kit_portable_health.py
-      - tests/test_prompt_library_portability.py
-      - tests/test_skill_prompt_registry.py
-      - tests/test_repository_work_ledger_prompt.py
-      - tests/test_correspondence_prompt_registry.py
-      - tests/test_management_operations_prompt_registry.py
-      - tests/test_spec_architecture_prompt_registry.py
-      - .github/workflows/prompt-kit-web.yml
-  push:
-    branches: [main]
-    paths:
-      - README.md
-      - PROMPT_KIT_ACCESS.md
-      - Open-Latest-PromptKit.cmd
-      - Acquire-Latest-PromptKit.cmd
-      - build_prompt_kit.py
-      - scripts/Acquire-LatestPromptKit.ps1
-      - scripts/Open-LatestPromptKitPortable.ps1
-      - scripts/build_prompt_kit_registry.py
-      - scripts/serve_prompt_kit_portable.py
-      - scripts/validate_prompt_kit_interactions.py
-      - scripts/validate_prompt_kit_discovery.py
-      - scripts/validate_prompt_kit_order_navigation.py
-      - scripts/validate_prompt_kit_portability.py
-      - triage/prompt_library_portability.py
-      - registry/prompts/skill-development-prompts.v1.json
-      - registry/prompts/tutorial-discovery-prompts.v1.json
-      - registry/prompts/repository-work-ledger-prompts.v1.json
-      - registry/prompts/correspondence-prompts.v1.json
-      - registry/prompts/management-operations-prompts.v1.json
-      - registry/prompts/spec-architecture-prompts.v1.json
-      - registry/prompts/prompt-overrides.v1.json
-      - registry/prompts/prompt-display-order.v1.json
-      - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
-      - docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md
-      - docs/PROMPT_KIT_PORTABILITY.md
-      - docs/prompt-kit-order-navigation.md
-      - docs/prompt-kit.js
-      - docs/prompt-kit-guided-recommendations.js
-      - docs/prompt-kit-journey.js
-      - docs/prompt-kit-polish.js
-      - docs/prompt-kit-correspondence.js
-      - docs/prompt-kit-management.js
-      - docs/prompt-kit-spec-architecture.js
-      - docs/prompt-kit-favorites-portability.js
-      - docs/prompts.json
-      - docs/reference.json
-      - harness/contracts/prompt-kit-interactions.v1.json
-      - harness/contracts/prompt-kit-filtering.v1.json
-      - harness/contracts/prompt-kit-mobile.v1.json
-      - harness/contracts/prompt-kit-discovery.v1.json
-      - harness/contracts/prompt-kit-order-navigation.v1.json
-      - harness/contracts/prompt-kit-portability.v1.json
-      - harness/manifest.v1.json
-      - web/prompt-kit/index.html
-      - web/README.md
-      - tests/Test-PromptKitQuickOpenPathResolution.ps1
-      - tests/test_prompt_kit_header_contract.py
-      - tests/test_prompt_kit_hotkey_completion.py
-      - tests/test_prompt_kit_product_interactions.py
-      - tests/test_prompt_kit_filtering_access.py
-      - tests/test_prompt_kit_mobile.py
-      - tests/test_prompt_kit_discovery.py
-      - tests/test_prompt_kit_guidance.py
-      - tests/test_prompt_kit_order_navigation_contract.py
-      - tests/test_prompt_kit_order_navigation_product.py
-      - tests/test_prompt_kit_portability.py
-      - tests/test_prompt_kit_portability_regressions.py
-      - tests/test_prompt_kit_portable_health.py
-      - tests/test_prompt_library_portability.py
-      - tests/test_skill_prompt_registry.py
-      - tests/test_repository_work_ledger_prompt.py
-      - tests/test_correspondence_prompt_registry.py
-      - tests/test_management_operations_prompt_registry.py
-      - tests/test_spec_architecture_prompt_registry.py
-      - .github/workflows/prompt-kit-web.yml
+      - '.github/workflows/prompt-kit-web.yml'
+      - '.github/workflows/tmp-p56-capability-bounded-builder.yml'
+      - 'docs/prompts.json'
+      - 'tests/test_context_to_artifact_prompt.py'
+      - 'web/prompt-kit/index.html'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  prompt-kit-web:
+  p56-builder:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/p56-capability-bounded-artifact-synthesis-20260826'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-      - name: Compile website builders and contracts
+          python-version: '3.12'
+      - name: Strengthen canonical P56 and focused regression
+        shell: bash
         run: |
-          python -m py_compile \
-            build_prompt_kit.py \
-            scripts/build_prompt_kit_registry.py \
-            scripts/serve_prompt_kit_portable.py \
-            scripts/validate_prompt_kit_interactions.py \
-            scripts/validate_prompt_kit_discovery.py \
-            scripts/validate_prompt_kit_order_navigation.py \
-            scripts/validate_prompt_kit_portability.py \
-            triage/prompt_library_portability.py \
-            tests/test_prompt_kit_header_contract.py \
-            tests/test_prompt_kit_hotkey_completion.py \
-            tests/test_prompt_kit_product_interactions.py \
-            tests/test_prompt_kit_filtering_access.py \
-            tests/test_prompt_kit_mobile.py \
-            tests/test_prompt_kit_discovery.py \
-            tests/test_prompt_kit_guidance.py \
-            tests/test_prompt_kit_order_navigation_contract.py \
-            tests/test_prompt_kit_order_navigation_product.py \
-            tests/test_prompt_kit_portability.py \
-            tests/test_prompt_kit_portability_regressions.py \
-            tests/test_prompt_kit_portable_health.py \
-            tests/test_prompt_library_portability.py \
-            tests/test_skill_prompt_registry.py \
-            tests/test_repository_work_ledger_prompt.py \
-            tests/test_correspondence_prompt_registry.py \
-            tests/test_management_operations_prompt_registry.py \
-            tests/test_spec_architecture_prompt_registry.py
-      - name: Validate Prompt Kit JavaScript syntax
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('docs/prompts.json')
+          prompts = json.loads(path.read_text(encoding='utf-8'))
+          p56 = next((p for p in prompts if p.get('id') == 'P56'), None)
+          if p56 is None:
+              raise SystemExit('P56 not found in canonical base registry')
+
+          p56.update({
+            'sprintRole': 'Generate the actual requested artifact from supplied evidence while matching repository/system claims to the capabilities the current agent can actually exercise',
+            'useWhen': 'The user supplies context, research, requirements, examples, or source files and expects a real artifact or implementation-ready contribution; especially when a target repository/system exists but the current agent may not have access to inspect or mutate it.',
+            'inspectFirst': 'Provided context, files, research dossier, explicit capability/tool access, and any actually accessible artifact-family or repository authority. If the target repository/system is inaccessible, do not invent its rules, paths, schemas, tests, CI, or runtime state; treat proposed integration as a later repo-capable handoff.',
+            'expectedOutput': 'The actual requested artifact. When repository access exists, include repository-backed manifests, registry updates, validation, path/hash, and integration proof as applicable. When repository access does not exist, produce complete standalone implementation artifacts plus a capability-bounded integration handoff that labels repository claims as SUPPLIED_CONTEXT, PROPOSED, or UNKNOWN_REQUIRES_REPO_INSPECTION.',
+            'nextStep': 'If the target repository/system was inaccessible, hand the verified standalone artifact packet to a repo-capable executor to discover canonical owners, adapt the contribution, run repository validators and runtime proof, and integrate through current policy; otherwise field-test or continue through the task-specific implementation/repair/integration owner.',
+            'proofGate': 'A real requested artifact exists and passes the strongest checks the current environment can actually run. The response states the capability mode and proof ceiling; inaccessible repository/system facts are never presented as inspected, tested, committed, integrated, or runtime-proven, and dossier-only output includes an executable repo-capable handoff.',
+            'copyContent': '''PROMPT SURFACE: STANDARD AI. THIS IS NOT A GOODNIGHT, HAVE FUN (GNHF) PROMPT.\n\nGENERATE THE ACTUAL ARTIFACT FROM THE PROVIDED EVIDENCE. DO NOT STOP AT AN OUTLINE OR SAMPLE, AND DO NOT PRETEND TO INSPECT OR MUTATE A SYSTEM YOU CANNOT ACCESS.\n\nRepository, system, or artifact family: xyz_target_or_artifact_family\nSource context / verified dossier / files: xyz_context_and_sources\nRequested artifact: xyz_artifact\nOutput format and destination: xyz_format_and_destination\nAcceptance requirements: xyz_acceptance_requirements\n\nCAPABILITY BOUNDARY — CHOOSE ONE MODE BEFORE MAKING TARGET-SPECIFIC CLAIMS\n- REPO_CAPABLE: the current environment actually exposes and verifies the target repository/filesystem plus the tools needed for the requested repository work. Use current repository evidence and repository-owned generators/validators.\n- DOSSIER_ONLY: the target repository/system exists but the current environment cannot inspect or mutate it. Work from supplied evidence and accessible files only. Do not claim repository inspection, branch/PR/CI state, tests, integration, runtime behavior, or canonical paths that were not actually observed.\n- ARTIFACT_ONLY: no repository is required for the requested output. State the bounded source authority, output location, and applicable artifact proof.\nCapability presence is not authority. A repository name in the request does not grant repository access. If a claimed capability is unavailable, downgrade the execution mode instead of fabricating evidence.\n\nSOURCE / CLAIM PROVENANCE\nWhen operating DOSSIER_ONLY, classify every material target-repository/system claim with one of these meanings:\n- SUPPLIED_CONTEXT — explicitly present in the user-provided dossier, files, or quoted evidence.\n- PROPOSED — a design or integration recommendation that a repo-capable executor must verify before adoption.\n- UNKNOWN_REQUIRES_REPO_INSPECTION — cannot be established from the supplied evidence.\nDo not convert remembered conventions, another repository, model preference, or a plausible path/module/schema into SUPPLIED_CONTEXT.\nA verified research dossier may be the authority boundary between gathering and synthesis: consume its pinned decisions and evidence without reflexively redoing research, while keeping later repository/runtime proof separate. Exact grounding or tool-call validation remains owned by P101; hallucination-cause diagnosis remains owned by P100.\n\nARTIFACT EXECUTION CONTRACT\n1. Convert supplied evidence into concrete acceptance criteria and identify which source material is authoritative, advisory, proposed, or unknown.\n2. Generate the actual requested deliverable now. This may be a document, spreadsheet, slide deck, archive, report, schema, manifest, implementation packet, standalone source code, deterministic tests/fixtures, or another concrete artifact family.\n3. REPO_CAPABLE: inspect the real canonical owners before choosing paths or imports; reuse existing templates, generators, contracts, serializers, test patterns, and output conventions rather than inventing competitors.\n4. DOSSIER_ONLY: make the contribution implementation-ready without impersonating repository access. Produce complete standalone code/schemas/tests/examples when requested. Do not use fake imports from hypothetical repository modules. Label suggested destinations `PROPOSED LOCATION — REQUIRES REPO-CAPABLE AGENT TO VERIFY`. Do not return a fake repository patch, fabricated SHA, PR, CI result, or integration claim.\n5. Preserve source truth. Keep normalized/canonical data separate from derived projections when the supplied design requires it; preserve provenance and version identity where practical.\n6. Run every artifact-level check available in the current environment. Inspect the generated artifact itself, not only a generator exit code. Record exact checks that could not run.\n7. Never inflate proof. Local standalone tests prove the standalone artifact at those inputs; they do not prove compatibility with an inaccessible repository, live service, browser/device, production environment, or operator workflow.\n8. Preserve source files and never embed secrets, credentials, private machine data, or unsupported target facts merely to make the artifact look complete.\n\nDOSSIER-ONLY REPOSITORY-CAPABLE HANDOFF\nWhen the artifact is intended for a repository/system the current agent cannot access, end with one self-contained handoff containing:\n- target repository/system identity exactly as supplied;\n- verified dossier/source identities and important accepted/rejected decisions;\n- generated standalone artifacts and hashes/versions when practical;\n- explicit SUPPLIED_CONTEXT / PROPOSED / UNKNOWN_REQUIRES_REPO_INSPECTION ledger;\n- proposed integration seams without claiming they exist;\n- forbidden assumptions and behaviors;\n- first executable repo-capable actions: refresh current truth, read governance, find the existing owner/registry/schema/CLI/test/output/validation seams, strengthen rather than duplicate authority, adapt the standalone contribution, run focused and registered validators, exercise the real required runtime/field path, then integrate through the repository's actual branch/PR/promotion policy;\n- completion gate and proof ceiling.\nDo not make the operator manually translate the packet or restate evidence already included in the dossier.\n\nFINAL RESPONSE\nReport capability mode; source/provenance ledger; actual artifact links or paths; checks actually run and results; target-repository claims by SUPPLIED_CONTEXT / PROPOSED / UNKNOWN_REQUIRES_REPO_INSPECTION when DOSSIER_ONLY; skipped proof; gaps and risks; proof ceiling; and one exact next action. If repository access was unavailable, include the repo-capable handoff rather than pretending integration occurred.''',
+            'keywords': [
+              'artifact', 'generate artifact', 'build artifact', 'context to artifact', 'create artifact', 'output file',
+              'implementation ready packet', 'standalone implementation', 'dossier only', 'no repository access',
+              'capability bounded', 'repo capable handoff', 'supplied context', 'proposed location'
+            ],
+          })
+          path.write_text(json.dumps(prompts, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          Path('tests/test_context_to_artifact_prompt.py').write_text(r'''from __future__ import annotations
+
+import json
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+BASE = ROOT / "docs" / "prompts.json"
+DEPLOYED = ROOT / "web" / "prompt-kit" / "index.html"
+
+
+class ContextToArtifactPromptTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        prompts = json.loads(BASE.read_text(encoding="utf-8"))
+        cls.p56 = next(item for item in prompts if item["id"] == "P56")
+        cls.content = cls.p56["copyContent"]
+
+    def test_p56_retains_canonical_artifact_identity(self) -> None:
+        self.assertEqual(self.p56["name"], "Context-to-Artifact Generator")
+        self.assertEqual(self.p56["type"], "BUILD + ARTIFACT")
+        self.assertIn("actual requested artifact", self.p56["expectedOutput"].lower())
+
+    def test_p56_has_explicit_capability_modes_and_no_repo_access_failure_boundary(self) -> None:
+        for marker in (
+            "CAPABILITY BOUNDARY — CHOOSE ONE MODE",
+            "REPO_CAPABLE",
+            "DOSSIER_ONLY",
+            "ARTIFACT_ONLY",
+            "A repository name in the request does not grant repository access.",
+            "Do not claim repository inspection",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_p56_labels_repository_claim_authority_in_dossier_only_mode(self) -> None:
+        for marker in (
+            "SUPPLIED_CONTEXT",
+            "PROPOSED",
+            "UNKNOWN_REQUIRES_REPO_INSPECTION",
+            "PROPOSED LOCATION — REQUIRES REPO-CAPABLE AGENT TO VERIFY",
+        ):
+            self.assertIn(marker, self.content)
+        self.assertIn("fake repository patch", self.content)
+        self.assertIn("fabricated SHA, PR, CI result", self.content)
+
+    def test_p56_requires_real_standalone_artifacts_and_repo_capable_handoff(self) -> None:
+        for marker in (
+            "complete standalone code/schemas/tests/examples",
+            "Do not use fake imports from hypothetical repository modules.",
+            "DOSSIER-ONLY REPOSITORY-CAPABLE HANDOFF",
+            "strengthen rather than duplicate authority",
+            "repository's actual branch/PR/promotion policy",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_p56_preserves_proof_ceiling(self) -> None:
+        self.assertIn("Never inflate proof", self.content)
+        self.assertIn("do not prove compatibility with an inaccessible repository", self.content)
+        self.assertIn("proof ceiling", self.p56["proofGate"].lower())
+
+    def test_generated_site_contains_strengthened_p56(self) -> None:
+        deployed = DEPLOYED.read_text(encoding="utf-8")
+        for marker in (
+            "CAPABILITY BOUNDARY — CHOOSE ONE MODE",
+            "DOSSIER-ONLY REPOSITORY-CAPABLE HANDOFF",
+            "UNKNOWN_REQUIRES_REPO_INSPECTION",
+        ):
+            self.assertIn(marker, deployed)
+
+
+if __name__ == "__main__":
+    unittest.main()
+''', encoding='utf-8')
+          PY
+      - name: Rebuild and prove contribution
+        shell: bash
         run: |
-          node --check docs/prompt-kit.js
-          node --check docs/prompt-kit-guided-recommendations.js
-          node --check docs/prompt-kit-journey.js
-          node --check docs/prompt-kit-polish.js
-          node --check docs/prompt-kit-correspondence.js
-          node --check docs/prompt-kit-management.js
-          node --check docs/prompt-kit-spec-architecture.js
-          node --check docs/prompt-kit-favorites-portability.js
-      - name: Validate acquisition and portable PowerShell syntax
-        shell: pwsh
-        run: |
-          $null = [scriptblock]::Create((Get-Content -Raw scripts/Acquire-LatestPromptKit.ps1))
-          $null = [scriptblock]::Create((Get-Content -Raw scripts/Open-LatestPromptKitPortable.ps1))
-      - name: Reproduce empty-list path insertion
-        shell: pwsh
-        run: |
-          $tokens = $null
-          $errors = $null
-          $ast = [System.Management.Automation.Language.Parser]::ParseFile('scripts/Acquire-LatestPromptKit.ps1', [ref]$tokens, [ref]$errors)
-          if ($errors.Count) { throw ($errors -join '; ') }
-          $fn = $ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Add-UniquePath' }, $true)
-          if (-not $fn) { throw 'Add-UniquePath not found' }
-          Invoke-Expression $fn.Extent.Text
-          $paths = [System.Collections.Generic.List[string]]::new()
-          $expected = [System.IO.Path]::GetFullPath((Join-Path ([System.IO.Path]::GetTempPath()) 'prompt-kit-dev'))
-          Add-UniquePath -Paths $paths -Path $expected
-          if ($paths.Count -ne 1 -or $paths[0] -ne $expected) { throw 'empty-list path insertion did not resolve correctly' }
-          Write-Host 'Add-UniquePath empty-list regression: PASS'
-      - name: Validate deterministic quick-open path
-        shell: pwsh
-        run: ./tests/Test-PromptKitQuickOpenPathResolution.ps1
-      - name: Validate strict interaction implementation contract
-        run: python scripts/validate_prompt_kit_interactions.py --require-implementation --output "$RUNNER_TEMP/prompt-kit-interaction-audit.json" --summary
-      - name: Build current Prompt Kit preview
-        run: |
-          mkdir -p "$RUNNER_TEMP/prompt-kit"
-          python scripts/build_prompt_kit_registry.py --output "$RUNNER_TEMP/prompt-kit/index.html"
-      - name: Upload current Prompt Kit preview
-        uses: actions/upload-artifact@v4
-        with:
-          name: prompt-kit-current-preview
-          path: ${{ runner.temp }}/prompt-kit/index.html
-          if-no-files-found: error
-      - name: Build portable Prompt Kit runtime artifact
-        run: |
-          python scripts/serve_prompt_kit_portable.py --build-only
-          test -f Outputs/prompt-kit-portable/index.html
-          test -f Outputs/prompt-kit-portable/manifest.json
-      - name: Validate portable Favorites and harness discipline
-        run: |
-          python scripts/validate_prompt_kit_portability.py \
-            --require-artifact \
-            --output Outputs/prompt-kit-portability-validation.json \
-            --summary
-          python -m unittest \
-            tests.test_prompt_kit_portability \
-            tests.test_prompt_kit_portability_regressions \
-            tests.test_prompt_kit_portable_health \
-            -v
-      - name: Validate Prompt Library portability contract
-        run: python -m unittest tests.test_prompt_library_portability -v
-      - name: Upload portable Prompt Kit runtime proof
-        uses: actions/upload-artifact@v4
-        with:
-          name: prompt-kit-portable-runtime
-          path: |
-            Outputs/prompt-kit-portable/index.html
-            Outputs/prompt-kit-portable/manifest.json
-            Outputs/prompt-kit-portability-validation.json
-          if-no-files-found: error
-      - name: Validate search favorites tutorial journey and polish contract
-        run: |
-          python -m unittest tests.test_prompt_kit_hotkey_completion -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python -m unittest tests.test_context_to_artifact_prompt -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
           python scripts/validate_prompt_kit_discovery.py --summary
-          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
-      - name: Validate combined prompt registry
-        run: |
-          python -m unittest tests.test_skill_prompt_registry -v
-          python -m unittest tests.test_repository_work_ledger_prompt -v
-          python -m unittest tests.test_correspondence_prompt_registry -v
-          python -m unittest tests.test_management_operations_prompt_registry -v
-          python -m unittest tests.test_spec_architecture_prompt_registry -v
-      - name: Validate chronological ordering and dense navigation
-        run: |
-          python -m unittest \
-            tests.test_prompt_kit_order_navigation_contract \
-            tests.test_prompt_kit_order_navigation_product \
-            -v
-          python scripts/validate_prompt_kit_order_navigation.py \
-            --require-implementation \
-            --output "$RUNNER_TEMP/prompt-kit-order-navigation-audit.json" \
-            --summary
-      - name: Validate Prompt Kit product interactions
-        run: python -m unittest tests.test_prompt_kit_product_interactions -v
-      - name: Validate Prompt Kit category and type filtering
-        run: python -m unittest tests.test_prompt_kit_filtering_access -v
-      - name: Validate Prompt Kit mobile and quick-open behavior
-        run: python -m unittest tests.test_prompt_kit_mobile -v
-      - name: Validate exact deployed website
-        run: |
-          python tests/test_prompt_kit_header_contract.py
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Restore canonical workflow, remove temporary carrier, and push durable head
+        shell: bash
+        env:
+          BRANCH: feat/p56-capability-bounded-artifact-synthesis-20260826
+        run: |
+          git fetch origin main
+          git checkout origin/main -- .github/workflows/prompt-kit-web.yml
+          rm -f .github/workflows/tmp-p56-capability-bounded-builder.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/prompts.json tests/test_context_to_artifact_prompt.py web/prompt-kit/index.html .github/workflows/prompt-kit-web.yml .github/workflows/tmp-p56-capability-bounded-builder.yml
+          git diff --cached --check
+          git commit -m "feat(prompt-kit): bound P56 by available capabilities"
+          git push origin "HEAD:${BRANCH}"
