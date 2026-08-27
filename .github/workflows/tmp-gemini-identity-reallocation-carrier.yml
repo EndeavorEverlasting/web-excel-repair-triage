@@ -39,12 +39,13 @@ jobs:
           if [ "$merge_rc" -ne 0 ]; then
             mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
             printf 'merge conflicts: %s\n' "${conflicts[*]}"
-            if [ "${#conflicts[@]}" -ne 1 ] || [ "${conflicts[0]}" != 'web/prompt-kit/index.html' ]; then
+            expected=(tests/test_sysadminsuite_prompt_registry.py web/prompt-kit/index.html)
+            if [ "${#conflicts[@]}" -ne "${#expected[@]}" ] || [ "${conflicts[0]}" != "${expected[0]}" ] || [ "${conflicts[1]}" != "${expected[1]}" ]; then
               echo 'unexpected merge conflict surface; refusing automatic reconciliation' >&2
               exit 1
             fi
-            git checkout --theirs -- web/prompt-kit/index.html
-            git add web/prompt-kit/index.html
+            git checkout --theirs -- tests/test_sysadminsuite_prompt_registry.py web/prompt-kit/index.html
+            git add tests/test_sysadminsuite_prompt_registry.py web/prompt-kit/index.html
             git commit --no-edit
           fi
           python scripts/tmp_apply_gemini_identity_reallocation.py
