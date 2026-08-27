@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "registry" / "prompts" / "ai-engineering-level-up-prompts.v1.json"
 BASE = ROOT / "docs" / "prompts.json"
 SITE = ROOT / "web" / "prompt-kit" / "index.html"
+EXPECTED_ID = "P122"
 EXPECTED_NAME = "Gemini YouTube Playlist Ingestion Builder"
 
 
@@ -15,12 +16,13 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
-        cls.prompt = next(item for item in payload["prompts"] if item["name"] == EXPECTED_NAME)
+        cls.prompt = next(item for item in payload["prompts"] if item["id"] == EXPECTED_ID)
         cls.content = cls.prompt["copyContent"]
 
     def test_helper_allocated_identity_and_distinct_role(self) -> None:
-        self.assertRegex(self.prompt["id"], r"^P\d+$")
-        self.assertEqual(self.prompt["copySheet"], f"{self.prompt['id']}_COPY_SAFE")
+        self.assertEqual(self.prompt["name"], EXPECTED_NAME)
+        self.assertEqual(self.prompt["seq"], "122")
+        self.assertEqual(self.prompt["copySheet"], "P122_COPY_SAFE")
         self.assertEqual(self.prompt["class"], "AI ENGINEERING / YOUTUBE INGESTION")
         self.assertIn("YouTube playlist", self.prompt["useWhen"])
         self.assertIn("Gemini", self.prompt["useWhen"])
@@ -98,6 +100,14 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
     def test_repo_capable_handoff_is_complete(self) -> None:
         for marker in (
             "REPOSITORY-CAPABLE HANDOFF",
+            "PRE-MUTATION MISSION DECLARATION",
+            "repository and branch/worktree",
+            "lane and mission",
+            "owned and forbidden scope",
+            "expected artifacts",
+            "validation order",
+            "proof ceiling",
+            "mutation authority",
             "yt-dlp owns YouTube parsing, consumer owns normalization/schema/tests/exports",
             "find the existing source/import/domain owners",
             "Do not make the operator restate the donor research",
@@ -107,11 +117,12 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
     def test_generated_site_contains_new_prompt_and_key_semantics(self) -> None:
         deployed = SITE.read_text(encoding="utf-8")
         for marker in (
-            self.prompt["id"],
+            EXPECTED_ID,
             EXPECTED_NAME,
             "GEMINI CAPABILITY BOUNDARY",
             "yt-dlp owns YouTube extraction",
             "Repeated playlist entries are valid data",
+            "PRE-MUTATION MISSION DECLARATION",
             "REPOSITORY-CAPABLE HANDOFF",
         ):
             self.assertIn(marker, deployed)
