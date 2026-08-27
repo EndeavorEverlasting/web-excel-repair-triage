@@ -123,7 +123,6 @@ def _format_evidence(evidence: list[dict[str, Any]]) -> str:
 
 
 def build_prompt(case: dict[str, Any], p100: dict[str, Any]) -> str:
-    expected = case["expected"]
     return (
         "P67 SOURCE-FAITHFULNESS EVAL\n"
         "Use only the supplied case context and the effective P100 contract below. "
@@ -146,11 +145,16 @@ def build_prompt(case: dict[str, Any], p100: dict[str, Any]) -> str:
         "CLASSIFICATION: <FACTUALITY_CONTEXT_MISSING|FAITHFULNESS_CONTEXT_IGNORED|NONE>\n"
         "REMEDIATION: <TARGETED_GROUNDING|REANCHOR_EXISTING_CONTEXT|NONE>\n"
         "REASONS: <comma-separated reason codes or none>\n\n"
-        "Protocol semantics:\n"
-        "- Missing authoritative evidence must be GROUND / FACTUALITY_CONTEXT_MISSING / TARGETED_GROUNDING.\n"
-        "- Authoritative contradictory evidence already present must be CONTINUE / FAITHFULNESS_CONTEXT_IGNORED / REANCHOR_EXISTING_CONTEXT.\n"
-        "- TERMINAL / NONE / NONE is valid only for a genuinely terminal case with sufficient supplied proof.\n"
-        f"Expected reason vocabulary for this case: {', '.join(expected['reasons'])}.\n"
+        "Classification meanings:\n"
+        "- FACTUALITY_CONTEXT_MISSING: required truth is absent from supplied context; do not invent it.\n"
+        "- FAITHFULNESS_CONTEXT_IGNORED: supplied authoritative truth contradicts the observed closeout.\n"
+        "- NONE: supplied proof supports the closeout without a factuality/faithfulness defect.\n"
+        "Remediation meanings:\n"
+        "- TARGETED_GROUNDING: obtain the missing authoritative evidence before deciding.\n"
+        "- REANCHOR_EXISTING_CONTEXT: use the authoritative evidence already supplied and continue or route the work.\n"
+        "- NONE: no corrective action is required.\n"
+        "Reason-code vocabulary: missing_authoritative_evidence, required_gate_failure, "
+        "acknowledged_identity_conflict, none.\n"
     )
 
 
