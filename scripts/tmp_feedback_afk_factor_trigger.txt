@@ -1,2 +1,2 @@
 factor private Prompt Kit feedback AFK routing from fresh main
-retry=1 preserve portability literal test paths
+retry=2 idempotent portability marker preservation
