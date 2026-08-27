@@ -1,1 +1,1 @@
-reconcile Gemini prompt identity after semantic compaction via prompt_registry_ops.py
+reconcile Gemini prompt identity with simplified carrier via prompt_registry_ops.py
