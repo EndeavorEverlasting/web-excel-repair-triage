@@ -1,0 +1,62 @@
+name: Temporary Prompt Kit outcome tutorial carrier v2
+
+on:
+  pull_request:
+    types: [synchronize]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-outcome-tutorial-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/prompt-kit-outcome-tutorial-exec-context-20260826'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-outcome-tutorial-exec-context-20260826
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reconcile, implement, prove, and push durable candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/p114-canary-network-20260826 feat/prompt-kit-outcome-tutorial-exec-context-20260826 --prune
+          if [ ! -f scripts/tmp_apply_prompt_kit_outcome_tutorial_exec_context.py ]; then
+            echo 'outcome tutorial already materialized; no transport work remains'
+            exit 0
+          fi
+          git merge --no-edit origin/main
+          python scripts/tmp_apply_prompt_kit_outcome_tutorial_exec_context.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          node --check docs/prompt-kit-guided-recommendations.js
+          node --check scripts/validate_prompt_finder_outcomes.js
+          node scripts/validate_prompt_finder_outcomes.js
+          python -m unittest tests.test_prompt_kit_guidance tests.test_prompt_kit_discovery tests.test_conversation_context_canary_prompt tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          python scripts/tmp_apply_prompt_kit_outcome_tutorial_exec_context.py --verify-only
+          node scripts/validate_prompt_finder_outcomes.js
+          python -m unittest tests.test_prompt_kit_guidance tests.test_conversation_context_canary_prompt tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          git rm -f .github/workflows/tmp-prompt-kit-outcome-tutorial-exec-context.yml scripts/tmp_apply_prompt_kit_outcome_tutorial_exec_context.py
+          git add registry/prompts/spec-architecture-prompts.v1.json tests/test_spec_architecture_prompt_registry.py tests/test_conversation_context_canary_prompt.py docs/prompt-kit-guided-recommendations.js docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md docs/PROMPT_KIT_OPERATOR_GUIDE.md scripts/validate_prompt_finder_outcomes.js tests/test_prompt_kit_guidance.py tests/test_prompt_kit_discovery.py harness/test-floor.v1.json .github/workflows/prompt-kit-pages.yml web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'feat(prompt-kit): make tutorial outcome-driven'
+          git push origin HEAD:feat/prompt-kit-outcome-tutorial-exec-context-20260826
