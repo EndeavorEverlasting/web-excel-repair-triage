@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import re
 import unittest
 from pathlib import Path
 
@@ -55,7 +54,8 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
             "--dump-single-json",
             "--flat-playlist",
             "--input-json",
-            "do not download media",
+            "without downloading media",
+            "does not request media download",
         ):
             self.assertIn(marker, self.content)
 
