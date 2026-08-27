@@ -8,8 +8,8 @@ ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "registry" / "prompts" / "ai-engineering-level-up-prompts.v1.json"
 BASE = ROOT / "docs" / "prompts.json"
 SITE = ROOT / "web" / "prompt-kit" / "index.html"
-# P122 is the identity allocated by prompt_registry_ops.py for this semantic draft.
-EXPECTED_ID = "P122"
+# Identity is allocated by prompt_registry_ops.py from the refreshed combined registry.
+EXPECTED_ID = "P123"
 EXPECTED_NAME = "Gemini YouTube Playlist Ingestion Builder"
 
 
@@ -26,8 +26,8 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
 
     def test_helper_allocated_identity_and_distinct_role(self) -> None:
         self.assertEqual(self.prompt["name"], EXPECTED_NAME)
-        self.assertEqual(self.prompt["seq"], "122")
-        self.assertEqual(self.prompt["copySheet"], "P122_COPY_SAFE")
+        self.assertEqual(self.prompt["seq"], "123")
+        self.assertEqual(self.prompt["copySheet"], "P123_COPY_SAFE")
         self.assertEqual(self.prompt["class"], "AI ENGINEERING / YOUTUBE INGESTION")
         self.assertIn("YouTube playlist", self.prompt["useWhen"])
         self.assertIn("Gemini", self.prompt["useWhen"])
@@ -185,7 +185,7 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
             "Do not make the operator restate the donor research",
         )
 
-    def test_generated_site_contains_strengthened_p122_semantics(self) -> None:
+    def test_generated_site_contains_gemini_ingestion_semantics(self) -> None:
         deployed = SITE.read_text(encoding="utf-8")
         for marker in (
             EXPECTED_ID,
