@@ -1,1 +1,1 @@
-trigger outcome tutorial carrier after buffer and donor-authority repair
+trigger outcome tutorial carrier after discovery-validator contract repair
