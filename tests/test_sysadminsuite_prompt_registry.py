@@ -95,13 +95,17 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
             payload["prompts"] = [item for item in payload["prompts"] if item.get("name") not in ORDER]
             sandbox_raw.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
-            remaining_ids = [
-                int(str(item["id"])[1:])
-                for registry in build_prompt_kit_registry.REGISTRY_FILES
-                for item in json.loads((sandbox / registry.relative_to(ROOT)).read_text(encoding="utf-8"))["prompts"]
-                if str(item.get("id", "")).startswith("P") and str(item["id"])[1:].isdigit()
-            ]
-            floor = max(remaining_ids)
+            inspect_proc = subprocess.run(
+                [sys.executable, "scripts/prompt_registry_ops.py", "inspect"],
+                cwd=sandbox,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            self.assertEqual(inspect_proc.returncode, 0, inspect_proc.stdout)
+            inspect_receipt = json.loads(inspect_proc.stdout)
+            floor = int(str(inspect_receipt["next_id"])[1:]) - 1
 
             receipts = []
             for index, name in enumerate(ORDER, start=1):
