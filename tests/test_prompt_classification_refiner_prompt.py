@@ -84,12 +84,20 @@ class PromptClassificationRefinerPromptTests(unittest.TestCase):
 
         effective_types = {str(prompt["type"]).strip() for prompt in self.prompts}
         unmapped = sorted(prompt_type for prompt_type in effective_types if prompt_type not in memberships)
+        unmapped_usages = {
+            prompt_type: [
+                f"{prompt['id']}:{prompt['name']} [{prompt['class']}]"
+                for prompt in self.prompts
+                if str(prompt["type"]).strip() == prompt_type
+            ]
+            for prompt_type in unmapped
+        }
         multiply_mapped = {
             prompt_type: sections
             for prompt_type, sections in sorted(memberships.items())
             if len(sections) != 1
         }
-        self.assertEqual([], unmapped, f"effective prompt types without lifecycle section: {unmapped}")
+        self.assertEqual({}, unmapped_usages, f"effective prompt types without lifecycle section: {unmapped_usages}")
         self.assertEqual({}, multiply_mapped, f"prompt types mapped to multiple lifecycle sections: {multiply_mapped}")
 
 
