@@ -1,0 +1,111 @@
+name: Temporary Gemini prompt identity reallocation carrier
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/tmp_gemini_identity_reallocation_trigger.txt
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gemini-prompt-identity-reallocation
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/gemini-youtube-ingestion-prompt-20260827
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Reconcile main and reallocate Gemini prompt identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/gemini-youtube-ingestion-prompt-20260827 --prune
+          test "$(git branch --show-current)" = 'feat/gemini-youtube-ingestion-prompt-20260827'
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('registry/prompts/ai-engineering-level-up-prompts.v1.json')
+          payload = json.loads(path.read_text(encoding='utf-8'))
+          matches = [p for p in payload['prompts'] if p.get('name') == 'Gemini YouTube Playlist Ingestion Builder']
+          if len(matches) != 1:
+              raise SystemExit(f'expected one Gemini prompt before reconciliation, found {len(matches)}')
+          source = matches[0]
+          auto = {'id', 'seq', 'copySheet', 'actionabilityPolicy'}
+          draft = {k: v for k, v in source.items() if k not in auto}
+          draft['registry_id'] = 'ai-engineering-level-up-prompts'
+          Path('/tmp/gemini-prompt-draft.json').write_text(json.dumps(draft, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          print(f"preserved semantic draft from {source.get('id')} {source.get('name')}")
+          PY
+          set +e
+          git merge --no-edit origin/main
+          merge_rc=$?
+          set -e
+          if [ "$merge_rc" -ne 0 ]; then
+            mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+            printf 'merge conflicts: %s\n' "${conflicts[*]}"
+            if [ "${#conflicts[@]}" -ne 1 ] || [ "${conflicts[0]}" != 'web/prompt-kit/index.html' ]; then
+              echo 'unexpected merge conflict surface; refusing automatic reconciliation' >&2
+              exit 1
+            fi
+            git checkout --theirs -- web/prompt-kit/index.html
+            git add web/prompt-kit/index.html
+            git commit --no-edit
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('registry/prompts/ai-engineering-level-up-prompts.v1.json')
+          payload = json.loads(path.read_text(encoding='utf-8'))
+          before = len(payload['prompts'])
+          payload['prompts'] = [p for p in payload['prompts'] if p.get('name') != 'Gemini YouTube Playlist Ingestion Builder']
+          if len(payload['prompts']) != before - 1:
+              raise SystemExit('failed to remove exactly one stale Gemini identity')
+          path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+          python scripts/prompt_registry_ops.py add --input /tmp/gemini-prompt-draft.json --registry ai-engineering-level-up-prompts | tee /tmp/gemini-add-receipt.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          receipt = json.loads(Path('/tmp/gemini-add-receipt.json').read_text(encoding='utf-8'))
+          new_id = receipt['id']
+          new_seq = receipt['seq']
+          test_path = Path('tests/test_gemini_youtube_playlist_ingestion_prompt.py')
+          text = test_path.read_text(encoding='utf-8')
+          replacements = {
+              '# P122 is the identity allocated by prompt_registry_ops.py for this semantic draft.': '# Identity is allocated by prompt_registry_ops.py from the refreshed combined registry.',
+              'EXPECTED_ID = "P122"': f'EXPECTED_ID = "{new_id}"',
+              'self.assertEqual(self.prompt["seq"], "122")': f'self.assertEqual(self.prompt["seq"], "{new_seq}")',
+              'self.assertEqual(self.prompt["copySheet"], "P122_COPY_SAFE")': f'self.assertEqual(self.prompt["copySheet"], "{new_id}_COPY_SAFE")',
+              'test_generated_site_contains_strengthened_p122_semantics': 'test_generated_site_contains_gemini_ingestion_semantics',
+          }
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f'missing focused-test identity anchor: {old}')
+              text = text.replace(old, new, 1)
+          test_path.write_text(text, encoding='utf-8')
+          print(f'focused identity assertions rebound to helper receipt {new_id}/{new_seq}')
+          PY
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python -m unittest tests.test_gemini_youtube_playlist_ingestion_prompt -v
+          python -m unittest tests.test_sysadminsuite_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output "$RUNNER_TEMP/prompt-kit-order-navigation-audit.json" --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          git add registry/prompts/ai-engineering-level-up-prompts.v1.json tests/test_gemini_youtube_playlist_ingestion_prompt.py tests/test_sysadminsuite_prompt_registry.py harness/test-floor.v1.json web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'fix(prompt-kit): reallocate Gemini prompt after P122 collision'
+          git push origin HEAD:feat/gemini-youtube-ingestion-prompt-20260827
