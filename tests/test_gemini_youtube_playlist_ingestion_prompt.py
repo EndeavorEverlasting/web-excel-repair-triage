@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "registry" / "prompts" / "ai-engineering-level-up-prompts.v1.json"
 BASE = ROOT / "docs" / "prompts.json"
 SITE = ROOT / "web" / "prompt-kit" / "index.html"
+# P122 is the identity allocated by prompt_registry_ops.py for this semantic draft.
 EXPECTED_ID = "P122"
 EXPECTED_NAME = "Gemini YouTube Playlist Ingestion Builder"
 
