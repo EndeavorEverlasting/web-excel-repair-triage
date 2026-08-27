@@ -75,5 +75,53 @@ if old_buffer not in text:
     raise SystemExit("Prompt Finder validator child-process buffer anchor not found")
 text = text.replace(old_buffer, new_buffer, 1)
 
+# Keep the prior P92 deployment-proof wording verbatim while adding execution context.
+old_p92_phrase = "remote merge is never local deployment proof;"
+new_p92_phrase = "remote merged SHA is never treated as local deployment proof;"
+if old_p92_phrase not in text:
+    raise SystemExit("P92 deployment-proof phrase anchor not found")
+text = text.replace(old_p92_phrase, new_p92_phrase, 1)
+
+# The discovery tests are operational contracts. Replace assertions for the deliberately
+# retired weighted-primary/no-router model with assertions for deterministic outcome
+# ownership plus shared-search follow-ons.
+old_method = "    def test_guided_questionnaire_uses_shared_search_and_no_prompt_id_router(self) -> None:\n"
+new_method = "    def test_guided_questionnaire_uses_outcome_owner_and_shared_search_followons(self) -> None:\n"
+if old_method not in text:
+    raise SystemExit("legacy discovery test method anchor not found")
+text = text.replace(old_method, new_method, 1)
+
+old_marker = '''            "slice(0,3)",
+            "copyPrompt(",
+'''
+new_marker = '''            "slice(0,2)",
+            "resolvePromptFinderOutcome",
+            "promptFinderRouteIsActionable",
+            "ownerId:'P79'",
+            "ownerId:'P23'",
+            "copyPrompt(",
+'''
+if old_marker not in text:
+    raise SystemExit("legacy discovery slice marker not found")
+text = text.replace(old_marker, new_marker, 1)
+
+old_doc_slice = '        self.assertIn("slice(0,3)", guided)\n'
+new_doc_slice = '        self.assertIn("slice(0,2)", guided)\n'
+if old_doc_slice not in text:
+    raise SystemExit("operator-doc discovery slice assertion not found")
+text = text.replace(old_doc_slice, new_doc_slice, 1)
+
+old_p83_guide = '        self.assertIn("search **`P83`**", guide)\n'
+new_p83_guide = '        self.assertIn("**Verify work another agent says is complete**", guide)\n        self.assertIn("resolves directly to **P83**", guide)\n'
+if old_p83_guide not in text:
+    raise SystemExit("legacy P83 operator-guide assertion not found")
+text = text.replace(old_p83_guide, new_p83_guide, 1)
+
+old_p83_tutorial = '        self.assertIn("Another agent claims work is complete or partially complete", tutorial)\n'
+new_p83_tutorial = '        self.assertIn("Inherited-completion verification is now an explicit terminal outcome", tutorial)\n        self.assertIn("**Verify work another agent says is complete** to route directly to P83", tutorial)\n'
+if old_p83_tutorial not in text:
+    raise SystemExit("legacy P83 tutorial assertion not found")
+text = text.replace(old_p83_tutorial, new_p83_tutorial, 1)
+
 TARGET.write_text(text, encoding="utf-8")
-print("patched temporary mutator: pinned P114 three-way authority + 16MiB registry buffer")
+print("patched temporary mutator: pinned P114 authority + large-registry buffer + outcome regression reconciliation")
