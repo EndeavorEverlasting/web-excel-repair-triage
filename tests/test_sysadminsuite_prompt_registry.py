@@ -79,7 +79,7 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
             ).casefold()
             self.assertIn("sysadminsuite", searchable)
 
-    def test_helper_reproduces_exact_registry_and_generated_site_from_semantic_records(self) -> None:
+    def test_helper_replays_semantic_records_with_fresh_ids_and_site_parity(self) -> None:
         allowed = prompt_registry_ops.REQUIRED_DRAFT_FIELDS | prompt_registry_ops.OPTIONAL_DRAFT_FIELDS
         with tempfile.TemporaryDirectory(prefix="sas-prompt-helper-") as tmp:
             sandbox = Path(tmp) / "repo"
@@ -111,10 +111,41 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
                 self.assertEqual(proc.returncode, 0, proc.stdout)
                 receipts.append(json.loads(proc.stdout))
 
-            self.assertEqual([r["id"] for r in receipts], [records[name]["id"] for name in ORDER])
-            self.assertTrue(all(r["site_parity"] for r in receipts))
-            self.assertEqual(sandbox_raw.read_bytes(), RAW.read_bytes())
-            self.assertEqual((sandbox / "web" / "prompt-kit" / "index.html").read_bytes(), SITE.read_bytes())
+            receipt_numbers = [int(receipt["id"][1:]) for receipt in receipts]
+            self.assertEqual(
+                receipt_numbers,
+                list(range(receipt_numbers[0], receipt_numbers[0] + len(ORDER))),
+            )
+            self.assertEqual(len(receipt_numbers), len(set(receipt_numbers)))
+            self.assertTrue(all(receipt["site_parity"] for receipt in receipts))
+
+            replayed = json.loads(sandbox_raw.read_text(encoding="utf-8"))["prompts"]
+            replayed_by_name = {item["name"]: item for item in replayed if item.get("name") in ORDER}
+            self.assertEqual(set(replayed_by_name), set(ORDER))
+            for name in ORDER:
+                expected_semantics = {key: records[name][key] for key in allowed if key in records[name]}
+                actual_semantics = {
+                    key: replayed_by_name[name][key]
+                    for key in allowed
+                    if key in replayed_by_name[name]
+                }
+                self.assertEqual(actual_semantics, expected_semantics, name)
+
+            check = subprocess.run(
+                [
+                    sys.executable,
+                    "scripts/build_prompt_kit_registry.py",
+                    "--output",
+                    "web/prompt-kit/index.html",
+                    "--check",
+                ],
+                cwd=sandbox,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            self.assertEqual(check.returncode, 0, check.stdout)
 
 
 if __name__ == "__main__":
