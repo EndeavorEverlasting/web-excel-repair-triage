@@ -53,6 +53,8 @@ class P67SourceFaithfulnessEvalTests(unittest.TestCase):
         self.assertNotIn("33086093122", missing_prompt)
         self.assertNotIn("feat/gemini-youtube-ingestion-prompt-20260827", missing_prompt)
         self.assertIn("NONE SUPPLIED", missing_prompt)
+        self.assertNotIn("Expected reason vocabulary for this case", missing_prompt)
+        self.assertNotIn("Missing authoritative evidence must be GROUND", missing_prompt)
 
         self.assertIn("33086093122", present_prompt)
         self.assertIn("feat/gemini-youtube-ingestion-prompt-20260827", present_prompt)
