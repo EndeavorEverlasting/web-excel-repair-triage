@@ -33,6 +33,13 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
         self.assertIn("Gemini", self.prompt["useWhen"])
         self.assertIn("standalone", self.prompt["expectedOutput"].lower())
 
+    def test_helper_contribution_stays_within_copy_ceiling(self) -> None:
+        # prompt_registry_ops.py owns the 12,000-character contribution ceiling.
+        # Keep this regression on the durable semantic record so a future edit
+        # cannot recreate the oversized P122/P123 collision-repair failure.
+        self.assertGreaterEqual(len(self.content), 300)
+        self.assertLessEqual(len(self.content), 12000)
+
     def test_gemini_no_repo_access_boundary_is_operational(self) -> None:
         self.assert_markers(
             "GEMINI CAPABILITY BOUNDARY",
