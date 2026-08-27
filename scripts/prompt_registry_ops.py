@@ -110,6 +110,7 @@ def inspect_state() -> dict[str, Any]:
         "registries": registries,
         "required_draft_fields": sorted(REQUIRED_DRAFT_FIELDS),
         "auto_fields": sorted(AUTO_FIELDS),
+        "classification": registry.prompt_classification.classification_summary(registry.load_prompt_kit_registry()),
     }
 
 
@@ -140,6 +141,7 @@ def _validate_draft(draft: dict[str, Any]) -> None:
         raise SystemExit("Every prompt draft keyword must be a non-empty string")
     if len(keywords) != len({_normalize_text(item) for item in keywords}):
         raise SystemExit("Prompt draft keywords must not contain duplicates")
+    registry.prompt_classification.require_known_prompt_type(str(draft["type"]).strip())
     copy_content = str(draft["copyContent"]).strip()
     if len(copy_content) < 300:
         raise SystemExit("Prompt draft copyContent is too small to be operational (<300 chars)")
