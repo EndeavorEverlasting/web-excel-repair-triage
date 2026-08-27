@@ -67,7 +67,10 @@ jobs:
           BRANCH: feat/prompt-kit-outcome-tutorial-exec-context-20260826
         run: |
           set -euo pipefail
-          git rm -f .github/workflows/tmp-prompt-kit-outcome-tutorial-exec-context.yml scripts/tmp_apply_prompt_kit_outcome_tutorial_exec_context.py
+          git rm -f \
+            .github/workflows/tmp-prompt-kit-outcome-tutorial-carrier.yml \
+            .github/workflows/tmp-prompt-kit-outcome-tutorial-exec-context.yml \
+            scripts/tmp_apply_prompt_kit_outcome_tutorial_exec_context.py
           git add \
             registry/prompts/spec-architecture-prompts.v1.json \
             tests/test_spec_architecture_prompt_registry.py \
