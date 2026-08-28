@@ -3,8 +3,8 @@
 
 Validate one explicitly authorized browser-origin feedback envelope, pseudonymize
 source identity, persist the full event only in a user-local private spool, and
-optionally publish a sanitized repository-dispatch receipt *only when a matching
-consumer is registered*. This module never schedules workers, scans PRs, or
+optionally publish a sanitized repository-dispatch receipt only when a matching
+consumer is registered. This module never schedules workers, scans PRs, or
 merges repository changes.
 """
 from __future__ import annotations
@@ -82,6 +82,7 @@ def canonical_prompt_ids() -> set[str]:
 
 
 def default_spool_root() -> Path:
+    """Resolve a per-user state location; never default raw feedback into the repo."""
     if os.name == "nt":
         base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
         return base / "PromptKit" / "feedback-spool"
@@ -138,14 +139,24 @@ def _source_hash(source: str) -> str:
 
 
 def _ensure_private_directory(path: Path) -> None:
-    path.mkdir(parents=True, exist_ok=True, mode=0o700)
+    path.mkdir(parents=False, exist_ok=True, mode=0o700)
     if os.name != "nt":
         os.chmod(path, 0o700)
 
 
+def _ensure_spool_layout(spool_root: Path) -> None:
+    root = spool_root.expanduser().resolve()
+    root_parent = root.parent
+    root_parent.mkdir(parents=True, exist_ok=True)
+    _ensure_private_directory(root)
+    _ensure_private_directory(root / "accepted")
+    _ensure_private_directory(root / "receipts")
+    _ensure_private_directory(root / "receipts" / "pending")
+    _ensure_private_directory(root / "receipts" / "sent")
+
+
 def _write_private_json(path: Path, payload: dict[str, Any]) -> None:
-    _ensure_private_directory(path.parent)
-    encoded = (json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n").encode("utf-8")
+    encoded = (json.dumps(payload, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     try:
         with os.fdopen(fd, "wb") as handle:
@@ -274,27 +285,46 @@ def provider_receipt(event: dict[str, Any]) -> dict[str, Any]:
     return receipt
 
 
+def _same_receipt_shape(receipt: object) -> bool:
+    return (
+        isinstance(receipt, dict)
+        and len(receipt) == len(PROVIDER_RECEIPT_FIELDS)
+        and set(receipt) == set(PROVIDER_RECEIPT_FIELDS)
+    )
+
+
 def write_accepted(spool_root: Path, event: dict[str, Any], repository: str) -> tuple[Path, bool]:
+    repository = _require_repository(repository)
+    _ensure_spool_layout(spool_root)
     accepted, _, _ = spool_paths(spool_root, str(event["event_id"]))
     digest = event_digest(event)
     if accepted.exists():
         existing = json.loads(accepted.read_text(encoding="utf-8"))
-        if existing.get("event_digest") != digest or existing.get("event", {}).get("event_id") != event["event_id"]:
+        existing_event = existing.get("event") if isinstance(existing, dict) else None
+        if (
+            existing.get("event_digest") != digest
+            or not isinstance(existing_event, dict)
+            or existing_event.get("event_id") != event["event_id"]
+        ):
             raise ValueError(f"event id conflict in private spool: {event['event_id']}")
         return accepted, False
-    payload = {
-        "schema_version": SPOOL_SCHEMA,
-        "repository": repository,
-        "accepted_at": utc_now(),
-        "event_digest": digest,
-        "event": event,
-        "provider_receipt": provider_receipt(event),
-    }
-    _write_private_json(accepted, payload)
+    _write_private_json(
+        accepted,
+        {
+            "schema_version": SPOOL_SCHEMA,
+            "repository": repository,
+            "accepted_at": utc_now(),
+            "event_digest": digest,
+            "event": event,
+            "provider_receipt": provider_receipt(event),
+        },
+    )
     return accepted, True
 
 
 def queue_provider_receipt(spool_root: Path, event: dict[str, Any], repository: str) -> Path:
+    repository = _require_repository(repository)
+    _ensure_spool_layout(spool_root)
     _, pending, sent = spool_paths(spool_root, str(event["event_id"]))
     if sent.exists():
         return sent
@@ -330,6 +360,7 @@ def dispatch_repository_receipt(
     enabled: bool = False,
     runner: Runner = subprocess.run,
 ) -> dict[str, Any]:
+    repository = _require_repository(repository)
     if not enabled:
         return {"status": "PROVIDER_WAKEUP_DISABLED", "signal_id": receipt["signal_id"]}
     if not provider_consumer_registered(repo_root):
@@ -369,6 +400,7 @@ def dispatch_repository_receipt(
 
 
 def mark_receipt_sent(spool_root: Path, event_id: str, pending: Path) -> Path:
+    _ensure_spool_layout(spool_root)
     _, _, sent = spool_paths(spool_root, event_id)
     payload = json.loads(pending.read_text(encoding="utf-8"))
     payload["dispatched_at"] = utc_now()
@@ -447,7 +479,7 @@ def retry_pending_receipts(
                 f"pending receipt repository mismatch: stored={stored_repository} requested={repository}"
             )
         receipt = queued.get("provider_receipt")
-        if not isinstance(receipt, dict) or tuple(receipt) != PROVIDER_RECEIPT_FIELDS:
+        if not _same_receipt_shape(receipt):
             raise ValueError(f"invalid pending provider receipt: {path}")
         dispatch = dispatch_repository_receipt(
             repo_root=repo_root,
