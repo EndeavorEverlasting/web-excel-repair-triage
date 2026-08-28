@@ -74,6 +74,33 @@ if text.count(old_size_guard) != 1:
     raise SystemExit(f"expected exactly one stale P92 size guard, found {text.count(old_size_guard)}")
 text = text.replace(old_size_guard, new_size_guard, 1)
 
+# The Pages gate was pre-staged through normal repository write authority because the
+# carrier token cannot write workflow files. Make the old materializer idempotent at
+# this seam: add the gate only when absent; otherwise verify exactly one canonical gate.
+old_automation = '''    path = ROOT / ".github" / "workflows" / "prompt-kit-pages.yml"
+    text = path.read_text(encoding="utf-8")
+    anchor = "      - name: Validate exact checked-in Prompt Kit\n        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check\n"
+    new = "      - name: Prompt Finder terminal-outcome gate\n        run: |\n          node scripts/validate_prompt_finder_outcomes.js\n          python -m unittest tests.test_prompt_kit_guidance -v\n      - name: Validate exact checked-in Prompt Kit\n        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check\n"
+    text = require_replace(text, anchor, new, "pages outcome gate")
+    path.write_text(text, encoding="utf-8")
+'''
+new_automation = '''    path = ROOT / ".github" / "workflows" / "prompt-kit-pages.yml"
+    text = path.read_text(encoding="utf-8")
+    anchor = "      - name: Validate exact checked-in Prompt Kit\n        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check\n"
+    gate = "      - name: Prompt Finder terminal-outcome gate\n        run: |\n          node scripts/validate_prompt_finder_outcomes.js\n          python -m unittest tests.test_prompt_kit_guidance -v\n"
+    if gate not in text:
+        text = require_replace(text, anchor, gate + anchor, "pages outcome gate")
+    else:
+        if text.count(gate) != 1:
+            raise SystemExit(f"expected one pre-staged Pages outcome gate, found {text.count(gate)}")
+        if anchor not in text:
+            raise SystemExit("Pages exact checked-in Prompt Kit gate missing after pre-staged outcome gate")
+    path.write_text(text, encoding="utf-8")
+'''
+if old_automation not in text:
+    raise SystemExit("stale Pages automation mutation block not found")
+text = text.replace(old_automation, new_automation, 1)
+
 old_donor = '''    donor_text = subprocess.check_output(
         ["git", "show", "origin/feat/p114-canary-network-20260826:registry/prompts/spec-architecture-prompts.v1.json"],
         cwd=ROOT,
@@ -188,4 +215,4 @@ if old_discovery_mutation not in text:
 text = text.replace(old_discovery_mutation, new_discovery_mutation, 1)
 
 TARGET.write_text(text, encoding="utf-8")
-print("patched temporary mutator: preserve current-main P92 exactly + align current P92 regressions + pin P114 authority + outcome regression reconciliation")
+print("patched temporary mutator: preserve current-main P92 + idempotent Pages gate + pinned P114 authority + outcome regression reconciliation")
