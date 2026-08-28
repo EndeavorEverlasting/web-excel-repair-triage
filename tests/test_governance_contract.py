@@ -49,7 +49,7 @@ class GovernanceContractTests(unittest.TestCase):
         )
         positions = [section.index(item) for item in expected]
         self.assertEqual(positions, sorted(positions))
-        self.assertIn("Binding domain specs are subordinate implementation law", section)
+        self.assertIn("Domain specs remain subordinate", section)
 
     def test_sprint_and_completion_contracts_remain_binding(self) -> None:
         declaration = self._section("## 3. Mandatory sprint declaration", "## 4.")
@@ -69,8 +69,7 @@ class GovernanceContractTests(unittest.TestCase):
             "exact files changed",
             "validations run",
             "commit SHA",
-            "push state",
-            "PR/integration state",
+            "push or PR/integration state",
             "one exact next command",
             "fetch without force",
             "isolated worktree",

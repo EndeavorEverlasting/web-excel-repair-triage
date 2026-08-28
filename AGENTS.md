@@ -10,21 +10,20 @@ This file is the single repository governance authority for `EndeavorEverlasting
 6. **No completion without proof.** Plans/process start are not completion.
 
 ## 2. Instruction precedence
-When instructions conflict, apply this order: (1) Platform, security, legal, and repository-owner instructions. (2) This governance contract. (3) Task-specific prompts and sprint instructions. (4) Generic agent defaults. Lower authority may narrow scope/strengthen safety, never weaken higher authority. Binding domain specs are subordinate implementation law routed by this contract.
+Order: (1) Platform, security, legal, and repository-owner instructions. (2) This governance contract. (3) Task-specific prompts and sprint instructions. (4) Generic agent defaults. Domain specs remain subordinate. Lower authority may narrow scope/strengthen safety, never weaken higher authority.
 
 ## 3. Mandatory sprint declaration
-Every writing sprint must state repository and branch or worktree; lane and mission; owned scope and forbidden scope; expected artifacts; validation commands and their order; proof ceiling; push/PR/merge/deploy authority. Preserve dirty or separately owned work; never discard unrelated work to become current.
+Every writing sprint must state repository and branch or worktree; lane and mission; owned scope and forbidden scope; expected artifacts; validation commands and their order; proof ceiling; push/PR/merge/deploy authority. Preserve owned work; never discard unrelated work to become current.
 Before modifying or integrating overlapping prior work, refresh the default branch. Prove each required integrated slice is an ancestor via `git merge-base --is-ancestor <required-sha> <refreshed-default>` and still materially present using current content plus its owning validator. Ancestry alone cannot prove current content after a revert. Any failed check requires reconciliation and fresh proof before mutation or integration.
 
 ## 4. Completion standard
-A task is complete only when exact files changed are named; validations run are actually executed, not assumed; a commit SHA exists; push state and PR/integration state are reported; blockers/skips and proof ceiling are reported; final Git state is reported; and one exact next command is given.
+A task is complete only when exact files changed are named; validations run are actual; commit SHA exists; push or PR/integration state is reported; and one exact next command is given. Report blockers/skips, proof ceiling, and final Git state.
 NEXT COMMAND advances the next unproven state. Remote/unmerged: fetch without force; pin branch/commit; preserve dirty work in an isolated worktree; run owner validator/builder/launcher; resolve canonical artifact from tracked authority; propagate nonzero exit codes; it must not execute production by default.
 Use `none; no safe actionable work remains` only after authorized implementation/validation/integration, preservation/cleanup, and artifact consumption.
 
 ## 5. Safety and mutation boundaries
-Forbidden behaviors include acknowledgment, plans, or summaries when they substitute for required work; specifically: **acknowledgment without mutation**; **plans without execution**; **summaries without proof**; **completion claims without running checks**; **secret or credential exposure**.
-Do not expose private workbook/protected/machine-local evidence; force-push/rewrite default/destructively clean unknown work/delete unique work; hide deterministic behavior only in prompts/skills/prose; weaken tests/validators/fixtures for green; write generated outputs into protected inputs; or guess latest artifacts from generic names.
-Material behavior changes require proof. Run focused checks and `git diff --check`.
+Forbidden: acknowledgment without mutation; plans without execution; summaries without proof; completion claims without running checks; secret or credential exposure. Also forbid private/protected evidence exposure; force-push/default rewrites/destructive cleanup of unknown or unique work; prose-only deterministic behavior; weakened tests/validators/fixtures; protected-input generated outputs; guessed latest artifacts.
+Material behavior changes require proof. Run focused checks and `git diff --check` before commit.
 
 ## 6. Repository identity and product boundary
 This repository's core product domain is **spreadsheet intelligence**: inspection, validation, repair, transformation, safe delivery. Web Excel compatibility, billing, roster/time evidence, and triage are first-class.
@@ -36,4 +35,4 @@ Orient: `AGENTS.md` → `harness/CONTEXT.md` → one selected domain + only its 
 Bindings: delivery/live cert → `harness/specs/operator-delivery.md`; Prompt Kit → `harness/specs/prompt-operations.md`; billing/artifact safety → `harness/specs/billing-artifact-safety.md`. `harness/contracts/context-architecture.v1.json` defines context budgets/routes; `scripts/validate_context_architecture.py --summary` fails closed on bloat/routing drift.
 
 ### Repository-local `/teach` protocol
-`/teach <topic>` uses `.teach/`: ground from repo truth, teach first principles, stop after one mechanism/trade-off question plus one diagnostic, and record VERIFIED/MASTERED only after demonstration. `/teach recap` resumes the first weak recorded frontier. No fabricated mastery or secrets/private evidence.
+`/teach <topic>` uses `.teach/`: update `MISSION.md`; ground from `RESOURCES.md` + repo truth; create/reuse `lessons/<number>_<topic>.md` (`.html` for useful visual); teach first principles, not final production code; end with exactly one mechanism/trade-off question + one code diagnostic/edge-case exercise; stop for learner response. Write dated `learning-records/<date>_<topic>.md` VERIFIED/MASTERED only after demonstrated understanding. `/teach recap` reads records first, runs a roughly three-minute refresher, resumes first weak/unmastered frontier. No external package/clone, fabricated mastery, secrets/private/sensitive evidence. Setup stops here; sessions use Stateful Socratic Technical Tutor Workspace.
