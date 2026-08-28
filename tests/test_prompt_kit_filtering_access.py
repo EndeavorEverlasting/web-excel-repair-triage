@@ -26,6 +26,7 @@ class PromptKitFilteringAccessTests(unittest.TestCase):
                 "unique_categories",
                 "single_category_scope",
                 "unique_type_filters",
+                "exhaustive_lifecycle_type_mapping",
                 "progressive_type_disclosure",
                 "all_view_full_reset",
                 "sequential_with_gaps",
@@ -38,6 +39,7 @@ class PromptKitFilteringAccessTests(unittest.TestCase):
         self.assertIn("Favorites then All", expected["all_view_full_reset"])
         self.assertIn("complete visible prompt-card stream", expected["sequential_with_gaps"])
         self.assertIn("at most once", expected["unique_categories"])
+        self.assertIn("exactly one declared lifecycle section", expected["exhaustive_lifecycle_type_mapping"])
         self.assertIn("compact instructional hint", expected["progressive_type_disclosure"])
         self.assertIn("only subcategories available in that scope", expected["progressive_type_disclosure"])
 
