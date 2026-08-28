@@ -10,19 +10,19 @@ This file is the single repository governance authority for `EndeavorEverlasting
 6. **No completion without proof.** Plans/process start are not completion.
 
 ## 2. Instruction precedence
-Order: (1) Platform, security, legal, and repository-owner instructions. (2) This governance contract plus selected binding domain spec. (3) Task-specific prompts and sprint instructions. (4) Generic agent defaults. Lower authority may narrow scope/strengthen safety, never weaken higher authority.
+Order: (1) Platform, security, legal, and repository-owner instructions. (2) This governance contract. (3) Task-specific prompts and sprint instructions. (4) Generic agent defaults. Domain specs remain subordinate. Lower authority may narrow scope/strengthen safety, never weaken higher authority.
 
 ## 3. Mandatory sprint declaration
-Before writes state repository and branch or worktree; lane and mission; owned scope and forbidden scope; expected artifacts; validation commands and their order; proof ceiling; push/PR/merge/deploy authority. Preserve/isolate dirty, conflicted, stale, or separately owned work; never discard unrelated work to become current.
+Every writing sprint must state repository and branch or worktree; lane and mission; owned scope and forbidden scope; expected artifacts; validation commands and their order; proof ceiling; push/PR/merge/deploy authority. Preserve owned work; never discard unrelated work.
 Before modifying or integrating overlapping prior work, refresh the default branch. Prove each required integrated slice is an ancestor via `git merge-base --is-ancestor <required-sha> <refreshed-default>` and still materially present using current content plus its owning validator. Ancestry alone cannot prove current content after a revert. Any failed check requires reconciliation and fresh proof before mutation or integration.
 
 ## 4. Completion standard
-Report exact files changed, validations run, commit SHA, push state, PR/integration state, blockers/skips, proof ceiling, final Git state, and one exact next command.
+A task is complete only when exact files changed are named; validations run are actual; commit SHA exists; push or PR/integration state is reported; and one exact next command is given. Report blockers/skips, proof ceiling, and final Git state.
 NEXT COMMAND advances the next unproven state. Remote/unmerged: fetch without force; pin branch/commit; preserve dirty work in an isolated worktree; run owner validator/builder/launcher; resolve canonical artifact from tracked authority; propagate nonzero exit codes; it must not execute production by default.
 Use `none; no safe actionable work remains` only after authorized implementation/validation/integration, preservation/cleanup, and artifact consumption.
 
 ## 5. Safety and mutation boundaries
-Do not substitute acknowledgment, plans, or summaries for safe mutation/proof; claim completion without checks; expose secrets, credentials, private workbook/protected/machine-local evidence; force-push/rewrite default/destructively clean unknown work/delete unique work; hide deterministic behavior only in prompts/skills/prose; weaken tests/validators/fixtures for green; write generated outputs into protected inputs; or guess latest artifacts from generic names.
+Forbidden: acknowledgment without mutation; plans without execution; summaries without proof; completion claims without running checks; secret or credential exposure. Also forbid private workbook/protected/machine-local evidence exposure; force-push/default rewrites/destructive cleanup of unknown or unique work; prose-only deterministic behavior; weakened tests/validators/fixtures; protected-input generated outputs; guessed latest artifacts.
 Material behavior changes require proof. Run focused checks and `git diff --check` before commit.
 
 ## 6. Repository identity and product boundary
