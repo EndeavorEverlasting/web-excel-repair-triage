@@ -14,6 +14,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 import build_prompt_kit  # noqa: E402
+from scripts import prompt_classification  # noqa: E402
 
 BASE_REGISTRY = REPO_ROOT / "docs" / "prompts.json"
 EXTENSION_REGISTRIES = (
@@ -394,6 +395,7 @@ def load_prompt_registry() -> list[dict[str, Any]]:
 
     prompts = apply_prompt_overrides(prompts)
     _validate_unique_prompt_identity(prompts, "operational")
+    prompt_classification.validate_prompt_classification(prompts, "operational")
     actionability_policy = load_actionability_policy()
     strengthened_prompts = [
         apply_actionability_policy(prompt, actionability_policy) for prompt in prompts
@@ -422,6 +424,7 @@ def load_content_prompt_registry() -> list[dict[str, Any]]:
         prompts.extend(content_prompts)
 
     _validate_unique_prompt_identity(prompts, "content")
+    prompt_classification.validate_prompt_classification(prompts, "content")
     prepared: list[dict[str, Any]] = []
     for prompt in prompts:
         prompt_id = str(prompt["id"])
@@ -444,6 +447,7 @@ def load_prompt_kit_registry() -> list[dict[str, Any]]:
     prompts = [dict(prompt) for prompt in load_prompt_registry()]
     prompts.extend(load_content_prompt_registry())
     _validate_unique_prompt_identity(prompts, "Prompt Kit")
+    prompt_classification.validate_prompt_classification(prompts, "Prompt Kit")
     annotated_prompts = apply_display_order(prompts, load_display_order_policy())
     return sorted(
         annotated_prompts,

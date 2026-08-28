@@ -10,6 +10,8 @@ import json
 import os
 import sys
 
+from scripts.prompt_classification import site_sections
+
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(REPO_ROOT, "docs")
 PROMPTS_PATH = os.path.join(DATA_DIR, "prompts.json")
@@ -31,29 +33,7 @@ COLOR_HEX = {
     "mint": "#34d399", "night": "#1e293b", "violet": "#7c3aed", "cream": "#fef3c7",
 }
 
-SECTIONS = [
-    {"name": "Foundation", "glow": "#64748b",
-     "types": ["SETUP", "HARVEST", "CLOSEOUT", "CLOSEOUT + VALIDATE"]},
-    {"name": "Discover & Plan", "glow": "#f59e0b",
-     "types": ["DISCOVERY + BUILD", "PLAN", "PORTFOLIO PLAN", "TUTORIAL PLAN",
-               "CONSOLIDATE + EXECUTE", "ANALYZE + DIRECTORY", "ANALYZE + FACTOR",
-               "ANALYZE + TEST"]},
-    {"name": "Build & Repair", "glow": "#22c55e",
-     "types": ["BUILD", "CLEANUP", "REPAIR", "REVIEW + REPAIR", "REVIEW + BUILD",
-               "BUILD + FACTOR", "BUILD + ARTIFACT", "BUILD + BOOTSTRAP",
-               "BUILD + SAFETY"]},
-    {"name": "Validate & Protect", "glow": "#14b8a6",
-     "types": ["VALIDATE", "VALIDATE + CLOSE", "SAFETY", "RUNTIME PROOF", "IMPROVE"]},
-    {"name": "Integrate & Ship", "glow": "#6366f1",
-     "types": ["INTEGRATE", "INTEROP", "MAINTENANCE", "MAINTENANCE + BUILD",
-               "ENABLEMENT", "ENABLEMENT + BUILD", "OPERATE", "OPPORTUNITY",
-               "COMPILE ONLY", "INSTALL + ENFORCE", "ENVIRONMENT + CONFIGURE"]},
-    {"name": "Autonomy & Night Shift", "glow": "#7c3aed",
-     "types": ["AUTONOMY + VALIDATE", "AUTONOMY + BUILD", "AUTONOMY + PLAN",
-               "AUTONOMY + PREFLIGHT", "AUTONOMY + QUEUE", "RECOVER + BUILD",
-               "RECOVER + COMMIT", "HARNESS + BUILD", "HARNESS + EXECUTE",
-               "CURSOR + LIVE CERT"]},
-]
+SECTIONS = site_sections()
 
 SYNONYMS = {
     "doctrine": "P00 P01", "repo rules": "P00 P01", "agent rules": "P00 P01",
