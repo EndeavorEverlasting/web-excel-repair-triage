@@ -119,11 +119,41 @@ console.log('GUIDANCE_COMPLEX_ROUTE_PASS');
         self.assertIn(journey, deployed)
         self.assertIn("prompt-kit-journey-styles", deployed)
 
-    def test_existing_questionnaire_remains_shared_search_driven(self) -> None:
+    def test_finder_uses_terminal_outcome_owner_before_shared_search_followons(self) -> None:
         guided = GUIDED.read_text(encoding="utf-8")
-        self.assertIn("filterPromptsForQuery(PROMPTS,query)", guided)
-        self.assertIn("slice(0,3)", guided)
-        self.assertIn("✦ Tutorial · Find My Prompt", guided)
+        for marker in (
+            "What outcome must this tutorial hand you?",
+            "ownerId:'P79'",
+            "ownerId:'P23'",
+            "resolvePromptFinderOutcome",
+            "promptFinderRouteIsActionable",
+            "PROMPT_FINDER_OUTCOMES",
+            "they cannot displace the outcome owner",
+            "do not silently substitute P07",
+            "filterPromptsForQuery(PROMPTS,query)",
+            "slice(0,2)",
+            "✦ Tutorial · Find My Prompt",
+        ):
+            self.assertIn(marker, guided)
+
+    def test_repeated_outcome_route_validator_proves_actionable_terminal_owners(self) -> None:
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("Node is not installed in this test environment")
+        completed = subprocess.run(
+            [node, "scripts/validate_prompt_finder_outcomes.js"],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        receipt = json.loads(completed.stdout)
+        self.assertEqual(receipt["status"], "PASS")
+        self.assertEqual(receipt["repeats"], 10)
+        self.assertGreaterEqual(receipt["cases"], 1000)
+        self.assertEqual(receipt["critical"]["create-prompt"], "P79")
+        self.assertEqual(receipt["critical"]["prioritize-repos-now"], "P23")
 
 
 if __name__ == "__main__":
