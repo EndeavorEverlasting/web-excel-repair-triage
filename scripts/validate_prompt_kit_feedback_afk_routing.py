@@ -15,6 +15,7 @@ WORKFLOWS = ROOT / "harness" / "workflows.v1.json"
 MANIFEST = ROOT / "harness" / "manifest.v1.json"
 SKILL = ROOT / ".ai" / "skills" / "prompt-kit-feedback-afk-routing" / "SKILL.md"
 ROUTER = ROOT / "scripts" / "prompt_kit_afk_signal_router.py"
+BRIDGE = ROOT / "scripts" / "prompt_kit_feedback_bridge.py"
 WEB_WORKFLOW = ROOT / ".github" / "workflows" / "prompt-kit-web.yml"
 FEEDBACK_WORKFLOW = ROOT / ".github" / "workflows" / "prompt-kit-feedback-hook.yml"
 REPORT_SCHEMA = "prompt-kit-feedback-afk-routing-validation/v1"
@@ -39,6 +40,7 @@ def validate() -> dict[str, Any]:
     manifest = load_json(MANIFEST)
     skill = SKILL.read_text(encoding="utf-8")
     router = ROUTER.read_text(encoding="utf-8")
+    bridge = BRIDGE.read_text(encoding="utf-8")
     web_workflow = WEB_WORKFLOW.read_text(encoding="utf-8")
     feedback_workflow = FEEDBACK_WORKFLOW.read_text(encoding="utf-8")
 
@@ -73,6 +75,25 @@ def validate() -> dict[str, Any]:
         contract.get("privacy", {}).get("raw_comment_provider_dispatch") is False,
         "raw written feedback must not be provider-dispatched",
     )
+
+    bridge_contract = contract.get("surfaces", {}).get("private_bridge", {})
+    check(
+        "bridge_owner_path",
+        bridge_contract.get("path") == "scripts/prompt_kit_feedback_bridge.py",
+        "private bridge contract path drift",
+    )
+    bridge_forbidden = set(bridge_contract.get("forbidden", []))
+    for required in (
+        "pull-request merge authority",
+        "worker scheduling loop",
+        "raw written feedback in provider dispatch payloads",
+        "browser credential storage",
+    ):
+        check(
+            f"bridge_contract_forbids_{required[:16].replace(' ', '_')}",
+            required in bridge_forbidden,
+            f"private bridge contract lost forbidden boundary: {required}",
+        )
 
     try:
         capability = one(capabilities.get("capabilities", []), "id", "prompt-kit-feedback-afk-routing", "capability")
@@ -136,6 +157,44 @@ def validate() -> dict[str, Any]:
     check("router_uses_p115", "P115 AFK Feedback-Driven Development Loop Executor" in router, "router work request must name P115")
     check("router_no_shell", "shell=True" not in router, "router must not invoke workers through shell=True")
 
+    for marker in (
+        "prompt_kit_afk_local_loop",
+        "PROMPT_KIT_AFK_WORKER_COMMAND",
+        "one_pass(",
+        "time.sleep(",
+        "--poll-seconds",
+        "gh pr",
+        '"/merge"',
+    ):
+        check(
+            f"bridge_bans_{marker.replace(' ', '_')}",
+            marker not in bridge,
+            f"private bridge contains forbidden worker/scheduler/merge marker: {marker}",
+        )
+    for required in (
+        "sync_authorized",
+        "PROVIDER_WAKEUP_DISABLED",
+        "prompt-kit-feedback-receipt",
+        "provider_receipt",
+        "retry_pending_receipts",
+        "bridge-local:",
+    ):
+        check(
+            f"bridge_requires_{required[:18].replace(' ', '_')}",
+            required in bridge,
+            f"private bridge missing required transport/privacy marker: {required}",
+        )
+    check(
+        "bridge_provider_receipt_no_raw_comment",
+        '"comment":' not in bridge.split("def provider_receipt", 1)[1].split("def write_pending", 1)[0],
+        "provider receipt must not include raw written feedback",
+    )
+    check(
+        "bridge_default_wakeup_off",
+        "enabled: bool = False" in bridge and "provider_wakeup: bool = False" in bridge,
+        "private bridge provider wakeup must be opt-in",
+    )
+
     check("web_workflow_read_only", "contents: write" not in web_workflow and "contents: read" in web_workflow, "Prompt Kit web workflow must be read-only")
     for stale in ("P122 Gemini regression strengthening", "feat/gemini-youtube-ingestion-prompt-20260827", "git push origin"):
         check(f"web_workflow_retires_{stale[:12]}", stale not in web_workflow, f"Prompt Kit web workflow retains stale writer behavior: {stale}")
@@ -144,6 +203,7 @@ def validate() -> dict[str, Any]:
         "scripts/validate_prompt_kit_portability.py",
         "tests/test_prompt_kit_portability.py",
         "tests/test_prompt_kit_portability_regressions.py",
+        "docs/prompt-kit-favorites-portability.js",
         "Build portable Prompt Kit runtime artifact",
         "Validate portable Favorites and harness discipline",
         "prompt-kit-portable-runtime",
