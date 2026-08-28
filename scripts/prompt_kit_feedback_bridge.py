@@ -1,26 +1,38 @@
 #!/usr/bin/env python3
 """Private Prompt Kit feedback transport seam.
 
-This module validates one browser-origin feedback envelope, pseudonymizes source
-identity, persists the sanitized event in a private local spool, and can emit a
-sanitized repository-dispatch receipt when explicitly enabled. It deliberately
-does not schedule workers, scan pull requests, or merge repository changes.
+Validate one explicitly authorized browser-origin feedback envelope, pseudonymize
+source identity, persist the full event only in a user-local private spool, and
+optionally publish a sanitized repository-dispatch receipt *only when a matching
+consumer is registered*. This module never schedules workers, scans PRs, or
+merges repository changes.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+import os
+import re
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Sequence
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from scripts import build_prompt_kit_registry as registry  # noqa: E402
+
 EVENT_SCHEMA = "prompt-feedback-event/v1"
 PRIVATE_ENVELOPE_SCHEMA = "prompt-feedback-private-envelope/v1"
 PRIVATE_DISPATCH_SCHEMA = "prompt-feedback-private-dispatch/v1"
-SPOOL_SCHEMA = "prompt-feedback-private-spool/v1"
+SPOOL_SCHEMA = "prompt-feedback-private-spool/v2"
+PROVIDER_EVENT_TYPE = "prompt-kit-feedback-receipt"
+PROVIDER_TIMEOUT_SECONDS = 20
 MAX_ENVELOPE_BYTES = 16 * 1024
+REPOSITORY_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 SENSITIVE_MARKERS = (
     "prompt_body",
     "clipboard",
@@ -61,12 +73,45 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def canonical_prompt_ids() -> set[str]:
+    return {
+        str(prompt.get("id", "")).strip().upper()
+        for prompt in registry.load_prompt_kit_registry()
+        if isinstance(prompt, dict) and str(prompt.get("id", "")).strip()
+    }
+
+
+def default_spool_root() -> Path:
+    if os.name == "nt":
+        base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
+        return base / "PromptKit" / "feedback-spool"
+    state = os.environ.get("XDG_STATE_HOME")
+    base = Path(state) if state else Path.home() / ".local" / "state"
+    return base / "prompt-kit" / "feedback-spool"
+
+
 def _require_text(value: object, field: str, maximum: int) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field} must be a non-empty string")
     text = value.strip()
     if len(text) > maximum:
         raise ValueError(f"{field} exceeds {maximum} characters")
+    return text
+
+
+def _require_repository(value: object) -> str:
+    repository = _require_text(value, "repository", 180)
+    if not REPOSITORY_RE.fullmatch(repository):
+        raise ValueError("repository must use owner/name form")
+    return repository
+
+
+def _validate_timestamp(value: object) -> str:
+    text = _require_text(value, "timestamp", 64)
+    try:
+        datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError(f"invalid timestamp: {text}") from exc
     return text
 
 
@@ -82,16 +127,40 @@ def reject_sensitive_payload(value: object, path: str = "event") -> None:
             reject_sensitive_payload(item, f"{path}[{index}]")
 
 
-def _safe_id(value: str) -> str:
-    cleaned = "".join(ch if ch.isalnum() or ch in "-_" else "_" for ch in value)
-    return cleaned[:120] or hashlib.sha256(value.encode("utf-8")).hexdigest()[:24]
+def _spool_key(event_id: str) -> str:
+    readable = "".join(ch if ch.isalnum() or ch in "-_" else "_" for ch in event_id)[:64]
+    digest = hashlib.sha256(event_id.encode("utf-8")).hexdigest()[:20]
+    return f"{readable or 'event'}-{digest}"
 
 
 def _source_hash(source: str) -> str:
     return "bridge-local:" + hashlib.sha256(source.encode("utf-8")).hexdigest()[:24]
 
 
-def sanitize_event(event: object) -> dict[str, Any]:
+def _ensure_private_directory(path: Path) -> None:
+    path.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if os.name != "nt":
+        os.chmod(path, 0o700)
+
+
+def _write_private_json(path: Path, payload: dict[str, Any]) -> None:
+    _ensure_private_directory(path.parent)
+    encoded = (json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n").encode("utf-8")
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(encoded)
+    except Exception:
+        try:
+            os.close(fd)
+        except OSError:
+            pass
+        raise
+    if os.name != "nt":
+        os.chmod(path, 0o600)
+
+
+def sanitize_event(event: object, prompt_ids: set[str] | None = None) -> dict[str, Any]:
     if not isinstance(event, dict):
         raise ValueError("feedback event must be an object")
     reject_sensitive_payload(event)
@@ -103,6 +172,9 @@ def sanitize_event(event: object) -> dict[str, Any]:
 
     event_id = _require_text(event.get("event_id"), "event_id", 160)
     prompt_id = _require_text(event.get("prompt_id"), "prompt_id", 40).upper()
+    known = prompt_ids if prompt_ids is not None else canonical_prompt_ids()
+    if prompt_id not in known:
+        raise ValueError(f"unknown prompt identity: {prompt_id}")
     event_type = _require_text(event.get("event_type"), "event_type", 40)
     if event_type not in {"prompt_vote", "prompt_feedback", "prompt_usage"}:
         raise ValueError("unsupported feedback event type")
@@ -114,7 +186,7 @@ def sanitize_event(event: object) -> dict[str, Any]:
     if event_type == "prompt_usage" and value not in {"detail-open", "copy"}:
         raise ValueError("unsupported prompt usage value")
 
-    timestamp = _require_text(event.get("timestamp"), "timestamp", 64)
+    timestamp = _validate_timestamp(event.get("timestamp"))
     source = _require_text(event.get("source"), "source", 160)
     sequence = event.get("sequence", 0)
     if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence < 0:
@@ -148,13 +220,11 @@ def sanitize_event(event: object) -> dict[str, Any]:
             raise ValueError("unsupported feedback metadata fields: " + ", ".join(unknown_metadata))
         runtime = metadata.get("runtime")
         if runtime is not None:
-            sanitized["metadata"] = {
-                "runtime": _require_text(runtime, "metadata.runtime", 120)
-            }
+            sanitized["metadata"] = {"runtime": _require_text(runtime, "metadata.runtime", 120)}
     return sanitized
 
 
-def parse_envelope(payload: bytes) -> dict[str, Any]:
+def parse_envelope(payload: bytes, prompt_ids: set[str] | None = None) -> dict[str, Any]:
     if len(payload) > MAX_ENVELOPE_BYTES:
         raise ValueError("feedback envelope exceeds maximum size")
     try:
@@ -170,19 +240,21 @@ def parse_envelope(payload: bytes) -> dict[str, Any]:
     unknown = sorted(set(envelope) - {"schema_version", "sync_authorized", "event"})
     if unknown:
         raise ValueError("unsupported private envelope fields: " + ", ".join(unknown))
-    return sanitize_event(envelope.get("event"))
+    return sanitize_event(envelope.get("event"), prompt_ids=prompt_ids)
 
 
-def spool_paths(repo_root: Path, event_id: str) -> tuple[Path, Path]:
-    root = (repo_root / "Outputs" / "prompt-kit-feedback-spool").resolve()
-    safe = _safe_id(event_id)
-    return root / "pending" / f"{safe}.json", root / "sent" / f"{safe}.json"
+def spool_paths(spool_root: Path, event_id: str) -> tuple[Path, Path, Path]:
+    key = _spool_key(event_id)
+    root = spool_root.expanduser().resolve()
+    return (
+        root / "accepted" / f"{key}.json",
+        root / "receipts" / "pending" / f"{key}.json",
+        root / "receipts" / "sent" / f"{key}.json",
+    )
 
 
 def event_digest(event: dict[str, Any]) -> str:
-    data = json.dumps(
-        event, sort_keys=True, separators=(",", ":"), ensure_ascii=False
-    ).encode("utf-8")
+    data = json.dumps(event, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
     return hashlib.sha256(data).hexdigest()
 
 
@@ -202,99 +274,107 @@ def provider_receipt(event: dict[str, Any]) -> dict[str, Any]:
     return receipt
 
 
-def write_pending(repo_root: Path, event: dict[str, Any], repository: str) -> Path:
-    pending, sent = spool_paths(repo_root, str(event["event_id"]))
-    if sent.exists():
-        sent_payload = json.loads(sent.read_text(encoding="utf-8"))
-        if sent_payload.get("event_digest") != event_digest(event):
-            raise ValueError(f"event id conflict in sent ledger: {event['event_id']}")
-        return sent
-    pending.parent.mkdir(parents=True, exist_ok=True)
+def write_accepted(spool_root: Path, event: dict[str, Any], repository: str) -> tuple[Path, bool]:
+    accepted, _, _ = spool_paths(spool_root, str(event["event_id"]))
+    digest = event_digest(event)
+    if accepted.exists():
+        existing = json.loads(accepted.read_text(encoding="utf-8"))
+        if existing.get("event_digest") != digest or existing.get("event", {}).get("event_id") != event["event_id"]:
+            raise ValueError(f"event id conflict in private spool: {event['event_id']}")
+        return accepted, False
     payload = {
         "schema_version": SPOOL_SCHEMA,
         "repository": repository,
-        "queued_at": utc_now(),
-        "event_digest": event_digest(event),
+        "accepted_at": utc_now(),
+        "event_digest": digest,
         "event": event,
         "provider_receipt": provider_receipt(event),
     }
+    _write_private_json(accepted, payload)
+    return accepted, True
+
+
+def queue_provider_receipt(spool_root: Path, event: dict[str, Any], repository: str) -> Path:
+    _, pending, sent = spool_paths(spool_root, str(event["event_id"]))
+    if sent.exists():
+        return sent
+    payload = {
+        "schema_version": SPOOL_SCHEMA,
+        "repository": repository,
+        "event_digest": event_digest(event),
+        "provider_receipt": provider_receipt(event),
+        "queued_at": utc_now(),
+    }
     if pending.exists():
         existing = json.loads(pending.read_text(encoding="utf-8"))
-        if existing.get("event_digest") != payload["event_digest"]:
-            raise ValueError(f"event id conflict in private spool: {event['event_id']}")
+        if existing.get("event_digest") != payload["event_digest"] or existing.get("repository") != repository:
+            raise ValueError(f"receipt conflict in private spool: {event['event_id']}")
         return pending
-    pending.write_text(
-        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
+    _write_private_json(pending, payload)
     return pending
 
 
-def mark_sent(repo_root: Path, event: dict[str, Any], pending: Path) -> Path:
-    _, sent = spool_paths(repo_root, str(event["event_id"]))
-    sent.parent.mkdir(parents=True, exist_ok=True)
-    sent.write_text(
-        json.dumps(
-            {
-                "schema_version": SPOOL_SCHEMA,
-                "event_id": event["event_id"],
-                "event_digest": event_digest(event),
-                "provider_receipt": provider_receipt(event),
-                "dispatched_at": utc_now(),
-            },
-            indent=2,
-            sort_keys=True,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
-    if pending != sent:
-        pending.unlink(missing_ok=True)
-    return sent
+def provider_consumer_registered(repo_root: Path) -> bool:
+    workflow = repo_root / ".github" / "workflows" / "prompt-kit-feedback-hook.yml"
+    if not workflow.is_file():
+        return False
+    text = workflow.read_text(encoding="utf-8")
+    return "repository_dispatch:" in text and PROVIDER_EVENT_TYPE in text
 
 
 def dispatch_repository_receipt(
     *,
     repo_root: Path,
     repository: str,
-    event: dict[str, Any],
+    receipt: dict[str, Any],
     enabled: bool = False,
     runner: Runner = subprocess.run,
 ) -> dict[str, Any]:
     if not enabled:
-        return {"status": "PROVIDER_WAKEUP_DISABLED", "signal_id": event["event_id"]}
-    receipt = provider_receipt(event)
+        return {"status": "PROVIDER_WAKEUP_DISABLED", "signal_id": receipt["signal_id"]}
+    if not provider_consumer_registered(repo_root):
+        return {"status": "PROVIDER_CONSUMER_UNREGISTERED", "signal_id": receipt["signal_id"]}
     body = json.dumps(
-        {
-            "event_type": "prompt-kit-feedback-receipt",
-            "client_payload": receipt,
-        },
+        {"event_type": PROVIDER_EVENT_TYPE, "client_payload": receipt},
         separators=(",", ":"),
     )
-    proc = runner(
-        [
-            "gh",
-            "api",
-            "--method",
-            "POST",
-            f"repos/{repository}/dispatches",
-            "--input",
-            "-",
-        ],
-        cwd=repo_root,
-        input=body,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
+    try:
+        proc = runner(
+            [
+                "gh",
+                "api",
+                "--method",
+                "POST",
+                f"repos/{repository}/dispatches",
+                "--input",
+                "-",
+            ],
+            cwd=repo_root,
+            input=body,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=PROVIDER_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired:
+        return {"status": "PROVIDER_WAKEUP_TIMEOUT", "signal_id": receipt["signal_id"]}
     if proc.returncode:
         return {
             "status": "PROVIDER_WAKEUP_FAILED",
-            "signal_id": event["event_id"],
+            "signal_id": receipt["signal_id"],
             "error": (proc.stderr or proc.stdout).strip()[-2000:],
         }
-    return {"status": "PROVIDER_WAKEUP_SENT", "signal_id": event["event_id"]}
+    return {"status": "PROVIDER_WAKEUP_SENT", "signal_id": receipt["signal_id"]}
+
+
+def mark_receipt_sent(spool_root: Path, event_id: str, pending: Path) -> Path:
+    _, _, sent = spool_paths(spool_root, event_id)
+    payload = json.loads(pending.read_text(encoding="utf-8"))
+    payload["dispatched_at"] = utc_now()
+    _write_private_json(sent, payload)
+    pending.unlink(missing_ok=True)
+    return sent
 
 
 def accept_private_feedback(
@@ -302,33 +382,41 @@ def accept_private_feedback(
     repo_root: Path,
     repository: str,
     payload: bytes,
+    spool_root: Path | None = None,
     provider_wakeup: bool = False,
     runner: Runner = subprocess.run,
 ) -> dict[str, Any]:
+    repository = _require_repository(repository)
+    spool_root = (spool_root or default_spool_root()).expanduser().resolve()
     event = parse_envelope(payload)
-    pending, sent = spool_paths(repo_root, str(event["event_id"]))
-    spool_path = write_pending(repo_root, event, repository)
-    if spool_path == sent:
+    _, created = write_accepted(spool_root, event, repository)
+    if not created:
         return {
             "status": "DUPLICATE",
             "signal_id": event["event_id"],
             "provider_receipt": provider_receipt(event),
         }
+    if not provider_wakeup:
+        return {
+            "status": "ACCEPTED_PRIVATE",
+            "signal_id": event["event_id"],
+            "provider_status": "PROVIDER_WAKEUP_DISABLED",
+            "provider_receipt": provider_receipt(event),
+        }
 
+    pending = queue_provider_receipt(spool_root, event, repository)
     dispatch = dispatch_repository_receipt(
         repo_root=repo_root,
         repository=repository,
-        event=event,
-        enabled=provider_wakeup,
+        receipt=provider_receipt(event),
+        enabled=True,
         runner=runner,
     )
     if dispatch["status"] == "PROVIDER_WAKEUP_SENT":
-        mark_sent(repo_root, event, pending)
+        mark_receipt_sent(spool_root, str(event["event_id"]), pending)
         status = "ACCEPTED_AND_SIGNALLED"
-    elif dispatch["status"] == "PROVIDER_WAKEUP_FAILED":
-        status = "ACCEPTED_PRIVATE_RETRY_PENDING"
     else:
-        status = "ACCEPTED_PRIVATE"
+        status = "ACCEPTED_PRIVATE_RETRY_PENDING"
     return {
         "status": status,
         "signal_id": event["event_id"],
@@ -341,37 +429,38 @@ def retry_pending_receipts(
     *,
     repo_root: Path,
     repository: str,
+    spool_root: Path | None = None,
     provider_wakeup: bool,
     runner: Runner = subprocess.run,
 ) -> dict[str, Any]:
-    pending_root = (repo_root / "Outputs" / "prompt-kit-feedback-spool" / "pending").resolve()
+    repository = _require_repository(repository)
+    spool_root = (spool_root or default_spool_root()).expanduser().resolve()
+    pending_root = spool_root / "receipts" / "pending"
     results: list[dict[str, Any]] = []
     if not pending_root.exists():
         return {"status": "PASS", "attempted": 0, "sent": 0, "results": results}
     for path in sorted(pending_root.glob("*.json")):
-        payload = json.loads(path.read_text(encoding="utf-8"))
-        event = payload.get("event")
-        if not isinstance(event, dict):
-            raise ValueError(f"invalid pending spool event: {path}")
-        if payload.get("event_digest") != event_digest(event):
-            raise ValueError(f"pending spool digest mismatch: {path}")
+        queued = json.loads(path.read_text(encoding="utf-8"))
+        stored_repository = _require_repository(queued.get("repository"))
+        if stored_repository != repository:
+            raise ValueError(
+                f"pending receipt repository mismatch: stored={stored_repository} requested={repository}"
+            )
+        receipt = queued.get("provider_receipt")
+        if not isinstance(receipt, dict) or tuple(receipt) != PROVIDER_RECEIPT_FIELDS:
+            raise ValueError(f"invalid pending provider receipt: {path}")
         dispatch = dispatch_repository_receipt(
             repo_root=repo_root,
-            repository=repository,
-            event=event,
+            repository=stored_repository,
+            receipt=receipt,
             enabled=provider_wakeup,
             runner=runner,
         )
         if dispatch["status"] == "PROVIDER_WAKEUP_SENT":
-            mark_sent(repo_root, event, path)
+            mark_receipt_sent(spool_root, str(receipt["signal_id"]), path)
         results.append(dispatch)
     sent_count = sum(item["status"] == "PROVIDER_WAKEUP_SENT" for item in results)
-    return {
-        "status": "PASS",
-        "attempted": len(results),
-        "sent": sent_count,
-        "results": results,
-    }
+    return {"status": "PASS", "attempted": len(results), "sent": sent_count, "results": results}
 
 
 def _read_payload(path: Path) -> bytes:
@@ -385,6 +474,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     parser.add_argument("--repository", required=True)
+    parser.add_argument("--spool-root", type=Path)
     parser.add_argument("--payload", type=Path)
     parser.add_argument("--retry-pending", action="store_true")
     parser.add_argument("--provider-wakeup", action="store_true")
@@ -397,6 +487,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             report = retry_pending_receipts(
                 repo_root=repo_root,
                 repository=args.repository,
+                spool_root=args.spool_root,
                 provider_wakeup=args.provider_wakeup,
             )
         else:
@@ -406,6 +497,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 repo_root=repo_root,
                 repository=args.repository,
                 payload=_read_payload(args.payload),
+                spool_root=args.spool_root,
                 provider_wakeup=args.provider_wakeup,
             )
     except (OSError, ValueError, json.JSONDecodeError) as exc:
