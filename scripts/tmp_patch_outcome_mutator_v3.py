@@ -6,6 +6,41 @@ ROOT = Path(__file__).resolve().parents[1]
 TARGET = ROOT / "scripts" / "tmp_apply_prompt_kit_outcome_tutorial_exec_context.py"
 text = TARGET.read_text(encoding="utf-8")
 
+# P92 has advanced on main since this temporary materializer was authored. Do not
+# transplant the older P92 wording over a stronger current owner. Replace the stale
+# mutation block with a fail-closed verification that current P92 already carries the
+# execution-context invariant this lane originally intended to add.
+p92_start = '    p92 = by_id["P92"]\n'
+p92_end = '    donor_text = subprocess.check_output(\n'
+start = text.find(p92_start)
+end = text.find(p92_end, start)
+if start < 0 or end < 0 or end <= start:
+    raise SystemExit("P92 materializer block boundaries not found")
+current_p92_block = text[start:end]
+if "missing anchor: P92 execution context" not in current_p92_block and "P92 execution context" not in current_p92_block:
+    raise SystemExit("P92 materializer block no longer matches the expected stale mutation lane")
+verified_p92_block = '''    p92 = by_id["P92"]
+    if p92["name"] != "Canonical Path Prompt":
+        raise SystemExit("P92 identity mismatch")
+    p92_required = (
+        (p92.get("sprintRole", ""), "terminal/shell/kernel/runtime", "P92 sprintRole execution context"),
+        (p92.get("inspectFirst", ""), "terminal host, actual shell/interpreter, kernel/OS/runtime boundary, execution target", "P92 inspection execution context"),
+        (p92.get("expectedOutput", ""), "EXECUTION CONTEXT RECEIPT", "P92 receipt output"),
+        (p92.get("proofGate", ""), "fails closed instead of guessing shell/path semantics", "P92 fail-closed proof"),
+        (p92.get("copyContent", ""), "5A. EXECUTION CONTEXT RECEIPT BEFORE PATH-SENSITIVE COMMANDS", "P92 execution-context section"),
+        (p92.get("copyContent", ""), "EXECUTION_CONTEXT=UNKNOWN", "P92 unknown execution context"),
+        (p92.get("copyContent", ""), "A terminal application is not the shell", "P92 terminal-host distinction"),
+    )
+    for haystack, needle, label in p92_required:
+        if needle not in haystack:
+            raise SystemExit(f"current P92 no longer subsumes intended execution-context invariant: {label}")
+    for keyword in ("terminal context", "shell context", "kernel context", "runtime context"):
+        if keyword not in p92.get("keywords", []):
+            raise SystemExit(f"current P92 missing execution-context discovery keyword: {keyword}")
+
+'''
+text = text[:start] + verified_p92_block + text[end:]
+
 old_donor = '''    donor_text = subprocess.check_output(
         ["git", "show", "origin/feat/p114-canary-network-20260826:registry/prompts/spec-architecture-prompts.v1.json"],
         cwd=ROOT,
@@ -75,12 +110,6 @@ if old_buffer not in text:
     raise SystemExit("Prompt Finder validator child-process buffer anchor not found")
 text = text.replace(old_buffer, new_buffer, 1)
 
-old_p92_phrase = "remote merge is never local deployment proof;"
-new_p92_phrase = "remote merged SHA is never treated as local deployment proof;"
-if old_p92_phrase not in text:
-    raise SystemExit("P92 deployment-proof phrase anchor not found")
-text = text.replace(old_p92_phrase, new_p92_phrase, 1)
-
 old_discovery_mutation = '''    text = require_replace(text, marker, marker_new, "discovery outcome assertions")
     path.write_text(text, encoding="utf-8")
 '''
@@ -130,4 +159,4 @@ if old_discovery_mutation not in text:
 text = text.replace(old_discovery_mutation, new_discovery_mutation, 1)
 
 TARGET.write_text(text, encoding="utf-8")
-print("patched temporary mutator: pinned P114 authority + large-registry buffer + outcome regression reconciliation")
+print("patched temporary mutator: current-P92 verification + pinned P114 authority + large-registry buffer + outcome regression reconciliation")
