@@ -41,9 +41,6 @@ verified_p92_block = '''    p92 = by_id["P92"]
 '''
 text = text[:start] + verified_p92_block + text[end:]
 
-# The stale heading remains in exactly two proof surfaces after the old mutation
-# block is replaced: the focused P92 regression added by this materializer and the
-# final fixed-point verifier. Both should assert the stronger current heading.
 old_verify_phrase = '"EXECUTION CONTEXT RECEIPT BEFORE COMMANDS OR AGENT SELECTION"'
 new_verify_phrase = '"5A. EXECUTION CONTEXT RECEIPT BEFORE PATH-SENSITIVE COMMANDS"'
 if text.count(old_verify_phrase) != 2:
@@ -52,10 +49,16 @@ if text.count(old_verify_phrase) != 2:
     )
 text = text.replace(old_verify_phrase, new_verify_phrase, 2)
 
-# The historical <9000-character P92 cap predates later accepted P92 sections on
-# current main. Replace that stale size proxy with the stronger invariant this lane
-# actually needs: materialization must leave the complete current-main P92 record
-# byte-for-data identical while strengthening neighboring owners.
+# The old P92 regression also encoded Windows-Terminal-specific wording that current
+# P92 intentionally generalized. Require the current causal invariants instead.
+for old_phrase, new_phrase in (
+    ("Windows Terminal can host PowerShell", "shell prompt does not prove the kernel/runtime or target"),
+    ("do not emit a guessed shell-specific mutation command", "do not emit a guessed shell-specific or target-specific write command"),
+):
+    if text.count(old_phrase) != 1:
+        raise SystemExit(f"expected exactly one stale P92 regression phrase {old_phrase!r}, found {text.count(old_phrase)}")
+    text = text.replace(old_phrase, new_phrase, 1)
+
 old_size_guard = '''    assert len(next(p for p in json.loads(REG.read_text(encoding="utf-8"))["prompts"] if p["id"] == "P92")["copyContent"]) < 9000
 '''
 new_size_guard = '''    raw_p92 = next(p for p in json.loads(REG.read_text(encoding="utf-8"))["prompts"] if p["id"] == "P92")
@@ -87,11 +90,7 @@ old_donor = '''    donor_text = subprocess.check_output(
     p114.update(donor_p114)
     p114.update(identity)
 '''
-new_donor = '''    # Preserve the reviewed P114 network semantics from PR #313 without trusting
-    # a mutable feature-branch tip as current authority. The network patch is pinned
-    # to the exact reviewed head and may be transplanted only while the current P114
-    # record still exactly matches that PR's recorded base owner.
-    network_base_sha = "24ca96c57a7a9c706e43f7037d98caa79fb14fce"
+new_donor = '''    network_base_sha = "24ca96c57a7a9c706e43f7037d98caa79fb14fce"
     network_patch_sha = "67f76da78c5ee798b5d920a9db6c7e0344d2d387"
 
     def p114_at(ref: str) -> dict:
@@ -189,4 +188,4 @@ if old_discovery_mutation not in text:
 text = text.replace(old_discovery_mutation, new_discovery_mutation, 1)
 
 TARGET.write_text(text, encoding="utf-8")
-print("patched temporary mutator: preserve current-main P92 exactly + align proofs + pin P114 authority + outcome regression reconciliation")
+print("patched temporary mutator: preserve current-main P92 exactly + align current P92 regressions + pin P114 authority + outcome regression reconciliation")
