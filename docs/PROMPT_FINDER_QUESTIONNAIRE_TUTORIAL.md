@@ -139,6 +139,8 @@ python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidanc
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 ```
 
+`validate_prompt_finder_outcomes.js` is the fail-closed owner for terminal-outcome routing. Run it before interpreting the broader discovery tests so an owner mismatch cannot be hidden by otherwise healthy search behavior.
+
 ## Proof ceiling
 
 Repository validation can prove registry integrity, the current four-question outcome-owner model, repeated terminal-route stability across many context combinations, registry-owned next-step extraction, session-only completion state, JavaScript syntax, current Favorite/shortcut semantics, generated-site parity, and focused documentation assertions.
