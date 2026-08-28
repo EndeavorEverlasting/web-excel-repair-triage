@@ -2,140 +2,74 @@ name: Prompt Kit web contracts
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize]
     paths:
-      - 'registry/prompts/ai-engineering-level-up-prompts.v1.json'
-      - 'tests/test_gemini_youtube_playlist_ingestion_prompt.py'
-      - 'tests/test_sysadminsuite_prompt_registry.py'
-      - 'harness/test-floor.v1.json'
+      - 'registry/prompts/**'
+      - 'docs/prompt-kit-*.js'
+      - 'docs/prompt-kit-favorites-portability.js'
+      - 'harness/contracts/prompt-kit-*.json'
+      - 'harness/capabilities.v1.json'
+      - 'harness/triggers.v1.json'
+      - 'harness/workflows.v1.json'
+      - 'harness/validators.v1.json'
+      - 'harness/manifest.v1.json'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/serve_prompt_kit_portable.py'
+      - 'scripts/validate_prompt_kit_portability.py'
+      - 'scripts/prompt_kit_*.py'
+      - 'scripts/validate_prompt_kit_feedback_afk_routing.py'
+      - 'tests/test_prompt_kit_*.py'
+      - 'web/prompt-kit/index.html'
+      - '.github/workflows/prompt-kit-web.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'registry/prompts/**'
+      - 'docs/prompt-kit-*.js'
+      - 'docs/prompt-kit-favorites-portability.js'
+      - 'harness/contracts/prompt-kit-*.json'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/serve_prompt_kit_portable.py'
+      - 'scripts/validate_prompt_kit_portability.py'
+      - 'scripts/prompt_kit_*.py'
+      - 'tests/test_prompt_kit_*.py'
       - 'web/prompt-kit/index.html'
       - '.github/workflows/prompt-kit-web.yml'
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: prompt-kit-web-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  p122-review-repair:
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/gemini-youtube-ingestion-prompt-20260827'
+  validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - name: Checkout exact candidate
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
-
-      - name: Strengthen P122 repository-capable handoff
-        shell: bash
+      - name: Validate private feedback AFK factoring
         run: |
-          set -euo pipefail
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          path = Path('registry/prompts/ai-engineering-level-up-prompts.v1.json')
-          payload = json.loads(path.read_text(encoding='utf-8'))
-          p122 = next((item for item in payload['prompts'] if item.get('id') == 'P122'), None)
-          if p122 is None:
-              raise SystemExit('P122 not found')
-          if p122.get('name') != 'Gemini YouTube Playlist Ingestion Builder' or p122.get('seq') != '122':
-              raise SystemExit('P122 identity mismatch')
-
-          old = '''REPOSITORY-CAPABLE HANDOFF
-End with one copy-paste handoff for an agent that DOES have access to the consumer repository. Include:
-- exact consumer/repository identity as supplied;'''
-          new = '''REPOSITORY-CAPABLE HANDOFF
-End with one copy-paste handoff for an agent that DOES have access to the consumer repository.
-
-PRE-MUTATION MISSION DECLARATION
-Before modifying any tracked file, the repository-capable agent must declare the repository and branch/worktree, lane and mission, owned and forbidden scope, expected artifacts, validation order, proof ceiling, and mutation authority. Do not mutate tracked files until this declaration is complete.
-
-Then include:
-- exact consumer/repository identity as supplied;'''
-          if old not in p122['copyContent']:
-              raise SystemExit('P122 handoff anchor missing or already changed unexpectedly')
-          p122['copyContent'] = p122['copyContent'].replace(old, new, 1)
-          path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
-          PY
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
-
-      - name: Focused and adjacent regression proof
-        shell: bash
+          python scripts/validate_prompt_kit_feedback_afk_routing.py --summary
+          python -m unittest tests.test_prompt_kit_feedback_afk_routing tests.test_prompt_kit_feedback_production -v
+      - name: Validate canonical Prompt Kit parity
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Build portable Prompt Kit runtime artifact
+        run: python scripts/serve_prompt_kit_portable.py --build-only
+      - name: Validate portable Favorites and harness discipline
         run: |
-          set -euo pipefail
-          python -m unittest tests.test_gemini_youtube_playlist_ingestion_prompt -v
-          python -m unittest tests.test_sysadminsuite_prompt_registry -v
-          python scripts/prompt_registry_ops.py validate
-          python scripts/evaluate_prompt_language.py --summary
-          python scripts/validate_prompt_kit_discovery.py --summary
-          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output "$RUNNER_TEMP/prompt-kit-order-navigation-audit.json" --summary
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-          git diff --check
-
-      - name: Whole-chat pass-two fixed-point check
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          registry = json.loads(Path('registry/prompts/ai-engineering-level-up-prompts.v1.json').read_text(encoding='utf-8'))
-          p122 = next(p for p in registry['prompts'] if p['id'] == 'P122')
-          text = p122['copyContent']
-          required = [
-              'Gemini YouTube Playlist Ingestion Builder',
-              'GEMINI CAPABILITY BOUNDARY',
-              'yt-dlp owns YouTube extraction',
-              'WINDOWS-FIRST EXTRACTION CONTRACT',
-              'Repeated playlist entries are valid data',
-              'normalized JSON is canonical',
-              'utf-8-sig',
-              'do not copy GPL implementation code',
-              'MINIMUM DETERMINISTIC TESTS',
-              'LIVE-PROOF CEILING',
-              'REPOSITORY-CAPABLE HANDOFF',
-              'PRE-MUTATION MISSION DECLARATION',
-              'repository and branch/worktree',
-              'lane and mission',
-              'owned and forbidden scope',
-              'expected artifacts',
-              'validation order',
-              'proof ceiling',
-              'mutation authority',
-          ]
-          missing = [marker for marker in required if marker not in (p122['name'] + '\n' + text)]
-          if missing:
-              raise SystemExit(f'P122 fixed-point missing: {missing}')
-          if p122['seq'] != '122' or p122['copySheet'] != 'P122_COPY_SAFE':
-              raise SystemExit('P122 allocated identity drifted')
-          if 'StudySyndicate' in text:
-              raise SystemExit('P122 leaked consumer-specific repository name')
-
-          base = json.loads(Path('docs/prompts.json').read_text(encoding='utf-8'))
-          p56 = next(p for p in base if p['id'] == 'P56')
-          if p56['name'] != 'Context-to-Artifact Generator':
-              raise SystemExit('P56 identity drifted')
-          p100 = next(p for p in registry['prompts'] if p['id'] == 'P100')
-          p101 = next(p for p in registry['prompts'] if p['id'] == 'P101')
-          if p100['name'] != 'Factuality vs Faithfulness Hallucination Diagnoser':
-              raise SystemExit('P100 identity drifted')
-          if p101['name'] != 'Grounded Agent Output & Tool-Call Gate':
-              raise SystemExit('P101 identity drifted')
-          print('P122 whole-chat pass-two fixed-point PASS')
-          PY
-
-      - name: Commit durable review repair
-        shell: bash
-        env:
-          BRANCH: feat/gemini-youtube-ingestion-prompt-20260827
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add registry/prompts/ai-engineering-level-up-prompts.v1.json web/prompt-kit/index.html
-          git diff --cached --check
-          git commit -m 'fix(prompt-kit): harden P122 repository handoff'
-          git push origin "HEAD:${BRANCH}"
+          python scripts/validate_prompt_kit_portability.py --require-artifact --output Outputs/prompt-kit-portability-validation.json --summary
+          python -m unittest tests/test_prompt_kit_portability.py tests/test_prompt_kit_portability_regressions.py tests/test_prompt_kit_portable_health.py -v
+      - name: Validate patch hygiene
+        run: git diff --check
+      - name: Publish portable runtime proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-portable-runtime
+          path: Outputs/prompt-kit-portable/
+          if-no-files-found: error
+          retention-days: 14

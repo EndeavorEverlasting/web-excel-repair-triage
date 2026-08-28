@@ -102,6 +102,24 @@ class AIEngineeringLevelUpTests(unittest.TestCase):
         self.assertLess(len(raw_by_name[diagnostic["name"]]["copyContent"]), 8000)
         self.assertLess(len(raw_by_name[grounding["name"]]["copyContent"]), 8000)
 
+    def test_p100_rejects_contradictory_terminal_closeout_and_preserves_true_terminal_case(self) -> None:
+        prompts = build_prompt_kit_registry.load_prompt_registry()
+        by_id = {item["id"]: item for item in prompts}
+        p100 = by_id["P100"]["copyContent"]
+        for phrase in (
+            "7. CLOSEOUT CONSISTENCY CHECK",
+            "REMAINING GAPS, RISKS, BLOCKERS, INTEGRATION STATE",
+            "acknowledged overlapping branch or identity conflict",
+            "none; no safe actionable work remains",
+            "FAITHFULNESS_CONTEXT_IGNORED closure failure",
+            "reopen closure and execute or route the action",
+            "A true terminal case",
+            "do not manufacture work",
+        ):
+            self.assertIn(phrase, p100)
+        self.assertIn("closeout contradiction", by_id["P100"]["keywords"])
+        self.assertIn("no safe actionable work", by_id["P100"]["keywords"])
+
     def test_p68_repeats_context_refactor_until_fixed_point_and_mainline(self) -> None:
         raw = json.loads((ROOT / "registry/prompts/ai-engineering-level-up-prompts.v1.json").read_text(encoding="utf-8"))
         source = next(item for item in raw["prompts"] if item["id"] == "P68")

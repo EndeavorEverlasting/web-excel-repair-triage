@@ -496,12 +496,25 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
             "do not assume `%USERPROFILE%\\Desktop`",
             "Ambiguous roots/redirection -> CONFLICT/UNKNOWN",
             "tracked canonical-path/profile contract -> authorized machine/profile override",
+            "5A. EXECUTION CONTEXT RECEIPT BEFORE PATH-SENSITIVE COMMANDS",
+            "A terminal application is not the shell",
+            "EXECUTION_CONTEXT=UNKNOWN",
+            "5B. DEVELOPMENT MUTATION VS ACTIVE PRODUCTION USE",
+            "Production/use path is a consumer path, not the default development mutation target",
+            "PROD_USE_STATE",
+            "UNKNOWN is not idle",
+            "same physical path",
+            "Any write is production-impacting",
+            "prevents partial candidate state",
         ):
             self.assertIn(phrase, p92)
         self.assertIn("remote merged SHA is never treated as local deployment proof", p92_prompt["proofGate"])
+        self.assertIn("production/use path is not the default development mutation target", p92_prompt["proofGate"])
+        self.assertIn("UNKNOWN production use state blocks production mutation", p92_prompt["proofGate"])
+        self.assertIn("running processes, services, launchers", p92_prompt["inspectFirst"])
         self.assertIn("OneDrive/cloud roots", p92_prompt["inspectFirst"])
         self.assertIn("hard-coded username", p92_prompt["proofGate"])
-        self.assertLess(len(self.raw["P92"]["copyContent"]), 9000)
+        self.assertLess(len(self.raw["P92"]["copyContent"]), 12000)
         for synonym in (
             "canonical path",
             "canonical repository path",
@@ -710,6 +723,72 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("The repair owner must create a new exact candidate", content)
         self.assertIn("re-enter this P105 pipeline from the beginning", content)
         self.assertIn("never reuse proof from the failed candidate", content)
+
+    def test_p113_evolution_covers_crlf_second_sink_and_built_output_release_check(self) -> None:
+        prompt = self.full["P113"]
+        raw = self.raw["P113"]
+        content = prompt["copyContent"]
+        raw_content = raw["copyContent"]
+        self.assertEqual(prompt["id"], "P113")
+        self.assertEqual(prompt["class"], "HARNESS / TEST EVOLUTION")
+        for phrase in (
+            "CRLF-normalized mutation fixtures",
+            "second-sink",
+            "built-output",
+            "release:check",
+            "mutation fixture",
+            "Normalize line endings in fixtures",
+            "CRLF vs LF",
+        ):
+            self.assertIn(phrase, content)
+            self.assertIn(phrase, raw_content)
+        for kw in ("CRLF-normalized", "second-sink", "built-output", "release:check"):
+            self.assertIn(kw, prompt["keywords"])
+            self.assertIn(kw, raw["keywords"])
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+
+    def test_p122_web_contact_form_semantic_validation_and_mutation_release_guard(self) -> None:
+        prompt = self.full["P122"]
+        raw = self.raw["P122"]
+        content = prompt["copyContent"]
+        raw_content = raw["copyContent"]
+        self.assertEqual(prompt["seq"], "122")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["color"], "Cyan")
+        self.assertEqual(prompt["class"], "WEB / FORM SECURITY & VALIDATION")
+        self.assertEqual(prompt["name"], "Web Contact Form Semantic Validation & Mutation-Hardened Release Guard")
+        self.assertEqual(raw["id"], "P122")
+        for phrase in (
+            "form=\"contact-form\"",
+            "SEMANTIC FORM-CONTROL ASSOCIATION",
+            "UNNAMED AND EXTERNAL NATIVE-SUBMIT REJECTION",
+            "required-attribute",
+            "COMPUTED AND ALIASED REQUEST ACCESS",
+            "ALL-CONSOLE DENIAL",
+            "SEMANTIC RESEND PAYLOAD",
+            "SECOND-SINK",
+            "CRLF-NORMALIZED MUTATION FIXTURES",
+            "CRLF",
+            "HTML-AWARE TAG BOUNDARIES",
+            "COMMENT-SAFE",
+            "TEMPLATE-INTERPOLATION",
+            "TURNSTILE",
+            "passive Turnstile-resource",
+            "release:check",
+            "built-output",
+        ):
+            self.assertIn(phrase, content)
+            self.assertIn(phrase, raw_content)
+        for kw in ("contact form", "Resend payload", "second-sink", "CRLF-normalized", "mutation fixture", "release:check"):
+            self.assertIn(kw, prompt["keywords"])
+        self.assertIn("HARDEN THE WEB CONTACT FORM", content)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+        html = build_prompt_kit_registry.render()
+        self.assertIn("P122", html)
+        self.assertIn("Web Contact Form Semantic Validation", html)
+        self.assertIn("contact-form", html)
 
 if __name__ == "__main__":
     unittest.main()

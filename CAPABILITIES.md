@@ -20,6 +20,7 @@ This file is the human-readable index for reusable repository operations. The ma
 | `skill-factoring` | `.ai/skills/skill-factoring/SKILL.md` | Prompt Kit P61 | Skill ownership dispositions and repaired routing boundaries. |
 | `technician-prompt-kit-acquisition` | `.ai/skills/technician-prompt-kit-acquisition/SKILL.md` | Existing public/Windows/Git acquisition surfaces | Device-aware access mode: public use, phone install, Windows local app, editable checkout, or ZIP snapshot. |
 | `prompt-kit-browser-proof-scratch-cleanup` | `.ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md` | `scripts/Clear-PromptKitBrowserProofScratch.ps1` | Preview/apply cleanup receipt for exact eligible detached browser-proof scratch. |
+| `prompt-kit-feedback-afk-routing` | `.ai/skills/prompt-kit-feedback-afk-routing/SKILL.md` | `scripts/prompt_kit_afk_signal_router.py` | One deduplicated P115 work request or information-only disposition; promotion remains P105/pr-floor. |
 
 ## Harness infrastructure capability
 
@@ -60,6 +61,10 @@ P62 must reproduce functional weaknesses and inefficiencies with versioned cases
 ## Browser-proof scratch cleanup capability
 
 `prompt-kit-browser-proof-scratch-cleanup` owns only detached `prompt-kit-browser-proof-*` directories directly under the OS temp root. Preview is default; apply is explicit; rejected paths are preserved; prior stable receipts are backed up. Browser profile data, localStorage, Favorites, canonical repositories, public Pages, and unrelated Temp contents are outside this capability.
+
+## Prompt Kit feedback AFK routing capability
+
+`prompt-kit-feedback-afk-routing` consumes one accepted explicit feedback signal at a time. P99 owns explicit feedback semantics, P115 owns AFK coordination, P07/P32 own bounded repair lanes, and P105 / `pr-floor-integration` owns promotion. The router may classify, deduplicate, write a private work request, and invoke one configured worker through argv; it must not poll indefinitely, scan provider PR queues, or merge. Raw written feedback remains local and provider wakeups are receipt-only.
 
 ## Proof boundaries
 
