@@ -75,19 +75,22 @@ if text.count(old_size_guard) != 1:
 text = text.replace(old_size_guard, new_size_guard, 1)
 
 # The Pages gate was pre-staged through normal repository write authority because the
-# carrier token cannot write workflow files. Make the old materializer idempotent at
-# this seam: add the gate only when absent; otherwise verify exactly one canonical gate.
-old_automation = '''    path = ROOT / ".github" / "workflows" / "prompt-kit-pages.yml"
+# carrier token cannot write workflow files. Patch the materializer by stable function
+# boundaries rather than by one brittle full-string representation, then make that
+# materialization idempotent: add once when absent, otherwise verify exactly one gate.
+automation_start_marker = '    path = ROOT / ".github" / "workflows" / "prompt-kit-pages.yml"\n'
+automation_end_marker = '\n\n\ndef verify_fixed_point() -> None:\n'
+automation_start = text.find(automation_start_marker)
+automation_end = text.find(automation_end_marker, automation_start)
+if automation_start < 0 or automation_end < 0 or automation_end <= automation_start:
+    raise SystemExit("Pages automation materializer boundaries not found")
+automation_block = text[automation_start:automation_end]
+if "Prompt Finder terminal-outcome gate" not in automation_block or "pages outcome gate" not in automation_block:
+    raise SystemExit("Pages automation block no longer matches expected outcome-gate mutation lane")
+idempotent_automation = '''    path = ROOT / ".github" / "workflows" / "prompt-kit-pages.yml"
     text = path.read_text(encoding="utf-8")
-    anchor = "      - name: Validate exact checked-in Prompt Kit\n        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check\n"
-    new = "      - name: Prompt Finder terminal-outcome gate\n        run: |\n          node scripts/validate_prompt_finder_outcomes.js\n          python -m unittest tests.test_prompt_kit_guidance -v\n      - name: Validate exact checked-in Prompt Kit\n        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check\n"
-    text = require_replace(text, anchor, new, "pages outcome gate")
-    path.write_text(text, encoding="utf-8")
-'''
-new_automation = '''    path = ROOT / ".github" / "workflows" / "prompt-kit-pages.yml"
-    text = path.read_text(encoding="utf-8")
-    anchor = "      - name: Validate exact checked-in Prompt Kit\n        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check\n"
-    gate = "      - name: Prompt Finder terminal-outcome gate\n        run: |\n          node scripts/validate_prompt_finder_outcomes.js\n          python -m unittest tests.test_prompt_kit_guidance -v\n"
+    anchor = "      - name: Validate exact checked-in Prompt Kit\\n        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check\\n"
+    gate = "      - name: Prompt Finder terminal-outcome gate\\n        run: |\\n          node scripts/validate_prompt_finder_outcomes.js\\n          python -m unittest tests.test_prompt_kit_guidance -v\\n"
     if gate not in text:
         text = require_replace(text, anchor, gate + anchor, "pages outcome gate")
     else:
@@ -97,9 +100,7 @@ new_automation = '''    path = ROOT / ".github" / "workflows" / "prompt-kit-page
             raise SystemExit("Pages exact checked-in Prompt Kit gate missing after pre-staged outcome gate")
     path.write_text(text, encoding="utf-8")
 '''
-if old_automation not in text:
-    raise SystemExit("stale Pages automation mutation block not found")
-text = text.replace(old_automation, new_automation, 1)
+text = text[:automation_start] + idempotent_automation + text[automation_end:]
 
 old_donor = '''    donor_text = subprocess.check_output(
         ["git", "show", "origin/feat/p114-canary-network-20260826:registry/prompts/spec-architecture-prompts.v1.json"],
@@ -215,4 +216,4 @@ if old_discovery_mutation not in text:
 text = text.replace(old_discovery_mutation, new_discovery_mutation, 1)
 
 TARGET.write_text(text, encoding="utf-8")
-print("patched temporary mutator: preserve current-main P92 + idempotent Pages gate + pinned P114 authority + outcome regression reconciliation")
+print("patched temporary mutator: preserve current-main P92 + structurally idempotent Pages gate + pinned P114 authority + outcome regression reconciliation")
