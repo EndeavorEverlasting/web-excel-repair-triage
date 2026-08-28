@@ -28,6 +28,7 @@
     "tests/test_p67_source_faithfulness_eval_prompt.py",
     "tests/test_permissioned_repository_polling_prompt.py",
     "tests/test_prompt_classification_refiner_prompt.py",
+    "tests/test_prompt_kit_feedback_bridge.py",
     "tests/test_prompt_registry_expansion_regression_design_teach.py",
     "tests/test_repository_work_ledger_prompt.py",
     "tests/test_spec_architecture_prompt_registry.py",
