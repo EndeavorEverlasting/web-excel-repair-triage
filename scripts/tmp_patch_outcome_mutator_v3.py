@@ -52,6 +52,25 @@ if text.count(old_verify_phrase) != 2:
     )
 text = text.replace(old_verify_phrase, new_verify_phrase, 2)
 
+# The historical <9000-character P92 cap predates later accepted P92 sections on
+# current main. Replace that stale size proxy with the stronger invariant this lane
+# actually needs: materialization must leave the complete current-main P92 record
+# byte-for-data identical while strengthening neighboring owners.
+old_size_guard = '''    assert len(next(p for p in json.loads(REG.read_text(encoding="utf-8"))["prompts"] if p["id"] == "P92")["copyContent"]) < 9000
+'''
+new_size_guard = '''    raw_p92 = next(p for p in json.loads(REG.read_text(encoding="utf-8"))["prompts"] if p["id"] == "P92")
+    main_registry = json.loads(subprocess.check_output(
+        ["git", "show", "origin/main:registry/prompts/spec-architecture-prompts.v1.json"],
+        cwd=ROOT,
+        text=True,
+    ))
+    main_p92 = next(p for p in main_registry["prompts"] if p["id"] == "P92")
+    assert raw_p92 == main_p92, "P92 must remain identical to the refreshed current-main owner"
+'''
+if text.count(old_size_guard) != 1:
+    raise SystemExit(f"expected exactly one stale P92 size guard, found {text.count(old_size_guard)}")
+text = text.replace(old_size_guard, new_size_guard, 1)
+
 old_donor = '''    donor_text = subprocess.check_output(
         ["git", "show", "origin/feat/p114-canary-network-20260826:registry/prompts/spec-architecture-prompts.v1.json"],
         cwd=ROOT,
@@ -170,4 +189,4 @@ if old_discovery_mutation not in text:
 text = text.replace(old_discovery_mutation, new_discovery_mutation, 1)
 
 TARGET.write_text(text, encoding="utf-8")
-print("patched temporary mutator: current-P92 verification + both proof-heading alignments + pinned P114 authority + large-registry buffer + outcome regression reconciliation")
+print("patched temporary mutator: preserve current-main P92 exactly + align proofs + pin P114 authority + outcome regression reconciliation")
