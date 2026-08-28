@@ -41,15 +41,16 @@ verified_p92_block = '''    p92 = by_id["P92"]
 '''
 text = text[:start] + verified_p92_block + text[end:]
 
-# The fixed-point verifier carried the same superseded P92 heading. Keep its
-# semantic checks, but bind the heading assertion to the stronger current owner.
+# The stale heading remains in exactly two proof surfaces after the old mutation
+# block is replaced: the focused P92 regression added by this materializer and the
+# final fixed-point verifier. Both should assert the stronger current heading.
 old_verify_phrase = '"EXECUTION CONTEXT RECEIPT BEFORE COMMANDS OR AGENT SELECTION"'
 new_verify_phrase = '"5A. EXECUTION CONTEXT RECEIPT BEFORE PATH-SENSITIVE COMMANDS"'
-if text.count(old_verify_phrase) != 1:
+if text.count(old_verify_phrase) != 2:
     raise SystemExit(
-        f"expected exactly one stale P92 fixed-point heading, found {text.count(old_verify_phrase)}"
+        f"expected exactly two stale P92 proof headings, found {text.count(old_verify_phrase)}"
     )
-text = text.replace(old_verify_phrase, new_verify_phrase, 1)
+text = text.replace(old_verify_phrase, new_verify_phrase, 2)
 
 old_donor = '''    donor_text = subprocess.check_output(
         ["git", "show", "origin/feat/p114-canary-network-20260826:registry/prompts/spec-architecture-prompts.v1.json"],
@@ -169,4 +170,4 @@ if old_discovery_mutation not in text:
 text = text.replace(old_discovery_mutation, new_discovery_mutation, 1)
 
 TARGET.write_text(text, encoding="utf-8")
-print("patched temporary mutator: current-P92 verification + fixed-point alignment + pinned P114 authority + large-registry buffer + outcome regression reconciliation")
+print("patched temporary mutator: current-P92 verification + both proof-heading alignments + pinned P114 authority + large-registry buffer + outcome regression reconciliation")
