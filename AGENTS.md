@@ -13,7 +13,7 @@ This file is the single repository governance authority for `EndeavorEverlasting
 Order: (1) Platform, security, legal, and repository-owner instructions. (2) This governance contract. (3) Task-specific prompts and sprint instructions. (4) Generic agent defaults. Domain specs remain subordinate. Lower authority may narrow scope/strengthen safety, never weaken higher authority.
 
 ## 3. Mandatory sprint declaration
-Every writing sprint must state repository and branch or worktree; lane and mission; owned scope and forbidden scope; expected artifacts; validation commands and their order; proof ceiling; push/PR/merge/deploy authority. Preserve owned work; never discard unrelated work to become current.
+Every writing sprint must state repository and branch or worktree; lane and mission; owned scope and forbidden scope; expected artifacts; validation commands and their order; proof ceiling; push/PR/merge/deploy authority. Preserve owned work; never discard unrelated work.
 Before modifying or integrating overlapping prior work, refresh the default branch. Prove each required integrated slice is an ancestor via `git merge-base --is-ancestor <required-sha> <refreshed-default>` and still materially present using current content plus its owning validator. Ancestry alone cannot prove current content after a revert. Any failed check requires reconciliation and fresh proof before mutation or integration.
 
 ## 4. Completion standard
