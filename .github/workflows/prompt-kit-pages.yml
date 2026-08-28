@@ -52,6 +52,10 @@ jobs:
           python scripts/prompt_kit_feedback_hook.py --input feedback/inbox --output Outputs/prompt-kit-feedback-maintenance.json
       - name: Promotion fail-closed regression gate
         run: python -m unittest tests.test_prompt_kit_promotion_pipeline -v
+      - name: Prompt Finder terminal-outcome gate
+        run: |
+          node scripts/validate_prompt_finder_outcomes.js
+          python -m unittest tests.test_prompt_kit_guidance -v
       - name: Validate exact checked-in Prompt Kit
         run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
       - name: Application browser E2E gate
