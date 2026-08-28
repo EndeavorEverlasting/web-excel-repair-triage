@@ -37,24 +37,26 @@ Use this path when you know the outcome you want but do not know the Prompt Kit 
 3. Answer the **four** current questions:
    - **Where are you starting?** — new/no checkout, already in a repository, or app/artifact open.
    - **Do you have a known problem you want to solve?** — failure, known task, repeated stall, or discovery/planning.
-   - **What are you trying to accomplish?** — plan, coordinate, build, AI/agent production hardening, prove, ship, teach, or close out.
+   - **What outcome must this tutorial hand you?** — prompt creation/strengthening, implementation, troubleshooting, inherited-work verification, circumstance-aware repo prioritization, tutorial publication, regression proof, integration/release, or closeout.
    - **How should the work be organized?** — one sprint, parallel lanes, dependency-ordered work, or live/runtime proof.
-4. Read the **Primary recommendation** first. The page may show up to two additional candidates.
-5. Use **Open** when you need to inspect the full prompt before committing to it, or **Copy** when you are ready to paste the prompt into a new chat.
+4. Read the **Outcome owner** first. The page may show up to two context follow-ons, but context scoring cannot displace the declared outcome owner.
+5. Use **Open owner** when you need to inspect the full prompt, or **Copy & start** when you are ready to paste that owner into a new chat and execute it.
 6. If the primary prompt has registered continuation guidance, the **After the recommendation** preview shows the current `nextStep` path.
 7. After opening a prompt, use the **Guided workflow** panel to read the current **NEXT-STEP CONTRACT** and **READY TO CONTINUE WHEN** evidence gate before moving on.
 
 ### What the browser finder actually does
 
-The browser questionnaire is not a hard-coded prompt-ID decision tree. Each selected answer contributes ordinary search phrases. Those phrases are sent through the same `filterPromptsForQuery(PROMPTS, query)` path used by normal Prompt Kit search. For each phrase, the finder scores the first five shared-search results, aggregates evidence across answers, sorts by score/discovery rank, and returns at most three recommendations.
+The finder uses an **outcome-owner contract** for the primary route. The selected terminal outcome resolves to one canonical prompt ID already present in the registry, and that owner must expose actionable copy content, expected output, proof gate, and next-step guidance. Context answers still use `filterPromptsForQuery(PROMPTS, query)`; the first five shared-search results may contribute at most two follow-ons, so the page still returns at most three recommendations. Those context scores cannot replace the outcome owner.
 
-That keeps the finder aligned with the current registry, synonyms, metadata, and search behavior, but it also means the questionnaire is a routing aid rather than an authorization or correctness oracle. When you already know the exact specialist you need, searching its ID or exact name is more precise than intentionally answering broader questions until it appears.
+Two canary routes are deliberately protected: **Create or strengthen a Prompt Kit prompt → P79 — Prompt Registry Prompt Adder**, and **Decide which repository should move first right now → P23 — Circumstance-Aware Repo Priority Planner**. If a registered owner is missing or non-actionable, the finder fails closed to P65; it does not silently send the user to P07 merely because broad `implement` or `sprint` terms scored highly.
+
+The questionnaire remains a routing aid rather than authorization or correctness proof. The copied owner still has to execute its own mission and pass its own proof gate.
 
 ### Important inherited-work route: P83
 
 If another agent, chat, branch, PR, report, artifact, or implementation says work is complete or partially complete and you need to verify whether that claim is actually true, use **P83 — Agent Work Verifier & Iterative Advancer**.
 
-The current four-question browser questionnaire does not have a dedicated "another agent claims this is complete" answer. In that situation, search **`P83`** or the exact name directly instead of forcing the broader questionnaire to infer the distinction.
+The four-question browser questionnaire now has an explicit **Verify work another agent says is complete** outcome that resolves directly to **P83**. Exact-ID/name search remains available when you already know the specialist.
 
 P83 is specifically for treating inherited completion claims as hypotheses, checking the exact current evidence, correcting or finishing the work, independently deriving validation, and advancing the proven slice through integration when authorized. Generic prototyping, live-proof, regression, or integration prompts can be later steps; they do not replace the need to verify the inherited claim first.
 
@@ -144,7 +146,7 @@ If Favorites appear missing after opening a direct `file://` copy at a different
 
 | Symptom | Safe action | What not to conclude |
 |---|---|---|
-| Finder recommendation feels too generic | Search the exact prompt ID/name, or use P65 conversationally when you truly need another guided selection pass. | A high-ranked finder result is not automatic authorization or proof that adjacent prompts are wrong. |
+| Finder outcome owner is missing, non-actionable, or clearly wrong | Use P65 conversationally and report the exact terminal outcome. The automated route gate treats an owner mismatch as a defect. | Do not keep answering broad questions until P07 appears; context ranking cannot replace the terminal owner. |
 | Another agent says work is complete but observed behavior disagrees | Search/open **P83** directly and verify the inherited work against current evidence. | Do not treat the prior completion report as proof. |
 | Favorite prompt shortcut is rejected | Confirm the ID exists and Favorite the prompt first. | Do not create another shortcut system or edit browser storage by hand. |
 | Typed prompt sequence does nothing | Start outside an editable field and type the sequence within the 1.2-second buffer window. | A timed-out/ignored sequence does not prove the target prompt is missing. |
@@ -163,6 +165,7 @@ node --check docs/prompt-kit-guided-recommendations.js
 node --check docs/prompt-kit-journey.js
 node --check docs/prompt-kit-polish.js
 python -m unittest tests.test_prompt_kit_hotkey_completion -v
+node scripts/validate_prompt_finder_outcomes.js
 python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
 python scripts/validate_prompt_kit_discovery.py --summary
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
@@ -179,6 +182,6 @@ The CI owner is `.github/workflows/prompt-kit-web.yml`.
 
 ## Proof ceiling
 
-Repository validation can prove source syntax, finder structure, shared-search routing mechanics, registry-owned journey extraction, Favorite/shortcut policy, executable shortcut seam behavior, generated-site parity, and focused documentation assertions. The repository also contains browser-proof infrastructure for runtime-facing Prompt Kit claims.
+Repository validation can prove source syntax, finder structure, deterministic outcome-owner routing plus repeated context-combination checks, shared-search follow-on mechanics, registry-owned journey extraction, Favorite/shortcut policy, executable shortcut seam behavior, generated-site parity, and focused documentation assertions. The repository also contains browser-proof infrastructure for runtime-facing Prompt Kit claims.
 
 Documentation alone does **not** prove clipboard permission on every browser/device, Windows field execution on a particular workstation, live GitHub Pages freshness, organizational acceptance of a recommendation, or the success of a copied prompt in an environment whose required permissions/runtime are unavailable. Name those steps as runtime/operator proof when they matter.

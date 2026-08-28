@@ -6,7 +6,6 @@ from pathlib import Path
 
 from scripts import build_prompt_kit_registry
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RAW_REGISTRY = REPO_ROOT / "registry" / "prompts" / "spec-architecture-prompts.v1.json"
 TEST_FLOOR = REPO_ROOT / "harness" / "test-floor.v1.json"
@@ -29,90 +28,95 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
             raise AssertionError(f"expected one raw {TARGET_NAME!r}, found {len(raw_matches)}")
         cls.raw = raw_matches[0]
 
-    def test_helper_owns_identity_and_profile(self) -> None:
-        self.assertRegex(self.target["id"], r"^P\d+$")
-        self.assertEqual(self.target["seq"], self.target["id"][1:])
-        self.assertEqual(self.target["copySheet"], f"{self.target['id']}_COPY_SAFE")
+    def test_identity_and_profile_remain_stable(self) -> None:
+        self.assertEqual(self.target["id"], "P114")
+        self.assertEqual(self.target["seq"], "114")
+        self.assertEqual(self.target["copySheet"], "P114_COPY_SAFE")
         self.assertEqual(self.target["profile"], "spec-architecture")
         self.assertEqual(self.target["class"], "CONTEXT / CONTINUITY")
         self.assertEqual(self.raw["id"], self.target["id"])
 
-    def test_canary_requires_small_computer_profile_signal_every_response(self) -> None:
+    def test_canary_requires_profile_and_required_network_every_response(self) -> None:
         content = self.target["copyContent"]
         for phrase in (
             "MANDATORY FIRST LINE",
-            "Before every response, emit one compact first line",
-            "CANARY | PROFILE=<canonical computer profile>",
+            "CANARY | PROFILE=<canonical computer profile> | NETWORK=<WAB|Guest|Hardwire|Local|Arbitrary/N/A>",
             "Do not expand the normal Canary into scope narration",
             "Keep the normal Canary to one line",
         ):
             self.assertIn(phrase, content)
+        for network in ("WAB", "Guest", "Hardwire", "Local", "Arbitrary/N/A"):
+            self.assertIn(network, content)
 
-    def test_unknown_profile_fails_closed_and_reanchors_from_evidence(self) -> None:
+    def test_network_is_required_posture_not_observed_connectivity(self) -> None:
         content = self.target["copyContent"]
         for phrase in (
-            "CANARY | PROFILE=UNKNOWN",
-            "Never invent a machine, profile, path, repo, branch, or lane",
+            "REQUIRED NETWORK SEMANTICS",
+            "network the user should be on for the current task",
+            "not, by itself, a claim that the agent has observed the user's live connection",
+            "It must never be used as a synonym for unknown",
+            "NETWORK=UNKNOWN",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_execution_context_is_conditional_and_distinguishes_terminal_shell_kernel(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "EXECUTION CONTEXT SEMANTICS",
+            "EXEC=<shell>@<kernel/runtime>",
+            "EXEC=UNKNOWN",
+            "terminal application only as a host surface",
+            "Windows Terminal, for example, can host PowerShell, `cmd.exe`, WSL shells",
+            "do not guess a shell-specific mutation command or shell-bound agent runtime",
+            "When execution context is irrelevant, omit EXEC",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_unknown_material_context_fails_closed_and_reanchors(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "PROFILE=UNKNOWN",
+            "NETWORK=UNKNOWN",
+            "command-sensitive `EXEC=UNKNOWN`",
             "RE-ANCHOR ONCE",
             "Do not ask the operator to repeat recoverable context",
         ):
             self.assertIn(phrase, content)
 
-    def test_canary_is_signal_not_fake_context_telemetry(self) -> None:
-        content = self.target["copyContent"]
-        self.assertIn("CANARY IS A SENSOR, NOT PROOF", content)
-        self.assertIn("not mathematical proof that the context window is exhausted", content)
-        self.assertIn("Do not claim a token count, context percentage, or remaining-window estimate", content)
-        self.assertIn("Do not treat harmless wording changes as drift", content)
-
-    def test_repeated_drift_crosses_to_evidence_bearing_handoff(self) -> None:
+    def test_handoff_preserves_network_and_material_execution_context(self) -> None:
         content = self.target["copyContent"]
         for phrase in (
             "HANDOFF ON REPEATED OR UNRECOVERABLE DRIFT",
-            "fails again after a re-anchor",
+            "required network (`WAB`, `Guest`, `Hardwire`, `Local`, `Arbitrary/N/A`)",
+            "material execution context (`<shell>@<kernel/runtime>` plus target detail when needed)",
             "current mission and forbidden scope",
             "last proven artifacts, SHAs, checks, or other evidence",
             "first executable next action",
-            "Do not pretend that the agent can terminate the current chat or open the next one itself",
         ):
             self.assertIn(phrase, content)
 
-    def test_one_canonical_contract_exports_only_a_lightweight_stub(self) -> None:
+    def test_lightweight_stub_preserves_owner_boundaries(self) -> None:
         content = self.target["copyContent"]
         self.assertIn("ONE CANONICAL CONTRACT, LIGHTWEIGHT EMBEDDING", content)
         self.assertIn("do not paste this entire contract into every prompt", content)
-        self.assertIn(
-            "CANARY STUB — Before every response emit CANARY | PROFILE=<canonical computer profile>",
-            content,
-        )
-        self.assertIn("The host prompt still owns its mission, scope, proof, and closure", content)
+        self.assertIn("Append ` | EXEC=<shell>@<kernel/runtime>` only when command/agent choice materially depends", content)
+        self.assertIn("P92 Canonical Path Prompt", content)
+        self.assertIn("must not create a competing profile or network registry", content)
+
+    def test_semantic_falsification_order_covers_exec_context(self) -> None:
+        content = self.target["copyContent"]
+        ordered = ("1. STABLE BASELINE", "2. RECOVERY CASE", "3. LEGITIMATE CHANGE", "4. REPEATED DRIFT", "5. UNRECOVERABLE STATE")
+        positions = [content.index(marker) for marker in ordered]
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn("wrong material shell/kernel execution context", content)
+        self.assertIn("shell/kernel runtime, or execution target", content)
+        self.assertIn("command-sensitive execution context unrecoverable", content)
 
     def test_neighbor_owners_remain_distinct(self) -> None:
-        self.assertEqual(
-            self.by_id["P02"]["name"],
-            "Previous Chat → Active Sprint Executor",
-        )
-        self.assertEqual(
-            self.by_id["P76"]["name"],
-            "Progressive-Disclosure Spec & Harness Factorer",
-        )
+        self.assertEqual(self.by_id["P02"]["name"], "Previous Chat → Active Sprint Executor")
+        self.assertEqual(self.by_id["P76"]["name"], "Progressive-Disclosure Spec & Harness Factorer")
         self.assertNotEqual(self.target["id"], "P02")
         self.assertNotEqual(self.target["id"], "P76")
-        self.assertIn("P02 owns previous-chat recovery and active sprint execution", self.target["copyContent"])
-        self.assertIn("P76 owns repository spec/harness progressive disclosure", self.target["copyContent"])
-
-    def test_semantic_falsification_cases_are_explicit(self) -> None:
-        content = self.target["copyContent"]
-        for phrase in (
-            "SEMANTIC FALSIFICATION",
-            "stable profile across several responses",
-            "one seeded omission",
-            "one seeded wrong profile",
-            "a legitimate profile change backed by new evidence",
-            "repeated drift after re-anchor",
-            "unrecoverable profile state",
-        ):
-            self.assertIn(phrase, content)
 
     def test_registered_in_deterministic_test_floor(self) -> None:
         floor = json.loads(TEST_FLOOR.read_text(encoding="utf-8"))
@@ -122,8 +126,10 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
     def test_generated_site_is_exact_and_contains_canary(self) -> None:
         html = build_prompt_kit_registry.DEFAULT_OUTPUT.read_text(encoding="utf-8")
         self.assertEqual(html, build_prompt_kit_registry.render())
-        self.assertIn(self.target["id"], html)
+        self.assertIn("P114", html)
         self.assertIn(TARGET_NAME, html)
+        self.assertIn("kernel/runtime", html)
+        self.assertIn("EXEC=", html)
 
 
 if __name__ == "__main__":

@@ -126,7 +126,7 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         flattened = [prompt_id for group in groups for prompt_id in group["ids"]]
         self.assertEqual(flattened, ["P02", "P03", "P10"])
 
-    def test_guided_questionnaire_uses_shared_search_and_no_prompt_id_router(self) -> None:
+    def test_guided_questionnaire_uses_outcome_owner_and_shared_search_followons(self) -> None:
         guided = GUIDED_JS.read_text(encoding="utf-8")
         for marker in (
             "id:'startingPoint'",
@@ -138,7 +138,14 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             "id:'shape'",
             "filterPromptsForQuery(PROMPTS,query)",
             "PROMPTS.find",
-            "slice(0,3)",
+            "ownerId:'P79'",
+            "resolvePromptFinderOutcome",
+            "promptFinderRouteIsActionable",
+            "slice(0,2)",
+            "resolvePromptFinderOutcome",
+            "promptFinderRouteIsActionable",
+            "ownerId:'P79'",
+            "ownerId:'P23'",
             "copyPrompt(",
             "showPromptDetail(",
             "promptFinderBtn",
@@ -244,7 +251,7 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         question_ids = ("startingPoint", "problemKnown", "goal", "shape")
         self.assertEqual(sum(guided.count(f"id:'{item}'") for item in question_ids), 4)
         self.assertIn("slice(0,5)", guided)
-        self.assertIn("slice(0,3)", guided)
+        self.assertIn("slice(0,2)", guided)
         self.assertIn("Answer the **four** current questions", guide)
         self.assertIn("first five shared-search results", guide)
         self.assertIn("returns at most three recommendations", guide)
@@ -253,9 +260,11 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         self.assertEqual(p83["name"], "Agent Work Verifier & Iterative Advancer")
         self.assertIn("claims work is complete or partially complete", p83["useWhen"])
         self.assertIn("P83 — Agent Work Verifier & Iterative Advancer", guide)
-        self.assertIn("search **`P83`**", guide)
+        self.assertIn("**Verify work another agent says is complete**", guide)
+        self.assertIn("resolves directly to **P83**", guide)
         self.assertIn("P83 — Agent Work Verifier & Iterative Advancer", tutorial)
-        self.assertIn("Another agent claims work is complete or partially complete", tutorial)
+        self.assertIn("Inherited-completion verification is now an explicit terminal outcome", tutorial)
+        self.assertIn("**Verify work another agent says is complete** to route directly to P83", tutorial)
 
         start = polish.index("function activatePromptShortcutTarget")
         end = polish.index("\n\nfunction handleConfiguredPromptShortcutKey", start)

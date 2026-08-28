@@ -11,32 +11,34 @@ For the broader operating model—supported entry points, Favorites, hotkeys, in
 3. Answer the four current questions:
    - **Where are you starting?** — no checkout/new start, already in a repository, or app/artifact open.
    - **Do you have a known problem you want to solve?** — active failure, known task, repeated stall, or discovery/planning.
-   - **What are you trying to accomplish?** — plan, coordinate, build, AI/agent production hardening, prove, ship, teach, or close out.
+   - **What outcome must this tutorial hand you?** — create/strengthen a Prompt Kit prompt, implement, troubleshoot, verify inherited work, prioritize repositories by current circumstances, publish tutorial docs, prove a change, ship validated work, or close out.
    - **How should the work be organized?** — one bounded sprint, parallel lanes, dependency-ordered work, or live/runtime proof.
-4. Review the **Primary recommendation** first. The page may show up to two additional candidates.
+4. Review the **Outcome owner** first. The page may show up to two context follow-ons, but they cannot displace the owner selected by your declared terminal outcome.
 5. Read **After the recommendation** when it appears to see the current registry-owned continuation path.
-6. Select **Open** to inspect the full prompt or **Copy** to place it on the clipboard.
+6. Select **Open owner** to inspect the full prompt or **Copy & start** to place the canonical owner prompt on the clipboard. Copying routes you to executable work; it does not claim the work is complete.
 7. Complete the current prompt's expected output or proof gate before moving to a registered next step.
 
 The questionnaire runs in the generated page. It does not send answers to a separate recommendation service and does not retain questionnaire answers after reset/closure.
 
 ## How recommendations are computed
 
-The browser finder does not maintain a private prompt-ID routing table. Each selected answer contributes ordinary search phrases and passes them through the same `filterPromptsForQuery(PROMPTS, query)` path used by normal Prompt Kit search.
+The browser finder separates **terminal outcome ownership** from **context discovery**. The outcome answer names a canonical Prompt Kit owner ID already present in the registry. That owner must exist and expose non-empty copy content, expected output, proof gate, and next-step contract; otherwise the route fails closed to P65 rather than silently substituting P07.
 
-For each phrase, the finder considers the first five shared-search results, gives stronger results more weight, aggregates evidence across the four answers, sorts by score and discovery rank, and returns at most three candidates.
+The other answers still contribute ordinary phrases through `filterPromptsForQuery(PROMPTS, query)`. For each phrase, the finder considers the first five shared-search results, but those scores are used only for at most two context follow-ons. Shared-search ranking cannot displace the terminal outcome owner, so the full result returns at most three recommendations.
 
-That means the tutorial reuses the current prompt registry, synonyms, metadata, search ranking, and filters rather than creating a second recommendation database. It also means the questionnaire is a routing aid—not an authorization or correctness oracle. If you already know the exact specialist you need, search its ID or exact name directly.
+The key regression case is explicit: **Create or strengthen a Prompt Kit prompt** resolves to **P79 — Prompt Registry Prompt Adder**, regardless of broad surrounding words such as `implement`, `sprint`, or `one bounded sprint`. **Decide which repository should move first right now** resolves to **P23 — Circumstance-Aware Repo Priority Planner**.
+
+This remains a routing aid, not authorization or completion proof. The selected owner must execute its own mission and proof gate.
 
 ## When another agent says the work is complete
 
-A specific inherited-completion claim is an important case that the current four-question browser questionnaire does not represent with a dedicated answer.
+Inherited-completion verification is now an explicit terminal outcome in the four-question browser questionnaire.
 
 If another agent, chat, handoff, branch, PR, report, artifact, or implementation claims work is complete or partially complete and you need to establish whether that claim is actually true, search for **P83 — Agent Work Verifier & Iterative Advancer** directly.
 
 P83 owns independent verification of inherited work: resolve the exact prior work and current evidence floor, treat the completion report as a hypothesis rather than proof, repair or finish concrete gaps, independently derive validation, and advance proven work through integration when authorized.
 
-Do not force a broader questionnaire answer such as **known task**, **runtime proof**, or **one sprint** to stand in for the inherited-claim distinction. Prototyping, regression proof, runtime proof, and integration may be later gates after the inherited work has been verified.
+Choose **Verify work another agent says is complete** to route directly to P83. Prototyping, regression proof, runtime proof, and integration may be later gates after the inherited work has been verified.
 
 ## Use → prove → continue
 
@@ -78,6 +80,8 @@ A copy-paste handoff is useful when work must continue in another chat or agent.
 |---|---|---|
 | The repository is not checked out or its local path is unknown | P61 | Establishes the exact repository and working directory safely. |
 | The repository is unfamiliar | P03 | Recovers repository truth before mutation. |
+| Create or strengthen a Prompt Kit prompt | P79 | Harvests relevant chat context, strengthens canonical owners first, and helper-adds only genuinely missing prompt identities. |
+| Decide which repository should move first under current circumstances | P23 | Separates urgency/access/readiness from structural gap severity. |
 | A bounded implementation task is already known | P07 | Executes one owned sprint through validation and delivery. |
 | Something is failing now | P58 | Diagnoses from observed evidence before guessing at a fix. |
 | Another agent claims work is complete or partially complete and you need to verify it | P83 | Treats inherited completion claims as evidence to verify, then repairs/advances the actual state. |
@@ -87,7 +91,7 @@ A copy-paste handoff is useful when work must continue in another chat or agent.
 | Several possible tutorials must be ranked first | P64 | Inventories and ranks tutorial paths, prerequisites, and proof readiness. |
 | Immediate coaching is needed for an app already open | P24 | Guides the current app-at-hand interaction without replacing durable documentation. |
 
-The table is explanatory documentation, not the browser recommendation implementation. Browser recommendations are computed from the current registry and shared search path, while subsequent workflow guidance comes from each selected prompt's current registry-owned `nextStep`.
+The table is explanatory documentation, not the browser recommendation implementation. Browser outcome ownership is resolved from the current registry, shared search supplies only context follow-ons, and subsequent workflow guidance comes from each selected prompt's current registry-owned `nextStep`.
 
 Recommendations are evidence-informed routing aids, not automatic authorization. Read the selected prompt's owned scope, forbidden scope, dependencies, and proof gate before using it.
 
@@ -130,12 +134,13 @@ node --check docs/prompt-kit-journey.js
 node --check docs/prompt-kit-polish.js
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 python scripts/validate_prompt_kit_discovery.py --summary
+node scripts/validate_prompt_finder_outcomes.js
 python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 ```
 
 ## Proof ceiling
 
-Repository validation can prove registry integrity, the current four-question shared-search implementation, registry-owned next-step extraction, session-only completion state, JavaScript syntax, current Favorite/shortcut semantics, generated-site parity, and focused documentation assertions.
+Repository validation can prove registry integrity, the current four-question outcome-owner model, repeated terminal-route stability across many context combinations, registry-owned next-step extraction, session-only completion state, JavaScript syntax, current Favorite/shortcut semantics, generated-site parity, and focused documentation assertions.
 
 It does not prove every browser or assistive-technology combination, clipboard permissions on every device, live Windows launcher behavior on a particular workstation, organizational acceptance of a recommendation, or that a recommended prompt succeeds without the environment and permissions it requires.
