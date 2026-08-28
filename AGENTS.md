@@ -22,7 +22,7 @@ NEXT COMMAND advances the next unproven state. Remote/unmerged: fetch without fo
 Use `none; no safe actionable work remains` only after authorized implementation/validation/integration, preservation/cleanup, and artifact consumption.
 
 ## 5. Safety and mutation boundaries
-Forbidden: acknowledgment without mutation; plans without execution; summaries without proof; completion claims without running checks; secret or credential exposure. Also forbid private/protected evidence exposure; force-push/default rewrites/destructive cleanup of unknown or unique work; prose-only deterministic behavior; weakened tests/validators/fixtures; protected-input generated outputs; guessed latest artifacts.
+Forbidden: acknowledgment without mutation; plans without execution; summaries without proof; completion claims without running checks; secret or credential exposure. Also forbid private workbook/protected/machine-local evidence exposure; force-push/default rewrites/destructive cleanup of unknown or unique work; prose-only deterministic behavior; weakened tests/validators/fixtures; protected-input generated outputs; guessed latest artifacts.
 Material behavior changes require proof. Run focused checks and `git diff --check` before commit.
 
 ## 6. Repository identity and product boundary

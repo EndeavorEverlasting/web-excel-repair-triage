@@ -100,6 +100,8 @@ class GovernanceContractTests(unittest.TestCase):
             "summaries without proof",
             "completion claims without running checks",
             "secret or credential exposure",
+            "private workbook/protected/machine-local evidence",
+            "weakened tests/validators/fixtures",
         ):
             self.assertIn(phrase, section)
 
