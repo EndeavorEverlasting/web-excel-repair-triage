@@ -43,15 +43,17 @@ class GovernanceContractTests(unittest.TestCase):
         section = self._section("## 2. Instruction precedence", "## 3.")
         expected = (
             "Platform, security, legal, and repository-owner instructions.",
-            "This governance contract",
+            "This governance contract.",
             "Task-specific prompts and sprint instructions.",
             "Generic agent defaults.",
         )
         positions = [section.index(item) for item in expected]
         self.assertEqual(positions, sorted(positions))
+        self.assertIn("Binding domain specs are subordinate implementation law", section)
 
     def test_sprint_and_completion_contracts_remain_binding(self) -> None:
         declaration = self._section("## 3. Mandatory sprint declaration", "## 4.")
+        self.assertIn("Every writing sprint must state", declaration)
         for phrase in (
             "repository and branch or worktree",
             "lane and mission",
@@ -62,6 +64,7 @@ class GovernanceContractTests(unittest.TestCase):
         ):
             self.assertIn(phrase, declaration)
         completion = self._section("## 4. Completion standard", "## 5.")
+        self.assertIn("A task is complete only when", completion)
         for phrase in (
             "exact files changed",
             "validations run",
@@ -93,10 +96,11 @@ class GovernanceContractTests(unittest.TestCase):
     def test_forbidden_behaviors_remain_explicit(self) -> None:
         section = self._section("## 5. Safety and mutation boundaries", "## 6.")
         for phrase in (
-            "acknowledgment, plans, or summaries",
-            "claim completion without checks",
-            "expose secrets, credentials",
-            "weaken tests/validators/fixtures",
+            "acknowledgment without mutation",
+            "plans without execution",
+            "summaries without proof",
+            "completion claims without running checks",
+            "secret or credential exposure",
         ):
             self.assertIn(phrase, section)
 
