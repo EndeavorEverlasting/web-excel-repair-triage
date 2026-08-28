@@ -124,37 +124,64 @@ def validate() -> dict[str, Any]:
         workflow = one(workflows.get("workflows", []), "id", "prompt-kit-feedback-afk-routing", "workflow")
         forbidden = set(workflow.get("forbidden_scope", []))
         check("workflow_forbids_merge", "direct PR merge" in forbidden, "AFK routing workflow must forbid direct PR merge")
-        check("workflow_forbids_polling", "second scheduler or infinite polling loop" in forbidden, "AFK routing workflow must forbid a second scheduler")
+        check(
+            "workflow_forbids_polling",
+            "second scheduler or infinite polling loop" in forbidden,
+            "AFK routing workflow must forbid a second scheduler",
+        )
     except ValueError as exc:
         errors.append(str(exc))
 
     domain = manifest.get("domain_contracts", {}).get("prompt_kit_feedback_afk_routing", {})
-    check("manifest_contract", domain.get("contract") == "harness/contracts/prompt-kit-feedback-afk-routing.v1.json", "root manifest must register AFK routing contract")
-    check("manifest_validator", domain.get("validator") == "scripts/validate_prompt_kit_feedback_afk_routing.py", "root manifest must register AFK routing validator")
+    check(
+        "manifest_contract",
+        domain.get("contract") == "harness/contracts/prompt-kit-feedback-afk-routing.v1.json",
+        "root manifest must register AFK routing contract",
+    )
+    check(
+        "manifest_validator",
+        domain.get("validator") == "scripts/validate_prompt_kit_feedback_afk_routing.py",
+        "root manifest must register AFK routing validator",
+    )
     check(
         "manifest_skill",
         ".ai/skills/prompt-kit-feedback-afk-routing/SKILL.md" in manifest.get("skills", []),
         "root manifest must register AFK routing skill",
     )
 
-    for heading in ("## Trigger", "## Required inputs", "## Outputs", "## Procedure", "## Guardrails", "## Validation", "## Proof ceiling"):
-        check(f"skill_{heading[3:].lower().replace(' ', '_')}", heading in skill, f"skill missing required heading: {heading}")
+    for heading in (
+        "## Trigger",
+        "## Required inputs",
+        "## Outputs",
+        "## Procedure",
+        "## Guardrails",
+        "## Validation",
+        "## Proof ceiling",
+    ):
+        check(
+            f"skill_{heading[3:].lower().replace(' ', '_')}",
+            heading in skill,
+            f"skill missing required heading: {heading}",
+        )
 
-    banned_router_markers = (
+    for marker in (
         "time.sleep(",
         "--poll-seconds",
         "gh api",
         "gh pr",
         "/merge\"",
         "GITHUB_TOKEN",
-    )
-    for marker in banned_router_markers:
+    ):
         check(
             f"router_bans_{marker.replace(' ', '_')}",
             marker not in router,
             f"one-shot AFK router contains forbidden provider/scheduler marker: {marker}",
         )
-    check("router_uses_p115", "P115 AFK Feedback-Driven Development Loop Executor" in router, "router work request must name P115")
+    check(
+        "router_uses_p115",
+        "P115 AFK Feedback-Driven Development Loop Executor" in router,
+        "router work request must name P115",
+    )
     check("router_no_shell", "shell=True" not in router, "router must not invoke workers through shell=True")
 
     for marker in (
@@ -171,22 +198,40 @@ def validate() -> dict[str, Any]:
             marker not in bridge,
             f"private bridge contains forbidden worker/scheduler/merge marker: {marker}",
         )
-    for required in (
+    required_bridge_markers = (
         "sync_authorized",
-        "PROVIDER_WAKEUP_DISABLED",
-        "prompt-kit-feedback-receipt",
+        "canonical_prompt_ids",
+        "load_prompt_kit_registry",
+        "_validate_timestamp",
+        "default_spool_root",
+        "LOCALAPPDATA",
+        "XDG_STATE_HOME",
+        "bridge-local:",
+        "hashlib.sha256(event_id.encode",
+        "0o700",
+        "0o600",
         "provider_receipt",
         "retry_pending_receipts",
-        "bridge-local:",
-    ):
+        "PROVIDER_WAKEUP_DISABLED",
+        "PROVIDER_CONSUMER_UNREGISTERED",
+        "PROVIDER_TIMEOUT_SECONDS",
+        "pending receipt repository mismatch",
+        "repository_dispatch:",
+    )
+    for required in required_bridge_markers:
         check(
-            f"bridge_requires_{required[:18].replace(' ', '_')}",
+            f"bridge_requires_{required[:22].replace(' ', '_')}",
             required in bridge,
             f"private bridge missing required transport/privacy marker: {required}",
         )
     check(
+        "bridge_raw_feedback_not_repo_default",
+        "Outputs/prompt-kit-feedback-spool" not in bridge,
+        "raw feedback spool must not default inside the repository",
+    )
+    check(
         "bridge_provider_receipt_no_raw_comment",
-        '"comment":' not in bridge.split("def provider_receipt", 1)[1].split("def write_pending", 1)[0],
+        '"comment":' not in bridge.split("def provider_receipt", 1)[1].split("def _same_receipt_shape", 1)[0],
         "provider receipt must not include raw written feedback",
     )
     check(
@@ -194,30 +239,61 @@ def validate() -> dict[str, Any]:
         "enabled: bool = False" in bridge and "provider_wakeup: bool = False" in bridge,
         "private bridge provider wakeup must be opt-in",
     )
+    check(
+        "bridge_consumer_gate_precedes_gh",
+        bridge.find("PROVIDER_CONSUMER_UNREGISTERED") < bridge.find('"gh",\n                "api"'),
+        "provider consumer gate must precede gh dispatch",
+    )
+    check(
+        "bridge_timeout_is_bounded",
+        "timeout=PROVIDER_TIMEOUT_SECONDS" in bridge and "except subprocess.TimeoutExpired" in bridge,
+        "provider dispatch must have a finite timeout and retry-pending timeout handling",
+    )
 
-    check("web_workflow_read_only", "contents: write" not in web_workflow and "contents: read" in web_workflow, "Prompt Kit web workflow must be read-only")
-    for stale in ("P122 Gemini regression strengthening", "feat/gemini-youtube-ingestion-prompt-20260827", "git push origin"):
-        check(f"web_workflow_retires_{stale[:12]}", stale not in web_workflow, f"Prompt Kit web workflow retains stale writer behavior: {stale}")
+    check(
+        "web_workflow_read_only",
+        "contents: write" not in web_workflow and "contents: read" in web_workflow,
+        "Prompt Kit web workflow must be read-only",
+    )
+    for stale in (
+        "P122 Gemini regression strengthening",
+        "feat/gemini-youtube-ingestion-prompt-20260827",
+        "git push origin",
+    ):
+        check(
+            f"web_workflow_retires_{stale[:12]}",
+            stale not in web_workflow,
+            f"Prompt Kit web workflow retains stale writer behavior: {stale}",
+        )
     for required in (
         "scripts/serve_prompt_kit_portable.py",
         "scripts/validate_prompt_kit_portability.py",
         "tests/test_prompt_kit_portability.py",
         "tests/test_prompt_kit_portability_regressions.py",
         "docs/prompt-kit-favorites-portability.js",
+        "tests.test_prompt_kit_feedback_bridge",
         "Build portable Prompt Kit runtime artifact",
         "Validate portable Favorites and harness discipline",
         "prompt-kit-portable-runtime",
     ):
-        check(f"web_workflow_portability_{required[:16]}", required in web_workflow, f"Prompt Kit web workflow lost portability contract marker: {required}")
+        check(
+            f"web_workflow_portability_{required[:16]}",
+            required in web_workflow,
+            f"Prompt Kit web workflow lost required contract marker: {required}",
+        )
 
-    check("feedback_hook_read_only", "contents: write" not in feedback_workflow and "contents: read" in feedback_workflow, "feedback hook must remain read-only")
+    check(
+        "feedback_hook_read_only",
+        "contents: write" not in feedback_workflow and "contents: read" in feedback_workflow,
+        "feedback hook must remain read-only",
+    )
 
     return {
         "schema_version": REPORT_SCHEMA,
         "status": "PASS" if not errors else "FAIL",
         "checks": checks,
         "errors": errors,
-        "proof_ceiling": "Static repository boundary and routing proof only; browser loopback, configured worker, provider review, and promotion require separate observed proof.",
+        "proof_ceiling": "Static repository boundary and routing proof only; browser loopback, configured worker, provider consumer activation, review, and promotion require separate observed proof.",
     }
 
 
@@ -235,7 +311,12 @@ def main(argv: list[str] | None = None) -> int:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if args.summary or not args.output:
-        print(json.dumps({"status": report["status"], "checks": len(report["checks"]), "errors": report["errors"]}, sort_keys=True))
+        print(
+            json.dumps(
+                {"status": report["status"], "checks": len(report["checks"]), "errors": report["errors"]},
+                sort_keys=True,
+            )
+        )
     return 0 if report["status"] == "PASS" else 1
 
 
