@@ -2,217 +2,74 @@ name: Prompt Kit web contracts
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize]
     paths:
-      - 'registry/prompts/ai-engineering-level-up-prompts.v1.json'
-      - 'tests/test_gemini_youtube_playlist_ingestion_prompt.py'
-      - 'tests/test_sysadminsuite_prompt_registry.py'
-      - 'harness/test-floor.v1.json'
+      - 'registry/prompts/**'
+      - 'docs/prompt-kit-*.js'
+      - 'docs/prompt-kit-favorites-portability.js'
+      - 'harness/contracts/prompt-kit-*.json'
+      - 'harness/capabilities.v1.json'
+      - 'harness/triggers.v1.json'
+      - 'harness/workflows.v1.json'
+      - 'harness/validators.v1.json'
+      - 'harness/manifest.v1.json'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/serve_prompt_kit_portable.py'
+      - 'scripts/validate_prompt_kit_portability.py'
+      - 'scripts/prompt_kit_*.py'
+      - 'scripts/validate_prompt_kit_feedback_afk_routing.py'
+      - 'tests/test_prompt_kit_*.py'
+      - 'web/prompt-kit/index.html'
+      - '.github/workflows/prompt-kit-web.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'registry/prompts/**'
+      - 'docs/prompt-kit-*.js'
+      - 'docs/prompt-kit-favorites-portability.js'
+      - 'harness/contracts/prompt-kit-*.json'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/serve_prompt_kit_portable.py'
+      - 'scripts/validate_prompt_kit_portability.py'
+      - 'scripts/prompt_kit_*.py'
+      - 'tests/test_prompt_kit_*.py'
       - 'web/prompt-kit/index.html'
       - '.github/workflows/prompt-kit-web.yml'
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: prompt-kit-web-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  p122-gemini-regression-strengthening:
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/gemini-youtube-ingestion-prompt-20260827'
+  validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - name: Checkout exact candidate
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
-
-      - name: Strengthen canonical P122 from Gemini regression corpus
-        shell: bash
+      - name: Validate private feedback AFK factoring
         run: |
-          set -euo pipefail
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          path = Path('registry/prompts/ai-engineering-level-up-prompts.v1.json')
-          payload = json.loads(path.read_text(encoding='utf-8'))
-          p122 = next((item for item in payload['prompts'] if item.get('id') == 'P122'), None)
-          if p122 is None:
-              raise SystemExit('P122 not found')
-          if p122.get('name') != 'Gemini YouTube Playlist Ingestion Builder':
-              raise SystemExit('P122 owner/name mismatch')
-          if p122.get('seq') != '122' or p122.get('copySheet') != 'P122_COPY_SAFE':
-              raise SystemExit('P122 helper-allocated identity mismatch')
-
-          text = p122['copyContent']
-
-          def insert_before(anchor: str, marker: str, block: str) -> None:
-              global text
-              if marker in text:
-                  return
-              if anchor not in text:
-                  raise SystemExit(f'P122 insertion anchor missing: {anchor}')
-              text = text.replace(anchor, block.rstrip() + '\n\n' + anchor, 1)
-
-          insert_before(
-              'JSON + CSV CONTRACT',
-              'IDENTITY / OCCURRENCE INVARIANTS',
-              '''IDENTITY / OCCURRENCE INVARIANTS
-- A unique source/video entity represents stable video identity when a usable video ID is present. A playlist occurrence is ordered membership and references source identity; these are not the same record type.
-- A repeated video ID must not duplicate the canonical source entity merely because it appears again. Preserve every observed occurrence separately and preserve its order.
-- Normalize YouTube identity independently from share/tracking query parameters. A share/tracking parameter such as `si=` must not create a new video identity.
-- When explicit source URLs are supplied, emit a source-list census before implementation: input_occurrence_count, unique_video_count, repeated IDs with occurrence positions, and unparseable entries. Do not collapse repeated input occurrences.
-
-SOURCE-LIST REGRESSION EXAMPLE
-The supplied regression corpus contains 25 URL occurrences and 23 unique video IDs. `_CuibYl_Fh0` occurs twice and `bBdq2hf5R0I` occurs twice with different `si=` values. A correct normalization keeps 25 ordered occurrences, reuses 23 unique source identities, and does not let differing share parameters manufacture new source identities.'''
-          )
-
-          insert_before(
-              'JSON + CSV CONTRACT',
-              'UNAVAILABLE / COMPLETENESS CONTRACT',
-              '''UNAVAILABLE / COMPLETENESS CONTRACT
-- If extraction proves a playlist slot existed but the video is null, deleted, private, unavailable, or otherwise lacks a usable source entity, preserve an occurrence tombstone with the observed position/index and the strongest available availability/reason evidence. The occurrence count must not silently shrink because metadata is unavailable.
-- Record an explicit completeness state such as COMPLETE, PARTIAL, EMPTY_CONFIRMED, EMPTY_UNPROVEN, or FAILED. Do not label partial evidence complete.
-- Zero usable entries are not automatically a valid empty playlist. Write/certify a normal complete empty import only when the extractor evidence proves genuine emptiness or an explicit operator override such as `--allow-empty` accepts the lower proof. Otherwise fail closed or emit clearly marked EMPTY_UNPROVEN/PARTIAL evidence.
-- Suspected truncation, malformed output, missing continuation evidence, or unavailable slots must remain visible in provenance/completeness rather than being silently normalized away.
-- Prefer extractor-supplied `playlist_index` or equivalent position when valid. Use encounter-order fallback only when no reliable extractor position exists, and record `position_source` so the fallback is auditable.'''
-          )
-
-          insert_before(
-              'IMPLEMENTATION PACKET — PRODUCE ALL APPLICABLE FILES',
-              'DONOR EVIDENCE / VERSION CONTRACT',
-              '''DONOR EVIDENCE / VERSION CONTRACT
-- Never invent a donor commit, release, version, date range, license conclusion, or runtime observation. When the dossier does not supply a value, record NOT_SUPPLIED or UNKNOWN rather than filling the gap with a plausible value.
-- Distinguish reference evidence from runtime evidence: a pinned donor/reference commit identifies implementation evidence studied; the observed runtime `yt-dlp --version` identifies the executable that actually performed a live extraction. Do not imply they are the same unless the runtime is genuinely pinned and proved.
-- Preserve supplied donor dispositions exactly as ADOPT / ADAPT / REFERENCE_ONLY / REJECT / DEFER. The implementation may propose a disposition change only when it cites new evidence and explains the change; it must not silently change a supplied donor disposition.
-- Version the normalized contract independently from adapter code. Record `normalization_schema_version` and `adapter_version` separately.
-- `donor_manifest.json` is a distinct machine-readable artifact containing donor repository identity, supplied pin/reference, license evidence/status, authority role, disposition, and runtime-evidence status. Do not substitute only an embedded provenance node when the packet requires the manifest.'''
-          )
-
-          insert_before(
-              'MINIMUM DETERMINISTIC TESTS',
-              'RUNNABILITY GATE',
-              '''RUNNABILITY GATE
-Before calling reference implementation code or tests complete, actually run the deterministic suite when execution is available; otherwise label it UNRUN and state exactly what was not executed. A code-looking response is not runtime proof.
-The standalone packet must self-check the mundane failures models often miss: import `subprocess` when tests reference it; create or validate the output directory; use an actual non-ASCII Unicode fixture; include an embedded quote plus commas and newlines in CSV fixtures; exercise all four formula prefixes; verify the UTF-8 BOM bytes for spreadsheet CSV; expose a fixture-mode CLI such as `--input-json`; use the same normalization/export path for fixture and live input; support a deterministic timestamp/clock override for stable fixtures; and prove the fixture-mode CLI writes both JSON and CSV plus the separate donor manifest. Every claimed deterministic test case must exist and be runnable.'''
-          )
-
-          insert_before(
-              'LIVE-PROOF CEILING',
-              'BACKEND-NEUTRAL NORMALIZATION CONTRACT',
-              '''BACKEND-NEUTRAL NORMALIZATION CONTRACT
-Raw extractor responses are backend-local adapter inputs and must not be the shared domain contract. The yt-dlp adapter normalizes yt-dlp-native output into the canonical source schema; a future YouTube Data API adapter normalizes API-native output into that same canonical source schema. The YouTube Data API adapter must not impersonate yt-dlp JSON merely to reuse a raw-shape normalizer. Canonical normalized source records are the shared boundary; JSON serialization and CSV projection consume that canonical boundary.'''
-          )
-
-          if 'UTF-8 BOM' not in text:
-              old = "Prefer UTF-8 with BOM (`utf-8-sig`) for spreadsheet-facing CSV unless the supplied consumer contract says otherwise."
-              new = old + " The implementation and deterministic tests must verify the actual UTF-8 BOM bytes rather than merely naming the encoding."
-              if old not in text:
-                  raise SystemExit('P122 UTF-8 BOM anchor missing')
-              text = text.replace(old, new, 1)
-
-          if 'PRE-MUTATION MISSION DECLARATION' not in text:
-              old = '''REPOSITORY-CAPABLE HANDOFF
-End with one copy-paste handoff for an agent that DOES have access to the consumer repository. Include:
-- exact consumer/repository identity as supplied;'''
-              new = '''REPOSITORY-CAPABLE HANDOFF
-End with one copy-paste handoff for an agent that DOES have access to the consumer repository.
-
-PRE-MUTATION MISSION DECLARATION
-Before modifying any tracked file, the repository-capable agent must declare the repository and branch/worktree, lane and mission, owned and forbidden scope, expected artifacts, validation order, proof ceiling, and mutation authority. Do not mutate tracked files until this declaration is complete.
-
-Then include:
-- exact consumer/repository identity as supplied;'''
-              if old not in text:
-                  raise SystemExit('P122 handoff anchor missing')
-              text = text.replace(old, new, 1)
-
-          p122['copyContent'] = text
-          path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
-          PY
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
-
-      - name: Focused semantic and adjacent helper proof
-        shell: bash
+          python scripts/validate_prompt_kit_feedback_afk_routing.py --summary
+          python -m unittest tests.test_prompt_kit_feedback_afk_routing tests.test_prompt_kit_feedback_production -v
+      - name: Validate canonical Prompt Kit parity
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Build portable Prompt Kit runtime artifact
+        run: python scripts/serve_prompt_kit_portable.py --build-only
+      - name: Validate portable Favorites and harness discipline
         run: |
-          set -euo pipefail
-          python -m unittest tests.test_gemini_youtube_playlist_ingestion_prompt -v
-          python -m unittest tests.test_sysadminsuite_prompt_registry -v
-          python scripts/prompt_registry_ops.py validate
-          python scripts/evaluate_prompt_language.py --summary
-          python scripts/validate_prompt_kit_discovery.py --summary
-          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output "$RUNNER_TEMP/prompt-kit-order-navigation-audit.json" --summary
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-          git diff --check
-
-      - name: Whole-chat pass-two fixed-point falsification
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          registry = json.loads(Path('registry/prompts/ai-engineering-level-up-prompts.v1.json').read_text(encoding='utf-8'))
-          p122 = next(p for p in registry['prompts'] if p['id'] == 'P122')
-          text = p122['copyContent']
-          required = [
-              'IDENTITY / OCCURRENCE INVARIANTS',
-              '25 URL occurrences',
-              '23 unique video IDs',
-              '_CuibYl_Fh0',
-              'bBdq2hf5R0I',
-              'occurrence tombstone',
-              'EMPTY_UNPROVEN',
-              'extractor-supplied `playlist_index`',
-              'UTF-8 BOM',
-              'DONOR EVIDENCE / VERSION CONTRACT',
-              'NOT_SUPPLIED',
-              'ADOPT / ADAPT / REFERENCE_ONLY / REJECT / DEFER',
-              'normalization_schema_version',
-              'RUNNABILITY GATE',
-              'UNRUN',
-              'actual non-ASCII Unicode fixture',
-              'fixture-mode CLI',
-              'BACKEND-NEUTRAL NORMALIZATION CONTRACT',
-              'must not be the shared domain contract',
-              'PRE-MUTATION MISSION DECLARATION',
-          ]
-          missing = [marker for marker in required if marker not in text]
-          if missing:
-              raise SystemExit(f'P122 pass-two missing: {missing}')
-          if p122['seq'] != '122' or p122['copySheet'] != 'P122_COPY_SAFE':
-              raise SystemExit('P122 helper identity drifted')
-          if 'StudySyndicate' in text:
-              raise SystemExit('Reusable P122 leaked consumer-specific repository name')
-
-          base = json.loads(Path('docs/prompts.json').read_text(encoding='utf-8'))
-          p56 = next(p for p in base if p['id'] == 'P56')
-          if p56['name'] != 'Context-to-Artifact Generator':
-              raise SystemExit('P56 identity drifted')
-          p100 = next(p for p in registry['prompts'] if p['id'] == 'P100')
-          p101 = next(p for p in registry['prompts'] if p['id'] == 'P101')
-          if p100['name'] != 'Factuality vs Faithfulness Hallucination Diagnoser':
-              raise SystemExit('P100 identity drifted')
-          if p101['name'] != 'Grounded Agent Output & Tool-Call Gate':
-              raise SystemExit('P101 identity drifted')
-          print('P122 Gemini regression corpus pass-two fixed point: PASS')
-          PY
-
-      - name: Commit durable P122 strengthening
-        shell: bash
-        env:
-          BRANCH: feat/gemini-youtube-ingestion-prompt-20260827
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add registry/prompts/ai-engineering-level-up-prompts.v1.json web/prompt-kit/index.html
-          git diff --cached --check
-          if git diff --cached --quiet; then
-            echo 'P122 strengthening already present; no generated commit required.'
-          else
-            git commit -m 'fix(prompt-kit): encode Gemini regressions in P122'
-            git push origin "HEAD:${BRANCH}"
-          fi
+          python scripts/validate_prompt_kit_portability.py --require-artifact --output Outputs/prompt-kit-portability-validation.json --summary
+          python -m unittest tests/test_prompt_kit_portability.py tests/test_prompt_kit_portability_regressions.py tests/test_prompt_kit_portable_health.py -v
+      - name: Validate patch hygiene
+        run: git diff --check
+      - name: Publish portable runtime proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-portable-runtime
+          path: Outputs/prompt-kit-portable/
+          if-no-files-found: error
+          retention-days: 14

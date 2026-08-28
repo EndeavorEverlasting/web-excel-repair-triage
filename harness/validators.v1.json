@@ -168,6 +168,22 @@
       "blocking": true,
       "output": "Outputs/app-harness-validation.json",
       "proof_ceiling": "Exact-head offline/synthetic harness readiness with explicit requirement classes and honest optional skips; no application/runtime proof."
+    },
+    {
+      "id": "prompt-kit-feedback-afk-routing-audit",
+      "class": "contract",
+      "command": "python scripts/validate_prompt_kit_feedback_afk_routing.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static feedback-AFK ownership, privacy, scheduler, workflow, and promotion-boundary proof."
+    },
+    {
+      "id": "prompt-kit-feedback-afk-routing-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_prompt_kit_feedback_afk_routing -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable one-shot classification, dedupe, work-request, and routing-boundary regression proof."
     }
   ],
   "profiles": {
@@ -181,6 +197,8 @@
       "prompt-language-contract-tests",
       "prompt-language-audit",
       "skill-prompt-registry-tests",
+      "prompt-kit-feedback-afk-routing-audit",
+      "prompt-kit-feedback-afk-routing-tests",
       "prompt-kit-responsive-layout-audit",
       "prompt-kit-responsive-layout-tests",
       "prompt-kit-header-contract",
@@ -214,6 +232,8 @@
       "prompt-language-contract-tests",
       "prompt-language-audit",
       "skill-prompt-registry-tests",
+      "prompt-kit-feedback-afk-routing-audit",
+      "prompt-kit-feedback-afk-routing-tests",
       "prompt-kit-responsive-layout-audit",
       "prompt-kit-responsive-layout-tests",
       "prompt-kit-header-contract",

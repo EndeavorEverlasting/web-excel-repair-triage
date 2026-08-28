@@ -146,6 +146,18 @@
       "skill": ".ai/skills/prompt-kit-responsive-layout/SKILL.md",
       "artifact_registry": "harness/prompt-kit-layout/artifacts.v1.json",
       "operator_report": "harness/prompt-kit-layout/reports/CURRENT_STATE.md"
+    },
+    "prompt_kit_feedback_afk_routing": {
+      "contract": "harness/contracts/prompt-kit-feedback-afk-routing.v1.json",
+      "validator": "scripts/validate_prompt_kit_feedback_afk_routing.py",
+      "contract_tests": "tests/test_prompt_kit_feedback_afk_routing.py",
+      "workflow": "WORKFLOW.md#i-prompt-kit-feedback-afk-routing",
+      "harness_gate": "python scripts/validate_prompt_kit_feedback_afk_routing.py --summary",
+      "skill": ".ai/skills/prompt-kit-feedback-afk-routing/SKILL.md",
+      "router": "scripts/prompt_kit_afk_signal_router.py",
+      "feedback_runtime": "docs/prompt-kit-feedback-production.js",
+      "provider_hook": ".github/workflows/prompt-kit-feedback-hook.yml",
+      "promotion_contract": "harness/contracts/pr-merge-gate.v1.json"
     }
   },
   "skills": [
@@ -155,7 +167,8 @@
     ".ai/skills/skill-factoring/SKILL.md",
     ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
     ".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md",
-    ".ai/skills/prompt-kit-responsive-layout/SKILL.md"
+    ".ai/skills/prompt-kit-responsive-layout/SKILL.md",
+    ".ai/skills/prompt-kit-feedback-afk-routing/SKILL.md"
   ],
   "technician_acquisition": {
     "launcher": "Acquire-Latest-PromptKit.cmd",
@@ -194,6 +207,8 @@
     "python -m unittest tests.test_prompt_language_audit -v",
     "python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary",
     "python -m unittest tests.test_skill_prompt_registry -v",
+    "python scripts/validate_prompt_kit_feedback_afk_routing.py --summary",
+    "python -m unittest tests.test_prompt_kit_feedback_afk_routing -v",
     "python scripts/validate_prompt_kit_layout_harness.py --summary",
     "python -m unittest tests.test_prompt_kit_layout_harness -v",
     "python tests/test_prompt_kit_header_contract.py",
