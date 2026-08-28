@@ -5,6 +5,7 @@ on:
     paths:
       - 'registry/prompts/**'
       - 'docs/prompt-kit-*.js'
+      - 'docs/prompt-kit-favorites-portability.js'
       - 'harness/contracts/prompt-kit-*.json'
       - 'harness/capabilities.v1.json'
       - 'harness/triggers.v1.json'
@@ -24,6 +25,7 @@ on:
     paths:
       - 'registry/prompts/**'
       - 'docs/prompt-kit-*.js'
+      - 'docs/prompt-kit-favorites-portability.js'
       - 'harness/contracts/prompt-kit-*.json'
       - 'scripts/build_prompt_kit_registry.py'
       - 'scripts/serve_prompt_kit_portable.py'
