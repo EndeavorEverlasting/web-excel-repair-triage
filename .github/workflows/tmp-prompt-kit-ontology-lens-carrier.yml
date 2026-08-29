@@ -1,0 +1,62 @@
+name: Temporary Prompt Kit ontology lens carrier
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-ontology-lens-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/prompt-kit-ontology-lens-20260829'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-ontology-lens-20260829
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Materialize ontology lens, prove exact artifact, and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/prompt-kit-ontology-lens-20260829 --prune
+          git merge --no-edit origin/main
+
+          if [ -f scripts/tmp_apply_prompt_kit_ontology_lens.py ]; then
+            python scripts/tmp_apply_prompt_kit_ontology_lens.py
+          fi
+
+          git rm -f scripts/tmp_apply_prompt_kit_ontology_lens.py .github/workflows/tmp-prompt-kit-ontology-lens-carrier.yml
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+          node --check docs/prompt-kit-ontology.js
+          python -m unittest \
+            tests.test_prompt_kit_ontology_view \
+            tests.test_prompt_kit_filtering_access \
+            tests.test_prompt_kit_documentation_authority -v
+          python scripts/validate_harness.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+          git add scripts/build_prompt_kit_registry.py docs/prompt-kit-ontology.js tests/test_prompt_kit_ontology_view.py web/prompt-kit/index.html
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo 'ontology lens already materialized; no commit needed'
+            exit 0
+          fi
+          git commit -m 'feat(prompt-kit): expose repository ontology lens'
+          git push origin HEAD:feat/prompt-kit-ontology-lens-20260829
