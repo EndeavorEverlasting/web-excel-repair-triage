@@ -4,33 +4,40 @@ This file stores the current teaching objective and frontier. `/teach` sessions 
 
 ## Topic
 
-Prompt Kit ontology: capabilities vs skills vs prompts, and how those primitives should compose in the Prompt Kit viewer/interface.
+Prompt Kit ontology: capabilities vs skills vs prompts, implementations, invocations, and evidence/proof relationships.
 
 ## Target outcome
 
-The learner can inspect an existing or proposed Prompt Kit artifact and independently determine whether it is a capability, skill, prompt, implementation, or a composition/relationship among them; explain the ownership boundary; predict what should change when implementation/procedure/invocation changes; and use that model to critique or design Prompt Kit navigation without collapsing distinct primitives into synonyms.
+The learner can inspect an existing or proposed Prompt Kit artifact and independently determine whether it is a capability, skill, prompt, implementation, invocation/run, evidence surface, or a composition/relationship among them; explain the ownership boundary; predict what should change when implementation/procedure/invocation changes; and use that model to critique or design Prompt Kit navigation without collapsing distinct primitives into synonyms.
 
-## Constraints
+## Status
 
-- Ground distinctions in current repository authority before generalizing.
-- Teach Socratically from first principles; do not front-load a finished taxonomy.
-- Keep production Prompt Kit registries/UI unchanged during teaching.
-- One atomic invariant at a time; require retrieval and diagnosis before advancing.
-- Do not record VERIFIED/MASTERED until learner responses demonstrate it.
+MASTERED — teaching lane closed on 2026-08-29.
 
-## Current frontier
+## Demonstrated mastery
 
-Teaching closeout. Lesson 01 is VERIFIED. Lesson 02 is CLOSED at PRACTICED with its remaining reusable-metric-method vs per-run-selection nuance folded into one final mastery synthesis. The next learner response should answer exactly two synthesis checkpoints. If the response demonstrates ownership and change-impact reasoning across the full model, promote the ontology record to MASTERED and close the teaching lane.
+- Stable capability/contract vs replaceable implementation.
+- Reusable skill procedure/judgment vs concrete prompt/run binding.
+- Deterministic runtime truth vs agent narrative/reporting.
+- Reusable metric method vs per-run target/metric selection.
+- Heterogeneous implementation as a relationship/lens rather than one uniform peer artifact.
+- Evidence/proof as observed support for claims, distinct from the capability itself.
+- Product-level transfer: learner independently proposed repository-grounded navigation across capability, skill, implementation/prompt, and evidence surfaces.
 
-## Implementation handoff after mastery
+## Precision notes retained
 
-Preserve these hypotheses for the immediately following implementation sprint:
+- A prompt invocation creates a run/instance; it is not automatically identical to the implementation artifact.
+- New reusable metric methods that make executable quality claims require focused eval/test proof in addition to skill prose.
 
-- Prompt Kit should expose repository-grounded ownership relationships rather than flattening capabilities, skills, prompts, implementations, and evidence into one artifact list.
-- Separate capability and skill views appear useful.
-- An implementation view/lens may also be useful, but implementation is a heterogeneous relationship: script, launcher, binary, prompt, or other executable/orchestration surface.
-- Prompt-specific views should remain available because prompts can be concrete task artifacts even when they are not capability implementations.
-- The UI should make it possible to trace from a capability to its reusable skill, concrete implementation/prompt, relevant tests/evals/evidence, and proof ceiling.
-- Failed/over-specialized invocation evidence may later support tutorial/log surfaces, but that is separate from minimum viable ontology navigation.
+## Implementation handoff
 
-Do not mutate production Prompt Kit UI until the mastery synthesis is complete and the teaching lane is closed.
+Use these hypotheses for the immediately following production sprint:
+
+- Prompt Kit should expose repository-grounded ownership relationships rather than flattening capabilities, skills, prompts, implementations, invocations, and evidence into one artifact list.
+- Separate capability and skill views are justified by distinct user questions.
+- Prompt-specific navigation should remain available because prompts can be task artifacts without being capability implementations.
+- Implementation should be modeled as a heterogeneous relationship/lens: script, launcher, binary, prompt, or other executable/orchestration surface.
+- The UI should make it possible to trace capability → reusable skill → concrete implementation/prompt → invocation/run → relevant tests/evals/evidence → proof ceiling.
+- Evidence/history may later include failed runs, critiques, favorites, and invocation metadata, but this should remain separate from minimum viable ontology navigation.
+
+Production Prompt Kit mutation is now permitted under a fresh implementation lane with refreshed repository/provider truth.
