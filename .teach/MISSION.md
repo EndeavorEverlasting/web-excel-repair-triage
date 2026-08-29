@@ -20,4 +20,4 @@ The learner can inspect an existing or proposed Prompt Kit artifact and independ
 
 ## Current frontier
 
-PRACTICED: learner can propose measurable skill-evaluation cases, understands evidence should precede repair, and can identify an implementation-language change as an implementation change rather than automatically a contract change. Remaining Lesson 01 frontier: separate implementation-specific stale references from stable capability contracts, and distinguish deterministic runtime enforcement from later harness validation or an agent's narrative claim. Test against the FUN NTH exporter without using “harness” as an umbrella owner.
+Lesson 01 VERIFIED: learner distinguishes stable capability/contract from replaceable implementation, identifies implementation-specific stale skill instructions, and separates deterministic runtime truth from agent reporting. Current Lesson 02 frontier: distinguish **reusable skill procedure/judgment** from **task-specific prompt invocation/orchestration**. Test against the repository's `skill-evaluation` capability, its linked `.ai/skills/skill-evaluation/SKILL.md`, and registered prompt implementation `P62`.
