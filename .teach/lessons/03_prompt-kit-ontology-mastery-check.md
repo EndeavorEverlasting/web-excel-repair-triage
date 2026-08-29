@@ -1,23 +1,43 @@
 # Lesson 03 — Prompt Kit ontology mastery synthesis
 
-Status: ACTIVE — final mastery check.
+Status: MASTERED.
 
 ## Purpose
 
-This is not a new content lesson. It is a transfer test across the distinctions already practiced: capability/contract, reusable skill, concrete prompt, heterogeneous implementation, deterministic runtime truth, agent reporting, and evidence/eval surfaces.
+This transfer test closes the teaching lane across capability/contract, reusable skill, concrete prompt, heterogeneous implementation, deterministic runtime truth, agent reporting, and evidence/eval surfaces.
 
-If the learner can answer both checkpoints by reasoning from ownership and change impact rather than memorized labels, the ontology can be recorded as MASTERED and used as the basis for the Prompt Kit implementation sprint.
+## Mastery evidence
 
-## Implementation hypotheses preserved for handoff
+The learner independently synthesized the distinctions into a product model rather than merely repeating definitions:
 
-- Prompt Kit should expose relationships among repository-grounded capabilities, skills, prompts/implementations, and evidence rather than flattening them into one list.
-- Capability and skill deserve distinct navigation views.
-- Implementation may deserve a distinct view or lens, but it is heterogeneous: a capability implementation may be a script, launcher, binary, prompt, or another surface.
-- Prompts also deserve direct navigation because a prompt may be a task artifact without being a capability implementation.
-- A useful graph should allow traversal from capability → skill → implementation/prompt → tests/evals/evidence → proof ceiling.
+- capability view as a high-level view of what operation is available and what can be relied upon;
+- skill view as the reusable knowledge/procedure surface;
+- prompt/invocation view as the concrete mechanism by which a user binds a target and objective to an agent mission;
+- evidence/proof view as the observed outcome and proof boundary that should inform future selection and critique;
+- implementation as a heterogeneous relationship/lens rather than a uniform artifact class.
 
-## Final learner checkpoints
+On change impact, the learner correctly identified that adding a reusable `agent retry-loop rate` measurement method changes the reusable skill knowledge while leaving the stable capability operation unchanged, and that a concrete invocation binds the new method to a target run without inherently requiring a new prompt identity.
 
-A. **CONCEPTUAL SYNTHESIS / DESIGN MECHANISM** — A new Prompt Kit screen is showing `skill-evaluation`. The repository says the capability operation is to install executable evals for a target skill and repair valid weaknesses; the reusable `SKILL.md` knows how to build baselines, reproduce weaknesses, measure tool calls/tokens/interpretation consistency, repair safely, and preserve proof ceilings; P62 is the prompt implementation that accepts a concrete target and selected metric for one run. Explain what the **capability view**, **skill view**, **prompt/implementation view**, and **evidence/proof view** should each answer for a user. Then explain why “implementation” may be better modeled as a relationship/lens than as a single uniform artifact type.
+## Precision corrections retained
 
-B. **CHANGE-IMPACT / EDGE-CASE DIAGNOSTIC** — Tomorrow three things happen independently: (1) a reusable `agent retry-loop rate` measurement method is added to `skill-evaluation/SKILL.md`; (2) no capability operation changes; (3) a user invokes P62 with `Target skill: deployment-safety` and `Primary metric: agent retry-loop rate`. Which layer gained reusable knowledge, which layer performs the per-run binding, which layer can remain unchanged, and does this scenario require a brand-new prompt identity? Explain the smallest sound set of repository changes and why.
+Mastery does not require erasing two terminology refinements:
+
+1. Sending a prompt to an agent creates an **invocation/run instance**. The run is not automatically the implementation artifact itself, although a prompt may be the registered implementation surface for a capability.
+2. Adding a reusable metric method to a canonical skill is not soundly proved by editing Markdown alone when the method makes an executable quality claim. The smallest sound change should include the skill update plus focused executable eval/test evidence for the new measurement method. P62 and the capability need not change if they are already parameterized/general enough to accept the metric.
+
+These are implementation-discipline refinements, not remaining ontology ownership confusion.
+
+## Product handoff
+
+The mastery model supports an implementation sprint around a repository-grounded Prompt Kit graph:
+
+- capability → reusable skill → heterogeneous implementation/prompt → invocation/run → tests/evals/evidence → proof ceiling;
+- separate capability and skill navigation;
+- prompt navigation retained independently because prompts may exist without being capability implementations;
+- implementation modeled as a relationship/lens with kinds such as script, launcher, binary, prompt, or other executable/orchestration surface;
+- evidence/proof kept distinct from the claimed capability so users can see what has actually been demonstrated;
+- later evidence/history features may incorporate failed runs, critiques, favorites, and useful invocation metadata, but should not be conflated with the minimum viable ontology navigation.
+
+## Closure
+
+Overall Prompt Kit ontology: MASTERED. Teaching mode is closed. Production implementation may now begin from this ownership model.
