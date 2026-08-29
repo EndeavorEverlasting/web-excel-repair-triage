@@ -31,11 +31,11 @@ Prompt Kit began here as a spreadsheet and is separable. Intended home: a dedica
 Until proven, Prompt Kit sources here remain operationally authoritative and must not be silently moved. It may source, pin, mirror, package, link to, or consume Prompt Kit releases, but must not become a competing Prompt Kit authority; keep cross-repo dependencies explicit and versioned.
 
 ## 7. Progressive disclosure and binding domain law
-Orient: `AGENTS.md` → `harness/CONTEXT.md` → one selected domain and only needed detail. Do **not** preload full harness/skills/history. Escalate context only for evidence, ownership, validation, or safety.
+Orient: `AGENTS.md` → `harness/CONTEXT.md` → one selected domain and needed detail. Do **not** preload full harness/skills/history. Escalate context only for evidence, ownership, validation, or safety.
 Bindings: `harness/specs/operator-delivery.md`; `harness/specs/prompt-operations.md`; `harness/specs/billing-artifact-safety.md`. `harness/contracts/context-architecture.v1.json` owns budgets/routes.
 
 ### Repository-local `/teach` protocol
-`/teach <topic>` uses `.teach/`, repo truth, first-principles lessons, exactly one mechanism/trade-off question + one code diagnostic/edge-case exercise, then stops. VERIFIED/MASTERED requires demonstrated understanding. `/teach recap` resumes the first weak frontier. No external package/clone, fabricated mastery, secrets/private/sensitive evidence.
+`/teach <topic>` uses `.teach/`, repo truth, first principles, one mechanism/trade-off question + one code diagnostic/edge-case exercise, then stops. VERIFIED/MASTERED requires demonstrated understanding. `/teach recap` resumes the first weak frontier. No external package/clone, fabricated mastery, secrets/private/sensitive evidence.
 
 ### Agent execution tiering and parallel delegation
 Parallelism is capability-earned, not equal-authority. Strategic/harness owners are `ChatGPT` and `Auggie`; only they may own governance, harness spine, skills, capabilities, triggers, routing, proof gates, or cross-repo migration authority. `desktop-app` and `OpenCode` are executors: they may consume settled contracts for application logic, UI, adapters, fixtures, tests, docs, or conforming migration, but may not mutate strategic surfaces without promotion.
