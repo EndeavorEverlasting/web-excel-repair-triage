@@ -35,6 +35,20 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main feat/p105-provider-side-merge-executor-20260828 --prune
           git merge --no-edit origin/main
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/tmp_strengthen_p105_provider_merge.py')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace(
+              'Keep an explicit repository-owned manifest/configuration of required check names for each destination.',
+              'Keep explicit repository-owned required-check names in a tracked manifest/configuration for each destination.',
+          )
+          text = text.replace(
+              'The terminal success criterion is provider merge/queue result plus refreshed containment, not `git switch main` on an operator workstation.',
+              'The terminal success criterion is provider merge/queue result plus refreshed containment, not local branch state on an operator workstation.',
+          )
+          path.write_text(text, encoding='utf-8')
+          PY
           python scripts/tmp_strengthen_p105_provider_merge.py
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           python -m unittest tests.test_spec_architecture_prompt_registry -v
