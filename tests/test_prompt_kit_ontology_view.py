@@ -22,6 +22,12 @@ class PromptKitOntologyViewTests(unittest.TestCase):
             [item["id"] for item in model["capabilities"]],
             [item["id"] for item in registry["capabilities"]],
         )
+        self.assertEqual(len(model["implementations"]), len(model["capabilities"]))
+        self.assertTrue(
+            {"prompt", "script", "launcher"}.issubset(
+                {item["kind"] for item in model["implementations"]}
+            )
+        )
         expected = {item["id"]: item for item in registry["capabilities"]}
         actual = {item["id"]: item for item in model["capabilities"]}
         for capability_id, source in expected.items():
