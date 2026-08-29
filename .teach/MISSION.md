@@ -8,7 +8,7 @@ Prompt Kit ontology: capabilities vs skills vs prompts, and how those primitives
 
 ## Target outcome
 
-The learner can inspect an existing or proposed Prompt Kit artifact and independently determine whether it is a capability, skill, prompt, or a composition of them; explain the ownership boundary; predict what should change when implementation/procedure/invocation changes; and use that model to critique or design Prompt Kit navigation without collapsing distinct primitives into synonyms.
+The learner can inspect an existing or proposed Prompt Kit artifact and independently determine whether it is a capability, skill, prompt, implementation, or a composition/relationship among them; explain the ownership boundary; predict what should change when implementation/procedure/invocation changes; and use that model to critique or design Prompt Kit navigation without collapsing distinct primitives into synonyms.
 
 ## Constraints
 
@@ -20,8 +20,17 @@ The learner can inspect an existing or proposed Prompt Kit artifact and independ
 
 ## Current frontier
 
-Lesson 01 VERIFIED. Lesson 02 PRACTICED: learner understands that target-specific names/assumptions make canonical skills less reusable and correctly diagnosed an over-specialized P62 as a prompt defect. Remaining boundary: distinguish a reusable **metric method/family** from the concrete prompt's **selection/binding** of target + metric for one run. `excess tool calls` and `cross-agent interpretation variance` can both be reusable evaluation methods; the prompt chooses which one applies now.
+Teaching closeout. Lesson 01 is VERIFIED. Lesson 02 is CLOSED at PRACTICED with its remaining reusable-metric-method vs per-run-selection nuance folded into one final mastery synthesis. The next learner response should answer exactly two synthesis checkpoints. If the response demonstrates ownership and change-impact reasoning across the full model, promote the ontology record to MASTERED and close the teaching lane.
 
-## Emerging product hypothesis
+## Implementation handoff after mastery
 
-Prompt Kit may benefit from separate **capability**, **skill**, and **implementation** views grounded in actual repository owners. Preserve this as a hypothesis during teaching; do not mutate production UI until later examples test whether these views remain distinct and useful.
+Preserve these hypotheses for the immediately following implementation sprint:
+
+- Prompt Kit should expose repository-grounded ownership relationships rather than flattening capabilities, skills, prompts, implementations, and evidence into one artifact list.
+- Separate capability and skill views appear useful.
+- An implementation view/lens may also be useful, but implementation is a heterogeneous relationship: script, launcher, binary, prompt, or other executable/orchestration surface.
+- Prompt-specific views should remain available because prompts can be concrete task artifacts even when they are not capability implementations.
+- The UI should make it possible to trace from a capability to its reusable skill, concrete implementation/prompt, relevant tests/evals/evidence, and proof ceiling.
+- Failed/over-specialized invocation evidence may later support tutorial/log surfaces, but that is separate from minimum viable ontology navigation.
+
+Do not mutate production Prompt Kit UI until the mastery synthesis is complete and the teaching lane is closed.
