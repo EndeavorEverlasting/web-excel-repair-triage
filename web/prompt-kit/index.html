@@ -434,6 +434,9 @@ render();
 
 </script>
 <script>
+window.PROMPT_KIT_ONTOLOGY = {"schema_version":"prompt-kit-ontology/v1","capabilities":[{"id":"prompt-language-audit","version":"1.0.0","status":"canonical","skill":".ai/skills/prompt-language-audit/SKILL.md","trigger_ids":["prompt-language-change","lazy-next-action-report"],"operation":"Evaluate every canonical and effective Prompt Kit prompt for complete, actionable, non-lazy language and emit one disposition per prompt.","inputs":["docs/prompts.json","registry/prompts/*.json","registry/prompts/actionable-next-step-policy.v1.json","scripts/build_prompt_kit_registry.py","harness/evals/prompt-language-audit.v1.json"],"outputs":["prompt-language-audit-result/v1 report","per-prompt disposition","finding-to-repair ledger"],"implementation":{"kind":"script","path":"scripts/evaluate_prompt_language.py"},"proof_ceiling":"Exhaustive static registry and effective-prompt language proof; no provider compliance proof."},{"id":"skill-evaluation","version":"1.0.0","status":"canonical","skill":".ai/skills/skill-evaluation/SKILL.md","trigger_ids":["skill-quality-unproven"],"operation":"Install executable correctness, routing, regression, performance, cost, and token-efficiency evals for a target skill and repair valid weaknesses.","inputs":["target skill","trigger and capability contracts","known failures","unit and integration surfaces","baseline traces"],"outputs":["versioned eval cases","runner","machine-readable results","finding-to-repair ledger","before-and-after measurements"],"implementation":{"kind":"prompt","prompt_id":"P62"},"proof_ceiling":"Depends on the eval lanes actually executed; static, model, runtime, and production proof must remain distinct."},{"id":"skill-factoring","version":"1.0.0","status":"canonical","skill":".ai/skills/skill-factoring/SKILL.md","trigger_ids":["skill-boundary-defect"],"operation":"Factor skill ownership into deterministic reusable boundaries without moving application behavior into prose.","inputs":["skills","capabilities","triggers","consumers","tests","failure evidence"],"outputs":["KEEP/SPLIT/MERGE/RETIRE/REWIRE dispositions","repaired skills and routing","boundary fixtures"],"implementation":{"kind":"prompt","prompt_id":"P63"},"proof_ceiling":"Static ownership and routing proof until model or runtime evals are executed."},{"id":"technician-prompt-kit-acquisition","version":"1.1.0","status":"canonical","skill":".ai/skills/technician-prompt-kit-acquisition/SKILL.md","trigger_ids":["technician-needs-latest-prompt-kit"],"operation":"Route Prompt Kit access by user intent and device: public browser use, phone install, Windows local app, editable checkout, or ZIP snapshot; require Git only when source work actually needs it.","inputs":["user intent: use/install/share or edit/commit/push","device or platform","public Prompt Kit and phone-launcher URLs","canonical repository URL","default branch main","Git only when an editable checkout is required","Termux from F-Droid for an Android editable checkout","Windows PowerShell and Python only for the Windows local-app path"],"outputs":["selected cross-device access mode","public Prompt Kit or phone install surface","validated Windows local app when requested","clean editable checkout when source work is requested","explicit runtime proof ceiling"],"implementation":{"kind":"launcher","path":"Acquire-Latest-PromptKit.cmd"},"proof_ceiling":"Static routing, canonical URL/command, and preservation-first contract proof until the selected phone, browser, Termux, Windows launcher, network, or Git-authentication path is observed."},{"id":"harness-infrastructure-maintenance","version":"1.2.0","status":"canonical","skill":".ai/skills/harness-infrastructure-maintenance/SKILL.md","trigger_ids":["harness-infrastructure-change"],"operation":"Inspect, repair, validate, report, and hand off the repository operational harness; when product code is out of scope, convert observed behavior gaps into enforceable focused contracts with non-strict harness evidence and explicit strict product gates.","inputs":["AGENTS.md","CODEBASE_MAP.md","WORKFLOW.md","ARTIFACT_REGISTRY.md","harness/manifest.v1.json","harness/workflows.v1.json","harness/artifacts.v1.json","harness/validators.v1.json","harness/capabilities.v1.json","harness/triggers.v1.json","focused domain contracts including harness/contracts/prompt-kit-order-navigation.v1.json and harness/contracts/pr-merge-gate.v1.json","focused operator reports including harness/reports/PROMPT_KIT_ORDER_NAVIGATION.md",".githooks/",".github/workflows/harness-contract.yml","existing harness failures, product-gap evidence, PR state, merge intent, and merge authority"],"outputs":["tracked canonical harness repairs","harness-completeness-report/v1","focused regression tests","focused product-gap audit when implementation is outside owned scope","updated operator report","commit and push or PR evidence","actionable next command"],"implementation":{"kind":"script","path":"scripts/validate_harness.py"},"proof_ceiling":"Static repository, contract, source-gap, and CI harness proof on the tested commit; actual provider merges, product runtime, browser/mobile ergonomics, GUI, protected-target, and production proof remain separate."},{"id":"prompt-kit-browser-proof-scratch-cleanup","version":"1.0.0","status":"canonical","skill":".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md","trigger_ids":["prompt-kit-browser-proof-temp-path"],"operation":"Preview, classify, retain receipts for, and explicitly remove only eligible detached Prompt Kit browser-proof scratch directories under the OS temp root.","inputs":["optional exact prompt-kit-browser-proof path","OS temp root","minimum age","explicit apply intent"],"outputs":["prompt-kit-browser-proof-cleanup-report","preserved prior receipt when present","eligible/preserved/deleted/failed counts"],"implementation":{"kind":"script","path":"scripts/Clear-PromptKitBrowserProofScratch.ps1"},"proof_ceiling":"Filesystem classification and cleanup receipt only; browser profile/localStorage/Favorites state remains separate."},{"id":"prompt-kit-responsive-layout","version":"1.0.0","status":"canonical","skill":".ai/skills/prompt-kit-responsive-layout/SKILL.md","trigger_ids":["prompt-kit-responsive-overlap"],"operation":"Classify Prompt Kit header/search collisions, enforce responsive source and generated-artifact contracts, and require browser geometry before strict no-overlap proof.","inputs":["operator overlap evidence","web/prompt-kit/index.html","docs/prompt-kit-polish.js","harness/prompt-kit-layout/contracts/responsive-header-overlap.v1.json","declared responsive viewports"],"outputs":["responsive-layout harness validation","focused source/artifact regression proof","browser geometry receipt for strict proof when available"],"implementation":{"kind":"script","path":"scripts/validate_prompt_kit_layout_harness.py"},"proof_ceiling":"Static harness/source/artifact proof unless a validated browser-geometry receipt covers every declared viewport."},{"id":"prompt-kit-feedback-afk-routing","version":"1.0.0","status":"canonical","skill":".ai/skills/prompt-kit-feedback-afk-routing/SKILL.md","trigger_ids":["prompt-kit-actionable-feedback"],"operation":"Classify and deduplicate one accepted Prompt Kit feedback signal, create a P115-owned bounded work request, and invoke at most one configured capable worker without polling or promotion authority.","inputs":["harness/contracts/prompt-kit-feedback-afk-routing.v1.json","accepted explicit feedback signal or sanitized provider receipt","current Prompt Kit feedback owner evidence","configured worker argv when available"],"outputs":["ACTIONABLE_REPAIR or INFORMATION_ONLY disposition","deduplicated prompt-kit-afk-work-request/v1 artifact for actionable feedback","bounded worker result or exact worker-configuration blocker"],"implementation":{"kind":"script","path":"scripts/prompt_kit_afk_signal_router.py"},"proof_ceiling":"One-shot repository routing and local work-request proof only; browser loopback behavior, worker quality, provider review, and promotion remain separate."}],"skills":[{"id":"artifact-derivation","title":"Artifact Derivation and Source Preservation","path":".ai/skills/artifact-derivation/SKILL.md","capability_ids":[]},{"id":"fun-nth-artifact-export","title":"FUN NTH Artifact Export","path":".ai/skills/fun-nth-artifact-export/SKILL.md","capability_ids":[]},{"id":"harness-infrastructure-maintenance","title":"Harness Infrastructure Maintenance","path":".ai/skills/harness-infrastructure-maintenance/SKILL.md","capability_ids":["harness-infrastructure-maintenance"]},{"id":"july-nth-public-disclosure","title":"July NTH Public-Disclosure Producer Skill","path":".ai/skills/july-nth-public-disclosure/SKILL.md","capability_ids":[]},{"id":"lua-embedding-readiness","title":"Lua Embedding Readiness","path":".ai/skills/lua-embedding-readiness/SKILL.md","capability_ids":[]},{"id":"nth-abstract-detail-delivery","title":"NTH Abstract-Detail Delivery","path":".ai/skills/nth-abstract-detail-delivery/SKILL.md","capability_ids":[]},{"id":"prompt-kit-browser-proof-cleanup","title":"Prompt Kit Browser-Proof Cleanup","path":".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md","capability_ids":["prompt-kit-browser-proof-scratch-cleanup"]},{"id":"prompt-kit-feedback-afk-routing","title":"Prompt Kit Feedback AFK Routing","path":".ai/skills/prompt-kit-feedback-afk-routing/SKILL.md","capability_ids":["prompt-kit-feedback-afk-routing"]},{"id":"prompt-kit-responsive-layout","title":"Prompt Kit Responsive Layout Audit","path":".ai/skills/prompt-kit-responsive-layout/SKILL.md","capability_ids":["prompt-kit-responsive-layout"]},{"id":"prompt-language-audit","title":"Prompt Language Audit","path":".ai/skills/prompt-language-audit/SKILL.md","capability_ids":["prompt-language-audit"]},{"id":"share-artifact-alias-handoff","title":"Share Artifact Alias Handoff","path":".ai/skills/share-artifact-alias-handoff/SKILL.md","capability_ids":[]},{"id":"skill-evaluation","title":"Skill Evaluation","path":".ai/skills/skill-evaluation/SKILL.md","capability_ids":["skill-evaluation"]},{"id":"skill-factoring","title":"Skill Factoring","path":".ai/skills/skill-factoring/SKILL.md","capability_ids":["skill-factoring"]},{"id":"technician-prompt-kit-acquisition","title":"Technician Prompt Kit Acquisition","path":".ai/skills/technician-prompt-kit-acquisition/SKILL.md","capability_ids":["technician-prompt-kit-acquisition"]}],"implementations":[{"capability_id":"prompt-language-audit","skill":".ai/skills/prompt-language-audit/SKILL.md","kind":"script","locator":"scripts/evaluate_prompt_language.py","path":"scripts/evaluate_prompt_language.py"},{"capability_id":"skill-evaluation","skill":".ai/skills/skill-evaluation/SKILL.md","kind":"prompt","locator":"P62","prompt_id":"P62","prompt_name":"Skill Correctness and Efficiency Eval Implementer"},{"capability_id":"skill-factoring","skill":".ai/skills/skill-factoring/SKILL.md","kind":"prompt","locator":"P63","prompt_id":"P63","prompt_name":"Skill Factoring and Boundary Refactorer"},{"capability_id":"technician-prompt-kit-acquisition","skill":".ai/skills/technician-prompt-kit-acquisition/SKILL.md","kind":"launcher","locator":"Acquire-Latest-PromptKit.cmd","path":"Acquire-Latest-PromptKit.cmd"},{"capability_id":"harness-infrastructure-maintenance","skill":".ai/skills/harness-infrastructure-maintenance/SKILL.md","kind":"script","locator":"scripts/validate_harness.py","path":"scripts/validate_harness.py"},{"capability_id":"prompt-kit-browser-proof-scratch-cleanup","skill":".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md","kind":"script","locator":"scripts/Clear-PromptKitBrowserProofScratch.ps1","path":"scripts/Clear-PromptKitBrowserProofScratch.ps1"},{"capability_id":"prompt-kit-responsive-layout","skill":".ai/skills/prompt-kit-responsive-layout/SKILL.md","kind":"script","locator":"scripts/validate_prompt_kit_layout_harness.py","path":"scripts/validate_prompt_kit_layout_harness.py"},{"capability_id":"prompt-kit-feedback-afk-routing","skill":".ai/skills/prompt-kit-feedback-afk-routing/SKILL.md","kind":"script","locator":"scripts/prompt_kit_afk_signal_router.py","path":"scripts/prompt_kit_afk_signal_router.py"}]};
+</script>
+<script>
 (function(){
 'use strict';
 var PROMPT_FINDER_QUESTIONS=[
@@ -1929,6 +1932,217 @@ installSpecArchitectureProfile();
   function install(){if(typeof document==='undefined')return;var original=root.showPromptDetail;if(typeof original==='function'&&!original.__promptKitFeedbackWrapped){var wrapped=function(id,origin){var result=original.call(this,id,origin);installPanel(String(id||'').toUpperCase());return result};wrapped.__promptKitFeedbackWrapped=true;root.showPromptDetail=wrapped}var style=document.createElement('style');style.id='prompt-kit-feedback-styles';style.textContent='.prompt-feedback-votes{display:flex;gap:8px;margin:8px 0}.pk-feedback-vote{border:1px solid var(--border);background:var(--bg-surface);color:var(--text-primary);border-radius:7px;padding:8px 12px;cursor:pointer}.prompt-feedback-panel textarea{width:100%;box-sizing:border-box;margin:8px 0;padding:8px;border:1px solid var(--border);border-radius:7px;background:var(--bg-surface);color:var(--text-primary)}.prompt-feedback-status{font-size:11px;color:var(--text-muted)}';if(!document.getElementById(style.id))document.head.appendChild(style);document.documentElement.setAttribute('data-prompt-kit-feedback-runtime','v1')}
   var api={EVENT_SCHEMA:EVENT_SCHEMA,CURSOR_SCHEMA:CURSOR_SCHEMA,append:append,pollSince:pollSince,exportBundle:exportBundle,readEvents:readEvents,currentVote:currentVote,install:install};root.PromptKitFeedback=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;if(typeof document!=='undefined'){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install()}
 })(typeof window!=='undefined'?window:globalThis);
+
+</script>
+<script>
+(function () {
+  'use strict';
+
+  var model = window.PROMPT_KIT_ONTOLOGY;
+  if (!model || !Array.isArray(model.capabilities) || !Array.isArray(model.skills)) return;
+
+  function esc(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
+    });
+  }
+
+  function ensureStyles() {
+    if (document.getElementById('prompt-kit-ontology-styles')) return;
+    var style = document.createElement('style');
+    style.id = 'prompt-kit-ontology-styles';
+    style.textContent = [
+      '.ontology-active #promptGrid,.ontology-active #doctrineView,.ontology-active .sections-nav,.ontology-active .type-nav{display:none!important}',
+      '.ontology-tab{border:1px solid var(--border);border-radius:7px;background:var(--bg-surface);color:var(--text-muted);padding:7px 11px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s}',
+      '.ontology-tab:hover,.ontology-tab:focus-visible,.ontology-tab.active{outline:none;border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}',
+      '.ontology-view{display:none;max-width:1500px;margin:14px auto 90px;padding:0 24px}',
+      '.ontology-view.active{display:block}',
+      '.ontology-hero{border:1px solid var(--border);border-radius:12px;background:var(--bg-secondary);padding:20px;margin-bottom:14px}',
+      '.ontology-kicker{font-size:10px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--accent)}',
+      '.ontology-hero h2{margin:6px 0 5px;font-size:24px;color:var(--text-primary)}',
+      '.ontology-hero p{margin:0;color:var(--text-muted);font-size:13px;line-height:1.55}',
+      '.ontology-stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}',
+      '.ontology-stat{border:1px solid var(--border);border-radius:999px;padding:5px 9px;color:var(--text-secondary);font-size:10px}',
+      '.ontology-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px}',
+      '.ontology-lens{border:1px solid var(--border);border-radius:7px;background:var(--bg-surface);color:var(--text-muted);padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer}',
+      '.ontology-lens.active,.ontology-lens:hover,.ontology-lens:focus-visible{outline:none;border-color:var(--accent);color:var(--accent)}',
+      '.ontology-search{flex:1;min-width:220px;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg-surface);color:var(--text-primary);font-size:12px}',
+      '.ontology-note{border:1px solid var(--border);border-radius:9px;background:var(--bg-secondary);padding:12px 14px;color:var(--text-muted);font-size:12px;line-height:1.5;margin-bottom:12px}',
+      '.ontology-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}',
+      '.ontology-card{border:1px solid var(--border);border-radius:10px;background:var(--bg-secondary);padding:14px;min-width:0}',
+      '.ontology-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}',
+      '.ontology-card h3{margin:0;color:var(--text-primary);font-size:14px;overflow-wrap:anywhere}',
+      '.ontology-badge{border:1px solid var(--border);border-radius:999px;padding:3px 7px;color:var(--text-muted);font-size:9px;text-transform:uppercase;white-space:nowrap}',
+      '.ontology-operation{color:var(--text-secondary);font-size:12px;line-height:1.5;margin:8px 0 11px}',
+      '.ontology-row{display:grid;grid-template-columns:86px minmax(0,1fr);gap:8px;margin-top:7px;font-size:11px;line-height:1.45}',
+      '.ontology-label{color:var(--text-muted);font-weight:700;text-transform:uppercase;font-size:9px;letter-spacing:.05em}',
+      '.ontology-value{color:var(--text-secondary);overflow-wrap:anywhere}',
+      '.ontology-proof{border-top:1px solid var(--border);margin-top:11px;padding-top:10px;color:var(--text-secondary);font-size:11px;line-height:1.45}',
+      '.ontology-link{border:1px solid var(--border);border-radius:6px;background:var(--bg-surface);color:var(--accent);padding:4px 7px;font-size:10px;cursor:pointer}',
+      '.ontology-empty{color:var(--text-muted);font-size:12px;padding:18px;border:1px dashed var(--border);border-radius:9px}',
+      '@media(max-width:760px){.ontology-view{padding:0 12px}.ontology-hero{padding:15px}.ontology-hero h2{font-size:19px}.ontology-grid{grid-template-columns:1fr}.ontology-controls{align-items:stretch}.ontology-search{flex-basis:100%;min-height:42px}.ontology-tab,.ontology-lens{min-height:40px}}'
+    ].join('');
+    document.head.appendChild(style);
+  }
+
+  function implementationLocator(implementation) {
+    if (!implementation) return 'unregistered';
+    if (implementation.prompt_id) return implementation.prompt_id;
+    if (implementation.path) return implementation.path;
+    return Object.keys(implementation).filter(function (key) { return key !== 'kind'; }).map(function (key) {
+      return key + ': ' + implementation[key];
+    }).join(', ') || 'registered without locator';
+  }
+
+  function containsQuery(values, query) {
+    if (!query) return true;
+    return values.join(' ').toLowerCase().indexOf(query) >= 0;
+  }
+
+  ensureStyles();
+  var tabs = document.querySelector('.cat-tabs');
+  var grid = document.getElementById('promptGrid');
+  var doctrine = document.getElementById('doctrineView');
+  var host = (doctrine && doctrine.parentNode) || (grid && grid.parentNode);
+  if (!tabs || !host) return;
+
+  var topButton = document.createElement('button');
+  topButton.type = 'button';
+  topButton.className = 'ontology-tab';
+  topButton.id = 'ontologyTab';
+  topButton.textContent = 'Ontology';
+  topButton.setAttribute('aria-controls', 'ontologyView');
+  topButton.setAttribute('aria-expanded', 'false');
+  tabs.appendChild(topButton);
+
+  var view = document.createElement('section');
+  view.id = 'ontologyView';
+  view.className = 'ontology-view';
+  view.setAttribute('aria-labelledby', 'ontologyTitle');
+  view.innerHTML = [
+    '<div class="ontology-hero">',
+      '<div class="ontology-kicker">Repository-backed agentic map</div>',
+      '<h2 id="ontologyTitle">Capabilities, skills, implementations, and proof</h2>',
+      '<p>This view is generated from canonical repository owners. It shows what an operation promises, which reusable skill guides it, how it is implemented, and what its declared proof ceiling allows you to claim.</p>',
+      '<div class="ontology-stats" id="ontologyStats"></div>',
+    '</div>',
+    '<div class="ontology-controls" role="toolbar" aria-label="Ontology views">',
+      '<button class="ontology-lens active" type="button" data-lens="capabilities">Capabilities</button>',
+      '<button class="ontology-lens" type="button" data-lens="skills">Skills</button>',
+      '<button class="ontology-lens" type="button" data-lens="implementations">Implementations</button>',
+      '<button class="ontology-lens" type="button" data-lens="evidence">Evidence / Proof</button>',
+      '<input class="ontology-search" id="ontologySearch" type="search" placeholder="Filter this ontology view" aria-label="Filter ontology view">',
+    '</div>',
+    '<div id="ontologyBody"></div>'
+  ].join('');
+  host.insertBefore(view, doctrine || grid || host.firstChild);
+
+  var promptBacked = model.implementations.filter(function (item) { return item.kind === 'prompt'; }).length;
+  document.getElementById('ontologyStats').innerHTML = [
+    '<span class="ontology-stat">' + model.capabilities.length + ' capabilities</span>',
+    '<span class="ontology-stat">' + model.skills.length + ' skills</span>',
+    '<span class="ontology-stat">' + model.implementations.length + ' registered implementations</span>',
+    '<span class="ontology-stat">' + promptBacked + ' prompt-backed</span>'
+  ].join('');
+
+  var lens = 'capabilities';
+  var search = document.getElementById('ontologySearch');
+  var body = document.getElementById('ontologyBody');
+
+  function openPrompt(promptId, origin) {
+    if (promptId && typeof window.showPromptDetail === 'function') {
+      window.showPromptDetail(promptId, origin || null);
+    }
+  }
+
+  function capabilityCard(item, evidenceOnly) {
+    var implementation = item.implementation || {};
+    var locator = implementationLocator(implementation);
+    var promptControl = implementation.kind === 'prompt' && implementation.prompt_id
+      ? ' <button type="button" class="ontology-link" data-prompt-id="' + esc(implementation.prompt_id) + '">Open ' + esc(implementation.prompt_id) + '</button>'
+      : '';
+    if (evidenceOnly) {
+      return '<article class="ontology-card"><div class="ontology-card-head"><h3>' + esc(item.id) + '</h3><span class="ontology-badge">declared ceiling</span></div><div class="ontology-operation">' + esc(item.operation) + '</div><div class="ontology-proof"><span class="ontology-label">Proof ceiling</span><br>' + esc(item.proof_ceiling || 'No proof ceiling registered') + '</div></article>';
+    }
+    return '<article class="ontology-card"><div class="ontology-card-head"><h3>' + esc(item.id) + '</h3><span class="ontology-badge">' + esc(item.status || 'unknown') + '</span></div><div class="ontology-operation">' + esc(item.operation) + '</div>' +
+      '<div class="ontology-row"><span class="ontology-label">Skill</span><span class="ontology-value">' + esc(item.skill) + '</span></div>' +
+      '<div class="ontology-row"><span class="ontology-label">Implements</span><span class="ontology-value">' + esc(implementation.kind || 'unregistered') + ' · ' + esc(locator) + promptControl + '</span></div>' +
+      '<div class="ontology-row"><span class="ontology-label">Triggers</span><span class="ontology-value">' + esc((item.trigger_ids || []).join(', ') || 'none registered') + '</span></div>' +
+      '<div class="ontology-proof"><span class="ontology-label">Proof ceiling</span><br>' + esc(item.proof_ceiling || 'No proof ceiling registered') + '</div></article>';
+  }
+
+  function renderCapabilities(query, evidenceOnly) {
+    var items = model.capabilities.filter(function (item) {
+      return containsQuery([item.id, item.operation, item.skill, JSON.stringify(item.implementation || {}), (item.trigger_ids || []).join(' '), item.proof_ceiling || ''], query);
+    });
+    var note = evidenceOnly
+      ? '<div class="ontology-note"><strong>Declared proof, not run history.</strong> These ceilings state the maximum claim each registered capability can support. Live invocation receipts, failures, critiques, and longitudinal metrics remain a separate future evidence/history layer.</div>'
+      : '<div class="ontology-note"><strong>Capability answers:</strong> “What operation can I rely on, and where is its boundary?” Implementation details are shown as relationships rather than treated as the capability itself.</div>';
+    body.innerHTML = note + (items.length ? '<div class="ontology-grid">' + items.map(function (item) { return capabilityCard(item, evidenceOnly); }).join('') + '</div>' : '<div class="ontology-empty">No matching capabilities.</div>');
+  }
+
+  function renderSkills(query) {
+    var items = model.skills.filter(function (item) {
+      return containsQuery([item.id, item.title, item.path, (item.capability_ids || []).join(' ')], query);
+    });
+    body.innerHTML = '<div class="ontology-note"><strong>Skill answers:</strong> “What reusable procedure or judgment can an agent apply across missions?” The inventory comes from actual <code>.ai/skills/*/SKILL.md</code> files; an unlinked skill is shown rather than silently invented into a capability.</div>' +
+      (items.length ? '<div class="ontology-grid">' + items.map(function (item) {
+        return '<article class="ontology-card"><div class="ontology-card-head"><h3>' + esc(item.title || item.id) + '</h3><span class="ontology-badge">skill</span></div><div class="ontology-row"><span class="ontology-label">ID</span><span class="ontology-value">' + esc(item.id) + '</span></div><div class="ontology-row"><span class="ontology-label">Path</span><span class="ontology-value">' + esc(item.path) + '</span></div><div class="ontology-row"><span class="ontology-label">Capabilities</span><span class="ontology-value">' + esc((item.capability_ids || []).join(', ') || 'no registered capability link') + '</span></div></article>';
+      }).join('') + '</div>' : '<div class="ontology-empty">No matching skills.</div>');
+  }
+
+  function renderImplementations(query) {
+    var items = model.implementations.filter(function (item) {
+      return containsQuery([item.capability_id, item.kind, item.locator, item.prompt_name || '', item.skill || ''], query);
+    });
+    body.innerHTML = '<div class="ontology-note"><strong>Implementation answers:</strong> “What concrete mechanism realizes or orchestrates this capability?” Kinds stay heterogeneous—prompt, script, launcher, binary, or another registered form—so the viewer does not flatten mechanisms into one artifact class.</div>' +
+      (items.length ? '<div class="ontology-grid">' + items.map(function (item) {
+        var open = item.kind === 'prompt' && item.prompt_id ? '<button type="button" class="ontology-link" data-prompt-id="' + esc(item.prompt_id) + '">Open ' + esc(item.prompt_id) + '</button>' : '';
+        return '<article class="ontology-card"><div class="ontology-card-head"><h3>' + esc(item.capability_id) + '</h3><span class="ontology-badge">' + esc(item.kind) + '</span></div><div class="ontology-row"><span class="ontology-label">Locator</span><span class="ontology-value">' + esc(item.locator) + ' ' + open + '</span></div><div class="ontology-row"><span class="ontology-label">Skill</span><span class="ontology-value">' + esc(item.skill || '') + '</span></div>' + (item.prompt_name ? '<div class="ontology-row"><span class="ontology-label">Prompt</span><span class="ontology-value">' + esc(item.prompt_name) + '</span></div>' : '') + '</article>';
+      }).join('') + '</div>' : '<div class="ontology-empty">No matching implementations.</div>');
+  }
+
+  function renderBody() {
+    var query = String(search.value || '').trim().toLowerCase();
+    if (lens === 'skills') renderSkills(query);
+    else if (lens === 'implementations') renderImplementations(query);
+    else renderCapabilities(query, lens === 'evidence');
+    body.querySelectorAll('[data-prompt-id]').forEach(function (button) {
+      button.addEventListener('click', function () { openPrompt(button.getAttribute('data-prompt-id'), button); });
+    });
+  }
+
+  function activate() {
+    document.body.classList.add('ontology-active');
+    view.classList.add('active');
+    topButton.classList.add('active');
+    topButton.setAttribute('aria-expanded', 'true');
+    document.querySelectorAll('.cat-tab').forEach(function (button) { button.classList.remove('active'); });
+    renderBody();
+    try { view.scrollIntoView({block:'start',behavior:'smooth'}); } catch (e) { view.scrollIntoView(); }
+  }
+
+  function deactivate() {
+    document.body.classList.remove('ontology-active');
+    view.classList.remove('active');
+    topButton.classList.remove('active');
+    topButton.setAttribute('aria-expanded', 'false');
+  }
+
+  topButton.addEventListener('click', activate);
+  document.querySelectorAll('.cat-tab').forEach(function (button) { button.addEventListener('click', deactivate); });
+  var home = document.getElementById('homeReset') || document.querySelector('.logo');
+  if (home) home.addEventListener('click', deactivate);
+  search.addEventListener('input', renderBody);
+  view.querySelectorAll('.ontology-lens').forEach(function (button) {
+    button.addEventListener('click', function () {
+      lens = button.getAttribute('data-lens');
+      view.querySelectorAll('.ontology-lens').forEach(function (peer) { peer.classList.toggle('active', peer === button); });
+      renderBody();
+    });
+  });
+  renderBody();
+})();
 
 </script>
 </body>
