@@ -20,4 +20,8 @@ The learner can inspect an existing or proposed Prompt Kit artifact and independ
 
 ## Current frontier
 
-Lesson 01 VERIFIED: learner distinguishes stable capability/contract from replaceable implementation, identifies implementation-specific stale skill instructions, and separates deterministic runtime truth from agent reporting. Current Lesson 02 frontier: distinguish **reusable skill procedure/judgment** from **task-specific prompt invocation/orchestration**. Test against the repository's `skill-evaluation` capability, its linked `.ai/skills/skill-evaluation/SKILL.md`, and registered prompt implementation `P62`.
+Lesson 01 VERIFIED. Lesson 02 PRACTICED: learner understands that target-specific names/assumptions make canonical skills less reusable and correctly diagnosed an over-specialized P62 as a prompt defect. Remaining boundary: distinguish a reusable **metric method/family** from the concrete prompt's **selection/binding** of target + metric for one run. `excess tool calls` and `cross-agent interpretation variance` can both be reusable evaluation methods; the prompt chooses which one applies now.
+
+## Emerging product hypothesis
+
+Prompt Kit may benefit from separate **capability**, **skill**, and **implementation** views grounded in actual repository owners. Preserve this as a hypothesis during teaching; do not mutate production UI until later examples test whether these views remain distinct and useful.
