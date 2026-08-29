@@ -37,6 +37,6 @@ Bindings: `harness/specs/operator-delivery.md`; `harness/specs/prompt-operations
 ### Repository-local `/teach` protocol
 `/teach <topic>` uses `.teach/`, repo truth, first-principles lessons, exactly one mechanism/trade-off question + one code diagnostic/edge-case exercise, then stops. VERIFIED/MASTERED requires demonstrated understanding. `/teach recap` resumes the first weak frontier. No external package/clone, fabricated mastery, secrets/private/sensitive evidence.
 
-## 8. Agent execution tiering and parallel delegation
+### Agent execution tiering and parallel delegation
 Parallelism is capability-earned, not equal-authority. Strategic/harness owners are `ChatGPT` and `Auggie`; only they may own governance, harness spine, skills, capabilities, triggers, routing, proof gates, or cross-repo migration authority. `desktop-app` and `OpenCode` are executors: they may consume settled contracts for application logic, UI, adapters, fixtures, tests, docs, or conforming migration, but may not mutate strategic surfaces without promotion.
 Machine policy: `harness/contracts/agent-execution-tiering.v1.json`. Availability is not authority; unknown routes down. Promotion requires explicit operator approval and evaluation evidence. Shared contracts precede parallel consumers; collision owners stay singular.
