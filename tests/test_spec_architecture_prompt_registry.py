@@ -253,6 +253,30 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertNotEqual(prompt["id"], "P95")
         self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
 
+    def test_p105_owns_provider_side_last_mile_merge_execution(self) -> None:
+        prompt = self.full["P105"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["name"], "Validated CI/CD Promotion Pipeline Builder")
+        self.assertEqual(prompt["class"], "HARNESS / CI-CD PROMOTION")
+        for phrase in (
+            "PROVIDER-SIDE MERGE EXECUTOR — NO HUMAN MEMORY STEP",
+            "explicit repository-owned required-check names",
+            "unresolved review threads",
+            "immediately re-read provider truth",
+            "expected head SHA",
+            "A local branch switch or local checkout is not part of normal merge convergence",
+            "duplicate wakeups are idempotent",
+            "GitHub App/workflow permissions",
+            "merge API/queue response",
+            "missing/renamed/pending/failing blocks",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("last-mile provider-side merge", prompt["useWhen"])
+        self.assertIn("provider-side executor", prompt["expectedOutput"])
+        self.assertIn("unresolved review threads", prompt["proofGate"])
+        self.assertIn("explicit repository-owned required-check set", prompt["nextStep"])
+        self.assertNotIn("git switch main", content)
+
     def test_repository_automation_prompts_have_distinct_generation_and_promotion_roles(self) -> None:
         generation = [p for p in self.full.values() if p["name"] == "Repository-Native Code Update Harness Builder"]
         promotion = [p for p in self.full.values() if p["name"] == "Validated CI/CD Promotion Pipeline Builder"]
