@@ -1,6 +1,6 @@
 # Lesson 02 — Reusable skill vs task-specific prompt
 
-Status: CLOSED — PRACTICED; remaining metric-method vs per-run binding nuance is folded into the final ontology mastery check.
+Status: VERIFIED — completed through final synthesis transfer.
 
 ## Atomic invariant
 
@@ -18,16 +18,19 @@ Therefore, repeated task-specific facts do not automatically belong in the reusa
 
 ## Learner evidence
 
-The learner correctly explained why target names and target-specific assumptions should not be embedded in a canonical reusable skill: doing so forces later agents to undo stale assumptions and damages reuse. The learner also correctly diagnosed a P62 that hard-codes `fun-nth-artifact-export` and a single primary metric as a prompt-implementation defect rather than automatically a skill or capability defect.
+The learner correctly explained why target names and target-specific assumptions should not be embedded in a canonical reusable skill: doing so forces later agents to undo stale assumptions and damages reuse. The learner correctly diagnosed a P62 that hard-codes `fun-nth-artifact-export` and a single primary metric as a prompt-implementation defect rather than automatically a skill or capability defect.
 
-The remaining precision point is narrow: metric names do not determine ownership by themselves. Reusable **metric methods/families** may belong in `skill-evaluation` when they generalize across targets. A concrete prompt selects the target and which supported metric/objective matters for the current run. Thus the skill may know *how* to measure tool-call excess, token use, retries, latency, or cross-agent interpretation variance, while a prompt says *measure this target with this metric now*.
+In the final synthesis, the learner correctly placed reusable measurement knowledge in the skill layer and concrete target/run binding in the invocation/implementation context. The learner also independently applied the model to Prompt Kit information architecture, which demonstrates transfer beyond memorized labels.
 
-The learner also proposed preserving failed or over-specialized invocation evidence in a tutorial/log view. That is a potentially useful later product/evidence feature, but it is not part of the smallest repair for an over-specialized prompt.
+## Precision corrections retained
 
-## Emerging product hypothesis
+Two refinements remain important but do not invalidate the demonstrated ownership model:
 
-Prompt Kit may benefit from repository-grounded views that expose capability, reusable skill, implementation/prompt, and evidence relationships instead of flattening all agent artifacts into one library. In particular, the learner proposed separate capability, skill, and implementation views tied to actual repository-owned skills. Preserve this for post-teaching implementation critique; do not mutate production UI during the teaching lane.
+1. Reusable metric **methods/families** may belong in `skill-evaluation`; the concrete prompt selects which supported metric/objective matters for a particular run. Metric names do not determine ownership by themselves.
+2. Sending a prompt to an agent creates a concrete invocation/run. That run is not automatically identical to the capability's implementation artifact, even when the prompt itself is the registered implementation surface.
+
+The learner also proposed preserving failed or over-specialized invocation evidence in a tutorial/log view. That is a potentially useful later product/evidence feature, not part of the smallest repair for an over-specialized prompt.
 
 ## Closure
 
-Lesson 02 is closed at PRACTICED rather than VERIFIED so the remaining metric-method vs per-run selection distinction can be tested once, in context, as part of the final mastery synthesis instead of extending the lesson with another micro-remediation cycle.
+VERIFIED through final transfer: the learner can distinguish reusable skill knowledge from concrete prompt/run binding and can use that distinction to reason about design and change impact.
