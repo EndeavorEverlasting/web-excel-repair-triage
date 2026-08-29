@@ -20,4 +20,4 @@ The learner can inspect an existing or proposed Prompt Kit artifact and independ
 
 ## Current frontier
 
-Diagnostic frontier: distinguish an exposed operation from the reusable procedure/judgment used to perform it and from a task-specific invocation contract that may orchestrate it. Test this first against the repository's `skill-evaluation` capability, linked `SKILL.md`, and Prompt Kit prompt implementation.
+PRACTICED diagnostic: learner can propose measurable skill-evaluation cases and understands that evidence should precede repair. Current weak relation: separating the harness/capability contract from the executable implementation and from the skill's reusable procedure. Next atomic invariant: **contract describes what operation must remain true; implementation performs it; skill tells the agent how to conduct the work around those deterministic owners.** Test against `fun-nth-artifact-export`.
