@@ -17,7 +17,7 @@ Every writing sprint must state repository and branch or worktree; lane and miss
 Before modifying or integrating overlapping prior work, refresh the default branch. Prove each required integrated slice is an ancestor with `git merge-base --is-ancestor <required-sha> <refreshed-default>` and still materially present using current content plus its owning validator. Ancestry alone cannot prove current content after a revert. Any failed check requires reconciliation and fresh proof before mutation or integration.
 
 ## 4. Completion standard
-Completion reports exact files changed, validations run, commit SHA, push or PR/integration state, blockers/skips, proof ceiling, final Git state, one exact next command.
+A task is complete only when exact files changed, validations run, commit SHA, push or PR/integration state, blockers/skips, proof ceiling, final Git state, and one exact next command are reported.
 NEXT COMMAND advances the next unproven state. Remote/unmerged: fetch without force; pin branch/commit; preserve dirty work in an isolated worktree; run the owner validator/builder/launcher; resolve canonical artifacts from tracked authority; propagate nonzero exit codes; it must not execute production by default.
 Use `none; no safe actionable work remains` only after authorized implementation, validation, integration, preservation/cleanup, and artifact consumption.
 
@@ -27,8 +27,8 @@ Material behavior changes require proof and `git diff --check`.
 
 ## 6. Repository identity and product boundary
 This repository's core product domain is **spreadsheet intelligence**: inspection, validation, repair, transformation. Web Excel compatibility, billing, roster/time evidence, and triage are first-class.
-The Prompt Kit began here as a spreadsheet and is separable. Intended home: a dedicated repository under `UnderDeskDev`, not yet named or created; agents must not invent its name or claim migration complete.
-Until proven, Prompt Kit sources here remain operationally authoritative and must not be silently moved. Later it may source, pin, mirror, package, link to, or consume Prompt Kit releases, but must not become a competing Prompt Kit authority; keep cross-repo dependencies explicit and versioned.
+Prompt Kit began here as a spreadsheet and is separable. Intended home: a dedicated repository under `UnderDeskDev`, not yet named or created; agents must not invent its name or claim migration complete.
+Until proven, Prompt Kit sources here remain operationally authoritative and must not be silently moved. It may source, pin, mirror, package, link to, or consume Prompt Kit releases, but must not become a competing Prompt Kit authority; keep cross-repo dependencies explicit and versioned.
 
 ## 7. Progressive disclosure and binding domain law
 Orient: `AGENTS.md` → `harness/CONTEXT.md` → one selected domain and only needed detail. Do **not** preload full harness/skills/history. Escalate context only for evidence, ownership, validation, or safety.
