@@ -56,8 +56,11 @@ jobs:
         run: |
           python scripts/validate_prompt_kit_feedback_afk_routing.py --summary
           python -m unittest tests.test_prompt_kit_feedback_afk_routing tests.test_prompt_kit_feedback_production -v
-      - name: Validate canonical Prompt Kit parity
-        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Validate repository ontology lens and canonical Prompt Kit parity
+        run: |
+          node --check docs/prompt-kit-ontology.js
+          python -m unittest tests.test_prompt_kit_ontology_view -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
       - name: Build portable Prompt Kit runtime artifact
         run: python scripts/serve_prompt_kit_portable.py --build-only
       - name: Validate portable Favorites and harness discipline
