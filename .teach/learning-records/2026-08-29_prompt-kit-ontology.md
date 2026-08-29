@@ -11,15 +11,23 @@ Status: PRACTICED
 - **Lesson 01 VERIFIED:** learner distinguishes a stable capability/contract from a replaceable implementation mechanism.
 - Learner correctly identified that a Python-specific skill instruction becomes stale after a behavior-preserving Rust rewrite even though the capability itself can remain unchanged.
 - Learner correctly separated deterministic CLI/runtime rejection from a later agentic false-success report.
+- In Lesson 02, learner correctly explained that canonical skills should avoid target-specific assumptions because those assumptions damage reuse and force future agents to undo stale context.
+- Learner correctly diagnosed an over-specialized P62 as a prompt-implementation defect rather than automatically a skill or capability defect.
 
 ## Verified relation
 
 Contract/capability vs implementation vs procedure/reporting is verified at the current lesson level. The learner demonstrated that implementation may change while observable capability behavior remains stable; implementation-specific skill references may then require repair without redefining the capability. The learner also demonstrated that executable runtime truth and agent narrative truth are separate.
 
-## Precision note
+## Current remediation
 
-The learner briefly said that the Rust rewrite "preserves implementation." Corrected formulation: the rewrite **replaces the implementation while preserving the observable contract**. This was a wording issue rather than a remaining ownership error.
+Lesson 02 is not yet VERIFIED. The learner separated target names from reusable skill doctrine, but initially assigned `excess tool calls` to the skill and `cross-agent interpretation variance` to the prompt as though the metric names themselves determine ownership. The stronger rule is: reusable metric **methods/families** may belong in the skill when they generalize across targets; the concrete prompt selects which target and metric/objective matter for the current run.
+
+The learner also proposed preserving failed/over-specialized invocation evidence in a tutorial/log view. Record this as a later product/evidence hypothesis, not part of the smallest prompt repair.
+
+## Emerging product hypothesis
+
+Prompt Kit may benefit from separate capability, skill, and implementation views tied to actual repository-owned skills. This is not yet an implementation decision; revisit after the ontology lessons establish whether those views remain distinct and useful under multiple examples.
 
 ## Next frontier
 
-Distinguish **reusable skill procedure** from **task-specific prompt invocation/orchestration**. Use the repository's `skill-evaluation` case, where the capability links a reusable `.ai/skills/skill-evaluation/SKILL.md` while its registered implementation kind is Prompt Kit prompt `P62`. Determine what should remain reusable across missions versus what belongs in the concrete request handed to an agent.
+Complete Lesson 02 by separating reusable measurement method from concrete mission selection. Verify that adding a reusable metric family to the skill does not inherently require a new prompt, and that parameterizing an over-specialized prompt can repair the invocation layer without changing the skill or capability when their contracts already support the metric.
