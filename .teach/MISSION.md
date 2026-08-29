@@ -20,4 +20,4 @@ The learner can inspect an existing or proposed Prompt Kit artifact and independ
 
 ## Current frontier
 
-PRACTICED diagnostic: learner can propose measurable skill-evaluation cases and understands that evidence should precede repair. Current weak relation: separating the harness/capability contract from the executable implementation and from the skill's reusable procedure. Next atomic invariant: **contract describes what operation must remain true; implementation performs it; skill tells the agent how to conduct the work around those deterministic owners.** Test against `fun-nth-artifact-export`.
+PRACTICED: learner can propose measurable skill-evaluation cases, understands evidence should precede repair, and can identify an implementation-language change as an implementation change rather than automatically a contract change. Remaining Lesson 01 frontier: separate implementation-specific stale references from stable capability contracts, and distinguish deterministic runtime enforcement from later harness validation or an agent's narrative claim. Test against the FUN NTH exporter without using “harness” as an umbrella owner.
