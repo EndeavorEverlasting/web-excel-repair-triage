@@ -8,16 +8,18 @@ Status: PRACTICED
 - Learner proposed at least two distinct eval families for a target skill: token/efficiency cost across agents/iterations, and cross-agent interpretation/relevance variance.
 - Learner correctly reasoned that evidence should be accumulated across repeated eval cases before repairing weaknesses or issuing a durable evidence claim.
 - Learner recognized that changing task instructions alone may be insufficient when stronger repository contracts constrain behavior.
-- On Lesson 01 checkpoint A, learner correctly identified that replacing a Python implementation with Rust changes the implementation layer and may require implementation-specific validation references to be updated.
-- Learner is beginning to distinguish a stable observable contract from its replaceable implementation mechanism.
+- **Lesson 01 VERIFIED:** learner distinguishes a stable capability/contract from a replaceable implementation mechanism.
+- Learner correctly identified that a Python-specific skill instruction becomes stale after a behavior-preserving Rust rewrite even though the capability itself can remain unchanged.
+- Learner correctly separated deterministic CLI/runtime rejection from a later agentic false-success report.
 
-## Weak relation / needs review
+## Verified relation
 
-Two ownership distinctions remain unverified:
+Contract/capability vs implementation vs procedure/reporting is verified at the current lesson level. The learner demonstrated that implementation may change while observable capability behavior remains stable; implementation-specific skill references may then require repair without redefining the capability. The learner also demonstrated that executable runtime truth and agent narrative truth are separate.
 
-1. The learner still tends to say “the harness must change” when only implementation-specific references may need repair. A mechanism-preserving language rewrite does not by itself invalidate the capability/contract.
-2. On the contradictory-skill edge case, the learner predicted later agent or harness detection rather than immediate runtime rejection. The exporter itself rejects `fixture + protected_runtime` before a valid result is emitted. Runtime enforcement and later harness validation must be kept distinct.
+## Precision note
+
+The learner briefly said that the Rust rewrite "preserves implementation." Corrected formulation: the rewrite **replaces the implementation while preserving the observable contract**. This was a wording issue rather than a remaining ownership error.
 
 ## Next frontier
 
-Complete Lesson 01 by separating (a) a stale skill instruction from an unchanged capability contract and (b) deterministic runtime success/failure from an agent's later narrative claim about that result. Do not use “harness” as an umbrella owner when a concrete implementation, test, skill, prompt, or contract can be named.
+Distinguish **reusable skill procedure** from **task-specific prompt invocation/orchestration**. Use the repository's `skill-evaluation` case, where the capability links a reusable `.ai/skills/skill-evaluation/SKILL.md` while its registered implementation kind is Prompt Kit prompt `P62`. Determine what should remain reusable across missions versus what belongs in the concrete request handed to an agent.
