@@ -1,6 +1,6 @@
 # Lesson 02 — Reusable skill vs task-specific prompt
 
-Status: ACTIVE — awaiting learner checkpoints.
+Status: ACTIVE — learner has the reuse principle; metric-selection boundary needs one remediation pass.
 
 ## Atomic invariant
 
@@ -16,8 +16,26 @@ A concrete prompt has a different job: bind that reusable method to the mission 
 
 Therefore, repeated task-specific facts do not automatically belong in the reusable skill, and reusable evaluation doctrine should not need to be recopied into every task prompt when the agent can route to the canonical skill.
 
-## Learner checkpoints
+## Learner checkpoint attempt 1
 
-A. **CONCEPTUAL MECHANISM / TRADE-OFF** — You want to evaluate two different skills: `fun-nth-artifact-export` for cross-agent interpretation variance, and a deployment skill for excess tool calls. Both evaluations should use the same rule that weaknesses must be reproduced before repair and that token optimization cannot weaken correctness. Which information belongs in the reusable `skill-evaluation` skill, and which information belongs in each concrete prompt? Explain why moving the target names and one-off objectives into the canonical skill would make the architecture worse.
+### A — reuse boundary
 
-B. **CODE / DATA DIAGNOSTIC EDGE CASE** — The capability registry still points `skill-evaluation` to the same reusable `SKILL.md`, but P62 is edited so its copied task text hard-codes `Target skill: fun-nth-artifact-export` and `Metric: cross-agent interpretation variance`. Nothing in `SKILL.md` is changed. Has the reusable skill become FUN-specific, has the capability necessarily changed, or has the prompt implementation become over-specialized? Identify the stale/defective layer and the smallest sound repair.
+The learner correctly explained why target names and target-specific assumptions should not be embedded in the canonical skill: doing so makes future agents undo stale assumptions and damages reuse. The learner also correctly identified cross-agent interpretation variance as something a concrete evaluation mission may select.
+
+Remediation point: `excess tool calls` is not inherently skill-owned while `cross-agent interpretation variance` is prompt-owned. Both can exist as reusable **metric families or measurement procedures** inside `skill-evaluation` when their method generalizes across targets. The concrete prompt should select the target and the metric/objective to emphasize for this run. In other words, the reusable skill may know *how* to measure tool-call excess and interpretation variance; the prompt says *measure this target with this metric now*.
+
+### B — over-specialized P62
+
+The learner correctly identified the prompt implementation as defective when P62 hard-codes one target and one primary metric while the capability and reusable skill remain generic. The smallest sound repair is to remove or parameterize those target-specific literals so P62 again accepts the concrete target/metric from invocation context while preserving the reusable skill and capability contract.
+
+The learner proposed a further idea: preserve evidence from the failed or over-specialized invocation and surface it in a tutorial/log view. This may be useful later, but it is not part of the smallest repair and remains a product/evidence hypothesis rather than a Lesson 02 requirement.
+
+## Emerging product hypothesis
+
+The learner proposed that Prompt Kit may benefit from separate capability, skill, and implementation views tied to actual repository-owned skills. Preserve this as a design hypothesis for later critique after the ontology is better verified; do not mutate production UI during teaching.
+
+## Learner checkpoints — remediation
+
+A. **CONCEPTUAL MECHANISM / TRADE-OFF** — `skill-evaluation` contains reusable procedures for measuring tool calls, latency, token use, and interpretation consistency. A concrete request says: “Evaluate deployment-safety for excess tool calls.” Which part is the reusable *method* and which part is the concrete *selection/binding*? Then explain whether adding a new reusable metric family such as “cross-agent interpretation variance” necessarily requires a new prompt.
+
+B. **CODE / DATA DIAGNOSTIC EDGE CASE** — P62 is repaired from hard-coded values to parameters: `Target skill: <target skill>` and `Primary metric: <metric selected for this run>`. The linked `SKILL.md` already explains how to measure both supported metric families, and the capability operation remains unchanged. Which repository layers changed in this repair, and which explicitly did **not** need to change?
