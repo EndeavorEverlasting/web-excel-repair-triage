@@ -7,9 +7,11 @@ on:
       - harness/CONTEXT.md
       - harness/specs/**
       - harness/contracts/context-architecture.v1.json
+      - harness/contracts/agent-execution-tiering.v1.json
       - scripts/validate_context_architecture.py
       - tests/test_context_architecture.py
       - tests/test_governance_contract.py
+      - tests/test_agent_execution_tiering.py
       - .github/workflows/governance-contract.yml
   push:
     branches: [main]
@@ -18,9 +20,11 @@ on:
       - harness/CONTEXT.md
       - harness/specs/**
       - harness/contracts/context-architecture.v1.json
+      - harness/contracts/agent-execution-tiering.v1.json
       - scripts/validate_context_architecture.py
       - tests/test_context_architecture.py
       - tests/test_governance_contract.py
+      - tests/test_agent_execution_tiering.py
       - .github/workflows/governance-contract.yml
 
 permissions:
@@ -42,10 +46,11 @@ jobs:
           python -m py_compile \
             scripts/validate_context_architecture.py \
             tests/test_context_architecture.py \
-            tests/test_governance_contract.py
+            tests/test_governance_contract.py \
+            tests/test_agent_execution_tiering.py
       - name: Enforce progressive-disclosure governance
         run: |
           python scripts/validate_context_architecture.py --summary
-          python -m unittest tests.test_context_architecture tests.test_governance_contract -v
+          python -m unittest tests.test_context_architecture tests.test_governance_contract tests.test_agent_execution_tiering -v
       - name: Check patch hygiene
         run: git diff --check origin/main...HEAD
