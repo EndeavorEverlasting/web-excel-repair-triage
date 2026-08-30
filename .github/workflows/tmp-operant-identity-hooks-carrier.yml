@@ -41,8 +41,6 @@ jobs:
             exit 0
           fi
 
-          # Keep the governance identity transition inside the enforced 5,200-character budget
-          # while preserving the existing no-silent-move safety clause.
           python - <<'PY'
           from pathlib import Path
           import re
@@ -58,9 +56,16 @@ jobs:
           python scripts/tmp_operant_identity_hooks_carrier.py
           python -m py_compile scripts/install_local_hooks.py scripts/validate_harness.py tests/test_operant_product_identity.py tests/test_repository_hook_integration.py tests/test_governance_contract.py tests/test_prompt_kit_order_navigation_product.py
 
-          # Branding changes make the tracked generated page stale by design; regenerate before strict product gates.
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+
+          # The harness uses git ls-files as its tracked-authority check. Stage only durable files before validating.
+          git add AGENTS.md PROMPT_KIT_ACCESS.md build_prompt_kit.py web/prompt-kit/index.html \
+            harness/contracts/operant-product-identity.v1.json harness/capabilities.v1.json harness/triggers.v1.json harness/manifest.v1.json \
+            .ai/skills/repository-hook-integration/SKILL.md scripts/validate_harness.py \
+            SKILLS.md CAPABILITIES.md TRIGGERS.md \
+            tests/test_governance_contract.py tests/test_operant_product_identity.py tests/test_repository_hook_integration.py tests/test_prompt_kit_order_navigation_product.py
+          git diff --cached --check
 
           python -m unittest tests.test_governance_contract tests.test_operant_product_identity tests.test_repository_hook_integration tests.test_local_hook_activation tests.test_prompt_kit_order_navigation_product -v
           python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
@@ -68,19 +73,15 @@ jobs:
           python tests/test_prompt_kit_header_contract.py
           python -m triage.gitignore_hygiene
           git diff --check
+          git diff --cached --check
 
-          # Second evidence pass on the exact materialized tree before transport removal.
+          # Deliberate second evidence pass on the staged candidate.
           python -m unittest tests.test_operant_product_identity tests.test_repository_hook_integration tests.test_governance_contract tests.test_prompt_kit_order_navigation_product -v
           python scripts/validate_harness.py --report Outputs/harness-operant-identity-hooks.json
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-          git diff --check
+          git diff --cached --check
 
           git rm scripts/tmp_operant_identity_hooks_carrier.py .github/workflows/tmp-operant-identity-hooks-carrier.yml
-          git add AGENTS.md PROMPT_KIT_ACCESS.md build_prompt_kit.py web/prompt-kit/index.html \
-            harness/contracts/operant-product-identity.v1.json harness/capabilities.v1.json harness/triggers.v1.json harness/manifest.v1.json \
-            .ai/skills/repository-hook-integration/SKILL.md scripts/validate_harness.py \
-            SKILLS.md CAPABILITIES.md TRIGGERS.md \
-            tests/test_governance_contract.py tests/test_operant_product_identity.py tests/test_repository_hook_integration.py tests/test_prompt_kit_order_navigation_product.py
           git diff --cached --check
           if git diff --cached --name-only | grep -E '(^|/)tmp_operant_identity_hooks_carrier|tmp-operant-identity-hooks-carrier'; then
             echo 'temporary carrier leaked into durable candidate' >&2
