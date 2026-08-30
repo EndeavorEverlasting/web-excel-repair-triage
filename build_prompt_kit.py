@@ -460,7 +460,7 @@ def build_html(prompts, ref):
     html.append('<!DOCTYPE html>\n<html lang="en">\n<head>')
     html.append('<meta charset="UTF-8">')
     html.append('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
-    html.append('<title>AI Harness Prompt Kit v40</title>')
+    html.append('<title>Operant 0.1</title>')
     html.append('<style>')
     html.append(CSS_TEXT)
     html.append('</style>\n</head>\n<body>')
@@ -469,8 +469,8 @@ def build_html(prompts, ref):
     html.append('  <div class="header-top">')
     html.append('    <div class="logo">')
     html.append('      <div class="logo-icon">AK</div>')
-    html.append('      <div><h1>AI Harness Prompt Kit <span>v40</span></h1>'
-                '<div style="font-size:10px;color:var(--text-muted)">Agent Control Panel</div></div>')
+    html.append('      <div><h1>Operant <span>0.1</span></h1>'
+                '<div style="font-size:10px;color:var(--text-muted)">Capabilities · Skills · Implementations · Evidence</div></div>')
     html.append('    </div>')
     html.append('    <div class="search-container">')
     html.append('      <span class="search-icon">&#128269;</span>')
@@ -515,7 +515,7 @@ def build_html(prompts, ref):
     html.append('<div class="prompt-detail-overlay" id="promptDetailOverlay">')
     html.append('  <div class="prompt-detail" id="promptDetail"></div>')
     html.append('</div>')
-    html.append('<div class="version-badge" id="versionBadge">v40</div>')
+    html.append('<div class="version-badge" id="versionBadge">0.1</div>')
 
     html.append('<script>')
     html.append('var PROMPTS=' + prompt_json + ';')

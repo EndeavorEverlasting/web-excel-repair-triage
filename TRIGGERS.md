@@ -7,6 +7,7 @@ This file describes deterministic routing into repository skills and capabilitie
 | Trigger ID | Route when | Capability | Do not route when |
 |---|---|---|---|
 | `harness-infrastructure-change` | Maps, workflow/artifact/validator registries, completeness checks, hooks, skills, reports, or ownership are missing, stale, disconnected, or failing. | `harness-infrastructure-maintenance` | The task changes `AGENTS.md`, implements product behavior only, requires secrets, or requests destructive cleanup. |
+| `repository-hook-installation-needed` | Tracked hooks need activation/verification, or an external agent/provider hook must be reconciled with repository hook ownership. | `repository-hook-integration` | Global Git config, ambiguous linked-worktree mutation, silent replacement of another hook owner, or unproved provider-hook behavior would result. |
 | `prompt-language-change` | Prompt registry, actionability policy, builder, or generated Prompt Kit language changes; or a full language pass is requested. | `prompt-language-audit` | The request is only to read an existing validated report. |
 | `lazy-next-action-report` | Empty, placeholder, observation-only, PR/status/log-only, optional-only, or generic next actions are suspected. | `prompt-language-audit` | No canonical registry/effective builder exists; route to repository intake first. |
 | `skill-quality-unproven` | Skill correctness, routing, regression safety, efficiency, or token use lacks executable proof. | `skill-evaluation` | The task is ownership factoring only. |
@@ -14,6 +15,10 @@ This file describes deterministic routing into repository skills and capabilitie
 | `technician-needs-latest-prompt-kit` | A user needs to open/use the Prompt Kit in a browser, install it on a phone/tablet, launch the Windows stable local app, obtain a source snapshot, or create/update an editable checkout for edit/commit/push work. | `technician-prompt-kit-acquisition` | Destructive Git cleanup or credential automation is proposed; or an editable checkout update is unsafe because the checkout is dirty, divergent, non-main, or has the wrong origin. |
 | `prompt-kit-browser-proof-temp-path` | An operator supplies a `prompt-kit-browser-proof-*` path under OS Temp or asks to classify/remove detached Prompt Kit browser-proof scratch. | `prompt-kit-browser-proof-scratch-cleanup` | The real request is browser-site data/Favorites deletion, broad Temp cleanup, canonical-repo cleanup, or durable evidence deletion. |
 | `prompt-kit-actionable-feedback` | Accepted written feedback or a dislike has an unconsumed actionable Prompt Kit signal. | `prompt-kit-feedback-afk-routing` | The signal is like/usage-only, malformed/sensitive/already consumed, requires a second scheduler, or the only remaining gate is P105 promotion. |
+
+## Repository hook integration routing rule
+
+Route hook-install requests to the tracked `.githooks` owner first. Existing `core.hooksPath`, default hooks, and linked worktrees are preconditions, not cleanup targets. Claude/Codex/DeepSeek/Husky/Lefthook examples may inform an adapter, but they do not supersede repository ownership merely because they are installed or popular.
 
 ## Prompt Kit acquisition routing rule
 

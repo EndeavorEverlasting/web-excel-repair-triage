@@ -1,0 +1,47 @@
+{
+  "schema_version": "operant-product-identity/v1",
+  "product_id": "operant",
+  "product_name": "Operant",
+  "product_version": "0.1.0",
+  "status": "transition",
+  "tagline": "Agentic Capability & Execution System",
+  "purpose": "Map capabilities, skills, implementations, agents, hooks, and evidence into fast, evidence-bounded execution routes.",
+  "ontology_lenses": [
+    "capabilities",
+    "skills",
+    "implementations",
+    "agents",
+    "evidence"
+  ],
+  "legacy_identity": {
+    "names": [
+      "AI Harness Prompt Kit",
+      "Prompt Kit"
+    ],
+    "latest_legacy_display_version": "v40",
+    "compatibility_prefixes": [
+      "prompt-kit",
+      "PromptKit"
+    ],
+    "rule": "Legacy names and paths are compatibility identifiers, not the current product brand."
+  },
+  "authority": {
+    "current_repository": "EndeavorEverlasting/web-excel-repair-triage",
+    "target_repository": "UnderDeskDev/Operant",
+    "target_repository_state": "not-created-or-unproven",
+    "cutover_rule": "Current repository remains authoritative until the dedicated repository passes source, build, evidence, consumer, and release-identity parity and the old repository is reduced to an explicit versioned consumer."
+  },
+  "compatibility": {
+    "visible_brand": "Operant",
+    "visible_version": "0.1",
+    "preserve_paths": [
+      "web/prompt-kit/index.html",
+      "docs/prompt-kit*.js",
+      "registry/prompts/",
+      "Open-Latest-PromptKit.cmd",
+      "Acquire-Latest-PromptKit.cmd"
+    ],
+    "internal_path_renames_deferred": true,
+    "reason": "Avoid breaking launchers, public URLs, storage keys, workflows, and stale/open branch references before dedicated-repository cutover."
+  }
+}

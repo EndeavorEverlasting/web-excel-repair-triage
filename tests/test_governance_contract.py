@@ -117,18 +117,18 @@ class GovernanceContractTests(unittest.TestCase):
         ):
             self.assertIn(phrase, section)
 
-    def test_prompt_kit_separation_is_explicit_and_transition_safe(self) -> None:
+    def test_operant_separation_is_explicit_and_transition_safe(self) -> None:
         section = self._section(
             "## 6. Repository identity and product boundary", "## 7."
         )
         for phrase in (
-            "dedicated repository under `UnderDeskDev`",
-            "not yet named or created",
-            "must not invent its name",
-            "Prompt Kit sources here remain operationally authoritative",
+            "`UnderDeskDev/Operant`",
+            "not yet created/proven",
+            "operator-approved product identity",
+            "legacy `prompt-kit` paths and sources here remain authoritative compatibility surfaces",
             "must not be silently moved",
-            "source, pin, mirror, package, link to, or consume Prompt Kit releases",
-            "must not become a competing Prompt Kit authority",
+            "pin, mirror, package, link to, or consume Operant releases",
+            "must not become a competing Operant authority",
             "cross-repo dependencies explicit and versioned",
         ):
             self.assertIn(phrase, section)

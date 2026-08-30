@@ -237,6 +237,34 @@
         "path": "scripts/prompt_kit_afk_signal_router.py"
       },
       "proof_ceiling": "One-shot repository routing and local work-request proof only; browser loopback behavior, worker quality, provider review, and promotion remain separate."
+    },
+    {
+      "id": "repository-hook-integration",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/repository-hook-integration/SKILL.md",
+      "trigger_ids": [
+        "repository-hook-installation-needed"
+      ],
+      "operation": "Discover the existing repository hook authority, preserve incompatible hook setups, activate the tracked Git hook path, and prove activation without creating a competing hook framework.",
+      "inputs": [
+        "repository Git/worktree state",
+        ".githooks/",
+        "scripts/install_local_hooks.py",
+        "existing core.hooksPath and default hooks",
+        "provider-specific hook context when required"
+      ],
+      "outputs": [
+        "preserved or configured hook authority",
+        "activation/check evidence",
+        "coexistence or worktree blocker when unsafe",
+        "provider-adapter disposition"
+      ],
+      "implementation": {
+        "kind": "script",
+        "path": "scripts/install_local_hooks.py"
+      },
+      "proof_ceiling": "Tracked Git hook and observed local core.hooksPath activation proof only; provider-specific Claude/Codex/DeepSeek hooks and other workstations require separate runtime proof."
     }
   ]
 }

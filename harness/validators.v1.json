@@ -184,12 +184,30 @@
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable one-shot classification, dedupe, work-request, and routing-boundary regression proof."
+    },
+    {
+      "id": "operant-product-identity-audit",
+      "class": "contract",
+      "command": "python scripts/validate_operant_product_identity.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static product identity, transition authority, compatibility-path, governance, and generated-brand proof."
+    },
+    {
+      "id": "operant-product-identity-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_operant_product_identity -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable regression proof for Operant identity, transition authority, and generated visible-brand invariants."
     }
   ],
   "profiles": {
     "harness": [
       "harness-completeness",
       "harness-contract-tests",
+      "operant-product-identity-audit",
+      "operant-product-identity-tests",
       "prompt-kit-interaction-contract-tests",
       "prompt-kit-interaction-audit",
       "prompt-kit-discovery-audit",
@@ -225,6 +243,8 @@
     "pre_push": [
       "harness-completeness",
       "harness-contract-tests",
+      "operant-product-identity-audit",
+      "operant-product-identity-tests",
       "prompt-kit-interaction-contract-tests",
       "prompt-kit-interaction-audit",
       "prompt-kit-discovery-audit",

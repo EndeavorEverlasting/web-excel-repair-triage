@@ -1,4 +1,6 @@
-# Get the Latest Prompt Kit Website
+# Get Operant
+
+> **Transition:** Operant is the current product identity. Existing `Prompt Kit`, `prompt-kit`, and `PromptKit` names below are compatibility paths and launcher/storage identifiers until the dedicated `UnderDeskDev/Operant` cutover is proven.
 
 <!-- PROMPT_KIT_FAST_PATH_START -->
 ## Choose the easiest path
@@ -225,7 +227,7 @@ Generated HTML is not the primary editable source. Repair canonical tracked sour
 
 The desktop and mobile layouts use the same prompts, filters, renderers, and action functions.
 
-- Tap/click the **AI Harness Prompt Kit** title to reset the temporary browsing state while preserving Favorites.
+- Tap/click the **Operant** title to reset the temporary browsing state while preserving Favorites.
 - Use **Hide filters** to collapse the search/category/section/type filter chrome and maximize the screen area available to prompt cards; **Show filters** restores it.
 - Press **A** for All, **B** for Standard, or **C** for Favorites. Slots **D** and **E** are persisted user profiles (default SAS and PM) and may be renamed or reassigned in the Hotkeys panel.
 - **Doctrine** remains a first-class built-in profile mode without consuming a sixth header slot: assign any A–E slot to **Doctrine** in the Hotkeys panel, then activate that slot by click/tap or its A–E key. The dedicated Doctrine view is restored after reload because slot configuration and the active slot are persisted.

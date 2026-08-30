@@ -15,6 +15,7 @@ This file is the human-readable index for reusable repository operations. The ma
 | Capability ID | Skill | Implementation | Primary output |
 |---|---|---|---|
 | `harness-infrastructure-maintenance` | `.ai/skills/harness-infrastructure-maintenance/SKILL.md` | `scripts/validate_harness.py` | Canonical harness repairs plus `harness-completeness-report/v1`. |
+| `repository-hook-integration` | `.ai/skills/repository-hook-integration/SKILL.md` | `scripts/install_local_hooks.py` | Preserved or activated tracked hook authority plus activation/coexistence evidence. |
 | `prompt-language-audit` | `.ai/skills/prompt-language-audit/SKILL.md` | `scripts/evaluate_prompt_language.py` | Exhaustive prompt disposition and finding report. |
 | `skill-evaluation` | `.ai/skills/skill-evaluation/SKILL.md` | Prompt Kit P62 | Repository-native eval harness, cases, runner, results, and repair ledger. |
 | `skill-factoring` | `.ai/skills/skill-factoring/SKILL.md` | Prompt Kit P61 | Skill ownership dispositions and repaired routing boundaries. |
@@ -31,6 +32,12 @@ Canonical report command:
 ```bash
 python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
 ```
+
+## Repository hook integration capability
+
+`repository-hook-integration` makes the existing `.githooks` + local `core.hooksPath` installer the canonical Git-hook implementation. Upstream Claude/Codex/DeepSeek/Husky/Lefthook mechanisms are adapter donors, not parallel authorities; add an adapter only when the canonical Git hooks cannot express the required interception semantics, and prove that adapter separately.
+
+Focused implementation proof remains `tests/test_local_hook_activation.py` plus `.github/workflows/local-hook-activation.yml`.
 
 ## Prompt Kit acquisition capability
 

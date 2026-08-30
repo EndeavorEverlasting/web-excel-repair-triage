@@ -30,6 +30,7 @@ on:
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
+      - scripts/validate_operant_product_identity.py
       - scripts/validate_staged_artifacts.py
       - triage/artifact_hygiene_policy.py
       - triage/gitignore_hygiene.py
@@ -37,6 +38,7 @@ on:
       - tests/test_governance_contract.py
       - tests/test_gitignore_hygiene.py
       - tests/test_harness_contract.py
+      - tests/test_operant_product_identity.py
       - tests/test_operator_command_envelope.py
       - tests/test_pr_merge_gate.py
       - tests/test_prompt_kit_cross_device_access.py
@@ -78,6 +80,7 @@ on:
       - scripts/validate_prompt_kit_interactions.py
       - scripts/validate_prompt_kit_discovery.py
       - scripts/validate_harness.py
+      - scripts/validate_operant_product_identity.py
       - scripts/validate_staged_artifacts.py
       - triage/artifact_hygiene_policy.py
       - triage/gitignore_hygiene.py
@@ -85,6 +88,7 @@ on:
       - tests/test_governance_contract.py
       - tests/test_gitignore_hygiene.py
       - tests/test_harness_contract.py
+      - tests/test_operant_product_identity.py
       - tests/test_operator_command_envelope.py
       - tests/test_pr_merge_gate.py
       - tests/test_prompt_kit_cross_device_access.py
@@ -115,6 +119,7 @@ jobs:
         run: |
           python -m py_compile \
             scripts/validate_harness.py \
+            scripts/validate_operant_product_identity.py \
             scripts/validate_context_architecture.py \
             scripts/validate_operator_command_envelope.py \
             scripts/validate_pr_merge_gate.py \
@@ -132,6 +137,7 @@ jobs:
             tests/test_governance_contract.py \
             tests/test_gitignore_hygiene.py \
             tests/test_harness_contract.py \
+            tests/test_operant_product_identity.py \
             tests/test_operator_command_envelope.py \
             tests/test_pr_merge_gate.py \
             tests/test_prompt_kit_cross_device_access.py \
@@ -200,6 +206,8 @@ jobs:
       - name: Run harness contracts
         run: |
           python -m unittest tests.test_harness_contract -v
+          python scripts/validate_operant_product_identity.py --summary
+          python -m unittest tests.test_operant_product_identity -v
           python -m unittest tests.test_prompt_kit_interactions_contract -v
           python -m unittest tests.test_prompt_kit_discovery -v
           python -m unittest tests.test_prompt_language_audit -v

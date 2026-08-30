@@ -27,8 +27,8 @@ Material behavior changes require proof and `git diff --check`.
 
 ## 6. Repository identity and product boundary
 This repository's core product domain is **spreadsheet intelligence**: inspection, validation, repair, transformation. Web Excel compatibility, billing, roster/time evidence, and triage are first-class.
-Prompt Kit began here as a spreadsheet and is separable. Intended home: a dedicated repository under `UnderDeskDev`, not yet named or created; agents must not invent its name or claim migration complete.
-Until proven, Prompt Kit sources here remain operationally authoritative and must not be silently moved. It may source, pin, mirror, package, link to, or consume Prompt Kit releases, but must not become a competing Prompt Kit authority; keep cross-repo dependencies explicit and versioned.
+**Operant** is the operator-approved product identity, formerly Prompt Kit. It began here as a spreadsheet and is separable. Target: `UnderDeskDev/Operant`; not yet created/proven.
+Until cutover, legacy `prompt-kit` paths and sources here remain authoritative compatibility surfaces and must not be silently moved. This repo may pin, mirror, package, link to, or consume Operant releases; it must not become a competing Operant authority; keep cross-repo dependencies explicit and versioned.
 
 ## 7. Progressive disclosure and binding domain law
 Orient: `AGENTS.md` → `harness/CONTEXT.md` → one selected domain and needed detail. Do **not** preload full harness/skills/history. Escalate context only for evidence, ownership, validation, or safety.

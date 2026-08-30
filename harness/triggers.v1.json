@@ -152,6 +152,24 @@
         "the next action is only PR promotion or merge; route that gate to P105/pr-floor-integration",
         "routing would require a second polling scheduler"
       ]
+    },
+    {
+      "id": "repository-hook-installation-needed",
+      "capability_id": "repository-hook-integration",
+      "skill": ".ai/skills/repository-hook-integration/SKILL.md",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "conditions": [
+        "tracked repository hooks exist but are not activated or verified",
+        "pre-commit or pre-push enforcement needs installation",
+        "existing Git hook ownership must be reconciled before adding an agent/provider hook",
+        "a Claude, Codex, DeepSeek Harness, Husky, Lefthook, or other hook donor must be adapted without replacing repository authority"
+      ],
+      "forbidden_conditions": [
+        "global Git hook configuration would be changed",
+        "linked worktrees make shared core.hooksPath mutation ambiguous",
+        "an existing different hooksPath or default hook would be overwritten without reviewed replacement intent",
+        "provider-specific hook behavior is being claimed without its own runtime proof"
+      ]
     }
   ]
 }

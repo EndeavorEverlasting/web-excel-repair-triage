@@ -158,6 +158,13 @@
       "feedback_runtime": "docs/prompt-kit-feedback-production.js",
       "provider_hook": ".github/workflows/prompt-kit-feedback-hook.yml",
       "promotion_contract": "harness/contracts/pr-merge-gate.v1.json"
+    },
+    "operant_product_identity": {
+      "contract": "harness/contracts/operant-product-identity.v1.json",
+      "contract_tests": "tests/test_operant_product_identity.py",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "harness_gate": "python scripts/validate_operant_product_identity.py --summary",
+      "validator": "scripts/validate_operant_product_identity.py"
     }
   },
   "skills": [
@@ -168,7 +175,8 @@
     ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
     ".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md",
     ".ai/skills/prompt-kit-responsive-layout/SKILL.md",
-    ".ai/skills/prompt-kit-feedback-afk-routing/SKILL.md"
+    ".ai/skills/prompt-kit-feedback-afk-routing/SKILL.md",
+    ".ai/skills/repository-hook-integration/SKILL.md"
   ],
   "technician_acquisition": {
     "launcher": "Acquire-Latest-PromptKit.cmd",
@@ -200,6 +208,8 @@
   "validation_order": [
     "python scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
     "python -m unittest tests.test_harness_contract -v",
+    "python scripts/validate_operant_product_identity.py --summary",
+    "python -m unittest tests.test_operant_product_identity -v",
     "python -m unittest tests.test_prompt_kit_interactions_contract -v",
     "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
     "python scripts/validate_prompt_kit_discovery.py --summary",
