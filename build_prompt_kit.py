@@ -41,6 +41,8 @@ SYNONYMS = {
     "night shift": "P37 P38 P39 P40 P41 P42 P43 P44",
     "overnight": "P37 P38 P39 P40 P41 P42 P43 P44",
     "cleanup": "P06", "pr cleanup": "P06",
+    "code readability": "P124", "codebase readability": "P124", "code cleanup": "P124", "code refactor": "P124",
+    "structural refactor": "P124", "maintainability refactor": "P124", "god file": "P124", "giant function": "P124",
     "sprint": "P07", "implement": "P07", "code change": "P07",
     "validate": "P11", "validator": "P11", "gate": "P11",
     "closeout": "P12", "handoff": "P12", "compress": "P12",
