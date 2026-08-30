@@ -814,5 +814,63 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("Web Contact Form Semantic Validation", html)
         self.assertIn("contact-form", html)
 
+
+    def test_code_readability_prompt_owns_general_source_refactoring_without_absorbing_specialists(self) -> None:
+        matches = [p for p in self.full.values() if p.get("name") == 'Repository Code Readability & Structural Refactorer']
+        self.assertEqual(len(matches), 1)
+        prompt = matches[0]
+        content = prompt["copyContent"]
+        raw_content = self.raw[prompt["id"]]["copyContent"]
+        self.assertEqual(prompt["class"], "ENGINEERING / CODE READABILITY")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["color"], "Cyan")
+        for phrase in (
+            "BUILD A STRUCTURAL-DEBT LEDGER",
+            "PROTECT BEHAVIOR BEFORE MOVING IT",
+            "REFACTOR FOR COHESION, NOT SMALLNESS ALONE",
+            "DO NOT REPLACE A MONOLITH WITH A MAZE",
+            "Pass 2: read the resulting diff from the perspective of a fresh maintainer",
+            "Where would a fresh maintainer change <responsibility>?",
+            "Never hand-edit generated output for tidiness",
+        ):
+            self.assertIn(phrase, content)
+        self.assertLess(len(raw_content), 7000)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        for existing_id in ("P06", "P63", "P68", "P76", "P78"):
+            self.assertNotEqual(prompt["id"], existing_id)
+        for synonym in (
+            "code readability",
+            "codebase readability",
+            "code cleanup",
+            "code refactor",
+            "structural refactor",
+            "maintainability refactor",
+            "god file",
+            "giant function",
+        ):
+            self.assertEqual(build_prompt_kit.SYNONYMS[synonym], prompt["id"])
+
+    def test_general_execution_review_and_discovery_prompts_do_not_hide_readability_debt(self) -> None:
+        owner = [p for p in self.full.values() if p.get("name") == 'Repository Code Readability & Structural Refactorer'][0]
+        owner_id = owner["id"]
+        p03 = self.full["P03"]["copyContent"]
+        p07 = self.full["P07"]
+        p14 = self.full["P14"]
+        self.assertIn("do not misclassify evidenced structural editability debt as speculative refactoring", p03)
+        self.assertIn(f"route a bounded cleanup to {owner_id}", p03)
+        self.assertIn("CODE READABILITY / EDITABILITY FLOOR", p07["copyContent"])
+        self.assertIn("Green behavior is not enough", p07["copyContent"])
+        self.assertIn(f"route that separate cleanup to {owner_id}", p07["copyContent"])
+        self.assertIn("readability/editability regression", p07["proofGate"])
+        self.assertIn("READABILITY / STRUCTURAL EDITABILITY CHECK — STANDARDS, NOT TASTE", p14["copyContent"])
+        self.assertIn("do not hijack the feature review", p14["copyContent"])
+        self.assertIn(f"route the bounded cleanup to {owner_id}", p14["copyContent"])
+        self.assertIn("structural editability", p14["proofGate"])
+        self.assertIn("Avoid permission theater, duplicate ownership, giant prompts, and trivial-only progress", self.full["P04"]["copyContent"])
+        self.assertEqual(self.full["P76"]["class"], "HARNESS / SPEC ARCHITECTURE")
+        self.assertEqual(self.full["P78"]["class"], "HARNESS / KNOWLEDGE ARCHITECTURE")
+        self.assertEqual(self.full["P63"]["class"], "AGENT HARNESS / SKILL FACTORING")
+        self.assertEqual(self.full["P68"]["class"], "AI ENGINEERING / CONTEXT")
+
 if __name__ == "__main__":
     unittest.main()
