@@ -55,7 +55,6 @@ jobs:
 
           python scripts/tmp_operant_identity_hooks_carrier.py
 
-          # Promote product identity from passive metadata to an executable, fail-closed harness contract.
           cat > scripts/validate_operant_product_identity.py <<'PY'
           #!/usr/bin/env python3
           from __future__ import annotations
@@ -241,21 +240,16 @@ jobs:
           git diff --check
           git diff --cached --check
 
-          # Deliberate second evidence pass on the staged candidate.
           python scripts/validate_operant_product_identity.py --summary
           python -m unittest tests.test_operant_product_identity tests.test_repository_hook_integration tests.test_governance_contract tests.test_prompt_kit_order_navigation_product -v
           python scripts/validate_harness.py --report Outputs/harness-operant-identity-hooks.json
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --cached --check
 
-          # Runtime patched this temporary source only to stay within the governance context budget.
-          # Restore its tracked branch version so ordinary removal is non-destructive and force-free.
           git checkout -- scripts/tmp_operant_identity_hooks_carrier.py
           git rm scripts/tmp_operant_identity_hooks_carrier.py .github/workflows/tmp-operant-identity-hooks-carrier.yml
           git diff --cached --check
-          if git diff --cached --name-only | grep -E '(^|/)tmp_operant_identity_hooks_carrier|tmp-operant-identity-hooks-carrier'; then
-            echo 'temporary carrier leaked into durable candidate' >&2
-            exit 1
-          fi
+          test ! -e scripts/tmp_operant_identity_hooks_carrier.py
+          test ! -e .github/workflows/tmp-operant-identity-hooks-carrier.yml
           git commit -m 'feat(operant): establish product identity and hook capability'
           git push origin HEAD:feat/operant-product-identity-hooks-20260830
