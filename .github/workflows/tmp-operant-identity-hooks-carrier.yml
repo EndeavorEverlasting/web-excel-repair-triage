@@ -225,7 +225,6 @@ jobs:
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 
-          # The harness uses git ls-files as its tracked-authority check. Stage only durable files before validating.
           git add AGENTS.md PROMPT_KIT_ACCESS.md build_prompt_kit.py web/prompt-kit/index.html \
             harness/contracts/operant-product-identity.v1.json harness/capabilities.v1.json harness/triggers.v1.json harness/manifest.v1.json harness/validators.v1.json \
             .ai/skills/repository-hook-integration/SKILL.md scripts/validate_harness.py scripts/validate_operant_product_identity.py \
@@ -249,6 +248,9 @@ jobs:
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --cached --check
 
+          # Runtime patched this temporary source only to stay within the governance context budget.
+          # Restore its tracked branch version so ordinary removal is non-destructive and force-free.
+          git checkout -- scripts/tmp_operant_identity_hooks_carrier.py
           git rm scripts/tmp_operant_identity_hooks_carrier.py .github/workflows/tmp-operant-identity-hooks-carrier.yml
           git diff --cached --check
           if git diff --cached --name-only | grep -E '(^|/)tmp_operant_identity_hooks_carrier|tmp-operant-identity-hooks-carrier'; then
