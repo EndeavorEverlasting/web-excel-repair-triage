@@ -1,0 +1,74 @@
+name: Temporary Operant identity and hook carrier
+
+on:
+  push:
+    branches:
+      - feat/operant-product-identity-hooks-20260830
+
+permissions:
+  contents: write
+
+concurrency:
+  group: operant-identity-hooks-carrier
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    if: github.ref == 'refs/heads/feat/operant-product-identity-hooks-20260830'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/operant-product-identity-hooks-20260830
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Materialize, validate, and push durable Operant candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/operant-product-identity-hooks-20260830 --prune
+          test "$(git branch --show-current)" = "feat/operant-product-identity-hooks-20260830"
+          git merge-base --is-ancestor 4e9892315716260a41b7caee343a8cacb67c37d6 HEAD
+
+          if [ ! -f scripts/tmp_operant_identity_hooks_carrier.py ]; then
+            echo 'Operant carrier already consumed; no transport work remains.'
+            exit 0
+          fi
+
+          python scripts/tmp_operant_identity_hooks_carrier.py
+          python -m py_compile scripts/install_local_hooks.py scripts/validate_harness.py tests/test_operant_product_identity.py tests/test_repository_hook_integration.py tests/test_governance_contract.py tests/test_prompt_kit_order_navigation_product.py
+          python -m unittest tests.test_governance_contract tests.test_operant_product_identity tests.test_repository_hook_integration tests.test_local_hook_activation tests.test_prompt_kit_order_navigation_product -v
+          python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
+          python -m unittest tests.test_harness_contract -v
+
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python tests/test_prompt_kit_header_contract.py
+          python -m triage.gitignore_hygiene
+          git diff --check
+
+          # Second evidence pass on the exact materialized tree before transport removal.
+          python -m unittest tests.test_operant_product_identity tests.test_repository_hook_integration tests.test_governance_contract -v
+          python scripts/validate_harness.py --report Outputs/harness-operant-identity-hooks.json
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+          git rm scripts/tmp_operant_identity_hooks_carrier.py .github/workflows/tmp-operant-identity-hooks-carrier.yml
+          git add AGENTS.md PROMPT_KIT_ACCESS.md build_prompt_kit.py web/prompt-kit/index.html \
+            harness/contracts/operant-product-identity.v1.json harness/capabilities.v1.json harness/triggers.v1.json harness/manifest.v1.json \
+            .ai/skills/repository-hook-integration/SKILL.md scripts/validate_harness.py \
+            SKILLS.md CAPABILITIES.md TRIGGERS.md \
+            tests/test_governance_contract.py tests/test_operant_product_identity.py tests/test_repository_hook_integration.py tests/test_prompt_kit_order_navigation_product.py
+          git diff --cached --check
+          if git diff --cached --name-only | grep -E '(^|/)tmp_operant_identity_hooks_carrier|tmp-operant-identity-hooks-carrier'; then
+            echo 'temporary carrier leaked into durable candidate' >&2
+            exit 1
+          fi
+          git commit -m 'feat(operant): establish product identity and hook capability'
+          git push origin HEAD:feat/operant-product-identity-hooks-20260830
