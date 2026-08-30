@@ -41,6 +41,18 @@ jobs:
             exit 0
           fi
 
+          # Keep the governance identity transition inside the enforced 5,200-character budget.
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/tmp_operant_identity_hooks_carrier.py')
+          text = path.read_text(encoding='utf-8')
+          old = """**Operant** is the operator-approved product identity for the agentic capability/execution system formerly called Prompt Kit. It began here as a spreadsheet artifact and is separable. Intended home: `UnderDeskDev/Operant`; that repository is not yet created/proven, so agents must not claim migration complete.\nUntil cutover is proven, legacy `prompt-kit` paths and sources here remain authoritative compatibility surfaces. This repo may pin, mirror, package, link to, or consume Operant releases, but must not become a competing Operant authority; cross-repo dependencies stay explicit and versioned."""
+          new = """**Operant** is the operator-approved product identity for the system formerly Prompt Kit. It began here as a spreadsheet and is separable. Target: `UnderDeskDev/Operant`; not yet created/proven, so migration incomplete.\nUntil cutover, legacy `prompt-kit` paths and sources here remain authoritative compatibility surfaces. This repo may pin, mirror, package, link to, or consume Operant releases but must not become a competing Operant authority; keep cross-repo dependencies explicit and versioned."""
+          if text.count(old) != 1:
+              raise SystemExit('Operant doctrine carrier source drifted')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
           python scripts/tmp_operant_identity_hooks_carrier.py
           python -m py_compile scripts/install_local_hooks.py scripts/validate_harness.py tests/test_operant_product_identity.py tests/test_repository_hook_integration.py tests/test_governance_contract.py tests/test_prompt_kit_order_navigation_product.py
           python -m unittest tests.test_governance_contract tests.test_operant_product_identity tests.test_repository_hook_integration tests.test_local_hook_activation tests.test_prompt_kit_order_navigation_product -v
