@@ -42,6 +42,7 @@ jobs:
           fi
 
           python tmp/apply_code_readability_contribution.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 
           python -m py_compile \
             build_prompt_kit.py \
