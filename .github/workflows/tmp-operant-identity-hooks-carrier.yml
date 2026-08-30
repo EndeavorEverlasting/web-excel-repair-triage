@@ -54,19 +54,186 @@ jobs:
           PY
 
           python scripts/tmp_operant_identity_hooks_carrier.py
-          python -m py_compile scripts/install_local_hooks.py scripts/validate_harness.py tests/test_operant_product_identity.py tests/test_repository_hook_integration.py tests/test_governance_contract.py tests/test_prompt_kit_order_navigation_product.py
+
+          # Promote product identity from passive metadata to an executable, fail-closed harness contract.
+          cat > scripts/validate_operant_product_identity.py <<'PY'
+          #!/usr/bin/env python3
+          from __future__ import annotations
+          import argparse
+          import json
+          from pathlib import Path
+
+          ROOT = Path(__file__).resolve().parents[1]
+          CONTRACT = ROOT / 'harness/contracts/operant-product-identity.v1.json'
+
+          def evaluate() -> list[str]:
+              findings: list[str] = []
+              payload = json.loads(CONTRACT.read_text(encoding='utf-8'))
+              expected = {
+                  'schema_version': 'operant-product-identity/v1',
+                  'product_id': 'operant',
+                  'product_name': 'Operant',
+                  'product_version': '0.1.0',
+                  'status': 'transition',
+              }
+              for key, value in expected.items():
+                  if payload.get(key) != value:
+                      findings.append(f'{key} drifted: {payload.get(key)!r}')
+              authority = payload.get('authority', {})
+              if authority.get('current_repository') != 'EndeavorEverlasting/web-excel-repair-triage':
+                  findings.append('current repository authority drifted')
+              if authority.get('target_repository') != 'UnderDeskDev/Operant':
+                  findings.append('target repository drifted')
+              if authority.get('target_repository_state') != 'not-created-or-unproven':
+                  findings.append('target repository state was promoted without proof')
+              compatibility = payload.get('compatibility', {})
+              if compatibility.get('internal_path_renames_deferred') is not True:
+                  findings.append('legacy compatibility-path preservation was disabled')
+              for relative in compatibility.get('preserve_paths', []):
+                  if '*' not in relative and not (ROOT / relative).exists():
+                      findings.append(f'compatibility path missing: {relative}')
+              governance = (ROOT / 'AGENTS.md').read_text(encoding='utf-8')
+              for marker in ('**Operant** is the operator-approved product identity', '`UnderDeskDev/Operant`', 'must not be silently moved', 'must not become a competing Operant authority'):
+                  if marker not in governance:
+                      findings.append(f'governance marker missing: {marker}')
+              html = (ROOT / 'web/prompt-kit/index.html').read_text(encoding='utf-8')
+              for marker in ('<title>Operant 0.1</title>', 'Operant <span>0.1</span>', 'Capabilities · Skills · Implementations · Evidence'):
+                  if marker not in html:
+                      findings.append(f'generated Operant marker missing: {marker}')
+              if '<title>AI Harness Prompt Kit v40</title>' in html:
+                  findings.append('legacy v40 title remains the visible product identity')
+              return findings
+
+          def main() -> int:
+              parser = argparse.ArgumentParser(description='Validate the Operant product identity transition contract.')
+              parser.add_argument('--summary', action='store_true')
+              args = parser.parse_args()
+              findings = evaluate()
+              if findings:
+                  if args.summary:
+                      print('OPERANT_IDENTITY_FAIL')
+                      for finding in findings:
+                          print(f'- {finding}')
+                  return 1
+              if args.summary:
+                  print('OPERANT_IDENTITY_PASS product=Operant version=0.1 target=UnderDeskDev/Operant state=transition')
+              return 0
+
+          if __name__ == '__main__':
+              raise SystemExit(main())
+          PY
+
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          root = Path('.')
+          manifest_path = root / 'harness/manifest.v1.json'
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          domain = manifest['domain_contracts']['operant_product_identity']
+          domain['validator'] = 'scripts/validate_operant_product_identity.py'
+          domain['harness_gate'] = 'python scripts/validate_operant_product_identity.py --summary'
+
+          validators_path = root / 'harness/validators.v1.json'
+          validators = json.loads(validators_path.read_text(encoding='utf-8'))
+          by_id = {item['id']: item for item in validators['validators']}
+          new_items = [
+              {
+                  'id': 'operant-product-identity-audit',
+                  'class': 'contract',
+                  'command': 'python scripts/validate_operant_product_identity.py --summary',
+                  'blocking': True,
+                  'output': 'process log',
+                  'proof_ceiling': 'Static product identity, transition authority, compatibility-path, governance, and generated-brand proof.',
+              },
+              {
+                  'id': 'operant-product-identity-tests',
+                  'class': 'test',
+                  'command': 'python -m unittest tests.test_operant_product_identity -v',
+                  'blocking': True,
+                  'output': 'process log',
+                  'proof_ceiling': 'Executable regression proof for Operant identity, transition authority, and generated visible-brand invariants.',
+              },
+          ]
+          for item in new_items:
+              if item['id'] not in by_id:
+                  validators['validators'].append(item)
+          for profile in ('harness', 'pre_push'):
+              ids = validators['profiles'][profile]
+              anchor = ids.index('harness-contract-tests') + 1
+              for item_id in ('operant-product-identity-audit', 'operant-product-identity-tests'):
+                  if item_id not in ids:
+                      ids.insert(anchor, item_id)
+                      anchor += 1
+          by_id = {item['id']: item for item in validators['validators']}
+          manifest['validation_order'] = [by_id[item_id]['command'] for item_id in validators['profiles']['harness']]
+          manifest_path.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+          validators_path.write_text(json.dumps(validators, indent=2) + '\n', encoding='utf-8')
+
+          harness_path = root / 'scripts/validate_harness.py'
+          source = harness_path.read_text(encoding='utf-8')
+          match = re.search(r'REQUIRED_VALIDATOR_IDS = \{(?P<body>.*?)\n\}', source, flags=re.S)
+          if not match:
+              raise SystemExit('REQUIRED_VALIDATOR_IDS block not found')
+          body = match.group('body')
+          additions = ''
+          for item_id in ('operant-product-identity-audit', 'operant-product-identity-tests'):
+              token = f'    "{item_id}",'
+              if token not in body:
+                  additions += '\n' + token
+          if additions:
+              replacement = 'REQUIRED_VALIDATOR_IDS = {' + body + additions + '\n}'
+              source = source[:match.start()] + replacement + source[match.end():]
+          harness_path.write_text(source, encoding='utf-8')
+
+          hook_path = root / '.githooks/pre-push'
+          hook = hook_path.read_text(encoding='utf-8')
+          anchor = 'python -m unittest tests.test_harness_contract -v\n'
+          insertion = 'python scripts/validate_operant_product_identity.py --summary\npython -m unittest tests.test_operant_product_identity -v\n'
+          if insertion not in hook:
+              if hook.count(anchor) != 1:
+                  raise SystemExit('pre-push harness anchor drifted')
+              hook = hook.replace(anchor, anchor + insertion, 1)
+          hook_path.write_text(hook, encoding='utf-8')
+
+          workflow_path = root / '.github/workflows/harness-contract.yml'
+          workflow = workflow_path.read_text(encoding='utf-8')
+          workflow = workflow.replace('      - scripts/validate_harness.py\n', '      - scripts/validate_harness.py\n      - scripts/validate_operant_product_identity.py\n')
+          workflow = workflow.replace('      - tests/test_harness_contract.py\n', '      - tests/test_harness_contract.py\n      - tests/test_operant_product_identity.py\n')
+          compile_script = '            scripts/validate_harness.py \\\n'
+          if '            scripts/validate_operant_product_identity.py \\\n' not in workflow:
+              if workflow.count(compile_script) != 1:
+                  raise SystemExit('harness CI compile script anchor drifted')
+              workflow = workflow.replace(compile_script, compile_script + '            scripts/validate_operant_product_identity.py \\\n', 1)
+          compile_test = '            tests/test_harness_contract.py \\\n'
+          if '            tests/test_operant_product_identity.py \\\n' not in workflow:
+              if workflow.count(compile_test) != 1:
+                  raise SystemExit('harness CI compile test anchor drifted')
+              workflow = workflow.replace(compile_test, compile_test + '            tests/test_operant_product_identity.py \\\n', 1)
+          contract_anchor = '          python -m unittest tests.test_harness_contract -v\n'
+          contract_insert = '          python scripts/validate_operant_product_identity.py --summary\n          python -m unittest tests.test_operant_product_identity -v\n'
+          if contract_insert not in workflow:
+              if workflow.count(contract_anchor) != 1:
+                  raise SystemExit('harness CI contract anchor drifted')
+              workflow = workflow.replace(contract_anchor, contract_anchor + contract_insert, 1)
+          workflow_path.write_text(workflow, encoding='utf-8')
+          PY
+
+          python -m py_compile scripts/install_local_hooks.py scripts/validate_harness.py scripts/validate_operant_product_identity.py tests/test_operant_product_identity.py tests/test_repository_hook_integration.py tests/test_governance_contract.py tests/test_prompt_kit_order_navigation_product.py
 
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 
           # The harness uses git ls-files as its tracked-authority check. Stage only durable files before validating.
           git add AGENTS.md PROMPT_KIT_ACCESS.md build_prompt_kit.py web/prompt-kit/index.html \
-            harness/contracts/operant-product-identity.v1.json harness/capabilities.v1.json harness/triggers.v1.json harness/manifest.v1.json \
-            .ai/skills/repository-hook-integration/SKILL.md scripts/validate_harness.py \
-            SKILLS.md CAPABILITIES.md TRIGGERS.md \
+            harness/contracts/operant-product-identity.v1.json harness/capabilities.v1.json harness/triggers.v1.json harness/manifest.v1.json harness/validators.v1.json \
+            .ai/skills/repository-hook-integration/SKILL.md scripts/validate_harness.py scripts/validate_operant_product_identity.py \
+            SKILLS.md CAPABILITIES.md TRIGGERS.md .githooks/pre-push .github/workflows/harness-contract.yml \
             tests/test_governance_contract.py tests/test_operant_product_identity.py tests/test_repository_hook_integration.py tests/test_prompt_kit_order_navigation_product.py
           git diff --cached --check
 
+          python scripts/validate_operant_product_identity.py --summary
           python -m unittest tests.test_governance_contract tests.test_operant_product_identity tests.test_repository_hook_integration tests.test_local_hook_activation tests.test_prompt_kit_order_navigation_product -v
           python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
           python -m unittest tests.test_harness_contract -v
@@ -76,6 +243,7 @@ jobs:
           git diff --cached --check
 
           # Deliberate second evidence pass on the staged candidate.
+          python scripts/validate_operant_product_identity.py --summary
           python -m unittest tests.test_operant_product_identity tests.test_repository_hook_integration tests.test_governance_contract tests.test_prompt_kit_order_navigation_product -v
           python scripts/validate_harness.py --report Outputs/harness-operant-identity-hooks.json
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
