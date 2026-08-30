@@ -114,6 +114,8 @@ REQUIRED_VALIDATOR_IDS = {
     "app-harness-validation",
     "prompt-kit-feedback-afk-routing-audit",
     "prompt-kit-feedback-afk-routing-tests",
+    "operant-product-identity-audit",
+    "operant-product-identity-tests",
 }
 REQUIRED_CAPABILITY_IDS = {
     "harness-infrastructure-maintenance",
@@ -124,6 +126,7 @@ REQUIRED_CAPABILITY_IDS = {
     "prompt-kit-browser-proof-scratch-cleanup",
     "prompt-kit-responsive-layout",
     "prompt-kit-feedback-afk-routing",
+    "repository-hook-integration",
 }
 REQUIRED_TRIGGER_IDS = {
     "harness-infrastructure-change",
@@ -135,6 +138,7 @@ REQUIRED_TRIGGER_IDS = {
     "prompt-kit-browser-proof-temp-path",
     "prompt-kit-responsive-overlap",
     "prompt-kit-actionable-feedback",
+    "repository-hook-installation-needed",
 }
 PROTECTED_PATHS = ("Candidates/", "Active/")
 
