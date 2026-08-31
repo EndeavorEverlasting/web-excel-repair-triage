@@ -60,6 +60,7 @@
     "triage.same_family_compare",
     "triage.roster_log_compare.compare",
     "triage.roster_log_review_queue.cli",
+    "triage.roster_log_v2.cli",
     "triage.gitignore_hygiene"
   ],
   "artifact_tests": [
@@ -77,6 +78,7 @@
     "tests/test_same_family_compare.py",
     "tests/test_gitignore_hygiene.py",
     "tests/test_roster_log_review_queue.py",
+    "tests/test_roster_log_v2.py",
     "tests/test_artifact_engine_workflow_contract.py"
   ],
   "allowed_artifact_skip_reasons": [
