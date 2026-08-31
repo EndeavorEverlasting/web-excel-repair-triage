@@ -100,12 +100,16 @@ def build_roster_workbook(
                 raw.get("notes", ""),
             ]
         )
+    # Bounded allocation ledger range anchored to the last allocation data row.
+    # Whole-column references (e.g. $F:$F) are rejected by the Web Excel / artifact
+    # calculation engine; use the one_marcus_recon bounded SUMIFS/COUNTIFS pattern.
+    alloc_last_row = max(len(state["allocations"]) + 1, 2)
     for row in range(2, max(attendance.max_row, 201) + 1):
         attendance.cell(row, 7).value = (
-            f'=IF(COUNTIFS(\'Project Allocations\'!$B:$B,A{row},\'Project Allocations\'!$C:$C,B{row})>1,"MULTI","SINGLE")'
+            f'=IF(COUNTIFS(\'Project Allocations\'!$B$2:$B${alloc_last_row},A{row},\'Project Allocations\'!$C$2:$C${alloc_last_row},B{row})>1,"MULTI","SINGLE")'
         )
         attendance.cell(row, 8).value = (
-            f'=SUMIFS(\'Project Allocations\'!$F:$F,\'Project Allocations\'!$B:$B,A{row},\'Project Allocations\'!$C:$C,B{row})'
+            f'=SUMIFS(\'Project Allocations\'!$F$2:$F${alloc_last_row},\'Project Allocations\'!$B$2:$B${alloc_last_row},A{row},\'Project Allocations\'!$C$2:$C${alloc_last_row},B{row})'
         )
         attendance.cell(row, 9).value = f'=IF(OR(A{row}="",B{row}=""),"",E{row}-H{row})'
         attendance.cell(row, 10).value = f'=IF(I{row}="","",IF(ABS(I{row})<=0.01,"YES","NO"))'
