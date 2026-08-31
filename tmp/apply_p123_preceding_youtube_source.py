@@ -56,7 +56,7 @@ replacements = {
     "Canonical normalized JSON owns playlist identity/provenance plus video/source records and ordered occurrences. Preserve supplied metadata and repeated occurrences; tracking parameters do not create new source identity.":
         "Canonical normalized JSON owns YouTube source identity/provenance plus video/source records and, for playlists, ordered occurrences. A single video is valid input with one source identity and no invented playlist-only requirement. Preserve supplied metadata and repeated occurrences; tracking parameters do not create new source identity.",
     "If real yt-dlp execution is unavailable, say so: fixture tests do NOT prove current YouTube behavior, authentication/private-playlist access, real playlist metadata, target-repository compatibility, or integration.":
-        "If real yt-dlp execution is unavailable, say so: fixture tests do NOT prove current YouTube metadata behavior, authentication/private-playlist access, real video/playlist metadata, target-repository compatibility, or integration. Directly inspectable media may still support bounded semantic observations, but those observations do not prove metadata extraction."
+        "If real yt-dlp execution is unavailable, say so: fixture tests do NOT prove current YouTube behavior for machine-readable metadata extraction, authentication/private-playlist access, real video/playlist metadata, target-repository compatibility, or integration. Directly inspectable media may still support bounded semantic observations, but those observations do not prove metadata extraction."
 }
 for old, new in replacements.items():
     if old not in content:
