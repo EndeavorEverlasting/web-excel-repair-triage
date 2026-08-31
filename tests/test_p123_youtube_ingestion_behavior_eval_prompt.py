@@ -222,6 +222,29 @@ class P123YouTubeIngestionBehaviorEvalTests(unittest.TestCase):
             self.assertEqual(report["baseline"]["status"], "FAIL")
             self.assertEqual(report["candidate"]["status"], "PASS")
 
+    def test_cli_refuses_to_overwrite_fixture_or_candidate_response(self):
+        with self.assertRaisesRegex(SystemExit, "over input fixture"):
+            MOD.main(["--fixture", str(FIXTURE), "--output", str(FIXTURE)])
+
+        with tempfile.TemporaryDirectory() as tmp:
+            response = Path(tmp) / "candidate.txt"
+            response.write_text(self.fixture["candidate_response"], encoding="utf-8")
+            with self.assertRaisesRegex(SystemExit, "over candidate response input"):
+                MOD.main(
+                    [
+                        "--fixture",
+                        str(FIXTURE),
+                        "--response",
+                        str(response),
+                        "--output",
+                        str(response),
+                    ]
+                )
+
+    def test_default_report_location_is_under_outputs(self):
+        self.assertEqual(MOD.DEFAULT_OUTPUT.parent, ROOT / "Outputs")
+        self.assertEqual(MOD.DEFAULT_OUTPUT.name, "p123-youtube-ingestion-behavior-report.json")
+
     def test_existing_p67_pair_remains_the_model_runtime_hallucination_layer(self):
         floor = json.loads((ROOT / "harness" / "test-floor.v1.json").read_text(encoding="utf-8"))
         self.assertIn("tests/test_p67_source_faithfulness_eval_prompt.py", floor["self_tests"])
