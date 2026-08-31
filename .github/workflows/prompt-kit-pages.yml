@@ -54,6 +54,10 @@ jobs:
         run: python -m unittest tests.test_prompt_kit_promotion_pipeline -v
       - name: Validate exact checked-in Prompt Kit
         run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Validate Roster Log V2 static app
+        run: |
+          node --check web/roster-log-v2/app.js
+          python -m pytest tests/test_roster_log_v2.py -q
       - name: Application browser E2E gate
         run: bash scripts/run_prompt_kit_browser_e2e.sh | tee Outputs/prompt-kit-browser-e2e.json
       - name: Release identity gate
@@ -97,9 +101,10 @@ jobs:
           SITE_ROOT: ${{ runner.temp }}/prompt-kit-pages
         run: |
           set -euo pipefail
-          mkdir -p "$SITE_ROOT/prompt-kit" Outputs
+          mkdir -p "$SITE_ROOT/prompt-kit" "$SITE_ROOT/roster-log-v2" Outputs
           python scripts/build_prompt_kit_registry.py --output "$SITE_ROOT/prompt-kit/index.html"
           cp -R web/prompt-kit-mobile/. "$SITE_ROOT/"
+          cp -R web/roster-log-v2/. "$SITE_ROOT/roster-log-v2/"
           test -s "$SITE_ROOT/index.html"
           test -s "$SITE_ROOT/manifest.webmanifest"
           test -s "$SITE_ROOT/service-worker.js"
@@ -107,7 +112,13 @@ jobs:
           test -s "$SITE_ROOT/icon-512.png"
           test -s "$SITE_ROOT/qr-prompt-kit.png"
           test -s "$SITE_ROOT/prompt-kit/index.html"
+          test -s "$SITE_ROOT/roster-log-v2/index.html"
+          test -s "$SITE_ROOT/roster-log-v2/app.js"
+          test -s "$SITE_ROOT/roster-log-v2/styles.css"
           cmp "$SITE_ROOT/prompt-kit/index.html" web/prompt-kit/index.html
+          cmp "$SITE_ROOT/roster-log-v2/index.html" web/roster-log-v2/index.html
+          cmp "$SITE_ROOT/roster-log-v2/app.js" web/roster-log-v2/app.js
+          cmp "$SITE_ROOT/roster-log-v2/styles.css" web/roster-log-v2/styles.css
           (cd "$SITE_ROOT" && find . -type f -print0 | sort -z | xargs -0 sha256sum) > Outputs/prompt-kit-pages-manifest.sha256
       - name: Write exact-candidate promotion receipt
         env:
@@ -146,7 +157,7 @@ jobs:
     outputs:
       page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy exact validated Prompt Kit artifact
+      - name: Deploy exact validated Pages artifact
         id: deployment
         uses: actions/deploy-pages@v5
 
@@ -170,6 +181,13 @@ jobs:
           set -euo pipefail
           test -n "$PAGE_URL"
           curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors "${PAGE_URL}prompt-kit/" --output deployed-prompt-kit.html
+          curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors "${PAGE_URL}roster-log-v2/" --output deployed-roster-v2.html
+          curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors "${PAGE_URL}roster-log-v2/app.js" --output deployed-roster-v2.js
+          curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors "${PAGE_URL}roster-log-v2/styles.css" --output deployed-roster-v2.css
           cmp deployed-prompt-kit.html web/prompt-kit/index.html
+          cmp deployed-roster-v2.html web/roster-log-v2/index.html
+          cmp deployed-roster-v2.js web/roster-log-v2/app.js
+          cmp deployed-roster-v2.css web/roster-log-v2/styles.css
           echo "deployed_sha=${GITHUB_SHA}"
-          echo "page_url=${PAGE_URL}prompt-kit/"
+          echo "prompt_kit_url=${PAGE_URL}prompt-kit/"
+          echo "roster_v2_url=${PAGE_URL}roster-log-v2/"
