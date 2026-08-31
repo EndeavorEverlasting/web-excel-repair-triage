@@ -101,7 +101,9 @@ def _find_unqualified_25_23_claims(text: str) -> list[str]:
 
 def _find_donor_pin_claims(text: str) -> list[str]:
     patterns = (
-        re.compile(r'(?i)\bpinned_version\b\s*[:=]\s*["\'`]?([^\s,;|}"\'`]+)'),
+        re.compile(
+            r'(?i)["\'`]?pinned_version["\'`]?\s*[:=]\s*["\'`]?([^\s,;|}"\'`]+)'
+        ),
         re.compile(
             r'(?i)\bpinned(?:\s+[A-Za-z0-9._-]+){0,3}\s+version\b'
             r'\s*(?:(?:[:=])|(?:is\b))?\s*["\'`]?([^\s,;|}"\'`]+)'
@@ -120,6 +122,15 @@ def _find_donor_pin_claims(text: str) -> list[str]:
     return findings
 
 
+def _mentions_live_metadata(clause: str) -> bool:
+    lower = clause.lower()
+    return (
+        "live youtube metadata" in lower
+        or "live yt-dlp" in lower
+        or "current youtube behavior" in lower
+    )
+
+
 def _find_live_proof_claims(text: str) -> list[str]:
     findings: list[str] = []
     for line in _lines(text):
@@ -128,20 +139,18 @@ def _find_live_proof_claims(text: str) -> list[str]:
             for clause in re.split(r"(?i)\bbut\b|[|;]", line)
             if clause.strip()
         ]
+        live_subject_active = False
         for clause in clauses:
             lower = clause.lower()
-            mentions_live_metadata = (
-                "live youtube metadata" in lower
-                or "live yt-dlp" in lower
-                or "current youtube behavior" in lower
-            )
+            if _mentions_live_metadata(clause):
+                live_subject_active = True
             claims_proof = bool(
                 re.search(r"\b(?:proven|verified|retrieved|pass(?:ed|ing)?)\b", lower)
             )
             explicitly_unproven = bool(
                 re.search(r"\b(?:unproven|unknown)\b|\bnot observed\b", lower)
             )
-            if mentions_live_metadata and claims_proof and not explicitly_unproven:
+            if live_subject_active and claims_proof and not explicitly_unproven:
                 findings.append(clause)
     return findings
 
