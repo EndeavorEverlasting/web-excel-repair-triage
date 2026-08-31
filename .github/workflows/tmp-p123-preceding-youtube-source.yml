@@ -54,17 +54,21 @@ jobs:
           git diff --check
 
           python - <<'PY'
-          from scripts import build_prompt_kit_registry
-          prompts = {p['id']: p for p in build_prompt_kit_registry.load_prompt_kit_registry()}
-          p = prompts['P123']
+          import json
+          from pathlib import Path
+          registry = json.loads(Path('registry/prompts/ai-engineering-level-up-prompts.v1.json').read_text(encoding='utf-8'))
+          matches = [p for p in registry['prompts'] if p['id'] == 'P123']
+          assert len(matches) == 1
+          p = matches[0]
           assert p['name'] == 'Gemini YouTube Video / Playlist Ingestion Builder'
           assert 'SOURCE INPUT RESOLUTION' in p['copyContent']
           assert 'immediately above this prompt' in p['copyContent']
           assert 'bind it as `SOURCE_INPUT` automatically' in p['copyContent']
           assert 'yt-dlp owns machine-readable YouTube metadata extraction' in p['copyContent']
           assert 'single video is valid input' in p['copyContent']
+          assert 'fixture tests do NOT prove current YouTube behavior' in p['copyContent']
           assert len(p['copyContent']) <= 12000
-          print(f"P123_PRECEDING_SOURCE_FIXED_POINT prompts={len(prompts)} copy_chars={len(p['copyContent'])}")
+          print(f"P123_PRECEDING_SOURCE_FIXED_POINT copy_chars={len(p['copyContent'])}")
           PY
 
           git add \
