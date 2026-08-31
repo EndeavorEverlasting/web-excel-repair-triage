@@ -25,6 +25,7 @@
     "tests/test_gemini_youtube_playlist_ingestion_prompt.py",
     "tests/test_management_operations_prompt_registry.py",
     "tests/test_p100_closeout_replay_prompt.py",
+    "tests/test_p123_youtube_ingestion_behavior_eval_prompt.py",
     "tests/test_p67_source_faithfulness_eval_prompt.py",
     "tests/test_permissioned_repository_polling_prompt.py",
     "tests/test_prompt_classification_refiner_prompt.py",
