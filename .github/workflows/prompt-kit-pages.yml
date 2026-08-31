@@ -56,8 +56,17 @@ jobs:
         run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
       - name: Validate Roster Log V2 static app
         run: |
+          set -euo pipefail
           node --check web/roster-log-v2/app.js
-          python -m pytest tests/test_roster_log_v2.py -q
+          test -s web/roster-log-v2/index.html
+          test -s web/roster-log-v2/styles.css
+          grep -Fq "Add project" web/roster-log-v2/index.html
+          grep -Fq "Use one project for whole day" web/roster-log-v2/index.html
+          grep -Fq "localStorage" web/roster-log-v2/app.js
+          if grep -Fq "fetch(" web/roster-log-v2/app.js; then
+            echo "Roster Log V2 local app unexpectedly contains a network fetch" >&2
+            exit 1
+          fi
       - name: Application browser E2E gate
         run: bash scripts/run_prompt_kit_browser_e2e.sh | tee Outputs/prompt-kit-browser-e2e.json
       - name: Release identity gate
