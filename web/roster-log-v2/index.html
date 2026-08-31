@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roster Log V2</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div>
+      <p class="eyebrow">LOCAL-FIRST / ROSTER LOG V2</p>
+      <h1>Attendance + Project Allocations</h1>
+      <p class="lede">One project is the default. Add another only when the day should be split. Multi-project days are normal; the arithmetic just has to reconcile.</p>
+    </div>
+    <div class="cache-pill" id="cacheStatus">Local cache ready</div>
+  </header>
+
+  <main>
+    <section class="panel editor" aria-labelledby="entry-title">
+      <div class="panel-title">
+        <div>
+          <p class="eyebrow">DAY ENTRY</p>
+          <h2 id="entry-title">Record attendance</h2>
+        </div>
+        <button id="singleProject" class="secondary" type="button">Use one project for whole day</button>
+      </div>
+
+      <div class="grid attendance-grid">
+        <label>Date<input id="workDate" type="date"></label>
+        <label>Staff<input id="staff" autocomplete="name" placeholder="Staff name"></label>
+        <label>Clock in<input id="clockIn" type="time"></label>
+        <label>Clock out<input id="clockOut" type="time"></label>
+        <label>Paid hours<input id="paidHours" type="number" min="0" step="0.01" value="8"></label>
+        <label class="wide">Default project<input id="defaultProject" list="projectNames" placeholder="Project / billing scope"></label>
+        <label class="wide">Attendance notes<input id="attendanceNotes" placeholder="Optional internal note"></label>
+      </div>
+
+      <datalist id="projectNames"></datalist>
+      <div class="allocation-heading">
+        <div>
+          <p class="eyebrow">PROJECT ALLOCATIONS</p>
+          <h3>Where does this paid day belong?</h3>
+        </div>
+        <button id="addProject" type="button">+ Add project</button>
+      </div>
+      <div id="allocations" class="allocation-list"></div>
+
+      <div class="reconcile-bar">
+        <div><span>Paid</span><strong id="paidTotal">8.00</strong></div>
+        <div><span>Allocated</span><strong id="allocatedTotal">8.00</strong></div>
+        <div><span>Variance</span><strong id="variance">0.00</strong></div>
+        <div id="reconcileState" class="state good">RECONCILED</div>
+      </div>
+
+      <div class="actions">
+        <button id="saveDay" type="button">Save day</button>
+        <button id="clearEditor" class="secondary" type="button">Clear editor</button>
+      </div>
+      <p id="message" role="status"></p>
+    </section>
+
+    <section class="panel" aria-labelledby="ledger-title">
+      <div class="panel-title">
+        <div>
+          <p class="eyebrow">LEDGER</p>
+          <h2 id="ledger-title">Saved days</h2>
+        </div>
+        <div class="actions compact">
+          <button id="exportJson" class="secondary" type="button">Export JSON</button>
+          <button id="exportAttendance" class="secondary" type="button">Attendance CSV</button>
+          <button id="exportAllocations" class="secondary" type="button">Allocations CSV</button>
+          <label class="file-button">Import JSON<input id="importJson" type="file" accept="application/json,.json"></label>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Staff</th><th>Paid</th><th>Mode</th><th>Allocated</th><th>Variance</th><th>Projects</th><th></th></tr></thead>
+          <tbody id="dayRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel rules">
+      <p class="eyebrow">OPERATING RULE</p>
+      <h2>Attendance owns hours. Allocation explains them.</h2>
+      <p>A deliberate full-day project decision is valid input. An 80/20 split is also valid input. This tracker does not invent either one. It records the operator's project decision, permits additional project rows, and highlights only unreconciled totals.</p>
+      <p>Everything stays in this browser's local storage until you export it. The JSON export is the canonical local artifact consumed by the repo workbook generator.</p>
+    </section>
+  </main>
+
+  <template id="allocationTemplate">
+    <article class="allocation-card">
+      <div class="allocation-number"></div>
+      <label>Project<input class="project" list="projectNames" placeholder="Project / billing scope"></label>
+      <label>Workstream<input class="workstream" placeholder="Optional workstream"></label>
+      <label>Hours<input class="hours" type="number" min="0" step="0.01"></label>
+      <label class="wide">Notes<input class="notes" placeholder="Optional internal note"></label>
+      <button class="remove secondary" type="button">Remove</button>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
