@@ -2,7 +2,7 @@
 
 ## Scope
 
-This receipt records the bounded repository ↔ Google Drive synchronization and Drive organization for the Jon Zhou NTH reconciliation send set. Git remains repository history. Google Drive remains the collaboration/delivery workspace. No whole-repository mirroring, Drive-as-source-control behavior, or destructive cleanup is authorized by this receipt.
+This receipt records the bounded repository ↔ Google Drive synchronization and Drive organization for the Jon Zhou **June 2026 + August 2026 MTD Neuron Track Hours** submission. Git remains repository history. Google Drive remains the collaboration/delivery workspace. No whole-repository mirroring, Drive-as-source-control behavior, destructive cleanup, or silent promotion of internal allocation math is authorized by this receipt.
 
 Binding repository authorities:
 
@@ -13,47 +13,84 @@ Binding repository authorities:
 
 Drive workspace reused: `Neuron Track Hours (NTH) — 2026` → `00_CURRENT` → `Published_Admin_Share`.
 
+## Objective
+
+The recipient package is specifically for:
+
+1. **June 2026 NTH — full month**; and
+2. **August 2026 NTH — MTD through August 21**.
+
+May and July are not submission targets for this package.
+
 ## Human-readable Drive layout
 
-`Published_Admin_Share` now contains only three top-level folders:
+`Published_Admin_Share` contains:
 
 - `00_SEND_TO_JON_ZHOU__2026-08-31`
 - `90_ARCHIVE__NOT_FOR_JON`
 - `95_INTERNAL_SYNC_RECEIPTS`
 
-The send folder intentionally contains exactly two files:
+The send folder contains exactly two files:
 
-1. `01_EMAIL_DRAFT__Jon_Zhou__NTH_Reconciliation__2026-08-31.md`
-2. `02_ATTACH__NTH_May-July__CLAIM_SAFE.xlsx`
+1. `01_EMAIL_DRAFT__Jon_Zhou__NTH_June_and_August__2026-08-31.md`
+2. `02_ATTACH__NTH__JUNE_FULL_AND_AUGUST_MTD_THROUGH_08-21.xlsx`
 
-Historical/competing June, August, and May–July workbook variants were moved into `90_ARCHIVE__NOT_FOR_JON` without deletion. Sync receipts were moved into `95_INTERNAL_SYNC_RECEIPTS`. Stable Drive file identities were reused; no replacement project workspace was created.
+The previously selected May–July packet was removed from the send folder and preserved in `90_ARCHIVE__NOT_FOR_JON` under an explicit archive name. Historical/competing June and August workbook variants remain archived rather than deleted. Sync receipts remain separated under `95_INTERNAL_SYNC_RECEIPTS`.
+
+## Submission controls
+
+### June 2026
+
+- **603.25 paid NTH hours**.
+- **73 / 73 attendance records are assignment-backed**.
+- **603.25 / 603.25 hours are administrator-eligible** under the current assignment-first generation contract.
+- **No current unassigned-hour gap** remains.
+- Open contextual review flags do not change June assignment/hour eligibility. Disputed context remains bounded rather than being used to alter paid hours.
+
+### August 2026 MTD through August 21
+
+- **22 completed attendance records have NTH involvement**.
+- Those records contain **176 gross attendance hours**.
+- **168.00 hours are fully attributable to NTH** across the full-NTH records.
+- One additional completed **8-hour August 19** attendance record contains documented NTH work plus other project work. Its exact outward NTH portion is intentionally **not quantified** because the current finer-grained allocation mechanism is internal-only.
+- Rich Perez's **August 20** attendance is treated as a reconciled full NTH day; the earlier H&H override is superseded by the current correction.
+- Later August 25–28 H&H/Northwell management allocations are not included in this through-August-21 NTH submission and are not promoted into outward exact NTH percentages.
+
+The stale **176-hour whole-shift NTH total** is rejected. `176` is used only as the gross attendance boundary for the 22 NTH-involved records; it is not represented as fully attributable NTH hours.
+
+## Audience boundary
+
+The recipient workbook includes the June and August submission evidence needed to evaluate the NTH hours. It excludes:
+
+- raw punch times;
+- private allocation percentages/remainder math;
+- ticket IDs and workstation IDs;
+- internal reconciliation mechanics;
+- later mixed-project management allocation rules; and
+- unsupported exact task-hour splits.
+
+Evidence context may explain work but does not manufacture hours. Conflicts that do not affect assignment/hour eligibility remain internal and do not erase otherwise supported attendance.
 
 ## Send-set decision
 
 | Artifact | Drive location | Authority | Action | Status / evidence |
 | --- | --- | --- | --- | --- |
-| Jon Zhou reconciliation email/status draft | `Published_Admin_Share/00_SEND_TO_JON_ZHOU__2026-08-31/01_EMAIL_DRAFT__Jon_Zhou__NTH_Reconciliation__2026-08-31.md` | DRIVE-AUTHORITATIVE delivery draft; repository contracts bound evidence language | MOVE + RENAME IN PLACE | Selected for send. June remains `603.25h / 73 shifts`. August-through-2026-08-21 is expressed as `22 completed attendance records with NTH involvement` plus gross `184h / 23 completed records`; one 8h Projects Team record is outside NTH and one separate completed day is multi-project. The stale whole-shift NTH subtotal is not presented as a billing total. |
-| May–July claim-safe executive packet | `Published_Admin_Share/00_SEND_TO_JON_ZHOU__2026-08-31/02_ATTACH__NTH_May-July__CLAIM_SAFE.xlsx` | DERIVED / PUBLISH-ONLY | MOVE + RENAME IN PLACE | Selected for attachment. June control is `603.25h`. Operational themes remain descriptive; exact workstream-hour splits are not presented without task-level attribution. |
-| Site/device overview | `00_CURRENT/Client_Share/Neuron Deployment — Site and Device Overview.xlsm` | DERIVED / PUBLISH-ONLY | NO CHANGE; HOLD UNLESS NEEDED | Not part of the default Jon send set unless physical deployment scope is specifically useful. |
-| Historical/competing NTH publications | `Published_Admin_Share/90_ARCHIVE__NOT_FOR_JON/` | DERIVED / HISTORICAL | MOVE IN PLACE | Preserved, not deleted. These files are no longer visually competing with the send set at the top level. |
-| Sync receipts | `Published_Admin_Share/95_INTERNAL_SYNC_RECEIPTS/` | INTERNAL / DO-NOT-SEND | MOVE + DISAMBIGUATING RENAME | Current raw receipt and legacy native-Doc receipt are separated from recipient-facing artifacts. |
-| Private August workstream math / allocation evidence | internal evidence locations / canonical roster allocation ledger | PRIVATE / DO-NOT-SYNC | SKIP | Retained only as internal evidence and excluded from the recipient package. |
-
-## Reconciliation finding
-
-A second-pass check against the current allocation-aware roster found that one completed August attendance day is explicitly multi-project. Therefore the older whole-shift subtotal must not be represented as an exact August NTH billing total. The recipient draft reports the directly supportable record counts and gross attendance boundary instead of promoting private allocation arithmetic into an outward claim.
-
-The current qualitative-admin profile remains the controlling outward pattern: direct paid attendance is quantitative; workstream interpretation is qualitative unless direct task/time evidence supports a split. Technical-scope controls may bound claims but do not create labor hours by themselves.
+| Jon Zhou June + August email draft | `Published_Admin_Share/00_SEND_TO_JON_ZHOU__2026-08-31/01_EMAIL_DRAFT__Jon_Zhou__NTH_June_and_August__2026-08-31.md` | DRIVE-AUTHORITATIVE delivery draft; repository contracts bound evidence language | UPDATE IN PLACE | Selected for send; wording matches the June + August objective and August mixed-day boundary. |
+| June + August NTH workbook | `Published_Admin_Share/00_SEND_TO_JON_ZHOU__2026-08-31/02_ATTACH__NTH__JUNE_FULL_AND_AUGUST_MTD_THROUGH_08-21.xlsx` | DERIVED / PUBLISH-ONLY | CREATE FROM CURRENT EVIDENCE FLOOR | Selected attachment. Contains separate June and August detail plus submission/evidence notes. |
+| Prior May–July claim-safe packet | `Published_Admin_Share/90_ARCHIVE__NOT_FOR_JON/ARCHIVE__NOT_FOR_JON__May-July__CLAIM_SAFE.xlsx` | DERIVED / HISTORICAL | REMOVE FROM SEND + ARCHIVE | Not a submission artifact for the June + August objective. |
+| Historical/competing June/August publications | `Published_Admin_Share/90_ARCHIVE__NOT_FOR_JON/` | DERIVED / HISTORICAL | NO CHANGE | Preserved but excluded from the recipient send set. |
+| Sync receipts | `Published_Admin_Share/95_INTERNAL_SYNC_RECEIPTS/` | INTERNAL / DO-NOT-SEND | NO CHANGE | Not recipient artifacts. |
+| Private workstream/allocation evidence | internal evidence locations / canonical roster allocation ledger | PRIVATE / DO-NOT-SYNC | SKIP | Used only to bound outward claims; not copied into the recipient package. |
 
 ## Recipient package
 
-Default send set — no judgment call required:
+Default send set — no May/July substitution:
 
-1. `01_EMAIL_DRAFT__Jon_Zhou__NTH_Reconciliation__2026-08-31.md`
-2. `02_ATTACH__NTH_May-July__CLAIM_SAFE.xlsx`
+1. `01_EMAIL_DRAFT__Jon_Zhou__NTH_June_and_August__2026-08-31.md`
+2. `02_ATTACH__NTH__JUNE_FULL_AND_AUGUST_MTD_THROUGH_08-21.xlsx`
 
 Do not attach anything from `90_ARCHIVE__NOT_FOR_JON` or `95_INTERNAL_SYNC_RECEIPTS`.
 
 ## Proof ceiling
 
-This receipt proves Drive organization, stable-identity moves/renames, recipient send-set separation, repository/Drive mapping, audience-boundary review, and reconciliation against the current allocation-aware roster. It does not prove email delivery, Jon's acceptance, Excel-for-Web rendering on Jon's device, or a newly regenerated August qualitative-admin workbook.
+This receipt proves the June + August recipient objective, Drive send-set correction, current June assignment/hour eligibility, the August through-August-21 evidence boundary, removal of the stale 176-hour NTH-total pattern, and recipient/internal evidence separation. It does not prove email delivery, Jon's acceptance, or an exact outward NTH allocation for the mixed August 19 record.
