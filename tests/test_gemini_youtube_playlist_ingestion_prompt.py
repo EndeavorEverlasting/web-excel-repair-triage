@@ -10,7 +10,7 @@ BASE = ROOT / "docs" / "prompts.json"
 SITE = ROOT / "web" / "prompt-kit" / "index.html"
 # Identity is allocated by prompt_registry_ops.py from the refreshed combined registry.
 EXPECTED_ID = "P123"
-EXPECTED_NAME = "Gemini YouTube Playlist Ingestion Builder"
+EXPECTED_NAME = "Gemini YouTube Video / Playlist Ingestion Builder"
 
 
 class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
@@ -29,7 +29,8 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
         self.assertEqual(self.prompt["seq"], "123")
         self.assertEqual(self.prompt["copySheet"], "P123_COPY_SAFE")
         self.assertEqual(self.prompt["class"], "AI ENGINEERING / YOUTUBE INGESTION")
-        self.assertIn("YouTube playlist", self.prompt["useWhen"])
+        self.assertIn("YouTube video", self.prompt["useWhen"])
+        self.assertIn("playlist", self.prompt["useWhen"])
         self.assertIn("Gemini", self.prompt["useWhen"])
         self.assertIn("standalone", self.prompt["expectedOutput"].lower())
 
@@ -65,9 +66,35 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
             "MUST NOT fabricate a repository patch",
         )
 
+
+    def test_immediately_preceding_video_or_link_is_implicit_source_input(self) -> None:
+        self.assert_markers(
+            "SOURCE INPUT RESOLUTION",
+            "immediately above this prompt",
+            "bind it as `SOURCE_INPUT` automatically",
+            "Do not ask the operator to paste, repeat, or restate it into a placeholder",
+            "`SOURCE_INPUT_KIND`",
+            "`SOURCE_INPUT_IDENTITY`",
+            "If the video itself is directly inspectable",
+            "grounded semantic analysis",
+            "If only a URL is present and the environment cannot inspect its content, do not invent what the video says",
+            "Source placement is input binding, not repository access",
+        )
+        self.assertIn("single video is valid input", self.content)
+        for keyword in (
+            "youtube video ingestion",
+            "single youtube video",
+            "youtube short",
+            "youtube video attachment",
+            "video above prompt",
+            "preceding youtube video",
+        ):
+            self.assertIn(keyword, self.prompt["keywords"])
+
     def test_yt_dlp_is_single_extraction_authority(self) -> None:
         self.assert_markers(
-            "yt-dlp owns YouTube extraction",
+            "yt-dlp owns machine-readable YouTube metadata extraction",
+            "does not forbid semantic analysis of video/transcript content directly available in Gemini context",
             "do not reimplement YouTube HTML parsing",
             "do not create two competing extraction authorities",
             "runtime `yt-dlp --version`",
@@ -86,6 +113,8 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
 
     def test_entity_and_occurrence_models_are_separate(self) -> None:
         self.assert_markers(
+            "SOURCE INPUT RESOLUTION",
+            "bind it as `SOURCE_INPUT` automatically",
             "IDENTITY / OCCURRENCE INVARIANTS",
             "unique source/video entity",
             "playlist occurrence is ordered membership",
