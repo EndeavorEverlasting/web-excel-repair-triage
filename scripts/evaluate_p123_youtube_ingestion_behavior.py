@@ -16,6 +16,7 @@ DEFAULT_FIXTURE = (
     / "p123_youtube_ingestion_behavior"
     / "drive_ud64uounlw_20260831.v1.json"
 )
+DEFAULT_OUTPUT = ROOT / "Outputs" / "p123-youtube-ingestion-behavior-report.json"
 
 FAILURE_CLASSES = {
     "SOURCE_CONTEXT_REPLACED",
@@ -393,9 +394,16 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Evaluate P123 YouTube ingestion behavior against deterministic proof/source contracts.")
     parser.add_argument("--fixture", type=Path, default=DEFAULT_FIXTURE)
     parser.add_argument("--response", type=Path, help="Optional UTF-8 candidate response to score instead of fixture baseline/candidate comparison")
-    parser.add_argument("--output", type=Path, help="Optional JSON report path")
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT, help="JSON report path; defaults under Outputs/")
     parser.add_argument("--summary", action="store_true")
     args = parser.parse_args(argv)
+
+    fixture_path = args.fixture.resolve()
+    output_path = args.output.resolve()
+    if output_path == fixture_path:
+        raise SystemExit("refusing to write P123 eval report over input fixture")
+    if args.response is not None and output_path == args.response.resolve():
+        raise SystemExit("refusing to write P123 eval report over candidate response input")
 
     fixture = load_fixture(args.fixture)
     if args.response:
@@ -403,9 +411,8 @@ def main(argv: list[str] | None = None) -> int:
     else:
         report = compare_fixture(fixture)
 
-    if args.output:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     if args.summary:
         print(json.dumps(report, indent=2, ensure_ascii=False))
