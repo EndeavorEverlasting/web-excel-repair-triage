@@ -11,7 +11,6 @@ from triage.webexcel_semantic_gate import run_semantic_gate
 _INLINE_CELL = 't="inlineStr"'
 _STOP_SHIP = ["ns0:", "xmlns:ns0"]
 _CLIENT_FORBIDDEN_TABS = {
-    "Tech Summary",
     "Tech Project Summary",
     "Review Flags",
     "CF Dictionary",
@@ -92,6 +91,10 @@ def preflight_billing_summary(path: str, *, variant: str, expect_neuron_tab: str
 
             if variant == "client":
                 failures = res["client_hygiene_failures"]
+                required = {"Start Here", "Executive Dashboard", "Monthly Summary", "Project Summary", "Tech Summary", expect_neuron_tab}
+                for tab in sorted(required):
+                    if tab not in res["tabs"]:
+                        failures.append(f"missing_client_tab:{tab}")
                 for tab in sorted(_CLIENT_FORBIDDEN_TABS):
                     if tab in res["tabs"]:
                         failures.append(f"forbidden_client_tab:{tab}")
