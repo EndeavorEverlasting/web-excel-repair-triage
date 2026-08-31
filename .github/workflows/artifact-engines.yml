@@ -61,6 +61,7 @@ jobs:
             tests/test_nth_qualitative_admin.py \
             tests/test_nth_evidence_bounded_allocation.py \
             tests/test_admin_billing_summary.py \
+            tests/test_admin_billing_client_hygiene.py \
             tests/test_one_marcus_recon.py \
             tests/test_one_marcus_generate.py \
             tests/test_one_marcus_immutability.py \
