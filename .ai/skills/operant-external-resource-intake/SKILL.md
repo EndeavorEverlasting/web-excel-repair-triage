@@ -32,7 +32,7 @@ This skill owns donor **resource discovery and coverage routing**. It does not m
 7. **Preserve progressive disclosure.** The main Operant page embeds only the small resource runtime. It must not embed donor records and must not fetch `resources.v1.json` until the user explicitly opens Resources.
 8. **Refresh regularly without bypassing review.** The scheduled workflow generates a current candidate snapshot and gap ledger as CI artifacts, compares them with tracked canonical projections, and signals drift. It never writes directly to the default branch.
 
-## Performance and safety invariants
+## Guardrails
 
 - maximum entries, index bytes, search terms, and render page size come from the contract and fail closed;
 - donor content never joins the `PROMPTS` array merely to make it searchable;
