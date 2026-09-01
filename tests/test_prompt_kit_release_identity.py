@@ -171,7 +171,7 @@ class PromptKitReleaseIdentityTests(unittest.TestCase):
 
     def test_crlf_checkout_keeps_platform_stable_content_identity(self) -> None:
         path = self.root / validator.CANONICAL_ARTIFACT
-        lf_bytes = path.read_bytes()
+        lf_bytes = path.read_bytes().replace(b"\r\n", b"\n")
         expected_content_sha = hashlib.sha256(lf_bytes).hexdigest()
         crlf_bytes = lf_bytes.replace(b"\n", b"\r\n")
         self.assertNotEqual(lf_bytes, crlf_bytes)

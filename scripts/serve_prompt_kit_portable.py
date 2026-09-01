@@ -44,7 +44,7 @@ def require_file(path: Path, label: str) -> bytes:
 def require_output_path(repo_root: Path, path: Path) -> None:
     outputs = (repo_root / "Outputs").resolve()
     try:
-        path.relative_to(outputs)
+        path.resolve().relative_to(outputs)
     except ValueError as exc:
         raise ValueError(f"portable artifact output must remain under {outputs}") from exc
 
@@ -55,7 +55,7 @@ def backup_existing_output(repo_root: Path, path: Path) -> Path | None:
         return None
     if not path.is_file():
         raise ValueError(f"portable output exists but is not a file: {path}")
-    backup_root = (repo_root / "Outputs" / "backups" / "prompt-kit-portable").resolve()
+    backup_root = repo_root / "Outputs" / "backups" / "prompt-kit-portable"
     backup_root.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     destination = backup_root / f"{stamp}-{path.name}"

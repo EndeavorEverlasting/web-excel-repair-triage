@@ -310,15 +310,20 @@ class HarnessContractTests(unittest.TestCase):
             returncode=0,
             stdout=b"harness/manifest.v1.json\0scripts/validate_harness.py\0",
         )
-        with mock.patch.object(
-            validate_harness, "_TRACKED_PATHS_CACHE", None
-        ), mock.patch.object(
-            validate_harness.subprocess, "run", return_value=fake
-        ) as run:
-            validate_harness.require_tracked("harness/manifest.v1.json")
-        args, kwargs = run.call_args
-        self.assertEqual(args[0], ["git", "ls-files", "-z"])
-        self.assertEqual(kwargs["cwd"], validate_harness.ROOT)
+        with tempfile.TemporaryDirectory() as temporary:
+            fake_root = Path(temporary)
+            (fake_root / ".git").mkdir()
+            with mock.patch.object(
+                validate_harness, "ROOT", fake_root
+            ), mock.patch.object(
+                validate_harness, "_TRACKED_PATHS_CACHE", None
+            ), mock.patch.object(
+                validate_harness.subprocess, "run", return_value=fake
+            ) as run:
+                validate_harness.require_tracked("harness/manifest.v1.json")
+                args, kwargs = run.call_args
+                self.assertEqual(args[0], ["git", "ls-files", "-z"])
+                self.assertEqual(kwargs["cwd"], validate_harness.ROOT)
         self.assertIs(kwargs["stdin"], subprocess.DEVNULL)
         self.assertIs(kwargs["stdout"], subprocess.PIPE)
         self.assertIs(kwargs["stderr"], subprocess.DEVNULL)
@@ -334,18 +339,23 @@ class HarnessContractTests(unittest.TestCase):
             cmd=["git", "ls-files", "-z"],
             timeout=validate_harness.GIT_PROBE_TIMEOUT_SECONDS,
         )
-        with mock.patch.object(
-            validate_harness, "_TRACKED_PATHS_CACHE", None
-        ), mock.patch.object(
-            validate_harness.subprocess, "run", side_effect=timeout
-        ):
-            with self.assertRaisesRegex(
-                validate_harness.HarnessValidationError,
-                "timed out",
+        with tempfile.TemporaryDirectory() as temporary:
+            fake_root = Path(temporary)
+            (fake_root / ".git").mkdir()
+            with mock.patch.object(
+                validate_harness, "ROOT", fake_root
+            ), mock.patch.object(
+                validate_harness, "_TRACKED_PATHS_CACHE", None
+            ), mock.patch.object(
+                validate_harness.subprocess, "run", side_effect=timeout
             ):
-                validate_harness.require_tracked(
-                    "harness/manifest.v1.json"
-                )
+                with self.assertRaisesRegex(
+                    validate_harness.HarnessValidationError,
+                    "timed out",
+                ):
+                    validate_harness.require_tracked(
+                        "harness/manifest.v1.json"
+                    )
 
     def test_repository_local_report_must_use_outputs(self) -> None:
         with self.assertRaisesRegex(
