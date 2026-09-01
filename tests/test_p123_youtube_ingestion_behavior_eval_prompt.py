@@ -252,11 +252,14 @@ class P123YouTubeIngestionBehaviorEvalTests(unittest.TestCase):
                 MOD.main(["--fixture", str(FIXTURE), "--output", str(out)])
 
     def test_relative_output_path_is_rooted_under_repository_outputs(self):
-        expected = (ROOT / "Outputs" / "p123-relative-report.json").resolve()
-        self.assertEqual(
-            MOD._resolve_output_path(Path("Outputs/p123-relative-report.json")),
-            expected,
-        )
+        outputs = ROOT / "Outputs"
+        outputs.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=outputs) as tmp:
+            absolute = Path(tmp) / "relative-report.json"
+            relative = absolute.relative_to(ROOT)
+            rc = MOD.main(["--fixture", str(FIXTURE), "--output", str(relative)])
+            self.assertEqual(rc, 0)
+            self.assertTrue(absolute.is_file())
 
     def test_default_report_location_is_under_outputs(self):
         self.assertEqual(MOD.DEFAULT_OUTPUT.parent, ROOT / "Outputs")
