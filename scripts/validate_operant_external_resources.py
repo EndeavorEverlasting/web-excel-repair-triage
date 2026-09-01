@@ -78,16 +78,25 @@ def validate() -> dict[str, Any]:
         contract["coverage"]["external_only_disposition"],
     }
     pinned = 0
-    external = 0
+    external_resources: dict[str, dict[str, Any]] = {}
     for item in resources:
         source_id = str(item.get("source_id", ""))
         floor = next((row for row in floors if row["id"] == source_id), None)
         if floor is None:
             raise ValidationError(f"resource references unknown source: {source_id}")
+        source = configured[source_id]
+        repo = str(floor["repository"])
         sha = str(floor["resolved_sha"])
-        url = str(item.get("url", ""))
-        if f"/blob/{sha}/" not in url:
-            raise ValidationError(f"resource URL is not pinned to donor SHA: {item.get('id')}")
+        path = str(item.get("path", ""))
+        expected_prefix = str(source["resource_root"]).rstrip("/") + "/"
+        expected_suffix = "/" + str(source["resource_filename"])
+        if not path.startswith(expected_prefix) or not path.endswith(expected_suffix):
+            raise ValidationError(f"resource path escapes configured donor root: {item.get('id')}")
+        if item.get("source_repo") != repo or item.get("source_sha") != sha:
+            raise ValidationError(f"resource source identity differs from donor floor: {item.get('id')}")
+        expected_url = f"https://github.com/{repo}/blob/{sha}/{path}"
+        if item.get("url") != expected_url:
+            raise ValidationError(f"resource URL differs from exact donor repository/path/SHA: {item.get('id')}")
         pinned += 1
         terms = item.get("search_terms")
         if not isinstance(terms, list) or len(terms) > int(projection["maximum_search_terms_per_resource"]):
@@ -96,15 +105,38 @@ def validate() -> dict[str, Any]:
         if not isinstance(coverage, dict) or coverage.get("disposition") not in dispositions:
             raise ValidationError(f"invalid coverage disposition: {item.get('id')}")
         if coverage["disposition"] == contract["coverage"]["external_only_disposition"]:
-            external += 1
+            external_resources[str(item["id"])] = item
             if coverage.get("prompt_action") != contract["coverage"]["missing_prompt_action"]:
                 raise ValidationError(f"external-only resource lacks prompt review action: {item.get('id')}")
-        elif coverage.get("prompt_action") != contract["coverage"]["existing_coverage_prompt_action"]:
-            raise ValidationError(f"covered resource incorrectly requests prompt addition: {item.get('id')}")
+            if coverage.get("target_id") is not None or coverage.get("target_title") is not None:
+                raise ValidationError(f"external-only resource unexpectedly claims internal target: {item.get('id')}")
+        else:
+            if coverage.get("prompt_action") != contract["coverage"]["existing_coverage_prompt_action"]:
+                raise ValidationError(f"covered resource incorrectly requests prompt addition: {item.get('id')}")
+            if not str(coverage.get("target_id") or "").strip() or not str(coverage.get("target_title") or "").strip():
+                raise ValidationError(f"covered resource lacks internal target identity: {item.get('id')}")
 
     actions = gaps.get("actions")
-    if not isinstance(actions, list) or len(actions) != external:
-        raise ValidationError("gap ledger must contain exactly the external-only resources")
+    if not isinstance(actions, list):
+        raise ValidationError("gap ledger actions must be a list")
+    action_ids = [str(action.get("resource_id", "")) for action in actions]
+    if len(action_ids) != len(set(action_ids)):
+        raise ValidationError("gap ledger resource IDs must be unique")
+    if set(action_ids) != set(external_resources):
+        raise ValidationError("gap ledger resource identities differ from external-only resources")
+    for action in actions:
+        resource = external_resources[str(action["resource_id"])]
+        expected = {
+            "source_id": resource["source_id"],
+            "title": resource["title"],
+            "url": resource["url"],
+            "user_disposition": contract["coverage"]["external_only_disposition"],
+            "prompt_action": contract["coverage"]["missing_prompt_action"],
+            "promotion_owner_prompt": contract["coverage"]["promotion_owner_prompt"],
+        }
+        for field, value in expected.items():
+            if action.get(field) != value:
+                raise ValidationError(f"gap ledger action mismatch for {action['resource_id']}: {field}")
     if gaps.get("source_floor") != floors:
         raise ValidationError("gap ledger source floor differs from public index")
     if gaps.get("policy", {}).get("automatic_prompt_authoring") is not False:
@@ -145,7 +177,7 @@ def validate() -> dict[str, Any]:
         "sources": len(floors),
         "resources": len(resources),
         "pinned_urls": pinned,
-        "external_only": external,
+        "external_only": len(external_resources),
         "index_bytes": INDEX.stat().st_size,
         "page_size": projection["default_render_page_size"],
         "lazy_fetch": True,
