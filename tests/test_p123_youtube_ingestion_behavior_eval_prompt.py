@@ -237,6 +237,41 @@ class P123YouTubeIngestionBehaviorEvalTests(unittest.TestCase):
             self.assertEqual(list(Path(tmp).glob(".atomic-report.json.*.tmp")), [])
             json.loads(out.read_text(encoding="utf-8"))
 
+    def test_atomic_replace_preserves_hard_link_aliases_of_inputs(self):
+        outputs = ROOT / "Outputs"
+        outputs.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=outputs) as tmp:
+            tmp_path = Path(tmp)
+            fixture_alias = tmp_path / "fixture-alias.json"
+            try:
+                fixture_alias.hardlink_to(FIXTURE)
+            except (NotImplementedError, OSError) as exc:
+                self.skipTest(f"hard links unavailable: {exc}")
+            fixture_before = FIXTURE.read_bytes()
+            rc = MOD.main(["--fixture", str(FIXTURE), "--output", str(fixture_alias)])
+            self.assertEqual(rc, 0)
+            self.assertEqual(FIXTURE.read_bytes(), fixture_before)
+            json.loads(fixture_alias.read_text(encoding="utf-8"))
+
+            response = tmp_path / "candidate.txt"
+            response.write_text(self.fixture["candidate_response"], encoding="utf-8")
+            response_before = response.read_bytes()
+            response_alias = tmp_path / "candidate-alias.json"
+            response_alias.hardlink_to(response)
+            rc = MOD.main(
+                [
+                    "--fixture",
+                    str(FIXTURE),
+                    "--response",
+                    str(response),
+                    "--output",
+                    str(response_alias),
+                ]
+            )
+            self.assertEqual(rc, 0)
+            self.assertEqual(response.read_bytes(), response_before)
+            json.loads(response_alias.read_text(encoding="utf-8"))
+
     def test_cli_refuses_to_overwrite_fixture_or_candidate_response(self):
         with self.assertRaisesRegex(SystemExit, "over input fixture"):
             MOD.main(["--fixture", str(FIXTURE), "--output", str(FIXTURE)])
