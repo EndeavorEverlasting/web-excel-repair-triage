@@ -412,11 +412,15 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     fixture_path = args.fixture.resolve()
-    output_path = _resolve_output_path(args.output)
+    output_candidate = args.output.expanduser()
+    if not output_candidate.is_absolute():
+        output_candidate = ROOT / output_candidate
+    output_path = output_candidate.resolve()
     if output_path == fixture_path:
         raise SystemExit("refusing to write P123 eval report over input fixture")
     if args.response is not None and output_path == args.response.resolve():
         raise SystemExit("refusing to write P123 eval report over candidate response input")
+    output_path = _resolve_output_path(output_path)
 
     fixture = load_fixture(args.fixture)
     if args.response:
