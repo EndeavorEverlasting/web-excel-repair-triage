@@ -1,0 +1,71 @@
+name: Temporary Operant resource review repair
+
+on:
+  push:
+    branches:
+      - feat/operant-external-resource-intake-20260901
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-operant-resource-review-repair
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/operant-external-resource-intake-20260901
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply review repairs, regenerate, validate, and commit
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/operant-external-resource-intake-20260901 --prune
+          test "$(git branch --show-current)" = "feat/operant-external-resource-intake-20260901"
+          test "$(git rev-parse origin/main)" = "eb479a2ae30031c2c71262c20084485daa1c335c"
+
+          python tmp/apply_operant_resource_review_repairs.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+          python -m py_compile scripts/serve_prompt_kit_portable.py scripts/validate_prompt_kit_portability.py scripts/validate_operant_external_resources.py tests/prompt_kit_external_resources_browser_proof.py tests/test_operant_external_resources.py tests/test_prompt_kit_portability.py tests/test_prompt_kit_pages.py
+          node --check docs/prompt-kit-external-resources.js
+          python scripts/validate_operant_external_resources.py --summary
+          python -m unittest tests.test_operant_external_resources tests.test_prompt_kit_portability tests.test_prompt_kit_pages -v
+          python scripts/serve_prompt_kit_portable.py --build-only
+          python scripts/validate_prompt_kit_portability.py --artifact Outputs/prompt-kit-portable/index.html --artifact-manifest Outputs/prompt-kit-portable/manifest.json --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
+          python -m unittest tests.test_harness_contract -v
+          git diff --check
+
+          git add \
+            scripts/serve_prompt_kit_portable.py \
+            scripts/validate_prompt_kit_portability.py \
+            harness/contracts/prompt-kit-portability.v1.json \
+            .github/workflows/prompt-kit-pages.yml \
+            tests/test_prompt_kit_pages.py \
+            tests/test_prompt_kit_portability.py \
+            tests/test_operant_external_resources.py \
+            tests/prompt_kit_external_resources_browser_proof.py \
+            docs/prompt-kit-external-resources.js \
+            scripts/validate_operant_external_resources.py \
+            web/prompt-kit/index.html
+          git rm tmp/apply_operant_resource_review_repairs.py
+          git diff --cached --check
+          git status --short
+          git diff --cached --stat
+          git commit -m 'fix(operant): close external resource packaging and validation gaps'
+          git push origin HEAD:feat/operant-external-resource-intake-20260901
