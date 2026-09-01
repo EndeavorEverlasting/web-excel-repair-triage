@@ -3,8 +3,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -71,6 +73,34 @@ def _require_output_path(path: Path) -> None:
         path.resolve().relative_to(outputs)
     except ValueError as exc:
         raise SystemExit(f"P123 eval report must remain under {outputs}") from exc
+
+
+def _write_report_atomic(path: Path, report: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    _require_output_path(path)
+    payload = json.dumps(report, indent=2, ensure_ascii=False) + "\n"
+    tmp_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as tmp:
+            tmp.write(payload)
+            tmp.flush()
+            os.fsync(tmp.fileno())
+            tmp_path = Path(tmp.name).resolve()
+        _require_output_path(tmp_path)
+        _require_output_path(path)
+        os.replace(tmp_path, path)
+        tmp_path = None
+        _require_output_path(path)
+    finally:
+        if tmp_path is not None and tmp_path.exists():
+            tmp_path.unlink()
 
 
 def load_fixture(path: Path) -> dict[str, Any]:
@@ -423,8 +453,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         report = compare_fixture(fixture)
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    _write_report_atomic(output_path, report)
 
     if args.summary:
         print(json.dumps(report, indent=2, ensure_ascii=False))
