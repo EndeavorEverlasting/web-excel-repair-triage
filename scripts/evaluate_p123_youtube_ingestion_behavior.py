@@ -65,17 +65,12 @@ def _validate_source(source: Any) -> dict[str, Any]:
     return source
 
 
-def _resolve_output_path(path: Path) -> Path:
-    candidate = path.expanduser()
-    if not candidate.is_absolute():
-        candidate = ROOT / candidate
-    resolved = candidate.resolve()
+def _require_output_path(path: Path) -> None:
     outputs = (ROOT / "Outputs").resolve()
     try:
-        resolved.relative_to(outputs)
+        path.resolve().relative_to(outputs)
     except ValueError as exc:
         raise SystemExit(f"P123 eval report must remain under {outputs}") from exc
-    return resolved
 
 
 def load_fixture(path: Path) -> dict[str, Any]:
@@ -420,7 +415,7 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("refusing to write P123 eval report over input fixture")
     if args.response is not None and output_path == args.response.resolve():
         raise SystemExit("refusing to write P123 eval report over candidate response input")
-    output_path = _resolve_output_path(output_path)
+    _require_output_path(output_path)
 
     fixture = load_fixture(args.fixture)
     if args.response:
