@@ -1,0 +1,97 @@
+name: Temporary Operant external resource intake carrier
+
+on:
+  push:
+    branches:
+      - feat/operant-external-resource-intake-20260901
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-operant-external-resource-intake
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/operant-external-resource-intake-20260901
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Register, sync, validate, build, and commit
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/operant-external-resource-intake-20260901 --prune
+          test "$(git branch --show-current)" = "feat/operant-external-resource-intake-20260901"
+          git merge-base --is-ancestor eb479a2ae30031c2c71262c20084485daa1c335c HEAD
+
+          if [ -f tmp/apply_operant_external_resource_registration.py ]; then
+            python tmp/apply_operant_external_resource_registration.py
+          fi
+          python scripts/sync_operant_external_resources.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+          python -m py_compile scripts/sync_operant_external_resources.py scripts/validate_operant_external_resources.py tests/test_operant_external_resources.py
+          node --check docs/prompt-kit-external-resources.js
+          python scripts/validate_operant_external_resources.py --summary
+          python -m unittest tests.test_operant_external_resources -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
+          python -m unittest tests.test_harness_contract -v
+          git diff --check
+
+          test "$(python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('harness/contracts/operant-external-resource-intake.v1.json').read_text())
+          print(p['projection']['default_render_page_size'])
+          PY
+          )" = "40"
+          python - <<'PY'
+          from pathlib import Path
+          site=Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
+          index=Path('web/prompt-kit/resources.v1.json').read_text(encoding='utf-8')
+          assert 'operant-external-resources/v1' in site
+          assert 'deepseek-harness:' not in site
+          assert 'anthropic-skills:' not in site
+          assert 'deepseek-harness:' in index
+          assert 'anthropic-skills:' in index
+          print('OPERANT_EXTERNAL_RESOURCE_CONTAINMENT=PASS')
+          PY
+
+          git add \
+            harness/contracts/operant-external-resource-intake.v1.json \
+            .ai/skills/operant-external-resource-intake/SKILL.md \
+            scripts/sync_operant_external_resources.py \
+            scripts/validate_operant_external_resources.py \
+            docs/prompt-kit-external-resources.js \
+            tests/test_operant_external_resources.py \
+            .github/workflows/operant-external-resource-refresh.yml \
+            scripts/build_prompt_kit_registry.py \
+            harness/capabilities.v1.json \
+            harness/triggers.v1.json \
+            harness/manifest.v1.json \
+            harness/validators.v1.json \
+            harness/artifacts.v1.json \
+            SKILLS.md CAPABILITIES.md TRIGGERS.md web/README.md \
+            web/prompt-kit/resources.v1.json \
+            registry/resources/operant-external-resource-gaps.v1.json \
+            web/prompt-kit/index.html
+          if [ -f tmp/apply_operant_external_resource_registration.py ]; then git rm tmp/apply_operant_external_resource_registration.py; fi
+          git diff --cached --check
+          git status --short
+          git diff --cached --stat
+          git commit -m 'feat(operant): add lazy external resource intake'
+          git push origin HEAD:feat/operant-external-resource-intake-20260901
