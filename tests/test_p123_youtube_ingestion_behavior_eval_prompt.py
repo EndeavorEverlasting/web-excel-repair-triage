@@ -212,7 +212,9 @@ class P123YouTubeIngestionBehaviorEvalTests(unittest.TestCase):
         self.assertIn("false_negative_risk", comparison)
 
     def test_cli_writes_machine_readable_report_and_returns_green_for_expected_comparison(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        outputs = ROOT / "Outputs"
+        outputs.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=outputs) as tmp:
             out = Path(tmp) / "report.json"
             rc = MOD.main(["--fixture", str(FIXTURE), "--output", str(out)])
             self.assertEqual(rc, 0)
@@ -226,7 +228,9 @@ class P123YouTubeIngestionBehaviorEvalTests(unittest.TestCase):
         with self.assertRaisesRegex(SystemExit, "over input fixture"):
             MOD.main(["--fixture", str(FIXTURE), "--output", str(FIXTURE)])
 
-        with tempfile.TemporaryDirectory() as tmp:
+        outputs = ROOT / "Outputs"
+        outputs.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=outputs) as tmp:
             response = Path(tmp) / "candidate.txt"
             response.write_text(self.fixture["candidate_response"], encoding="utf-8")
             with self.assertRaisesRegex(SystemExit, "over candidate response input"):
@@ -240,6 +244,19 @@ class P123YouTubeIngestionBehaviorEvalTests(unittest.TestCase):
                         str(response),
                     ]
                 )
+
+    def test_cli_rejects_output_outside_repository_outputs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "report.json"
+            with self.assertRaisesRegex(SystemExit, "must remain under"):
+                MOD.main(["--fixture", str(FIXTURE), "--output", str(out)])
+
+    def test_relative_output_path_is_rooted_under_repository_outputs(self):
+        expected = (ROOT / "Outputs" / "p123-relative-report.json").resolve()
+        self.assertEqual(
+            MOD._resolve_output_path(Path("Outputs/p123-relative-report.json")),
+            expected,
+        )
 
     def test_default_report_location_is_under_outputs(self):
         self.assertEqual(MOD.DEFAULT_OUTPUT.parent, ROOT / "Outputs")
