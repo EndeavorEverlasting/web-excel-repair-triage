@@ -37,25 +37,19 @@ jobs:
           test "$(git branch --show-current)" = "feat/operant-external-resource-intake-20260901"
           git merge-base --is-ancestor eb479a2ae30031c2c71262c20084485daa1c335c HEAD
 
-          if [ -f tmp/apply_operant_external_resource_registration.py ]; then
-            python tmp/apply_operant_external_resource_registration.py
-          fi
-          if [ -f tmp/repair_operant_external_resource_harness_floor.py ]; then
-            python tmp/repair_operant_external_resource_harness_floor.py
-          fi
+          if [ -f tmp/apply_operant_external_resource_registration.py ]; then python tmp/apply_operant_external_resource_registration.py; fi
+          if [ -f tmp/repair_operant_external_resource_harness_floor.py ]; then python tmp/repair_operant_external_resource_harness_floor.py; fi
+          if [ -f tmp/repair_operant_external_resource_prepush.py ]; then python tmp/repair_operant_external_resource_prepush.py; fi
           python scripts/sync_operant_external_resources.py
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 
-          # Harness tracked-path validation must observe generated canonical projections as staged/tracked.
           git add \
             harness/contracts/operant-external-resource-intake.v1.json \
             .ai/skills/operant-external-resource-intake/SKILL.md \
-            scripts/sync_operant_external_resources.py \
-            scripts/validate_operant_external_resources.py \
-            docs/prompt-kit-external-resources.js \
-            tests/test_operant_external_resources.py \
+            scripts/sync_operant_external_resources.py scripts/validate_operant_external_resources.py \
+            docs/prompt-kit-external-resources.js tests/test_operant_external_resources.py \
             .github/workflows/operant-external-resource-refresh.yml \
-            scripts/build_prompt_kit_registry.py scripts/validate_harness.py \
+            scripts/build_prompt_kit_registry.py scripts/validate_harness.py .githooks/pre-push \
             harness/capabilities.v1.json harness/triggers.v1.json harness/manifest.v1.json \
             harness/validators.v1.json harness/artifacts.v1.json \
             SKILLS.md CAPABILITIES.md TRIGGERS.md web/README.md \
@@ -71,15 +65,11 @@ jobs:
           python -m unittest tests.test_harness_contract -v
           git diff --check
 
-          test "$(python - <<'PY'
+          python - <<'PY'
           import json
           from pathlib import Path
-          p=json.loads(Path('harness/contracts/operant-external-resource-intake.v1.json').read_text())
-          print(p['projection']['default_render_page_size'])
-          PY
-          )" = "40"
-          python - <<'PY'
-          from pathlib import Path
+          contract=json.loads(Path('harness/contracts/operant-external-resource-intake.v1.json').read_text())
+          assert contract['projection']['default_render_page_size'] == 40
           site=Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
           index=Path('web/prompt-kit/resources.v1.json').read_text(encoding='utf-8')
           assert 'operant-external-resources/v1' in site
@@ -90,8 +80,9 @@ jobs:
           print('OPERANT_EXTERNAL_RESOURCE_CONTAINMENT=PASS')
           PY
 
-          if [ -f tmp/apply_operant_external_resource_registration.py ]; then git rm tmp/apply_operant_external_resource_registration.py; fi
-          if [ -f tmp/repair_operant_external_resource_harness_floor.py ]; then git rm tmp/repair_operant_external_resource_harness_floor.py; fi
+          for carrier in tmp/apply_operant_external_resource_registration.py tmp/repair_operant_external_resource_harness_floor.py tmp/repair_operant_external_resource_prepush.py; do
+            if [ -f "$carrier" ]; then git rm "$carrier"; fi
+          done
           git add -u
           git diff --cached --check
           git status --short
