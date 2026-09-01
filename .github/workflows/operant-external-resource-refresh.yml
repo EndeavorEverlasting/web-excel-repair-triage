@@ -1,0 +1,64 @@
+name: Operant external resource refresh
+
+on:
+  pull_request:
+    paths:
+      - harness/contracts/operant-external-resource-intake.v1.json
+      - .ai/skills/operant-external-resource-intake/SKILL.md
+      - scripts/sync_operant_external_resources.py
+      - scripts/validate_operant_external_resources.py
+      - docs/prompt-kit-external-resources.js
+      - web/prompt-kit/resources.v1.json
+      - registry/resources/operant-external-resource-gaps.v1.json
+      - tests/test_operant_external_resources.py
+      - scripts/build_prompt_kit_registry.py
+      - web/prompt-kit/index.html
+      - .github/workflows/operant-external-resource-refresh.yml
+  schedule:
+    - cron: '37 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: operant-external-resource-refresh-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  refresh-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Build live donor candidate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p Outputs/operant-external-resources
+          python scripts/sync_operant_external_resources.py \
+            --output Outputs/operant-external-resources/resources.v1.json \
+            --gaps-output Outputs/operant-external-resources/gaps.v1.json
+      - name: Validate tracked canonical resource projection
+        run: |
+          node --check docs/prompt-kit-external-resources.js
+          python scripts/validate_operant_external_resources.py --summary
+          python -m unittest tests.test_operant_external_resources -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Compare live donor candidate with tracked projection
+        run: |
+          cmp Outputs/operant-external-resources/resources.v1.json web/prompt-kit/resources.v1.json
+          cmp Outputs/operant-external-resources/gaps.v1.json registry/resources/operant-external-resource-gaps.v1.json
+      - name: Upload refresh evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: operant-external-resource-refresh-${{ github.sha }}
+          path: Outputs/operant-external-resources/
+          if-no-files-found: error
+          retention-days: 14
