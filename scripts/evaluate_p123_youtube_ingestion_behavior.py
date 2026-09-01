@@ -65,6 +65,19 @@ def _validate_source(source: Any) -> dict[str, Any]:
     return source
 
 
+def _resolve_output_path(path: Path) -> Path:
+    candidate = path.expanduser()
+    if not candidate.is_absolute():
+        candidate = ROOT / candidate
+    resolved = candidate.resolve()
+    outputs = (ROOT / "Outputs").resolve()
+    try:
+        resolved.relative_to(outputs)
+    except ValueError as exc:
+        raise SystemExit(f"P123 eval report must remain under {outputs}") from exc
+    return resolved
+
+
 def load_fixture(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if payload.get("schema_version") != "p123-youtube-ingestion-behavior/v1":
@@ -399,7 +412,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     fixture_path = args.fixture.resolve()
-    output_path = args.output.resolve()
+    output_path = _resolve_output_path(args.output)
     if output_path == fixture_path:
         raise SystemExit("refusing to write P123 eval report over input fixture")
     if args.response is not None and output_path == args.response.resolve():
@@ -411,8 +424,8 @@ def main(argv: list[str] | None = None) -> int:
     else:
         report = compare_fixture(fixture)
 
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     if args.summary:
         print(json.dumps(report, indent=2, ensure_ascii=False))
