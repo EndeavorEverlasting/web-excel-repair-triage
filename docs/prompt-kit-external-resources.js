@@ -12,7 +12,7 @@ function ensureExternalResourceStyles(){
   if(document.getElementById('operant-external-resource-styles'))return;
   var style=document.createElement('style');
   style.id='operant-external-resource-styles';
-  style.textContent='.operant-resource-button{min-height:34px;padding:6px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg-surface);color:var(--text-secondary);font:600 11px/1.2 inherit;cursor:pointer}.operant-resource-button:hover,.operant-resource-button:focus-visible{outline:none;border-color:var(--accent);color:var(--text-primary)}.operant-resource-backdrop{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.58);display:flex;align-items:flex-start;justify-content:center;padding:7vh 16px}.operant-resource-backdrop[hidden]{display:none!important}.operant-resource-panel{width:min(860px,100%);max-height:86vh;overflow:hidden;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:10px;padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--bg-surface);box-shadow:0 20px 60px rgba(0,0,0,.45)}.operant-resource-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.operant-resource-head h2{margin:0;font-size:16px}.operant-resource-close{border:0;background:transparent;color:var(--text-secondary);font-size:22px;cursor:pointer}.operant-resource-search{width:100%;box-sizing:border-box;min-height:40px;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text-primary)}.operant-resource-list{overflow:auto;display:grid;gap:8px;align-content:start}.operant-resource-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;padding:10px;border:1px solid var(--border);border-radius:8px}.operant-resource-title{font-weight:700;color:var(--text-primary)}.operant-resource-meta{margin-top:3px;color:var(--text-muted);font-size:10px}.operant-resource-actions{display:flex;align-items:center;gap:6px}.operant-resource-actions a,.operant-resource-actions button{min-height:30px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);font:600 10px/1.2 inherit;text-decoration:none;cursor:pointer}.operant-resource-actions a:hover,.operant-resource-actions button:hover{border-color:var(--accent);color:var(--text-primary)}.operant-resource-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--text-muted);font-size:10px}.operant-resource-more{min-height:30px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);cursor:pointer}.operant-resource-empty{padding:18px 8px;color:var(--text-muted);text-align:center}@media(max-width:640px){.operant-resource-backdrop{padding:3vh 8px}.operant-resource-panel{max-height:94vh;padding:12px}.operant-resource-row{grid-template-columns:1fr}.operant-resource-actions{justify-content:flex-start;flex-wrap:wrap}}';
+  style.textContent='.operant-resource-button{min-height:34px;padding:6px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg-surface);color:var(--text-secondary);font:600 11px/1.2 inherit;cursor:pointer}.operant-resource-button:hover,.operant-resource-button:focus-visible{outline:none;border-color:var(--accent);color:var(--text-primary)}.operant-resource-backdrop{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.58);display:flex;align-items:flex-start;justify-content:center;padding:7vh 16px}.operant-resource-backdrop[hidden]{display:none!important}.operant-resource-panel{width:min(860px,100%);max-height:86vh;overflow:hidden;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:10px;padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--bg-surface);box-shadow:0 20px 60px rgba(0,0,0,.45)}.operant-resource-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.operant-resource-head h2{margin:0;font-size:16px}.operant-resource-close{border:0;background:transparent;color:var(--text-secondary);font-size:22px;cursor:pointer}.operant-resource-search{width:100%;box-sizing:border-box;min-height:40px;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text-primary)}.operant-resource-list{overflow:auto;display:grid;gap:8px;align-content:start}.operant-resource-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;padding:10px;border:1px solid var(--border);border-radius:8px}.operant-resource-title{font-weight:700;color:var(--text-primary)}.operant-resource-meta{margin-top:3px;color:var(--text-muted);font-size:10px}.operant-resource-actions{display:flex;align-items:center;gap:6px}.operant-resource-actions a,.operant-resource-actions button{min-height:30px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);font:600 10px/1.2 inherit;text-decoration:none;cursor:pointer}.operant-resource-actions a:hover,.operant-resource-actions button:hover{border-color:var(--accent);color:var(--text-primary)}.operant-resource-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--text-muted);font-size:10px}.operant-resource-page-actions{display:flex;gap:6px}.operant-resource-page{min-height:30px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);cursor:pointer}.operant-resource-empty{padding:18px 8px;color:var(--text-muted);text-align:center}@media(max-width:640px){.operant-resource-backdrop{padding:3vh 8px}.operant-resource-panel{max-height:94vh;padding:12px}.operant-resource-row{grid-template-columns:1fr}.operant-resource-actions{justify-content:flex-start;flex-wrap:wrap}}';
   document.head.appendChild(style)
 }
 
@@ -35,11 +35,12 @@ function ensureExternalResourceSurface(){
   backdrop.className='operant-resource-backdrop';
   backdrop.id='operantExternalResources';
   backdrop.hidden=true;
-  backdrop.innerHTML='<section class="operant-resource-panel" role="dialog" aria-modal="true" aria-labelledby="operantResourceTitle"><div class="operant-resource-head"><h2 id="operantResourceTitle">Open resources</h2><button type="button" class="operant-resource-close" aria-label="Close resources">×</button></div><input class="operant-resource-search" type="search" placeholder="Search external skills and existing Operant coverage" aria-label="Search external resources"><div class="operant-resource-list" aria-live="polite"></div><div class="operant-resource-foot"><span class="operant-resource-count">Catalog loads only when opened.</span><button type="button" class="operant-resource-more" hidden>More</button></div></section>';
+  backdrop.innerHTML='<section class="operant-resource-panel" role="dialog" aria-modal="true" aria-labelledby="operantResourceTitle"><div class="operant-resource-head"><h2 id="operantResourceTitle">Open resources</h2><button type="button" class="operant-resource-close" aria-label="Close resources">×</button></div><input class="operant-resource-search" type="search" placeholder="Search external skills and existing Operant coverage" aria-label="Search external resources"><div class="operant-resource-list" aria-live="polite"></div><div class="operant-resource-foot"><span class="operant-resource-count">Catalog loads only when opened.</span><span class="operant-resource-page-actions"><button type="button" class="operant-resource-page operant-resource-prev" hidden>Previous</button><button type="button" class="operant-resource-page operant-resource-next" hidden>Next</button></span></div></section>';
   backdrop.addEventListener('click',function(event){if(event.target===backdrop)closeExternalResources()});
   backdrop.querySelector('.operant-resource-close').addEventListener('click',closeExternalResources);
   backdrop.querySelector('.operant-resource-search').addEventListener('input',function(event){externalResourceQuery=String(event.target.value||'').trim().toLowerCase();externalResourcePage=0;renderExternalResourcePage()});
-  backdrop.querySelector('.operant-resource-more').addEventListener('click',function(){externalResourcePage+=1;renderExternalResourcePage()});
+  backdrop.querySelector('.operant-resource-prev').addEventListener('click',function(){if(externalResourcePage>0){externalResourcePage-=1;renderExternalResourcePage()}});
+  backdrop.querySelector('.operant-resource-next').addEventListener('click',function(){externalResourcePage+=1;renderExternalResourcePage()});
   document.body.appendChild(backdrop)
 }
 
@@ -78,10 +79,15 @@ function renderExternalResourcePage(){
   if(!surface)return;
   var list=surface.querySelector('.operant-resource-list');
   var count=surface.querySelector('.operant-resource-count');
-  var more=surface.querySelector('.operant-resource-more');
-  if(!externalResourceIndex){list.innerHTML='<div class="operant-resource-empty">Loading current resource index…</div>';count.textContent='Fetching metadata only…';more.hidden=true;return}
+  var previous=surface.querySelector('.operant-resource-prev');
+  var next=surface.querySelector('.operant-resource-next');
+  if(!externalResourceIndex){list.innerHTML='<div class="operant-resource-empty">Loading current resource index…</div>';count.textContent='Fetching metadata only…';previous.hidden=true;next.hidden=true;return}
   var filtered=externalResourceIndex.resources.filter(resourceMatches);
-  var visible=filtered.slice(0,(externalResourcePage+1)*OPERANT_EXTERNAL_RESOURCE_PAGE_SIZE);
+  var pageCount=Math.max(1,Math.ceil(filtered.length/OPERANT_EXTERNAL_RESOURCE_PAGE_SIZE));
+  externalResourcePage=Math.min(externalResourcePage,pageCount-1);
+  var start=externalResourcePage*OPERANT_EXTERNAL_RESOURCE_PAGE_SIZE;
+  var end=start+OPERANT_EXTERNAL_RESOURCE_PAGE_SIZE;
+  var visible=filtered.slice(start,end);
   list.innerHTML='';
   visible.forEach(function(item){
     var coverage=item.coverage||{};
@@ -98,9 +104,9 @@ function renderExternalResourcePage(){
     row.appendChild(detail);row.appendChild(actions);list.appendChild(row)
   });
   if(!visible.length)list.innerHTML='<div class="operant-resource-empty">No resources match this search.</div>';
-  count.textContent=filtered.length+' matching · '+externalResourceIndex.summary.resource_count+' indexed · metadata only';
-  more.hidden=visible.length>=filtered.length;
-  more.textContent='More ('+Math.min(OPERANT_EXTERNAL_RESOURCE_PAGE_SIZE,filtered.length-visible.length)+')'
+  count.textContent=filtered.length+' matching · '+externalResourceIndex.summary.resource_count+' indexed · page '+(externalResourcePage+1)+'/'+pageCount+' · metadata only';
+  previous.hidden=externalResourcePage===0;
+  next.hidden=end>=filtered.length
 }
 
 function openExternalResources(){
