@@ -172,6 +172,12 @@ Production decisions closed on 2026-08-22:
 
 These production choices preserve the selected seams and remove the prior UX-policy ambiguity.
 
+Production decisions extended on 2026-09-01:
+- a registry prompt may publish a shared recommended shortcut by shipping `sharedShortcut: true` in its canonical registry record; the effective typed sequence is the lowercase prompt ID.
+- shared recommended shortcuts are active for every user without requiring a Favorite and complete through the same copy + reveal dispatch path.
+- built-ins and user-configured bindings keep precedence; assigning or removing a personal binding still requires the Favorite gate and a successful durable storage write.
+- Hotkey help lists shared recommended shortcuts as a projection of the registry with a Recommended label and no Remove control, because the registry owns them.
+
 ## Proof ceiling
 Repository proof must cover the production source, generated-site parity, input/modifier suppression, filter commands, sequence collision ordering, timeout semantics, fail-closed persistence, target validation, and canonical prompt-detail dispatch. The user's direct browser exercise supplies additional live evidence that the existing visible hotkeys operate on the deployed UI.
 

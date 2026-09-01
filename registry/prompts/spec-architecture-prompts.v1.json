@@ -499,6 +499,7 @@
     {
       "id": "P95",
       "seq": "95",
+      "sharedShortcut": true,
       "name": "Program Design & Call-Stack Prototype Architect",
       "type": "DESIGN + PROTOTYPE",
       "class": "SOFTWARE ARCHITECTURE / PROGRAM DESIGN",

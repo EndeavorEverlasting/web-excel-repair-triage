@@ -196,6 +196,31 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             self.assertIn(marker, source)
             self.assertIn(marker, deployed)
 
+    def test_shared_registry_shortcuts_publish_without_favorite_gate(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        deployed = DEPLOYED.read_text(encoding="utf-8")
+        for marker in (
+            "function computeSharedPromptShortcutBindings()",
+            "item.sharedShortcut!==true",
+            "function effectivePromptShortcutBindings()",
+            "var bindings=effectivePromptShortcutBindings();",
+            "if(!sharedPromptShortcutBindings[String(promptId).toLowerCase()]&&!isFavoritePrompt(promptId))",
+            "function sharedPromptShortcutIds()",
+            "shared.textContent='Recommended'",
+        ):
+            self.assertIn(marker, source)
+            self.assertIn(marker, deployed)
+        registry = json.loads(
+            (ROOT / "registry" / "prompts" / "spec-architecture-prompts.v1.json").read_text(encoding="utf-8")
+        )
+        shared_ids = [
+            prompt["id"]
+            for prompt in registry["prompts"]
+            if prompt.get("sharedShortcut") is True
+        ]
+        self.assertEqual(shared_ids, ["P95"])
+        self.assertIn('"sharedShortcut": true', deployed)
+
     def test_human_contract_and_design_close_previous_ux_decisions(self) -> None:
         readme = README.read_text(encoding="utf-8")
         design = DESIGN.read_text(encoding="utf-8")
