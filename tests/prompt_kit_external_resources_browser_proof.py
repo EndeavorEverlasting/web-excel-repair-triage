@@ -59,7 +59,7 @@ def observe(port: int, screenshot: Path) -> list[dict]:
                   const count=document.querySelector('.operant-resource-count');
                   return !!(count && count.textContent.includes(expected+' indexed'));
                 }""",
-                expected_count,
+                arg=expected_count,
                 timeout=5000,
             )
             loaded_requests = len(resource_requests)
