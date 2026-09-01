@@ -1,0 +1,296 @@
+{
+  "schema_version": "operant-external-resource-gap-ledger/v1",
+  "source_floor": [
+    {
+      "id": "deepseek-harness",
+      "repository": "deepseek-ai/deepseek-harness",
+      "default_branch": "master",
+      "resolved_sha": "4e84901e6471b79ec0338099867ebb4606d12bb5",
+      "resource_root": ".agents/skills",
+      "resource_count": 11
+    },
+    {
+      "id": "anthropic-skills",
+      "repository": "anthropics/skills",
+      "default_branch": "main",
+      "resolved_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "resource_root": "skills",
+      "resource_count": 19
+    }
+  ],
+  "policy": {
+    "promotion_owner_prompt": "P79",
+    "automatic_prompt_authoring": false,
+    "rule": "Prefer an existing Operant prompt or local skill when deterministic title/keyword coverage is strong; otherwise keep the donor resource directly usable and route the missing internal capability to P79 for strategic strengthen-before-add review."
+  },
+  "summary": {
+    "source_count": 2,
+    "resource_count": 30,
+    "point_to_existing_prompt": 4,
+    "point_to_existing_skill": 0,
+    "point_to_external": 26,
+    "review_add_prompt": 26
+  },
+  "actions": [
+    {
+      "resource_id": "anthropic-skills:academy-guide",
+      "source_id": "anthropic-skills",
+      "title": "Academy Guide",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/academy-guide/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "anthropic-skills:algorithmic-art",
+      "source_id": "anthropic-skills",
+      "title": "Algorithmic Art",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/algorithmic-art/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "anthropic-skills:brand-guidelines",
+      "source_id": "anthropic-skills",
+      "title": "Brand Guidelines",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/brand-guidelines/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "anthropic-skills:canvas-design",
+      "source_id": "anthropic-skills",
+      "title": "Canvas Design",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/canvas-design/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "anthropic-skills:claude-api",
+      "source_id": "anthropic-skills",
+      "title": "Claude Api",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/claude-api/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "anthropic-skills:discernment-nudge",
+      "source_id": "anthropic-skills",
+      "title": "Discernment Nudge",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/discernment-nudge/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "anthropic-skills:doc-coauthoring",
+      "source_id": "anthropic-skills",
+      "title": "Doc Coauthoring",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/doc-coauthoring/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "anthropic-skills:docx",
+      "source_id": "anthropic-skills",
+      "title": "Docx",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/docx/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "anthropic-skills:frontend-design",
+      "source_id": "anthropic-skills",
+      "title": "Frontend Design",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/frontend-design/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "anthropic-skills:internal-comms",
+      "source_id": "anthropic-skills",
+      "title": "Internal Comms",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/internal-comms/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "anthropic-skills:pdf",
+      "source_id": "anthropic-skills",
+      "title": "Pdf",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/pdf/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "anthropic-skills:pptx",
+      "source_id": "anthropic-skills",
+      "title": "Pptx",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/pptx/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "anthropic-skills:skill-creator",
+      "source_id": "anthropic-skills",
+      "title": "Skill Creator",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/skill-creator/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "anthropic-skills:slack-gif-creator",
+      "source_id": "anthropic-skills",
+      "title": "Slack Gif Creator",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/slack-gif-creator/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.333
+    },
+    {
+      "resource_id": "anthropic-skills:theme-factory",
+      "source_id": "anthropic-skills",
+      "title": "Theme Factory",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/theme-factory/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "anthropic-skills:web-artifacts-builder",
+      "source_id": "anthropic-skills",
+      "title": "Web Artifacts Builder",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/web-artifacts-builder/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.333
+    },
+    {
+      "resource_id": "anthropic-skills:webapp-testing",
+      "source_id": "anthropic-skills",
+      "title": "Webapp Testing",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/webapp-testing/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "anthropic-skills:xlsx",
+      "source_id": "anthropic-skills",
+      "title": "Xlsx",
+      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/xlsx/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "deepseek-harness:dsh-archive-agent-notes",
+      "source_id": "deepseek-harness",
+      "title": "Dsh Archive Agent Notes",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/4e84901e6471b79ec0338099867ebb4606d12bb5/.agents/skills/dsh-archive-agent-notes/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "deepseek-harness:dsh-doc",
+      "source_id": "deepseek-harness",
+      "title": "Dsh Doc",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/4e84901e6471b79ec0338099867ebb4606d12bb5/.agents/skills/dsh-doc/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "deepseek-harness:dsh-find-simplifications",
+      "source_id": "deepseek-harness",
+      "title": "Dsh Find Simplifications",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/4e84901e6471b79ec0338099867ebb4606d12bb5/.agents/skills/dsh-find-simplifications/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "deepseek-harness:dsh-merging-stacked-prs",
+      "source_id": "deepseek-harness",
+      "title": "Dsh Merging Stacked Prs",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/4e84901e6471b79ec0338099867ebb4606d12bb5/.agents/skills/dsh-merging-stacked-prs/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "deepseek-harness:dsh-prose-standard",
+      "source_id": "deepseek-harness",
+      "title": "Dsh Prose Standard",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/4e84901e6471b79ec0338099867ebb4606d12bb5/.agents/skills/dsh-prose-standard/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "deepseek-harness:dsh-translate-docs",
+      "source_id": "deepseek-harness",
+      "title": "Dsh Translate Docs",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/4e84901e6471b79ec0338099867ebb4606d12bb5/.agents/skills/dsh-translate-docs/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "deepseek-harness:dsh-trim-cot-leakage",
+      "source_id": "deepseek-harness",
+      "title": "Dsh Trim Cot Leakage",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/4e84901e6471b79ec0338099867ebb4606d12bb5/.agents/skills/dsh-trim-cot-leakage/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "deepseek-harness:record-browser-gif",
+      "source_id": "deepseek-harness",
+      "title": "Record Browser Gif",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/4e84901e6471b79ec0338099867ebb4606d12bb5/.agents/skills/record-browser-gif/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.333
+    }
+  ]
+}

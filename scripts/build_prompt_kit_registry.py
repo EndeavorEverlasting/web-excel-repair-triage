@@ -41,6 +41,7 @@ MANAGEMENT_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-management.js"
 SPEC_ARCHITECTURE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-spec-architecture.js"
 FEEDBACK_PRODUCTION_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-feedback-production.js"
 ONTOLOGY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-ontology.js"
+EXTERNAL_RESOURCES_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-external-resources.js"
 CAPABILITIES_REGISTRY = REPO_ROOT / "harness" / "capabilities.v1.json"
 SKILLS_ROOT = REPO_ROOT / ".ai" / "skills"
 ACTIONABILITY_POLICY = (
@@ -620,6 +621,9 @@ def render() -> str:
     ontology_script = _read_runtime(
         ONTOLOGY_RUNTIME, "Prompt Kit ontology lens behavior"
     )
+    external_resources_script = _read_runtime(
+        EXTERNAL_RESOURCES_RUNTIME, "Operant external resource browsing behavior"
+    )
     closing = "</body>"
     if closing not in html:
         raise SystemExit("Prompt Kit builder output is missing </body>")
@@ -634,6 +638,7 @@ def render() -> str:
         f"<script>\n{spec_architecture_script}\n</script>\n"
         f"<script>\n{feedback_production_script}\n</script>\n"
         f"<script>\n{ontology_script}\n</script>\n"
+        f"<script>\n{external_resources_script}\n</script>\n"
     )
     return html.replace(closing, supplemental + closing, 1)
 

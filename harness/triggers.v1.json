@@ -170,6 +170,24 @@
         "an existing different hooksPath or default hook would be overwritten without reviewed replacement intent",
         "provider-specific hook behavior is being claimed without its own runtime proof"
       ]
+    },
+    {
+      "id": "operant-external-resource-refresh-needed",
+      "capability_id": "operant-external-resource-intake",
+      "skill": ".ai/skills/operant-external-resource-intake/SKILL.md",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "conditions": [
+        "approved donor repository resource inventory may have changed",
+        "scheduled Operant external-resource drift proof fails",
+        "user asks whether an existing open-source skill/resource already covers a task",
+        "prompt-gap maintenance needs current donor evidence"
+      ],
+      "forbidden_conditions": [
+        "donor content would be copied into PROMPTS merely for search",
+        "scheduled automation would write directly to the default branch",
+        "private or credentialed donor access is required",
+        "prompt addition would occur without P79 strategic strengthen-before-add review"
+      ]
     }
   ]
 }

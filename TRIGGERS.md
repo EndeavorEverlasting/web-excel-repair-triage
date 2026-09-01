@@ -52,3 +52,7 @@ Explicit written feedback and dislikes may create one bounded P115 work request 
 ## Collision rule
 
 One writer owns each shared registry, workflow, generated artifact, branch, PR, or mutable runtime. Read-only audits may run in parallel only when they cannot invalidate the writer's floor. Harness infrastructure may modify contracts, registries, validators, tests, hooks, CI, skills, and reports; it may not silently take ownership of product implementation or governance.
+
+## Operant external resource refresh
+
+`operant-external-resource-refresh-needed` routes scheduled donor drift, open-source resource lookup, and donor-backed prompt-gap maintenance to `.ai/skills/operant-external-resource-intake/SKILL.md`. Existing Operant coverage wins; external-only resources remain directly usable; prompt publication stays behind P79 strategic review.

@@ -265,6 +265,33 @@
         "path": "scripts/install_local_hooks.py"
       },
       "proof_ceiling": "Tracked Git hook and observed local core.hooksPath activation proof only; provider-specific Claude/Codex/DeepSeek hooks and other workstations require separate runtime proof."
+    },
+    {
+      "id": "operant-external-resource-intake",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/operant-external-resource-intake/SKILL.md",
+      "trigger_ids": [
+        "operant-external-resource-refresh-needed"
+      ],
+      "operation": "Refresh approved public donor skill inventories, project compact commit-pinned metadata, classify existing Operant coverage first, and emit external pointers plus grounded prompt-review gaps without copying donor bodies into the Prompt Kit.",
+      "inputs": [
+        "harness/contracts/operant-external-resource-intake.v1.json",
+        "live public GitHub donor metadata",
+        "current Operant prompt registry",
+        "current local skill inventory"
+      ],
+      "outputs": [
+        "web/prompt-kit/resources.v1.json",
+        "registry/resources/operant-external-resource-gaps.v1.json",
+        "POINT_TO_EXISTING_PROMPT / POINT_TO_EXISTING_SKILL / POINT_TO_EXTERNAL disposition",
+        "REVIEW_ADD_PROMPT queue routed to P79 when internal coverage is absent"
+      ],
+      "implementation": {
+        "kind": "script",
+        "path": "scripts/sync_operant_external_resources.py"
+      },
+      "proof_ceiling": "Live public donor source-SHA resolution plus repository metadata projection, deterministic coverage routing, size-budget, lazy-load, CI drift, and generated-site proof; no donor quality, license-adaptation, browser-network, or automatic prompt-quality proof."
     }
   ]
 }

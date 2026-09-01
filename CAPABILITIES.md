@@ -76,3 +76,7 @@ P62 must reproduce functional weaknesses and inefficiencies with versioned cases
 ## Proof boundaries
 
 Capability registration, static validators, tests, and CI prove only the repository surfaces and commands exercised on the tested commit. Cross-device Prompt Kit validation proves routing intent and canonical access surfaces plus the existing-checkout preconditions encoded in the contract, not a phone/browser install menu, Termux/F-Droid availability, Git credentials, browser storage, clipboard behavior, or push success. Other capability proof likewise does not establish provider behavior, model judgment, Excel for Web, Windows GUI, protected runtime access, technician acceptance, deployment, or production success.
+
+## Operant external resource intake
+
+`operant-external-resource-intake` uses `scripts/sync_operant_external_resources.py` to inventory approved public donor skill roots at exact commits, publish the metadata-only `web/prompt-kit/resources.v1.json` sidecar, and route deterministic coverage gaps through P79 rather than copying donor bodies or auto-authoring prompts.
