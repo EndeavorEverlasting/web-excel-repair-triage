@@ -47,12 +47,14 @@ class PromptKitHotkeyIdentityRuntimeTests(unittest.TestCase):
                 "resetPromptShortcutBuffer",
                 "schedulePromptShortcutBufferReset",
                 "promptShortcutHasLongerPrefix",
+                "effectivePromptShortcutBindings",
                 "handleConfiguredPromptShortcutKey",
             )
         )
         script = f"""
 var PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS=25;
 var promptShortcutBindings={{p11:'P11',p13:'P13',p111:'P111'}};
+var sharedPromptShortcutBindings={{}};
 var promptShortcutBuffer='';
 var promptShortcutBufferTimer=null;
 var activations=[];
@@ -107,6 +109,8 @@ function assert(condition,message){{if(!condition)throw new Error(message)}}
             "normalizePromptShortcutId",
             "schedulePromptShortcutBufferReset",
             "promptShortcutHasLongerPrefix",
+            "computeSharedPromptShortcutBindings",
+            "effectivePromptShortcutBindings",
             "handleConfiguredPromptShortcutKey",
         ):
             self.assertEqual(function_block(source, name), function_block(deployed, name))

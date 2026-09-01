@@ -5,6 +5,7 @@ var PROMPT_KIT_SHORTCUT_STORAGE_KEY='promptKit.promptShortcuts.v1';
 var PROMPT_KIT_SHORTCUT_SCHEMA='prompt-kit-shortcuts/v1';
 var PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS=1200;
 var promptShortcutBindings=loadPromptShortcutBindings();
+var sharedPromptShortcutBindings=computeSharedPromptShortcutBindings();
 var promptShortcutBuffer='';
 var promptShortcutBufferTimer=null;
 
@@ -180,6 +181,24 @@ function normalizePromptShortcutId(raw){
   return /^P\d+$/.test(value)?value:null
 }
 
+function computeSharedPromptShortcutBindings(){
+  var bindings={};
+  var catalog=typeof PROMPTS!=='undefined'&&Array.isArray(PROMPTS)?PROMPTS:[];
+  catalog.forEach(function(item){
+    if(!item||item.sharedShortcut!==true)return;
+    var promptId=normalizePromptShortcutId(item.id);
+    if(promptId)bindings[promptId.toLowerCase()]=promptId
+  });
+  return bindings
+}
+
+function effectivePromptShortcutBindings(){
+  var merged={};
+  Object.keys(sharedPromptShortcutBindings).forEach(function(gesture){merged[gesture]=sharedPromptShortcutBindings[gesture]});
+  Object.keys(promptShortcutBindings).forEach(function(gesture){merged[gesture]=promptShortcutBindings[gesture]});
+  return merged
+}
+
 function clonePromptShortcutBindings(source){
   var copy={};
   Object.keys(source||{}).forEach(function(gesture){copy[gesture]=source[gesture]});
@@ -219,6 +238,10 @@ function configuredPromptShortcutIds(){
   return Object.keys(promptShortcutBindings).sort(function(a,b){return Number(a.slice(1))-Number(b.slice(1))}).map(function(gesture){return promptShortcutBindings[gesture]})
 }
 
+function sharedPromptShortcutIds(){
+  return Object.keys(sharedPromptShortcutBindings).sort(function(a,b){return Number(a.slice(1))-Number(b.slice(1))}).map(function(gesture){return sharedPromptShortcutBindings[gesture]})
+}
+
 function configurePromptShortcut(rawPromptId){
   var promptId=normalizePromptShortcutId(rawPromptId);
   if(!promptId){showToast('Use a prompt ID such as P95');return false}
@@ -252,8 +275,16 @@ function renderPromptShortcutBindings(){
   var host=document.getElementById('promptShortcutBindings');
   if(!host)return;
   host.innerHTML='';
+  var sharedIds=sharedPromptShortcutIds().filter(function(promptId){return !promptShortcutBindings[promptId.toLowerCase()]});
   var ids=configuredPromptShortcutIds();
-  if(!ids.length){var empty=document.createElement('span');empty.className='hotkey-shortcut-empty';empty.textContent='No favorite prompt shortcuts configured.';host.appendChild(empty);return}
+  if(!ids.length&&!sharedIds.length){var empty=document.createElement('span');empty.className='hotkey-shortcut-empty';empty.textContent='No favorite prompt shortcuts configured.';host.appendChild(empty);return}
+  sharedIds.forEach(function(promptId){
+    var row=document.createElement('div');row.className='hotkey-shortcut-row';
+    var key=document.createElement('kbd');key.textContent=promptId.toLowerCase();
+    var label=document.createElement('span');label.textContent='Copy + reveal '+promptId;
+    var shared=document.createElement('span');shared.className='hotkey-shortcut-shared';shared.textContent='Recommended';
+    row.appendChild(key);row.appendChild(label);row.appendChild(shared);host.appendChild(row)
+  });
   ids.forEach(function(promptId){
     var row=document.createElement('div');row.className='hotkey-shortcut-row';
     var key=document.createElement('kbd');key.textContent=promptId.toLowerCase();
@@ -272,7 +303,7 @@ function resetPromptShortcutBuffer(){
 function schedulePromptShortcutBufferReset(){
   if(promptShortcutBufferTimer)clearTimeout(promptShortcutBufferTimer);
   promptShortcutBufferTimer=setTimeout(function(){
-    var exact=promptShortcutBindings[promptShortcutBuffer];
+    var exact=effectivePromptShortcutBindings()[promptShortcutBuffer];
     resetPromptShortcutBuffer();
     if(exact)activatePromptShortcutTarget(exact)
   },PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS)
@@ -303,24 +334,25 @@ function revealPromptShortcutTarget(promptId){
 function activatePromptShortcutTarget(promptId){
   var prompt=PROMPTS.find(function(item){return item.id===promptId});
   if(!prompt)return false;
-  if(!isFavoritePrompt(promptId)){showToast(promptId+' is no longer a Favorite');return false}
+  if(!sharedPromptShortcutBindings[String(promptId).toLowerCase()]&&!isFavoritePrompt(promptId)){showToast(promptId+' is no longer a Favorite');return false}
   if(!revealPromptShortcutTarget(promptId)){showToast(promptId+' could not be revealed');return false}
   copyPrompt(promptId);
   return true
 }
 
 function handleConfiguredPromptShortcutKey(e,key){
-  var gestures=Object.keys(promptShortcutBindings);
+  var bindings=effectivePromptShortcutBindings();
+  var gestures=Object.keys(bindings);
   if(!gestures.length){resetPromptShortcutBuffer();return false}
   if(key==='.'&&promptShortcutBuffer){e.preventDefault();e.stopImmediatePropagation();schedulePromptShortcutBufferReset();return true}
-  var pendingExact=promptShortcutBindings[promptShortcutBuffer]||null;
+  var pendingExact=bindings[promptShortcutBuffer]||null;
   if(!/^[a-z0-9]$/.test(key)){
     resetPromptShortcutBuffer();
     if(pendingExact)activatePromptShortcutTarget(pendingExact);
     return false
   }
   function acceptCandidate(candidate){
-    var exact=promptShortcutBindings[candidate];
+    var exact=bindings[candidate];
     var prefix=gestures.some(function(gesture){return gesture.indexOf(candidate)===0});
     if(exact&&!promptShortcutHasLongerPrefix(candidate,gestures)){e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();activatePromptShortcutTarget(exact);return true}
     if(prefix){e.preventDefault();e.stopImmediatePropagation();promptShortcutBuffer=candidate;schedulePromptShortcutBufferReset();return true}
@@ -447,7 +479,7 @@ function ensureHotkeyHelp(){
   document.addEventListener('click',function(e){if(!panel.hidden&&!shell.contains(e.target))setHotkeyHelpOpen(false,false)});
   if(!document.getElementById('prompt-kit-hotkey-config-styles')){
     var configStyle=document.createElement('style');configStyle.id='prompt-kit-hotkey-config-styles';
-    configStyle.textContent='.hotkey-shortcut-config{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:grid;gap:7px}.hotkey-shortcut-hint,.hotkey-shortcut-empty{color:var(--text-muted);font-size:10px;line-height:1.4}.hotkey-shortcut-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}.hotkey-shortcut-controls input,.hotkey-shortcut-controls button,.hotkey-shortcut-remove{min-height:32px;border:1px solid var(--border);border-radius:6px;background:var(--bg-surface);color:var(--text-primary);font:inherit}.hotkey-shortcut-controls input{padding:5px 7px}.hotkey-shortcut-controls button,.hotkey-shortcut-remove{padding:5px 8px;cursor:pointer}.hotkey-shortcut-bindings{display:grid;gap:5px}.hotkey-shortcut-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:7px;color:var(--text-secondary);font-size:10px}.hotkey-shortcut-row kbd{padding:3px 6px;border:1px solid var(--border);border-radius:6px;color:var(--accent);font:700 10px/1.3 ui-monospace,SFMono-Regular,Consolas,monospace}.hotkey-shortcut-remove{min-height:28px;font-size:9px}';
+    configStyle.textContent='.hotkey-shortcut-config{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:grid;gap:7px}.hotkey-shortcut-hint,.hotkey-shortcut-empty{color:var(--text-muted);font-size:10px;line-height:1.4}.hotkey-shortcut-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}.hotkey-shortcut-controls input,.hotkey-shortcut-controls button,.hotkey-shortcut-remove{min-height:32px;border:1px solid var(--border);border-radius:6px;background:var(--bg-surface);color:var(--text-primary);font:inherit}.hotkey-shortcut-controls input{padding:5px 7px}.hotkey-shortcut-controls button,.hotkey-shortcut-remove{padding:5px 8px;cursor:pointer}.hotkey-shortcut-bindings{display:grid;gap:5px}.hotkey-shortcut-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:7px;color:var(--text-secondary);font-size:10px}.hotkey-shortcut-row kbd{padding:3px 6px;border:1px solid var(--border);border-radius:6px;color:var(--accent);font:700 10px/1.3 ui-monospace,SFMono-Regular,Consolas,monospace}.hotkey-shortcut-remove{min-height:28px;font-size:9px}.hotkey-shortcut-shared{display:inline-flex;align-items:center;min-height:28px;padding:0 8px;border:1px solid var(--border);border-radius:6px;color:var(--text-muted);font-size:9px}';
     document.head.appendChild(configStyle)
   }
   renderPromptShortcutBindings()
