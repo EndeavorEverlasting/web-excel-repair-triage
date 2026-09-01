@@ -3,8 +3,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -63,6 +65,42 @@ def _validate_source(source: Any) -> dict[str, Any]:
     for key in SOURCE_BOOL_FIELDS:
         _source_flag(source, key)
     return source
+
+
+def _require_output_path(path: Path) -> None:
+    outputs = (ROOT / "Outputs").resolve()
+    try:
+        path.resolve().relative_to(outputs)
+    except ValueError as exc:
+        raise SystemExit(f"P123 eval report must remain under {outputs}") from exc
+
+
+def _write_report_atomic(path: Path, report: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    _require_output_path(path)
+    payload = json.dumps(report, indent=2, ensure_ascii=False) + "\n"
+    tmp_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as tmp:
+            tmp.write(payload)
+            tmp.flush()
+            os.fsync(tmp.fileno())
+            tmp_path = Path(tmp.name).resolve()
+        _require_output_path(tmp_path)
+        _require_output_path(path)
+        os.replace(tmp_path, path)
+        tmp_path = None
+        _require_output_path(path)
+    finally:
+        if tmp_path is not None and tmp_path.exists():
+            tmp_path.unlink()
 
 
 def load_fixture(path: Path) -> dict[str, Any]:
@@ -399,11 +437,15 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     fixture_path = args.fixture.resolve()
-    output_path = args.output.resolve()
+    output_candidate = args.output.expanduser()
+    if not output_candidate.is_absolute():
+        output_candidate = ROOT / output_candidate
+    output_path = output_candidate.resolve()
     if output_path == fixture_path:
         raise SystemExit("refusing to write P123 eval report over input fixture")
     if args.response is not None and output_path == args.response.resolve():
         raise SystemExit("refusing to write P123 eval report over candidate response input")
+    _require_output_path(output_path)
 
     fixture = load_fixture(args.fixture)
     if args.response:
@@ -411,8 +453,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         report = compare_fixture(fixture)
 
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    _write_report_atomic(output_path, report)
 
     if args.summary:
         print(json.dumps(report, indent=2, ensure_ascii=False))

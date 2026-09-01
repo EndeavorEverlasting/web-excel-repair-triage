@@ -6,6 +6,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
@@ -212,7 +213,9 @@ class P123YouTubeIngestionBehaviorEvalTests(unittest.TestCase):
         self.assertIn("false_negative_risk", comparison)
 
     def test_cli_writes_machine_readable_report_and_returns_green_for_expected_comparison(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        outputs = ROOT / "Outputs"
+        outputs.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=outputs) as tmp:
             out = Path(tmp) / "report.json"
             rc = MOD.main(["--fixture", str(FIXTURE), "--output", str(out)])
             self.assertEqual(rc, 0)
@@ -222,11 +225,60 @@ class P123YouTubeIngestionBehaviorEvalTests(unittest.TestCase):
             self.assertEqual(report["baseline"]["status"], "FAIL")
             self.assertEqual(report["candidate"]["status"], "PASS")
 
+    def test_cli_commits_report_with_atomic_replace_and_cleans_temp_file(self):
+        outputs = ROOT / "Outputs"
+        outputs.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=outputs) as tmp:
+            out = Path(tmp) / "atomic-report.json"
+            with mock.patch.object(MOD.os, "replace", wraps=MOD.os.replace) as replace:
+                rc = MOD.main(["--fixture", str(FIXTURE), "--output", str(out)])
+            self.assertEqual(rc, 0)
+            self.assertEqual(replace.call_count, 1)
+            self.assertEqual(list(Path(tmp).glob(".atomic-report.json.*.tmp")), [])
+            json.loads(out.read_text(encoding="utf-8"))
+
+    def test_atomic_replace_preserves_hard_link_aliases_of_inputs(self):
+        outputs = ROOT / "Outputs"
+        outputs.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=outputs) as tmp:
+            tmp_path = Path(tmp)
+            fixture_alias = tmp_path / "fixture-alias.json"
+            try:
+                fixture_alias.hardlink_to(FIXTURE)
+            except (NotImplementedError, OSError) as exc:
+                self.skipTest(f"hard links unavailable: {exc}")
+            fixture_before = FIXTURE.read_bytes()
+            rc = MOD.main(["--fixture", str(FIXTURE), "--output", str(fixture_alias)])
+            self.assertEqual(rc, 0)
+            self.assertEqual(FIXTURE.read_bytes(), fixture_before)
+            json.loads(fixture_alias.read_text(encoding="utf-8"))
+
+            response = tmp_path / "candidate.txt"
+            response.write_text(self.fixture["candidate_response"], encoding="utf-8")
+            response_before = response.read_bytes()
+            response_alias = tmp_path / "candidate-alias.json"
+            response_alias.hardlink_to(response)
+            rc = MOD.main(
+                [
+                    "--fixture",
+                    str(FIXTURE),
+                    "--response",
+                    str(response),
+                    "--output",
+                    str(response_alias),
+                ]
+            )
+            self.assertEqual(rc, 0)
+            self.assertEqual(response.read_bytes(), response_before)
+            json.loads(response_alias.read_text(encoding="utf-8"))
+
     def test_cli_refuses_to_overwrite_fixture_or_candidate_response(self):
         with self.assertRaisesRegex(SystemExit, "over input fixture"):
             MOD.main(["--fixture", str(FIXTURE), "--output", str(FIXTURE)])
 
-        with tempfile.TemporaryDirectory() as tmp:
+        outputs = ROOT / "Outputs"
+        outputs.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=outputs) as tmp:
             response = Path(tmp) / "candidate.txt"
             response.write_text(self.fixture["candidate_response"], encoding="utf-8")
             with self.assertRaisesRegex(SystemExit, "over candidate response input"):
@@ -240,6 +292,36 @@ class P123YouTubeIngestionBehaviorEvalTests(unittest.TestCase):
                         str(response),
                     ]
                 )
+
+    def test_cli_rejects_output_outside_repository_outputs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "report.json"
+            with self.assertRaisesRegex(SystemExit, "must remain under"):
+                MOD.main(["--fixture", str(FIXTURE), "--output", str(out)])
+
+    def test_cli_rejects_symlink_escape_from_repository_outputs(self):
+        outputs = ROOT / "Outputs"
+        outputs.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=outputs) as inside, tempfile.TemporaryDirectory() as outside:
+            link = Path(inside) / "escape"
+            try:
+                link.symlink_to(Path(outside), target_is_directory=True)
+            except (NotImplementedError, OSError) as exc:
+                self.skipTest(f"directory symlinks unavailable: {exc}")
+            out = link / "report.json"
+            with self.assertRaisesRegex(SystemExit, "must remain under"):
+                MOD.main(["--fixture", str(FIXTURE), "--output", str(out)])
+            self.assertFalse((Path(outside) / "report.json").exists())
+
+    def test_relative_output_path_is_rooted_under_repository_outputs(self):
+        outputs = ROOT / "Outputs"
+        outputs.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=outputs) as tmp:
+            absolute = Path(tmp) / "relative-report.json"
+            relative = absolute.relative_to(ROOT)
+            rc = MOD.main(["--fixture", str(FIXTURE), "--output", str(relative)])
+            self.assertEqual(rc, 0)
+            self.assertTrue(absolute.is_file())
 
     def test_default_report_location_is_under_outputs(self):
         self.assertEqual(MOD.DEFAULT_OUTPUT.parent, ROOT / "Outputs")
