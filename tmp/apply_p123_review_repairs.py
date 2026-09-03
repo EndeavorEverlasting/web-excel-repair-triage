@@ -20,23 +20,23 @@ old_section = """DOMAIN-AGNOSTIC KNOWLEDGE / LEDGER CONTRACT
 """
 new_section = """DOMAIN-AGNOSTIC KNOWLEDGE / LEDGER CONTRACT
 - Classify from source + mission, never recent conversation themes, favorites, or examples. Examples prove range, not defaults: Cybersecurity; Agentic Software Development; Culinary & Food.
-- With a supplied ledger/schema, `Sources`, `Findings`, and `Domains` are canonical; reuse domains and treat favored-domain views as projections, not separate data authorities.
-- Resolve spreadsheet write capability + authority. If writable and authorized, reuse/append the Source, append one Findings row per finding, and report exact written ranges/IDs as the mutation receipt. Otherwise emit row-ready Source and Findings records. Never claim the spreadsheet was updated without an observed write receipt.
+- With a ledger/schema, `Sources`, `Findings`, and `Domains` are canonical; reuse domains; favored views are projections, not separate data authorities.
+- Resolve spreadsheet write capability + authority. If writable + authorized, reuse/append Source, append Findings rows, and report exact written ranges/IDs as the mutation receipt. Otherwise emit row-ready Source and Findings records. Never claim the spreadsheet was updated without an observed write receipt.
 - Preserve provenance/evidence/validation; use Unknown / Needs Verification. Set Prompt Kit Candidate / Software Candidate only when applicable.
 """
 if old_section not in content:
     raise SystemExit("Expected current P123 ledger section not found")
 content = content.replace(old_section, new_section, 1)
 
-# Recover enough copy budget for the stronger write rule without dropping any behavior.
+# Recover copy budget by removing redundant framing, not behavior.
 content = content.replace(
     "GEMINI YOUTUBE INGESTION. USE THE SUPPLIED SOURCE; EXTRACT GROUNDED KNOWLEDGE, BUILD THE STANDALONE PACKET, AND DO NOT PRETEND TO ACCESS THE TARGET REPOSITORY.",
-    "GEMINI YOUTUBE INGESTION. USE THE SOURCE; EXTRACT GROUNDED KNOWLEDGE, BUILD THE PACKET, AND DO NOT PRETEND TO ACCESS THE TARGET REPOSITORY.",
+    "GEMINI YOUTUBE INGESTION. USE THE SOURCE; EXTRACT KNOWLEDGE, BUILD THE PACKET, AND DO NOT PRETEND REPOSITORY ACCESS.",
     1,
 )
 content = content.replace(
     "Turn the YouTube source, user mission, supplied ledger/schema, and verified donor research into grounded knowledge plus a runnable ingestion packet. Build real artifacts; never fake repository work.",
-    "Turn the source, mission, ledger/schema, and verified donor research into grounded knowledge plus a runnable ingestion packet. Build real artifacts; never fake repository work.",
+    "Turn source + mission + ledger/schema + donor evidence into grounded knowledge and a runnable packet. Build real artifacts; never fake repo work.",
     1,
 )
 prompt["copyContent"] = content
