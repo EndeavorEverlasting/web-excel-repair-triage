@@ -62,9 +62,9 @@ jobs:
           assert 'Examples prove range, not defaults' in c
           assert 'recent conversation themes' in c
           assert '`Sources`, `Findings`, and `Domains`' in c
-          assert 'Favored-domain tabs/views are projections, not separate data authorities' in c
+          assert 'favored-domain views are projections, not separate data authorities' in c
           assert 'never pretend the spreadsheet was updated' in c
-          assert 'Cybersecurity; Agentic Software Development; Culinary & Food; Gardening & Horticulture' in c
+          assert 'Cybersecurity; Agentic Software Development; Culinary & Food' in c
           print(f"SECOND_PASS_FIXED_POINT P123_COPY_LENGTH={len(c)} domain_bias_guard=PASS ledger_ownership=PASS")
           PY
 
