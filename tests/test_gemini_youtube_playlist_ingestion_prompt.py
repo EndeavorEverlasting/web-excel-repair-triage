@@ -91,6 +91,42 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
         ):
             self.assertIn(keyword, self.prompt["keywords"])
 
+
+    def test_domain_agnostic_knowledge_ledger_contract(self) -> None:
+        self.assert_markers(
+            "DOMAIN-AGNOSTIC KNOWLEDGE / LEDGER CONTRACT",
+            "recent conversation themes",
+            "Examples prove range, not defaults",
+            "Cybersecurity",
+            "Agentic Software Development",
+            "Culinary & Food",
+            "`Sources`, `Findings`, and `Domains`",
+            "favored views are projections, not separate data authorities",
+            "Unknown / Needs Verification",
+            "Prompt Kit Candidate",
+            "Software Candidate",
+            "Resolve spreadsheet write capability + authority",
+            "exact written ranges/IDs as the mutation receipt",
+            "Otherwise emit row-ready Source and Findings records",
+            "Never claim the spreadsheet was updated without an observed write receipt",
+        )
+        self.assertIn("domain-agnostic", self.prompt["sprintRole"])
+        self.assertIn("without domain bias", self.prompt["useWhen"])
+        self.assertIn("canonical domain vocabulary", self.prompt["inspectFirst"])
+        self.assertIn("one Finding record per distinct reusable insight", self.prompt["expectedOutput"])
+        self.assertIn("written with exact mutation receipt", self.prompt["expectedOutput"])
+        self.assertIn("writable and write authority exists", self.prompt["proofGate"])
+        self.assertIn("exact written ranges/IDs", self.prompt["proofGate"])
+        self.assertIn("favorite domains", self.prompt["proofGate"])
+        for keyword in (
+            "youtube knowledge extraction",
+            "youtube knowledge base",
+            "domain agnostic youtube",
+            "knowledge ledger",
+            "youtube findings ledger",
+        ):
+            self.assertIn(keyword, self.prompt["keywords"])
+
     def test_yt_dlp_is_single_extraction_authority(self) -> None:
         self.assert_markers(
             "yt-dlp owns machine-readable YouTube metadata extraction",
@@ -250,6 +286,11 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
             "one writer per mutation surface",
             "`git diff --check`",
             "PRE-MUTATION MISSION DECLARATION",
+            "DOMAIN-AGNOSTIC KNOWLEDGE / LEDGER CONTRACT",
+            "`Sources`, `Findings`, and `Domains`",
+            "Resolve spreadsheet write capability + authority",
+            "exact written ranges/IDs as the mutation receipt",
+            "row-ready Source and Findings records",
         ):
             self.assertIn(marker, deployed)
 

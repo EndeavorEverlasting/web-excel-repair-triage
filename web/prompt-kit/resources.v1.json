@@ -13,7 +13,7 @@
       "id": "anthropic-skills",
       "repository": "anthropics/skills",
       "default_branch": "main",
-      "resolved_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "resolved_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "resource_root": "skills",
       "resource_count": 19
     }
@@ -31,12 +31,12 @@
       "id": "anthropic-skills:academy-guide",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "academy-guide",
       "title": "Academy Guide",
       "path": "skills/academy-guide/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/academy-guide/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/academy-guide/SKILL.md",
       "search_terms": [
         "academy",
         "guide"
@@ -53,12 +53,12 @@
       "id": "anthropic-skills:algorithmic-art",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "algorithmic-art",
       "title": "Algorithmic Art",
       "path": "skills/algorithmic-art/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/algorithmic-art/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/algorithmic-art/SKILL.md",
       "search_terms": [
         "algorithmic",
         "art"
@@ -75,12 +75,12 @@
       "id": "anthropic-skills:brand-guidelines",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "brand-guidelines",
       "title": "Brand Guidelines",
       "path": "skills/brand-guidelines/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/brand-guidelines/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/brand-guidelines/SKILL.md",
       "search_terms": [
         "brand",
         "guidelines"
@@ -97,12 +97,12 @@
       "id": "anthropic-skills:canvas-design",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "canvas-design",
       "title": "Canvas Design",
       "path": "skills/canvas-design/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/canvas-design/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/canvas-design/SKILL.md",
       "search_terms": [
         "canvas",
         "design"
@@ -119,12 +119,12 @@
       "id": "anthropic-skills:claude-api",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "claude-api",
       "title": "Claude Api",
       "path": "skills/claude-api/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/claude-api/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/claude-api/SKILL.md",
       "search_terms": [
         "api",
         "claude"
@@ -141,12 +141,12 @@
       "id": "anthropic-skills:discernment-nudge",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "discernment-nudge",
       "title": "Discernment Nudge",
       "path": "skills/discernment-nudge/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/discernment-nudge/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/discernment-nudge/SKILL.md",
       "search_terms": [
         "discernment",
         "nudge"
@@ -163,12 +163,12 @@
       "id": "anthropic-skills:doc-coauthoring",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "doc-coauthoring",
       "title": "Doc Coauthoring",
       "path": "skills/doc-coauthoring/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/doc-coauthoring/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/doc-coauthoring/SKILL.md",
       "search_terms": [
         "coauthoring",
         "doc"
@@ -185,12 +185,12 @@
       "id": "anthropic-skills:docx",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "docx",
       "title": "Docx",
       "path": "skills/docx/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/docx/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/docx/SKILL.md",
       "search_terms": [
         "docx"
       ],
@@ -206,12 +206,12 @@
       "id": "anthropic-skills:frontend-design",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "frontend-design",
       "title": "Frontend Design",
       "path": "skills/frontend-design/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/frontend-design/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/frontend-design/SKILL.md",
       "search_terms": [
         "design",
         "frontend"
@@ -228,12 +228,12 @@
       "id": "anthropic-skills:internal-comms",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "internal-comms",
       "title": "Internal Comms",
       "path": "skills/internal-comms/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/internal-comms/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/internal-comms/SKILL.md",
       "search_terms": [
         "comms",
         "internal"
@@ -250,12 +250,12 @@
       "id": "anthropic-skills:mcp-builder",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "mcp-builder",
       "title": "Mcp Builder",
       "path": "skills/mcp-builder/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/mcp-builder/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/mcp-builder/SKILL.md",
       "search_terms": [
         "builder",
         "mcp"
@@ -272,12 +272,12 @@
       "id": "anthropic-skills:pdf",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "pdf",
       "title": "Pdf",
       "path": "skills/pdf/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/pdf/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/pdf/SKILL.md",
       "search_terms": [
         "pdf"
       ],
@@ -293,12 +293,12 @@
       "id": "anthropic-skills:pptx",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "pptx",
       "title": "Pptx",
       "path": "skills/pptx/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/pptx/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/pptx/SKILL.md",
       "search_terms": [
         "pptx"
       ],
@@ -314,12 +314,12 @@
       "id": "anthropic-skills:skill-creator",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "skill-creator",
       "title": "Skill Creator",
       "path": "skills/skill-creator/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/skill-creator/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/skill-creator/SKILL.md",
       "search_terms": [
         "creator"
       ],
@@ -335,12 +335,12 @@
       "id": "anthropic-skills:slack-gif-creator",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "slack-gif-creator",
       "title": "Slack Gif Creator",
       "path": "skills/slack-gif-creator/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/slack-gif-creator/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/slack-gif-creator/SKILL.md",
       "search_terms": [
         "creator",
         "gif",
@@ -358,12 +358,12 @@
       "id": "anthropic-skills:theme-factory",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "theme-factory",
       "title": "Theme Factory",
       "path": "skills/theme-factory/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/theme-factory/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/theme-factory/SKILL.md",
       "search_terms": [
         "factory",
         "theme"
@@ -380,12 +380,12 @@
       "id": "anthropic-skills:web-artifacts-builder",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "web-artifacts-builder",
       "title": "Web Artifacts Builder",
       "path": "skills/web-artifacts-builder/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/web-artifacts-builder/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/web-artifacts-builder/SKILL.md",
       "search_terms": [
         "artifacts",
         "builder",
@@ -403,12 +403,12 @@
       "id": "anthropic-skills:webapp-testing",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "webapp-testing",
       "title": "Webapp Testing",
       "path": "skills/webapp-testing/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/webapp-testing/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/webapp-testing/SKILL.md",
       "search_terms": [
         "testing",
         "webapp"
@@ -425,12 +425,12 @@
       "id": "anthropic-skills:xlsx",
       "source_id": "anthropic-skills",
       "source_repo": "anthropics/skills",
-      "source_sha": "53048666b05b4799081517d00e09e0a2dd688678",
+      "source_sha": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
       "kind": "agent-skill",
       "slug": "xlsx",
       "title": "Xlsx",
       "path": "skills/xlsx/SKILL.md",
-      "url": "https://github.com/anthropics/skills/blob/53048666b05b4799081517d00e09e0a2dd688678/skills/xlsx/SKILL.md",
+      "url": "https://github.com/anthropics/skills/blob/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/xlsx/SKILL.md",
       "search_terms": [
         "xlsx"
       ],
