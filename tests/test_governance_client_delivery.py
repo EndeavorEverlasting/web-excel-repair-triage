@@ -15,10 +15,12 @@ class GovernanceClientDeliveryTests(unittest.TestCase):
             "single repository governance authority",
             "minimum sufficient explanation",
             "purpose, period, totals, attachment, consequence",
-            "Do not narrate internal evidence mechanics",
+            "Omit internal evidence mechanics",
             "private allocation logic",
-            "singled-out edge cases unless needed to act",
-            "Do not add defensive caveats or invitation-to-question closings",
+            "singled-out edge cases",
+            "defensive caveats",
+            "invitation-to-question closings",
+            "unless needed for recipient action",
         ):
             self.assertIn(phrase, text)
 
