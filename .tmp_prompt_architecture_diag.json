@@ -1,0 +1,9 @@
+{
+  "p03_anchor": true,
+  "p95_anchor": true,
+  "p95_copy_length_before": 9916,
+  "p95_copy_length_after_compact": 10401,
+  "focused_test_anchor": true,
+  "existing_greenfield_p03": false,
+  "existing_hosting_p95": false
+}
