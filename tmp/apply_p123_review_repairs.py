@@ -77,6 +77,11 @@ text = text.replace(
     1,
 )
 text = text.replace(
+    '            "favored-domain views are projections, not separate data authorities",\n',
+    '            "favored views are projections, not separate data authorities",\n',
+    1,
+)
+text = text.replace(
     '        self.assertIn("one Finding record per distinct reusable insight", self.prompt["expectedOutput"])\n        self.assertIn("favorite domains", self.prompt["proofGate"])\n',
     '        self.assertIn("one Finding record per distinct reusable insight", self.prompt["expectedOutput"])\n        self.assertIn("written with exact mutation receipt", self.prompt["expectedOutput"])\n        self.assertIn("writable and write authority exists", self.prompt["proofGate"])\n        self.assertIn("exact written ranges/IDs", self.prompt["proofGate"])\n        self.assertIn("favorite domains", self.prompt["proofGate"])\n',
     1,
