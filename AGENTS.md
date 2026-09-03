@@ -2,12 +2,12 @@
 This file is the single repository governance authority for `EndeavorEverlasting/web-excel-repair-triage`.
 
 ## 1. Agent operating principles
-1. **Evidence before action.** Inspect authority first.
-2. **Floor before furniture.** Repair shared contracts first.
-3. **Bounded sprints.** Declare scope, artifacts, validation, proof ceiling.
-4. **One writer per branch.** Preserve unrelated work.
+1. **Evidence before action.** Inspect authoritative evidence first.
+2. **Floor before furniture.** Repair unsafe shared state/contracts first.
+3. **Bounded sprints.** Declare mission, scope, artifacts, validation, proof ceiling.
+4. **One writer per branch.** Preserve unrelated work; isolate unclear ownership.
 5. **Reuse before replacing.** Extend canonical owners.
-6. **No completion without proof.** Plans are not completion.
+6. **No completion without proof.** Plans/process start are not completion.
 
 ## 2. Instruction precedence
 Order: (1) Platform, security, legal, and repository-owner instructions. (2) This governance contract. (3) Task-specific prompts and sprint instructions. (4) Generic agent defaults. Domain specs remain subordinate. Lower authority may strengthen safety, never weaken higher authority.
@@ -24,7 +24,7 @@ Use `none; no safe actionable work remains` only after authorized implementation
 ## 5. Safety and mutation boundaries
 Forbidden: acknowledgment without mutation; plans without execution; summaries without proof; completion claims without running checks; secret or credential exposure; private workbook/protected/machine-local evidence exposure; force-push/default rewrites/destructive cleanup of unique work; prose-only deterministic behavior; weakened tests/validators/fixtures; protected-input generated outputs; guessed latest artifacts.
 Material behavior changes require proof and `git diff --check`.
-Client-facing delivery uses the **minimum sufficient explanation**: purpose, period, totals, attachment, consequence. Do not narrate internal evidence mechanics, private allocation logic, or singled-out edge cases unless needed to act. Do not add defensive caveats or invitation-to-question closings because analysis found ambiguity.
+Client-facing delivery uses the **minimum sufficient explanation**: purpose, period, totals, attachment, consequence. Omit internal evidence mechanics, private allocation logic, singled-out edge cases, defensive caveats, and invitation-to-question closings unless needed for recipient action.
 
 ## 6. Repository identity and product boundary
 The core product domain is **spreadsheet intelligence**. Web Excel compatibility, billing, roster/time evidence, and triage are first-class.
@@ -36,8 +36,8 @@ Orient: `AGENTS.md` → `harness/CONTEXT.md` → selected domain. Do **not** pre
 Bindings: `harness/specs/operator-delivery.md`; `harness/specs/prompt-operations.md`; `harness/specs/billing-artifact-safety.md`. `harness/contracts/context-architecture.v1.json` owns budgets/routes.
 
 ### Repository-local `/teach` protocol
-`/teach <topic>` uses `.teach/`, repo truth, first principles, one mechanism + one code exercise, then stops. VERIFIED/MASTERED requires demonstrated understanding. `/teach recap` resumes the first weak frontier. No fabricated mastery or private/sensitive evidence.
+`/teach <topic>` uses `.teach/`, repo truth, first principles, one mechanism + one code exercise. VERIFIED/MASTERED requires demonstrated understanding. `/teach recap` resumes the first weak frontier. No fabricated mastery or private evidence.
 
 ### Agent execution tiering and parallel delegation
-Parallelism is capability-earned, not equal-authority. Strategic/harness owners are `ChatGPT` and `Auggie`; only they may own governance, harness spine, skills, capabilities, triggers, routing, proof gates, or cross-repo migration authority. `desktop-app` and `OpenCode` are executors; they may consume settled product/test/doc contracts but may not mutate strategic surfaces without promotion.
+Parallelism is capability-earned, not equal-authority. Strategic/harness owners are `ChatGPT` and `Auggie`; they may own governance, harness spine, skills, capabilities, triggers, routing, proof gates, or cross-repo migration authority. `desktop-app` and `OpenCode` are executors; they may consume settled product/test/doc contracts but may not mutate strategic surfaces without promotion.
 Machine policy: `harness/contracts/agent-execution-tiering.v1.json`. Availability is not authority. Promotion requires explicit operator approval and evaluation evidence. Shared contracts precede parallel consumers; collision owners stay singular.
