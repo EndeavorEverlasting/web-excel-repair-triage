@@ -62,8 +62,8 @@ old_open = (
     "IMPLEMENTATION PACKET, AND DO NOT PRETEND YOU CAN ACCESS THE TARGET REPOSITORY."
 )
 new_open = (
-    "GEMINI YOUTUBE INGESTION. USE THE SUPPLIED SOURCE DIRECTLY; EXTRACT GROUNDED KNOWLEDGE, BUILD THE STANDALONE PACKET, "
-    "AND DO NOT PRETEND TO ACCESS THE TARGET REPOSITORY."
+    "GEMINI YOUTUBE INGESTION. USE THE SUPPLIED SOURCE; EXTRACT GROUNDED KNOWLEDGE, BUILD THE STANDALONE PACKET, AND DO "
+    "NOT PRETEND TO ACCESS THE TARGET REPOSITORY."
 )
 if old_open in content:
     content = content.replace(old_open, new_open, 1)
@@ -74,16 +74,16 @@ old_mission = (
     "synthesis is required; fake repository work is forbidden."
 )
 new_mission = (
-    "Turn the supplied YouTube source, user mission, ledger/schema when present, and verified donor research into grounded "
-    "knowledge plus a runnable standalone ingestion packet. Build real artifacts; never fake repository work."
+    "Turn the YouTube source, user mission, supplied ledger/schema, and verified donor research into grounded knowledge "
+    "plus a runnable ingestion packet. Build real artifacts; never fake repository work."
 )
 if old_mission in content:
     content = content.replace(old_mission, new_mission, 1)
 
 anchor = "Source placement is input binding, not repository access.\n\n"
 section = """DOMAIN-AGNOSTIC KNOWLEDGE / LEDGER CONTRACT
-- Classify from the source + user mission, never recent conversation themes, favorites, or examples. Examples prove range, not defaults: Cybersecurity; Agentic Software Development; Culinary & Food.
-- With a supplied ledger/schema, `Sources`, `Findings`, and `Domains` are canonical: reuse domains; one Source per media source; one Findings row per distinct finding; favored-domain views are projections, not separate data authorities.
+- Classify from source + user mission, never recent conversation themes, favorites, or examples. Examples prove range, not defaults: Cybersecurity; Agentic Software Development; Culinary & Food.
+- With a supplied ledger/schema, `Sources`, `Findings`, and `Domains` are canonical: reuse domains; one Source per source; one Findings row per finding; favored-domain views are projections, not separate data authorities.
 - Preserve provenance/evidence/validation; use Unknown / Needs Verification. Set Prompt Kit Candidate or Software Candidate only when applicable. If unwritable, emit row-ready Source and Findings records; never pretend the spreadsheet was updated.
 
 """
