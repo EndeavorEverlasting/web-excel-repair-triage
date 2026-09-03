@@ -69,6 +69,22 @@ jobs:
             --registry management-operations-prompts \
             | tee "$RUNNER_TEMP/hh-ticket-helper-receipt.json"
 
+          echo '--- register focused semantic test in deterministic floor ---'
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('harness/test-floor.v1.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          test_path = 'tests/test_hh_ticket_tracking_prompt.py'
+          tests = data['self_tests']
+          if test_path not in tests:
+              tests.append(test_path)
+          if tests.count(test_path) != 1:
+              raise SystemExit(f'deterministic-floor registration must be unique: {test_path}')
+          path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
           echo '--- focused semantic assertion ---'
           python -m unittest tests.test_hh_ticket_tracking_prompt -v
 
@@ -81,7 +97,10 @@ jobs:
 
           echo '--- pass 2 whole-context semantic falsification ---'
           python - <<'PY'
+          import json
+          from pathlib import Path
           from scripts import build_prompt_kit_registry
+
           prompts = build_prompt_kit_registry.load_prompt_kit_registry()
           target = [p for p in prompts if p.get('name') == 'Health + Hospitals Ticket Discovery & Tracking Harvester']
           if len(target) != 1:
@@ -98,6 +117,7 @@ jobs:
           )
           checks = {
               'new distinct owner': p['id'] not in {'P88', 'P89'} and p['class'] == 'H+H SUPPORT / TICKET TRACKING',
+              'classified read-evidence type': p.get('type') == 'RESEARCH + EVIDENCE',
               'non-billing profile': p.get('profile') == 'triage-management',
               'both source workflow': 'Search both Outlook and Teams inside the requested window' in c,
               'priority people': all(name in c for name in required_people),
@@ -112,10 +132,14 @@ jobs:
           failed = [name for name, ok in checks.items() if not ok]
           if failed:
               raise SystemExit(f'H+H pass-2 semantic falsification failed: {failed}')
-          if prompts[[p.get('id') for p in prompts].index('P88')]['name'] != 'Outlook Work-Evidence Harvester':
+          by_id = {p.get('id'): p for p in prompts}
+          if by_id['P88']['name'] != 'Outlook Work-Evidence Harvester' or by_id['P88']['class'] != 'BILLING / EVIDENCE DISCOVERY':
               raise SystemExit('P88 role drifted')
-          if prompts[[p.get('id') for p in prompts].index('P89')]['name'] != 'Teams Work-Evidence Harvester':
+          if by_id['P89']['name'] != 'Teams Work-Evidence Harvester' or by_id['P89']['class'] != 'BILLING / EVIDENCE DISCOVERY':
               raise SystemExit('P89 role drifted')
+          manifest = json.loads(Path('harness/test-floor.v1.json').read_text(encoding='utf-8'))
+          if manifest['self_tests'].count('tests/test_hh_ticket_tracking_prompt.py') != 1:
+              raise SystemExit('focused semantic test is not uniquely registered')
           print(f"H+H pass-2 semantic falsification: PASS id={p['id']}")
           PY
 
@@ -125,15 +149,18 @@ jobs:
             --output web/prompt-kit/index.html --check
           git diff --check
 
-          echo '--- deterministic floor on mutated candidate ---'
+          echo '--- restore canonical read-only workflow before deterministic certification ---'
+          git checkout origin/main -- .github/workflows/deterministic-test-floor.yml
+
+          echo '--- deterministic floor on durable candidate surfaces ---'
           python scripts/run_deterministic_test_floor.py \
             --report "$RUNNER_TEMP/hh-ticket-deterministic-floor.json"
 
-          echo '--- restore transport and commit only durable contribution ---'
-          git checkout origin/main -- .github/workflows/deterministic-test-floor.yml
+          echo '--- remove transport and commit only durable contribution ---'
           git rm -f tmp/hh-ticket-tracking-prompt-draft.json
           git add \
             .github/workflows/deterministic-test-floor.yml \
+            harness/test-floor.v1.json \
             registry/prompts/management-operations-prompts.v1.json \
             tests/test_hh_ticket_tracking_prompt.py \
             web/prompt-kit/index.html
@@ -141,7 +168,8 @@ jobs:
 
           final_diff="$(git diff --cached --name-only origin/main)"
           printf '%s\n' '--- final durable diff vs main ---' "$final_diff"
-          test "$(printf '%s\n' "$final_diff" | sed '/^$/d' | wc -l)" -eq 3
+          test "$(printf '%s\n' "$final_diff" | sed '/^$/d' | wc -l)" -eq 4
+          printf '%s\n' "$final_diff" | grep -Fx 'harness/test-floor.v1.json'
           printf '%s\n' "$final_diff" | grep -Fx 'registry/prompts/management-operations-prompts.v1.json'
           printf '%s\n' "$final_diff" | grep -Fx 'tests/test_hh_ticket_tracking_prompt.py'
           printf '%s\n' "$final_diff" | grep -Fx 'web/prompt-kit/index.html'
