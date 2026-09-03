@@ -62,16 +62,10 @@ jobs:
           start = content.index('1A. WIDEN THE DESIGN SPACE BEFORE CONVERGING')
           end = content.index('2. BUILD A PRECISE DOMAIN VOCABULARY')
           replacement = '''1A. WIDEN THE DESIGN SPACE BEFORE CONVERGING\nWhen uncertainty is material, inspect relevant external repositories or structurally analogous systems using source/tests/config. Synthesize 2-4 materially different candidates and compare the same acceptance criteria. Creativity is disciplined recombination, not novelty. Use P97 Open-Source Prior-Art & Gap Analyst for broad ecosystem research; verify license/security/dependency implications before direct reuse.\n\n1B. ACQUIRE COHESIVE REPOSITORY CONTEXT — NOT ONE ISOLATED FILE\nInspect the relevant tree, root manifests/configuration, entrypoints, routing/composition, state owners, dependencies, tests, and persistence/external boundaries together. If direct access is unavailable, use bounded Repomix/code2prompt or tree-plus-root-config context excluding secrets/vendor/generated bulk. Do not treat a single pasted file as sufficient evidence; narrow claims to available context.\n\n1C. CHOOSE THE DEPLOYMENT OPERATING MODEL FROM EVIDENCE\nCompare: managed PaaS/serverless for velocity and low ops; one host with OCI containers via Docker or Podman for low-cost control; Kubernetes/managed orchestration only for demonstrated horizontal scaling, HA/isolation, or spiky distributed load. “millions someday” is not proof; keep an upgrade seam. Record chosen/rejected tier and migration triggers: saturation, p95/p99/SLO, queues/connections, RTO/RPO, toil, and cost.\n\n'''
-          content = content[:start] + replacement + content[end:]
-          p95['copyContent'] = content
-          for kw in (
-              'hosting architecture', 'deployment topology', 'managed paas', 'serverless',
-              'single vps', 'docker', 'podman', 'oci containers', 'kubernetes',
-              'container orchestration', 'scale readiness', 'horizontal scaling'
-          ):
+          p95['copyContent'] = content[:start] + replacement + content[end:]
+          for kw in ('hosting architecture','deployment topology','managed paas','serverless','single vps','docker','podman','oci containers','kubernetes','container orchestration','scale readiness','horizontal scaling'):
               if kw not in p95['keywords']:
                   p95['keywords'].append(kw)
-          print('P95_COPY_LENGTH', len(p95['copyContent']))
           if len(p95['copyContent']) > 10000:
               raise SystemExit(f"P95 raw copyContent length {len(p95['copyContent'])} exceeds 10000")
           spec_path.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
@@ -88,17 +82,22 @@ jobs:
 
       - name: Rebuild canonical Prompt Kit
         run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
-
-      - name: Focused semantic and registry proof
-        run: |
-          python -m unittest tests.test_prompt_registry_expansion_regression_design_teach -v
-          python -m unittest tests.test_spec_architecture_prompt_registry -v
-          python scripts/prompt_registry_ops.py validate
-          python scripts/evaluate_prompt_language.py --summary
-          python scripts/validate_prompt_kit_discovery.py --summary
-          node scripts/analyze_prompt_finder_routes.js
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-          git diff --check
+      - name: Focused P03-P95 semantic regression
+        run: python -m unittest tests.test_prompt_registry_expansion_regression_design_teach -v
+      - name: Spec architecture registry regression
+        run: python -m unittest tests.test_spec_architecture_prompt_registry -v
+      - name: Prompt registry validation
+        run: python scripts/prompt_registry_ops.py validate
+      - name: Prompt language gate
+        run: python scripts/evaluate_prompt_language.py --summary
+      - name: Prompt discovery gate
+        run: python scripts/validate_prompt_kit_discovery.py --summary
+      - name: Prompt finder route analysis
+        run: node scripts/analyze_prompt_finder_routes.js
+      - name: Generated-site parity
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Diff whitespace proof
+        run: git diff --check
 
       - name: Diff guard
         run: |
@@ -106,14 +105,7 @@ jobs:
           git diff --stat
           python - <<'PY'
           import subprocess
-          allowed = {
-              'docs/prompts.json',
-              'registry/prompts/spec-architecture-prompts.v1.json',
-              'tests/test_prompt_registry_expansion_regression_design_teach.py',
-              'web/prompt-kit/index.html',
-              '.tmp_prompt_architecture_diag.json',
-              '.github/workflows/_tmp_prompt_kit_repo_architecture_executor.yml',
-          }
+          allowed = {'docs/prompts.json','registry/prompts/spec-architecture-prompts.v1.json','tests/test_prompt_registry_expansion_regression_design_teach.py','web/prompt-kit/index.html','.tmp_prompt_architecture_diag.json','.github/workflows/_tmp_prompt_kit_repo_architecture_executor.yml'}
           lines = subprocess.check_output(['git', 'status', '--porcelain=v1'], text=True).splitlines()
           paths = {line[3:] for line in lines if len(line) >= 4}
           extra = sorted(paths - allowed)
