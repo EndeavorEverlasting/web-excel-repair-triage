@@ -90,10 +90,12 @@ jobs:
         run: python scripts/prompt_registry_ops.py validate
       - name: Prompt language gate
         run: python scripts/evaluate_prompt_language.py --summary
-      - name: Prompt discovery gate
+      - name: Prompt discovery contract tests
+        run: python -m unittest tests.test_prompt_kit_discovery -v
+      - name: Prompt discovery validator
         run: python scripts/validate_prompt_kit_discovery.py --summary
-      - name: Prompt finder route analysis
-        run: node scripts/analyze_prompt_finder_routes.js
+      - name: Prompt order/navigation validator
+        run: python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output /tmp/prompt-kit-order-navigation-audit.json --summary
       - name: Generated-site parity
         run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
       - name: Diff whitespace proof
