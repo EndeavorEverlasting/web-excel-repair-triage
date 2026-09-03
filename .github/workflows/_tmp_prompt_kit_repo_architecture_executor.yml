@@ -1,4 +1,4 @@
-name: Temporary Prompt Kit repository architecture diagnostic
+name: Temporary Prompt Kit repository architecture executor
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  diagnose:
+  execute:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,33 +18,115 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Record exact mutation preconditions
+
+      - name: Strengthen P03 and P95 plus focused regression
         run: |
           python - <<'PY'
+          from __future__ import annotations
           import json
           from pathlib import Path
-          prompts = json.loads(Path('docs/prompts.json').read_text(encoding='utf-8'))
-          spec = json.loads(Path('registry/prompts/spec-architecture-prompts.v1.json').read_text(encoding='utf-8'))
-          tests = Path('tests/test_prompt_registry_expansion_regression_design_teach.py').read_text(encoding='utf-8')
+
+          prompts_path = Path('docs/prompts.json')
+          spec_path = Path('registry/prompts/spec-architecture-prompts.v1.json')
+          test_path = Path('tests/test_prompt_registry_expansion_regression_design_teach.py')
+
+          prompts = json.loads(prompts_path.read_text(encoding='utf-8'))
           p03 = next(p for p in prompts if p.get('id') == 'P03')
+          if 'greenfield repository that needs its first bounded architecture/build decision' not in p03['useWhen']:
+              p03['useWhen'] = p03['useWhen'].rstrip('.') + '. This includes creating a greenfield repository that needs its first bounded architecture/build decision.'
+          if 'credible scale/concurrency envelope' not in p03['inspectFirst']:
+              p03['inspectFirst'] = p03['inspectFirst'].rstrip('.') + '. For greenfield work, also recover the product outcome, credible scale/concurrency envelope, availability needs, operator tolerance, and budget before scaffolding.'
+          greenfield = '''\nGREENFIELD REPOSITORY CREATION\nWhen the repository does not exist yet or is only an empty shell, recover the product outcome and credible scale envelope before scaffolding. If module boundaries or deployment topology are materially uncertain, route that bounded design decision to P95. Do not make Docker, Podman, Kubernetes, microservices, or a managed platform mandatory merely because future scale is possible. Create the smallest skeleton consistent with the decision; P00 remains governance owner and P01 remains harness plus canonical build/test/deploy/path owner.\n'''
+          p03_anchor = 'FIRST-SPRINT SELECTION RULES\n'
+          if 'GREENFIELD REPOSITORY CREATION' not in p03['copyContent']:
+              if p03_anchor not in p03['copyContent']:
+                  raise SystemExit('P03 insertion anchor missing')
+              p03['copyContent'] = p03['copyContent'].replace(p03_anchor, greenfield + '\n' + p03_anchor, 1)
+          for kw in ('greenfield repository', 'create repository', 'repository creation', 'architecture-first repo'):
+              if kw not in p03['keywords']:
+                  p03['keywords'].append(kw)
+          prompts_path.write_text(json.dumps(prompts, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          spec = json.loads(spec_path.read_text(encoding='utf-8'))
           p95 = next(p for p in spec['prompts'] if p.get('id') == 'P95')
-          compact = '''\n1C. CHOOSE THE DEPLOYMENT OPERATING MODEL FROM EVIDENCE\nCompare: managed PaaS/serverless for velocity and low ops; one host with OCI containers via Docker or Podman for low-cost control; Kubernetes/managed orchestration only for demonstrated horizontal scaling, HA/isolation, or spiky distributed load. “Millions someday” is not proof; keep an upgrade seam. Record the chosen/rejected tier and migration triggers: saturation, p95/p99/SLO, queues/connections, RTO/RPO, toil, and cost.\n'''
-          report = {
-              'p03_anchor': 'FIRST-SPRINT SELECTION RULES\n' in p03['copyContent'],
-              'p95_anchor': '\n2. BUILD A PRECISE DOMAIN VOCABULARY\n' in p95['copyContent'],
-              'p95_copy_length_before': len(p95['copyContent']),
-              'p95_copy_length_after_compact': len(p95['copyContent']) + len(compact),
-              'focused_test_anchor': '    def test_teach_prompt_is_grounded_stateful_and_active(self) -> None:\n' in tests,
-              'existing_greenfield_p03': 'GREENFIELD REPOSITORY CREATION' in p03['copyContent'],
-              'existing_hosting_p95': 'CHOOSE THE DEPLOYMENT OPERATING MODEL FROM EVIDENCE' in p95['copyContent'],
-          }
-          Path('.tmp_prompt_architecture_diag.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
-          print(json.dumps(report, indent=2))
+          if 'greenfield repository/application creation' not in p95['useWhen']:
+              p95['useWhen'] = p95['useWhen'].rstrip('.') + '. This includes greenfield repository/application creation when the hosting or deployment operating model is materially uncertain.'
+          if 'For deployment topology, inspect traffic/concurrency' not in p95['inspectFirst']:
+              p95['inspectFirst'] = p95['inspectFirst'].rstrip('.') + '. For deployment topology, inspect traffic/concurrency, SLO/availability, state, tenancy, workload spikes, budget/operator toil, and platform constraints.'
+          if 'selected operating tier, rejected tiers' not in p95['expectedOutput']:
+              p95['expectedOutput'] = p95['expectedOutput'].rstrip('.') + '. When hosting is in scope, record the selected operating tier, rejected tiers, and measurable migration triggers.'
+          if 'Hosting proof requires an evidence-backed tier choice' not in p95['proofGate']:
+              p95['proofGate'] = p95['proofGate'].rstrip('.') + '. Hosting proof requires an evidence-backed tier choice; hypothetical future popularity alone does not prove orchestration is required now.'
+
+          content = p95['copyContent']
+          start = content.index('1A. WIDEN THE DESIGN SPACE BEFORE CONVERGING')
+          end = content.index('2. BUILD A PRECISE DOMAIN VOCABULARY')
+          replacement = '''1A. WIDEN THE DESIGN SPACE BEFORE CONVERGING\nWhen uncertainty is material, inspect relevant external repositories or structurally analogous systems using source/tests/config. Synthesize 2-4 materially different candidates and compare the same acceptance criteria. Creativity is disciplined recombination, not novelty. Use P97 Open-Source Prior-Art & Gap Analyst for broad ecosystem research; verify license/security/dependency implications before direct reuse.\n\n1B. ACQUIRE COHESIVE REPOSITORY CONTEXT — NOT ONE ISOLATED FILE\nInspect the relevant tree, root manifests/configuration, entrypoints, routing/composition, state owners, dependencies, tests, and persistence/external boundaries together. If direct access is unavailable, use bounded Repomix/code2prompt or tree-plus-root-config context excluding secrets/vendor/generated bulk. Do not treat a single pasted file as sufficient evidence; narrow claims to available context.\n\n1C. CHOOSE THE DEPLOYMENT OPERATING MODEL FROM EVIDENCE\nCompare: managed PaaS/serverless for velocity and low ops; one host with OCI containers via Docker or Podman for low-cost control; Kubernetes/managed orchestration only for demonstrated horizontal scaling, HA/isolation, or spiky distributed load. “millions someday” is not proof; keep an upgrade seam. Record chosen/rejected tier and migration triggers: saturation, p95/p99/SLO, queues/connections, RTO/RPO, toil, and cost.\n\n'''
+          content = content[:start] + replacement + content[end:]
+          p95['copyContent'] = content
+          for kw in (
+              'hosting architecture', 'deployment topology', 'managed paas', 'serverless',
+              'single vps', 'docker', 'podman', 'oci containers', 'kubernetes',
+              'container orchestration', 'scale readiness', 'horizontal scaling'
+          ):
+              if kw not in p95['keywords']:
+                  p95['keywords'].append(kw)
+          print('P95_COPY_LENGTH', len(p95['copyContent']))
+          if len(p95['copyContent']) > 10000:
+              raise SystemExit(f"P95 raw copyContent length {len(p95['copyContent'])} exceeds 10000")
+          spec_path.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          text = test_path.read_text(encoding='utf-8')
+          marker = '    def test_teach_prompt_is_grounded_stateful_and_active(self) -> None:\n'
+          if 'def test_greenfield_repository_architecture_selects_hosting_tier_from_evidence' not in text:
+              focused = '''    def test_greenfield_repository_architecture_selects_hosting_tier_from_evidence(self) -> None:\n        design = self.by_name["Program Design & Call-Stack Prototype Architect"]\n        content = design["copyContent"]\n        for phrase in (\n            "CHOOSE THE DEPLOYMENT OPERATING MODEL FROM EVIDENCE",\n            "managed PaaS/serverless",\n            "Docker or Podman",\n            "Kubernetes/managed orchestration",\n            "millions someday",\n            "OCI containers",\n            "p95/p99/SLO",\n        ):\n            self.assertIn(phrase, content)\n        p03 = self.full["P03"]["copyContent"]\n        self.assertIn("GREENFIELD REPOSITORY CREATION", p03)\n        self.assertIn("route that bounded design decision to P95", p03)\n        self.assertIn("Do not make Docker, Podman, Kubernetes", p03)\n        self.assertIn("P00 remains governance owner", p03)\n        self.assertIn("P01 remains harness", p03)\n\n'''
+              if marker not in text:
+                  raise SystemExit('focused test insertion anchor missing')
+              text = text.replace(marker, focused + marker, 1)
+          test_path.write_text(text, encoding='utf-8')
           PY
-      - name: Commit diagnostic receipt
+
+      - name: Rebuild canonical Prompt Kit
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+      - name: Focused semantic and registry proof
         run: |
+          python -m unittest tests.test_prompt_registry_expansion_regression_design_teach -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          node scripts/analyze_prompt_finder_routes.js
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Diff guard
+        run: |
+          git status --short
+          git diff --stat
+          python - <<'PY'
+          import subprocess
+          allowed = {
+              'docs/prompts.json',
+              'registry/prompts/spec-architecture-prompts.v1.json',
+              'tests/test_prompt_registry_expansion_regression_design_teach.py',
+              'web/prompt-kit/index.html',
+              '.tmp_prompt_architecture_diag.json',
+              '.github/workflows/_tmp_prompt_kit_repo_architecture_executor.yml',
+          }
+          lines = subprocess.check_output(['git', 'status', '--porcelain=v1'], text=True).splitlines()
+          paths = {line[3:] for line in lines if len(line) >= 4}
+          extra = sorted(paths - allowed)
+          if extra:
+              raise SystemExit(f'unexpected changed paths: {extra}')
+          PY
+
+      - name: Commit durable contribution and self-remove temporary evidence
+        run: |
+          git rm .github/workflows/_tmp_prompt_kit_repo_architecture_executor.yml .tmp_prompt_architecture_diag.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .tmp_prompt_architecture_diag.json
-          git commit -m "chore(prompt-kit): record architecture mutation diagnostics"
+          git add docs/prompts.json registry/prompts/spec-architecture-prompts.v1.json tests/test_prompt_registry_expansion_regression_design_teach.py web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m "feat(prompt-kit): strengthen repository architecture decisions"
           git push origin HEAD:feat/prompt-kit-repo-architecture-hosting-20260903
