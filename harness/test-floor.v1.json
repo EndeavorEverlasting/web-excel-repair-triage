@@ -34,7 +34,8 @@
     "tests/test_spec_architecture_prompt_registry.py",
     "tests/test_sysadminsuite_prompt_registry.py",
     "tests/test_test_floor_evolution_prompt.py",
-    "tests/test_ux_design_prompt_suite.py"
+    "tests/test_ux_design_prompt_suite.py",
+    "tests/test_hh_ticket_tracking_prompt.py"
   ],
   "prompt_semantic_test_globs": [
     "tests/test_*_prompt.py",
