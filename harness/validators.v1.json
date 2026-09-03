@@ -200,6 +200,22 @@
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable regression proof for Operant identity, transition authority, and generated visible-brand invariants."
+    },
+    {
+      "id": "operant-external-resource-audit",
+      "class": "contract",
+      "command": "python scripts/validate_operant_external_resources.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static/current tracked resource projection, source pin, coverage routing, size-budget, lazy-load, and generated-site containment proof."
+    },
+    {
+      "id": "operant-external-resource-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_operant_external_resources -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable deterministic resource projection and lazy-loading regression proof."
     }
   ],
   "profiles": {
@@ -219,6 +235,8 @@
       "prompt-kit-feedback-afk-routing-tests",
       "prompt-kit-responsive-layout-audit",
       "prompt-kit-responsive-layout-tests",
+      "operant-external-resource-audit",
+      "operant-external-resource-tests",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",
@@ -256,6 +274,8 @@
       "prompt-kit-feedback-afk-routing-tests",
       "prompt-kit-responsive-layout-audit",
       "prompt-kit-responsive-layout-tests",
+      "operant-external-resource-audit",
+      "operant-external-resource-tests",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",

@@ -17,6 +17,7 @@ VALIDATOR = ROOT / "scripts" / "validate_prompt_kit_portability.py"
 PORTABLE_LAUNCHER = ROOT / "scripts" / "Open-LatestPromptKitPortable.ps1"
 WINDOWS_ENTRY = ROOT / "Open-Latest-PromptKit.cmd"
 SITE = ROOT / "web" / "prompt-kit" / "index.html"
+RESOURCE_INDEX = ROOT / "web" / "prompt-kit" / "resources.v1.json"
 WORKFLOW = ROOT / ".github" / "workflows" / "prompt-kit-web.yml"
 EXPECTED_ORIGIN = "http://127.0.0.1:8765/"
 
@@ -156,11 +157,16 @@ class PromptKitPortabilityTests(unittest.TestCase):
             ):
                 self.assertIn(marker, artifact_text)
             self.assertEqual(receipt["stable_origin"], EXPECTED_ORIGIN)
+            resource_artifact = artifact.parent / "resources.v1.json"
+            self.assertEqual(resource_artifact.read_bytes(), RESOURCE_INDEX.read_bytes())
+            self.assertEqual(receipt["resource_index"]["path"], str(resource_artifact.relative_to(ROOT)))
             self.assertTrue(receipt["guardrails"]["canonical_site_untouched"])
+            self.assertTrue(receipt["guardrails"]["resource_sidecar_matches_canonical"])
             self.assertTrue(receipt["guardrails"]["overwrite_backup_required"])
             validated = validator.validate_artifact(artifact, manifest)
             self.assertEqual(validated["sha256"], receipt["artifact"]["sha256"])
             self.assertEqual(validated["bytes"], receipt["artifact"]["bytes"])
+            self.assertEqual(validated["resource_index_sha256"], receipt["resource_index"]["sha256"])
 
     def test_existing_generated_output_is_backed_up_before_replacement(self) -> None:
         portable = load_module("prompt_kit_portable_backup", PORTABLE_BUILDER)

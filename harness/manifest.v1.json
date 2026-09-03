@@ -165,6 +165,18 @@
       "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
       "harness_gate": "python scripts/validate_operant_product_identity.py --summary",
       "validator": "scripts/validate_operant_product_identity.py"
+    },
+    "operant_external_resource_intake": {
+      "contract": "harness/contracts/operant-external-resource-intake.v1.json",
+      "validator": "scripts/validate_operant_external_resources.py",
+      "contract_tests": "tests/test_operant_external_resources.py",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "harness_gate": "python scripts/validate_operant_external_resources.py --summary",
+      "skill": ".ai/skills/operant-external-resource-intake/SKILL.md",
+      "sync": "scripts/sync_operant_external_resources.py",
+      "public_index": "web/prompt-kit/resources.v1.json",
+      "gap_ledger": "registry/resources/operant-external-resource-gaps.v1.json",
+      "provider_refresh": ".github/workflows/operant-external-resource-refresh.yml"
     }
   },
   "skills": [
@@ -176,7 +188,8 @@
     ".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md",
     ".ai/skills/prompt-kit-responsive-layout/SKILL.md",
     ".ai/skills/prompt-kit-feedback-afk-routing/SKILL.md",
-    ".ai/skills/repository-hook-integration/SKILL.md"
+    ".ai/skills/repository-hook-integration/SKILL.md",
+    ".ai/skills/operant-external-resource-intake/SKILL.md"
   ],
   "technician_acquisition": {
     "launcher": "Acquire-Latest-PromptKit.cmd",
@@ -221,6 +234,8 @@
     "python -m unittest tests.test_prompt_kit_feedback_afk_routing -v",
     "python scripts/validate_prompt_kit_layout_harness.py --summary",
     "python -m unittest tests.test_prompt_kit_layout_harness -v",
+    "python scripts/validate_operant_external_resources.py --summary",
+    "python -m unittest tests.test_operant_external_resources -v",
     "python tests/test_prompt_kit_header_contract.py",
     "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
     "python -m triage.gitignore_hygiene",

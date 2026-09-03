@@ -216,3 +216,7 @@ python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html -
 ```
 
 Repository validation does not substitute for physical browser download/file-picker behavior, browser-profile transfer, cross-device acceptance, phone/tablet touch acceptance, clipboard permissions in every browser, live Pages publication, or a Windows field run of the quick launcher.
+
+### External resources
+
+The **Resources** control uses `docs/prompt-kit-external-resources.js` and lazily fetches the compact `prompt-kit/resources.v1.json` sidecar only after the user opens it. Donor skill bodies are never embedded in the main generated page; results are paged and existing Operant prompt coverage is preferred before upstream links.

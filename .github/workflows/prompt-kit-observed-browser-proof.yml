@@ -5,30 +5,36 @@ on:
     paths:
       - docs/prompt-kit-polish.js
       - docs/prompt-kit-hotkey-prototype.js
+      - docs/prompt-kit-external-resources.js
       - docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md
       - docs/prompts.json
       - registry/prompts/ai-engineering-level-up-prompts.v1.json
       - harness/observed-proof/**
       - scripts/validate_observed_behavior_receipt.py
       - tests/prompt_kit_favorite_browser_proof.py
+      - tests/prompt_kit_external_resources_browser_proof.py
       - tests/test_observed_behavior_proof_harness.py
       - tests/test_prompt_kit_hotkey_completion.py
       - web/prompt-kit/index.html
+      - web/prompt-kit/resources.v1.json
       - .github/workflows/prompt-kit-observed-browser-proof.yml
   push:
     branches: [main]
     paths:
       - docs/prompt-kit-polish.js
       - docs/prompt-kit-hotkey-prototype.js
+      - docs/prompt-kit-external-resources.js
       - docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md
       - docs/prompts.json
       - registry/prompts/ai-engineering-level-up-prompts.v1.json
       - harness/observed-proof/**
       - scripts/validate_observed_behavior_receipt.py
       - tests/prompt_kit_favorite_browser_proof.py
+      - tests/prompt_kit_external_resources_browser_proof.py
       - tests/test_observed_behavior_proof_harness.py
       - tests/test_prompt_kit_hotkey_completion.py
       - web/prompt-kit/index.html
+      - web/prompt-kit/resources.v1.json
       - .github/workflows/prompt-kit-observed-browser-proof.yml
 
 permissions:
@@ -49,6 +55,7 @@ jobs:
           python -m unittest tests.test_observed_behavior_proof_harness tests.test_prompt_kit_hotkey_completion tests.test_ai_engineering_level_up -v
           node --check docs/prompt-kit-polish.js
           node --check docs/prompt-kit-hotkey-prototype.js
+          if [ -f docs/prompt-kit-external-resources.js ]; then node --check docs/prompt-kit-external-resources.js; fi
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
       - name: Install browser proof runtime
         run: |
@@ -59,9 +66,14 @@ jobs:
           mkdir -p Outputs/observed-proof
           python tests/prompt_kit_favorite_browser_proof.py --receipt Outputs/observed-proof/favorite-shortcut-receipt.json --screenshot Outputs/observed-proof/favorite-shortcut.png
           python scripts/validate_observed_behavior_receipt.py Outputs/observed-proof/favorite-shortcut-receipt.json --expected-sha "$(git rev-parse HEAD)" --summary
+      - name: Observe lazy external resource behavior
+        if: ${{ hashFiles('tests/prompt_kit_external_resources_browser_proof.py', 'web/prompt-kit/resources.v1.json') != '' }}
+        run: |
+          python tests/prompt_kit_external_resources_browser_proof.py --receipt Outputs/observed-proof/external-resources-receipt.json --screenshot Outputs/observed-proof/external-resources.png
+          python scripts/validate_observed_behavior_receipt.py Outputs/observed-proof/external-resources-receipt.json --expected-sha "$(git rev-parse HEAD)" --summary
       - name: Upload observed proof receipt
         uses: actions/upload-artifact@v4
         with:
-          name: prompt-kit-favorite-observed-proof
+          name: prompt-kit-observed-browser-proof
           path: Outputs/observed-proof/
           if-no-files-found: error

@@ -80,6 +80,7 @@ class PromptKitReleaseIdentityTests(unittest.TestCase):
         )
         self.copy(validator.PAGES_WORKFLOW_REL)
         self.copy(validator.PORTABLE_BUILDER_REL)
+        self.copy(Path("web/prompt-kit/resources.v1.json"))
         self.write(validator.PORTABLE_RUNTIME_REL, "// prompt-kit-favorites/v1\n")
         self.write(validator.CANONICAL_ARTIFACT, "<!doctype html><body><title>Prompt Kit</title></body>\n")
 

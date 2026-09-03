@@ -89,6 +89,8 @@ REQUIRED_ARTIFACT_IDS = {
     "workbook-engine-output",
     "prompt-kit-browser-proof-cleanup-report",
     "app-harness-validation-report",
+    "operant-external-resource-index",
+    "operant-external-resource-gap-ledger",
 }
 REQUIRED_VALIDATOR_IDS = {
     "harness-completeness",
@@ -116,6 +118,8 @@ REQUIRED_VALIDATOR_IDS = {
     "prompt-kit-feedback-afk-routing-tests",
     "operant-product-identity-audit",
     "operant-product-identity-tests",
+    "operant-external-resource-audit",
+    "operant-external-resource-tests",
 }
 REQUIRED_CAPABILITY_IDS = {
     "harness-infrastructure-maintenance",
@@ -127,6 +131,7 @@ REQUIRED_CAPABILITY_IDS = {
     "prompt-kit-responsive-layout",
     "prompt-kit-feedback-afk-routing",
     "repository-hook-integration",
+    "operant-external-resource-intake",
 }
 REQUIRED_TRIGGER_IDS = {
     "harness-infrastructure-change",
@@ -139,6 +144,7 @@ REQUIRED_TRIGGER_IDS = {
     "prompt-kit-responsive-overlap",
     "prompt-kit-actionable-feedback",
     "repository-hook-installation-needed",
+    "operant-external-resource-refresh-needed",
 }
 PROTECTED_PATHS = ("Candidates/", "Active/")
 

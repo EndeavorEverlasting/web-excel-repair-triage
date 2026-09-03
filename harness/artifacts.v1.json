@@ -102,6 +102,26 @@
       "tracking_policy": "Gitignored runtime evidence or CI artifact; never treat it as live/runtime proof.",
       "schema": "app-harness-validation/v2",
       "proof_ceiling": "Offline/synthetic repository harness proof only; no live runtime, browser, launcher, network, target, save/account, provider-runtime, deployment, or production proof."
+    },
+    {
+      "id": "operant-external-resource-index",
+      "kind": "tracked",
+      "canonical_path": "web/prompt-kit/resources.v1.json",
+      "producer": "python scripts/sync_operant_external_resources.py",
+      "validator": "operant-external-resource-audit",
+      "naming": "Stable metadata-only sidecar next to the generated Prompt Kit website.",
+      "tracking_policy": "Tracked deterministic projection of approved public donors pinned to exact commits; donor bodies are not copied.",
+      "proof_ceiling": "Donor inventory metadata, pinning, and projection proof; no donor content quality or browser-network proof."
+    },
+    {
+      "id": "operant-external-resource-gap-ledger",
+      "kind": "tracked",
+      "canonical_path": "registry/resources/operant-external-resource-gaps.v1.json",
+      "producer": "python scripts/sync_operant_external_resources.py",
+      "validator": "operant-external-resource-audit",
+      "naming": "Stable deterministic donor-to-Operant coverage ledger.",
+      "tracking_policy": "Tracked maintenance input. REVIEW_ADD_PROMPT routes to P79; it is not prompt publication authority.",
+      "proof_ceiling": "Deterministic lexical coverage classification and maintenance routing only; strategic prompt quality remains separate."
     }
   ]
 }
