@@ -91,6 +91,37 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
         ):
             self.assertIn(keyword, self.prompt["keywords"])
 
+
+    def test_domain_agnostic_knowledge_ledger_contract(self) -> None:
+        self.assert_markers(
+            "DOMAIN-AGNOSTIC KNOWLEDGE / LEDGER CONTRACT",
+            "recent conversation themes",
+            "Examples prove range, not defaults",
+            "Cybersecurity",
+            "Agentic Software Development",
+            "Culinary & Food",
+            "`Sources`, `Findings`, and `Domains`",
+            "favored-domain views are projections, not separate data authorities",
+            "Unknown / Needs Verification",
+            "Prompt Kit Candidate",
+            "Software Candidate",
+            "row-ready Source and Findings records",
+            "never pretend the spreadsheet was updated",
+        )
+        self.assertIn("domain-agnostic", self.prompt["sprintRole"])
+        self.assertIn("without domain bias", self.prompt["useWhen"])
+        self.assertIn("canonical domain vocabulary", self.prompt["inspectFirst"])
+        self.assertIn("one Finding record per distinct reusable insight", self.prompt["expectedOutput"])
+        self.assertIn("favorite domains", self.prompt["proofGate"])
+        for keyword in (
+            "youtube knowledge extraction",
+            "youtube knowledge base",
+            "domain agnostic youtube",
+            "knowledge ledger",
+            "youtube findings ledger",
+        ):
+            self.assertIn(keyword, self.prompt["keywords"])
+
     def test_yt_dlp_is_single_extraction_authority(self) -> None:
         self.assert_markers(
             "yt-dlp owns machine-readable YouTube metadata extraction",
