@@ -24,19 +24,20 @@ Use `none; no safe actionable work remains` only after authorized implementation
 ## 5. Safety and mutation boundaries
 Forbidden: acknowledgment without mutation; plans without execution; summaries without proof; completion claims without running checks; secret or credential exposure; private workbook/protected/machine-local evidence exposure; force-push/default rewrites/destructive cleanup of unique work; prose-only deterministic behavior; weakened tests/validators/fixtures; protected-input generated outputs; guessed latest artifacts.
 Material behavior changes require proof and `git diff --check`.
+Client-facing delivery uses the **minimum sufficient explanation**: purpose, period, totals, attachment, consequence. Omit internal evidence mechanics, private allocation logic, singled-out edge cases, defensive caveats, and invitation-to-question closings unless needed for recipient action.
 
 ## 6. Repository identity and product boundary
-This repository's core product domain is **spreadsheet intelligence**: inspection, validation, repair, transformation. Web Excel compatibility, billing, roster/time evidence, and triage are first-class.
-**Operant** is the operator-approved product identity, formerly Prompt Kit. It began here as a spreadsheet and is separable. Target: `UnderDeskDev/Operant`; not yet created/proven.
+The core product domain is **spreadsheet intelligence**. Web Excel compatibility, billing, roster/time evidence, and triage are first-class.
+**Operant** is the operator-approved product identity, formerly Prompt Kit; it began here as a spreadsheet. Target: `UnderDeskDev/Operant`; not yet created/proven.
 Until cutover, legacy `prompt-kit` paths and sources here remain authoritative compatibility surfaces and must not be silently moved. This repo may pin, mirror, package, link to, or consume Operant releases; it must not become a competing Operant authority; keep cross-repo dependencies explicit and versioned.
 
 ## 7. Progressive disclosure and binding domain law
-Orient: `AGENTS.md` → `harness/CONTEXT.md` → one selected domain and needed detail. Do **not** preload full harness/skills/history. Escalate context only for evidence, ownership, validation, or safety.
+Orient: `AGENTS.md` → `harness/CONTEXT.md` → selected domain. Do **not** preload full harness/skills/history. Escalate context only for evidence, ownership, validation, or safety.
 Bindings: `harness/specs/operator-delivery.md`; `harness/specs/prompt-operations.md`; `harness/specs/billing-artifact-safety.md`. `harness/contracts/context-architecture.v1.json` owns budgets/routes.
 
 ### Repository-local `/teach` protocol
-`/teach <topic>` uses `.teach/`, repo truth, first principles, one mechanism/trade-off question + one code diagnostic/edge-case exercise, then stops. VERIFIED/MASTERED requires demonstrated understanding. `/teach recap` resumes the first weak frontier. No external package/clone, fabricated mastery, secrets/private/sensitive evidence.
+`/teach <topic>` uses `.teach/`, repo truth, first principles, one mechanism + one code exercise. VERIFIED/MASTERED requires demonstrated understanding. `/teach recap` resumes the first weak frontier. No fabricated mastery or private evidence.
 
 ### Agent execution tiering and parallel delegation
-Parallelism is capability-earned, not equal-authority. Strategic/harness owners are `ChatGPT` and `Auggie`; only they may own governance, harness spine, skills, capabilities, triggers, routing, proof gates, or cross-repo migration authority. `desktop-app` and `OpenCode` are executors: they may consume settled contracts for application logic, UI, adapters, fixtures, tests, docs, or conforming migration, but may not mutate strategic surfaces without promotion.
-Machine policy: `harness/contracts/agent-execution-tiering.v1.json`. Availability is not authority; unknown routes down. Promotion requires explicit operator approval and evaluation evidence. Shared contracts precede parallel consumers; collision owners stay singular.
+Parallelism is capability-earned, not equal-authority. Strategic/harness owners are `ChatGPT` and `Auggie`; they may own governance, harness spine, skills, capabilities, triggers, routing, proof gates, or cross-repo migration authority. `desktop-app` and `OpenCode` are executors; they may consume settled product/test/doc contracts but may not mutate strategic surfaces without promotion.
+Machine policy: `harness/contracts/agent-execution-tiering.v1.json`. Availability is not authority. Promotion requires explicit operator approval and evaluation evidence. Shared contracts precede parallel consumers; collision owners stay singular.

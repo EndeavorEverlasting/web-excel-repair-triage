@@ -105,6 +105,20 @@ class GovernanceContractTests(unittest.TestCase):
         ):
             self.assertIn(phrase, section)
 
+    def test_client_delivery_requires_minimum_sufficient_explanation(self) -> None:
+        section = self._section("## 5. Safety and mutation boundaries", "## 6.")
+        for phrase in (
+            "minimum sufficient explanation",
+            "purpose, period, totals, attachment, consequence",
+            "Omit internal evidence mechanics",
+            "private allocation logic",
+            "singled-out edge cases",
+            "defensive caveats",
+            "invitation-to-question closings",
+            "unless needed for recipient action",
+        ):
+            self.assertIn(phrase, section)
+
     def test_repository_identity_keeps_triage_spreadsheet_first(self) -> None:
         section = self._section(
             "## 6. Repository identity and product boundary", "## 7."
