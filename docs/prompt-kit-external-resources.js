@@ -7,6 +7,10 @@ var externalResourceIndex=null;
 var externalResourceQuery='';
 var externalResourcePage=0;
 var externalResourceLoadPromise=null;
+try{
+  Object.defineProperty(window,'externalResourceIndex',{get:function(){return externalResourceIndex},set:function(v){externalResourceIndex=v},configurable:true});
+  Object.defineProperty(window,'externalResourcePage',{get:function(){return externalResourcePage},set:function(v){externalResourcePage=v},configurable:true});
+}catch(e){}
 
 function ensureExternalResourceStyles(){
   if(document.getElementById('operant-external-resource-styles'))return;
