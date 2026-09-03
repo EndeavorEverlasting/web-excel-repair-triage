@@ -1,0 +1,104 @@
+{
+  "schema_version": "agent-capability-evidence/v1",
+  "policy_id": "repository-agent-capability-evidence",
+  "purpose": "Provide benchmark and operator evidence for agent routing without replacing harness/contracts/agent-execution-tiering.v1.json as the authority contract.",
+  "authority": {
+    "execution_tiering": "harness/contracts/agent-execution-tiering.v1.json",
+    "benchmark_evidence_is_advisory": true,
+    "leaderboard_rank_alone_cannot_promote_agent": true,
+    "opaque_product_agent_must_not_inherit_underlying_model_score_without_proof": true,
+    "operator_observation_may_route_down_but_not_promote": true
+  },
+  "benchmark_sources": [
+    {
+      "id": "deepswe-v1.1-2026-09-02",
+      "name": "DeepSWE v1.1",
+      "url": "https://deepswe.datacurve.ai/",
+      "benchmark_updated": "2026-09-02",
+      "observed_for_registry": "2026-09-03",
+      "tasks": 113,
+      "harness": "mini-swe-agent",
+      "metric": "pass@1",
+      "scope_note": "DeepSWE evaluates model + reasoning configuration on a common mini-swe-agent harness. It is coding-agent evidence, not a direct measurement of a commercial product agent's planning judgment, provider permissions, context quality, or tool integration."
+    }
+  ],
+  "deepswe_frontier_snapshot": [
+    {"configuration": "gemini-3.8-flash[high]", "pass_at_1_pct": 74, "ci_pct": 1, "avg_cost_usd": 2.36, "output_tokens_k": 143, "agent_steps": 166},
+    {"configuration": "claude-opus-5[max]", "pass_at_1_pct": 74, "ci_pct": 4, "avg_cost_usd": 11.84, "output_tokens_k": 118, "agent_steps": 99},
+    {"configuration": "gpt-5.6-sol[max]", "pass_at_1_pct": 73, "ci_pct": 3, "avg_cost_usd": 6.46, "output_tokens_k": 60, "agent_steps": 61},
+    {"configuration": "claude-fable-5[max]", "pass_at_1_pct": 70, "ci_pct": 4, "avg_cost_usd": 21.63, "output_tokens_k": 119, "agent_steps": 88},
+    {"configuration": "glm-5.3[max]", "pass_at_1_pct": 69, "ci_pct": 3, "avg_cost_usd": 3.99, "output_tokens_k": 80, "agent_steps": 124},
+    {"configuration": "kimi-k3[max]", "pass_at_1_pct": 69, "ci_pct": 5, "avg_cost_usd": 4.65, "output_tokens_k": 81, "agent_steps": 98},
+    {"configuration": "gpt-5.6-luna[max]", "pass_at_1_pct": 67, "ci_pct": 4, "avg_cost_usd": 0.61, "output_tokens_k": 73, "agent_steps": 102},
+    {"configuration": "gpt-5.5[xhigh]", "pass_at_1_pct": 67, "ci_pct": 6, "avg_cost_usd": 7.23, "output_tokens_k": 46, "agent_steps": 82},
+    {"configuration": "grok-4.6[xhigh]", "pass_at_1_pct": 67, "ci_pct": 2, "avg_cost_usd": 5.50, "output_tokens_k": 71, "agent_steps": 87},
+    {"configuration": "gemini-3.7-flash[high]", "pass_at_1_pct": 65, "ci_pct": 2, "avg_cost_usd": 2.18, "output_tokens_k": 107, "agent_steps": 125},
+    {"configuration": "glm-5.3-flash[max]", "pass_at_1_pct": 63, "ci_pct": 4, "avg_cost_usd": 0.24, "output_tokens_k": 73, "agent_steps": 123},
+    {"configuration": "deepseek-v4-pro[max]", "pass_at_1_pct": 63, "ci_pct": 6, "avg_cost_usd": 1.67, "output_tokens_k": 106, "agent_steps": 155},
+    {"configuration": "claude-opus-4.8[max]", "pass_at_1_pct": 59, "ci_pct": 2, "avg_cost_usd": 13.22, "output_tokens_k": 135, "agent_steps": 120},
+    {"configuration": "qwen3.8-max[xhigh]", "pass_at_1_pct": 57, "ci_pct": 3, "avg_cost_usd": 3.73, "output_tokens_k": 95, "agent_steps": 111},
+    {"configuration": "muse-spark-1.2[xhigh]", "pass_at_1_pct": 55, "ci_pct": 2, "avg_cost_usd": 3.70, "output_tokens_k": 99, "agent_steps": 101},
+    {"configuration": "claude-sonnet-5[max]", "pass_at_1_pct": 54, "ci_pct": 4, "avg_cost_usd": 26.40, "output_tokens_k": 214, "agent_steps": 268},
+    {"configuration": "deepseek-v4-flash[max]", "pass_at_1_pct": 53, "ci_pct": 4, "avg_cost_usd": 0.46, "output_tokens_k": 108, "agent_steps": 153},
+    {"configuration": "gemini-3.6-flash[high]", "pass_at_1_pct": 47, "ci_pct": 4, "avg_cost_usd": 2.21, "output_tokens_k": 96, "agent_steps": 117},
+    {"configuration": "glm-5.2[max]", "pass_at_1_pct": 44, "ci_pct": 2, "avg_cost_usd": 3.92, "output_tokens_k": 78, "agent_steps": 129},
+    {"configuration": "gemini-3.5-flash[high]", "pass_at_1_pct": 36, "ci_pct": 4, "avg_cost_usd": 3.45, "output_tokens_k": 76, "agent_steps": 105}
+  ],
+  "agent_identity_map": [
+    {
+      "agent_id": "auggie",
+      "product": "Augment Code",
+      "aliases": ["auggie"],
+      "model_mapping": "UNKNOWN",
+      "identity_note": "Repository-local name. Do not conflate with Google Anti-gravity."
+    },
+    {
+      "agent_id": "google-antigravity",
+      "product": "Google Anti-gravity",
+      "aliases": ["anti-gravity", "antigravity", "agy"],
+      "model_mapping": "UNKNOWN",
+      "identity_note": "Underlying model/configuration is not proven by repository evidence, so no DeepSWE score is inherited."
+    },
+    {
+      "agent_id": "chatgpt",
+      "product": "ChatGPT",
+      "aliases": ["chatgpt"],
+      "model_mapping": "environment-dependent",
+      "identity_note": "Routing authority is evidence-earned and repository-scoped; model leaderboard results do not automatically alter authority."
+    }
+  ],
+  "operator_observations": [
+    {
+      "agent_id": "google-antigravity",
+      "observed_on": "2026-09-03",
+      "evidence_class": "operator-anecdotal",
+      "observation": "Operator reports Google Anti-gravity is not reliable for work requiring judgment.",
+      "routing_effect": "route-down",
+      "default_tier": "bounded-application-executor",
+      "judgment_contract": [
+        "all material architecture and policy decisions must be settled in the handoff",
+        "owned and forbidden scope must be explicit",
+        "exact inputs, outputs, validators, and acceptance gates must be explicit",
+        "ambiguous or missing provider facts require STOP and escalation",
+        "no governance, harness-spine, cross-repository authority, proof-gate, billing, privacy-policy, DNS, or production-architecture judgment without promotion"
+      ],
+      "promotion_requirement": "Explicit operator approval plus task-relevant evaluation evidence."
+    }
+  ],
+  "routing_dimensions": [
+    "software-engineering benchmark evidence",
+    "task-specific repository eval evidence",
+    "judgment requirement",
+    "provider/tool access",
+    "context/retrieval reliability",
+    "irreversibility/blast radius",
+    "operator observations",
+    "cost/latency when quality gates are otherwise satisfied"
+  ],
+  "known_gaps": [
+    "No DeepSWE configuration is currently proven to be the model/harness used by Google Anti-gravity.",
+    "No repository-native eval yet measures Google Anti-gravity against this repository's judgment-heavy tasks.",
+    "No automatic refresh job currently updates this benchmark snapshot.",
+    "No benchmark should be used as the sole basis for strategic authority."
+  ]
+}
