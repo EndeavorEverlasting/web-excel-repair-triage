@@ -47,7 +47,7 @@ jobs:
           if p03_inspect.strip() not in p03['inspectFirst']:
               p03['inspectFirst'] = p03['inspectFirst'].rstrip('.') + '.' + p03_inspect
           greenfield = '''\nGREENFIELD REPOSITORY CREATION\nWhen the repository does not exist yet or is only an empty shell, recover the product outcome and credible scale envelope before choosing scaffolding. If module boundaries or deployment topology are materially uncertain, route that bounded design decision to P95 before broad implementation. Do not make Docker, Podman, Kubernetes, microservices, or a managed platform mandatory merely because future scale is possible. After the design decision, create the smallest repository skeleton consistent with it; P00 remains the governance owner and P01 remains the harness plus canonical build/test/deploy/path owner.\n'''
-          anchor = 'FIRST-SPRINT SELECTION RULES\\n'
+          anchor = 'FIRST-SPRINT SELECTION RULES\n'
           if 'GREENFIELD REPOSITORY CREATION' not in p03['copyContent']:
               if anchor not in p03['copyContent']:
                   raise SystemExit('P03 insertion anchor missing')
