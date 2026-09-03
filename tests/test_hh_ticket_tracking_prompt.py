@@ -44,6 +44,54 @@ class HHTicketTrackingPromptTests(unittest.TestCase):
         ):
             self.assertIn(phrase, content)
 
+    def test_workflow_sections_are_ordered_and_rules_are_locally_bound(self) -> None:
+        content = self.target["copyContent"]
+        markers = (
+            "PASS 1 — DIRECT TICKET SEARCH",
+            "PASS 2 — RECOVERY + CROSS-SOURCE RECONCILIATION",
+            "TICKET IDENTITY + DEDUPLICATION",
+            "STATUS DISCIPLINE — COMMUNICATION IS EVIDENCE, NOT MAGIC",
+            "NORMALIZED TICKET RECORD",
+            "DAILY DIGEST",
+            "BOUNDARY FROM THE EXISTING HARVEST PROMPTS",
+            "DELIVER",
+        )
+        positions = [content.index(marker) for marker in markers]
+        self.assertEqual(positions, sorted(positions))
+
+        sections = {
+            marker: content[start:end]
+            for marker, start, end in zip(markers[:-1], positions[:-1], positions[1:])
+        }
+        self.assertIn(
+            "Search both Outlook and Teams inside the requested window",
+            sections["PASS 1 — DIRECT TICKET SEARCH"],
+        )
+        self.assertIn(
+            "If an Outlook hit contains an incident number, search that incident in Teams",
+            sections["PASS 2 — RECOVERY + CROSS-SOURCE RECONCILIATION"],
+        )
+        self.assertIn(
+            "Never merge two records solely because they concern the same hospital, kiosk type, person, or day",
+            sections["TICKET IDENTITY + DEDUPLICATION"],
+        )
+        self.assertIn(
+            "`In progress` is not completion",
+            sections["STATUS DISCIPLINE — COMMUNICATION IS EVIDENCE, NOT MAGIC"],
+        )
+        self.assertIn(
+            "Sources — Outlook / Teams / both",
+            sections["NORMALIZED TICKET RECORD"],
+        )
+        self.assertIn(
+            "OPEN / NEEDS FOLLOW-UP",
+            sections["DAILY DIGEST"],
+        )
+        self.assertIn(
+            "must not calculate hours, billing allocations, attendance",
+            sections["BOUNDARY FROM THE EXISTING HARVEST PROMPTS"],
+        )
+
     def test_priority_people_are_exact_and_nonexclusive(self) -> None:
         content = self.target["copyContent"]
         for person in (
