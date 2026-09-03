@@ -95,6 +95,8 @@ def build_portable_artifact(
     require_output_path(repo_root, manifest_path)
     resource_source_path = repo_root / "web" / "prompt-kit" / RESOURCE_INDEX_NAME
     resource_output_path = output_path.parent / RESOURCE_INDEX_NAME
+    if output_path.resolve() == resource_output_path.resolve():
+        raise ValueError("portable artifact path must not be resources.v1.json")
     require_output_path(repo_root, resource_output_path)
 
     source_bytes = require_file(source_path, "canonical Prompt Kit site")
