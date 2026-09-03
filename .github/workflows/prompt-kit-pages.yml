@@ -112,6 +112,7 @@ jobs:
           set -euo pipefail
           mkdir -p "$SITE_ROOT/prompt-kit" "$SITE_ROOT/roster-log-v2" Outputs
           python scripts/build_prompt_kit_registry.py --output "$SITE_ROOT/prompt-kit/index.html"
+          cp web/prompt-kit/resources.v1.json "$SITE_ROOT/prompt-kit/resources.v1.json"
           cp -R web/prompt-kit-mobile/. "$SITE_ROOT/"
           cp -R web/roster-log-v2/. "$SITE_ROOT/roster-log-v2/"
           test -s "$SITE_ROOT/index.html"
@@ -121,10 +122,12 @@ jobs:
           test -s "$SITE_ROOT/icon-512.png"
           test -s "$SITE_ROOT/qr-prompt-kit.png"
           test -s "$SITE_ROOT/prompt-kit/index.html"
+          test -s "$SITE_ROOT/prompt-kit/resources.v1.json"
           test -s "$SITE_ROOT/roster-log-v2/index.html"
           test -s "$SITE_ROOT/roster-log-v2/app.js"
           test -s "$SITE_ROOT/roster-log-v2/styles.css"
           cmp "$SITE_ROOT/prompt-kit/index.html" web/prompt-kit/index.html
+          cmp "$SITE_ROOT/prompt-kit/resources.v1.json" web/prompt-kit/resources.v1.json
           cmp "$SITE_ROOT/roster-log-v2/index.html" web/roster-log-v2/index.html
           cmp "$SITE_ROOT/roster-log-v2/app.js" web/roster-log-v2/app.js
           cmp "$SITE_ROOT/roster-log-v2/styles.css" web/roster-log-v2/styles.css

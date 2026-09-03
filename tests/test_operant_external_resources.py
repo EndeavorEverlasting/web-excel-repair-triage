@@ -17,6 +17,8 @@ INDEX = ROOT / "web" / "prompt-kit" / "resources.v1.json"
 GAPS = ROOT / "registry" / "resources" / "operant-external-resource-gaps.v1.json"
 RUNTIME = ROOT / "docs" / "prompt-kit-external-resources.js"
 SITE = ROOT / "web" / "prompt-kit" / "index.html"
+PAGES_WORKFLOW = ROOT / ".github" / "workflows" / "prompt-kit-pages.yml"
+PORTABLE_BUILDER = ROOT / "scripts" / "serve_prompt_kit_portable.py"
 
 
 class OperantExternalResourceTests(unittest.TestCase):
@@ -87,6 +89,16 @@ class OperantExternalResourceTests(unittest.TestCase):
         sample = self.index["resources"][: min(20, len(self.index["resources"]))]
         for resource in sample:
             self.assertNotIn(resource["url"], self.site)
+
+
+    def test_release_packages_include_sidecar_without_embedding_records(self) -> None:
+        pages = PAGES_WORKFLOW.read_text(encoding="utf-8")
+        portable = PORTABLE_BUILDER.read_text(encoding="utf-8")
+        self.assertIn('cp web/prompt-kit/resources.v1.json "$SITE_ROOT/prompt-kit/resources.v1.json"', pages)
+        self.assertIn('cmp "$SITE_ROOT/prompt-kit/resources.v1.json" web/prompt-kit/resources.v1.json', pages)
+        self.assertIn('RESOURCE_INDEX_NAME = "resources.v1.json"', portable)
+        self.assertIn('resource_source_path = repo_root / "web" / "prompt-kit" / RESOURCE_INDEX_NAME', portable)
+        self.assertIn('resource_sidecar_matches_canonical', portable)
 
     def test_token_match_is_deterministic_and_conservative(self) -> None:
         query = sync.tokens("code-review")
