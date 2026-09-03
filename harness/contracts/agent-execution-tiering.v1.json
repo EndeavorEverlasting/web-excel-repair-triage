@@ -1,6 +1,7 @@
 {
   "schema_version": "agent-execution-tiering/v1",
   "policy_id": "repository-agent-execution-tiering",
+  "evidence_registry": "harness/contracts/agent-capability-evidence.v1.json",
   "assignment_basis": [
     "scope-specific",
     "evidence-earned",
@@ -13,7 +14,13 @@
     "unknown_or_unproven_agent_routes_down": true,
     "shared_contracts_before_parallel_consumers": true,
     "promotion_requires_operator_approval": true,
-    "promotion_requires_evaluation_evidence": true
+    "promotion_requires_evaluation_evidence": true,
+    "benchmark_rank_alone_cannot_promote_agent": true,
+    "opaque_product_agent_does_not_inherit_model_score_without_proof": true
+  },
+  "identity_disambiguation": {
+    "auggie": "Augment Code; repository-local agent identity, not Google Anti-gravity",
+    "google-antigravity": "Google Anti-gravity; aliases anti-gravity, antigravity, agy; underlying model mapping currently UNKNOWN"
   },
   "tiers": [
     {
@@ -40,7 +47,7 @@
     },
     {
       "id": "bounded-application-executor",
-      "current_agents": ["chatgpt", "auggie", "desktop-app", "opencode"],
+      "current_agents": ["chatgpt", "auggie", "desktop-app", "opencode", "google-antigravity"],
       "owned_surfaces": [
         "conventional-application-logic",
         "ui",
@@ -65,7 +72,7 @@
     },
     {
       "id": "research-design-contributor",
-      "current_agents": ["chatgpt", "auggie", "desktop-app", "opencode"],
+      "current_agents": ["chatgpt", "auggie", "desktop-app", "opencode", "google-antigravity"],
       "owned_surfaces": [
         "read-only inventory",
         "reference research",
@@ -79,7 +86,8 @@
     "chatgpt": "strategic-harness-owner",
     "auggie": "strategic-harness-owner",
     "desktop-app": "bounded-application-executor",
-    "opencode": "bounded-application-executor"
+    "opencode": "bounded-application-executor",
+    "google-antigravity": "bounded-application-executor"
   },
-  "fallback": "When agent identity, environment, or demonstrated capability is uncertain, route the work to the lower-authority tier or a strategic-harness owner; never infer promotion from availability alone."
+  "fallback": "When agent identity, environment, or demonstrated capability is uncertain, route the work to the lower-authority tier or a strategic-harness owner; never infer promotion from availability or benchmark rank alone."
 }
