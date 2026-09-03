@@ -101,17 +101,22 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
             "Agentic Software Development",
             "Culinary & Food",
             "`Sources`, `Findings`, and `Domains`",
-            "favored-domain views are projections, not separate data authorities",
+            "favored views are projections, not separate data authorities",
             "Unknown / Needs Verification",
             "Prompt Kit Candidate",
             "Software Candidate",
-            "row-ready Source and Findings records",
-            "never pretend the spreadsheet was updated",
+            "Resolve spreadsheet write capability + authority",
+            "exact written ranges/IDs as the mutation receipt",
+            "Otherwise emit row-ready Source and Findings records",
+            "Never claim the spreadsheet was updated without an observed write receipt",
         )
         self.assertIn("domain-agnostic", self.prompt["sprintRole"])
         self.assertIn("without domain bias", self.prompt["useWhen"])
         self.assertIn("canonical domain vocabulary", self.prompt["inspectFirst"])
         self.assertIn("one Finding record per distinct reusable insight", self.prompt["expectedOutput"])
+        self.assertIn("written with exact mutation receipt", self.prompt["expectedOutput"])
+        self.assertIn("writable and write authority exists", self.prompt["proofGate"])
+        self.assertIn("exact written ranges/IDs", self.prompt["proofGate"])
         self.assertIn("favorite domains", self.prompt["proofGate"])
         for keyword in (
             "youtube knowledge extraction",
@@ -281,6 +286,11 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
             "one writer per mutation surface",
             "`git diff --check`",
             "PRE-MUTATION MISSION DECLARATION",
+            "DOMAIN-AGNOSTIC KNOWLEDGE / LEDGER CONTRACT",
+            "`Sources`, `Findings`, and `Domains`",
+            "Resolve spreadsheet write capability + authority",
+            "exact written ranges/IDs as the mutation receipt",
+            "row-ready Source and Findings records",
         ):
             self.assertIn(marker, deployed)
 
