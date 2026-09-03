@@ -1,6 +1,6 @@
 {
   "name": "Health + Hospitals Ticket Discovery & Tracking Harvester",
-  "type": "RESEARCH + OPERATIONS",
+  "type": "RESEARCH + EVIDENCE",
   "class": "H+H SUPPORT / TICKET TRACKING",
   "sprintRole": "Search Outlook and Microsoft Teams together for NYC Health + Hospitals support-ticket intake and updates, reconcile cross-source evidence into ticket-level tracking records, and surface new, changed, open, blocked, and completion-reported work without converting communication evidence into billing truth",
   "useWhen": "You need the recurring daily Copilot search across Outlook and Teams for Health + Hospitals tickets, incident updates, assignments, follow-ups, or closure signals, especially messages involving the usual H+H ticket senders and coordinators.",
