@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import copy
 import json
 import unittest
 from pathlib import Path
 
 from scripts import build_prompt_kit_registry as builder
+from scripts import validate_prompt_kit_ontology_evidence as evidence_validator
 
 ROOT = Path(__file__).resolve().parents[1]
 CAPABILITIES = ROOT / "harness" / "capabilities.v1.json"
+EVIDENCE_CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-ontology-evidence.v1.json"
 ONTOLOGY_RUNTIME = ROOT / "docs" / "prompt-kit-ontology.js"
+TEACHING_RECORD = ROOT / ".teach" / "learning-records" / "2026-08-29_prompt-kit-ontology.md"
 
 
 class PromptKitOntologyViewTests(unittest.TestCase):
@@ -69,6 +73,34 @@ class PromptKitOntologyViewTests(unittest.TestCase):
         self.assertIn("Repository-backed agentic map", html)
         self.assertIn(runtime, html)
         self.assertIn("Declared proof, not run history.", html)
+
+    def test_evidence_history_contract_extends_mastered_ontology_without_fabricating_runs(self) -> None:
+        contract = json.loads(EVIDENCE_CONTRACT.read_text(encoding="utf-8"))
+        report = evidence_validator.validate()
+
+        self.assertEqual(report["status"], "PASS", report["errors"])
+        self.assertEqual(
+            contract["relation_chain"],
+            ["capability", "skill", "implementation", "invocation", "run", "evidence", "proof_ceiling"],
+        )
+        self.assertEqual(contract["record_kinds"]["favorite"]["proof_effect"], "none")
+        self.assertEqual(contract["record_kinds"]["failure"]["proof_effect"], "lower_or_block")
+        self.assertEqual(contract["record_kinds"]["feedback"]["raw_payload_transport"], "out_of_scope")
+        self.assertIn("does not assert that any invocation", contract["proof_ceiling"])
+
+    def test_evidence_history_validator_rejects_preference_as_proof(self) -> None:
+        contract = json.loads(EVIDENCE_CONTRACT.read_text(encoding="utf-8"))
+        mutated = copy.deepcopy(contract)
+        mutated["record_kinds"]["favorite"]["proof_effect"] = "supports_observed_claim"
+
+        report = evidence_validator.validate_payload(
+            mutated,
+            ONTOLOGY_RUNTIME.read_text(encoding="utf-8"),
+            TEACHING_RECORD.read_text(encoding="utf-8"),
+        )
+
+        self.assertEqual(report["status"], "FAIL")
+        self.assertIn("favorites must not count as proof", report["errors"])
 
 
 if __name__ == "__main__":
