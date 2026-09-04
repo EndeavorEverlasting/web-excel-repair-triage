@@ -63,8 +63,8 @@ class JobSearchPromptRegistryTests(unittest.TestCase):
 
     def test_prompt_roles_are_distinct_and_generated_site_contains_semantics(self) -> None:
         self.assertNotEqual(self.portable["id"], self.sync["id"])
-        self.assertEqual(self.portable.get("profile"), "career-operations")
-        self.assertEqual(self.sync.get("profile"), "career-operations")
+        self.assertNotIn("profile", self.portable)
+        self.assertNotIn("profile", self.sync)
         for marker in (
             "Job Opportunity Search & Trajectory Mapper",
             "Connected Job Search Workspace & Tracker Synchronizer",
