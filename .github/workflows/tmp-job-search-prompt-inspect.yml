@@ -1,0 +1,22 @@
+name: Temporary job search prompt routing inspect
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-job-search-workflows-20260903
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/prompt-kit-job-search-workflows-20260903
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Inspect registry routing
+        run: python scripts/prompt_registry_ops.py inspect
