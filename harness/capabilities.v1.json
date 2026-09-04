@@ -211,6 +211,87 @@
         "path": "scripts/validate_prompt_kit_layout_harness.py"
       },
       "proof_ceiling": "Static harness/source/artifact proof unless a validated browser-geometry receipt covers every declared viewport."
+    },
+    {
+      "id": "prompt-kit-feedback-afk-routing",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/prompt-kit-feedback-afk-routing/SKILL.md",
+      "trigger_ids": [
+        "prompt-kit-actionable-feedback"
+      ],
+      "operation": "Classify and deduplicate one accepted Prompt Kit feedback signal, create a P115-owned bounded work request, and invoke at most one configured capable worker without polling or promotion authority.",
+      "inputs": [
+        "harness/contracts/prompt-kit-feedback-afk-routing.v1.json",
+        "accepted explicit feedback signal or sanitized provider receipt",
+        "current Prompt Kit feedback owner evidence",
+        "configured worker argv when available"
+      ],
+      "outputs": [
+        "ACTIONABLE_REPAIR or INFORMATION_ONLY disposition",
+        "deduplicated prompt-kit-afk-work-request/v1 artifact for actionable feedback",
+        "bounded worker result or exact worker-configuration blocker"
+      ],
+      "implementation": {
+        "kind": "script",
+        "path": "scripts/prompt_kit_afk_signal_router.py"
+      },
+      "proof_ceiling": "One-shot repository routing and local work-request proof only; browser loopback behavior, worker quality, provider review, and promotion remain separate."
+    },
+    {
+      "id": "repository-hook-integration",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/repository-hook-integration/SKILL.md",
+      "trigger_ids": [
+        "repository-hook-installation-needed"
+      ],
+      "operation": "Discover the existing repository hook authority, preserve incompatible hook setups, activate the tracked Git hook path, and prove activation without creating a competing hook framework.",
+      "inputs": [
+        "repository Git/worktree state",
+        ".githooks/",
+        "scripts/install_local_hooks.py",
+        "existing core.hooksPath and default hooks",
+        "provider-specific hook context when required"
+      ],
+      "outputs": [
+        "preserved or configured hook authority",
+        "activation/check evidence",
+        "coexistence or worktree blocker when unsafe",
+        "provider-adapter disposition"
+      ],
+      "implementation": {
+        "kind": "script",
+        "path": "scripts/install_local_hooks.py"
+      },
+      "proof_ceiling": "Tracked Git hook and observed local core.hooksPath activation proof only; provider-specific Claude/Codex/DeepSeek hooks and other workstations require separate runtime proof."
+    },
+    {
+      "id": "operant-external-resource-intake",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/operant-external-resource-intake/SKILL.md",
+      "trigger_ids": [
+        "operant-external-resource-refresh-needed"
+      ],
+      "operation": "Refresh approved public donor skill inventories, project compact commit-pinned metadata, classify existing Operant coverage first, and emit external pointers plus grounded prompt-review gaps without copying donor bodies into the Prompt Kit.",
+      "inputs": [
+        "harness/contracts/operant-external-resource-intake.v1.json",
+        "live public GitHub donor metadata",
+        "current Operant prompt registry",
+        "current local skill inventory"
+      ],
+      "outputs": [
+        "web/prompt-kit/resources.v1.json",
+        "registry/resources/operant-external-resource-gaps.v1.json",
+        "POINT_TO_EXISTING_PROMPT / POINT_TO_EXISTING_SKILL / POINT_TO_EXTERNAL disposition",
+        "REVIEW_ADD_PROMPT queue routed to P79 when internal coverage is absent"
+      ],
+      "implementation": {
+        "kind": "script",
+        "path": "scripts/sync_operant_external_resources.py"
+      },
+      "proof_ceiling": "Live public donor source-SHA resolution plus repository metadata projection, deterministic coverage routing, size-budget, lazy-load, CI drift, and generated-site proof; no donor quality, license-adaptation, browser-network, or automatic prompt-quality proof."
     }
   ]
 }

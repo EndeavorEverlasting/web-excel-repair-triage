@@ -10,6 +10,8 @@ import json
 import os
 import sys
 
+from scripts.prompt_classification import site_sections
+
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(REPO_ROOT, "docs")
 PROMPTS_PATH = os.path.join(DATA_DIR, "prompts.json")
@@ -31,29 +33,7 @@ COLOR_HEX = {
     "mint": "#34d399", "night": "#1e293b", "violet": "#7c3aed", "cream": "#fef3c7",
 }
 
-SECTIONS = [
-    {"name": "Foundation", "glow": "#64748b",
-     "types": ["SETUP", "HARVEST", "CLOSEOUT", "CLOSEOUT + VALIDATE"]},
-    {"name": "Discover & Plan", "glow": "#f59e0b",
-     "types": ["DISCOVERY + BUILD", "PLAN", "PORTFOLIO PLAN", "TUTORIAL PLAN",
-               "CONSOLIDATE + EXECUTE", "ANALYZE + DIRECTORY", "ANALYZE + FACTOR",
-               "ANALYZE + TEST"]},
-    {"name": "Build & Repair", "glow": "#22c55e",
-     "types": ["BUILD", "CLEANUP", "REPAIR", "REVIEW + REPAIR", "REVIEW + BUILD",
-               "BUILD + FACTOR", "BUILD + ARTIFACT", "BUILD + BOOTSTRAP",
-               "BUILD + SAFETY"]},
-    {"name": "Validate & Protect", "glow": "#14b8a6",
-     "types": ["VALIDATE", "VALIDATE + CLOSE", "SAFETY", "RUNTIME PROOF", "IMPROVE"]},
-    {"name": "Integrate & Ship", "glow": "#6366f1",
-     "types": ["INTEGRATE", "INTEROP", "MAINTENANCE", "MAINTENANCE + BUILD",
-               "ENABLEMENT", "ENABLEMENT + BUILD", "OPERATE", "OPPORTUNITY",
-               "COMPILE ONLY", "INSTALL + ENFORCE", "ENVIRONMENT + CONFIGURE"]},
-    {"name": "Autonomy & Night Shift", "glow": "#7c3aed",
-     "types": ["AUTONOMY + VALIDATE", "AUTONOMY + BUILD", "AUTONOMY + PLAN",
-               "AUTONOMY + PREFLIGHT", "AUTONOMY + QUEUE", "RECOVER + BUILD",
-               "RECOVER + COMMIT", "HARNESS + BUILD", "HARNESS + EXECUTE",
-               "CURSOR + LIVE CERT"]},
-]
+SECTIONS = site_sections()
 
 SYNONYMS = {
     "doctrine": "P00 P01", "repo rules": "P00 P01", "agent rules": "P00 P01",
@@ -61,6 +41,8 @@ SYNONYMS = {
     "night shift": "P37 P38 P39 P40 P41 P42 P43 P44",
     "overnight": "P37 P38 P39 P40 P41 P42 P43 P44",
     "cleanup": "P06", "pr cleanup": "P06",
+    "code readability": "P124", "codebase readability": "P124", "code cleanup": "P124", "code refactor": "P124",
+    "structural refactor": "P124", "maintainability refactor": "P124", "god file": "P124", "giant function": "P124",
     "sprint": "P07", "implement": "P07", "code change": "P07",
     "validate": "P11", "validator": "P11", "gate": "P11",
     "closeout": "P12", "handoff": "P12", "compress": "P12",
@@ -480,7 +462,7 @@ def build_html(prompts, ref):
     html.append('<!DOCTYPE html>\n<html lang="en">\n<head>')
     html.append('<meta charset="UTF-8">')
     html.append('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
-    html.append('<title>AI Harness Prompt Kit v40</title>')
+    html.append('<title>Operant 0.1</title>')
     html.append('<style>')
     html.append(CSS_TEXT)
     html.append('</style>\n</head>\n<body>')
@@ -489,8 +471,8 @@ def build_html(prompts, ref):
     html.append('  <div class="header-top">')
     html.append('    <div class="logo">')
     html.append('      <div class="logo-icon">AK</div>')
-    html.append('      <div><h1>AI Harness Prompt Kit <span>v40</span></h1>'
-                '<div style="font-size:10px;color:var(--text-muted)">Agent Control Panel</div></div>')
+    html.append('      <div><h1>Operant <span>0.1</span></h1>'
+                '<div style="font-size:10px;color:var(--text-muted)">Capabilities · Skills · Implementations · Evidence</div></div>')
     html.append('    </div>')
     html.append('    <div class="search-container">')
     html.append('      <span class="search-icon">&#128269;</span>')
@@ -535,7 +517,7 @@ def build_html(prompts, ref):
     html.append('<div class="prompt-detail-overlay" id="promptDetailOverlay">')
     html.append('  <div class="prompt-detail" id="promptDetail"></div>')
     html.append('</div>')
-    html.append('<div class="version-badge" id="versionBadge">v40</div>')
+    html.append('<div class="version-badge" id="versionBadge">0.1</div>')
 
     html.append('<script>')
     html.append('var PROMPTS=' + prompt_json + ';')

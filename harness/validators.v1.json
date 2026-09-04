@@ -168,12 +168,62 @@
       "blocking": true,
       "output": "Outputs/app-harness-validation.json",
       "proof_ceiling": "Exact-head offline/synthetic harness readiness with explicit requirement classes and honest optional skips; no application/runtime proof."
+    },
+    {
+      "id": "prompt-kit-feedback-afk-routing-audit",
+      "class": "contract",
+      "command": "python scripts/validate_prompt_kit_feedback_afk_routing.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static feedback-AFK ownership, privacy, scheduler, workflow, and promotion-boundary proof."
+    },
+    {
+      "id": "prompt-kit-feedback-afk-routing-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_prompt_kit_feedback_afk_routing -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable one-shot classification, dedupe, work-request, and routing-boundary regression proof."
+    },
+    {
+      "id": "operant-product-identity-audit",
+      "class": "contract",
+      "command": "python scripts/validate_operant_product_identity.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static product identity, transition authority, compatibility-path, governance, and generated-brand proof."
+    },
+    {
+      "id": "operant-product-identity-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_operant_product_identity -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable regression proof for Operant identity, transition authority, and generated visible-brand invariants."
+    },
+    {
+      "id": "operant-external-resource-audit",
+      "class": "contract",
+      "command": "python scripts/validate_operant_external_resources.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static/current tracked resource projection, source pin, coverage routing, size-budget, lazy-load, and generated-site containment proof."
+    },
+    {
+      "id": "operant-external-resource-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_operant_external_resources -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable deterministic resource projection and lazy-loading regression proof."
     }
   ],
   "profiles": {
     "harness": [
       "harness-completeness",
       "harness-contract-tests",
+      "operant-product-identity-audit",
+      "operant-product-identity-tests",
       "prompt-kit-interaction-contract-tests",
       "prompt-kit-interaction-audit",
       "prompt-kit-discovery-audit",
@@ -181,8 +231,12 @@
       "prompt-language-contract-tests",
       "prompt-language-audit",
       "skill-prompt-registry-tests",
+      "prompt-kit-feedback-afk-routing-audit",
+      "prompt-kit-feedback-afk-routing-tests",
       "prompt-kit-responsive-layout-audit",
       "prompt-kit-responsive-layout-tests",
+      "operant-external-resource-audit",
+      "operant-external-resource-tests",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",
@@ -207,6 +261,8 @@
     "pre_push": [
       "harness-completeness",
       "harness-contract-tests",
+      "operant-product-identity-audit",
+      "operant-product-identity-tests",
       "prompt-kit-interaction-contract-tests",
       "prompt-kit-interaction-audit",
       "prompt-kit-discovery-audit",
@@ -214,8 +270,12 @@
       "prompt-language-contract-tests",
       "prompt-language-audit",
       "skill-prompt-registry-tests",
+      "prompt-kit-feedback-afk-routing-audit",
+      "prompt-kit-feedback-afk-routing-tests",
       "prompt-kit-responsive-layout-audit",
       "prompt-kit-responsive-layout-tests",
+      "operant-external-resource-audit",
+      "operant-external-resource-tests",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",

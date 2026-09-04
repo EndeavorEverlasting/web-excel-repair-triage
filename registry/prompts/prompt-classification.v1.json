@@ -1,0 +1,176 @@
+{
+  "schema_version": "prompt-classification/v1",
+  "policy_id": "prompt-kit-lifecycle-sections-v1",
+  "fallback_section": "Other",
+  "field_semantics": {
+    "identity": [
+      "id",
+      "seq",
+      "name",
+      "copySheet"
+    ],
+    "library_family": [
+      "category"
+    ],
+    "taxonomy": [
+      "type"
+    ],
+    "descriptive_semantics": [
+      "class"
+    ],
+    "routing_ownership": [
+      "profile"
+    ],
+    "presentation": [
+      "color",
+      "displayOrderPolicy"
+    ],
+    "discovery": [
+      "keywords",
+      "useWhen",
+      "synonyms"
+    ],
+    "activation": [
+      "sharedShortcut"
+    ]
+  },
+  "sections": [
+    {
+      "id": "foundation",
+      "name": "Foundation",
+      "glow": "#64748b",
+      "definition": "Workspace, teaching, harvest, and closure primitives that establish or preserve usable context.",
+      "types": [
+        "SETUP",
+        "HARVEST",
+        "CLOSEOUT",
+        "CLOSEOUT + VALIDATE",
+        "TEACH + PRACTICE",
+        "TEACH SETUP"
+      ]
+    },
+    {
+      "id": "discover-plan",
+      "name": "Discover & Plan",
+      "glow": "#f59e0b",
+      "definition": "Read-oriented discovery, research, analysis, and design/prototype work that establishes what should be done before implementation.",
+      "types": [
+        "DISCOVERY + BUILD",
+        "PLAN",
+        "PORTFOLIO PLAN",
+        "TUTORIAL PLAN",
+        "CONSOLIDATE + EXECUTE",
+        "ANALYZE + DIRECTORY",
+        "ANALYZE + FACTOR",
+        "ANALYZE + TEST",
+        "LEVERAGE",
+        "DESIGN + PROTOTYPE",
+        "RESEARCH + EVIDENCE",
+        "RESEARCH + GAP"
+      ]
+    },
+    {
+      "id": "build-repair",
+      "name": "Build & Repair",
+      "glow": "#22c55e",
+      "definition": "Creation, implementation, refactoring, refinement, or direct repair of product, harness, route, or architecture artifacts.",
+      "types": [
+        "BUILD",
+        "CLEANUP",
+        "REPAIR",
+        "REVIEW + REPAIR",
+        "REVIEW + BUILD",
+        "BUILD + FACTOR",
+        "BUILD + ARTIFACT",
+        "BUILD + BOOTSTRAP",
+        "BUILD + SAFETY",
+        "BUILD + HARDEN",
+        "BUILD + HARNESS",
+        "BUILD + ITERATE",
+        "BUILD + PRODUCT",
+        "BUILD + REFINE",
+        "BUILD + ROUTE",
+        "BUILD + VALIDATE",
+        "DESIGN + BUILD",
+        "EMULATE + BUILD",
+        "REFINE + POLISH",
+        "REPAIR + RECOVER",
+        "SYSTEM + FACTOR"
+      ]
+    },
+    {
+      "id": "validate-protect",
+      "name": "Validate & Protect",
+      "glow": "#14b8a6",
+      "definition": "Audit, diagnosis, testing, certification, acceptance, grounding, regression, and protective enforcement whose closure is evidence about correctness or safety.",
+      "types": [
+        "VALIDATE",
+        "VALIDATE + CLOSE",
+        "SAFETY",
+        "RUNTIME PROOF",
+        "IMPROVE",
+        "AUDIT + REPAIR",
+        "CERTIFY + REPAIR",
+        "DIAGNOSE + REPAIR",
+        "HARDEN + ENFORCE",
+        "TEST + HARDEN",
+        "VERIFY + ADVANCE",
+        "VERIFY + FIELD",
+        "VERIFY + REGRESSION",
+        "VERIFY + REPAIR",
+        "VERIFY + UX ACCEPTANCE"
+      ]
+    },
+    {
+      "id": "integrate-ship",
+      "name": "Integrate & Ship",
+      "glow": "#6366f1",
+      "definition": "Synchronization, maintenance, operations, deployment, environment mutation, integration, and verified movement of durable state across boundaries.",
+      "types": [
+        "INTEGRATE",
+        "INTEROP",
+        "MAINTENANCE",
+        "MAINTENANCE + BUILD",
+        "ENABLEMENT",
+        "ENABLEMENT + BUILD",
+        "OPERATE",
+        "OPPORTUNITY",
+        "COMPILE ONLY",
+        "INSTALL + ENFORCE",
+        "ENVIRONMENT + CONFIGURE",
+        "DEPLOY + VERIFY",
+        "EXECUTE + ORCHESTRATE",
+        "MAINTENANCE + CROSS-REPO",
+        "MAINTENANCE + FACTOR",
+        "MAINTENANCE + HARDEN",
+        "MAINTENANCE + HARNESS",
+        "MAINTENANCE + REGISTRY",
+        "MAP + VERIFY",
+        "MOVE + VERIFY",
+        "SYNC + ARTIFACT"
+      ]
+    },
+    {
+      "id": "autonomy",
+      "name": "Autonomy & Night Shift",
+      "glow": "#7c3aed",
+      "definition": "Autonomous, continuous, unattended, monitoring, recovery, queue, or agent-loop execution whose control semantics differ from ordinary bounded work.",
+      "types": [
+        "AUTONOMY + VALIDATE",
+        "AUTONOMY + BUILD",
+        "AUTONOMY + PLAN",
+        "AUTONOMY + PREFLIGHT",
+        "AUTONOMY + QUEUE",
+        "RECOVER + BUILD",
+        "RECOVER + COMMIT",
+        "HARNESS + BUILD",
+        "HARNESS + EXECUTE",
+        "CURSOR + LIVE CERT",
+        "AUTONOMY + EXECUTE",
+        "EXECUTE + LOOP + INTEGRATE",
+        "MONITOR + HANDOFF",
+        "REPAIR + AUTONOMY"
+      ]
+    }
+  ]
+}

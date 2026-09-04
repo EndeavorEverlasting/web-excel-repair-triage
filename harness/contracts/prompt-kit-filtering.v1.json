@@ -5,7 +5,8 @@
     "canonical_site": "web/prompt-kit/index.html",
     "behavior_source": "docs/prompt-kit.js",
     "polish_source": "docs/prompt-kit-polish.js",
-    "access_guide": "PROMPT_KIT_ACCESS.md"
+    "access_guide": "PROMPT_KIT_ACCESS.md",
+    "classification_source": "registry/prompts/prompt-classification.v1.json"
   },
   "requirements": [
     {
@@ -19,6 +20,10 @@
     {
       "id": "unique_type_filters",
       "expected": "All Types plus one unique control per prompt type is available."
+    },
+    {
+      "id": "exhaustive_lifecycle_type_mapping",
+      "expected": "Every effective Prompt Kit type maps to exactly one declared lifecycle section; registry loading and prompt addition fail closed on an unmapped type instead of silently placing canonical prompts in Other."
     },
     {
       "id": "progressive_type_disclosure",
@@ -48,7 +53,8 @@
     "python -m unittest tests.test_prompt_kit_product_interactions -v",
     "python -m unittest tests.test_prompt_kit_mobile -v",
     "python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary",
-    "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check"
+    "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
+    "python scripts/prompt_registry_ops.py validate"
   ],
   "proof_ceiling": "Source, deterministic reset/grouping/order/mobile tests, generated-site parity, and CI artifact proof; real operator browser and physical mobile acceptance remain field gates."
 }

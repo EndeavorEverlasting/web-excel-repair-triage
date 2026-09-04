@@ -15,11 +15,13 @@ This file is the human-readable index for reusable repository operations. The ma
 | Capability ID | Skill | Implementation | Primary output |
 |---|---|---|---|
 | `harness-infrastructure-maintenance` | `.ai/skills/harness-infrastructure-maintenance/SKILL.md` | `scripts/validate_harness.py` | Canonical harness repairs plus `harness-completeness-report/v1`. |
+| `repository-hook-integration` | `.ai/skills/repository-hook-integration/SKILL.md` | `scripts/install_local_hooks.py` | Preserved or activated tracked hook authority plus activation/coexistence evidence. |
 | `prompt-language-audit` | `.ai/skills/prompt-language-audit/SKILL.md` | `scripts/evaluate_prompt_language.py` | Exhaustive prompt disposition and finding report. |
 | `skill-evaluation` | `.ai/skills/skill-evaluation/SKILL.md` | Prompt Kit P62 | Repository-native eval harness, cases, runner, results, and repair ledger. |
 | `skill-factoring` | `.ai/skills/skill-factoring/SKILL.md` | Prompt Kit P61 | Skill ownership dispositions and repaired routing boundaries. |
 | `technician-prompt-kit-acquisition` | `.ai/skills/technician-prompt-kit-acquisition/SKILL.md` | Existing public/Windows/Git acquisition surfaces | Device-aware access mode: public use, phone install, Windows local app, editable checkout, or ZIP snapshot. |
 | `prompt-kit-browser-proof-scratch-cleanup` | `.ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md` | `scripts/Clear-PromptKitBrowserProofScratch.ps1` | Preview/apply cleanup receipt for exact eligible detached browser-proof scratch. |
+| `prompt-kit-feedback-afk-routing` | `.ai/skills/prompt-kit-feedback-afk-routing/SKILL.md` | `scripts/prompt_kit_afk_signal_router.py` | One deduplicated P115 work request or information-only disposition; promotion remains P105/pr-floor. |
 
 ## Harness infrastructure capability
 
@@ -30,6 +32,12 @@ Canonical report command:
 ```bash
 python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
 ```
+
+## Repository hook integration capability
+
+`repository-hook-integration` makes the existing `.githooks` + local `core.hooksPath` installer the canonical Git-hook implementation. Upstream Claude/Codex/DeepSeek/Husky/Lefthook mechanisms are adapter donors, not parallel authorities; add an adapter only when the canonical Git hooks cannot express the required interception semantics, and prove that adapter separately.
+
+Focused implementation proof remains `tests/test_local_hook_activation.py` plus `.github/workflows/local-hook-activation.yml`.
 
 ## Prompt Kit acquisition capability
 
@@ -61,6 +69,14 @@ P62 must reproduce functional weaknesses and inefficiencies with versioned cases
 
 `prompt-kit-browser-proof-scratch-cleanup` owns only detached `prompt-kit-browser-proof-*` directories directly under the OS temp root. Preview is default; apply is explicit; rejected paths are preserved; prior stable receipts are backed up. Browser profile data, localStorage, Favorites, canonical repositories, public Pages, and unrelated Temp contents are outside this capability.
 
+## Prompt Kit feedback AFK routing capability
+
+`prompt-kit-feedback-afk-routing` consumes one accepted explicit feedback signal at a time. P99 owns explicit feedback semantics, P115 owns AFK coordination, P07/P32 own bounded repair lanes, and P105 / `pr-floor-integration` owns promotion. The router may classify, deduplicate, write a private work request, and invoke one configured worker through argv; it must not poll indefinitely, scan provider PR queues, or merge. Raw written feedback remains local and provider wakeups are receipt-only.
+
 ## Proof boundaries
 
 Capability registration, static validators, tests, and CI prove only the repository surfaces and commands exercised on the tested commit. Cross-device Prompt Kit validation proves routing intent and canonical access surfaces plus the existing-checkout preconditions encoded in the contract, not a phone/browser install menu, Termux/F-Droid availability, Git credentials, browser storage, clipboard behavior, or push success. Other capability proof likewise does not establish provider behavior, model judgment, Excel for Web, Windows GUI, protected runtime access, technician acceptance, deployment, or production success.
+
+## Operant external resource intake
+
+`operant-external-resource-intake` uses `scripts/sync_operant_external_resources.py` to inventory approved public donor skill roots at exact commits, publish the metadata-only `web/prompt-kit/resources.v1.json` sidecar, and route deterministic coverage gaps through P79 rather than copying donor bodies or auto-authoring prompts.

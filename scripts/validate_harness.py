@@ -77,6 +77,7 @@ REQUIRED_WORKFLOW_IDS = {
     "prompt-language-audit",
     "skill-evaluation",
     "prompt-kit-browser-proof-cleanup",
+    "prompt-kit-feedback-afk-routing",
 }
 REQUIRED_ARTIFACT_IDS = {
     "harness-control-plane",
@@ -88,6 +89,8 @@ REQUIRED_ARTIFACT_IDS = {
     "workbook-engine-output",
     "prompt-kit-browser-proof-cleanup-report",
     "app-harness-validation-report",
+    "operant-external-resource-index",
+    "operant-external-resource-gap-ledger",
 }
 REQUIRED_VALIDATOR_IDS = {
     "harness-completeness",
@@ -111,6 +114,12 @@ REQUIRED_VALIDATOR_IDS = {
     "prompt-kit-responsive-layout-audit",
     "prompt-kit-responsive-layout-tests",
     "app-harness-validation",
+    "prompt-kit-feedback-afk-routing-audit",
+    "prompt-kit-feedback-afk-routing-tests",
+    "operant-product-identity-audit",
+    "operant-product-identity-tests",
+    "operant-external-resource-audit",
+    "operant-external-resource-tests",
 }
 REQUIRED_CAPABILITY_IDS = {
     "harness-infrastructure-maintenance",
@@ -120,6 +129,9 @@ REQUIRED_CAPABILITY_IDS = {
     "technician-prompt-kit-acquisition",
     "prompt-kit-browser-proof-scratch-cleanup",
     "prompt-kit-responsive-layout",
+    "prompt-kit-feedback-afk-routing",
+    "repository-hook-integration",
+    "operant-external-resource-intake",
 }
 REQUIRED_TRIGGER_IDS = {
     "harness-infrastructure-change",
@@ -130,6 +142,9 @@ REQUIRED_TRIGGER_IDS = {
     "technician-needs-latest-prompt-kit",
     "prompt-kit-browser-proof-temp-path",
     "prompt-kit-responsive-overlap",
+    "prompt-kit-actionable-feedback",
+    "repository-hook-installation-needed",
+    "operant-external-resource-refresh-needed",
 }
 PROTECTED_PATHS = ("Candidates/", "Active/")
 
@@ -399,6 +414,7 @@ def validate_workflow_registry() -> dict[str, Any]:
         "f-prompt-language-audit-or-repair",
         "g-skill-evaluation-build",
         "h-prompt-kit-browser-proof-scratch-cleanup",
+        "i-prompt-kit-feedback-afk-routing",
     }
     by_id: dict[str, dict[str, Any]] = {}
     for workflow in workflows:

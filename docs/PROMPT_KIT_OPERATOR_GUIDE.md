@@ -101,6 +101,10 @@ Completing a configured Favorite shortcut:
 
 The Hotkeys panel labels these bindings as **Copy + reveal P##**. A buffered prompt sequence gets the next digit before built-in digit navigation, so a valid sequence such as `p95` is not interrupted by the built-in `5` command.
 
+### Recommended shortcuts from the registry
+
+Some registry prompts publish a shared recommended shortcut (`sharedShortcut: true` in the canonical registry record; currently `P95`). A recommended sequence is the lowercase prompt ID, works for every user without favoriting the prompt first, and completes through the same copy + reveal path as a configured Favorite shortcut. The Hotkeys panel lists these rows with a **Recommended** label and no Remove control, because the registry — not browser storage — owns them. Saving your own binding for the same prompt keeps working and takes precedence.
+
 ### Core hotkeys
 
 | Key | Action |

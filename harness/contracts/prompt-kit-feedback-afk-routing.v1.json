@@ -1,0 +1,111 @@
+{
+  "schema_version": "prompt-kit-feedback-afk-routing/v1",
+  "prompt_surface": "standard-ai",
+  "mission": "Route explicit Prompt Kit feedback into bounded AFK development work without giving browser telemetry, transport code, or a local coordinator independent merge authority.",
+  "semantic_owners": {
+    "explicit_feedback": "P99",
+    "afk_coordination": "P115",
+    "general_repository_execution": "P07",
+    "established_ci_repair": "P32",
+    "promotion": "P105/pr-floor-integration"
+  },
+  "surfaces": {
+    "browser_runtime": {
+      "primary_surface": "conventional_application_logic",
+      "path": "docs/prompt-kit-feedback-production.js",
+      "owns": [
+        "append-only browser-local explicit feedback",
+        "explicit user consent for any future private loopback sync",
+        "browser-local cursor state"
+      ],
+      "forbidden": [
+        "GitHub credentials",
+        "pull-request merge authority",
+        "implicit historical upload when consent is enabled",
+        "provider polling"
+      ]
+    },
+    "private_bridge": {
+      "primary_surface": "integration_seam",
+      "path": "scripts/prompt_kit_feedback_bridge.py",
+      "owns": [
+        "loopback request validation",
+        "browser-source pseudonymization",
+        "private local spool and retry receipts",
+        "sanitized provider wakeup metadata when enabled"
+      ],
+      "forbidden": [
+        "pull-request merge authority",
+        "worker scheduling loop",
+        "raw written feedback in provider dispatch payloads",
+        "browser credential storage"
+      ]
+    },
+    "afk_router": {
+      "primary_surface": "agent_harness",
+      "path": "scripts/prompt_kit_afk_signal_router.py",
+      "owns": [
+        "single-signal classification",
+        "signal-id deduplication",
+        "machine-readable work-request creation",
+        "bounded invocation of one configured capable worker"
+      ],
+      "forbidden": [
+        "background polling loop",
+        "provider PR scanning",
+        "direct merge execution",
+        "replacement of P115 or P105"
+      ]
+    },
+    "provider_feedback_hook": {
+      "primary_surface": "integration_seam",
+      "paths": [
+        "scripts/prompt_kit_feedback_hook.py",
+        ".github/workflows/prompt-kit-feedback-hook.yml"
+      ],
+      "required_permissions": "contents:read",
+      "mutation_authority": false
+    },
+    "promotion": {
+      "primary_surface": "harness_spine",
+      "owner": "pr-floor-integration/P105",
+      "contract": "harness/contracts/pr-merge-gate.v1.json",
+      "validator": "scripts/validate_pr_merge_gate.py"
+    }
+  },
+  "signal_classes": {
+    "prompt_feedback": "ACTIONABLE_REPAIR",
+    "prompt_vote:dislike": "ACTIONABLE_REPAIR",
+    "prompt_vote:like": "INFORMATION_ONLY",
+    "prompt_usage": "INFORMATION_ONLY"
+  },
+  "privacy": {
+    "browser_credentials": false,
+    "raw_comment_provider_dispatch": false,
+    "raw_comment_local_worker_request": true,
+    "provider_receipt_fields": [
+      "schema_version",
+      "signal_id",
+      "prompt_id",
+      "event_type",
+      "value",
+      "has_comment",
+      "source_hash",
+      "sequence"
+    ]
+  },
+  "wakeups": {
+    "event_driven": [
+      "accepted local feedback event",
+      "sanitized repository_dispatch receipt"
+    ],
+    "schedule_role": "bounded recovery or revalidation only",
+    "second_scheduler_allowed": false
+  },
+  "proof_levels": {
+    "static": "Contract, registries, source boundaries, and generated-site parity on the tested commit.",
+    "provider": "Observed workflow/check/review identities for the exact candidate only.",
+    "browser_runtime": "Observed browser request/response and persistence behavior; static JavaScript assertions are insufficient.",
+    "promotion": "P105/pr-floor exact-head validation and provider merge receipt; never inferred from the AFK router."
+  }
+}

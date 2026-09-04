@@ -19,9 +19,15 @@
     "tests/test_afk_deterministic_testing_prompt.py",
     "tests/test_afk_feedback_development_prompt.py",
     "tests/test_agentic_loop_prompts.py",
+    "tests/test_context_to_artifact_prompt.py",
     "tests/test_conversation_context_canary_prompt.py",
     "tests/test_correspondence_prompt_registry.py",
+    "tests/test_gemini_youtube_playlist_ingestion_prompt.py",
+    "tests/test_job_search_prompt_registry.py",
     "tests/test_management_operations_prompt_registry.py",
+    "tests/test_p100_closeout_replay_prompt.py",
+    "tests/test_p123_youtube_ingestion_behavior_eval_prompt.py",
+    "tests/test_p67_source_faithfulness_eval_prompt.py",
     "tests/test_permissioned_repository_polling_prompt.py",
     "tests/test_prompt_classification_refiner_prompt.py",
     "tests/test_prompt_registry_expansion_regression_design_teach.py",
@@ -29,7 +35,8 @@
     "tests/test_spec_architecture_prompt_registry.py",
     "tests/test_sysadminsuite_prompt_registry.py",
     "tests/test_test_floor_evolution_prompt.py",
-    "tests/test_ux_design_prompt_suite.py"
+    "tests/test_ux_design_prompt_suite.py",
+    "tests/test_hh_ticket_tracking_prompt.py"
   ],
   "prompt_semantic_test_globs": [
     "tests/test_*_prompt.py",
@@ -56,6 +63,7 @@
     "triage.same_family_compare",
     "triage.roster_log_compare.compare",
     "triage.roster_log_review_queue.cli",
+    "triage.roster_log_v2.cli",
     "triage.gitignore_hygiene"
   ],
   "artifact_tests": [
@@ -73,6 +81,7 @@
     "tests/test_same_family_compare.py",
     "tests/test_gitignore_hygiene.py",
     "tests/test_roster_log_review_queue.py",
+    "tests/test_roster_log_v2.py",
     "tests/test_artifact_engine_workflow_contract.py"
   ],
   "allowed_artifact_skip_reasons": [

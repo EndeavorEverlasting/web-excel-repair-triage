@@ -43,11 +43,13 @@ class PromptKitHotkeyHeaderHandoffTests(unittest.TestCase):
             "resetPromptShortcutBuffer",
             "schedulePromptShortcutBufferReset",
             "promptShortcutHasLongerPrefix",
+            "effectivePromptShortcutBindings",
             "handleConfiguredPromptShortcutKey",
         ))
         script = f"""
 var PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS=25;
 var promptShortcutBindings={{p11:'P11',p111:'P111'}};
+var sharedPromptShortcutBindings={{}};
 var promptShortcutBuffer='';
 var promptShortcutBufferTimer=null;
 var activations=[];

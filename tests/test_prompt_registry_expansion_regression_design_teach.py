@@ -83,6 +83,26 @@ class PromptRegistryExpansionTests(unittest.TestCase):
         raw = next(p for p in raw_payload["prompts"] if p["id"] == "P95")
         self.assertLessEqual(len(raw["copyContent"]), 10000)
 
+    def test_greenfield_repository_architecture_selects_hosting_tier_from_evidence(self) -> None:
+        design = self.by_name["Program Design & Call-Stack Prototype Architect"]
+        content = design["copyContent"]
+        for phrase in (
+            "CHOOSE THE DEPLOYMENT OPERATING MODEL FROM EVIDENCE",
+            "managed PaaS/serverless",
+            "Docker or Podman",
+            "Kubernetes/managed orchestration",
+            "millions someday",
+            "OCI containers",
+            "p95/p99/SLO",
+        ):
+            self.assertIn(phrase, content)
+        p03 = self.full["P03"]["copyContent"]
+        self.assertIn("GREENFIELD REPOSITORY CREATION", p03)
+        self.assertIn("route that bounded design decision to P95", p03)
+        self.assertIn("Do not make Docker, Podman, Kubernetes", p03)
+        self.assertIn("P00 remains governance owner", p03)
+        self.assertIn("P01 remains harness", p03)
+
     def test_teach_prompt_is_grounded_stateful_and_active(self) -> None:
         content = self.by_name["Stateful Socratic Technical Tutor Workspace"]["copyContent"]
         for phrase in (

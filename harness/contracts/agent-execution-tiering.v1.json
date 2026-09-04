@@ -1,0 +1,93 @@
+{
+  "schema_version": "agent-execution-tiering/v1",
+  "policy_id": "repository-agent-execution-tiering",
+  "evidence_registry": "harness/contracts/agent-capability-evidence.v1.json",
+  "assignment_basis": [
+    "scope-specific",
+    "evidence-earned",
+    "environment-aware",
+    "revocable",
+    "operator-authorized"
+  ],
+  "rules": {
+    "tool_or_model_label_is_not_authority": true,
+    "unknown_or_unproven_agent_routes_down": true,
+    "shared_contracts_before_parallel_consumers": true,
+    "promotion_requires_operator_approval": true,
+    "promotion_requires_evaluation_evidence": true,
+    "benchmark_rank_alone_cannot_promote_agent": true,
+    "opaque_product_agent_does_not_inherit_model_score_without_proof": true
+  },
+  "identity_disambiguation": {
+    "auggie": "Augment Code; repository-local agent identity, not Google Anti-gravity",
+    "google-antigravity": "Google Anti-gravity; aliases anti-gravity, antigravity, agy; underlying model mapping currently UNKNOWN"
+  },
+  "tiers": [
+    {
+      "id": "strategic-harness-owner",
+      "current_agents": ["chatgpt", "auggie"],
+      "owned_surfaces": [
+        "governance",
+        "harness-spine",
+        "agent-harness",
+        "skills",
+        "capabilities",
+        "triggers",
+        "routing",
+        "validators-and-proof-gates",
+        "cross-repository-architecture-and-migration-authority"
+      ],
+      "requirements": [
+        "fresh repository evidence floor",
+        "bounded sprint declaration",
+        "collision analysis",
+        "owning validation",
+        "explicit proof ceiling"
+      ]
+    },
+    {
+      "id": "bounded-application-executor",
+      "current_agents": ["chatgpt", "auggie", "desktop-app", "opencode", "google-antigravity"],
+      "owned_surfaces": [
+        "conventional-application-logic",
+        "ui",
+        "adapters",
+        "fixtures",
+        "focused-tests",
+        "bounded-documentation",
+        "contract-conforming-migration-work"
+      ],
+      "preconditions": [
+        "upstream shared contracts are settled and pinned",
+        "owned files and proof gate are explicit",
+        "no unresolved shared-schema or shared-workflow collision"
+      ],
+      "forbidden_without_promotion": [
+        "governance mutation",
+        "harness-spine mutation",
+        "skill capability or trigger ownership changes",
+        "validator or proof-gate weakening",
+        "cross-repository authority changes"
+      ]
+    },
+    {
+      "id": "research-design-contributor",
+      "current_agents": ["chatgpt", "auggie", "desktop-app", "opencode", "google-antigravity"],
+      "owned_surfaces": [
+        "read-only inventory",
+        "reference research",
+        "bounded alternatives",
+        "implementation notes"
+      ],
+      "proof_boundary": "Research may inform a strategic owner but cannot silently promote itself into governance, harness, migration, or proof authority."
+    }
+  ],
+  "agent_defaults": {
+    "chatgpt": "strategic-harness-owner",
+    "auggie": "strategic-harness-owner",
+    "desktop-app": "bounded-application-executor",
+    "opencode": "bounded-application-executor",
+    "google-antigravity": "bounded-application-executor"
+  },
+  "fallback": "When agent identity, environment, or demonstrated capability is uncertain, route the work to the lower-authority tier or a strategic-harness owner; never infer promotion from availability or benchmark rank alone."
+}

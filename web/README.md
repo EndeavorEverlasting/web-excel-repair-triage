@@ -184,6 +184,8 @@ Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prom
 
 A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it owns the following digits. Numeric keys have no header-navigation meaning, so `P111` and other configured prompt IDs cannot fall through into a tab command.
 
+Registry prompts may additionally publish a **recommended shortcut** by shipping `sharedShortcut: true` in their canonical registry record (currently `P95`). Recommended sequences are the lowercase prompt ID, are active for every user without favoriting, use the same copy + reveal path, and appear in the Hotkeys panel labeled **Recommended** without a Remove control because the registry owns them. Personal bindings and built-ins keep precedence, and configuring or removing a personal binding still requires the Favorite gate and a durable storage write.
+
 Navigation shortcuts are ignored while typing in an input, textarea, select, or content-editable surface. Modified backtick chords are ignored. Top/bottom scrolling respects reduced-motion preferences.
 
 ### Header navigation contract
@@ -214,3 +216,7 @@ python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html -
 ```
 
 Repository validation does not substitute for physical browser download/file-picker behavior, browser-profile transfer, cross-device acceptance, phone/tablet touch acceptance, clipboard permissions in every browser, live Pages publication, or a Windows field run of the quick launcher.
+
+### External resources
+
+The **Resources** control uses `docs/prompt-kit-external-resources.js` and lazily fetches the compact `prompt-kit/resources.v1.json` sidecar only after the user opens it. Donor skill bodies are never embedded in the main generated page; results are paged and existing Operant prompt coverage is preferred before upstream links.

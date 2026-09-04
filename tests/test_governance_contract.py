@@ -43,15 +43,17 @@ class GovernanceContractTests(unittest.TestCase):
         section = self._section("## 2. Instruction precedence", "## 3.")
         expected = (
             "Platform, security, legal, and repository-owner instructions.",
-            "This governance contract",
+            "This governance contract.",
             "Task-specific prompts and sprint instructions.",
             "Generic agent defaults.",
         )
         positions = [section.index(item) for item in expected]
         self.assertEqual(positions, sorted(positions))
+        self.assertIn("Domain specs remain subordinate", section)
 
     def test_sprint_and_completion_contracts_remain_binding(self) -> None:
         declaration = self._section("## 3. Mandatory sprint declaration", "## 4.")
+        self.assertIn("Every writing sprint must state", declaration)
         for phrase in (
             "repository and branch or worktree",
             "lane and mission",
@@ -62,12 +64,12 @@ class GovernanceContractTests(unittest.TestCase):
         ):
             self.assertIn(phrase, declaration)
         completion = self._section("## 4. Completion standard", "## 5.")
+        self.assertIn("A task is complete only when", completion)
         for phrase in (
             "exact files changed",
             "validations run",
             "commit SHA",
-            "push state",
-            "PR/integration state",
+            "push or PR/integration state",
             "one exact next command",
             "fetch without force",
             "isolated worktree",
@@ -93,10 +95,27 @@ class GovernanceContractTests(unittest.TestCase):
     def test_forbidden_behaviors_remain_explicit(self) -> None:
         section = self._section("## 5. Safety and mutation boundaries", "## 6.")
         for phrase in (
-            "acknowledgment, plans, or summaries",
-            "claim completion without checks",
-            "expose secrets, credentials",
-            "weaken tests/validators/fixtures",
+            "acknowledgment without mutation",
+            "plans without execution",
+            "summaries without proof",
+            "completion claims without running checks",
+            "secret or credential exposure",
+            "private workbook/protected/machine-local evidence",
+            "weakened tests/validators/fixtures",
+        ):
+            self.assertIn(phrase, section)
+
+    def test_client_delivery_requires_minimum_sufficient_explanation(self) -> None:
+        section = self._section("## 5. Safety and mutation boundaries", "## 6.")
+        for phrase in (
+            "minimum sufficient explanation",
+            "purpose, period, totals, attachment, consequence",
+            "Omit internal evidence mechanics",
+            "private allocation logic",
+            "singled-out edge cases",
+            "defensive caveats",
+            "invitation-to-question closings",
+            "unless needed for recipient action",
         ):
             self.assertIn(phrase, section)
 
@@ -112,18 +131,18 @@ class GovernanceContractTests(unittest.TestCase):
         ):
             self.assertIn(phrase, section)
 
-    def test_prompt_kit_separation_is_explicit_and_transition_safe(self) -> None:
+    def test_operant_separation_is_explicit_and_transition_safe(self) -> None:
         section = self._section(
             "## 6. Repository identity and product boundary", "## 7."
         )
         for phrase in (
-            "dedicated repository under `UnderDeskDev`",
-            "not yet named or created",
-            "must not invent its name",
-            "Prompt Kit sources here remain operationally authoritative",
+            "`UnderDeskDev/Operant`",
+            "not yet created/proven",
+            "operator-approved product identity",
+            "legacy `prompt-kit` paths and sources here remain authoritative compatibility surfaces",
             "must not be silently moved",
-            "source, pin, mirror, package, link to, or consume Prompt Kit releases",
-            "must not become a competing Prompt Kit authority",
+            "pin, mirror, package, link to, or consume Operant releases",
+            "must not become a competing Operant authority",
             "cross-repo dependencies explicit and versioned",
         ):
             self.assertIn(phrase, section)
