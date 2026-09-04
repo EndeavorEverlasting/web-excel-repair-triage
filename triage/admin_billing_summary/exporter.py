@@ -1,7 +1,8 @@
-"""OpenAI-format, Web Excel-safe admin billing workbooks (native tables).
+"""Web Excel-safe admin billing workbooks with explicit audience boundaries.
 
-Per-month Internal and Client variants share the same resolved ``MonthSummary``.
-Single clean ``wb.save()`` — no ``_repair_inlinestr`` post-processing.
+Internal and Client variants share the same resolved ``MonthSummary`` but do not
+share the same disclosure surface. Internal exports retain technician/punch and
+review evidence. Client exports are aggregate billing-support copies only.
 """
 from __future__ import annotations
 
@@ -10,20 +11,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from triage.admin_billing_summary.models import (
-    DailyRecord,
-    MonthSummary,
-    billing_bucket,
-)
-from triage.nw_prj_neuron_track_hours.bonita_exporter import (
-    _write_month_tab,
-    tab_name_for_month_key,
-)
+from triage.admin_billing_summary.models import DailyRecord, MonthSummary, billing_bucket
+from triage.nw_prj_neuron_track_hours.bonita_exporter import _write_month_tab, tab_name_for_month_key
 from triage.neuron_work_context_rules import classify_neuron_work_context
-from triage.nw_prj_neuron_track_hours.bonita_resolver import (
-    BonitaShift,
-    NEURON_DISPLAY_NAME,
-)
+from triage.nw_prj_neuron_track_hours.bonita_resolver import BonitaShift, NEURON_DISPLAY_NAME
 from triage.websafe_cell import websafe_cell_value
 from triage.xlsx_utils import fix_inlinestr
 
@@ -36,7 +27,6 @@ _CF_ROWS = [
     ("Amber", "Needs review", "Review before submission."),
     ("Red", "Must fix", "Correct source roster before trusting."),
 ]
-
 _QC_ROWS = [
     ("Macros", "PASS", "No VBA project."),
     ("Formulas", "PASS", "Values only on export sheets."),
@@ -44,6 +34,17 @@ _QC_ROWS = [
     ("Inline string cells", "PASS", "No t=inlineStr cells in worksheet XML."),
     ("Shared-string repair", "PASS", "fix_inlinestr only when openpyxl emits inlineStr."),
 ]
+
+_CLIENT_PURPOSE = "Client billing support copy"
+_CLIENT_STATUS = "Supporting documentation only — not a standalone invoice or new billing request."
+_CLIENT_PERIOD = (
+    "Historical or reference periods shown for context are not reopened, rebilled, or superseded "
+    "unless a separate invoice or correction expressly says so."
+)
+_CLIENT_PRIVACY = (
+    "Individual technician punch, pay, approval, exception, and review detail is retained internally "
+    "and excluded from this client copy."
+)
 
 
 def _xl():
@@ -57,20 +58,18 @@ def _xl():
 
 
 def _num_format(header: str) -> str:
-    h = header
-    if h in {"Gross Span", "Gross Span Hours", "Gross", "Lunch", "Lunch Deducted",
-             "Net Hours", "Net", "Billable Hours", "Clean Net Hours", "Review Net Hours"}:
+    if header in {"Gross Span", "Gross Span Hours", "Gross", "Lunch", "Lunch Deducted",
+                  "Net Hours", "Net", "Billable Hours", "Clean Net Hours", "Review Net Hours"}:
         return "0.00"
-    if h in {"Tech Count", "Worked Days", "Worked Rows", "Detail Rows",
-             "Clean Billable Rows", "Review Rows", "Review row count", "Projects", "Techs"}:
+    if header in {"Tech Count", "Worked Days", "Worked Rows", "Detail Rows",
+                  "Clean Billable Rows", "Review Rows", "Review row count", "Projects", "Techs"}:
         return "0"
-    if h == "Date":
+    if header == "Date":
         return "yyyy-mm-dd"
     return "General"
 
 
 def _title_band(ws, title: str, subtitle: str, width: int) -> None:
-    """Title/subtitle without merged cells (merged cells force inlineStr in openpyxl)."""
     _, _, _, _, Font, PatternFill, get_column_letter, *_ = _xl()
     w = max(2, width)
     tf = PatternFill("solid", fgColor=_TITLE_FILL)
@@ -89,8 +88,7 @@ def _title_band(ws, title: str, subtitle: str, width: int) -> None:
 
 def _add_table(ws, table_name: str, headers: List[str], rows: List[Dict[str, Any]],
                header_row: int = 5, start_col: int = 1) -> Tuple[int, int]:
-    (_, _, _, Alignment, Font, PatternFill, get_column_letter,
-     Table, TableStyleInfo) = _xl()
+    (_, _, _, Alignment, Font, PatternFill, get_column_letter, Table, TableStyleInfo) = _xl()
     fill = PatternFill("solid", fgColor=_TITLE_FILL)
     for c, h in enumerate(headers, start_col):
         cell = ws.cell(row=header_row, column=c, value=h)
@@ -107,14 +105,10 @@ def _add_table(ws, table_name: str, headers: List[str], rows: List[Dict[str, Any
     if rows:
         c0 = get_column_letter(start_col)
         c1 = get_column_letter(start_col + len(headers) - 1)
-        ref = f"{c0}{header_row}:{c1}{last_row}"
-        tab = Table(displayName=table_name, ref=ref)
+        tab = Table(displayName=table_name, ref=f"{c0}{header_row}:{c1}{last_row}")
         tab.tableStyleInfo = TableStyleInfo(
-            name=_TABLE_STYLE,
-            showFirstColumn=False,
-            showLastColumn=False,
-            showRowStripes=True,
-            showColumnStripes=False,
+            name=_TABLE_STYLE, showFirstColumn=False, showLastColumn=False,
+            showRowStripes=True, showColumnStripes=False,
         )
         ws.add_table(tab)
     if start_col == 1:
@@ -146,53 +140,12 @@ def _add_net_chart(ws, title: str, headers: List[str], header_row: int,
 
 
 def _review_records(summary: MonthSummary) -> List[DailyRecord]:
-    out: List[DailyRecord] = []
-    for r in summary.records:
-        if r.long_shift or r.project_source == "override":
-            out.append(r)
-        elif r.project == "Unassigned / Review":
-            out.append(r)
-    return out
+    return [r for r in summary.records
+            if r.long_shift or r.project_source == "override" or r.project == "Unassigned / Review"]
 
 
 def _time_to_float(t) -> Optional[float]:
-    if t is None:
-        return None
-    return t.hour + t.minute / 60.0
-
-
-def _neuron_shifts(summary: MonthSummary) -> List[BonitaShift]:
-    _, _, mon = _parse_key(summary.month_key)
-    short = _month_name[mon]
-    shifts: List[BonitaShift] = []
-    for r in summary.neuron_records():
-        decision = classify_neuron_work_context(
-            work_date=r.date,
-            start_hour=_time_to_float(r.start_time),
-            end_hour=_time_to_float(r.end_time),
-            notes=r.note,
-            worked_label=r.worked_label,
-            resolved_project=r.project,
-        )
-        shifts.append(BonitaShift(
-            month_key=summary.month_key,
-            month_name=short,
-            date=r.date,
-            day=r.day,
-            tech=r.tech,
-            clock_in=r.clock_in,
-            clock_out=r.clock_out,
-            total_hours=r.net_hours,
-            project_name=NEURON_DISPLAY_NAME,
-            assignment_type=decision.assignment_type,
-            note=r.note,
-            long_shift=r.long_shift,
-            start_time=r.start_time,
-            end_time=r.end_time,
-        ))
-    shifts.sort(key=lambda s: (s.date, s.tech))
-    return shifts
-
+    return None if t is None else t.hour + t.minute / 60.0
 
 
 def _parse_key(month_key: str):
@@ -201,71 +154,70 @@ def _parse_key(month_key: str):
     return m.group(1), int(m.group(1)), int(m.group(2))
 
 
+def _neuron_shifts(summary: MonthSummary) -> List[BonitaShift]:
+    _, _, mon = _parse_key(summary.month_key)
+    shifts: List[BonitaShift] = []
+    for r in summary.neuron_records():
+        decision = classify_neuron_work_context(
+            work_date=r.date, start_hour=_time_to_float(r.start_time), end_hour=_time_to_float(r.end_time),
+            notes=r.note, worked_label=r.worked_label, resolved_project=r.project,
+        )
+        shifts.append(BonitaShift(
+            month_key=summary.month_key, month_name=_month_name[mon], date=r.date, day=r.day,
+            tech=r.tech, clock_in=r.clock_in, clock_out=r.clock_out, total_hours=r.net_hours,
+            project_name=NEURON_DISPLAY_NAME, assignment_type=decision.assignment_type,
+            note=r.note, long_shift=r.long_shift, start_time=r.start_time, end_time=r.end_time,
+        ))
+    shifts.sort(key=lambda s: (s.date, s.tech))
+    return shifts
+
+
 def _neuron_detail_rows(summary: MonthSummary) -> List[Dict[str, Any]]:
-    return [{
-        "Month": summary.month_name,
-        "Date": r.date,
-        "Day": r.day,
-        "Tech": r.tech,
-        "Project": r.project,
-        "Billing Bucket": billing_bucket(r.project),
-        "Clock In": r.clock_in,
-        "Clock Out": r.clock_out,
-        "Gross": round(r.gross_span, 2),
-        "Lunch": round(r.lunch, 2),
-        "Net": round(r.net_hours, 2),
-    } for r in summary.neuron_records()]
+    return [{"Month": summary.month_name, "Date": r.date, "Day": r.day, "Tech": r.tech,
+             "Project": r.project, "Billing Bucket": billing_bucket(r.project),
+             "Clock In": r.clock_in, "Clock Out": r.clock_out, "Gross": round(r.gross_span, 2),
+             "Lunch": round(r.lunch, 2), "Net": round(r.net_hours, 2)}
+            for r in summary.neuron_records()]
 
 
 def _project_rows(summary: MonthSummary) -> List[Dict[str, Any]]:
-    return [{
-        "Month": summary.month_name,
-        "Project": r.project,
-        "Billing Bucket": billing_bucket(r.project),
-        "Worked Rows": r.worked_days,
-        "Tech Count": r.tech_count,
-        "Gross Span": round(r.gross_span, 2),
-        "Lunch": round(r.lunch_deducted, 2),
-        "Net Hours": round(r.net_hours, 2),
-    } for r in summary.project_rows]
+    return [{"Month": summary.month_name, "Project": r.project, "Billing Bucket": billing_bucket(r.project),
+             "Worked Rows": r.worked_days, "Tech Count": r.tech_count,
+             "Gross Span": round(r.gross_span, 2), "Lunch": round(r.lunch_deducted, 2),
+             "Net Hours": round(r.net_hours, 2)} for r in summary.project_rows]
+
+
+def _client_project_rows(summary: MonthSummary) -> List[Dict[str, Any]]:
+    return [{"Month": summary.month_name, "Project": r.project, "Billing Bucket": billing_bucket(r.project),
+             "Gross Span": round(r.gross_span, 2), "Lunch": round(r.lunch_deducted, 2),
+             "Net Hours": round(r.net_hours, 2)} for r in summary.project_rows]
 
 
 def _tech_rows(summary: MonthSummary) -> List[Dict[str, Any]]:
-    return [{
-        "Month": summary.month_name,
-        "Tech": r.tech,
-        "Worked Rows": r.worked_days,
-        "Gross Span": round(r.gross_span, 2),
-        "Lunch": round(r.lunch_deducted, 2),
-        "Net Hours": round(r.net_hours, 2),
-    } for r in summary.tech_rows]
+    return [{"Month": summary.month_name, "Tech": r.tech, "Worked Rows": r.worked_days,
+             "Gross Span": round(r.gross_span, 2), "Lunch": round(r.lunch_deducted, 2),
+             "Net Hours": round(r.net_hours, 2)} for r in summary.tech_rows]
 
 
 def _tech_project_rows(summary: MonthSummary) -> List[Dict[str, Any]]:
-    return [{
-        "Month": summary.month_name,
-        "Tech": r.tech,
-        "Project": r.project,
-        "Worked Rows": r.worked_days,
-        "Gross Span": round(r.gross_span, 2),
-        "Lunch": round(r.lunch_deducted, 2),
-        "Net Hours": round(r.net_hours, 2),
-    } for r in summary.tech_project_rows]
+    return [{"Month": summary.month_name, "Tech": r.tech, "Project": r.project,
+             "Worked Rows": r.worked_days, "Gross Span": round(r.gross_span, 2),
+             "Lunch": round(r.lunch_deducted, 2), "Net Hours": round(r.net_hours, 2)}
+            for r in summary.tech_project_rows]
 
 
 def _monthly_summary_rows(summary: MonthSummary) -> List[Dict[str, Any]]:
     review = _review_records(summary)
     review_net = round(sum(r.net_hours for r in review), 2)
-    return [{
-        "Month": summary.month_name,
-        "Detail Rows": len(summary.records),
-        "Clean Billable Rows": len(summary.records) - len(review),
-        "Review Rows": len(review),
-        "Clean Net Hours": round(summary.total_net - review_net, 2),
-        "Review Net Hours": review_net,
-        "Gross Span": summary.total_gross,
-        "Lunch": summary.total_lunch,
-    }]
+    return [{"Month": summary.month_name, "Detail Rows": len(summary.records),
+             "Clean Billable Rows": len(summary.records) - len(review), "Review Rows": len(review),
+             "Clean Net Hours": round(summary.total_net - review_net, 2), "Review Net Hours": review_net,
+             "Gross Span": summary.total_gross, "Lunch": summary.total_lunch}]
+
+
+def _client_monthly_summary_rows(summary: MonthSummary) -> List[Dict[str, Any]]:
+    return [{"Month": summary.month_name, "Net Hours": summary.total_net,
+             "Gross Span": summary.total_gross, "Lunch / Unpaid": summary.total_lunch}]
 
 
 def _review_flag_rows(summary: MonthSummary) -> List[Dict[str, Any]]:
@@ -278,27 +230,12 @@ def _review_flag_rows(summary: MonthSummary) -> List[Dict[str, Any]]:
             flags.append("override")
         if r.project == "Unassigned / Review":
             flags.append("unassigned")
-        rows.append({
-            "Month": summary.month_name,
-            "Date": r.date,
-            "Day": r.day,
-            "Tech": r.tech,
-            "Project": r.project,
-            "Net Hours": round(r.net_hours, 2),
-            "Flag": ", ".join(flags),
-            "Note": r.note,
-        })
+        rows.append({"Month": summary.month_name, "Date": r.date, "Day": r.day, "Tech": r.tech,
+                     "Project": r.project, "Net Hours": round(r.net_hours, 2),
+                     "Flag": ", ".join(flags), "Note": r.note})
     for m in summary.malformed:
-        rows.append({
-            "Month": summary.month_name,
-            "Date": "",
-            "Day": "",
-            "Tech": "",
-            "Project": "",
-            "Net Hours": "",
-            "Flag": "malformed",
-            "Note": m,
-        })
+        rows.append({"Month": summary.month_name, "Date": "", "Day": "", "Tech": "",
+                     "Project": "", "Net Hours": "", "Flag": "malformed", "Note": m})
     return rows
 
 
@@ -311,36 +248,66 @@ def _sheet_table(ws, title: str, subtitle: str, table_name: str,
         _add_net_chart(ws, chart[0], headers, hr, lr, chart[1])
 
 
-def build_workbook(
-    summary: MonthSummary,
-    out_path: str,
-    *,
-    variant: str = "internal",
-    roster_name: str = "",
-    generated_utc: Optional[str] = None,
-) -> str:
-    """Write Internal or Client billing summary for one month."""
-    if variant not in ("internal", "client"):
-        raise ValueError(f"variant must be internal or client, got {variant!r}")
-
-    Workbook, *_ = _xl()
-    wb = Workbook()
-    wb.remove(wb.active)
-    label = summary.month_name
-    stamp = generated_utc or datetime.now().strftime("%Y-%m-%d %H:%M")
-    stem = Path(out_path).stem
-
+def _build_start_here(wb, label: str, stem: str, stamp: str, variant: str, roster_name: str) -> None:
     ws = wb.create_sheet("Start Here")
-    _title_band(ws, f"{label} Billing Summary ({variant.title()})",
-                "Roster-derived; override-aware project resolution.", 2)
-    _add_table(ws, "StartHereTable", ["Field", "Value"], [
-        {"Field": "Artifact", "Value": stem + ".xlsx"},
-        {"Field": "Generated", "Value": stamp},
-        {"Field": "Source roster", "Value": roster_name},
-        {"Field": "Variant", "Value": variant},
-        {"Field": "Resolution", "Value": "Override > Worked > Assignment > Live default"},
-    ])
+    if variant == "client":
+        _title_band(ws, f"{label} Billing Summary (Client)", _CLIENT_STATUS, 2)
+        rows = [
+            {"Field": "Artifact", "Value": stem + ".xlsx"},
+            {"Field": "Generated", "Value": stamp},
+            {"Field": "Variant", "Value": "client"},
+            {"Field": "Document purpose", "Value": _CLIENT_PURPOSE},
+            {"Field": "Billing status", "Value": _CLIENT_STATUS},
+            {"Field": "Period handling", "Value": _CLIENT_PERIOD},
+            {"Field": "Privacy boundary", "Value": _CLIENT_PRIVACY},
+        ]
+    else:
+        _title_band(ws, f"{label} Billing Summary (Internal)",
+                    "Internal review artifact — not for client delivery.", 2)
+        rows = [
+            {"Field": "Artifact", "Value": stem + ".xlsx"},
+            {"Field": "Generated", "Value": stamp},
+            {"Field": "Source roster", "Value": roster_name},
+            {"Field": "Variant", "Value": "internal"},
+            {"Field": "Resolution", "Value": "Override > Worked > Assignment > Live default"},
+        ]
+    _add_table(ws, "StartHereTable", ["Field", "Value"], rows)
 
+
+def _build_client_workbook(wb, summary: MonthSummary, label: str) -> None:
+    ws = wb.create_sheet("Executive Dashboard")
+    _title_band(ws, "Executive Dashboard", f"{label} aggregate billing-support snapshot.", 6)
+    _add_table(ws, "DashboardKPITable", ["Metric", "Value"], [
+        {"Metric": "Total Net Hours", "Value": summary.total_net},
+        {"Metric": "Gross Span", "Value": summary.total_gross},
+        {"Metric": "Lunch / Unpaid", "Value": summary.total_lunch},
+        {"Metric": "Projects", "Value": summary.projects_reflected},
+        {"Metric": "Neuron Net", "Value": summary.net_for_bucket("Neurons")},
+    ], header_row=5)
+    top = sorted(summary.project_rows, key=lambda x: -x.net_hours)[:8]
+    _add_table(ws, "DashboardProjectTopTable", ["Project", "Net Hours"],
+               [{"Project": p.project, "Net Hours": round(p.net_hours, 2)} for p in top],
+               header_row=5, start_col=5)
+
+    _sheet_table(wb.create_sheet("Monthly Summary"), "Monthly Summary",
+                 "Aggregate current-period billing support; no technician review detail.",
+                 "MonthlySummaryTable", ["Month", "Net Hours", "Gross Span", "Lunch / Unpaid"],
+                 _client_monthly_summary_rows(summary))
+    ph = ["Month", "Project", "Billing Bucket", "Gross Span", "Lunch", "Net Hours"]
+    _sheet_table(wb.create_sheet("Project Summary"), "Project Summary",
+                 "Aggregate billable totals by project.", "ProjectSummaryTable", ph,
+                 _client_project_rows(summary), ("Net Hours by Project", "H4"))
+
+    compat_tab = tab_name_for_month_key(summary.month_key)
+    _sheet_table(wb.create_sheet(compat_tab), "Client Neuron Summary",
+                 "Compatibility tab: aggregate Neuron support only; individual punch detail is internal.",
+                 "ClientNeuronSummaryTable", ["Month", "Billing Bucket", "Net Hours"], [{
+                     "Month": summary.month_name, "Billing Bucket": "Neurons",
+                     "Net Hours": summary.net_for_bucket("Neurons"),
+                 }])
+
+
+def _build_internal_workbook(wb, summary: MonthSummary, label: str) -> None:
     ws = wb.create_sheet("Executive Dashboard")
     _title_band(ws, "Executive Dashboard", f"{label} billing snapshot.", 8)
     review = _review_records(summary)
@@ -360,50 +327,54 @@ def build_workbook(
                [{"Project": p.project, "Net Hours": round(p.net_hours, 2)} for p in top],
                header_row=5, start_col=5)
 
-    mh = ["Month", "Detail Rows", "Clean Billable Rows", "Review Rows",
-          "Clean Net Hours", "Review Net Hours", "Gross Span", "Lunch"]
-    _sheet_table(wb.create_sheet("Monthly Summary"), "Monthly Summary",
-                 f"{label} totals.", "MonthlySummaryTable", mh, _monthly_summary_rows(summary))
-
-    ph = ["Month", "Project", "Billing Bucket", "Worked Rows", "Tech Count",
-          "Gross Span", "Lunch", "Net Hours"]
-    _sheet_table(wb.create_sheet("Project Summary"), "Project Summary",
-                 "Billable totals by project.", "ProjectSummaryTable", ph, _project_rows(summary),
-                 ("Net Hours by Project", "I4"))
-
+    mh = ["Month", "Detail Rows", "Clean Billable Rows", "Review Rows", "Clean Net Hours",
+          "Review Net Hours", "Gross Span", "Lunch"]
+    _sheet_table(wb.create_sheet("Monthly Summary"), "Monthly Summary", f"{label} totals.",
+                 "MonthlySummaryTable", mh, _monthly_summary_rows(summary))
+    ph = ["Month", "Project", "Billing Bucket", "Worked Rows", "Tech Count", "Gross Span", "Lunch", "Net Hours"]
+    _sheet_table(wb.create_sheet("Project Summary"), "Project Summary", "Billable totals by project.",
+                 "ProjectSummaryTable", ph, _project_rows(summary), ("Net Hours by Project", "I4"))
     th = ["Month", "Tech", "Worked Rows", "Gross Span", "Lunch", "Net Hours"]
-    _sheet_table(wb.create_sheet("Tech Summary"), "Tech Summary",
-                 "Billable totals by technician.", "TechSummaryTable", th, _tech_rows(summary))
-
+    _sheet_table(wb.create_sheet("Tech Summary"), "Tech Summary", "Billable totals by technician.",
+                 "TechSummaryTable", th, _tech_rows(summary))
     tph = ["Month", "Tech", "Project", "Worked Rows", "Gross Span", "Lunch", "Net Hours"]
     _sheet_table(wb.create_sheet("Tech Project Summary"), "Tech Project Summary",
-                 "Billable totals by technician and project.", "TechProjectSummaryTable",
-                 tph, _tech_project_rows(summary),
-                 ("Net Hours by Tech and Project", "I4"))
-
+                 "Billable totals by technician and project.", "TechProjectSummaryTable", tph,
+                 _tech_project_rows(summary), ("Net Hours by Tech and Project", "I4"))
     neuron_tab = f"{label.split()[0]} Neuron Hours"
-    nh = ["Month", "Date", "Day", "Tech", "Project", "Billing Bucket",
-          "Clock In", "Clock Out", "Gross", "Lunch", "Net"]
+    nh = ["Month", "Date", "Day", "Tech", "Project", "Billing Bucket", "Clock In", "Clock Out", "Gross", "Lunch", "Net"]
     _sheet_table(wb.create_sheet(neuron_tab), f"{label} Neuron Hours",
                  "Neuron-only detail; same source as embedded Bonita tracker tab.",
                  "NeuronDetailTable", nh, _neuron_detail_rows(summary))
-
     _write_month_tab(wb, tab_name_for_month_key(summary.month_key), _neuron_shifts(summary))
+    rh = ["Month", "Date", "Day", "Tech", "Project", "Net Hours", "Flag", "Note"]
+    _sheet_table(wb.create_sheet("Review Flags"), "Review Flags",
+                 "Overrides, long shifts, unassigned, and malformed rows.", "ReviewFlagsTable", rh,
+                 _review_flag_rows(summary))
+    _sheet_table(wb.create_sheet("CF Dictionary"), "Conditional Formatting Dictionary",
+                 "Color meanings for review visibility.", "CFDictionaryTable", ["Color", "Meaning", "Action"],
+                 [{"Color": c, "Meaning": m, "Action": a} for c, m, a in _CF_ROWS])
+    _sheet_table(wb.create_sheet("WebExcel QC"), "Web Excel QC",
+                 "Structural checks for Excel for Web.", "WebExcelQCTable", ["Check", "Result", "Notes"],
+                 [{"Check": c, "Result": r, "Notes": n} for c, r, n in _QC_ROWS])
 
-    if variant == "internal":
-        rh = ["Month", "Date", "Day", "Tech", "Project", "Net Hours", "Flag", "Note"]
-        _sheet_table(wb.create_sheet("Review Flags"), "Review Flags",
-                     "Overrides, long shifts, unassigned, and malformed rows.",
-                     "ReviewFlagsTable", rh, _review_flag_rows(summary))
-        _sheet_table(wb.create_sheet("CF Dictionary"), "Conditional Formatting Dictionary",
-                     "Color meanings for review visibility.", "CFDictionaryTable",
-                     ["Color", "Meaning", "Action"],
-                     [{"Color": c, "Meaning": m, "Action": a} for c, m, a in _CF_ROWS])
-        _sheet_table(wb.create_sheet("WebExcel QC"), "Web Excel QC",
-                     "Structural checks for Excel for Web.", "WebExcelQCTable",
-                     ["Check", "Result", "Notes"],
-                     [{"Check": c, "Result": r, "Notes": n} for c, r, n in _QC_ROWS])
 
+def build_workbook(summary: MonthSummary, out_path: str, *, variant: str = "internal",
+                   roster_name: str = "", generated_utc: Optional[str] = None) -> str:
+    """Write a full Internal audit workbook or aggregate Client support workbook."""
+    if variant not in ("internal", "client"):
+        raise ValueError(f"variant must be internal or client, got {variant!r}")
+    Workbook, *_ = _xl()
+    wb = Workbook()
+    wb.remove(wb.active)
+    label = summary.month_name
+    stamp = generated_utc or datetime.now().strftime("%Y-%m-%d %H:%M")
+    stem = Path(out_path).stem
+    _build_start_here(wb, label, stem, stamp, variant, roster_name)
+    if variant == "client":
+        _build_client_workbook(wb, summary, label)
+    else:
+        _build_internal_workbook(wb, summary, label)
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     wb.save(out_path)
     fix_inlinestr(out_path)
