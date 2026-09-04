@@ -9,11 +9,15 @@ on:
       - .ai/skills/skill-factoring/SKILL.md
       - configs/prompt_kit/generators.v1.json
       - scripts/build_prompt_kit_registry.py
+      - scripts/prompt_registry_ops.py
+      - scripts/prompt_registry_grounding.py
       - scripts/prompt_kit_generator_gui.py
       - Run-PromptKitGenerator.cmd
       - Build-PromptKitWebsite.cmd
       - tests/test_skill_prompt_registry.py
       - tests/test_actionable_prompt_registry.py
+      - tests/test_prompt_registry_grounding.py
+      - harness/specs/prompt-operations.md
       - web/prompt-kit/index.html
       - docs/PROMPT_KIT_GENERATOR_OPERATOR_GUIDE.md
       - .github/workflows/skill-prompt-registry.yml
@@ -26,11 +30,15 @@ on:
       - .ai/skills/skill-factoring/SKILL.md
       - configs/prompt_kit/generators.v1.json
       - scripts/build_prompt_kit_registry.py
+      - scripts/prompt_registry_ops.py
+      - scripts/prompt_registry_grounding.py
       - scripts/prompt_kit_generator_gui.py
       - Run-PromptKitGenerator.cmd
       - Build-PromptKitWebsite.cmd
       - tests/test_skill_prompt_registry.py
       - tests/test_actionable_prompt_registry.py
+      - tests/test_prompt_registry_grounding.py
+      - harness/specs/prompt-operations.md
       - web/prompt-kit/index.html
       - docs/PROMPT_KIT_GENERATOR_OPERATOR_GUIDE.md
       - .github/workflows/skill-prompt-registry.yml
@@ -53,13 +61,17 @@ jobs:
         run: |
           python -m py_compile \
             scripts/build_prompt_kit_registry.py \
+            scripts/prompt_registry_ops.py \
+            scripts/prompt_registry_grounding.py \
             scripts/prompt_kit_generator_gui.py \
+            tests/test_prompt_registry_grounding.py \
             tests/test_skill_prompt_registry.py \
             tests/test_actionable_prompt_registry.py
       - name: Run skill prompt and launcher contracts
         run: |
           python -m unittest tests.test_skill_prompt_registry -v
           python -m unittest tests.test_actionable_prompt_registry -v
+          python -m unittest tests.test_prompt_registry_grounding -v
       - name: Validate checked-in combined Prompt Kit website
         run: |
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check

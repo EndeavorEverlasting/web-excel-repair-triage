@@ -14,6 +14,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts import build_prompt_kit_registry as registry  # noqa: E402
+from scripts import prompt_registry_grounding as grounding  # noqa: E402
 
 PROMPT_ID_RE = re.compile(r"^P(\d+)$")
 AUTO_FIELDS = {"id", "seq", "copySheet"}
@@ -33,7 +34,7 @@ REQUIRED_DRAFT_FIELDS = {
 OPTIONAL_DRAFT_FIELDS = {"registry_id", "profile", "color", "category", "progress"}
 
 
-def _read_json(path_value: str) -> dict[str, Any]:
+def _read_json(path_value: str, noun: str = "Prompt draft") -> dict[str, Any]:
     if path_value == "-":
         text = sys.stdin.read()
         label = "stdin"
@@ -44,9 +45,9 @@ def _read_json(path_value: str) -> dict[str, Any]:
     try:
         payload = json.loads(text)
     except json.JSONDecodeError as exc:
-        raise SystemExit(f"Prompt draft is invalid JSON ({label}): {exc}") from exc
+        raise SystemExit(f"{noun} is invalid JSON ({label}): {exc}") from exc
     if not isinstance(payload, dict):
-        raise SystemExit("Prompt draft must be one JSON object")
+        raise SystemExit(f"{noun} must be one JSON object")
     return payload
 
 
@@ -253,6 +254,151 @@ def _reject_obvious_duplicate(record: dict[str, Any]) -> None:
             )
 
 
+
+def build_grounding_packet() -> dict[str, Any]:
+    """Return the current compact structural dossier for exact registry operations."""
+    state = inspect_state()
+    return grounding.build_packet(
+        repo_root=REPO_ROOT,
+        registry_module=registry,
+        helper_path=Path(__file__).resolve(),
+        required_fields=REQUIRED_DRAFT_FIELDS,
+        optional_fields=OPTIONAL_DRAFT_FIELDS,
+        auto_fields=AUTO_FIELDS,
+        next_identity={
+            "id": state["next_id"],
+            "seq": state["next_seq"],
+            "copySheet": f"{state['next_id']}_COPY_SAFE",
+        },
+        registries=state["registries"],
+    )
+
+
+def _gate_status_for_error(message: str) -> str:
+    lowered = message.casefold()
+    if (
+        "unknown registry_id" in lowered
+        or "target registry is ambiguous" in lowered
+        or "does not resolve to exactly one registry" in lowered
+    ):
+        return grounding.UNSOURCED_BLOCK
+    if "duplicates existing" in lowered:
+        return grounding.CONTRADICTION_BLOCK
+    return grounding.SCHEMA_MISMATCH
+
+
+def ground_prompt_proposal(
+    draft: dict[str, Any],
+    explicit_registry: str | None,
+    grounding_packet: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Validate all exact contribution parameters without mutating repository state."""
+    try:
+        current = build_grounding_packet()
+    except (OSError, RuntimeError, SystemExit, ValueError) as exc:
+        return grounding.gate_result(
+            grounding.GROUNDING_FAILURE, "cannot_build_current_grounding", detail=str(exc)
+        )
+
+    if grounding_packet is not None:
+        packet_gate = grounding.validate_packet(grounding_packet, current)
+        if packet_gate["status"] != grounding.GROUNDED_PASS:
+            return packet_gate
+
+    try:
+        target_path, target_payload = _resolve_target(draft, explicit_registry)
+        record = _build_record(draft, target_payload)
+        _reject_obvious_duplicate(record)
+    except SystemExit as exc:
+        message = str(exc)
+        return grounding.gate_result(
+            _gate_status_for_error(message),
+            "proposal_rejected",
+            detail=message,
+            source_fingerprint=current["source_fingerprint"],
+            packet_fingerprint=current["packet_fingerprint"],
+        )
+
+    registry_entry = next(
+        (
+            item
+            for item in current["registries"]
+            if item["registry_id"] == target_payload["registry_id"]
+        ),
+        None,
+    )
+    if registry_entry is None:
+        return grounding.gate_result(
+            grounding.UNSOURCED_BLOCK,
+            "target_registry_missing_from_grounding_packet",
+            registry_id=target_payload["registry_id"],
+        )
+    target_relative = str(target_path.relative_to(REPO_ROOT)).replace("\\", "/")
+    if registry_entry["path"].replace("\\", "/") != target_relative:
+        return grounding.gate_result(
+            grounding.CONTRADICTION_BLOCK,
+            "registry_path_contradiction",
+            registry_id=target_payload["registry_id"],
+            grounded_path=registry_entry["path"],
+            resolved_path=target_relative,
+        )
+
+    expected_identity = current["next_identity"]
+    actual_identity = {
+        "id": record["id"],
+        "seq": record["seq"],
+        "copySheet": record["copySheet"],
+    }
+    if actual_identity != expected_identity:
+        return grounding.gate_result(
+            grounding.CONTRADICTION_BLOCK,
+            "identity_contradiction",
+            expected=expected_identity,
+            actual=actual_identity,
+        )
+
+    return {
+        "status": grounding.GROUNDED_PASS,
+        "gate_id": grounding.GATE_ID,
+        "reason": "proposal_matches_current_structure",
+        "source_fingerprint": current["source_fingerprint"],
+        "packet_fingerprint": current["packet_fingerprint"],
+        "record": record,
+        "attribution": {
+            "registry_id": {
+                "source_key": registry_entry["source_key"],
+                "path": registry_entry["path"],
+                "selector": "$.registry_id",
+            },
+            "identity": {
+                "source_keys": [
+                    item["source_key"]
+                    for item in current["sources"]
+                    if item["source_key"] == "base_registry"
+                    or item["source_key"].startswith("registry:")
+                    or item["source_key"].startswith("content_registry:")
+                ],
+                "selector": "max(P##)+1",
+            },
+            "draft_schema": {
+                "source_key": "helper",
+                "path": "scripts/prompt_registry_ops.py",
+                "selector": "REQUIRED_DRAFT_FIELDS|OPTIONAL_DRAFT_FIELDS|AUTO_FIELDS",
+            },
+            "actionability_policy": {
+                "source_key": "actionability_policy",
+                "path": current["actionability_policy"]["path"],
+                "selector": "$.policy_id",
+            },
+            "builder": {
+                "source_key": "builder",
+                "path": current["builder"]["path"],
+                "selector": "EXTENSION_REGISTRIES|DEFAULT_OUTPUT",
+            },
+        },
+    }
+
+
 def _validate_site_parity() -> tuple[bool, int]:
     prompts = registry.load_prompt_kit_registry()
     expected = registry.render()
@@ -262,20 +408,13 @@ def _validate_site_parity() -> tuple[bool, int]:
     return output.read_text(encoding="utf-8") == expected, len(prompts)
 
 
-def add_prompt(
-    draft: dict[str, Any], explicit_registry: str | None, dry_run: bool
+def _apply_prompt_record(
+    target_path: Path,
+    target_payload: dict[str, Any],
+    record: dict[str, Any],
+    gate: dict[str, Any],
 ) -> dict[str, Any]:
-    target_path, target_payload = _resolve_target(draft, explicit_registry)
-    record = _build_record(draft, target_payload)
-    _reject_obvious_duplicate(record)
-    if dry_run:
-        return {
-            "status": "dry-run",
-            "registry_id": target_payload["registry_id"],
-            "registry_path": str(target_path.relative_to(REPO_ROOT)),
-            "record": record,
-        }
-
+    """Perform the protected write path after the grounding gate has passed."""
     original_registry = target_path.read_text(encoding="utf-8")
     output = registry.DEFAULT_OUTPUT
     original_output = output.read_text(encoding="utf-8") if output.exists() else None
@@ -315,7 +454,90 @@ def add_prompt(
         "prompt_count": prompt_count,
         "site_parity": True,
         "actionability_policy": registry.load_actionability_policy()["policy_id"],
+        "grounding_gate": {
+            key: gate[key]
+            for key in (
+                "status",
+                "gate_id",
+                "source_fingerprint",
+                "packet_fingerprint",
+                "attribution",
+            )
+        },
     }
+
+
+def _raise_gate(block: dict[str, Any]) -> None:
+    raise SystemExit(json.dumps(block, indent=2, ensure_ascii=False))
+
+
+def _grounded_add_under_lock(
+    draft: dict[str, Any],
+    explicit_registry: str | None,
+    grounding_packet: dict[str, Any] | None,
+) -> dict[str, Any]:
+    gate = ground_prompt_proposal(draft, explicit_registry, grounding_packet)
+    if gate["status"] != grounding.GROUNDED_PASS:
+        _raise_gate(gate)
+
+    target_path, target_payload = _resolve_target(draft, explicit_registry)
+    record = gate["record"]
+    current_before_write = build_grounding_packet()
+    if current_before_write["packet_fingerprint"] != gate["packet_fingerprint"]:
+        _raise_gate(
+            grounding.gate_result(
+                grounding.CONTRADICTION_BLOCK,
+                "source_changed_after_gate",
+                gated_packet_fingerprint=gate["packet_fingerprint"],
+                current_packet_fingerprint=current_before_write["packet_fingerprint"],
+            )
+        )
+    return _apply_prompt_record(target_path, target_payload, record, gate)
+
+
+def add_prompt(
+    draft: dict[str, Any],
+    explicit_registry: str | None,
+    dry_run: bool,
+    grounding_packet: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if dry_run:
+        gate = ground_prompt_proposal(draft, explicit_registry, grounding_packet)
+        if gate["status"] != grounding.GROUNDED_PASS:
+            _raise_gate(gate)
+        target_path, target_payload = _resolve_target(draft, explicit_registry)
+        gate_summary = {
+            key: gate[key]
+            for key in (
+                "status",
+                "gate_id",
+                "source_fingerprint",
+                "packet_fingerprint",
+                "attribution",
+            )
+        }
+        return {
+            "status": "dry-run",
+            "registry_id": target_payload["registry_id"],
+            "registry_path": str(target_path.relative_to(REPO_ROOT)),
+            "record": gate["record"],
+            "grounding_gate": gate_summary,
+        }
+
+    try:
+        with grounding.registry_write_lock(REPO_ROOT):
+            return _grounded_add_under_lock(
+                draft, explicit_registry, grounding_packet
+            )
+    except grounding.GroundingLockError as exc:
+        _raise_gate(
+            grounding.gate_result(
+                grounding.GROUNDING_FAILURE,
+                "registry_write_lock_unavailable",
+                detail=str(exc),
+            )
+        )
+    raise AssertionError("unreachable")
 
 
 def validate_current() -> dict[str, Any]:
@@ -334,25 +556,48 @@ def validate_current() -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Inspect, add, and validate Prompt Kit registry contributions with minimal ceremony."
+        description="Inspect, ground, add, and validate Prompt Kit registry contributions."
     )
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("inspect", help="Print next identity and compact registry routing choices as JSON.")
-    add = sub.add_parser("add", help="Add one prompt draft, allocate identity, rebuild, and validate.")
+    sub.add_parser("ground", help="Emit the current source-pinned JIT grounding packet as JSON.")
+    check = sub.add_parser("check", help="Validate one proposed contribution without writing files.")
+    check.add_argument("--input", required=True, help="Draft JSON path, or - for stdin.")
+    check.add_argument("--registry", help="Existing registry_id; otherwise resolve from draft profile.")
+    check.add_argument("--grounding", help="Previously emitted grounding packet; stale/tampered packets block.")
+    add = sub.add_parser("add", help="Ground, add one prompt draft, rebuild, and validate.")
     add.add_argument("--input", required=True, help="Draft JSON path, or - for stdin.")
     add.add_argument("--registry", help="Existing registry_id; otherwise resolve from draft profile.")
-    add.add_argument("--dry-run", action="store_true", help="Resolve and validate without writing files.")
+    add.add_argument("--grounding", help="Previously emitted grounding packet; stale/tampered packets block.")
+    add.add_argument("--dry-run", action="store_true", help="Ground and resolve without writing files.")
     sub.add_parser("validate", help="Validate current registry loading and generated-site parity.")
     args = parser.parse_args(argv)
 
+    exit_code = 0
     if args.command == "inspect":
         result = inspect_state()
+    elif args.command == "ground":
+        result = build_grounding_packet()
+    elif args.command == "check":
+        packet = (
+            _read_json(args.grounding, "Grounding packet") if args.grounding else None
+        )
+        result = ground_prompt_proposal(
+            _read_json(args.input), args.registry, packet
+        )
+        if result["status"] != grounding.GROUNDED_PASS:
+            exit_code = 2
     elif args.command == "add":
-        result = add_prompt(_read_json(args.input), args.registry, args.dry_run)
+        packet = (
+            _read_json(args.grounding, "Grounding packet") if args.grounding else None
+        )
+        result = add_prompt(
+            _read_json(args.input), args.registry, args.dry_run, packet
+        )
     else:
         result = validate_current()
     print(json.dumps(result, indent=2, ensure_ascii=False))
-    return 0
+    return exit_code
 
 
 if __name__ == "__main__":
