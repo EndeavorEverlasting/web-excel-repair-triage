@@ -102,6 +102,7 @@ jobs:
           python -m unittest tests.test_prompt_language_audit -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           python scripts/validate_harness.py
+          python -m pip install -r requirements-test-floor.txt
           python scripts/run_deterministic_test_floor.py --report "$RUNNER_TEMP/job-search-review-floor.json"
           git diff --check
 
