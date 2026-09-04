@@ -1,0 +1,82 @@
+{
+  "schema_version": "prompt-kit-ontology-evidence/v1",
+  "purpose": "Define repository-level evidence/history semantics that extend the Prompt Kit ontology without treating preference, critique, transport metadata, or declared proof ceilings as observed runtime proof.",
+  "relation_chain": [
+    "capability",
+    "skill",
+    "implementation",
+    "invocation",
+    "run",
+    "evidence",
+    "proof_ceiling"
+  ],
+  "required_lineage_fields": [
+    "record_id",
+    "record_kind",
+    "capability_id",
+    "implementation_locator",
+    "observed_at",
+    "source",
+    "subject_ref"
+  ],
+  "record_kinds": {
+    "invocation": {
+      "class": "observation",
+      "proof_effect": "none",
+      "description": "A concrete attempt to invoke an implementation. Invocation alone does not prove success."
+    },
+    "run_result": {
+      "class": "observation",
+      "proof_effect": "support_or_block",
+      "description": "Observed result of an invocation, bound to the exact subject and evidence source."
+    },
+    "failure": {
+      "class": "negative_evidence",
+      "proof_effect": "lower_or_block",
+      "description": "Observed failure or regression. A failure may reduce or block a claim but can never raise proof."
+    },
+    "critique": {
+      "class": "assessment",
+      "proof_effect": "none_without_independent_verification",
+      "description": "Review or critique signal. It becomes proof only through separate validating evidence."
+    },
+    "favorite": {
+      "class": "preference",
+      "proof_effect": "none",
+      "preference_signal": true,
+      "description": "User preference signal. Favorites are discoverability/utility evidence, not correctness proof."
+    },
+    "feedback": {
+      "class": "feedback",
+      "proof_effect": "none_without_independent_verification",
+      "raw_payload_transport": "out_of_scope",
+      "description": "Explicit user feedback signal. Transport and private payload handling remain owned by the feedback subsystem."
+    },
+    "eval": {
+      "class": "evaluation",
+      "proof_effect": "support_or_block",
+      "description": "Executable evaluation result with an oracle, fixture, or acceptance rule tied to the observed subject."
+    },
+    "proof_receipt": {
+      "class": "proof",
+      "proof_effect": "supports_observed_claim",
+      "immutable": true,
+      "description": "Immutable receipt binding an observed claim to exact subject identity, evidence, and proof ceiling."
+    }
+  },
+  "separation_rules": {
+    "declared_ceiling_is_not_observed_proof": true,
+    "favorites_are_not_proof": true,
+    "critiques_require_independent_verification": true,
+    "feedback_transport_is_separate": true,
+    "failed_runs_remain_visible": true,
+    "history_is_append_only": true
+  },
+  "authority": {
+    "declared_proof_ceiling_owner": "harness/capabilities.v1.json",
+    "runtime_view_owner": "docs/prompt-kit-ontology.js",
+    "feedback_transport_owner": "harness/contracts/prompt-kit-feedback-afk-routing.v1.json",
+    "scope": "ontology evidence/history semantics only"
+  },
+  "proof_ceiling": "Static repository contract and validator proof only. This contract does not assert that any invocation, run, failure, critique, favorite, feedback event, eval, or proof receipt has actually occurred."
+}
