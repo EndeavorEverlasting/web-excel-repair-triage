@@ -1,4 +1,4 @@
-name: Temporary job search prompt contribution
+name: Temporary job search prompt second-pass review
 
 on:
   push:
@@ -9,11 +9,11 @@ permissions:
   contents: write
 
 concurrency:
-  group: tmp-job-search-prompt-contribution
+  group: tmp-job-search-prompt-review
   cancel-in-progress: false
 
 jobs:
-  contribute:
+  review:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
-      - name: Add job search prompts and validate
+      - name: Repair inert profile and rerun contribution proof
         shell: bash
         run: |
           set -euo pipefail
@@ -35,13 +35,13 @@ jobs:
           test "$(git branch --show-current)" = "feat/prompt-kit-job-search-workflows-20260903"
           git merge-base --is-ancestor 6ad9ef6d746829bcc7e06344223e7706fa52c5f4 HEAD
 
-          if [ ! -f tmp/apply_job_search_prompt_contribution.py ]; then
-            echo 'Contribution carrier already consumed.'
+          if [ ! -f tmp/review_job_search_prompt_contribution.py ]; then
+            echo 'Review carrier already consumed.'
             exit 0
           fi
 
-          python tmp/apply_job_search_prompt_contribution.py
-
+          python tmp/review_job_search_prompt_contribution.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           python scripts/prompt_registry_ops.py validate
           python -m unittest tests.test_job_search_prompt_registry -v
           python -m unittest tests.test_management_operations_prompt_registry -v
@@ -54,27 +54,20 @@ jobs:
 
           python - <<'PY'
           from scripts import build_prompt_kit_registry
-          prompts = build_prompt_kit_registry.load_prompt_kit_registry()
-          by_name = {p['name']: p for p in prompts}
-          portable = by_name['Job Opportunity Search & Trajectory Mapper']
-          sync = by_name['Connected Job Search Workspace & Tracker Synchronizer']
-          assert portable['id'] != sync['id']
-          assert 'SEARCH TO BOUNDED SOURCE SATURATION' in portable['copyContent']
-          assert 'Applied? | Priority | Status | Company | Role | Work Mode' in portable['copyContent']
-          assert 'DISCOVER BEFORE CREATING' in sync['copyContent']
-          assert 'Report exact spreadsheet ranges/row IDs/files changed' in sync['copyContent']
-          print(f"JOB_SEARCH_FIXED_POINT portable={portable['id']} sync={sync['id']} prompts={len(prompts)}")
+          prompts={p['id']:p for p in build_prompt_kit_registry.load_prompt_kit_registry()}
+          for pid in ('P126','P127'):
+              assert 'profile' not in prompts[pid], (pid,prompts[pid].get('profile'))
+          assert prompts['P126']['actionabilityPolicy']=='actionable-next-command/v1'
+          assert prompts['P127']['actionabilityPolicy']=='actionable-next-command/v1'
+          print(f"SECOND_PASS_FIXED_POINT P126=P126 P127=P127 prompts={len(prompts)} inert_profile=REMOVED")
           PY
 
           git add \
             registry/prompts/management-operations-prompts.v1.json \
             tests/test_job_search_prompt_registry.py \
             web/prompt-kit/index.html
-          git rm \
-            tmp/apply_job_search_prompt_contribution.py \
-            tmp/job-opportunity-search-draft.json \
-            tmp/job-search-workspace-sync-draft.json
+          git rm tmp/review_job_search_prompt_contribution.py
           git diff --cached --check
           git diff --cached --stat
-          git commit -m 'feat(prompt-kit): add job search discovery and tracker workflows'
+          git commit -m 'fix(prompt-kit): keep job search prompts profile-neutral'
           git push origin HEAD:feat/prompt-kit-job-search-workflows-20260903
