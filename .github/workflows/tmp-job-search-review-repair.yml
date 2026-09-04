@@ -1,0 +1,131 @@
+name: Temporary job search review repair
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-job-search-workflows-20260903
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-job-search-review-repair
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/prompt-kit-job-search-workflows-20260903
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Apply review repairs and prove them
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/prompt-kit-job-search-workflows-20260903 --prune
+          test "$(git branch --show-current)" = "feat/prompt-kit-job-search-workflows-20260903"
+          git merge-base --is-ancestor e9f2070082bea3182dc874e9bf02d31bf2e2285b HEAD
+
+          python - <<'PY'
+          from pathlib import Path
+
+          registry = Path('registry/prompts/management-operations-prompts.v1.json')
+          tests = Path('tests/test_job_search_prompt_registry.py')
+
+          text = registry.read_text(encoding='utf-8')
+          replacements = {
+              'postings are deduplicated and checked for current availability; direct employer links are preferred when available;':
+                  'postings are deduplicated and either proven to be currently accepting applications or labeled UNVERIFIED; direct employer links are preferred when available;',
+              '- confirm the posting can still be opened or otherwise establish current availability;':
+                  '- establish that the posting is currently accepting applications using an active apply control, a current closing window, or equivalent direct employer/ATS evidence; page accessibility alone is insufficient. If only page accessibility is known, label Posting Status as UNVERIFIED;',
+              '- deduplicate mirrors by employer/title/location and canonical/direct posting URL;':
+                  '- deduplicate mirrors when the canonical/direct posting URL or explicit requisition/posting ID proves they are the same opportunity. Company + role + location/work mode alone is not sufficient identity for a repost; corroborate with requisition/posting ID, posting/closing dates, and materially matching description, and preserve separate rows when identity remains uncertain;',
+              'Applied? | Priority | Status | Company | Role | Work Mode | Location | Employment | Compensation | Fit Score | Why It Fits | Requirements / Gaps | Date Found | Date Applied | Follow-Up Due | Next Action | Apply Link | Notes | Source | Job Description / Snapshot':
+                  'Applied? | Priority | Posting Status | Application Status | Company | Role | Work Mode | Location | Employment | Compensation | Fit Score | Why It Fits | Requirements / Gaps | Date Found | Date Applied | Follow-Up Due | Next Action | Apply Link | Notes | Source | Job Description / Snapshot',
+              'For new leads, `Applied?` is normally No and application/follow-up dates remain blank until true.':
+                  'For new leads, `Applied?` is normally No, Application Status is `Not Applied`, and application/follow-up dates remain blank until true. Set Posting Status to `ACTIVE` only when current application acceptance is evidenced; otherwise use `UNVERIFIED` rather than guessing.',
+              '- match existing records by posting URL first, then company + role + location/work mode where necessary;':
+                  '- match existing records by canonical/direct posting URL or explicit requisition/posting ID first. If a URL changed or a repost is suspected, require corroborating requisition/posting ID, posting/closing dates, and materially matching description before treating it as the same opportunity. Company + role + location/work mode alone is discovery evidence, not identity; append a separate row when identity remains uncertain;',
+              'Change `Applied?`, Date Applied, Status, Follow-Up Due, interview/offer/rejection state, or employer-response notes only from user statements or connected evidence that supports the change.':
+                  'Change `Applied?`, Date Applied, Application Status, Follow-Up Due, interview/offer/rejection state, or employer-response notes only from user statements or connected evidence that supports the change.'
+          }
+          for old, new in replacements.items():
+              count = text.count(old)
+              if count == 0:
+                  raise SystemExit(f'missing registry review anchor: {old[:90]!r}')
+              text = text.replace(old, new)
+          registry.write_text(text, encoding='utf-8')
+
+          t = tests.read_text(encoding='utf-8')
+          t = t.replace(
+              'self.assertIn("Applied? | Priority | Status | Company | Role | Work Mode", c)',
+              'self.assertIn("Applied? | Priority | Posting Status | Application Status | Company | Role | Work Mode", c)'
+          )
+          portable_anchor = '        self.assertIn("Do not fabricate jobs from memory", c)\n'
+          portable_extra = (
+              '        self.assertIn("page accessibility alone is insufficient", c)\n'
+              '        self.assertIn("Company + role + location/work mode alone is not sufficient identity", c)\n'
+              '        self.assertIn("preserve separate rows when identity remains uncertain", c)\n'
+          )
+          if portable_anchor not in t:
+              raise SystemExit('portable focused-test anchor missing')
+          t = t.replace(portable_anchor, portable_anchor + portable_extra, 1)
+
+          sync_anchor = '        self.assertIn("posting status and application status separate", c)\n'
+          sync_extra = (
+              '        self.assertIn("Company + role + location/work mode alone is discovery evidence, not identity", c)\n'
+              '        self.assertIn("append a separate row when identity remains uncertain", c)\n'
+              '        self.assertIn("Date Applied, Application Status, Follow-Up Due", c)\n'
+          )
+          if sync_anchor not in t:
+              raise SystemExit('sync focused-test anchor missing')
+          t = t.replace(sync_anchor, sync_anchor + sync_extra, 1)
+          tests.write_text(t, encoding='utf-8')
+          print('REVIEW_REPAIRS_APPLIED posting_application_status=SEPARATE repost_identity=CORROBORATED active_posting=EVIDENCED')
+          PY
+
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_job_search_prompt_registry -v
+          python -m unittest tests.test_management_operations_prompt_registry -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --summary
+          python -m unittest tests.test_prompt_language_audit -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/validate_harness.py
+          python scripts/run_deterministic_test_floor.py --report "$RUNNER_TEMP/job-search-review-floor.json"
+          git diff --check
+
+          python - <<'PY'
+          from scripts import build_prompt_kit_registry
+          prompts={p['id']:p for p in build_prompt_kit_registry.load_prompt_kit_registry()}
+          p126=prompts['P126']['copyContent']
+          p127=prompts['P127']['copyContent']
+          schema='Applied? | Priority | Posting Status | Application Status | Company | Role | Work Mode'
+          assert schema in p126 and schema in p127
+          assert 'page accessibility alone is insufficient' in p126
+          assert 'preserve separate rows when identity remains uncertain' in p126
+          assert 'Company + role + location/work mode alone is discovery evidence, not identity' in p127
+          assert 'append a separate row when identity remains uncertain' in p127
+          print(f"REVIEW_FIXED_POINT prompts={len(prompts)} P126=P126 P127=P127 schema_statuses=SEPARATE")
+          PY
+
+          git add \
+            registry/prompts/management-operations-prompts.v1.json \
+            tests/test_job_search_prompt_registry.py \
+            web/prompt-kit/index.html \
+            harness/test-floor.v1.json
+          git rm .github/workflows/tmp-job-search-review-repair.yml
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m 'fix(prompt-kit): harden job posting and application identity'
+          git push origin HEAD:feat/prompt-kit-job-search-workflows-20260903
