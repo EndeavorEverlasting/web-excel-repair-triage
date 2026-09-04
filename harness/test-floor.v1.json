@@ -89,8 +89,28 @@
     "private real workbook not present",
     "Real roster log not present"
   ],
+  "private_input_requirements": [
+    {
+      "id": "neuron-real-roster",
+      "input_path": "Candidates/attendacne artifacts 6-1-2026/INTERNAL_May_Billing_Active_Roster_Log_2026-06-01-update so that partial hours are flagged before submission.xlsx",
+      "test_selector": "tests/test_nw_prj_neuron_track_hours.py::test_neuron_track_totals_match_reference_targets",
+      "missing_reason": "Real roster log not present"
+    },
+    {
+      "id": "one-marcus-real-recon",
+      "input_path": "Candidates/inventory recon/WEBSAFE_Tab-Linked_1_Marcus_Compiled_Recon_Integrated_5-28-2026_PARTNUMBERS_LINKED_CANDIDATE_v2.xlsx",
+      "test_selector": "tests/test_one_marcus_recon.py::test_real_workbook_idempotent_regression",
+      "missing_reason": "private real workbook not present"
+    },
+    {
+      "id": "one-marcus-operator-reference",
+      "input_path": "Candidates/inventory recon/1M_Recon_READY.xlsx",
+      "test_selector": "tests/test_one_marcus_generate.py::test_generate_from_operator_reference",
+      "missing_reason": "private operator reference workbook not present"
+    }
+  ],
   "validator_registry": "harness/validators.v1.json",
   "validator_profile": "pre_push",
   "required_canary_failure": "test-floor-self-tests",
-  "proof_ceiling": "Deterministic clean-checkout Python, pinned direct CI dependencies, test-floor self-contract, convention-covered Prompt Kit semantic regressions with explicit low-cost execution registration, public/synthetic artifact-engine tests with fail-closed registered private-input skips, harness, Prompt Kit static/generated-parity, repository hygiene, and exact-candidate provider-workflow proof on the observed SHA. It does not prove browser/device/operator/production behavior or the three registered private-input regressions."
+  "proof_ceiling": "Deterministic clean-checkout Python, pinned direct CI dependencies, test-floor self-contract, convention-covered Prompt Kit semantic regressions with explicit low-cost execution registration, public/synthetic artifact-engine tests with fail-closed registered private-input skips, harness, Prompt Kit static/generated-parity, repository hygiene, and exact-candidate provider-workflow proof on the observed SHA. The separate canonical private-input gate fails closed when its three registered operator inputs are absent and runs the exact real-input regressions when they are supplied. Public CI does not claim a private-input PASS, production, privileged-device, secret-bearing, or operator acceptance proof."
 }
