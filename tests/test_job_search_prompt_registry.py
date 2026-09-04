@@ -1,53 +1,4 @@
-#!/usr/bin/env python3
 from __future__ import annotations
-
-import json
-import subprocess
-import sys
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
-PORTABLE_DRAFT = ROOT / "tmp/job-opportunity-search-draft.json"
-SYNC_DRAFT = ROOT / "tmp/job-search-workspace-sync-draft.json"
-TEST = ROOT / "tests/test_job_search_prompt_registry.py"
-
-
-def run(*args: str) -> str:
-    proc = subprocess.run(args, cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True)
-    print(proc.stdout, end="")
-    return proc.stdout
-
-inspect = json.loads(run(sys.executable, "scripts/prompt_registry_ops.py", "inspect"))
-management = next((item for item in inspect["registries"] if item["registry_id"] == "management-operations-prompts"), None)
-if not management:
-    raise SystemExit("management-operations-prompts registry not found")
-print(json.dumps({"routing_receipt": {"next_id": inspect["next_id"], "registry": management}}, indent=2))
-
-portable = json.loads(run(
-    sys.executable,
-    "scripts/prompt_registry_ops.py",
-    "add",
-    "--input",
-    str(PORTABLE_DRAFT.relative_to(ROOT)),
-    "--registry",
-    "management-operations-prompts",
-))
-sync = json.loads(run(
-    sys.executable,
-    "scripts/prompt_registry_ops.py",
-    "add",
-    "--input",
-    str(SYNC_DRAFT.relative_to(ROOT)),
-    "--registry",
-    "management-operations-prompts",
-))
-if portable["id"] == sync["id"]:
-    raise SystemExit("helper allocated duplicate prompt identity")
-print(json.dumps({"portable_helper_receipt": portable, "sync_helper_receipt": sync}, indent=2))
-
-portable_id = portable["id"]
-sync_id = sync["id"]
-TEST.write_text(f'''from __future__ import annotations
 
 import unittest
 from pathlib import Path
@@ -61,9 +12,9 @@ SITE = ROOT / "web" / "prompt-kit" / "index.html"
 class JobSearchPromptRegistryTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.prompts = {{p["id"]: p for p in build_prompt_kit_registry.load_prompt_kit_registry()}}
-        cls.portable = cls.prompts[{portable_id!r}]
-        cls.sync = cls.prompts[{sync_id!r}]
+        cls.prompts = {p["id"]: p for p in build_prompt_kit_registry.load_prompt_kit_registry()}
+        cls.portable = cls.prompts['P126']
+        cls.sync = cls.prompts['P127']
         cls.policy = build_prompt_kit_registry.load_actionability_policy()
         cls.site = SITE.read_text(encoding="utf-8")
 
@@ -137,15 +88,3 @@ class JobSearchPromptRegistryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-''', encoding="utf-8")
-
-ledger = [
-    {"insight": "portable job discovery from supplied trajectory or compact interview", "current_owner": portable_id, "action": "ADD", "proof": "distinct live-search trigger and source-saturation closure"},
-    {"insight": "connected tracker/workspace persistence and reconciliation", "current_owner": sync_id, "action": "ADD", "proof": "distinct write/sync trigger and mutation-receipt closure"},
-    {"insight": "subject isolation for user/brother/technician/other person", "current_owner": f"{portable_id}+{sync_id}", "action": "ADD", "proof": "both prompts forbid cross-person history/credential mixing"},
-    {"insight": "tracker-ready opportunity schema with fit/gaps/next action/source/description", "current_owner": f"{portable_id}+{sync_id}", "action": "ADD", "proof": "shared schema asserted in focused regression"},
-    {"insight": "resume tailoring and application drafting", "current_owner": "none in this contribution", "action": "OUT OF SCOPE", "proof": "current request centers discovery and persistence; avoids career super-prompt"},
-    {"insight": "generic cross-repo/Drive management synchronization", "current_owner": "P77", "action": "ALREADY COVERED", "proof": "P77 remains management evidence sync; new prompt is career-tracker-specific and user-connected"},
-]
-print(json.dumps({"reverse_sweep_ledger": ledger}, indent=2))
-print(json.dumps({"portable_id": portable_id, "sync_id": sync_id}, indent=2))
