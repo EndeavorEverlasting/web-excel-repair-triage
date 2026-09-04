@@ -23,6 +23,7 @@
     "tests/test_conversation_context_canary_prompt.py",
     "tests/test_correspondence_prompt_registry.py",
     "tests/test_gemini_youtube_playlist_ingestion_prompt.py",
+    "tests/test_job_search_prompt_registry.py",
     "tests/test_management_operations_prompt_registry.py",
     "tests/test_p100_closeout_replay_prompt.py",
     "tests/test_p123_youtube_ingestion_behavior_eval_prompt.py",
