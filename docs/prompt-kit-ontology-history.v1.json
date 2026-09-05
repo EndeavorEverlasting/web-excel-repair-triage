@@ -1,0 +1,6 @@
+{
+  "schema_version": "prompt-kit-ontology-history/v1",
+  "append_only": true,
+  "records": [],
+  "proof_ceiling": "Repository-backed ontology history ledger only. An empty records array means no invocation, run_result, failure, critique, favorite, feedback, eval, or proof_receipt has been registered here. This file does not assert that any live event occurred."
+}
