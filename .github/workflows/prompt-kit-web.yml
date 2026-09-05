@@ -17,6 +17,7 @@ on:
       - 'scripts/serve_prompt_kit_portable.py'
       - 'scripts/validate_prompt_kit_portability.py'
       - 'scripts/validate_prompt_kit_ontology_evidence.py'
+      - 'scripts/validate_prompt_kit_ontology_history_append_only.py'
       - 'scripts/prompt_kit_*.py'
       - 'scripts/validate_prompt_kit_feedback_afk_routing.py'
       - 'tests/test_prompt_kit_*.py'
@@ -34,6 +35,7 @@ on:
       - 'scripts/serve_prompt_kit_portable.py'
       - 'scripts/validate_prompt_kit_portability.py'
       - 'scripts/validate_prompt_kit_ontology_evidence.py'
+      - 'scripts/validate_prompt_kit_ontology_history_append_only.py'
       - 'scripts/prompt_kit_*.py'
       - 'tests/test_prompt_kit_*.py'
       - 'web/prompt-kit/index.html'
@@ -52,6 +54,8 @@ jobs:
     steps:
       - name: Checkout exact candidate
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
@@ -61,9 +65,13 @@ jobs:
           python scripts/validate_prompt_kit_feedback_afk_routing.py --summary
           python -m unittest tests.test_prompt_kit_feedback_afk_routing tests.test_prompt_kit_feedback_production -v
       - name: Validate repository ontology lens and canonical Prompt Kit parity
+        env:
+          ONTOLOGY_HISTORY_BASELINE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
           node --check docs/prompt-kit-ontology.js
-          python -m unittest tests.test_prompt_kit_ontology_view -v
+          python scripts/validate_prompt_kit_ontology_evidence.py --summary
+          python scripts/validate_prompt_kit_ontology_history_append_only.py --baseline-ref "$ONTOLOGY_HISTORY_BASELINE" --summary
+          python -m unittest tests.test_prompt_kit_ontology_view tests.test_prompt_kit_ontology_history_append_only -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
       - name: Build portable Prompt Kit runtime artifact
         run: python scripts/serve_prompt_kit_portable.py --build-only
