@@ -102,6 +102,8 @@ def test_client_tabs_clean(generated):
     wb = openpyxl.load_workbook(client)
     assert "Review Flags" not in wb.sheetnames
     assert "WebExcel QC" not in wb.sheetnames
+    assert "Tech Summary" not in wb.sheetnames
+    assert "Tech Project Summary" not in wb.sheetnames
     assert "Apr 26" in wb.sheetnames
     wb.close()
 

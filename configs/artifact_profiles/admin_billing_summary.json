@@ -7,8 +7,6 @@
     "Executive Dashboard",
     "Monthly Summary",
     "Project Summary",
-    "Tech Summary",
-    "Tech Project Summary",
     "{{expect_neuron_tab}}"
   ],
   "required_semantic_cells": [
