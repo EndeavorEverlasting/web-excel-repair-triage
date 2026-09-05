@@ -45,14 +45,29 @@ def client_text_violations(blob: str) -> List[str]:
     before matching human-readable sentinels.
     """
     decoded = html.unescape(blob)
-    hits = [text for text in _CLIENT_FORBIDDEN_TEXT if text in decoded]
-    hits.extend(cell for cell in _CLIENT_FORBIDDEN_XML_CELLS if f">{cell}</t>" in blob)
+    lowered = decoded.lower()
+    hits = [text for text in _CLIENT_FORBIDDEN_TEXT if text.lower() in lowered]
+    for cell in _CLIENT_FORBIDDEN_XML_CELLS:
+        if f">{cell}</t>" in blob or re.search(rf"(?<![A-Za-z]){re.escape(cell)}(?![A-Za-z])", decoded):
+            if cell not in hits:
+                hits.append(cell)
     return hits
 
 
 def _client_missing_required_text(blob: str) -> List[str]:
     decoded = html.unescape(blob)
-    return [text for text in _CLIENT_REQUIRED_TEXT if text not in decoded]
+    lowered = decoded.lower()
+    return [text for text in _CLIENT_REQUIRED_TEXT if text.lower() not in lowered]
+
+
+def _table_display_names(zf: zipfile.ZipFile, names: List[str]) -> List[str]:
+    found: List[str] = []
+    for name in names:
+        if not (name.startswith("xl/tables/") and name.endswith(".xml")):
+            continue
+        xml = zf.read(name).decode("utf-8", errors="ignore")
+        found.extend(re.findall(r'(?:name|displayName)="([^"]+)"', xml))
+    return found
 
 
 def preflight_billing_summary(
@@ -142,16 +157,21 @@ def preflight_billing_summary(
                 for tab in sorted(required):
                     if tab not in res["tabs"]:
                         failures.append(f"missing_client_tab:{tab}")
+                lowered_tabs = {t.lower() for t in res["tabs"]}
                 for tab in sorted(_CLIENT_FORBIDDEN_TABS):
-                    if tab in res["tabs"]:
+                    if tab in res["tabs"] or tab.lower() in lowered_tabs:
                         failures.append(f"forbidden_client_tab:{tab}")
-                for tab in [t for t in res["tabs"] if t.endswith(" Neuron Hours")]:
+                for tab in [t for t in res["tabs"] if t.lower().endswith(" neuron hours")]:
                     failures.append(f"forbidden_client_tab:{tab}")
+                for tab in res["tabs"]:
+                    if tab not in required:
+                        failures.append(f"unexpected_client_tab:{tab}")
                 for text in client_text_violations(all_text):
                     failures.append(f"forbidden_client_text:{text}")
                 for text in _client_missing_required_text(all_text):
                     failures.append(f"missing_client_text:{text}")
-                if _CLIENT_REQUIRED_TABLE not in all_text:
+                table_names = _table_display_names(z, names)
+                if _CLIENT_REQUIRED_TABLE not in table_names:
                     failures.append(f"missing_client_table:{_CLIENT_REQUIRED_TABLE}")
                 res["client_hygiene_pass"] = not failures
                 if failures:
@@ -183,7 +203,7 @@ def preflight_billing_summary(
         return res
 
     # Semantic integrity gate
-    gate = run_semantic_gate(path, profile="admin_billing")
+    gate = run_semantic_gate(path, profile="admin_billing", variant=variant)
     res.update(gate)
 
     audience_ok = variant != "client" or res.get("client_hygiene_pass") is True

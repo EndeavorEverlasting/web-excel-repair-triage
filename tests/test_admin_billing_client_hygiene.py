@@ -107,6 +107,7 @@ def test_client_text_violations_decode_xml_entities():
     hits = client_text_violations(raw)
     assert "Override > Worked > Assignment > Live default" in hits
     assert client_text_violations("Clock In / Clock Out") == ["Clock In", "Clock Out"]
+    assert "Clock In" in client_text_violations("clock in at 09:00")
     assert client_text_violations("aggregate Neuron support only") == []
     assert "TECH" in client_text_violations("<si><t>TECH</t></si>")
     assert "TECH" not in client_text_violations("Start Here / technician punch detail")
@@ -128,3 +129,58 @@ def test_client_preflight_rejects_bonita_punch_headers(tmp_path):
     failures = "\n".join(pf["client_hygiene_failures"])
     assert "TECH" in failures
     assert "ASSIGNMENT" in failures
+
+
+def test_client_preflight_rejects_unexpected_tab(tmp_path):
+    manifest = _april_manifest(tmp_path)
+    client = manifest["per_month"]["2026-04"]["outputs"]["client"]["workbook"]
+    wb = openpyxl.load_workbook(client)
+    try:
+        ws = wb.create_sheet("Payroll Detail")
+        ws["A1"] = "Worker"
+        ws["B1"] = "Start Time"
+        wb.save(client)
+    finally:
+        wb.close()
+    fix_inlinestr(client)
+    pf = preflight_billing_summary(client, variant="client", expect_neuron_tab="Apr 26")
+    assert pf["client_hygiene_pass"] is False
+    assert any("unexpected_client_tab:Payroll Detail" in f for f in pf["client_hygiene_failures"])
+
+
+def test_internal_preflight_requires_tech_summary(tmp_path):
+    manifest = _april_manifest(tmp_path)
+    internal = manifest["per_month"]["2026-04"]["outputs"]["internal"]["workbook"]
+    wb = openpyxl.load_workbook(internal)
+    try:
+        wb.remove(wb["Tech Summary"])
+        wb.save(internal)
+    finally:
+        wb.close()
+    fix_inlinestr(internal)
+    pf = preflight_billing_summary(internal, variant="internal", expect_neuron_tab="Apr 26")
+    assert pf["semantic_integrity"] == "FAIL"
+    assert any("missing_sheet:Tech Summary" in f for f in pf["sentinel_failures"])
+    assert pf["preflight_pass"] is False
+
+
+def test_client_preflight_requires_named_neuron_table(tmp_path):
+    import io
+    import zipfile
+
+    manifest = _april_manifest(tmp_path)
+    client = Path(manifest["per_month"]["2026-04"]["outputs"]["client"]["workbook"])
+    buf = io.BytesIO()
+    with zipfile.ZipFile(client, "r") as zin, zipfile.ZipFile(buf, "w") as zout:
+        for name in zin.namelist():
+            data = zin.read(name)
+            if name.startswith("xl/tables/") and b"ClientNeuronSummaryTable" in data:
+                data = data.replace(b"ClientNeuronSummaryTable", b"RenamedNeuronTable")
+            zout.writestr(name, data)
+    client.write_bytes(buf.getvalue())
+    pf = preflight_billing_summary(str(client), variant="client", expect_neuron_tab="Apr 26")
+    assert pf["client_hygiene_pass"] is False
+    assert any(
+        "missing_client_table:ClientNeuronSummaryTable" in f
+        for f in pf["client_hygiene_failures"]
+    )
