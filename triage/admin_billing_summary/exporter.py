@@ -1,6 +1,8 @@
 """OpenAI-format, Web Excel-safe admin billing workbooks (native tables).
 
-Per-month Internal and Client variants share the same resolved ``MonthSummary``.
+Internal and Client variants share the same resolved ``MonthSummary`` but not
+the same disclosure surface. Internal exports retain technician/punch and
+review evidence. Client exports are aggregate billing-support copies only.
 Single clean ``wb.save()`` — no ``_repair_inlinestr`` post-processing.
 """
 from __future__ import annotations
@@ -45,6 +47,17 @@ _QC_ROWS = [
     ("Shared-string repair", "PASS", "fix_inlinestr only when openpyxl emits inlineStr."),
 ]
 
+_CLIENT_PURPOSE = "Client billing support copy"
+_CLIENT_STATUS = "Supporting documentation only — not a standalone invoice or new billing request."
+_CLIENT_PERIOD = (
+    "Historical or reference periods shown for context are not reopened, rebilled, or superseded "
+    "unless a separate invoice or correction expressly says so."
+)
+_CLIENT_PRIVACY = (
+    "Individual technician punch, pay, approval, exception, and review detail is retained internally "
+    "and excluded from this client copy."
+)
+
 
 def _xl():
     from openpyxl import Workbook
@@ -59,7 +72,8 @@ def _xl():
 def _num_format(header: str) -> str:
     h = header
     if h in {"Gross Span", "Gross Span Hours", "Gross", "Lunch", "Lunch Deducted",
-             "Net Hours", "Net", "Billable Hours", "Clean Net Hours", "Review Net Hours"}:
+             "Lunch / Unpaid", "Net Hours", "Net", "Billable Hours", "Clean Net Hours",
+             "Review Net Hours"}:
         return "0.00"
     if h in {"Tech Count", "Worked Days", "Worked Rows", "Detail Rows",
              "Clean Billable Rows", "Review Rows", "Review row count", "Projects", "Techs"}:
@@ -194,7 +208,6 @@ def _neuron_shifts(summary: MonthSummary) -> List[BonitaShift]:
     return shifts
 
 
-
 def _parse_key(month_key: str):
     import re
     m = re.match(r"^(\d{4})-(\d{1,2})$", month_key.strip())
@@ -224,6 +237,17 @@ def _project_rows(summary: MonthSummary) -> List[Dict[str, Any]]:
         "Billing Bucket": billing_bucket(r.project),
         "Worked Rows": r.worked_days,
         "Tech Count": r.tech_count,
+        "Gross Span": round(r.gross_span, 2),
+        "Lunch": round(r.lunch_deducted, 2),
+        "Net Hours": round(r.net_hours, 2),
+    } for r in summary.project_rows]
+
+
+def _client_project_rows(summary: MonthSummary) -> List[Dict[str, Any]]:
+    return [{
+        "Month": summary.month_name,
+        "Project": r.project,
+        "Billing Bucket": billing_bucket(r.project),
         "Gross Span": round(r.gross_span, 2),
         "Lunch": round(r.lunch_deducted, 2),
         "Net Hours": round(r.net_hours, 2),
@@ -265,6 +289,15 @@ def _monthly_summary_rows(summary: MonthSummary) -> List[Dict[str, Any]]:
         "Review Net Hours": review_net,
         "Gross Span": summary.total_gross,
         "Lunch": summary.total_lunch,
+    }]
+
+
+def _client_monthly_summary_rows(summary: MonthSummary) -> List[Dict[str, Any]]:
+    return [{
+        "Month": summary.month_name,
+        "Net Hours": summary.total_net,
+        "Gross Span": summary.total_gross,
+        "Lunch / Unpaid": summary.total_lunch,
     }]
 
 
@@ -311,36 +344,82 @@ def _sheet_table(ws, title: str, subtitle: str, table_name: str,
         _add_net_chart(ws, chart[0], headers, hr, lr, chart[1])
 
 
-def build_workbook(
-    summary: MonthSummary,
-    out_path: str,
-    *,
-    variant: str = "internal",
-    roster_name: str = "",
-    generated_utc: Optional[str] = None,
-) -> str:
-    """Write Internal or Client billing summary for one month."""
-    if variant not in ("internal", "client"):
-        raise ValueError(f"variant must be internal or client, got {variant!r}")
-
-    Workbook, *_ = _xl()
-    wb = Workbook()
-    wb.remove(wb.active)
-    label = summary.month_name
-    stamp = generated_utc or datetime.now().strftime("%Y-%m-%d %H:%M")
-    stem = Path(out_path).stem
-
+def _build_start_here(wb, label: str, stem: str, stamp: str, variant: str, roster_name: str) -> None:
     ws = wb.create_sheet("Start Here")
-    _title_band(ws, f"{label} Billing Summary ({variant.title()})",
-                "Roster-derived; override-aware project resolution.", 2)
-    _add_table(ws, "StartHereTable", ["Field", "Value"], [
-        {"Field": "Artifact", "Value": stem + ".xlsx"},
-        {"Field": "Generated", "Value": stamp},
-        {"Field": "Source roster", "Value": roster_name},
-        {"Field": "Variant", "Value": variant},
-        {"Field": "Resolution", "Value": "Override > Worked > Assignment > Live default"},
-    ])
+    if variant == "client":
+        _title_band(ws, f"{label} Billing Summary (Client)", _CLIENT_STATUS, 2)
+        rows = [
+            {"Field": "Artifact", "Value": stem + ".xlsx"},
+            {"Field": "Generated", "Value": stamp},
+            {"Field": "Variant", "Value": "client"},
+            {"Field": "Document purpose", "Value": _CLIENT_PURPOSE},
+            {"Field": "Billing status", "Value": _CLIENT_STATUS},
+            {"Field": "Period handling", "Value": _CLIENT_PERIOD},
+            {"Field": "Privacy boundary", "Value": _CLIENT_PRIVACY},
+        ]
+    else:
+        _title_band(ws, f"{label} Billing Summary (Internal)",
+                    "Internal review artifact — not for client delivery.", 2)
+        rows = [
+            {"Field": "Artifact", "Value": stem + ".xlsx"},
+            {"Field": "Generated", "Value": stamp},
+            {"Field": "Source roster", "Value": roster_name},
+            {"Field": "Variant", "Value": "internal"},
+            {"Field": "Resolution", "Value": "Override > Worked > Assignment > Live default"},
+        ]
+    _add_table(ws, "StartHereTable", ["Field", "Value"], rows)
 
+
+def _build_client_workbook(wb, summary: MonthSummary, label: str) -> None:
+    ws = wb.create_sheet("Executive Dashboard")
+    _title_band(ws, "Executive Dashboard", f"{label} aggregate billing-support snapshot.", 6)
+    _add_table(ws, "DashboardKPITable", ["Metric", "Value"], [
+        {"Metric": "Total Net Hours", "Value": summary.total_net},
+        {"Metric": "Gross Span", "Value": summary.total_gross},
+        {"Metric": "Lunch / Unpaid", "Value": summary.total_lunch},
+        {"Metric": "Projects", "Value": summary.projects_reflected},
+        {"Metric": "Neuron Net", "Value": summary.net_for_bucket("Neurons")},
+    ], header_row=5)
+    top = sorted(summary.project_rows, key=lambda x: -x.net_hours)[:8]
+    _add_table(ws, "DashboardProjectTopTable", ["Project", "Net Hours"],
+               [{"Project": p.project, "Net Hours": round(p.net_hours, 2)} for p in top],
+               header_row=5, start_col=5)
+
+    _sheet_table(
+        wb.create_sheet("Monthly Summary"),
+        "Monthly Summary",
+        "Aggregate current-period billing support; no technician review detail.",
+        "MonthlySummaryTable",
+        ["Month", "Net Hours", "Gross Span", "Lunch / Unpaid"],
+        _client_monthly_summary_rows(summary),
+    )
+    ph = ["Month", "Project", "Billing Bucket", "Gross Span", "Lunch", "Net Hours"]
+    _sheet_table(
+        wb.create_sheet("Project Summary"),
+        "Project Summary",
+        "Aggregate billable totals by project.",
+        "ProjectSummaryTable",
+        ph,
+        _client_project_rows(summary),
+        ("Net Hours by Project", "H4"),
+    )
+
+    compat_tab = tab_name_for_month_key(summary.month_key)
+    _sheet_table(
+        wb.create_sheet(compat_tab),
+        "Client Neuron Summary",
+        "Compatibility tab: aggregate Neuron support only; individual punch detail is internal.",
+        "ClientNeuronSummaryTable",
+        ["Month", "Billing Bucket", "Net Hours"],
+        [{
+            "Month": summary.month_name,
+            "Billing Bucket": "Neurons",
+            "Net Hours": summary.net_for_bucket("Neurons"),
+        }],
+    )
+
+
+def _build_internal_workbook(wb, summary: MonthSummary, label: str) -> None:
     ws = wb.create_sheet("Executive Dashboard")
     _title_band(ws, "Executive Dashboard", f"{label} billing snapshot.", 8)
     review = _review_records(summary)
@@ -390,20 +469,43 @@ def build_workbook(
 
     _write_month_tab(wb, tab_name_for_month_key(summary.month_key), _neuron_shifts(summary))
 
-    if variant == "internal":
-        rh = ["Month", "Date", "Day", "Tech", "Project", "Net Hours", "Flag", "Note"]
-        _sheet_table(wb.create_sheet("Review Flags"), "Review Flags",
-                     "Overrides, long shifts, unassigned, and malformed rows.",
-                     "ReviewFlagsTable", rh, _review_flag_rows(summary))
-        _sheet_table(wb.create_sheet("CF Dictionary"), "Conditional Formatting Dictionary",
-                     "Color meanings for review visibility.", "CFDictionaryTable",
-                     ["Color", "Meaning", "Action"],
-                     [{"Color": c, "Meaning": m, "Action": a} for c, m, a in _CF_ROWS])
-        _sheet_table(wb.create_sheet("WebExcel QC"), "Web Excel QC",
-                     "Structural checks for Excel for Web.", "WebExcelQCTable",
-                     ["Check", "Result", "Notes"],
-                     [{"Check": c, "Result": r, "Notes": n} for c, r, n in _QC_ROWS])
+    rh = ["Month", "Date", "Day", "Tech", "Project", "Net Hours", "Flag", "Note"]
+    _sheet_table(wb.create_sheet("Review Flags"), "Review Flags",
+                 "Overrides, long shifts, unassigned, and malformed rows.",
+                 "ReviewFlagsTable", rh, _review_flag_rows(summary))
+    _sheet_table(wb.create_sheet("CF Dictionary"), "Conditional Formatting Dictionary",
+                 "Color meanings for review visibility.", "CFDictionaryTable",
+                 ["Color", "Meaning", "Action"],
+                 [{"Color": c, "Meaning": m, "Action": a} for c, m, a in _CF_ROWS])
+    _sheet_table(wb.create_sheet("WebExcel QC"), "Web Excel QC",
+                 "Structural checks for Excel for Web.", "WebExcelQCTable",
+                 ["Check", "Result", "Notes"],
+                 [{"Check": c, "Result": r, "Notes": n} for c, r, n in _QC_ROWS])
 
+
+def build_workbook(
+    summary: MonthSummary,
+    out_path: str,
+    *,
+    variant: str = "internal",
+    roster_name: str = "",
+    generated_utc: Optional[str] = None,
+) -> str:
+    """Write a full Internal audit workbook or aggregate Client support workbook."""
+    if variant not in ("internal", "client"):
+        raise ValueError(f"variant must be internal or client, got {variant!r}")
+
+    Workbook, *_ = _xl()
+    wb = Workbook()
+    wb.remove(wb.active)
+    label = summary.month_name
+    stamp = generated_utc or datetime.now().strftime("%Y-%m-%d %H:%M")
+    stem = Path(out_path).stem
+    _build_start_here(wb, label, stem, stamp, variant, roster_name)
+    if variant == "client":
+        _build_client_workbook(wb, summary, label)
+    else:
+        _build_internal_workbook(wb, summary, label)
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     wb.save(out_path)
     fix_inlinestr(out_path)

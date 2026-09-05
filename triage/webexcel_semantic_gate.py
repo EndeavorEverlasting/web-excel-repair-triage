@@ -40,6 +40,9 @@ ADMIN_BILLING_SENTINELS: List = [
     ("Project Summary",     5, 1, "equals",    "Month"),
     ("Tech Summary",        5, 1, "equals",    "Month"),
 ]
+# Technician summary is internal-only. Client billing-support copies omit it by
+# contract; the sentinel still applies when the sheet is present.
+_ADMIN_BILLING_INTERNAL_ONLY_SENTINELS = {"Tech Summary"}
 
 # Bonita sentinels are checked dynamically (see _check_bonita_sentinels).
 BONITA_SENTINELS: List = []
@@ -137,6 +140,8 @@ def _check_admin_billing_sentinels(path: str, tabs: List[str]) -> List[str]:
                 (n for n in wb.sheetnames if sheet_frag.lower() in n.lower()), None
             )
             if matched is None:
+                if sheet_frag in _ADMIN_BILLING_INTERNAL_ONLY_SENTINELS:
+                    continue
                 failures.append(f"missing_sheet:{sheet_frag}")
                 continue
             val = wb[matched].cell(row=row, column=col).value

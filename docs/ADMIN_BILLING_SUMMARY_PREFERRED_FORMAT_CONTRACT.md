@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Generate per-month **Internal** and **Client** billing summaries in the OpenAI WEBSAFE layout from the Active Roster Log, with native Excel Tables, embedded Neuron analytics, and the Bonita two-line Neuron tracker tab.
+Generate per-month **Internal** and **Client** billing summaries in the OpenAI WEBSAFE layout from the Active Roster Log. Both variants share the same resolved totals. Internal copies keep technician, punch, Neuron detail, Bonita tracker, and review evidence. Client copies are aggregate billing-support documentation only.
 
 Engine: [triage/admin_billing_summary/](triage/admin_billing_summary/) (`reader` → `aggregator` → `exporter` → `cli`).
 
@@ -19,7 +19,7 @@ Net hours = gross span − lunch (≥8h:1.0, ≥6h:0.5, else 0).
 | File | Tabs |
 | --- | --- |
 | `{Month}_{Year}_Billing_Summary_Internal.xlsx` | Start Here, Executive Dashboard, Monthly Summary, Project Summary (+ chart), Tech Summary, Tech Project Summary (+ chart), `{Month} Neuron Hours`, `{Mon YY}` Bonita tracker, Review Flags, CF Dictionary, WebExcel QC |
-| `{Month}_{Year}_Billing_Summary_Client.xlsx` | Same rollup + Neuron + Bonita tabs; **no** Review Flags / CF Dictionary / WebExcel QC |
+| `{Month}_{Year}_Billing_Summary_Client.xlsx` | Start Here (support/historical/privacy wording), Executive Dashboard, Monthly Summary, Project Summary (+ chart), `{Mon YY}` aggregate Neuron compatibility tab. **No** technician names, punches, Tech Summary, Tech Project Summary, `{Month} Neuron Hours`, Review Flags, CF Dictionary, or WebExcel QC. |
 
 Standalone Bonita workbook remains `Bonita_Neuron_Track_Hours_April_May_2026.xlsx` (two tabs only) via `triage.nw_prj_neuron_track_hours.bonita_cli`.
 
@@ -56,9 +56,11 @@ index.html                    # human review portal (see docs/SIDECAR_HTML_PORTA
 
 [tests/test_admin_billing_summary.py](tests/test_admin_billing_summary.py) — resolution, Internal/Client tab sets, native tables, Neuron detail vs summary totals, Bonita tab Neuron-only, preflight, delta.
 
+[tests/test_admin_billing_client_hygiene.py](tests/test_admin_billing_client_hygiene.py) — client disclosure boundary: aggregate-only client copy, support/historical wording, internal audit detail retained.
+
 ## Known gaps
 
-- External file uses the **Bonita two-line** Neuron tab (not the full OpenAI analytics detail table).
+- Internal `{Mon YY}` still uses the **Bonita two-line** Neuron tracker (not the full OpenAI analytics detail table). Client `{Mon YY}` is aggregate Neuron support only.
 - `Billing Bucket Snapshot` / trucking prose from the hand-made April workbook are not in this OpenAI layout.
 - Submitted payroll Regular/OT is not in the roster (informational only if a feed is added later).
-- `ASSIGNMENT TYPE` on the Bonita tab remains operator-classified.
+- `ASSIGNMENT TYPE` on the Internal Bonita tab remains operator-classified.
