@@ -120,6 +120,10 @@ class PromptKitOntologyViewTests(unittest.TestCase):
         self.assertIn("prompt-kit-ontology-evidence/v1", html)
         self.assertIn("promptKit.favoritePromptIds.v1", html)
         self.assertIn("MutationObserver", html)
+        self.assertNotIn(
+            "if (missing && view && view.classList.contains('active')) deactivate();",
+            html,
+        )
         self.assertNotIn("separate future evidence/history layer", html)
         self.assertIn('"records":[]', html.replace(" ", ""))
 
@@ -199,6 +203,26 @@ class PromptKitOntologyViewTests(unittest.TestCase):
         self.assertTrue(
             any("must not override failure proof_effect" in item or "cannot raise proof" in item for item in errors)
         )
+
+    def test_history_validator_rejects_blank_record_id(self) -> None:
+        contract = json.loads(EVIDENCE_CONTRACT.read_text(encoding="utf-8"))
+        errors = evidence_validator.validate_history_records(
+            contract,
+            [_record("invocation", record_id="  ")],
+        )
+        self.assertTrue(errors)
+        self.assertTrue(
+            any("missing lineage fields" in item and "record_id" in item for item in errors)
+        )
+
+    def test_history_validator_rejects_proof_receipt_without_immutable(self) -> None:
+        contract = json.loads(EVIDENCE_CONTRACT.read_text(encoding="utf-8"))
+        errors = evidence_validator.validate_history_records(
+            contract,
+            [_record("proof_receipt")],
+        )
+        self.assertTrue(errors)
+        self.assertTrue(any("must be immutable" in item for item in errors))
 
     def test_local_favorite_projection_is_preference_not_proof(self) -> None:
         script = """

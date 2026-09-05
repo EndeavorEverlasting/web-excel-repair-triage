@@ -2131,8 +2131,16 @@ installSpecArchitectureProfile();
     var host = document.querySelector('.cat-tabs');
     if (!host) return;
     var missing = !document.body.contains(topButton);
-    if (missing) host.appendChild(topButton);
-    if (missing && view && view.classList.contains('active')) deactivate();
+    if (!missing) return;
+    host.appendChild(topButton);
+    document.querySelectorAll('.cat-tab').forEach(function (button) {
+      button.addEventListener('click', deactivate);
+    });
+    if (view && view.classList.contains('active')) {
+      topButton.classList.add('active');
+      topButton.setAttribute('aria-expanded', 'true');
+      document.querySelectorAll('.cat-tab').forEach(function (button) { button.classList.remove('active'); });
+    }
   }
 
   var view = document.createElement('section');

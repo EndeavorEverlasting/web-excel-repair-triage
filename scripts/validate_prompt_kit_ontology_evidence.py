@@ -78,15 +78,19 @@ def validate_history_records(contract: dict[str, Any], records: list[Any]) -> li
         if not isinstance(record, dict):
             errors.append(f"{label} is not an object")
             continue
-        record_id = str(record.get("record_id", "")).strip()
+        record_id = str(record.get("record_id", "")).strip() if isinstance(record.get("record_id"), str) else ""
         if record_id:
             label = f"history record {record_id}"
             if record_id in seen_ids:
                 errors.append(f"duplicate history record_id: {record_id}")
             seen_ids.add(record_id)
-        missing = sorted(lineage - set(record))
-        if missing:
-            errors.append(f"{label} missing lineage fields: {', '.join(missing)}")
+        blank = [
+            field
+            for field in sorted(lineage)
+            if not isinstance(record.get(field), str) or not str(record.get(field)).strip()
+        ]
+        if blank:
+            errors.append(f"{label} missing lineage fields: {', '.join(blank)}")
         kind = record.get("record_kind")
         if kind not in kinds:
             errors.append(f"{label} has unknown record_kind: {kind}")
@@ -99,8 +103,8 @@ def validate_history_records(contract: dict[str, Any], records: list[Any]) -> li
             errors.append("favorite history records must not count as proof")
         if kind == "failure" and record.get("proof_effect") in RAISING_PROOF_EFFECTS:
             errors.append("failure records cannot raise proof")
-        if kind == "proof_receipt" and record.get("immutable") is False:
-            errors.append("proof receipts cannot be marked mutable")
+        if kind == "proof_receipt" and record.get("immutable") is not True:
+            errors.append("proof receipts must be immutable")
         transport_keys = sorted(FEEDBACK_TRANSPORT_KEYS.intersection(record))
         if transport_keys:
             errors.append(
@@ -285,8 +289,10 @@ def validate_payload(
     )
     check(
         "runtime_tab_survives_profile_rebuild",
-        "MutationObserver" in runtime and "ensureOntologyTab" in runtime,
-        "ontology tab must reattach after profile header rebuilds",
+        "MutationObserver" in runtime
+        and "ensureOntologyTab" in runtime
+        and "if (missing && view && view.classList.contains('active')) deactivate();" not in runtime,
+        "ontology tab must reattach after profile header rebuilds without closing an open Evidence view",
     )
     check(
         "teaching_relation_preserved",
