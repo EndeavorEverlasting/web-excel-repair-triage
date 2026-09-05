@@ -43,6 +43,9 @@ FEEDBACK_PRODUCTION_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-feedback-producti
 ONTOLOGY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-ontology.js"
 EXTERNAL_RESOURCES_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-external-resources.js"
 CAPABILITIES_REGISTRY = REPO_ROOT / "harness" / "capabilities.v1.json"
+ONTOLOGY_EVIDENCE_CONTRACT = (
+    REPO_ROOT / "harness" / "contracts" / "prompt-kit-ontology-evidence.v1.json"
+)
 SKILLS_ROOT = REPO_ROOT / ".ai" / "skills"
 ACTIONABILITY_POLICY = (
     REPO_ROOT / "registry" / "prompts" / "actionable-next-step-policy.v1.json"
@@ -475,6 +478,40 @@ def _skill_title(path: Path) -> str:
     return path.parent.name
 
 
+def load_ontology_evidence() -> dict[str, Any]:
+    """Attach the settled evidence contract and append-only history ledger to the ontology model."""
+    from scripts import validate_prompt_kit_ontology_evidence as ontology_evidence
+
+    contract = _load_json(ONTOLOGY_EVIDENCE_CONTRACT)
+    if not isinstance(contract, dict):
+        raise SystemExit(f"Ontology evidence contract must be an object: {ONTOLOGY_EVIDENCE_CONTRACT}")
+    if contract.get("schema_version") != "prompt-kit-ontology-evidence/v1":
+        raise SystemExit("Unsupported ontology evidence contract schema")
+    history_path = ontology_evidence.history_ledger_path(contract)
+    history = _load_json(history_path)
+    if not isinstance(history, dict):
+        raise SystemExit(f"Ontology history ledger must be an object: {history_path}")
+    errors = ontology_evidence.validate_history_ledger(contract, history)
+    if errors:
+        raise SystemExit("Ontology history ledger is invalid: " + "; ".join(errors))
+    records = history.get("records") if isinstance(history.get("records"), list) else []
+    return {
+        "schema_version": contract.get("schema_version"),
+        "relation_chain": list(contract.get("relation_chain") or []),
+        "required_lineage_fields": list(contract.get("required_lineage_fields") or []),
+        "record_kinds": dict(contract.get("record_kinds") or {}),
+        "separation_rules": dict(contract.get("separation_rules") or {}),
+        "history": {
+            "schema_version": history.get("schema_version"),
+            "append_only": history.get("append_only") is True,
+            "records": list(records),
+            "count": len(records),
+            "proof_ceiling": str(history.get("proof_ceiling") or ""),
+        },
+        "proof_ceiling": str(contract.get("proof_ceiling") or ""),
+    }
+
+
 def build_ontology_model(prompts: list[dict[str, Any]]) -> dict[str, Any]:
     """Build a repository-backed capability/skill/implementation lens for Prompt Kit."""
     payload = _load_json(CAPABILITIES_REGISTRY)
@@ -592,6 +629,7 @@ def build_ontology_model(prompts: list[dict[str, Any]]) -> dict[str, Any]:
         "capabilities": capabilities,
         "skills": skills,
         "implementations": implementations,
+        "evidence": load_ontology_evidence(),
     }
 
 

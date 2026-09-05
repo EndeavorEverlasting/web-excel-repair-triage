@@ -75,6 +75,7 @@
   "authority": {
     "declared_proof_ceiling_owner": "harness/capabilities.v1.json",
     "runtime_view_owner": "docs/prompt-kit-ontology.js",
+    "history_ledger": "docs/prompt-kit-ontology-history.v1.json",
     "feedback_transport_owner": "harness/contracts/prompt-kit-feedback-afk-routing.v1.json",
     "scope": "ontology evidence/history semantics only"
   },
