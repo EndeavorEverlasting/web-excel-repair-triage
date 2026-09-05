@@ -1,5 +1,4 @@
 name: Operant external resource refresh
-# Temporary PR synchronization carrier; removed in the next commit.
 
 on:
   pull_request:
