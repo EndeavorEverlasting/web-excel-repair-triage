@@ -872,5 +872,42 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertEqual(self.full["P63"]["class"], "AGENT HARNESS / SKILL FACTORING")
         self.assertEqual(self.full["P68"]["class"], "AI ENGINEERING / CONTEXT")
 
+    def test_programming_paradigm_specialist_is_distinct_bounded_and_routed_from_general_owners(self) -> None:
+        matches = [p for p in self.full.values() if p.get("name") == "Programming Paradigm Fit & Boundary Refactorer"]
+        self.assertEqual(len(matches), 1)
+        specialist = matches[0]
+        sid = specialist["id"]
+        self.assertEqual(sid, "P128")
+        self.assertEqual(specialist["seq"], "128")
+        content = specialist["copyContent"]
+        self.assertEqual(specialist["class"], "ENGINEERING / PROGRAMMING PARADIGMS")
+        self.assertNotEqual(sid, "P124")
+        for phrase in ("TOOL, NOT RELIGION", "PRESERVE, ADOPT, HYBRIDIZE, or DEFER", "OBJECT-ORIENTED", "FUNCTIONAL", "PROCEDURAL / IMPERATIVE", "DECLARATIVE", "DATA-ORIENTED", "EVENT / MESSAGE-DRIVEN", "HYBRID", "functional core + imperative shell", "Do not convert an entire module tree", "Where is state owned, where do effects occur"):
+            self.assertIn(phrase, content)
+        for declaration_field in (
+            "Branch/worktree:", "Lane/sprint:", "Owned scope:", "Forbidden scope:",
+            "Dependencies/collision risks:", "Expected tracked artifacts:", "Validation order:",
+            "Integration authority:", "Proof ceiling:", "Commit/PR expectation:",
+            "SPRINT DECLARATION — REQUIRED BEFORE MUTATION",
+        ):
+            self.assertIn(declaration_field, content)
+        self.assertLess(len(self.raw[sid]["copyContent"]), 7000)
+        self.assertIn(sid, self.full["P124"]["useWhen"])
+        self.assertIn("programming-paradigm specialist", self.full["P124"]["nextStep"])
+        self.assertLess(len(self.raw["P124"]["copyContent"]), 7000)
+        self.assertIn("do not drift into a programming paradigm accidentally", self.full["P07"]["copyContent"])
+        self.assertIn(sid, self.full["P07"]["proofGate"])
+        self.assertIn("Review paradigm coherence only when the diff materially changes a design boundary", self.full["P14"]["copyContent"])
+        self.assertIn(sid, self.full["P14"]["proofGate"])
+        for keyword in (
+            "programming paradigm", "functional programming", "object-oriented programming", "OOP",
+            "procedural programming", "imperative programming", "declarative programming",
+            "data-oriented programming", "event-driven programming", "functional core imperative shell",
+        ):
+            self.assertIn(keyword, specialist["keywords"])
+        self.assertEqual(self.full["P86"]["name"], "Prompt Semantic Hardener & Principle Integrator")
+        self.assertEqual(self.full["P79"]["name"], "Prompt Registry Prompt Adder")
+
+
 if __name__ == "__main__":
     unittest.main()
