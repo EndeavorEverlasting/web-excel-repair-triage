@@ -30,6 +30,10 @@
       "expected": "When Favorites contains saved prompts in one or more existing prompt sections, the Favorites view exposes a compact touch-usable Saved groups navigator built from those existing rendered sections and counts. Activating a group jumps to that section without changing Favorites membership, creating collection state, or using browser Find."
     },
     {
+      "id": "favorites_empty_state_and_persistence",
+      "expected": "Favorites saved in the existing canonical browser storage survive a page reload. An empty Favorites view distinguishes: no saved IDs, saved IDs unavailable in the current prompt registry, and available saved Favorites hidden by current filters. Recovery actions must be useful for each state, unknown imported IDs remain preserved for portability, and clearing filters must never change membership."
+    },
+    {
       "id": "horizontal_filter_rails",
       "expected": "Library, category, and type filters remain the same controls and semantics; narrow layouts may present them as horizontally scrollable touch rails rather than wrapping into an unstable header."
     },
@@ -61,5 +65,5 @@
     "python -m unittest tests.test_prompt_kit_filtering_access -v",
     "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check"
   ],
-  "proof_ceiling": "Static source, PowerShell parse, deterministic tests, generated-site parity, and CI prove the tracked responsive/acquisition contract. Physical phone/tablet ergonomics, browser clipboard permissions, touch timing, live OneDrive filesystem state, and Windows process launch remain field acceptance gates."
+  "proof_ceiling": "Static source, PowerShell parse, deterministic tests, generated-site parity, CI, and exact-head headless Chromium observations prove the tracked responsive and browser-runtime behaviors they exercise. Physical phone/tablet ergonomics, browser-specific clipboard permission prompts, real touch timing, live OneDrive filesystem state, and Windows process launch remain field acceptance gates."
 }

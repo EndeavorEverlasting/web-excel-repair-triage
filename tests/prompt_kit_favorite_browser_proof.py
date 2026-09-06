@@ -304,6 +304,122 @@ def observe(port: int, screenshot: Path):
                 target_visible = False
                 target_focused = False
                 favorites_state_preserved = False
+            persisted_after_reload = False
+            persisted_group_count = 0
+            empty_state_visible = False
+            empty_state_kind = None
+            browse_all_returned = False
+            filtered_empty_visible = False
+            filtered_empty_kind = None
+            clear_filters_restored = False
+            if structured_pair_available:
+                mobile_page.reload(wait_until="domcontentloaded")
+                mobile_page.wait_for_timeout(120)
+                quick = mobile_page.locator('#mobileFavoritesQuick')
+                quick.click()
+                mobile_page.wait_for_timeout(120)
+                persisted_after_reload = all(
+                    mobile_page.locator(f'[data-prompt-id="{item["id"]}"]').count() == 1
+                    for item in group_pair
+                )
+                persisted_group_count = mobile_page.locator('#favoritesGroupJumpNav .favorite-group-jump').count()
+                for item in group_pair:
+                    card = mobile_page.locator(f'[data-prompt-id="{item["id"]}"]')
+                    if card.count():
+                        card.locator('.prompt-favorite-btn').click()
+                        mobile_page.wait_for_timeout(80)
+                empty = mobile_page.locator('#favoritesEmptyState')
+                empty_state_visible = empty.is_visible()
+                empty_state_kind = empty.get_attribute('data-empty-kind')
+                empty_title = empty.locator('.favorites-empty-title').inner_text() if empty_state_visible else ''
+                browse = empty.get_by_role('button', name='Browse all prompts') if empty_state_visible else None
+                if browse is not None:
+                    browse.click()
+                    mobile_page.wait_for_timeout(100)
+                    browse_all_returned = mobile_page.evaluate("activeSection === null && activeCat === 'all'")
+
+                p79 = mobile_page.locator('[data-prompt-id="P79"]')
+                if p79.count():
+                    p79.locator('.prompt-favorite-btn').click()
+                    mobile_page.wait_for_timeout(80)
+                quick = mobile_page.locator('#mobileFavoritesQuick')
+                quick.click()
+                mobile_page.wait_for_timeout(100)
+                mobile_page.locator('#search').fill('definitely-no-favorite-match-xyz')
+                mobile_page.wait_for_timeout(100)
+                filtered_empty = mobile_page.locator('#favoritesEmptyState')
+                filtered_empty_visible = filtered_empty.is_visible()
+                filtered_empty_kind = filtered_empty.get_attribute('data-empty-kind')
+                filtered_title = filtered_empty.locator('.favorites-empty-title').inner_text() if filtered_empty_visible else ''
+                if filtered_empty_visible:
+                    filtered_empty.get_by_role('button', name='Clear Favorites filters').click()
+                    mobile_page.wait_for_timeout(100)
+                    clear_filters_restored = (
+                        mobile_page.locator('[data-prompt-id="P79"]').count() == 1
+                        and mobile_page.locator('#search').input_value() == ''
+                        and mobile_page.evaluate("activeSection === '__favorites__'")
+                    )
+
+                mobile_page.evaluate("localStorage.setItem('promptKit.favoritePromptIds.v1', JSON.stringify(['P999999']))")
+                mobile_page.reload(wait_until="domcontentloaded")
+                mobile_page.wait_for_timeout(120)
+                mobile_page.locator('#mobileFavoritesQuick').click()
+                mobile_page.wait_for_timeout(100)
+                unavailable_empty = mobile_page.locator('#favoritesEmptyState')
+                unavailable_visible = unavailable_empty.is_visible()
+                unavailable_kind = unavailable_empty.get_attribute('data-empty-kind')
+                unavailable_title = unavailable_empty.locator('.favorites-empty-title').inner_text() if unavailable_visible else ''
+                unavailable_action_visible = unavailable_empty.get_by_role('button', name='Browse current prompts').is_visible() if unavailable_visible else False
+                unknown_id_preserved = mobile_page.evaluate("JSON.parse(localStorage.getItem('promptKit.favoritePromptIds.v1')||'[]').includes('P999999')")
+            else:
+                empty_title = ''
+                filtered_title = ''
+                unavailable_visible = False
+                unavailable_kind = None
+                unavailable_title = ''
+                unavailable_action_visible = False
+                unknown_id_preserved = False
+
+            observations.append({
+                "id": "mobile_favorites_persistence_and_empty_state",
+                "event": "Favorites persist across reload and empty states distinguish zero saved, unavailable saved IDs, and filtered-out available prompts",
+                "occurred": True,
+                "passed": bool(all((
+                    structured_pair_available,
+                    persisted_after_reload,
+                    persisted_group_count == 2,
+                    empty_state_visible,
+                    empty_state_kind == 'none-saved',
+                    empty_title == 'No Favorites yet',
+                    browse_all_returned,
+                    filtered_empty_visible,
+                    filtered_empty_kind == 'filtered',
+                    filtered_title == 'No Favorites match these filters',
+                    clear_filters_restored,
+                    unavailable_visible,
+                    unavailable_kind == 'unavailable',
+                    unavailable_title == 'Saved Favorites unavailable in this version',
+                    unavailable_action_visible,
+                    unknown_id_preserved,
+                ))),
+                "persisted_after_reload": bool(persisted_after_reload),
+                "persisted_group_count": persisted_group_count,
+                "empty_state_visible": bool(empty_state_visible),
+                "empty_state_kind": empty_state_kind,
+                "empty_title": empty_title,
+                "browse_all_returned": bool(browse_all_returned),
+                "filtered_empty_visible": bool(filtered_empty_visible),
+                "filtered_empty_kind": filtered_empty_kind,
+                "filtered_title": filtered_title,
+                "clear_filters_restored": bool(clear_filters_restored),
+                "unavailable_visible": bool(unavailable_visible),
+                "unavailable_kind": unavailable_kind,
+                "unavailable_title": unavailable_title,
+                "unavailable_action_visible": bool(unavailable_action_visible),
+                "unknown_id_preserved": bool(unknown_id_preserved),
+                "viewport": {"width": 390, "height": 844},
+            })
+
             observations.append({
                 "id": "mobile_favorites_group_jump_navigation",
                 "event": "Favorites exposes saved section groups with counts and direct in-page jumps without leaving Favorites",
@@ -400,6 +516,7 @@ def main(argv=None) -> int:
         },
         "environment": {"kind": execution_environment_kind(), "engine": "chromium", "scenario": "search-escape-profile-tabs-a-e-and-favorite-shortcut-copy-reveal"},
         "claims": [
+            {"id": "mobile_favorites_persistence_and_empty_state", "statement": "Canonical Favorites survive page reload; zero-saved and filtered-empty Favorites states provide touch-actionable recovery without changing the storage model", "status": "PASS" if by_id["mobile_favorites_persistence_and_empty_state"]["passed"] else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["mobile_favorites_persistence_and_empty_state"]},
             {"id": "mobile_favorites_group_jump_navigation", "statement": "Favorites on a phone-width viewport exposes only saved prompt groups with counts and direct section jumps while preserving Favorites state", "status": "PASS" if by_id["mobile_favorites_group_jump_navigation"]["passed"] else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["mobile_favorites_group_jump_navigation"]},
             {"id": "mobile_favorites_quick_access", "statement": "A phone-width viewport exposes a persistent Favorites quick action outside horizontal rails; saving, opening Favorites, removing, and returning to All reuse the canonical Favorites state", "status": "PASS" if by_id["mobile_favorites_quick_access"]["passed"] else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["mobile_favorites_quick_access"]},
             {"id": "search_escape_recovery", "statement": "Slash focuses search; one Escape clears a populated query, hides the clear affordance, releases focus, also releases an empty focused search, and restores global hotkeys", "status": "PASS" if search_escape_recovery else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["search_escape_recovery"]},

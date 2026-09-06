@@ -88,6 +88,73 @@ function ensureFavoritesGroupJumpStyles(){
   document.head.appendChild(style)
 }
 
+function ensureFavoritesJourneyStyles(){
+  if(document.getElementById('favorites-journey-styles'))return;
+  var style=document.createElement('style');
+  style.id='favorites-journey-styles';
+  style.textContent='.favorites-empty-state{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:220px;padding:28px 20px;border:1px dashed var(--border);border-radius:12px;background:var(--bg-surface);text-align:center}.favorites-empty-icon{font-size:30px;line-height:1;color:#fbbf24}.favorites-empty-title{margin:0;color:var(--text-primary);font-size:18px}.favorites-empty-copy{max-width:520px;margin:0;color:var(--text-secondary);font-size:12px;line-height:1.55}.favorites-empty-action{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:8px 14px;border:1px solid var(--accent);border-radius:8px;background:var(--accent-glow);color:var(--text-primary);font-size:12px;font-weight:800;cursor:pointer;touch-action:manipulation}.favorites-empty-action:hover,.favorites-empty-action:focus-visible{outline:none;box-shadow:0 0 0 2px var(--accent-glow)}@media(max-width:760px){.favorites-empty-state{min-height:190px;padding:24px 16px}.favorites-empty-action{width:100%;min-height:48px}}';
+  document.head.appendChild(style)
+}
+
+function storedFavoritePromptCount(){
+  return Object.keys(favoritePromptIds||{}).filter(function(id){return favoritePromptIds[id]===true}).length
+}
+
+function currentFavoritePromptCount(){
+  var catalog=typeof PROMPTS!=='undefined'&&Array.isArray(PROMPTS)?PROMPTS:[];
+  return catalog.filter(function(prompt){return prompt&&isFavoritePrompt(prompt.id)}).length
+}
+
+function renderFavoritesEmptyState(grid){
+  if(!grid||activeSection!=='__favorites__')return false;
+  var storedCount=storedFavoritePromptCount();
+  var savedCount=currentFavoritePromptCount();
+  var state=document.createElement('section');
+  state.id='favoritesEmptyState';
+  state.className='favorites-empty-state';
+  state.setAttribute('role','status');
+  state.setAttribute('aria-live','polite');
+  var icon=document.createElement('div');
+  icon.className='favorites-empty-icon';
+  icon.setAttribute('aria-hidden','true');
+  icon.textContent='★';
+  var title=document.createElement('h2');
+  title.className='favorites-empty-title';
+  var copy=document.createElement('p');
+  copy.className='favorites-empty-copy';
+  var action=document.createElement('button');
+  action.className='favorites-empty-action';
+  action.type='button';
+  if(storedCount===0){
+    state.setAttribute('data-empty-kind','none-saved');
+    title.textContent='No Favorites yet';
+    copy.textContent='Star any prompt to save it here. Your Favorites stay in this browser for quick return visits.';
+    action.textContent='Browse all prompts';
+    action.setAttribute('aria-label','Browse all prompts');
+    action.addEventListener('click',function(){activateAllPromptsView()})
+  }else if(savedCount===0){
+    state.setAttribute('data-empty-kind','unavailable');
+    title.textContent='Saved Favorites unavailable in this version';
+    copy.textContent='This browser still remembers saved prompt IDs, but none exist in the current Prompt Kit registry. Your saved IDs are preserved for portability.';
+    action.textContent='Browse current prompts';
+    action.setAttribute('aria-label','Browse current prompts');
+    action.addEventListener('click',function(){activateAllPromptsView()})
+  }else{
+    state.setAttribute('data-empty-kind','filtered');
+    title.textContent='No Favorites match these filters';
+    copy.textContent='You still have saved Favorites available in this version. Clear the current search and prompt filters to show them again.';
+    action.textContent='Clear Favorites filters';
+    action.setAttribute('aria-label','Clear Favorites filters');
+    action.addEventListener('click',function(){clearTransientPromptFilters();renderTypes();render()})
+  }
+  state.appendChild(icon);
+  state.appendChild(title);
+  state.appendChild(copy);
+  state.appendChild(action);
+  grid.appendChild(state);
+  return true
+}
+
 function favoriteGroupJumpId(name,index){
   var slug=String(name||'group').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'group';
   return 'favorite-group-'+String(index+1)+'-'+slug
@@ -98,10 +165,12 @@ function renderFavoritesGroupJumpNavigation(){
   if(!grid)return;
   var existing=document.getElementById('favoritesGroupJumpNav');
   if(existing&&existing.parentNode)existing.parentNode.removeChild(existing);
+  var existingEmpty=document.getElementById('favoritesEmptyState');
+  if(existingEmpty&&existingEmpty.parentNode)existingEmpty.parentNode.removeChild(existingEmpty);
   grid.querySelectorAll('.section-divider.favorite-group-jump-target').forEach(function(divider){divider.classList.remove('favorite-group-jump-target');divider.removeAttribute('id')});
   if(activeSection!=='__favorites__')return;
   var dividers=Array.prototype.slice.call(grid.querySelectorAll('.section-divider[data-category]'));
-  if(!dividers.length)return;
+  if(!dividers.length){renderFavoritesEmptyState(grid);return}
   var nav=document.createElement('nav');
   nav.id='favoritesGroupJumpNav';
   nav.className='favorites-group-jump-nav';
@@ -658,6 +727,7 @@ window.appendPromptCard=function(grid,p){
 
 ensurePromptKitPolishStyles();
 ensureFavoritesGroupJumpStyles();
+ensureFavoritesJourneyStyles();
 ensureCompactBrowsingControls();
 ensureHotkeyHelp();
 installCompactBrowsingViewSwitches();
