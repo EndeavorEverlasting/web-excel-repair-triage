@@ -877,11 +877,20 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertEqual(len(matches), 1)
         specialist = matches[0]
         sid = specialist["id"]
+        self.assertEqual(sid, "P128")
+        self.assertEqual(specialist["seq"], "128")
         content = specialist["copyContent"]
         self.assertEqual(specialist["class"], "ENGINEERING / PROGRAMMING PARADIGMS")
         self.assertNotEqual(sid, "P124")
         for phrase in ("TOOL, NOT RELIGION", "PRESERVE, ADOPT, HYBRIDIZE, or DEFER", "OBJECT-ORIENTED", "FUNCTIONAL", "PROCEDURAL / IMPERATIVE", "DECLARATIVE", "DATA-ORIENTED", "EVENT / MESSAGE-DRIVEN", "HYBRID", "functional core + imperative shell", "Do not convert an entire module tree", "Where is state owned, where do effects occur"):
             self.assertIn(phrase, content)
+        for declaration_field in (
+            "Branch/worktree:", "Lane/sprint:", "Owned scope:", "Forbidden scope:",
+            "Dependencies/collision risks:", "Expected tracked artifacts:", "Validation order:",
+            "Integration authority:", "Proof ceiling:", "Commit/PR expectation:",
+            "SPRINT DECLARATION — REQUIRED BEFORE MUTATION",
+        ):
+            self.assertIn(declaration_field, content)
         self.assertLess(len(self.raw[sid]["copyContent"]), 7000)
         self.assertIn(sid, self.full["P124"]["useWhen"])
         self.assertIn("programming-paradigm specialist", self.full["P124"]["nextStep"])
