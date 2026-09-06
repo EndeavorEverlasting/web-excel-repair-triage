@@ -8,7 +8,8 @@ Runtime behavior is UNKNOWN until the required event sequence has actually occur
 - A behavior claim may be `PASS` only when every observation required by that claim is present in a receipt, has `occurred: true`, and has `passed: true`.
 - Evidence tiers are ordered. Browser observation cannot satisfy a target-runtime or production requirement; stronger tiers may satisfy weaker requirements.
 - Missing artifacts, stale subjects, skipped events, or weaker evidence yield `UNKNOWN`/`UNPROVEN`, never an inferred pass.
-- Every receipt pins the exact commit, artifact path/hash, environment, scenario, claims, and observations.
+- Every receipt pins the exact commit, artifact path/hash, clean-worktree evidence, generated-parity evidence, environment, scenario, claims, and observations.
+- Exact-head browser proof rejects tracked modifications, checks the canonical generated Prompt Kit (`python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check`), and records that evidence before Chromium launches. Recording `git rev-parse HEAD` alone is not exact-head proof.
 - If the commit, generated artifact, relevant dependency, or scenario changes, the prior receipt is stale for the changed claim.
 - CI/browser proof is representative runtime proof, not operator workstation or production proof. Raise the proof ceiling only when that stronger target was actually observed.
 

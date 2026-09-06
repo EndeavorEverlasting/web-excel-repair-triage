@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 import argparse
-import hashlib
 import json
 import os
-import subprocess
+import sys
 import threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACT = ROOT / "web/prompt-kit/index.html"
+if str(ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts"))
+from prepare_observed_behavior_subject import ExactHeadError, prepare_exact_head_subject
 
 
 class Quiet(SimpleHTTPRequestHandler):
@@ -359,30 +360,40 @@ def observe(port: int, screenshot: Path):
                         and mobile_page.locator('#search').input_value() == ''
                         and mobile_page.evaluate("activeSection === '__favorites__'")
                     )
-
-                mobile_page.evaluate("localStorage.setItem('promptKit.favoritePromptIds.v1', JSON.stringify(['P999999']))")
-                mobile_page.reload(wait_until="domcontentloaded")
-                mobile_page.wait_for_timeout(120)
-                mobile_page.locator('#mobileFavoritesQuick').click()
-                mobile_page.wait_for_timeout(100)
-                unavailable_empty = mobile_page.locator('#favoritesEmptyState')
-                unavailable_visible = unavailable_empty.is_visible()
-                unavailable_kind = unavailable_empty.get_attribute('data-empty-kind')
-                unavailable_title = unavailable_empty.locator('.favorites-empty-title').inner_text() if unavailable_visible else ''
-                unavailable_action_visible = unavailable_empty.get_by_role('button', name='Browse current prompts').is_visible() if unavailable_visible else False
-                unknown_id_preserved = mobile_page.evaluate("JSON.parse(localStorage.getItem('promptKit.favoritePromptIds.v1')||'[]').includes('P999999')")
             else:
                 empty_title = ''
                 filtered_title = ''
-                unavailable_visible = False
-                unavailable_kind = None
-                unavailable_title = ''
-                unavailable_action_visible = False
-                unknown_id_preserved = False
+
+            mobile_page.evaluate("localStorage.setItem('promptKit.favoritePromptIds.v1', JSON.stringify(['P79','P999999']))")
+            mobile_page.reload(wait_until="domcontentloaded")
+            mobile_page.wait_for_timeout(120)
+            mobile_page.locator('#mobileFavoritesQuick').click()
+            mobile_page.wait_for_timeout(100)
+            known_favorite_rendered = mobile_page.locator('[data-prompt-id="P79"]').count() == 1
+            unknown_id_preserved_before_mutation = mobile_page.evaluate("JSON.parse(localStorage.getItem('promptKit.favoritePromptIds.v1')||'[]').includes('P999999')")
+            if known_favorite_rendered:
+                mobile_page.locator('[data-prompt-id="P79"] .prompt-favorite-btn').click()
+                mobile_page.wait_for_timeout(100)
+            stored_after_mutation = mobile_page.evaluate("JSON.parse(localStorage.getItem('promptKit.favoritePromptIds.v1')||'[]')")
+            unknown_id_preserved_after_mutation = 'P999999' in stored_after_mutation
+            known_id_removed = 'P79' not in stored_after_mutation
+            unavailable_empty = mobile_page.locator('#favoritesEmptyState')
+            unavailable_visible = unavailable_empty.is_visible()
+            unavailable_kind = unavailable_empty.get_attribute('data-empty-kind')
+            unavailable_title = unavailable_empty.locator('.favorites-empty-title').inner_text() if unavailable_visible else ''
+            browse_current = unavailable_empty.get_by_role('button', name='Browse current prompts') if unavailable_visible else None
+            unavailable_action_visible = browse_current.is_visible() if browse_current is not None else False
+            browse_current_prompts_returned = False
+            current_prompt_visible = False
+            if browse_current is not None and unavailable_action_visible:
+                browse_current.click()
+                mobile_page.wait_for_timeout(100)
+                browse_current_prompts_returned = mobile_page.evaluate("activeSection === null && activeCat === 'all'")
+                current_prompt_visible = mobile_page.locator('[data-prompt-id="P79"]').count() == 1
 
             observations.append({
                 "id": "mobile_favorites_persistence_and_empty_state",
-                "event": "Favorites persist across reload and empty states distinguish zero saved, unavailable saved IDs, and filtered-out available prompts",
+                "event": "Favorites persist across reload and empty states distinguish zero saved and filtered-out available prompts",
                 "occurred": True,
                 "passed": bool(all((
                     structured_pair_available,
@@ -396,11 +407,6 @@ def observe(port: int, screenshot: Path):
                     filtered_empty_kind == 'filtered',
                     filtered_title == 'No Favorites match these filters',
                     clear_filters_restored,
-                    unavailable_visible,
-                    unavailable_kind == 'unavailable',
-                    unavailable_title == 'Saved Favorites unavailable in this version',
-                    unavailable_action_visible,
-                    unknown_id_preserved,
                 ))),
                 "persisted_after_reload": bool(persisted_after_reload),
                 "persisted_group_count": persisted_group_count,
@@ -412,11 +418,35 @@ def observe(port: int, screenshot: Path):
                 "filtered_empty_kind": filtered_empty_kind,
                 "filtered_title": filtered_title,
                 "clear_filters_restored": bool(clear_filters_restored),
+                "viewport": {"width": 390, "height": 844},
+            })
+
+            observations.append({
+                "id": "unknown_favorite_portability_recovery",
+                "event": "A known Favorite plus unknown ID keep the unknown ID through mutation, reach unavailable recovery, and Browse current prompts restores the live catalog",
+                "occurred": True,
+                "passed": bool(all((
+                    known_favorite_rendered,
+                    unknown_id_preserved_before_mutation,
+                    unknown_id_preserved_after_mutation,
+                    known_id_removed,
+                    unavailable_visible,
+                    unavailable_kind == 'unavailable',
+                    unavailable_title == 'Saved Favorites unavailable in this version',
+                    unavailable_action_visible,
+                    browse_current_prompts_returned,
+                    current_prompt_visible,
+                ))),
+                "known_favorite_rendered": bool(known_favorite_rendered),
+                "unknown_id_preserved_before_mutation": bool(unknown_id_preserved_before_mutation),
+                "unknown_id_preserved_after_mutation": bool(unknown_id_preserved_after_mutation),
+                "known_id_removed": bool(known_id_removed),
                 "unavailable_visible": bool(unavailable_visible),
                 "unavailable_kind": unavailable_kind,
                 "unavailable_title": unavailable_title,
                 "unavailable_action_visible": bool(unavailable_action_visible),
-                "unknown_id_preserved": bool(unknown_id_preserved),
+                "browse_current_prompts_returned": bool(browse_current_prompts_returned),
+                "current_prompt_visible": bool(current_prompt_visible),
                 "viewport": {"width": 390, "height": 844},
             })
 
@@ -493,6 +523,11 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     receipt_path = Path(args.receipt)
     screenshot = Path(args.screenshot)
+    try:
+        subject = prepare_exact_head_subject()
+    except ExactHeadError as exc:
+        print(f"exact-head preflight failed; Chromium was not launched\n{exc}", file=sys.stderr)
+        return 2
     observations = observe(args.port, screenshot)
     by_id = {item['id']: item for item in observations}
     search_escape_recovery = by_id['search_escape_recovery']['passed']
@@ -502,21 +537,15 @@ def main(argv=None) -> int:
     reveal = all(by_id[item]['passed'] for item in ('alternate_scope_precondition', 'favorite_shortcut_dispatched', 'prompt_card_scrolled_visible'))
     focus_safe = all(by_id[item]['passed'] for item in ('detail_modal_closed', 'enter_does_not_close_prompt'))
     verdict = 'PASS' if all(item['passed'] for item in observations) else 'FAIL'
-    sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
     receipt = {
         "schema_version": "observed-behavior-proof/v1",
         "verdict": verdict,
         "evidence_class": "browser_runtime_observed",
-        "subject": {
-            "commit_sha": sha,
-            "artifact": {
-                "path": "web/prompt-kit/index.html",
-                "sha256": hashlib.sha256(ARTIFACT.read_bytes()).hexdigest(),
-            },
-        },
+        "subject": subject,
         "environment": {"kind": execution_environment_kind(), "engine": "chromium", "scenario": "search-escape-profile-tabs-a-e-and-favorite-shortcut-copy-reveal"},
         "claims": [
             {"id": "mobile_favorites_persistence_and_empty_state", "statement": "Canonical Favorites survive page reload; zero-saved and filtered-empty Favorites states provide touch-actionable recovery without changing the storage model", "status": "PASS" if by_id["mobile_favorites_persistence_and_empty_state"]["passed"] else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["mobile_favorites_persistence_and_empty_state"]},
+            {"id": "unknown_favorite_portability_recovery", "statement": "Seeding a known Favorite plus an unknown ID preserves the unknown ID through known-Favorite mutation, reaches saved-Favorites-unavailable recovery, and Browse current prompts restores the live catalog", "status": "PASS" if by_id["unknown_favorite_portability_recovery"]["passed"] else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["unknown_favorite_portability_recovery"]},
             {"id": "mobile_favorites_group_jump_navigation", "statement": "Favorites on a phone-width viewport exposes only saved prompt groups with counts and direct section jumps while preserving Favorites state", "status": "PASS" if by_id["mobile_favorites_group_jump_navigation"]["passed"] else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["mobile_favorites_group_jump_navigation"]},
             {"id": "mobile_favorites_quick_access", "statement": "A phone-width viewport exposes a persistent Favorites quick action outside horizontal rails; saving, opening Favorites, removing, and returning to All reuse the canonical Favorites state", "status": "PASS" if by_id["mobile_favorites_quick_access"]["passed"] else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["mobile_favorites_quick_access"]},
             {"id": "search_escape_recovery", "statement": "Slash focuses search; one Escape clears a populated query, hides the clear affordance, releases focus, also releases an empty focused search, and restores global hotkeys", "status": "PASS" if search_escape_recovery else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["search_escape_recovery"]},

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import subprocess
@@ -14,7 +13,10 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACT = ROOT / "web" / "prompt-kit" / "index.html"
+if str(ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts"))
+from prepare_observed_behavior_subject import ExactHeadError, prepare_exact_head_subject
+
 RESOURCE_INDEX = ROOT / "web" / "prompt-kit" / "resources.v1.json"
 
 
@@ -205,9 +207,13 @@ def main(argv=None) -> int:
     parser.add_argument("--screenshot", required=True)
     parser.add_argument("--port", type=int, default=8766)
     args = parser.parse_args(argv)
+    try:
+        subject = prepare_exact_head_subject()
+    except ExactHeadError as exc:
+        print(f"exact-head preflight failed; Chromium was not launched\n{exc}", file=sys.stderr)
+        return 2
     observations = observe(args.port, Path(args.screenshot))
     by_id = {item["id"]: item for item in observations}
-    sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     claims = [
         {
             "id": "lazy_catalog_loading",
@@ -236,13 +242,7 @@ def main(argv=None) -> int:
         "schema_version": "observed-behavior-proof/v1",
         "verdict": verdict,
         "evidence_class": "browser_runtime_observed",
-        "subject": {
-            "commit_sha": sha,
-            "artifact": {
-                "path": "web/prompt-kit/index.html",
-                "sha256": hashlib.sha256(ARTIFACT.read_bytes()).hexdigest(),
-            },
-        },
+        "subject": subject,
         "environment": {
             "kind": "github_actions_headless_browser" if os.environ.get("GITHUB_ACTIONS", "").lower() == "true" else "local_headless_browser",
             "engine": "chromium",

@@ -151,6 +151,28 @@ class PromptKitMobileTests(unittest.TestCase):
         self.assertNotIn("favoritesEmptyStorage", polish)
         self.assertNotIn("favoritesSessionStorage", polish)
 
+    def test_unknown_favorite_browser_proof_executes_portability_recovery(self) -> None:
+        proof = (ROOT / "tests" / "prompt_kit_favorite_browser_proof.py").read_text(encoding="utf-8")
+        for marker in (
+            "JSON.stringify(['P79','P999999'])",
+            "unknown_id_preserved_before_mutation",
+            "unknown_id_preserved_after_mutation",
+            "get_by_role('button', name='Browse current prompts')",
+            "browse_current.click()",
+            "Saved Favorites unavailable in this version",
+            "unknown_favorite_portability_recovery",
+            "subject = prepare_exact_head_subject()",
+        ):
+            self.assertIn(marker, proof)
+        self.assertLess(
+            proof.index("JSON.stringify(['P79','P999999'])"),
+            proof.index("unknown_id_preserved_after_mutation"),
+        )
+        self.assertLess(
+            proof.index("unknown_id_preserved_after_mutation"),
+            proof.index("browse_current.click()"),
+        )
+
     def test_category_collapse_control_is_touch_sized_and_native(self) -> None:
         js = JS.read_text(encoding="utf-8")
         self.assertIn('class="sd-label section-toggle"', js)
