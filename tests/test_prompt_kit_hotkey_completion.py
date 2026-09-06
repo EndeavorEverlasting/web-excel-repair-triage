@@ -221,29 +221,45 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
 
     def test_shared_registry_shortcuts_publish_without_favorite_gate(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
-        for marker in (
-            "function buildEffectivePromptShortcutBindings()",
-            "window.PromptKitShortcuts",
-            "copy_reveal_prompt",
-            "binding.shared",
-            "function renderPromptShortcutBindings()",
-            "hotkey-shortcut-shared",
-        ):
-            self.assertIn(marker, source)
-        self.assertIn("buildEffectivePromptShortcutBindings()", source)
-
-    def test_configuration_ui_and_generated_parity_are_present(self) -> None:
-        source = POLISH.read_text(encoding="utf-8")
         deployed = DEPLOYED.read_text(encoding="utf-8")
         for marker in (
-            "Favorite prompt shortcuts",
-            "promptShortcutPromptId",
-            "promptShortcutBindings",
-            "Favorite a prompt, enter its ID",
-            "Save favorite prompt keyboard shortcut",
-            "function focusFavoritePromptShortcutInput(panel)",
-            "promptInput.scrollIntoView({block:'nearest',inline:'nearest'})",
-            "resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return",
+            "function computeSharedPromptShortcutBindings()",
+            "item.sharedShortcut!==true",
+            "function effectivePromptShortcutBindings()",
+            "var bindings=effectivePromptShortcutBindings();",
+            "if(!sharedPromptShortcutBindings[String(promptId).toLowerCase()]&&!isFavoritePrompt(promptId))",
+            "function sharedPromptShortcutIds()",
+            "shared.textContent='Recommended'",
         ):
             self.assertIn(marker, source)
             self.assertIn(marker, deployed)
+        registry = json.loads(
+            (ROOT / "registry" / "prompts" / "spec-architecture-prompts.v1.json").read_text(encoding="utf-8")
+        )
+        shared_ids = [
+            prompt["id"]
+            for prompt in registry["prompts"]
+            if prompt.get("sharedShortcut") is True
+        ]
+        self.assertEqual(shared_ids, ["P95"])
+        self.assertIn('"sharedShortcut": true', deployed)
+
+    def test_human_contract_and_design_close_previous_ux_decisions(self) -> None:
+        readme = README.read_text(encoding="utf-8")
+        design = DESIGN.read_text(encoding="utf-8")
+        for row in (
+            "| `` ` `` | Show / hide Hotkeys |",
+            "| `[` | Hide filters |",
+            "| `]` | Show filters |",
+        ):
+            self.assertIn(row, readme)
+        self.assertIn("Typed prompt sequences expire after 1.2 seconds", readme)
+        self.assertIn("only prompts that are currently Favorites", design)
+        self.assertIn("copies the canonical prompt and scrolls its card into view without opening prompt detail", design)
+        self.assertIn("buffer is active", design)
+        self.assertIn("one hand", design)
+        self.assertNotIn("Still unresolved by design proof:", design)
+
+
+if __name__ == "__main__":
+    unittest.main()
