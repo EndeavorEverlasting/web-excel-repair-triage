@@ -6,6 +6,7 @@ import os
 import sys
 import threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from contextlib import closing
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -222,378 +223,377 @@ def observe(port: int, screenshot: Path):
                 {"id": "detail_modal_closed", "event": "favorite shortcut does not open detail modal or focus its close control", "occurred": True, "passed": bool(modal_closed and not close_focused), "modal_closed": bool(modal_closed), "close_focused": bool(close_focused)},
                 {"id": "enter_does_not_close_prompt", "event": "Enter after shortcut leaves detail modal closed and clipboard intact", "occurred": True, "passed": bool(enter_modal_closed and canonical_clipboard_text(after_enter) == canonical_clipboard_text(expected))},
             ]
-            mobile_context = browser.new_context(
+            with closing(browser.new_context(
                 viewport={"width": 390, "height": 844},
                 is_mobile=True,
                 has_touch=True,
                 reduced_motion="reduce",
-            )
-            mobile_page = mobile_context.new_page()
-            mobile_page.goto(f"http://127.0.0.1:{port}/web/prompt-kit/index.html", wait_until="domcontentloaded")
-            favorites_key = "promptKit.favoritePromptIds.v1"
+            )) as mobile_context:
+                mobile_page = mobile_context.new_page()
+                mobile_page.goto(f"http://127.0.0.1:{port}/web/prompt-kit/index.html", wait_until="domcontentloaded")
+                favorites_key = "promptKit.favoritePromptIds.v1"
 
-            def control_tappable(locator) -> bool:
-                if locator is None or not locator.is_visible():
-                    return False
-                box = locator.bounding_box() or {}
-                width = float(box.get("width") or 0)
-                height = float(box.get("height") or 0)
-                x = float(box.get("x") or -1)
-                y = float(box.get("y") or -1)
-                return bool(
-                    width >= 40
-                    and height >= 40
-                    and x >= 0
-                    and y >= 0
-                    and x + width <= 390
-                    and y + height <= 844
-                )
+                def control_tappable(locator) -> bool:
+                    if locator is None or not locator.is_visible():
+                        return False
+                    box = locator.bounding_box() or {}
+                    width = float(box.get("width") or 0)
+                    height = float(box.get("height") or 0)
+                    x = float(box.get("x") or -1)
+                    y = float(box.get("y") or -1)
+                    return bool(
+                        width >= 40
+                        and height >= 40
+                        and x >= 0
+                        and y >= 0
+                        and x + width <= 390
+                        and y + height <= 844
+                    )
 
-            quick = mobile_page.locator("#mobileFavoritesQuick")
-            quick_visible = quick.is_visible()
-            quick_rect = quick.bounding_box() or {}
-            quick_in_viewport = bool(
-                quick_rect
-                and quick_rect.get("x", -1) >= 0
-                and quick_rect.get("y", -1) >= 0
-                and quick_rect.get("x", 0) + quick_rect.get("width", 0) <= 390
-                and quick_rect.get("y", 0) + quick_rect.get("height", 0) <= 844
-            )
-            mobile_page.locator("#filterPanelToggle").click()
-            mobile_page.wait_for_timeout(80)
-            quick_visible_when_filters_collapsed = quick.is_visible()
-
-            group_pair = mobile_page.evaluate(
-                """() => {
-                  const firstBySection={};
-                  for(const prompt of PROMPTS){
-                    const section=sectionForPrompt(prompt);
-                    const name=section?section.name:'Other';
-                    if(!firstBySection[name])firstBySection[name]=prompt.id;
-                  }
-                  return Object.keys(firstBySection).slice(0,2).map(name => ({name,id:firstBySection[name]}));
-                }"""
-            )
-            structured_pair_available = len(group_pair) == 2
-
-            # save → canonical key
-            saved_in_canonical_key = False
-            if structured_pair_available:
-                for item in group_pair:
-                    mobile_page.locator(f'[data-prompt-id="{item["id"]}"] .prompt-favorite-btn').click()
-                    mobile_page.wait_for_timeout(60)
-                stored_after_save = mobile_page.evaluate(
-                    f"JSON.parse(localStorage.getItem('{favorites_key}')||'[]')"
-                )
-                saved_in_canonical_key = all(item["id"] in stored_after_save for item in group_pair)
-
-            # reload → persisted Favorites appear → structured groups
-            persisted_after_reload = False
-            favorites_appear_after_reload = False
-            group_nav_visible = False
-            group_link_count = 0
-            group_labels = []
-            counts_present = False
-            target_visible = False
-            target_focused = False
-            favorites_state_preserved = False
-            if structured_pair_available and saved_in_canonical_key:
-                mobile_page.reload(wait_until="domcontentloaded")
-                mobile_page.wait_for_timeout(120)
                 quick = mobile_page.locator("#mobileFavoritesQuick")
-                quick.click()
-                mobile_page.wait_for_timeout(120)
-                persisted_after_reload = all(
-                    mobile_page.locator(f'[data-prompt-id="{item["id"]}"]').count() == 1
-                    for item in group_pair
+                quick_visible = quick.is_visible()
+                quick_rect = quick.bounding_box() or {}
+                quick_in_viewport = bool(
+                    quick_rect
+                    and quick_rect.get("x", -1) >= 0
+                    and quick_rect.get("y", -1) >= 0
+                    and quick_rect.get("x", 0) + quick_rect.get("width", 0) <= 390
+                    and quick_rect.get("y", 0) + quick_rect.get("height", 0) <= 844
                 )
-                favorites_appear_after_reload = persisted_after_reload and mobile_page.evaluate(
-                    "activeSection === '__favorites__'"
-                )
-                group_nav = mobile_page.locator("#favoritesGroupJumpNav")
-                group_nav_visible = group_nav.is_visible()
-                group_links = group_nav.locator(".favorite-group-jump")
-                group_link_count = group_links.count()
-                group_labels = [
-                    group_links.nth(i).get_attribute("data-favorite-group")
-                    for i in range(group_link_count)
-                ]
-                counts_present = all(
-                    "prompt" in group_links.nth(i).inner_text().lower()
-                    for i in range(group_link_count)
-                )
-                if group_link_count >= 2:
-                    second_link = group_links.nth(1)
-                    target_id = (second_link.get_attribute("href") or "").lstrip("#")
-                    second_link.click()
+                mobile_page.locator("#filterPanelToggle").click()
+                mobile_page.wait_for_timeout(80)
+                quick_visible_when_filters_collapsed = quick.is_visible()
 
-                    def group_target_in_viewport(tid: str) -> bool:
-                        return bool(
+                group_pair = mobile_page.evaluate(
+                    """() => {
+                      const firstBySection={};
+                      for(const prompt of PROMPTS){
+                        const section=sectionForPrompt(prompt);
+                        const name=section?section.name:'Other';
+                        if(!firstBySection[name])firstBySection[name]=prompt.id;
+                      }
+                      return Object.keys(firstBySection).slice(0,2).map(name => ({name,id:firstBySection[name]}));
+                    }"""
+                )
+                structured_pair_available = len(group_pair) == 2
+
+                # save → canonical key
+                saved_in_canonical_key = False
+                if structured_pair_available:
+                    for item in group_pair:
+                        mobile_page.locator(f'[data-prompt-id="{item["id"]}"] .prompt-favorite-btn').click()
+                        mobile_page.wait_for_timeout(60)
+                    stored_after_save = mobile_page.evaluate(
+                        f"JSON.parse(localStorage.getItem('{favorites_key}')||'[]')"
+                    )
+                    saved_in_canonical_key = all(item["id"] in stored_after_save for item in group_pair)
+
+                # reload → persisted Favorites appear → structured groups
+                persisted_after_reload = False
+                favorites_appear_after_reload = False
+                group_nav_visible = False
+                group_link_count = 0
+                group_labels = []
+                counts_present = False
+                target_visible = False
+                target_focused = False
+                favorites_state_preserved = False
+                if structured_pair_available and saved_in_canonical_key:
+                    mobile_page.reload(wait_until="domcontentloaded")
+                    mobile_page.wait_for_timeout(120)
+                    quick = mobile_page.locator("#mobileFavoritesQuick")
+                    quick.click()
+                    mobile_page.wait_for_timeout(120)
+                    persisted_after_reload = all(
+                        mobile_page.locator(f'[data-prompt-id="{item["id"]}"]').count() == 1
+                        for item in group_pair
+                    )
+                    favorites_appear_after_reload = persisted_after_reload and mobile_page.evaluate(
+                        "activeSection === '__favorites__'"
+                    )
+                    group_nav = mobile_page.locator("#favoritesGroupJumpNav")
+                    group_nav_visible = group_nav.is_visible()
+                    group_links = group_nav.locator(".favorite-group-jump")
+                    group_link_count = group_links.count()
+                    group_labels = [
+                        group_links.nth(i).get_attribute("data-favorite-group")
+                        for i in range(group_link_count)
+                    ]
+                    counts_present = all(
+                        "prompt" in group_links.nth(i).inner_text().lower()
+                        for i in range(group_link_count)
+                    )
+                    if group_link_count >= 2:
+                        second_link = group_links.nth(1)
+                        target_id = (second_link.get_attribute("href") or "").lstrip("#")
+                        second_link.click()
+
+                        def group_target_in_viewport(tid: str) -> bool:
+                            return bool(
+                                mobile_page.evaluate(
+                                    """targetId => {
+                                      const target=document.getElementById(targetId);
+                                      if(!target)return false;
+                                      const nodes=[target, target.querySelector('.section-toggle')].filter(Boolean);
+                                      return nodes.some(node => {
+                                        const r=node.getBoundingClientRect();
+                                        return r.width>0 && r.height>0 && r.bottom>0 && r.top<window.innerHeight;
+                                      });
+                                    }""",
+                                    tid,
+                                )
+                            )
+
+                        # Linux CI headless can settle focus before scroll geometry; poll, then force nearest.
+                        target_visible = False
+                        for _ in range(40):
+                            if group_target_in_viewport(target_id):
+                                target_visible = True
+                                break
+                            mobile_page.wait_for_timeout(50)
+                        if not target_visible:
                             mobile_page.evaluate(
                                 """targetId => {
                                   const target=document.getElementById(targetId);
-                                  if(!target)return false;
-                                  const nodes=[target, target.querySelector('.section-toggle')].filter(Boolean);
-                                  return nodes.some(node => {
-                                    const r=node.getBoundingClientRect();
-                                    return r.width>0 && r.height>0 && r.bottom>0 && r.top<window.innerHeight;
-                                  });
+                                  if(!target)return;
+                                  try{target.scrollIntoView({block:'nearest',inline:'nearest',behavior:'auto'})}
+                                  catch(err){target.scrollIntoView(true)}
                                 }""",
-                                tid,
+                                target_id,
                             )
-                        )
-
-                    # Linux CI headless can settle focus before scroll geometry; poll, then force nearest.
-                    target_visible = False
-                    for _ in range(40):
-                        if group_target_in_viewport(target_id):
-                            target_visible = True
-                            break
-                        mobile_page.wait_for_timeout(50)
-                    if not target_visible:
-                        mobile_page.evaluate(
+                            mobile_page.wait_for_timeout(80)
+                            target_visible = group_target_in_viewport(target_id)
+                        target_focused = mobile_page.evaluate(
                             """targetId => {
                               const target=document.getElementById(targetId);
-                              if(!target)return;
-                              try{target.scrollIntoView({block:'nearest',inline:'nearest',behavior:'auto'})}
-                              catch(err){target.scrollIntoView(true)}
+                              return !!(target && target.contains(document.activeElement));
                             }""",
                             target_id,
                         )
-                        mobile_page.wait_for_timeout(80)
-                        target_visible = group_target_in_viewport(target_id)
-                    target_focused = mobile_page.evaluate(
-                        """targetId => {
-                          const target=document.getElementById(targetId);
-                          return !!(target && target.contains(document.activeElement));
-                        }""",
-                        target_id,
-                    )
-                    favorites_state_preserved = mobile_page.evaluate(
-                        "activeSection === '__favorites__'"
-                    )
+                        favorites_state_preserved = mobile_page.evaluate(
+                            "activeSection === '__favorites__'"
+                        )
 
-            # remove all → zero-saved recovery → Browse all prompts
-            empty_state_visible = False
-            empty_state_kind = None
-            empty_title = ""
-            browse_all_tappable = False
-            browse_all_returned = False
-            browse_all_useful_content = False
-            if structured_pair_available and favorites_appear_after_reload:
-                for item in group_pair:
-                    card = mobile_page.locator(f'[data-prompt-id="{item["id"]}"]')
-                    if card.count():
-                        card.locator(".prompt-favorite-btn").click()
-                        mobile_page.wait_for_timeout(80)
-                empty = mobile_page.locator("#favoritesEmptyState")
-                empty_state_visible = empty.is_visible()
-                empty_state_kind = empty.get_attribute("data-empty-kind")
-                empty_title = empty.locator(".favorites-empty-title").inner_text() if empty_state_visible else ""
-                browse_all = empty.get_by_role("button", name="Browse all prompts") if empty_state_visible else None
-                browse_all_tappable = control_tappable(browse_all)
-                if browse_all is not None and browse_all_tappable:
-                    browse_all.click()
-                    mobile_page.wait_for_timeout(100)
-                    browse_all_returned = mobile_page.evaluate(
-                        "activeSection === null && activeCat === 'all'"
-                    )
-                    browse_all_useful_content = browse_all_returned and (
-                        mobile_page.locator('[data-prompt-id="P79"]').count() == 1
-                    )
+                # remove all → zero-saved recovery → Browse all prompts
+                empty_state_visible = False
+                empty_state_kind = None
+                empty_title = ""
+                browse_all_tappable = False
+                browse_all_returned = False
+                browse_all_useful_content = False
+                if structured_pair_available and favorites_appear_after_reload:
+                    for item in group_pair:
+                        card = mobile_page.locator(f'[data-prompt-id="{item["id"]}"]')
+                        if card.count():
+                            card.locator(".prompt-favorite-btn").click()
+                            mobile_page.wait_for_timeout(80)
+                    empty = mobile_page.locator("#favoritesEmptyState")
+                    empty_state_visible = empty.is_visible()
+                    empty_state_kind = empty.get_attribute("data-empty-kind")
+                    empty_title = empty.locator(".favorites-empty-title").inner_text() if empty_state_visible else ""
+                    browse_all = empty.get_by_role("button", name="Browse all prompts") if empty_state_visible else None
+                    browse_all_tappable = control_tappable(browse_all)
+                    if browse_all is not None and browse_all_tappable:
+                        browse_all.click()
+                        mobile_page.wait_for_timeout(100)
+                        browse_all_returned = mobile_page.evaluate(
+                            "activeSection === null && activeCat === 'all'"
+                        )
+                        browse_all_useful_content = browse_all_returned and (
+                            mobile_page.locator('[data-prompt-id="P79"]').count() == 1
+                        )
 
-            # save again → filter away → Clear filters (membership unchanged)
-            filtered_empty_visible = False
-            filtered_empty_kind = None
-            filtered_title = ""
-            clear_filters_tappable = False
-            clear_filters_restored = False
-            membership_unchanged_after_clear = False
-            if browse_all_useful_content:
-                mobile_page.locator('[data-prompt-id="P79"] .prompt-favorite-btn').click()
-                mobile_page.wait_for_timeout(80)
-                membership_before_filter = mobile_page.evaluate(
-                    f"JSON.parse(localStorage.getItem('{favorites_key}')||'[]')"
-                )
-                quick = mobile_page.locator("#mobileFavoritesQuick")
-                quick.click()
-                mobile_page.wait_for_timeout(100)
-                mobile_page.locator("#search").fill("definitely-no-favorite-match-xyz")
-                mobile_page.wait_for_timeout(100)
-                filtered_empty = mobile_page.locator("#favoritesEmptyState")
-                filtered_empty_visible = filtered_empty.is_visible()
-                filtered_empty_kind = filtered_empty.get_attribute("data-empty-kind")
-                filtered_title = (
-                    filtered_empty.locator(".favorites-empty-title").inner_text()
-                    if filtered_empty_visible
-                    else ""
-                )
-                clear_filters = (
-                    filtered_empty.get_by_role("button", name="Clear Favorites filters")
-                    if filtered_empty_visible
-                    else None
-                )
-                clear_filters_tappable = control_tappable(clear_filters)
-                if clear_filters is not None and clear_filters_tappable:
-                    clear_filters.click()
-                    mobile_page.wait_for_timeout(100)
-                    membership_after_clear = mobile_page.evaluate(
+                # save again → filter away → Clear filters (membership unchanged)
+                filtered_empty_visible = False
+                filtered_empty_kind = None
+                filtered_title = ""
+                clear_filters_tappable = False
+                clear_filters_restored = False
+                membership_unchanged_after_clear = False
+                if browse_all_useful_content:
+                    mobile_page.locator('[data-prompt-id="P79"] .prompt-favorite-btn').click()
+                    mobile_page.wait_for_timeout(80)
+                    membership_before_filter = mobile_page.evaluate(
                         f"JSON.parse(localStorage.getItem('{favorites_key}')||'[]')"
                     )
-                    membership_unchanged_after_clear = (
-                        sorted(membership_before_filter) == sorted(membership_after_clear)
-                        and "P79" in membership_after_clear
-                    )
-                    clear_filters_restored = (
-                        mobile_page.locator('[data-prompt-id="P79"]').count() == 1
-                        and mobile_page.locator("#search").input_value() == ""
-                        and mobile_page.evaluate("activeSection === '__favorites__'")
-                        and membership_unchanged_after_clear
-                    )
-
-            # mixed known/unknown → mutate known → unknown preserved → unavailable → Browse current
-            known_favorite_rendered = False
-            unknown_id_preserved_before_mutation = False
-            unknown_id_preserved_after_mutation = False
-            known_id_removed = False
-            unavailable_visible = False
-            unavailable_kind = None
-            unavailable_title = ""
-            browse_current_tappable = False
-            browse_current_prompts_returned = False
-            current_prompt_visible = False
-            if clear_filters_restored:
-                mobile_page.evaluate(
-                    f"localStorage.setItem('{favorites_key}', JSON.stringify(['P79','P999999']))"
-                )
-                mobile_page.reload(wait_until="domcontentloaded")
-                mobile_page.wait_for_timeout(120)
-                mobile_page.locator("#mobileFavoritesQuick").click()
-                mobile_page.wait_for_timeout(100)
-                known_favorite_rendered = mobile_page.locator('[data-prompt-id="P79"]').count() == 1
-                unknown_id_preserved_before_mutation = mobile_page.evaluate(
-                    f"JSON.parse(localStorage.getItem('{favorites_key}')||'[]').includes('P999999')"
-                )
-                if known_favorite_rendered:
-                    mobile_page.locator('[data-prompt-id="P79"] .prompt-favorite-btn').click()
+                    quick = mobile_page.locator("#mobileFavoritesQuick")
+                    quick.click()
                     mobile_page.wait_for_timeout(100)
-                stored_after_mutation = mobile_page.evaluate(
-                    f"JSON.parse(localStorage.getItem('{favorites_key}')||'[]')"
-                )
-                unknown_id_preserved_after_mutation = "P999999" in stored_after_mutation
-                known_id_removed = "P79" not in stored_after_mutation
-                unavailable_empty = mobile_page.locator("#favoritesEmptyState")
-                unavailable_visible = unavailable_empty.is_visible()
-                unavailable_kind = unavailable_empty.get_attribute("data-empty-kind")
-                unavailable_title = (
-                    unavailable_empty.locator(".favorites-empty-title").inner_text()
-                    if unavailable_visible
-                    else ""
-                )
-                browse_current = (
-                    unavailable_empty.get_by_role("button", name="Browse current prompts")
-                    if unavailable_visible
-                    else None
-                )
-                browse_current_tappable = control_tappable(browse_current)
-                if browse_current is not None and browse_current_tappable:
-                    browse_current.click()
+                    mobile_page.locator("#search").fill("definitely-no-favorite-match-xyz")
                     mobile_page.wait_for_timeout(100)
-                    browse_current_prompts_returned = mobile_page.evaluate(
-                        "activeSection === null && activeCat === 'all'"
+                    filtered_empty = mobile_page.locator("#favoritesEmptyState")
+                    filtered_empty_visible = filtered_empty.is_visible()
+                    filtered_empty_kind = filtered_empty.get_attribute("data-empty-kind")
+                    filtered_title = (
+                        filtered_empty.locator(".favorites-empty-title").inner_text()
+                        if filtered_empty_visible
+                        else ""
                     )
-                    current_prompt_visible = mobile_page.locator('[data-prompt-id="P79"]').count() == 1
+                    clear_filters = (
+                        filtered_empty.get_by_role("button", name="Clear Favorites filters")
+                        if filtered_empty_visible
+                        else None
+                    )
+                    clear_filters_tappable = control_tappable(clear_filters)
+                    if clear_filters is not None and clear_filters_tappable:
+                        clear_filters.click()
+                        mobile_page.wait_for_timeout(100)
+                        membership_after_clear = mobile_page.evaluate(
+                            f"JSON.parse(localStorage.getItem('{favorites_key}')||'[]')"
+                        )
+                        membership_unchanged_after_clear = (
+                            sorted(membership_before_filter) == sorted(membership_after_clear)
+                            and "P79" in membership_after_clear
+                        )
+                        clear_filters_restored = (
+                            mobile_page.locator('[data-prompt-id="P79"]').count() == 1
+                            and mobile_page.locator("#search").input_value() == ""
+                            and mobile_page.evaluate("activeSection === '__favorites__'")
+                            and membership_unchanged_after_clear
+                        )
 
-            recovery_controls_tappable = bool(
-                browse_all_tappable and clear_filters_tappable and browse_current_tappable
-            )
-            observations.append({
-                "id": "mobile_favorites_definitive_journey",
-                "event": (
-                    "One 390x844 Favorites journey: save, reload, persist, structured groups, "
-                    "zero-saved recovery, filter recovery, unknown-ID preservation, and Browse current prompts"
-                ),
-                "occurred": True,
-                "passed": bool(all((
-                    quick_visible,
-                    quick_in_viewport,
-                    quick_visible_when_filters_collapsed,
-                    structured_pair_available,
-                    saved_in_canonical_key,
-                    persisted_after_reload,
-                    favorites_appear_after_reload,
-                    group_nav_visible,
-                    group_link_count >= 2,
-                    set(group_labels) == {item["name"] for item in group_pair},
-                    counts_present,
-                    target_visible,
-                    target_focused,
-                    favorites_state_preserved,
-                    empty_state_visible,
-                    empty_state_kind == "none-saved",
-                    empty_title == "No Favorites yet",
-                    browse_all_tappable,
-                    browse_all_returned,
-                    browse_all_useful_content,
-                    filtered_empty_visible,
-                    filtered_empty_kind == "filtered",
-                    filtered_title == "No Favorites match these filters",
-                    clear_filters_tappable,
-                    clear_filters_restored,
-                    membership_unchanged_after_clear,
-                    known_favorite_rendered,
-                    unknown_id_preserved_before_mutation,
-                    unknown_id_preserved_after_mutation,
-                    known_id_removed,
-                    unavailable_visible,
-                    unavailable_kind == "unavailable",
-                    unavailable_title == "Saved Favorites unavailable in this version",
-                    browse_current_tappable,
-                    browse_current_prompts_returned,
-                    current_prompt_visible,
-                    recovery_controls_tappable,
-                ))),
-                "favorites_storage_key": favorites_key,
-                "saved_in_canonical_key": bool(saved_in_canonical_key),
-                "persisted_after_reload": bool(persisted_after_reload),
-                "favorites_appear_after_reload": bool(favorites_appear_after_reload),
-                "pair": group_pair,
-                "group_nav_visible": bool(group_nav_visible),
-                "group_link_count": group_link_count,
-                "group_labels": group_labels,
-                "counts_present": bool(counts_present),
-                "target_visible": bool(target_visible),
-                "target_focused": bool(target_focused),
-                "favorites_state_preserved": bool(favorites_state_preserved),
-                "empty_state_visible": bool(empty_state_visible),
-                "empty_state_kind": empty_state_kind,
-                "empty_title": empty_title,
-                "browse_all_tappable": bool(browse_all_tappable),
-                "browse_all_returned": bool(browse_all_returned),
-                "browse_all_useful_content": bool(browse_all_useful_content),
-                "filtered_empty_visible": bool(filtered_empty_visible),
-                "filtered_empty_kind": filtered_empty_kind,
-                "filtered_title": filtered_title,
-                "clear_filters_tappable": bool(clear_filters_tappable),
-                "clear_filters_restored": bool(clear_filters_restored),
-                "membership_unchanged_after_clear": bool(membership_unchanged_after_clear),
-                "known_favorite_rendered": bool(known_favorite_rendered),
-                "unknown_id_preserved_before_mutation": bool(unknown_id_preserved_before_mutation),
-                "unknown_id_preserved_after_mutation": bool(unknown_id_preserved_after_mutation),
-                "known_id_removed": bool(known_id_removed),
-                "unavailable_visible": bool(unavailable_visible),
-                "unavailable_kind": unavailable_kind,
-                "unavailable_title": unavailable_title,
-                "browse_current_tappable": bool(browse_current_tappable),
-                "browse_current_prompts_returned": bool(browse_current_prompts_returned),
-                "current_prompt_visible": bool(current_prompt_visible),
-                "recovery_controls_tappable": bool(recovery_controls_tappable),
-                "quick_visible": bool(quick_visible),
-                "quick_in_viewport": bool(quick_in_viewport),
-                "quick_visible_when_filters_collapsed": bool(quick_visible_when_filters_collapsed),
-                "viewport": {"width": 390, "height": 844},
-            })
-            mobile_context.close()
+                # mixed known/unknown → mutate known → unknown preserved → unavailable → Browse current
+                known_favorite_rendered = False
+                unknown_id_preserved_before_mutation = False
+                unknown_id_preserved_after_mutation = False
+                known_id_removed = False
+                unavailable_visible = False
+                unavailable_kind = None
+                unavailable_title = ""
+                browse_current_tappable = False
+                browse_current_prompts_returned = False
+                current_prompt_visible = False
+                if clear_filters_restored:
+                    mobile_page.evaluate(
+                        f"localStorage.setItem('{favorites_key}', JSON.stringify(['P79','P999999']))"
+                    )
+                    mobile_page.reload(wait_until="domcontentloaded")
+                    mobile_page.wait_for_timeout(120)
+                    mobile_page.locator("#mobileFavoritesQuick").click()
+                    mobile_page.wait_for_timeout(100)
+                    known_favorite_rendered = mobile_page.locator('[data-prompt-id="P79"]').count() == 1
+                    unknown_id_preserved_before_mutation = mobile_page.evaluate(
+                        f"JSON.parse(localStorage.getItem('{favorites_key}')||'[]').includes('P999999')"
+                    )
+                    if known_favorite_rendered:
+                        mobile_page.locator('[data-prompt-id="P79"] .prompt-favorite-btn').click()
+                        mobile_page.wait_for_timeout(100)
+                    stored_after_mutation = mobile_page.evaluate(
+                        f"JSON.parse(localStorage.getItem('{favorites_key}')||'[]')"
+                    )
+                    unknown_id_preserved_after_mutation = "P999999" in stored_after_mutation
+                    known_id_removed = "P79" not in stored_after_mutation
+                    unavailable_empty = mobile_page.locator("#favoritesEmptyState")
+                    unavailable_visible = unavailable_empty.is_visible()
+                    unavailable_kind = unavailable_empty.get_attribute("data-empty-kind")
+                    unavailable_title = (
+                        unavailable_empty.locator(".favorites-empty-title").inner_text()
+                        if unavailable_visible
+                        else ""
+                    )
+                    browse_current = (
+                        unavailable_empty.get_by_role("button", name="Browse current prompts")
+                        if unavailable_visible
+                        else None
+                    )
+                    browse_current_tappable = control_tappable(browse_current)
+                    if browse_current is not None and browse_current_tappable:
+                        browse_current.click()
+                        mobile_page.wait_for_timeout(100)
+                        browse_current_prompts_returned = mobile_page.evaluate(
+                            "activeSection === null && activeCat === 'all'"
+                        )
+                        current_prompt_visible = mobile_page.locator('[data-prompt-id="P79"]').count() == 1
+
+                recovery_controls_tappable = bool(
+                    browse_all_tappable and clear_filters_tappable and browse_current_tappable
+                )
+                observations.append({
+                    "id": "mobile_favorites_definitive_journey",
+                    "event": (
+                        "One 390x844 Favorites journey: save, reload, persist, structured groups, "
+                        "zero-saved recovery, filter recovery, unknown-ID preservation, and Browse current prompts"
+                    ),
+                    "occurred": True,
+                    "passed": bool(all((
+                        quick_visible,
+                        quick_in_viewport,
+                        quick_visible_when_filters_collapsed,
+                        structured_pair_available,
+                        saved_in_canonical_key,
+                        persisted_after_reload,
+                        favorites_appear_after_reload,
+                        group_nav_visible,
+                        group_link_count >= 2,
+                        set(group_labels) == {item["name"] for item in group_pair},
+                        counts_present,
+                        target_visible,
+                        target_focused,
+                        favorites_state_preserved,
+                        empty_state_visible,
+                        empty_state_kind == "none-saved",
+                        empty_title == "No Favorites yet",
+                        browse_all_tappable,
+                        browse_all_returned,
+                        browse_all_useful_content,
+                        filtered_empty_visible,
+                        filtered_empty_kind == "filtered",
+                        filtered_title == "No Favorites match these filters",
+                        clear_filters_tappable,
+                        clear_filters_restored,
+                        membership_unchanged_after_clear,
+                        known_favorite_rendered,
+                        unknown_id_preserved_before_mutation,
+                        unknown_id_preserved_after_mutation,
+                        known_id_removed,
+                        unavailable_visible,
+                        unavailable_kind == "unavailable",
+                        unavailable_title == "Saved Favorites unavailable in this version",
+                        browse_current_tappable,
+                        browse_current_prompts_returned,
+                        current_prompt_visible,
+                        recovery_controls_tappable,
+                    ))),
+                    "favorites_storage_key": favorites_key,
+                    "saved_in_canonical_key": bool(saved_in_canonical_key),
+                    "persisted_after_reload": bool(persisted_after_reload),
+                    "favorites_appear_after_reload": bool(favorites_appear_after_reload),
+                    "pair": group_pair,
+                    "group_nav_visible": bool(group_nav_visible),
+                    "group_link_count": group_link_count,
+                    "group_labels": group_labels,
+                    "counts_present": bool(counts_present),
+                    "target_visible": bool(target_visible),
+                    "target_focused": bool(target_focused),
+                    "favorites_state_preserved": bool(favorites_state_preserved),
+                    "empty_state_visible": bool(empty_state_visible),
+                    "empty_state_kind": empty_state_kind,
+                    "empty_title": empty_title,
+                    "browse_all_tappable": bool(browse_all_tappable),
+                    "browse_all_returned": bool(browse_all_returned),
+                    "browse_all_useful_content": bool(browse_all_useful_content),
+                    "filtered_empty_visible": bool(filtered_empty_visible),
+                    "filtered_empty_kind": filtered_empty_kind,
+                    "filtered_title": filtered_title,
+                    "clear_filters_tappable": bool(clear_filters_tappable),
+                    "clear_filters_restored": bool(clear_filters_restored),
+                    "membership_unchanged_after_clear": bool(membership_unchanged_after_clear),
+                    "known_favorite_rendered": bool(known_favorite_rendered),
+                    "unknown_id_preserved_before_mutation": bool(unknown_id_preserved_before_mutation),
+                    "unknown_id_preserved_after_mutation": bool(unknown_id_preserved_after_mutation),
+                    "known_id_removed": bool(known_id_removed),
+                    "unavailable_visible": bool(unavailable_visible),
+                    "unavailable_kind": unavailable_kind,
+                    "unavailable_title": unavailable_title,
+                    "browse_current_tappable": bool(browse_current_tappable),
+                    "browse_current_prompts_returned": bool(browse_current_prompts_returned),
+                    "current_prompt_visible": bool(current_prompt_visible),
+                    "recovery_controls_tappable": bool(recovery_controls_tappable),
+                    "quick_visible": bool(quick_visible),
+                    "quick_in_viewport": bool(quick_in_viewport),
+                    "quick_visible_when_filters_collapsed": bool(quick_visible_when_filters_collapsed),
+                    "viewport": {"width": 390, "height": 844},
+                })
 
             browser.close()
     finally:

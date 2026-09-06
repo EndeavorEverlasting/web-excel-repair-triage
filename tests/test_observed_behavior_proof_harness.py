@@ -93,12 +93,16 @@ class ObservedBehaviorProofHarnessTests(unittest.TestCase):
             self.assertTrue(any("not PASS" in e for e in MOD.validate(receipt)))
 
     def test_missing_clean_worktree_or_generated_parity_fails_closed(self):
-        receipt = self.base_receipt()
-        del receipt["subject"]["clean_worktree"]
-        del receipt["subject"]["generated_parity"]
-        errors = MOD.validate(receipt)
-        self.assertTrue(any("clean_worktree" in e for e in errors))
-        self.assertTrue(any("generated_parity" in e for e in errors))
+        for evidence_class in ("browser_runtime_observed", "target_runtime_observed"):
+            receipt = self.base_receipt()
+            receipt["evidence_class"] = evidence_class
+            if evidence_class == "target_runtime_observed":
+                receipt["claims"][0]["required_evidence_class"] = "target_runtime_observed"
+            del receipt["subject"]["clean_worktree"]
+            del receipt["subject"]["generated_parity"]
+            errors = MOD.validate(receipt)
+            self.assertTrue(any("clean_worktree" in e for e in errors), evidence_class)
+            self.assertTrue(any("generated_parity" in e for e in errors), evidence_class)
 
     def test_dirty_or_stale_exact_head_claim_fails_closed(self):
         dirty = self.base_receipt()

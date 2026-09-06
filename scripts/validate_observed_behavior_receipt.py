@@ -34,7 +34,7 @@ def validate(receipt: dict, expected_sha: str | None = None, *, reverify_tree: b
     if expected_sha and sha != expected_sha:
         errors.append(f"receipt SHA {sha} does not match expected {expected_sha}")
     evidence_class = receipt.get("evidence_class")
-    if evidence_class == "browser_runtime_observed":
+    if evidence_class in EVIDENCE_RANK:
         errors.extend(exact_head_field_errors(subject if isinstance(subject, dict) else {}))
     artifact = subject.get("artifact") or {}
     rel = artifact.get("path")

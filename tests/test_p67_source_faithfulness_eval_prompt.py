@@ -196,11 +196,26 @@ class P67SourceFaithfulnessEvalTests(unittest.TestCase):
             report,
             commit_sha="a" * 40,
             fixture_path=PAIR_FIXTURE,
+            exact_head_subject={
+                "commit_sha": "a" * 40,
+                "clean_worktree": {
+                    "tracked_modifications": False,
+                    "status": "PASS",
+                    "check": "git status --porcelain=v1 --untracked-files=no",
+                },
+                "generated_parity": {
+                    "status": "PASS",
+                    "command": "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
+                    "artifact_path": "web/prompt-kit/index.html",
+                },
+            },
         )
         self.assertEqual(receipt["schema_version"], "observed-behavior-proof/v1")
         self.assertEqual(receipt["evidence_class"], "target_runtime_observed")
         self.assertEqual(receipt["verdict"], "PASS")
         self.assertEqual(receipt["subject"]["commit_sha"], "a" * 40)
+        self.assertEqual(receipt["subject"]["clean_worktree"]["status"], "PASS")
+        self.assertEqual(receipt["subject"]["generated_parity"]["status"], "PASS")
         self.assertEqual(
             receipt["subject"]["artifact"]["path"],
             "tests/fixtures/p67_source_faithfulness/opencode_p122_pair.v1.json",

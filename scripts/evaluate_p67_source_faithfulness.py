@@ -411,11 +411,17 @@ def build_observed_receipt(
     *,
     commit_sha: str,
     fixture_path: Path,
+    exact_head_subject: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if report.get("status") != "PASS" or report.get("evidence_class") != "target_runtime_observed":
         raise ValueError("observed receipt requires a passing target_runtime_observed report")
     if not re.fullmatch(r"[0-9a-f]{40}", commit_sha):
         raise ValueError("commit_sha must be an exact 40-character lowercase SHA")
+    from prepare_observed_behavior_subject import prepare_exact_head_subject
+
+    exact = exact_head_subject or prepare_exact_head_subject()
+    if str(exact.get("commit_sha") or "") != commit_sha:
+        raise ValueError("exact-head subject commit_sha must match the receipt commit_sha")
     rel = fixture_path.resolve().relative_to(ROOT.resolve()).as_posix()
     observations = []
     observation_ids = []
@@ -436,6 +442,8 @@ def build_observed_receipt(
         "evidence_class": "target_runtime_observed",
         "subject": {
             "commit_sha": commit_sha,
+            "clean_worktree": exact["clean_worktree"],
+            "generated_parity": exact["generated_parity"],
             "artifact": {
                 "path": rel,
                 "sha256": _sha256_bytes(fixture_path.read_bytes()),
