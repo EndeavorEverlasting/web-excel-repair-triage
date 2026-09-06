@@ -162,6 +162,8 @@ class PromptKitMobileTests(unittest.TestCase):
             "Saved Favorites unavailable in this version",
             "unknown_favorite_portability_recovery",
             "subject = prepare_exact_head_subject()",
+            "canonical_clipboard_text(actual)",
+            "canonical_clipboard_text(after_enter)",
         ):
             self.assertIn(marker, proof)
         self.assertLess(

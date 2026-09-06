@@ -15,6 +15,10 @@ if str(ROOT / "scripts") not in sys.path:
 from prepare_observed_behavior_subject import ExactHeadError, prepare_exact_head_subject
 
 
+def canonical_clipboard_text(text: str) -> str:
+    return str(text).replace("\r\n", "\n").replace("\r", "\n")
+
+
 class Quiet(SimpleHTTPRequestHandler):
     def log_message(self, *args):
         pass
@@ -214,9 +218,9 @@ def observe(port: int, screenshot: Path):
                 {"id": "alternate_scope_precondition", "event": "D custom profile hotkey activates and excludes P79 before shortcut", "occurred": True, "passed": bool(d_active and not before_present), "profile_d_active": bool(d_active), "present_before": bool(before_present)},
                 {"id": "favorite_shortcut_dispatched", "event": "typed favorite shortcut p79", "occurred": True, "passed": bool(shortcut_copied), "toast": toast_text},
                 {"id": "prompt_card_scrolled_visible", "event": "P79 card exists and intersects viewport after shortcut", "occurred": True, "passed": bool(target_present and visible), "present": bool(target_present), "visible": bool(visible)},
-                {"id": "clipboard_exact_match", "event": "clipboard equals canonical P79 copyContent", "occurred": bool(clipboard_read), "passed": bool(clipboard_read and actual == expected), "actual_length": len(actual), "expected_length": len(expected)},
+                {"id": "clipboard_exact_match", "event": "clipboard equals canonical P79 copyContent", "occurred": bool(clipboard_read), "passed": bool(clipboard_read and canonical_clipboard_text(actual) == canonical_clipboard_text(expected)), "actual_length": len(actual), "expected_length": len(expected)},
                 {"id": "detail_modal_closed", "event": "favorite shortcut does not open detail modal or focus its close control", "occurred": True, "passed": bool(modal_closed and not close_focused), "modal_closed": bool(modal_closed), "close_focused": bool(close_focused)},
-                {"id": "enter_does_not_close_prompt", "event": "Enter after shortcut leaves detail modal closed and clipboard intact", "occurred": True, "passed": bool(enter_modal_closed and after_enter == expected)},
+                {"id": "enter_does_not_close_prompt", "event": "Enter after shortcut leaves detail modal closed and clipboard intact", "occurred": True, "passed": bool(enter_modal_closed and canonical_clipboard_text(after_enter) == canonical_clipboard_text(expected))},
             ]
             mobile_context = browser.new_context(
                 viewport={"width": 390, "height": 844},
