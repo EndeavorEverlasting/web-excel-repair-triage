@@ -235,6 +235,9 @@ def observe(port: int, screenshot: Path):
                 and quick_rect.get('x', 0) + quick_rect.get('width', 0) <= 390
                 and quick_rect.get('y', 0) + quick_rect.get('height', 0) <= 844
             )
+            mobile_page.locator('#filterPanelToggle').click()
+            mobile_page.wait_for_timeout(80)
+            quick_visible_when_filters_collapsed = quick.is_visible()
             mobile_card = mobile_page.locator('[data-prompt-id="P79"]')
             mobile_card.locator('.prompt-favorite-btn').click()
             mobile_page.wait_for_timeout(80)
@@ -263,6 +266,7 @@ def observe(port: int, screenshot: Path):
                 "passed": bool(all((
                     quick_visible,
                     quick_in_viewport,
+                    quick_visible_when_filters_collapsed,
                     favorite_view_active,
                     favorite_card_present,
                     showing_favorite,
@@ -272,6 +276,7 @@ def observe(port: int, screenshot: Path):
                 ))),
                 "quick_visible": bool(quick_visible),
                 "quick_in_viewport": bool(quick_in_viewport),
+                "quick_visible_when_filters_collapsed": bool(quick_visible_when_filters_collapsed),
                 "favorite_view_active": bool(favorite_view_active),
                 "favorite_card_present": bool(favorite_card_present),
                 "showing_favorite": bool(showing_favorite),

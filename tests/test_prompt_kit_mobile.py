@@ -90,9 +90,9 @@ class PromptKitMobileTests(unittest.TestCase):
             "setAttribute('aria-label','Open saved favorite prompts')",
             "textContent='★ Favorites'",
             "activateFavoritesView()",
-            "catTabs.parentNode.insertBefore(mobileFavoritesQuick,catTabs)",
+            "if(search)headerTop.insertBefore(mobileFavoritesQuick,search);else headerTop.appendChild(mobileFavoritesQuick)",
             ".mobile-favorites-quick{display:none",
-            ".header-top>.header-controls .mobile-favorites-quick{display:inline-flex;width:100%;grid-column:1/-1}",
+            ".header-top>.mobile-favorites-quick{display:inline-flex;width:100%;grid-column:1/-1}",
         ):
             self.assertIn(marker, polish)
         self.assertEqual(polish.count("id='mobileFavoritesQuick'"), 1)
