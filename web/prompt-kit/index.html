@@ -1581,9 +1581,9 @@ function installCompactBrowsingHotkeys(){
       e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return
     }
     var search=document.getElementById('search');
-  if(key==='escape'&&search&&target===search){
-    e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();exitFocusedSearch(search);return
-  }
+    if(key==='escape'&&search&&target===search){
+      e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();exitFocusedSearch(search);return
+    }
     if(editable)return;
     if(key==='`'){
       e.preventDefault();e.stopImmediatePropagation();
