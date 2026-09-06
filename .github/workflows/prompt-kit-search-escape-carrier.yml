@@ -45,35 +45,29 @@ jobs:
             return true
           }
           """
-          if helper_marker not in polish:
-              raise SystemExit('Prompt Kit hotkey install marker not found; refusing stale patch')
+          if polish.count(helper_marker) != 1:
+              raise SystemExit('Prompt Kit hotkey install marker is missing or non-unique; refusing stale patch')
           if 'function exitFocusedSearch(search)' in polish:
               raise SystemExit('Search Escape helper already exists; carrier is stale')
           polish = polish.replace(helper_marker, '\n' + helper + helper_marker, 1)
 
-          old_guard = """    if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden){
-              e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return
-            }
-            if(editable)return;"""
-          new_guard = """    if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden){
-              e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return
-            }
-            var search=document.getElementById('search');
+          editable_guard = "    if(editable)return;"
+          search_guard = """    var search=document.getElementById('search');
             if(key==='escape'&&search&&target===search){
               e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();exitFocusedSearch(search);return
             }
-            if(editable)return;"""
-          if old_guard not in polish:
-              raise SystemExit('Expected editable hotkey guard not found; refusing stale patch')
-          polish = polish.replace(old_guard, new_guard, 1)
+          """
+          if polish.count(editable_guard) != 1:
+              raise SystemExit('Expected editable hotkey guard is missing or non-unique; refusing stale patch')
+          polish = polish.replace(editable_guard, search_guard + editable_guard, 1)
           polish_path.write_text(polish, encoding='utf-8')
 
           test_path = Path('tests/test_prompt_kit_hotkey_completion.py')
           tests = test_path.read_text(encoding='utf-8')
           next_test = "    def test_hotkey_open_focuses_favorite_input_and_escape_recovers_from_editable(self) -> None:\n"
           regression = '''    def test_escape_clears_and_releases_focused_search_before_editable_guard(self) -> None:\n        source = POLISH.read_text(encoding="utf-8")\n        deployed = DEPLOYED.read_text(encoding="utf-8")\n        markers = (\n            "function exitFocusedSearch(search)",\n            "var changed=search.value!=='';",\n            "search.value='';",\n            "var clear=document.getElementById('searchClear');",\n            "if(clear)clear.style.display='none';",\n            "if(changed)render();",\n            "search.blur()",\n            "var search=document.getElementById('search');",\n            "if(key==='escape'&&search&&target===search)",\n            "resetPromptShortcutBuffer();exitFocusedSearch(search);return",\n        )\n        for marker in markers:\n            self.assertIn(marker, source)\n            self.assertIn(marker, deployed)\n        self.assertLess(\n            source.index("if(key==='escape'&&search&&target===search)"),\n            source.index("if(editable)return;"),\n        )\n\n'''
-          if next_test not in tests:
-              raise SystemExit('Expected hotkey regression insertion point not found; refusing stale patch')
+          if tests.count(next_test) != 1:
+              raise SystemExit('Expected hotkey regression insertion point is missing or non-unique; refusing stale patch')
           if 'test_escape_clears_and_releases_focused_search_before_editable_guard' in tests:
               raise SystemExit('Search Escape regression already exists; carrier is stale')
           tests = tests.replace(next_test, regression + next_test, 1)
