@@ -27,26 +27,26 @@ jobs:
 
           build_path = Path('build_prompt_kit.py')
           build_text = build_path.read_text(encoding='utf-8')
-          alias_block = '''    "programming paradigm": "P128", "functional programming": "P128", "object-oriented programming": "P128", "oop": "P128",
-    "procedural programming": "P128", "imperative programming": "P128", "declarative programming": "P128",
-    "data-oriented programming": "P128", "event-driven programming": "P128", "functional core imperative shell": "P128",
-'''
+          alias_block = (
+              '    "programming paradigm": "P128", "functional programming": "P128", "object-oriented programming": "P128", "oop": "P128",\n'
+              '    "procedural programming": "P128", "imperative programming": "P128", "declarative programming": "P128",\n'
+              '    "data-oriented programming": "P128", "event-driven programming": "P128", "functional core imperative shell": "P128",\n'
+          )
           if alias_block not in build_text:
               raise SystemExit('expected P128 legacy-builder alias block not found')
           build_path.write_text(build_text.replace(alias_block, '', 1), encoding='utf-8')
 
           test_path = Path('tests/test_spec_architecture_prompt_registry.py')
           test_text = test_path.read_text(encoding='utf-8')
-          old = '''        for synonym in ("programming paradigm", "functional programming", "object-oriented programming", "oop", "procedural programming", "imperative programming", "declarative programming", "data-oriented programming", "event-driven programming", "functional core imperative shell"):
-            self.assertEqual(build_prompt_kit.SYNONYMS[synonym], sid)
-'''
-          new = '''        for keyword in (
-            "programming paradigm", "functional programming", "object-oriented programming", "OOP",
-            "procedural programming", "imperative programming", "declarative programming",
-            "data-oriented programming", "event-driven programming", "functional core imperative shell",
-        ):
-            self.assertIn(keyword, specialist["keywords"])
-'''
+          old = '        for synonym in ("programming paradigm", "functional programming", "object-oriented programming", "oop", "procedural programming", "imperative programming", "declarative programming", "data-oriented programming", "event-driven programming", "functional core imperative shell"):\n            self.assertEqual(build_prompt_kit.SYNONYMS[synonym], sid)\n'
+          new = (
+              '        for keyword in (\n'
+              '            "programming paradigm", "functional programming", "object-oriented programming", "OOP",\n'
+              '            "procedural programming", "imperative programming", "declarative programming",\n'
+              '            "data-oriented programming", "event-driven programming", "functional core imperative shell",\n'
+              '        ):\n'
+              '            self.assertIn(keyword, specialist["keywords"])\n'
+          )
           if old not in test_text:
               raise SystemExit('expected legacy-builder synonym assertion block not found')
           test_path.write_text(test_text.replace(old, new, 1), encoding='utf-8')
