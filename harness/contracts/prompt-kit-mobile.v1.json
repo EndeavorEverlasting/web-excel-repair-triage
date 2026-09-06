@@ -22,6 +22,10 @@
       "expected": "The existing Copy action remains visible and touch-sized on coarse-pointer/mobile layouts while desktop single-click copy behavior remains intact."
     },
     {
+      "id": "favorites_quick_access",
+      "expected": "On narrow mobile layouts, a persistent touch-sized Favorites quick action remains visible outside horizontally scrollable rails and opens the existing canonical Favorites view without creating separate Favorites state or storage."
+    },
+    {
       "id": "horizontal_filter_rails",
       "expected": "Library, category, and type filters remain the same controls and semantics; narrow layouts may present them as horizontally scrollable touch rails rather than wrapping into an unstable header."
     },

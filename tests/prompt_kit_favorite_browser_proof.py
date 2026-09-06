@@ -217,6 +217,71 @@ def observe(port: int, screenshot: Path):
                 {"id": "detail_modal_closed", "event": "favorite shortcut does not open detail modal or focus its close control", "occurred": True, "passed": bool(modal_closed and not close_focused), "modal_closed": bool(modal_closed), "close_focused": bool(close_focused)},
                 {"id": "enter_does_not_close_prompt", "event": "Enter after shortcut leaves detail modal closed and clipboard intact", "occurred": True, "passed": bool(enter_modal_closed and after_enter == expected)},
             ]
+            mobile_context = browser.new_context(
+                viewport={"width": 390, "height": 844},
+                is_mobile=True,
+                has_touch=True,
+                reduced_motion="reduce",
+            )
+            mobile_page = mobile_context.new_page()
+            mobile_page.goto(f"http://127.0.0.1:{port}/web/prompt-kit/index.html", wait_until="domcontentloaded")
+            quick = mobile_page.locator('#mobileFavoritesQuick')
+            quick_visible = quick.is_visible()
+            quick_rect = quick.bounding_box() or {}
+            quick_in_viewport = bool(
+                quick_rect
+                and quick_rect.get('x', -1) >= 0
+                and quick_rect.get('y', -1) >= 0
+                and quick_rect.get('x', 0) + quick_rect.get('width', 0) <= 390
+                and quick_rect.get('y', 0) + quick_rect.get('height', 0) <= 844
+            )
+            mobile_card = mobile_page.locator('[data-prompt-id="P79"]')
+            mobile_card.locator('.prompt-favorite-btn').click()
+            mobile_page.wait_for_timeout(80)
+            quick.click()
+            mobile_page.wait_for_timeout(100)
+            favorite_view_active = mobile_page.evaluate("activeSection === '__favorites__'")
+            favorite_card_present = mobile_page.locator('[data-prompt-id="P79"]').count() == 1
+            showing_favorite = mobile_page.locator('#showing').inner_text() == '1'
+            mobile_page.locator('[data-prompt-id="P79"] .prompt-favorite-btn').click()
+            mobile_page.wait_for_timeout(100)
+            removed_from_view = (
+                mobile_page.locator('[data-prompt-id="P79"]').count() == 0
+                and mobile_page.locator('#showing').inner_text() == '0'
+            )
+            quick_still_visible = quick.is_visible()
+            mobile_page.locator('#homeReset').click()
+            mobile_page.wait_for_timeout(100)
+            returned_to_all = (
+                mobile_page.evaluate("activeSection === null && activeCat === 'all'")
+                and mobile_page.locator('[data-prompt-id="P79"]').count() == 1
+            )
+            observations.append({
+                "id": "mobile_favorites_quick_access",
+                "event": "Mobile Favorites quick action stays visible outside scroll rails and reuses canonical Favorites state",
+                "occurred": True,
+                "passed": bool(all((
+                    quick_visible,
+                    quick_in_viewport,
+                    favorite_view_active,
+                    favorite_card_present,
+                    showing_favorite,
+                    removed_from_view,
+                    quick_still_visible,
+                    returned_to_all,
+                ))),
+                "quick_visible": bool(quick_visible),
+                "quick_in_viewport": bool(quick_in_viewport),
+                "favorite_view_active": bool(favorite_view_active),
+                "favorite_card_present": bool(favorite_card_present),
+                "showing_favorite": bool(showing_favorite),
+                "removed_from_view": bool(removed_from_view),
+                "quick_still_visible": bool(quick_still_visible),
+                "returned_to_all": bool(returned_to_all),
+                "viewport": {"width": 390, "height": 844},
+            })
+            mobile_context.close()
+
             browser.close()
     finally:
         server.shutdown()
@@ -260,6 +325,7 @@ def main(argv=None) -> int:
         },
         "environment": {"kind": execution_environment_kind(), "engine": "chromium", "scenario": "search-escape-profile-tabs-a-e-and-favorite-shortcut-copy-reveal"},
         "claims": [
+            {"id": "mobile_favorites_quick_access", "statement": "A phone-width viewport exposes a persistent Favorites quick action outside horizontal rails; saving, opening Favorites, removing, and returning to All reuse the canonical Favorites state", "status": "PASS" if by_id["mobile_favorites_quick_access"]["passed"] else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["mobile_favorites_quick_access"]},
             {"id": "search_escape_recovery", "statement": "Slash focuses search; one Escape clears a populated query, hides the clear affordance, releases focus, also releases an empty focused search, and restores global hotkeys", "status": "PASS" if search_escape_recovery else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["search_escape_recovery"]},
             {"id": "profile_header_navigation", "statement": "A-E header hotkeys activate their matching profile slots in the browser", "status": "PASS" if profile_header_navigation else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["profile_header_hotkeys_a_to_e"]},
             {"id": "hotkey_config_focus_escape", "statement": "Opening Hotkeys by button or backtick focuses and reveals the Favorite prompt ID field, and Escape closes Hotkeys from that field", "status": "PASS" if hotkey_config_recovery else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["hotkey_click_focuses_favorite_input", "escape_closes_hotkeys_from_favorite_input", "hotkey_backtick_focuses_favorite_input"]},

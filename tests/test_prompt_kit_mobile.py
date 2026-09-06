@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 JS = ROOT / "docs" / "prompt-kit.js"
+POLISH = ROOT / "docs" / "prompt-kit-polish.js"
 CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-mobile.v1.json"
 QUICK_CMD = ROOT / "Open-Latest-PromptKit.cmd"
 PORTABLE_PS1 = ROOT / "scripts" / "Open-LatestPromptKitPortable.ps1"
@@ -25,6 +26,7 @@ class PromptKitMobileTests(unittest.TestCase):
                 "title_reset",
                 "explicit_mobile_open",
                 "touch_copy_preserved",
+                "favorites_quick_access",
                 "horizontal_filter_rails",
                 "single_column_cards",
                 "mobile_detail_surface",
@@ -78,6 +80,24 @@ class PromptKitMobileTests(unittest.TestCase):
             ".prompt-open-btn,.prompt-copy-btn{opacity:1;min-width:64px;min-height:40px;padding:8px 12px;touch-action:manipulation}",
             js,
         )
+
+    def test_mobile_favorites_quick_action_is_persistent_and_reuses_canonical_view(self) -> None:
+        polish = POLISH.read_text(encoding="utf-8")
+        for marker in (
+            "id='mobileFavoritesQuick'",
+            "className='mobile-favorites-quick'",
+            "setAttribute('data-view','favorites')",
+            "setAttribute('aria-label','Open saved favorite prompts')",
+            "textContent='★ Favorites'",
+            "activateFavoritesView()",
+            "catTabs.parentNode.insertBefore(mobileFavoritesQuick,catTabs)",
+            ".mobile-favorites-quick{display:none",
+            ".header-top>.header-controls .mobile-favorites-quick{display:inline-flex;width:100%;grid-column:1/-1}",
+        ):
+            self.assertIn(marker, polish)
+        self.assertEqual(polish.count("id='mobileFavoritesQuick'"), 1)
+        self.assertNotIn("mobileFavoritePromptIds", polish)
+        self.assertNotIn("mobileFavoritesStorage", polish)
 
     def test_category_collapse_control_is_touch_sized_and_native(self) -> None:
         js = JS.read_text(encoding="utf-8")
