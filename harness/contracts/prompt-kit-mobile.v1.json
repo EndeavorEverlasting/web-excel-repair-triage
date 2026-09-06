@@ -30,6 +30,10 @@
       "expected": "When Favorites contains saved prompts in one or more existing prompt sections, the Favorites view exposes a compact touch-usable Saved groups navigator built from those existing rendered sections and counts. Activating a group jumps to that section without changing Favorites membership, creating collection state, or using browser Find."
     },
     {
+      "id": "favorites_empty_state_and_persistence",
+      "expected": "Favorites saved in the existing canonical browser storage survive a page reload. An empty Favorites view shows a touch-actionable explanation and Browse all prompts action; when saved Favorites exist but current filters hide them, the empty state instead offers Clear Favorites filters and restores the saved results without changing membership."
+    },
+    {
       "id": "horizontal_filter_rails",
       "expected": "Library, category, and type filters remain the same controls and semantics; narrow layouts may present them as horizontally scrollable touch rails rather than wrapping into an unstable header."
     },

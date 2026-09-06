@@ -28,6 +28,7 @@ class PromptKitMobileTests(unittest.TestCase):
                 "touch_copy_preserved",
                 "favorites_quick_access",
                 "favorites_group_jump_navigation",
+                "favorites_empty_state_and_persistence",
                 "horizontal_filter_rails",
                 "single_column_cards",
                 "mobile_detail_surface",
@@ -119,6 +120,28 @@ class PromptKitMobileTests(unittest.TestCase):
         self.assertIn("if(activeSection!=='__favorites__')return", polish)
         self.assertNotIn("favoriteGroupsStorage", polish)
         self.assertNotIn("favoriteCollections", polish)
+
+    def test_favorites_empty_state_reuses_canonical_membership_and_has_two_recovery_paths(self) -> None:
+        polish = POLISH.read_text(encoding="utf-8")
+        for marker in (
+            "function renderFavoritesEmptyState(grid)",
+            "currentFavoritePromptCount()",
+            "state.id='favoritesEmptyState'",
+            "state.setAttribute('data-empty-kind','none-saved')",
+            "title.textContent='No Favorites yet'",
+            "action.textContent='Browse all prompts'",
+            "activateAllPromptsView()",
+            "state.setAttribute('data-empty-kind','filtered')",
+            "title.textContent='No Favorites match these filters'",
+            "action.textContent='Clear Favorites filters'",
+            "clearTransientPromptFilters();renderTypes();render()",
+            "if(!dividers.length){renderFavoritesEmptyState(grid);return}",
+            "ensureFavoritesJourneyStyles();",
+        ):
+            self.assertIn(marker, polish)
+        self.assertIn("favoritePromptIds", polish)
+        self.assertNotIn("favoritesEmptyStorage", polish)
+        self.assertNotIn("favoritesSessionStorage", polish)
 
     def test_category_collapse_control_is_touch_sized_and_native(self) -> None:
         js = JS.read_text(encoding="utf-8")
