@@ -5,7 +5,7 @@
       "id": "observed-behavior-receipt",
       "command": "python scripts/validate_observed_behavior_receipt.py <receipt> --summary",
       "fails_closed": true,
-      "purpose": "Reject PASS claims without current artifacts, sufficient evidence tier, and observations that actually occurred and passed."
+      "purpose": "Reject PASS claims without exact-head clean-worktree and generated-parity evidence, current artifacts, sufficient evidence tier, and observations that actually occurred and passed."
     }
   ]
 }

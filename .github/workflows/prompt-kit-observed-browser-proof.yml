@@ -11,6 +11,7 @@ on:
       - registry/prompts/ai-engineering-level-up-prompts.v1.json
       - harness/observed-proof/**
       - scripts/validate_observed_behavior_receipt.py
+      - scripts/prepare_observed_behavior_subject.py
       - tests/prompt_kit_favorite_browser_proof.py
       - tests/prompt_kit_external_resources_browser_proof.py
       - tests/test_observed_behavior_proof_harness.py
@@ -29,6 +30,7 @@ on:
       - registry/prompts/ai-engineering-level-up-prompts.v1.json
       - harness/observed-proof/**
       - scripts/validate_observed_behavior_receipt.py
+      - scripts/prepare_observed_behavior_subject.py
       - tests/prompt_kit_favorite_browser_proof.py
       - tests/prompt_kit_external_resources_browser_proof.py
       - tests/test_observed_behavior_proof_harness.py

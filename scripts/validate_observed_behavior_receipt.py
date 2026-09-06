@@ -7,6 +7,11 @@ import re
 import sys
 from pathlib import Path
 
+SCRIPTS = Path(__file__).resolve().parent
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+from prepare_observed_behavior_subject import exact_head_field_errors, reverify_exact_head_tree
+
 ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE_RANK = {
     "source": 0,
@@ -18,7 +23,7 @@ EVIDENCE_RANK = {
 }
 
 
-def validate(receipt: dict, expected_sha: str | None = None) -> list[str]:
+def validate(receipt: dict, expected_sha: str | None = None, *, reverify_tree: bool = False) -> list[str]:
     errors: list[str] = []
     if receipt.get("schema_version") != "observed-behavior-proof/v1":
         errors.append("unsupported schema_version")
@@ -28,6 +33,9 @@ def validate(receipt: dict, expected_sha: str | None = None) -> list[str]:
         errors.append("subject.commit_sha must be an exact 40-character SHA")
     if expected_sha and sha != expected_sha:
         errors.append(f"receipt SHA {sha} does not match expected {expected_sha}")
+    evidence_class = receipt.get("evidence_class")
+    if evidence_class in EVIDENCE_RANK:
+        errors.extend(exact_head_field_errors(subject if isinstance(subject, dict) else {}))
     artifact = subject.get("artifact") or {}
     rel = artifact.get("path")
     digest = str(artifact.get("sha256") or "")
@@ -39,7 +47,12 @@ def validate(receipt: dict, expected_sha: str | None = None) -> list[str]:
             errors.append(f"artifact does not exist: {rel}")
         elif hashlib.sha256(path.read_bytes()).hexdigest() != digest:
             errors.append("artifact hash does not match current file")
-    evidence_class = receipt.get("evidence_class")
+    if (
+        reverify_tree
+        and evidence_class == "browser_runtime_observed"
+        and isinstance(subject, dict)
+    ):
+        errors.extend(reverify_exact_head_tree(subject))
     if evidence_class not in EVIDENCE_RANK:
         errors.append("unknown evidence_class")
     observations = {
@@ -88,7 +101,7 @@ def main(argv=None) -> int:
     parser.add_argument("--summary", action="store_true")
     args = parser.parse_args(argv)
     receipt = json.loads(Path(args.receipt).read_text(encoding="utf-8"))
-    errors = validate(receipt, args.expected_sha)
+    errors = validate(receipt, args.expected_sha, reverify_tree=True)
     if errors:
         print("Observed behavior proof: FAIL", file=sys.stderr)
         for error in errors:
