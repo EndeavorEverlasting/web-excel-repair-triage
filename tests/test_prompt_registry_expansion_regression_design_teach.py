@@ -94,6 +94,9 @@ class PromptRegistryExpansionTests(unittest.TestCase):
             "millions someday",
             "OCI containers",
             "p95/p99/SLO",
+            "Keep this branch progressive-disclosure",
+            "do not preload tier-specific Docker/Podman/Kubernetes",
+            "only after current evidence makes that tier decision-relevant",
         ):
             self.assertIn(phrase, content)
         p03 = self.full["P03"]["copyContent"]
