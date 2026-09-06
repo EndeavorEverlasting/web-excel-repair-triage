@@ -125,12 +125,18 @@ class PromptKitMobileTests(unittest.TestCase):
         polish = POLISH.read_text(encoding="utf-8")
         for marker in (
             "function renderFavoritesEmptyState(grid)",
+            "storedFavoritePromptCount()",
             "currentFavoritePromptCount()",
+            "catalog.filter(function(prompt){return prompt&&isFavoritePrompt(prompt.id)}).length",
             "state.id='favoritesEmptyState'",
             "state.setAttribute('data-empty-kind','none-saved')",
             "title.textContent='No Favorites yet'",
             "action.textContent='Browse all prompts'",
             "action.setAttribute('aria-label','Browse all prompts')",
+            "state.setAttribute('data-empty-kind','unavailable')",
+            "title.textContent='Saved Favorites unavailable in this version'",
+            "action.textContent='Browse current prompts'",
+            "action.setAttribute('aria-label','Browse current prompts')",
             "activateAllPromptsView()",
             "state.setAttribute('data-empty-kind','filtered')",
             "title.textContent='No Favorites match these filters'",

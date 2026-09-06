@@ -96,12 +96,18 @@ function ensureFavoritesJourneyStyles(){
   document.head.appendChild(style)
 }
 
-function currentFavoritePromptCount(){
+function storedFavoritePromptCount(){
   return Object.keys(favoritePromptIds||{}).filter(function(id){return favoritePromptIds[id]===true}).length
+}
+
+function currentFavoritePromptCount(){
+  var catalog=typeof PROMPTS!=='undefined'&&Array.isArray(PROMPTS)?PROMPTS:[];
+  return catalog.filter(function(prompt){return prompt&&isFavoritePrompt(prompt.id)}).length
 }
 
 function renderFavoritesEmptyState(grid){
   if(!grid||activeSection!=='__favorites__')return false;
+  var storedCount=storedFavoritePromptCount();
   var savedCount=currentFavoritePromptCount();
   var state=document.createElement('section');
   state.id='favoritesEmptyState';
@@ -119,17 +125,24 @@ function renderFavoritesEmptyState(grid){
   var action=document.createElement('button');
   action.className='favorites-empty-action';
   action.type='button';
-  if(savedCount===0){
+  if(storedCount===0){
     state.setAttribute('data-empty-kind','none-saved');
     title.textContent='No Favorites yet';
     copy.textContent='Star any prompt to save it here. Your Favorites stay in this browser for quick return visits.';
     action.textContent='Browse all prompts';
     action.setAttribute('aria-label','Browse all prompts');
     action.addEventListener('click',function(){activateAllPromptsView()})
+  }else if(savedCount===0){
+    state.setAttribute('data-empty-kind','unavailable');
+    title.textContent='Saved Favorites unavailable in this version';
+    copy.textContent='This browser still remembers saved prompt IDs, but none exist in the current Prompt Kit registry. Your saved IDs are preserved for portability.';
+    action.textContent='Browse current prompts';
+    action.setAttribute('aria-label','Browse current prompts');
+    action.addEventListener('click',function(){activateAllPromptsView()})
   }else{
     state.setAttribute('data-empty-kind','filtered');
     title.textContent='No Favorites match these filters';
-    copy.textContent='You still have saved Favorites. Clear the current search and prompt filters to show them again.';
+    copy.textContent='You still have saved Favorites available in this version. Clear the current search and prompt filters to show them again.';
     action.textContent='Clear Favorites filters';
     action.setAttribute('aria-label','Clear Favorites filters');
     action.addEventListener('click',function(){clearTransientPromptFilters();renderTypes();render()})

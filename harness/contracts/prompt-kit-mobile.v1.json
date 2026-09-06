@@ -31,7 +31,7 @@
     },
     {
       "id": "favorites_empty_state_and_persistence",
-      "expected": "Favorites saved in the existing canonical browser storage survive a page reload. An empty Favorites view shows a touch-actionable explanation and Browse all prompts action; when saved Favorites exist but current filters hide them, the empty state instead offers Clear Favorites filters and restores the saved results without changing membership."
+      "expected": "Favorites saved in the existing canonical browser storage survive a page reload. An empty Favorites view distinguishes: no saved IDs, saved IDs unavailable in the current prompt registry, and available saved Favorites hidden by current filters. Recovery actions must be useful for each state, unknown imported IDs remain preserved for portability, and clearing filters must never change membership."
     },
     {
       "id": "horizontal_filter_rails",

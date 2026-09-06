@@ -359,13 +359,30 @@ def observe(port: int, screenshot: Path):
                         and mobile_page.locator('#search').input_value() == ''
                         and mobile_page.evaluate("activeSection === '__favorites__'")
                     )
+
+                mobile_page.evaluate("localStorage.setItem('promptKit.favoritePromptIds.v1', JSON.stringify(['P999999']))")
+                mobile_page.reload(wait_until="domcontentloaded")
+                mobile_page.wait_for_timeout(120)
+                mobile_page.locator('#mobileFavoritesQuick').click()
+                mobile_page.wait_for_timeout(100)
+                unavailable_empty = mobile_page.locator('#favoritesEmptyState')
+                unavailable_visible = unavailable_empty.is_visible()
+                unavailable_kind = unavailable_empty.get_attribute('data-empty-kind')
+                unavailable_title = unavailable_empty.locator('.favorites-empty-title').inner_text() if unavailable_visible else ''
+                unavailable_action_visible = unavailable_empty.get_by_role('button', name='Browse current prompts').is_visible() if unavailable_visible else False
+                unknown_id_preserved = mobile_page.evaluate("JSON.parse(localStorage.getItem('promptKit.favoritePromptIds.v1')||'[]').includes('P999999')")
             else:
                 empty_title = ''
                 filtered_title = ''
+                unavailable_visible = False
+                unavailable_kind = None
+                unavailable_title = ''
+                unavailable_action_visible = False
+                unknown_id_preserved = False
 
             observations.append({
                 "id": "mobile_favorites_persistence_and_empty_state",
-                "event": "Favorites persist across reload and empty states provide actionable recovery for zero saved and filtered-out saved prompts",
+                "event": "Favorites persist across reload and empty states distinguish zero saved, unavailable saved IDs, and filtered-out available prompts",
                 "occurred": True,
                 "passed": bool(all((
                     structured_pair_available,
@@ -379,6 +396,11 @@ def observe(port: int, screenshot: Path):
                     filtered_empty_kind == 'filtered',
                     filtered_title == 'No Favorites match these filters',
                     clear_filters_restored,
+                    unavailable_visible,
+                    unavailable_kind == 'unavailable',
+                    unavailable_title == 'Saved Favorites unavailable in this version',
+                    unavailable_action_visible,
+                    unknown_id_preserved,
                 ))),
                 "persisted_after_reload": bool(persisted_after_reload),
                 "persisted_group_count": persisted_group_count,
@@ -390,6 +412,11 @@ def observe(port: int, screenshot: Path):
                 "filtered_empty_kind": filtered_empty_kind,
                 "filtered_title": filtered_title,
                 "clear_filters_restored": bool(clear_filters_restored),
+                "unavailable_visible": bool(unavailable_visible),
+                "unavailable_kind": unavailable_kind,
+                "unavailable_title": unavailable_title,
+                "unavailable_action_visible": bool(unavailable_action_visible),
+                "unknown_id_preserved": bool(unknown_id_preserved),
                 "viewport": {"width": 390, "height": 844},
             })
 
