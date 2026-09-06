@@ -2,10 +2,9 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
-import subprocess
+import sys
 import threading
 import time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -14,7 +13,10 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACT = ROOT / "web/prompt-kit/index.html"
+if str(ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts"))
+from prepare_observed_behavior_subject import ExactHeadError, prepare_exact_head_subject
+
 TARGETS = ("P11", "P13", "P111")
 
 
@@ -291,20 +293,18 @@ def main(argv=None) -> int:
     parser.add_argument("--port", type=int, default=8766)
     args = parser.parse_args(argv)
     screenshot = Path(args.screenshot)
+    try:
+        subject = prepare_exact_head_subject()
+    except ExactHeadError as exc:
+        print(f"exact-head preflight failed; Chromium was not launched\n{exc}", file=sys.stderr)
+        return 2
     observations = observe(args.port, screenshot)
     passed = all(item["passed"] for item in observations)
-    sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     receipt = {
         "schema_version": "observed-behavior-proof/v1",
         "verdict": "PASS" if passed else "FAIL",
         "evidence_class": "browser_runtime_observed",
-        "subject": {
-            "commit_sha": sha,
-            "artifact": {
-                "path": "web/prompt-kit/index.html",
-                "sha256": hashlib.sha256(ARTIFACT.read_bytes()).hexdigest(),
-            },
-        },
+        "subject": subject,
         "environment": {
             "kind": environment_kind(),
             "engine": "chromium",

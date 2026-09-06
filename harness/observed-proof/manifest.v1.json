@@ -2,6 +2,7 @@
   "schema_version": "observed-behavior-proof-harness/v1",
   "contract": "harness/observed-proof/CONTRACT.md",
   "validator": "scripts/validate_observed_behavior_receipt.py",
+  "exact_head_preflight": "scripts/prepare_observed_behavior_subject.py",
   "contract_tests": "tests/test_observed_behavior_proof_harness.py",
   "browser_proof": "tests/prompt_kit_favorite_browser_proof.py",
   "model_runtime_eval": "scripts/evaluate_p67_source_faithfulness.py",
