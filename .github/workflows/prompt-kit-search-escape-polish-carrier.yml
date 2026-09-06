@@ -1,0 +1,97 @@
+name: Prompt Kit search Escape polish carrier
+
+on:
+  push:
+    branches:
+      - fix/prompt-kit-search-escape-20260905
+
+permissions:
+  contents: write
+
+jobs:
+  polish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Repair indentation only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('docs/prompt-kit-polish.js')
+          text = path.read_text(encoding='utf-8')
+          old = """    var search=document.getElementById('search');
+            if(key==='escape'&&search&&target===search){
+              e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();exitFocusedSearch(search);return
+            }
+              if(editable)return;"""
+          # GitHub-rendered whitespace is not authoritative; normalize the exact observed source variant too.
+          observed = """    var search=document.getElementById('search');
+          if(key==='escape'&&search&&target===search){
+            e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();exitFocusedSearch(search);return
+          }
+            if(editable)return;"""
+          direct = """    var search=document.getElementById('search');
+          if(key==='escape'&&search&&target===search){
+            e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();exitFocusedSearch(search);return
+          }
+            if(editable)return;"""
+          correct = """    var search=document.getElementById('search');
+            if(key==='escape'&&search&&target===search){
+              e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();exitFocusedSearch(search);return
+            }
+            if(editable)return;"""
+          # Normalize based on the semantic block instead of guessing display indentation.
+          start = text.index("    var search=document.getElementById('search');")
+          end_marker = "    if(editable)return;"
+          end = text.index(end_marker, start) + len(end_marker)
+          block = text[start:end]
+          expected = """    var search=document.getElementById('search');
+            if(key==='escape'&&search&&target===search){
+              e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();exitFocusedSearch(search);return
+            }
+            if(editable)return;"""
+          # Dedent the literal to the repository's four-space listener indentation.
+          expected = expected.replace("            if(key", "    if(key").replace("              e.prevent", "      e.prevent").replace("            }", "    }").replace("            if(editable", "    if(editable")
+          if "if(key==='escape'&&search&&target===search)" not in block:
+              raise SystemExit('Search Escape guard not found at expected seam')
+          text = text[:start] + expected + text[end:]
+          path.write_text(text, encoding='utf-8')
+          PY
+      - name: Rebuild and validate exact polished source
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          node --check docs/prompt-kit-polish.js
+          python -m unittest tests.test_prompt_kit_hotkey_completion tests.test_prompt_kit_header_contract tests.test_prompt_kit_filtering_access tests.test_prompt_kit_interactions_contract tests.test_prompt_kit_product_interactions -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python - <<'PY'
+          from pathlib import Path
+          src = Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
+          expected = """    var search=document.getElementById('search');
+              if(key==='escape'&&search&&target===search){
+                e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();exitFocusedSearch(search);return
+              }
+              if(editable)return;"""
+          expected = expected.replace("              if(key", "    if(key").replace("                e.prevent", "      e.prevent").replace("              }", "    }").replace("              if(editable", "    if(editable")
+          assert expected in src
+          print('SEARCH_ESCAPE_FORMAT_REVIEW=PASS')
+          PY
+          git diff --check
+      - name: Commit polished durable change and remove carrier
+        run: |
+          git rm .github/workflows/prompt-kit-search-escape-polish-carrier.yml
+          git status --short
+          git diff --stat
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/prompt-kit-polish.js web/prompt-kit/index.html tests/test_prompt_kit_hotkey_completion.py
+          git commit -m "style(prompt-kit): align search Escape hotkey guard"
+          git push origin HEAD:fix/prompt-kit-search-escape-20260905
