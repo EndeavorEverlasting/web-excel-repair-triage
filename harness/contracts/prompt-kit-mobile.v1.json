@@ -65,5 +65,5 @@
     "python -m unittest tests.test_prompt_kit_filtering_access -v",
     "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check"
   ],
-  "proof_ceiling": "Static source, PowerShell parse, deterministic tests, generated-site parity, CI, and exact-head headless Chromium observations (clean tracked worktree, canonical generated Prompt Kit parity, recorded commit SHA) prove the tracked responsive and browser-runtime behaviors they exercise. Physical phone/tablet ergonomics, browser-specific clipboard permission prompts, real touch timing, live OneDrive filesystem state, and Windows process launch remain field acceptance gates."
+  "proof_ceiling": "Static source, PowerShell parse, deterministic tests, generated-site parity, CI, and one exact-head 390x844 Favorites Chromium journey (clean tracked worktree, canonical generated Prompt Kit parity, recorded commit SHA) prove the tracked responsive and browser-runtime behaviors they exercise. Physical phone/tablet ergonomics, browser-specific clipboard permission prompts, real touch timing, live OneDrive filesystem state, and Windows process launch remain field acceptance gates."
 }
