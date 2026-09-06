@@ -1,1 +1,1 @@
-trigger progressive-disclosure materialization
+trigger progressive-disclosure materialization after PR open
