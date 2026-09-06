@@ -72,14 +72,15 @@ jobs:
               if anchor not in text:
                   raise SystemExit('P128 identity assertion anchor not found')
               text = text.replace(anchor, replacement, 1)
-          declaration_assertions = '''        for declaration_field in (
-            "Branch/worktree:", "Lane/sprint:", "Owned scope:", "Forbidden scope:",
-            "Dependencies/collision risks:", "Expected tracked artifacts:", "Validation order:",
-            "Integration authority:", "Proof ceiling:", "Commit/PR expectation:",
-            "SPRINT DECLARATION — REQUIRED BEFORE MUTATION",
-        ):
-            self.assertIn(declaration_field, content)
-'''
+          declaration_assertions = (
+              '        for declaration_field in (\n'
+              '            "Branch/worktree:", "Lane/sprint:", "Owned scope:", "Forbidden scope:",\n'
+              '            "Dependencies/collision risks:", "Expected tracked artifacts:", "Validation order:",\n'
+              '            "Integration authority:", "Proof ceiling:", "Commit/PR expectation:",\n'
+              '            "SPRINT DECLARATION — REQUIRED BEFORE MUTATION",\n'
+              '        ):\n'
+              '            self.assertIn(declaration_field, content)\n'
+          )
           marker = '        self.assertLess(len(self.raw[sid]["copyContent"]), 7000)\n'
           if 'for declaration_field in (' not in text:
               if marker not in text:
