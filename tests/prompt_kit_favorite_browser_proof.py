@@ -259,6 +259,76 @@ def observe(port: int, screenshot: Path):
                 mobile_page.evaluate("activeSection === null && activeCat === 'all'")
                 and mobile_page.locator('[data-prompt-id="P79"]').count() == 1
             )
+            group_pair = mobile_page.evaluate("""() => {
+              const firstBySection={};
+              for(const prompt of PROMPTS){
+                const section=sectionForPrompt(prompt);
+                const name=section?section.name:'Other';
+                if(!firstBySection[name])firstBySection[name]=prompt.id;
+              }
+              return Object.keys(firstBySection).slice(0,2).map(name => ({name,id:firstBySection[name]}));
+            }""")
+            structured_pair_available = len(group_pair) == 2
+            if structured_pair_available:
+                for item in group_pair:
+                    mobile_page.locator(f'[data-prompt-id="{item["id"]}"] .prompt-favorite-btn').click()
+                    mobile_page.wait_for_timeout(60)
+                quick.click()
+                mobile_page.wait_for_timeout(100)
+                group_nav = mobile_page.locator('#favoritesGroupJumpNav')
+                group_nav_visible = group_nav.is_visible()
+                group_links = group_nav.locator('.favorite-group-jump')
+                group_link_count = group_links.count()
+                group_labels = [group_links.nth(i).get_attribute('data-favorite-group') for i in range(group_link_count)]
+                counts_present = all('prompt' in group_links.nth(i).inner_text().lower() for i in range(group_link_count))
+                second_link = group_links.nth(1)
+                target_id = (second_link.get_attribute('href') or '').lstrip('#')
+                second_link.click()
+                mobile_page.wait_for_timeout(120)
+                target_visible = mobile_page.evaluate("""targetId => {
+                  const target=document.getElementById(targetId);
+                  if(!target)return false;
+                  const r=target.getBoundingClientRect();
+                  return r.bottom>0 && r.top<innerHeight;
+                }""", target_id)
+                target_focused = mobile_page.evaluate("""targetId => {
+                  const target=document.getElementById(targetId);
+                  return !!(target && target.contains(document.activeElement));
+                }""", target_id)
+                favorites_state_preserved = mobile_page.evaluate("activeSection === '__favorites__'")
+            else:
+                group_nav_visible = False
+                group_link_count = 0
+                group_labels = []
+                counts_present = False
+                target_visible = False
+                target_focused = False
+                favorites_state_preserved = False
+            observations.append({
+                "id": "mobile_favorites_group_jump_navigation",
+                "event": "Favorites exposes saved section groups with counts and direct in-page jumps without leaving Favorites",
+                "occurred": True,
+                "passed": bool(all((
+                    structured_pair_available,
+                    group_nav_visible,
+                    group_link_count >= 2,
+                    set(group_labels) == {item['name'] for item in group_pair},
+                    counts_present,
+                    target_visible,
+                    target_focused,
+                    favorites_state_preserved,
+                ))),
+                "pair": group_pair,
+                "group_nav_visible": bool(group_nav_visible),
+                "group_link_count": group_link_count,
+                "group_labels": group_labels,
+                "counts_present": bool(counts_present),
+                "target_visible": bool(target_visible),
+                "target_focused": bool(target_focused),
+                "favorites_state_preserved": bool(favorites_state_preserved),
+                "viewport": {"width": 390, "height": 844},
+            })
+
             observations.append({
                 "id": "mobile_favorites_quick_access",
                 "event": "Mobile Favorites quick action stays visible outside scroll rails and reuses canonical Favorites state",
@@ -330,6 +400,7 @@ def main(argv=None) -> int:
         },
         "environment": {"kind": execution_environment_kind(), "engine": "chromium", "scenario": "search-escape-profile-tabs-a-e-and-favorite-shortcut-copy-reveal"},
         "claims": [
+            {"id": "mobile_favorites_group_jump_navigation", "statement": "Favorites on a phone-width viewport exposes only saved prompt groups with counts and direct section jumps while preserving Favorites state", "status": "PASS" if by_id["mobile_favorites_group_jump_navigation"]["passed"] else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["mobile_favorites_group_jump_navigation"]},
             {"id": "mobile_favorites_quick_access", "statement": "A phone-width viewport exposes a persistent Favorites quick action outside horizontal rails; saving, opening Favorites, removing, and returning to All reuse the canonical Favorites state", "status": "PASS" if by_id["mobile_favorites_quick_access"]["passed"] else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["mobile_favorites_quick_access"]},
             {"id": "search_escape_recovery", "statement": "Slash focuses search; one Escape clears a populated query, hides the clear affordance, releases focus, also releases an empty focused search, and restores global hotkeys", "status": "PASS" if search_escape_recovery else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["search_escape_recovery"]},
             {"id": "profile_header_navigation", "statement": "A-E header hotkeys activate their matching profile slots in the browser", "status": "PASS" if profile_header_navigation else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["profile_header_hotkeys_a_to_e"]},

@@ -27,6 +27,7 @@ class PromptKitMobileTests(unittest.TestCase):
                 "explicit_mobile_open",
                 "touch_copy_preserved",
                 "favorites_quick_access",
+                "favorites_group_jump_navigation",
                 "horizontal_filter_rails",
                 "single_column_cards",
                 "mobile_detail_surface",
@@ -98,6 +99,26 @@ class PromptKitMobileTests(unittest.TestCase):
         self.assertEqual(polish.count("id='mobileFavoritesQuick'"), 1)
         self.assertNotIn("mobileFavoritePromptIds", polish)
         self.assertNotIn("mobileFavoritesStorage", polish)
+
+    def test_favorites_group_jump_navigation_reuses_rendered_sections(self) -> None:
+        polish = POLISH.read_text(encoding="utf-8")
+        for marker in (
+            "function renderFavoritesGroupJumpNavigation()",
+            "nav.id='favoritesGroupJumpNav'",
+            "nav.setAttribute('aria-label','Saved favorite groups')",
+            "label.textContent='Saved groups'",
+            "grid.querySelectorAll('.section-divider[data-category]')",
+            "countNode=divider.querySelector('.sd-count')",
+            "link.setAttribute('data-favorite-group',name)",
+            "target.scrollIntoView({block:'start',behavior:hotkeyScrollBehavior()})",
+            "installFavoritesGroupJumpNavigation()",
+            "wrapped=function(){baseRender();renderFavoritesGroupJumpNavigation()}",
+            ".favorite-group-jump{",
+        ):
+            self.assertIn(marker, polish)
+        self.assertIn("if(activeSection!=='__favorites__')return", polish)
+        self.assertNotIn("favoriteGroupsStorage", polish)
+        self.assertNotIn("favoriteCollections", polish)
 
     def test_category_collapse_control_is_touch_sized_and_native(self) -> None:
         js = JS.read_text(encoding="utf-8")

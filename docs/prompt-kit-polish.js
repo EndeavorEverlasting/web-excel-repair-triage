@@ -80,6 +80,71 @@ function activateFavoritesView(){
   render();
 }
 
+function ensureFavoritesGroupJumpStyles(){
+  if(document.getElementById('favorites-group-jump-styles'))return;
+  var style=document.createElement('style');
+  style.id='favorites-group-jump-styles';
+  style.textContent='.favorites-group-jump-nav{grid-column:1/-1;display:flex;align-items:center;gap:8px;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:4px 0 10px}.favorites-group-jump-nav::-webkit-scrollbar{display:none}.favorites-group-jump-label{flex:0 0 auto;color:var(--text-muted);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}.favorite-group-jump{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-height:38px;padding:7px 10px;border:1px solid var(--border);border-radius:999px;background:var(--bg-surface);color:var(--text-secondary);font-size:11px;font-weight:700;text-decoration:none;touch-action:manipulation}.favorite-group-jump:hover,.favorite-group-jump:focus-visible{outline:none;border-color:#f59e0b;color:#fbbf24;box-shadow:0 0 0 2px rgba(245,158,11,.16)}.section-divider.favorite-group-jump-target{scroll-margin-top:12px}@media(max-width:760px){.favorites-group-jump-nav{padding:2px 0 8px}.favorite-group-jump{min-height:44px;padding:8px 12px}}';
+  document.head.appendChild(style)
+}
+
+function favoriteGroupJumpId(name,index){
+  var slug=String(name||'group').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'group';
+  return 'favorite-group-'+String(index+1)+'-'+slug
+}
+
+function renderFavoritesGroupJumpNavigation(){
+  var grid=document.getElementById('grid');
+  if(!grid)return;
+  var existing=document.getElementById('favoritesGroupJumpNav');
+  if(existing&&existing.parentNode)existing.parentNode.removeChild(existing);
+  grid.querySelectorAll('.section-divider.favorite-group-jump-target').forEach(function(divider){divider.classList.remove('favorite-group-jump-target');divider.removeAttribute('id')});
+  if(activeSection!=='__favorites__')return;
+  var dividers=Array.prototype.slice.call(grid.querySelectorAll('.section-divider[data-category]'));
+  if(!dividers.length)return;
+  var nav=document.createElement('nav');
+  nav.id='favoritesGroupJumpNav';
+  nav.className='favorites-group-jump-nav';
+  nav.setAttribute('aria-label','Saved favorite groups');
+  var label=document.createElement('span');
+  label.className='favorites-group-jump-label';
+  label.textContent='Saved groups';
+  nav.appendChild(label);
+  dividers.forEach(function(divider,index){
+    var name=divider.getAttribute('data-category')||'Group';
+    var countNode=divider.querySelector('.sd-count');
+    var countText=countNode?String(countNode.textContent||'').trim():'';
+    var id=favoriteGroupJumpId(name,index);
+    divider.id=id;
+    divider.classList.add('favorite-group-jump-target');
+    var link=document.createElement('a');
+    link.className='favorite-group-jump';
+    link.href='#'+id;
+    link.setAttribute('data-favorite-group',name);
+    link.setAttribute('aria-label','Jump to saved favorite group '+name+(countText?' · '+countText:''));
+    link.textContent=name+(countText?' · '+countText:'');
+    link.addEventListener('click',function(e){
+      e.preventDefault();
+      var target=document.getElementById(id);
+      if(!target)return;
+      try{target.scrollIntoView({block:'start',behavior:hotkeyScrollBehavior()})}catch(err){target.scrollIntoView(true)}
+      var toggle=target.querySelector('.section-toggle');
+      if(toggle){try{toggle.focus({preventScroll:true})}catch(err){toggle.focus()}}
+    });
+    nav.appendChild(link)
+  });
+  grid.insertBefore(nav,grid.firstChild)
+}
+
+function installFavoritesGroupJumpNavigation(){
+  var baseRender=window.render;
+  if(typeof baseRender!=='function'||baseRender.__favoritesGroupJumpWrapped)return false;
+  var wrapped=function(){baseRender();renderFavoritesGroupJumpNavigation()};
+  wrapped.__favoritesGroupJumpWrapped=true;
+  window.render=wrapped;
+  return true
+}
+
 function ensureCompactBrowsingControls(){
   var header=document.querySelector('.header');
   var headerTop=document.querySelector('.header-top');
@@ -592,9 +657,11 @@ window.appendPromptCard=function(grid,p){
 };
 
 ensurePromptKitPolishStyles();
+ensureFavoritesGroupJumpStyles();
 ensureCompactBrowsingControls();
 ensureHotkeyHelp();
 installCompactBrowsingViewSwitches();
 installCompactBrowsingHotkeys();
+installFavoritesGroupJumpNavigation();
 render();
 })();
