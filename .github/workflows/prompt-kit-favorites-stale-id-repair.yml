@@ -1,0 +1,33 @@
+name: Prompt Kit stale Favorite repair
+on:
+  push:
+    branches: [feat/prompt-kit-favorites-empty-persistence-20260905]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python scripts/_tmp_fix_favorites_stale_ids.py
+      - run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - run: |
+          node --check docs/prompt-kit-polish.js
+          python -m unittest tests.test_prompt_kit_mobile tests.test_prompt_kit_hotkey_completion -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - run: |
+          git rm .github/workflows/prompt-kit-favorites-stale-id-repair.yml
+          git rm scripts/_tmp_fix_favorites_stale_ids.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/prompt-kit-polish.js harness/contracts/prompt-kit-mobile.v1.json tests/test_prompt_kit_mobile.py tests/prompt_kit_favorite_browser_proof.py web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m "fix(prompt-kit): classify unavailable saved Favorites"
+          git push origin HEAD:feat/prompt-kit-favorites-empty-persistence-20260905
