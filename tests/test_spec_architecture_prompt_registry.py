@@ -890,8 +890,12 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn(sid, self.full["P07"]["proofGate"])
         self.assertIn("Review paradigm coherence only when the diff materially changes a design boundary", self.full["P14"]["copyContent"])
         self.assertIn(sid, self.full["P14"]["proofGate"])
-        for synonym in ("programming paradigm", "functional programming", "object-oriented programming", "oop", "procedural programming", "imperative programming", "declarative programming", "data-oriented programming", "event-driven programming", "functional core imperative shell"):
-            self.assertEqual(build_prompt_kit.SYNONYMS[synonym], sid)
+        for keyword in (
+            "programming paradigm", "functional programming", "object-oriented programming", "OOP",
+            "procedural programming", "imperative programming", "declarative programming",
+            "data-oriented programming", "event-driven programming", "functional core imperative shell",
+        ):
+            self.assertIn(keyword, specialist["keywords"])
         self.assertEqual(self.full["P86"]["name"], "Prompt Semantic Hardener & Principle Integrator")
         self.assertEqual(self.full["P79"]["name"], "Prompt Registry Prompt Adder")
 
