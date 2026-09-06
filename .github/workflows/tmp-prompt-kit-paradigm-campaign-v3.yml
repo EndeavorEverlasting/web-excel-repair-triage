@@ -1,0 +1,126 @@
+name: Temporary Prompt Kit programming paradigm campaign v3
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-programming-paradigm-guidance-20260906
+    paths:
+      - '.github/workflows/tmp-prompt-kit-paradigm-campaign-v3.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Add bounded specialist through canonical helper
+        shell: bash
+        run: |
+          set -o pipefail
+          cat > /tmp/paradigm-prompt.json <<'JSON'
+          {
+            "name": "Programming Paradigm Fit & Boundary Refactorer",
+            "type": "DESIGN + BUILD",
+            "class": "ENGINEERING / PROGRAMMING PARADIGMS",
+            "sprintRole": "Choose, preserve, or repair programming paradigms at concrete code boundaries so object-oriented, functional, procedural, declarative, data-oriented, event-driven, and hybrid techniques are used deliberately rather than by habit",
+            "useWhen": "The primary engineering question is whether a source boundary should remain or become object-oriented, functional, procedural/imperative, declarative, data-oriented, event/message-driven, or an explicit hybrid; or when accidental paradigm mixing materially worsens state ownership, side-effect clarity, coupling, testability, or maintainability.",
+            "inspectFirst": "Repository and language/framework conventions; the current responsibility and callers; state, identity, invariants, mutation, side effects, data flow, lifecycle, concurrency/asynchrony, performance evidence, public contracts, tests, and the neighboring P124 structural-readability owner.",
+            "expectedOutput": "A bounded paradigm-fit ledger for materially affected boundaries, an evidence-backed PRESERVE/ADOPT/HYBRIDIZE/DEFER disposition, the smallest behavior-protected implementation needed to repair a real mismatch, focused regression proof, and explicit routing of general structural cleanup back to P124.",
+            "nextStep": "Classify the highest-impact affected boundary by state, effects, ownership, data flow, lifecycle, concurrency, and repository idiom; implement the smallest justified paradigm repair or preserve the current design with evidence; then rerun focused and impacted checks and review the resulting seam once more.",
+            "proofGate": "No paradigm is selected by ideology or fashion; behavior/contracts remain protected; changed boundaries make state, effects, ownership, and execution semantics at least as explicit as before; hybrids have explicit seams; paradigm-specific failure modes are checked; general structural cleanup remains with P124; targeted and impacted tests pass; and a second pass finds no practical in-scope paradigm mismatch remaining.",
+            "color": "Cyan",
+            "profile": "spec-architecture",
+            "copyContent": "CHOOSE OR REPAIR THE PROGRAMMING PARADIGM AT THE ACTUAL CODE BOUNDARY. DO NOT FORCE OOP, FUNCTIONAL PROGRAMMING, OR ANY OTHER PARADIGM AS A REPOSITORY-WIDE RELIGION.\n\nRepo: xyz_repo_or_path\nTarget responsibility/boundary: xyz_boundary_or_resolve_from_evidence\nObserved paradigm concern: xyz_concern_or_unknown\nForbidden behavior changes: xyz_forbidden_behavior_or_resolve_from_repo\n\nMISSION\nMake paradigm choice deliberate and local. Preserve a coherent existing design when it fits. Change it only when evidence shows that another paradigm or explicit hybrid makes ownership, state, side effects, data flow, concurrency, testing, or maintenance materially clearer without unbounded rewrite. General code readability and structural factoring remain owned by P124 Repository Code Readability & Structural Refactorer; this prompt owns the paradigm-fit decision and the bounded repair it requires.\n\n1. PIN THE REAL BOUNDARY\nRefresh repository truth and inspect the responsibility, callers, tests, language/framework idioms, public contracts, state/mutation, effects/I-O, lifecycle, data flow, concurrency/asynchrony, and performance constraints. Do not infer a paradigm from filenames or syntax alone. Identify which boundary is actually hard to reason about or change.\n\n2. BUILD A PARADIGM-FIT LEDGER\nFor each materially affected boundary record CURRENT PARADIGM, EVIDENCE, FAILURE/FRICTION, and one disposition: PRESERVE, ADOPT, HYBRIDIZE, or DEFER. Compare only plausible local choices. A campaign succeeds by correct fit, not by maximizing the number of boundaries converted.\n\n3. FIT RULES — TOOL, NOT RELIGION\n- OBJECT-ORIENTED: prefer when identity, lifecycle, encapsulated mutable state/invariants, polymorphic substitution, or stateful collaboration is the domain story. Reject data-only service objects, deep inheritance, mutable god objects, and class ceremony around stateless transforms. Favor composition over inheritance when substitution is not the real requirement.\n- FUNCTIONAL: prefer for deterministic transforms, rules, validation, calculation, immutable data flow, and pipelines. Keep effects at explicit boundaries. Reject hidden mutable closures, unreadable combinator cleverness, and purity theater around inherently stateful lifecycle/I-O code.\n- PROCEDURAL / IMPERATIVE: prefer when ordered orchestration and I-O sequence are the clearest domain story. A readable linear workflow does not need classes or functional combinators merely to appear sophisticated. Keep mutation scoped and control flow obvious.\n- DECLARATIVE: prefer for configuration, schema/query, UI/state descriptions, routing, policy, or framework-owned execution. Ensure declarations do not conceal imperative lifecycle effects, ordering, or error behavior that maintainers must understand.\n- DATA-ORIENTED: prefer when measured throughput, locality, allocation, serialization, or batch/hot-loop behavior makes data layout the dominant constraint. Require performance evidence before architecture churn.\n- EVENT / MESSAGE-DRIVEN: prefer only for genuine asynchronous/integration boundaries. Make event identity, ordering, idempotency, delivery/retry, failure, and observability semantics explicit. Do not introduce a bus or queue to disguise a local synchronous call.\n- HYBRID: valid when seams are explicit—for example functional core + imperative shell, stateful objects + pure domain helpers, declarative configuration + imperative adapters. Mixing is not a defect by itself; accidental mixing is debt when ownership or effects become ambiguous.\n\n4. PROTECT BEHAVIOR BEFORE CONVERSION\nCharacterize externally observable behavior, contracts, serialization, errors, and important side effects before risky movement. Add the smallest missing regression first. Do not hide semantic feature changes inside paradigm refactoring, weaken tests to ease conversion, or hand-edit generated output.\n\n5. IMPLEMENT THE SMALLEST JUSTIFIED REPAIR\nChange only the boundaries whose ledger disposition requires it. Preserve repository/language idioms unless evidence justifies departure. Keep public surfaces narrow. Prefer explicit adapters at paradigm seams. Do not convert an entire module tree because one function benefits from purity, or create a class hierarchy because one object has state. If the real problem is simply giant/mixed/duplicated source rather than paradigm fit, route it to P124 instead of stretching this prompt.\n\n6. PARADIGM-SPECIFIC FAILURE REVIEW\nAfter the first green result, falsify the chosen design: OOP -> leaked mutable state/inheritance coupling; functional -> hidden effects/closure mutation/order dependence; procedural -> sprawling shared mutation/control tangles; declarative -> hidden execution/order/effect behavior; data-oriented -> unmeasured optimization/semantic leakage; event-driven -> duplicate/out-of-order/lost/retried events; hybrid -> unclear seam or two competing owners. Repair practical findings and rerun affected checks.\n\n7. PROVE FIT, NOT PREFERENCE\nRun formatter/linter/type/build/tests and owning validators. Show why the selected or preserved paradigm fits this boundary using concrete state/effect/ownership/data-flow/concurrency evidence. Perform a second-pass maintainer question: `Where is state owned, where do effects occur, and where would I change this rule now?` The answer should be obvious from a smaller owner set, not dependent on taste.\n\nDELIVER\nReport the paradigm-fit ledger, boundaries preserved/changed, P124-routed structural debt, behavior protection, focused regressions, validation, commit/PR/mainline state, proof ceiling, and exact next action.\n\nCLOSURE RULE\nClose when every materially affected boundary has a supported PRESERVE/ADOPT/HYBRIDIZE/DEFER disposition, required repairs are green, paradigm-specific failure review finds no practical in-scope defect, and no repository-wide conversion was invented merely for stylistic consistency.",
+            "keywords": ["programming paradigm", "functional programming", "object-oriented programming", "OOP", "procedural programming", "imperative programming", "declarative programming", "data-oriented programming", "event-driven programming", "message-driven programming", "functional core imperative shell", "composition over inheritance", "paradigm mismatch", "hybrid programming paradigm"]
+          }
+          JSON
+          python scripts/prompt_registry_ops.py add --input /tmp/paradigm-prompt.json --registry spec-architecture-prompts | tee /tmp/paradigm-receipt.json
+      - name: Strengthen general execution/refactor/review owners and discovery
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          root = Path('.')
+          docs_path = root / 'docs/prompts.json'
+          spec_path = root / 'registry/prompts/spec-architecture-prompts.v1.json'
+          build_path = root / 'build_prompt_kit.py'
+          test_path = root / 'tests/test_spec_architecture_prompt_registry.py'
+          spec = json.loads(spec_path.read_text(encoding='utf-8'))
+          specialist = next(p for p in spec['prompts'] if p['name'] == 'Programming Paradigm Fit & Boundary Refactorer')
+          sid = specialist['id']
+          p124 = next(p for p in spec['prompts'] if p['id'] == 'P124')
+          if specialist['name'] not in p124['useWhen']:
+              p124['useWhen'] += f' When paradigm selection itself is the primary defect, route that bounded decision/repair to {sid} {specialist["name"]}.'
+          if 'programming-paradigm specialist' not in p124['nextStep']:
+              p124['nextStep'] += f' If evidence shows paradigm mismatch rather than general structural debt, hand that boundary to {sid} programming-paradigm specialist without broadening P124.'
+          if sid not in p124['proofGate']:
+              p124['proofGate'] += f' Paradigm-specific redesign is either unnecessary or explicitly routed to {sid}; P124 does not absorb a second architecture doctrine.'
+          spec_path.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          docs = json.loads(docs_path.read_text(encoding='utf-8'))
+          by_id = {p['id']: p for p in docs}
+          p07, p14 = by_id['P07'], by_id['P14']
+          h07 = 'CODE READABILITY / EDITABILITY FLOOR\n'
+          l07 = f'- When touched source materially changes a design boundary, do not drift into a programming paradigm accidentally. Preserve the local paradigm or route an evidenced mismatch to {sid} Programming Paradigm Fit & Boundary Refactorer; broader structural cleanup remains P124.\n'
+          if 'do not drift into a programming paradigm accidentally' not in p07['copyContent']:
+              if h07 not in p07['copyContent']: raise SystemExit('P07 readability heading not found')
+              p07['copyContent'] = p07['copyContent'].replace(h07, h07 + l07, 1)
+          if 'paradigm mismatch' not in p07['proofGate'].lower():
+              p07['proofGate'] += f' A material touched-boundary paradigm mismatch is repaired when bounded or routed to {sid}; green behavior does not excuse accidental architecture drift.'
+          h14 = 'READABILITY / STRUCTURAL EDITABILITY CHECK — STANDARDS, NOT TASTE\n'
+          l14 = f'- Review paradigm coherence only when the diff materially changes a design boundary. Tie findings to state/effect ownership, coupling, testability, or maintainability—not reviewer taste—and route paradigm-specific redesign to {sid}; do not demand repository-wide OOP/functional conversion.\n'
+          if 'Review paradigm coherence only when the diff materially changes a design boundary' not in p14['copyContent']:
+              if h14 not in p14['copyContent']: raise SystemExit('P14 readability heading not found')
+              p14['copyContent'] = p14['copyContent'].replace(h14, h14 + l14, 1)
+          if 'paradigm coherence' not in p14['proofGate'].lower():
+              p14['proofGate'] += f' Paradigm coherence findings are evidence-backed rather than stylistic and route specialist redesign to {sid}.'
+          docs_path.write_text(json.dumps(docs, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          text = build_path.read_text(encoding='utf-8')
+          anchor = '    "structural refactor": "P124", "maintainability refactor": "P124", "god file": "P124", "giant function": "P124",\n'
+          aliases = f'    "programming paradigm": "{sid}", "functional programming": "{sid}", "object-oriented programming": "{sid}", "oop": "{sid}",\n    "procedural programming": "{sid}", "imperative programming": "{sid}", "declarative programming": "{sid}",\n    "data-oriented programming": "{sid}", "event-driven programming": "{sid}", "functional core imperative shell": "{sid}",\n'
+          if '"functional programming":' not in text:
+              if anchor not in text: raise SystemExit('P124 synonym anchor not found')
+              build_path.write_text(text.replace(anchor, anchor + aliases, 1), encoding='utf-8')
+
+          tests = test_path.read_text(encoding='utf-8')
+          if 'test_programming_paradigm_specialist_is_distinct_bounded_and_routed_from_general_owners' not in tests:
+              method = '''\n    def test_programming_paradigm_specialist_is_distinct_bounded_and_routed_from_general_owners(self) -> None:\n        matches = [p for p in self.full.values() if p.get("name") == "Programming Paradigm Fit & Boundary Refactorer"]\n        self.assertEqual(len(matches), 1)\n        specialist = matches[0]\n        sid = specialist["id"]\n        content = specialist["copyContent"]\n        self.assertEqual(specialist["class"], "ENGINEERING / PROGRAMMING PARADIGMS")\n        self.assertNotEqual(sid, "P124")\n        for phrase in ("TOOL, NOT RELIGION", "PRESERVE, ADOPT, HYBRIDIZE, or DEFER", "OBJECT-ORIENTED", "FUNCTIONAL", "PROCEDURAL / IMPERATIVE", "DECLARATIVE", "DATA-ORIENTED", "EVENT / MESSAGE-DRIVEN", "HYBRID", "functional core + imperative shell", "Do not convert an entire module tree", "Where is state owned, where do effects occur"):\n            self.assertIn(phrase, content)\n        self.assertLess(len(self.raw[sid]["copyContent"]), 7000)\n        self.assertIn(sid, self.full["P124"]["useWhen"])\n        self.assertIn("programming-paradigm specialist", self.full["P124"]["nextStep"])\n        self.assertLess(len(self.raw["P124"]["copyContent"]), 7000)\n        self.assertIn("do not drift into a programming paradigm accidentally", self.full["P07"]["copyContent"])\n        self.assertIn(sid, self.full["P07"]["proofGate"])\n        self.assertIn("Review paradigm coherence only when the diff materially changes a design boundary", self.full["P14"]["copyContent"])\n        self.assertIn(sid, self.full["P14"]["proofGate"])\n        for synonym in ("programming paradigm", "functional programming", "object-oriented programming", "oop", "procedural programming", "imperative programming", "declarative programming", "data-oriented programming", "event-driven programming", "functional core imperative shell"):\n            self.assertEqual(build_prompt_kit.SYNONYMS[synonym], sid)\n        self.assertEqual(self.full["P86"]["name"], "Prompt Semantic Hardener & Principle Integrator")\n        self.assertEqual(self.full["P79"]["name"], "Prompt Registry Prompt Adder")\n\n'''
+              marker = '\nif __name__ == "__main__":\n'
+              if marker not in tests: raise SystemExit('test insertion marker not found')
+              test_path.write_text(tests.replace(marker, method + marker, 1), encoding='utf-8')
+          PY
+      - name: Rebuild and validate exact Prompt Kit
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_order_navigation_contract -v
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Enforce bounded durable diff and self-remove carriers
+        env:
+          BASE_SHA: 193f6bbd3198bf1bf3ef210c5540ca979d0a9eae
+        run: |
+          rm .github/workflows/tmp-prompt-kit-paradigm-campaign.yml .github/workflows/tmp-prompt-kit-paradigm-campaign-v2.yml .github/workflows/tmp-prompt-kit-paradigm-campaign-v3.yml
+          changed="$(git diff --name-only "$BASE_SHA" | sort)"
+          expected="$(printf '%s\n' 'build_prompt_kit.py' 'docs/prompts.json' 'registry/prompts/spec-architecture-prompts.v1.json' 'tests/test_spec_architecture_prompt_registry.py' 'web/prompt-kit/index.html' | sort)"
+          test "$changed" = "$expected" || { printf 'Unexpected durable diff:\n%s\n' "$changed" >&2; exit 1; }
+      - name: Commit and push durable campaign
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'feat(prompt-kit): add programming paradigm fit guidance'
+          git push origin HEAD:feat/prompt-kit-programming-paradigm-guidance-20260906
