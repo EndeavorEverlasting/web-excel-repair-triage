@@ -151,29 +151,53 @@ class PromptKitMobileTests(unittest.TestCase):
         self.assertNotIn("favoritesEmptyStorage", polish)
         self.assertNotIn("favoritesSessionStorage", polish)
 
-    def test_unknown_favorite_browser_proof_executes_portability_recovery(self) -> None:
+    def test_mobile_favorites_definitive_journey_is_linear_and_complete(self) -> None:
         proof = (ROOT / "tests" / "prompt_kit_favorite_browser_proof.py").read_text(encoding="utf-8")
         for marker in (
+            "mobile_favorites_definitive_journey",
+            "promptKit.favoritePromptIds.v1",
+            "saved_in_canonical_key",
+            "persisted_after_reload",
+            "favorites_appear_after_reload",
             "JSON.stringify(['P79','P999999'])",
             "unknown_id_preserved_before_mutation",
             "unknown_id_preserved_after_mutation",
-            "get_by_role('button', name='Browse current prompts')",
+            "membership_unchanged_after_clear",
+            "get_by_role(\"button\", name=\"Browse all prompts\")",
+            "get_by_role(\"button\", name=\"Clear Favorites filters\")",
+            "get_by_role(\"button\", name=\"Browse current prompts\")",
             "browse_current.click()",
             "Saved Favorites unavailable in this version",
-            "unknown_favorite_portability_recovery",
+            "recovery_controls_tappable",
             "subject = prepare_exact_head_subject()",
             "canonical_clipboard_text(actual)",
             "canonical_clipboard_text(after_enter)",
         ):
             self.assertIn(marker, proof)
         self.assertLess(
-            proof.index("JSON.stringify(['P79','P999999'])"),
-            proof.index("unknown_id_preserved_after_mutation"),
+            proof.index("saved_in_canonical_key = all"),
+            proof.index("mobile_page.reload(wait_until=\"domcontentloaded\")"),
         )
         self.assertLess(
-            proof.index("unknown_id_preserved_after_mutation"),
+            proof.index('name="Browse all prompts"'),
+            proof.index("definitely-no-favorite-match-xyz"),
+        )
+        self.assertLess(
+            proof.index("definitely-no-favorite-match-xyz"),
+            proof.index("JSON.stringify(['P79','P999999'])"),
+        )
+        self.assertLess(
+            proof.index("JSON.stringify(['P79','P999999'])"),
+            proof.index("unknown_id_preserved_after_mutation = \"P999999\" in stored_after_mutation"),
+        )
+        self.assertLess(
+            proof.index("unknown_id_preserved_after_mutation = \"P999999\" in stored_after_mutation"),
             proof.index("browse_current.click()"),
         )
+        self.assertNotIn("mobile_favorites_persistence_and_empty_state", proof)
+        self.assertNotIn("mobile_favorites_quick_access", proof)
+        self.assertNotIn("mobile_favorites_group_jump_navigation", proof)
+        self.assertNotIn("unknown_favorite_portability_recovery", proof)
 
     def test_category_collapse_control_is_touch_sized_and_native(self) -> None:
         js = JS.read_text(encoding="utf-8")
