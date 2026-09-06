@@ -1197,14 +1197,14 @@ function renderFavoritesEmptyState(grid){
     title.textContent='No Favorites yet';
     copy.textContent='Star any prompt to save it here. Your Favorites stay in this browser for quick return visits.';
     action.textContent='Browse all prompts';
-    action.setAttribute('aria-label','Browse all prompts and choose Favorites');
+    action.setAttribute('aria-label','Browse all prompts');
     action.addEventListener('click',function(){activateAllPromptsView()})
   }else{
     state.setAttribute('data-empty-kind','filtered');
     title.textContent='No Favorites match these filters';
     copy.textContent='You still have saved Favorites. Clear the current search and prompt filters to show them again.';
     action.textContent='Clear Favorites filters';
-    action.setAttribute('aria-label','Clear Favorites search and prompt filters');
+    action.setAttribute('aria-label','Clear Favorites filters');
     action.addEventListener('click',function(){clearTransientPromptFilters();renderTypes();render()})
   }
   state.appendChild(icon);
