@@ -45,6 +45,29 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         self.assertNotIn("key==='/'&&e.ctrlKey", source)
         self.assertNotIn("key==='/'&&e.metaKey", source)
 
+    def test_escape_clears_and_releases_focused_search_before_editable_guard(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        deployed = DEPLOYED.read_text(encoding="utf-8")
+        markers = (
+            "function exitFocusedSearch(search)",
+            "var changed=search.value!=='';",
+            "search.value='';",
+            "var clear=document.getElementById('searchClear');",
+            "if(clear)clear.style.display='none';",
+            "if(changed)render();",
+            "search.blur()",
+            "var search=document.getElementById('search');",
+            "if(key==='escape'&&search&&target===search)",
+            "resetPromptShortcutBuffer();exitFocusedSearch(search);return",
+        )
+        for marker in markers:
+            self.assertIn(marker, source)
+            self.assertIn(marker, deployed)
+        self.assertLess(
+            source.index("if(key==='escape'&&search&&target===search)"),
+            source.index("if(editable)return;"),
+        )
+
     def test_hotkey_open_focuses_favorite_input_and_escape_recovers_from_editable(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         for marker in (

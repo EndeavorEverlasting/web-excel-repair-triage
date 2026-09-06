@@ -485,6 +485,18 @@ function ensureHotkeyHelp(){
   renderPromptShortcutBindings()
 }
 
+
+function exitFocusedSearch(search){
+  if(!search)return false;
+  var changed=search.value!=='';
+  search.value='';
+  var clear=document.getElementById('searchClear');
+  if(clear)clear.style.display='none';
+  if(changed)render();
+  try{search.blur()}catch(e){}
+  return true
+}
+
 function installCompactBrowsingHotkeys(){
   document.addEventListener('keydown',function(e){
     var key=String(e.key||'').toLowerCase();
@@ -495,6 +507,10 @@ function installCompactBrowsingHotkeys(){
     if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden){
       e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return
     }
+    var search=document.getElementById('search');
+  if(key==='escape'&&search&&target===search){
+    e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();exitFocusedSearch(search);return
+  }
     if(editable)return;
     if(key==='`'){
       e.preventDefault();e.stopImmediatePropagation();
