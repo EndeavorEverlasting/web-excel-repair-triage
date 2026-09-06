@@ -29,6 +29,7 @@ def observe(port: int, screenshot: Path):
     actual = ""
     after_enter = ""
     profile_hotkeys = {}
+    search_escape = {}
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)
@@ -40,6 +41,55 @@ def observe(port: int, screenshot: Path):
             page = context.new_page()
             page.goto(f"http://127.0.0.1:{port}/web/prompt-kit/index.html", wait_until="domcontentloaded")
             expected = page.evaluate("PROMPTS.find(p => p.id === 'P79').copyContent")
+
+            # Exercise search mode exactly as a keyboard user does: slash, type, Escape.
+            page.keyboard.press("/")
+            page.wait_for_timeout(50)
+            search_focused = page.evaluate("document.activeElement && document.activeElement.id === 'search'")
+            page.keyboard.type("P79")
+            page.wait_for_timeout(100)
+            search_value_before = page.locator('#search').input_value()
+            search_clear_visible_before = page.evaluate("""() => {
+              const clear=document.getElementById('searchClear');
+              return !!(clear && getComputedStyle(clear).display!=='none');
+            }""")
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(100)
+            search_value_after = page.locator('#search').input_value()
+            search_focus_released = page.evaluate("!(document.activeElement && document.activeElement.id === 'search')")
+            search_clear_hidden_after = page.evaluate("""() => {
+              const clear=document.getElementById('searchClear');
+              return !clear || getComputedStyle(clear).display==='none';
+            }""")
+
+            # Escape must also release an already-empty focused search field.
+            page.keyboard.press("/")
+            page.wait_for_timeout(50)
+            empty_search_refocused = page.evaluate("document.activeElement && document.activeElement.id === 'search'")
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(50)
+            empty_search_focus_released = page.evaluate("!(document.activeElement && document.activeElement.id === 'search')")
+
+            # Prove document-level hotkeys are usable immediately after leaving search mode.
+            page.keyboard.press("a")
+            page.wait_for_timeout(50)
+            global_hotkey_after_escape = page.evaluate(
+                """() => {
+                  const button=document.querySelector('.cat-tab[data-profile-slot="A"]');
+                  return !!(button && button.classList.contains('active') && button.getAttribute('aria-pressed')==='true');
+                }"""
+            )
+            search_escape = {
+                "slash_focused": bool(search_focused),
+                "typed_value": search_value_before,
+                "clear_visible_before": bool(search_clear_visible_before),
+                "cleared": search_value_after == "",
+                "focus_released": bool(search_focus_released),
+                "clear_hidden_after": bool(search_clear_hidden_after),
+                "empty_refocused": bool(empty_search_refocused),
+                "empty_focus_released": bool(empty_search_focus_released),
+                "global_hotkey_restored": bool(global_hotkey_after_escape),
+            }
 
             # Exercise the actual five-slot header hotkeys before configuring the Favorite.
             for slot_key in "ABCDE":
@@ -154,6 +204,7 @@ def observe(port: int, screenshot: Path):
             screenshot.parent.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(screenshot), full_page=False)
             observations = [
+                {"id": "search_escape_recovery", "event": "Slash focuses search; Escape clears and releases populated or empty search and restores global hotkeys", "occurred": True, "passed": bool(all((search_escape["slash_focused"], search_escape["typed_value"] == "P79", search_escape["clear_visible_before"], search_escape["cleared"], search_escape["focus_released"], search_escape["clear_hidden_after"], search_escape["empty_refocused"], search_escape["empty_focus_released"], search_escape["global_hotkey_restored"]))), **search_escape},
                 {"id": "profile_header_hotkeys_a_to_e", "event": "A-E header hotkeys activate their matching profile slots", "occurred": True, "passed": bool(set(profile_hotkeys) == set("ABCDE") and all(profile_hotkeys.values())), "slots": profile_hotkeys},
                 {"id": "hotkey_click_focuses_favorite_input", "event": "Hotkeys button opens the panel with Favorite prompt ID input focused and revealed", "occurred": True, "passed": bool(click_focus and click_visible), "focused": bool(click_focus), "visible": bool(click_visible)},
                 {"id": "escape_closes_hotkeys_from_favorite_input", "event": "Escape closes Hotkeys while Favorite prompt ID input owns focus and returns focus to Hotkeys toggle", "occurred": True, "passed": bool(escape_closed and escape_focus_returned), "closed": bool(escape_closed), "toggle_focused": bool(escape_focus_returned)},
@@ -188,6 +239,7 @@ def main(argv=None) -> int:
     screenshot = Path(args.screenshot)
     observations = observe(args.port, screenshot)
     by_id = {item['id']: item for item in observations}
+    search_escape_recovery = by_id['search_escape_recovery']['passed']
     profile_header_navigation = by_id['profile_header_hotkeys_a_to_e']['passed']
     hotkey_config_recovery = all(by_id[item]['passed'] for item in ('hotkey_click_focuses_favorite_input', 'escape_closes_hotkeys_from_favorite_input', 'hotkey_backtick_focuses_favorite_input'))
     auto_copy = all(by_id[item]['passed'] for item in ('favorite_setup_saved', 'favorite_shortcut_dispatched', 'clipboard_exact_match'))
@@ -206,8 +258,9 @@ def main(argv=None) -> int:
                 "sha256": hashlib.sha256(ARTIFACT.read_bytes()).hexdigest(),
             },
         },
-        "environment": {"kind": execution_environment_kind(), "engine": "chromium", "scenario": "profile-tabs-a-e-and-favorite-shortcut-copy-reveal"},
+        "environment": {"kind": execution_environment_kind(), "engine": "chromium", "scenario": "search-escape-profile-tabs-a-e-and-favorite-shortcut-copy-reveal"},
         "claims": [
+            {"id": "search_escape_recovery", "statement": "Slash focuses search; one Escape clears a populated query, hides the clear affordance, releases focus, also releases an empty focused search, and restores global hotkeys", "status": "PASS" if search_escape_recovery else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["search_escape_recovery"]},
             {"id": "profile_header_navigation", "statement": "A-E header hotkeys activate their matching profile slots in the browser", "status": "PASS" if profile_header_navigation else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["profile_header_hotkeys_a_to_e"]},
             {"id": "hotkey_config_focus_escape", "statement": "Opening Hotkeys by button or backtick focuses and reveals the Favorite prompt ID field, and Escape closes Hotkeys from that field", "status": "PASS" if hotkey_config_recovery else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["hotkey_click_focuses_favorite_input", "escape_closes_hotkeys_from_favorite_input", "hotkey_backtick_focuses_favorite_input"]},
             {"id": "favorite_auto_copy", "statement": "Typing configured Favorite P79 automatically copies canonical prompt content", "status": "PASS" if auto_copy else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["favorite_setup_saved", "favorite_shortcut_dispatched", "clipboard_exact_match"]},
