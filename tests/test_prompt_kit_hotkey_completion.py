@@ -201,6 +201,8 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             'profile_header_hotkeys_a_to_e',
             'page.keyboard.press("d")',
             'D custom profile hotkey activates and excludes P79 before shortcut',
+            "def canonical_clipboard_text(text: str) -> str:",
+            'canonical_clipboard_text(actual) == canonical_clipboard_text(expected)',
         ):
             self.assertIn(marker, proof)
         self.assertNotIn('.cat-tab[data-cat="doctrine"]', proof)
