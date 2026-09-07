@@ -41,8 +41,11 @@ jobs:
           test_text = tests.read_text(encoding='utf-8')
           replacements = (
               ('".mobile-quick-controls{display:grid}",', '".mobile-quick-controls{display:grid;gap:8px",'),
-              ('for phrase in ("Tap Quick Controls", "swipe up", "swipe left", "swipe right", "swipe down", "optional accelerator"):',
-               'for phrase in ("Tap **Quick Controls**", "swipe up", "swipe left", "swipe right", "swipe down", "optional accelerator"):')
+              ('"Tap Quick Controls",', '"Tap **Quick Controls**",'),
+              ('"Swipe up from Quick Controls",', '"swipe up on the pill",'),
+              ('"Swipe left from Quick Controls",', '"swipe left or tap the arrow",'),
+              ('"Swipe right from Quick Controls",', '"swipe right or tap the arrow",'),
+              ('"Swipe down from Quick Controls",', '"swipe down or tap the arrow",'),
           )
           for old_test, new_test in replacements:
               count = test_text.count(old_test)
