@@ -54,6 +54,10 @@ def main() -> int:
                 assert panel.is_visible(), "Quick Controls sheet did not open"
                 quick = page.locator("#mobileQuickControls")
                 assert quick.is_visible(), "touch command grid not visible"
+                active_id = page.evaluate("document.activeElement && document.activeElement.id")
+                assert active_id != "promptShortcutPromptId", active_id
+                active_action = page.evaluate("document.activeElement && document.activeElement.getAttribute('data-mobile-quick-action')")
+                assert active_action == "find", active_action
                 buttons = quick.locator(".mobile-quick-action")
                 assert buttons.count() >= 9, buttons.count()
                 for index in range(buttons.count()):

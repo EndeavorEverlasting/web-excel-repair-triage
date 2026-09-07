@@ -51,6 +51,12 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
         self.assertNotIn("document.addEventListener('pointerdown'", gesture)
         self.assertNotIn("document.addEventListener('touchstart'", gesture)
 
+    def test_mobile_open_focuses_touch_command_without_opening_keyboard_input(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        self.assertIn("function mobileQuickControlsActive()", source)
+        self.assertIn("if(!mobileQuickControlsActive()&&focusFavoritePromptShortcutInput(panel))return;", source)
+        self.assertIn("panel.querySelector('[data-mobile-quick-action=\"find\"]')", source)
+
     def test_mobile_sheet_is_visible_and_describes_gestures(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         for marker in (

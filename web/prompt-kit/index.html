@@ -1678,6 +1678,10 @@ function focusFavoritePromptShortcutInput(panel){
   return document.activeElement===promptInput
 }
 
+function mobileQuickControlsActive(){
+  return !!(window.matchMedia&&window.matchMedia('(max-width:760px)').matches)
+}
+
 function setHotkeyHelpOpen(open,restoreFocus){
   var panel=document.getElementById('hotkeyHelpPanel');
   var toggle=document.getElementById('hotkeyHelpToggle');
@@ -1685,9 +1689,9 @@ function setHotkeyHelpOpen(open,restoreFocus){
   panel.hidden=!open;
   toggle.setAttribute('aria-expanded',open?'true':'false');
   if(open){
-    if(focusFavoritePromptShortcutInput(panel))return;
-    var close=panel.querySelector('.hotkey-help-close');
-    if(close){try{close.focus({preventScroll:true})}catch(e){close.focus()}}
+    if(!mobileQuickControlsActive()&&focusFavoritePromptShortcutInput(panel))return;
+    var target=mobileQuickControlsActive()?panel.querySelector('[data-mobile-quick-action="find"]'):panel.querySelector('.hotkey-help-close');
+    if(target){try{target.focus({preventScroll:true})}catch(e){target.focus()}}
     return;
   }
   if(restoreFocus){try{toggle.focus({preventScroll:true})}catch(e){toggle.focus()}}
