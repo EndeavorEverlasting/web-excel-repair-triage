@@ -1,0 +1,512 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import textwrap
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def replace_once(text: str, old: str, new: str, label: str) -> str:
+    count = text.count(old)
+    if count != 1:
+        raise SystemExit(f"{label}: expected one anchor, found {count}")
+    return text.replace(old, new, 1)
+
+
+def patch_polish() -> None:
+    path = ROOT / "docs" / "prompt-kit-polish.js"
+    source = path.read_text(encoding="utf-8")
+
+    anchor = (
+        "function toggleCompactFilters(){\n"
+        "  var header=document.querySelector('.header');\n"
+        "  if(!header)return false;\n"
+        "  return setCompactFiltersVisible(header.classList.contains('filters-collapsed'))\n"
+        "}\n"
+    )
+    runtime = textwrap.dedent(r'''
+
+    var MOBILE_QUICK_GESTURE_THRESHOLD=38;
+    var MOBILE_QUICK_PROFILE_KEYS=['A','B','C','D','E'];
+
+    function mobileQuickCurrentProfileKey(){
+      try{
+        if(window.PromptKitProfiles&&typeof window.PromptKitProfiles.getState==='function'){
+          var state=window.PromptKitProfiles.getState();
+          if(state&&MOBILE_QUICK_PROFILE_KEYS.indexOf(state.activeKey)>=0)return state.activeKey
+        }
+      }catch(e){}
+      var active=document.querySelector('.cat-tab.profile-slot.active[data-profile-slot]');
+      var key=active&&active.getAttribute('data-profile-slot');
+      return MOBILE_QUICK_PROFILE_KEYS.indexOf(key)>=0?key:'A'
+    }
+
+    function mobileQuickCycleProfile(delta){
+      if(!window.PromptKitProfiles||typeof window.PromptKitProfiles.activateSlot!=='function')return false;
+      var current=mobileQuickCurrentProfileKey();
+      var index=MOBILE_QUICK_PROFILE_KEYS.indexOf(current);
+      var next=(index+delta+MOBILE_QUICK_PROFILE_KEYS.length)%MOBILE_QUICK_PROFILE_KEYS.length;
+      window.PromptKitProfiles.activateSlot(MOBILE_QUICK_PROFILE_KEYS[next]);
+      return true
+    }
+
+    function mobileQuickFocusSearch(){
+      showCompactFilters();
+      var search=document.getElementById('search');
+      if(!search)return false;
+      try{search.focus()}catch(e){return false}
+      try{search.scrollIntoView({block:'center',inline:'nearest'})}catch(e){}
+      return true
+    }
+
+    function performMobileQuickAction(action,origin){
+      if(action!=='panel')setHotkeyHelpOpen(false,false);
+      if(action==='find'){
+        if(typeof window.openPromptFinder==='function'){
+          window.openPromptFinder(origin||document.getElementById('hotkeyHelpToggle'));
+          return true
+        }
+        return mobileQuickFocusSearch()
+      }
+      if(action==='search')return mobileQuickFocusSearch();
+      if(action==='profile-prev')return mobileQuickCycleProfile(-1);
+      if(action==='profile-next')return mobileQuickCycleProfile(1);
+      if(action==='favorites'){activateFavoritesView();return true}
+      if(action==='filters'){toggleCompactFilters();return true}
+      if(action==='reference'){
+        var ref=document.getElementById('refBtn');
+        if(ref){ref.click();return true}
+        return false
+      }
+      if(action==='top'){scrollPromptKitTo('top');return true}
+      if(action==='bottom'){scrollPromptKitTo('bottom');return true}
+      return false
+    }
+
+    function installMobileQuickHandleGestures(toggle){
+      if(!toggle||toggle.__mobileQuickGesturesInstalled)return;
+      toggle.__mobileQuickGesturesInstalled=true;
+      var start=null;
+      toggle.addEventListener('pointerdown',function(e){
+        if(!window.matchMedia||!window.matchMedia('(max-width:760px)').matches)return;
+        if(e.pointerType&&e.pointerType!=='touch'&&e.pointerType!=='pen')return;
+        start={id:e.pointerId,x:e.clientX,y:e.clientY};
+        try{toggle.setPointerCapture(e.pointerId)}catch(ignore){}
+      });
+      toggle.addEventListener('pointercancel',function(){start=null});
+      toggle.addEventListener('pointerup',function(e){
+        if(!start||start.id!==e.pointerId){start=null;return}
+        var dx=e.clientX-start.x,dy=e.clientY-start.y;
+        start=null;
+        var ax=Math.abs(dx),ay=Math.abs(dy),action=null;
+        if(ay>=MOBILE_QUICK_GESTURE_THRESHOLD&&ay>ax*1.2)action=dy<0?'find':'filters';
+        else if(ax>=MOBILE_QUICK_GESTURE_THRESHOLD&&ax>ay*1.2)action=dx<0?'profile-prev':'profile-next';
+        if(!action)return;
+        e.preventDefault();e.stopPropagation();
+        toggle.__mobileQuickGestureConsumed=true;
+        var status=document.getElementById('mobileQuickGestureStatus');
+        if(status)status.textContent=action==='find'?'Find Prompt opened':action==='filters'?'Filters toggled':action==='profile-prev'?'Previous profile selected':'Next profile selected';
+        performMobileQuickAction(action,toggle);
+        setTimeout(function(){toggle.__mobileQuickGestureConsumed=false},450)
+      })
+    }
+    ''').rstrip() + "\n"
+    if "MOBILE_QUICK_GESTURE_THRESHOLD=38" not in source:
+        source = replace_once(source, anchor, anchor + runtime, "touch runtime")
+
+    old_mobile_css = "@media(max-width:760px){.hotkey-help{right:78px;bottom:16px}.hotkey-help-toggle{min-height:44px;padding:9px 12px}.hotkey-help-panel{position:fixed;right:12px;bottom:72px;width:calc(100vw - 24px);max-height:60vh}}"
+    new_mobile_css = "@media(max-width:760px){.ref-toggle{display:none!important}.hotkey-help{right:16px;bottom:16px}.hotkey-help-toggle{min-height:48px;padding:10px 14px;touch-action:none}.hotkey-desktop-label{display:none}.mobile-quick-label{display:inline}.hotkey-help-panel{position:fixed;right:12px;bottom:76px;width:calc(100vw - 24px);max-height:72vh}.mobile-quick-controls{display:grid}.mobile-quick-gesture-guide{display:block}}"
+    if new_mobile_css not in source:
+        source = replace_once(source, old_mobile_css, new_mobile_css, "mobile handle CSS")
+
+    old_icon_css = ".hotkey-help-icon{font-size:15px;line-height:1}"
+    new_icon_css = old_icon_css + ".mobile-quick-label{display:none}.mobile-quick-controls{display:none;gap:10px;padding:2px 0 12px;margin-bottom:10px;border-bottom:1px solid var(--border)}.mobile-quick-gesture-guide{display:none;padding:9px 10px;border:1px solid rgba(56,189,248,.25);border-radius:9px;background:rgba(14,116,144,.08);color:var(--text-secondary);font-size:10px;line-height:1.45;text-align:center}.mobile-quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.mobile-quick-action{min-height:44px;padding:9px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-surface);color:var(--text-primary);font:inherit;font-size:11px;font-weight:750;text-align:left;cursor:pointer;touch-action:manipulation}.mobile-quick-action:hover,.mobile-quick-action:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}.mobile-quick-heading{color:var(--text-primary);font-size:12px}"
+    if ".mobile-quick-controls{display:none" not in source:
+        source = replace_once(source, old_icon_css, new_icon_css, "quick panel CSS")
+
+    source = replace_once(
+        source,
+        "toggle.setAttribute('aria-label','Open keyboard shortcut help');",
+        "toggle.setAttribute('aria-label','Open Hotkeys on desktop or Quick Controls on touch devices');",
+        "touch-aware handle label",
+    )
+    source = replace_once(
+        source,
+        "toggle.innerHTML='<span class=\"hotkey-help-icon\" aria-hidden=\"true\">⌨</span><span>Hotkeys</span>';",
+        "toggle.innerHTML='<span class=\"hotkey-help-icon\" aria-hidden=\"true\">◎</span><span class=\"hotkey-desktop-label\">Hotkeys</span><span class=\"mobile-quick-label\">Quick Controls</span>';",
+        "mobile handle visual label",
+    )
+    source = replace_once(
+        source,
+        "title.textContent='Keyboard shortcuts';",
+        "title.textContent='Quick controls & hotkeys';",
+        "panel title",
+    )
+
+    panel_anchor = "  panel.appendChild(head);\n\n  var list=document.createElement('div');\n"
+    quick_panel = textwrap.dedent(r'''  panel.appendChild(head);
+
+    var mobileQuick=document.createElement('section');
+    mobileQuick.className='mobile-quick-controls';
+    mobileQuick.id='mobileQuickControls';
+    mobileQuick.setAttribute('aria-label','Mobile quick controls');
+    var quickHeading=document.createElement('strong');
+    quickHeading.className='mobile-quick-heading';
+    quickHeading.textContent='Touch shortcuts';
+    mobileQuick.appendChild(quickHeading);
+    var gestureGuide=document.createElement('div');
+    gestureGuide.className='mobile-quick-gesture-guide';
+    gestureGuide.textContent='Swipe the Quick Controls handle: ↑ Find · ← previous profile · → next profile · ↓ filters. Tap the handle for these labeled controls.';
+    mobileQuick.appendChild(gestureGuide);
+    var quickGrid=document.createElement('div');
+    quickGrid.className='mobile-quick-grid';
+    [
+      ['find','✦ Find Prompt'],
+      ['search','⌕ Search'],
+      ['profile-prev','← Previous profile'],
+      ['profile-next','Next profile →'],
+      ['favorites','★ Favorites'],
+      ['filters','▤ Filters'],
+      ['reference','☰ Reference'],
+      ['top','↑ Top'],
+      ['bottom','↓ Bottom']
+    ].forEach(function(item){
+      var button=document.createElement('button');
+      button.type='button';
+      button.className='mobile-quick-action';
+      button.setAttribute('data-mobile-quick-action',item[0]);
+      button.textContent=item[1];
+      button.addEventListener('click',function(){performMobileQuickAction(item[0],toggle)});
+      quickGrid.appendChild(button)
+    });
+    mobileQuick.appendChild(quickGrid);
+    var gestureStatus=document.createElement('div');
+    gestureStatus.id='mobileQuickGestureStatus';
+    gestureStatus.setAttribute('role','status');
+    gestureStatus.setAttribute('aria-live','polite');
+    gestureStatus.style.position='absolute';
+    gestureStatus.style.width='1px';
+    gestureStatus.style.height='1px';
+    gestureStatus.style.overflow='hidden';
+    gestureStatus.style.clip='rect(0 0 0 0)';
+    mobileQuick.appendChild(gestureStatus);
+    panel.appendChild(mobileQuick);
+
+    var list=document.createElement('div');
+    ''')
+    if "mobileQuick.id='mobileQuickControls'" not in source:
+        source = replace_once(source, panel_anchor, quick_panel, "quick panel insertion")
+
+    source = replace_once(
+        source,
+        "toggle.addEventListener('click',function(){setHotkeyHelpOpen(panel.hidden)});",
+        "toggle.addEventListener('click',function(e){if(toggle.__mobileQuickGestureConsumed){e.preventDefault();e.stopImmediatePropagation();return}setHotkeyHelpOpen(panel.hidden)});\n  installMobileQuickHandleGestures(toggle);",
+        "gesture install",
+    )
+    path.write_text(source, encoding="utf-8")
+
+
+def patch_contract_and_docs() -> None:
+    contract_path = ROOT / "harness" / "contracts" / "prompt-kit-mobile.v1.json"
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    if not any(item.get("id") == "mobile_quick_controls_gesture_parity" for item in contract["requirements"]):
+        contract["requirements"].insert(6, {
+            "id": "mobile_quick_controls_gesture_parity",
+            "expected": "Touch users receive one visible Quick Controls handle instead of keyboard-only floating controls. Tapping opens labeled Find/Search/Profile/Favorites/Filters/Reference/Top/Bottom commands; swiping up opens Find Prompt, left/right cycles the existing A-E profile slots, and down toggles filters. The desktop Hotkeys control and shared semantic actions remain authoritative; gestures do not create parallel state."
+        })
+    validation = "python -m unittest tests.test_prompt_kit_mobile_quick_controls -v"
+    if validation not in contract["validation"]:
+        contract["validation"].insert(2, validation)
+    contract_path.write_text(json.dumps(contract, indent=2) + "\n", encoding="utf-8")
+
+    mobile_test = ROOT / "tests" / "test_prompt_kit_mobile.py"
+    text = mobile_test.read_text(encoding="utf-8")
+    marker = '                "touch_copy_preserved",\n'
+    if '"mobile_quick_controls_gesture_parity",' not in text:
+        text = replace_once(text, marker, marker + '                "mobile_quick_controls_gesture_parity",\n', "mobile contract test")
+    mobile_test.write_text(text, encoding="utf-8")
+
+    guide_path = ROOT / "OPEN_PROMPT_KIT_ON_PHONE.md"
+    guide = guide_path.read_text(encoding="utf-8")
+    if "## Quick Controls on touch devices" not in guide:
+        guide += textwrap.dedent(r'''
+
+        ## Quick Controls on touch devices
+
+        On a phone or tablet, the floating **Quick Controls** handle is the touch counterpart to desktop Hotkeys. The old floating Reference button is folded into this control on narrow layouts so there is one obvious mobile command surface.
+
+        - **Tap Quick Controls** — open labeled touch commands for Find Prompt, Search, previous/next profile, Favorites, Filters, Reference, Top, and Bottom.
+        - **Swipe up from Quick Controls** — open **Find Prompt**.
+        - **Swipe left from Quick Controls** — move to the previous A-E profile slot.
+        - **Swipe right from Quick Controls** — move to the next A-E profile slot.
+        - **Swipe down from Quick Controls** — show/hide filters.
+
+        The gestures are optional accelerators. Every gesture also has a labeled button in the Quick Controls sheet; normal vertical page scrolling and browser-edge gestures are not captured because gesture recognition begins only on the handle. Desktop keyboard users keep the existing Hotkeys panel and shortcuts.
+        ''')
+    guide_path.write_text(guide.rstrip() + "\n", encoding="utf-8")
+
+
+def write_tests_and_workflow() -> None:
+    (ROOT / "tests" / "test_prompt_kit_mobile_quick_controls.py").write_text(textwrap.dedent(r'''from __future__ import annotations
+
+import json
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+POLISH = ROOT / "docs" / "prompt-kit-polish.js"
+CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-mobile.v1.json"
+PHONE_GUIDE = ROOT / "OPEN_PROMPT_KIT_ON_PHONE.md"
+GENERATED = ROOT / "web" / "prompt-kit" / "index.html"
+
+
+class PromptKitMobileQuickControlsTests(unittest.TestCase):
+    def test_touch_handle_reuses_existing_semantic_commands(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        for marker in (
+            "MOBILE_QUICK_GESTURE_THRESHOLD=38",
+            "MOBILE_QUICK_PROFILE_KEYS=['A','B','C','D','E']",
+            "function performMobileQuickAction(action,origin)",
+            "window.openPromptFinder",
+            "mobileQuickFocusSearch()",
+            "window.PromptKitProfiles.activateSlot",
+            "activateFavoritesView()",
+            "toggleCompactFilters()",
+            "document.getElementById('refBtn')",
+            "scrollPromptKitTo('top')",
+            "scrollPromptKitTo('bottom')",
+        ):
+            self.assertIn(marker, source)
+        self.assertNotIn("mobileQuickProfileState=", source)
+        self.assertNotIn("mobileQuickFavoritesState=", source)
+
+    def test_handle_gestures_are_bounded_to_touch_handle(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        start = source.index("function installMobileQuickHandleGestures(toggle)")
+        end = source.index("function normalizePromptShortcutId", start)
+        gesture = source[start:end]
+        for marker in (
+            "toggle.addEventListener('pointerdown'",
+            "toggle.addEventListener('pointerup'",
+            "window.matchMedia('(max-width:760px)').matches",
+            "e.pointerType!=='touch'&&e.pointerType!=='pen'",
+            "ay>ax*1.2",
+            "ax>ay*1.2",
+            "dy<0?'find':'filters'",
+            "dx<0?'profile-prev':'profile-next'",
+            "performMobileQuickAction(action,toggle)",
+        ):
+            self.assertIn(marker, gesture)
+        self.assertNotIn("document.addEventListener('pointerdown'", gesture)
+        self.assertNotIn("document.addEventListener('touchstart'", gesture)
+
+    def test_mobile_sheet_is_visible_and_describes_gestures(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        for marker in (
+            "class=\"mobile-quick-label\">Quick Controls",
+            "mobileQuick.id='mobileQuickControls'",
+            "quickHeading.textContent='Touch shortcuts'",
+            "Swipe the Quick Controls handle: ↑ Find · ← previous profile · → next profile · ↓ filters.",
+            "['find','✦ Find Prompt']",
+            "['search','⌕ Search']",
+            "['profile-prev','← Previous profile']",
+            "['profile-next','Next profile →']",
+            "['favorites','★ Favorites']",
+            "['filters','▤ Filters']",
+            "['reference','☰ Reference']",
+            "['top','↑ Top']",
+            "['bottom','↓ Bottom']",
+            ".ref-toggle{display:none!important}",
+            ".mobile-quick-controls{display:grid}",
+            ".hotkey-help-toggle{min-height:48px",
+        ):
+            self.assertIn(marker, source)
+
+    def test_contract_and_phone_guide_make_touch_parity_explicit(self) -> None:
+        contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
+        requirement = next(item for item in contract["requirements"] if item["id"] == "mobile_quick_controls_gesture_parity")
+        for phrase in ("Quick Controls", "swiping up", "left/right", "down toggles filters", "parallel state"):
+            self.assertIn(phrase, requirement["expected"])
+        guide = PHONE_GUIDE.read_text(encoding="utf-8")
+        for phrase in (
+            "## Quick Controls on touch devices",
+            "Tap Quick Controls",
+            "Swipe up from Quick Controls",
+            "Swipe left from Quick Controls",
+            "Swipe right from Quick Controls",
+            "Swipe down from Quick Controls",
+            "optional accelerators",
+        ):
+            self.assertIn(phrase, guide)
+
+    def test_generated_site_contains_quick_controls_runtime(self) -> None:
+        generated = GENERATED.read_text(encoding="utf-8")
+        for marker in (
+            "mobileQuickControls",
+            "Quick Controls",
+            "MOBILE_QUICK_GESTURE_THRESHOLD=38",
+            "performMobileQuickAction(action,origin)",
+        ):
+            self.assertIn(marker, generated)
+
+
+if __name__ == "__main__":
+    unittest.main()
+'''), encoding="utf-8")
+
+    (ROOT / "tests" / "prompt_kit_mobile_quick_controls_browser_proof.py").write_text(textwrap.dedent(r'''#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import threading
+from contextlib import closing
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+
+from playwright.sync_api import sync_playwright
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class Quiet(SimpleHTTPRequestHandler):
+    def log_message(self, fmt: str, *args: object) -> None:
+        pass
+
+
+def swipe(page, dx: int, dy: int) -> None:
+    page.evaluate(
+        """([dx,dy]) => {
+          const el=document.getElementById('hotkeyHelpToggle');
+          const r=el.getBoundingClientRect();
+          const x=r.left+r.width/2,y=r.top+r.height/2,id=71;
+          el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:id,pointerType:'touch',clientX:x,clientY:y}));
+          el.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:id,pointerType:'touch',clientX:x+dx,clientY:y+dy}));
+        }""",
+        [dx, dy],
+    )
+    page.wait_for_timeout(120)
+
+
+def main() -> int:
+    handler = lambda *args, **kwargs: Quiet(*args, directory=str(ROOT), **kwargs)
+    server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+            with closing(browser.new_context(viewport={"width":390,"height":844}, is_mobile=True, has_touch=True, reduced_motion="reduce")) as context:
+                page = context.new_page()
+                page.goto(f"http://127.0.0.1:{server.server_port}/web/prompt-kit/index.html", wait_until="domcontentloaded")
+                handle = page.locator("#hotkeyHelpToggle")
+                assert handle.is_visible(), "Quick Controls handle is not visible"
+                assert "Quick Controls" in handle.inner_text(), handle.inner_text()
+                assert not page.locator("#refBtn").is_visible(), "legacy floating Reference button remains visible on mobile"
+                box = handle.bounding_box() or {}
+                assert box.get("height", 0) >= 44 and box.get("width", 0) >= 44, box
+
+                handle.click()
+                panel = page.locator("#hotkeyHelpPanel")
+                assert panel.is_visible(), "Quick Controls sheet did not open"
+                quick = page.locator("#mobileQuickControls")
+                assert quick.is_visible(), "touch command grid not visible"
+                buttons = quick.locator(".mobile-quick-action")
+                assert buttons.count() >= 9, buttons.count()
+                for index in range(buttons.count()):
+                    rect = buttons.nth(index).bounding_box() or {}
+                    assert rect.get("height", 0) >= 40, (index, rect)
+
+                quick.get_by_role("button", name="✦ Find Prompt").click()
+                assert page.locator("#promptDetailOverlay").evaluate("el=>el.classList.contains('open')")
+                assert "Prompt Kit Tutorial" in page.locator("#promptDetail").inner_text()
+                page.locator(".prompt-detail-close").click()
+
+                page.evaluate("window.PromptKitProfiles.activateSlot('A')")
+                swipe(page, 70, 0)
+                assert page.evaluate("window.PromptKitProfiles.getState().activeKey") == "B"
+                swipe(page, -70, 0)
+                assert page.evaluate("window.PromptKitProfiles.getState().activeKey") == "A"
+
+                before = page.locator(".header").evaluate("el=>el.classList.contains('filters-collapsed')")
+                swipe(page, 0, 70)
+                after = page.locator(".header").evaluate("el=>el.classList.contains('filters-collapsed')")
+                assert before != after, (before, after)
+
+                swipe(page, 0, -70)
+                assert page.locator("#promptDetailOverlay").evaluate("el=>el.classList.contains('open')")
+                assert "Prompt Kit Tutorial" in page.locator("#promptDetail").inner_text()
+
+                print(json.dumps({"verdict":"PASS","viewport":"390x844","handle":"Quick Controls","gestures":["up=find","left/right=profiles","down=filters"]}))
+            browser.close()
+    finally:
+        server.shutdown(); server.server_close(); thread.join(timeout=2)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+'''), encoding="utf-8")
+
+    workflow = ROOT / ".github" / "workflows" / "prompt-kit-mobile-quick-controls.yml"
+    workflow.write_text(textwrap.dedent('''name: Prompt Kit mobile quick controls
+
+on:
+  pull_request:
+    paths:
+      - 'docs/prompt-kit-polish.js'
+      - 'harness/contracts/prompt-kit-mobile.v1.json'
+      - 'OPEN_PROMPT_KIT_ON_PHONE.md'
+      - 'tests/test_prompt_kit_mobile.py'
+      - 'tests/test_prompt_kit_mobile_quick_controls.py'
+      - 'tests/prompt_kit_mobile_quick_controls_browser_proof.py'
+      - 'web/prompt-kit/index.html'
+      - '.github/workflows/prompt-kit-mobile-quick-controls.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/prompt-kit-polish.js'
+      - 'harness/contracts/prompt-kit-mobile.v1.json'
+      - 'OPEN_PROMPT_KIT_ON_PHONE.md'
+      - 'tests/test_prompt_kit_mobile.py'
+      - 'tests/test_prompt_kit_mobile_quick_controls.py'
+      - 'tests/prompt_kit_mobile_quick_controls_browser_proof.py'
+      - 'web/prompt-kit/index.html'
+      - '.github/workflows/prompt-kit-mobile-quick-controls.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  quick-controls:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+      - name: Static mobile contract
+        run: |
+          node --check docs/prompt-kit-polish.js
+          python -m unittest tests.test_prompt_kit_mobile tests.test_prompt_kit_mobile_quick_controls -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Install Chromium proof dependency
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+      - name: Chromium quick-controls journey
+        run: python tests/prompt_kit_mobile_quick_controls_browser_proof.py
+'''), encoding="utf-8")
+
+
+def main() -> int:
+    patch_polish()
+    patch_contract_and_docs()
+    write_tests_and_workflow()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
