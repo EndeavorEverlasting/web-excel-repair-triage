@@ -50,7 +50,9 @@ If you already know the prompt ID, do **not** open More and do **not** use a swi
 
 You do not open **More** first. **Swiping is not required.** This path also avoids opening Chrome's **Find in page**, typing the `P`, and stepping through text matches that do not understand Prompt Kit IDs.
 
-If a shorter ID is also the start of a longer ID (for example `P11` and `P111`), the shorter one waits instead of stealing the route. Keep typing for the longer ID, or tap **Go** to deliberately open the shorter exact ID.
+If a shorter ID is also the start of a longer ID (for example `P11` and `P111`), the shorter one waits instead of stealing the route. For **P11**, type `11`; the button changes to **Open P11** and the status tells you the ID is exact. Press **Enter** (including the phone keyboard's Go/Enter key) or tap **Open P11** to open it, or keep typing `1` to continue to P111. There is no timing race.
+
+For the zero-padded IDs `P00` through `P09`, keep the **leading zero**: type `00` for P00, `01` for P01, and so on. A prefix such as `1` that is not itself a canonical prompt stays in **Keep typing** state and cannot submit a fake exact target. A nonexistent number stays closed with a clear no-match message. Pasting `P111` is also safe: the control strips the `P` and resolves the same canonical ID.
 
 ## More controls on touch devices
 

@@ -56,18 +56,50 @@ def main() -> int:
                 assert "P111" in detail_text, detail_text[:300]
                 page.locator(".prompt-detail-close").click()
 
-                # Prefix collision: P11 must not steal P111; explicit Go still opens exact P11 when requested.
+                # Prefix collision: P11 must not steal P111, but Enter/submit is an obvious exact-ID choice.
                 jump.click()
                 inp.fill("11")
-                inp.dispatch_event("input")
                 page.wait_for_timeout(80)
                 assert not overlay.evaluate("el=>el.classList.contains('open')"), "P11 opened before the user resolved its P111 prefix collision"
                 status = page.locator("#mobilePromptJumpStatus").inner_text()
-                assert "P11 exists" in status and "Keep typing" in status, status
-                page.locator(".mobile-prompt-jump-go").click()
-                assert overlay.evaluate("el=>el.classList.contains('open')"), "explicit Go did not open exact P11"
+                go = page.locator(".mobile-prompt-jump-go")
+                assert "P11 is exact" in status and "Press Enter" in status and "keep typing" in status.lower(), status
+                assert go.is_enabled(), "exact ambiguous P11 should be explicitly submittable"
+                assert go.inner_text() == "Open P11", go.inner_text()
+                inp.press("Enter")
+                assert overlay.evaluate("el=>el.classList.contains('open')"), "Enter did not open exact P11"
                 assert "P11" in page.locator("#promptDetail").inner_text()
                 page.locator(".prompt-detail-close").click()
+
+                # Prefix-only input has no exact target, so submit stays disabled instead of pretending there is one.
+                jump.click()
+                inp.fill("1")
+                page.wait_for_timeout(40)
+                assert not overlay.evaluate("el=>el.classList.contains('open')")
+                assert page.locator(".mobile-prompt-jump-go").is_disabled()
+                assert "Keep typing P1" in page.locator("#mobilePromptJumpStatus").inner_text()
+                set_open = page.evaluate("document.getElementById('mobilePromptJumpForm').hidden=false; document.getElementById('mobilePromptJumpToggle').setAttribute('aria-expanded','true'); true")
+                assert set_open
+
+                # Canonical leading-zero IDs remain first-class (P01 is entered as 01).
+                inp.fill("01")
+                page.wait_for_timeout(40)
+                assert overlay.evaluate("el=>el.classList.contains('open')"), "P01 did not open from leading-zero digits"
+                assert "P01" in page.locator("#promptDetail").inner_text()
+                page.locator(".prompt-detail-close").click()
+
+                # Pasted IDs are sanitized, while nonexistent IDs fail closed with no submit target.
+                jump.click()
+                inp.fill("P111")
+                page.wait_for_timeout(40)
+                assert overlay.evaluate("el=>el.classList.contains('open')"), "pasted P111 was not sanitized to the known ID"
+                page.locator(".prompt-detail-close").click()
+                jump.click()
+                inp.fill("999999")
+                page.wait_for_timeout(40)
+                assert not overlay.evaluate("el=>el.classList.contains('open')")
+                assert page.locator(".mobile-prompt-jump-go").is_disabled()
+                assert "No prompt starts with P999999" in page.locator("#mobilePromptJumpStatus").inner_text()
 
                 # Secondary actions are explicit and compact; gesture discovery is not required.
                 more.click()
@@ -91,6 +123,7 @@ def main() -> int:
                     "verdict": "PASS",
                     "viewport": "390x844",
                     "known_id": "P111",
+                    "edge_cases": ["P11-enter", "P1-prefix-only", "P01-leading-zero", "paste-P111", "P999999-missing"],
                     "direct_path": "tap Go to P# + type 111",
                     "direct_interactions": 4,
                     "more_panel_required": False,
