@@ -79,6 +79,8 @@ SYNONYMS = {
     "ci repair": "P32", "validation repair": "P32",
     "harness hardening": "P33", "harden": "P33",
     "technician": "P34", "ux": "P34",
+    "phone native ux": "P129", "mobile interaction design": "P129", "touch first ux": "P129",
+    "cross input ux": "P129", "input modality ux": "P129", "mouse keyboard phone ux": "P129",
     "pr branch": "P36", "branch repair": "P36",
     "compiler": "P45", "ai to gnhf": "P45",
     "repo harness builder": "P46",
