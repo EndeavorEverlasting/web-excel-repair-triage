@@ -47,15 +47,12 @@ MOBILE_TEST.write_text(mobile_test, encoding="utf-8")
 
 direct_test = DIRECT_TEST.read_text(encoding="utf-8")
 direct_test = direct_test.replace('"Chrome Find in page",', '"Find in page",')
-direct_test = direct_test.replace('"mobile-quick-label\\\">More",', '"mobile-quick-label\\\">More",')
-# The source file contains literal double quotes inside the single-quoted HTML string.
-direct_test = direct_test.replace('"mobile-quick-label\\\">More"', '"mobile-quick-label\\\">More"')
-# Normalize the source marker if the generated test came from the older escaped representation.
-direct_test = direct_test.replace('"mobile-quick-label\\">More"', '"mobile-quick-label\">More"')
-if '"mobile-quick-label\">More"' not in direct_test:
-    anchor = '        for marker in (\n'
-    if anchor not in direct_test:
-        raise SystemExit("direct test marker list missing")
+lines = direct_test.splitlines()
+more_lines = [i for i, line in enumerate(lines) if "mobile-quick-label" in line and "More" in line]
+if len(more_lines) != 1:
+    raise SystemExit(f"direct test More marker: expected one line, found {len(more_lines)}")
+lines[more_lines[0]] = "            'mobile-quick-label\">More',"
+direct_test = "\n".join(lines) + "\n"
 # Add current-floor compactness markers beside the existing mobile hide assertion if absent.
 if '".hotkey-help-panel{width:min(340px,calc(100vw - 24px));max-height:min(460px,58vh)}",' not in direct_test:
     hide = '            ".hotkey-help-list,.hotkey-shortcut-config,.prompt-profile-editor{display:none!important}",\n'
