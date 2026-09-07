@@ -1,0 +1,9 @@
+name: Temporary no-op trigger
+on:
+  push:
+    branches: [feat/prompt-kit-phone-native-ux-modality-20260907]
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo trigger
