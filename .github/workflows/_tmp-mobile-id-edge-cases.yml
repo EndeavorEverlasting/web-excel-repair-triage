@@ -26,7 +26,9 @@ jobs:
           python-version: '3.12'
 
       - name: Apply bounded repair
-        run: python scripts/_tmp_mobile_id_edge_case_executor.py
+        run: |
+          python scripts/_tmp_mobile_id_edge_case_executor.py
+          python scripts/_tmp_mobile_id_edge_case_postprocess.py
 
       - name: Regenerate canonical Prompt Kit
         run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
