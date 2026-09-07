@@ -323,7 +323,6 @@ function toggleCompactFilters(){
 }
 
 
-var MOBILE_QUICK_GESTURE_THRESHOLD=38;
 var MOBILE_QUICK_PROFILE_KEYS=['A','B','C','D','E'];
 
 function mobileQuickCurrentProfileKey(){
@@ -380,32 +379,120 @@ function performMobileQuickAction(action,origin){
   return false
 }
 
-function installMobileQuickHandleGestures(toggle){
-  if(!toggle||toggle.__mobileQuickGesturesInstalled)return;
-  toggle.__mobileQuickGesturesInstalled=true;
-  var start=null;
-  toggle.addEventListener('pointerdown',function(e){
-    if(!window.matchMedia||!window.matchMedia('(max-width:760px)').matches)return;
-    if(e.pointerType&&e.pointerType!=='touch'&&e.pointerType!=='pen')return;
-    start={id:e.pointerId,x:e.clientX,y:e.clientY};
-    try{toggle.setPointerCapture(e.pointerId)}catch(ignore){}
-  });
-  toggle.addEventListener('pointercancel',function(){start=null});
-  toggle.addEventListener('pointerup',function(e){
-    if(!start||start.id!==e.pointerId){start=null;return}
-    var dx=e.clientX-start.x,dy=e.clientY-start.y;
-    start=null;
-    var ax=Math.abs(dx),ay=Math.abs(dy),action=null;
-    if(ay>=MOBILE_QUICK_GESTURE_THRESHOLD&&ay>ax*1.2)action=dy<0?'find':'filters';
-    else if(ax>=MOBILE_QUICK_GESTURE_THRESHOLD&&ax>ay*1.2)action=dx<0?'profile-prev':'profile-next';
-    if(!action)return;
-    e.preventDefault();e.stopPropagation();
-    toggle.__mobileQuickGestureConsumed=true;
-    var status=document.getElementById('mobileQuickGestureStatus');
-    if(status)status.textContent=action==='find'?'Find Prompt opened':action==='filters'?'Filters toggled':action==='profile-prev'?'Previous profile selected':'Next profile selected';
-    performMobileQuickAction(action,toggle);
-    setTimeout(function(){toggle.__mobileQuickGestureConsumed=false},450)
-  })
+function mobilePromptJumpDigits(raw){
+  return String(raw||'').replace(/\D+/g,'').slice(0,6)
+}
+
+function mobilePromptJumpPrompt(promptId){
+  var catalog=typeof PROMPTS!=='undefined'&&Array.isArray(PROMPTS)?PROMPTS:[];
+  return catalog.find(function(item){return item&&item.id===promptId})||null
+}
+
+function mobilePromptJumpHasPrefix(promptId){
+  var catalog=typeof PROMPTS!=='undefined'&&Array.isArray(PROMPTS)?PROMPTS:[];
+  return catalog.some(function(item){return item&&typeof item.id==='string'&&item.id!==promptId&&item.id.indexOf(promptId)===0})
+}
+
+function setMobilePromptJumpOpen(open,restoreFocus){
+  var form=document.getElementById('mobilePromptJumpForm');
+  var toggle=document.getElementById('mobilePromptJumpToggle');
+  var input=document.getElementById('mobilePromptJumpInput');
+  if(!form||!toggle)return false;
+  form.hidden=!open;
+  toggle.setAttribute('aria-expanded',open?'true':'false');
+  if(open&&input){
+    input.value='';
+    var status=document.getElementById('mobilePromptJumpStatus');
+    if(status)status.textContent='Type the digits after P. Example: 111.';
+    try{input.focus({preventScroll:true})}catch(e){input.focus()}
+  }else if(restoreFocus){
+    try{toggle.focus({preventScroll:true})}catch(e){toggle.focus()}
+  }
+  return true
+}
+
+function resolveMobilePromptJump(force){
+  var input=document.getElementById('mobilePromptJumpInput');
+  var status=document.getElementById('mobilePromptJumpStatus');
+  var toggle=document.getElementById('mobilePromptJumpToggle');
+  if(!input)return false;
+  var digits=mobilePromptJumpDigits(input.value);
+  if(input.value!==digits)input.value=digits;
+  if(!digits){if(status)status.textContent='Type the digits after P. Example: 111.';return false}
+  var promptId='P'+digits;
+  var prompt=mobilePromptJumpPrompt(promptId);
+  var longer=mobilePromptJumpHasPrefix(promptId);
+  if(prompt&&(!longer||force)){
+    setMobilePromptJumpOpen(false,false);
+    setHotkeyHelpOpen(false,false);
+    if(typeof window.showPromptDetail==='function'){
+      window.showPromptDetail(promptId,toggle||null);
+      return true
+    }
+    if(status)status.textContent='Prompt detail is unavailable.';
+    return false
+  }
+  if(prompt&&longer){if(status)status.textContent=promptId+' exists. Keep typing, or tap Go for '+promptId+'.';return false}
+  var catalog=typeof PROMPTS!=='undefined'&&Array.isArray(PROMPTS)?PROMPTS:[];
+  var hasCandidate=catalog.some(function(item){return item&&typeof item.id==='string'&&item.id.indexOf(promptId)===0});
+  if(status)status.textContent=hasCandidate?'Keep typing '+promptId+'…':'No prompt begins with '+promptId+'.';
+  return false
+}
+
+function installMobilePromptJump(shell){
+  if(!shell||document.getElementById('mobilePromptJump'))return;
+  if(!document.getElementById('mobile-prompt-jump-styles')){
+    var style=document.createElement('style');
+    style.id='mobile-prompt-jump-styles';
+    style.textContent='.mobile-prompt-jump{display:none}.mobile-prompt-jump-form[hidden]{display:none}@media(max-width:760px){.hotkey-help{display:flex;align-items:flex-end;gap:8px;right:12px;bottom:12px}.mobile-prompt-jump{display:block;position:relative}.mobile-prompt-jump-toggle,.hotkey-help-toggle{min-height:52px;border-radius:999px;touch-action:manipulation!important}.mobile-prompt-jump-toggle{display:inline-flex;align-items:center;justify-content:center;padding:8px 14px;border:1px solid rgba(56,189,248,.75);background:linear-gradient(135deg,rgba(2,132,199,.96),rgba(15,23,42,.98));color:var(--text-primary);font:800 12px/1 inherit;box-shadow:0 0 0 1px rgba(56,189,248,.14),0 0 18px rgba(56,189,248,.28),0 8px 24px rgba(0,0,0,.28)}.mobile-prompt-jump-toggle:focus-visible{outline:none;box-shadow:0 0 0 3px var(--accent-glow),0 0 24px rgba(56,189,248,.4)}.mobile-prompt-jump-form{position:fixed;right:12px;bottom:74px;width:min(300px,calc(100vw - 24px));display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;padding:10px;border:1px solid rgba(56,189,248,.55);border-radius:12px;background:rgba(15,23,42,.99);box-shadow:0 14px 40px rgba(0,0,0,.48);z-index:47}.mobile-prompt-jump-prefix{font:900 18px/1 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--accent)}.mobile-prompt-jump-input{min-width:0;height:48px;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-surface);color:var(--text-primary);font:800 18px/1 ui-monospace,SFMono-Regular,Consolas,monospace}.mobile-prompt-jump-go{min-width:52px;height:48px;border:1px solid var(--accent);border-radius:8px;background:var(--accent-glow);color:var(--text-primary);font:800 12px/1 inherit}.mobile-prompt-jump-status{grid-column:1/-1;min-height:16px;color:var(--text-secondary);font-size:10px;line-height:1.35}.mobile-quick-label{display:inline}.hotkey-panel-title{display:none}.mobile-quick-panel-title{display:inline}.hotkey-help-panel{width:min(340px,calc(100vw - 24px));max-height:min(460px,58vh)}.hotkey-help-list,.hotkey-shortcut-config,.prompt-profile-editor{display:none!important}.mobile-quick-handle-cue{display:none!important}}';
+    document.head.appendChild(style)
+  }
+  var jump=document.createElement('div');
+  jump.className='mobile-prompt-jump';
+  jump.id='mobilePromptJump';
+  var toggle=document.createElement('button');
+  toggle.className='mobile-prompt-jump-toggle';
+  toggle.id='mobilePromptJumpToggle';
+  toggle.type='button';
+  toggle.textContent='Go to P#';
+  toggle.setAttribute('aria-expanded','false');
+  toggle.setAttribute('aria-controls','mobilePromptJumpForm');
+  toggle.setAttribute('aria-label','Go directly to a prompt by number');
+  var form=document.createElement('form');
+  form.className='mobile-prompt-jump-form';
+  form.id='mobilePromptJumpForm';
+  form.hidden=true;
+  form.setAttribute('aria-label','Go directly to prompt ID');
+  var prefix=document.createElement('span');
+  prefix.className='mobile-prompt-jump-prefix';
+  prefix.textContent='P';
+  prefix.setAttribute('aria-hidden','true');
+  var input=document.createElement('input');
+  input.className='mobile-prompt-jump-input';
+  input.id='mobilePromptJumpInput';
+  input.type='text';
+  input.inputMode='numeric';
+  input.pattern='[0-9]*';
+  input.enterKeyHint='go';
+  input.autocomplete='off';
+  input.placeholder='111';
+  input.setAttribute('aria-label','Prompt number after P');
+  var go=document.createElement('button');
+  go.className='mobile-prompt-jump-go';
+  go.type='submit';
+  go.textContent='Go';
+  go.setAttribute('aria-label','Open exact prompt ID');
+  var status=document.createElement('div');
+  status.className='mobile-prompt-jump-status';
+  status.id='mobilePromptJumpStatus';
+  status.setAttribute('role','status');
+  status.setAttribute('aria-live','polite');
+  form.appendChild(prefix);form.appendChild(input);form.appendChild(go);form.appendChild(status);
+  jump.appendChild(toggle);jump.appendChild(form);shell.appendChild(jump);
+  toggle.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();setHotkeyHelpOpen(false,false);setMobilePromptJumpOpen(form.hidden,false)});
+  input.addEventListener('input',function(){resolveMobilePromptJump(false)});
+  input.addEventListener('keydown',function(e){if(e.key==='Escape'){e.preventDefault();setMobilePromptJumpOpen(false,true)}});
+  form.addEventListener('submit',function(e){e.preventDefault();resolveMobilePromptJump(true)});
 }
 
 function normalizePromptShortcutId(raw){
@@ -625,12 +712,13 @@ function ensureHotkeyHelp(){
   if(!document.getElementById('prompt-kit-hotkey-help-styles')){
     var style=document.createElement('style');
     style.id='prompt-kit-hotkey-help-styles';
-    style.textContent='.hotkey-help{position:fixed;right:80px;bottom:16px;z-index:45;font-family:inherit}.hotkey-help-toggle{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:8px 11px;border:1px solid rgba(56,189,248,.62);border-radius:999px;background:linear-gradient(135deg,rgba(14,116,144,.92),rgba(15,23,42,.96));color:var(--text-primary);font-size:11px;font-weight:800;letter-spacing:.03em;cursor:pointer;box-shadow:0 0 0 1px rgba(56,189,248,.14),0 0 18px rgba(56,189,248,.32),0 8px 24px rgba(0,0,0,.28);animation:hotkey-help-glow 2.8s ease-in-out infinite}.hotkey-help-toggle:hover,.hotkey-help-toggle:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow),0 0 26px rgba(56,189,248,.46)}.hotkey-help-icon{font-size:15px;line-height:1}.mobile-quick-label{display:none}.mobile-quick-controls{display:none;gap:10px;padding:2px 0 12px;margin-bottom:10px;border-bottom:1px solid var(--border)}.mobile-quick-gesture-guide{display:none;padding:9px 10px;border:1px solid rgba(56,189,248,.25);border-radius:9px;background:rgba(14,116,144,.08);color:var(--text-secondary);font-size:10px;line-height:1.45;text-align:center}.mobile-quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.mobile-quick-action{min-height:44px;padding:9px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-surface);color:var(--text-primary);font:inherit;font-size:11px;font-weight:750;text-align:left;cursor:pointer;touch-action:manipulation}.mobile-quick-action:hover,.mobile-quick-action:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}.mobile-quick-heading{color:var(--text-primary);font-size:12px}.hotkey-help-panel{position:absolute;right:0;bottom:calc(100% + 10px);width:min(292px,calc(100vw - 24px));max-height:min(520px,70vh);overflow:auto;padding:12px;border:1px solid rgba(56,189,248,.42);border-radius:12px;background:rgba(15,23,42,.98);box-shadow:0 0 0 1px rgba(56,189,248,.12),0 0 28px rgba(56,189,248,.22),0 18px 48px rgba(0,0,0,.46);backdrop-filter:blur(12px)}.hotkey-help-panel[hidden]{display:none}.hotkey-help-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;color:var(--text-primary);font-size:12px}.hotkey-help-close{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:1px solid var(--border);border-radius:7px;background:var(--bg-surface);color:var(--text-secondary);cursor:pointer}.hotkey-help-close:hover,.hotkey-help-close:focus-visible{outline:none;border-color:var(--accent);color:var(--text-primary);box-shadow:0 0 0 2px var(--accent-glow)}.hotkey-help-list{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center}.hotkey-help-list kbd{min-width:28px;padding:3px 6px;border:1px solid var(--border);border-bottom-color:rgba(148,163,184,.65);border-radius:6px;background:var(--bg-surface);color:var(--accent);font:700 10px/1.3 ui-monospace,SFMono-Regular,Consolas,monospace;text-align:center}.hotkey-help-list span{color:var(--text-secondary);font-size:11px;line-height:1.35}@keyframes hotkey-help-glow{0%,100%{box-shadow:0 0 0 1px rgba(56,189,248,.12),0 0 14px rgba(56,189,248,.24),0 8px 24px rgba(0,0,0,.28)}50%{box-shadow:0 0 0 1px rgba(56,189,248,.24),0 0 24px rgba(56,189,248,.46),0 8px 28px rgba(0,0,0,.34)}}@media(max-width:760px){.ref-toggle{display:none!important}.hotkey-help{right:16px;bottom:16px}.hotkey-help-toggle{min-height:48px;padding:10px 14px;touch-action:none}.hotkey-desktop-label{display:none}.mobile-quick-label{display:inline}.hotkey-help-panel{position:fixed;right:12px;bottom:76px;width:calc(100vw - 24px);max-height:72vh}.mobile-quick-controls{display:grid}.mobile-quick-gesture-guide{display:block}}@media(prefers-reduced-motion:reduce){.hotkey-help-toggle{animation:none}}';
+    style.textContent='.hotkey-help{position:fixed;right:80px;bottom:16px;z-index:45;font-family:inherit}.hotkey-help-toggle{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:8px 11px;border:1px solid rgba(56,189,248,.62);border-radius:999px;background:linear-gradient(135deg,rgba(14,116,144,.92),rgba(15,23,42,.96));color:var(--text-primary);font-size:11px;font-weight:800;letter-spacing:.03em;cursor:pointer;box-shadow:0 0 0 1px rgba(56,189,248,.14),0 0 18px rgba(56,189,248,.32),0 8px 24px rgba(0,0,0,.28);animation:hotkey-help-glow 2.8s ease-in-out infinite}.hotkey-help-toggle:hover,.hotkey-help-toggle:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow),0 0 26px rgba(56,189,248,.46)}.hotkey-help-icon{font-size:15px;line-height:1}.mobile-quick-label{display:none}.mobile-quick-controls{display:none;gap:10px;padding:2px 0 12px;margin-bottom:10px;border-bottom:1px solid var(--border)}.mobile-quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.mobile-quick-action{min-height:44px;padding:9px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-surface);color:var(--text-primary);font:inherit;font-size:11px;font-weight:750;text-align:left;cursor:pointer;touch-action:manipulation}.mobile-quick-action:hover,.mobile-quick-action:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}.mobile-quick-heading{color:var(--text-primary);font-size:12px}.hotkey-help-panel{position:absolute;right:0;bottom:calc(100% + 10px);width:min(292px,calc(100vw - 24px));max-height:min(520px,70vh);overflow:auto;padding:12px;border:1px solid rgba(56,189,248,.42);border-radius:12px;background:rgba(15,23,42,.98);box-shadow:0 0 0 1px rgba(56,189,248,.12),0 0 28px rgba(56,189,248,.22),0 18px 48px rgba(0,0,0,.46);backdrop-filter:blur(12px)}.hotkey-help-panel[hidden]{display:none}.hotkey-help-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;color:var(--text-primary);font-size:12px}.hotkey-help-close{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:1px solid var(--border);border-radius:7px;background:var(--bg-surface);color:var(--text-secondary);cursor:pointer}.hotkey-help-close:hover,.hotkey-help-close:focus-visible{outline:none;border-color:var(--accent);color:var(--text-primary);box-shadow:0 0 0 2px var(--accent-glow)}.hotkey-help-list{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center}.hotkey-help-list kbd{min-width:28px;padding:3px 6px;border:1px solid var(--border);border-bottom-color:rgba(148,163,184,.65);border-radius:6px;background:var(--bg-surface);color:var(--accent);font:700 10px/1.3 ui-monospace,SFMono-Regular,Consolas,monospace;text-align:center}.hotkey-help-list span{color:var(--text-secondary);font-size:11px;line-height:1.35}@keyframes hotkey-help-glow{0%,100%{box-shadow:0 0 0 1px rgba(56,189,248,.12),0 0 14px rgba(56,189,248,.24),0 8px 24px rgba(0,0,0,.28)}50%{box-shadow:0 0 0 1px rgba(56,189,248,.24),0 0 24px rgba(56,189,248,.46),0 8px 28px rgba(0,0,0,.34)}}@media(max-width:760px){.ref-toggle{display:none!important}.hotkey-help{right:16px;bottom:16px}.hotkey-help-toggle{min-height:48px;padding:10px 14px;touch-action:none}.hotkey-desktop-label{display:none}.mobile-quick-label{display:inline}.hotkey-help-panel{position:fixed;right:12px;bottom:76px;width:calc(100vw - 24px);max-height:72vh}.mobile-quick-controls{display:grid}.mobile-quick-gesture-guide{display:block}}@media(prefers-reduced-motion:reduce){.hotkey-help-toggle{animation:none}}';
     document.head.appendChild(style)
   }
   var shell=document.createElement('div');
   shell.className='hotkey-help';
   shell.id='hotkeyHelp';
+  installMobilePromptJump(shell);
 
   var toggle=document.createElement('button');
   toggle.className='hotkey-help-toggle';
@@ -638,9 +726,9 @@ function ensureHotkeyHelp(){
   toggle.type='button';
   toggle.setAttribute('aria-expanded','false');
   toggle.setAttribute('aria-controls','hotkeyHelpPanel');
-  toggle.setAttribute('aria-label','Open Hotkeys on desktop or Quick Controls on touch devices');
+  toggle.setAttribute('aria-label','Open Hotkeys on desktop. On touch, open More controls. Use Go to P# for the fastest known prompt ID path.');
   toggle.setAttribute('aria-keyshortcuts','`');
-  toggle.innerHTML='<span class="hotkey-help-icon" aria-hidden="true">◎</span><span class="hotkey-desktop-label">Hotkeys</span><span class="mobile-quick-label">Quick Controls</span>';
+  toggle.innerHTML='<span class="hotkey-help-icon" aria-hidden="true">◎</span><span class="hotkey-desktop-label">Hotkeys</span><span class="mobile-quick-label">More</span>';
   shell.appendChild(toggle);
 
   var panel=document.createElement('div');
@@ -653,7 +741,7 @@ function ensureHotkeyHelp(){
   var head=document.createElement('div');
   head.className='hotkey-help-head';
   var title=document.createElement('strong');
-  title.textContent='Quick controls & hotkeys';
+  title.innerHTML='<span class="hotkey-panel-title">Hotkeys</span><span class="mobile-quick-panel-title">More controls</span>';
   var close=document.createElement('button');
   close.className='hotkey-help-close';
   close.type='button';
@@ -669,19 +757,15 @@ panel.appendChild(head);
   mobileQuick.setAttribute('aria-label','Mobile quick controls');
   var quickHeading=document.createElement('strong');
   quickHeading.className='mobile-quick-heading';
-  quickHeading.textContent='Touch shortcuts';
+  quickHeading.textContent='More controls';
   mobileQuick.appendChild(quickHeading);
-  var gestureGuide=document.createElement('div');
-  gestureGuide.className='mobile-quick-gesture-guide';
-  gestureGuide.textContent='Swipe the Quick Controls handle: ↑ Find · ← previous profile · → next profile · ↓ filters. Tap the handle for these labeled controls.';
-  mobileQuick.appendChild(gestureGuide);
   var quickGrid=document.createElement('div');
   quickGrid.className='mobile-quick-grid';
   [
     ['find','✦ Find Prompt'],
-    ['search','⌕ Search'],
     ['profile-prev','← Previous profile'],
     ['profile-next','Next profile →'],
+    ['search','⌕ Search'],
     ['favorites','★ Favorites'],
     ['filters','▤ Filters'],
     ['reference','☰ Reference'],
@@ -697,16 +781,6 @@ panel.appendChild(head);
     quickGrid.appendChild(button)
   });
   mobileQuick.appendChild(quickGrid);
-  var gestureStatus=document.createElement('div');
-  gestureStatus.id='mobileQuickGestureStatus';
-  gestureStatus.setAttribute('role','status');
-  gestureStatus.setAttribute('aria-live','polite');
-  gestureStatus.style.position='absolute';
-  gestureStatus.style.width='1px';
-  gestureStatus.style.height='1px';
-  gestureStatus.style.overflow='hidden';
-  gestureStatus.style.clip='rect(0 0 0 0)';
-  mobileQuick.appendChild(gestureStatus);
   panel.appendChild(mobileQuick);
 
   var list=document.createElement('div');
@@ -750,8 +824,7 @@ panel.appendChild(head);
   shell.appendChild(panel);
   document.body.appendChild(shell);
 
-  toggle.addEventListener('click',function(e){if(toggle.__mobileQuickGestureConsumed){e.preventDefault();e.stopImmediatePropagation();return}setHotkeyHelpOpen(panel.hidden)});
-  installMobileQuickHandleGestures(toggle);
+  toggle.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();setMobilePromptJumpOpen(false,false);setHotkeyHelpOpen(panel.hidden)});
   close.addEventListener('click',function(){setHotkeyHelpOpen(false,true)});
   saveShortcut.addEventListener('click',function(){if(configurePromptShortcut(promptInput.value))promptInput.value=''});
   promptInput.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();if(configurePromptShortcut(promptInput.value))promptInput.value=''}});

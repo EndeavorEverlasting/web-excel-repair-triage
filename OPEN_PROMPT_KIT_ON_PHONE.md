@@ -40,15 +40,20 @@ https://endeavoreverlasting.github.io/web-excel-repair-triage/
 
 The launcher adds install, share, copy-link, QR, and offline-fallback surfaces without changing prompt content or creating a parallel mobile application.
 
+## Fastest path to a known prompt ID
 
-## Quick Controls on touch devices
+If you already know the prompt ID, do **not** open More and do **not** use a swipe gesture. Use the dedicated thumb-zone jump:
 
-On a phone or tablet, the floating **Quick Controls** handle is the touch counterpart to desktop Hotkeys. The old floating Reference button is folded into this control on narrow layouts so there is one obvious mobile command surface.
+1. Tap **Go to P#**.
+2. For `P111`, type **111**. The `P` is already supplied by the control.
+3. When the ID is exact and unambiguous, **P111 opens automatically**. There is no search-results tap.
 
-- **Tap Quick Controls** — open labeled touch commands for Find Prompt, Search, previous/next profile, Favorites, Filters, Reference, Top, and Bottom.
-- **Swipe up from Quick Controls** — open **Find Prompt**.
-- **Swipe left from Quick Controls** — move to the previous A-E profile slot.
-- **Swipe right from Quick Controls** — move to the next A-E profile slot.
-- **Swipe down from Quick Controls** — show/hide filters.
+You do not open **More** first. **Swiping is not required.** This path also avoids opening Chrome's **Find in page**, typing the `P`, and stepping through text matches that do not understand Prompt Kit IDs.
 
-The gestures are optional accelerators. Every gesture also has a labeled button in the Quick Controls sheet; normal vertical page scrolling and browser-edge gestures are not captured because gesture recognition begins only on the handle. Desktop keyboard users keep the existing Hotkeys panel and shortcuts.
+If a shorter ID is also the start of a longer ID (for example `P11` and `P111`), the shorter one waits instead of stealing the route. Keep typing for the longer ID, or tap **Go** to deliberately open the shorter exact ID.
+
+## More controls on touch devices
+
+The second floating control is **More**. Open it only when you need a secondary action: **Find Prompt, Previous profile, Next profile, Search, Favorites, Filters, Reference, Top, or Bottom**. These are ordinary labeled buttons; there is no hidden swipe vocabulary to memorize.
+
+Desktop keyboard users keep the existing Hotkeys panel and prompt-ID sequences. The phone controls call the same underlying Prompt Kit actions and do not create a second prompt database or parallel state.
