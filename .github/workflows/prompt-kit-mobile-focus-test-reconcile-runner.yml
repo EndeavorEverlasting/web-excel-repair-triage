@@ -1,0 +1,54 @@
+name: Prompt Kit mobile focus test reconcile runner
+
+on:
+  push:
+    branches:
+      - fix/prompt-kit-mobile-quick-controls-focus-20260907
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/prompt-kit-mobile-quick-controls-focus-20260907
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+      - name: Update owning Hotkeys regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/test_prompt_kit_hotkey_completion.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''    def test_hotkey_open_focuses_favorite_input_and_escape_recovers_from_editable(self) -> None:\n        source = POLISH.read_text(encoding="utf-8")\n        for marker in (\n            "function focusFavoritePromptShortcutInput(panel)",\n            "document.getElementById('promptShortcutPromptId')",\n            "promptInput.focus()",\n            "promptInput.scrollIntoView({block:'nearest',inline:'nearest'})",\n            "if(focusFavoritePromptShortcutInput(panel))return",\n        ):\n            self.assertIn(marker, source)\n        escape_guard = "if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)"\n        editable_guard = "if(editable)return;"\n        backtick = "if(key==='`')"\n        self.assertLess(source.index(escape_guard), source.index(editable_guard))\n        self.assertLess(source.index(editable_guard), source.index(backtick))\n        self.assertIn("resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return", source)\n'''
+          new = '''    def test_hotkey_open_focuses_favorite_input_on_desktop_and_escape_recovers_from_editable(self) -> None:\n        source = POLISH.read_text(encoding="utf-8")\n        for marker in (\n            "function focusFavoritePromptShortcutInput(panel)",\n            "document.getElementById('promptShortcutPromptId')",\n            "promptInput.focus()",\n            "promptInput.scrollIntoView({block:'nearest',inline:'nearest'})",\n            "function mobileQuickControlsActive()",\n            "if(!mobileQuickControlsActive()&&focusFavoritePromptShortcutInput(panel))return;",\n            "panel.querySelector('[data-mobile-quick-action=\\\"find\\\"]')",\n            "panel.querySelector('.hotkey-help-close')",\n        ):\n            self.assertIn(marker, source)\n        escape_guard = "if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)"\n        editable_guard = "if(editable)return;"\n        backtick = "if(key==='`')"\n        self.assertLess(source.index(escape_guard), source.index(editable_guard))\n        self.assertLess(source.index(editable_guard), source.index(backtick))\n        self.assertIn("resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return", source)\n'''
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one stale Hotkeys focus test, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Validate reconciled contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_prompt_kit_hotkey_completion tests.test_prompt_kit_mobile_quick_controls -v
+          node --check docs/prompt-kit-polish.js
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit reconciled regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/test_prompt_kit_hotkey_completion.py
+          git commit -m 'test(prompt-kit): preserve desktop Hotkeys focus across mobile split'
+          git push origin HEAD:fix/prompt-kit-mobile-quick-controls-focus-20260907
