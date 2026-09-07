@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   implement:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -35,11 +36,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f .github/workflows/prompt-kit-mobile-quick-controls-executor.yml
-          rm -f .github/workflows/prompt-kit-mobile-quick-controls-runner.yml
+          rm -f .github/workflows/prompt-kit-mobile-quick-controls.yml
           rm -f scripts/execute_mobile_quick_controls_patch.py
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
+          git add docs/prompt-kit-polish.js harness/contracts/prompt-kit-mobile.v1.json OPEN_PROMPT_KIT_ON_PHONE.md tests/test_prompt_kit_mobile.py tests/test_prompt_kit_mobile_quick_controls.py tests/prompt_kit_mobile_quick_controls_browser_proof.py web/prompt-kit/index.html scripts/execute_mobile_quick_controls_patch.py
           git commit -m 'feat(prompt-kit): add mobile Quick Controls gesture handle'
           git push origin HEAD:feat/prompt-kit-mobile-quick-controls-20260907
