@@ -39,3 +39,16 @@ https://endeavoreverlasting.github.io/web-excel-repair-triage/
 - Launcher URL: `https://endeavoreverlasting.github.io/web-excel-repair-triage/`
 
 The launcher adds install, share, copy-link, QR, and offline-fallback surfaces without changing prompt content or creating a parallel mobile application.
+
+
+## Quick Controls on touch devices
+
+On a phone or tablet, the floating **Quick Controls** handle is the touch counterpart to desktop Hotkeys. The old floating Reference button is folded into this control on narrow layouts so there is one obvious mobile command surface.
+
+- **Tap Quick Controls** — open labeled touch commands for Find Prompt, Search, previous/next profile, Favorites, Filters, Reference, Top, and Bottom.
+- **Swipe up from Quick Controls** — open **Find Prompt**.
+- **Swipe left from Quick Controls** — move to the previous A-E profile slot.
+- **Swipe right from Quick Controls** — move to the next A-E profile slot.
+- **Swipe down from Quick Controls** — show/hide filters.
+
+The gestures are optional accelerators. Every gesture also has a labeled button in the Quick Controls sheet; normal vertical page scrolling and browser-edge gestures are not captured because gesture recognition begins only on the handle. Desktop keyboard users keep the existing Hotkeys panel and shortcuts.

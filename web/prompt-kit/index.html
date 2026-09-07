@@ -1395,6 +1395,92 @@ function toggleCompactFilters(){
   return setCompactFiltersVisible(header.classList.contains('filters-collapsed'))
 }
 
+
+var MOBILE_QUICK_GESTURE_THRESHOLD=38;
+var MOBILE_QUICK_PROFILE_KEYS=['A','B','C','D','E'];
+
+function mobileQuickCurrentProfileKey(){
+  try{
+    if(window.PromptKitProfiles&&typeof window.PromptKitProfiles.getState==='function'){
+      var state=window.PromptKitProfiles.getState();
+      if(state&&MOBILE_QUICK_PROFILE_KEYS.indexOf(state.activeKey)>=0)return state.activeKey
+    }
+  }catch(e){}
+  var active=document.querySelector('.cat-tab.profile-slot.active[data-profile-slot]');
+  var key=active&&active.getAttribute('data-profile-slot');
+  return MOBILE_QUICK_PROFILE_KEYS.indexOf(key)>=0?key:'A'
+}
+
+function mobileQuickCycleProfile(delta){
+  if(!window.PromptKitProfiles||typeof window.PromptKitProfiles.activateSlot!=='function')return false;
+  var current=mobileQuickCurrentProfileKey();
+  var index=MOBILE_QUICK_PROFILE_KEYS.indexOf(current);
+  var next=(index+delta+MOBILE_QUICK_PROFILE_KEYS.length)%MOBILE_QUICK_PROFILE_KEYS.length;
+  window.PromptKitProfiles.activateSlot(MOBILE_QUICK_PROFILE_KEYS[next]);
+  return true
+}
+
+function mobileQuickFocusSearch(){
+  showCompactFilters();
+  var search=document.getElementById('search');
+  if(!search)return false;
+  try{search.focus()}catch(e){return false}
+  try{search.scrollIntoView({block:'center',inline:'nearest'})}catch(e){}
+  return true
+}
+
+function performMobileQuickAction(action,origin){
+  if(action!=='panel')setHotkeyHelpOpen(false,false);
+  if(action==='find'){
+    if(typeof window.openPromptFinder==='function'){
+      window.openPromptFinder(origin||document.getElementById('hotkeyHelpToggle'));
+      return true
+    }
+    return mobileQuickFocusSearch()
+  }
+  if(action==='search')return mobileQuickFocusSearch();
+  if(action==='profile-prev')return mobileQuickCycleProfile(-1);
+  if(action==='profile-next')return mobileQuickCycleProfile(1);
+  if(action==='favorites'){activateFavoritesView();return true}
+  if(action==='filters'){toggleCompactFilters();return true}
+  if(action==='reference'){
+    var ref=document.getElementById('refBtn');
+    if(ref){ref.click();return true}
+    return false
+  }
+  if(action==='top'){scrollPromptKitTo('top');return true}
+  if(action==='bottom'){scrollPromptKitTo('bottom');return true}
+  return false
+}
+
+function installMobileQuickHandleGestures(toggle){
+  if(!toggle||toggle.__mobileQuickGesturesInstalled)return;
+  toggle.__mobileQuickGesturesInstalled=true;
+  var start=null;
+  toggle.addEventListener('pointerdown',function(e){
+    if(!window.matchMedia||!window.matchMedia('(max-width:760px)').matches)return;
+    if(e.pointerType&&e.pointerType!=='touch'&&e.pointerType!=='pen')return;
+    start={id:e.pointerId,x:e.clientX,y:e.clientY};
+    try{toggle.setPointerCapture(e.pointerId)}catch(ignore){}
+  });
+  toggle.addEventListener('pointercancel',function(){start=null});
+  toggle.addEventListener('pointerup',function(e){
+    if(!start||start.id!==e.pointerId){start=null;return}
+    var dx=e.clientX-start.x,dy=e.clientY-start.y;
+    start=null;
+    var ax=Math.abs(dx),ay=Math.abs(dy),action=null;
+    if(ay>=MOBILE_QUICK_GESTURE_THRESHOLD&&ay>ax*1.2)action=dy<0?'find':'filters';
+    else if(ax>=MOBILE_QUICK_GESTURE_THRESHOLD&&ax>ay*1.2)action=dx<0?'profile-prev':'profile-next';
+    if(!action)return;
+    e.preventDefault();e.stopPropagation();
+    toggle.__mobileQuickGestureConsumed=true;
+    var status=document.getElementById('mobileQuickGestureStatus');
+    if(status)status.textContent=action==='find'?'Find Prompt opened':action==='filters'?'Filters toggled':action==='profile-prev'?'Previous profile selected':'Next profile selected';
+    performMobileQuickAction(action,toggle);
+    setTimeout(function(){toggle.__mobileQuickGestureConsumed=false},450)
+  })
+}
+
 function normalizePromptShortcutId(raw){
   var value=String(raw||'').trim().toUpperCase().replace(/\./g,'');
   return /^P\d+$/.test(value)?value:null
@@ -1612,7 +1698,7 @@ function ensureHotkeyHelp(){
   if(!document.getElementById('prompt-kit-hotkey-help-styles')){
     var style=document.createElement('style');
     style.id='prompt-kit-hotkey-help-styles';
-    style.textContent='.hotkey-help{position:fixed;right:80px;bottom:16px;z-index:45;font-family:inherit}.hotkey-help-toggle{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:8px 11px;border:1px solid rgba(56,189,248,.62);border-radius:999px;background:linear-gradient(135deg,rgba(14,116,144,.92),rgba(15,23,42,.96));color:var(--text-primary);font-size:11px;font-weight:800;letter-spacing:.03em;cursor:pointer;box-shadow:0 0 0 1px rgba(56,189,248,.14),0 0 18px rgba(56,189,248,.32),0 8px 24px rgba(0,0,0,.28);animation:hotkey-help-glow 2.8s ease-in-out infinite}.hotkey-help-toggle:hover,.hotkey-help-toggle:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow),0 0 26px rgba(56,189,248,.46)}.hotkey-help-icon{font-size:15px;line-height:1}.hotkey-help-panel{position:absolute;right:0;bottom:calc(100% + 10px);width:min(292px,calc(100vw - 24px));max-height:min(520px,70vh);overflow:auto;padding:12px;border:1px solid rgba(56,189,248,.42);border-radius:12px;background:rgba(15,23,42,.98);box-shadow:0 0 0 1px rgba(56,189,248,.12),0 0 28px rgba(56,189,248,.22),0 18px 48px rgba(0,0,0,.46);backdrop-filter:blur(12px)}.hotkey-help-panel[hidden]{display:none}.hotkey-help-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;color:var(--text-primary);font-size:12px}.hotkey-help-close{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:1px solid var(--border);border-radius:7px;background:var(--bg-surface);color:var(--text-secondary);cursor:pointer}.hotkey-help-close:hover,.hotkey-help-close:focus-visible{outline:none;border-color:var(--accent);color:var(--text-primary);box-shadow:0 0 0 2px var(--accent-glow)}.hotkey-help-list{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center}.hotkey-help-list kbd{min-width:28px;padding:3px 6px;border:1px solid var(--border);border-bottom-color:rgba(148,163,184,.65);border-radius:6px;background:var(--bg-surface);color:var(--accent);font:700 10px/1.3 ui-monospace,SFMono-Regular,Consolas,monospace;text-align:center}.hotkey-help-list span{color:var(--text-secondary);font-size:11px;line-height:1.35}@keyframes hotkey-help-glow{0%,100%{box-shadow:0 0 0 1px rgba(56,189,248,.12),0 0 14px rgba(56,189,248,.24),0 8px 24px rgba(0,0,0,.28)}50%{box-shadow:0 0 0 1px rgba(56,189,248,.24),0 0 24px rgba(56,189,248,.46),0 8px 28px rgba(0,0,0,.34)}}@media(max-width:760px){.hotkey-help{right:78px;bottom:16px}.hotkey-help-toggle{min-height:44px;padding:9px 12px}.hotkey-help-panel{position:fixed;right:12px;bottom:72px;width:calc(100vw - 24px);max-height:60vh}}@media(prefers-reduced-motion:reduce){.hotkey-help-toggle{animation:none}}';
+    style.textContent='.hotkey-help{position:fixed;right:80px;bottom:16px;z-index:45;font-family:inherit}.hotkey-help-toggle{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:8px 11px;border:1px solid rgba(56,189,248,.62);border-radius:999px;background:linear-gradient(135deg,rgba(14,116,144,.92),rgba(15,23,42,.96));color:var(--text-primary);font-size:11px;font-weight:800;letter-spacing:.03em;cursor:pointer;box-shadow:0 0 0 1px rgba(56,189,248,.14),0 0 18px rgba(56,189,248,.32),0 8px 24px rgba(0,0,0,.28);animation:hotkey-help-glow 2.8s ease-in-out infinite}.hotkey-help-toggle:hover,.hotkey-help-toggle:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow),0 0 26px rgba(56,189,248,.46)}.hotkey-help-icon{font-size:15px;line-height:1}.mobile-quick-label{display:none}.mobile-quick-controls{display:none;gap:10px;padding:2px 0 12px;margin-bottom:10px;border-bottom:1px solid var(--border)}.mobile-quick-gesture-guide{display:none;padding:9px 10px;border:1px solid rgba(56,189,248,.25);border-radius:9px;background:rgba(14,116,144,.08);color:var(--text-secondary);font-size:10px;line-height:1.45;text-align:center}.mobile-quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.mobile-quick-action{min-height:44px;padding:9px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-surface);color:var(--text-primary);font:inherit;font-size:11px;font-weight:750;text-align:left;cursor:pointer;touch-action:manipulation}.mobile-quick-action:hover,.mobile-quick-action:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}.mobile-quick-heading{color:var(--text-primary);font-size:12px}.hotkey-help-panel{position:absolute;right:0;bottom:calc(100% + 10px);width:min(292px,calc(100vw - 24px));max-height:min(520px,70vh);overflow:auto;padding:12px;border:1px solid rgba(56,189,248,.42);border-radius:12px;background:rgba(15,23,42,.98);box-shadow:0 0 0 1px rgba(56,189,248,.12),0 0 28px rgba(56,189,248,.22),0 18px 48px rgba(0,0,0,.46);backdrop-filter:blur(12px)}.hotkey-help-panel[hidden]{display:none}.hotkey-help-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;color:var(--text-primary);font-size:12px}.hotkey-help-close{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:1px solid var(--border);border-radius:7px;background:var(--bg-surface);color:var(--text-secondary);cursor:pointer}.hotkey-help-close:hover,.hotkey-help-close:focus-visible{outline:none;border-color:var(--accent);color:var(--text-primary);box-shadow:0 0 0 2px var(--accent-glow)}.hotkey-help-list{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center}.hotkey-help-list kbd{min-width:28px;padding:3px 6px;border:1px solid var(--border);border-bottom-color:rgba(148,163,184,.65);border-radius:6px;background:var(--bg-surface);color:var(--accent);font:700 10px/1.3 ui-monospace,SFMono-Regular,Consolas,monospace;text-align:center}.hotkey-help-list span{color:var(--text-secondary);font-size:11px;line-height:1.35}@keyframes hotkey-help-glow{0%,100%{box-shadow:0 0 0 1px rgba(56,189,248,.12),0 0 14px rgba(56,189,248,.24),0 8px 24px rgba(0,0,0,.28)}50%{box-shadow:0 0 0 1px rgba(56,189,248,.24),0 0 24px rgba(56,189,248,.46),0 8px 28px rgba(0,0,0,.34)}}@media(max-width:760px){.ref-toggle{display:none!important}.hotkey-help{right:16px;bottom:16px}.hotkey-help-toggle{min-height:48px;padding:10px 14px;touch-action:none}.hotkey-desktop-label{display:none}.mobile-quick-label{display:inline}.hotkey-help-panel{position:fixed;right:12px;bottom:76px;width:calc(100vw - 24px);max-height:72vh}.mobile-quick-controls{display:grid}.mobile-quick-gesture-guide{display:block}}@media(prefers-reduced-motion:reduce){.hotkey-help-toggle{animation:none}}';
     document.head.appendChild(style)
   }
   var shell=document.createElement('div');
@@ -1625,9 +1711,9 @@ function ensureHotkeyHelp(){
   toggle.type='button';
   toggle.setAttribute('aria-expanded','false');
   toggle.setAttribute('aria-controls','hotkeyHelpPanel');
-  toggle.setAttribute('aria-label','Open keyboard shortcut help');
+  toggle.setAttribute('aria-label','Open Hotkeys on desktop or Quick Controls on touch devices');
   toggle.setAttribute('aria-keyshortcuts','`');
-  toggle.innerHTML='<span class="hotkey-help-icon" aria-hidden="true">⌨</span><span>Hotkeys</span>';
+  toggle.innerHTML='<span class="hotkey-help-icon" aria-hidden="true">◎</span><span class="hotkey-desktop-label">Hotkeys</span><span class="mobile-quick-label">Quick Controls</span>';
   shell.appendChild(toggle);
 
   var panel=document.createElement('div');
@@ -1640,7 +1726,7 @@ function ensureHotkeyHelp(){
   var head=document.createElement('div');
   head.className='hotkey-help-head';
   var title=document.createElement('strong');
-  title.textContent='Keyboard shortcuts';
+  title.textContent='Quick controls & hotkeys';
   var close=document.createElement('button');
   close.className='hotkey-help-close';
   close.type='button';
@@ -1648,7 +1734,53 @@ function ensureHotkeyHelp(){
   close.textContent='×';
   head.appendChild(title);
   head.appendChild(close);
-  panel.appendChild(head);
+panel.appendChild(head);
+
+  var mobileQuick=document.createElement('section');
+  mobileQuick.className='mobile-quick-controls';
+  mobileQuick.id='mobileQuickControls';
+  mobileQuick.setAttribute('aria-label','Mobile quick controls');
+  var quickHeading=document.createElement('strong');
+  quickHeading.className='mobile-quick-heading';
+  quickHeading.textContent='Touch shortcuts';
+  mobileQuick.appendChild(quickHeading);
+  var gestureGuide=document.createElement('div');
+  gestureGuide.className='mobile-quick-gesture-guide';
+  gestureGuide.textContent='Swipe the Quick Controls handle: ↑ Find · ← previous profile · → next profile · ↓ filters. Tap the handle for these labeled controls.';
+  mobileQuick.appendChild(gestureGuide);
+  var quickGrid=document.createElement('div');
+  quickGrid.className='mobile-quick-grid';
+  [
+    ['find','✦ Find Prompt'],
+    ['search','⌕ Search'],
+    ['profile-prev','← Previous profile'],
+    ['profile-next','Next profile →'],
+    ['favorites','★ Favorites'],
+    ['filters','▤ Filters'],
+    ['reference','☰ Reference'],
+    ['top','↑ Top'],
+    ['bottom','↓ Bottom']
+  ].forEach(function(item){
+    var button=document.createElement('button');
+    button.type='button';
+    button.className='mobile-quick-action';
+    button.setAttribute('data-mobile-quick-action',item[0]);
+    button.textContent=item[1];
+    button.addEventListener('click',function(){performMobileQuickAction(item[0],toggle)});
+    quickGrid.appendChild(button)
+  });
+  mobileQuick.appendChild(quickGrid);
+  var gestureStatus=document.createElement('div');
+  gestureStatus.id='mobileQuickGestureStatus';
+  gestureStatus.setAttribute('role','status');
+  gestureStatus.setAttribute('aria-live','polite');
+  gestureStatus.style.position='absolute';
+  gestureStatus.style.width='1px';
+  gestureStatus.style.height='1px';
+  gestureStatus.style.overflow='hidden';
+  gestureStatus.style.clip='rect(0 0 0 0)';
+  mobileQuick.appendChild(gestureStatus);
+  panel.appendChild(mobileQuick);
 
   var list=document.createElement('div');
   list.className='hotkey-help-list';
@@ -1691,7 +1823,8 @@ function ensureHotkeyHelp(){
   shell.appendChild(panel);
   document.body.appendChild(shell);
 
-  toggle.addEventListener('click',function(){setHotkeyHelpOpen(panel.hidden)});
+  toggle.addEventListener('click',function(e){if(toggle.__mobileQuickGestureConsumed){e.preventDefault();e.stopImmediatePropagation();return}setHotkeyHelpOpen(panel.hidden)});
+  installMobileQuickHandleGestures(toggle);
   close.addEventListener('click',function(){setHotkeyHelpOpen(false,true)});
   saveShortcut.addEventListener('click',function(){if(configurePromptShortcut(promptInput.value))promptInput.value=''});
   promptInput.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();if(configurePromptShortcut(promptInput.value))promptInput.value=''}});
