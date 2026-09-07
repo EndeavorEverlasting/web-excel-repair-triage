@@ -1,0 +1,95 @@
+name: Prompt Kit mobile direct P-number jump sprint
+
+on:
+  push:
+    branches:
+      - fix/prompt-kit-mobile-quick-controls-focus-20260907
+
+permissions:
+  contents: write
+
+jobs:
+  sprint:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/prompt-kit-mobile-quick-controls-focus-20260907
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+      - name: Fresh floor and reconcile main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git status --short
+          git branch --show-current
+          git log --oneline --decorate -5
+          git fetch --all --prune --tags
+          echo "origin/main=$(git rev-parse origin/main)"
+          if ! git merge --no-edit origin/main; then
+            echo 'MERGE CONFLICTS:' >&2
+            git diff --name-only --diff-filter=U >&2
+            exit 42
+          fi
+          git status --short
+          git log --oneline --decorate -5
+      - name: Apply direct known-ID mobile navigation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/execute_mobile_prompt_jump_sprint.py
+          node --check docs/prompt-kit-polish.js
+      - name: Regenerate canonical Prompt Kit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Focused and connected validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest \
+            tests.test_prompt_kit_mobile \
+            tests.test_prompt_kit_mobile_quick_controls \
+            tests.test_prompt_kit_product_interactions \
+            tests.test_prompt_kit_hotkey_completion \
+            tests.test_ux_design_prompt_suite -v
+          git diff --check
+      - name: Android-width Chromium journey
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+          python tests/prompt_kit_mobile_quick_controls_browser_proof.py
+      - name: Deliberate second-pass diff review
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "Go to P#" docs/prompt-kit-polish.js
+          grep -q "type \*\*111\*\*" OPEN_PROMPT_KIT_ON_PHONE.md
+          ! grep -q "SWIPE HERE" docs/prompt-kit-polish.js
+          ! grep -q "MOBILE_QUICK_GESTURE_THRESHOLD" docs/prompt-kit-polish.js
+          ! grep -q "mobileQuickGestureMap" web/prompt-kit/index.html
+          git diff --check
+          git diff --stat
+          git diff -- docs/prompt-kit-polish.js tests/test_prompt_kit_mobile_quick_controls.py tests/prompt_kit_mobile_quick_controls_browser_proof.py harness/contracts/prompt-kit-mobile.v1.json OPEN_PROMPT_KIT_ON_PHONE.md | sed -n '1,1200p'
+      - name: Commit durable result and remove sprint transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f scripts/execute_mobile_prompt_jump_sprint.py
+          rm -f .github/workflows/prompt-kit-mobile-direct-jump-runner.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/prompt-kit-polish.js tests/test_prompt_kit_mobile_quick_controls.py tests/prompt_kit_mobile_quick_controls_browser_proof.py harness/contracts/prompt-kit-mobile.v1.json OPEN_PROMPT_KIT_ON_PHONE.md web/prompt-kit/index.html scripts/execute_mobile_prompt_jump_sprint.py .github/workflows/prompt-kit-mobile-direct-jump-runner.yml
+          git diff --cached --check
+          git diff --cached --stat
+          git status --short
+          git commit -m 'fix(prompt-kit): add direct mobile prompt ID jump'
+          git push origin HEAD:fix/prompt-kit-mobile-quick-controls-focus-20260907
