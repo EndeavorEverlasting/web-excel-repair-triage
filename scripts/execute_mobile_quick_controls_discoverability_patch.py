@@ -9,8 +9,24 @@ def replace_once(path: str, old: str, new: str) -> None:
     text = target.read_text(encoding="utf-8")
     count = text.count(old)
     if count != 1:
-        raise SystemExit(f"{path}: expected one replacement anchor, found {count}")
+        label = old.splitlines()[0][:100]
+        raise SystemExit(f"{path}: expected one anchor for {label!r}, found {count}")
     target.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+
+def replace_range(path: str, start_marker: str, end_marker: str, new: str) -> None:
+    target = Path(path)
+    text = target.read_text(encoding="utf-8")
+    start_count = text.count(start_marker)
+    end_count = text.count(end_marker)
+    if start_count != 1 or end_count != 1:
+        raise SystemExit(
+            f"{path}: range anchors not unique: start={start_count} end={end_count} "
+            f"for {start_marker!r} .. {end_marker!r}"
+        )
+    start = text.index(start_marker)
+    end = text.index(end_marker, start) + len(end_marker)
+    target.write_text(text[:start] + new + text[end:], encoding="utf-8")
 
 
 POLISH = "docs/prompt-kit-polish.js"
@@ -42,7 +58,6 @@ old_gesture_fn = '''function installMobileQuickHandleGestures(toggle){
     setTimeout(function(){toggle.__mobileQuickGestureConsumed=false},450)
   })
 }'''
-
 new_gesture_fn = '''function installMobileQuickGestureSurface(surface){
   if(!surface||surface.__mobileQuickGesturesInstalled)return;
   surface.__mobileQuickGesturesInstalled=true;
@@ -129,7 +144,6 @@ old_mobile_controls = '''  var gestureGuide=document.createElement('div');
     quickGrid.appendChild(button)
   });
   mobileQuick.appendChild(quickGrid);'''
-
 new_mobile_controls = '''  var gestureGuide=document.createElement('div');
   gestureGuide.className='mobile-quick-gesture-guide';
   gestureGuide.textContent='Swipe the Quick Controls pill in the direction shown — or tap an arrow.';
@@ -182,100 +196,47 @@ replace_once(POLISH, old_mobile_controls, new_mobile_controls)
 replace_once(POLISH, "installMobileQuickHandleGestures(toggle);", "installMobileQuickGestureSurface(toggle);")
 
 TEST = "tests/test_prompt_kit_mobile_quick_controls.py"
-old_gesture_test = '''    def test_handle_gestures_are_bounded_to_touch_handle(self) -> None:
-        source = POLISH.read_text(encoding="utf-8")
-        start = source.index("function installMobileQuickHandleGestures(toggle)")
-        end = source.index("function normalizePromptShortcutId", start)
-        gesture = source[start:end]
-        for marker in (
-            "toggle.addEventListener('pointerdown'",
-            "toggle.addEventListener('pointerup'",
-            "window.matchMedia('(max-width:760px)').matches",
-            "e.pointerType!=='touch'&&e.pointerType!=='pen'",
-            "ay>ax*1.2",
-            "ax>ay*1.2",
-            "dy<0?'find':'filters'",
-            "dx<0?'profile-prev':'profile-next'",
-            "performMobileQuickAction(action,toggle)",
-        ):
-            self.assertIn(marker, gesture)
-        self.assertNotIn("document.addEventListener('pointerdown'", gesture)
-        self.assertNotIn("document.addEventListener('touchstart'", gesture)
-'''
-new_gesture_test = '''    def test_gestures_are_bounded_to_owned_quick_control_surfaces(self) -> None:
-        source = POLISH.read_text(encoding="utf-8")
-        start = source.index("function installMobileQuickGestureSurface(surface)")
-        end = source.index("function normalizePromptShortcutId", start)
-        gesture = source[start:end]
-        for marker in (
-            "surface.addEventListener('pointerdown'",
-            "surface.addEventListener('pointerup'",
-            "window.matchMedia('(max-width:760px)').matches",
-            "e.pointerType!=='touch'&&e.pointerType!=='pen'",
-            "ay>ax*1.2",
-            "ax>ay*1.2",
-            "dy<0?'find':'filters'",
-            "dx<0?'profile-prev':'profile-next'",
-            "performMobileQuickAction(action,surface)",
-        ):
-            self.assertIn(marker, gesture)
-        self.assertIn("installMobileQuickGestureSurface(toggle);", source)
-        self.assertIn("installMobileQuickGestureSurface(gestureCenter);", source)
-        self.assertNotIn("document.addEventListener('pointerdown'", gesture)
-        self.assertNotIn("document.addEventListener('touchstart'", gesture)
-'''
-replace_once(TEST, old_gesture_test, new_gesture_test)
-
-old_sheet_test = '''    def test_mobile_sheet_is_visible_and_describes_gestures(self) -> None:
-        source = POLISH.read_text(encoding="utf-8")
-        for marker in (
-            "class=\"mobile-quick-label\">Quick Controls",
-            "mobileQuick.id='mobileQuickControls'",
-            "quickHeading.textContent='Touch shortcuts'",
-            "Swipe the Quick Controls handle: ↑ Find · ← previous profile · → next profile · ↓ filters.",
-            "['find','✦ Find Prompt']",
-            "['search','⌕ Search']",
-            "['profile-prev','← Previous profile']",
-            "['profile-next','Next profile →']",
-            "['favorites','★ Favorites']",
-            "['filters','▤ Filters']",
-            "['reference','☰ Reference']",
-            "['top','↑ Top']",
-            "['bottom','↓ Bottom']",
-            ".ref-toggle{display:none!important}",
-            ".mobile-quick-controls{display:grid}",
-            ".hotkey-help-toggle{min-height:48px",
-        ):
-            self.assertIn(marker, source)
-'''
-new_sheet_test = '''    def test_mobile_sheet_spatially_teaches_gestures_and_stays_compact(self) -> None:
-        source = POLISH.read_text(encoding="utf-8")
-        for marker in (
-            "class=\"mobile-quick-label\">Quick Controls",
-            "↑ Find · ↔ Profile · ↓ Filters",
-            "mobileQuick.id='mobileQuickControls'",
-            "quickHeading.textContent='Touch shortcuts'",
-            "Swipe the Quick Controls pill in the direction shown — or tap an arrow.",
-            "gestureMap.id='mobileQuickGestureMap'",
-            "gestureCenter.id='mobileQuickGestureSurface'",
-            "['find','↑ Find']",
-            "['profile-prev','← Previous profile']",
-            "['profile-next','Next profile →']",
-            "['filters','↓ Filters']",
-            "['search','⌕ Search']",
-            "['favorites','★ Favorites']",
-            "['reference','☰ Reference']",
-            "['top','↑ Top']",
-            "['bottom','↓ Bottom']",
-            ".ref-toggle{display:none!important}",
-            ".mobile-quick-gesture-map{display:grid}",
-            ".hotkey-help-list,.hotkey-shortcut-config{display:none}",
-            "width:min(340px,calc(100vw - 32px));max-height:min(460px,58vh)",
-            ".hotkey-help-toggle{min-height:52px",
-        ):
-            self.assertIn(marker, source)
-'''
-replace_once(TEST, old_sheet_test, new_sheet_test)
+for old, new in (
+    ("def test_handle_gestures_are_bounded_to_touch_handle", "def test_gestures_are_bounded_to_owned_quick_control_surfaces"),
+    ('source.index("function installMobileQuickHandleGestures(toggle)")', 'source.index("function installMobileQuickGestureSurface(surface)")'),
+    ('"toggle.addEventListener(\'pointerdown\'"', '"surface.addEventListener(\'pointerdown\'"'),
+    ('"toggle.addEventListener(\'pointerup\'"', '"surface.addEventListener(\'pointerup\'"'),
+    ('"performMobileQuickAction(action,toggle)"', '"performMobileQuickAction(action,surface)"'),
+    ("def test_mobile_sheet_is_visible_and_describes_gestures", "def test_mobile_sheet_spatially_teaches_gestures_and_stays_compact"),
+    ("Swipe the Quick Controls handle: ↑ Find · ← previous profile · → next profile · ↓ filters.", "Swipe the Quick Controls pill in the direction shown — or tap an arrow."),
+    ("['find','✦ Find Prompt']", "['find','↑ Find']"),
+    ("['filters','▤ Filters']", "['filters','↓ Filters']"),
+    (".hotkey-help-toggle{min-height:48px", ".hotkey-help-toggle{min-height:52px"),
+):
+    replace_once(TEST, old, new)
+replace_once(
+    TEST,
+    '        self.assertNotIn("document.addEventListener(\'pointerdown\'", gesture)\n',
+    '        self.assertIn("installMobileQuickGestureSurface(toggle);", source)\n'
+    '        self.assertIn("installMobileQuickGestureSurface(gestureCenter);", source)\n'
+    '        self.assertNotIn("document.addEventListener(\'pointerdown\'", gesture)\n',
+)
+replace_once(
+    TEST,
+    '            "mobileQuick.id=\'mobileQuickControls\'",\n',
+    '            "↑ Find · ↔ Profile · ↓ Filters",\n'
+    '            "mobileQuick.id=\'mobileQuickControls\'",\n',
+)
+replace_once(
+    TEST,
+    '            "quickHeading.textContent=\'Touch shortcuts\'",\n',
+    '            "quickHeading.textContent=\'Touch shortcuts\'",\n'
+    '            "gestureMap.id=\'mobileQuickGestureMap\'",\n'
+    '            "gestureCenter.id=\'mobileQuickGestureSurface\'",\n',
+)
+replace_once(
+    TEST,
+    '            ".mobile-quick-controls{display:grid}",\n',
+    '            ".mobile-quick-controls{display:grid}",\n'
+    '            ".mobile-quick-gesture-map{display:grid}",\n'
+    '            ".hotkey-help-list,.hotkey-shortcut-config{display:none}",\n'
+    '            "width:min(340px,calc(100vw - 32px));max-height:min(460px,58vh)",\n',
+)
 replace_once(
     TEST,
     '        for phrase in ("Quick Controls", "swiping up", "left/right", "down toggles filters", "parallel state"):\n',
@@ -342,28 +303,8 @@ new_swipe = '''def swipe(page, dx: int, dy: int, element_id: str = "hotkeyHelpTo
 '''
 replace_once(PROOF, old_swipe, new_swipe)
 
-old_browser = '''                assert "Quick Controls" in handle.inner_text(), handle.inner_text()
-                assert not page.locator("#refBtn").is_visible(), "legacy floating Reference button remains visible on mobile"
-                box = handle.bounding_box() or {}
-                assert box.get("height", 0) >= 44 and box.get("width", 0) >= 44, box
-
-                handle.click()
-                panel = page.locator("#hotkeyHelpPanel")
-                assert panel.is_visible(), "Quick Controls sheet did not open"
-                quick = page.locator("#mobileQuickControls")
-                assert quick.is_visible(), "touch command grid not visible"
-                active_id = page.evaluate("document.activeElement && document.activeElement.id")
-                assert active_id != "promptShortcutPromptId", active_id
-                active_action = page.evaluate("document.activeElement && document.activeElement.getAttribute('data-mobile-quick-action')")
-                assert active_action == "find", active_action
-                buttons = quick.locator(".mobile-quick-action")
-                assert buttons.count() >= 9, buttons.count()
-                for index in range(buttons.count()):
-                    rect = buttons.nth(index).bounding_box() or {}
-                    assert rect.get("height", 0) >= 40, (index, rect)
-
-                quick.get_by_role("button", name="✦ Find Prompt").click()
-'''
+browser_start = '                assert "Quick Controls" in handle.inner_text(), handle.inner_text()\n'
+browser_end = '                quick.get_by_role("button", name="✦ Find Prompt").click()\n'
 new_browser = '''                handle_text = handle.inner_text()
                 assert "Quick Controls" in handle_text, handle_text
                 for cue in ("↑ Find", "↔ Profile", "↓ Filters"):
@@ -415,6 +356,6 @@ new_browser = '''                handle_text = handle.inner_text()
                 handle.click()
                 quick.get_by_role("button", name="↑ Find").click()
 '''
-replace_once(PROOF, old_browser, new_browser)
+replace_range(PROOF, browser_start, browser_end, new_browser)
 
 print("mobile Quick Controls discoverability patch applied")
