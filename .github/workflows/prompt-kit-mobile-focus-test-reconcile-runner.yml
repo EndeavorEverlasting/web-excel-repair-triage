@@ -27,6 +27,7 @@ jobs:
           set -euo pipefail
           python scripts/execute_mobile_quick_controls_discoverability_patch.py
           python - <<'PY'
+          import json
           from pathlib import Path
 
           polish = Path('docs/prompt-kit-polish.js')
@@ -35,7 +36,7 @@ jobs:
               ("grid-template-areas:'. up .' 'left center right' '. down .';",
                'grid-template-areas:". up ." "left center right" ". down .";'),
               ('.hotkey-help-list,.hotkey-shortcut-config{display:none}',
-               '.hotkey-help-list,.hotkey-shortcut-config{display:none!important}'),
+               '.hotkey-help-list,.hotkey-shortcut-config,.prompt-profile-editor{display:none!important}'),
           )
           for old, new in replacements:
               count = text.count(old)
@@ -49,7 +50,7 @@ jobs:
           replacements = (
               ('".mobile-quick-controls{display:grid}",', '".mobile-quick-controls{display:grid;gap:8px",'),
               ('".hotkey-help-list,.hotkey-shortcut-config{display:none}",',
-               '".hotkey-help-list,.hotkey-shortcut-config{display:none!important}",'),
+               '".hotkey-help-list,.hotkey-shortcut-config,.prompt-profile-editor{display:none!important}",'),
               ('"Tap Quick Controls",', '"Tap **Quick Controls**",'),
               ('"Swipe up from Quick Controls",', '"swipe up on the pill",'),
               ('"Swipe left from Quick Controls",', '"swipe left or tap the arrow",'),
@@ -63,6 +64,24 @@ jobs:
               test_text = test_text.replace(old_test, new_test, 1)
           tests.write_text(test_text, encoding='utf-8')
 
+          contract_path = Path('harness/contracts/prompt-kit-mobile.v1.json')
+          contract = json.loads(contract_path.read_text(encoding='utf-8'))
+          requirement = next(item for item in contract['requirements'] if item['id'] == 'mobile_quick_controls_gesture_parity')
+          old_contract = 'On mobile the desktop Hotkeys list and Favorite-shortcut editor are hidden so the panel does not become screen-filling.'
+          new_contract = 'On mobile the desktop Hotkeys list, Favorite-shortcut editor, and profile editor are hidden so the panel does not become screen-filling.'
+          if old_contract not in requirement['expected']:
+              raise SystemExit('mobile contract desktop-only editor sentence not found')
+          requirement['expected'] = requirement['expected'].replace(old_contract, new_contract, 1)
+          contract_path.write_text(json.dumps(contract, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          guide = Path('OPEN_PROMPT_KIT_ON_PHONE.md')
+          guide_text = guide.read_text(encoding='utf-8')
+          old_guide = 'Desktop-only Hotkeys rows and Favorite-shortcut configuration stay hidden on narrow touch layouts so Quick Controls does not turn into a screen-filling keyboard reference.'
+          new_guide = 'Desktop-only Hotkeys rows, Favorite-shortcut configuration, and the profile editor stay hidden on narrow touch layouts so Quick Controls does not turn into a screen-filling configuration sheet.'
+          if guide_text.count(old_guide) != 1:
+              raise SystemExit('phone guide desktop-only editor sentence not found')
+          guide.write_text(guide_text.replace(old_guide, new_guide, 1), encoding='utf-8')
+
           proof = Path('tests/prompt_kit_mobile_quick_controls_browser_proof.py')
           proof_text = proof.read_text(encoding='utf-8')
           proof_replacements = (
@@ -70,12 +89,11 @@ jobs:
                'assert box.get("height", 0) >= 44 and 44 <= box.get("width", 0) <= 260, box'),
               ('assert 0 < panel_box.get("height", 0) <= 500, panel_box',
                'assert 0 < panel_box.get("height", 0) <= 470, panel_box\n'
-               '                panel_metrics = panel.evaluate("""el => ({\n'
-               '                  clientHeight: el.clientHeight, scrollHeight: el.scrollHeight,\n'
-               '                  children: Array.from(el.children).map(n => ({tag:n.tagName,id:n.id,cls:n.className,clientHeight:n.clientHeight,scrollHeight:n.scrollHeight,display:getComputedStyle(n).display,position:getComputedStyle(n).position})),\n'
-               '                  quickChildren: Array.from(document.querySelector(\"#mobileQuickControls\").children).map(n => ({tag:n.tagName,id:n.id,cls:n.className,clientHeight:n.clientHeight,scrollHeight:n.scrollHeight,display:getComputedStyle(n).display,position:getComputedStyle(n).position}))\n'
-               '                })""")\n'
+               '                panel_metrics = panel.evaluate("el => ({clientHeight: el.clientHeight, scrollHeight: el.scrollHeight})")\n'
                '                assert panel_metrics["scrollHeight"] <= panel_metrics["clientHeight"] + 2, panel_metrics'),
+              ('assert not page.locator(".hotkey-shortcut-config").is_visible(), "desktop shortcut editor leaks into mobile Quick Controls"',
+               'assert not page.locator(".hotkey-shortcut-config").is_visible(), "desktop shortcut editor leaks into mobile Quick Controls"\n'
+               '                assert not page.locator(".prompt-profile-editor").is_visible(), "desktop profile editor leaks into mobile Quick Controls"'),
           )
           for old_proof, new_proof in proof_replacements:
               count = proof_text.count(old_proof)
