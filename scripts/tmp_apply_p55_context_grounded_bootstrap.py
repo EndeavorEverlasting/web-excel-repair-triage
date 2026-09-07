@@ -138,7 +138,7 @@ if method_marker not in source:
             self.assertIn(preserved, content)
         self.assertIn("repository creation", bootstrap["keywords"])
         self.assertIn("name repository", bootstrap["keywords"])
-        self.assertIn("preceding/surrounding operator guidance", bootstrap["inspectFirst"])
+        self.assertIn("Preceding/surrounding operator guidance", bootstrap["inspectFirst"])
         self.assertIn("RESOLVED, INFERRED, and USER_ONLY", bootstrap["expectedOutput"])
         self.assertIn("visibility never defaults to public", bootstrap["proofGate"])
 '''
