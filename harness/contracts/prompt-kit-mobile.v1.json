@@ -35,7 +35,7 @@
     },
     {
       "id": "mobile_quick_controls_gesture_parity",
-      "expected": "Touch users receive one visible Quick Controls handle instead of keyboard-only floating controls. Tapping opens labeled Find/Search/Profile/Favorites/Filters/Reference/Top/Bottom commands; swiping up opens Find Prompt, left/right cycles the existing A-E profile slots, and down toggles filters. The desktop Hotkeys control and shared semantic actions remain authoritative; gestures do not create parallel state."
+      "expected": "Touch users receive one compact visible Quick Controls handle instead of keyboard-only floating controls. The handle itself labels ↑ Find, ↔ Profile, and ↓ Filters. Tapping opens a compact mobile-only panel with a spatial four-way gesture map: up opens Find Prompt, left selects the previous A-E profile, right selects the next A-E profile, and down toggles filters. Each directional cell is also tappable, the map center accepts the same swipes for practice, and Search/Favorites/Reference/Top/Bottom remain explicit labeled buttons. On mobile the desktop Hotkeys list, Favorite-shortcut editor, and profile editor are hidden so the panel does not become screen-filling. The desktop Hotkeys control and shared semantic actions remain authoritative; gestures do not create parallel state."
     },
     {
       "id": "horizontal_filter_rails",

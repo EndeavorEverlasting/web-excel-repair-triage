@@ -43,12 +43,15 @@ The launcher adds install, share, copy-link, QR, and offline-fallback surfaces w
 
 ## Quick Controls on touch devices
 
-On a phone or tablet, the floating **Quick Controls** handle is the touch counterpart to desktop Hotkeys. The old floating Reference button is folded into this control on narrow layouts so there is one obvious mobile command surface.
+On a phone or tablet, the floating **Quick Controls** pill is the touch counterpart to desktop Hotkeys. The pill itself shows the mnemonic **↑ Find · ↔ Profile · ↓ Filters**, so the swipe features are visible before you open anything.
 
-- **Tap Quick Controls** — open labeled touch commands for Find Prompt, Search, previous/next profile, Favorites, Filters, Reference, Top, and Bottom.
-- **Swipe up from Quick Controls** — open **Find Prompt**.
-- **Swipe left from Quick Controls** — move to the previous A-E profile slot.
-- **Swipe right from Quick Controls** — move to the next A-E profile slot.
-- **Swipe down from Quick Controls** — show/hide filters.
+Tap **Quick Controls** to open a compact touch panel. Its four-way map mirrors the gesture directions around a center **SWIPE HERE** target:
 
-The gestures are optional accelerators. Every gesture also has a labeled button in the Quick Controls sheet; normal vertical page scrolling and browser-edge gestures are not captured because gesture recognition begins only on the handle. Desktop keyboard users keep the existing Hotkeys panel and shortcuts.
+- **↑ Find** — swipe up on the pill or center target, or tap the arrow, to open **Find Prompt**.
+- **← Previous profile** — swipe left or tap the arrow to move to the previous A-E profile.
+- **Next profile →** — swipe right or tap the arrow to move to the next A-E profile.
+- **↓ Filters** — swipe down or tap the arrow to show/hide filters.
+
+The same compact panel keeps **Search, Favorites, Reference, Top, and Bottom** as ordinary labeled buttons. Desktop-only Hotkeys rows, Favorite-shortcut configuration, and the profile editor stay hidden on narrow touch layouts so Quick Controls does not turn into a screen-filling configuration sheet.
+
+Gestures remain optional accelerators. Recognition is bounded to the Quick Controls pill and the panel's center practice target; normal page scrolling and browser-edge gestures are not captured. Desktop keyboard users keep the existing Hotkeys panel and shortcuts.

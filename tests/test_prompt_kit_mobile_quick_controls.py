@@ -31,23 +31,25 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
         self.assertNotIn("mobileQuickProfileState=", source)
         self.assertNotIn("mobileQuickFavoritesState=", source)
 
-    def test_handle_gestures_are_bounded_to_touch_handle(self) -> None:
+    def test_gestures_are_bounded_to_owned_quick_control_surfaces(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
-        start = source.index("function installMobileQuickHandleGestures(toggle)")
+        start = source.index("function installMobileQuickGestureSurface(surface)")
         end = source.index("function normalizePromptShortcutId", start)
         gesture = source[start:end]
         for marker in (
-            "toggle.addEventListener('pointerdown'",
-            "toggle.addEventListener('pointerup'",
+            "surface.addEventListener('pointerdown'",
+            "surface.addEventListener('pointerup'",
             "window.matchMedia('(max-width:760px)').matches",
             "e.pointerType!=='touch'&&e.pointerType!=='pen'",
             "ay>ax*1.2",
             "ax>ay*1.2",
             "dy<0?'find':'filters'",
             "dx<0?'profile-prev':'profile-next'",
-            "performMobileQuickAction(action,toggle)",
+            "performMobileQuickAction(action,surface)",
         ):
             self.assertIn(marker, gesture)
+        self.assertIn("installMobileQuickGestureSurface(toggle);", source)
+        self.assertIn("installMobileQuickGestureSurface(gestureCenter);", source)
         self.assertNotIn("document.addEventListener('pointerdown'", gesture)
         self.assertNotIn("document.addEventListener('touchstart'", gesture)
 
@@ -57,41 +59,47 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
         self.assertIn("if(!mobileQuickControlsActive()&&focusFavoritePromptShortcutInput(panel))return;", source)
         self.assertIn("panel.querySelector('[data-mobile-quick-action=\"find\"]')", source)
 
-    def test_mobile_sheet_is_visible_and_describes_gestures(self) -> None:
+    def test_mobile_sheet_spatially_teaches_gestures_and_stays_compact(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         for marker in (
             "class=\"mobile-quick-label\">Quick Controls",
+            "↑ Find · ↔ Profile · ↓ Filters",
             "mobileQuick.id='mobileQuickControls'",
             "quickHeading.textContent='Touch shortcuts'",
-            "Swipe the Quick Controls handle: ↑ Find · ← previous profile · → next profile · ↓ filters.",
-            "['find','✦ Find Prompt']",
+            "gestureMap.id='mobileQuickGestureMap'",
+            "gestureCenter.id='mobileQuickGestureSurface'",
+            "Swipe the Quick Controls pill in the direction shown — or tap an arrow.",
+            "['find','↑ Find']",
             "['search','⌕ Search']",
             "['profile-prev','← Previous profile']",
             "['profile-next','Next profile →']",
             "['favorites','★ Favorites']",
-            "['filters','▤ Filters']",
+            "['filters','↓ Filters']",
             "['reference','☰ Reference']",
             "['top','↑ Top']",
             "['bottom','↓ Bottom']",
             ".ref-toggle{display:none!important}",
-            ".mobile-quick-controls{display:grid}",
-            ".hotkey-help-toggle{min-height:48px",
+            ".mobile-quick-controls{display:grid;gap:8px",
+            ".mobile-quick-gesture-map{display:grid}",
+            ".hotkey-help-list,.hotkey-shortcut-config,.prompt-profile-editor{display:none!important}",
+            "width:min(340px,calc(100vw - 32px));max-height:min(460px,58vh)",
+            ".hotkey-help-toggle{min-height:52px",
         ):
             self.assertIn(marker, source)
 
     def test_contract_and_phone_guide_make_touch_parity_explicit(self) -> None:
         contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
         requirement = next(item for item in contract["requirements"] if item["id"] == "mobile_quick_controls_gesture_parity")
-        for phrase in ("Quick Controls", "swiping up", "left/right", "down toggles filters", "parallel state"):
+        for phrase in ("Quick Controls", "compact", "spatial four-way", "desktop Hotkeys list", "parallel state"):
             self.assertIn(phrase, requirement["expected"])
         guide = PHONE_GUIDE.read_text(encoding="utf-8")
         for phrase in (
             "## Quick Controls on touch devices",
-            "Tap Quick Controls",
-            "Swipe up from Quick Controls",
-            "Swipe left from Quick Controls",
-            "Swipe right from Quick Controls",
-            "Swipe down from Quick Controls",
+            "Tap **Quick Controls**",
+            "swipe up on the pill",
+            "swipe left or tap the arrow",
+            "swipe right or tap the arrow",
+            "swipe down or tap the arrow",
             "optional accelerators",
         ):
             self.assertIn(phrase, guide)

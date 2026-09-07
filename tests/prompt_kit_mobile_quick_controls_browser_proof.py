@@ -17,16 +17,16 @@ class Quiet(SimpleHTTPRequestHandler):
         pass
 
 
-def swipe(page, dx: int, dy: int) -> None:
+def swipe(page, dx: int, dy: int, element_id: str = "hotkeyHelpToggle") -> None:
     page.evaluate(
-        """([dx,dy]) => {
-          const el=document.getElementById('hotkeyHelpToggle');
+        """([dx,dy,elementId]) => {
+          const el=document.getElementById(elementId);
           const r=el.getBoundingClientRect();
           const x=r.left+r.width/2,y=r.top+r.height/2,id=71;
           el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:id,pointerType:'touch',clientX:x,clientY:y}));
           el.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:id,pointerType:'touch',clientX:x+dx,clientY:y+dy}));
         }""",
-        [dx, dy],
+        [dx, dy, element_id],
     )
     page.wait_for_timeout(120)
 
@@ -44,27 +44,59 @@ def main() -> int:
                 page.goto(f"http://127.0.0.1:{server.server_port}/web/prompt-kit/index.html", wait_until="domcontentloaded")
                 handle = page.locator("#hotkeyHelpToggle")
                 assert handle.is_visible(), "Quick Controls handle is not visible"
-                assert "Quick Controls" in handle.inner_text(), handle.inner_text()
+                handle_text = handle.inner_text()
+                assert "Quick Controls" in handle_text, handle_text
+                for cue in ("↑ Find", "↔ Profile", "↓ Filters"):
+                    assert cue in handle_text, handle_text
                 assert not page.locator("#refBtn").is_visible(), "legacy floating Reference button remains visible on mobile"
                 box = handle.bounding_box() or {}
-                assert box.get("height", 0) >= 44 and box.get("width", 0) >= 44, box
+                assert box.get("height", 0) >= 44 and 44 <= box.get("width", 0) <= 260, box
 
                 handle.click()
                 panel = page.locator("#hotkeyHelpPanel")
                 assert panel.is_visible(), "Quick Controls sheet did not open"
+                panel_box = panel.bounding_box() or {}
+                assert 0 < panel_box.get("width", 0) <= 350, panel_box
+                assert 0 < panel_box.get("height", 0) <= 470, panel_box
+                panel_metrics = panel.evaluate("el => ({clientHeight: el.clientHeight, scrollHeight: el.scrollHeight})")
+                assert panel_metrics["scrollHeight"] <= panel_metrics["clientHeight"] + 2, panel_metrics
+                assert not page.locator(".hotkey-help-list").is_visible(), "desktop Hotkeys list leaks into mobile Quick Controls"
+                assert not page.locator(".hotkey-shortcut-config").is_visible(), "desktop shortcut editor leaks into mobile Quick Controls"
+                assert not page.locator(".prompt-profile-editor").is_visible(), "desktop profile editor leaks into mobile Quick Controls"
                 quick = page.locator("#mobileQuickControls")
                 assert quick.is_visible(), "touch command grid not visible"
+                gesture_map = page.locator("#mobileQuickGestureMap")
+                center = page.locator("#mobileQuickGestureSurface")
+                assert gesture_map.is_visible() and center.is_visible(), "spatial swipe map is not visible"
                 active_id = page.evaluate("document.activeElement && document.activeElement.id")
                 assert active_id != "promptShortcutPromptId", active_id
                 active_action = page.evaluate("document.activeElement && document.activeElement.getAttribute('data-mobile-quick-action')")
                 assert active_action == "find", active_action
-                buttons = quick.locator(".mobile-quick-action")
-                assert buttons.count() >= 9, buttons.count()
-                for index in range(buttons.count()):
-                    rect = buttons.nth(index).bounding_box() or {}
-                    assert rect.get("height", 0) >= 40, (index, rect)
 
-                quick.get_by_role("button", name="✦ Find Prompt").click()
+                center_box = center.bounding_box() or {}
+                find_box = quick.locator('[data-mobile-quick-action="find"]').bounding_box() or {}
+                prev_box = quick.locator('[data-mobile-quick-action="profile-prev"]').bounding_box() or {}
+                next_box = quick.locator('[data-mobile-quick-action="profile-next"]').bounding_box() or {}
+                filters_box = quick.locator('[data-mobile-quick-action="filters"]').bounding_box() or {}
+                assert find_box.get("y", 9999) < center_box.get("y", 0), (find_box, center_box)
+                assert prev_box.get("x", 9999) < center_box.get("x", 0), (prev_box, center_box)
+                assert next_box.get("x", 0) > center_box.get("x", 9999), (next_box, center_box)
+                assert filters_box.get("y", 0) > center_box.get("y", 9999), (filters_box, center_box)
+
+                gesture_buttons = quick.locator(".mobile-quick-gesture")
+                assert gesture_buttons.count() == 4, gesture_buttons.count()
+                buttons = quick.locator(".mobile-quick-action")
+                assert buttons.count() == 5, buttons.count()
+                for group in (gesture_buttons, buttons):
+                    for index in range(group.count()):
+                        rect = group.nth(index).bounding_box() or {}
+                        assert rect.get("height", 0) >= 40, (index, rect)
+
+                page.evaluate("window.PromptKitProfiles.activateSlot('A')")
+                swipe(page, 70, 0, "mobileQuickGestureSurface")
+                assert page.evaluate("window.PromptKitProfiles.getState().activeKey") == "B"
+                handle.click()
+                quick.get_by_role("button", name="↑ Find").click()
                 assert page.locator("#promptDetailOverlay").evaluate("el=>el.classList.contains('open')")
                 assert "Prompt Kit Tutorial" in page.locator("#promptDetail").inner_text()
                 page.locator(".prompt-detail-close").click()
