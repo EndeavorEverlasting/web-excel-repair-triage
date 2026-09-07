@@ -3,7 +3,11 @@ from __future__ import annotations
 import json
 import subprocess
 import unittest
+
+import build_prompt_kit
 from pathlib import Path
+
+from scripts import build_prompt_kit_registry
 
 ROOT = Path(__file__).resolve().parents[1]
 JS = ROOT / "docs" / "prompt-kit.js"
@@ -91,6 +95,29 @@ process.stdout.write(JSON.stringify({artifact:artifact,close:close}));
         self.assertNotIn("P07", result["artifact"], "copyContent-only artifact noise must be suppressed")
         self.assertNotIn("P20", result["artifact"], "copyContent-only artifact noise must be suppressed")
         self.assertIn("P12", result["close"], "partial close must resolve closeout synonym and metadata")
+
+    def test_phone_native_queries_rank_p129_before_generic_finder(self) -> None:
+        js = JS.read_text(encoding="utf-8")
+        start = js.index("function normalizeSearchText")
+        end = js.index("function promptSequenceValue")
+        helpers = js[start:end]
+        full = {p["id"]: p for p in build_prompt_kit_registry.load_prompt_kit_registry()}
+        fields = ("id", "seq", "name", "type", "class", "useWhen", "sprintRole", "proofGate", "copyContent", "keywords")
+        prompts = [{key: full[prompt_id].get(key) for key in fields} for prompt_id in ("P129", "P65", "P34")]
+        script = (
+            "var SYNONYMS=" + json.dumps(build_prompt_kit.SYNONYMS) + ";\n"
+            "function promptSequenceValue(p){var raw=String((p&&p.seq)||((p&&p.id)||''));var n=parseInt(raw.replace(/\\D/g,''),10);return isNaN(n)?Number.MAX_SAFE_INTEGER:n}\n"
+            + helpers
+            + "\nvar prompts=" + json.dumps(prompts) + ";\n"
+            + "var queries=['mobile interaction design','touch first ux','phone native ux'];\n"
+            + "var out={};queries.forEach(function(q){out[q]=filterPromptsForQuery(prompts,q).map(function(p){return p.id})});\n"
+            + "process.stdout.write(JSON.stringify(out));\n"
+        )
+        completed = subprocess.run(["node", "-e", script], check=True, capture_output=True, text=True)
+        result = json.loads(completed.stdout)
+        for query in ("mobile interaction design", "touch first ux", "phone native ux"):
+            self.assertEqual(result[query][0], "P129", f"{query!r} must route to the specialist before P65")
+            self.assertIn("P65", result[query], "guided finder should remain discoverable as a secondary router")
 
     def test_favorites_persist_as_explicit_filter_without_reordering_default(self) -> None:
         js = JS.read_text(encoding="utf-8")

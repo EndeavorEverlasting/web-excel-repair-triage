@@ -165,6 +165,9 @@ class UXDesignPromptSuiteTests(unittest.TestCase):
         self.assertIn("P94 Regression Test & Live Behavior Guard", content)
         for phrase in ("MOUSE / POINTER", "KEYBOARD POWER LANGUAGE", "PHONE / TOUCH-NATIVE", "physical-phone ergonomics"):
             self.assertIn(phrase, content)
+        self.assertIn("Apply only the checks for product-declared supported modes", content)
+        self.assertIn("When all three modalities are product-declared supported", prompt["expectedOutput"])
+        self.assertNotIn("When multiple input modalities are supported, include an explicit three-mode capability matrix", prompt["expectedOutput"])
 
     def test_existing_iteration_flow_program_and_regression_owners_remain_distinct(self) -> None:
         for prompt_id, expected in (
