@@ -28,13 +28,28 @@ jobs:
           python scripts/execute_mobile_quick_controls_discoverability_patch.py
           python - <<'PY'
           from pathlib import Path
-          path = Path('docs/prompt-kit-polish.js')
-          text = path.read_text(encoding='utf-8')
+
+          polish = Path('docs/prompt-kit-polish.js')
+          text = polish.read_text(encoding='utf-8')
           old = "grid-template-areas:'. up .' 'left center right' '. down .';"
           new = 'grid-template-areas:". up ." "left center right" ". down .";'
           if text.count(old) != 1:
               raise SystemExit(f'expected one grid-template-areas quote repair, found {text.count(old)}')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          polish.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          tests = Path('tests/test_prompt_kit_mobile_quick_controls.py')
+          test_text = tests.read_text(encoding='utf-8')
+          replacements = (
+              ('".mobile-quick-controls{display:grid}",', '".mobile-quick-controls{display:grid;gap:8px",'),
+              ('for phrase in ("Tap Quick Controls", "swipe up", "swipe left", "swipe right", "swipe down", "optional accelerator"):',
+               'for phrase in ("Tap **Quick Controls**", "swipe up", "swipe left", "swipe right", "swipe down", "optional accelerator"):')
+          )
+          for old_test, new_test in replacements:
+              count = test_text.count(old_test)
+              if count != 1:
+                  raise SystemExit(f'expected one test-literal reconciliation for {old_test!r}, found {count}')
+              test_text = test_text.replace(old_test, new_test, 1)
+          tests.write_text(test_text, encoding='utf-8')
           PY
       - name: Regenerate and validate
         shell: bash
