@@ -1,0 +1,48 @@
+name: Prompt Kit mobile quick controls
+
+on:
+  pull_request:
+    paths:
+      - 'docs/prompt-kit-polish.js'
+      - 'harness/contracts/prompt-kit-mobile.v1.json'
+      - 'OPEN_PROMPT_KIT_ON_PHONE.md'
+      - 'tests/test_prompt_kit_mobile.py'
+      - 'tests/test_prompt_kit_mobile_quick_controls.py'
+      - 'tests/prompt_kit_mobile_quick_controls_browser_proof.py'
+      - 'web/prompt-kit/index.html'
+      - '.github/workflows/prompt-kit-mobile-quick-controls.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/prompt-kit-polish.js'
+      - 'harness/contracts/prompt-kit-mobile.v1.json'
+      - 'OPEN_PROMPT_KIT_ON_PHONE.md'
+      - 'tests/test_prompt_kit_mobile.py'
+      - 'tests/test_prompt_kit_mobile_quick_controls.py'
+      - 'tests/prompt_kit_mobile_quick_controls_browser_proof.py'
+      - 'web/prompt-kit/index.html'
+      - '.github/workflows/prompt-kit-mobile-quick-controls.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  quick-controls:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+      - name: Static mobile contract
+        run: |
+          node --check docs/prompt-kit-polish.js
+          python -m unittest tests.test_prompt_kit_mobile tests.test_prompt_kit_mobile_quick_controls -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Install Chromium proof dependency
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+      - name: Chromium quick-controls journey
+        run: python tests/prompt_kit_mobile_quick_controls_browser_proof.py

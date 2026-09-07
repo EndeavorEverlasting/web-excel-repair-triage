@@ -26,6 +26,7 @@ class PromptKitMobileTests(unittest.TestCase):
                 "title_reset",
                 "explicit_mobile_open",
                 "touch_copy_preserved",
+                "mobile_quick_controls_gesture_parity",
                 "favorites_quick_access",
                 "favorites_group_jump_navigation",
                 "favorites_empty_state_and_persistence",
