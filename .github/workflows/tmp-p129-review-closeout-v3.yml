@@ -1,0 +1,121 @@
+name: Temporary P129 review closeout v3
+
+on:
+  push:
+    branches:
+      - fix/p129-review-closeout-20260907
+    paths:
+      - '.github/workflows/tmp-p129-review-closeout-v3.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Reconcile current main floor
+        run: |
+          git fetch --all --prune --tags
+          test "$(git rev-parse origin/main)" = "bd1431efec587a18de71fbb6b7096bdff18b3a65"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git merge --no-edit origin/main
+      - name: Repair canonical prompt sources and focused regressions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          spec_path = Path('registry/prompts/spec-architecture-prompts.v1.json')
+          ux_test_path = Path('tests/test_ux_design_prompt_suite.py')
+          discovery_test_path = Path('tests/test_prompt_kit_discovery.py')
+          builder_path = Path('build_prompt_kit.py')
+
+          spec = json.loads(spec_path.read_text(encoding='utf-8'))
+          p110 = next(p for p in spec['prompts'] if p['id'] == 'P110')
+          old_expected = 'When multiple input modalities are supported, include an explicit three-mode capability matrix and route upstream design defects to P129.'
+          new_expected = 'When all three modalities are product-declared supported, include an explicit three-mode capability matrix; otherwise evaluate only the declared supported modes and route upstream design defects to P129.'
+          if old_expected not in p110['expectedOutput']:
+              raise SystemExit('P110 expectedOutput review anchor missing')
+          p110['expectedOutput'] = p110['expectedOutput'].replace(old_expected, new_expected, 1)
+
+          old_proof = 'Touch emulation may prove deterministic gesture/focus mechanics but cannot alone prove physical-phone ergonomics, software-keyboard feel, thumb reach, or OS/browser gesture conflict; those claims require observed device evidence.'
+          new_proof = 'When phone/touch is in the product-declared supported contract, touch emulation may prove deterministic gesture/focus mechanics but cannot alone prove physical-phone ergonomics, software-keyboard feel, thumb reach, or OS/browser gesture conflict; those claims require observed device evidence.'
+          if old_proof not in p110['proofGate']:
+              raise SystemExit('P110 proofGate review anchor missing')
+          p110['proofGate'] = p110['proofGate'].replace(old_proof, new_proof, 1)
+
+          old_section = '2A. PROVE MODE-NATIVE EQUIVALENCE, NOT IDENTICAL CONTROL SHAPES\n- MOUSE / POINTER: direct controls and supported click/double-click/hover behavior must reach terminal action without hover-only essential capability.\n- KEYBOARD POWER LANGUAGE: shortcuts, command/finder entry, navigation, sequences, focus recovery, and Escape semantics must complete terminal capabilities without a mouse-only intermediate.\n- PHONE / TOUCH-NATIVE: labeled tap/command surfaces and gestures must preserve feature reachability without tiny desktop chrome, browser Find, accidental software-keyboard focus, scroll/back conflict, or duplicate touch+pointer dispatch.\nEquivalent intent converges on canonical semantic actions/state owners; if that design is missing, route upstream to P129. Touch-emulated Chromium is useful runtime evidence, but physical-phone ergonomics remain unproven until an actual device pass.'
+          new_section = '2A. PROVE MODE-NATIVE EQUIVALENCE, NOT IDENTICAL CONTROL SHAPES\nApply only the checks for product-declared supported modes. Do not make phone/touch acceptance a release requirement for a product that intentionally supports only mouse and keyboard; likewise do not invent a pointer or keyboard contract for a touch-only surface. When all three modes are supported, prove the complete three-mode matrix.\n- MOUSE / POINTER, WHEN SUPPORTED: direct controls and supported click/double-click/hover behavior must reach terminal action without hover-only essential capability.\n- KEYBOARD POWER LANGUAGE, WHEN SUPPORTED: shortcuts, command/finder entry, navigation, sequences, focus recovery, and Escape semantics must complete terminal capabilities without a mouse-only intermediate.\n- PHONE / TOUCH-NATIVE, WHEN SUPPORTED: labeled tap/command surfaces and gestures must preserve feature reachability without tiny desktop chrome, browser Find, accidental software-keyboard focus, scroll/back conflict, or duplicate touch+pointer dispatch.\nEquivalent supported-mode intent converges on canonical semantic actions/state owners; if that design is missing, route upstream to P129. When phone/touch is supported, touch-emulated Chromium is useful runtime evidence, but physical-phone ergonomics remain unproven until an actual device pass.'
+          if old_section not in p110['copyContent']:
+              raise SystemExit('P110 copyContent review anchor missing')
+          p110['copyContent'] = p110['copyContent'].replace(old_section, new_section, 1)
+          spec_path.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          builder = builder_path.read_text(encoding='utf-8')
+          synonym_anchor = '    "technician": "P34", "ux": "P34",\n'
+          synonym_insert = '    "technician": "P34", "ux": "P34",\n    "phone native ux": "P129", "mobile interaction design": "P129", "touch first ux": "P129",\n    "cross input ux": "P129", "input modality ux": "P129", "mouse keyboard phone ux": "P129",\n'
+          if '"mobile interaction design": "P129"' not in builder:
+              if synonym_anchor not in builder:
+                  raise SystemExit('SYNONYMS insertion anchor missing')
+              builder = builder.replace(synonym_anchor, synonym_insert, 1)
+          builder_path.write_text(builder, encoding='utf-8')
+
+          ux = ux_test_path.read_text(encoding='utf-8')
+          anchor = '        for phrase in ("MOUSE / POINTER", "KEYBOARD POWER LANGUAGE", "PHONE / TOUCH-NATIVE", "physical-phone ergonomics"):\n            self.assertIn(phrase, content)\n'
+          replacement = anchor + '        self.assertIn("Apply only the checks for product-declared supported modes", content)\n        self.assertIn("When all three modalities are product-declared supported", prompt["expectedOutput"])\n        self.assertNotIn("When multiple input modalities are supported, include an explicit three-mode capability matrix", prompt["expectedOutput"])\n'
+          if 'Apply only the checks for product-declared supported modes' not in ux:
+              if anchor not in ux:
+                  raise SystemExit('P110 test insertion anchor missing')
+              ux = ux.replace(anchor, replacement, 1)
+          ux_test_path.write_text(ux, encoding='utf-8')
+
+          discovery = discovery_test_path.read_text(encoding='utf-8')
+          if 'import build_prompt_kit\n' not in discovery:
+              discovery = discovery.replace('import unittest\n', 'import unittest\n\nimport build_prompt_kit\n', 1)
+          if 'from scripts import build_prompt_kit_registry\n' not in discovery:
+              discovery = discovery.replace('from pathlib import Path\n', 'from pathlib import Path\n\nfrom scripts import build_prompt_kit_registry\n', 1)
+
+          test_method = '''    def test_phone_native_queries_rank_p129_before_generic_finder(self) -> None:\n        js = JS.read_text(encoding="utf-8")\n        start = js.index("function normalizeSearchText")\n        end = js.index("function promptSequenceValue")\n        helpers = js[start:end]\n        full = {p["id"]: p for p in build_prompt_kit_registry.load_prompt_kit_registry()}\n        fields = ("id", "seq", "name", "type", "class", "useWhen", "sprintRole", "proofGate", "copyContent", "keywords")\n        prompts = [{key: full[prompt_id].get(key) for key in fields} for prompt_id in ("P129", "P65", "P34")]\n        script = (\n            "var SYNONYMS=" + json.dumps(build_prompt_kit.SYNONYMS) + ";\\n"\n            "function promptSequenceValue(p){var raw=String((p&&p.seq)||((p&&p.id)||''));var n=parseInt(raw.replace(/\\\\D/g,''),10);return isNaN(n)?Number.MAX_SAFE_INTEGER:n}\\n"\n            + helpers\n            + "\\nvar prompts=" + json.dumps(prompts) + ";\\n"\n            + "var queries=['mobile interaction design','touch first ux','phone native ux'];\\n"\n            + "var out={};queries.forEach(function(q){out[q]=filterPromptsForQuery(prompts,q).map(function(p){return p.id})});\\n"\n            + "process.stdout.write(JSON.stringify(out));\\n"\n        )\n        completed = subprocess.run(["node", "-e", script], check=True, capture_output=True, text=True)\n        result = json.loads(completed.stdout)\n        for query in ("mobile interaction design", "touch first ux", "phone native ux"):\n            self.assertEqual(result[query][0], "P129", f"{query!r} must route to the specialist before P65")\n            self.assertIn("P65", result[query], "guided finder should remain discoverable as a secondary router")\n\n'''
+          marker = '    def test_favorites_persist_as_explicit_filter_without_reordering_default(self) -> None:\n'
+          if 'def test_phone_native_queries_rank_p129_before_generic_finder' not in discovery:
+              if marker not in discovery:
+                  raise SystemExit('discovery test insertion marker missing')
+              discovery = discovery.replace(marker, test_method + marker, 1)
+          discovery_test_path.write_text(discovery, encoding='utf-8')
+          PY
+      - name: Regenerate and validate review repairs
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_ux_design_prompt_suite -v
+          python -m unittest tests.test_prompt_kit_discovery -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_order_navigation_contract -v
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Enforce durable scope and remove carriers
+        env:
+          BASE_SHA: bd1431efec587a18de71fbb6b7096bdff18b3a65
+        run: |
+          rm .github/workflows/tmp-p129-review-closeout.yml .github/workflows/tmp-p129-review-closeout-v2.yml .github/workflows/tmp-p129-review-closeout-v3.yml
+          changed="$(git diff --name-only "$BASE_SHA" | sort)"
+          expected="$(printf '%s\n' 'build_prompt_kit.py' 'registry/prompts/spec-architecture-prompts.v1.json' 'tests/test_prompt_kit_discovery.py' 'tests/test_ux_design_prompt_suite.py' 'web/prompt-kit/index.html' | sort)"
+          test "$changed" = "$expected" || { printf 'Unexpected durable diff:\n%s\n' "$changed" >&2; exit 1; }
+      - name: Commit and push durable repair
+        run: |
+          git add -A
+          git diff --cached --check
+          git commit -m 'fix(prompt-kit): close P129 modality review gaps'
+          test -z "$(git status --porcelain)"
+          git push origin HEAD:fix/p129-review-closeout-20260907
