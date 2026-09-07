@@ -1466,6 +1466,20 @@ function mobilePromptJumpHasPrefix(promptId){
   return catalog.some(function(item){return item&&typeof item.id==='string'&&item.id!==promptId&&item.id.indexOf(promptId)===0})
 }
 
+function setMobilePromptJumpSubmitState(promptId,exact,longer){
+  var go=document.querySelector('#mobilePromptJumpForm .mobile-prompt-jump-go');
+  if(!go)return;
+  if(exact){
+    go.disabled=false;
+    go.textContent=longer?'Open '+promptId:'Go';
+    go.setAttribute('aria-label',longer?'Open exact '+promptId:'Open exact prompt ID')
+  }else{
+    go.disabled=true;
+    go.textContent='Go';
+    go.setAttribute('aria-label','Open exact prompt ID')
+  }
+}
+
 function setMobilePromptJumpOpen(open,restoreFocus){
   var form=document.getElementById('mobilePromptJumpForm');
   var toggle=document.getElementById('mobilePromptJumpToggle');
@@ -1477,6 +1491,7 @@ function setMobilePromptJumpOpen(open,restoreFocus){
     input.value='';
     var status=document.getElementById('mobilePromptJumpStatus');
     if(status)status.textContent='Type the digits after P. Example: 111.';
+    setMobilePromptJumpSubmitState('',false,false);
     try{input.focus({preventScroll:true})}catch(e){input.focus()}
   }else if(restoreFocus){
     try{toggle.focus({preventScroll:true})}catch(e){toggle.focus()}
@@ -1491,11 +1506,12 @@ function resolveMobilePromptJump(force){
   if(!input)return false;
   var digits=mobilePromptJumpDigits(input.value);
   if(input.value!==digits)input.value=digits;
-  if(!digits){if(status)status.textContent='Type the digits after P. Example: 111.';return false}
+  if(!digits){setMobilePromptJumpSubmitState('',false,false);if(status)status.textContent='Type the digits after P. Example: 111.';return false}
   var promptId='P'+digits;
   var prompt=mobilePromptJumpPrompt(promptId);
   var longer=mobilePromptJumpHasPrefix(promptId);
   if(prompt&&(!longer||force)){
+    setMobilePromptJumpSubmitState(promptId,true,longer);
     setMobilePromptJumpOpen(false,false);
     setHotkeyHelpOpen(false,false);
     if(typeof window.showPromptDetail==='function'){
@@ -1505,10 +1521,15 @@ function resolveMobilePromptJump(force){
     if(status)status.textContent='Prompt detail is unavailable.';
     return false
   }
-  if(prompt&&longer){if(status)status.textContent=promptId+' exists. Keep typing, or tap Go for '+promptId+'.';return false}
+  if(prompt&&longer){
+    setMobilePromptJumpSubmitState(promptId,true,true);
+    if(status)status.textContent=promptId+' is exact. Press Enter or tap Open '+promptId+', or keep typing for a longer ID.';
+    return false
+  }
   var catalog=typeof PROMPTS!=='undefined'&&Array.isArray(PROMPTS)?PROMPTS:[];
   var hasCandidate=catalog.some(function(item){return item&&typeof item.id==='string'&&item.id.indexOf(promptId)===0});
-  if(status)status.textContent=hasCandidate?'Keep typing '+promptId+'…':'No prompt begins with '+promptId+'.';
+  setMobilePromptJumpSubmitState(promptId,false,false);
+  if(status)status.textContent=hasCandidate?'Keep typing '+promptId+'…':'No prompt starts with '+promptId+'.';
   return false
 }
 
@@ -1517,7 +1538,7 @@ function installMobilePromptJump(shell){
   if(!document.getElementById('mobile-prompt-jump-styles')){
     var style=document.createElement('style');
     style.id='mobile-prompt-jump-styles';
-    style.textContent='.mobile-prompt-jump{display:none}.mobile-prompt-jump-form[hidden]{display:none}@media(max-width:760px){.hotkey-help{display:flex;align-items:flex-end;gap:8px;right:12px;bottom:12px}.mobile-prompt-jump{display:block;position:relative}.mobile-prompt-jump-toggle,.hotkey-help-toggle{min-height:52px;border-radius:999px;touch-action:manipulation!important}.mobile-prompt-jump-toggle{display:inline-flex;align-items:center;justify-content:center;padding:8px 14px;border:1px solid rgba(56,189,248,.75);background:linear-gradient(135deg,rgba(2,132,199,.96),rgba(15,23,42,.98));color:var(--text-primary);font:800 12px/1 inherit;box-shadow:0 0 0 1px rgba(56,189,248,.14),0 0 18px rgba(56,189,248,.28),0 8px 24px rgba(0,0,0,.28)}.mobile-prompt-jump-toggle:focus-visible{outline:none;box-shadow:0 0 0 3px var(--accent-glow),0 0 24px rgba(56,189,248,.4)}.mobile-prompt-jump-form{position:fixed;right:12px;bottom:74px;width:min(300px,calc(100vw - 24px));display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;padding:10px;border:1px solid rgba(56,189,248,.55);border-radius:12px;background:rgba(15,23,42,.99);box-shadow:0 14px 40px rgba(0,0,0,.48);z-index:47}.mobile-prompt-jump-prefix{font:900 18px/1 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--accent)}.mobile-prompt-jump-input{min-width:0;height:48px;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-surface);color:var(--text-primary);font:800 18px/1 ui-monospace,SFMono-Regular,Consolas,monospace}.mobile-prompt-jump-go{min-width:52px;height:48px;border:1px solid var(--accent);border-radius:8px;background:var(--accent-glow);color:var(--text-primary);font:800 12px/1 inherit}.mobile-prompt-jump-status{grid-column:1/-1;min-height:16px;color:var(--text-secondary);font-size:10px;line-height:1.35}.mobile-quick-label{display:inline}.hotkey-panel-title{display:none}.mobile-quick-panel-title{display:inline}.hotkey-help-panel{width:min(340px,calc(100vw - 24px));max-height:min(460px,58vh)}.hotkey-help-list,.hotkey-shortcut-config,.prompt-profile-editor{display:none!important}.mobile-quick-handle-cue{display:none!important}}';
+    style.textContent='.mobile-prompt-jump{display:none}.mobile-prompt-jump-form[hidden]{display:none}@media(max-width:760px){.hotkey-help{display:flex;align-items:flex-end;gap:8px;right:12px;bottom:12px}.mobile-prompt-jump{display:block;position:relative}.mobile-prompt-jump-toggle,.hotkey-help-toggle{min-height:52px;border-radius:999px;touch-action:manipulation!important}.mobile-prompt-jump-toggle{display:inline-flex;align-items:center;justify-content:center;padding:8px 14px;border:1px solid rgba(56,189,248,.75);background:linear-gradient(135deg,rgba(2,132,199,.96),rgba(15,23,42,.98));color:var(--text-primary);font:800 12px/1 inherit;box-shadow:0 0 0 1px rgba(56,189,248,.14),0 0 18px rgba(56,189,248,.28),0 8px 24px rgba(0,0,0,.28)}.mobile-prompt-jump-toggle:focus-visible{outline:none;box-shadow:0 0 0 3px var(--accent-glow),0 0 24px rgba(56,189,248,.4)}.mobile-prompt-jump-form{position:fixed;right:12px;bottom:74px;width:min(300px,calc(100vw - 24px));display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;padding:10px;border:1px solid rgba(56,189,248,.55);border-radius:12px;background:rgba(15,23,42,.99);box-shadow:0 14px 40px rgba(0,0,0,.48);z-index:47}.mobile-prompt-jump-prefix{font:900 18px/1 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--accent)}.mobile-prompt-jump-input{min-width:0;height:48px;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-surface);color:var(--text-primary);font:800 18px/1 ui-monospace,SFMono-Regular,Consolas,monospace}.mobile-prompt-jump-go{min-width:52px;height:48px;border:1px solid var(--accent);border-radius:8px;background:var(--accent-glow);color:var(--text-primary);font:800 12px/1 inherit}.mobile-prompt-jump-go:disabled{opacity:.45;cursor:not-allowed}.mobile-prompt-jump-status{grid-column:1/-1;min-height:16px;color:var(--text-secondary);font-size:10px;line-height:1.35}.mobile-quick-label{display:inline}.hotkey-panel-title{display:none}.mobile-quick-panel-title{display:inline}.hotkey-help-panel{width:min(340px,calc(100vw - 24px));max-height:min(460px,58vh)}.hotkey-help-list,.hotkey-shortcut-config,.prompt-profile-editor{display:none!important}.mobile-quick-handle-cue{display:none!important}}';
     document.head.appendChild(style)
   }
   var jump=document.createElement('div');
@@ -1554,6 +1575,7 @@ function installMobilePromptJump(shell){
   go.className='mobile-prompt-jump-go';
   go.type='submit';
   go.textContent='Go';
+  go.disabled=true;
   go.setAttribute('aria-label','Open exact prompt ID');
   var status=document.createElement('div');
   status.className='mobile-prompt-jump-status';

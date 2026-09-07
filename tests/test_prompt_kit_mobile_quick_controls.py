@@ -18,6 +18,7 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
             "function mobilePromptJumpDigits(raw)",
             "function mobilePromptJumpPrompt(promptId)",
             "function mobilePromptJumpHasPrefix(promptId)",
+            "function setMobilePromptJumpSubmitState(promptId,exact,longer)",
             "function resolveMobilePromptJump(force)",
             "function installMobilePromptJump(shell)",
             "mobilePromptJumpToggle",
@@ -36,11 +37,14 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
         self.assertNotIn("isFavoritePrompt", jump)
         self.assertNotIn("promptShortcutBindings", jump)
 
-    def test_prefix_collision_waits_but_unambiguous_exact_id_auto_opens(self) -> None:
+    def test_prefix_collision_requires_explicit_exact_confirmation_without_timing_race(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         self.assertIn("if(prompt&&(!longer||force))", source)
-        self.assertIn("if(prompt&&longer){if(status)status.textContent=promptId+' exists. Keep typing, or tap Go for '+promptId+'.'", source)
-        self.assertIn("hasCandidate?'Keep typing '+promptId+'…':'No prompt begins with '+promptId+'.'", source)
+        self.assertIn("go.textContent=longer?'Open '+promptId:'Go'", source)
+        self.assertIn("promptId+' is exact. Press Enter or tap Open '+promptId+', or keep typing for a longer ID.'", source)
+        self.assertIn("setMobilePromptJumpSubmitState(promptId,false,false)", source)
+        self.assertIn("hasCandidate?'Keep typing '+promptId+'…':'No prompt starts with '+promptId+'.'", source)
+        self.assertNotIn("setTimeout(function(){resolveMobilePromptJump", source)
 
     def test_mobile_more_panel_uses_explicit_controls_without_swipe_guessing(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
@@ -90,7 +94,7 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
         contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
         requirement = next(item for item in contract["requirements"] if item["id"] == "mobile_prompt_id_jump")
         expected = requirement["expected"]
-        for phrase in ("Go to P#", "digits only", "P111", "without opening More", "browser Find", "not required"):
+        for phrase in ("Go to P#", "digits only", "P111", "P11", "Enter", "leading zero", "without opening More", "browser Find", "not required"):
             self.assertIn(phrase, expected)
         guide = PHONE_GUIDE.read_text(encoding="utf-8")
         for phrase in (
@@ -101,6 +105,9 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
             "You do not open **More** first",
             "Swiping is not required",
             "Find in page",
+            "P11",
+            "Press **Enter**",
+            "leading zero",
         ):
             self.assertIn(phrase, guide)
 
