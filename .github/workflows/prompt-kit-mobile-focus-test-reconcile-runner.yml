@@ -22,7 +22,20 @@ jobs:
         with:
           python-version: '3.x'
       - name: Apply bounded UX repair
-        run: python scripts/execute_mobile_quick_controls_discoverability_patch.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/execute_mobile_quick_controls_discoverability_patch.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('docs/prompt-kit-polish.js')
+          text = path.read_text(encoding='utf-8')
+          old = "grid-template-areas:'. up .' 'left center right' '. down .';"
+          new = 'grid-template-areas:". up ." "left center right" ". down .";'
+          if text.count(old) != 1:
+              raise SystemExit(f'expected one grid-template-areas quote repair, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
       - name: Regenerate and validate
         shell: bash
         run: |
