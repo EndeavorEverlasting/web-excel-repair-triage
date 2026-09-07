@@ -1,0 +1,291 @@
+name: Temporary Prompt Kit phone-native UX modality campaign
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-phone-native-ux-modality-20260907
+    paths:
+      - '.github/workflows/tmp-prompt-kit-phone-native-ux-campaign.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact campaign head
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Add dedicated cross-input and phone-native UX specialist through canonical helper
+        shell: bash
+        run: |
+          set -o pipefail
+          cat > /tmp/phone-native-ux-prompt.json <<'JSON'
+          {
+            "name": "Cross-Input UX Modality & Phone-Native Interaction Architect",
+            "type": "DESIGN + BUILD",
+            "class": "PRODUCT / UX INPUT MODALITY",
+            "sprintRole": "Design and implement equivalent but mode-native interaction languages for mouse/pointer, keyboard power users, and phone/touch users, with phone treated as a first-class workflow rather than a resized desktop skin",
+            "useWhen": "An app or UX-critical repository supports or should support mouse/pointer, keyboard, and phone/touch users, but one modality is an afterthought; especially when mobile means little more than larger buttons, desktop controls are merely compressed, touch depends on hover/double-click/browser Find, keyboard shortcuts form a real power language while phone has no equivalent interaction grammar, or the same user capability behaves differently across input paths.",
+            "inspectFirst": "Fresh product/repository truth; primary user jobs and terminal actions; current semantic command/action owners; pointer click/double-click/hover controls; keyboard shortcuts, sequences, focus/navigation rules, and command surfaces; phone touch controls, gestures, bottom sheets/quick controls, safe-area and software-keyboard behavior; shared state owners; responsive/accessibility contracts; current browser/device proof; repeated cross-app interaction patterns; and overlapping UX/runtime work.",
+            "expectedOutput": "A three-mode capability matrix, mode-specific interaction grammar for mouse/pointer, keyboard, and phone/touch, a semantic-action convergence map proving shared state ownership without parallel mobile logic, the smallest phone-native vertical repair needed to close the highest-value gap, modality-specific failure regressions, browser/device proof with an explicit physical-phone ceiling, and routing of proven reusable patterns to the cross-app design-system owner.",
+            "nextStep": "Audit one high-frequency terminal user journey across mouse/pointer, keyboard-only, and phone/touch; identify the first capability whose phone path is missing, desktop-shaped, or semantically divergent; implement the smallest touch-native entrypoint on the existing semantic action/state owner; then rerun all three modes plus phone-specific failure falsification before broadening the interaction language.",
+            "proofGate": "Every in-scope high-value capability has a reachable mode-native route; pointer, keyboard, and phone entrypoints converge on the same semantic action/state owner when they mean the same thing; phone UX does not depend on hover, tiny desktop chrome, double-click, browser Find, or an accidental software-keyboard focus jump; gestures have discoverable labeled fallbacks and do not conflict with scroll/browser navigation; one physical user action cannot double-dispatch through synthesized pointer/touch events; static or touch-emulated proof is not promoted to physical-phone ergonomic acceptance; and the second pass finds no practical in-scope modality gap remaining.",
+            "color": "Cyan",
+            "profile": "spec-architecture",
+            "copyContent": "DESIGN THREE REAL UX LANGUAGES: MOUSE DIRECT CONTROLS, KEYBOARD POWER COMMANDS, AND PHONE-NATIVE TOUCH. DO NOT CALL BIGGER BUTTONS A MOBILE EXPERIENCE.\n\nRepo/product: xyz_repo_or_product\nBranch/worktree: xyz_branch_or_worktree_or_resolve_from_repo\nLane/sprint: xyz_lane_or_sprint_name\nOwned scope: xyz_owned_scope\nForbidden scope: xyz_forbidden_scope\nDependencies/collision risks: xyz_dependencies_and_collisions_or_resolve_from_repo\nExpected tracked artifacts: xyz_expected_artifacts_or_resolve_from_repo\nValidation order: xyz_validation_commands_or_resolve_from_repo\nIntegration authority: xyz_merge_or_integration_authority_or_resolve_from_provider\nProof ceiling: xyz_proof_ceiling\nCommit/PR expectation: xyz_commit_pr_expectation_or_resolve_from_repo\nUX surface/journey: xyz_surface_or_resolve_from_context\nSupported modes: mouse/pointer + keyboard + phone/touch unless product evidence narrows them\nObserved phone failure: xyz_phone_failure_or_resolve_from_evidence\n\nSPRINT DECLARATION — REQUIRED BEFORE MUTATION\nResolve the writing-sprint declaration above from repository/provider evidence before editing. Do not make the user restate recoverable paths, interaction contracts, or accepted behavior.\n\nMISSION\nGive each supported input modality an intentional interaction language while preserving one product model underneath. Mouse users should get direct visible controls and pointer-native affordances. Keyboard users should get a real power-user language rather than tabbing through a desktop UI one control at a time. Phone users should get touch-native journeys designed around the device instead of a desktop layout with larger buttons. Equivalent user intent should converge on the same semantic actions, state owners, feedback, and terminal results; modality-specific entrypoints may differ radically when that improves use.\n\nOWNED SCOPE\n- Cross-input capability mapping, modality-specific interaction grammar, phone-native touch design, semantic-action convergence, bounded implementation of missing modality seams, modality failure regressions, and proof of equivalent terminal capability across supported modes.\n\nFORBIDDEN SCOPE\n- Do not replace overall information architecture/product design owned by P106, generic flow/telemetry repair owned by P99, cross-app factoring owned by P109, acceptance-only certification owned by P110, or runtime/module architecture owned by P95. Do not create a second mobile state machine, duplicate command registry, or repository-wide gesture framework when existing semantic owners can be adapted.\n\n1. PIN CAPABILITIES BEFORE CONTROLS\nStart from terminal user value. List the high-frequency or high-risk capabilities the user must be able to complete: discover, navigate, search, select, inspect, act/copy/submit/export, recover/back, reset, filter, manage favorites or saved state, and handle empty/error states as applicable. For each capability record current MOUSE, KEYBOARD, PHONE, semantic action owner, state owner, and proof. Missing is not equivalent to 'use the desktop control.'\n\n2. DESIGN THREE MODE-NATIVE INTERACTION LANGUAGES\nMOUSE / POINTER — use visible direct controls, click, double-click, hover, context actions, drag/scroll, and pointer feedback only where those are natural and discoverable. Hover may enrich; it may not be the only way to learn or reach an essential action.\nKEYBOARD — preserve or design an actual command language: direct shortcuts, command/finder entry, mode keys, navigation keys, focus recovery, and short sequences where the product benefits. In Prompt Kit the concrete language includes `/`, `A–E`, `F`, `[`, `]`, `R`, `Home/End`, `Esc`, and prompt sequences; other products must resolve their own existing bindings instead of cargo-culting these exact keys. Keyboard completion should reach terminal user value, not merely reveal the next mouse control.\nPHONE / TOUCH-NATIVE — design tap, structured command sheets/quick controls, swipe or long-press only where conflict-safe and discoverable, thumb-reachable frequent actions, intentional text-entry focus, safe-area/viewport behavior, and structured destinations for important views. Do not require hover, double-click, tiny persistent desktop chrome, browser Find, or precision pointer behavior to use a core feature. Do not automatically summon the software keyboard when opening a non-text command surface.\n\n3. SHARE SEMANTIC ACTIONS; DO NOT SHARE CONTROL SHAPES BLINDLY\nBuild CAPABILITY -> SEMANTIC ACTION -> MODE ADAPTER -> FEEDBACK/STATE. When mouse click, keyboard command, and phone gesture mean the same thing, they must call the same canonical action and preserve the same orthogonal state. It is correct for controls to look and behave differently by modality; it is not correct for each modality to own separate business rules, preference truth, selection state, or success semantics. Prevent touch + synthesized pointer handlers from double-firing one action.\n\n4. MAKE THE PHONE JOURNEY COMPLETE, NOT MERELY RESPONSIVE\nWalk the full phone path from entry to terminal value. For Prompt-Kit-like products explicitly inspect discover/browse hierarchy, search, Favorites/saved destinations, open/read, terminal action such as copy, back/recovery, reset, filters, and zero-results/error behavior. Prefer a coherent mobile information architecture and command surface over requiring the user to scroll through desktop control rails. Preserve current product features; mobile simplification is not permission to omit capabilities.\n\n5. DESIGN GESTURE DISCOVERABILITY AND CONFLICT BOUNDARIES\nEvery non-obvious gesture that matters must have a labeled discoverable route or command-sheet equivalent. Define thresholds and cancellation so vertical scroll is not stolen by horizontal navigation, browser/OS back gestures are not shadowed carelessly, long-press does not fight text selection, and a tap does not accidentally become both touch and click dispatch. Gestures accelerate; they do not become invisible single points of access for essential features.\n\n6. HANDLE PHONE-SPECIFIC FOCUS, VIEWPORT, AND KEYBOARD FAILURE\nInspect what receives focus when sheets/menus open, whether editable fields summon the software keyboard intentionally, whether keyboard appearance obscures actions, whether fixed controls respect safe areas, whether orientation/visual viewport changes strand content, and whether back/Escape/dismiss semantics restore a sensible prior state. A narrow desktop screenshot does not prove any of this.\n\n7. IMPLEMENT THE SMALLEST MISSING MODE SEAM\nChoose the highest-value capability with the weakest modality. Reuse the existing command/action/state owner and add the smallest adapter/control surface needed to make that mode first-class. Do not redesign every screen at once. When the overall journey/IA is unsound, route to P106; when the flow works but has redundant steps or lost state, route to P99.\n\n8. FALSIFY EACH MODALITY AFTER THE FIRST GREEN PASS\nMouse: hover-only dependence, hidden direct action, double-click ambiguity, pointer state disagreeing with app state.\nKeyboard: shortcut collision, focus trap/loss, command stops at an intermediate screen, sequence ambiguity, Escape erases unrelated state.\nPhone: accidental software-keyboard opening, sheet scrolls past primary actions, swipe steals scroll/back, touch/pointer double dispatch, unreachable one-handed action, unsafe-area overlap, orientation/viewport breakage, gesture-only hidden capability, text-selection/long-press conflict.\nRepair practical findings and rerun the shared semantic action plus adjacent protected controls.\n\n9. PROVE EQUIVALENT TERMINAL CAPABILITY\nFor each in-scope capability, prove mouse/pointer, keyboard-only, and touch routes reach the intended terminal result with equivalent state/feedback semantics. Use component/state tests for command convergence, browser automation for focus/geometry/input behavior, and touch emulation for deterministic gesture mechanics. Physical-phone ergonomics, software-keyboard feel, thumb reach, OS/browser gesture conflict, and real touch comfort require an observed phone/device pass before claiming phone acceptance.\n\n10. SECOND PASS + CROSS-APP FACTORING\nReverse the journey and look for 'also', hidden desktop assumptions, skipped phone states, duplicate modality logic, missing recovery, and features only available through one input language. Stop at a bounded fixed point. When the same proven modality pattern recurs across several apps, route the reusable contract to P109 instead of copying mobile adapters everywhere.\n\nROUTING BOUNDARY\nUse P106 UX Product Designer & Interaction Architect when the product's overall information architecture, journey, or component/action hierarchy is unresolved. Use P99 User-Flow Friction & Preference Telemetry Refiner when a working journey needs redundant-step/state/telemetry refinement. Use P109 Cross-App UX Design System & Pattern Factorer after a modality pattern is proven and should become reusable across apps. Use P110 UX Integrity & Cross-Viewport Acceptance Guard when design is complete and the primary job is release-grade cross-mode/browser/device certification. Use P95 when the semantic command/state ownership beneath the UI is not yet coherent.\n\nDELIVER\nReport the three-mode capability matrix; mouse, keyboard, and phone interaction grammar; semantic-action/state convergence; phone-native implementation; modality-specific failures found/repaired; focused regressions; browser/device evidence; physical-phone proof ceiling; files; commit/PR/merge state; and the exact next unproven modality action.\n\nCLOSURE RULE\nClose only when every materially in-scope capability has a supported mode-native route or an explicit product-supported exclusion, equivalent intent converges on canonical semantic/state ownership, the phone path is a complete interaction language rather than resized desktop chrome, practical modality-specific failures are repaired, and the claimed proof level matches the actually observed device/runtime evidence.",
+            "keywords": [
+              "phone native ux",
+              "mobile interaction design",
+              "touch first ux",
+              "cross input ux",
+              "input modality",
+              "mouse keyboard phone ux",
+              "phone interaction language",
+              "mobile not bigger buttons",
+              "touch gestures",
+              "keyboard power user ux",
+              "semantic action convergence",
+              "mobile quick controls",
+              "software keyboard ux",
+              "physical phone acceptance",
+              "one handed ux",
+              "gesture discoverability"
+            ]
+          }
+          JSON
+          python scripts/prompt_registry_ops.py add --input /tmp/phone-native-ux-prompt.json --registry spec-architecture-prompts | tee /tmp/phone-native-ux-receipt.json
+      - name: Strengthen adjacent UX owners and guided discovery
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          root = Path('.')
+          spec_path = root / 'registry/prompts/spec-architecture-prompts.v1.json'
+          discovery_path = root / 'registry/prompts/tutorial-discovery-prompts.v1.json'
+          test_path = root / 'tests/test_ux_design_prompt_suite.py'
+
+          spec = json.loads(spec_path.read_text(encoding='utf-8'))
+          prompts = spec['prompts']
+          specialist = next(p for p in prompts if p['name'] == 'Cross-Input UX Modality & Phone-Native Interaction Architect')
+          sid = specialist['id']
+          seq = specialist['seq']
+          p106 = next(p for p in prompts if p['id'] == 'P106')
+          p109 = next(p for p in prompts if p['id'] == 'P109')
+          p110 = next(p for p in prompts if p['id'] == 'P110')
+
+          if 'phone is a resized desktop fallback' not in p106['useWhen']:
+              p106['useWhen'] += f' When the overall UX is sound but mouse/keyboard/phone interaction languages are the primary gap or phone is a resized desktop fallback, route that bounded modality design to {sid} {specialist["name"]}.'
+          if 'mode-native interaction language' not in p106['nextStep']:
+              p106['nextStep'] += f' If the critique shows the product mainly lacks a mode-native interaction language rather than overall UX architecture, route that seam to {sid} instead of expanding P106.'
+          if sid not in p106['proofGate']:
+              p106['proofGate'] += f' Cross-input modality debt is either resolved at the architecture level or explicitly routed to {sid}; phone is not accepted merely because desktop controls were enlarged or reflowed.'
+          p106_section = (
+              '\n\n5A. RECOGNIZE WHEN INPUT MODALITY IS ITS OWN DESIGN PROBLEM\n'
+              f'Phone users are not desktop users with bigger buttons. When mouse direct controls, keyboard power commands, and phone/touch need distinct interaction grammars for the same capabilities, preserve the shared semantic action/state owners here and route the dedicated three-mode design/repair to {sid} {specialist["name"]}. Do not make P106 absorb a second modality doctrine.\n'
+          )
+          if '5A. RECOGNIZE WHEN INPUT MODALITY IS ITS OWN DESIGN PROBLEM' not in p106['copyContent']:
+              anchor = '\n\n6. IMPLEMENT ONE REAL VERTICAL UX SLICE'
+              if anchor not in p106['copyContent']:
+                  raise SystemExit('P106 section anchor not found')
+              p106['copyContent'] = p106['copyContent'].replace(anchor, p106_section + anchor, 1)
+          for keyword in ('phone native ux', 'cross input ux', 'input modality ux'):
+              if keyword not in p106['keywords']:
+                  p106['keywords'].append(keyword)
+
+          if 'three-mode interaction contract' not in p109['useWhen']:
+              p109['useWhen'] += f' It also owns factoring a proven three-mode interaction contract across apps after {sid} has established mode-native behavior in representative products.'
+          if sid not in p109['nextStep']:
+              p109['nextStep'] += f' If the mouse/keyboard/phone modality contract is not yet proven in one product, establish it with {sid} before standardizing it across apps.'
+          if 'same semantic capability' not in p109['proofGate']:
+              p109['proofGate'] += ' Shared modality patterns keep the same semantic capability/action ownership while allowing different mouse, keyboard, and phone control shapes; reuse does not flatten mode-native behavior.'
+          p109_section = (
+              '\n\n4A. FACTOR CAPABILITIES, NOT IDENTICAL CONTROLS\n'
+              f'For cross-input patterns use CAPABILITY -> SEMANTIC ACTION -> MODE ADAPTER. Mouse may expose direct click/hover controls, keyboard may expose a power command language, and phone may expose touch-native quick controls or gestures. Standardize the shared semantics, state/feedback contract, discoverability rules, and failure boundaries; do not force one desktop control shape onto every modality. Use {sid} to prove the modality design before promoting it into a cross-app standard.\n'
+          )
+          if '4A. FACTOR CAPABILITIES, NOT IDENTICAL CONTROLS' not in p109['copyContent']:
+              anchor = '\n\n5. PRESERVE PRODUCT IDENTITY THROUGH CONTROLLED EXTENSION'
+              if anchor not in p109['copyContent']:
+                  raise SystemExit('P109 section anchor not found')
+              p109['copyContent'] = p109['copyContent'].replace(anchor, p109_section + anchor, 1)
+          for keyword in ('cross input design system', 'input modality pattern', 'phone interaction pattern'):
+              if keyword not in p109['keywords']:
+                  p109['keywords'].append(keyword)
+
+          if 'three-mode capability matrix' not in p110['expectedOutput']:
+              p110['expectedOutput'] += f' When multiple input modalities are supported, include an explicit three-mode capability matrix and use {sid} for upstream design defects rather than inventing acceptance-time controls.'
+          if 'physical phone' not in p110['proofGate'].lower():
+              p110['proofGate'] += ' Touch emulation may prove deterministic gesture/focus mechanics but cannot by itself prove physical-phone ergonomics, software-keyboard feel, thumb reach, or OS/browser gesture conflict; those claims require observed device evidence.'
+          p110_section = (
+              '\n\n2A. PROVE MODE-NATIVE EQUIVALENCE, NOT IDENTICAL CONTROL SHAPES\n'
+              '- MOUSE / POINTER: direct controls, click/double-click/hover behavior where supported, and pointer feedback must reach the terminal action without hover-only essential capability.\n'
+              '- KEYBOARD POWER LANGUAGE: shortcuts, command/finder entry, navigation keys, sequences, focus recovery, and Escape semantics must complete the same terminal capabilities without requiring a mouse-only intermediate.\n'
+              '- PHONE / TOUCH-NATIVE: labeled tap/command surfaces and any gestures must preserve feature reachability without tiny desktop chrome, browser Find dependence, accidental editable-focus/software-keyboard jumps, scroll/back conflicts, or duplicate touch+pointer dispatch.\n'
+              f'Equivalent intent should converge on canonical semantic actions/state owners; if that design is missing, route upstream to {sid} instead of certifying a broken modality model. Touch-emulated Chromium is useful runtime evidence, but physical-phone ergonomics remain unproven until an actual phone/device pass observes them.\n'
+          )
+          if '2A. PROVE MODE-NATIVE EQUIVALENCE, NOT IDENTICAL CONTROL SHAPES' not in p110['copyContent']:
+              anchor = '\n\n3. AUTOMATE WHAT CAN BE PROVEN DETERMINISTICALLY'
+              if anchor not in p110['copyContent']:
+                  raise SystemExit('P110 section anchor not found')
+              p110['copyContent'] = p110['copyContent'].replace(anchor, p110_section + anchor, 1)
+          for keyword in ('three mode ux acceptance', 'physical phone ux', 'phone native acceptance'):
+              if keyword not in p110['keywords']:
+                  p110['keywords'].append(keyword)
+
+          spec_path.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          discovery = json.loads(discovery_path.read_text(encoding='utf-8'))
+          p65 = next(p for p in discovery['prompts'] if p['id'] == 'P65')
+          if 'mouse, keyboard, and phone/touch need distinct interaction languages' not in p65['useWhen']:
+              p65['useWhen'] += f' It also routes input-modality UX when mouse, keyboard, and phone/touch need distinct interaction languages or mobile has degraded into enlarged/compressed desktop controls.'
+          if 'phone-native modality design' not in p65['expectedOutput']:
+              p65['expectedOutput'] += f' For cross-input UX requests, distinguish general P106 architecture, {sid} phone-native modality design, P99 flow friction, P109 pattern factoring, and P110 acceptance rather than collapsing them.'
+          route_block = (
+              f'\n\nUX INPUT-MODALITY ROUTE\n- Use {sid} {specialist["name"]} when the same product capabilities need deliberate mouse/pointer, keyboard power-user, and phone/touch interaction languages, especially when mobile is only bigger buttons or compressed desktop chrome.\n- Keep P106 for overall UX architecture, P99 for redundant-flow/state/telemetry repair, P109 for factoring already-proven cross-app patterns, and P110 for release-grade cross-mode/device acceptance.\n'
+          )
+          if 'UX INPUT-MODALITY ROUTE' not in p65['copyContent']:
+              p65['copyContent'] += route_block
+          for keyword in ('phone native ux', 'touch first ux', 'cross input ux', 'input modality ux', 'mobile interaction design', 'mouse keyboard phone ux'):
+              if keyword not in p65['keywords']:
+                  p65['keywords'].append(keyword)
+          discovery_path.write_text(json.dumps(discovery, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          text = test_path.read_text(encoding='utf-8')
+          old_names = '    "accept": "UX Integrity & Cross-Viewport Acceptance Guard",\n}'
+          new_names = '    "accept": "UX Integrity & Cross-Viewport Acceptance Guard",\n    "modality": "Cross-Input UX Modality & Phone-Native Interaction Architect",\n}'
+          if '"modality": "Cross-Input UX Modality & Phone-Native Interaction Architect"' not in text:
+              if old_names not in text:
+                  raise SystemExit('UX suite NAMES anchor not found')
+              text = text.replace(old_names, new_names, 1)
+          old_ids = '    "UX Integrity & Cross-Viewport Acceptance Guard": "P110"\n}'
+          new_ids = f'    "UX Integrity & Cross-Viewport Acceptance Guard": "P110",\n    "Cross-Input UX Modality & Phone-Native Interaction Architect": "{sid}"\n}}'
+          if f'"Cross-Input UX Modality & Phone-Native Interaction Architect": "{sid}"' not in text:
+              if old_ids not in text:
+                  raise SystemExit('UX suite EXPECTED_IDS anchor not found')
+              text = text.replace(old_ids, new_ids, 1)
+          text = text.replace('def test_suite_has_five_distinct_helper_allocated_owners', 'def test_suite_has_six_distinct_helper_allocated_owners')
+          text = text.replace('self.assertEqual(len({p["id"] for p in prompts}), 5)', 'self.assertEqual(len({p["id"] for p in prompts}), 6)')
+
+          modality_test = (
+              '\n    def test_modality_architect_makes_phone_a_first_class_interaction_language(self) -> None:\n'
+              '        prompt = self.by_name[NAMES["modality"]]\n'
+              '        self.assertEqual(prompt["class"], "PRODUCT / UX INPUT MODALITY")\n'
+              f'        self.assertEqual(prompt["id"], "{sid}")\n'
+              f'        self.assertEqual(prompt["seq"], "{seq}")\n'
+              '        content = prompt["copyContent"]\n'
+              '        for phrase in (\n'
+              '            "MOUSE DIRECT CONTROLS, KEYBOARD POWER COMMANDS, AND PHONE-NATIVE TOUCH",\n'
+              '            "DO NOT CALL BIGGER BUTTONS A MOBILE EXPERIENCE",\n'
+              '            "SPRINT DECLARATION — REQUIRED BEFORE MUTATION",\n'
+              '            "MOUSE / POINTER",\n'
+              '            "KEYBOARD",\n'
+              '            "PHONE / TOUCH-NATIVE",\n'
+              '            "`/`, `A–E`, `F`, `[`, `]`, `R`, `Home/End`, `Esc`",\n'
+              '            "CAPABILITY -> SEMANTIC ACTION -> MODE ADAPTER -> FEEDBACK/STATE",\n'
+              '            "Do not automatically summon the software keyboard",\n'
+              '            "Gestures accelerate; they do not become invisible single points of access",\n'
+              '            "Physical-phone ergonomics",\n'
+              '            "Do not create a second mobile state machine",\n'
+              '        ):\n'
+              '            self.assertIn(phrase, content)\n'
+              '        self.assertIn("physical-phone", prompt["proofGate"].lower())\n'
+              '        self.assertLess(len(self.raw_by_name[prompt["name"]]["copyContent"]), 8000)\n'
+          )
+          marker = '\n    def test_reference_emulator_requires_observed_vs_inferred_functional_fidelity'
+          if 'def test_modality_architect_makes_phone_a_first_class_interaction_language' not in text:
+              if marker not in text:
+                  raise SystemExit('UX suite modality test insertion marker not found')
+              text = text.replace(marker, modality_test + marker, 1)
+
+          architect_marker = '        self.assertNotIn("DERIVE THE DASHBOARD FROM EVENTS", content)\n'
+          architect_extra = f'        self.assertIn("Phone users are not desktop users with bigger buttons", content)\n        self.assertIn("{sid} {specialist["name"]}", content)\n'
+          if 'Phone users are not desktop users with bigger buttons' not in text:
+              if architect_marker not in text:
+                  raise SystemExit('P106 focused assertion anchor not found')
+              text = text.replace(architect_marker, architect_extra + architect_marker, 1)
+
+          system_marker = '        self.assertIn("without becoming identical", prompt["sprintRole"])\n'
+          system_extra = '        self.assertIn("CAPABILITY -> SEMANTIC ACTION -> MODE ADAPTER", content)\n'
+          if 'CAPABILITY -> SEMANTIC ACTION -> MODE ADAPTER' not in text:
+              if system_marker not in text:
+                  raise SystemExit('P109 focused assertion anchor not found')
+              text = text.replace(system_marker, system_marker + system_extra, 1)
+
+          accept_marker = '        self.assertIn("P94 Regression Test & Live Behavior Guard", content)\n'
+          accept_extra = '        for phrase in ("MOUSE / POINTER", "KEYBOARD POWER LANGUAGE", "PHONE / TOUCH-NATIVE", "physical-phone ergonomics"):\n            self.assertIn(phrase, content)\n'
+          if '"KEYBOARD POWER LANGUAGE"' not in text:
+              if accept_marker not in text:
+                  raise SystemExit('P110 focused assertion anchor not found')
+              text = text.replace(accept_marker, accept_marker + accept_extra, 1)
+
+          p99_marker = '        self.assertIn("PRESERVE ORTHOGONAL STATE", self.full["P99"]["copyContent"])\n'
+          p99_extra = '        self.assertIn("Keyboard shortcuts, buttons, command palette items, touch controls", self.full["P99"]["copyContent"])\n'
+          if 'Keyboard shortcuts, buttons, command palette items, touch controls' not in text:
+              if p99_marker not in text:
+                  raise SystemExit('P99 assertion anchor not found')
+              text = text.replace(p99_marker, p99_marker + p99_extra, 1)
+
+          keyword_anchor = '            "design system", "ux acceptance", "responsive ux", "visual regression",\n'
+          keyword_replacement = '            "design system", "ux acceptance", "responsive ux", "visual regression",\n            "phone native ux", "touch first ux", "cross input ux", "input modality ux",\n'
+          if '"phone native ux", "touch first ux"' not in text:
+              if keyword_anchor not in text:
+                  raise SystemExit('P65 keyword assertion anchor not found')
+              text = text.replace(keyword_anchor, keyword_replacement, 1)
+
+          old_scope_tuple = '        for prompt_id in ("P106", "P107", "P108", "P109", "P110"):\n'
+          new_scope_tuple = f'        for prompt_id in ("P106", "P107", "P108", "P109", "P110", "{sid}"):\n'
+          if new_scope_tuple not in text:
+              if old_scope_tuple not in text:
+                  raise SystemExit('UX scope tuple anchor not found')
+              text = text.replace(old_scope_tuple, new_scope_tuple, 1)
+          modality_scope_marker = '        self.assertIn("hand it to the correct owner", self.full["P110"]["copyContent"])\n'
+          modality_scope_extra = f'        self.assertIn("Do not create a second mobile state machine", self.full["{sid}"]["copyContent"])\n'
+          if f'self.full["{sid}"]' not in text:
+              if modality_scope_marker not in text:
+                  raise SystemExit('UX modality boundary assertion anchor not found')
+              text = text.replace(modality_scope_marker, modality_scope_marker + modality_scope_extra, 1)
+
+          test_path.write_text(text, encoding='utf-8')
+          PY
+      - name: Rebuild canonical Prompt Kit and validate contribution
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_ux_design_prompt_suite -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_order_navigation_contract -v
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Enforce bounded durable contribution and self-remove carrier
+        env:
+          BASE_SHA: 54fd353e823c8e4473126dd13003599d46dcc9c8
+        run: |
+          rm .github/workflows/tmp-prompt-kit-phone-native-ux-campaign.yml
+          changed="$(git diff --name-only "$BASE_SHA" | sort)"
+          expected="$(printf '%s\n' \
+            'registry/prompts/spec-architecture-prompts.v1.json' \
+            'registry/prompts/tutorial-discovery-prompts.v1.json' \
+            'tests/test_ux_design_prompt_suite.py' \
+            'web/prompt-kit/index.html' | sort)"
+          test "$changed" = "$expected" || {
+            printf 'Unexpected durable diff:\n%s\n' "$changed" >&2
+            exit 1
+          }
+      - name: Commit and push durable campaign
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'feat(prompt-kit): add phone-native UX modality guidance'
+          git push origin HEAD:feat/prompt-kit-phone-native-ux-modality-20260907
