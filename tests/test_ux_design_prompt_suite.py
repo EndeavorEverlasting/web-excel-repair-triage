@@ -16,13 +16,15 @@ NAMES = {
     "polish": "UX Polish & Sophistication Refiner",
     "system": "Cross-App UX Design System & Pattern Factorer",
     "accept": "UX Integrity & Cross-Viewport Acceptance Guard",
+    "modality": "Cross-Input UX Modality & Phone-Native Interaction Architect",
 }
 EXPECTED_IDS = {
     "UX Product Designer & Interaction Architect": "P106",
     "Reference UX Emulator & Adaptation Builder": "P107",
     "UX Polish & Sophistication Refiner": "P108",
     "Cross-App UX Design System & Pattern Factorer": "P109",
-    "UX Integrity & Cross-Viewport Acceptance Guard": "P110"
+    "UX Integrity & Cross-Viewport Acceptance Guard": "P110",
+    "Cross-Input UX Modality & Phone-Native Interaction Architect": "P129"
 }
 
 
@@ -35,9 +37,9 @@ class UXDesignPromptSuiteTests(unittest.TestCase):
         cls.raw_by_name = {p["name"]: p for p in cls.raw_spec}
         cls.policy = build_prompt_kit_registry.load_actionability_policy()
 
-    def test_suite_has_five_distinct_helper_allocated_owners(self) -> None:
+    def test_suite_has_six_distinct_helper_allocated_owners(self) -> None:
         prompts = [self.by_name[name] for name in NAMES.values()]
-        self.assertEqual(len({p["id"] for p in prompts}), 5)
+        self.assertEqual(len({p["id"] for p in prompts}), 6)
         for prompt in prompts:
             self.assertEqual(prompt["id"], EXPECTED_IDS[prompt["name"]])
             self.assertEqual(prompt["seq"], prompt["id"][1:])
@@ -62,8 +64,32 @@ class UXDesignPromptSuiteTests(unittest.TestCase):
             "Use P99 User-Flow Friction & Preference Telemetry Refiner",
         ):
             self.assertIn(phrase, content)
+        self.assertIn("Phone users are not desktop users with bigger buttons", content)
+        self.assertIn("P129 Cross-Input UX Modality & Phone-Native Interaction Architect", content)
         self.assertNotIn("DERIVE THE DASHBOARD FROM EVENTS", content)
         self.assertNotIn("PROTOTYPE FAILURE CALL STACKS TOO", content)
+
+    def test_modality_architect_makes_phone_a_first_class_interaction_language(self) -> None:
+        prompt = self.by_name[NAMES["modality"]]
+        self.assertEqual(prompt["class"], "PRODUCT / UX INPUT MODALITY")
+        self.assertEqual(prompt["id"], "P129")
+        self.assertEqual(prompt["seq"], "129")
+        content = prompt["copyContent"]
+        for phrase in (
+            "MOUSE DIRECT CONTROLS, KEYBOARD POWER COMMANDS, AND PHONE-NATIVE TOUCH",
+            "DO NOT CALL BIGGER BUTTONS A MOBILE EXPERIENCE",
+            "SPRINT DECLARATION — REQUIRED BEFORE MUTATION",
+            "MOUSE / POINTER", "KEYBOARD", "PHONE / TOUCH-NATIVE",
+            "`/`, `A–E`, `F`, `[`, `]`, `R`, `Home/End`, `Esc`",
+            "CAPABILITY -> SEMANTIC ACTION -> MODE ADAPTER -> FEEDBACK/STATE",
+            "Do not automatically summon the software keyboard",
+            "Gestures accelerate; they do not become invisible single points of access",
+            "Physical-phone ergonomics",
+            "Do not create a second mobile state machine",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("physical-phone", prompt["proofGate"].lower())
+        self.assertLess(len(self.raw_by_name[prompt["name"]]["copyContent"]), 8000)
 
     def test_reference_emulator_requires_observed_vs_inferred_functional_fidelity(self) -> None:
         prompt = self.by_name[NAMES["emulate"]]
@@ -115,6 +141,7 @@ class UXDesignPromptSuiteTests(unittest.TestCase):
         ):
             self.assertIn(phrase, content)
         self.assertIn("without becoming identical", prompt["sprintRole"])
+        self.assertIn("CAPABILITY -> SEMANTIC ACTION -> MODE ADAPTER", content)
 
     def test_acceptance_guard_requires_live_geometry_input_and_composed_state_proof(self) -> None:
         prompt = self.by_name[NAMES["accept"]]
@@ -136,6 +163,8 @@ class UXDesignPromptSuiteTests(unittest.TestCase):
             self.assertIn(phrase, content)
         self.assertIn("40px", content)
         self.assertIn("P94 Regression Test & Live Behavior Guard", content)
+        for phrase in ("MOUSE / POINTER", "KEYBOARD POWER LANGUAGE", "PHONE / TOUCH-NATIVE", "physical-phone ergonomics"):
+            self.assertIn(phrase, content)
 
     def test_existing_iteration_flow_program_and_regression_owners_remain_distinct(self) -> None:
         for prompt_id, expected in (
@@ -147,6 +176,7 @@ class UXDesignPromptSuiteTests(unittest.TestCase):
             self.assertEqual(self.full[prompt_id]["class"], expected)
         self.assertIn("HYPOTHESIS -> BUILD -> MEASURE -> CRITIQUE -> DECIDE", self.full["P82"]["copyContent"])
         self.assertIn("PRESERVE ORTHOGONAL STATE", self.full["P99"]["copyContent"])
+        self.assertIn("Keyboard shortcuts, buttons, command palette items, touch controls", self.full["P99"]["copyContent"])
         self.assertIn("PROTECT COMPOSED UI STATE AND INTERACTION SEQUENCES", self.full["P94"]["copyContent"])
         self.assertIn("PROTOTYPE FAILURE CALL STACKS TOO", self.full["P95"]["copyContent"])
 
@@ -160,6 +190,7 @@ class UXDesignPromptSuiteTests(unittest.TestCase):
         for keyword in (
             "ux design", "interaction design", "reference ux", "ux polish",
             "design system", "ux acceptance", "responsive ux", "visual regression",
+            "phone native ux", "touch first ux", "cross input ux", "input modality ux",
         ):
             self.assertIn(keyword, p65["keywords"])
         for existing in (
@@ -178,7 +209,7 @@ class UXDesignPromptSuiteTests(unittest.TestCase):
             self.assertIn(name, actual)
 
     def test_ux_specialists_declare_owned_and_forbidden_scope(self) -> None:
-        for prompt_id in ("P106", "P107", "P108", "P109", "P110"):
+        for prompt_id in ("P106", "P107", "P108", "P109", "P110", "P129"):
             content = self.full[prompt_id]["copyContent"]
             with self.subTest(prompt=prompt_id):
                 self.assertIn("OWNED SCOPE", content)
@@ -188,6 +219,7 @@ class UXDesignPromptSuiteTests(unittest.TestCase):
         self.assertIn("route structural defects to their owning prompt", self.full["P108"]["copyContent"])
         self.assertIn("must not erase product-specific semantics", self.full["P109"]["copyContent"])
         self.assertIn("hand it to the correct owner", self.full["P110"]["copyContent"])
+        self.assertIn("Do not create a second mobile state machine", self.full["P129"]["copyContent"])
 
 
 if __name__ == "__main__":
