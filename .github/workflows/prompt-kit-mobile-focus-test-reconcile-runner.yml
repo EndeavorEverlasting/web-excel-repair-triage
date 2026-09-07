@@ -70,7 +70,11 @@ jobs:
                'assert box.get("height", 0) >= 44 and 44 <= box.get("width", 0) <= 260, box'),
               ('assert 0 < panel_box.get("height", 0) <= 500, panel_box',
                'assert 0 < panel_box.get("height", 0) <= 470, panel_box\n'
-               '                panel_metrics = panel.evaluate("el => ({clientHeight: el.clientHeight, scrollHeight: el.scrollHeight})")\n'
+               '                panel_metrics = panel.evaluate("""el => ({\n'
+               '                  clientHeight: el.clientHeight, scrollHeight: el.scrollHeight,\n'
+               '                  children: Array.from(el.children).map(n => ({tag:n.tagName,id:n.id,cls:n.className,clientHeight:n.clientHeight,scrollHeight:n.scrollHeight,display:getComputedStyle(n).display,position:getComputedStyle(n).position})),\n'
+               '                  quickChildren: Array.from(document.querySelector(\"#mobileQuickControls\").children).map(n => ({tag:n.tagName,id:n.id,cls:n.className,clientHeight:n.clientHeight,scrollHeight:n.scrollHeight,display:getComputedStyle(n).display,position:getComputedStyle(n).position}))\n'
+               '                })""")\n'
                '                assert panel_metrics["scrollHeight"] <= panel_metrics["clientHeight"] + 2, panel_metrics'),
           )
           for old_proof, new_proof in proof_replacements:
