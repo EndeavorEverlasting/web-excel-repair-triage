@@ -68,14 +68,17 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         self.assertLess(source.index(escape_guard), source.index(editable_guard))
         self.assertLess(deployed.index(escape_guard), deployed.index(editable_guard))
 
-    def test_hotkey_open_focuses_favorite_input_and_escape_recovers_from_editable(self) -> None:
+    def test_hotkey_open_focuses_favorite_input_on_desktop_and_escape_recovers_from_editable(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         for marker in (
             "function focusFavoritePromptShortcutInput(panel)",
             "document.getElementById('promptShortcutPromptId')",
             "promptInput.focus()",
             "promptInput.scrollIntoView({block:'nearest',inline:'nearest'})",
-            "if(focusFavoritePromptShortcutInput(panel))return",
+            "function mobileQuickControlsActive()",
+            "if(!mobileQuickControlsActive()&&focusFavoritePromptShortcutInput(panel))return;",
+            "panel.querySelector('[data-mobile-quick-action=\"find\"]')",
+            "panel.querySelector('.hotkey-help-close')",
         ):
             self.assertIn(marker, source)
         escape_guard = "if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)"
