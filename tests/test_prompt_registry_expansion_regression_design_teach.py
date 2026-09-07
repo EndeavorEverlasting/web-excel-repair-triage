@@ -301,6 +301,41 @@ class PromptRegistryExpansionTests(unittest.TestCase):
             prompt = self.by_name[name]
             self.assertIn(f"{prompt['id']} {name}", p65)
 
+    def test_p55_repo_creation_recovers_context_before_naming(self) -> None:
+        bootstrap = self.full["P55"]
+        self.assertEqual(bootstrap["name"], "Context-Grounded Repository Bootstrapper")
+        content = bootstrap["copyContent"]
+        for phrase in (
+            "CONTEXT-GROUNDED PRE-CREATION RECONSTRUCTION",
+            "preceding/surrounding operator guidance",
+            "do not ask the operator to restate it",
+            "PROJECT IDENTITY ledger",
+            "RESOLVED, INFERRED, or USER_ONLY",
+            "Check `already exists` before `create new`",
+            "durable product responsibility and operator vocabulary",
+            "Never infer public visibility from silence",
+            "P96 owns deliberate challenge/teaching",
+            "route that bounded design choice to P95",
+            "Docker/Podman",
+            "Kubernetes detail demand-loaded",
+            "REMOTE_ONLY",
+            "do not claim a local clone/root",
+            "connected GitHub API/app",
+        ):
+            self.assertIn(phrase, content)
+        for preserved in (
+            "Never use --show-token",
+            "gh repo view xyz_owner/xyz_repo_name",
+            "never delete or overwrite it automatically",
+            "unowned dirty work",
+        ):
+            self.assertIn(preserved, content)
+        self.assertIn("repository creation", bootstrap["keywords"])
+        self.assertIn("name repository", bootstrap["keywords"])
+        self.assertIn("Preceding/surrounding operator guidance", bootstrap["inspectFirst"])
+        self.assertIn("RESOLVED, INFERRED, and USER_ONLY", bootstrap["expectedOutput"])
+        self.assertIn("visibility never defaults to public", bootstrap["proofGate"])
+
 
 if __name__ == "__main__":
     unittest.main()
