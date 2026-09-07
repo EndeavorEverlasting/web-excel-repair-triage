@@ -48,10 +48,15 @@ MOBILE_TEST.write_text(mobile_test, encoding="utf-8")
 direct_test = DIRECT_TEST.read_text(encoding="utf-8")
 direct_test = direct_test.replace('"Chrome Find in page",', '"Find in page",')
 lines = direct_test.splitlines()
-more_lines = [i for i, line in enumerate(lines) if "mobile-quick-label" in line and "More" in line]
-if len(more_lines) != 1:
-    raise SystemExit(f"direct test More marker: expected one line, found {len(more_lines)}")
-lines[more_lines[0]] = "            'mobile-quick-label\">More',"
+semantic_markers = {
+    "mobile-quick-label": '            \'mobile-quick-label">More\',',
+    "mobile-quick-panel-title": '            \'mobile-quick-panel-title">More controls\',',
+}
+for needle, replacement in semantic_markers.items():
+    matches = [i for i, line in enumerate(lines) if needle in line and "More" in line]
+    if len(matches) != 1:
+        raise SystemExit(f"direct test {needle} marker: expected one line, found {len(matches)}")
+    lines[matches[0]] = replacement
 direct_test = "\n".join(lines) + "\n"
 # Add current-floor compactness markers beside the existing mobile hide assertion if absent.
 if '".hotkey-help-panel{width:min(340px,calc(100vw - 24px));max-height:min(460px,58vh)}",' not in direct_test:
