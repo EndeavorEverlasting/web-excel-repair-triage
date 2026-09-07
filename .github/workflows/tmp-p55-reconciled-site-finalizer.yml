@@ -1,0 +1,55 @@
+name: Temporary P55 reconciled site finalizer
+
+on:
+  push:
+    branches:
+      - feat/p55-context-grounded-repo-bootstrap-20260907
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p55-reconciled-site-finalizer
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/p55-context-grounded-repo-bootstrap-20260907
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Rebuild and prove P55 on current main floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python -m unittest tests.test_prompt_registry_expansion_regression_design_teach -v
+          python -m unittest tests.test_prompt_kit_discovery tests.test_skill_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary
+          python -m unittest tests.test_prompt_kit_order_navigation_contract -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          git rm -f .github/workflows/tmp-p55-reconciled-site-finalizer.yml
+          git add web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'chore(prompt-kit): regenerate P55 on current main'
+          python -m unittest tests.test_prompt_registry_expansion_regression_design_teach -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          test -z "$(git status --porcelain --untracked-files=no)"
+          git push origin HEAD:feat/p55-context-grounded-repo-bootstrap-20260907
