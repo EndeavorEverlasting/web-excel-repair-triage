@@ -1,1 +1,1 @@
-retrigger P55 context-grounded bootstrap carrier after assertion repair
+trigger repaired P55 context-grounded bootstrap carrier with default-branch workflow restored
