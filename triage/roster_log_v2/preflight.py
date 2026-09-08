@@ -38,6 +38,10 @@ def preflight_roster_v2(path: str | Path) -> Dict[str, Any]:
             if name not in wb.sheetnames:
                 errors.append(f"missing_sheet:{name}")
 
+        for name in REQUIRED_SHEETS:
+            if name in wb.sheetnames and not wb[name].protection.sheet:
+                errors.append(f"unprotected_snapshot_sheet:{name}")
+
         if all(name in wb.sheetnames for name in ("Attendance", "Project Allocations")):
             attendance_headers = [cell.value for cell in wb["Attendance"][1]]
             allocation_headers = [cell.value for cell in wb["Project Allocations"][1]]
@@ -73,12 +77,14 @@ def preflight_roster_v2(path: str | Path) -> Dict[str, Any]:
                 for r in range(1, min(wb["Read Me"].max_row, 24) + 1)
             )
             for phrase in (
+                "protected DERIVED SNAPSHOT",
+                "website/JSON state is the editable authority",
                 "Default / Fallback Project is attendance metadata",
                 "Once explicit Project Allocations exist",
                 "Multi-project days are supported",
                 "allocated hours must reconcile",
                 "Project Mode counts distinct projects",
-                "Project Report is deterministic",
+                "Project Report is a deterministic build-time projection",
             ):
                 if phrase not in text:
                     errors.append(f"missing_contract_text:{phrase}")
@@ -90,4 +96,5 @@ def preflight_roster_v2(path: str | Path) -> Dict[str, Any]:
         "errors": errors,
         "web_excel_issue_count": len(package_issues),
         "required_sheets": REQUIRED_SHEETS,
+        "authority": "DERIVED / PUBLISH-ONLY",
     }
