@@ -181,5 +181,54 @@ class HHTicketTrackingPromptTests(unittest.TestCase):
         self.assertIn("do not manufacture a ticket to make the digest nonempty", content)
 
 
+    def test_period_defaults_and_coerces_both_sources(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "PARAMETER RESOLUTION — PERIOD IS A SHARED SOURCE CONTRACT",
+            "including natural-language values such as `since last Monday`",
+            "resolve it automatically to `since last run`",
+            "Do not report the window as unspecified",
+            "mandatory for BOTH Outlook and Teams",
+            "Apply the exact same boundary to both pass-1 source searches and every pass-2 recovery search",
+            "must never disable, narrow, or silently skip either Outlook or Teams",
+            "`last 7 days` bootstrap window",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_source_coverage_receipt_proves_latest_scope(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "SOURCE COVERAGE RECEIPT",
+            "Resolved Search Window",
+            "Outlook — EXECUTED + match count, FAILED, or UNAVAILABLE",
+            "Teams — EXECUTED + match count, FAILED, or UNAVAILABLE",
+            "Treat `EXECUTED — 0 MATCHES` as different from FAILED/UNAVAILABLE",
+            "Do not claim `latest H+H correspondence` across both sources unless both source searches actually executed",
+            "Newest relevant timestamp found in Outlook and in Teams separately",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_priority_anchor_receipt_includes_alias_sweep(self) -> None:
+        content = self.target["copyContent"]
+        self.assertIn("all eight named people plus `Kaiyang He`, `Kai Yang`, and `Kelly` alias searches were attempted", content)
+        self.assertIn("list any not searched", content)
+
+    def test_coordination_only_chatter_is_not_promoted_to_ticket(self) -> None:
+        content = self.target["copyContent"]
+        self.assertIn("A coordination or escalation-policy discussion is not itself a ticket", content)
+        self.assertIn("place it under IDENTITY OR EVIDENCE GAPS rather than OPEN / NEEDS FOLLOW-UP", content)
+
+    def test_case_reference_identity_does_not_imply_servicenow_incident(self) -> None:
+        content = self.target["copyContent"]
+        self.assertIn("INCIDENT / REQUEST / CASE / REFERENCE / UNKNOWN", content)
+        self.assertIn("described only as a case/reference must remain a case/reference", content)
+        self.assertIn("do not relabel it as a ServiceNow incident/ticket without evidence", content)
+        self.assertIn("Identifier type — INCIDENT / REQUEST / CASE / REFERENCE / UNKNOWN", content)
+
+    def test_operational_digest_does_not_append_repo_closeout_noise(self) -> None:
+        content = self.target["copyContent"]
+        self.assertIn("Do not append repository/PR/integration-state closeout sections unless repository work was explicitly requested", content)
+
+
 if __name__ == "__main__":
     unittest.main()
