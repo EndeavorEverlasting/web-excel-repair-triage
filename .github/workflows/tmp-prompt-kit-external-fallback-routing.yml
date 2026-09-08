@@ -1,0 +1,287 @@
+name: Temporary Prompt Kit external fallback routing sprint
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-external-fallback-routing-20260908
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-external-fallback-routing-20260908
+  cancel-in-progress: false
+
+jobs:
+  implement-validate-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-external-fallback-routing-20260908
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Establish fresh branch floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/prompt-kit-external-fallback-routing-20260908 --prune
+          test "$(git merge-base HEAD origin/main)" = "6405c27d465c2d86de09357bb495f8a3f5359960"
+          git status --short
+          git branch --show-current
+          git log --oneline --decorate -5
+
+      - name: Implement deterministic tutorial external fallback
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+          import re
+          from pathlib import Path
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              if new in text:
+                  return text
+              if old not in text:
+                  raise SystemExit(f"{label}: anchor missing")
+              return text.replace(old, new, 1)
+
+          guided_path = Path('docs/prompt-kit-guided-recommendations.js')
+          resources_path = Path('docs/prompt-kit-external-resources.js')
+          tutorial_path = Path('docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md')
+          test_path = Path('tests/test_operant_external_resources.py')
+
+          guided = guided_path.read_text(encoding='utf-8')
+          helper_anchor = 'function renderPromptFinderResults(){'
+          helpers = r'''function promptFinderFallbackQuery(answers){var order=['goal','problemKnown','shape','startingPoint'];for(var i=0;i<order.length;i++){var question=questionById(order[i]),option=optionById(question,answers&&answers[order[i]]);if(option&&Array.isArray(option.queries)&&option.queries.length){var query=String(option.queries[0]||'').trim();if(query)return query}}return 'agent workflow'}
+function openPromptFinderExternalFallback(){var query=promptFinderFallbackQuery(S.answers);if(window.OperantExternalResources&&typeof window.OperantExternalResources.openForUseCase==='function'){var origin=S.origin;window.closePromptFinder();window.OperantExternalResources.openForUseCase(query,origin);return}var search=document.getElementById('search');window.closePromptFinder();if(search){search.value=query;search.dispatchEvent(new Event('input',{bubbles:true}));search.focus()}}'''
+          if 'function promptFinderFallbackQuery(answers)' not in guided:
+              if helper_anchor not in guided:
+                  raise SystemExit('guided fallback helper anchor missing')
+              guided = guided.replace(helper_anchor, helpers + '\n' + helper_anchor, 1)
+
+          results_pattern = re.compile(r"function renderPromptFinderResults\(\)\{.*?\}\nfunction openPromptFinder\(origin\)", re.S)
+          results_replacement = r'''function renderPromptFinderResults(){var results=scorePromptFinderAnswers(S.answers),fallbackQuery=promptFinderFallbackQuery(S.answers),body='<p class="finder-intro">These recommendations use the same registry, synonym, metadata, and search-ranking logic as the main Prompt Kit. Start with the primary prompt.</p>';if(results.length)results.forEach(function(x,i){body+=card(x,i)});else body+='<p>No registered prompt matched strongly enough. Continue with the registered external resource floor.</p>';body+='<article class="finder-result finder-external"><small>External fallback</small><h3>Prompt Kit does not cover this use case</h3><p>Search the registered external sources for <strong>'+escapePromptHtml(fallbackQuery)+'</strong>. Indexed skill matches are ranked first; the on-demand prompt catalog remains available as a source library.</p><div><button data-finder-external="1">Search external resources</button></div></article><button class="finder-back" id="finderRestart">Start over</button>';var el=document.getElementById('promptDetail');el.innerHTML=shell('Recommended Prompt Path',body);el.querySelectorAll('[data-finder-open]').forEach(function(b){b.onclick=function(){showPromptDetail(b.getAttribute('data-finder-open'),S.origin)}});el.querySelectorAll('[data-finder-copy]').forEach(function(b){b.onclick=function(){copyPrompt(b.getAttribute('data-finder-copy'));b.textContent='Copied!';setTimeout(function(){b.textContent='Copy'},1200)}});var external=el.querySelector('[data-finder-external]');if(external)external.onclick=openPromptFinderExternalFallback;document.getElementById('finderRestart').onclick=function(){S.step=0;S.answers={};renderPromptFinderQuestion()};var first=el.querySelector('[data-finder-open]')||external||document.getElementById('finderRestart');if(first)first.focus()}
+function openPromptFinder(origin)'''
+          if not results_pattern.search(guided):
+              raise SystemExit('guided results function anchor missing')
+          guided = results_pattern.sub(results_replacement, guided, count=1)
+          guided = replace_once(
+              guided,
+              'window.closePromptFinder=function(){closePromptDetail()};window.openPromptFinder=openPromptFinder;window.scorePromptFinderAnswers=scorePromptFinderAnswers;window.PROMPT_FINDER_QUESTIONS=PROMPT_FINDER_QUESTIONS;',
+              'window.closePromptFinder=function(){closePromptDetail()};window.openPromptFinder=openPromptFinder;window.scorePromptFinderAnswers=scorePromptFinderAnswers;window.promptFinderFallbackQuery=promptFinderFallbackQuery;window.PROMPT_FINDER_QUESTIONS=PROMPT_FINDER_QUESTIONS;',
+              'guided fallback export',
+          )
+          guided_path.write_text(guided, encoding='utf-8')
+
+          resources = resources_path.read_text(encoding='utf-8')
+          resources = replace_once(
+              resources,
+              'grid-template-rows:auto auto minmax(0,1fr) auto',
+              'grid-template-rows:auto auto auto minmax(0,1fr) auto',
+              'external resource panel rows',
+          )
+          resources = replace_once(
+              resources,
+              '.operant-resource-list{overflow:auto;display:grid;gap:8px;align-content:start}',
+              '.operant-resource-sources{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.operant-resource-source{display:grid;gap:4px;padding:9px;border:1px solid var(--border);border-radius:8px;background:var(--bg)}.operant-resource-source strong{font-size:10px;color:var(--text-primary);overflow-wrap:anywhere}.operant-resource-source span{font-size:9px;color:var(--text-muted)}.operant-resource-source a{font-size:9px;color:var(--accent);text-decoration:none}.operant-resource-list{overflow:auto;display:grid;gap:8px;align-content:start}',
+              'external source cards styles',
+          )
+          resources = replace_once(
+              resources,
+              '@media(max-width:640px){.operant-resource-backdrop{padding:3vh 8px}',
+              '@media(max-width:640px){.operant-resource-sources{grid-template-columns:1fr}.operant-resource-backdrop{padding:3vh 8px}',
+              'external source cards mobile styles',
+          )
+          resources = replace_once(
+              resources,
+              '<input class="operant-resource-search" type="search" placeholder="Search external skills and existing Operant coverage" aria-label="Search external resources"><div class="operant-resource-list" aria-live="polite"></div>',
+              '<input class="operant-resource-search" type="search" placeholder="Search external skills and existing Operant coverage" aria-label="Search external resources"><div class="operant-resource-sources" aria-label="Registered external source libraries"></div><div class="operant-resource-list" aria-live="polite"></div>',
+              'external source cards surface',
+          )
+
+          source_helpers_anchor = 'function renderExternalResourcePage(){'
+          source_helpers = r'''function sourceRepositoryUrl(floor){var repository=String(floor&&floor.repository||'').trim();return repository?'https://github.com/'+repository:'#'}
+function renderExternalSourceChoices(){var surface=document.getElementById('operantExternalResources');if(!surface||!externalResourceIndex)return;var host=surface.querySelector('.operant-resource-sources');if(!host)return;var filtered=externalResourceIndex.resources.filter(resourceMatches);var floors=(externalResourceIndex.source_floor||[]).map(function(floor,index){var matchCount=filtered.filter(function(item){return item.source_id===floor.id}).length;var catalogBonus=floor.search_mode==='on_demand'&&externalResourceQuery?1:0;return {floor:floor,index:index,matchCount:matchCount,catalogBonus:catalogBonus}}).sort(function(a,b){return b.matchCount-a.matchCount||b.catalogBonus-a.catalogBonus||a.index-b.index});host.innerHTML='';floors.forEach(function(entry){var floor=entry.floor,card=document.createElement('article');card.className='operant-resource-source';card.setAttribute('data-source-id',String(floor.id||''));var title=document.createElement('strong');title.textContent=String(floor.repository||floor.id||'External source');var meta=document.createElement('span');if(floor.enumeration==='catalog_csv')meta.textContent=String(floor.catalog_entry_count||0)+' catalog prompts · on-demand';else meta.textContent=String(floor.resource_count||0)+' indexed skills'+(entry.matchCount?' · '+entry.matchCount+' matching':'');var link=document.createElement('a');link.href=sourceRepositoryUrl(floor);link.target='_blank';link.rel='noopener noreferrer';link.textContent='Open source library';card.appendChild(title);card.appendChild(meta);card.appendChild(link);host.appendChild(card)})}'''
+          if 'function renderExternalSourceChoices()' not in resources:
+              if source_helpers_anchor not in resources:
+                  raise SystemExit('external source helper anchor missing')
+              resources = resources.replace(source_helpers_anchor, source_helpers + '\n\n' + source_helpers_anchor, 1)
+          resources = replace_once(
+              resources,
+              "if(!externalResourceIndex){list.innerHTML='<div class=\"operant-resource-empty\">Loading current resource index…</div>';count.textContent='Fetching metadata only…';previous.hidden=true;next.hidden=true;return}\n  var filtered=externalResourceIndex.resources.filter(resourceMatches);",
+              "if(!externalResourceIndex){list.innerHTML='<div class=\"operant-resource-empty\">Loading current resource index…</div>';count.textContent='Fetching metadata only…';previous.hidden=true;next.hidden=true;return}\n  renderExternalSourceChoices();\n  var filtered=externalResourceIndex.resources.filter(resourceMatches);",
+              'external source rendering seam',
+          )
+
+          open_pattern = re.compile(r"function openExternalResources\(\)\{.*?\}\n\nfunction closeExternalResources", re.S)
+          open_replacement = r'''function openExternalResources(request){
+  ensureExternalResourceSurface();
+  var surface=document.getElementById('operantExternalResources');
+  var input=surface.querySelector('.operant-resource-search');
+  var requestedQuery='';
+  if(typeof request==='string')requestedQuery=request;else if(request&&typeof request.query==='string')requestedQuery=request.query;
+  externalResourceQuery=String(requestedQuery||'').trim().toLowerCase();
+  input.value=String(requestedQuery||'');
+  surface.hidden=false;
+  externalResourcePage=0;
+  renderExternalResourcePage();
+  loadExternalResources().then(function(){renderExternalResourcePage();input.focus()}).catch(function(error){var list=surface.querySelector('.operant-resource-list');list.innerHTML='<div class="operant-resource-empty">Resource catalog unavailable. Existing prompts remain fully usable.</div>';surface.querySelector('.operant-resource-count').textContent=String(error&&error.message||'Resource load failed')})
+}
+function openExternalResourcesForUseCase(query,origin){openExternalResources({query:query,origin:origin||null})}
+
+function closeExternalResources'''
+          if not open_pattern.search(resources):
+              raise SystemExit('external resource open function anchor missing')
+          resources = open_pattern.sub(open_replacement, resources, count=1)
+          resources = replace_once(
+              resources,
+              'window.OperantExternalResources={schema:OPERANT_EXTERNAL_RESOURCE_SCHEMA,open:openExternalResources,close:closeExternalResources,load:loadExternalResources,render:renderExternalResourcePage};',
+              'window.OperantExternalResources={schema:OPERANT_EXTERNAL_RESOURCE_SCHEMA,open:openExternalResources,openForUseCase:openExternalResourcesForUseCase,close:closeExternalResources,load:loadExternalResources,render:renderExternalResourcePage};',
+              'external fallback API export',
+          )
+          resources_path.write_text(resources, encoding='utf-8')
+
+          tutorial = tutorial_path.read_text(encoding='utf-8')
+          external_section = '''## When Prompt Kit does not cover the use case\n\nThe tutorial must not trap a user inside Prompt Kit when the current registry does not fit the job. Internal Prompt Kit routing remains first because Operant prompts are canonical for Operant behavior. When the finder produces no registered candidate, or when the user reviews the candidates and selects **Search external resources** because none fits, the tutorial continues into the existing lazy **Resources** surface instead of looping back to another internal prompt.\n\nThe fallback mapping is deterministic and reuses existing authority:\n\n1. The finder derives one compact external search query from the selected **goal** option first; if goal evidence is unavailable it falls back in order to **known problem**, **work shape**, then **starting point**. It uses the first canonical query phrase already attached to that answer rather than inventing a second routing vocabulary.\n2. The Resources surface lazily loads `resources.v1.json` only after the user takes the fallback. Indexed skill sources with concrete matches rank first. An on-demand catalog receives a deterministic fallback preference when the local sidecar has no matching row, while stable source-floor order breaks ties.\n3. The registered source floor is the authority for the external libraries: `f/prompts.chat` (prompt catalog), `mattpocock/skills` (agent skills), and `deepseek-ai/deepseek-harness` (agent/harness skills). The browser derives repository links from that source floor rather than maintaining a second URL table in the tutorial.\n4. Resources that already have strong internal coverage continue to point back to the existing Operant prompt. External-only resources remain directly usable references; they do not auto-create Prompt Kit prompts. P79 still owns strengthen-before-add review, and license review remains required before copying or adapting donor content.\n\nThis fallback is a capability-gap route, not a declaration that an upstream resource is better. The user can edit the prefilled resource search before opening a donor library.\n\n'''
+          if external_section not in tutorial:
+              anchor = '## Conversational fallback\n'
+              if anchor not in tutorial:
+                  raise SystemExit('tutorial external fallback insertion anchor missing')
+              tutorial = tutorial.replace(anchor, external_section + anchor, 1)
+          tutorial = replace_once(
+              tutorial,
+              'P65 asks one concise question at a time, recommends one primary prompt and no more than two follow-ons, and refuses to fabricate prompt IDs that are not present in its supplied/current routing vocabulary.',
+              'P65 asks one concise question at a time, recommends one primary prompt and no more than two follow-ons, and refuses to fabricate prompt IDs that are not present in its supplied/current routing vocabulary. Use P65 for conversational distinctions inside Prompt Kit; when Prompt Kit itself does not cover the capability, use the tutorial\'s external Resources fallback instead.',
+              'tutorial P65 boundary',
+          )
+          tutorial = replace_once(
+              tutorial,
+              'node --check docs/prompt-kit-guided-recommendations.js\nnode --check docs/prompt-kit-journey.js',
+              'node --check docs/prompt-kit-guided-recommendations.js\nnode --check docs/prompt-kit-external-resources.js\nnode --check docs/prompt-kit-journey.js',
+              'tutorial external runtime validation command',
+          )
+          tutorial = replace_once(
+              tutorial,
+              'python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v',
+              'python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance tests.test_operant_external_resources -v',
+              'tutorial external regression command',
+          )
+          tutorial = replace_once(
+              tutorial,
+              'Repository validation can prove registry integrity, the current four-question shared-search implementation, registry-owned next-step extraction, session-only completion state, JavaScript syntax, current Favorite/shortcut semantics, generated-site parity, and focused documentation assertions.',
+              'Repository validation can prove registry integrity, the current four-question shared-search implementation, deterministic Prompt Kit-to-Resources fallback wiring, registered source-floor links, registry-owned next-step extraction, session-only completion state, JavaScript syntax, current Favorite/shortcut semantics, generated-site parity, and focused documentation assertions.',
+              'tutorial proof ceiling',
+          )
+          tutorial_path.write_text(tutorial, encoding='utf-8')
+
+          test = test_path.read_text(encoding='utf-8')
+          test = replace_once(
+              test,
+              'RUNTIME = ROOT / "docs" / "prompt-kit-external-resources.js"\nSITE = ROOT / "web" / "prompt-kit" / "index.html"',
+              'RUNTIME = ROOT / "docs" / "prompt-kit-external-resources.js"\nGUIDED_RUNTIME = ROOT / "docs" / "prompt-kit-guided-recommendations.js"\nFINDER_TUTORIAL = ROOT / "docs" / "PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md"\nSITE = ROOT / "web" / "prompt-kit" / "index.html"',
+              'external regression constants',
+          )
+          test = replace_once(
+              test,
+              '        cls.runtime = RUNTIME.read_text(encoding="utf-8")\n        cls.site = SITE.read_text(encoding="utf-8")',
+              '        cls.runtime = RUNTIME.read_text(encoding="utf-8")\n        cls.guided = GUIDED_RUNTIME.read_text(encoding="utf-8")\n        cls.tutorial = FINDER_TUTORIAL.read_text(encoding="utf-8")\n        cls.site = SITE.read_text(encoding="utf-8")',
+              'external regression setup',
+          )
+          if 'def test_prompt_finder_routes_internal_gaps_to_registered_external_floor' not in test:
+              anchor = '    def test_full_validator_accepts_current_projection(self) -> None:\n'
+              addition = '''    def test_prompt_finder_routes_internal_gaps_to_registered_external_floor(self) -> None:\n        for marker in (\n            "function promptFinderFallbackQuery(answers)",\n            "var order=['goal','problemKnown','shape','startingPoint']",\n            "data-finder-external",\n            "Prompt Kit does not cover this use case",\n            "OperantExternalResources.openForUseCase",\n            "window.promptFinderFallbackQuery=promptFinderFallbackQuery",\n        ):\n            self.assertIn(marker, self.guided)\n        self.assertNotIn(\n            "No registered prompt matched strongly enough. Search for P65",\n            self.guided,\n        )\n        for marker in (\n            "function renderExternalSourceChoices()",\n            "externalResourceIndex.source_floor",\n            "catalogBonus",\n            "https://github.com/",\n            "openForUseCase:openExternalResourcesForUseCase",\n            "Registered external source libraries",\n        ):\n            self.assertIn(marker, self.runtime)\n        for repository in ("f/prompts.chat", "mattpocock/skills", "deepseek-ai/deepseek-harness"):\n            self.assertIn(repository, self.tutorial)\n        self.assertIn("When Prompt Kit does not cover the use case", self.tutorial)\n        self.assertIn("data-finder-external", self.site)\n        self.assertIn("openForUseCase:openExternalResourcesForUseCase", self.site)\n\n'''
+              if anchor not in test:
+                  raise SystemExit('external regression insertion anchor missing')
+              test = test.replace(anchor, addition + anchor, 1)
+          test_path.write_text(test, encoding='utf-8')
+          PY
+
+      - name: Build canonical generated site
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+      - name: Validate pass 1
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check docs/prompt-kit-guided-recommendations.js
+          node --check docs/prompt-kit-external-resources.js
+          python -m unittest tests.test_operant_external_resources -v
+          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
+          python scripts/validate_operant_external_resources.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/validate_harness.py
+          git diff --check
+
+      - name: Deliberate second-pass falsification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          guided = Path('docs/prompt-kit-guided-recommendations.js').read_text(encoding='utf-8')
+          resources = Path('docs/prompt-kit-external-resources.js').read_text(encoding='utf-8')
+          tutorial = Path('docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md').read_text(encoding='utf-8')
+          site = Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
+          checks = {
+              'internal-first external escape': 'data-finder-external' in guided and 'OperantExternalResources.openForUseCase' in guided,
+              'deterministic query order': "var order=['goal','problemKnown','shape','startingPoint']" in guided,
+              'registered floor source cards': 'externalResourceIndex.source_floor' in resources and 'function renderExternalSourceChoices()' in resources,
+              'prompts.chat on-demand preference': 'catalogBonus' in resources,
+              'all requested donors documented': all(repo in tutorial for repo in ('f/prompts.chat','mattpocock/skills','deepseek-ai/deepseek-harness')),
+              'generated parity markers': 'data-finder-external' in site and 'openForUseCase:openExternalResourcesForUseCase' in site,
+              'obsolete no-match loop removed': 'No registered prompt matched strongly enough. Search for P65' not in guided,
+          }
+          failed = [name for name, ok in checks.items() if not ok]
+          if failed:
+              raise SystemExit(f'external fallback second-pass falsification failed: {failed}')
+          PY
+          node --check docs/prompt-kit-guided-recommendations.js
+          node --check docs/prompt-kit-external-resources.js
+          python -m unittest tests.test_operant_external_resources -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Commit durable slice and self-remove transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/tmp-prompt-kit-external-fallback-routing.yml
+          git add \
+            docs/prompt-kit-guided-recommendations.js \
+            docs/prompt-kit-external-resources.js \
+            docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md \
+            tests/test_operant_external_resources.py \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          python - <<'PY'
+          import subprocess
+          expected = {
+              'docs/prompt-kit-guided-recommendations.js',
+              'docs/prompt-kit-external-resources.js',
+              'docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md',
+              'tests/test_operant_external_resources.py',
+              'web/prompt-kit/index.html',
+              '.github/workflows/tmp-prompt-kit-external-fallback-routing.yml',
+          }
+          actual = set(subprocess.check_output(['git','diff','--cached','--name-only'], text=True).splitlines())
+          if actual != expected:
+              raise SystemExit(f'unexpected staged scope: {sorted(actual)}')
+          PY
+          git commit -m "feat(prompt-kit): route tutorial gaps to external resources"
+          git push origin HEAD:feat/prompt-kit-external-fallback-routing-20260908
