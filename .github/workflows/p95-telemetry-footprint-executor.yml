@@ -1,134 +1,13 @@
-name: P95 telemetry footprint hardening executor
+name: P95 telemetry executor admission probe
 
 on:
   push:
-    branches:
-      - feat/p95-telemetry-footprint-causality-20260908
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  strengthen_p95:
+  probe:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.ref }}
-          fetch-depth: 0
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.11'
-      - name: Strengthen P95 and focused regression
-        shell: bash
-        run: |
-          set -euo pipefail
-          if git log -1 --pretty=%B | grep -Fq '[telemetry-hardening-generated]'; then
-            echo 'Generated change already committed; executor is idempotently complete.'
-            exit 0
-          fi
-
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          registry_path = Path('registry/prompts/spec-architecture-prompts.v1.json')
-          payload = json.loads(registry_path.read_text(encoding='utf-8'))
-          p95 = next(p for p in payload['prompts'] if p['id'] == 'P95')
-
-          inspect_suffix = (
-              ' When database/storage footprint influences capacity or deployment topology, '
-              'decompose current footprint and growth by table/data class/owner, separating '
-              'durable application state from generated telemetry/log/diagnostic exhaust before '
-              'treating aggregate size as workload demand.'
-          )
-          if inspect_suffix.strip() not in p95['inspectFirst']:
-              p95['inspectFirst'] += inspect_suffix
-
-          output_suffix = (
-              ' When storage footprint is architecture-relevant, include the irreducible '
-              'application-state/workload floor, generated-observability disposition, and the '
-              'deployment decision re-evaluated after accidental exhaust is contained.'
-          )
-          if output_suffix.strip() not in p95['expectedOutput']:
-              p95['expectedOutput'] += output_suffix
-
-          proof_suffix = (
-              ' Aggregate storage size alone is not hosting proof: architecture-changing capacity '
-              'claims require a decomposed footprint/growth owner map that separates durable '
-              'application state from generated telemetry/log/diagnostic exhaust and reruns the '
-              'deployment conclusion after containment.'
-          )
-          if proof_suffix.strip() not in p95['proofGate']:
-              p95['proofGate'] += proof_suffix
-
-          section = '''
-
-1D. DECOMPOSE STORAGE BEFORE ARCHITECTURE CONCLUSIONS
-Aggregate database/storage size is not application-state demand. When database or storage footprint is used to justify hosting, scaling, or serverless/container/orchestration choices, first decompose current footprint and growth by table/data class/owner. Separate durable application/business state from telemetry/logs/diagnostics, audit-like operational exhaust, caches, temporary material, and rebuildable derivatives. For generated observability data inspect retention/TTL/rotation, write rate and cardinality, sampling, indexing/duplication, and growth trend. An unbounded telemetry sink is an observability defect, not evidence that the product itself requires a larger hosting tier.
-
-Treat “a small application database buried under a telemetry accident” as a diagnostic counterexample: before redesigning topology, isolate the irreducible app-state/workload floor and quantify what remains when accidental/generated exhaust is excluded. Prefer bounded retention, sampling, rotation, or an explicitly budgeted diagnostic sink where compatible; do not persist every recurring diagnostic event in the primary relational database by default.
-
-After containment/removal, rerun the deployment operating-model decision against the corrected floor. If footprint ownership or growth cannot be proven, mark the architecture conclusion UNKNOWN/BLOCKED rather than converting aggregate size into a topology requirement.'''
-          anchor = '\n\n2. BUILD A PRECISE DOMAIN VOCABULARY'
-          if '1D. DECOMPOSE STORAGE BEFORE ARCHITECTURE CONCLUSIONS' not in p95['copyContent']:
-              if anchor not in p95['copyContent']:
-                  raise SystemExit('P95 insertion anchor moved')
-              p95['copyContent'] = p95['copyContent'].replace(anchor, section + anchor, 1)
-
-          for keyword in (
-              'database bloat',
-              'telemetry bloat',
-              'observability storage',
-              'storage causality',
-              'database footprint',
-              'logging bloat',
-              'retention policy',
-          ):
-              if keyword not in p95['keywords']:
-                  p95['keywords'].append(keyword)
-
-          if len(p95['copyContent']) > 10000:
-              raise SystemExit(f"P95 copyContent exceeds focused regression ceiling: {len(p95['copyContent'])}")
-
-          registry_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
-
-          test_path = Path('tests/test_prompt_registry_expansion_regression_design_teach.py')
-          test_text = test_path.read_text(encoding='utf-8')
-          marker = '            "only after current evidence makes that tier decision-relevant",\n'
-          additions = '''            "DECOMPOSE STORAGE BEFORE ARCHITECTURE CONCLUSIONS",
-            "Aggregate database/storage size is not application-state demand",
-            "durable application/business state",
-            "telemetry/logs/diagnostics",
-            "retention/TTL/rotation",
-            "write rate and cardinality",
-            "small application database buried under a telemetry accident",
-            "rerun the deployment operating-model decision",
-'''
-          if 'small application database buried under a telemetry accident' not in test_text:
-              if marker not in test_text:
-                  raise SystemExit('focused P95 hosting regression anchor moved')
-              test_text = test_text.replace(marker, marker + additions, 1)
-              test_path.write_text(test_text, encoding='utf-8')
-          PY
-
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
-          python -m unittest tests.test_prompt_registry_expansion_regression_design_teach -v
-          python scripts/prompt_registry_ops.py validate
-          python scripts/validate_prompt_kit_discovery.py --summary
-          python -m unittest tests.test_prompt_kit_discovery -v
-          python -m unittest tests.test_prompt_language_audit -v
-          python scripts/evaluate_prompt_language.py --output "$RUNNER_TEMP/prompt-language-audit.json" --summary
-          python -m unittest tests.test_skill_prompt_registry -v
-          python scripts/validate_prompt_kit_order_navigation.py --output "$RUNNER_TEMP/prompt-kit-order-navigation-audit.json" --summary
-          python -m unittest tests.test_prompt_kit_order_navigation_contract -v
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-          git diff --check
-
-          git status --short
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add registry/prompts/spec-architecture-prompts.v1.json tests/test_prompt_registry_expansion_regression_design_teach.py web/prompt-kit/index.html
-          git diff --cached --check
-          git commit -m 'feat: guard architecture from telemetry footprint accidents [telemetry-hardening-generated]'
-          git push origin HEAD:feat/p95-telemetry-footprint-causality-20260908
+      - run: echo "p95 telemetry executor admitted"
