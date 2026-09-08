@@ -18,14 +18,20 @@ jobs:
           ref: fix/operant-natural-prompt-hotkeys-20260908
           fetch-depth: 0
 
-      - name: Verify current main floor
+      - name: Reconcile current main floor without rewriting owned history
         shell: bash
         run: |
           set -euo pipefail
           git fetch origin main --prune
-          git merge-base --is-ancestor origin/main HEAD
-          echo "branch_head=$(git rev-parse HEAD)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "branch_head_before=$(git rev-parse HEAD)"
           echo "main_floor=$(git rev-parse origin/main)"
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+          fi
+          git merge-base --is-ancestor origin/main HEAD
+          echo "reconciled_head=$(git rev-parse HEAD)"
 
       - name: Repair transport guard and apply bounded product patch
         shell: bash
