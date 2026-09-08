@@ -87,6 +87,26 @@ class PromptKitOntologyHistoryAppendOnlyTests(unittest.TestCase):
         self.assertEqual(return_code, 2)
         self.assertIn("Prompt Kit ontology append-only validation failed", stderr.getvalue())
 
+    def test_failed_atomic_replace_preserves_existing_report_and_cleans_temp(self) -> None:
+        report = {
+            "schema_version": "prompt-kit-ontology-history-append-only-validation/v1",
+            "status": "PASS",
+            "baseline_ref": "baseline",
+            "baseline_records": 1,
+            "current_records": 1,
+            "errors": [],
+        }
+        prior_report = '{"status":"PRIOR"}\n'
+        with TemporaryDirectory() as tmp_dir:
+            output_path = Path(tmp_dir) / "report.json"
+            output_path.write_text(prior_report, encoding="utf-8")
+            with patch.object(Path, "replace", side_effect=OSError("replace failed")):
+                with self.assertRaises(OSError):
+                    append_only_validator.write_report(output_path, report)
+
+            self.assertEqual(output_path.read_text(encoding="utf-8"), prior_report)
+            self.assertEqual(list(Path(tmp_dir).glob(".report.json.*.tmp")), [])
+
 
 if __name__ == "__main__":
     unittest.main()
