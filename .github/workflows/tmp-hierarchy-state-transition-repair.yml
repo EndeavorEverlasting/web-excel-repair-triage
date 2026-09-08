@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   implement:
-    if: github.event.issue.pull_request && github.event.issue.number == 391 && github.event.comment.body == '/apply-versioning-prompt-v2'
+    if: github.event.issue.pull_request && github.event.issue.number == 391 && github.event.comment.body == '/apply-versioning-prompt-v3'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,4 +24,4 @@ jobs:
         with:
           python-version: '3.12'
       - name: Execute bounded versioning prompt contribution
-        run: python tmp/versioning_prompt_executor.py
+        run: python tmp/versioning_prompt_executor_v2.py
