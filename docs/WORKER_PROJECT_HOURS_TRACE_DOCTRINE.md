@@ -35,6 +35,20 @@ Resolve project for each worker/date in this order:
 
 This is implemented in `triage.admin_billing_summary.reader.read_month`.
 
+## Default-project overrides do not create a second project identity
+
+A dated project value can exist specifically to override a worker's non-project default. Do not confuse that resolution evidence with a new client-facing project taxonomy.
+
+The June 2026 NTH record is the canonical example:
+
+- Some source rows use the literal dated-assignment label `Neuron Deployments`.
+- That label was useful when the worker's default project could be `Mobile Device Support` / `iPhone Support`, another project managed during the same period.
+- The dated `Neuron Deployments` value therefore proves that the worker/date belongs to the Neuron/NTH project rather than the non-NTH default. It does **not** mean those hours belong to a second Neuron project distinct from Wave 3.
+- For the Jon Zhou June 2026 NTH submission, qualifying June rows normalize outward to the single project identity `Wave-3 Neurons & Cybernets`.
+- Private evidence must preserve the literal source label, the worker's default-project context, and the resolution source so the reason for the override is recoverable later.
+
+This normalization changes presentation only. It must not add, remove, or redistribute paid hours, and the legacy label alone must not be used to invent a task/workstream assignment.
+
 ## Why the bottom override table matters
 
 The bottom section of each `Assignments - {Month}` tab allows reviewed exceptions without rewriting the main grid. A row like:
