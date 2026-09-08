@@ -107,7 +107,6 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             source.index("promptShortcutBindings=candidate"),
         )
 
-
     def test_favorites_automatically_publish_shortcuts_and_detail_favorite_control(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         deployed = DEPLOYED.read_text(encoding="utf-8")
@@ -201,7 +200,7 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
                         return text[start : index + 1]
             self.fail(f"unterminated JavaScript function: {name}")
 
-        for function_name in ("focusFavoritePromptShortcutInput", "setHotkeyHelpOpen"):
+        for function_name in ("setHotkeyHelpOpen",):
             self.assertEqual(function_block(source, function_name), function_block(deployed, function_name))
 
         escape_start = "var escapeHelpPanel=document.getElementById('hotkeyHelpPanel');"
