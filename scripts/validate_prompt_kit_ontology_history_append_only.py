@@ -117,7 +117,12 @@ def write_report(path: Path, report: dict[str, Any]) -> None:
         except RuntimeError as exc:
             raise OSError(f"cannot resolve report output symlink: {exc}") from exc
     payload = json.dumps(report, indent=2, sort_keys=True) + "\n"
-    existing_mode = stat.S_IMODE(destination.stat().st_mode) if destination.is_file() else None
+    destination_stat = destination.stat() if destination.is_file() else None
+    if destination_stat is not None and destination_stat.st_nlink > 1:
+        raise OSError(
+            "cannot atomically publish to a hard-linked report output; use a path with one link"
+        )
+    existing_mode = stat.S_IMODE(destination_stat.st_mode) if destination_stat is not None else None
     with TemporaryDirectory(dir=destination.parent, prefix=f".{destination.name}.") as temp_dir:
         temp_path = Path(temp_dir) / destination.name
         temp_path.write_text(payload, encoding="utf-8")
