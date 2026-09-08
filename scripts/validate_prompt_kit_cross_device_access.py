@@ -18,7 +18,8 @@ ACCESS_GUIDE_PATH = ROOT / "PROMPT_KIT_ACCESS.md"
 PHONE_GUIDE_PATH = ROOT / "OPEN_PROMPT_KIT_ON_PHONE.md"
 SKILL_PATH = ROOT / ".ai" / "skills" / "technician-prompt-kit-acquisition" / "SKILL.md"
 
-PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/"
+PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/operant"
+LEGACY_PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/"
 LAUNCHER_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/"
 REPOSITORY_URL = "https://github.com/EndeavorEverlasting/web-excel-repair-triage.git"
 ZIP_URL = "https://github.com/EndeavorEverlasting/web-excel-repair-triage/archive/refs/heads/main.zip"
@@ -161,8 +162,12 @@ def validate_contract_payload(payload: dict[str, Any]) -> dict[str, dict[str, An
         raise CrossDeviceAccessError("canonical repository URL drifted")
     if payload.get("canonical_site") != "web/prompt-kit/index.html":
         raise CrossDeviceAccessError("canonical Prompt Kit site path drifted")
+    if payload.get("public_operant_url") != PUBLIC_URL:
+        raise CrossDeviceAccessError("public Operant URL drifted")
     if payload.get("public_prompt_kit_url") != PUBLIC_URL:
-        raise CrossDeviceAccessError("public Prompt Kit URL drifted")
+        raise CrossDeviceAccessError("compatibility public_prompt_kit_url must resolve to canonical Operant URL")
+    if payload.get("legacy_prompt_kit_url") != LEGACY_PUBLIC_URL:
+        raise CrossDeviceAccessError("legacy Prompt Kit compatibility URL drifted")
     if payload.get("public_launcher_url") != LAUNCHER_URL:
         raise CrossDeviceAccessError("public phone launcher URL drifted")
     if payload.get("source_guides") != ["PROMPT_KIT_ACCESS.md", "OPEN_PROMPT_KIT_ON_PHONE.md"]:
@@ -239,6 +244,7 @@ def validate_contract_payload(payload: dict[str, Any]) -> dict[str, dict[str, An
         "Do not tell a normal phone or browser user to clone",
         "download web/prompt-kit/index.html",
         "Distinguish use/install intent from edit/commit/push intent",
+        "Treat /prompt-kit/ as a compatibility redirect only",
         "verify canonical origin, clean worktree, current branch main, and zero local-only commits",
         "never reset, clean, force-push, or discard local work",
     ):
@@ -368,6 +374,7 @@ def validate_repository_surfaces() -> None:
         ACCESS_GUIDE_PATH,
         (
             PUBLIC_URL,
+            LEGACY_PUBLIC_URL,
             LAUNCHER_URL,
             "No repository clone, ZIP extraction, Git client, Python installation, PowerShell, or local web server is required for normal browser use.",
             "Open-Latest-PromptKit.cmd",
@@ -393,9 +400,10 @@ def validate_repository_surfaces() -> None:
         (
             LAUNCHER_URL,
             PUBLIC_URL,
+            LEGACY_PUBLIC_URL,
             "Open in browser",
-            "Install on this Android phone",
-            "same Prompt Kit used on desktop",
+            "Install Operant",
+            "same Operant release used on desktop",
         ),
     )
     require_markdown_section(
@@ -403,10 +411,9 @@ def validate_repository_surfaces() -> None:
         "## One tap — no download required",
         required=(
             LAUNCHER_URL,
-            PUBLIC_URL,
             "does not need to download `index.html`",
             "Open in browser",
-            "Install on this Android phone",
+            "Install Operant",
         ),
         forbidden=("git clone", "main.zip"),
         label="OPEN_PROMPT_KIT_ON_PHONE.md",
@@ -425,6 +432,8 @@ def validate_repository_surfaces() -> None:
             "Termux",
             "F-Droid",
             "pkg install git",
+            PUBLIC_URL,
+            LEGACY_PUBLIC_URL,
             f"git clone --branch main --single-branch {REPOSITORY_URL}",
             *EDITABLE_UPDATE_SEQUENCE,
             "Do not require a clone merely to use the Prompt Kit",
@@ -433,7 +442,7 @@ def validate_repository_surfaces() -> None:
     require_markdown_section(
         skill,
         "### 1. Normal browser use",
-        required=(PUBLIC_URL, "Do not require a clone merely to use the Prompt Kit"),
+        required=(PUBLIC_URL, LEGACY_PUBLIC_URL, "Do not require a clone merely to use the Prompt Kit"),
         forbidden=NORMAL_USE_FORBIDDEN,
         label=ACQUISITION_SKILL,
     )
