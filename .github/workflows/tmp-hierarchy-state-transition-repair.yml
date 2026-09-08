@@ -1,4 +1,4 @@
-name: Temporary P95 telemetry footprint repair
+name: Temporary hierarchy state-transition repair
 
 on:
   issue_comment:
@@ -8,167 +8,170 @@ permissions:
   contents: write
 
 concurrency:
-  group: prompt-kit-p95-telemetry-footprint-repair
+  group: prompt-kit-hierarchy-state-transition-repair
   cancel-in-progress: false
 
 jobs:
   repair:
-    if: github.event.issue.number == 378 && github.event.comment.body == '/apply-p95-telemetry-footprint'
+    if: github.event.issue.pull_request && github.event.issue.number == 244 && github.event.comment.body == '/repair-hierarchy-state-transitions'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: feat/p95-telemetry-footprint-causality-20260908
+          ref: main
           fetch-depth: 0
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Verify refreshed feature floor
+      - name: Refresh exact main floor
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main feat/p95-telemetry-footprint-causality-20260908 --prune
-          git merge-base --is-ancestor 1a962e0a4e66786d560bc3d34ef00dfc44a3fedc HEAD
-          test -z "$(git diff --name-only 1a962e0a4e66786d560bc3d34ef00dfc44a3fedc...HEAD)"
+          git fetch origin main --prune
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+          git status --short
+          git log --oneline --decorate -5
 
-      - name: Strengthen P95 without raw prompt growth
+      - name: Repair hierarchy state-transition refresh paths
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
+          from __future__ import annotations
           import json
           from pathlib import Path
 
-          registry = Path('registry/prompts/spec-architecture-prompts.v1.json')
-          payload = json.loads(registry.read_text(encoding='utf-8'))
-          p95 = next(p for p in payload['prompts'] if p['id'] == 'P95')
-          original_copy = p95['copyContent']
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              if new in text:
+                  return text
+              if old not in text:
+                  raise SystemExit(f'{label}: anchor missing')
+              return text.replace(old, new, 1)
 
-          old_1c = (
-              '1C. CHOOSE THE DEPLOYMENT OPERATING MODEL FROM EVIDENCE\n'
-              'Compare: managed PaaS/serverless for velocity and low ops; one host with OCI containers via Docker or Podman for low-cost control; Kubernetes/managed orchestration only for demonstrated horizontal scaling, HA/isolation, or spiky distributed load. “millions someday” is not proof; keep an upgrade seam. Record chosen/rejected tier and migration triggers: saturation, p95/p99/SLO, queues/connections, RTO/RPO, toil, and cost. Keep this branch progressive-disclosure: do not preload tier-specific Docker/Podman/Kubernetes or managed-platform detail; inspect it only after current evidence makes that tier decision-relevant.'
+          js_path = Path('docs/prompt-kit.js')
+          polish_path = Path('docs/prompt-kit-polish.js')
+          contract_path = Path('harness/contracts/prompt-kit-filtering.v1.json')
+          test_path = Path('tests/test_prompt_kit_filtering_access.py')
+
+          js = js_path.read_text(encoding='utf-8')
+          js = replace_once(
+              js,
+              "function toggleFavoritePrompt(id){var key=String(id||'').toUpperCase();if(!key)return;if(isFavoritePrompt(key)){delete favoritePromptIds[key];showToast('Removed '+key+' from Favorites')}else{favoritePromptIds[key]=true;showToast('Saved '+key+' to Favorites')}saveFavoritePromptIds();render()}",
+              "function toggleFavoritePrompt(id){var key=String(id||'').toUpperCase();if(!key)return;if(isFavoritePrompt(key)){delete favoritePromptIds[key];showToast('Removed '+key+' from Favorites')}else{favoritePromptIds[key]=true;showToast('Saved '+key+' to Favorites')}saveFavoritePromptIds();if(activeSection==='__favorites__')renderTypes();render()}",
+              'favorite membership refresh',
           )
-          new_1c = (
-              '1C. CHOOSE THE DEPLOYMENT OPERATING MODEL FROM EVIDENCE\n'
-              'Compare managed PaaS/serverless; one host with OCI containers via Docker or Podman; Kubernetes/managed orchestration only for proved need. “millions someday” is not proof. Aggregate database/storage size is not application-state demand: split footprint by owner: durable application/business state vs telemetry/log/diagnostic exhaust; inspect retention/TTL/rotation and write rate/cardinality. A small application database buried under a telemetry accident is not tier proof; contain it; rerun against the irreducible app-state/workload floor. Track p95/p99/SLO, queues/RTO/RPO/toil/cost. Keep this branch progressive-disclosure: do not preload tier-specific Docker/Podman/Kubernetes detail; inspect it only after current evidence makes that tier decision-relevant.'
+          js = replace_once(
+              js,
+              "if(activeSection){activeSection=null;render();return}",
+              "if(activeSection){activeSection=null;activeType=null;renderTypes();render();return}",
+              'Escape section reset refresh',
           )
-          old_9 = (
-              '9. DESIGN FOR TESTABILITY AND OBSERVABILITY\n'
-              'Specify tests at interfaces/seams, not internal line-by-line choreography. Define what can be unit-tested, what requires component/integration proof, and what eventually requires live runtime proof. Include enough structured logging/tracing/metrics to identify which program layer made a decision or failed without leaking sensitive data.'
-          )
-          new_9 = (
-              '9. DESIGN FOR TESTABILITY AND OBSERVABILITY\n'
-              'Test interfaces/seams; label unit/integration/live proof. Bound non-sensitive logs/traces/metrics; one owner controls volume/retention/cardinality. Diagnostics are not durable product state.'
-          )
+          js_path.write_text(js, encoding='utf-8')
 
-          if new_1c not in p95['copyContent']:
-              if old_1c not in p95['copyContent']:
-                  raise SystemExit('P95 1C canonical anchor moved; fail closed')
-              p95['copyContent'] = p95['copyContent'].replace(old_1c, new_1c, 1)
-          if new_9 not in p95['copyContent']:
-              if old_9 not in p95['copyContent']:
-                  raise SystemExit('P95 observability canonical anchor moved; fail closed')
-              p95['copyContent'] = p95['copyContent'].replace(old_9, new_9, 1)
+          polish = polish_path.read_text(encoding='utf-8')
+          old_favorites = """function activateFavoritesView(){
+            activeCat='all';
+            activeSection='__favorites__';
+            clearTransientPromptFilters();
+            document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.id==='favoritesShortcut')});
+            document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__favorites__')});
+            render();
+          }"""
+          new_favorites = """function activateFavoritesView(){
+            activeCat='all';
+            activeSection='__favorites__';
+            clearTransientPromptFilters();
+            document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.id==='favoritesShortcut')});
+            document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__favorites__')});
+            renderTypes();
+            render();
+          }"""
+          polish = replace_once(polish, old_favorites, new_favorites, 'Favorites activation refresh')
+          polish_path.write_text(polish, encoding='utf-8')
 
-          if len(p95['copyContent']) > len(original_copy):
-              raise SystemExit(f"P95 raw prompt grew: {len(original_copy)} -> {len(p95['copyContent'])}")
-          if len(p95['copyContent']) > 10000:
-              raise SystemExit(f"P95 copyContent exceeds ceiling: {len(p95['copyContent'])}")
+          contract = json.loads(contract_path.read_text(encoding='utf-8'))
+          requirement = next((item for item in contract['requirements'] if item['id'] == 'progressive_type_disclosure'), None)
+          if requirement is None:
+              raise SystemExit('progressive_type_disclosure contract owner missing')
+          sentence = ' Favorites activation, favorite membership changes while Favorites is active, and Escape section reset refresh subordinate navigation so controls cannot describe a stale scope.'
+          if sentence.strip() not in requirement['expected']:
+              requirement['expected'] = requirement['expected'].rstrip() + sentence
+          contract_path.write_text(json.dumps(contract, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
-          additions = {
-              'inspectFirst': ' When storage footprint affects deployment topology, decompose durable application state from generated telemetry/log/diagnostic exhaust before treating aggregate size as workload demand.',
-              'expectedOutput': ' For storage-driven tier choices, include the irreducible app-state/workload floor and the tier decision rerun after generated exhaust is contained.',
-              'proofGate': ' Aggregate storage alone is not hosting proof; storage-driven tier changes require decomposed ownership/growth evidence and a rerun after generated exhaust is contained.',
-          }
-          for field, sentence in additions.items():
-              if sentence.strip() not in p95[field]:
-                  p95[field] += sentence
-          for keyword in ('database bloat', 'telemetry bloat', 'observability storage', 'database footprint', 'retention policy'):
-              if keyword not in p95['keywords']:
-                  p95['keywords'].append(keyword)
-
-          registry.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
-
-          test_path = Path('tests/test_prompt_registry_expansion_regression_design_teach.py')
           test = test_path.read_text(encoding='utf-8')
-          marker = '            "only after current evidence makes that tier decision-relevant",\n'
-          new_asserts = ''.join((
-              '            "Aggregate database/storage size is not application-state demand",\n',
-              '            "durable application/business state",\n',
-              '            "telemetry/log/diagnostic exhaust",\n',
-              '            "retention/TTL/rotation",\n',
-              '            "write rate/cardinality",\n',
-              '            "small application database buried under a telemetry accident",\n',
-              '            "rerun against the irreducible app-state/workload floor",\n',
-              '            "Diagnostics are not durable product state",\n',
-          ))
-          if 'small application database buried under a telemetry accident' not in test:
-              if marker not in test:
-                  raise SystemExit('focused hosting regression anchor moved; fail closed')
-              test = test.replace(marker, marker + new_asserts, 1)
-              test_path.write_text(test, encoding='utf-8')
-          PY
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          contract_anchor = '        self.assertIn("only subcategories available in that scope", expected["progressive_type_disclosure"])\n'
+          contract_assert = '        self.assertIn("favorite membership changes while Favorites is active", expected["progressive_type_disclosure"])\n        self.assertIn("Escape section reset", expected["progressive_type_disclosure"])\n'
+          if contract_assert not in test:
+              if contract_anchor not in test:
+                  raise SystemExit('contract regression anchor missing')
+              test = test.replace(contract_anchor, contract_anchor + contract_assert, 1)
 
-      - name: Validate exact P95 candidate
+          if 'def test_hierarchy_refreshes_on_non_click_state_transitions' not in test:
+              anchor = '    def test_all_view_is_an_atomic_reset_after_favorites(self) -> None:\n'
+              addition = '''    def test_hierarchy_refreshes_on_non_click_state_transitions(self) -> None:\n        js = JS.read_text(encoding="utf-8")\n        polish = POLISH.read_text(encoding="utf-8")\n\n        toggle_start = js.index("function toggleFavoritePrompt")\n        toggle_end = js.index("\\n\\nfunction syncLibraryTabs", toggle_start)\n        toggle = js[toggle_start:toggle_end]\n        self.assertIn("if(activeSection==='__favorites__')renderTypes();render()", toggle)\n\n        favorites_start = polish.index("function activateFavoritesView()")\n        favorites_end = polish.index("function ensureCompactBrowsingControls()", favorites_start)\n        favorites = polish[favorites_start:favorites_end]\n        self.assertIn("renderTypes();", favorites)\n        self.assertLess(favorites.index("renderTypes();"), favorites.index("render();"))\n\n        self.assertIn("if(activeSection){activeSection=null;activeType=null;renderTypes();render();return}", js)\n\n'''
+              if anchor not in test:
+                  raise SystemExit('hierarchy transition test insertion anchor missing')
+              test = test.replace(anchor, addition + anchor, 1)
+          test_path.write_text(test, encoding='utf-8')
+          PY
+
+      - name: Validate hierarchy repair pass 1
         shell: bash
         run: |
           set -euo pipefail
-          python -m unittest tests.test_prompt_registry_expansion_regression_design_teach -v
+          node --check docs/prompt-kit.js
+          node --check docs/prompt-kit-polish.js
+          python -m unittest tests.test_prompt_kit_filtering_access -v
+          python -m unittest tests.test_prompt_kit_product_interactions tests.test_prompt_kit_mobile -v
+          python -m unittest tests.test_prompt_kit_mainline_contract tests.test_prompt_kit_header_contract tests.test_prompt_kit_pages tests.test_prompt_kit_hotkey_completion -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           python scripts/prompt_registry_ops.py validate
-          python scripts/validate_prompt_kit_discovery.py --summary
-          python -m unittest tests.test_prompt_kit_discovery -v
-          python -m unittest tests.test_prompt_language_audit -v
-          python scripts/evaluate_prompt_language.py --output "$RUNNER_TEMP/prompt-language-audit.json" --summary
-          python -m unittest tests.test_skill_prompt_registry -v
-          python scripts/validate_prompt_kit_order_navigation.py --output "$RUNNER_TEMP/prompt-kit-order-navigation-audit.json" --summary
-          python -m unittest tests.test_prompt_kit_order_navigation_contract -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/validate_prompt_kit_order_navigation.py --summary
           git diff --check
 
-      - name: Pass 2 owner-boundary falsification
+      - name: Deliberate second-pass falsification
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json
           from pathlib import Path
-          payload = json.loads(Path('registry/prompts/spec-architecture-prompts.v1.json').read_text(encoding='utf-8'))
-          p95 = next(p for p in payload['prompts'] if p['id'] == 'P95')
-          base = json.loads(Path('docs/prompts.json').read_text(encoding='utf-8'))
-          p58 = next(p for p in base if p['id'] == 'P58')
-          required = (
-              'Aggregate database/storage size is not application-state demand',
-              'durable application/business state',
-              'telemetry/log/diagnostic exhaust',
-              'retention/TTL/rotation',
-              'small application database buried under a telemetry accident',
-              'rerun against the irreducible app-state/workload floor',
-              'Diagnostics are not durable product state',
-          )
-          missing = [x for x in required if x not in p95['copyContent']]
-          if missing:
-              raise SystemExit(f'P95 telemetry semantics missing: {missing}')
-          if 'TROUBLESHOOT FROM CONTEXT NOW' not in p58['copyContent'] or 'root cause' not in p58['copyContent'].lower():
-              raise SystemExit('P58 diagnostic ownership regressed')
-          if len(p95['copyContent']) > 10000:
-              raise SystemExit('P95 size ceiling regressed')
-          print('OWNER_MAP: P58 ALREADY_COVERED; P95 STRENGTHENED; NEW_IDS=0')
+          js = Path('docs/prompt-kit.js').read_text(encoding='utf-8')
+          polish = Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
+          test = Path('tests/test_prompt_kit_filtering_access.py').read_text(encoding='utf-8')
+          html = Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
+          checks = {
+              'Favorites activation refresh': "activeSection='__favorites__'" in polish and 'renderTypes();' in polish[polish.index('function activateFavoritesView()'):polish.index('function ensureCompactBrowsingControls()')],
+              'favorite membership refresh': "if(activeSection==='__favorites__')renderTypes();render()" in js,
+              'Escape section refresh': "if(activeSection){activeSection=null;activeType=null;renderTypes();render();return}" in js,
+              'focused regression': 'test_hierarchy_refreshes_on_non_click_state_transitions' in test,
+              'generated parity marker': "if(activeSection==='__favorites__')renderTypes();render()" in html,
+          }
+          failed = [name for name, ok in checks.items() if not ok]
+          if failed:
+              raise SystemExit(f'hierarchy second-pass falsification failed: {failed}')
           PY
-          python -m unittest tests.test_prompt_registry_expansion_regression_design_teach -v
-          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_prompt_kit_filtering_access -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
-      - name: Commit durable product candidate
+      - name: Commit exact durable repair and self-remove transport
         shell: bash
         run: |
           set -euo pipefail
-          git add registry/prompts/spec-architecture-prompts.v1.json tests/test_prompt_registry_expansion_regression_design_teach.py web/prompt-kit/index.html
+          git rm .github/workflows/tmp-hierarchy-state-transition-repair.yml
+          git add \
+            docs/prompt-kit.js \
+            docs/prompt-kit-polish.js \
+            harness/contracts/prompt-kit-filtering.v1.json \
+            tests/test_prompt_kit_filtering_access.py \
+            web/prompt-kit/index.html
           git diff --cached --check
+          echo '--- staged files ---'
           git diff --cached --name-only
-          git commit -m 'feat(prompt-kit): guard hosting decisions from telemetry bloat'
-          git push origin HEAD:feat/p95-telemetry-footprint-causality-20260908
+          git commit -m "fix(prompt-kit): refresh hierarchy on state transitions"
+          git push origin HEAD:main
