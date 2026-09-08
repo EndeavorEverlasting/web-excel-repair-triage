@@ -4,7 +4,7 @@
     {
       "id": "technician-acquisition",
       "document": "WORKFLOW.md#a-technician-acquisition-or-update",
-      "trigger": "A user or technician needs to open, install, share, download, clone, update, or locally edit the current main Prompt Kit on a browser, phone, tablet, Windows PC, macOS, or Linux machine.",
+      "trigger": "A user or technician needs to open, install, share, download, clone, update, or locally edit the current main Operant / Prompt Kit compatibility source on a browser, phone, tablet, Windows PC, macOS, or Linux machine.",
       "owned_scope": [
         "device-aware access routing",
         "PROMPT_KIT_ACCESS.md and OPEN_PROMPT_KIT_ON_PHONE.md contract references",
@@ -20,7 +20,7 @@
         "requiring a clone for normal browser or phone use"
       ],
       "entry_points": [
-        "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
+        "https://endeavoreverlasting.github.io/web-excel-repair-triage/operant",
         "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
         "Open-Latest-PromptKit.cmd",
         "Acquire-Latest-PromptKit.cmd"
