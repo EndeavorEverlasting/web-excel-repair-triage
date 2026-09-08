@@ -1,0 +1,237 @@
+name: Temporary Prompt Kit external fallback review repair
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-external-fallback-routing-20260908
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-external-fallback-review-repair-20260908
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-external-fallback-routing-20260908
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Refresh exact floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/prompt-kit-external-fallback-routing-20260908 --prune
+          test "$(git rev-parse origin/main)" = "947dd607eac4eda3ea47ce99c75c2a7121a87832"
+          test "$(git merge-base origin/main HEAD)" = "947dd607eac4eda3ea47ce99c75c2a7121a87832"
+          git status --short
+          git branch --show-current
+          git log --oneline --decorate -5
+
+      - name: Repair pinned source links and focus restoration
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              if new in text:
+                  return text
+              if old not in text:
+                  raise SystemExit(f'{label}: anchor missing')
+              return text.replace(old, new, 1)
+
+          runtime_path = Path('docs/prompt-kit-external-resources.js')
+          runtime = runtime_path.read_text(encoding='utf-8')
+          runtime = replace_once(
+              runtime,
+              'var externalResourceLoadPromise=null;',
+              'var externalResourceLoadPromise=null;\nvar externalResourceOrigin=null;',
+              'origin state',
+          )
+          runtime = replace_once(
+              runtime,
+              "function sourceRepositoryUrl(floor){var repository=String(floor&&floor.repository||'').trim();return repository?'https://github.com/'+repository:'#'}",
+              "function sourceRepositoryUrl(floor){var repository=String(floor&&floor.repository||'').trim(),sha=String(floor&&floor.resolved_sha||'').trim(),catalogPath=String(floor&&floor.catalog_path||'').trim();if(!repository||!sha)return '#';return 'https://github.com/'+repository+(catalogPath?'/blob/'+sha+'/'+catalogPath:'/tree/'+sha)}",
+              'commit-pinned floor links',
+          )
+          runtime = replace_once(
+              runtime,
+              "  var requestedQuery='';\n  if(typeof request==='string')requestedQuery=request;else if(request&&typeof request.query==='string')requestedQuery=request.query;",
+              "  var requestedQuery='';\n  var requestedOrigin=request&&typeof request==='object'?request.origin:null;\n  externalResourceOrigin=requestedOrigin&&typeof requestedOrigin.focus==='function'?requestedOrigin:(document.activeElement&&typeof document.activeElement.focus==='function'?document.activeElement:null);\n  if(typeof request==='string')requestedQuery=request;else if(request&&typeof request.query==='string')requestedQuery=request.query;",
+              'capture focus origin',
+          )
+          runtime = replace_once(
+              runtime,
+              "  loadExternalResources().then(function(){renderExternalResourcePage();input.focus()}).catch(function(error){var list=surface.querySelector('.operant-resource-list');list.innerHTML='<div class=\"operant-resource-empty\">Resource catalog unavailable. Existing prompts remain fully usable.</div>';surface.querySelector('.operant-resource-count').textContent=String(error&&error.message||'Resource load failed')})",
+              "  loadExternalResources().then(function(){renderExternalResourcePage();if(!surface.hidden)input.focus()}).catch(function(error){var list=surface.querySelector('.operant-resource-list');list.innerHTML='<div class=\"operant-resource-empty\">Resource catalog unavailable. Existing prompts remain fully usable.</div>';surface.querySelector('.operant-resource-count').textContent=String(error&&error.message||'Resource load failed')})",
+              'hidden-panel async focus guard',
+          )
+          runtime = replace_once(
+              runtime,
+              "function closeExternalResources(){var surface=document.getElementById('operantExternalResources');if(surface)surface.hidden=true}",
+              "function closeExternalResources(){var surface=document.getElementById('operantExternalResources');if(surface)surface.hidden=true;var origin=externalResourceOrigin;externalResourceOrigin=null;if(origin&&typeof origin.focus==='function'&&document.contains(origin))origin.focus()}",
+              'restore focus on close',
+          )
+          runtime_path.write_text(runtime, encoding='utf-8')
+
+          tutorial_path = Path('docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md')
+          tutorial = tutorial_path.read_text(encoding='utf-8')
+          tutorial = replace_once(
+              tutorial,
+              '3. The registered source floor is the authority for the external libraries: `f/prompts.chat` (prompt catalog), `mattpocock/skills` (agent skills), and `deepseek-ai/deepseek-harness` (agent/harness skills). The browser derives repository links from that source floor rather than maintaining a second URL table in the tutorial.',
+              '3. The registered source floor is the authority for the external libraries: `f/prompts.chat` (prompt catalog), `mattpocock/skills` (agent skills), and `deepseek-ai/deepseek-harness` (agent/harness skills). The browser derives commit-pinned repository links from each floor\'s `resolved_sha` (and the catalog path when present) rather than maintaining a second URL table in the tutorial.',
+              'tutorial pinned source wording',
+          )
+          tutorial = replace_once(
+              tutorial,
+              'This fallback is a capability-gap route, not a declaration that an upstream resource is better. The user can edit the prefilled resource search before opening a donor library.',
+              'This fallback is a capability-gap route, not a declaration that an upstream resource is better. The user can edit the prefilled resource search before opening a donor library. Closing Resources returns keyboard focus to the control that launched the resource path.',
+              'tutorial focus wording',
+          )
+          tutorial_path.write_text(tutorial, encoding='utf-8')
+
+          static_test_path = Path('tests/test_operant_external_resources.py')
+          static_test = static_test_path.read_text(encoding='utf-8')
+          static_test = replace_once(
+              static_test,
+              '            "https://github.com/",\n            "openForUseCase:openExternalResourcesForUseCase",',
+              '            "resolved_sha",\n            "catalogPath?\'/blob/\'+sha+\'/\'+catalogPath:\'/tree/\'+sha",\n            "externalResourceOrigin",\n            "if(!surface.hidden)input.focus()",\n            "document.contains(origin)",\n            "openForUseCase:openExternalResourcesForUseCase",',
+              'static review regression markers',
+          )
+          static_test_path.write_text(static_test, encoding='utf-8')
+
+          browser_path = Path('tests/prompt_kit_external_resources_browser_proof.py')
+          browser = browser_path.read_text(encoding='utf-8')
+          browser = replace_once(
+              browser,
+              '    source_shas = {row["id"]: row["resolved_sha"] for row in expected["source_floor"]}\n',
+              '    source_shas = {row["id"]: row["resolved_sha"] for row in expected["source_floor"]}\n    expected_floor_links = {\n        row["id"]: (\n            f\'https://github.com/{row["repository"]}/blob/{row["resolved_sha"]}/{row["catalog_path"]}\'\n            if row.get("catalog_path")\n            else f\'https://github.com/{row["repository"]}/tree/{row["resolved_sha"]}\'\n        )\n        for row in expected["source_floor"]\n    }\n',
+              'browser expected floor links',
+          )
+          browser = replace_once(
+              browser,
+              '            loaded_requests = len(resource_requests)\n            rendered_rows = page.locator(".operant-resource-row").count()\n            loaded_panel_visible = not page.locator("#operantExternalResources").evaluate("el => el.hidden")\n',
+              '            loaded_requests = len(resource_requests)\n            rendered_rows = page.locator(".operant-resource-row").count()\n            loaded_panel_visible = not page.locator("#operantExternalResources").evaluate("el => el.hidden")\n            source_card_links = page.locator(".operant-resource-source").evaluate_all(\n                "cards => Object.fromEntries(cards.map(card => [card.dataset.sourceId, card.querySelector(\'a\').href]))"\n            )\n            floor_links_pinned = source_card_links == expected_floor_links\n',
+              'browser source card observation',
+          )
+          browser = replace_once(
+              browser,
+              '            page.keyboard.press("Escape")\n            closed_by_escape = page.locator("#operantExternalResources").evaluate("el => el.hidden")\n\n            portable_request_floor = len(resource_requests)\n',
+              '            page.keyboard.press("Escape")\n            closed_by_escape = page.locator("#operantExternalResources").evaluate("el => el.hidden")\n            manual_focus_restored = page.evaluate("document.activeElement && document.activeElement.id") == "externalResourcesButton"\n\n            page.evaluate("window.OperantExternalResources.openForUseCase(\'code review\', document.getElementById(\'promptFinderBtn\'))")\n            page.wait_for_function("() => !document.getElementById(\'operantExternalResources\').hidden")\n            page.keyboard.press("Escape")\n            fallback_focus_restored = page.evaluate("document.activeElement && document.activeElement.id") == "promptFinderBtn"\n\n            portable_request_floor = len(resource_requests)\n',
+              'browser focus restoration observation',
+          )
+          browser = replace_once(
+              browser,
+              '        {\n            "id": "render_is_bounded",',
+              '        {\n            "id": "source_floor_links_are_commit_pinned",\n            "event": "source-library cards navigate to the registered resolved SHA rather than a moving default branch",\n            "occurred": True,\n            "passed": floor_links_pinned,\n            "source_links": source_card_links,\n            "expected_links": expected_floor_links,\n        },\n        {\n            "id": "render_is_bounded",',
+              'browser source link observation record',
+          )
+          browser = replace_once(
+              browser,
+              '        {\n            "id": "escape_closes_resources",\n            "event": "Escape closes the progressive-disclosure resource panel",\n            "occurred": True,\n            "passed": bool(closed_by_escape),\n        },\n',
+              '        {\n            "id": "escape_closes_resources",\n            "event": "Escape closes the progressive-disclosure resource panel",\n            "occurred": True,\n            "passed": bool(closed_by_escape),\n        },\n        {\n            "id": "resource_close_restores_keyboard_origin",\n            "event": "closing Resources restores focus for both the header launcher and the finder fallback origin",\n            "occurred": True,\n            "passed": manual_focus_restored and fallback_focus_restored,\n            "manual_focus_restored": manual_focus_restored,\n            "fallback_focus_restored": fallback_focus_restored,\n        },\n',
+              'browser focus observation record',
+          )
+          browser = replace_once(
+              browser,
+              '            "status": "PASS" if by_id["search_preserves_pinned_source_navigation"]["passed"] and by_id["portable_package_serves_sidecar"]["passed"] and by_id["escape_closes_resources"]["passed"] else "FAIL",\n            "required_evidence_class": "browser_runtime_observed",\n            "observation_ids": ["search_preserves_pinned_source_navigation", "portable_package_serves_sidecar", "escape_closes_resources"],',
+              '            "status": "PASS" if by_id["search_preserves_pinned_source_navigation"]["passed"] and by_id["source_floor_links_are_commit_pinned"]["passed"] and by_id["portable_package_serves_sidecar"]["passed"] and by_id["escape_closes_resources"]["passed"] and by_id["resource_close_restores_keyboard_origin"]["passed"] else "FAIL",\n            "required_evidence_class": "browser_runtime_observed",\n            "observation_ids": ["search_preserves_pinned_source_navigation", "source_floor_links_are_commit_pinned", "portable_package_serves_sidecar", "escape_closes_resources", "resource_close_restores_keyboard_origin"],',
+              'browser resource navigation claim',
+          )
+          browser_path.write_text(browser, encoding='utf-8')
+          PY
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+      - name: Validate review repair pass 1
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check docs/prompt-kit-external-resources.js
+          node --check docs/prompt-kit-guided-recommendations.js
+          python -m py_compile tests/prompt_kit_external_resources_browser_proof.py
+          python -m unittest tests.test_external_prior_art_gate tests.test_operant_external_resources -v
+          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
+          python scripts/validate_operant_external_resources.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/validate_harness.py
+          git diff --check
+
+      - name: Observe repaired browser behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check playwright==1.55.0
+          python -m playwright install --with-deps chromium
+          mkdir -p Outputs/observed-proof
+          python tests/prompt_kit_external_resources_browser_proof.py --receipt Outputs/observed-proof/external-resource-review-repair.json --screenshot Outputs/observed-proof/external-resource-review-repair.png
+          python scripts/validate_observed_behavior_proof.py Outputs/observed-proof/external-resource-review-repair.json
+
+      - name: Deliberate second-pass falsification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          runtime = Path('docs/prompt-kit-external-resources.js').read_text(encoding='utf-8')
+          tutorial = Path('docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md').read_text(encoding='utf-8')
+          receipt = json.loads(Path('Outputs/observed-proof/external-resource-review-repair.json').read_text(encoding='utf-8'))
+          obs = {row['id']: row for row in receipt['observations']}
+          checks = {
+              'source cards are SHA pinned': "catalogPath?'/blob/'+sha+'/'+catalogPath:'/tree/'+sha" in runtime,
+              'no moving repository-root source card': "return repository?'https://github.com/'+repository:'#'" not in runtime,
+              'origin retained': 'externalResourceOrigin' in runtime,
+              'hidden async focus guarded': 'if(!surface.hidden)input.focus()' in runtime,
+              'close restores connected origin': 'document.contains(origin)' in runtime,
+              'browser floor links pinned': obs['source_floor_links_are_commit_pinned']['passed'],
+              'browser focus restoration': obs['resource_close_restores_keyboard_origin']['passed'],
+              'tutorial describes pinning': 'commit-pinned repository links' in tutorial,
+          }
+          failed = [name for name, ok in checks.items() if not ok]
+          if failed:
+              raise SystemExit(f'review-repair fixed-point failures: {failed}')
+          PY
+          python -m unittest tests.test_external_prior_art_gate tests.test_operant_external_resources -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Commit durable review repair and self-remove transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/tmp-prompt-kit-external-fallback-review-repair.yml
+          git add docs/prompt-kit-external-resources.js docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md tests/test_operant_external_resources.py tests/prompt_kit_external_resources_browser_proof.py web/prompt-kit/index.html
+          git diff --cached --check
+          python - <<'PY'
+          import subprocess
+          allowed = {
+              '.github/workflows/tmp-prompt-kit-external-fallback-review-repair.yml',
+              'docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md',
+              'docs/prompt-kit-external-resources.js',
+              'tests/test_operant_external_resources.py',
+              'tests/prompt_kit_external_resources_browser_proof.py',
+              'web/prompt-kit/index.html',
+          }
+          actual = set(subprocess.check_output(['git','diff','--cached','--name-only'], text=True).splitlines())
+          if actual != allowed:
+              raise SystemExit(f'unexpected staged review-repair scope: {sorted(actual)}')
+          PY
+          git commit -m "fix(prompt-kit): pin fallback sources and restore focus"
+          git push origin HEAD:feat/prompt-kit-external-fallback-routing-20260908
