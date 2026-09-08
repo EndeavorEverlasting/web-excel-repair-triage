@@ -97,6 +97,14 @@ class PromptRegistryExpansionTests(unittest.TestCase):
             "Keep this branch progressive-disclosure",
             "do not preload tier-specific Docker/Podman/Kubernetes",
             "only after current evidence makes that tier decision-relevant",
+            "Aggregate database/storage size is not application-state demand",
+            "durable application/business state",
+            "telemetry/log/diagnostic exhaust",
+            "retention/TTL/rotation",
+            "write rate/cardinality",
+            "small application database buried under a telemetry accident",
+            "rerun against the irreducible app-state/workload floor",
+            "Diagnostics are not durable product state",
         ):
             self.assertIn(phrase, content)
         p03 = self.full["P03"]["copyContent"]
