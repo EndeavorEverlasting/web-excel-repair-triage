@@ -25,6 +25,8 @@ class DayReconciliation:
 
 
 def _number(value: Any, *, field: str) -> float:
+    if isinstance(value, bool):
+        raise ValueError(f"{field} must be numeric")
     try:
         result = float(value)
     except (TypeError, ValueError) as exc:
@@ -47,7 +49,12 @@ def _day_key(row: Dict[str, Any]) -> Tuple[str, str]:
 
 
 def _allocation_basis(value: Any, *, default: str = "EXPLICIT") -> str:
-    basis = str(value or default).strip().upper()
+    if value is None or (isinstance(value, str) and not value.strip()):
+        basis = default
+    elif not isinstance(value, str):
+        raise ValueError("allocation basis must be a string when provided")
+    else:
+        basis = value.strip().upper()
     if basis not in ALLOCATION_BASES:
         raise ValueError(
             f"allocation basis must be one of {', '.join(ALLOCATION_BASES)}: {basis or '<blank>'}"
