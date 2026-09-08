@@ -36,7 +36,23 @@ jobs:
           git status --short
           git log --oneline --decorate -5
       - name: Apply bounded source and contract patch
-        run: python .github/tmp_favorite_hotkey_focus_patch.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .github/tmp_favorite_hotkey_focus_patch.py
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('docs/prompt-kit-polish.js')
+          text=path.read_text(encoding='utf-8')
+          old_query=".prompt-detail-favorite-btn[data-prompt-id=\"'+promptId+'\"]"
+          new_query=".prompt-detail-favorite-btn[data-favorite-prompt-id=\"'+promptId+'\"]"
+          old_attr="button.setAttribute('data-prompt-id',normalized);"
+          new_attr="button.setAttribute('data-favorite-prompt-id',normalized);"
+          if old_query not in text or old_attr not in text:
+              raise SystemExit('detail favorite selector repair anchor missing')
+          text=text.replace(old_query,new_query,1).replace(old_attr,new_attr,1)
+          path.write_text(text,encoding='utf-8')
+          PY
       - name: Generate and validate pass 1
         shell: bash
         run: |
@@ -69,9 +85,10 @@ jobs:
               'favorite-derived shortcuts': "var favorites=favoritePromptShortcutBindings();" in polish,
               'stale explicit binding gated': "if(isFavoritePrompt(promptId))merged[gesture]=promptId" in polish,
               'detail favorite': "function decoratePromptDetailFavorite(promptId)" in polish,
+              'unique prompt card anchors': "data-favorite-prompt-id" in polish and ".prompt-detail-favorite-btn[data-prompt-id" not in polish,
               'all detail opens center': "centerRenderedPromptCard(id);" in polish,
               'generated shortcut parity': "function favoritePromptShortcutBindings()" in html,
-              'generated detail parity': "prompt-detail-favorite-btn" in html,
+              'generated detail parity': "prompt-detail-favorite-btn" in html and "data-favorite-prompt-id" in html,
               'mobile contract': "centered in the underlying Prompt Kit page" in contract and "without a second shortcut-save step" in contract,
               'operator guide': "reveals and centers P111" in guide and "automatically becomes its lower-case P-ID hotkey" in guide,
           }
