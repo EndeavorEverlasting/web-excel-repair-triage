@@ -59,4 +59,6 @@ For the zero-padded IDs `P00` through `P09`, keep the **leading zero**: type `00
 
 The second floating control is **More**. Open it only when you need a secondary action: **Find Prompt, Previous profile, Next profile, Search, Favorites, Filters, Reference, Top, or Bottom**. These are ordinary labeled buttons; there is no hidden swipe vocabulary to memorize.
 
+Inside **Reference**, tap any item that links a prompt ID (for example Prompt Sequence rows). That tap opens the prompt. Long-press on reference items is not a product gesture and does nothing extra.
+
 Desktop keyboard users keep the existing Hotkeys panel and prompt-ID sequences. The phone controls call the same underlying Prompt Kit actions (`toggleRef`, Favorites activation, filter toggle, scroll, finder/search, profile slots) and do not create a second prompt database or parallel state. Known-ID phone jumps open detail for reading; desktop configured `p##` sequences remain the power-user copy+reveal path, with phone Copy available after open.

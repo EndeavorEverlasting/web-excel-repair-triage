@@ -146,6 +146,7 @@ Mobile is a responsive form of the existing Prompt Kit, not a second application
 - Favorite, **Open**, and **Copy** actions remain directly reachable; **Export Favorites** and **Import Favorites** are also touch-sized when the portable runtime is served.
 - Prompt detail uses the available mobile viewport and keeps the existing close/copy behavior.
 - The existing reference panel expands to the mobile viewport.
+- Reference items with `data-prompt` open that prompt on tap/click; long-press on reference items is not a product gesture and has no extra action.
 - Search uses a touch-sized control and avoids mobile browser zoom caused by undersized input text.
 - The floating reference control remains reachable.
 - Prompt display fields are escaped before insertion into rendered card/detail HTML.
