@@ -6,6 +6,7 @@ import argparse
 import csv
 import io
 import json
+import math
 import sys
 import time
 from pathlib import Path
@@ -21,6 +22,7 @@ from scripts import sync_operant_external_resources as sync  # noqa: E402
 
 CONTRACT = ROOT / "harness" / "contracts" / "operant-external-resource-intake.v1.json"
 INDEX = ROOT / "web" / "prompt-kit" / "resources.v1.json"
+DEFAULT_OPERATOR_LIMIT = 10
 
 
 def load_source(contract: dict[str, Any], source_id: str) -> dict[str, Any]:
@@ -49,12 +51,18 @@ def catalog_path_for(source: dict[str, Any]) -> str:
     return f"{root}/{filename}"
 
 
-def read_catalog_text(*, source: dict[str, Any], sha: str, catalog_file: Path | None) -> str:
+def read_catalog_text(
+    *,
+    source: dict[str, Any],
+    sha: str,
+    catalog_file: Path | None,
+    timeout: int = 120,
+) -> str:
     if catalog_file is not None:
         return catalog_file.read_text(encoding="utf-8")
     catalog_path = catalog_path_for(source)
     repo = str(source["repository"])
-    return sync.github_text(f"{sync.RAW_ROOT}/{repo}/{sha}/{catalog_path}")
+    return sync.github_text(f"{sync.RAW_ROOT}/{repo}/{sha}/{catalog_path}", timeout=timeout)
 
 
 def parse_catalog_rows(text: str) -> list[dict[str, str]]:
@@ -103,6 +111,7 @@ def search_catalog(
     limit: int,
     sha: str,
     catalog_file: Path | None,
+    fetch_timeout: int = 120,
 ) -> dict[str, Any]:
     threshold = float(contract["coverage"]["match_threshold"])
     max_terms = int(contract["projection"]["maximum_search_terms_per_resource"])
@@ -111,7 +120,9 @@ def search_catalog(
     skill_candidates = sync.skill_titles()
     catalog_path = catalog_path_for(source)
     repo = str(source["repository"])
-    rows = parse_catalog_rows(read_catalog_text(source=source, sha=sha, catalog_file=catalog_file))
+    rows = parse_catalog_rows(
+        read_catalog_text(source=source, sha=sha, catalog_file=catalog_file, timeout=fetch_timeout)
+    )
 
     ranked: list[dict[str, Any]] = []
     for row in rows:
@@ -180,9 +191,46 @@ def search_catalog(
 
 def catalog_search_budget_seconds(contract: dict[str, Any], override: float | None = None) -> float:
     if override is not None:
-        return float(override)
-    configured = contract.get("catalog_search", {}).get("maximum_live_search_seconds", 30)
-    return float(configured)
+        value = float(override)
+    else:
+        value = float(contract.get("catalog_search", {}).get("maximum_live_search_seconds", 30))
+    if not math.isfinite(value) or value <= 0:
+        raise ValueError("catalog search budget must be a finite positive number")
+    return value
+
+
+def live_fetch_timeout_seconds(budget_seconds: float) -> int:
+    return max(1, min(120, math.ceil(budget_seconds)))
+
+
+def resolve_cli_search_inputs(
+    *,
+    live_proof: bool,
+    source: str | None,
+    query: str | None,
+    limit: int | None,
+    catalog_cfg: dict[str, Any],
+) -> tuple[str, str, int]:
+    source_id = (source or "").strip() or str(catalog_cfg.get("default_source_id", "prompts-chat")).strip()
+    if not source_id:
+        raise ValueError("source required: pass --source or configure catalog_search.default_source_id")
+    query_text = (query or "").strip()
+    if not query_text and live_proof:
+        query_text = str(catalog_cfg.get("ci_proof_query", "")).strip()
+    if not query_text:
+        raise ValueError(
+            "query required: pass --query"
+            + (" or configure catalog_search.ci_proof_query" if live_proof else "")
+        )
+    if limit is not None:
+        resolved_limit = int(limit)
+    elif live_proof:
+        resolved_limit = int(catalog_cfg.get("ci_proof_limit", DEFAULT_OPERATOR_LIMIT))
+    else:
+        resolved_limit = DEFAULT_OPERATOR_LIMIT
+    if resolved_limit < 1:
+        raise ValueError("limit must be a positive integer")
+    return source_id, query_text, resolved_limit
 
 
 def run_timed_search(
@@ -193,6 +241,7 @@ def run_timed_search(
     limit: int,
     sha: str,
     catalog_file: Path | None,
+    fetch_timeout: int = 120,
 ) -> tuple[dict[str, Any], float]:
     started = time.perf_counter()
     result = search_catalog(
@@ -202,6 +251,7 @@ def run_timed_search(
         limit=limit,
         sha=sha,
         catalog_file=catalog_file,
+        fetch_timeout=fetch_timeout,
     )
     elapsed = time.perf_counter() - started
     return result, elapsed
@@ -215,6 +265,7 @@ def build_live_proof_receipt(
     budget_seconds: float,
     mode: str,
 ) -> dict[str, Any]:
+    elapsed_report = round(elapsed_seconds, 3)
     return {
         "schema_version": str(contract.get("catalog_search", {}).get("receipt_schema", "operant-external-catalog-search-live-proof/v1")),
         "mode": mode,
@@ -224,7 +275,7 @@ def build_live_proof_receipt(
         "catalog_path": result["catalog_path"],
         "catalog_entry_count": result["catalog_entry_count"],
         "hit_count": result["hit_count"],
-        "elapsed_seconds": round(elapsed_seconds, 3),
+        "elapsed_seconds": elapsed_report,
         "budget_seconds": budget_seconds,
         "within_budget": elapsed_seconds <= budget_seconds,
         "automatic_prompt_authoring": False,
@@ -236,9 +287,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Search a registered catalog_csv donor without projecting rows into Operant.")
     parser.add_argument("--contract", type=Path, default=CONTRACT)
     parser.add_argument("--index", type=Path, default=INDEX)
-    parser.add_argument("--source", default="prompts-chat")
-    parser.add_argument("--query", default="")
-    parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--source", default=None, help="Catalog source id. Defaults to catalog_search.default_source_id.")
+    parser.add_argument("--query", default=None, help="Search text. Required unless --live-proof, which uses catalog_search.ci_proof_query.")
+    parser.add_argument("--limit", type=int, default=None, help="Hit cap. Ordinary default 10; --live-proof uses catalog_search.ci_proof_limit.")
     parser.add_argument("--sha", default="")
     parser.add_argument("--catalog-file", type=Path, default=None, help="Offline fixture CSV; skips live network fetch.")
     parser.add_argument("--summary", action="store_true")
@@ -253,11 +304,13 @@ def main(argv: list[str] | None = None) -> int:
     try:
         contract = sync.load_json(args.contract)
         catalog_cfg = contract.get("catalog_search", {}) if isinstance(contract.get("catalog_search"), dict) else {}
-        source_id = args.source or str(catalog_cfg.get("default_source_id", "prompts-chat"))
-        query_text = (args.query or "").strip() or str(catalog_cfg.get("ci_proof_query", "")).strip()
-        if not query_text:
-            raise ValueError("query required: pass --query or configure catalog_search.ci_proof_query")
-        limit = int(args.limit) if args.limit is not None else int(catalog_cfg.get("ci_proof_limit", 10))
+        source_id, query_text, limit = resolve_cli_search_inputs(
+            live_proof=bool(args.live_proof),
+            source=args.source,
+            query=args.query,
+            limit=args.limit,
+            catalog_cfg=catalog_cfg,
+        )
         source = load_source(contract, source_id)
         index = sync.load_json(args.index) if args.index.exists() else None
         floor = floor_for(index, source_id)
@@ -266,6 +319,8 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError("resolved SHA required: pass --sha, refresh the projection floor, or use --catalog-file")
         if not sha:
             sha = "fixture"
+        budget = catalog_search_budget_seconds(contract, args.max_seconds)
+        fetch_timeout = live_fetch_timeout_seconds(budget) if args.live_proof and args.catalog_file is None else 120
         result, elapsed = run_timed_search(
             contract=contract,
             source=source,
@@ -273,9 +328,9 @@ def main(argv: list[str] | None = None) -> int:
             limit=limit,
             sha=sha,
             catalog_file=args.catalog_file,
+            fetch_timeout=fetch_timeout,
         )
         mode = "fixture" if args.catalog_file is not None else "live"
-        budget = catalog_search_budget_seconds(contract, args.max_seconds)
         if args.live_proof:
             receipt = build_live_proof_receipt(
                 contract=contract,

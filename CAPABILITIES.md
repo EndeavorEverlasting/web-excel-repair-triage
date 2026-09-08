@@ -79,4 +79,4 @@ Capability registration, static validators, tests, and CI prove only the reposit
 
 ## Operant external resource intake
 
-`operant-external-resource-intake` uses `scripts/sync_operant_external_resources.py` to inventory approved public donor skill roots and catalog floors at exact commits, publish the metadata-only `web/prompt-kit/resources.v1.json` sidecar, search large catalogs on demand via `scripts/search_operant_external_catalog.py` (including a CI live latency budget), and route deterministic coverage gaps through P79 rather than copying donor bodies, bulk-importing catalog rows, or auto-authoring prompts.
+`operant-external-resource-intake` uses `scripts/sync_operant_external_resources.py` to inventory approved public donor skill roots and catalog floors at exact commits, publish the metadata-only `web/prompt-kit/resources.v1.json` sidecar, search large catalogs on demand via `scripts/search_operant_external_catalog.py` (CI live latency budget applies only to `--live-proof`; ordinary search still requires `--query`), and route deterministic coverage gaps through P79 rather than copying donor bodies, bulk-importing catalog rows, or auto-authoring prompts.

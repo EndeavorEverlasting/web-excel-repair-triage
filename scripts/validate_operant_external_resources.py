@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from pathlib import Path
 from typing import Any
@@ -33,6 +34,33 @@ def load(path: Path) -> dict[str, Any]:
     return value
 
 
+def require_finite_positive(value: Any, field: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValidationError(f"{field} must be a finite positive number")
+    number = float(value)
+    if not math.isfinite(number) or number <= 0:
+        raise ValidationError(f"{field} must be a finite positive number")
+    return number
+
+
+def require_positive_int(value: Any, field: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValidationError(f"{field} must be a positive integer")
+    return value
+
+
+def active_workflow_text(workflow: str) -> str:
+    lines: list[str] = []
+    for line in workflow.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith("#"):
+            continue
+        if " #" in line:
+            line = line.split(" #", 1)[0].rstrip()
+        lines.append(line)
+    return "\n".join(lines)
+
+
 def validate() -> dict[str, Any]:
     contract = load(CONTRACT)
     index = load(INDEX)
@@ -51,19 +79,20 @@ def validate() -> dict[str, Any]:
     catalog_search = contract.get("catalog_search")
     if not isinstance(catalog_search, dict):
         raise ValidationError("catalog_search contract block is required")
-    if float(catalog_search.get("maximum_live_search_seconds", 0)) <= 0:
-        raise ValidationError("catalog_search.maximum_live_search_seconds must be positive")
+    require_finite_positive(catalog_search.get("maximum_live_search_seconds"), "catalog_search.maximum_live_search_seconds")
+    require_positive_int(catalog_search.get("ci_proof_limit"), "catalog_search.ci_proof_limit")
     if not str(catalog_search.get("ci_proof_query", "")).strip():
         raise ValidationError("catalog_search.ci_proof_query is required")
     if catalog_search.get("live_proof_required_in_refresh_workflow") is not True:
         raise ValidationError("catalog_search.live_proof_required_in_refresh_workflow must remain true")
     workflow = (ROOT / ".github" / "workflows" / "operant-external-resource-refresh.yml").read_text(encoding="utf-8")
+    active_workflow = active_workflow_text(workflow)
     for marker in (
         "scripts/search_operant_external_catalog.py",
         "--live-proof",
         "catalog-search-live-proof.json",
     ):
-        if marker not in workflow:
+        if marker not in active_workflow:
             raise ValidationError(f"refresh workflow missing live catalog-search proof marker: {marker}")
 
     configured = {str(source["id"]): source for source in contract.get("sources", [])}
