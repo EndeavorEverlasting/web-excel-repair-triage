@@ -35,27 +35,41 @@ def _source_floor(index: dict[str, Any], source_id: str) -> dict[str, Any]:
     if not isinstance(floor, dict):
         raise PriorArtGateError(f"registered external source lacks pinned floor: {source_id}")
     sha = str(floor.get("resolved_sha", ""))
-    if len(sha) != 40:
+    if len(sha) != 40 or any(ch not in "0123456789abcdef" for ch in sha):
         raise PriorArtGateError(f"registered external source has invalid pinned SHA: {source_id}")
     return floor
+
+
+def _candidate_tokens(
+    candidate_id: str | None, candidates: list[tuple[str, str, set[str]]]
+) -> set[str]:
+    if candidate_id is None:
+        return set()
+    for row_id, _title, row_tokens in candidates:
+        if row_id == candidate_id:
+            return set(row_tokens)
+    return set()
 
 
 def _internal_comparison(
     query_tokens: set[str], max_terms: int
 ) -> tuple[dict[str, Any], list[str]]:
-    prompt_id, prompt_title, prompt_score = sync.best_match(query_tokens, sync.prompt_titles())
-    skill_id, skill_title, skill_score = sync.best_match(query_tokens, sync.skill_titles())
+    prompt_candidates = sync.prompt_titles()
+    skill_candidates = sync.skill_titles()
+    prompt_id, prompt_title, prompt_score = sync.best_match(query_tokens, prompt_candidates)
+    skill_id, skill_title, skill_score = sync.best_match(query_tokens, skill_candidates)
     if prompt_score >= skill_score:
         best_kind = "prompt"
         best_id = prompt_id
         best_title = prompt_title
         best_score = prompt_score
+        covered_terms = _candidate_tokens(prompt_id, prompt_candidates)
     else:
         best_kind = "skill"
         best_id = skill_id
         best_title = skill_title
         best_score = skill_score
-    covered_terms = sync.tokens(str(best_title or ""))
+        covered_terms = _candidate_tokens(skill_id, skill_candidates)
     residual = sorted(query_tokens - covered_terms)[:max_terms]
     return (
         {
@@ -140,9 +154,12 @@ def require_external_prior_art(draft: dict[str, Any]) -> dict[str, Any]:
         sources = contract.get("sources")
         if not isinstance(sources, list) or not sources:
             raise PriorArtGateError("no registered external sources are configured")
-        configured_ids = {str(source.get("id", "")) for source in sources if isinstance(source, dict)}
-        if "" in configured_ids:
-            raise PriorArtGateError("registered external source is missing an id")
+        source_ids = [str(source.get("id", "")) for source in sources if isinstance(source, dict)]
+        if len(source_ids) != len(sources) or any(not source_id for source_id in source_ids):
+            raise PriorArtGateError("every registered external source must have a non-empty id")
+        if len(source_ids) != len(set(source_ids)):
+            raise PriorArtGateError("registered external source ids must be unique")
+        configured_ids = set(source_ids)
 
         catalog_cfg = contract.get("catalog_search", {})
         budget = catalog_search.catalog_search_budget_seconds(contract)
@@ -214,9 +231,9 @@ def require_external_prior_art(draft: dict[str, Any]) -> dict[str, Any]:
                 )
 
         searched_ids = {str(item["source_id"]) for item in source_receipts}
-        if searched_ids != configured_ids:
+        if len(source_receipts) != len(source_ids) or searched_ids != configured_ids:
             missing = sorted(configured_ids - searched_ids)
-            raise PriorArtGateError(f"not every registered external source was searched: {missing}")
+            raise PriorArtGateError(f"not every registered external source was searched exactly once: {missing}")
 
         return {
             "schema_version": RECEIPT_SCHEMA,
