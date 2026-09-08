@@ -35,84 +35,12 @@ jobs:
           git merge-base --is-ancestor origin/main HEAD
           git status --short
           git log --oneline --decorate -5
-      - name: Apply bounded source and contract patch
+      - name: Apply bounded feature patch
         shell: bash
         run: |
           set -euo pipefail
           python .github/tmp_favorite_hotkey_focus_patch.py
-          python - <<'PY'
-          from pathlib import Path
-
-          def replace_once(text, old, new, label):
-              if old not in text:
-                  raise SystemExit(f'{label}: anchor missing')
-              return text.replace(old, new, 1)
-
-          path=Path('docs/prompt-kit-polish.js')
-          text=path.read_text(encoding='utf-8')
-          text=replace_once(text,".prompt-detail-favorite-btn[data-prompt-id=\"'+promptId+'\"]",".prompt-detail-favorite-btn[data-favorite-prompt-id=\"'+promptId+'\"]",'detail favorite selector')
-          text=replace_once(text,"button.setAttribute('data-prompt-id',normalized);","button.setAttribute('data-favorite-prompt-id',normalized);",'detail favorite metadata')
-          old_center="""function centerRenderedPromptCard(promptId){
-  var selector='[data-prompt-id="'+String(promptId||'').replace(/"/g,'')+'"]';
-  var card=document.querySelector(selector);
-  if(!card)return false;
-  try{card.scrollIntoView({behavior:hotkeyScrollBehavior(),block:'center',inline:'nearest'})}catch(e){try{card.scrollIntoView()}catch(ignore){}}
-  return true
-}
-
-function revealPromptShortcutTarget(promptId){
-  if(window.PromptKitProfiles&&typeof window.PromptKitProfiles.activateSlot==='function'){
-    window.PromptKitProfiles.activateSlot('A',true)
-  }
-  activeCat='all';
-  activeSection=null;
-  clearTransientPromptFilters();
-  document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.dataset.cat==='all')});
-  document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__all__')});
-  renderTypes();
-  render();
-  return centerRenderedPromptCard(promptId)
-}"""
-          new_center="""function centerRenderedPromptCard(promptId,behavior){
-  var selector='[data-prompt-id="'+String(promptId||'').replace(/"/g,'')+'"]';
-  var card=document.querySelector(selector);
-  if(!card)return false;
-  var scrollBehavior=behavior||hotkeyScrollBehavior();
-  try{card.scrollIntoView({behavior:scrollBehavior,block:'center',inline:'nearest'})}catch(e){try{card.scrollIntoView()}catch(ignore){}}
-  return true
-}
-
-function revealPromptShortcutTarget(promptId,behavior){
-  if(window.PromptKitProfiles&&typeof window.PromptKitProfiles.activateSlot==='function'){
-    window.PromptKitProfiles.activateSlot('A',true)
-  }
-  activeCat='all';
-  activeSection=null;
-  clearTransientPromptFilters();
-  document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.dataset.cat==='all')});
-  document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__all__')});
-  renderTypes();
-  render();
-  return centerRenderedPromptCard(promptId,behavior||hotkeyScrollBehavior())
-}"""
-          text=replace_once(text,old_center,new_center,'deterministic center helper')
-          text=replace_once(text,"if(!revealPromptShortcutTarget(promptId)){","if(!revealPromptShortcutTarget(promptId,'instant')){",'direct jump instant reveal')
-          text=replace_once(text,"    centerRenderedPromptCard(id);\n    baseShowPromptDetailWithFavorite(id,origin);","    centerRenderedPromptCard(id,'instant');\n    baseShowPromptDetailWithFavorite(id,origin);",'detail open instant center')
-          path.write_text(text,encoding='utf-8')
-
-          hotkey_test=Path('tests/test_prompt_kit_hotkey_completion.py')
-          test=hotkey_test.read_text(encoding='utf-8')
-          test=replace_once(test,'            "function centerRenderedPromptCard(promptId)",\n','            "function centerRenderedPromptCard(promptId,behavior)",\n','hotkey center signature marker')
-          test=replace_once(test,'            "centerRenderedPromptCard(id);",\n','            "centerRenderedPromptCard(id,\'instant\');",\n','hotkey detail instant marker')
-          hotkey_test.write_text(test,encoding='utf-8')
-
-          mobile_test=Path('tests/test_prompt_kit_mobile_quick_controls.py')
-          mtest=mobile_test.read_text(encoding='utf-8')
-          if 'revealPromptShortcutTarget(promptId)' not in mtest:
-              raise SystemExit('mobile reveal test anchor missing')
-          mtest=mtest.replace('revealPromptShortcutTarget(promptId)','revealPromptShortcutTarget(promptId,\'instant\')')
-          mobile_test.write_text(mtest,encoding='utf-8')
-          PY
+          python .github/tmp_favorite_hotkey_focus_center_fix.py
       - name: Generate and validate pass 1
         shell: bash
         run: |
@@ -135,32 +63,7 @@ function revealPromptShortcutTarget(promptId,behavior){
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          polish=Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
-          html=Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
-          contract=Path('harness/contracts/prompt-kit-mobile.v1.json').read_text(encoding='utf-8')
-          guide=Path('OPEN_PROMPT_KIT_ON_PHONE.md').read_text(encoding='utf-8')
-          checks={
-              'favorite-derived shortcuts': "var favorites=favoritePromptShortcutBindings();" in polish,
-              'stale explicit binding gated': "if(isFavoritePrompt(promptId))merged[gesture]=promptId" in polish,
-              'detail favorite': "function decoratePromptDetailFavorite(promptId)" in polish,
-              'unique prompt card anchors': "data-favorite-prompt-id" in polish and ".prompt-detail-favorite-btn[data-prompt-id" not in polish,
-              'direct jump is instant': "revealPromptShortcutTarget(promptId,'instant')" in polish,
-              'detail opens after instant center': "centerRenderedPromptCard(id,'instant');" in polish,
-              'ordinary hotkeys preserve motion policy': "centerRenderedPromptCard(promptId,behavior||hotkeyScrollBehavior())" in polish,
-              'generated shortcut parity': "function favoritePromptShortcutBindings()" in html,
-              'generated detail parity': "prompt-detail-favorite-btn" in html and "data-favorite-prompt-id" in html and "centerRenderedPromptCard(id,'instant');" in html,
-              'mobile contract': "centered in the underlying Prompt Kit page" in contract and "without a second shortcut-save step" in contract,
-              'operator guide': "reveals and centers P111" in guide and "automatically becomes its lower-case P-ID hotkey" in guide,
-          }
-          jump=polish[polish.index('function resolveMobilePromptJump'):polish.index('function installMobilePromptJump')]
-          checks['Go to reveal before detail']=jump.index("revealPromptShortcutTarget(promptId,'instant')") < jump.index("window.showPromptDetail(promptId,toggle||null)")
-          failed=[name for name,ok in checks.items() if not ok]
-          if failed:
-              raise SystemExit(f'second-pass falsification failed: {failed}')
-          print('second-pass fixed-point checks: PASS')
-          PY
+          python .github/tmp_favorite_hotkey_focus_falsify.py
           node --check docs/prompt-kit-polish.js
           python -m unittest tests.test_prompt_kit_hotkey_completion tests.test_prompt_kit_mobile_quick_controls -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
@@ -169,7 +72,7 @@ function revealPromptShortcutTarget(promptId,behavior){
         shell: bash
         run: |
           set -euo pipefail
-          git rm .github/workflows/tmp-favorite-hotkey-focus-sprint.yml .github/tmp_favorite_hotkey_focus_patch.py
+          git rm .github/workflows/tmp-favorite-hotkey-focus-sprint.yml .github/tmp_favorite_hotkey_focus_patch.py .github/tmp_favorite_hotkey_focus_center_fix.py .github/tmp_favorite_hotkey_focus_falsify.py
           git add docs/prompt-kit-polish.js docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md harness/contracts/prompt-kit-mobile.v1.json OPEN_PROMPT_KIT_ON_PHONE.md tests/test_prompt_kit_hotkey_completion.py tests/test_prompt_kit_mobile_quick_controls.py tests/prompt_kit_mobile_quick_controls_browser_proof.py web/prompt-kit/index.html
           git diff --cached --check
           git diff --cached --name-only
