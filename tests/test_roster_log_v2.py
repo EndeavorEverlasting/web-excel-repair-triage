@@ -164,6 +164,29 @@ def test_invalid_allocation_basis_is_rejected() -> None:
         normalize_state(state)
 
 
+def test_non_string_allocation_basis_is_rejected_instead_of_defaulted() -> None:
+    state = _base_state()
+    state["allocations"] = [
+        {"allocation_id": "A1", "date": "2026-09-01", "staff": "Operator", "project": "Northwell", "basis": 0, "hours": 8}
+    ]
+    with pytest.raises(ValueError, match="allocation basis must be a string"):
+        normalize_state(state)
+
+
+def test_boolean_hours_are_rejected_instead_of_becoming_numeric() -> None:
+    state = _base_state()
+    state["attendance"][0]["paid_hours"] = True
+    with pytest.raises(ValueError, match="paid_hours must be numeric"):
+        normalize_state(state)
+
+
+def test_invalid_iso_date_is_rejected() -> None:
+    state = _base_state()
+    state["attendance"][0]["date"] = "2026-99-99"
+    with pytest.raises(ValueError, match="invalid ISO date"):
+        normalize_state(state)
+
+
 def test_only_variance_is_reconciliation_failure() -> None:
     state = _base_state()
     state["allocations"] = [
@@ -185,7 +208,7 @@ def test_allocation_without_attendance_is_rejected() -> None:
         normalize_state(state)
 
 
-def test_generated_workbook_is_webexcel_safe_and_has_reporting_contract(tmp_path: Path) -> None:
+def test_generated_workbook_is_webexcel_safe_and_publish_only(tmp_path: Path) -> None:
     state = _base_state()
     state["allocations"] = [
         {"allocation_id": "A1", "date": "2026-09-01", "staff": "Operator", "project": "H&H", "basis": "EXPLICIT", "hours": 6.4},
@@ -195,6 +218,8 @@ def test_generated_workbook_is_webexcel_safe_and_has_reporting_contract(tmp_path
     result = build_roster_workbook(state, out, require_reconciled=True)
     assert result["preflight"]["preflight_pass"]
     assert result["report_version"] == "roster-log-v2-project-report/v1"
+    assert result["workbook_authority"] == "DERIVED / PUBLISH-ONLY"
+    assert result["preflight"]["authority"] == "DERIVED / PUBLISH-ONLY"
     assert result["paid_hours"] == result["allocated_hours"] == 8
     assert result["multi_project_days"] == 1
     assert [row["project"] for row in result["project_report"]] == ["H&H", "Northwell"]
@@ -203,6 +228,8 @@ def test_generated_workbook_is_webexcel_safe_and_has_reporting_contract(tmp_path
     wb = openpyxl.load_workbook(out, data_only=False)
     try:
         assert wb.sheetnames == ["Dashboard", "Attendance", "Project Allocations", "Project Report", "Dictionaries", "Review Queue", "Read Me"]
+        assert all(wb[name].protection.sheet for name in wb.sheetnames)
+        assert "DERIVED SNAPSHOT" in wb["Dashboard"]["B2"].value
         assert wb["Attendance"]["F1"].value == "Default / Fallback Project"
         assert "$J$2:$J$3" in wb["Attendance"]["G2"].value
         assert "$G$2:$G$3" in wb["Attendance"]["H2"].value
@@ -214,9 +241,11 @@ def test_generated_workbook_is_webexcel_safe_and_has_reporting_contract(tmp_path
         assert wb["Project Report"]["C4"].value is None
         assert wb["Review Queue"].max_row == 1
         readme = " ".join(str(wb["Read Me"].cell(r, 1).value or "") for r in range(1, wb["Read Me"].max_row + 1))
+        assert "protected DERIVED SNAPSHOT" in readme
+        assert "website/JSON state is the editable authority" in readme
         assert "Once explicit Project Allocations exist" in readme
         assert "Project Mode counts distinct projects" in readme
-        assert "Project Report is deterministic" in readme
+        assert "deterministic build-time projection" in readme
         assert "does not manufacture an 80/20 split" in readme
     finally:
         wb.close()
@@ -234,6 +263,7 @@ def test_unreconciled_workbook_routes_variance_to_review(tmp_path: Path) -> None
     try:
         assert wb["Review Queue"]["C2"].value == "ALLOCATION_VARIANCE"
         assert wb["Review Queue"]["F2"].value == 1
+        assert "website/JSON" in wb["Review Queue"]["G2"].value
     finally:
         wb.close()
 
@@ -249,7 +279,10 @@ def test_local_web_app_exposes_basis_normalization_and_deterministic_reports() -
     assert "Project report JSON" in html
     assert "localStorage" in js
     assert "normalizeLocalState" in js
+    assert "strictNumber" in js
+    assert "validIsoDate" in js
     assert "reportSnapshot" in js
+    assert "reconciliation(row, normalized)" in js
     assert "exportProjectReportCsv" in js
     assert "exportProjectReportJson" in js
     assert 'basis: "DEFAULT"' in js
