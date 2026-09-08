@@ -106,16 +106,16 @@ jobs:
           test_path = Path('tests/test_prompt_registry_expansion_regression_design_teach.py')
           test_text = test_path.read_text(encoding='utf-8')
           marker = '            "only after current evidence makes that tier decision-relevant",\n'
-          additions = (
-              '            "DECOMPOSE STORAGE BEFORE ARCHITECTURE CONCLUSIONS",\n'
-              '            "Aggregate database/storage size is not application-state demand",\n'
-              '            "durable application/business state",\n'
-              '            "telemetry/logs/diagnostics",\n'
-              '            "retention/TTL/rotation",\n'
-              '            "write rate and cardinality",\n'
-              '            "small application database buried under a telemetry accident",\n'
-              '            "rerun the deployment operating-model decision",\n'
-          )
+          additions = ''.join((
+              '            "DECOMPOSE STORAGE BEFORE ARCHITECTURE CONCLUSIONS",\n',
+              '            "Aggregate database/storage size is not application-state demand",\n',
+              '            "durable application/business state",\n',
+              '            "telemetry/logs/diagnostics",\n',
+              '            "retention/TTL/rotation",\n',
+              '            "write rate and cardinality",\n',
+              '            "small application database buried under a telemetry accident",\n',
+              '            "rerun the deployment operating-model decision",\n',
+          ))
           if 'small application database buried under a telemetry accident' not in test_text:
               if marker not in test_text:
                   raise SystemExit('focused P95 hosting regression anchor moved')
