@@ -1,9 +1,9 @@
 const CACHE_PREFIX = "ai-prompt-kit-mobile-";
-const CACHE_NAME = `${CACHE_PREFIX}v1`;
+const CACHE_NAME = `${CACHE_PREFIX}v2`;
 const PRECACHE = [
   "./",
   "./index.html",
-  "./prompt-kit/",
+  "./operant/",
   "./manifest.webmanifest",
   "./icon-192.png",
   "./icon-512.png",
@@ -50,7 +50,7 @@ self.addEventListener("fetch", event => {
         const cached = await caches.match(event.request);
         if (cached) return cached;
         if (event.request.mode === "navigate") {
-          return (await caches.match("./prompt-kit/")) || caches.match("./index.html");
+          return (await caches.match("./operant/")) || caches.match("./index.html");
         }
         return Response.error();
       })
