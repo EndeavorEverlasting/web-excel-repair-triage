@@ -18,7 +18,7 @@ jobs:
           ref: fix/operant-natural-prompt-hotkeys-20260908
           fetch-depth: 0
 
-      - name: Align discovery assertion with instant snap contract
+      - name: Align discovery assertion block with instant numeric snap contract
         shell: bash
         run: |
           set -euo pipefail
@@ -26,12 +26,25 @@ jobs:
           from pathlib import Path
           path = Path('tests/test_prompt_kit_discovery.py')
           text = path.read_text(encoding='utf-8')
-          old = 'self.assertIn("revealPromptShortcutTarget(promptId)", activation)'
-          new = 'self.assertIn("revealPromptShortcutTarget(promptId,\'instant\')", activation)'
-          if old in text:
-              path.write_text(text.replace(old, new, 1), encoding='utf-8')
-          elif new not in text:
-              raise SystemExit('discovery assertion anchor missing')
+          replacements = (
+              (
+                  'self.assertIn("revealPromptShortcutTarget(promptId)", activation)',
+                  'self.assertIn("revealPromptShortcutTarget(promptId,\'instant\')", activation)',
+              ),
+              (
+                  'self.assertIn("Copy + reveal \' +promptId", polish)',
+                  'self.assertIn("Copy + snap to \' +promptId", polish)',
+              ),
+          )
+          changed = False
+          for old, new in replacements:
+              if old in text:
+                  text = text.replace(old, new, 1)
+                  changed = True
+              elif new not in text:
+                  raise SystemExit(f'discovery assertion anchor missing: {old}')
+          if changed:
+              path.write_text(text, encoding='utf-8')
           PY
           python -m unittest tests.test_prompt_kit_discovery.PromptKitDiscoveryTests.test_operator_docs_match_current_finder_p83_favorites_and_shortcuts -v
           git diff --check
