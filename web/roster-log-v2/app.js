@@ -23,9 +23,31 @@
     return { schema_version: SCHEMA, projects: [], workstreams: [], attendance: [], allocations: [] };
   }
 
+  // Permissive conversion is intentionally limited to live form math where an
+  // empty number field should temporarily behave like zero while the user edits.
   function n(value) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function strictNumber(value, field, fallback = 0) {
+    const candidate = value === undefined || value === null ? fallback : value;
+    if (typeof candidate === "boolean" || candidate === "") throw new Error(`${field} must be numeric`);
+    const parsed = Number(candidate);
+    if (!Number.isFinite(parsed)) throw new Error(`${field} must be numeric`);
+    if (parsed < 0) throw new Error(`${field} must be >= 0`);
+    return +parsed.toFixed(4);
+  }
+
+  function validIsoDate(value) {
+    const text = String(value || "").trim();
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+    if (!match) return false;
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const candidate = new Date(Date.UTC(year, month - 1, day));
+    return candidate.getUTCFullYear() === year && candidate.getUTCMonth() === month - 1 && candidate.getUTCDate() === day;
   }
 
   function cmp(a, b) {
@@ -37,7 +59,10 @@
   function keyOf(date, staff) { return `${date}::${String(staff).trim()}`; }
 
   function cleanBasis(value, fallback = "EXPLICIT") {
-    const basis = String(value || fallback).trim().toUpperCase();
+    let basis;
+    if (value === undefined || value === null || (typeof value === "string" && !value.trim())) basis = fallback;
+    else if (typeof value !== "string") throw new Error("Allocation basis must be a string when provided");
+    else basis = value.trim().toUpperCase();
     if (!BASES.has(basis)) throw new Error(`Unknown allocation basis: ${basis || "<blank>"}`);
     return basis;
   }
@@ -50,13 +75,26 @@
       schema_version: SCHEMA,
       projects: Array.isArray(payload.projects) ? [...payload.projects] : [],
       workstreams: Array.isArray(payload.workstreams) ? [...payload.workstreams] : [],
-      attendance: payload.attendance.map((raw) => ({ ...raw, staff: String(raw.staff || "").trim(), date: String(raw.date || "").trim(), paid_hours: n(raw.paid_hours), default_project: String(raw.default_project || "").trim() })),
-      allocations: payload.allocations.map((raw) => ({ ...raw, staff: String(raw.staff || "").trim(), date: String(raw.date || "").trim(), project: String(raw.project || "").trim(), hours: n(raw.hours), basis: cleanBasis(raw.basis, "EXPLICIT") }))
+      attendance: payload.attendance.map((raw) => ({
+        ...raw,
+        staff: String(raw.staff || "").trim(),
+        date: String(raw.date || "").trim(),
+        paid_hours: strictNumber(raw.paid_hours, "paid_hours"),
+        default_project: String(raw.default_project || "").trim()
+      })),
+      allocations: payload.allocations.map((raw) => ({
+        ...raw,
+        staff: String(raw.staff || "").trim(),
+        date: String(raw.date || "").trim(),
+        project: String(raw.project || "").trim(),
+        hours: strictNumber(raw.hours, "allocation hours"),
+        basis: cleanBasis(raw.basis, "EXPLICIT")
+      }))
     };
 
     const attendanceKeys = new Set();
     normalized.attendance.forEach((row) => {
-      if (!row.date || !row.staff || row.paid_hours < 0) throw new Error("Attendance rows require date, staff, and non-negative paid hours.");
+      if (!validIsoDate(row.date) || !row.staff) throw new Error("Attendance rows require a valid ISO date and staff.");
       if (row.paid_hours > 0 && !row.default_project) throw new Error(`Default / fallback project required: ${row.date} / ${row.staff}`);
       const key = keyOf(row.date, row.staff);
       if (attendanceKeys.has(key)) throw new Error(`Duplicate attendance day: ${row.date} / ${row.staff}`);
@@ -66,9 +104,10 @@
     const allocationIds = new Set();
     const allocatedDays = new Set();
     normalized.allocations.forEach((row, index) => {
+      if (!validIsoDate(row.date) || !row.staff) throw new Error("Allocation rows require a valid ISO date and staff.");
       const key = keyOf(row.date, row.staff);
       if (!attendanceKeys.has(key)) throw new Error(`Allocation without attendance day: ${row.date} / ${row.staff}`);
-      if (!row.project || row.hours < 0) throw new Error(`Allocation project and non-negative hours required: ${row.date} / ${row.staff}`);
+      if (!row.project) throw new Error(`Allocation project required: ${row.date} / ${row.staff}`);
       row.allocation_id = String(row.allocation_id || `LOCAL-${row.date.replaceAll("-", "")}-${index + 1}`).trim();
       if (allocationIds.has(row.allocation_id)) throw new Error(`Duplicate allocation ID: ${row.allocation_id}`);
       allocationIds.add(row.allocation_id);
@@ -227,8 +266,8 @@
     const staff = els.staff.value.trim();
     const paid = n(els.paid.value);
     const defaultProject = els.defaultProject.value.trim();
-    if (!workDate || !staff || !defaultProject || paid <= 0) {
-      show("Date, staff, paid hours, and default / fallback project are required.", true);
+    if (!validIsoDate(workDate) || !staff || !defaultProject || paid <= 0) {
+      show("Valid date, staff, paid hours, and default / fallback project are required.", true);
       return;
     }
     const allocations = readAllocations();
@@ -308,8 +347,8 @@
     addAllocation({ basis: "DEFAULT", hours: 8 });
   }
 
-  function reconciliation(row) {
-    const rows = state.allocations.filter((a) => a.date === row.date && a.staff === row.staff);
+  function reconciliation(row, source = state) {
+    const rows = source.allocations.filter((a) => a.date === row.date && a.staff === row.staff);
     const allocated = rows.reduce((sum, a) => sum + n(a.hours), 0);
     const projects = [...new Set(rows.map((a) => a.project).filter(Boolean))].sort(cmp);
     return { allocated, variance: +(row.paid_hours - allocated).toFixed(4), mode: projects.length > 1 ? "MULTI" : "SINGLE", projects };
@@ -335,8 +374,8 @@
     }));
     const paid = normalized.attendance.reduce((sum, row) => sum + n(row.paid_hours), 0);
     const allocated = normalized.allocations.reduce((sum, row) => sum + n(row.hours), 0);
-    const multi = normalized.attendance.reduce((sum, row) => sum + (reconciliation(row).mode === "MULTI" ? 1 : 0), 0);
-    const unreconciled = normalized.attendance.reduce((sum, row) => sum + (Math.abs(reconciliation(row).variance) > 0.01 ? 1 : 0), 0);
+    const multi = normalized.attendance.reduce((sum, row) => sum + (reconciliation(row, normalized).mode === "MULTI" ? 1 : 0), 0);
+    const unreconciled = normalized.attendance.reduce((sum, row) => sum + (Math.abs(reconciliation(row, normalized).variance) > 0.01 ? 1 : 0), 0);
     return {
       report_version: REPORT_VERSION,
       schema_version: SCHEMA,
