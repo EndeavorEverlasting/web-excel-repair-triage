@@ -190,6 +190,10 @@ class HarnessContractTests(unittest.TestCase):
         artifacts = self.load("harness/artifacts.v1.json")["artifacts"]
         site = next(item for item in artifacts if item["id"] == "prompt-kit-website")
         self.assertIn(
+            "https://endeavoreverlasting.github.io/web-excel-repair-triage/operant",
+            site["delivery_surfaces"],
+        )
+        self.assertNotIn(
             "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
             site["delivery_surfaces"],
         )
