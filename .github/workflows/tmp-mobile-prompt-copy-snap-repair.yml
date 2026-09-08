@@ -1,0 +1,433 @@
+name: Temporary mobile prompt copy-snap repair
+
+on:
+  push:
+    branches:
+      - fix/operant-mobile-prompt-copy-snap-20260908
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout isolated owner
+        uses: actions/checkout@v7
+        with:
+          ref: fix/operant-mobile-prompt-copy-snap-20260908
+          fetch-depth: 0
+
+      - name: Reconcile refreshed main without rewriting history
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "owner_before=$(git rev-parse HEAD)"
+          echo "main_floor=$(git rev-parse origin/main)"
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+          fi
+          git merge-base --is-ancestor origin/main HEAD
+          echo "reconciled=$(git rev-parse HEAD)"
+
+      - name: Repair known-ID terminal flow and recurrence contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          def replace_once(path: Path, old: str, new: str, label: str) -> None:
+              text = path.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'{label}: anchor missing in {path}')
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          polish = Path('docs/prompt-kit-polish.js')
+          replace_once(polish,
+              "go.textContent=longer?'Open '+promptId:'Go';",
+              "go.textContent=longer?'Go to '+promptId:'Go';",
+              'ambiguous submit label')
+          replace_once(polish,
+              "go.setAttribute('aria-label',longer?'Open exact '+promptId:'Open exact prompt ID')",
+              "go.setAttribute('aria-label',longer?'Go to exact '+promptId:'Go to exact prompt ID')",
+              'ambiguous aria label')
+          replace_once(polish,
+              "go.setAttribute('aria-label','Open exact prompt ID')",
+              "go.setAttribute('aria-label','Go to exact prompt ID')",
+              'disabled aria label')
+          old_exact = """    setMobilePromptJumpOpen(false,false);\n    setHotkeyHelpOpen(false,false);\n    if(typeof window.showPromptDetail==='function'){\n      window.showPromptDetail(promptId,toggle||null);\n      return true\n    }\n    if(status)status.textContent='Prompt detail is unavailable.';\n    return false"""
+          new_exact = """    setMobilePromptJumpOpen(false,false);\n    setHotkeyHelpOpen(false,false);\n    var card=document.querySelector('[data-prompt-id=\"'+promptId+'\"]');\n    if(card){\n      try{card.focus({preventScroll:true})}catch(e){try{card.focus()}catch(ignore){}}\n      if(typeof showToast==='function')showToast(promptId+' ready — tap the prompt card to copy');\n      return true\n    }\n    if(status)status.textContent='Prompt card is unavailable.';\n    return false"""
+          replace_once(polish, old_exact, new_exact, 'mobile exact-route terminal flow')
+          replace_once(polish,
+              "promptId+' is exact. Press Enter or tap Open '+promptId+', or keep typing for a longer ID.'",
+              "promptId+' is exact. Press Enter or tap Go to '+promptId+', or keep typing for a longer ID.'",
+              'ambiguous status copy')
+          replace_once(polish,
+              "go.setAttribute('aria-label','Open exact prompt ID');",
+              "go.setAttribute('aria-label','Go to exact prompt ID');",
+              'install submit aria label')
+
+          mobile_path = Path('harness/contracts/prompt-kit-mobile.v1.json')
+          mobile = json.loads(mobile_path.read_text(encoding='utf-8'))
+          by_id = {item['id']: item for item in mobile['requirements']}
+          by_id['touch_copy_preserved']['expected'] = (
+              "The whole non-control surface of every prompt card remains a tap/click-to-copy target on touch/coarse-pointer and pointer layouts. "
+              "The explicit Copy action remains visible and touch-sized, but it is a secondary affordance rather than a requirement to reach the terminal clipboard action. "
+              "A card tap copies through canonical copyPrompt acknowledgement and must not open prompt detail."
+          )
+          by_id['mobile_prompt_id_jump']['expected'] = (
+              "On narrow touch layouts, a persistent Go to P# control is the fastest locator when the user already knows a prompt ID. "
+              "The user taps Go to P#, enters digits only (for P111, type 111), and an exact unambiguous ID reveals and instant-snaps its canonical prompt card into the actionable viewport without opening prompt detail, More, browser Find, or a search-result step. "
+              "The landed card itself is the primary terminal copy surface: tapping any non-control area copies the canonical prompt; explicit Copy remains available and explicit Open is reserved for deliberate inspection. "
+              "When an exact ID is also a prefix of a longer prompt ID (for example P11 versus P111), it must not steal the longer route: the status says the shorter ID is exact, the submit control becomes Go to P11, and Enter or that button deliberately jumps to P11 while continued typing can reach P111. "
+              "Prefix-only or nonexistent IDs have no enabled exact-submit target; canonical P00-P09 IDs require their leading zero; pasted values such as P111 normalize to the same digits-only resolver. "
+              "A separate compact More control exposes Find Prompt, previous/next profile, Search, Favorites, Filters, Reference, Top, and Bottom as labeled buttons. Swiping is not required and no hidden gesture vocabulary is part of the primary phone interaction contract. "
+              "Desktop Hotkeys and shared semantic actions remain authoritative; phone controls do not create parallel prompt state. Go to P# must never auto-open the space-heavy detail modal merely to expose Copy."
+          )
+          by_id['mobile_detail_surface']['expected'] = (
+              "Prompt detail reuses the existing detail surface and functions but is entered only through an explicit inspection action such as Open, not by Go to P#. "
+              "When deliberately opened it occupies the mobile viewport with an accessible close and full-width Copy action and exposes the canonical Favorite toggle; favoriting there or on the card updates the same Favorite state without a second shortcut-save step."
+          )
+          mobile['proof_ceiling'] = (
+              "Static source, deterministic tests, generated-site parity, CI, and an exact-head 390x844 Chromium journey prove the tracked responsive/browser behavior they exercise, including Go to P# snap-without-detail, whole-card tap copy, explicit Open inspection, and the exact/prefix, leading-zero, pasted-ID, and missing-ID edge-case matrix. "
+              "Physical Android thumb reach, real software-keyboard timing, browser-specific clipboard prompts, and device-specific viewport/browser UI remain field acceptance gates."
+          )
+          mobile_path.write_text(json.dumps(mobile, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          cross_path = Path('harness/contracts/prompt-kit-cross-input-modality.v1.json')
+          cross = json.loads(cross_path.read_text(encoding='utf-8'))
+          for item in cross['capabilities']:
+              if item['id'] == 'inspect_open':
+                  item['phone'] = 'Explicit Open button on a prompt card; Go to P# does not auto-open detail'
+                  item['proof'] = 'prompt-kit-interactions + mobile_prompt_id_jump explicit-open regression'
+              elif item['id'] == 'copy_act':
+                  item['phone'] = 'Tap/click any non-control prompt-card surface; explicit Copy remains available; detail Copy exists only after deliberate Open'
+                  item['proof'] = 'prompt-kit-interactions whole-card touch copy + mobile browser proof'
+              elif item['id'] == 'open_known_id':
+                  item['id'] = 'locate_known_id'
+                  item['capability'] = 'Locate known prompt ID without forcing prompt detail'
+                  item['mouse'] = 'no dedicated known-ID digit grammar; locate the card normally'
+                  item['keyboard'] = 'digit sequences reveal the card as part of copy-known; no open-by-digits path'
+                  item['phone'] = 'Go to P# handle (P prefix shown; type digits only) → reveal and instant-snap the canonical card with detail closed'
+                  item['semantic_action'] = 'revealPromptShortcutTarget'
+                  item['state_owner'] = 'active filters + prompt-card viewport/focus; promptDetailOverlay remains closed'
+                  item['proof'] = 'mobile_prompt_id_jump + 390x844 snap-without-detail browser proof'
+                  item['note'] = 'Mode separation applies to locator grammar, not terminal value: phone Go to P# lands on the card; explicit Open alone owns detail.'
+              elif item['id'] == 'copy_known_id':
+                  item['phone'] = 'Go to P# → tap/click any non-control area of the snapped prompt card; canonical copyPrompt runs without detail'
+                  item['semantic_action'] = 'activatePromptShortcutTarget / prompt-card click / copyPrompt'
+                  item['state_owner'] = 'canonical prompt identity + clipboard adapter + copy acknowledgement UI'
+                  item['proof'] = 'hotkey completion + interaction contract + mobile card-tap browser proof'
+          cross['semantic_convergence_rules'] = [
+              rule for rule in cross['semantic_convergence_rules']
+              if not rule.startswith('Known-ID grammars are mode-separated:')
+          ] + [
+              'Known-ID locator grammars are mode-separated, but terminal copy converges on copyPrompt: phone Go to P# snaps to the card then card tap copies; keyboard digits copy+reveal; mouse locates then card click/Copy. Go to P# must not auto-open detail.'
+          ]
+          cross_path.write_text(json.dumps(cross, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          interaction_path = Path('harness/contracts/prompt-kit-interactions.v1.json')
+          interaction = json.loads(interaction_path.read_text(encoding='utf-8'))
+          requirements = {item['id']: item for item in interaction['requirements']}
+          requirements['single_click_copy']['event'] = 'single pointer click or touch tap on any non-control area of a prompt card'
+          requirements['single_click_copy']['expected'] = (
+              "Treat the whole non-control prompt-card surface as the primary copy target: copy the selected prompt's exact copyContent to the clipboard and show copy acknowledgement without opening detail. "
+              "This must hold for coarse-pointer/touch tap as well as mouse click; users must not have to scroll through a detail modal to reach Copy."
+          )
+          requirements['single_click_copy']['forbidden'] = 'Opening/expanding prompt detail from a card tap/click, or requiring the explicit Copy button before the card can perform its terminal copy action.'
+          interaction_path.write_text(json.dumps(interaction, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          guide = Path('OPEN_PROMPT_KIT_ON_PHONE.md')
+          guide_text = guide.read_text(encoding='utf-8')
+          old = """3. When the ID is exact and unambiguous, **P111 opens automatically**. There is no search-results tap. The main prompt library also reveals and centers P111 behind the detail panel, so closing the panel leaves you at the prompt you requested.\n4. Use the **☆ Favorite** control directly in the open prompt panel when you want to keep it. A Favorite automatically becomes its lower-case P-ID hotkey (for example, `p111`); there is no second shortcut-save step."""
+          new = """3. When the ID is exact and unambiguous, **P111 snaps into view automatically with prompt detail closed**. There is no search-results tap and no space-heavy prompt modal between you and the card.\n4. **Tap anywhere on the prompt card outside its explicit controls to copy the prompt.** The card itself is the primary copy surface; the Copy button is a secondary affordance. Use **Open** only when you deliberately want prompt detail, and use the card's star when you want to keep it as a Favorite."""
+          if old not in guide_text: raise SystemExit('phone guide P111 anchor missing')
+          guide_text = guide_text.replace(old, new, 1)
+          guide_text = guide_text.replace('the button changes to **Open P11**', 'the button changes to **Go to P11**', 1)
+          guide_text = guide_text.replace('tap **Open P11** to open it', 'tap **Go to P11** to jump to it', 1)
+          old_tail = 'Known-ID phone jumps open detail for reading; keyboard digit sequences remain the power-user copy+reveal path, with phone Copy available after open.'
+          new_tail = 'Known-ID phone jumps reveal and snap the canonical card without opening detail; tap the card surface to copy. Keyboard digit sequences remain the power-user copy+reveal path, while explicit Open remains the deliberate inspection route on phone.'
+          if old_tail not in guide_text: raise SystemExit('phone guide mode tail missing')
+          guide.write_text(guide_text.replace(old_tail, new_tail, 1), encoding='utf-8')
+
+          web = Path('web/README.md')
+          web_text = web.read_text(encoding='utf-8')
+          old_phone = '- **Phone:** use the **Go to P#** handle (P prefix shown; type digits) to open detail, then Copy.'
+          new_phone = '- **Phone:** use **Go to P#** (P prefix shown; type digits) to snap to the canonical card with detail closed; tap anywhere on the non-control card surface to Copy, and use Open only for deliberate inspection.'
+          if old_phone not in web_text: raise SystemExit('web README phone mode anchor missing')
+          web.write_text(web_text.replace(old_phone, new_phone, 1), encoding='utf-8')
+          PY
+
+      - name: Repair focused static regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          cross = Path('tests/test_prompt_kit_cross_input_modality.py')
+          text = cross.read_text(encoding='utf-8')
+          text = text.replace('    "open_known_id",', '    "locate_known_id",', 1)
+          old_method = '''    def test_matrix_documents_copy_known_phone_exclusion_and_open_known_phone_route(self) -> None:\n        payload = json.loads(CONTRACT.read_text(encoding="utf-8"))\n        by_id = {item["id"]: item for item in payload["capabilities"]}\n        self.assertTrue(by_id["copy_known_id"]["phone"].lower().startswith("supported_exclusion"))\n        self.assertIn("Go to P#", by_id["open_known_id"]["phone"])\n        self.assertIn("digits only", by_id["copy_known_id"]["keyboard"].lower())\n        self.assertIn("no dedicated known-ID digit grammar", by_id["copy_known_id"]["mouse"])\n        self.assertIn("no dedicated known-ID digit grammar", by_id["open_known_id"]["mouse"])\n        self.assertEqual(by_id["reference"]["semantic_action"], "toggleRef")\n        rules = payload.get("semantic_convergence_rules") or []\n        self.assertTrue(any("phone Go to P#" in rule and "keyboard digits-only" in rule for rule in rules))\n'''
+          new_method = '''    def test_matrix_routes_phone_known_id_to_card_copy_without_detail(self) -> None:\n        payload = json.loads(CONTRACT.read_text(encoding="utf-8"))\n        by_id = {item["id"]: item for item in payload["capabilities"]}\n        self.assertIn("Go to P#", by_id["locate_known_id"]["phone"])\n        self.assertIn("detail closed", by_id["locate_known_id"]["phone"])\n        self.assertEqual(by_id["locate_known_id"]["semantic_action"], "revealPromptShortcutTarget")\n        self.assertIn("tap/click any non-control area", by_id["copy_known_id"]["phone"])\n        self.assertIn("copyPrompt", by_id["copy_known_id"]["semantic_action"])\n        self.assertNotIn("supported_exclusion", by_id["copy_known_id"]["phone"].lower())\n        self.assertIn("digits only", by_id["copy_known_id"]["keyboard"].lower())\n        self.assertIn("no dedicated known-ID digit grammar", by_id["copy_known_id"]["mouse"])\n        self.assertEqual(by_id["reference"]["semantic_action"], "toggleRef")\n        rules = payload.get("semantic_convergence_rules") or []\n        convergence = next(rule for rule in rules if "terminal copy converges on copyPrompt" in rule)\n        self.assertIn("Go to P# must not auto-open detail", convergence)\n'''
+          if old_method not in text: raise SystemExit('cross modality old method missing')
+          cross.write_text(text.replace(old_method, new_method, 1), encoding='utf-8')
+
+          mobile = Path('tests/test_prompt_kit_mobile_quick_controls.py')
+          text = mobile.read_text(encoding='utf-8')
+          text = text.replace('            "window.showPromptDetail(promptId,toggle||null)",\n', '            "tap the prompt card to copy",\n', 1)
+          text = text.replace("        self.assertLess(jump.index(\"revealPromptShortcutTarget(promptId,'instant')\"), jump.index(\"window.showPromptDetail(promptId,toggle||null)\"))\n", "        self.assertNotIn(\"window.showPromptDetail(promptId,toggle||null)\", jump)\n        self.assertIn(\"document.querySelector('[data-prompt-id=\\\"'+promptId+'\\\"]')\", jump)\n        self.assertIn(\"card.focus({preventScroll:true})\", jump)\n", 1)
+          text = text.replace("self.assertIn(\"go.textContent=longer?'Open '+promptId:'Go'\", source)", "self.assertIn(\"go.textContent=longer?'Go to '+promptId:'Go'\", source)", 1)
+          text = text.replace("self.assertIn(\"promptId+' is exact. Press Enter or tap Open '+promptId+', or keep typing for a longer ID.'\", source)", "self.assertIn(\"promptId+' is exact. Press Enter or tap Go to '+promptId+', or keep typing for a longer ID.'\", source)", 1)
+          old_phrases = 'for phrase in ("Go to P#", "digits only", "P111", "P11", "Enter", "leading zero", "without opening More", "browser Find", "not required", "centered"):'
+          new_phrases = 'for phrase in ("Go to P#", "digits only", "P111", "P11", "Enter", "leading zero", "without opening More", "browser Find", "detail", "tap", "copy"):'
+          if old_phrases not in text: raise SystemExit('mobile contract phrase loop missing')
+          text = text.replace(old_phrases, new_phrases, 1)
+          text = text.replace('            "opens automatically",\n', '            "snaps into view automatically with prompt detail closed",\n', 1)
+          text = text.replace('            "reveals and centers P111",\n', '            "Tap anywhere on the prompt card outside its explicit controls to copy",\n', 1)
+          text = text.replace('            "automatically becomes its lower-case P-ID hotkey",\n', '            "Use **Open** only when you deliberately want prompt detail",\n', 1)
+          text = text.replace('            "window.showPromptDetail(promptId,toggle||null)",\n', '            "tap the prompt card to copy",\n', 1)
+          mobile.write_text(text, encoding='utf-8')
+
+          interactions = Path('tests/test_prompt_kit_interactions_contract.py')
+          text = interactions.read_text(encoding='utf-8')
+          anchor = '        self.assertIn("--require-implementation", contract["validation"]["implementation_gate"])\n'
+          extra = '''        single = next(item for item in contract["requirements"] if item["id"] == "single_click_copy")\n        self.assertIn("touch tap", single["event"])\n        self.assertIn("whole non-control prompt-card surface", single["expected"])\n        self.assertIn("must not have to scroll through a detail modal", single["expected"])\n'''
+          if anchor not in text: raise SystemExit('interaction contract test anchor missing')
+          interactions.write_text(text.replace(anchor, anchor + extra, 1), encoding='utf-8')
+          PY
+
+      - name: Replace 390x844 browser proof with terminal card-tap journey
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > tests/prompt_kit_mobile_quick_controls_browser_proof.py <<'PYFILE'
+          #!/usr/bin/env python3
+          from __future__ import annotations
+
+          import json
+          import threading
+          from contextlib import closing
+          from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+          from pathlib import Path
+
+          from playwright.sync_api import sync_playwright
+
+          ROOT = Path(__file__).resolve().parents[1]
+
+
+          class Quiet(SimpleHTTPRequestHandler):
+              def log_message(self, fmt: str, *args: object) -> None:
+                  pass
+
+
+          def canonical(text: str) -> str:
+              return str(text or '').replace('\r\n', '\n')
+
+
+          def card_midpoint(page, prompt_id: str) -> tuple[dict, float]:
+              box = page.locator(f'[data-prompt-id="{prompt_id}"]').bounding_box() or {}
+              return box, box.get('y', 0) + box.get('height', 0) / 2
+
+
+          def assert_detail_closed(page, message: str) -> None:
+              assert not page.locator('#promptDetailOverlay').evaluate("el=>el.classList.contains('open')"), message
+
+
+          def main() -> int:
+              handler = lambda *args, **kwargs: Quiet(*args, directory=str(ROOT), **kwargs)
+              server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+              thread = threading.Thread(target=server.serve_forever, daemon=True)
+              thread.start()
+              try:
+                  origin = f"http://127.0.0.1:{server.server_port}"
+                  with sync_playwright() as playwright:
+                      browser = playwright.chromium.launch(headless=True)
+                      with closing(browser.new_context(viewport={"width":390,"height":844}, is_mobile=True, has_touch=True, reduced_motion="reduce")) as context:
+                          context.grant_permissions(["clipboard-read", "clipboard-write"], origin=origin)
+                          page = context.new_page()
+                          page.goto(f"{origin}/web/prompt-kit/index.html", wait_until="domcontentloaded")
+
+                          jump = page.locator('#mobilePromptJumpToggle')
+                          more = page.locator('#hotkeyHelpToggle')
+                          assert jump.is_visible(), 'Go to P# is not visible in the phone thumb zone'
+                          assert more.is_visible(), 'More control is not visible'
+                          for control in (jump, more):
+                              box = control.bounding_box() or {}
+                              assert box.get('height', 0) >= 48, box
+                              assert box.get('width', 0) <= 180, box
+
+                          form = page.locator('#mobilePromptJumpForm')
+                          inp = page.locator('#mobilePromptJumpInput')
+                          go = page.locator('.mobile-prompt-jump-go')
+
+                          # Primary known-ID journey: locate/snap, keep detail closed, then card tap copies.
+                          jump.click()
+                          assert form.is_visible()
+                          assert inp.get_attribute('inputmode') == 'numeric'
+                          assert page.evaluate("document.activeElement && document.activeElement.id") == 'mobilePromptJumpInput'
+                          inp.press_sequentially('111')
+                          page.wait_for_timeout(80)
+                          assert_detail_closed(page, 'Go to P# must not auto-open the space-heavy detail panel')
+                          assert form.is_hidden(), 'exact P111 should close the jump form after snapping'
+                          target = page.locator('[data-prompt-id="P111"]')
+                          assert target.is_visible(), 'P111 card was not revealed'
+                          target_box, target_mid = card_midpoint(page, 'P111')
+                          assert abs(target_mid - 844 / 2) <= 150, (target_box, target_mid)
+                          assert page.evaluate("document.activeElement && document.activeElement.getAttribute('data-prompt-id')") == 'P111'
+                          toast = page.locator('#toast').inner_text()
+                          assert 'P111 ready' in toast and 'tap the prompt card to copy' in toast, toast
+
+                          expected = page.evaluate("PROMPTS.find(function(item){return item.id==='P111'}).copyContent")
+                          target.click(position={"x": 24, "y": 44})
+                          page.wait_for_timeout(380)
+                          actual = page.evaluate('navigator.clipboard.readText()')
+                          assert canonical(actual) == canonical(expected), (len(actual), len(expected))
+                          assert 'Copied to clipboard' in page.locator('#toast').inner_text()
+                          assert_detail_closed(page, 'card tap copy must not open detail')
+
+                          # Explicit Open remains available for deliberate inspection only.
+                          target.locator('.prompt-open-btn').click()
+                          page.wait_for_timeout(60)
+                          assert page.locator('#promptDetailOverlay').evaluate("el=>el.classList.contains('open')"), 'explicit Open no longer opens detail'
+                          assert 'P111' in page.locator('#promptDetail').inner_text()
+                          page.locator('.prompt-detail-close').click()
+                          assert_detail_closed(page, 'detail did not close after explicit inspection')
+
+                          # Exhaust exact IDs that also prefix longer IDs: explicit confirmation jumps, never opens detail.
+                          prompt_ids = page.evaluate("PROMPTS.map(function(item){return item.id})")
+                          collision_ids = [pid for pid in prompt_ids if any(other != pid and other.startswith(pid) for other in prompt_ids)]
+                          assert collision_ids, 'fixture must contain exact/prefix collisions'
+                          for prompt_id in collision_ids:
+                              jump.click(); inp.fill(prompt_id[1:]); page.wait_for_timeout(40)
+                              assert_detail_closed(page, f'{prompt_id} stole a longer route')
+                              status = page.locator('#mobilePromptJumpStatus').inner_text()
+                              assert f'{prompt_id} is exact' in status and 'Press Enter' in status and 'keep typing' in status.lower(), (prompt_id, status)
+                              assert go.is_enabled()
+                              assert go.inner_text() == f'Go to {prompt_id}', (prompt_id, go.inner_text())
+                              inp.press('Enter'); page.wait_for_timeout(60)
+                              assert_detail_closed(page, f'Enter on {prompt_id} opened detail')
+                              assert form.is_hidden()
+                              card = page.locator(f'[data-prompt-id="{prompt_id}"]')
+                              assert card.is_visible()
+                              assert page.evaluate("document.activeElement && document.activeElement.getAttribute('data-prompt-id')") == prompt_id
+
+                          # Prefix-only remains fail-closed.
+                          jump.click(); inp.fill('1'); page.wait_for_timeout(40)
+                          assert go.is_disabled()
+                          assert 'Keep typing P1' in page.locator('#mobilePromptJumpStatus').inner_text()
+                          inp.press('Enter'); page.wait_for_timeout(40)
+                          assert_detail_closed(page, 'prefix-only P1 opened detail')
+                          assert form.is_visible()
+
+                          # Leading-zero canonical ID snaps without detail.
+                          inp.fill('01'); page.wait_for_timeout(60)
+                          assert_detail_closed(page, 'P01 auto-opened detail')
+                          assert form.is_hidden()
+                          assert page.locator('[data-prompt-id="P01"]').is_visible()
+
+                          # Pasted P111 normalizes and snaps without detail.
+                          jump.click(); inp.fill('P111'); page.wait_for_timeout(60)
+                          assert_detail_closed(page, 'pasted P111 auto-opened detail')
+                          assert page.locator('[data-prompt-id="P111"]').is_visible()
+
+                          # Missing ID stays fail-closed.
+                          jump.click(); inp.fill('999999'); page.wait_for_timeout(40)
+                          assert go.is_disabled()
+                          assert 'No prompt starts with P999999' in page.locator('#mobilePromptJumpStatus').inner_text()
+                          inp.press('Enter'); page.wait_for_timeout(40)
+                          assert_detail_closed(page, 'missing P999999 opened detail')
+                          assert form.is_visible()
+
+                          # Secondary More surface remains compact and explicit.
+                          page.keyboard.press('Escape')
+                          more.click()
+                          panel = page.locator('#hotkeyHelpPanel')
+                          assert panel.is_visible()
+                          panel_box = panel.bounding_box() or {}
+                          assert 0 < panel_box.get('width', 0) <= 350, panel_box
+                          assert 0 < panel_box.get('height', 0) <= 470, panel_box
+                          buttons = page.locator('#mobileQuickControls .mobile-quick-action')
+                          assert buttons.count() == 9
+
+                          print(json.dumps({
+                              'verdict': 'PASS',
+                              'viewport': '390x844',
+                              'known_id': 'P111',
+                              'direct_path': 'tap Go to P# + type 111 -> snap card -> tap card to copy',
+                              'detail_auto_open': False,
+                              'card_tap_copy': True,
+                              'explicit_open_preserved': True,
+                              'underlying_prompt_centered': True,
+                              'collision_ids': collision_ids,
+                              'edge_cases': ['all-exact-prefix-collisions', 'P1-prefix-enter', 'P01-leading-zero', 'paste-P111', 'P999999-missing-enter'],
+                              'more_panel_required': False,
+                              'browser_find_required': False,
+                          }))
+                      browser.close()
+              finally:
+                  server.shutdown(); server.server_close(); thread.join(timeout=2)
+              return 0
+
+
+          if __name__ == '__main__':
+              raise SystemExit(main())
+          PYFILE
+          chmod +x tests/prompt_kit_mobile_quick_controls_browser_proof.py
+
+      - name: Regenerate and validate focused ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check docs/prompt-kit.js
+          node --check docs/prompt-kit-polish.js
+          python -m py_compile tests/prompt_kit_mobile_quick_controls_browser_proof.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python -m unittest \
+            tests.test_prompt_kit_cross_input_modality \
+            tests.test_prompt_kit_mobile_quick_controls \
+            tests.test_prompt_kit_interactions_contract \
+            tests.test_prompt_kit_product_interactions \
+            tests.test_prompt_kit_mobile -v
+          python scripts/validate_prompt_kit_interactions.py --require-implementation --summary
+          git diff --check
+
+      - name: Install Chromium and run 390x844 terminal-value proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+          python tests/prompt_kit_mobile_quick_controls_browser_proof.py
+
+      - name: Commit durable repair and remove carrier
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/tmp-mobile-prompt-copy-snap-repair.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git status --short
+          git diff --check
+          git add -A -- \
+            docs/prompt-kit-polish.js \
+            harness/contracts/prompt-kit-mobile.v1.json \
+            harness/contracts/prompt-kit-cross-input-modality.v1.json \
+            harness/contracts/prompt-kit-interactions.v1.json \
+            OPEN_PROMPT_KIT_ON_PHONE.md \
+            web/README.md \
+            tests/test_prompt_kit_cross_input_modality.py \
+            tests/test_prompt_kit_mobile_quick_controls.py \
+            tests/test_prompt_kit_interactions_contract.py \
+            tests/prompt_kit_mobile_quick_controls_browser_proof.py \
+            web/prompt-kit/index.html \
+            .github/workflows/tmp-mobile-prompt-copy-snap-repair.yml
+          git diff --cached --check
+          git commit -m "fix(operant): snap known prompt IDs to tap-to-copy cards"
+          git push origin HEAD:fix/operant-mobile-prompt-copy-snap-20260908
