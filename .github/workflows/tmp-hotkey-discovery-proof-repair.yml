@@ -1,0 +1,51 @@
+name: Temporary hotkey discovery proof repair
+
+on:
+  push:
+    branches:
+      - fix/operant-natural-prompt-hotkeys-20260908
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout owning branch
+        uses: actions/checkout@v7
+        with:
+          ref: fix/operant-natural-prompt-hotkeys-20260908
+          fetch-depth: 0
+
+      - name: Align discovery assertion with instant snap contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/test_prompt_kit_discovery.py')
+          text = path.read_text(encoding='utf-8')
+          old = 'self.assertIn("revealPromptShortcutTarget(promptId)", activation)'
+          new = 'self.assertIn("revealPromptShortcutTarget(promptId,\'instant\')", activation)'
+          if old in text:
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          elif new not in text:
+              raise SystemExit('discovery assertion anchor missing')
+          PY
+          python -m unittest tests.test_prompt_kit_discovery.PromptKitDiscoveryTests.test_operator_docs_match_current_finder_p83_favorites_and_shortcuts -v
+          git diff --check
+
+      - name: Commit and publish assertion repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- tests/test_prompt_kit_discovery.py; then
+            echo 'assertion already aligned'
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- tests/test_prompt_kit_discovery.py
+          git commit -m "test(operant): align discovery proof with instant snap"
+          git push origin HEAD:fix/operant-natural-prompt-hotkeys-20260908
