@@ -22,11 +22,12 @@ def build_roster_workbook(
     *,
     require_reconciled: bool = False,
 ) -> Dict[str, Any]:
-    """Build an editable roster without mutating any predecessor workbook.
+    """Build a protected derived snapshot without mutating any predecessor.
 
-    Attendance owns paid time. ``default_project`` is only a fallback. Normalized
-    Project Allocations are the actual project ledger and the sole source for
-    deterministic project reporting.
+    The website/JSON state is the editable authority. Attendance owns paid time;
+    ``default_project`` is only fallback metadata; normalized Project Allocations
+    are the actual project ledger and sole source for deterministic reporting.
+    Change state in the website/JSON and regenerate instead of hand-editing XLSX.
     """
     from openpyxl import Workbook
     from openpyxl.formatting.rule import FormulaRule
@@ -57,7 +58,7 @@ def build_roster_workbook(
 
     dashboard = wb.create_sheet("Dashboard")
     dashboard.append(["Roster Log V2", "Normalized attendance + first-class project allocation ledger"])
-    dashboard.append(["State", "CURRENT CANDIDATE — promote only after operator acceptance"])
+    dashboard.append(["State", "DERIVED SNAPSHOT — edit website/JSON and regenerate; do not hand-edit this workbook"])
     dashboard.append(["Attendance days", report["attendance_days"]])
     dashboard.append(["Paid hours", report["paid_hours"]])
     dashboard.append(["Allocation rows", report["allocation_rows"]])
@@ -137,9 +138,8 @@ def build_roster_workbook(
             ]
         )
 
-    # The hidden helper marks only the first occurrence of each
-    # date+staff+project combination. Attendance can therefore count distinct
-    # projects without mistaking two workstream rows for two projects.
+    # Hidden helper: mark only the first date+staff+project occurrence so two
+    # workstream rows for one project do not become a false MULTI day.
     for row in range(2, allocations.max_row + 1):
         allocations.cell(row, 10).value = (
             f'=IF(OR(B{row}="",C{row}="",D{row}=""),0,'
@@ -147,9 +147,9 @@ def build_roster_workbook(
         )
     allocations.column_dimensions["J"].hidden = True
 
-    # Bounded allocation-ledger ranges are required by the Web Excel/artifact
-    # calculation engine. Column G owns hours; hidden column J owns distinct
-    # project first-occurrence flags.
+    # The XLSX is a generated snapshot, so these bounded formulas only need to
+    # cover the state that produced this artifact. New state is entered in the
+    # website/JSON and regenerated; the workbook is protected below.
     alloc_last_row = max(len(state["allocations"]) + 1, 2)
     for row in range(2, max(attendance.max_row, 201) + 1):
         attendance.cell(row, 7).value = (
@@ -225,7 +225,8 @@ def build_roster_workbook(
     dictionaries.column_dimensions["C"].width = 20
     dictionaries.column_dimensions["D"].width = 20
 
-    # Range-backed validation keeps mutable vocabularies in one workbook owner.
+    # Retain range-backed validation metadata as documentation for consumers of
+    # the generated artifact even though the snapshot sheets are protected.
     if projects:
         default_dv = DataValidation(type="list", formula1=f"=Dictionaries!$A$2:$A${len(projects)+1}", allow_blank=True)
         alloc_project_dv = DataValidation(type="list", formula1=f"=Dictionaries!$A$2:$A${len(projects)+1}", allow_blank=False)
@@ -256,7 +257,7 @@ def build_roster_workbook(
             rec.paid_hours,
             rec.allocated_hours,
             rec.variance,
-            "Adjust project allocation rows until total allocated hours equals paid attendance.",
+            "Adjust project allocation rows in the website/JSON, then regenerate this snapshot.",
         ])
     review.freeze_panes = "A2"
     for column, width in {"A": 13, "B": 24, "C": 24, "D": 14, "E": 16, "F": 12, "G": 76}.items():
@@ -265,16 +266,17 @@ def build_roster_workbook(
     readme = wb.create_sheet("Read Me")
     readme_rows = [
         ["Roster Log V2 operating contract"],
+        ["This XLSX is a protected DERIVED SNAPSHOT. The website/JSON state is the editable authority; make changes there and regenerate rather than hand-editing this workbook."],
         ["Default / Fallback Project is attendance metadata. It creates a DEFAULT allocation only when a paid day has no explicit allocation rows."],
         ["Once explicit Project Allocations exist, those rows define actual project membership. The attendance default must not be reported as additional project work."],
         ["Allocation Basis is explicit: DEFAULT = fallback-created; EXPLICIT = intentionally entered allocation; OVERRIDE = intentional correction of a default or prior classification."],
-        ["Multi-project days are supported. Add one Project Allocations row per project/workstream that should receive part of the attendance day."],
+        ["Multi-project days are supported. Add one Project Allocations row per project/workstream that should receive part of the attendance day in the website/JSON state."],
         ["A multi-project day is not an error. The review condition is arithmetic: allocated hours must reconcile to paid attendance."],
         ["Project Mode counts distinct projects, not allocation-row count; two workstream rows for one project remain SINGLE."],
-        ["The Project Report is deterministic and derives only from normalized Project Allocations, sorted by project name."],
+        ["The Project Report is a deterministic build-time projection of the same normalized Project Allocations. Regeneration is the update mechanism."],
         ["Attendance owns paid hours. Project Allocations explain where those hours belong; allocation rows cannot create additional paid hours."],
-        ["This workbook does not manufacture an 80/20 split or second-guess a deliberate full-day project decision."],
-        ["The prior roster remains untouched. Promote this V2 workbook to CURRENT only after the operator confirms the new workflow is functional."],
+        ["This system does not manufacture an 80/20 split or second-guess a deliberate full-day project decision."],
+        ["The prior roster remains untouched. Promote V2 to CURRENT only after the operator confirms the website workflow is functional."],
     ]
     for row in readme_rows:
         readme.append(row)
@@ -295,6 +297,12 @@ def build_roster_workbook(
     attendance.conditional_formatting.add("G2:G1000", FormulaRule(formula=['$G2="MULTI"'], fill=accent_fill))
     review.conditional_formatting.add("A2:G1000", FormulaRule(formula=['$C2="ALLOCATION_VARIANCE"'], fill=warn_fill))
 
+    # Prevent the generated workbook from becoming a second mutable authority.
+    # No password is used: protection is an explicit UX/ownership guardrail, not
+    # a security control. Regeneration from canonical JSON is the mutation path.
+    for ws in wb.worksheets:
+        ws.protection.sheet = True
+
     wb.save(out)
     wb.close()
 
@@ -307,6 +315,7 @@ def build_roster_workbook(
         "path": str(out),
         "schema_version": state["schema_version"],
         "report_version": report["report_version"],
+        "workbook_authority": "DERIVED / PUBLISH-ONLY",
         "attendance_days": report["attendance_days"],
         "allocation_rows": report["allocation_rows"],
         "paid_hours": report["paid_hours"],
