@@ -9,8 +9,10 @@ WORKFLOW = ROOT / ".github" / "workflows" / "prompt-kit-pages.yml"
 ACCESS_GUIDE = ROOT / "PROMPT_KIT_ACCESS.md"
 PHONE_GUIDE = ROOT / "OPEN_PROMPT_KIT_ON_PHONE.md"
 MOBILE_ROOT = ROOT / "web" / "prompt-kit-mobile"
+LEGACY_REDIRECT = ROOT / "web" / "prompt-kit-legacy-redirect" / "index.html"
 PUBLIC_LAUNCHER_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/"
-PUBLIC_PROMPT_URL = PUBLIC_LAUNCHER_URL + "prompt-kit/"
+PUBLIC_OPERANT_URL = PUBLIC_LAUNCHER_URL + "operant"
+LEGACY_PUBLIC_PROMPT_URL = PUBLIC_LAUNCHER_URL + "prompt-kit/"
 
 
 def png_size(path: Path) -> tuple[int, int]:
@@ -37,15 +39,19 @@ class PromptKitPagesContractTests(unittest.TestCase):
             "bash scripts/run_prompt_kit_browser_e2e.sh",
             "name: Release identity gate",
             "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
-            'python scripts/build_prompt_kit_registry.py --output "$SITE_ROOT/prompt-kit/index.html"',
-            'cp web/prompt-kit/resources.v1.json "$SITE_ROOT/prompt-kit/resources.v1.json"',
-            'test -s "$SITE_ROOT/prompt-kit/resources.v1.json"',
-            'cmp "$SITE_ROOT/prompt-kit/index.html" web/prompt-kit/index.html',
-            'cmp "$SITE_ROOT/prompt-kit/resources.v1.json" web/prompt-kit/resources.v1.json',
+            'python scripts/build_prompt_kit_registry.py --output "$SITE_ROOT/operant/index.html"',
+            'cp web/prompt-kit/resources.v1.json "$SITE_ROOT/operant/resources.v1.json"',
+            'cp web/prompt-kit-legacy-redirect/index.html "$SITE_ROOT/prompt-kit/index.html"',
+            'test -s "$SITE_ROOT/operant/resources.v1.json"',
+            'cmp "$SITE_ROOT/operant/index.html" web/prompt-kit/index.html',
+            'cmp "$SITE_ROOT/operant/resources.v1.json" web/prompt-kit/resources.v1.json',
+            'cmp "$SITE_ROOT/prompt-kit/index.html" web/prompt-kit-legacy-redirect/index.html',
             "write_prompt_kit_promotion_receipt.py",
             "if: github.event_name == 'push' && github.ref == 'refs/heads/main'",
             "name: Prove deployed canonical bytes",
-            "cmp deployed-prompt-kit.html web/prompt-kit/index.html",
+            '"${PAGE_URL}operant"',
+            "cmp deployed-operant.html web/prompt-kit/index.html",
+            "cmp deployed-prompt-kit-legacy.html web/prompt-kit-legacy-redirect/index.html",
         )
         for marker in required:
             with self.subTest(marker=marker):
@@ -69,21 +75,22 @@ class PromptKitPagesContractTests(unittest.TestCase):
                 self.assertIn(marker, text)
         self.assertIn("needs: [validate, package]", text)
 
-    def test_existing_access_guide_retains_public_prompt_surface(self):
+    def test_access_guide_names_operant_as_canonical_public_surface(self):
         text = ACCESS_GUIDE.read_text(encoding="utf-8")
-        self.assertIn(PUBLIC_PROMPT_URL, text)
+        self.assertIn(PUBLIC_OPERANT_URL, text)
         self.assertIn("## Phone, tablet, or any browser", text)
         self.assertIn("Add to Home Screen", text)
         self.assertIn("GitHub Actions", text)
+        self.assertNotIn(f"canonical public browser URL is:\n\n```text\n{LEGACY_PUBLIC_PROMPT_URL}", text)
 
     def test_android_quick_open_guide_requires_no_download(self):
         text = PHONE_GUIDE.read_text(encoding="utf-8")
         self.assertIn(PUBLIC_LAUNCHER_URL, text)
-        self.assertIn(PUBLIC_PROMPT_URL, text)
+        self.assertIn(PUBLIC_OPERANT_URL, text)
         self.assertIn("no download required", text.lower())
         self.assertIn("Open in browser", text)
-        self.assertIn("Install on this Android phone", text)
-        self.assertIn("same Prompt Kit used on desktop", text)
+        self.assertIn("Install Operant", text)
+        self.assertIn("same Operant release used on desktop", text)
         self.assertIn("Canonical generated/deployed website artifact", text)
         self.assertIn("Implementation source: `docs/prompt-kit.js`", text)
 
@@ -92,7 +99,7 @@ class PromptKitPagesContractTests(unittest.TestCase):
         required = (
             'href="./manifest.webmanifest"',
             'id="openPromptKit"',
-            'href="./prompt-kit/"',
+            'href="./operant/"',
             'id="installButton"',
             'id="shareButton"',
             'id="copyButton"',
@@ -105,13 +112,15 @@ class PromptKitPagesContractTests(unittest.TestCase):
         for marker in required:
             with self.subTest(marker=marker):
                 self.assertIn(marker, html)
+        self.assertIn('new URL("./operant/", window.location.href)', html)
 
-    def test_manifest_launches_canonical_prompt_kit_as_standalone_app(self):
+    def test_manifest_launches_canonical_operant_as_standalone_app(self):
         payload = json.loads((MOBILE_ROOT / "manifest.webmanifest").read_text(encoding="utf-8"))
-        self.assertEqual(payload["id"], "./prompt-kit/")
-        self.assertEqual(payload["start_url"], "./prompt-kit/")
+        self.assertEqual(payload["id"], "./operant/")
+        self.assertEqual(payload["start_url"], "./operant/")
         self.assertEqual(payload["scope"], "./")
         self.assertEqual(payload["display"], "standalone")
+        self.assertEqual(payload["short_name"], "Operant")
         icon_sizes = {icon["sizes"] for icon in payload["icons"]}
         self.assertEqual(icon_sizes, {"192x192", "512x512"})
         self.assertTrue(all("maskable" in icon["purpose"] for icon in payload["icons"]))
@@ -119,11 +128,11 @@ class PromptKitPagesContractTests(unittest.TestCase):
     def test_service_worker_is_same_origin_network_first_with_offline_fallback(self):
         text = (MOBILE_ROOT / "service-worker.js").read_text(encoding="utf-8")
         required = (
-            '"./prompt-kit/"',
+            '"./operant/"',
             'requestUrl.origin !== self.location.origin',
             "fetch(event.request)",
             "cache.put(event.request, copy)",
-            'caches.match("./prompt-kit/")',
+            'caches.match("./operant/")',
             "self.skipWaiting()",
             "self.clients.claim()",
         )
@@ -136,12 +145,20 @@ class PromptKitPagesContractTests(unittest.TestCase):
     def test_service_worker_only_cleans_prompt_kit_caches_and_waits_for_runtime_writes(self):
         text = (MOBILE_ROOT / "service-worker.js").read_text(encoding="utf-8")
         self.assertIn('const CACHE_PREFIX = "ai-prompt-kit-mobile-";', text)
+        self.assertIn('const CACHE_NAME = `${CACHE_PREFIX}v2`;', text)
         self.assertIn("key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME", text)
         self.assertNotIn("keys.filter(key => key !== CACHE_NAME)", text)
         self.assertIn(
             "event.waitUntil(\n            caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy))",
             text,
         )
+
+    def test_legacy_prompt_kit_path_is_redirect_only(self):
+        text = LEGACY_REDIRECT.read_text(encoding="utf-8")
+        self.assertIn('location.replace("../operant/" + location.search + location.hash)', text)
+        self.assertIn('rel="canonical" href="../operant/"', text)
+        self.assertIn('url=../operant/', text)
+        self.assertNotIn("PROMPTS", text)
 
     def test_mobile_icons_and_qr_are_tracked_sized_pngs(self):
         self.assertEqual(png_size(MOBILE_ROOT / "icon-192.png"), (192, 192))
