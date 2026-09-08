@@ -32,8 +32,8 @@ jobs:
                   'self.assertIn("revealPromptShortcutTarget(promptId,\'instant\')", activation)',
               ),
               (
-                  'self.assertIn("Copy + reveal \' +promptId", polish)',
-                  'self.assertIn("Copy + snap to \' +promptId", polish)',
+                  'self.assertIn("Copy + reveal \' + 'promptId", polish)',
+                  'self.assertIn("Copy + snap to \' + 'promptId", polish)',
               ),
           )
           changed = False
