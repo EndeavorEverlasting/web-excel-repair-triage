@@ -104,7 +104,12 @@ class PromptKitCrossInputModalityTests(unittest.TestCase):
         by_id = {item["id"]: item for item in payload["capabilities"]}
         self.assertTrue(by_id["copy_known_id"]["phone"].lower().startswith("supported_exclusion"))
         self.assertIn("Go to P#", by_id["open_known_id"]["phone"])
+        self.assertIn("digits only", by_id["copy_known_id"]["keyboard"].lower())
+        self.assertIn("no dedicated known-ID digit grammar", by_id["copy_known_id"]["mouse"])
+        self.assertIn("no dedicated known-ID digit grammar", by_id["open_known_id"]["mouse"])
         self.assertEqual(by_id["reference"]["semantic_action"], "toggleRef")
+        rules = payload.get("semantic_convergence_rules") or []
+        self.assertTrue(any("phone Go to P#" in rule and "keyboard digits-only" in rule for rule in rules))
 
     def test_generated_site_embeds_converged_reference_route(self) -> None:
         generated = (ROOT / "web" / "prompt-kit" / "index.html").read_text(encoding="utf-8")

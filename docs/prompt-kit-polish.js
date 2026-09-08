@@ -547,6 +547,22 @@ function favoritePromptShortcutBindings(){
   return bindings
 }
 
+function promptShortcutDigitGesture(promptId){
+  var value=String(promptId||'');
+  if(!/^P\d+$/i.test(value))return '';
+  return value.slice(1)
+}
+
+function publishPromptShortcutDigitAliases(bindings){
+  var published=clonePromptShortcutBindings(bindings);
+  Object.keys(bindings||{}).forEach(function(gesture){
+    var promptId=bindings[gesture];
+    var digits=promptShortcutDigitGesture(promptId);
+    if(digits)published[digits]=promptId
+  });
+  return published
+}
+
 function effectivePromptShortcutBindings(){
   var merged={};
   Object.keys(sharedPromptShortcutBindings).forEach(function(gesture){merged[gesture]=sharedPromptShortcutBindings[gesture]});
@@ -556,7 +572,9 @@ function effectivePromptShortcutBindings(){
     var promptId=promptShortcutBindings[gesture];
     if(isFavoritePrompt(promptId))merged[gesture]=promptId
   });
-  return merged
+  // Keyboard grammar: type digits only (111). Storage may keep p111; digit aliases are published for matching.
+  // Phone grammar stays Go to P# (P prefix shown). Mouse has no dedicated known-ID digit sequence.
+  return publishPromptShortcutDigitAliases(merged)
 }
 
 function clonePromptShortcutBindings(source){
@@ -645,14 +663,14 @@ function renderPromptShortcutBindings(){
   if(!favoriteIds.length&&!sharedIds.length){var empty=document.createElement('span');empty.className='hotkey-shortcut-empty';empty.textContent='No favorite prompt shortcuts yet.';host.appendChild(empty);return}
   sharedIds.forEach(function(promptId){
     var row=document.createElement('div');row.className='hotkey-shortcut-row';
-    var key=document.createElement('kbd');key.textContent=promptId.toLowerCase();
+    var key=document.createElement('kbd');key.textContent=promptShortcutDigitGesture(promptId)||promptId.toLowerCase();
     var label=document.createElement('span');label.textContent='Copy + reveal '+promptId;
     var shared=document.createElement('span');shared.className='hotkey-shortcut-shared';shared.textContent='Recommended';
     row.appendChild(key);row.appendChild(label);row.appendChild(shared);host.appendChild(row)
   });
   favoriteIds.forEach(function(promptId){
     var row=document.createElement('div');row.className='hotkey-shortcut-row';
-    var key=document.createElement('kbd');key.textContent=promptId.toLowerCase();
+    var key=document.createElement('kbd');key.textContent=promptShortcutDigitGesture(promptId)||promptId.toLowerCase();
     var label=document.createElement('span');label.textContent='Copy + reveal '+promptId;
     var favorite=document.createElement('span');favorite.className='hotkey-shortcut-shared';favorite.textContent='Favorite';
     var remove=document.createElement('button');remove.type='button';remove.className='hotkey-shortcut-remove';remove.setAttribute('aria-label','Unfavorite '+promptId+' and remove its keyboard shortcut');remove.textContent='Unfavorite';
