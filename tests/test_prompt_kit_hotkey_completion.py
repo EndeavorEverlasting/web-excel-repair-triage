@@ -107,6 +107,31 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             source.index("promptShortcutBindings=candidate"),
         )
 
+
+    def test_favorites_automatically_publish_shortcuts_and_detail_favorite_control(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        deployed = DEPLOYED.read_text(encoding="utf-8")
+        for marker in (
+            "function favoritePromptShortcutBindings()",
+            "if(promptId&&isFavoritePrompt(promptId))bindings[promptId.toLowerCase()]=promptId",
+            "var favorites=favoritePromptShortcutBindings();",
+            "if(isFavoritePrompt(promptId))merged[gesture]=promptId",
+            "function favoritePromptShortcutIds()",
+            "function centerRenderedPromptCard(promptId,behavior)",
+            "function toggleFavoritePromptAndRefreshShortcut(rawPromptId)",
+            "function decoratePromptDetailFavorite(promptId)",
+            "prompt-detail-favorite-btn",
+            "Favorites and Hotkeys",
+            "shortcut '+promptId.toLowerCase()+' ready",
+            "baseShowPromptDetailWithFavorite(id,origin)",
+            "centerRenderedPromptCard(id,'instant');",
+            "toggleFavoritePromptAndRefreshShortcut(p.id)",
+        ):
+            self.assertIn(marker, source)
+            self.assertIn(marker, deployed)
+        effective = source[source.index("function effectivePromptShortcutBindings"):source.index("function clonePromptShortcutBindings")]
+        self.assertLess(effective.index("favoritePromptShortcutBindings"), effective.index("promptShortcutBindings[gesture]"))
+
     def test_prompt_sequence_owns_digits_and_header_navigation_is_letter_only(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         base = (ROOT / "docs" / "prompt-kit.js").read_text(encoding="utf-8")
@@ -216,7 +241,7 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             "Favorite prompt shortcuts",
             "promptShortcutPromptId",
             "promptShortcutBindings",
-            "Favorite a prompt, enter its ID",
+            "Favorites automatically become their P-ID shortcuts",
             "Save favorite prompt keyboard shortcut",
             "function focusFavoritePromptShortcutInput(panel)",
             "promptInput.scrollIntoView({block:'nearest',inline:'nearest'})",
@@ -260,7 +285,8 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         ):
             self.assertIn(row, readme)
         self.assertIn("Typed prompt sequences expire after 1.2 seconds", readme)
-        self.assertIn("only prompts that are currently Favorites", design)
+        self.assertIn("every current Favorite automatically participates", design)
+        self.assertIn("no second Save-shortcut action is required", design)
         self.assertIn("copies the canonical prompt and scrolls its card into view without opening prompt detail", design)
         self.assertIn("buffer is active", design)
         self.assertIn("one hand", design)

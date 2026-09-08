@@ -26,6 +26,7 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
             "input.inputMode='numeric'",
             "input.pattern='[0-9]*'",
             "input.enterKeyHint='go'",
+            "revealPromptShortcutTarget(promptId,'instant')",
             "window.showPromptDetail(promptId,toggle||null)",
             "input.addEventListener('input',function(){resolveMobilePromptJump(false)})",
             "form.addEventListener('submit',function(e){e.preventDefault();resolveMobilePromptJump(true)})",
@@ -36,6 +37,7 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
         jump = source[jump_start:jump_end]
         self.assertNotIn("isFavoritePrompt", jump)
         self.assertNotIn("promptShortcutBindings", jump)
+        self.assertLess(jump.index("revealPromptShortcutTarget(promptId,'instant')"), jump.index("window.showPromptDetail(promptId,toggle||null)"))
 
     def test_prefix_collision_requires_explicit_exact_confirmation_without_timing_race(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
@@ -94,7 +96,7 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
         contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
         requirement = next(item for item in contract["requirements"] if item["id"] == "mobile_prompt_id_jump")
         expected = requirement["expected"]
-        for phrase in ("Go to P#", "digits only", "P111", "P11", "Enter", "leading zero", "without opening More", "browser Find", "not required"):
+        for phrase in ("Go to P#", "digits only", "P111", "P11", "Enter", "leading zero", "without opening More", "browser Find", "not required", "centered"):
             self.assertIn(phrase, expected)
         guide = PHONE_GUIDE.read_text(encoding="utf-8")
         for phrase in (
@@ -108,6 +110,8 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
             "P11",
             "Press **Enter**",
             "leading zero",
+            "reveals and centers P111",
+            "automatically becomes its lower-case P-ID hotkey",
         ):
             self.assertIn(phrase, guide)
 
@@ -118,6 +122,7 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
             "mobilePromptJumpInput",
             "Go to P#",
             "resolveMobilePromptJump(force)",
+            "revealPromptShortcutTarget(promptId,'instant')",
             "window.showPromptDetail(promptId,toggle||null)",
         ):
             self.assertIn(marker, generated)

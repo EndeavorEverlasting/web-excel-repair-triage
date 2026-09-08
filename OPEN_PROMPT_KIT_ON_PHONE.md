@@ -46,7 +46,8 @@ If you already know the prompt ID, do **not** open More and do **not** use a swi
 
 1. Tap **Go to P#**.
 2. For `P111`, type **111**. The `P` is already supplied by the control.
-3. When the ID is exact and unambiguous, **P111 opens automatically**. There is no search-results tap.
+3. When the ID is exact and unambiguous, **P111 opens automatically**. There is no search-results tap. The main prompt library also reveals and centers P111 behind the detail panel, so closing the panel leaves you at the prompt you requested.
+4. Use the **☆ Favorite** control directly in the open prompt panel when you want to keep it. A Favorite automatically becomes its lower-case P-ID hotkey (for example, `p111`); there is no second shortcut-save step.
 
 You do not open **More** first. **Swiping is not required.** This path also avoids opening Chrome's **Find in page**, typing the `P`, and stepping through text matches that do not understand Prompt Kit IDs.
 

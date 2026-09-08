@@ -56,6 +56,17 @@ def main() -> int:
                 assert overlay.evaluate("el=>el.classList.contains('open')"), "P111 did not auto-open after exact digits"
                 detail_text = page.locator("#promptDetail").inner_text()
                 assert "P111" in detail_text, detail_text[:300]
+                target_box = page.locator('[data-prompt-id="P111"]').bounding_box() or {}
+                target_mid = target_box.get("y", 0) + target_box.get("height", 0) / 2
+                assert abs(target_mid - 844 / 2) <= 150, (target_box, target_mid)
+                detail_favorite = page.locator(".prompt-detail-favorite-btn")
+                assert detail_favorite.is_visible(), "open detail does not expose Favorite"
+                assert detail_favorite.get_attribute("aria-pressed") == "false"
+                detail_favorite.click()
+                assert detail_favorite.get_attribute("aria-pressed") == "true"
+                shortcut_rows = page.locator("#promptShortcutBindings").inner_text()
+                assert "p111" in shortcut_rows.lower() and "P111" in shortcut_rows, shortcut_rows
+                assert "Favorite" in shortcut_rows, shortcut_rows
                 page.locator(".prompt-detail-close").click()
 
                 # Exhaust every current exact ID that is also a prefix of another prompt.
@@ -147,6 +158,9 @@ def main() -> int:
                     "swipe_required": False,
                     "result_tap_required": False,
                     "browser_find_required": False,
+                    "underlying_prompt_centered": True,
+                    "detail_favorite_available": True,
+                    "favorite_auto_hotkey": "p111",
                 }))
             browser.close()
     finally:

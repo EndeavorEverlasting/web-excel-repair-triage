@@ -5,7 +5,7 @@ Design the keyboard-command subsystem before configurable prompt shortcuts are b
 
 ## User outcomes and invariants
 - Filters support semantic **show**, **hide**, and **toggle** commands through one state owner.
-- A user may bind a favorite prompt to a typed sequence such as `p95`.
+- Every current Favorite automatically publishes its canonical lower-case prompt ID as a typed shortcut such as `p95`; manual shortcut configuration remains a compatibility/repair path, not a second commitment step.
 - Keyboard commands do not fire in `input`, `textarea`, `select`, or content-editable surfaces.
 - Built-ins and user bindings cannot silently collide.
 - A prompt binding is valid only when its target exists in the canonical prompt catalog.
@@ -164,7 +164,7 @@ Production decisions closed on 2026-08-22:
 - modifier chords and editable fields suppress the backtick Hotkeys command.
 - `F` remains filter toggle; `[` explicitly hides filters and `]` explicitly shows filters.
 - configured prompt-ID sequences expire after 1.2 seconds.
-- only prompts that are currently Favorites may be assigned a prompt-ID shortcut.
+- every current Favorite automatically participates in the effective prompt-ID shortcut registry; unfavoriting removes that derived shortcut immediately, while the versioned explicit-binding store remains a compatibility/repair path.
 - a completed prompt-ID shortcut copies the canonical prompt and scrolls its card into view without opening prompt detail through `showPromptDetail`.
 - shortcut persistence uses versioned `promptKit.promptShortcuts.v1` storage and publishes only after a successful durable write.
 - opening Hotkeys by either the visible button or unmodified backtick reveals and focuses the Favorite prompt ID input; `Escape` closes Hotkeys even while that editable input owns focus and restores focus to the Hotkeys toggle.
@@ -175,7 +175,7 @@ These production choices preserve the selected seams and remove the prior UX-pol
 Production decisions extended on 2026-09-01:
 - a registry prompt may publish a shared recommended shortcut by shipping `sharedShortcut: true` in its canonical registry record; the effective typed sequence is the lowercase prompt ID.
 - shared recommended shortcuts are active for every user without requiring a Favorite and complete through the same copy + reveal dispatch path.
-- built-ins and user-configured bindings keep precedence; assigning or removing a personal binding still requires the Favorite gate and a successful durable storage write.
+- built-ins keep precedence; Favorite-derived bindings require no duplicate shortcut write because durable Favorite state is their authority. Explicit stored bindings remain fail-closed compatibility data and are effective only while their prompt remains a Favorite.
 - Hotkey help lists shared recommended shortcuts as a projection of the registry with a Recommended label and no Remove control, because the registry owns them.
 
 ## Proof ceiling
@@ -187,3 +187,7 @@ The remaining ceiling is limited to environment diversity that cannot be exhaust
 Production behavior is owned in `docs/prompt-kit-polish.js`; `web/prompt-kit/index.html` is rebuilt only through `scripts/build_prompt_kit_registry.py`. New hotkeys must extend the existing dispatcher/state owners and focused tests rather than introduce a second keyboard registry, second filter state owner, or generated-only patch.
 
 The owning CI gate is `.github/workflows/prompt-kit-web.yml`, which compiles and executes `tests/test_prompt_kit_hotkey_completion.py` alongside the existing Prompt Kit interaction, discovery, navigation, filtering, mobile, portability, and exact-generated-site checks.
+
+Production decision extended on 2026-09-08:
+- Opening prompt detail centers the already-rendered prompt card without changing the current filter/profile context. Direct Go to P# first reveals the canonical target in the library, centers it, and then opens detail.
+- Prompt detail exposes the same Favorite state as the card star. Favoriting from either surface immediately makes the canonical lower-case prompt ID an effective hotkey; no second Save-shortcut action is required.

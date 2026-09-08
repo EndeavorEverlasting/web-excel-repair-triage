@@ -35,7 +35,7 @@
     },
     {
       "id": "mobile_prompt_id_jump",
-      "expected": "On narrow touch layouts, a persistent Go to P# control is the fastest route when the user already knows a prompt ID. The user taps Go to P#, enters digits only (for P111, type 111), and an exact unambiguous ID opens its canonical prompt detail automatically without opening More, swiping, browser Find, typing the P prefix, or tapping a search result. When an exact ID is also a prefix of a longer prompt ID (for example P11 versus P111), it must not auto-open and steal the longer route: the status explicitly says the shorter ID is exact, the submit control becomes Open P11, and Enter or that button deliberately opens P11 while continued typing can reach P111. Prefix-only or nonexistent IDs have no enabled exact-submit target; canonical P00-P09 IDs require their leading zero; pasted values such as P111 are safely normalized to the same digits-only resolver. A separate compact More control exposes Find Prompt, previous/next profile, Search, Favorites, Filters, Reference, Top, and Bottom as labeled buttons. Swiping is not required and no hidden gesture vocabulary is part of the primary phone interaction contract. Desktop Hotkeys and shared semantic actions remain authoritative; phone controls do not create parallel prompt state."
+      "expected": "On narrow touch layouts, a persistent Go to P# control is the fastest route when the user already knows a prompt ID. The user taps Go to P#, enters digits only (for P111, type 111), and an exact unambiguous ID opens its canonical prompt detail automatically without opening More, swiping, browser Find, typing the P prefix, or tapping a search result. When an exact ID is also a prefix of a longer prompt ID (for example P11 versus P111), it must not auto-open and steal the longer route: the status explicitly says the shorter ID is exact, the submit control becomes Open P11, and Enter or that button deliberately opens P11 while continued typing can reach P111. Prefix-only or nonexistent IDs have no enabled exact-submit target; canonical P00-P09 IDs require their leading zero; pasted values such as P111 are safely normalized to the same digits-only resolver. A separate compact More control exposes Find Prompt, previous/next profile, Search, Favorites, Filters, Reference, Top, and Bottom as labeled buttons. Swiping is not required and no hidden gesture vocabulary is part of the primary phone interaction contract. Desktop Hotkeys and shared semantic actions remain authoritative; phone controls do not create parallel prompt state. Before detail opens, the canonical prompt card is revealed when necessary and centered in the underlying Prompt Kit page so closing the panel leaves the user oriented at the requested prompt."
     },
     {
       "id": "horizontal_filter_rails",
@@ -47,7 +47,7 @@
     },
     {
       "id": "mobile_detail_surface",
-      "expected": "Prompt detail reuses the existing detail surface and functions but occupies the mobile viewport with an accessible close and full-width Copy action."
+      "expected": "Prompt detail reuses the existing detail surface and functions but occupies the mobile viewport with an accessible close and full-width Copy action. The detail surface exposes the canonical Favorite toggle; favoriting there or on the card immediately publishes that Favorite's lower-case prompt ID as an effective hotkey without a second shortcut-save step, and unfavoriting removes the derived hotkey."
     },
     {
       "id": "mobile_reference_surface",

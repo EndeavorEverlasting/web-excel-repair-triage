@@ -439,6 +439,10 @@ function resolveMobilePromptJump(force){
   var longer=mobilePromptJumpHasPrefix(promptId);
   if(prompt&&(!longer||force)){
     setMobilePromptJumpSubmitState(promptId,true,longer);
+    if(!revealPromptShortcutTarget(promptId,'instant')){
+      if(status)status.textContent=promptId+' could not be centered in the prompt library.';
+      return false
+    }
     setMobilePromptJumpOpen(false,false);
     setHotkeyHelpOpen(false,false);
     if(typeof window.showPromptDetail==='function'){
@@ -533,10 +537,26 @@ function computeSharedPromptShortcutBindings(){
   return bindings
 }
 
+function favoritePromptShortcutBindings(){
+  var bindings={};
+  var catalog=typeof PROMPTS!=='undefined'&&Array.isArray(PROMPTS)?PROMPTS:[];
+  catalog.forEach(function(item){
+    if(!item)return;
+    var promptId=normalizePromptShortcutId(item.id);
+    if(promptId&&isFavoritePrompt(promptId))bindings[promptId.toLowerCase()]=promptId
+  });
+  return bindings
+}
+
 function effectivePromptShortcutBindings(){
   var merged={};
   Object.keys(sharedPromptShortcutBindings).forEach(function(gesture){merged[gesture]=sharedPromptShortcutBindings[gesture]});
-  Object.keys(promptShortcutBindings).forEach(function(gesture){merged[gesture]=promptShortcutBindings[gesture]});
+  var favorites=favoritePromptShortcutBindings();
+  Object.keys(favorites).forEach(function(gesture){merged[gesture]=favorites[gesture]});
+  Object.keys(promptShortcutBindings).forEach(function(gesture){
+    var promptId=promptShortcutBindings[gesture];
+    if(isFavoritePrompt(promptId))merged[gesture]=promptId
+  });
   return merged
 }
 
@@ -579,6 +599,11 @@ function configuredPromptShortcutIds(){
   return Object.keys(promptShortcutBindings).sort(function(a,b){return Number(a.slice(1))-Number(b.slice(1))}).map(function(gesture){return promptShortcutBindings[gesture]})
 }
 
+function favoritePromptShortcutIds(){
+  var bindings=favoritePromptShortcutBindings();
+  return Object.keys(bindings).sort(function(a,b){return Number(a.slice(1))-Number(b.slice(1))}).map(function(gesture){return bindings[gesture]})
+}
+
 function sharedPromptShortcutIds(){
   return Object.keys(sharedPromptShortcutBindings).sort(function(a,b){return Number(a.slice(1))-Number(b.slice(1))}).map(function(gesture){return sharedPromptShortcutBindings[gesture]})
 }
@@ -616,9 +641,9 @@ function renderPromptShortcutBindings(){
   var host=document.getElementById('promptShortcutBindings');
   if(!host)return;
   host.innerHTML='';
-  var sharedIds=sharedPromptShortcutIds().filter(function(promptId){return !promptShortcutBindings[promptId.toLowerCase()]});
-  var ids=configuredPromptShortcutIds();
-  if(!ids.length&&!sharedIds.length){var empty=document.createElement('span');empty.className='hotkey-shortcut-empty';empty.textContent='No favorite prompt shortcuts configured.';host.appendChild(empty);return}
+  var favoriteIds=favoritePromptShortcutIds();
+  var sharedIds=sharedPromptShortcutIds().filter(function(promptId){return favoriteIds.indexOf(promptId)<0});
+  if(!favoriteIds.length&&!sharedIds.length){var empty=document.createElement('span');empty.className='hotkey-shortcut-empty';empty.textContent='No favorite prompt shortcuts yet.';host.appendChild(empty);return}
   sharedIds.forEach(function(promptId){
     var row=document.createElement('div');row.className='hotkey-shortcut-row';
     var key=document.createElement('kbd');key.textContent=promptId.toLowerCase();
@@ -626,13 +651,14 @@ function renderPromptShortcutBindings(){
     var shared=document.createElement('span');shared.className='hotkey-shortcut-shared';shared.textContent='Recommended';
     row.appendChild(key);row.appendChild(label);row.appendChild(shared);host.appendChild(row)
   });
-  ids.forEach(function(promptId){
+  favoriteIds.forEach(function(promptId){
     var row=document.createElement('div');row.className='hotkey-shortcut-row';
     var key=document.createElement('kbd');key.textContent=promptId.toLowerCase();
     var label=document.createElement('span');label.textContent='Copy + reveal '+promptId;
-    var remove=document.createElement('button');remove.type='button';remove.className='hotkey-shortcut-remove';remove.setAttribute('aria-label','Remove '+promptId+' keyboard shortcut');remove.textContent='Remove';
-    remove.addEventListener('click',function(){removePromptShortcut(promptId)});
-    row.appendChild(key);row.appendChild(label);row.appendChild(remove);host.appendChild(row)
+    var favorite=document.createElement('span');favorite.className='hotkey-shortcut-shared';favorite.textContent='Favorite';
+    var remove=document.createElement('button');remove.type='button';remove.className='hotkey-shortcut-remove';remove.setAttribute('aria-label','Unfavorite '+promptId+' and remove its keyboard shortcut');remove.textContent='Unfavorite';
+    remove.addEventListener('click',function(){toggleFavoritePromptAndRefreshShortcut(promptId)});
+    row.appendChild(key);row.appendChild(label);row.appendChild(favorite);row.appendChild(remove);host.appendChild(row)
   })
 }
 
@@ -654,7 +680,16 @@ function promptShortcutHasLongerPrefix(candidate,gestures){
   return gestures.some(function(gesture){return gesture!==candidate&&gesture.indexOf(candidate)===0})
 }
 
-function revealPromptShortcutTarget(promptId){
+function centerRenderedPromptCard(promptId,behavior){
+  var selector='[data-prompt-id="'+String(promptId||'').replace(/"/g,'')+'"]';
+  var card=document.querySelector(selector);
+  if(!card)return false;
+  var scrollBehavior=behavior||hotkeyScrollBehavior();
+  try{card.scrollIntoView({behavior:scrollBehavior,block:'center',inline:'nearest'})}catch(e){try{card.scrollIntoView()}catch(ignore){}}
+  return true
+}
+
+function revealPromptShortcutTarget(promptId,behavior){
   if(window.PromptKitProfiles&&typeof window.PromptKitProfiles.activateSlot==='function'){
     window.PromptKitProfiles.activateSlot('A',true)
   }
@@ -665,11 +700,7 @@ function revealPromptShortcutTarget(promptId){
   document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__all__')});
   renderTypes();
   render();
-  var selector='[data-prompt-id="'+String(promptId||'').replace(/"/g,'')+'"]';
-  var card=document.querySelector(selector);
-  if(!card)return false;
-  try{card.scrollIntoView({behavior:hotkeyScrollBehavior(),block:'center',inline:'nearest'})}catch(e){try{card.scrollIntoView()}catch(ignore){}}
-  return true
+  return centerRenderedPromptCard(promptId,behavior||hotkeyScrollBehavior())
 }
 
 function activatePromptShortcutTarget(promptId){
@@ -823,7 +854,7 @@ panel.appendChild(head);
   configTitle.textContent='Favorite prompt shortcuts';
   var configHint=document.createElement('span');
   configHint.className='hotkey-shortcut-hint';
-  configHint.textContent='Favorite a prompt, enter its ID, then type that ID anywhere outside editable fields.';
+  configHint.textContent='Favorites automatically become their P-ID shortcuts. Type a favorite ID anywhere outside editable fields; the ID field remains available for explicit repair.';
   var configControls=document.createElement('div');
   configControls.className='hotkey-shortcut-controls';
   var promptInput=document.createElement('input');
@@ -907,6 +938,63 @@ function installCompactBrowsingHotkeys(){
   },true)
 }
 
+function ensurePromptDetailFavoriteStyles(){
+  if(document.getElementById('prompt-detail-favorite-styles'))return;
+  var style=document.createElement('style');
+  style.id='prompt-detail-favorite-styles';
+  style.textContent='.prompt-detail-favorite-btn{position:absolute;top:12px;right:50px;z-index:3;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:6px 10px;border:1px solid rgba(245,158,11,.55);border-radius:999px;background:rgba(15,23,42,.94);color:#fbbf24;font:800 11px/1 inherit;cursor:pointer}.prompt-detail-favorite-btn:hover,.prompt-detail-favorite-btn:focus-visible{outline:none;border-color:#f59e0b;box-shadow:0 0 0 2px rgba(245,158,11,.18)}.prompt-detail-favorite-btn.active{background:rgba(245,158,11,.16);border-color:#f59e0b}@media(max-width:760px){.prompt-detail-favorite-btn{position:sticky;top:0;right:auto;float:right;margin:-4px 34px 8px 8px;min-height:44px;padding:8px 12px}}';
+  document.head.appendChild(style)
+}
+
+function refreshPromptDetailFavoriteButton(button,promptId){
+  if(!button)return;
+  var active=isFavoritePrompt(promptId);
+  button.classList.toggle('active',active);
+  button.setAttribute('aria-pressed',active?'true':'false');
+  button.setAttribute('aria-label',(active?'Remove ':'Add ')+promptId+(active?' from Favorites and Hotkeys':' to Favorites and Hotkeys'));
+  button.textContent=(active?'★ ':'☆ ')+(active?'Favorited':'Favorite')
+}
+
+function toggleFavoritePromptAndRefreshShortcut(rawPromptId){
+  var promptId=normalizePromptShortcutId(rawPromptId);
+  if(!promptId)return false;
+  var wasFavorite=isFavoritePrompt(promptId);
+  toggleFavoritePrompt(promptId);
+  var isFavorite=isFavoritePrompt(promptId);
+  renderPromptShortcutBindings();
+  var detailButton=document.querySelector('.prompt-detail-favorite-btn[data-favorite-prompt-id="'+promptId+'"]');
+  refreshPromptDetailFavoriteButton(detailButton,promptId);
+  if(isFavorite&&!wasFavorite)showToast('★ '+promptId+' saved · shortcut '+promptId.toLowerCase()+' ready','success');
+  else if(!isFavorite&&wasFavorite)showToast('Removed '+promptId+' from Favorites and Hotkeys');
+  return isFavorite
+}
+
+function decoratePromptDetailFavorite(promptId){
+  var normalized=normalizePromptShortcutId(promptId);
+  var detail=document.getElementById('promptDetail');
+  if(!normalized||!detail)return false;
+  var existing=detail.querySelector('.prompt-detail-favorite-btn');
+  if(existing&&existing.parentNode)existing.parentNode.removeChild(existing);
+  var button=document.createElement('button');
+  button.type='button';
+  button.className='prompt-detail-favorite-btn';
+  button.setAttribute('data-favorite-prompt-id',normalized);
+  refreshPromptDetailFavoriteButton(button,normalized);
+  button.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();toggleFavoritePromptAndRefreshShortcut(normalized)});
+  var close=detail.querySelector('.prompt-detail-close');
+  if(close&&close.parentNode===detail)detail.insertBefore(button,close.nextSibling);else detail.insertBefore(button,detail.firstChild);
+  return true
+}
+
+var baseShowPromptDetailWithFavorite=window.showPromptDetail;
+if(typeof baseShowPromptDetailWithFavorite==='function'){
+  window.showPromptDetail=function(id,origin){
+    centerRenderedPromptCard(id,'instant');
+    baseShowPromptDetailWithFavorite(id,origin);
+    decoratePromptDetailFavorite(id)
+  }
+}
+
 window.appendPromptCard=function(grid,p){
   var hex=COLORS[p.color.toLowerCase()]||'#64748b';
   var isGnhf=p.category==='gnhf';
@@ -932,7 +1020,7 @@ window.appendPromptCard=function(grid,p){
   favBtn.setAttribute('aria-label',(isFavoritePrompt(p.id)?'Remove ':'Add ')+p.id+(isFavoritePrompt(p.id)?' from Favorites':' to Favorites'));
   favBtn.setAttribute('aria-pressed',isFavoritePrompt(p.id)?'true':'false');
   favBtn.title=isFavoritePrompt(p.id)?'Remove from Favorites':'Save to Favorites';
-  favBtn.onclick=function(e){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();toggleFavoritePrompt(p.id)};
+  favBtn.onclick=function(e){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();toggleFavoritePromptAndRefreshShortcut(p.id)};
   actions.appendChild(favBtn);
 
   var openBtn=document.createElement('button');
@@ -956,6 +1044,7 @@ window.appendPromptCard=function(grid,p){
 ensurePromptKitPolishStyles();
 ensureFavoritesGroupJumpStyles();
 ensureFavoritesJourneyStyles();
+ensurePromptDetailFavoriteStyles();
 ensureCompactBrowsingControls();
 ensureHotkeyHelp();
 installCompactBrowsingViewSwitches();
