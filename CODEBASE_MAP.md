@@ -66,13 +66,13 @@ python -m unittest tests.test_artifact_handoff_harness -v
 
 Workbook/product changes require their focused engine tests. Prompt Kit changes require the registered Prompt Kit web/interaction/discovery/portability gates rather than this generic set.
 
-## Public Prompt Kit access
+## Public Operant access
 
 Canonical browser surface:
 
-`https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`
+`https://endeavoreverlasting.github.io/web-excel-repair-triage/operant`
 
-Normal browser users should not clone the repository. Cross-device acquisition is routed through `PROMPT_KIT_ACCESS.md` and the selected technician skill.
+The former `/prompt-kit/` Pages path is compatibility-only. Normal browser users should not clone the repository. Cross-device acquisition is routed through `PROMPT_KIT_ACCESS.md` and the selected technician skill.
 
 ## Artifact engine
 
