@@ -1,9 +1,9 @@
 {
-  "id": "./prompt-kit/",
-  "name": "AI Harness Prompt Kit",
-  "short_name": "AI Prompt Kit",
-  "description": "Responsive AI Harness Prompt Kit published from the canonical GitHub repository.",
-  "start_url": "./prompt-kit/",
+  "id": "./operant/",
+  "name": "Operant",
+  "short_name": "Operant",
+  "description": "Responsive Operant agentic capability and execution system published from the canonical GitHub repository.",
+  "start_url": "./operant/",
   "scope": "./",
   "display": "standalone",
   "background_color": "#080d16",
@@ -25,9 +25,9 @@
   ],
   "shortcuts": [
     {
-      "name": "Open Prompt Kit",
+      "name": "Open Operant",
       "short_name": "Open",
-      "url": "./prompt-kit/",
+      "url": "./operant/",
       "icons": [
         {
           "src": "./icon-192.png",
