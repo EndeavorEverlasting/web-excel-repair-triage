@@ -92,11 +92,33 @@ def validate() -> dict[str, Any]:
         expected_suffix = "/" + str(source["resource_filename"])
         if not path.startswith(expected_prefix) or not path.endswith(expected_suffix):
             raise ValidationError(f"resource path escapes configured donor root: {item.get('id')}")
+        max_depth = int(source.get("max_depth", 1)) if str(source.get("enumeration", "git_skill_tree")) == "git_skill_tree" else None
+        if max_depth is not None:
+            relative = path[len(expected_prefix) : -len(expected_suffix)]
+            parts = [part for part in relative.split("/") if part]
+            if not parts or len(parts) > max_depth:
+                raise ValidationError(f"resource path depth exceeds configured max_depth: {item.get('id')}")
+            exclude = {str(seg) for seg in source.get("exclude_root_segments", [])}
+            if parts[0] in exclude:
+                raise ValidationError(f"resource path uses excluded root segment: {item.get('id')}")
         if item.get("source_repo") != repo or item.get("source_sha") != sha:
             raise ValidationError(f"resource source identity differs from donor floor: {item.get('id')}")
-        expected_url = f"https://github.com/{repo}/blob/{sha}/{path}"
+        url_mode = str(source.get("url_mode", "github_blob"))
+        if url_mode == "github_blob":
+            expected_url = f"https://github.com/{repo}/blob/{sha}/{path}"
+        elif url_mode == "public_template":
+            expected_url = str(source["url_template"]).format(
+                slug=str(item.get("slug", "")),
+                sha=sha,
+                path=path,
+                repository=repo,
+            )
+        else:
+            raise ValidationError(f"unsupported url_mode for donor {source_id}: {url_mode}")
         if item.get("url") != expected_url:
-            raise ValidationError(f"resource URL differs from exact donor repository/path/SHA: {item.get('id')}")
+            raise ValidationError(f"resource URL differs from configured donor URL mode: {item.get('id')}")
+        if "contentPreview" in item or "body" in item or "copyContent" in item:
+            raise ValidationError(f"resource embeds upstream body content: {item.get('id')}")
         pinned += 1
         terms = item.get("search_terms")
         if not isinstance(terms, list) or len(terms) > int(projection["maximum_search_terms_per_resource"]):

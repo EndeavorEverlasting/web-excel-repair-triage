@@ -32,26 +32,45 @@ class OperantExternalResourceTests(unittest.TestCase):
 
     def test_registered_donors_and_roots_are_explicit(self) -> None:
         sources = {item["id"]: item for item in self.contract["sources"]}
+        self.assertEqual(
+            set(sources),
+            {"deepseek-harness", "prompts-chat", "mattpocock-skills"},
+        )
         self.assertEqual(sources["deepseek-harness"]["repository"], "deepseek-ai/deepseek-harness")
         self.assertEqual(sources["deepseek-harness"]["expected_default_branch"], "master")
         self.assertEqual(sources["deepseek-harness"]["resource_root"], ".agents/skills")
-        self.assertEqual(sources["anthropic-skills"]["repository"], "anthropics/skills")
-        self.assertEqual(sources["anthropic-skills"]["expected_default_branch"], "main")
-        self.assertEqual(sources["anthropic-skills"]["resource_root"], "skills")
+        self.assertEqual(sources["deepseek-harness"]["enumeration"], "git_skill_tree")
+        self.assertEqual(sources["prompts-chat"]["repository"], "f/prompts.chat")
+        self.assertEqual(sources["prompts-chat"]["enumeration"], "http_json_catalog")
+        self.assertEqual(sources["prompts-chat"]["catalog_url"], "https://prompts.chat/prompts.json")
+        self.assertEqual(sources["prompts-chat"]["url_mode"], "public_template")
+        self.assertEqual(sources["mattpocock-skills"]["repository"], "mattpocock/skills")
+        self.assertEqual(sources["mattpocock-skills"]["resource_root"], "skills")
+        self.assertEqual(sources["mattpocock-skills"]["max_depth"], 2)
+        self.assertEqual(sources["mattpocock-skills"]["enumeration"], "git_skill_tree")
 
     def test_index_is_metadata_only_commit_pinned_and_bounded(self) -> None:
         self.assertTrue(self.contract["projection"]["metadata_only"])
         self.assertFalse(self.contract["projection"]["copy_upstream_skill_body"])
         floors = {row["id"]: row for row in self.index["source_floor"]}
-        self.assertEqual(set(floors), {"deepseek-harness", "anthropic-skills"})
+        self.assertEqual(set(floors), {"deepseek-harness", "prompts-chat", "mattpocock-skills"})
         self.assertLessEqual(len(self.index["resources"]), self.contract["projection"]["maximum_entries"])
         self.assertLessEqual(INDEX.stat().st_size, self.contract["projection"]["maximum_index_bytes"])
         for resource in self.index["resources"]:
             floor = floors[resource["source_id"]]
-            self.assertIn(f"/blob/{floor['resolved_sha']}/", resource["url"])
+            self.assertEqual(resource["source_sha"], floor["resolved_sha"])
             self.assertNotIn("copyContent", resource)
             self.assertNotIn("body", resource)
-            self.assertLessEqual(len(resource["search_terms"]), self.contract["projection"]["maximum_search_terms_per_resource"])
+            self.assertNotIn("contentPreview", resource)
+            self.assertLessEqual(
+                len(resource["search_terms"]),
+                self.contract["projection"]["maximum_search_terms_per_resource"],
+            )
+            source = next(item for item in self.contract["sources"] if item["id"] == resource["source_id"])
+            if source.get("url_mode", "github_blob") == "github_blob":
+                self.assertIn(f"/blob/{floor['resolved_sha']}/", resource["url"])
+            else:
+                self.assertTrue(resource["url"].startswith("https://prompts.chat/prompts/"))
 
     def test_missing_coverage_points_external_and_routes_prompt_review(self) -> None:
         external = [r for r in self.index["resources"] if r["coverage"]["disposition"] == "POINT_TO_EXTERNAL"]
@@ -99,6 +118,37 @@ class OperantExternalResourceTests(unittest.TestCase):
         self.assertIn('RESOURCE_INDEX_NAME = "resources.v1.json"', portable)
         self.assertIn('resource_source_path = repo_root / "web" / "prompt-kit" / RESOURCE_INDEX_NAME', portable)
         self.assertIn('resource_sidecar_matches_canonical', portable)
+
+    def test_nested_skill_depth_and_public_url_helpers(self) -> None:
+        github_source = {
+            "id": "mattpocock-skills",
+            "url_mode": "github_blob",
+        }
+        self.assertEqual(
+            sync.resource_url(
+                github_source,
+                repo="mattpocock/skills",
+                sha="abc",
+                path="skills/engineering/tdd/SKILL.md",
+                slug="engineering/tdd",
+            ),
+            "https://github.com/mattpocock/skills/blob/abc/skills/engineering/tdd/SKILL.md",
+        )
+        catalog_source = {
+            "id": "prompts-chat",
+            "url_mode": "public_template",
+            "url_template": "https://prompts.chat/prompts/{slug}",
+        }
+        self.assertEqual(
+            sync.resource_url(
+                catalog_source,
+                repo="f/prompts.chat",
+                sha="def",
+                path="catalog/demo/prompt.meta.json",
+                slug="demo",
+            ),
+            "https://prompts.chat/prompts/demo",
+        )
 
     def test_token_match_is_deterministic_and_conservative(self) -> None:
         query = sync.tokens("code-review")

@@ -7,17 +7,41 @@
       "id": "deepseek-harness",
       "repository": "deepseek-ai/deepseek-harness",
       "expected_default_branch": "master",
+      "enumeration": "git_skill_tree",
       "resource_root": ".agents/skills",
       "resource_filename": "SKILL.md",
-      "resource_kind": "agent-skill"
+      "resource_kind": "agent-skill",
+      "max_depth": 1,
+      "url_mode": "github_blob"
     },
     {
-      "id": "anthropic-skills",
-      "repository": "anthropics/skills",
+      "id": "prompts-chat",
+      "repository": "f/prompts.chat",
       "expected_default_branch": "main",
+      "enumeration": "http_json_catalog",
+      "catalog_url": "https://prompts.chat/prompts.json",
+      "items_key": "prompts",
+      "slug_field": "slug",
+      "title_field": "title",
+      "description_field": "description",
+      "resource_root": "catalog",
+      "resource_filename": "prompt.meta.json",
+      "resource_kind": "community-prompt",
+      "url_mode": "public_template",
+      "url_template": "https://prompts.chat/prompts/{slug}",
+      "description_max_chars": 160
+    },
+    {
+      "id": "mattpocock-skills",
+      "repository": "mattpocock/skills",
+      "expected_default_branch": "main",
+      "enumeration": "git_skill_tree",
       "resource_root": "skills",
       "resource_filename": "SKILL.md",
-      "resource_kind": "agent-skill"
+      "resource_kind": "agent-skill",
+      "max_depth": 2,
+      "exclude_root_segments": ["deprecated"],
+      "url_mode": "github_blob"
     }
   ],
   "refresh": {
@@ -35,7 +59,7 @@
     "copy_upstream_skill_body": false,
     "pin_urls_to_resolved_commit": true,
     "maximum_entries": 5000,
-    "maximum_index_bytes": 1500000,
+    "maximum_index_bytes": 2500000,
     "maximum_search_terms_per_resource": 12,
     "default_render_page_size": 40,
     "lazy_fetch_required": true,
