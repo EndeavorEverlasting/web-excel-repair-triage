@@ -180,7 +180,7 @@ prompt-kit-current-preview
 prompt-kit-portable-runtime
 ```
 
-`prompt-kit-current-preview` is the canonical builder preview. `prompt-kit-portable-runtime` contains the generated stable-origin artifact, its SHA-256 manifest, and portability validation output. Neither artifact replaces `main` as the source of truth.
+`prompt-kit-current-preview` is the canonical builder preview. `prompt-kit-portable-runtime` contains the generated stable-origin artifact, its SHA-256 manifest, and portability validation output. Neither artifact replaces `main` as the source of truth. GitHub-hosted runner temp paths are ephemeral CI evidence and must not be copied into the workstation as another persistent Prompt Kit checkout.
 
 ## Rebuild and open locally
 
