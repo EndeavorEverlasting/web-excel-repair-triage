@@ -91,6 +91,32 @@ def test_multi_project_day_is_normal_when_hours_reconcile() -> None:
     assert rec.reconciled
 
 
+def test_default_allocation_cannot_coexist_with_explicit_split() -> None:
+    state = _base_state()
+    state["allocations"] = [
+        {"allocation_id": "A1", "date": "2026-09-01", "staff": "Operator", "project": "Northwell", "basis": "DEFAULT", "hours": 4},
+        {"allocation_id": "A2", "date": "2026-09-01", "staff": "Operator", "project": "H&H", "basis": "EXPLICIT", "hours": 4},
+    ]
+    with pytest.raises(ValueError, match="DEFAULT allocation cannot coexist with explicit allocations"):
+        normalize_state(state)
+
+
+def test_default_allocation_must_match_fallback_project_and_paid_hours() -> None:
+    state = _base_state()
+    state["allocations"] = [
+        {"allocation_id": "A1", "date": "2026-09-01", "staff": "Operator", "project": "H&H", "basis": "DEFAULT", "hours": 8}
+    ]
+    with pytest.raises(ValueError, match="DEFAULT allocation must use attendance default_project"):
+        normalize_state(state)
+
+    state = _base_state()
+    state["allocations"] = [
+        {"allocation_id": "A1", "date": "2026-09-01", "staff": "Operator", "project": "Northwell", "basis": "DEFAULT", "hours": 7}
+    ]
+    with pytest.raises(ValueError, match="DEFAULT allocation must equal paid_hours"):
+        normalize_state(state)
+
+
 def test_project_report_is_sorted_and_counts_days_without_double_counting() -> None:
     state = _base_state()
     state["attendance"].append(
@@ -279,8 +305,14 @@ def test_local_web_app_exposes_basis_normalization_and_deterministic_reports() -
     assert "Project report JSON" in html
     assert "localStorage" in js
     assert "normalizeLocalState" in js
+    assert "validateDefaultAllocation" in js
     assert "strictNumber" in js
     assert "validIsoDate" in js
+    assert "addExplicitProject" in js
+    assert "nextAllocationId" in js
+    assert "keysToReplace" in js
+    assert "DEFAULT is fallback-only" in js
+    assert '$("addProject").onclick = addExplicitProject' in js
     assert "reportSnapshot" in js
     assert "reconciliation(row, normalized)" in js
     assert "exportProjectReportCsv" in js
