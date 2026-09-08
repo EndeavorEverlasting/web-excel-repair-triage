@@ -99,10 +99,10 @@ The fallback mapping is deterministic and reuses existing authority:
 
 1. The finder derives one compact external search query from the selected **goal** option first; if goal evidence is unavailable it falls back in order to **known problem**, **work shape**, then **starting point**. It uses the first canonical query phrase already attached to that answer rather than inventing a second routing vocabulary.
 2. The Resources surface lazily loads `resources.v1.json` only after the user takes the fallback. Indexed skill sources with concrete matches rank first. An on-demand catalog receives a deterministic fallback preference when the local sidecar has no matching row, while stable source-floor order breaks ties.
-3. The registered source floor is the authority for the external libraries: `f/prompts.chat` (prompt catalog), `mattpocock/skills` (agent skills), and `deepseek-ai/deepseek-harness` (agent/harness skills). The browser derives repository links from that source floor rather than maintaining a second URL table in the tutorial.
+3. The registered source floor is the authority for the external libraries: `f/prompts.chat` (prompt catalog), `mattpocock/skills` (agent skills), and `deepseek-ai/deepseek-harness` (agent/harness skills). The browser derives commit-pinned repository links from each floor's `resolved_sha` (and the catalog path when present) rather than maintaining a second URL table in the tutorial.
 4. Resources that already have strong internal coverage continue to point back to the existing Operant prompt. External-only resources remain directly usable references; they do not auto-create Prompt Kit prompts. P79 still owns strengthen-before-add review, and license review remains required before copying or adapting donor content.
 
-This fallback is a capability-gap route, not a declaration that an upstream resource is better. The user can edit the prefilled resource search before opening a donor library.
+This fallback is a capability-gap route, not a declaration that an upstream resource is better. The user can edit the prefilled resource search before opening a donor library. Closing Resources returns keyboard focus to the control that launched the resource path.
 
 ## Conversational fallback
 

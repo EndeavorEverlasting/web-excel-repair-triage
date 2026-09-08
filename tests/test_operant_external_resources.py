@@ -405,7 +405,11 @@ class OperantExternalResourceTests(unittest.TestCase):
             "function renderExternalSourceChoices()",
             "externalResourceIndex.source_floor",
             "catalogBonus",
-            "https://github.com/",
+            "resolved_sha",
+            "catalogPath?'/blob/'+sha+'/'+catalogPath:'/tree/'+sha",
+            "externalResourceOrigin",
+            "if(!surface.hidden)input.focus()",
+            "document.contains(origin)",
             "openForUseCase:openExternalResourcesForUseCase",
             "Registered external source libraries",
         ):

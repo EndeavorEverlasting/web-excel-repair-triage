@@ -2853,6 +2853,7 @@ var externalResourceIndex=null;
 var externalResourceQuery='';
 var externalResourcePage=0;
 var externalResourceLoadPromise=null;
+var externalResourceOrigin=null;
 try{
   Object.defineProperty(window,'externalResourceIndex',{get:function(){return externalResourceIndex},set:function(v){externalResourceIndex=v},configurable:true});
   Object.defineProperty(window,'externalResourcePage',{get:function(){return externalResourcePage},set:function(v){externalResourcePage=v},configurable:true});
@@ -2924,7 +2925,7 @@ function focusExistingPrompt(promptId){
   search.focus()
 }
 
-function sourceRepositoryUrl(floor){var repository=String(floor&&floor.repository||'').trim();return repository?'https://github.com/'+repository:'#'}
+function sourceRepositoryUrl(floor){var repository=String(floor&&floor.repository||'').trim(),sha=String(floor&&floor.resolved_sha||'').trim(),catalogPath=String(floor&&floor.catalog_path||'').trim();if(!repository||!sha)return '#';return 'https://github.com/'+repository+(catalogPath?'/blob/'+sha+'/'+catalogPath:'/tree/'+sha)}
 function renderExternalSourceChoices(){var surface=document.getElementById('operantExternalResources');if(!surface||!externalResourceIndex)return;var host=surface.querySelector('.operant-resource-sources');if(!host)return;var filtered=externalResourceIndex.resources.filter(resourceMatches);var floors=(externalResourceIndex.source_floor||[]).map(function(floor,index){var matchCount=filtered.filter(function(item){return item.source_id===floor.id}).length;var catalogBonus=floor.search_mode==='on_demand'&&externalResourceQuery?1:0;return {floor:floor,index:index,matchCount:matchCount,catalogBonus:catalogBonus}}).sort(function(a,b){return b.matchCount-a.matchCount||b.catalogBonus-a.catalogBonus||a.index-b.index});host.innerHTML='';floors.forEach(function(entry){var floor=entry.floor,card=document.createElement('article');card.className='operant-resource-source';card.setAttribute('data-source-id',String(floor.id||''));var title=document.createElement('strong');title.textContent=String(floor.repository||floor.id||'External source');var meta=document.createElement('span');if(floor.enumeration==='catalog_csv')meta.textContent=String(floor.catalog_entry_count||0)+' catalog prompts · on-demand';else meta.textContent=String(floor.resource_count||0)+' indexed skills'+(entry.matchCount?' · '+entry.matchCount+' matching':'');var link=document.createElement('a');link.href=sourceRepositoryUrl(floor);link.target='_blank';link.rel='noopener noreferrer';link.textContent='Open source library';card.appendChild(title);card.appendChild(meta);card.appendChild(link);host.appendChild(card)})}
 
 function renderExternalResourcePage(){
@@ -2969,17 +2970,19 @@ function openExternalResources(){
   var surface=document.getElementById('operantExternalResources');
   var input=surface.querySelector('.operant-resource-search');
   var requestedQuery='';
+  var requestedOrigin=request&&typeof request==='object'?request.origin:null;
+  externalResourceOrigin=requestedOrigin&&typeof requestedOrigin.focus==='function'?requestedOrigin:(document.activeElement&&typeof document.activeElement.focus==='function'?document.activeElement:null);
   if(typeof request==='string')requestedQuery=request;else if(request&&typeof request.query==='string')requestedQuery=request.query;
   externalResourceQuery=String(requestedQuery||'').trim().toLowerCase();
   input.value=String(requestedQuery||'');
   surface.hidden=false;
   externalResourcePage=0;
   renderExternalResourcePage();
-  loadExternalResources().then(function(){renderExternalResourcePage();input.focus()}).catch(function(error){var list=surface.querySelector('.operant-resource-list');list.innerHTML='<div class="operant-resource-empty">Resource catalog unavailable. Existing prompts remain fully usable.</div>';surface.querySelector('.operant-resource-count').textContent=String(error&&error.message||'Resource load failed')})
+  loadExternalResources().then(function(){renderExternalResourcePage();if(!surface.hidden)input.focus()}).catch(function(error){var list=surface.querySelector('.operant-resource-list');list.innerHTML='<div class="operant-resource-empty">Resource catalog unavailable. Existing prompts remain fully usable.</div>';surface.querySelector('.operant-resource-count').textContent=String(error&&error.message||'Resource load failed')})
 }
 function openExternalResourcesForUseCase(query,origin){openExternalResources({query:query,origin:origin||null})}
 
-function closeExternalResources(){var surface=document.getElementById('operantExternalResources');if(surface)surface.hidden=true}
+function closeExternalResources(){var surface=document.getElementById('operantExternalResources');if(surface)surface.hidden=true;var origin=externalResourceOrigin;externalResourceOrigin=null;if(origin&&typeof origin.focus==='function'&&document.contains(origin))origin.focus()}
 
 document.addEventListener('keydown',function(event){if(event.key==='Escape'){var surface=document.getElementById('operantExternalResources');if(surface&&!surface.hidden){event.preventDefault();closeExternalResources()}}});
 
