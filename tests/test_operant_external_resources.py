@@ -5,11 +5,14 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from scripts import prompt_registry_external_prior_art as add_prior_art  # noqa: E402
+from scripts import prompt_registry_ops as prompt_ops  # noqa: E402
 from scripts import search_operant_external_catalog as catalog_search  # noqa: E402
 from scripts import sync_operant_external_resources as sync  # noqa: E402
 from scripts import validate_operant_external_resources as validator  # noqa: E402
@@ -21,6 +24,7 @@ RUNTIME = ROOT / "docs" / "prompt-kit-external-resources.js"
 SITE = ROOT / "web" / "prompt-kit" / "index.html"
 PAGES_WORKFLOW = ROOT / ".github" / "workflows" / "prompt-kit-pages.yml"
 PORTABLE_BUILDER = ROOT / "scripts" / "serve_prompt_kit_portable.py"
+PROMPT_ADDER = ROOT / "scripts" / "prompt_registry_ops.py"
 
 FIXTURE_CSV = """act,prompt,for_devs,type,contributor
 Code Review,"Review this pull request for correctness and regressions.",TRUE,TEXT,fixture
@@ -37,6 +41,30 @@ class OperantExternalResourceTests(unittest.TestCase):
         cls.gaps = json.loads(GAPS.read_text(encoding="utf-8"))
         cls.runtime = RUNTIME.read_text(encoding="utf-8")
         cls.site = SITE.read_text(encoding="utf-8")
+
+    @staticmethod
+    def prompt_draft() -> dict[str, object]:
+        return {
+            "name": "Prior Art Gate Zeta Quokka",
+            "type": "BUILD + FACTOR",
+            "class": "REPOSITORY / TEST",
+            "sprintRole": "Prove the Prompt Kit ADD helper searches registered external prior art before allocating identity.",
+            "useWhen": "A synthetic test needs a valid new-prompt draft with a deliberately unique residual vocabulary.",
+            "inspectFirst": "Registered Prompt Kit owners and registered external-resource floors.",
+            "expectedOutput": "A dry-run prompt record plus a machine-readable external prior-art receipt.",
+            "nextStep": "Stop after the dry-run evidence is returned.",
+            "proofGate": "External search happens before identity allocation and no registry write occurs in dry-run mode.",
+            "copyContent": (
+                "SYNTHETIC TEST PROMPT. This content exists only to exercise the repository-owned prompt adder. "
+                "Search registered external resources before allocating a new identity, preserve reference-only authority, "
+                "fail closed when discovery cannot run, and return machine-readable evidence. Do not write any registry "
+                "content during dry-run validation. Repeatable deterministic behavior is required for this focused test. "
+            ),
+            "keywords": ["prior-art-gate-zeta", "quokka-enforcement", "external-source-search"],
+            "profile": "spec-architecture",
+            "color": "Teal",
+            "category": "standard",
+        }
 
     def test_registered_donors_and_roots_are_explicit(self) -> None:
         sources = {item["id"]: item for item in self.contract["sources"]}
@@ -288,6 +316,72 @@ class OperantExternalResourceTests(unittest.TestCase):
                 "0.000001",
             ])
             self.assertEqual(over_budget, 1)
+
+    def test_prompt_adder_binds_external_gate_before_identity_allocation(self) -> None:
+        text = PROMPT_ADDER.read_text(encoding="utf-8")
+        gate = "external_prior_art = prior_art.require_external_prior_art(draft)"
+        identity = "record = _build_record(draft, target_payload)"
+        self.assertIn(gate, text)
+        self.assertIn(identity, text)
+        self.assertLess(text.index(gate), text.index(identity))
+        self.assertIn('"external_prior_art": external_prior_art', text)
+        self.assertIn("_reject_obvious_duplicate(draft)", text)
+        self.assertLess(text.index("_reject_obvious_duplicate(draft)"), text.index(gate))
+
+    def test_prompt_adder_fails_closed_before_identity_when_external_search_fails(self) -> None:
+        draft = self.prompt_draft()
+        with mock.patch.object(
+            add_prior_art,
+            "require_external_prior_art",
+            side_effect=add_prior_art.PriorArtGateError("donor unavailable"),
+        ) as gate, mock.patch.object(prompt_ops, "_next_identity") as next_identity:
+            with self.assertRaises(SystemExit) as caught:
+                prompt_ops.add_prompt(draft, "spec-architecture-prompts", True)
+        gate.assert_called_once_with(draft)
+        next_identity.assert_not_called()
+        self.assertIn("before identity allocation", str(caught.exception))
+
+    def test_prompt_adder_dry_run_returns_external_prior_art_receipt(self) -> None:
+        receipt = {
+            "schema_version": add_prior_art.RECEIPT_SCHEMA,
+            "all_registered_sources_searched": True,
+            "distinct_residual_terms": ["quokka"],
+            "automatic_prompt_authoring": False,
+        }
+        with mock.patch.object(add_prior_art, "require_external_prior_art", return_value=receipt):
+            result = prompt_ops.add_prompt(self.prompt_draft(), "spec-architecture-prompts", True)
+        self.assertEqual(result["status"], "dry-run")
+        self.assertEqual(result["external_prior_art"], receipt)
+        self.assertTrue(result["record"]["id"].startswith("P"))
+
+    def test_prompt_add_prior_art_gate_searches_every_registered_source(self) -> None:
+        floor = next(row for row in self.index["source_floor"] if row["id"] == "prompts-chat")
+        catalog_result = {
+            "source_id": "prompts-chat",
+            "query": "fixture",
+            "resolved_sha": floor["resolved_sha"],
+            "catalog_path": "prompts.csv",
+            "catalog_entry_count": int(floor["catalog_entry_count"]),
+            "hit_count": 0,
+            "hits": [],
+        }
+        with mock.patch.object(
+            add_prior_art.catalog_search,
+            "run_timed_search",
+            return_value=(catalog_result, 0.01),
+        ):
+            receipt = add_prior_art.require_external_prior_art(self.prompt_draft())
+        configured = {source["id"] for source in self.contract["sources"]}
+        searched = {source["source_id"] for source in receipt["sources"]}
+        self.assertEqual(searched, configured)
+        modes = {source["source_id"]: source["search_mode"] for source in receipt["sources"]}
+        self.assertEqual(modes["prompts-chat"], "pinned_catalog_live_fetch")
+        self.assertEqual(modes["deepseek-harness"], "pinned_metadata_projection")
+        self.assertEqual(modes["mattpocock-skills"], "pinned_metadata_projection")
+        self.assertTrue(receipt["all_registered_sources_searched"])
+        self.assertFalse(receipt["automatic_prompt_authoring"])
+        self.assertTrue(receipt["distinct_residual_terms"])
+        self.assertEqual(receipt["promotion_owner_prompt"], "P79")
 
     def test_full_validator_accepts_current_projection(self) -> None:
         result = validator.validate()

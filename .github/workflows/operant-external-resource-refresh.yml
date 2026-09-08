@@ -8,10 +8,13 @@ on:
       - scripts/sync_operant_external_resources.py
       - scripts/validate_operant_external_resources.py
       - scripts/search_operant_external_catalog.py
+      - scripts/prompt_registry_external_prior_art.py
+      - scripts/prompt_registry_ops.py
       - docs/prompt-kit-external-resources.js
       - web/prompt-kit/resources.v1.json
       - registry/resources/operant-external-resource-gaps.v1.json
       - tests/test_operant_external_resources.py
+      - tests/test_external_prior_art_gate.py
       - scripts/build_prompt_kit_registry.py
       - web/prompt-kit/index.html
       - .github/workflows/operant-external-resource-refresh.yml
@@ -49,7 +52,7 @@ jobs:
         run: |
           node --check docs/prompt-kit-external-resources.js
           python scripts/validate_operant_external_resources.py --summary
-          python -m unittest tests.test_operant_external_resources -v
+          python -m unittest tests.test_operant_external_resources tests.test_external_prior_art_gate -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
       - name: Compare live donor candidate with tracked projection
         run: |
