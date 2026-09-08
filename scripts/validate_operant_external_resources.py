@@ -35,10 +35,9 @@ def load(path: Path) -> dict[str, Any]:
 
 
 def require_finite_positive(value: Any, field: str) -> float:
-    try:
-        number = float(value)
-    except (TypeError, ValueError) as exc:
-        raise ValidationError(f"{field} must be a finite positive number") from exc
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValidationError(f"{field} must be a finite positive number")
+    number = float(value)
     if not math.isfinite(number) or number <= 0:
         raise ValidationError(f"{field} must be a finite positive number")
     return number
@@ -51,7 +50,15 @@ def require_positive_int(value: Any, field: str) -> int:
 
 
 def active_workflow_text(workflow: str) -> str:
-    return "\n".join(line for line in workflow.splitlines() if not line.lstrip().startswith("#"))
+    lines: list[str] = []
+    for line in workflow.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith("#"):
+            continue
+        if " #" in line:
+            line = line.split(" #", 1)[0].rstrip()
+        lines.append(line)
+    return "\n".join(lines)
 
 
 def validate() -> dict[str, Any]:

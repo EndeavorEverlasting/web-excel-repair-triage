@@ -227,12 +227,20 @@ class OperantExternalResourceTests(unittest.TestCase):
         with self.assertRaises(validator.ValidationError):
             validator.require_finite_positive("nan", "catalog_search.maximum_live_search_seconds")
         with self.assertRaises(validator.ValidationError):
+            validator.require_finite_positive("30", "catalog_search.maximum_live_search_seconds")
+        with self.assertRaises(validator.ValidationError):
+            validator.require_finite_positive(True, "catalog_search.maximum_live_search_seconds")
+        with self.assertRaises(validator.ValidationError):
             validator.require_positive_int(-1, "catalog_search.ci_proof_limit")
         with self.assertRaises(validator.ValidationError):
             validator.require_positive_int(True, "catalog_search.ci_proof_limit")
         self.assertNotIn(
             "--live-proof",
             validator.active_workflow_text("# python scripts/search_operant_external_catalog.py --live-proof\n"),
+        )
+        self.assertNotIn(
+            "--live-proof",
+            validator.active_workflow_text("echo ignored # --live-proof catalog-search-live-proof.json\n"),
         )
         boundary = catalog_search.build_live_proof_receipt(
             contract=self.contract,
@@ -250,7 +258,7 @@ class OperantExternalResourceTests(unittest.TestCase):
             mode="fixture",
         )
         self.assertEqual(boundary["elapsed_seconds"], 30.0)
-        self.assertEqual(boundary["within_budget"], boundary["elapsed_seconds"] <= boundary["budget_seconds"])
+        self.assertFalse(boundary["within_budget"])
         with tempfile.TemporaryDirectory() as tmp:
             fixture = Path(tmp) / "prompts.csv"
             fixture.write_text(FIXTURE_CSV, encoding="utf-8")

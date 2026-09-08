@@ -277,7 +277,7 @@ def build_live_proof_receipt(
         "hit_count": result["hit_count"],
         "elapsed_seconds": elapsed_report,
         "budget_seconds": budget_seconds,
-        "within_budget": elapsed_report <= budget_seconds,
+        "within_budget": elapsed_seconds <= budget_seconds,
         "automatic_prompt_authoring": False,
         "top_titles": [hit["title"] for hit in result["hits"][:5]],
     }
