@@ -107,13 +107,56 @@ def build_roster_workbook(
             ]
         )
 
+    allocations = wb.create_sheet("Project Allocations")
+    allocation_headers = [
+        "Allocation ID",
+        "Date",
+        "Staff",
+        "Project / Billing Scope",
+        "Allocation Basis",
+        "Workstream",
+        "Allocated Hours",
+        "Status",
+        "Notes",
+        "Distinct Project First?",
+    ]
+    allocations.append(allocation_headers)
+    for raw in state["allocations"]:
+        allocations.append(
+            [
+                raw["allocation_id"],
+                _iso_date(raw["date"]),
+                raw["staff"],
+                raw["project"],
+                raw["basis"],
+                raw.get("workstream", ""),
+                raw["hours"],
+                raw.get("status", "RECONCILED"),
+                raw.get("notes", ""),
+                None,
+            ]
+        )
+
+    # The hidden helper marks only the first occurrence of each
+    # date+staff+project combination. Attendance can therefore count distinct
+    # projects without mistaking two workstream rows for two projects.
+    for row in range(2, allocations.max_row + 1):
+        allocations.cell(row, 10).value = (
+            f'=IF(OR(B{row}="",C{row}="",D{row}=""),0,'
+            f'IF(COUNTIFS($B$2:B{row},B{row},$C$2:C{row},C{row},$D$2:D{row},D{row})=1,1,0))'
+        )
+    allocations.column_dimensions["J"].hidden = True
+
     # Bounded allocation-ledger ranges are required by the Web Excel/artifact
-    # calculation engine. Project Allocations column G owns allocated hours.
+    # calculation engine. Column G owns hours; hidden column J owns distinct
+    # project first-occurrence flags.
     alloc_last_row = max(len(state["allocations"]) + 1, 2)
     for row in range(2, max(attendance.max_row, 201) + 1):
         attendance.cell(row, 7).value = (
-            f'=IF(COUNTIFS(\'Project Allocations\'!$B$2:$B${alloc_last_row},A{row},'
-            f'\'Project Allocations\'!$C$2:$C${alloc_last_row},B{row})>1,"MULTI","SINGLE")'
+            f'=IF(OR(A{row}="",B{row}=""),"",IF('
+            f'SUMIFS(\'Project Allocations\'!$J$2:$J${alloc_last_row},'
+            f'\'Project Allocations\'!$B$2:$B${alloc_last_row},A{row},'
+            f'\'Project Allocations\'!$C$2:$C${alloc_last_row},B{row})>1,"MULTI","SINGLE"))'
         )
         attendance.cell(row, 8).value = (
             f'=SUMIFS(\'Project Allocations\'!$G$2:$G${alloc_last_row},'
@@ -132,33 +175,6 @@ def build_roster_workbook(
     for row in attendance.iter_rows(min_row=2, max_row=attendance.max_row, min_col=1, max_col=1):
         row[0].number_format = "yyyy-mm-dd"
 
-    allocations = wb.create_sheet("Project Allocations")
-    allocation_headers = [
-        "Allocation ID",
-        "Date",
-        "Staff",
-        "Project / Billing Scope",
-        "Allocation Basis",
-        "Workstream",
-        "Allocated Hours",
-        "Status",
-        "Notes",
-    ]
-    allocations.append(allocation_headers)
-    for raw in state["allocations"]:
-        allocations.append(
-            [
-                raw["allocation_id"],
-                _iso_date(raw["date"]),
-                raw["staff"],
-                raw["project"],
-                raw["basis"],
-                raw.get("workstream", ""),
-                raw["hours"],
-                raw.get("status", "RECONCILED"),
-                raw.get("notes", ""),
-            ]
-        )
     allocations.freeze_panes = "A2"
     allocations.auto_filter.ref = f"A1:I{max(allocations.max_row, 2)}"
     widths = [24, 13, 24, 40, 18, 36, 15, 18, 48]
@@ -177,7 +193,7 @@ def build_roster_workbook(
             row["staff_count"],
             row["allocation_count"],
         ])
-    project_report.append(["TOTAL", report["allocated_hours"], report["attendance_days"], None, report["allocation_rows"]])
+    project_report.append(["TOTAL", report["allocated_hours"], None, None, report["allocation_rows"]])
     project_report.freeze_panes = "A2"
     project_report.auto_filter.ref = f"A1:E{max(project_report.max_row - 1, 2)}"
     for column, width in {"A": 44, "B": 18, "C": 12, "D": 12, "E": 18}.items():
@@ -254,6 +270,7 @@ def build_roster_workbook(
         ["Allocation Basis is explicit: DEFAULT = fallback-created; EXPLICIT = intentionally entered allocation; OVERRIDE = intentional correction of a default or prior classification."],
         ["Multi-project days are supported. Add one Project Allocations row per project/workstream that should receive part of the attendance day."],
         ["A multi-project day is not an error. The review condition is arithmetic: allocated hours must reconcile to paid attendance."],
+        ["Project Mode counts distinct projects, not allocation-row count; two workstream rows for one project remain SINGLE."],
         ["The Project Report is deterministic and derives only from normalized Project Allocations, sorted by project name."],
         ["Attendance owns paid hours. Project Allocations explain where those hours belong; allocation rows cannot create additional paid hours."],
         ["This workbook does not manufacture an 80/20 split or second-guess a deliberate full-day project decision."],
@@ -296,6 +313,7 @@ def build_roster_workbook(
         "allocated_hours": report["allocated_hours"],
         "multi_project_days": report["multi_project_days"],
         "project_count": len(report["projects"]),
+        "project_report": report["projects"],
         "reconciled_days": sum(1 for row in reconciliation if row.reconciled),
         "unreconciled_days": report["unreconciled_days"],
         "preflight": preflight,
