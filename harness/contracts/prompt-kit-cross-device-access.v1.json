@@ -4,7 +4,9 @@
   "default_branch": "main",
   "canonical_repository_url": "https://github.com/EndeavorEverlasting/web-excel-repair-triage.git",
   "canonical_site": "web/prompt-kit/index.html",
-  "public_prompt_kit_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
+  "public_operant_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/operant",
+  "public_prompt_kit_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/operant",
+  "legacy_prompt_kit_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
   "public_launcher_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
   "windows_checkout_policy": {
     "desktop_dev_relative_root": "Desktop\\dev",
@@ -43,8 +45,8 @@
         "tablet"
       ],
       "manual_clone_required": false,
-      "entry_point": "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
-      "operator_message": "Open the public Prompt Kit directly. Do not require Git, ZIP extraction, PowerShell, Python, or Termux for normal use."
+      "entry_point": "https://endeavoreverlasting.github.io/web-excel-repair-triage/operant",
+      "operator_message": "Open Operant directly at the canonical public route. Do not require Git, ZIP extraction, PowerShell, Python, or Termux for normal use."
     },
     {
       "id": "phone-install",
@@ -61,7 +63,7 @@
       ],
       "manual_clone_required": false,
       "entry_point": "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
-      "operator_message": "Open the phone launcher in the system browser, then use the install or Add to Home Screen surface."
+      "operator_message": "Open the phone launcher in the system browser, then use the install or Add to Home Screen surface. Installed Operant starts at the canonical /operant route."
     },
     {
       "id": "windows-local-app",
@@ -136,9 +138,10 @@
     }
   ],
   "guardrails": [
-    "Do not tell a normal phone or browser user to clone the repository merely to use the Prompt Kit.",
+    "Do not tell a normal phone or browser user to clone the repository merely to use Operant.",
     "Do not tell a mobile GitHub-app user to hunt for or download web/prompt-kit/index.html as the primary access path.",
     "Distinguish use/install intent from edit/commit/push intent before prescribing acquisition commands.",
+    "Treat /prompt-kit/ as a compatibility redirect only; agents and user-facing guidance must name /operant as the canonical public route.",
     "On Windows, automatic acquisition must reuse or create Desktop\\dev\\web-excel-repair-triage and must fail closed if that canonical path cannot be used; do not create -latest sibling checkouts or derive a checkout from the launcher download directory.",
     "Do not leave persistent local browser-proof copies of the Prompt Kit under arbitrary Temp or download directories; use the canonical checkout, repository-owned Outputs, or CI-owned ephemeral runner storage.",
     "For existing editable checkouts, verify canonical origin, clean worktree, current branch main, and zero local-only commits before fetching and fast-forwarding; never reset, clean, force-push, or discard local work.",
