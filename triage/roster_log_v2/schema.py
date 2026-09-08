@@ -62,6 +62,27 @@ def _allocation_basis(value: Any, *, default: str = "EXPLICIT") -> str:
     return basis
 
 
+def _validate_default_allocation(
+    attendance_row: Dict[str, Any], rows: List[Dict[str, Any]], key: Tuple[str, str]
+) -> None:
+    defaults = [row for row in rows if row["basis"] == "DEFAULT"]
+    if not defaults:
+        return
+    if len(rows) != 1 or len(defaults) != 1:
+        raise ValueError(
+            f"DEFAULT allocation cannot coexist with explicit allocations: {key[0]} / {key[1]}"
+        )
+    default_row = defaults[0]
+    if default_row["project"] != attendance_row["default_project"]:
+        raise ValueError(
+            f"DEFAULT allocation must use attendance default_project: {key[0]} / {key[1]}"
+        )
+    if abs(float(default_row["hours"]) - float(attendance_row["paid_hours"])) > TOLERANCE_HOURS:
+        raise ValueError(
+            f"DEFAULT allocation must equal paid_hours: {key[0]} / {key[1]}"
+        )
+
+
 def normalize_state(payload: Dict[str, Any]) -> Dict[str, Any]:
     """Normalize operator state without inventing project-allocation policy.
 
@@ -123,7 +144,11 @@ def normalize_state(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     for attendance_row in normalized_attendance:
         key = _day_key(attendance_row)
-        if attendance_row["paid_hours"] <= 0 or grouped.get(key):
+        rows = grouped.get(key, [])
+        if rows:
+            _validate_default_allocation(attendance_row, rows, key)
+            continue
+        if attendance_row["paid_hours"] <= 0:
             continue
         row = {
             "allocation_id": f"DEFAULT-{key[0].replace('-', '')}-{len(normalized_allocations)+1:04d}",
