@@ -161,6 +161,45 @@ class OperantExternalResourceTests(unittest.TestCase):
             self.assertEqual(INDEX.read_text(encoding="utf-8"), before_index)
             self.assertEqual(GAPS.read_text(encoding="utf-8"), before_gaps)
 
+    def test_catalog_search_live_proof_budget_is_contracted_and_enforced(self) -> None:
+        search_cfg = self.contract["catalog_search"]
+        self.assertEqual(search_cfg["default_source_id"], "prompts-chat")
+        self.assertGreater(float(search_cfg["maximum_live_search_seconds"]), 0)
+        self.assertTrue(search_cfg["live_proof_required_in_refresh_workflow"])
+        self.assertTrue(str(search_cfg["ci_proof_query"]).strip())
+        workflow = (ROOT / ".github" / "workflows" / "operant-external-resource-refresh.yml").read_text(encoding="utf-8")
+        self.assertIn("scripts/search_operant_external_catalog.py", workflow)
+        self.assertIn("--live-proof", workflow)
+        self.assertIn("catalog-search-live-proof.json", workflow)
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture = Path(tmp) / "prompts.csv"
+            fixture.write_text(FIXTURE_CSV, encoding="utf-8")
+            receipt_path = Path(tmp) / "receipt.json"
+            code = catalog_search.main([
+                "--catalog-file",
+                str(fixture),
+                "--live-proof",
+                "--summary",
+                "--max-seconds",
+                "5",
+                "--receipt-output",
+                str(receipt_path),
+            ])
+            self.assertEqual(code, 0)
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            self.assertEqual(receipt["schema_version"], "operant-external-catalog-search-live-proof/v1")
+            self.assertEqual(receipt["mode"], "fixture")
+            self.assertTrue(receipt["within_budget"])
+            self.assertLessEqual(float(receipt["elapsed_seconds"]), float(receipt["budget_seconds"]))
+            over_budget = catalog_search.main([
+                "--catalog-file",
+                str(fixture),
+                "--live-proof",
+                "--max-seconds",
+                "0.000001",
+            ])
+            self.assertEqual(over_budget, 1)
+
     def test_full_validator_accepts_current_projection(self) -> None:
         result = validator.validate()
         self.assertEqual(result["status"], "valid")

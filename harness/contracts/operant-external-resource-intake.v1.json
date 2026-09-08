@@ -64,6 +64,15 @@
     "default_page_load_must_not_embed_resource_records": true,
     "catalog_csv_projects_rows_into_index": false
   },
+  "catalog_search": {
+    "canonical_command": "python scripts/search_operant_external_catalog.py",
+    "default_source_id": "prompts-chat",
+    "ci_proof_query": "code review",
+    "ci_proof_limit": 5,
+    "maximum_live_search_seconds": 30,
+    "live_proof_required_in_refresh_workflow": true,
+    "receipt_schema": "operant-external-catalog-search-live-proof/v1"
+  },
   "coverage": {
     "match_threshold": 0.65,
     "existing_prompt_disposition": "POINT_TO_EXISTING_PROMPT",
@@ -90,5 +99,5 @@
     "license_review_required_before_copy_or_adaptation": true,
     "resource_links_may_point_to_upstream_without_copying_content": true
   },
-  "proof_ceiling": "Repository sync, source-SHA pinning, metadata projection, catalog floor-only receipts, deterministic coverage classification, on-demand catalog search (fixture or live), lazy-loading contract, generated-site parity, and scheduled drift evidence. It does not prove upstream resource quality, license compatibility for copied/adapted content, live browser network success, MCP client success, or automatic prompt quality."
+  "proof_ceiling": "Repository sync, source-SHA pinning, metadata projection, catalog floor-only receipts, deterministic coverage classification, on-demand catalog search (fixture plus CI live latency budget against the pinned catalog SHA), lazy-loading contract, generated-site parity, and scheduled drift evidence. It does not prove upstream resource quality, license compatibility for copied/adapted content, live browser network success, MCP client success, or automatic prompt quality."
 }
