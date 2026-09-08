@@ -37,7 +37,7 @@ jobs:
       - name: Search registered prompts.chat catalog
         run: |
           set -euo pipefail
-          python scripts/search_operant_external_catalog.py --source prompts-chat --query "repository versioning semantic versioning release strategy" --limit 10 --json | tee "$RUNNER_TEMP/prompts-chat-versioning-search.json"
+          python scripts/search_operant_external_catalog.py --source prompts-chat --query "repository versioning semantic versioning release strategy" --limit 10 | tee "$RUNNER_TEMP/prompts-chat-versioning-search.json"
       - name: Search registered skill projections
         run: |
           set -euo pipefail
