@@ -67,41 +67,41 @@
       "capability": "Open / inspect prompt detail",
       "mouse": "Open button; double-click card",
       "keyboard": "Enter on focused card",
-      "phone": "Open button; Go to P# exact jump",
+      "phone": "Explicit Open button on a prompt card; Go to P# does not auto-open detail",
       "semantic_action": "showPromptDetail",
       "state_owner": "promptDetailOverlay + promptDetailOrigin",
-      "proof": "prompt-kit-interactions + mobile_prompt_id_jump"
+      "proof": "prompt-kit-interactions + mobile_prompt_id_jump explicit-open regression"
     },
     {
       "id": "copy_act",
       "capability": "Copy prompt content (terminal clipboard act)",
       "mouse": "Copy button; single-click card",
       "keyboard": "Space on focused card; configured/recommended prompt sequences (copy + reveal)",
-      "phone": "Copy on card and detail (explicit after open)",
+      "phone": "Tap/click any non-control prompt-card surface; explicit Copy remains available; detail Copy exists only after deliberate Open",
       "semantic_action": "copyPrompt",
       "state_owner": "clipboard adapter + copy acknowledgement UI",
-      "proof": "prompt-kit-interactions copy requirements"
+      "proof": "prompt-kit-interactions whole-card touch copy + mobile browser proof"
     },
     {
-      "id": "open_known_id",
-      "capability": "Open known prompt ID for read (distinct from copy-known)",
-      "mouse": "no dedicated known-ID digit grammar; Open or double-click after locating the card",
-      "keyboard": "no dedicated open-by-digits path; Enter after locating (digit sequences are copy-known)",
-      "phone": "Go to P# handle (P prefix shown; type digits only) → showPromptDetail",
-      "semantic_action": "showPromptDetail via mobilePromptJump / Open",
-      "state_owner": "promptDetailOverlay",
-      "proof": "OPEN_PROMPT_KIT_ON_PHONE.md + mobile_prompt_id_jump",
-      "note": "Mode separation: phone owns Go to P# open; keyboard digits own copy-known; mouse unchanged (locate then Open)."
+      "id": "locate_known_id",
+      "capability": "Locate known prompt ID without forcing prompt detail",
+      "mouse": "no dedicated known-ID digit grammar; locate the card normally",
+      "keyboard": "digit sequences reveal the card as part of copy-known; no open-by-digits path",
+      "phone": "Go to P# handle (P prefix shown; type digits only) → reveal and instant-snap the canonical card with detail closed",
+      "semantic_action": "revealPromptShortcutTarget",
+      "state_owner": "active filters + prompt-card viewport/focus; promptDetailOverlay remains closed",
+      "proof": "mobile_prompt_id_jump + 390x844 snap-without-detail browser proof",
+      "note": "Mode separation applies to locator grammar, not terminal value: phone Go to P# lands on the card; explicit Open alone owns detail."
     },
     {
       "id": "copy_known_id",
       "capability": "Copy known favorite/recommended prompt ID",
       "mouse": "no dedicated known-ID digit grammar; Copy after locating the card",
       "keyboard": "type digits only (111 for P111) for favorite/recommended bindings → copy + reveal without detail; leading p is not required",
-      "phone": "supported_exclusion: no digit-copy hotkey buffer; use Go to P# then tap Copy",
-      "semantic_action": "activatePromptShortcutTarget / copyPrompt",
-      "state_owner": "promptShortcutBindings + favorites + digit aliases from effectivePromptShortcutBindings",
-      "proof": "hotkey completion digit-alias markers; phone exclusion documented"
+      "phone": "Go to P# → tap/click any non-control area of the snapped prompt card; canonical copyPrompt runs without detail",
+      "semantic_action": "activatePromptShortcutTarget / prompt-card click / copyPrompt",
+      "state_owner": "canonical prompt identity + clipboard adapter + copy acknowledgement UI",
+      "proof": "hotkey completion + interaction contract + mobile card-tap browser proof"
     },
     {
       "id": "filters",
@@ -170,7 +170,7 @@
     "Hover and double-click may enrich mouse grammar but must not be the only route to essential actions",
     "Gestures accelerate only when a labeled More/button fallback exists",
     "supported_exclusion is allowed when documented; missing phone route is not equivalent to use the desktop control",
-    "Known-ID grammars are mode-separated: phone Go to P# (open), keyboard digits-only sequences (copy+reveal), mouse locate-then-Open/Copy with no digit sequence"
+    "Known-ID locator grammars are mode-separated, but terminal copy converges on copyPrompt: phone Go to P# snaps to the card then card tap copies; keyboard digits copy+reveal; mouse locates then card click/Copy. Go to P# must not auto-open detail."
   ],
   "validation": [
     "node --check docs/prompt-kit-polish.js",

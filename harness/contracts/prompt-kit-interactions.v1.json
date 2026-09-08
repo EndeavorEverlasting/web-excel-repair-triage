@@ -22,9 +22,9 @@
   "requirements": [
     {
       "id": "single_click_copy",
-      "event": "single pointer click on a prompt card",
-      "expected": "Copy the selected prompt's exact copyContent to the clipboard and show copy acknowledgement without opening the detail panel.",
-      "forbidden": "Opening or expanding the prompt detail panel from the single-click action."
+      "event": "single pointer click or touch tap on any non-control area of a prompt card",
+      "expected": "Treat the whole non-control prompt-card surface as the primary copy target: copy the selected prompt's exact copyContent to the clipboard and show copy acknowledgement without opening detail. This must hold for coarse-pointer/touch tap as well as mouse click; users must not have to scroll through a detail modal to reach Copy.",
+      "forbidden": "Opening/expanding prompt detail from a card tap/click, or requiring the explicit Copy button before the card can perform its terminal copy action."
     },
     {
       "id": "double_click_expand",

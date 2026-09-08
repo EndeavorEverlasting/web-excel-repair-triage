@@ -397,12 +397,12 @@ function setMobilePromptJumpSubmitState(promptId,exact,longer){
   if(!go)return;
   if(exact){
     go.disabled=false;
-    go.textContent=longer?'Open '+promptId:'Go';
-    go.setAttribute('aria-label',longer?'Open exact '+promptId:'Open exact prompt ID')
+    go.textContent=longer?'Go to '+promptId:'Go';
+    go.setAttribute('aria-label',longer?'Go to exact '+promptId:'Go to exact prompt ID')
   }else{
     go.disabled=true;
     go.textContent='Go';
-    go.setAttribute('aria-label','Open exact prompt ID')
+    go.setAttribute('aria-label','Go to exact prompt ID')
   }
 }
 
@@ -444,16 +444,18 @@ function resolveMobilePromptJump(force){
     }
     setMobilePromptJumpOpen(false,false);
     setHotkeyHelpOpen(false,false);
-    if(typeof window.showPromptDetail==='function'){
-      window.showPromptDetail(promptId,toggle||null);
+    var card=document.querySelector('[data-prompt-id="'+promptId+'"]');
+    if(card){
+      try{card.focus({preventScroll:true})}catch(e){try{card.focus()}catch(ignore){}}
+      if(typeof showToast==='function')showToast(promptId+' ready — tap the prompt card to copy');
       return true
     }
-    if(status)status.textContent='Prompt detail is unavailable.';
+    if(status)status.textContent='Prompt card is unavailable.';
     return false
   }
   if(prompt&&longer){
     setMobilePromptJumpSubmitState(promptId,true,true);
-    if(status)status.textContent=promptId+' is exact. Press Enter or tap Open '+promptId+', or keep typing for a longer ID.';
+    if(status)status.textContent=promptId+' is exact. Press Enter or tap Go to '+promptId+', or keep typing for a longer ID.';
     return false
   }
   var catalog=typeof PROMPTS!=='undefined'&&Array.isArray(PROMPTS)?PROMPTS:[];
@@ -506,7 +508,7 @@ function installMobilePromptJump(shell){
   go.type='submit';
   go.textContent='Go';
   go.disabled=true;
-  go.setAttribute('aria-label','Open exact prompt ID');
+  go.setAttribute('aria-label','Go to exact prompt ID');
   var status=document.createElement('div');
   status.className='mobile-prompt-jump-status';
   status.id='mobilePromptJumpStatus';

@@ -24,6 +24,10 @@ class PromptKitInteractionHarnessTests(unittest.TestCase):
             interactions.REQUIRED_REQUIREMENT_IDS,
         )
         self.assertIn("--require-implementation", contract["validation"]["implementation_gate"])
+        single = next(item for item in contract["requirements"] if item["id"] == "single_click_copy")
+        self.assertIn("touch tap", single["event"])
+        self.assertIn("whole non-control prompt-card surface", single["expected"])
+        self.assertIn("must not have to scroll through a detail modal", single["expected"])
 
     def test_current_source_audit_is_structured_without_inflating_proof(self) -> None:
         report = interactions.audit_implementation()

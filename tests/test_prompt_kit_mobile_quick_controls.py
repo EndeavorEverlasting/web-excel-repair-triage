@@ -27,7 +27,7 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
             "input.pattern='[0-9]*'",
             "input.enterKeyHint='go'",
             "revealPromptShortcutTarget(promptId,'instant')",
-            "window.showPromptDetail(promptId,toggle||null)",
+            "tap the prompt card to copy",
             "input.addEventListener('input',function(){resolveMobilePromptJump(false)})",
             "form.addEventListener('submit',function(e){e.preventDefault();resolveMobilePromptJump(true)})",
         ):
@@ -37,13 +37,15 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
         jump = source[jump_start:jump_end]
         self.assertNotIn("isFavoritePrompt", jump)
         self.assertNotIn("promptShortcutBindings", jump)
-        self.assertLess(jump.index("revealPromptShortcutTarget(promptId,'instant')"), jump.index("window.showPromptDetail(promptId,toggle||null)"))
+        self.assertNotIn("window.showPromptDetail(promptId,toggle||null)", jump)
+        self.assertIn("document.querySelector('[data-prompt-id=\"'+promptId+'\"]')", jump)
+        self.assertIn("card.focus({preventScroll:true})", jump)
 
     def test_prefix_collision_requires_explicit_exact_confirmation_without_timing_race(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         self.assertIn("if(prompt&&(!longer||force))", source)
-        self.assertIn("go.textContent=longer?'Open '+promptId:'Go'", source)
-        self.assertIn("promptId+' is exact. Press Enter or tap Open '+promptId+', or keep typing for a longer ID.'", source)
+        self.assertIn("go.textContent=longer?'Go to '+promptId:'Go'", source)
+        self.assertIn("promptId+' is exact. Press Enter or tap Go to '+promptId+', or keep typing for a longer ID.'", source)
         self.assertIn("setMobilePromptJumpSubmitState(promptId,false,false)", source)
         self.assertIn("hasCandidate?'Keep typing '+promptId+'…':'No prompt starts with '+promptId+'.'", source)
         self.assertNotIn("setTimeout(function(){resolveMobilePromptJump", source)
@@ -102,22 +104,22 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
         contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
         requirement = next(item for item in contract["requirements"] if item["id"] == "mobile_prompt_id_jump")
         expected = requirement["expected"]
-        for phrase in ("Go to P#", "digits only", "P111", "P11", "Enter", "leading zero", "without opening More", "browser Find", "not required", "centered"):
+        for phrase in ("Go to P#", "digits only", "P111", "P11", "Enter", "leading zero", "without opening More", "browser Find", "detail", "tap", "copy"):
             self.assertIn(phrase, expected)
         guide = PHONE_GUIDE.read_text(encoding="utf-8")
         for phrase in (
             "## Fastest path to a known prompt ID",
             "Tap **Go to P#**",
             "type **111**",
-            "opens automatically",
+            "snaps into view automatically with prompt detail closed",
             "You do not open **More** first",
             "Swiping is not required",
             "Find in page",
             "P11",
             "Press **Enter**",
             "leading zero",
-            "reveals and centers P111",
-            "automatically becomes its lower-case P-ID hotkey",
+            "Tap anywhere on the prompt card outside its explicit controls to copy",
+            "Use **Open** only when you deliberately want prompt detail",
         ):
             self.assertIn(phrase, guide)
 
@@ -129,7 +131,7 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
             "Go to P#",
             "resolveMobilePromptJump(force)",
             "revealPromptShortcutTarget(promptId,'instant')",
-            "window.showPromptDetail(promptId,toggle||null)",
+            "tap the prompt card to copy",
         ):
             self.assertIn(marker, generated)
         self.assertNotIn("mobileQuickGestureMap", generated)

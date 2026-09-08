@@ -19,7 +19,7 @@
     },
     {
       "id": "touch_copy_preserved",
-      "expected": "The existing Copy action remains visible and touch-sized on coarse-pointer/mobile layouts while desktop single-click copy behavior remains intact."
+      "expected": "The whole non-control surface of every prompt card remains a tap/click-to-copy target on touch/coarse-pointer and pointer layouts. The explicit Copy action remains visible and touch-sized, but it is a secondary affordance rather than a requirement to reach the terminal clipboard action. A card tap copies through canonical copyPrompt acknowledgement and must not open prompt detail."
     },
     {
       "id": "favorites_quick_access",
@@ -35,7 +35,7 @@
     },
     {
       "id": "mobile_prompt_id_jump",
-      "expected": "On narrow touch layouts, a persistent Go to P# control is the fastest route when the user already knows a prompt ID. The user taps Go to P#, enters digits only (for P111, type 111), and an exact unambiguous ID opens its canonical prompt detail automatically without opening More, swiping, browser Find, typing the P prefix, or tapping a search result. When an exact ID is also a prefix of a longer prompt ID (for example P11 versus P111), it must not auto-open and steal the longer route: the status explicitly says the shorter ID is exact, the submit control becomes Open P11, and Enter or that button deliberately opens P11 while continued typing can reach P111. Prefix-only or nonexistent IDs have no enabled exact-submit target; canonical P00-P09 IDs require their leading zero; pasted values such as P111 are safely normalized to the same digits-only resolver. A separate compact More control exposes Find Prompt, previous/next profile, Search, Favorites, Filters, Reference, Top, and Bottom as labeled buttons. Swiping is not required and no hidden gesture vocabulary is part of the primary phone interaction contract. Desktop Hotkeys and shared semantic actions remain authoritative; phone controls do not create parallel prompt state. Before detail opens, the canonical prompt card is revealed when necessary and centered in the underlying Prompt Kit page so closing the panel leaves the user oriented at the requested prompt."
+      "expected": "On narrow touch layouts, a persistent Go to P# control is the fastest locator when the user already knows a prompt ID. The user taps Go to P#, enters digits only (for P111, type 111), and an exact unambiguous ID reveals and instant-snaps its canonical prompt card into the actionable viewport with prompt detail closed, without opening More, browser Find, or a search-result step. The landed card itself is the primary terminal copy surface: tapping any non-control area copies the canonical prompt; explicit Copy remains available and explicit Open is reserved for deliberate inspection. When an exact ID is also a prefix of a longer prompt ID (for example P11 versus P111), it must not steal the longer route: the status says the shorter ID is exact, the submit control becomes Go to P11, and Enter or that button deliberately jumps to P11 while continued typing can reach P111. Prefix-only or nonexistent IDs have no enabled exact-submit target; canonical P00-P09 IDs require their leading zero; pasted values such as P111 normalize to the same digits-only resolver. A separate compact More control exposes Find Prompt, previous/next profile, Search, Favorites, Filters, Reference, Top, and Bottom as labeled buttons. Swiping is not required and no hidden gesture vocabulary is part of the primary phone interaction contract. Desktop Hotkeys and shared semantic actions remain authoritative; phone controls do not create parallel prompt state. Go to P# must never auto-open the space-heavy detail modal merely to expose Copy."
     },
     {
       "id": "horizontal_filter_rails",
@@ -47,7 +47,7 @@
     },
     {
       "id": "mobile_detail_surface",
-      "expected": "Prompt detail reuses the existing detail surface and functions but occupies the mobile viewport with an accessible close and full-width Copy action. The detail surface exposes the canonical Favorite toggle; favoriting there or on the card immediately publishes that Favorite's lower-case prompt ID as an effective hotkey without a second shortcut-save step, and unfavoriting removes the derived hotkey."
+      "expected": "Prompt detail reuses the existing detail surface and functions but is entered only through an explicit inspection action such as Open, not by Go to P#. When deliberately opened it occupies the mobile viewport with an accessible close and full-width Copy action and exposes the canonical Favorite toggle; favoriting there or on the card updates the same Favorite state without a second shortcut-save step."
     },
     {
       "id": "mobile_reference_surface",
@@ -70,5 +70,5 @@
     "python -m unittest tests.test_prompt_kit_filtering_access -v",
     "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check"
   ],
-  "proof_ceiling": "Static source, deterministic tests, generated-site parity, CI, and an exact-head 390x844 Chromium journey prove the tracked responsive/browser behavior they exercise, including the P111 one-tap-plus-digits direct path and the P11/P111, prefix-only, leading-zero, pasted-ID, and missing-ID edge-case matrix. Browser chrome itself is outside page automation, so this proof does not claim a measured Chrome Find-in-page benchmark. Physical Android thumb reach, real software-keyboard timing, browser-specific clipboard prompts, and device-specific viewport/browser UI remain field acceptance gates."
+  "proof_ceiling": "Static source, deterministic tests, generated-site parity, CI, and an exact-head 390x844 Chromium journey prove the tracked responsive/browser behavior they exercise, including Go to P# snap-without-detail, whole-card tap copy, explicit Open inspection, and the exact/prefix, leading-zero, pasted-ID, and missing-ID edge-case matrix. Physical Android thumb reach, real software-keyboard timing, browser-specific clipboard prompts, and device-specific viewport/browser UI remain field acceptance gates."
 }
