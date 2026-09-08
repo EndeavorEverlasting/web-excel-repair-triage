@@ -1,0 +1,402 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+
+def replace_once(text: str, old: str, new: str, label: str) -> str:
+    if new in text:
+        return text
+    if old not in text:
+        raise SystemExit(f"{label}: anchor missing")
+    return text.replace(old, new, 1)
+
+
+def replace_function(text: str, name: str, new: str) -> str:
+    marker = f"function {name}("
+    start = text.find(marker)
+    if start < 0:
+        raise SystemExit(f"function anchor missing: {name}")
+    brace = text.find("{", start)
+    if brace < 0:
+        raise SystemExit(f"function opening brace missing: {name}")
+    depth = 0
+    for index in range(brace, len(text)):
+        char = text[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return text[:start] + new.rstrip() + text[index + 1 :]
+    raise SystemExit(f"unterminated function: {name}")
+
+
+polish_path = Path("docs/prompt-kit-polish.js")
+polish = polish_path.read_text(encoding="utf-8")
+
+effective_old = """function effectivePromptShortcutBindings(){
+  var merged={};
+  Object.keys(sharedPromptShortcutBindings).forEach(function(gesture){merged[gesture]=sharedPromptShortcutBindings[gesture]});
+  Object.keys(promptShortcutBindings).forEach(function(gesture){merged[gesture]=promptShortcutBindings[gesture]});
+  return merged
+}"""
+effective_new = """function favoritePromptShortcutBindings(){
+  var bindings={};
+  var catalog=typeof PROMPTS!=='undefined'&&Array.isArray(PROMPTS)?PROMPTS:[];
+  catalog.forEach(function(item){
+    if(!item)return;
+    var promptId=normalizePromptShortcutId(item.id);
+    if(promptId&&isFavoritePrompt(promptId))bindings[promptId.toLowerCase()]=promptId
+  });
+  return bindings
+}
+
+function effectivePromptShortcutBindings(){
+  var merged={};
+  Object.keys(sharedPromptShortcutBindings).forEach(function(gesture){merged[gesture]=sharedPromptShortcutBindings[gesture]});
+  var favorites=favoritePromptShortcutBindings();
+  Object.keys(favorites).forEach(function(gesture){merged[gesture]=favorites[gesture]});
+  Object.keys(promptShortcutBindings).forEach(function(gesture){
+    var promptId=promptShortcutBindings[gesture];
+    if(isFavoritePrompt(promptId))merged[gesture]=promptId
+  });
+  return merged
+}"""
+polish = replace_once(polish, effective_old, effective_new, "favorite-derived effective shortcut map")
+
+configured_anchor = """function configuredPromptShortcutIds(){
+  return Object.keys(promptShortcutBindings).sort(function(a,b){return Number(a.slice(1))-Number(b.slice(1))}).map(function(gesture){return promptShortcutBindings[gesture]})
+}
+
+function sharedPromptShortcutIds(){"""
+configured_new = """function configuredPromptShortcutIds(){
+  return Object.keys(promptShortcutBindings).sort(function(a,b){return Number(a.slice(1))-Number(b.slice(1))}).map(function(gesture){return promptShortcutBindings[gesture]})
+}
+
+function favoritePromptShortcutIds(){
+  var bindings=favoritePromptShortcutBindings();
+  return Object.keys(bindings).sort(function(a,b){return Number(a.slice(1))-Number(b.slice(1))}).map(function(gesture){return bindings[gesture]})
+}
+
+function sharedPromptShortcutIds(){"""
+polish = replace_once(polish, configured_anchor, configured_new, "favorite shortcut ID projection")
+
+render_shortcuts_new = """function renderPromptShortcutBindings(){
+  var host=document.getElementById('promptShortcutBindings');
+  if(!host)return;
+  host.innerHTML='';
+  var favoriteIds=favoritePromptShortcutIds();
+  var sharedIds=sharedPromptShortcutIds().filter(function(promptId){return favoriteIds.indexOf(promptId)<0});
+  if(!favoriteIds.length&&!sharedIds.length){var empty=document.createElement('span');empty.className='hotkey-shortcut-empty';empty.textContent='No favorite prompt shortcuts yet.';host.appendChild(empty);return}
+  sharedIds.forEach(function(promptId){
+    var row=document.createElement('div');row.className='hotkey-shortcut-row';
+    var key=document.createElement('kbd');key.textContent=promptId.toLowerCase();
+    var label=document.createElement('span');label.textContent='Copy + reveal '+promptId;
+    var shared=document.createElement('span');shared.className='hotkey-shortcut-shared';shared.textContent='Recommended';
+    row.appendChild(key);row.appendChild(label);row.appendChild(shared);host.appendChild(row)
+  });
+  favoriteIds.forEach(function(promptId){
+    var row=document.createElement('div');row.className='hotkey-shortcut-row';
+    var key=document.createElement('kbd');key.textContent=promptId.toLowerCase();
+    var label=document.createElement('span');label.textContent='Copy + reveal '+promptId;
+    var favorite=document.createElement('span');favorite.className='hotkey-shortcut-shared';favorite.textContent='Favorite';
+    var remove=document.createElement('button');remove.type='button';remove.className='hotkey-shortcut-remove';remove.setAttribute('aria-label','Unfavorite '+promptId+' and remove its keyboard shortcut');remove.textContent='Unfavorite';
+    remove.addEventListener('click',function(){toggleFavoritePromptAndRefreshShortcut(promptId)});
+    row.appendChild(key);row.appendChild(label);row.appendChild(favorite);row.appendChild(remove);host.appendChild(row)
+  })
+}"""
+polish = replace_function(polish, "renderPromptShortcutBindings", render_shortcuts_new)
+
+reveal_new = """function centerRenderedPromptCard(promptId){
+  var selector='[data-prompt-id="'+String(promptId||'').replace(/"/g,'')+'"]';
+  var card=document.querySelector(selector);
+  if(!card)return false;
+  try{card.scrollIntoView({behavior:hotkeyScrollBehavior(),block:'center',inline:'nearest'})}catch(e){try{card.scrollIntoView()}catch(ignore){}}
+  return true
+}
+
+function revealPromptShortcutTarget(promptId){
+  if(window.PromptKitProfiles&&typeof window.PromptKitProfiles.activateSlot==='function'){
+    window.PromptKitProfiles.activateSlot('A',true)
+  }
+  activeCat='all';
+  activeSection=null;
+  clearTransientPromptFilters();
+  document.querySelectorAll('.cat-tab').forEach(function(button){button.classList.toggle('active',button.dataset.cat==='all')});
+  document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__all__')});
+  renderTypes();
+  render();
+  return centerRenderedPromptCard(promptId)
+}"""
+polish = replace_function(polish, "revealPromptShortcutTarget", reveal_new)
+
+jump_old = """  if(prompt&&(!longer||force)){
+    setMobilePromptJumpSubmitState(promptId,true,longer);
+    setMobilePromptJumpOpen(false,false);
+    setHotkeyHelpOpen(false,false);
+    if(typeof window.showPromptDetail==='function'){
+      window.showPromptDetail(promptId,toggle||null);
+      return true
+    }
+    if(status)status.textContent='Prompt detail is unavailable.';
+    return false
+  }"""
+jump_new = """  if(prompt&&(!longer||force)){
+    setMobilePromptJumpSubmitState(promptId,true,longer);
+    if(!revealPromptShortcutTarget(promptId)){
+      if(status)status.textContent=promptId+' could not be centered in the prompt library.';
+      return false
+    }
+    setMobilePromptJumpOpen(false,false);
+    setHotkeyHelpOpen(false,false);
+    if(typeof window.showPromptDetail==='function'){
+      window.showPromptDetail(promptId,toggle||null);
+      return true
+    }
+    if(status)status.textContent='Prompt detail is unavailable.';
+    return false
+  }"""
+polish = replace_once(polish, jump_old, jump_new, "Go to P# centered reveal")
+
+polish = replace_once(
+    polish,
+    "configHint.textContent='Favorite a prompt, enter its ID, then type that ID anywhere outside editable fields.';",
+    "configHint.textContent='Favorites automatically become their P-ID shortcuts. Type a favorite ID anywhere outside editable fields; the ID field remains available for explicit repair.';",
+    "hotkey favorite hint",
+)
+
+detail_helpers = r'''
+function ensurePromptDetailFavoriteStyles(){
+  if(document.getElementById('prompt-detail-favorite-styles'))return;
+  var style=document.createElement('style');
+  style.id='prompt-detail-favorite-styles';
+  style.textContent='.prompt-detail-favorite-btn{position:absolute;top:12px;right:50px;z-index:3;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:6px 10px;border:1px solid rgba(245,158,11,.55);border-radius:999px;background:rgba(15,23,42,.94);color:#fbbf24;font:800 11px/1 inherit;cursor:pointer}.prompt-detail-favorite-btn:hover,.prompt-detail-favorite-btn:focus-visible{outline:none;border-color:#f59e0b;box-shadow:0 0 0 2px rgba(245,158,11,.18)}.prompt-detail-favorite-btn.active{background:rgba(245,158,11,.16);border-color:#f59e0b}@media(max-width:760px){.prompt-detail-favorite-btn{position:sticky;top:0;right:auto;float:right;margin:-4px 34px 8px 8px;min-height:44px;padding:8px 12px}}';
+  document.head.appendChild(style)
+}
+
+function refreshPromptDetailFavoriteButton(button,promptId){
+  if(!button)return;
+  var active=isFavoritePrompt(promptId);
+  button.classList.toggle('active',active);
+  button.setAttribute('aria-pressed',active?'true':'false');
+  button.setAttribute('aria-label',(active?'Remove ':'Add ')+promptId+(active?' from Favorites and Hotkeys':' to Favorites and Hotkeys'));
+  button.textContent=(active?'★ ':'☆ ')+(active?'Favorited':'Favorite')
+}
+
+function toggleFavoritePromptAndRefreshShortcut(rawPromptId){
+  var promptId=normalizePromptShortcutId(rawPromptId);
+  if(!promptId)return false;
+  var wasFavorite=isFavoritePrompt(promptId);
+  toggleFavoritePrompt(promptId);
+  var isFavorite=isFavoritePrompt(promptId);
+  renderPromptShortcutBindings();
+  var detailButton=document.querySelector('.prompt-detail-favorite-btn[data-prompt-id="'+promptId+'"]');
+  refreshPromptDetailFavoriteButton(detailButton,promptId);
+  if(isFavorite&&!wasFavorite)showToast('★ '+promptId+' saved · shortcut '+promptId.toLowerCase()+' ready','success');
+  else if(!isFavorite&&wasFavorite)showToast('Removed '+promptId+' from Favorites and Hotkeys');
+  return isFavorite
+}
+
+function decoratePromptDetailFavorite(promptId){
+  var normalized=normalizePromptShortcutId(promptId);
+  var detail=document.getElementById('promptDetail');
+  if(!normalized||!detail)return false;
+  var existing=detail.querySelector('.prompt-detail-favorite-btn');
+  if(existing&&existing.parentNode)existing.parentNode.removeChild(existing);
+  var button=document.createElement('button');
+  button.type='button';
+  button.className='prompt-detail-favorite-btn';
+  button.setAttribute('data-prompt-id',normalized);
+  refreshPromptDetailFavoriteButton(button,normalized);
+  button.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();toggleFavoritePromptAndRefreshShortcut(normalized)});
+  var close=detail.querySelector('.prompt-detail-close');
+  if(close&&close.parentNode===detail)detail.insertBefore(button,close.nextSibling);else detail.insertBefore(button,detail.firstChild);
+  return true
+}
+
+var baseShowPromptDetailWithFavorite=window.showPromptDetail;
+if(typeof baseShowPromptDetailWithFavorite==='function'){
+  window.showPromptDetail=function(id,origin){
+    centerRenderedPromptCard(id);
+    baseShowPromptDetailWithFavorite(id,origin);
+    decoratePromptDetailFavorite(id)
+  }
+}
+'''.strip()
+insertion_anchor = "\nwindow.appendPromptCard=function(grid,p){"
+if detail_helpers not in polish:
+    if insertion_anchor not in polish:
+        raise SystemExit("prompt-card insertion anchor missing")
+    polish = polish.replace(insertion_anchor, "\n" + detail_helpers + "\n" + insertion_anchor, 1)
+
+polish = replace_once(
+    polish,
+    "favBtn.onclick=function(e){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();toggleFavoritePrompt(p.id)};",
+    "favBtn.onclick=function(e){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();toggleFavoritePromptAndRefreshShortcut(p.id)};",
+    "card favorite derives shortcut",
+)
+polish = replace_once(
+    polish,
+    "ensureFavoritesJourneyStyles();\nensureCompactBrowsingControls();",
+    "ensureFavoritesJourneyStyles();\nensurePromptDetailFavoriteStyles();\nensureCompactBrowsingControls();",
+    "detail favorite styles startup",
+)
+polish_path.write_text(polish, encoding="utf-8")
+
+design_path = Path("docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md")
+design = design_path.read_text(encoding="utf-8")
+design = replace_once(
+    design,
+    "- A user may bind a favorite prompt to a typed sequence such as `p95`.",
+    "- Every current Favorite automatically publishes its canonical lower-case prompt ID as a typed shortcut such as `p95`; manual shortcut configuration remains a compatibility/repair path, not a second commitment step.",
+    "design favorite invariant",
+)
+design = replace_once(
+    design,
+    "- only prompts that are currently Favorites may be assigned a prompt-ID shortcut.",
+    "- every current Favorite automatically participates in the effective prompt-ID shortcut registry; unfavoriting removes that derived shortcut immediately, while the versioned explicit-binding store remains a compatibility/repair path.",
+    "production favorite shortcut invariant",
+)
+design = replace_once(
+    design,
+    "- built-ins and user-configured bindings keep precedence; assigning or removing a personal binding still requires the Favorite gate and a successful durable storage write.",
+    "- built-ins keep precedence; Favorite-derived bindings require no duplicate shortcut write because durable Favorite state is their authority. Explicit stored bindings remain fail-closed compatibility data and are effective only while their prompt remains a Favorite.",
+    "shared shortcut precedence",
+)
+if "Production decision extended on 2026-09-08:" not in design:
+    design += "\n\nProduction decision extended on 2026-09-08:\n- Opening prompt detail centers the already-rendered prompt card without changing the current filter/profile context. Direct Go to P# first reveals the canonical target in the library, centers it, and then opens detail.\n- Prompt detail exposes the same Favorite state as the card star. Favoriting from either surface immediately makes the canonical lower-case prompt ID an effective hotkey; no second Save-shortcut action is required.\n"
+design_path.write_text(design, encoding="utf-8")
+
+contract_path = Path("harness/contracts/prompt-kit-mobile.v1.json")
+contract = json.loads(contract_path.read_text(encoding="utf-8"))
+by_id = {item["id"]: item for item in contract["requirements"]}
+jump_sentence = " Before detail opens, the canonical prompt card is revealed when necessary and centered in the underlying Prompt Kit page so closing the panel leaves the user oriented at the requested prompt."
+if jump_sentence.strip() not in by_id["mobile_prompt_id_jump"]["expected"]:
+    by_id["mobile_prompt_id_jump"]["expected"] += jump_sentence
+detail_sentence = " The detail surface exposes the canonical Favorite toggle; favoriting there or on the card immediately publishes that Favorite's lower-case prompt ID as an effective hotkey without a second shortcut-save step, and unfavoriting removes the derived hotkey."
+if detail_sentence.strip() not in by_id["mobile_detail_surface"]["expected"]:
+    by_id["mobile_detail_surface"]["expected"] += detail_sentence
+contract_path.write_text(json.dumps(contract, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+guide_path = Path("OPEN_PROMPT_KIT_ON_PHONE.md")
+guide = guide_path.read_text(encoding="utf-8")
+guide = replace_once(
+    guide,
+    "3. When the ID is exact and unambiguous, **P111 opens automatically**. There is no search-results tap.\n",
+    "3. When the ID is exact and unambiguous, **P111 opens automatically**. There is no search-results tap. The main prompt library also reveals and centers P111 behind the detail panel, so closing the panel leaves you at the prompt you requested.\n4. Use the **☆ Favorite** control directly in the open prompt panel when you want to keep it. A Favorite automatically becomes its lower-case P-ID hotkey (for example, `p111`); there is no second shortcut-save step.\n",
+    "phone guide centered/favorite flow",
+)
+guide_path.write_text(guide, encoding="utf-8")
+
+hotkey_test_path = Path("tests/test_prompt_kit_hotkey_completion.py")
+test = hotkey_test_path.read_text(encoding="utf-8")
+test = replace_once(
+    test,
+    '            "Favorite a prompt, enter its ID",\n',
+    '            "Favorites automatically become their P-ID shortcuts",\n',
+    "hotkey hint regression",
+)
+test = replace_once(
+    test,
+    '        self.assertIn("only prompts that are currently Favorites", design)\n',
+    '        self.assertIn("every current Favorite automatically participates", design)\n        self.assertIn("no second Save-shortcut action is required", design)\n',
+    "design regression",
+)
+new_hotkey_test = '''
+    def test_favorites_automatically_publish_shortcuts_and_detail_favorite_control(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        deployed = DEPLOYED.read_text(encoding="utf-8")
+        for marker in (
+            "function favoritePromptShortcutBindings()",
+            "if(promptId&&isFavoritePrompt(promptId))bindings[promptId.toLowerCase()]=promptId",
+            "var favorites=favoritePromptShortcutBindings();",
+            "if(isFavoritePrompt(promptId))merged[gesture]=promptId",
+            "function favoritePromptShortcutIds()",
+            "function centerRenderedPromptCard(promptId)",
+            "function toggleFavoritePromptAndRefreshShortcut(rawPromptId)",
+            "function decoratePromptDetailFavorite(promptId)",
+            "prompt-detail-favorite-btn",
+            "Favorites and Hotkeys",
+            "shortcut '+promptId.toLowerCase()+' ready",
+            "baseShowPromptDetailWithFavorite(id,origin)",
+            "centerRenderedPromptCard(id);",
+            "toggleFavoritePromptAndRefreshShortcut(p.id)",
+        ):
+            self.assertIn(marker, source)
+            self.assertIn(marker, deployed)
+        effective = source[source.index("function effectivePromptShortcutBindings"):source.index("function clonePromptShortcutBindings")]
+        self.assertLess(effective.index("favoritePromptShortcutBindings"), effective.index("promptShortcutBindings[gesture]"))
+
+'''
+anchor = "    def test_prompt_sequence_owns_digits_and_header_navigation_is_letter_only(self) -> None:\n"
+if "def test_favorites_automatically_publish_shortcuts_and_detail_favorite_control" not in test:
+    if anchor not in test:
+        raise SystemExit("hotkey test insertion anchor missing")
+    test = test.replace(anchor, new_hotkey_test + anchor, 1)
+hotkey_test_path.write_text(test, encoding="utf-8")
+
+mobile_test_path = Path("tests/test_prompt_kit_mobile_quick_controls.py")
+mobile_test = mobile_test_path.read_text(encoding="utf-8")
+first_show_marker = '            "window.showPromptDetail(promptId,toggle||null)",\n'
+mobile_test = replace_once(
+    mobile_test,
+    first_show_marker,
+    '            "revealPromptShortcutTarget(promptId)",\n            "window.showPromptDetail(promptId,toggle||null)",\n',
+    "mobile centered reveal marker",
+)
+mobile_test = replace_once(
+    mobile_test,
+    '        self.assertNotIn("promptShortcutBindings", jump)\n',
+    '        self.assertNotIn("promptShortcutBindings", jump)\n        self.assertLess(jump.index("revealPromptShortcutTarget(promptId)"), jump.index("window.showPromptDetail(promptId,toggle||null)"))\n',
+    "mobile centered reveal ordering",
+)
+mobile_test = replace_once(
+    mobile_test,
+    '        for phrase in ("Go to P#", "digits only", "P111", "P11", "Enter", "leading zero", "without opening More", "browser Find", "not required"):\n',
+    '        for phrase in ("Go to P#", "digits only", "P111", "P11", "Enter", "leading zero", "without opening More", "browser Find", "not required", "centered"):\n',
+    "mobile contract centering phrase",
+)
+mobile_test = replace_once(
+    mobile_test,
+    '            "leading zero",\n',
+    '            "leading zero",\n            "reveals and centers P111",\n            "automatically becomes its lower-case P-ID hotkey",\n',
+    "phone guide regression",
+)
+generated_start = mobile_test.index("    def test_generated_site_contains_direct_jump_runtime")
+if '            "revealPromptShortcutTarget(promptId)",\n' not in mobile_test[generated_start:]:
+    idx = mobile_test.index(first_show_marker, generated_start)
+    mobile_test = mobile_test[:idx] + '            "revealPromptShortcutTarget(promptId)",\n' + mobile_test[idx:]
+mobile_test_path.write_text(mobile_test, encoding="utf-8")
+
+browser_path = Path("tests/prompt_kit_mobile_quick_controls_browser_proof.py")
+browser = browser_path.read_text(encoding="utf-8")
+browser_old = '''                detail_text = page.locator("#promptDetail").inner_text()
+                assert "P111" in detail_text, detail_text[:300]
+                page.locator(".prompt-detail-close").click()
+'''
+browser_new = '''                detail_text = page.locator("#promptDetail").inner_text()
+                assert "P111" in detail_text, detail_text[:300]
+                target_box = page.locator('[data-prompt-id="P111"]').bounding_box() or {}
+                target_mid = target_box.get("y", 0) + target_box.get("height", 0) / 2
+                assert abs(target_mid - 844 / 2) <= 150, (target_box, target_mid)
+                detail_favorite = page.locator(".prompt-detail-favorite-btn")
+                assert detail_favorite.is_visible(), "open detail does not expose Favorite"
+                assert detail_favorite.get_attribute("aria-pressed") == "false"
+                detail_favorite.click()
+                assert detail_favorite.get_attribute("aria-pressed") == "true"
+                shortcut_rows = page.locator("#promptShortcutBindings").inner_text()
+                assert "p111" in shortcut_rows.lower() and "P111" in shortcut_rows, shortcut_rows
+                assert "Favorite" in shortcut_rows, shortcut_rows
+                page.locator(".prompt-detail-close").click()
+'''
+browser = replace_once(browser, browser_old, browser_new, "browser centered detail favorite journey")
+browser = replace_once(
+    browser,
+    '                    "browser_find_required": False,\n',
+    '                    "browser_find_required": False,\n                    "underlying_prompt_centered": True,\n                    "detail_favorite_available": True,\n                    "favorite_auto_hotkey": "p111",\n',
+    "browser proof receipt fields",
+)
+browser_path.write_text(browser, encoding="utf-8")
+
+print("favorite/hotkey focus patch applied")
