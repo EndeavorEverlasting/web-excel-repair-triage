@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: deterministic-test-floor-${{ github.workflow }}-${{ github.ref }}
@@ -28,10 +28,10 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: true
-          fetch-depth: 0
+          persist-credentials: false
+          fetch-depth: 1
 
-      - name: Verify exact candidate and fetch main evidence
+      - name: Verify exact candidate and fetch shallow main evidence
         shell: bash
         env:
           EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -39,7 +39,7 @@ jobs:
           set -euo pipefail
           actual="$(git rev-parse HEAD)"
           test "$actual" = "$EXPECTED_SHA"
-          git fetch --no-tags origin \
+          git fetch --no-tags --depth=1 origin \
             +refs/heads/main:refs/remotes/origin/main
           test "$(git rev-parse origin/main)" != ""
           echo "deterministic test-floor candidate sha=$actual"
@@ -55,34 +55,6 @@ jobs:
           set -euo pipefail
           python -m pip install --upgrade pip
           python -m pip install -r requirements-test-floor.txt
-
-      - name: One-shot P125 period/source coercion contribution
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'fix/p125-period-source-coercion-20260908'
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          python tmp/p125_period_source_coercion.py
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
-          python -m unittest tests.test_hh_ticket_tracking_prompt -v
-          python scripts/prompt_registry_ops.py validate
-          python scripts/evaluate_prompt_language.py --summary
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-          git diff --check
-
-          git add \
-            registry/prompts/management-operations-prompts.v1.json \
-            tests/test_hh_ticket_tracking_prompt.py \
-            web/prompt-kit/index.html
-          git diff --cached --check
-          if git diff --cached --quiet; then
-            echo "P125 durable contribution already present; no push needed."
-          else
-            git commit -m "fix(prompt-kit): coerce P125 period across Outlook and Teams"
-            git push origin HEAD:fix/p125-period-source-coercion-20260908
-          fi
 
       - name: Negative generated-site canary must fail closed
         shell: bash
