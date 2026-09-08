@@ -128,6 +128,25 @@ class PromptKitOntologyHistoryAppendOnlyTests(unittest.TestCase):
                 stat.S_IMODE(reference_path.stat().st_mode),
             )
 
+    @unittest.skipIf(os.name == "nt", "symlink creation may require elevated privileges")
+    def test_atomic_replace_follows_existing_output_symlink(self) -> None:
+        with TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            target_dir = root / "target"
+            target_dir.mkdir()
+            target_path = target_dir / "report.json"
+            target_path.write_text('{"status":"PRIOR"}\n', encoding="utf-8")
+            target_path.chmod(0o640)
+            output_path = root / "report-link.json"
+            output_path.symlink_to(Path("target") / "report.json")
+
+            append_only_validator.write_report(output_path, self._report())
+
+            self.assertTrue(output_path.is_symlink())
+            self.assertEqual(output_path.read_text(encoding="utf-8"), target_path.read_text(encoding="utf-8"))
+            self.assertEqual(stat.S_IMODE(target_path.stat().st_mode), 0o640)
+            self.assertEqual(json.loads(target_path.read_text(encoding="utf-8"))["status"], "PASS")
+
 
 if __name__ == "__main__":
     unittest.main()
