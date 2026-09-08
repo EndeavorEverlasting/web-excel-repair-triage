@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -9,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from scripts import search_operant_external_catalog as catalog_search  # noqa: E402
 from scripts import sync_operant_external_resources as sync  # noqa: E402
 from scripts import validate_operant_external_resources as validator  # noqa: E402
 
@@ -19,6 +21,12 @@ RUNTIME = ROOT / "docs" / "prompt-kit-external-resources.js"
 SITE = ROOT / "web" / "prompt-kit" / "index.html"
 PAGES_WORKFLOW = ROOT / ".github" / "workflows" / "prompt-kit-pages.yml"
 PORTABLE_BUILDER = ROOT / "scripts" / "serve_prompt_kit_portable.py"
+
+FIXTURE_CSV = """act,prompt,for_devs,type,contributor
+Code Review,"Review this pull request for correctness and regressions.",TRUE,TEXT,fixture
+Linux Terminal,"Act as a linux terminal and reply with command output only.",TRUE,TEXT,fixture
+PDF Generation,"Create a PDF report from spreadsheet rows.",FALSE,TEXT,fixture
+"""
 
 
 class OperantExternalResourceTests(unittest.TestCase):
@@ -32,45 +40,46 @@ class OperantExternalResourceTests(unittest.TestCase):
 
     def test_registered_donors_and_roots_are_explicit(self) -> None:
         sources = {item["id"]: item for item in self.contract["sources"]}
-        self.assertEqual(
-            set(sources),
-            {"deepseek-harness", "prompts-chat", "mattpocock-skills"},
-        )
+        self.assertEqual(set(sources), {"deepseek-harness", "prompts-chat", "mattpocock-skills"})
         self.assertEqual(sources["deepseek-harness"]["repository"], "deepseek-ai/deepseek-harness")
-        self.assertEqual(sources["deepseek-harness"]["expected_default_branch"], "master")
-        self.assertEqual(sources["deepseek-harness"]["resource_root"], ".agents/skills")
         self.assertEqual(sources["deepseek-harness"]["enumeration"], "git_skill_tree")
         self.assertEqual(sources["prompts-chat"]["repository"], "f/prompts.chat")
-        self.assertEqual(sources["prompts-chat"]["enumeration"], "http_json_catalog")
-        self.assertEqual(sources["prompts-chat"]["catalog_url"], "https://prompts.chat/prompts.json")
-        self.assertEqual(sources["prompts-chat"]["url_mode"], "public_template")
+        self.assertEqual(sources["prompts-chat"]["enumeration"], "catalog_csv")
+        self.assertEqual(sources["prompts-chat"]["resource_filename"], "prompts.csv")
+        self.assertEqual(sources["prompts-chat"]["license"]["prompt_data"], "CC0-1.0")
         self.assertEqual(sources["mattpocock-skills"]["repository"], "mattpocock/skills")
-        self.assertEqual(sources["mattpocock-skills"]["resource_root"], "skills")
         self.assertEqual(sources["mattpocock-skills"]["max_depth"], 2)
-        self.assertEqual(sources["mattpocock-skills"]["enumeration"], "git_skill_tree")
+        self.assertFalse(self.contract["projection"]["catalog_csv_projects_rows_into_index"])
+        self.assertIn(
+            "registered_external_source_or_catalog_search",
+            self.contract["coverage"]["p79_external_evidence"]["required_before_add"],
+        )
 
     def test_index_is_metadata_only_commit_pinned_and_bounded(self) -> None:
         self.assertTrue(self.contract["projection"]["metadata_only"])
         self.assertFalse(self.contract["projection"]["copy_upstream_skill_body"])
         floors = {row["id"]: row for row in self.index["source_floor"]}
         self.assertEqual(set(floors), {"deepseek-harness", "prompts-chat", "mattpocock-skills"})
+        self.assertEqual(floors["prompts-chat"]["enumeration"], "catalog_csv")
+        self.assertEqual(floors["prompts-chat"]["catalog_path"], "prompts.csv")
+        self.assertGreaterEqual(int(floors["prompts-chat"]["catalog_entry_count"]), 1)
+        self.assertEqual(int(floors["prompts-chat"]["resource_count"]), 0)
+        self.assertEqual(floors["prompts-chat"]["search_mode"], "on_demand")
+        self.assertEqual(int(self.index["summary"]["catalog_entries_indexed"]), 0)
         self.assertLessEqual(len(self.index["resources"]), self.contract["projection"]["maximum_entries"])
         self.assertLessEqual(INDEX.stat().st_size, self.contract["projection"]["maximum_index_bytes"])
         for resource in self.index["resources"]:
+            self.assertNotEqual(resource["source_id"], "prompts-chat")
             floor = floors[resource["source_id"]]
             self.assertEqual(resource["source_sha"], floor["resolved_sha"])
             self.assertNotIn("copyContent", resource)
             self.assertNotIn("body", resource)
             self.assertNotIn("contentPreview", resource)
+            self.assertIn(f"/blob/{floor['resolved_sha']}/", resource["url"])
             self.assertLessEqual(
                 len(resource["search_terms"]),
                 self.contract["projection"]["maximum_search_terms_per_resource"],
             )
-            source = next(item for item in self.contract["sources"] if item["id"] == resource["source_id"])
-            if source.get("url_mode", "github_blob") == "github_blob":
-                self.assertIn(f"/blob/{floor['resolved_sha']}/", resource["url"])
-            else:
-                self.assertTrue(resource["url"].startswith("https://prompts.chat/prompts/"))
 
     def test_missing_coverage_points_external_and_routes_prompt_review(self) -> None:
         external = [r for r in self.index["resources"] if r["coverage"]["disposition"] == "POINT_TO_EXTERNAL"]
@@ -79,6 +88,7 @@ class OperantExternalResourceTests(unittest.TestCase):
         self.assertEqual(self.gaps["policy"]["promotion_owner_prompt"], "P79")
         for resource in external:
             self.assertEqual(resource["coverage"]["prompt_action"], "REVIEW_ADD_PROMPT")
+            self.assertNotEqual(resource["source_id"], "prompts-chat")
         for action in self.gaps["actions"]:
             self.assertEqual(action["user_disposition"], "POINT_TO_EXTERNAL")
             self.assertEqual(action["prompt_action"], "REVIEW_ADD_PROMPT")
@@ -109,7 +119,6 @@ class OperantExternalResourceTests(unittest.TestCase):
         for resource in sample:
             self.assertNotIn(resource["url"], self.site)
 
-
     def test_release_packages_include_sidecar_without_embedding_records(self) -> None:
         pages = PAGES_WORKFLOW.read_text(encoding="utf-8")
         portable = PORTABLE_BUILDER.read_text(encoding="utf-8")
@@ -118,37 +127,6 @@ class OperantExternalResourceTests(unittest.TestCase):
         self.assertIn('RESOURCE_INDEX_NAME = "resources.v1.json"', portable)
         self.assertIn('resource_source_path = repo_root / "web" / "prompt-kit" / RESOURCE_INDEX_NAME', portable)
         self.assertIn('resource_sidecar_matches_canonical', portable)
-
-    def test_nested_skill_depth_and_public_url_helpers(self) -> None:
-        github_source = {
-            "id": "mattpocock-skills",
-            "url_mode": "github_blob",
-        }
-        self.assertEqual(
-            sync.resource_url(
-                github_source,
-                repo="mattpocock/skills",
-                sha="abc",
-                path="skills/engineering/tdd/SKILL.md",
-                slug="engineering/tdd",
-            ),
-            "https://github.com/mattpocock/skills/blob/abc/skills/engineering/tdd/SKILL.md",
-        )
-        catalog_source = {
-            "id": "prompts-chat",
-            "url_mode": "public_template",
-            "url_template": "https://prompts.chat/prompts/{slug}",
-        }
-        self.assertEqual(
-            sync.resource_url(
-                catalog_source,
-                repo="f/prompts.chat",
-                sha="def",
-                path="catalog/demo/prompt.meta.json",
-                slug="demo",
-            ),
-            "https://prompts.chat/prompts/demo",
-        )
 
     def test_token_match_is_deterministic_and_conservative(self) -> None:
         query = sync.tokens("code-review")
@@ -160,11 +138,35 @@ class OperantExternalResourceTests(unittest.TestCase):
         ]
         self.assertEqual(sync.best_match(query, candidates)[0], "P2")
 
+    def test_catalog_search_fixture_is_deterministic_and_non_authoring(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture = Path(tmp) / "prompts.csv"
+            fixture.write_text(FIXTURE_CSV, encoding="utf-8")
+            before_index = INDEX.read_text(encoding="utf-8")
+            before_gaps = GAPS.read_text(encoding="utf-8")
+            result = catalog_search.search_catalog(
+                contract=self.contract,
+                source=next(item for item in self.contract["sources"] if item["id"] == "prompts-chat"),
+                query_text="code review regressions",
+                limit=5,
+                sha="fixture",
+                catalog_file=fixture,
+            )
+            self.assertEqual(result["schema_version"], "operant-external-catalog-search/v1")
+            self.assertFalse(result["automatic_prompt_authoring"])
+            self.assertGreaterEqual(result["hit_count"], 1)
+            self.assertEqual(result["hits"][0]["title"], "Code Review")
+            self.assertIn(result["hits"][0]["disposition"], {"REFERENCE_ONLY", "ADAPT"})
+            self.assertEqual(result["hits"][0]["prompt_action"], "NO_AUTO_AUTHOR")
+            self.assertEqual(INDEX.read_text(encoding="utf-8"), before_index)
+            self.assertEqual(GAPS.read_text(encoding="utf-8"), before_gaps)
+
     def test_full_validator_accepts_current_projection(self) -> None:
         result = validator.validate()
         self.assertEqual(result["status"], "valid")
         self.assertTrue(result["lazy_fetch"])
         self.assertEqual(result["resources"], len(self.index["resources"]))
+        self.assertEqual(result["catalog_sources"], 1)
 
 
 if __name__ == "__main__":

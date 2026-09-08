@@ -43,6 +43,11 @@ def validate() -> dict[str, Any]:
         raise ValidationError("unsupported external resource index schema")
     if gaps.get("schema_version") != "operant-external-resource-gap-ledger/v1":
         raise ValidationError("unsupported external resource gap schema")
+    if contract.get("projection", {}).get("catalog_csv_projects_rows_into_index") is not False:
+        raise ValidationError("catalog_csv must not project rows into the public index")
+    evidence = contract.get("coverage", {}).get("p79_external_evidence")
+    if not isinstance(evidence, dict) or "registered_external_source_or_catalog_search" not in evidence.get("required_before_add", []):
+        raise ValidationError("coverage.p79_external_evidence must require catalog/source search before ADD")
 
     configured = {str(source["id"]): source for source in contract.get("sources", [])}
     floors = index.get("source_floor", [])
@@ -51,6 +56,7 @@ def validate() -> dict[str, Any]:
     floor_ids = {str(source.get("id", "")) for source in floors}
     if floor_ids != set(configured):
         raise ValidationError("source floor IDs differ from configured donor IDs")
+    catalog_floors = 0
     for floor in floors:
         source = configured[str(floor["id"])]
         if floor.get("repository") != source.get("repository"):
@@ -60,6 +66,21 @@ def validate() -> dict[str, Any]:
         sha = str(floor.get("resolved_sha", ""))
         if len(sha) != 40 or any(ch not in "0123456789abcdef" for ch in sha):
             raise ValidationError(f"invalid resolved SHA for donor {floor['id']}")
+        enumeration = str(source.get("enumeration", "git_skill_tree"))
+        if str(floor.get("enumeration", "git_skill_tree")) != enumeration:
+            raise ValidationError(f"enumeration mismatch for donor {floor['id']}")
+        if enumeration == "catalog_csv":
+            catalog_floors += 1
+            root = str(source.get("resource_root", ".")).rstrip("/")
+            expected_path = str(source["resource_filename"]) if root in {"", "."} else f"{root}/{source['resource_filename']}"
+            if floor.get("catalog_path") != expected_path:
+                raise ValidationError(f"catalog_path mismatch for donor {floor['id']}")
+            if int(floor.get("catalog_entry_count", -1)) < 1:
+                raise ValidationError(f"catalog_entry_count missing for donor {floor['id']}")
+            if int(floor.get("resource_count", -1)) != 0:
+                raise ValidationError(f"catalog donor must project zero resource rows: {floor['id']}")
+            if floor.get("search_mode") != "on_demand":
+                raise ValidationError(f"catalog donor must declare on_demand search: {floor['id']}")
 
     resources = index.get("resources")
     if not isinstance(resources, list) or not resources:
@@ -85,6 +106,8 @@ def validate() -> dict[str, Any]:
         if floor is None:
             raise ValidationError(f"resource references unknown source: {source_id}")
         source = configured[source_id]
+        if str(source.get("enumeration", "git_skill_tree")) == "catalog_csv":
+            raise ValidationError(f"catalog_csv source must not emit projected resources: {item.get('id')}")
         repo = str(floor["repository"])
         sha = str(floor["resolved_sha"])
         path = str(item.get("path", ""))
@@ -194,9 +217,14 @@ def validate() -> dict[str, Any]:
         raise ValidationError("index summary resource_count mismatch")
     if int(summary.get("review_add_prompt", -1)) != len(actions):
         raise ValidationError("index summary review_add_prompt mismatch")
+    if int(summary.get("catalog_sources", -1)) != catalog_floors:
+        raise ValidationError("index summary catalog_sources mismatch")
+    if int(summary.get("catalog_entries_indexed", -1)) != 0:
+        raise ValidationError("catalog entries must remain unindexed in the public sidecar")
     return {
         "status": "valid",
         "sources": len(floors),
+        "catalog_sources": catalog_floors,
         "resources": len(resources),
         "pinned_urls": pinned,
         "external_only": len(external_resources),

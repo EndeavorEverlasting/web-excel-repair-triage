@@ -266,6 +266,8 @@ class PromptRegistryExpansionTests(unittest.TestCase):
             "Multiple genuinely distinct prompts may be added from one chat",
             "WHOLE-CHAT HARVEST — PASS 2",
             "Stop at a bounded fixed point",
+            "search_operant_external_catalog.py",
+            "distinct residual before ADD",
         ):
             self.assertIn(phrase, content)
         raw = json.loads((ROOT / "registry/prompts/spec-architecture-prompts.v1.json").read_text(encoding="utf-8"))

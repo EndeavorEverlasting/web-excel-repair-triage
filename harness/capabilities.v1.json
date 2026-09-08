@@ -274,24 +274,26 @@
       "trigger_ids": [
         "operant-external-resource-refresh-needed"
       ],
-      "operation": "Refresh approved public donor skill inventories, project compact commit-pinned metadata, classify existing Operant coverage first, and emit external pointers plus grounded prompt-review gaps without copying donor bodies into the Prompt Kit.",
+      "operation": "Refresh approved public donor skill inventories and catalog floors, project compact commit-pinned metadata without bulk-importing catalog rows, classify existing Operant coverage first, expose on-demand catalog search for P79 evidence, and emit external pointers plus grounded prompt-review gaps without copying donor bodies into the Prompt Kit.",
       "inputs": [
         "harness/contracts/operant-external-resource-intake.v1.json",
         "live public GitHub donor metadata",
         "current Operant prompt registry",
-        "current local skill inventory"
+        "current local skill inventory",
+        "optional offline catalog fixture for deterministic search proof"
       ],
       "outputs": [
         "web/prompt-kit/resources.v1.json",
         "registry/resources/operant-external-resource-gaps.v1.json",
         "POINT_TO_EXISTING_PROMPT / POINT_TO_EXISTING_SKILL / POINT_TO_EXTERNAL disposition",
+        "on-demand catalog search receipts (REFERENCE_ONLY / ADAPT)",
         "REVIEW_ADD_PROMPT queue routed to P79 when internal coverage is absent"
       ],
       "implementation": {
         "kind": "script",
         "path": "scripts/sync_operant_external_resources.py"
       },
-      "proof_ceiling": "Live public donor source-SHA resolution plus repository metadata projection, deterministic coverage routing, size-budget, lazy-load, CI drift, and generated-site proof; no donor quality, license-adaptation, browser-network, or automatic prompt-quality proof."
+      "proof_ceiling": "Live public donor source-SHA resolution plus repository metadata projection, catalog floor-only receipts, fixture/on-demand catalog search, deterministic coverage routing, size-budget, lazy-load, CI drift, and generated-site proof; no donor quality, license-adaptation, browser-network, MCP, or automatic prompt-quality proof."
     }
   ]
 }
