@@ -110,9 +110,10 @@ jobs:
           SITE_ROOT: ${{ runner.temp }}/prompt-kit-pages
         run: |
           set -euo pipefail
-          mkdir -p "$SITE_ROOT/prompt-kit" "$SITE_ROOT/roster-log-v2" Outputs
-          python scripts/build_prompt_kit_registry.py --output "$SITE_ROOT/prompt-kit/index.html"
-          cp web/prompt-kit/resources.v1.json "$SITE_ROOT/prompt-kit/resources.v1.json"
+          mkdir -p "$SITE_ROOT/operant" "$SITE_ROOT/prompt-kit" "$SITE_ROOT/roster-log-v2" Outputs
+          python scripts/build_prompt_kit_registry.py --output "$SITE_ROOT/operant/index.html"
+          cp web/prompt-kit/resources.v1.json "$SITE_ROOT/operant/resources.v1.json"
+          cp web/prompt-kit-legacy-redirect/index.html "$SITE_ROOT/prompt-kit/index.html"
           cp -R web/prompt-kit-mobile/. "$SITE_ROOT/"
           cp -R web/roster-log-v2/. "$SITE_ROOT/roster-log-v2/"
           test -s "$SITE_ROOT/index.html"
@@ -121,13 +122,15 @@ jobs:
           test -s "$SITE_ROOT/icon-192.png"
           test -s "$SITE_ROOT/icon-512.png"
           test -s "$SITE_ROOT/qr-prompt-kit.png"
+          test -s "$SITE_ROOT/operant/index.html"
+          test -s "$SITE_ROOT/operant/resources.v1.json"
           test -s "$SITE_ROOT/prompt-kit/index.html"
-          test -s "$SITE_ROOT/prompt-kit/resources.v1.json"
           test -s "$SITE_ROOT/roster-log-v2/index.html"
           test -s "$SITE_ROOT/roster-log-v2/app.js"
           test -s "$SITE_ROOT/roster-log-v2/styles.css"
-          cmp "$SITE_ROOT/prompt-kit/index.html" web/prompt-kit/index.html
-          cmp "$SITE_ROOT/prompt-kit/resources.v1.json" web/prompt-kit/resources.v1.json
+          cmp "$SITE_ROOT/operant/index.html" web/prompt-kit/index.html
+          cmp "$SITE_ROOT/operant/resources.v1.json" web/prompt-kit/resources.v1.json
+          cmp "$SITE_ROOT/prompt-kit/index.html" web/prompt-kit-legacy-redirect/index.html
           cmp "$SITE_ROOT/roster-log-v2/index.html" web/roster-log-v2/index.html
           cmp "$SITE_ROOT/roster-log-v2/app.js" web/roster-log-v2/app.js
           cmp "$SITE_ROOT/roster-log-v2/styles.css" web/roster-log-v2/styles.css
@@ -192,14 +195,17 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$PAGE_URL"
-          curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors "${PAGE_URL}prompt-kit/" --output deployed-prompt-kit.html
+          curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors "${PAGE_URL}operant" --output deployed-operant.html
+          curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors "${PAGE_URL}prompt-kit/" --output deployed-prompt-kit-legacy.html
           curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors "${PAGE_URL}roster-log-v2/" --output deployed-roster-v2.html
           curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors "${PAGE_URL}roster-log-v2/app.js" --output deployed-roster-v2.js
           curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors "${PAGE_URL}roster-log-v2/styles.css" --output deployed-roster-v2.css
-          cmp deployed-prompt-kit.html web/prompt-kit/index.html
+          cmp deployed-operant.html web/prompt-kit/index.html
+          cmp deployed-prompt-kit-legacy.html web/prompt-kit-legacy-redirect/index.html
           cmp deployed-roster-v2.html web/roster-log-v2/index.html
           cmp deployed-roster-v2.js web/roster-log-v2/app.js
           cmp deployed-roster-v2.css web/roster-log-v2/styles.css
           echo "deployed_sha=${GITHUB_SHA}"
-          echo "prompt_kit_url=${PAGE_URL}prompt-kit/"
+          echo "operant_url=${PAGE_URL}operant"
+          echo "legacy_prompt_kit_url=${PAGE_URL}prompt-kit/"
           echo "roster_v2_url=${PAGE_URL}roster-log-v2/"
