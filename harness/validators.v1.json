@@ -20,10 +20,10 @@
     {
       "id": "prompt-kit-interaction-contract-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_prompt_kit_interactions_contract -v",
+      "command": "python -m unittest tests.test_prompt_kit_interactions_contract tests.test_prompt_kit_hotkey_identity_runtime tests.test_prompt_kit_hotkey_header_handoff tests.test_prompt_kit_hotkey_completion -v",
       "blocking": true,
       "output": "process log",
-      "proof_ceiling": "Interaction contract and static fixture proof."
+      "proof_ceiling": "Executable Prompt Kit interaction, natural prompt-identity dispatch, header handoff, discoverability, and generated-runtime regression proof."
     },
     {
       "id": "prompt-kit-interaction-audit",
@@ -48,14 +48,6 @@
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable prompt discovery regression proof."
-    },
-    {
-      "id": "prompt-kit-hotkey-runtime-tests",
-      "class": "test",
-      "command": "python -m unittest tests.test_prompt_kit_hotkey_identity_runtime tests.test_prompt_kit_hotkey_header_handoff tests.test_prompt_kit_hotkey_completion -v",
-      "blocking": true,
-      "output": "process log",
-      "proof_ceiling": "Executable natural prompt-identity dispatch, header handoff, discoverability, and generated-runtime regression proof."
     },
     {
       "id": "prompt-language-contract-tests",
@@ -236,7 +228,6 @@
       "prompt-kit-interaction-audit",
       "prompt-kit-discovery-audit",
       "prompt-kit-discovery-tests",
-      "prompt-kit-hotkey-runtime-tests",
       "prompt-language-contract-tests",
       "prompt-language-audit",
       "skill-prompt-registry-tests",
@@ -276,7 +267,6 @@
       "prompt-kit-interaction-audit",
       "prompt-kit-discovery-audit",
       "prompt-kit-discovery-tests",
-      "prompt-kit-hotkey-runtime-tests",
       "prompt-language-contract-tests",
       "prompt-language-audit",
       "skill-prompt-registry-tests",
