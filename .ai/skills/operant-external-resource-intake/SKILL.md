@@ -24,13 +24,19 @@ This skill owns donor **resource discovery and coverage routing**. It does not m
 ## Procedure
 
 1. **Refresh donor truth.** Resolve each registered public repository's actual default branch and current commit. Fail closed if the observed default branch differs from the registered expectation until the contract is deliberately reconciled.
-2. **Enumerate only declared resource roots.** Read the resolved Git tree and select `SKILL.md` records under the registered root. Ignore caches, examples, notes, and unrelated repository files.
-3. **Project metadata, not bodies.** Emit source ID, repository, pinned commit, skill slug/title, path, pinned GitHub URL, and bounded search terms. Do not embed donor instructions or prose in Operant's prompt registry or generated HTML.
+2. **Enumerate only declared resource roots.** For `git_skill_tree` donors, read the resolved Git tree and select `SKILL.md` records under the registered root up to `max_depth` (nested category/slug trees are allowed when configured). For `http_json_catalog` donors such as prompts.chat, fetch the registered public metadata catalog and project title/slug/description only. Ignore caches, examples, notes, upstream bodies, and unrelated repository files.
+3. **Project metadata, not bodies.** Emit source ID, repository, pinned commit, skill/prompt slug/title, path, discoverable URL, and bounded search terms. Do not embed donor instructions, `contentPreview`, or prose bodies in Operant's prompt registry or generated HTML.
 4. **Compare against existing Operant owners first.** Use the deterministic coverage scorer against current prompt names/keywords and local skill titles. Prefer pointing users to an existing Operant prompt or skill when coverage clears the contract threshold.
 5. **Keep external-only resources useful.** If no strong local owner exists, keep the upstream pinned resource directly discoverable as `POINT_TO_EXTERNAL` and record `REVIEW_ADD_PROMPT` in the maintenance ledger. External-only does not mean unavailable.
 6. **Promote through the existing grounded prompt path.** P79 owns strengthen-before-add prompt contributions. A strategic owner reviews the gap evidence, donor license, real user task, and current registry before changing prompts. Never auto-copy or mechanically translate a donor skill into a new prompt.
 7. **Preserve progressive disclosure.** The main Operant page embeds only the small resource runtime. It must not embed donor records and must not fetch `resources.v1.json` until the user explicitly opens Resources.
 8. **Refresh regularly without bypassing review.** The scheduled workflow generates a current candidate snapshot and gap ledger as CI artifacts, compares them with tracked canonical projections, and signals drift. It never writes directly to the default branch.
+
+Registered donor floor (current contract):
+
+- `deepseek-ai/deepseek-harness` — `.agents/skills/*/SKILL.md`
+- `f/prompts.chat` — public metadata catalog `https://prompts.chat/prompts.json` with GitHub SHA provenance
+- `mattpocock/skills` — nested `skills/<category>/<slug>/SKILL.md` (excluding `deprecated/`)
 
 ## Guardrails
 

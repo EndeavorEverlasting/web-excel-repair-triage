@@ -37,23 +37,40 @@ def load_json(path: Path) -> dict[str, Any]:
     return data
 
 
-def github_json(path: str) -> Any:
-    request = urllib.request.Request(
-        API_ROOT + path,
-        headers={
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "OperantExternalResourceSync/1.0",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
-    )
-    token = os.environ.get("GITHUB_TOKEN", "").strip()
-    if token:
-        request.add_header("Authorization", f"Bearer {token}")
+def _request_json(url: str, *, accept: str, user_agent: str, auth_bearer: bool = False) -> Any:
+    headers = {
+        "Accept": accept,
+        "User-Agent": user_agent,
+    }
+    request = urllib.request.Request(url, headers=headers)
+    if auth_bearer:
+        token = os.environ.get("GITHUB_TOKEN", "").strip()
+        if token:
+            request.add_header("Authorization", f"Bearer {token}")
+            request.add_header("X-GitHub-Api-Version", "2022-11-28")
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:
+        with urllib.request.urlopen(request, timeout=60) as response:
             return json.load(response)
     except (urllib.error.URLError, json.JSONDecodeError) as exc:
-        raise RuntimeError(f"GitHub request failed for {path}: {exc}") from exc
+        raise RuntimeError(f"JSON request failed for {url}: {exc}") from exc
+
+
+def github_json(path: str) -> Any:
+    return _request_json(
+        API_ROOT + path,
+        accept="application/vnd.github+json",
+        user_agent="OperantExternalResourceSync/1.0",
+        auth_bearer=True,
+    )
+
+
+def http_json(url: str) -> Any:
+    return _request_json(
+        url,
+        accept="application/json",
+        user_agent="OperantExternalResourceSync/1.0",
+        auth_bearer=False,
+    )
 
 
 def tokens(value: str) -> set[str]:
@@ -103,7 +120,7 @@ def best_match(query: set[str], candidates: list[tuple[str, str, set[str]]]) -> 
     return best_id, best_title, round(best, 3)
 
 
-def enumerate_source(source: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+def resolve_github_floor(source: dict[str, Any]) -> tuple[str, str, dict[str, Any]]:
     repo = str(source["repository"])
     repository = github_json(f"/repos/{repo}")
     default_branch = str(repository["default_branch"])
@@ -112,6 +129,26 @@ def enumerate_source(source: dict[str, Any]) -> tuple[dict[str, Any], list[dict[
         raise ValueError(f"{repo} default branch changed: expected {expected}, observed {default_branch}")
     branch = github_json(f"/repos/{repo}/branches/{default_branch}")
     sha = str(branch["commit"]["sha"])
+    return default_branch, sha, branch
+
+
+def resource_url(source: dict[str, Any], *, repo: str, sha: str, path: str, slug: str) -> str:
+    mode = str(source.get("url_mode", "github_blob"))
+    if mode == "github_blob":
+        return f"https://github.com/{repo}/blob/{sha}/{path}"
+    if mode == "public_template":
+        template = str(source["url_template"])
+        return template.format(slug=slug, sha=sha, path=path, repository=repo)
+    raise ValueError(f"unsupported url_mode for {source.get('id')}: {mode}")
+
+
+def enumerate_git_skill_tree(
+    source: dict[str, Any],
+    *,
+    repo: str,
+    sha: str,
+    branch: dict[str, Any],
+) -> list[dict[str, Any]]:
     tree_sha = str(branch["commit"]["commit"]["tree"]["sha"])
     tree = github_json(f"/repos/{repo}/git/trees/{tree_sha}?recursive=1")
     if tree.get("truncated"):
@@ -121,17 +158,72 @@ def enumerate_source(source: dict[str, Any]) -> tuple[dict[str, Any], list[dict[
     filename = str(source["resource_filename"])
     prefix = root + "/"
     suffix = "/" + filename
+    max_depth = int(source.get("max_depth", 1))
+    exclude = {str(item) for item in source.get("exclude_root_segments", [])}
     resources: list[dict[str, Any]] = []
     for item in tree.get("tree", []):
         path = str(item.get("path", ""))
         if item.get("type") != "blob" or not path.startswith(prefix) or not path.endswith(suffix):
             continue
-        relative = path[len(prefix):-len(suffix)]
-        if not relative or "/" in relative:
+        relative = path[len(prefix) : -len(suffix)]
+        parts = [part for part in relative.split("/") if part]
+        if not parts or len(parts) > max_depth:
             continue
-        slug = relative
-        title = display_title(slug)
-        resources.append({
+        if parts[0] in exclude:
+            continue
+        slug = "/".join(parts)
+        title = display_title(parts[-1])
+        resources.append(
+            {
+                "id": f"{source['id']}:{slug}",
+                "source_id": source["id"],
+                "source_repo": repo,
+                "source_sha": sha,
+                "kind": source["resource_kind"],
+                "slug": slug,
+                "title": title,
+                "path": path,
+                "url": resource_url(source, repo=repo, sha=sha, path=path, slug=slug),
+            }
+        )
+    resources.sort(key=lambda row: (str(row["title"]).lower(), str(row["id"])))
+    return resources
+
+
+def enumerate_http_json_catalog(
+    source: dict[str, Any],
+    *,
+    repo: str,
+    sha: str,
+) -> list[dict[str, Any]]:
+    catalog_url = str(source["catalog_url"])
+    payload = http_json(catalog_url)
+    items_key = str(source.get("items_key", "prompts"))
+    items = payload.get(items_key)
+    if not isinstance(items, list):
+        raise ValueError(f"{source['id']} catalog missing list at key {items_key}")
+
+    root = str(source["resource_root"]).rstrip("/")
+    filename = str(source["resource_filename"])
+    slug_field = str(source.get("slug_field", "slug"))
+    title_field = str(source.get("title_field", "title"))
+    description_field = str(source.get("description_field", "description"))
+    description_max = int(source.get("description_max_chars", 160))
+    resources: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        slug = str(item.get(slug_field, "")).strip()
+        title = str(item.get(title_field, "")).strip() or display_title(slug)
+        if not slug or slug in seen:
+            continue
+        seen.add(slug)
+        path = f"{root}/{slug}/{filename}"
+        description = str(item.get(description_field, "") or "").strip()
+        if len(description) > description_max:
+            description = description[: description_max - 1].rstrip() + "…"
+        resource: dict[str, Any] = {
             "id": f"{source['id']}:{slug}",
             "source_id": source["id"],
             "source_repo": repo,
@@ -140,9 +232,26 @@ def enumerate_source(source: dict[str, Any]) -> tuple[dict[str, Any], list[dict[
             "slug": slug,
             "title": title,
             "path": path,
-            "url": f"https://github.com/{repo}/blob/{sha}/{path}",
-        })
+            "url": resource_url(source, repo=repo, sha=sha, path=path, slug=slug),
+        }
+        if description:
+            resource["description"] = description
+        resources.append(resource)
     resources.sort(key=lambda row: (str(row["title"]).lower(), str(row["id"])))
+    return resources
+
+
+def enumerate_source(source: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    repo = str(source["repository"])
+    default_branch, sha, branch = resolve_github_floor(source)
+    enumeration = str(source.get("enumeration", "git_skill_tree"))
+    root = str(source["resource_root"]).rstrip("/")
+    if enumeration == "git_skill_tree":
+        resources = enumerate_git_skill_tree(source, repo=repo, sha=sha, branch=branch)
+    elif enumeration == "http_json_catalog":
+        resources = enumerate_http_json_catalog(source, repo=repo, sha=sha)
+    else:
+        raise ValueError(f"unsupported enumeration for {source.get('id')}: {enumeration}")
     receipt = {
         "id": source["id"],
         "repository": repo,
@@ -150,6 +259,7 @@ def enumerate_source(source: dict[str, Any]) -> tuple[dict[str, Any], list[dict[
         "resolved_sha": sha,
         "resource_root": root,
         "resource_count": len(resources),
+        "enumeration": enumeration,
     }
     return receipt, resources
 
@@ -167,7 +277,10 @@ def build_projection(contract: dict[str, Any]) -> tuple[dict[str, Any], dict[str
         receipt, source_resources = enumerate_source(source)
         receipts.append(receipt)
         for resource in source_resources:
-            query = tokens(str(resource["title"]) + " " + str(resource["slug"]))
+            query_text = str(resource["title"]) + " " + str(resource["slug"])
+            if resource.get("description"):
+                query_text += " " + str(resource["description"])
+            query = tokens(query_text)
             prompt_id, prompt_title, prompt_score = best_match(query, prompt_candidates)
             skill_id, skill_title, skill_score = best_match(query, skill_candidates)
             coverage: dict[str, Any]
