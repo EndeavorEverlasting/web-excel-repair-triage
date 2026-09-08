@@ -88,9 +88,15 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
             "toggleCompactFilters()",
             "scrollPromptKitTo('top')",
             "scrollPromptKitTo('bottom')",
+            "if(typeof toggleRef==='function'){toggleRef();return true}",
             "toggle.setAttribute('aria-keyshortcuts','`')",
         ):
             self.assertIn(marker, source)
+        action_start = source.index("function performMobileQuickAction")
+        action_end = source.index("function mobilePromptJumpDigits", action_start)
+        action = source[action_start:action_end]
+        self.assertNotIn("ref.click()", action)
+        self.assertNotIn("getElementById('refBtn')", action)
 
     def test_contract_and_phone_guide_define_fast_p111_route(self) -> None:
         contract = json.loads(CONTRACT.read_text(encoding="utf-8"))

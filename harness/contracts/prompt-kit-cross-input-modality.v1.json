@@ -1,0 +1,180 @@
+{
+  "schema_version": "prompt-kit-cross-input-modality-contract/v1",
+  "contract_id": "prompt-kit-cross-input-modality",
+  "principle": "Mouse, keyboard, and phone are three mode-native interaction languages over one Prompt Kit product model. Equivalent intent converges on the same semantic action and state owner; phone is not resized desktop chrome.",
+  "surface": {
+    "canonical_site": "web/prompt-kit/index.html",
+    "behavior_source": "docs/prompt-kit.js",
+    "polish_source": "docs/prompt-kit-polish.js",
+    "phone_guide": "OPEN_PROMPT_KIT_ON_PHONE.md",
+    "mobile_contract": "harness/contracts/prompt-kit-mobile.v1.json",
+    "interaction_contract": "harness/contracts/prompt-kit-interactions.v1.json"
+  },
+  "routing_boundary": {
+    "owner": "P129",
+    "forbidden": [
+      "P106 overall UX architecture replacement",
+      "P99 flow/telemetry repair ownership",
+      "P109 cross-app factoring ownership",
+      "P110 acceptance-only certification ownership",
+      "P95 runtime CommandKernel ownership rewrite",
+      "second mobile state machine or command registry"
+    ]
+  },
+  "capabilities": [
+    {
+      "id": "browse_profiles",
+      "capability": "Discover / browse library hierarchy",
+      "mouse": "A–E profile tabs and filter rails",
+      "keyboard": "A–E profile slots",
+      "phone": "More → Previous/Next profile; touch rails",
+      "semantic_action": "PromptKitProfiles.activateSlot / library filter sync",
+      "state_owner": "PromptKitProfiles + activeCat/Section/Type",
+      "proof": "tests.test_prompt_kit_mobile_quick_controls + profile slot markers"
+    },
+    {
+      "id": "search",
+      "capability": "Search prompts",
+      "mouse": "Search field",
+      "keyboard": "/ focuses search",
+      "phone": "More → Search (intentional focus; software keyboard only for text entry)",
+      "semantic_action": "focus #search after showCompactFilters",
+      "state_owner": "#search value + filter hierarchy",
+      "proof": "mobile quick controls markers; keyboard / binding in prompt-kit.js"
+    },
+    {
+      "id": "find_prompt",
+      "capability": "Guided Find Prompt discovery",
+      "mouse": "Tutorial · Find My Prompt control",
+      "keyboard": "reachable via finder open from Hotkeys/Tutorial surfaces",
+      "phone": "More → Find Prompt → openPromptFinder",
+      "semantic_action": "window.openPromptFinder",
+      "state_owner": "guided recommendation runtime",
+      "proof": "performMobileQuickAction find branch"
+    },
+    {
+      "id": "favorites_view",
+      "capability": "Favorites / saved destinations",
+      "mouse": "★ control and Favorites profile/tab",
+      "keyboard": "Favorites profile slot (default C) + favorite prompt sequences",
+      "phone": "Favorites quick access + More → Favorites",
+      "semantic_action": "activateFavoritesView",
+      "state_owner": "favoritePromptIds / promptKit.favoritePromptIds.v1",
+      "proof": "mobile contract favorites_* requirements"
+    },
+    {
+      "id": "inspect_open",
+      "capability": "Open / inspect prompt detail",
+      "mouse": "Open button; double-click card",
+      "keyboard": "Enter on focused card",
+      "phone": "Open button; Go to P# exact jump",
+      "semantic_action": "showPromptDetail",
+      "state_owner": "promptDetailOverlay + promptDetailOrigin",
+      "proof": "prompt-kit-interactions + mobile_prompt_id_jump"
+    },
+    {
+      "id": "copy_act",
+      "capability": "Copy prompt content (terminal clipboard act)",
+      "mouse": "Copy button; single-click card",
+      "keyboard": "Space on focused card; configured/recommended prompt sequences (copy + reveal)",
+      "phone": "Copy on card and detail (explicit after open)",
+      "semantic_action": "copyPrompt",
+      "state_owner": "clipboard adapter + copy acknowledgement UI",
+      "proof": "prompt-kit-interactions copy requirements"
+    },
+    {
+      "id": "open_known_id",
+      "capability": "Open known prompt ID for read (distinct from copy-known)",
+      "mouse": "Open / double-click after locating card",
+      "keyboard": "Enter after locating; not the favorite sequence terminal",
+      "phone": "Go to P# digits → showPromptDetail",
+      "semantic_action": "showPromptDetail via mobilePromptJump / Open",
+      "state_owner": "promptDetailOverlay",
+      "proof": "OPEN_PROMPT_KIT_ON_PHONE.md + mobile_prompt_id_jump",
+      "note": "Intentionally distinct from keyboard favorite sequence terminal (copy + reveal without detail)."
+    },
+    {
+      "id": "copy_known_id",
+      "capability": "Copy known favorite/recommended prompt ID",
+      "mouse": "Copy after locating card",
+      "keyboard": "favorite/recommended p## sequences → copy + reveal without detail",
+      "phone": "supported_exclusion: no separate digit-copy hotkey; open via Go to P# then tap Copy",
+      "semantic_action": "activatePromptShortcutTarget / copyPrompt",
+      "state_owner": "promptShortcutBindings + favorites",
+      "proof": "hotkey completion tests; phone exclusion documented"
+    },
+    {
+      "id": "filters",
+      "capability": "Show/hide and apply filters",
+      "mouse": "Hide/Show filters control + rails",
+      "keyboard": "F [ ]",
+      "phone": "More → Filters; touch rails",
+      "semantic_action": "toggleCompactFilters / filter hierarchy",
+      "state_owner": "compact filter visibility + activeCat/Section/Type",
+      "proof": "filtering access + mobile quick controls"
+    },
+    {
+      "id": "reference",
+      "capability": "Toggle reference panel",
+      "mouse": "Reference floating control",
+      "keyboard": "R",
+      "phone": "More → Reference",
+      "semantic_action": "toggleRef",
+      "state_owner": "refSidebar / refOverlay open classes",
+      "proof": "performMobileQuickAction calls toggleRef; no refBtn.click synthesis"
+    },
+    {
+      "id": "scroll_edges",
+      "capability": "Scroll to top/bottom",
+      "mouse": "Top/Bottom links",
+      "keyboard": "Home / End",
+      "phone": "More → Top / Bottom",
+      "semantic_action": "scrollPromptKitTo",
+      "state_owner": "window scroll position",
+      "proof": "mobile quick controls shared action markers"
+    },
+    {
+      "id": "reset_recover",
+      "capability": "Reset / recover / dismiss",
+      "mouse": "Title/logo reset; backdrop dismiss",
+      "keyboard": "Esc cascade; title keyboard activation",
+      "phone": "Title/logo reset; detail close; Esc where available; Go to P# Esc dismiss",
+      "semantic_action": "resetPromptKitView / closePromptDetail / closeRef / clearSearch",
+      "state_owner": "filter + detail + reference + search composition",
+      "proof": "title_reset mobile contract; escape_close_preserved"
+    },
+    {
+      "id": "zero_results",
+      "capability": "Zero-results / no-match feedback",
+      "mouse": "Empty search/filter grid states",
+      "keyboard": "same search/filter state surfaces",
+      "phone": "Favorites empty recovery + Go to P# no-match status",
+      "semantic_action": "render empty states / mobile jump status",
+      "state_owner": "search + filters + favorites membership",
+      "proof": "favorites_empty_state_and_persistence; jump no-match markers"
+    },
+    {
+      "id": "command_surface",
+      "capability": "Command / help surface",
+      "mouse": "Hotkeys panel toggle",
+      "keyboard": "` toggles Hotkeys",
+      "phone": "More command sheet (labeled buttons; hotkey config chrome hidden)",
+      "semantic_action": "setHotkeyHelpOpen / install mobile More panel",
+      "state_owner": "hotkey help open state",
+      "proof": "mobile More panel markers; no swipe-required vocabulary"
+    }
+  ],
+  "semantic_convergence_rules": [
+    "CAPABILITY -> SEMANTIC ACTION -> MODE ADAPTER -> FEEDBACK/STATE",
+    "Phone adapters must call canonical owners; synthesizing desktop control clicks is forbidden for essential actions",
+    "Hover and double-click may enrich mouse grammar but must not be the only route to essential actions",
+    "Gestures accelerate only when a labeled More/button fallback exists",
+    "supported_exclusion is allowed when documented; missing phone route is not equivalent to use the desktop control"
+  ],
+  "validation": [
+    "node --check docs/prompt-kit-polish.js",
+    "python -m unittest tests.test_prompt_kit_cross_input_modality tests.test_prompt_kit_mobile_quick_controls -v",
+    "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check"
+  ],
+  "proof_ceiling": "Static contract and source-marker tests prove mode routes and semantic convergence markers. Chromium 390x844 journeys prove browser geometry/input for tracked paths. Physical Android thumb reach, real software-keyboard feel, OS/browser gesture conflict, and device clipboard UX remain field acceptance gates and are not claimed by this contract."
+}
