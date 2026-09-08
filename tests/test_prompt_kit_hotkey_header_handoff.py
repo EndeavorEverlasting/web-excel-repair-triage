@@ -40,6 +40,9 @@ class PromptKitHotkeyHeaderHandoffTests(unittest.TestCase):
     def test_pending_prompt_identity_hands_back_to_header_key(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         blocks = "\n\n".join(function_block(source, name) for name in (
+            "promptShortcutDigitGesture",
+            "publishPromptShortcutDigitAliases",
+            "clonePromptShortcutBindings",
             "resetPromptShortcutBuffer",
             "schedulePromptShortcutBufferReset",
             "promptShortcutHasLongerPrefix",
@@ -54,6 +57,8 @@ var promptShortcutBuffer='';
 var promptShortcutBufferTimer=null;
 var activations=[];
 function activatePromptShortcutTarget(id){{activations.push(id);return true}}
+function isFavoritePrompt(){{return true}}
+function favoritePromptShortcutBindings(){{return {{}}}}
 {blocks}
 function eventStub(){{return{{preventDefault:function(){{}},stopImmediatePropagation:function(){{}}}}}}
 var header=[];

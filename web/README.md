@@ -181,17 +181,22 @@ The glowing **Hotkeys** module beside the floating reference control is the in-p
 | `End` | Scroll to bottom |
 | `Esc` | Close the active surface or clear filters |
 
-Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prompt first, enter its canonical ID such as `P95`, and save it; the persisted binding is then the lower-case prompt ID (`p95`). Typed prompt sequences expire after 1.2 seconds and are ignored in editable fields. If one configured ID prefixes another, the shorter exact match waits for that boundary and continued typing selects the longer exact ID. Dots may be typed as separators inside an active sequence (`p1.1` → `P11`, `p1.11` → `P111`). Completing a configured sequence clears the transient restrictions needed to reveal the target, scrolls the canonical prompt card into view, and copies the canonical prompt through the normal copy path **without opening prompt detail**. The Hotkeys panel labels configured rows as **Copy + reveal P##**.
+Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prompt first, enter its canonical ID such as `P95`, and save it; storage may keep the lower-case prompt ID (`p95`). **Keyboard grammar:** type the digits only (`95`, `111`) — a leading `p`/`P` is not required. Sequences expire after 1.2 seconds and are ignored in editable fields. If one configured ID prefixes another, the shorter exact match waits for that boundary and continued typing selects the longer exact ID. Dots may be typed as separators inside an active sequence (`1.1` → `P11`, `1.11` → `P111`). Completing a configured sequence clears the transient restrictions needed to reveal the target, scrolls the canonical prompt card into view, and copies the canonical prompt through the normal copy path **without opening prompt detail**. The Hotkeys panel labels configured rows as **Copy + reveal P##** with digit-only keycaps.
 
-A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it owns the following digits. Numeric keys have no header-navigation meaning, so `P111` and other configured prompt IDs cannot fall through into a tab command.
+**Mode separation for known prompt IDs:**
+- **Mouse:** no dedicated digit sequence; locate the card, then use Open/Copy.
+- **Keyboard:** digits-only sequences for favorite/recommended bindings (copy + reveal).
+- **Phone:** use the **Go to P#** handle (P prefix shown; type digits) to open detail, then Copy.
 
-Registry prompts may additionally publish a **recommended shortcut** by shipping `sharedShortcut: true` in their canonical registry record (currently `P95`). Recommended sequences are the lowercase prompt ID, are active for every user without favoriting, use the same copy + reveal path, and appear in the Hotkeys panel labeled **Recommended** without a Remove control because the registry owns them. Personal bindings and built-ins keep precedence, and configuring or removing a personal binding still requires the Favorite gate and a durable storage write.
+A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it owns the following digits. Numeric keys have no header-navigation meaning, so digit sequences cannot fall through into a tab command.
+
+Registry prompts may additionally publish a **recommended shortcut** by shipping `sharedShortcut: true` in their canonical registry record (currently `P95`). Recommended sequences are active for every user without favoriting, use the same copy + reveal path with digit-only typing, and appear in the Hotkeys panel labeled **Recommended** without a Remove control because the registry owns them. Personal bindings and built-ins keep precedence, and configuring or removing a personal binding still requires the Favorite gate and a durable storage write.
 
 Navigation shortcuts are ignored while typing in an input, textarea, select, or content-editable surface. Modified backtick chords are ignored. Top/bottom scrolling respects reduced-motion preferences.
 
 ### Header navigation contract
 
-The five visible profile slots have stable letter identities: `A` All, `B` Standard, `C` Favorites, `D` SAS, and `E` PM by default. Their labels/profile packs may be customized without changing those key identities. Header navigation has no numeric shortcuts and does not reserve `P`, leaving digit-bearing prompt sequences such as `p11`, `p13`, and `p111` exclusively to the prompt shortcut dispatcher.
+The five visible profile slots have stable letter identities: `A` All, `B` Standard, `C` Favorites, `D` SAS, and `E` PM by default. Their labels/profile packs may be customized without changing those key identities. Header navigation has no numeric shortcuts and does not reserve digit keys, leaving digit-only prompt sequences such as `11`, `13`, and `111` exclusively to the prompt shortcut dispatcher.
 
 ### Validation
 

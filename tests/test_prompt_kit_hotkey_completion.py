@@ -131,7 +131,18 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             self.assertIn(marker, deployed)
         effective = source[source.index("function effectivePromptShortcutBindings"):source.index("function clonePromptShortcutBindings")]
         self.assertLess(effective.index("favoritePromptShortcutBindings"), effective.index("promptShortcutBindings[gesture]"))
+        self.assertIn("function promptShortcutDigitGesture(promptId)", source)
+        self.assertIn("function publishPromptShortcutDigitAliases(bindings)", source)
+        self.assertIn("return publishPromptShortcutDigitAliases(merged)", source)
+        self.assertIn("key.textContent=promptShortcutDigitGesture(promptId)||promptId.toLowerCase()", source)
 
+    def test_keyboard_digit_grammar_does_not_require_leading_p(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        readme = (ROOT / "web" / "README.md").read_text(encoding="utf-8")
+        self.assertIn("type the digits only", readme.lower())
+        self.assertIn("leading `p`/`P` is not required", readme)
+        self.assertIn("publishPromptShortcutDigitAliases(merged)", source)
+        self.assertIn("Keyboard grammar: type digits only", source)
     def test_prompt_sequence_owns_digits_and_header_navigation_is_letter_only(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         base = (ROOT / "docs" / "prompt-kit.js").read_text(encoding="utf-8")
@@ -284,7 +295,7 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             "| `]` | Show filters |",
         ):
             self.assertIn(row, readme)
-        self.assertIn("Typed prompt sequences expire after 1.2 seconds", readme)
+        self.assertIn("Sequences expire after 1.2 seconds", readme)
         self.assertIn("every current Favorite automatically participates", design)
         self.assertIn("no second Save-shortcut action is required", design)
         self.assertIn("copies the canonical prompt and scrolls its card into view without opening prompt detail", design)
