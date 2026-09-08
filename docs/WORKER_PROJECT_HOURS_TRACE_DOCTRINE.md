@@ -37,7 +37,7 @@ This is implemented in `triage.admin_billing_summary.reader.read_month`.
 
 ## Default-project overrides do not create a second project identity
 
-A dated project value can exist specifically to override a worker's non-project default. Do not confuse that resolution evidence with a new client-facing project taxonomy.
+A dated project value can exist specifically to override a worker's non-NTH default project. Do not confuse that resolution evidence with a new client-facing project taxonomy.
 
 The June 2026 NTH record is the canonical example:
 
