@@ -13,6 +13,7 @@ on:
       - scripts/validate_observed_behavior_receipt.py
       - scripts/prepare_observed_behavior_subject.py
       - tests/prompt_kit_favorite_browser_proof.py
+      - tests/prompt_kit_hotkey_identity_browser_proof.py
       - tests/prompt_kit_external_resources_browser_proof.py
       - tests/test_observed_behavior_proof_harness.py
       - tests/test_prompt_kit_hotkey_completion.py
@@ -32,6 +33,7 @@ on:
       - scripts/validate_observed_behavior_receipt.py
       - scripts/prepare_observed_behavior_subject.py
       - tests/prompt_kit_favorite_browser_proof.py
+      - tests/prompt_kit_hotkey_identity_browser_proof.py
       - tests/prompt_kit_external_resources_browser_proof.py
       - tests/test_observed_behavior_proof_harness.py
       - tests/test_prompt_kit_hotkey_completion.py
@@ -68,6 +70,10 @@ jobs:
           mkdir -p Outputs/observed-proof
           python tests/prompt_kit_favorite_browser_proof.py --receipt Outputs/observed-proof/favorite-shortcut-receipt.json --screenshot Outputs/observed-proof/favorite-shortcut.png
           python scripts/validate_observed_behavior_receipt.py Outputs/observed-proof/favorite-shortcut-receipt.json --expected-sha "$(git rev-parse HEAD)" --summary
+      - name: Observe catalog-derived numeric prompt hotkeys
+        run: |
+          python tests/prompt_kit_hotkey_identity_browser_proof.py --receipt Outputs/observed-proof/hotkey-identity-receipt.json --screenshot Outputs/observed-proof/hotkey-identity.png
+          python scripts/validate_observed_behavior_receipt.py Outputs/observed-proof/hotkey-identity-receipt.json --expected-sha "$(git rev-parse HEAD)" --summary
       - name: Observe lazy external resource behavior
         if: ${{ hashFiles('tests/prompt_kit_external_resources_browser_proof.py', 'web/prompt-kit/resources.v1.json') != '' }}
         run: |

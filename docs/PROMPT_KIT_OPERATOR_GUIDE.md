@@ -80,48 +80,34 @@ Select the star on a prompt card. Favorites are persisted under the browser-loca
 
 Favorites do **not** reorder the normal library. Use the explicit **Favorites** view (header control or `4`) when you want to see the saved collection without the ordinary library/category/type/search restrictions.
 
-### Configure a prompt-ID shortcut
+### Use a prompt-number shortcut
 
-1. Favorite the target prompt first.
-2. Open **Hotkeys** or press the unmodified backtick key (`` ` ``).
-3. In **Favorite prompt shortcuts**, enter a canonical ID such as `P95` and save it.
-4. The effective typed sequence is the lowercase ID, such as `p95`.
-5. Type the sequence outside editable fields. Sequence state expires after **1.2 seconds**.
+1. Stay outside input, textarea, select, and content-editable fields.
+2. Type the digits after `P`: for `P126`, type **`126`**.
+3. Operant resolves the number from the canonical prompt catalog, copies the prompt, and instant-snaps the P126 card to the center of the page.
+4. No Favorite and no Hotkeys-panel Save step is required. Favorites remain useful for organizing prompts.
+5. `p126` remains accepted as a compatibility alias. Prefix-ambiguous IDs wait up to **1.2 seconds** for continued digits.
 
-A configured prompt shortcut is accepted only when the target exists and is currently a Favorite. Browser storage must succeed before the new binding becomes active.
-
-### What a configured shortcut does now
-
-Completing a configured Favorite shortcut:
-
-1. clears the transient browsing restrictions needed to reveal the target;
-2. renders and scrolls the target prompt card into view;
-3. copies the target's canonical prompt through the normal `copyPrompt` path;
-4. **does not open prompt detail**.
-
-The Hotkeys panel labels these bindings as **Copy + reveal P##**. A buffered prompt sequence gets the next digit before built-in digit navigation, so a valid sequence such as `p95` is not interrupted by the built-in `5` command.
-
-### Recommended shortcuts from the registry
-
-Some registry prompts publish a shared recommended shortcut (`sharedShortcut: true` in the canonical registry record; currently `P95`). A recommended sequence is the lowercase prompt ID, works for every user without favoriting the prompt first, and completes through the same copy + reveal path as a configured Favorite shortcut. The Hotkeys panel lists these rows with a **Recommended** label and no Remove control, because the registry — not browser storage — owns them. Saving your own binding for the same prompt keeps working and takes precedence.
+The Hotkeys panel shows the natural numeric rule and labels Favorite/recommended prompts as convenience cues only; neither state controls whether a canonical prompt number works.
 
 ### Core hotkeys
 
 | Key | Action |
 |---|---|
 | `` ` `` | Show / hide Hotkeys |
+| `126` | Example prompt number: copy + snap to P126 |
+| `A` | All profile |
+| `B` | Standard profile |
+| `C` | Favorites profile |
+| `D` | Configurable profile slot (default SAS) |
+| `E` | Configurable profile slot (default PM) |
 | `/` | Focus search |
-| `1` | All prompts |
-| `2` | Standard prompts |
-| `3` | GNHF prompts |
-| `4` | Favorites |
-| `5` | Doctrine |
 | `R` | Toggle reference panel |
 | `F` | Show / hide filters |
 | `[` | Hide filters |
 | `]` | Show filters |
-| `T` | Scroll to top |
-| `B` | Scroll to bottom |
+| `Home` | Scroll to top |
+| `End` | Scroll to bottom |
 | `Esc` | Close the active surface or clear temporary filters |
 
 Navigation shortcuts are ignored while typing in input, textarea, select, or content-editable surfaces. Modified backtick chords are ignored.

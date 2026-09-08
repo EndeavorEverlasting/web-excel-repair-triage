@@ -107,46 +107,57 @@ class PromptKitInteractionHarnessTests(unittest.TestCase):
                 "schedulePromptShortcutBufferReset",
                 "promptShortcutHasLongerPrefix",
                 "effectivePromptShortcutBindings",
+                "activatePromptShortcutTarget",
                 "handleConfiguredPromptShortcutKey",
             )
         )
         script = f"""
 var PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS=25;
-var PROMPTS=[{{id:'P01'}},{{id:'P11'}},{{id:'P13'}},{{id:'P111'}},{{id:'P125'}}];
+var PROMPTS=[{{id:'P01'}},{{id:'P11'}},{{id:'P13'}},{{id:'P111'}},{{id:'P125'}},{{id:'P126'}}];
 var promptShortcutBuffer='';
 var promptShortcutBufferTimer=null;
 var activations=[];
-function activatePromptShortcutTarget(promptId){{activations.push(promptId);return true}}
+var reveals=[];
+var copies=[];
+function revealPromptShortcutTarget(promptId,behavior){{reveals.push([promptId,behavior]);return true}}
+function copyPrompt(promptId){{copies.push(promptId)}}
+function showToast(){{}}
 {blocks}
 function eventStub(){{return{{preventDefault:function(){{}},stopImmediatePropagation:function(){{}}}}}}
 function press(key){{return handleConfiguredPromptShortcutKey(eventStub(),key)}}
-function resetProbe(){{resetPromptShortcutBuffer();activations=[]}}
+function resetProbe(){{resetPromptShortcutBuffer();activations=[];reveals=[];copies=[]}}
 function sleep(ms){{return new Promise(function(resolve){{setTimeout(resolve,ms)}})}}
 function assert(condition,message){{if(!condition)throw new Error(message)}}
+function assertActivated(promptId){{
+  assert(JSON.stringify(reveals)===JSON.stringify([[promptId,'instant']]),promptId+' did not instant-reveal');
+  assert(JSON.stringify(copies)===JSON.stringify([promptId]),promptId+' did not copy');
+}}
 (async function(){{
   var bindings=catalogPromptShortcutBindings();
   assert(bindings['125']==='P125','numeric P125 binding missing');
-  assert(bindings['p125']==='P125','p-prefixed P125 compatibility binding missing');
+  assert(bindings['126']==='P126','numeric P126 binding missing');
+  assert(bindings['p126']==='P126','p-prefixed P126 compatibility binding missing');
   assert(bindings['01']==='P01','zero-padded P01 binding missing');
-  ['1','2','5'].forEach(press);
-  assert(JSON.stringify(activations)==='["P125"]','125 did not activate P125');
+
+  ['1','2','6'].forEach(press);
+  assertActivated('P126');
   resetProbe();
-  ['p','1','2','5'].forEach(press);
-  assert(JSON.stringify(activations)==='["P125"]','p125 did not activate P125');
+  ['p','1','2','6'].forEach(press);
+  assertActivated('P126');
   resetProbe();
   ['0','1'].forEach(press);
-  assert(JSON.stringify(activations)==='["P01"]','01 did not preserve zero-padded P01 identity');
+  assertActivated('P01');
   resetProbe();
   ['1','1'].forEach(press);
-  assert(activations.length===0,'11 fired before longer-prefix ambiguity closed');
+  assert(copies.length===0,'11 fired before longer-prefix ambiguity closed');
   await sleep(40);
-  assert(JSON.stringify(activations)==='["P11"]','11 timeout resolution');
+  assertActivated('P11');
   resetProbe();
   ['1','1','1'].forEach(press);
-  assert(JSON.stringify(activations)==='["P111"]','111 longer exact resolution');
+  assertActivated('P111');
   resetProbe();
   ['1','3'].forEach(press);
-  assert(JSON.stringify(activations)==='["P13"]','13 exact resolution');
+  assertActivated('P13');
   console.log('PASS');
 }})().catch(function(error){{console.error(error.stack||error);process.exit(1)}});
 """
@@ -156,9 +167,13 @@ function assert(condition,message){{if(!condition)throw new Error(message)}}
         self.assertEqual(completed.stdout.strip(), "PASS")
         self.assertIn("bindings[digits]=promptId", source)
         self.assertIn("bindings['p'+digits]=promptId", source)
+        self.assertIn("revealPromptShortcutTarget(promptId,'instant')", source)
         self.assertNotIn("PROMPT_KIT_SHORTCUT_STORAGE_KEY", source)
         self.assertNotIn("function configurePromptShortcut(", source)
         self.assertNotIn("promptShortcutPromptId", source)
+        activation = function_block(source, "activatePromptShortcutTarget")
+        self.assertNotIn("isFavoritePrompt", activation)
+        self.assertNotIn("sharedPromptShortcutBindings", activation)
 
     def test_harness_mode_writes_report_without_requiring_product_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

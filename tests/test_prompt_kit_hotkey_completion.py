@@ -68,16 +68,11 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         self.assertLess(source.index(escape_guard), source.index(editable_guard))
         self.assertLess(deployed.index(escape_guard), deployed.index(editable_guard))
 
-    def test_hotkey_open_focuses_favorite_input_and_escape_recovers_from_editable(self) -> None:
+    def test_hotkey_open_focuses_close_and_escape_recovers_without_manual_shortcut_input(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
-        for marker in (
-            "function focusFavoritePromptShortcutInput(panel)",
-            "document.getElementById('promptShortcutPromptId')",
-            "promptInput.focus()",
-            "promptInput.scrollIntoView({block:'nearest',inline:'nearest'})",
-            "if(focusFavoritePromptShortcutInput(panel))return",
-        ):
-            self.assertIn(marker, source)
+        self.assertNotIn("focusFavoritePromptShortcutInput", source)
+        self.assertNotIn("promptShortcutPromptId", source)
+        self.assertIn("var close=panel.querySelector('.hotkey-help-close');", source)
         escape_guard = "if(key==='escape'&&escapeHelpPanel&&!escapeHelpPanel.hidden)"
         editable_guard = "if(editable)return;"
         backtick = "if(key==='`')"
@@ -85,51 +80,52 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         self.assertLess(source.index(editable_guard), source.index(backtick))
         self.assertIn("resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return", source)
 
-    def test_favorite_prompt_shortcuts_are_persisted_fail_closed(self) -> None:
+    def test_catalog_prompt_shortcuts_are_derived_without_manual_persistence(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
+        deployed = DEPLOYED.read_text(encoding="utf-8")
         for marker in (
-            "promptKit.promptShortcuts.v1",
-            "prompt-kit-shortcuts/v1",
             "PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS=1200",
-            "function configurePromptShortcut(rawPromptId)",
-            "if(!isFavoritePrompt(promptId))",
-            "if(!persistPromptShortcutBindings(candidate))return false",
-            "promptShortcutBindings=candidate",
+            "function catalogPromptShortcutBindings()",
+            "bindings[digits]=promptId",
+            "bindings['p'+digits]=promptId",
             "function handleConfiguredPromptShortcutKey(e,key)",
             "function activatePromptShortcutTarget(promptId)",
-            "revealPromptShortcutTarget(promptId)",
-            "renderTypes();",
+            "revealPromptShortcutTarget(promptId,'instant')",
             "copyPrompt(promptId)",
         ):
             self.assertIn(marker, source)
-        self.assertLess(
-            source.index("if(!persistPromptShortcutBindings(candidate))return false"),
-            source.index("promptShortcutBindings=candidate"),
-        )
+            self.assertIn(marker, deployed)
+        for removed in (
+            "PROMPT_KIT_SHORTCUT_STORAGE_KEY",
+            "PROMPT_KIT_SHORTCUT_SCHEMA",
+            "function configurePromptShortcut(",
+            "function removePromptShortcut(",
+            "promptShortcutPromptId",
+        ):
+            self.assertNotIn(removed, source)
+            self.assertNotIn(removed, deployed)
+        activation = source[source.index("function activatePromptShortcutTarget"):source.index("function handleConfiguredPromptShortcutKey")]
+        self.assertNotIn("isFavoritePrompt", activation)
+        self.assertNotIn("sharedPromptShortcutBindings", activation)
 
-    def test_favorites_automatically_publish_shortcuts_and_detail_favorite_control(self) -> None:
+    def test_favorites_are_organizational_and_detail_control_keeps_numeric_shortcut_visible(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         deployed = DEPLOYED.read_text(encoding="utf-8")
         for marker in (
             "function favoritePromptShortcutBindings()",
-            "if(promptId&&isFavoritePrompt(promptId))bindings[promptId.toLowerCase()]=promptId",
-            "var favorites=favoritePromptShortcutBindings();",
-            "if(isFavoritePrompt(promptId))merged[gesture]=promptId",
-            "function favoritePromptShortcutIds()",
+            "bindings[promptId.slice(1)]=promptId",
             "function centerRenderedPromptCard(promptId,behavior)",
             "function toggleFavoritePromptAndRefreshShortcut(rawPromptId)",
             "function decoratePromptDetailFavorite(promptId)",
             "prompt-detail-favorite-btn",
-            "Favorites and Hotkeys",
-            "shortcut '+promptId.toLowerCase()+' ready",
-            "baseShowPromptDetailWithFavorite(id,origin)",
+            "type '+promptId.slice(1)+' anytime",
+            "shortcut '+promptId.slice(1)+' still available",
             "centerRenderedPromptCard(id,'instant');",
             "toggleFavoritePromptAndRefreshShortcut(p.id)",
         ):
             self.assertIn(marker, source)
             self.assertIn(marker, deployed)
-        effective = source[source.index("function effectivePromptShortcutBindings"):source.index("function clonePromptShortcutBindings")]
-        self.assertLess(effective.index("favoritePromptShortcutBindings"), effective.index("promptShortcutBindings[gesture]"))
+        self.assertIn("return catalogPromptShortcutBindings()", source)
 
     def test_prompt_sequence_owns_digits_and_header_navigation_is_letter_only(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
@@ -180,7 +176,7 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
     def test_shortcut_rows_are_numeric_and_generated_runtime_matches_source(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         deployed = DEPLOYED.read_text(encoding="utf-8")
-        self.assertIn("Number(a.slice(1))-Number(b.slice(1))", source)
+        self.assertIn("Number(a)-Number(b)", source)
         start_marker = "function setCompactFiltersVisible(visible)"
         end_marker = "\n\nfunction setHotkeyHelpOpen(open,restoreFocus)"
         source_block = source[source.index(start_marker) : source.index(end_marker)]
@@ -211,6 +207,7 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
 
     def test_browser_proof_reports_actual_execution_topology(self) -> None:
         proof = (ROOT / "tests" / "prompt_kit_favorite_browser_proof.py").read_text(encoding="utf-8")
+        identity = (ROOT / "tests" / "prompt_kit_hotkey_identity_browser_proof.py").read_text(encoding="utf-8")
         for marker in (
             "def execution_environment_kind(env=None)",
             "GITHUB_ACTIONS",
@@ -223,41 +220,48 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             'global_hotkey_restored',
             'for slot_key in "ABCDE":',
             'profile_header_hotkeys_a_to_e',
-            'page.keyboard.press("d")',
-            'D custom profile hotkey activates and excludes P79 before shortcut',
+            'page.keyboard.type("126")',
+            'catalog_numeric_shortcut_dispatched',
+            'clipboard equals canonical P126 copyContent',
             "def canonical_clipboard_text(text: str) -> str:",
             'canonical_clipboard_text(actual) == canonical_clipboard_text(expected)',
         ):
             self.assertIn(marker, proof)
-        self.assertNotIn('.cat-tab[data-cat="doctrine"]', proof)
+        for marker in (
+            'TARGETS = ("P11", "P13", "P111", "P126")',
+            'Natural prompt hotkeys are catalog-derived',
+            'P126',
+        ):
+            self.assertIn(marker, identity)
+        self.assertNotIn('promptShortcutPromptId', proof)
+        self.assertNotIn('Save favorite prompt keyboard shortcut', proof)
         source = POLISH.read_text(encoding="utf-8")
         self.assertIn("window.PromptKitProfiles.activateSlot('A',true)", source)
 
-    def test_configuration_ui_and_generated_parity_are_present(self) -> None:
+    def test_hotkey_help_exposes_natural_numeric_route_without_manual_setup(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         deployed = DEPLOYED.read_text(encoding="utf-8")
         for marker in (
-            "Favorite prompt shortcuts",
-            "promptShortcutPromptId",
-            "promptShortcutBindings",
-            "Favorites automatically become their P-ID shortcuts",
-            "Save favorite prompt keyboard shortcut",
-            "function focusFavoritePromptShortcutInput(panel)",
-            "promptInput.scrollIntoView({block:'nearest',inline:'nearest'})",
-            "resetPromptShortcutBuffer();setHotkeyHelpOpen(false,true);return",
+            "Prompt shortcuts",
+            "Every prompt has a natural numeric shortcut",
+            "Example: type 126 to copy + snap to P126",
+            "Type the digits after P anywhere outside editable fields",
+            "p126 remains accepted for compatibility",
+            "{key:'126',label:'Prompt number → copy + snap to P126'}",
         ):
             self.assertIn(marker, source)
             self.assertIn(marker, deployed)
+        self.assertNotIn("promptShortcutPromptId", source)
+        self.assertNotIn("Save favorite prompt keyboard shortcut", source)
 
-    def test_shared_registry_shortcuts_publish_without_favorite_gate(self) -> None:
+    def test_shared_registry_shortcuts_remain_recommendation_metadata_not_activation_authority(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         deployed = DEPLOYED.read_text(encoding="utf-8")
         for marker in (
             "function computeSharedPromptShortcutBindings()",
             "item.sharedShortcut!==true",
             "function effectivePromptShortcutBindings()",
-            "var bindings=effectivePromptShortcutBindings();",
-            "if(!sharedPromptShortcutBindings[String(promptId).toLowerCase()]&&!isFavoritePrompt(promptId))",
+            "return catalogPromptShortcutBindings()",
             "function sharedPromptShortcutIds()",
             "shared.textContent='Recommended'",
         ):
@@ -267,14 +271,13 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             (ROOT / "registry" / "prompts" / "spec-architecture-prompts.v1.json").read_text(encoding="utf-8")
         )
         shared_ids = [
-            prompt["id"]
-            for prompt in registry["prompts"]
-            if prompt.get("sharedShortcut") is True
+            prompt["id"] for prompt in registry["prompts"] if prompt.get("sharedShortcut") is True
         ]
         self.assertEqual(shared_ids, ["P95"])
-        self.assertIn('"sharedShortcut": true', deployed)
+        activation = source[source.index("function activatePromptShortcutTarget"):source.index("function handleConfiguredPromptShortcutKey")]
+        self.assertNotIn("sharedPromptShortcutBindings", activation)
 
-    def test_human_contract_and_design_close_previous_ux_decisions(self) -> None:
+    def test_human_contract_and_design_close_natural_numeric_hotkey_decision(self) -> None:
         readme = README.read_text(encoding="utf-8")
         design = DESIGN.read_text(encoding="utf-8")
         for row in (
@@ -283,14 +286,14 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             "| `]` | Show filters |",
         ):
             self.assertIn(row, readme)
-        self.assertIn("Typed prompt sequences expire after 1.2 seconds", readme)
-        self.assertIn("every current Favorite automatically participates", design)
-        self.assertIn("no second Save-shortcut action is required", design)
-        self.assertIn("copies the canonical prompt and scrolls its card into view without opening prompt detail", design)
+        self.assertIn("Type the digits after `P`", readme)
+        self.assertIn("`126` → `P126`", readme)
+        self.assertIn("canonical `PROMPTS` catalog owns prompt-number hotkeys", design)
+        self.assertIn("bare numeric identity is the primary gesture", design)
+        self.assertIn("manual prompt-shortcut persistence is retired", design.lower())
+        self.assertIn("copy + instant snap", design)
         self.assertIn("buffer is active", design)
         self.assertIn("one hand", design)
-        self.assertNotIn("Still unresolved by design proof:", design)
-
 
 if __name__ == "__main__":
     unittest.main()

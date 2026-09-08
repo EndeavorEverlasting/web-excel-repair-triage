@@ -80,7 +80,7 @@ Serialization ends here. Domain validation begins after loading.
 | State | Owner | Persistence |
 | --- | --- | --- |
 | Built-in bindings | ShortcutRegistry | code |
-| User bindings | ShortcutRegistry | ShortcutStore |
+| Prompt-number bindings | canonical `PROMPTS` catalog | generated registry |
 | Typed-sequence buffer | ShortcutDispatcher | none |
 | Filter visible/hidden | FilterVisibility | none initially |
 | Prompt identities | canonical `PROMPTS` catalog | generated registry |
@@ -164,7 +164,7 @@ Production decisions closed on 2026-08-22:
 - modifier chords and editable fields suppress the backtick Hotkeys command.
 - `F` remains filter toggle; `[` explicitly hides filters and `]` explicitly shows filters.
 - configured prompt-ID sequences expire after 1.2 seconds.
-- every current Favorite automatically participates in the effective prompt-ID shortcut registry; unfavoriting removes that derived shortcut immediately, while the versioned explicit-binding store remains a compatibility/repair path.
+- the canonical `PROMPTS` catalog owns prompt-number hotkeys for every prompt; the bare numeric identity is the primary gesture (`126` -> `P126`), with `p126` retained as a compatibility alias.
 - a completed prompt-ID shortcut copies the canonical prompt and scrolls its card into view without opening prompt detail through `showPromptDetail`.
 - shortcut persistence uses versioned `promptKit.promptShortcuts.v1` storage and publishes only after a successful durable write.
 - opening Hotkeys by either the visible button or unmodified backtick reveals and focuses the Favorite prompt ID input; `Escape` closes Hotkeys even while that editable input owns focus and restores focus to the Hotkeys toggle.
@@ -175,8 +175,8 @@ These production choices preserve the selected seams and remove the prior UX-pol
 Production decisions extended on 2026-09-01:
 - a registry prompt may publish a shared recommended shortcut by shipping `sharedShortcut: true` in its canonical registry record; the effective typed sequence is the lowercase prompt ID.
 - shared recommended shortcuts are active for every user without requiring a Favorite and complete through the same copy + reveal dispatch path.
-- built-ins keep precedence; Favorite-derived bindings require no duplicate shortcut write because durable Favorite state is their authority. Explicit stored bindings remain fail-closed compatibility data and are effective only while their prompt remains a Favorite.
-- Hotkey help lists shared recommended shortcuts as a projection of the registry with a Recommended label and no Remove control, because the registry owns them.
+- built-ins keep precedence outside an active prompt-number buffer; Favorites are organizational state only and never authorize or suppress a catalog prompt hotkey. Manual prompt-shortcut persistence is retired.
+- Hotkey help teaches the natural numeric route and may label registry-recommended or Favorite prompts without changing activation authority.
 
 ## Proof ceiling
 Repository proof must cover the production source, generated-site parity, input/modifier suppression, filter commands, sequence collision ordering, timeout semantics, fail-closed persistence, target validation, and canonical prompt-detail dispatch. The user's direct browser exercise supplies additional live evidence that the existing visible hotkeys operate on the deployed UI.
@@ -191,3 +191,9 @@ The owning CI gate is `.github/workflows/prompt-kit-web.yml`, which compiles and
 Production decision extended on 2026-09-08:
 - Opening prompt detail centers the already-rendered prompt card without changing the current filter/profile context. Direct Go to P# first reveals the canonical target in the library, centers it, and then opens detail.
 - Prompt detail exposes the same Favorite state as the card star. Favoriting from either surface immediately makes the canonical lower-case prompt ID an effective hotkey; no second Save-shortcut action is required.
+
+Production correction on 2026-09-08 after operator P126 regression evidence:
+- typing bare digits such as `126` is the primary desktop/keyboard route and must resolve from the canonical catalog without Favorite state or manual configuration;
+- `p126` remains a compatibility alias, not the primary contract;
+- successful prompt-number activation performs copy + instant snap to the canonical rendered card, while editable fields and modified chords remain protected;
+- observed-browser proof must type the bare numeric sequence through the real page keyboard path before this behavior can be called complete.

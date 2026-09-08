@@ -17,7 +17,7 @@ if str(ROOT / "scripts") not in sys.path:
     sys.path.insert(0, str(ROOT / "scripts"))
 from prepare_observed_behavior_subject import ExactHeadError, prepare_exact_head_subject
 
-TARGETS = ("P11", "P13", "P111")
+TARGETS = ("P11", "P13", "P111", "P126")
 
 
 class Quiet(SimpleHTTPRequestHandler):
@@ -50,22 +50,10 @@ def observe(port: int, screenshot: Path) -> list[dict]:
                 for prompt_id in TARGETS
             }
 
-            # Configure all three overlapping identities through the real product UI.
-            for prompt_id in TARGETS:
-                card = page.locator(f'[data-prompt-id="{prompt_id}"]')
-                if card.count() != 1:
-                    raise AssertionError(f"missing canonical card {prompt_id}")
-                card.locator('.prompt-favorite-btn').click()
-            page.locator('#hotkeyHelpToggle').click()
-            page.wait_for_timeout(50)
-            for prompt_id in TARGETS:
-                page.locator('#promptShortcutPromptId').fill(prompt_id)
-                page.get_by_role('button', name='Save favorite prompt keyboard shortcut').click()
-                page.wait_for_timeout(75)
-                if f"Shortcut {prompt_id.lower()} saved" not in page.locator('#toast').inner_text():
-                    raise AssertionError(f"shortcut save failed for {prompt_id}")
-            page.locator('.hotkey-help-close').click()
-            page.evaluate("document.activeElement && document.activeElement.blur()")
+            # Natural prompt hotkeys are catalog-derived; no Favorite or manual Save step is allowed.
+            p126_favorite = page.locator('[data-prompt-id="P126"] .prompt-favorite-btn')
+            if p126_favorite.count() != 1 or p126_favorite.get_attribute('aria-pressed') != 'false':
+                raise AssertionError('P126 browser proof did not start from a non-favorite state')
 
             def set_clipboard(value: str) -> None:
                 page.evaluate("value => navigator.clipboard.writeText(value)", value)
@@ -77,16 +65,54 @@ def observe(port: int, screenshot: Path) -> list[dict]:
                 for char in sequence:
                     page.keyboard.press(char)
 
+            # Bare numeric P126 is the operator-reported regression: it must copy and instant-snap with no Favorite gate.
+            set_clipboard("sentinel-126")
+            before_y = page.evaluate("window.scrollY")
+            press("126")
+            page.wait_for_timeout(220)
+            p126_final = clipboard()
+            p126_geometry = page.evaluate("""() => {
+              const card=document.querySelector('[data-prompt-id="P126"]');
+              if(!card)return null;
+              const rect=card.getBoundingClientRect();
+              return {center:(rect.top+rect.bottom)/2,viewport:window.innerHeight/2,scrollY:window.scrollY};
+            }""")
+            p126_snapped = bool(p126_geometry and abs(p126_geometry["center"] - p126_geometry["viewport"]) <= max(120, 900 * 0.18))
+            observations.append({
+                "id": "numeric_p126_copies_and_snaps",
+                "event": "typing bare 126 copies P126 and centers its canonical card without Favorite/manual setup",
+                "occurred": True,
+                "passed": p126_final == expected["P126"] and p126_snapped,
+                "clipboard_matches": p126_final == expected["P126"],
+                "favorite_required": False,
+                "before_scroll_y": before_y,
+                "geometry": p126_geometry,
+                "snapped": p126_snapped,
+            })
+
+            # p-prefixed compatibility remains valid after bare numeric becomes primary.
+            set_clipboard("sentinel-p126")
+            press("p126")
+            page.wait_for_timeout(220)
+            p126_compat = clipboard()
+            observations.append({
+                "id": "p126_compatibility_alias",
+                "event": "p126 remains a compatibility alias for canonical P126",
+                "occurred": True,
+                "passed": p126_compat == expected["P126"],
+                "clipboard_matches": p126_compat == expected["P126"],
+            })
+
             # P11 is a prefix of P111: it must remain pending until timeout.
             set_clipboard("sentinel-p11")
-            press("p11")
+            press("11")
             page.wait_for_timeout(180)
             p11_early = clipboard()
             page.wait_for_timeout(1150)
             p11_final = clipboard()
             observations.append({
-                "id": "p11_waits_for_longer_prefix",
-                "event": "p11 remains pending before the 1.2s boundary and resolves to P11 after it",
+                "id": "numeric_11_waits_for_longer_prefix",
+                "event": "11 remains pending before the 1.2s boundary and resolves to P11 after it",
                 "occurred": True,
                 "passed": p11_early == "sentinel-p11" and p11_final == expected["P11"],
                 "early_unchanged": p11_early == "sentinel-p11",
@@ -95,12 +121,12 @@ def observe(port: int, screenshot: Path) -> list[dict]:
 
             # P13 has no longer configured prefix and resolves immediately.
             set_clipboard("sentinel-p13")
-            press("p13")
+            press("13")
             page.wait_for_timeout(180)
             p13_final = clipboard()
             observations.append({
-                "id": "p13_resolves_exactly",
-                "event": "p13 resolves to P13 without being confused with the p11 family",
+                "id": "numeric_13_resolves_exactly",
+                "event": "13 resolves to P13 without being confused with the 11 family",
                 "occurred": True,
                 "passed": p13_final == expected["P13"],
                 "final_matches": p13_final == expected["P13"],
@@ -108,12 +134,12 @@ def observe(port: int, screenshot: Path) -> list[dict]:
 
             # Continued typing wins over the pending shorter exact match.
             set_clipboard("sentinel-p111")
-            press("p111")
+            press("111")
             page.wait_for_timeout(180)
             p111_final = clipboard()
             observations.append({
-                "id": "p111_wins_over_p11_prefix",
-                "event": "p111 resolves to P111 before the pending P11 timeout fires",
+                "id": "numeric_111_wins_over_11_prefix",
+                "event": "111 resolves to P111 before the pending P11 timeout fires",
                 "occurred": True,
                 "passed": p111_final == expected["P111"],
                 "final_matches": p111_final == expected["P111"],
@@ -149,7 +175,7 @@ def observe(port: int, screenshot: Path) -> list[dict]:
 
             # A pending shorter exact identity settles before the same key continues to A-E header navigation.
             set_clipboard("sentinel-p11-a")
-            press("p11")
+            press("11")
             page.keyboard.press("a")
             deadline = time.monotonic() + 1.5
             p11_then_a = clipboard()
@@ -159,26 +185,11 @@ def observe(port: int, screenshot: Path) -> list[dict]:
             slot_after_a = page.evaluate("window.PromptKitProfiles && window.PromptKitProfiles.getState().activeKey")
             observations.append({
                 "id": "pending_p11_hands_off_to_header_a",
-                "event": "A settles pending P11 and still activates the All profile",
+                "event": "A settles pending numeric P11 and still activates the All profile",
                 "occurred": True,
                 "passed": p11_then_a == expected["P11"] and slot_after_a == "A",
                 "prompt_matches": p11_then_a == expected["P11"],
                 "active_slot": slot_after_a,
-            })
-
-            set_clipboard("sentinel-p1-b")
-            press("p1")
-            page.keyboard.press("b")
-            page.wait_for_timeout(250)
-            p1_then_b = clipboard()
-            slot_after_b = page.evaluate("window.PromptKitProfiles && window.PromptKitProfiles.getState().activeKey")
-            observations.append({
-                "id": "incomplete_prefix_hands_off_to_header_b",
-                "event": "B abandons incomplete p1 without firing a prompt and activates Standard",
-                "occurred": True,
-                "passed": p1_then_b == "sentinel-p1-b" and slot_after_b == "B",
-                "clipboard_unchanged": p1_then_b == "sentinel-p1-b",
-                "active_slot": slot_after_b,
             })
 
             # Home/End are page navigation only and do not alter the header/profile namespace.
@@ -308,11 +319,11 @@ def main(argv=None) -> int:
         "environment": {
             "kind": environment_kind(),
             "engine": "chromium",
-            "scenario": "overlapping-and-dotted-prompt-identity-hotkeys",
+            "scenario": "catalog-derived-numeric-prompt-hotkeys",
         },
         "claims": [{
             "id": "prompt_identity_disambiguation",
-            "statement": "p11, p13, p111, p1.1, and p1.11 resolve to distinct canonical prompt identities without numeric header collisions",
+            "statement": "bare numeric prompt IDs, including 126, resolve to canonical prompts with copy + snap behavior while p-prefixed compatibility and prefix disambiguation remain intact",
             "status": "PASS" if passed else "FAIL",
             "required_evidence_class": "browser_runtime_observed",
             "observation_ids": [item["id"] for item in observations],

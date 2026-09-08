@@ -1,10 +1,7 @@
 (function(){
 'use strict';
 var copyToastTimer=null;
-var PROMPT_KIT_SHORTCUT_STORAGE_KEY='promptKit.promptShortcuts.v1';
-var PROMPT_KIT_SHORTCUT_SCHEMA='prompt-kit-shortcuts/v1';
 var PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS=1200;
-var promptShortcutBindings=loadPromptShortcutBindings();
 var sharedPromptShortcutBindings=computeSharedPromptShortcutBindings();
 var promptShortcutBuffer='';
 var promptShortcutBufferTimer=null;
@@ -276,6 +273,7 @@ function installCompactBrowsingViewSwitches(){
 
 var PROMPT_KIT_SHORTCUTS=[
   {key:'`',label:'Show / hide Hotkeys'},
+  {key:'126',label:'Prompt number → copy + snap to P126'},
   {key:'A',label:'All'},
   {key:'B',label:'Standard'},
   {key:'C',label:'Favorites'},
@@ -532,7 +530,22 @@ function computeSharedPromptShortcutBindings(){
   catalog.forEach(function(item){
     if(!item||item.sharedShortcut!==true)return;
     var promptId=normalizePromptShortcutId(item.id);
-    if(promptId)bindings[promptId.toLowerCase()]=promptId
+    if(promptId)bindings[promptId.slice(1)]=promptId
+  });
+  return bindings
+}
+
+function catalogPromptShortcutBindings(){
+  var bindings={};
+  var catalog=typeof PROMPTS!=='undefined'&&Array.isArray(PROMPTS)?PROMPTS:[];
+  catalog.forEach(function(item){
+    if(!item)return;
+    var promptId=normalizePromptShortcutId(item.id);
+    if(!promptId)return;
+    var digits=promptId.slice(1);
+    if(!digits)return;
+    bindings[digits]=promptId;
+    bindings['p'+digits]=promptId
   });
   return bindings
 }
@@ -543,120 +556,47 @@ function favoritePromptShortcutBindings(){
   catalog.forEach(function(item){
     if(!item)return;
     var promptId=normalizePromptShortcutId(item.id);
-    if(promptId&&isFavoritePrompt(promptId))bindings[promptId.toLowerCase()]=promptId
+    if(promptId&&isFavoritePrompt(promptId))bindings[promptId.slice(1)]=promptId
   });
   return bindings
 }
 
 function effectivePromptShortcutBindings(){
-  var merged={};
-  Object.keys(sharedPromptShortcutBindings).forEach(function(gesture){merged[gesture]=sharedPromptShortcutBindings[gesture]});
-  var favorites=favoritePromptShortcutBindings();
-  Object.keys(favorites).forEach(function(gesture){merged[gesture]=favorites[gesture]});
-  Object.keys(promptShortcutBindings).forEach(function(gesture){
-    var promptId=promptShortcutBindings[gesture];
-    if(isFavoritePrompt(promptId))merged[gesture]=promptId
-  });
-  return merged
-}
-
-function clonePromptShortcutBindings(source){
-  var copy={};
-  Object.keys(source||{}).forEach(function(gesture){copy[gesture]=source[gesture]});
-  return copy
-}
-
-function loadPromptShortcutBindings(){
-  var bindings={};
-  try{
-    if(!window.localStorage)return bindings;
-    var raw=window.localStorage.getItem(PROMPT_KIT_SHORTCUT_STORAGE_KEY);
-    if(!raw)return bindings;
-    var payload=JSON.parse(raw);
-    if(!payload||payload.schema!==PROMPT_KIT_SHORTCUT_SCHEMA||!Array.isArray(payload.bindings))return bindings;
-    payload.bindings.forEach(function(item){
-      if(!item||typeof item.promptId!=='string')return;
-      var promptId=normalizePromptShortcutId(item.promptId);
-      if(promptId)bindings[promptId.toLowerCase()]=promptId
-    })
-  }catch(e){}
-  return bindings
-}
-
-function persistPromptShortcutBindings(candidate){
-  try{
-    if(!window.localStorage)throw new Error('localStorage unavailable');
-    var payload={schema:PROMPT_KIT_SHORTCUT_SCHEMA,bindings:Object.keys(candidate).sort().map(function(gesture){return{gesture:gesture,promptId:candidate[gesture]}})};
-    window.localStorage.setItem(PROMPT_KIT_SHORTCUT_STORAGE_KEY,JSON.stringify(payload));
-    return true
-  }catch(e){
-    showToast('Prompt shortcut save failed');
-    return false
-  }
-}
-
-function configuredPromptShortcutIds(){
-  return Object.keys(promptShortcutBindings).sort(function(a,b){return Number(a.slice(1))-Number(b.slice(1))}).map(function(gesture){return promptShortcutBindings[gesture]})
+  return catalogPromptShortcutBindings()
 }
 
 function favoritePromptShortcutIds(){
   var bindings=favoritePromptShortcutBindings();
-  return Object.keys(bindings).sort(function(a,b){return Number(a.slice(1))-Number(b.slice(1))}).map(function(gesture){return bindings[gesture]})
+  return Object.keys(bindings).sort(function(a,b){return Number(a)-Number(b)}).map(function(gesture){return bindings[gesture]})
 }
 
 function sharedPromptShortcutIds(){
-  return Object.keys(sharedPromptShortcutBindings).sort(function(a,b){return Number(a.slice(1))-Number(b.slice(1))}).map(function(gesture){return sharedPromptShortcutBindings[gesture]})
-}
-
-function configurePromptShortcut(rawPromptId){
-  var promptId=normalizePromptShortcutId(rawPromptId);
-  if(!promptId){showToast('Use a prompt ID such as P95');return false}
-  var prompt=PROMPTS.find(function(item){return item.id===promptId});
-  if(!prompt){showToast(promptId+' is not in this Prompt Kit');return false}
-  if(!isFavoritePrompt(promptId)){showToast('Favorite '+promptId+' before assigning its shortcut');return false}
-  var candidate=clonePromptShortcutBindings(promptShortcutBindings);
-  candidate[promptId.toLowerCase()]=promptId;
-  if(!persistPromptShortcutBindings(candidate))return false;
-  promptShortcutBindings=candidate;
-  renderPromptShortcutBindings();
-  showToast('Shortcut '+promptId.toLowerCase()+' saved','success');
-  return true
-}
-
-function removePromptShortcut(rawPromptId){
-  var promptId=normalizePromptShortcutId(rawPromptId);
-  if(!promptId)return false;
-  var gesture=promptId.toLowerCase();
-  if(!promptShortcutBindings[gesture])return false;
-  var candidate=clonePromptShortcutBindings(promptShortcutBindings);
-  delete candidate[gesture];
-  if(!persistPromptShortcutBindings(candidate))return false;
-  promptShortcutBindings=candidate;
-  renderPromptShortcutBindings();
-  showToast('Removed shortcut '+gesture);
-  return true
+  return Object.keys(sharedPromptShortcutBindings).sort(function(a,b){return Number(a)-Number(b)}).map(function(gesture){return sharedPromptShortcutBindings[gesture]})
 }
 
 function renderPromptShortcutBindings(){
   var host=document.getElementById('promptShortcutBindings');
   if(!host)return;
   host.innerHTML='';
+  var intro=document.createElement('span');
+  intro.className='hotkey-shortcut-empty';
+  intro.textContent='Every prompt has a natural numeric shortcut. Example: type 126 to copy + snap to P126.';
+  host.appendChild(intro);
   var favoriteIds=favoritePromptShortcutIds();
   var sharedIds=sharedPromptShortcutIds().filter(function(promptId){return favoriteIds.indexOf(promptId)<0});
-  if(!favoriteIds.length&&!sharedIds.length){var empty=document.createElement('span');empty.className='hotkey-shortcut-empty';empty.textContent='No favorite prompt shortcuts yet.';host.appendChild(empty);return}
   sharedIds.forEach(function(promptId){
     var row=document.createElement('div');row.className='hotkey-shortcut-row';
-    var key=document.createElement('kbd');key.textContent=promptId.toLowerCase();
-    var label=document.createElement('span');label.textContent='Copy + reveal '+promptId;
+    var key=document.createElement('kbd');key.textContent=promptId.slice(1);
+    var label=document.createElement('span');label.textContent='Copy + snap to '+promptId;
     var shared=document.createElement('span');shared.className='hotkey-shortcut-shared';shared.textContent='Recommended';
     row.appendChild(key);row.appendChild(label);row.appendChild(shared);host.appendChild(row)
   });
   favoriteIds.forEach(function(promptId){
     var row=document.createElement('div');row.className='hotkey-shortcut-row';
-    var key=document.createElement('kbd');key.textContent=promptId.toLowerCase();
-    var label=document.createElement('span');label.textContent='Copy + reveal '+promptId;
+    var key=document.createElement('kbd');key.textContent=promptId.slice(1);
+    var label=document.createElement('span');label.textContent='Copy + snap to '+promptId;
     var favorite=document.createElement('span');favorite.className='hotkey-shortcut-shared';favorite.textContent='Favorite';
-    var remove=document.createElement('button');remove.type='button';remove.className='hotkey-shortcut-remove';remove.setAttribute('aria-label','Unfavorite '+promptId+' and remove its keyboard shortcut');remove.textContent='Unfavorite';
+    var remove=document.createElement('button');remove.type='button';remove.className='hotkey-shortcut-remove';remove.setAttribute('aria-label','Remove '+promptId+' from Favorites');remove.textContent='Unfavorite';
     remove.addEventListener('click',function(){toggleFavoritePromptAndRefreshShortcut(promptId)});
     row.appendChild(key);row.appendChild(label);row.appendChild(favorite);row.appendChild(remove);host.appendChild(row)
   })
@@ -706,8 +646,7 @@ function revealPromptShortcutTarget(promptId,behavior){
 function activatePromptShortcutTarget(promptId){
   var prompt=PROMPTS.find(function(item){return item.id===promptId});
   if(!prompt)return false;
-  if(!sharedPromptShortcutBindings[String(promptId).toLowerCase()]&&!isFavoritePrompt(promptId)){showToast(promptId+' is no longer a Favorite');return false}
-  if(!revealPromptShortcutTarget(promptId)){showToast(promptId+' could not be revealed');return false}
+  if(!revealPromptShortcutTarget(promptId,'instant')){showToast(promptId+' could not be revealed');return false}
   copyPrompt(promptId);
   return true
 }
@@ -737,13 +676,7 @@ function handleConfiguredPromptShortcutKey(e,key){
   return acceptCandidate(key)
 }
 
-function focusFavoritePromptShortcutInput(panel){
-  var promptInput=document.getElementById('promptShortcutPromptId');
-  if(!panel||!promptInput||!panel.contains(promptInput))return false;
-  try{promptInput.focus()}catch(e){return false}
-  try{promptInput.scrollIntoView({block:'nearest',inline:'nearest'})}catch(e){try{promptInput.scrollIntoView()}catch(ignore){}}
-  return document.activeElement===promptInput
-}
+
 
 function setHotkeyHelpOpen(open,restoreFocus){
   var panel=document.getElementById('hotkeyHelpPanel');
@@ -752,7 +685,6 @@ function setHotkeyHelpOpen(open,restoreFocus){
   panel.hidden=!open;
   toggle.setAttribute('aria-expanded',open?'true':'false');
   if(open){
-    if(focusFavoritePromptShortcutInput(panel))return;
     var close=panel.querySelector('.hotkey-help-close');
     if(close){try{close.focus({preventScroll:true})}catch(e){close.focus()}}
     return;
@@ -851,36 +783,20 @@ panel.appendChild(head);
   var config=document.createElement('div');
   config.className='hotkey-shortcut-config';
   var configTitle=document.createElement('strong');
-  configTitle.textContent='Favorite prompt shortcuts';
+  configTitle.textContent='Prompt shortcuts';
   var configHint=document.createElement('span');
   configHint.className='hotkey-shortcut-hint';
-  configHint.textContent='Favorites automatically become their P-ID shortcuts. Type a favorite ID anywhere outside editable fields; the ID field remains available for explicit repair.';
-  var configControls=document.createElement('div');
-  configControls.className='hotkey-shortcut-controls';
-  var promptInput=document.createElement('input');
-  promptInput.id='promptShortcutPromptId';
-  promptInput.type='text';
-  promptInput.inputMode='text';
-  promptInput.autocomplete='off';
-  promptInput.placeholder='P95';
-  promptInput.setAttribute('aria-label','Favorite prompt ID for keyboard shortcut');
-  var saveShortcut=document.createElement('button');
-  saveShortcut.type='button';
-  saveShortcut.textContent='Save';
-  saveShortcut.setAttribute('aria-label','Save favorite prompt keyboard shortcut');
-  configControls.appendChild(promptInput);configControls.appendChild(saveShortcut);
+  configHint.textContent='Type the digits after P anywhere outside editable fields. Example: 126 copies P126 and snaps its card to center. p126 remains accepted for compatibility. Favorites need no shortcut setup.';
   var bindings=document.createElement('div');
   bindings.id='promptShortcutBindings';
   bindings.className='hotkey-shortcut-bindings';
-  config.appendChild(configTitle);config.appendChild(configHint);config.appendChild(configControls);config.appendChild(bindings);
+  config.appendChild(configTitle);config.appendChild(configHint);config.appendChild(bindings);
   panel.appendChild(config);
   shell.appendChild(panel);
   document.body.appendChild(shell);
 
   toggle.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();setMobilePromptJumpOpen(false,false);setHotkeyHelpOpen(panel.hidden)});
   close.addEventListener('click',function(){setHotkeyHelpOpen(false,true)});
-  saveShortcut.addEventListener('click',function(){if(configurePromptShortcut(promptInput.value))promptInput.value=''});
-  promptInput.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();if(configurePromptShortcut(promptInput.value))promptInput.value=''}});
   document.addEventListener('click',function(e){if(!panel.hidden&&!shell.contains(e.target))setHotkeyHelpOpen(false,false)});
   if(!document.getElementById('prompt-kit-hotkey-config-styles')){
     var configStyle=document.createElement('style');configStyle.id='prompt-kit-hotkey-config-styles';
@@ -951,7 +867,7 @@ function refreshPromptDetailFavoriteButton(button,promptId){
   var active=isFavoritePrompt(promptId);
   button.classList.toggle('active',active);
   button.setAttribute('aria-pressed',active?'true':'false');
-  button.setAttribute('aria-label',(active?'Remove ':'Add ')+promptId+(active?' from Favorites and Hotkeys':' to Favorites and Hotkeys'));
+  button.setAttribute('aria-label',(active?'Remove ':'Add ')+promptId+(active?' from Favorites':' to Favorites'));
   button.textContent=(active?'★ ':'☆ ')+(active?'Favorited':'Favorite')
 }
 
@@ -964,8 +880,8 @@ function toggleFavoritePromptAndRefreshShortcut(rawPromptId){
   renderPromptShortcutBindings();
   var detailButton=document.querySelector('.prompt-detail-favorite-btn[data-favorite-prompt-id="'+promptId+'"]');
   refreshPromptDetailFavoriteButton(detailButton,promptId);
-  if(isFavorite&&!wasFavorite)showToast('★ '+promptId+' saved · shortcut '+promptId.toLowerCase()+' ready','success');
-  else if(!isFavorite&&wasFavorite)showToast('Removed '+promptId+' from Favorites and Hotkeys');
+  if(isFavorite&&!wasFavorite)showToast('★ '+promptId+' saved · type '+promptId.slice(1)+' anytime','success');
+  else if(!isFavorite&&wasFavorite)showToast('Removed '+promptId+' from Favorites · shortcut '+promptId.slice(1)+' still available');
   return isFavorite
 }
 

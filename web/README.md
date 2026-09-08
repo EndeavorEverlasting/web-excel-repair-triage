@@ -180,13 +180,8 @@ The glowing **Hotkeys** module beside the floating reference control is the in-p
 | `End` | Scroll to bottom |
 | `Esc` | Close the active surface or clear filters |
 
-Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prompt first, enter its canonical ID such as `P95`, and save it; the persisted binding is then the lower-case prompt ID (`p95`). Typed prompt sequences expire after 1.2 seconds and are ignored in editable fields. If one configured ID prefixes another, the shorter exact match waits for that boundary and continued typing selects the longer exact ID. Dots may be typed as separators inside an active sequence (`p1.1` → `P11`, `p1.11` → `P111`). Completing a configured sequence clears the transient restrictions needed to reveal the target, scrolls the canonical prompt card into view, and copies the canonical prompt through the normal copy path **without opening prompt detail**. The Hotkeys panel labels configured rows as **Copy + reveal P##**.
+Type the digits after `P` anywhere outside editable fields to use a prompt directly: `126` → `P126`. The canonical `PROMPTS` catalog owns these routes, so Favorites and a separate Save step are not prerequisites. The compatibility form `p126` remains accepted. Typed prompt sequences expire after 1.2 seconds; if one prompt ID prefixes another, the shorter exact match waits for that boundary while continued typing selects the longer ID. Completing a prompt-number shortcut copies the canonical prompt and instant-snaps its card to the center of the page without opening detail.
 
-A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it owns the following digits. Numeric keys have no header-navigation meaning, so `P111` and other configured prompt IDs cannot fall through into a tab command.
-
-Registry prompts may additionally publish a **recommended shortcut** by shipping `sharedShortcut: true` in their canonical registry record (currently `P95`). Recommended sequences are the lowercase prompt ID, are active for every user without favoriting, use the same copy + reveal path, and appear in the Hotkeys panel labeled **Recommended** without a Remove control because the registry owns them. Personal bindings and built-ins keep precedence, and configuring or removing a personal binding still requires the Favorite gate and a durable storage write.
-
-Navigation shortcuts are ignored while typing in an input, textarea, select, or content-editable surface. Modified backtick chords are ignored. Top/bottom scrolling respects reduced-motion preferences.
 
 ### Header navigation contract
 
