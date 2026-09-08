@@ -161,6 +161,52 @@ class OperantExternalResourceTests(unittest.TestCase):
             self.assertEqual(INDEX.read_text(encoding="utf-8"), before_index)
             self.assertEqual(GAPS.read_text(encoding="utf-8"), before_gaps)
 
+    def test_catalog_search_cli_keeps_ci_defaults_off_ordinary_search(self) -> None:
+        search_cfg = self.contract["catalog_search"]
+        self.assertEqual(
+            catalog_search.resolve_cli_search_inputs(
+                live_proof=False,
+                source=None,
+                query="linux terminal",
+                limit=None,
+                catalog_cfg=search_cfg,
+            ),
+            ("prompts-chat", "linux terminal", 10),
+        )
+        self.assertEqual(
+            catalog_search.resolve_cli_search_inputs(
+                live_proof=True,
+                source=None,
+                query=None,
+                limit=None,
+                catalog_cfg=search_cfg,
+            ),
+            ("prompts-chat", str(search_cfg["ci_proof_query"]), int(search_cfg["ci_proof_limit"])),
+        )
+        with self.assertRaises(ValueError):
+            catalog_search.resolve_cli_search_inputs(
+                live_proof=False,
+                source=None,
+                query=None,
+                limit=None,
+                catalog_cfg=search_cfg,
+            )
+        with self.assertRaises(ValueError):
+            catalog_search.resolve_cli_search_inputs(
+                live_proof=True,
+                source=None,
+                query=None,
+                limit=0,
+                catalog_cfg=search_cfg,
+            )
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture = Path(tmp) / "prompts.csv"
+            fixture.write_text(FIXTURE_CSV, encoding="utf-8")
+            self.assertEqual(
+                catalog_search.main(["--catalog-file", str(fixture), "--summary"]),
+                2,
+            )
+
     def test_catalog_search_live_proof_budget_is_contracted_and_enforced(self) -> None:
         search_cfg = self.contract["catalog_search"]
         self.assertEqual(search_cfg["default_source_id"], "prompts-chat")
@@ -168,9 +214,43 @@ class OperantExternalResourceTests(unittest.TestCase):
         self.assertTrue(search_cfg["live_proof_required_in_refresh_workflow"])
         self.assertTrue(str(search_cfg["ci_proof_query"]).strip())
         workflow = (ROOT / ".github" / "workflows" / "operant-external-resource-refresh.yml").read_text(encoding="utf-8")
-        self.assertIn("scripts/search_operant_external_catalog.py", workflow)
-        self.assertIn("--live-proof", workflow)
-        self.assertIn("catalog-search-live-proof.json", workflow)
+        active_workflow = validator.active_workflow_text(workflow)
+        self.assertIn("scripts/search_operant_external_catalog.py", active_workflow)
+        self.assertIn("--live-proof", active_workflow)
+        self.assertIn("catalog-search-live-proof.json", active_workflow)
+        self.assertEqual(catalog_search.live_fetch_timeout_seconds(30), 30)
+        self.assertEqual(catalog_search.live_fetch_timeout_seconds(0.4), 1)
+        with self.assertRaises(ValueError):
+            catalog_search.catalog_search_budget_seconds({}, float("inf"))
+        with self.assertRaises(ValueError):
+            catalog_search.catalog_search_budget_seconds({}, float("nan"))
+        with self.assertRaises(validator.ValidationError):
+            validator.require_finite_positive("nan", "catalog_search.maximum_live_search_seconds")
+        with self.assertRaises(validator.ValidationError):
+            validator.require_positive_int(-1, "catalog_search.ci_proof_limit")
+        with self.assertRaises(validator.ValidationError):
+            validator.require_positive_int(True, "catalog_search.ci_proof_limit")
+        self.assertNotIn(
+            "--live-proof",
+            validator.active_workflow_text("# python scripts/search_operant_external_catalog.py --live-proof\n"),
+        )
+        boundary = catalog_search.build_live_proof_receipt(
+            contract=self.contract,
+            result={
+                "source_id": "prompts-chat",
+                "query": "code review",
+                "resolved_sha": "fixture",
+                "catalog_path": "prompts.csv",
+                "catalog_entry_count": 3,
+                "hit_count": 1,
+                "hits": [{"title": "Code Review"}],
+            },
+            elapsed_seconds=30.0004,
+            budget_seconds=30,
+            mode="fixture",
+        )
+        self.assertEqual(boundary["elapsed_seconds"], 30.0)
+        self.assertEqual(boundary["within_budget"], boundary["elapsed_seconds"] <= boundary["budget_seconds"])
         with tempfile.TemporaryDirectory() as tmp:
             fixture = Path(tmp) / "prompts.csv"
             fixture.write_text(FIXTURE_CSV, encoding="utf-8")
@@ -189,6 +269,7 @@ class OperantExternalResourceTests(unittest.TestCase):
             receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
             self.assertEqual(receipt["schema_version"], "operant-external-catalog-search-live-proof/v1")
             self.assertEqual(receipt["mode"], "fixture")
+            self.assertEqual(receipt["query"], str(search_cfg["ci_proof_query"]))
             self.assertTrue(receipt["within_budget"])
             self.assertLessEqual(float(receipt["elapsed_seconds"]), float(receipt["budget_seconds"]))
             over_budget = catalog_search.main([
