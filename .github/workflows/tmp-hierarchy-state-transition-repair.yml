@@ -32,8 +32,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main feat/p95-telemetry-footprint-causality-20260908 --prune
-          test "$(git rev-parse HEAD)" = "8bde479adc70d75b24de7c953174a6301c01cbc1"
           git merge-base --is-ancestor 1a962e0a4e66786d560bc3d34ef00dfc44a3fedc HEAD
+          test -z "$(git diff --name-only 1a962e0a4e66786d560bc3d34ef00dfc44a3fedc...HEAD)"
 
       - name: Strengthen P95 in its existing hosting owner
         shell: bash
