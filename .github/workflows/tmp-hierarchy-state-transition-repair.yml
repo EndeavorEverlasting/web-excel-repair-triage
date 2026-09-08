@@ -20,7 +20,6 @@ jobs:
         with:
           ref: feat/p95-telemetry-footprint-causality-20260908
           fetch-depth: 0
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -35,7 +34,7 @@ jobs:
           git merge-base --is-ancestor 1a962e0a4e66786d560bc3d34ef00dfc44a3fedc HEAD
           test -z "$(git diff --name-only 1a962e0a4e66786d560bc3d34ef00dfc44a3fedc...HEAD)"
 
-      - name: Strengthen P95 in its existing hosting owner
+      - name: Strengthen P95 without raw prompt growth
         shell: bash
         run: |
           set -euo pipefail
@@ -43,63 +42,75 @@ jobs:
           import json
           from pathlib import Path
 
-          registry_path = Path('registry/prompts/spec-architecture-prompts.v1.json')
-          payload = json.loads(registry_path.read_text(encoding='utf-8'))
+          registry = Path('registry/prompts/spec-architecture-prompts.v1.json')
+          payload = json.loads(registry.read_text(encoding='utf-8'))
           p95 = next(p for p in payload['prompts'] if p['id'] == 'P95')
+          original_copy = p95['copyContent']
 
-          old = (
+          old_1c = (
               '1C. CHOOSE THE DEPLOYMENT OPERATING MODEL FROM EVIDENCE\n'
               'Compare: managed PaaS/serverless for velocity and low ops; one host with OCI containers via Docker or Podman for low-cost control; Kubernetes/managed orchestration only for demonstrated horizontal scaling, HA/isolation, or spiky distributed load. “millions someday” is not proof; keep an upgrade seam. Record chosen/rejected tier and migration triggers: saturation, p95/p99/SLO, queues/connections, RTO/RPO, toil, and cost. Keep this branch progressive-disclosure: do not preload tier-specific Docker/Podman/Kubernetes or managed-platform detail; inspect it only after current evidence makes that tier decision-relevant.'
           )
-          new = (
+          new_1c = (
               '1C. CHOOSE THE DEPLOYMENT OPERATING MODEL FROM EVIDENCE\n'
-              'Compare managed PaaS/serverless, one host with OCI containers via Docker or Podman, and Kubernetes/managed orchestration only when current scaling, HA/isolation, or distributed-load evidence requires it. “millions someday” is not proof. Aggregate database/storage size is not application-state demand: if footprint drives the tier, decompose size/growth by table or data owner; separate durable application/business state from telemetry/log/diagnostic exhaust and rebuildable data; inspect retention/TTL/rotation and write rate/cardinality. A small application database buried under a telemetry accident is not proof of a larger hosting tier. Contain or bound generated exhaust, then rerun deployment selection against the irreducible app-state/workload floor. If ownership/growth is unproven, mark the tier UNKNOWN/BLOCKED. Record chosen/rejected tier and migration triggers: saturation, p95/p99/SLO, queues/connections, RTO/RPO, toil, cost. Keep progressive disclosure; load tier-specific detail only when evidence makes it decision-relevant.'
+              'Compare managed PaaS/serverless; one host with OCI containers via Docker or Podman; Kubernetes/managed orchestration only for proved need. “millions someday” is not proof. Aggregate database/storage size is not application-state demand: split footprint by owner: durable application/business state vs telemetry/log/diagnostic exhaust; inspect retention/TTL/rotation and write rate/cardinality. A small application database buried under a telemetry accident is not tier proof; contain it; rerun against the irreducible app-state/workload floor. Track p95/p99/SLO, queues/RTO/RPO/toil/cost. Keep this branch progressive-disclosure: do not preload tier-specific Docker/Podman/Kubernetes detail; inspect it only after current evidence makes that tier decision-relevant.'
           )
-          if new not in p95['copyContent']:
-              if old not in p95['copyContent']:
-                  raise SystemExit('P95 1C owner moved; fail closed')
-              p95['copyContent'] = p95['copyContent'].replace(old, new, 1)
+          old_9 = (
+              '9. DESIGN FOR TESTABILITY AND OBSERVABILITY\n'
+              'Specify tests at interfaces/seams, not internal line-by-line choreography. Define what can be unit-tested, what requires component/integration proof, and what eventually requires live runtime proof. Include enough structured logging/tracing/metrics to identify which program layer made a decision or failed without leaking sensitive data.'
+          )
+          new_9 = (
+              '9. DESIGN FOR TESTABILITY AND OBSERVABILITY\n'
+              'Test interfaces/seams; label unit/integration/live proof. Bound non-sensitive logs/traces/metrics; one owner controls volume/retention/cardinality. Diagnostics are not durable product state.'
+          )
 
-          inspect_suffix = ' When storage footprint is architecture-relevant, decompose size/growth by durable application state versus generated telemetry/log/diagnostic exhaust before treating aggregate size as workload demand.'
-          if inspect_suffix.strip() not in p95['inspectFirst']:
-              p95['inspectFirst'] += inspect_suffix
+          if new_1c not in p95['copyContent']:
+              if old_1c not in p95['copyContent']:
+                  raise SystemExit('P95 1C canonical anchor moved; fail closed')
+              p95['copyContent'] = p95['copyContent'].replace(old_1c, new_1c, 1)
+          if new_9 not in p95['copyContent']:
+              if old_9 not in p95['copyContent']:
+                  raise SystemExit('P95 observability canonical anchor moved; fail closed')
+              p95['copyContent'] = p95['copyContent'].replace(old_9, new_9, 1)
 
-          output_suffix = ' For storage-driven tier choices, include the irreducible app-state/workload floor and the deployment decision re-evaluated after generated exhaust is contained.'
-          if output_suffix.strip() not in p95['expectedOutput']:
-              p95['expectedOutput'] += output_suffix
+          if len(p95['copyContent']) > len(original_copy):
+              raise SystemExit(f"P95 raw prompt grew: {len(original_copy)} -> {len(p95['copyContent'])}")
+          if len(p95['copyContent']) > 10000:
+              raise SystemExit(f"P95 copyContent exceeds ceiling: {len(p95['copyContent'])}")
 
-          proof_suffix = ' Aggregate storage alone is not hosting proof; storage-driven tier changes require decomposed ownership/growth evidence and a rerun after generated exhaust is contained.'
-          if proof_suffix.strip() not in p95['proofGate']:
-              p95['proofGate'] += proof_suffix
-
+          additions = {
+              'inspectFirst': ' When storage footprint affects deployment topology, decompose durable application state from generated telemetry/log/diagnostic exhaust before treating aggregate size as workload demand.',
+              'expectedOutput': ' For storage-driven tier choices, include the irreducible app-state/workload floor and the tier decision rerun after generated exhaust is contained.',
+              'proofGate': ' Aggregate storage alone is not hosting proof; storage-driven tier changes require decomposed ownership/growth evidence and a rerun after generated exhaust is contained.',
+          }
+          for field, sentence in additions.items():
+              if sentence.strip() not in p95[field]:
+                  p95[field] += sentence
           for keyword in ('database bloat', 'telemetry bloat', 'observability storage', 'database footprint', 'retention policy'):
               if keyword not in p95['keywords']:
                   p95['keywords'].append(keyword)
 
-          if len(p95['copyContent']) > 10000:
-              raise SystemExit(f"P95 copyContent exceeds focused regression ceiling: {len(p95['copyContent'])}")
-
-          registry_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          registry.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
           test_path = Path('tests/test_prompt_registry_expansion_regression_design_teach.py')
-          test_text = test_path.read_text(encoding='utf-8')
+          test = test_path.read_text(encoding='utf-8')
           marker = '            "only after current evidence makes that tier decision-relevant",\n'
-          replacement = (
-              '            "only after current evidence makes that tier decision-relevant",\n'
-              '            "Aggregate database/storage size is not application-state demand",\n'
-              '            "durable application/business state",\n'
-              '            "telemetry/log/diagnostic exhaust",\n'
-              '            "retention/TTL/rotation",\n'
-              '            "small application database buried under a telemetry accident",\n'
-              '            "rerun deployment selection against the irreducible app-state/workload floor",\n'
-          )
-          if 'small application database buried under a telemetry accident' not in test_text:
-              if marker not in test_text:
-                  raise SystemExit('focused P95 regression anchor moved; fail closed')
-              test_text = test_text.replace(marker, replacement, 1)
-              test_path.write_text(test_text, encoding='utf-8')
+          new_asserts = ''.join((
+              '            "Aggregate database/storage size is not application-state demand",\n',
+              '            "durable application/business state",\n',
+              '            "telemetry/log/diagnostic exhaust",\n',
+              '            "retention/TTL/rotation",\n',
+              '            "write rate/cardinality",\n',
+              '            "small application database buried under a telemetry accident",\n',
+              '            "rerun against the irreducible app-state/workload floor",\n',
+              '            "Diagnostics are not durable product state",\n',
+          ))
+          if 'small application database buried under a telemetry accident' not in test:
+              if marker not in test:
+                  raise SystemExit('focused hosting regression anchor moved; fail closed')
+              test = test.replace(marker, marker + new_asserts, 1)
+              test_path.write_text(test, encoding='utf-8')
           PY
-
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 
       - name: Validate exact P95 candidate
@@ -135,23 +146,24 @@ jobs:
               'telemetry/log/diagnostic exhaust',
               'retention/TTL/rotation',
               'small application database buried under a telemetry accident',
-              'rerun deployment selection against the irreducible app-state/workload floor',
+              'rerun against the irreducible app-state/workload floor',
+              'Diagnostics are not durable product state',
           )
-          missing = [phrase for phrase in required if phrase not in p95['copyContent']]
+          missing = [x for x in required if x not in p95['copyContent']]
           if missing:
-              raise SystemExit(f'P95 semantic gap: {missing}')
+              raise SystemExit(f'P95 telemetry semantics missing: {missing}')
           if 'TROUBLESHOOT FROM CONTEXT NOW' not in p58['copyContent'] or 'root cause' not in p58['copyContent'].lower():
               raise SystemExit('P58 diagnostic ownership regressed')
           if len(p95['copyContent']) > 10000:
               raise SystemExit('P95 size ceiling regressed')
-          print('P58 remains diagnosis owner; P95 remains architecture owner; zero new prompt IDs required')
+          print('OWNER_MAP: P58 ALREADY_COVERED; P95 STRENGTHENED; NEW_IDS=0')
           PY
           python -m unittest tests.test_prompt_registry_expansion_regression_design_teach -v
           python scripts/prompt_registry_ops.py validate
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
-      - name: Commit exact durable candidate
+      - name: Commit durable product candidate
         shell: bash
         run: |
           set -euo pipefail
