@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+from contextlib import redirect_stderr
+from io import StringIO
+from pathlib import Path
+from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 
 from scripts import validate_prompt_kit_ontology_history_append_only as append_only_validator
 
@@ -55,6 +60,32 @@ class PromptKitOntologyHistoryAppendOnlyTests(unittest.TestCase):
             self._ledger(current),
         )
         self.assertTrue(any("changed or moved" in item for item in errors))
+
+    def test_output_io_failure_returns_2_without_traceback(self) -> None:
+        report = {
+            "schema_version": "prompt-kit-ontology-history-append-only-validation/v1",
+            "status": "PASS",
+            "baseline_ref": "baseline",
+            "baseline_records": 1,
+            "current_records": 1,
+            "errors": [],
+        }
+        with TemporaryDirectory() as tmp_dir:
+            output_directory = Path(tmp_dir)
+            stderr = StringIO()
+            with patch.object(append_only_validator, "validate", return_value=report):
+                with redirect_stderr(stderr):
+                    return_code = append_only_validator.main(
+                        [
+                            "--baseline-ref",
+                            "baseline",
+                            "--output",
+                            str(output_directory),
+                        ]
+                    )
+
+        self.assertEqual(return_code, 2)
+        self.assertIn("Prompt Kit ontology append-only validation failed", stderr.getvalue())
 
 
 if __name__ == "__main__":
