@@ -25,18 +25,17 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Verify bounded branch floor
+      - name: Verify refreshed feature floor
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main feat/p95-telemetry-footprint-causality-20260908 --prune
-          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/feat/p95-telemetry-footprint-causality-20260908)"
-          test "$(git merge-base HEAD eb64ac6b9a3473ba2e3aad9fb3d5fe282e4247b0)" = "eb64ac6b9a3473ba2e3aad9fb3d5fe282e4247b0"
-          test -z "$(git diff --name-only eb64ac6b9a3473ba2e3aad9fb3d5fe282e4247b0...HEAD)"
+          test "$(git rev-parse HEAD)" = "8bde479adc70d75b24de7c953174a6301c01cbc1"
+          git merge-base --is-ancestor 1a962e0a4e66786d560bc3d34ef00dfc44a3fedc HEAD
 
-      - name: Strengthen P95 and focused hosting regression
+      - name: Strengthen P95 in its existing hosting owner
         shell: bash
         run: |
           set -euo pipefail
@@ -48,53 +47,32 @@ jobs:
           payload = json.loads(registry_path.read_text(encoding='utf-8'))
           p95 = next(p for p in payload['prompts'] if p['id'] == 'P95')
 
-          inspect_suffix = (
-              ' When database/storage footprint influences capacity or deployment topology, '
-              'decompose current footprint and growth by table/data class/owner, separating '
-              'durable application state from generated telemetry/log/diagnostic exhaust before '
-              'treating aggregate size as workload demand.'
+          old = (
+              '1C. CHOOSE THE DEPLOYMENT OPERATING MODEL FROM EVIDENCE\n'
+              'Compare: managed PaaS/serverless for velocity and low ops; one host with OCI containers via Docker or Podman for low-cost control; Kubernetes/managed orchestration only for demonstrated horizontal scaling, HA/isolation, or spiky distributed load. “millions someday” is not proof; keep an upgrade seam. Record chosen/rejected tier and migration triggers: saturation, p95/p99/SLO, queues/connections, RTO/RPO, toil, and cost. Keep this branch progressive-disclosure: do not preload tier-specific Docker/Podman/Kubernetes or managed-platform detail; inspect it only after current evidence makes that tier decision-relevant.'
           )
+          new = (
+              '1C. CHOOSE THE DEPLOYMENT OPERATING MODEL FROM EVIDENCE\n'
+              'Compare managed PaaS/serverless, one host with OCI containers via Docker or Podman, and Kubernetes/managed orchestration only when current scaling, HA/isolation, or distributed-load evidence requires it. “millions someday” is not proof. Aggregate database/storage size is not application-state demand: if footprint drives the tier, decompose size/growth by table or data owner; separate durable application/business state from telemetry/log/diagnostic exhaust and rebuildable data; inspect retention/TTL/rotation and write rate/cardinality. A small application database buried under a telemetry accident is not proof of a larger hosting tier. Contain or bound generated exhaust, then rerun deployment selection against the irreducible app-state/workload floor. If ownership/growth is unproven, mark the tier UNKNOWN/BLOCKED. Record chosen/rejected tier and migration triggers: saturation, p95/p99/SLO, queues/connections, RTO/RPO, toil, cost. Keep progressive disclosure; load tier-specific detail only when evidence makes it decision-relevant.'
+          )
+          if new not in p95['copyContent']:
+              if old not in p95['copyContent']:
+                  raise SystemExit('P95 1C owner moved; fail closed')
+              p95['copyContent'] = p95['copyContent'].replace(old, new, 1)
+
+          inspect_suffix = ' When storage footprint is architecture-relevant, decompose size/growth by durable application state versus generated telemetry/log/diagnostic exhaust before treating aggregate size as workload demand.'
           if inspect_suffix.strip() not in p95['inspectFirst']:
               p95['inspectFirst'] += inspect_suffix
 
-          output_suffix = (
-              ' When storage footprint is architecture-relevant, include the irreducible '
-              'application-state/workload floor, generated-observability disposition, and the '
-              'deployment decision re-evaluated after accidental exhaust is contained.'
-          )
+          output_suffix = ' For storage-driven tier choices, include the irreducible app-state/workload floor and the deployment decision re-evaluated after generated exhaust is contained.'
           if output_suffix.strip() not in p95['expectedOutput']:
               p95['expectedOutput'] += output_suffix
 
-          proof_suffix = (
-              ' Aggregate storage size alone is not hosting proof: architecture-changing capacity '
-              'claims require a decomposed footprint/growth owner map that separates durable '
-              'application state from generated telemetry/log/diagnostic exhaust and reruns the '
-              'deployment conclusion after containment.'
-          )
+          proof_suffix = ' Aggregate storage alone is not hosting proof; storage-driven tier changes require decomposed ownership/growth evidence and a rerun after generated exhaust is contained.'
           if proof_suffix.strip() not in p95['proofGate']:
               p95['proofGate'] += proof_suffix
 
-          section = (
-              '\n\n1D. DECOMPOSE STORAGE BEFORE ARCHITECTURE CONCLUSIONS\n'
-              'Aggregate database/storage size is not application-state demand. When database or storage footprint is used to justify hosting, scaling, or serverless/container/orchestration choices, first decompose current footprint and growth by table/data class/owner. Separate durable application/business state from telemetry/logs/diagnostics, audit-like operational exhaust, caches, temporary material, and rebuildable derivatives. For generated observability data inspect retention/TTL/rotation, write rate and cardinality, sampling, indexing/duplication, and growth trend. An unbounded telemetry sink is an observability defect, not evidence that the product itself requires a larger hosting tier.\n\n'
-              'Treat "a small application database buried under a telemetry accident" as a diagnostic counterexample: before redesigning topology, isolate the irreducible app-state/workload floor and quantify what remains when accidental/generated exhaust is excluded. Prefer bounded retention, sampling, rotation, or an explicitly budgeted diagnostic sink where compatible; do not persist every recurring diagnostic event in the primary relational database by default.\n\n'
-              'After containment/removal, rerun the deployment operating-model decision against the corrected floor. If footprint ownership or growth cannot be proven, mark the architecture conclusion UNKNOWN/BLOCKED rather than converting aggregate size into a topology requirement.'
-          )
-          anchor = '\n\n2. BUILD A PRECISE DOMAIN VOCABULARY'
-          if '1D. DECOMPOSE STORAGE BEFORE ARCHITECTURE CONCLUSIONS' not in p95['copyContent']:
-              if anchor not in p95['copyContent']:
-                  raise SystemExit('P95 insertion anchor moved')
-              p95['copyContent'] = p95['copyContent'].replace(anchor, section + anchor, 1)
-
-          for keyword in (
-              'database bloat',
-              'telemetry bloat',
-              'observability storage',
-              'storage causality',
-              'database footprint',
-              'logging bloat',
-              'retention policy',
-          ):
+          for keyword in ('database bloat', 'telemetry bloat', 'observability storage', 'database footprint', 'retention policy'):
               if keyword not in p95['keywords']:
                   p95['keywords'].append(keyword)
 
@@ -106,25 +84,25 @@ jobs:
           test_path = Path('tests/test_prompt_registry_expansion_regression_design_teach.py')
           test_text = test_path.read_text(encoding='utf-8')
           marker = '            "only after current evidence makes that tier decision-relevant",\n'
-          additions = ''.join((
-              '            "DECOMPOSE STORAGE BEFORE ARCHITECTURE CONCLUSIONS",\n',
-              '            "Aggregate database/storage size is not application-state demand",\n',
-              '            "durable application/business state",\n',
-              '            "telemetry/logs/diagnostics",\n',
-              '            "retention/TTL/rotation",\n',
-              '            "write rate and cardinality",\n',
-              '            "small application database buried under a telemetry accident",\n',
-              '            "rerun the deployment operating-model decision",\n',
-          ))
+          replacement = (
+              '            "only after current evidence makes that tier decision-relevant",\n'
+              '            "Aggregate database/storage size is not application-state demand",\n'
+              '            "durable application/business state",\n'
+              '            "telemetry/log/diagnostic exhaust",\n'
+              '            "retention/TTL/rotation",\n'
+              '            "small application database buried under a telemetry accident",\n'
+              '            "rerun deployment selection against the irreducible app-state/workload floor",\n'
+          )
           if 'small application database buried under a telemetry accident' not in test_text:
               if marker not in test_text:
-                  raise SystemExit('focused P95 hosting regression anchor moved')
-              test_text = test_text.replace(marker, marker + additions, 1)
+                  raise SystemExit('focused P95 regression anchor moved; fail closed')
+              test_text = test_text.replace(marker, replacement, 1)
               test_path.write_text(test_text, encoding='utf-8')
           PY
+
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 
-      - name: Focused proof and Prompt Kit convergence
+      - name: Validate exact P95 candidate
         shell: bash
         run: |
           set -euo pipefail
@@ -140,7 +118,7 @@ jobs:
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
-      - name: Deliberate second-pass semantic falsification
+      - name: Pass 2 owner-boundary falsification
         shell: bash
         run: |
           set -euo pipefail
@@ -152,36 +130,33 @@ jobs:
           base = json.loads(Path('docs/prompts.json').read_text(encoding='utf-8'))
           p58 = next(p for p in base if p['id'] == 'P58')
           required = (
-              'DECOMPOSE STORAGE BEFORE ARCHITECTURE CONCLUSIONS',
               'Aggregate database/storage size is not application-state demand',
               'durable application/business state',
-              'telemetry/logs/diagnostics',
+              'telemetry/log/diagnostic exhaust',
               'retention/TTL/rotation',
-              'write rate and cardinality',
               'small application database buried under a telemetry accident',
-              'rerun the deployment operating-model decision',
+              'rerun deployment selection against the irreducible app-state/workload floor',
           )
           missing = [phrase for phrase in required if phrase not in p95['copyContent']]
           if missing:
-              raise SystemExit(f'P95 telemetry causality semantic gap: {missing}')
+              raise SystemExit(f'P95 semantic gap: {missing}')
           if 'TROUBLESHOOT FROM CONTEXT NOW' not in p58['copyContent'] or 'root cause' not in p58['copyContent'].lower():
-              raise SystemExit('P58 evidence-first diagnostic ownership regressed')
+              raise SystemExit('P58 diagnostic ownership regressed')
           if len(p95['copyContent']) > 10000:
-              raise SystemExit('P95 exceeded focused semantic ceiling')
-          print('second-pass owner boundary: P58 diagnostic owner preserved; P95 architecture causality strengthened; no new prompt identity required')
+              raise SystemExit('P95 size ceiling regressed')
+          print('P58 remains diagnosis owner; P95 remains architecture owner; zero new prompt IDs required')
           PY
           python -m unittest tests.test_prompt_registry_expansion_regression_design_teach -v
           python scripts/prompt_registry_ops.py validate
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
-      - name: Commit exact durable change to feature branch
+      - name: Commit exact durable candidate
         shell: bash
         run: |
           set -euo pipefail
           git add registry/prompts/spec-architecture-prompts.v1.json tests/test_prompt_registry_expansion_regression_design_teach.py web/prompt-kit/index.html
           git diff --cached --check
-          echo '--- staged files ---'
           git diff --cached --name-only
-          git commit -m 'feat(prompt-kit): guard architecture from telemetry footprint accidents'
+          git commit -m 'feat(prompt-kit): guard hosting decisions from telemetry bloat'
           git push origin HEAD:feat/p95-telemetry-footprint-causality-20260908
