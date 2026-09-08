@@ -111,5 +111,7 @@ class PromptKitCrossInputModalityTests(unittest.TestCase):
         self.assertIn("if(typeof toggleRef==='function'){toggleRef();return true}", generated)
         self.assertNotIn("if(ref){ref.click();return true}", generated)
         self.assertIn("Go to P#", generated)
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     unittest.main()
