@@ -9,8 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  strengthen-p95:
-    if: ${{ !contains(github.event.head_commit.message, '[telemetry-hardening-generated]') }}
+  strengthen_p95:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -24,6 +23,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if git log -1 --pretty=%B | grep -Fq '[telemetry-hardening-generated]'; then
+            echo 'Generated change already committed; executor is idempotently complete.'
+            exit 0
+          fi
+
           python - <<'PY'
           import json
           from pathlib import Path
