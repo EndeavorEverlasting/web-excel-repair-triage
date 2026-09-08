@@ -186,7 +186,7 @@ Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prom
 **Mode separation for known prompt IDs:**
 - **Mouse:** no dedicated digit sequence; locate the card, then use Open/Copy.
 - **Keyboard:** digits-only sequences for favorite/recommended bindings (copy + reveal).
-- **Phone:** use the **Go to P#** handle (P prefix shown; type digits) to open detail, then Copy.
+- **Phone:** use **Go to P#** (P prefix shown; type digits) to snap to the canonical card with detail closed; tap anywhere on the non-control card surface to Copy, and use Open only for deliberate inspection.
 
 A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it owns the following digits. Numeric keys have no header-navigation meaning, so digit sequences cannot fall through into a tab command.
 

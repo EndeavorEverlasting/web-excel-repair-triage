@@ -16,7 +16,7 @@ REQUIRED_CAPABILITY_IDS = {
     "favorites_view",
     "inspect_open",
     "copy_act",
-    "open_known_id",
+    "locate_known_id",
     "copy_known_id",
     "filters",
     "reference",
@@ -99,17 +99,21 @@ class PromptKitCrossInputModalityTests(unittest.TestCase):
         ):
             self.assertIn(marker, body)
 
-    def test_matrix_documents_copy_known_phone_exclusion_and_open_known_phone_route(self) -> None:
+    def test_matrix_routes_phone_known_id_to_card_copy_without_detail(self) -> None:
         payload = json.loads(CONTRACT.read_text(encoding="utf-8"))
         by_id = {item["id"]: item for item in payload["capabilities"]}
-        self.assertTrue(by_id["copy_known_id"]["phone"].lower().startswith("supported_exclusion"))
-        self.assertIn("Go to P#", by_id["open_known_id"]["phone"])
+        self.assertIn("Go to P#", by_id["locate_known_id"]["phone"])
+        self.assertIn("detail closed", by_id["locate_known_id"]["phone"])
+        self.assertEqual(by_id["locate_known_id"]["semantic_action"], "revealPromptShortcutTarget")
+        self.assertIn("tap/click any non-control area", by_id["copy_known_id"]["phone"])
+        self.assertIn("copyPrompt", by_id["copy_known_id"]["semantic_action"])
+        self.assertNotIn("supported_exclusion", by_id["copy_known_id"]["phone"].lower())
         self.assertIn("digits only", by_id["copy_known_id"]["keyboard"].lower())
         self.assertIn("no dedicated known-ID digit grammar", by_id["copy_known_id"]["mouse"])
-        self.assertIn("no dedicated known-ID digit grammar", by_id["open_known_id"]["mouse"])
         self.assertEqual(by_id["reference"]["semantic_action"], "toggleRef")
         rules = payload.get("semantic_convergence_rules") or []
-        self.assertTrue(any("phone Go to P#" in rule and "keyboard digits-only" in rule for rule in rules))
+        convergence = next(rule for rule in rules if "terminal copy converges on copyPrompt" in rule)
+        self.assertIn("Go to P# must not auto-open detail", convergence)
 
     def test_generated_site_embeds_converged_reference_route(self) -> None:
         generated = (ROOT / "web" / "prompt-kit" / "index.html").read_text(encoding="utf-8")
