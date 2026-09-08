@@ -2,12 +2,12 @@
 
 ## Trigger
 
-Use this skill when someone needs to open, install, share, refresh, clone, update, or locally edit the Prompt Kit.
+Use this skill when someone needs to open, install, share, refresh, clone, update, or locally edit Operant / the Prompt Kit compatibility source.
 
-Also trigger this skill when the user reports a Prompt Kit or prompt version label and currentness has not been proven, or when a downloaded, installed, cached, or cloned copy may be stale.
+Also trigger this skill when the user reports an Operant or Prompt Kit version label and currentness has not been proven, or when a downloaded, installed, cached, or cloned copy may be stale.
 
 Route by intent:
-1. use/open/share → public site;
+1. use/open/share → canonical Operant public site;
 2. phone/tablet install → public launcher + browser install/home-screen surface;
 3. Windows stable local app → `Open-Latest-PromptKit.cmd`;
 4. edit/commit/run repository tooling → real Git checkout;
@@ -38,7 +38,7 @@ One selected acquisition route plus:
 A version label is a freshness signal, not proof of currentness. Before troubleshooting, tutorial guidance, or prompt selection, treat an older or previously acquired copy as potentially stale.
 
 Recommend the lowest-friction refresh route first:
-- browser use → `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`;
+- browser use → `https://endeavoreverlasting.github.io/web-excel-repair-triage/operant`;
 - phone/tablet → `https://endeavoreverlasting.github.io/web-excel-repair-triage/`;
 - Windows stable local app → `Open-Latest-PromptKit.cmd`;
 - editable checkout → use the preservation-first sequence in section 4 and integrate only with `git merge --ff-only origin/main`;
@@ -51,10 +51,12 @@ If refresh is explicitly declined, continue only while labeling the copy `stale-
 Open:
 
 ```text
-https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/
+https://endeavoreverlasting.github.io/web-excel-repair-triage/operant
 ```
 
-Do not require a clone merely to use the Prompt Kit. Normal browser use needs no repository checkout, ZIP extraction, Python, PowerShell, Termux, or local server.
+Do not require a clone merely to use the Prompt Kit. `Prompt Kit` remains an internal/compatibility name here; the public product route is **Operant**. Normal browser use needs no repository checkout, ZIP extraction, Python, PowerShell, Termux, or local server.
+
+The legacy `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/` route is compatibility-only and must not be presented as canonical user guidance.
 
 ### 2. Android or iPhone/iPad install
 
@@ -64,7 +66,7 @@ Open the public launcher:
 https://endeavoreverlasting.github.io/web-excel-repair-triage/
 ```
 
-Use the system browser. If an in-app browser intercepts the link, choose **Open in browser** first. On Android use the browser's install surface when offered; on iPhone/iPad use **Add to Home Screen**. This route is for use/install, not source work.
+Use the system browser. If an in-app browser intercepts the link, choose **Open in browser** first. On Android use the browser's install surface when offered; on iPhone/iPad use **Add to Home Screen**. Installed Operant starts at the canonical `/operant` route. This route is for use/install, not source work.
 
 ### 3. Windows stable local app
 
@@ -107,7 +109,7 @@ pkg update
 pkg install git
 ```
 
-Use the same clone and existing-checkout gates above. Normal Android Prompt Kit use does not require Termux.
+Use the same clone and existing-checkout gates above. Normal Android Operant use does not require Termux.
 
 ### 5. ZIP snapshot fallback
 
@@ -118,6 +120,7 @@ When a source snapshot is explicitly wanted without Git, use the canonical `main
 - Treat a reported version or previously acquired copy as a freshness trigger until currentness is proven.
 - Recommend refresh before troubleshooting or prompt selection against a stale-or-unverified copy.
 - Do not require a clone merely to use the Prompt Kit.
+- Public normal-use guidance must name `https://endeavoreverlasting.github.io/web-excel-repair-triage/operant`; `/prompt-kit/` is legacy compatibility only.
 - Distinguish use/install intent from edit/commit/push intent before shell commands.
 - Preserve dirty, divergent, wrong-branch, wrong-origin, or local-only work; never discard it merely to refresh the kit.
 - Never embed credentials or user-specific absolute paths.
