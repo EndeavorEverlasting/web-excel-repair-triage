@@ -31,10 +31,10 @@
       "canonical_path": "web/prompt-kit/index.html",
       "producer": "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html",
       "validator": "prompt-kit-parity",
-      "naming": "Stable checked-in canonical site path.",
+      "naming": "Stable checked-in canonical source artifact path; public product route is /operant.",
       "tracking_policy": "Tracked deterministic output; edit canonical sources and rebuild. Delivery surfaces may expose this same canonical release without creating a second editable Prompt Kit.",
       "delivery_surfaces": [
-        "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
+        "https://endeavoreverlasting.github.io/web-excel-repair-triage/operant",
         "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
         "Open-Latest-PromptKit.cmd",
         "PROMPT_KIT_ACCESS.md",
@@ -109,7 +109,7 @@
       "canonical_path": "web/prompt-kit/resources.v1.json",
       "producer": "python scripts/sync_operant_external_resources.py",
       "validator": "operant-external-resource-audit",
-      "naming": "Stable metadata-only sidecar next to the generated Prompt Kit website.",
+      "naming": "Stable metadata-only sidecar next to the generated Prompt Kit source artifact and published under /operant.",
       "tracking_policy": "Tracked deterministic projection of approved public donors pinned to exact commits; donor bodies are not copied.",
       "proof_ceiling": "Donor inventory metadata, pinning, and projection proof; no donor content quality or browser-network proof."
     },
