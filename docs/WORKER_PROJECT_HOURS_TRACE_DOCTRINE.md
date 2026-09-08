@@ -49,6 +49,32 @@ The June 2026 NTH record is the canonical example:
 
 This normalization changes presentation only. It must not add, remove, or redistribute paid hours, and the legacy label alone must not be used to invent a task/workstream assignment.
 
+## Roster Log V2 continuation contract
+
+Roster Log V2 replaces the wide-sheet ambiguity with two explicit grains while preserving the legacy evidence semantics above:
+
+- one Attendance row owns paid time for a worker/date;
+- one or more Project Allocation rows own project attribution for that worker/date;
+- the Attendance `default_project` is fallback metadata only;
+- when no explicit allocation exists, normalization creates one `DEFAULT` allocation for the fallback project;
+- when explicit allocations exist, they are the complete project truth for reporting and the attendance default is not additionally counted;
+- a reviewed correction of a default/prior classification is represented by allocation basis `OVERRIDE`;
+- an intentionally entered allocation that is not a correction uses basis `EXPLICIT`;
+- multiple same-day allocation rows are valid and remain distinct when their hours reconcile to paid attendance.
+
+Legacy project-resolution evidence should therefore migrate into **allocation rows**, not overwrite the semantic meaning of Attendance defaults. For the June example, a Mobile Device Support / iPhone Support default can coexist with a Wave-3 Neurons & Cybernets `OVERRIDE` allocation without reporting any iPhone hours for that date.
+
+Deterministic Roster V2 reporting derives project membership, hours, day counts, and staff counts only from normalized allocation rows. It must never infer project hours from a default field once explicit allocations exist.
+
+The executable owners are:
+
+- `triage/roster_log_v2/schema.py` — normalization and basis rules;
+- `triage/roster_log_v2/report.py` — deterministic project report;
+- `web/roster-log-v2/` — local-first entry/reporting surface;
+- `tests/test_roster_log_v2.py` — regression proof.
+
+If a future implementation cannot deterministically answer **worker + date + project + allocated hours + allocation basis**, the V2 project-attribution model has regressed.
+
 ## Why the bottom override table matters
 
 The bottom section of each `Assignments - {Month}` tab allows reviewed exceptions without rewriting the main grid. A row like:
@@ -99,10 +125,16 @@ Any billing or payroll reconciliation engine should be able to emit:
 - Paylocity-only variance rows without billing them
 - Holiday/non-work exclusion rows when payroll contains paid non-work time
 
+Roster V2 reporting additionally emits project allocation basis (`DEFAULT`, `EXPLICIT`, `OVERRIDE`) and must preserve same-day multi-project allocations instead of flattening them.
+
 ## Guardrail
 
 If a generated artifact cannot answer this question, it is not ready:
 
 > For this worker, on this date, which project did the roster say they worked, which surface supplied that project, and how many net hours did that create?
+
+For V2 the equivalent question is:
+
+> For this worker, on this date, which project allocation rows explain the paid hours, what basis does each row carry, and do the allocated hours reconcile to attendance?
 
 No answer, no submission.
