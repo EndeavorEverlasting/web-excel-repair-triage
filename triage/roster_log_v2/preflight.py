@@ -31,7 +31,7 @@ def preflight_roster_v2(path: str | Path) -> Dict[str, Any]:
     try:
         wb = load_workbook(p, read_only=False, data_only=False)
     except Exception as exc:  # pragma: no cover - package gate normally catches this
-        return {"preflight_pass": False, "errors": errors + [f"open:{exc}"]}
+        return {"preflight_pass": False, "errors": errors + [f"open:{exc}"]
 
     try:
         for name in REQUIRED_SHEETS:
@@ -44,9 +44,17 @@ def preflight_roster_v2(path: str | Path) -> Dict[str, Any]:
             for header in ("Default / Fallback Project", "Allocated Hours", "Variance", "Reconciled?"):
                 if header not in attendance_headers:
                     errors.append(f"attendance_header:{header}")
-            for header in ("Allocation ID", "Project / Billing Scope", "Allocation Basis", "Allocated Hours"):
+            for header in (
+                "Allocation ID",
+                "Project / Billing Scope",
+                "Allocation Basis",
+                "Allocated Hours",
+                "Distinct Project First?",
+            ):
                 if header not in allocation_headers:
                     errors.append(f"allocation_header:{header}")
+            if not wb["Project Allocations"].column_dimensions["J"].hidden:
+                errors.append("allocation_helper:Distinct Project First? must be hidden")
 
         if "Project Report" in wb.sheetnames:
             report_headers = [cell.value for cell in wb["Project Report"][1]]
@@ -69,6 +77,7 @@ def preflight_roster_v2(path: str | Path) -> Dict[str, Any]:
                 "Once explicit Project Allocations exist",
                 "Multi-project days are supported",
                 "allocated hours must reconcile",
+                "Project Mode counts distinct projects",
                 "Project Report is deterministic",
             ):
                 if phrase not in text:
