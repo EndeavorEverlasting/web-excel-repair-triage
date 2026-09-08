@@ -148,6 +148,37 @@ class PromptKitOntologyHistoryAppendOnlyTests(unittest.TestCase):
             self.assertEqual(stat.S_IMODE(target_path.stat().st_mode), 0o640)
             self.assertEqual(json.loads(target_path.read_text(encoding="utf-8"))["status"], "PASS")
 
+    @unittest.skipIf(os.name == "nt", "hard-link inode semantics are validated on POSIX")
+    def test_hardlinked_output_fails_closed_without_splitting_aliases(self) -> None:
+        prior_report = '{"status":"PRIOR"}\n'
+        with TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            output_path = root / "report.json"
+            alias_path = root / "report-alias.json"
+            output_path.write_text(prior_report, encoding="utf-8")
+            output_path.chmod(0o640)
+            os.link(output_path, alias_path)
+
+            stderr = StringIO()
+            with patch.object(append_only_validator, "validate", return_value=self._report()):
+                with redirect_stderr(stderr):
+                    return_code = append_only_validator.main(
+                        [
+                            "--baseline-ref",
+                            "baseline",
+                            "--output",
+                            str(output_path),
+                        ]
+                    )
+
+            self.assertEqual(return_code, 2)
+            self.assertIn("hard-linked report output", stderr.getvalue())
+            self.assertEqual(output_path.read_text(encoding="utf-8"), prior_report)
+            self.assertEqual(alias_path.read_text(encoding="utf-8"), prior_report)
+            self.assertEqual(output_path.stat().st_ino, alias_path.stat().st_ino)
+            self.assertEqual(output_path.stat().st_nlink, 2)
+            self.assertEqual(stat.S_IMODE(output_path.stat().st_mode), 0o640)
+
 
 if __name__ == "__main__":
     unittest.main()
