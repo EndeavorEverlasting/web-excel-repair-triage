@@ -82,7 +82,7 @@ jobs:
           )
           by_id['mobile_prompt_id_jump']['expected'] = (
               "On narrow touch layouts, a persistent Go to P# control is the fastest locator when the user already knows a prompt ID. "
-              "The user taps Go to P#, enters digits only (for P111, type 111), and an exact unambiguous ID reveals and instant-snaps its canonical prompt card into the actionable viewport without opening prompt detail, More, browser Find, or a search-result step. "
+              "The user taps Go to P#, enters digits only (for P111, type 111), and an exact unambiguous ID reveals and instant-snaps its canonical prompt card into the actionable viewport with prompt detail closed, without opening More, browser Find, or a search-result step. "
               "The landed card itself is the primary terminal copy surface: tapping any non-control area copies the canonical prompt; explicit Copy remains available and explicit Open is reserved for deliberate inspection. "
               "When an exact ID is also a prefix of a longer prompt ID (for example P11 versus P111), it must not steal the longer route: the status says the shorter ID is exact, the submit control becomes Go to P11, and Enter or that button deliberately jumps to P11 while continued typing can reach P111. "
               "Prefix-only or nonexistent IDs have no enabled exact-submit target; canonical P00-P09 IDs require their leading zero; pasted values such as P111 normalize to the same digits-only resolver. "
