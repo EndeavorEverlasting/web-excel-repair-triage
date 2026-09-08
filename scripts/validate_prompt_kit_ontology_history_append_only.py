@@ -3,10 +3,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import stat
 import subprocess
 import sys
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import TemporaryDirectory
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -110,27 +111,13 @@ def validate(baseline_ref: str) -> dict[str, Any]:
 def write_report(path: Path, report: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = json.dumps(report, indent=2, sort_keys=True) + "\n"
-    temp_path: Path | None = None
-    try:
-        with NamedTemporaryFile(
-            mode="w",
-            encoding="utf-8",
-            dir=path.parent,
-            prefix=f".{path.name}.",
-            suffix=".tmp",
-            delete=False,
-        ) as handle:
-            temp_path = Path(handle.name)
-            handle.write(payload)
-            handle.flush()
+    existing_mode = stat.S_IMODE(path.stat().st_mode) if path.is_file() else None
+    with TemporaryDirectory(dir=path.parent, prefix=f".{path.name}.") as temp_dir:
+        temp_path = Path(temp_dir) / path.name
+        temp_path.write_text(payload, encoding="utf-8")
+        if existing_mode is not None:
+            temp_path.chmod(existing_mode)
         temp_path.replace(path)
-    except OSError:
-        if temp_path is not None:
-            try:
-                temp_path.unlink(missing_ok=True)
-            except OSError:
-                pass
-        raise
 
 
 def main(argv: list[str] | None = None) -> int:
