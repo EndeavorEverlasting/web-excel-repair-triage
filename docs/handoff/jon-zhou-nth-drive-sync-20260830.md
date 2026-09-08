@@ -1,13 +1,14 @@
-# Jon Zhou NTH Drive Sync Receipt — 2026-08-31
+# Jon Zhou NTH Drive Sync Receipt — updated 2026-09-08
 
 ## Scope
 
-This receipt records the bounded repository ↔ Google Drive synchronization and Drive organization for the Jon Zhou **June 2026 + August 2026 MTD Neuron Track Hours** submission. Git remains repository history. Google Drive remains the collaboration/delivery workspace. No whole-repository mirroring, Drive-as-source-control behavior, destructive cleanup, or silent promotion of internal allocation math is authorized by this receipt.
+This receipt records the bounded repository ↔ Google Drive synchronization and Drive organization for the Jon Zhou **June 2026 + August 2026 through August 21 Neuron Track Hours** submission. Git remains repository history. Google Drive remains the collaboration/delivery workspace. No whole-repository mirroring, Drive-as-source-control behavior, destructive cleanup, or silent promotion of internal allocation math is authorized by this receipt.
 
 Binding repository authorities:
 
 - `harness/specs/billing-artifact-safety.md`
 - `docs/NTH_QUALITATIVE_ADMIN_PROFILE.md`
+- `docs/WORKER_PROJECT_HOURS_TRACE_DOCTRINE.md`
 - `configs/artifact_profiles/nth_qualitative_admin.v1.json`
 - `scripts/build_nth_qualitative_admin.py`
 
@@ -18,79 +19,89 @@ Drive workspace reused: `Neuron Track Hours (NTH) — 2026` → `00_CURRENT` →
 The recipient package is specifically for:
 
 1. **June 2026 NTH — full month**; and
-2. **August 2026 NTH — MTD through August 21**.
+2. **August 2026 NTH — through August 21**.
 
-May and July are not submission targets for this package.
+May, July, later-August activity, record-count reconciliation, mixed-day allocation math, and internal evidence mechanics are not recipient-facing submission content.
 
-## Human-readable Drive layout
+## Current Drive layout
 
-`Published_Admin_Share` contains:
+The current send folder is:
 
-- `00_SEND_TO_JON_ZHOU__2026-08-31`
-- `90_ARCHIVE__NOT_FOR_JON`
-- `95_INTERNAL_SYNC_RECEIPTS`
+- `00_SEND_TO_JON_ZHOU__NTH_JUNE_AND_AUGUST__2026-09-08`
 
-The send folder contains exactly two files:
+It contains exactly:
 
-1. `01_EMAIL_DRAFT__Jon_Zhou__NTH_June_and_August__2026-08-31.md`
-2. `02_ATTACH__NTH__JUNE_FULL_AND_AUGUST_MTD_THROUGH_08-21.xlsx`
+1. `01_EMAIL_DRAFT__Jon_Zhou__NTH_June_and_August__2026-09-08.md`
+2. `02_SEND_TO_JON__NTH_JUNE_FULL__AUGUST_THROUGH_08-21.xlsx`
 
-The previously selected May–July packet was removed from the send folder and preserved in `90_ARCHIVE__NOT_FOR_JON` under an explicit archive name. Historical/competing June and August workbook variants remain archived rather than deleted. Sync receipts remain separated under `95_INTERNAL_SYNC_RECEIPTS`.
+Historical/competing June and August workbook variants remain preserved outside the send folder and are explicitly superseded for this Jon send. Internal sync receipts and private evidence remain separated from recipient artifacts.
 
-## Submission controls
+## June 2026 control
 
-### June 2026
+### Recipient-facing claim
 
 - **603.25 paid NTH hours**.
-- **73 / 73 attendance records are assignment-backed**.
-- **603.25 / 603.25 hours are administrator-eligible** under the current assignment-first generation contract.
-- **No current unassigned-hour gap** remains.
-- Open contextual review flags do not change June assignment/hour eligibility. Disputed context remains bounded rather than being used to alter paid hours.
+- The current June detail tab presents one project identity: **`Wave-3 Neurons & Cybernets`**.
+- The `NTH Project` column is normalized to that project on **all 73 June detail rows**.
+- The normalization changed no attendance row and no hour value; the June total remains **603.25**.
 
-### August 2026 MTD through August 21
+### Private assignment/evidence control
 
-- **22 completed attendance records have NTH involvement**.
-- Those records contain **176 gross attendance hours**.
-- **168.00 hours are fully attributable to NTH** across the full-NTH records.
-- One additional completed **8-hour August 19** attendance record contains documented NTH work plus other project work. Its exact outward NTH portion is intentionally **not quantified** because the current finer-grained allocation mechanism is internal-only.
-- Rich Perez's **August 20** attendance is treated as a reconciled full NTH day; the earlier H&H override is superseded by the current correction.
-- Later August 25–28 H&H/Northwell management allocations are not included in this through-August-21 NTH submission and are not promoted into outward exact NTH percentages.
+Private June evidence retains the assignment-first controls and source provenance:
 
-The stale **176-hour whole-shift NTH total** is rejected. `176` is used only as the gross attendance boundary for the 22 NTH-involved records; it is not represented as fully attributable NTH hours.
+- 73 / 73 attendance records assignment-backed;
+- 603.25 / 603.25 hours eligible under the current assignment gate;
+- 0 unassigned paid hours.
+
+Eight June source rows had previously surfaced the literal label `Neuron Deployments` in the recipient projection. That label is now treated correctly as **resolution provenance**, not a second June NTH project:
+
+- a worker could have a non-NTH default project such as `Mobile Device Support` / `iPhone Support`;
+- a dated `Neuron Deployments` assignment/override established that the worker/date belonged to the Neuron/NTH project instead of that default;
+- the source label therefore remains recoverable in private evidence, while the outward June project identity normalizes to `Wave-3 Neurons & Cybernets`.
+
+This rule is now durable in `docs/WORKER_PROJECT_HOURS_TRACE_DOCTRINE.md`. Project-label normalization must never add, remove, or redistribute paid hours and must not manufacture a task/workstream classification.
+
+## August 2026 through August 21 control
+
+- **168.00 hours are fully attributable to NTH** across the full-NTH records and remain the outward August claim.
+- One additional completed 8-hour August 19 record contains documented NTH work plus other project work; its exact outward NTH portion remains private/unquantified.
+- Rich Perez August 20 remains a reconciled full NTH day.
+- Later August 25–28 H&H/Northwell management allocations are outside this through-August-21 submission.
+
+Private August controls may retain record counts, gross-attendance boundaries, allocation math, and mixed-day reasoning. They are not promoted into recipient-facing language unless specifically requested.
 
 ## Audience boundary
 
-The recipient workbook includes the June and August submission evidence needed to evaluate the NTH hours. It excludes:
+The recipient package is intentionally narrow:
 
-- raw punch times;
-- private allocation percentages/remainder math;
-- ticket IDs and workstation IDs;
-- internal reconciliation mechanics;
-- later mixed-project management allocation rules; and
-- unsupported exact task-hour splits.
+- June outward: `603.25 paid NTH hours`, one canonical Wave 3 NTH project identity;
+- August outward through August 21: `168.00 hours fully attributable to NTH`;
+- workbook detail in separate June and August tabs;
+- no record-count/gap math, raw punch times, private allocation percentages, ticket/workstation IDs, internal reconciliation mechanics, default-project/override mechanics, or unsupported exact task-hour splits.
 
-Evidence context may explain work but does not manufacture hours. Conflicts that do not affect assignment/hour eligibility remain internal and do not erase otherwise supported attendance.
+Evidence context may explain work but does not manufacture hours. Source/project-resolution mechanics remain private unless they are needed to answer a specific reconciliation question.
 
-## Send-set decision
+## Sync ledger
 
-| Artifact | Drive location | Authority | Action | Status / evidence |
-| --- | --- | --- | --- | --- |
-| Jon Zhou June + August email draft | `Published_Admin_Share/00_SEND_TO_JON_ZHOU__2026-08-31/01_EMAIL_DRAFT__Jon_Zhou__NTH_June_and_August__2026-08-31.md` | DRIVE-AUTHORITATIVE delivery draft; repository contracts bound evidence language | UPDATE IN PLACE | Selected for send; wording matches the June + August objective and August mixed-day boundary. |
-| June + August NTH workbook | `Published_Admin_Share/00_SEND_TO_JON_ZHOU__2026-08-31/02_ATTACH__NTH__JUNE_FULL_AND_AUGUST_MTD_THROUGH_08-21.xlsx` | DERIVED / PUBLISH-ONLY | CREATE FROM CURRENT EVIDENCE FLOOR | Selected attachment. Contains separate June and August detail plus submission/evidence notes. |
-| Prior May–July claim-safe packet | `Published_Admin_Share/90_ARCHIVE__NOT_FOR_JON/ARCHIVE__NOT_FOR_JON__May-July__CLAIM_SAFE.xlsx` | DERIVED / HISTORICAL | REMOVE FROM SEND + ARCHIVE | Not a submission artifact for the June + August objective. |
-| Historical/competing June/August publications | `Published_Admin_Share/90_ARCHIVE__NOT_FOR_JON/` | DERIVED / HISTORICAL | NO CHANGE | Preserved but excluded from the recipient send set. |
-| Sync receipts | `Published_Admin_Share/95_INTERNAL_SYNC_RECEIPTS/` | INTERNAL / DO-NOT-SEND | NO CHANGE | Not recipient artifacts. |
-| Private workstream/allocation evidence | internal evidence locations / canonical roster allocation ledger | PRIVATE / DO-NOT-SYNC | SKIP | Used only to bound outward claims; not copied into the recipient package. |
+| Artifact | Repo identity | Drive identity/location | Authority | Action | Post-sync status |
+| --- | --- | --- | --- | --- | --- |
+| Worker/project resolution doctrine | `docs/WORKER_PROJECT_HOURS_TRACE_DOCTRINE.md` | n/a | REPO-AUTHORITATIVE | UPDATE REPO | Records Mobile Device Support/iPhone default → dated Neuron override semantics and outward Wave 3 normalization. |
+| Jon June + August email draft | n/a | current send folder / `01_EMAIL_DRAFT__Jon_Zhou__NTH_June_and_August__2026-09-08.md` | DRIVE-AUTHORITATIVE | NO CHANGE | Already uses only June 603.25h and August 168.00h outward claims. |
+| June + August recipient workbook | n/a | current send folder / `02_SEND_TO_JON__NTH_JUNE_FULL__AUGUST_THROUGH_08-21.xlsx` | DERIVED / PUBLISH-ONLY | UPDATE DRIVE IN PLACE | Stable Drive identity reused. `Dated Assignment` renamed to `NTH Project`; all 73 June rows normalized to `Wave-3 Neurons & Cybernets`; 603.25h total unchanged. |
+| June private assignment review | n/a | `INTERNAL_NTH_June_2026_ASSIGNMENT_REVIEW_CURRENT_2026-08-14` | DRIVE-AUTHORITATIVE | UPDATE DRIVE | Preserves literal source-label provenance and documents why `Neuron Deployments` overrode a Mobile Device Support/iPhone default. |
+| NTH navigation index | n/a | `01_NTH Navigation Index` | DRIVE-AUTHORITATIVE | UPDATE DRIVE | Current send-workbook entry documents canonical Wave 3 normalization and private provenance boundary. |
+| Current Drive sync receipt | this repo receipt is the durable repo-side counterpart | internal sync receipts folder | DRIVE-AUTHORITATIVE internal control | UPDATE DRIVE | Aligned to the same June project-normalization decision. |
+| Private August workstream/allocation evidence | n/a | internal evidence locations | PRIVATE / DO-NOT-SYNC TO RECIPIENT | NO CHANGE | Remains internal support only. |
 
 ## Recipient package
 
-Default send set — no May/July substitution:
+Send only:
 
-1. `01_EMAIL_DRAFT__Jon_Zhou__NTH_June_and_August__2026-08-31.md`
-2. `02_ATTACH__NTH__JUNE_FULL_AND_AUGUST_MTD_THROUGH_08-21.xlsx`
+1. `01_EMAIL_DRAFT__Jon_Zhou__NTH_June_and_August__2026-09-08.md`
+2. `02_SEND_TO_JON__NTH_JUNE_FULL__AUGUST_THROUGH_08-21.xlsx`
 
-Do not attach anything from `90_ARCHIVE__NOT_FOR_JON` or `95_INTERNAL_SYNC_RECEIPTS`.
+Do not attach private June/August controls, historical/superseded workbooks, navigation files, or sync receipts.
 
 ## Proof ceiling
 
-This receipt proves the June + August recipient objective, Drive send-set correction, current June assignment/hour eligibility, the August through-August-21 evidence boundary, removal of the stale 176-hour NTH-total pattern, and recipient/internal evidence separation. It does not prove email delivery, Jon's acceptance, or an exact outward NTH allocation for the mixed August 19 record.
+This receipt proves the repo/Drive identity mapping, June project-label normalization, preservation of the 603.25-hour total, private provenance for the Mobile Device Support/iPhone default → Neuron override case, current send-set organization, and recipient/internal evidence separation. It does not prove email delivery, Jon's acceptance, or the later evidence-grounding review the operator intends to perform separately for June and August.
