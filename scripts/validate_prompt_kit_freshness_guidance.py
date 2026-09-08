@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed validator for Prompt Kit freshness guidance."""
+"""Fail-closed validator for Operant / Prompt Kit freshness guidance."""
 from __future__ import annotations
 
 import argparse
@@ -13,9 +13,9 @@ MANIFEST_PATH = ROOT / "harness" / "manifest.v1.json"
 SKILL_PATH = ROOT / ".ai" / "skills" / "technician-prompt-kit-acquisition" / "SKILL.md"
 REPORT_PATH = ROOT / "harness" / "reports" / "PROMPT_KIT_FRESHNESS.md"
 
-PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/"
+PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/operant"
 LAUNCHER_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/"
-FRESHNESS_TRIGGER = "user reports a Prompt Kit or prompt version label and currentness is not proven"
+FRESHNESS_TRIGGER = "user reports an Operant or Prompt Kit version label and currentness is not proven"
 
 EXPECTED_ROUTES = {
     "browser-use": f"Open {PUBLIC_URL} and use that public surface as the normal-use latest route.",
@@ -36,7 +36,7 @@ EXPECTED_DOMAIN = {
 
 
 class FreshnessGuidanceError(RuntimeError):
-    """Raised when Prompt Kit freshness guidance drifts."""
+    """Raised when Operant / Prompt Kit freshness guidance drifts."""
 
 
 def load_object(path: Path) -> dict[str, Any]:
@@ -77,7 +77,7 @@ def validate_contract(payload: dict[str, Any]) -> None:
     for phrase in (
         "may be stale before troubleshooting or prompt-selection guidance",
         "lowest-friction latest route",
-        "only wants to use the Prompt Kit in a browser",
+        "only wants to use Operant in a browser",
         "explicitly declines to refresh",
         "stale-or-unverified",
     ):
@@ -88,7 +88,7 @@ def validate_contract(payload: dict[str, Any]) -> None:
         raise FreshnessGuidanceError("freshness routes drifted")
 
     evidence = "\n".join(string_list(payload.get("currentness_evidence"), "currentness_evidence"))
-    for phrase in ("canonical public Prompt Kit URL", "repository-owned launcher", "origin/main", "freshly downloaded"):
+    for phrase in ("canonical public Operant URL", "repository-owned launcher", "origin/main", "freshly downloaded"):
         if phrase not in evidence:
             raise FreshnessGuidanceError(f"currentness evidence is missing: {phrase}")
 
@@ -118,7 +118,7 @@ def validate_skill() -> None:
     except FileNotFoundError as exc:
         raise FreshnessGuidanceError("technician acquisition skill is missing") from exc
     required = (
-        "Also trigger this skill when the user reports a Prompt Kit or prompt version label",
+        "Also trigger this skill when the user reports an Operant or Prompt Kit version label",
         "### 0. Freshness gate before guidance",
         "A version label is a freshness signal, not proof of currentness.",
         "Before troubleshooting, tutorial guidance, or prompt selection",
@@ -144,6 +144,7 @@ def validate_report() -> None:
         "version label",
         "recommend a refresh before troubleshooting",
         "stale-or-unverified",
+        PUBLIC_URL,
     ):
         if phrase not in text:
             raise FreshnessGuidanceError(f"operator report is missing freshness state: {phrase}")
