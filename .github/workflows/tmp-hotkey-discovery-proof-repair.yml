@@ -18,27 +18,41 @@ jobs:
           ref: fix/operant-natural-prompt-hotkeys-20260908
           fetch-depth: 0
 
-      - name: Align discovery assertion block with instant numeric snap contract
+      - name: Align discovery assertions with instant numeric snap contract
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
+
           path = Path('tests/test_prompt_kit_discovery.py')
           text = path.read_text(encoding='utf-8')
-          old_call = 'self.assertIn("revealPromptShortcutTarget(promptId)", activation)'
-          new_call = 'self.assertIn("revealPromptShortcutTarget(promptId,\'instant\')", activation)'
-          if old_call in text:
-              text = text.replace(old_call, new_call, 1)
-          elif new_call not in text:
-              raise SystemExit('discovery instant-snap assertion anchor missing')
-          if 'Copy + reveal ' in text:
-              text = text.replace('Copy + reveal ', 'Copy + snap to ', 1)
-          elif 'Copy + snap to ' not in text:
-              raise SystemExit('discovery copy/snap assertion anchor missing')
+          replacements = (
+              (
+                  'self.assertIn("revealPromptShortcutTarget(promptId)", activation)',
+                  'self.assertIn("revealPromptShortcutTarget(promptId,\'instant\')", activation)',
+              ),
+              (
+                  'self.assertIn("Copy + reveal \' + 'promptId", polish)',
+                  'self.assertIn("Copy + snap to \' + 'promptId", polish)',
+              ),
+              (
+                  'self.assertIn("**does not open prompt detail**", guide)',
+                  'self.assertIn("type **`126`**", guide)\n        self.assertIn("No Favorite and no Hotkeys-panel Save step is required.", guide)',
+              ),
+              (
+                  'self.assertIn("**without opening prompt detail**", web)',
+                  'self.assertIn("without opening detail", web)',
+              ),
+          )
+          for old, new in replacements:
+              if old in text:
+                  text = text.replace(old, new, 1)
+              elif new not in text:
+                  raise SystemExit(f'discovery contract anchor missing: {old}')
           path.write_text(text, encoding='utf-8')
           PY
-          python -m unittest tests.test_prompt_kit_discovery.PromptKitDiscoveryTests.test_operator_docs_match_current_finder_p83_favorites_and_shortcuts -v
+          python -m unittest tests.test_prompt_kit_discovery -v
           git diff --check
 
       - name: Commit and publish assertion repair
