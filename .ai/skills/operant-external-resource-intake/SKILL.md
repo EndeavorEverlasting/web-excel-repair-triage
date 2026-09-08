@@ -57,6 +57,7 @@ Registered donor floor (current contract):
 python scripts/sync_operant_external_resources.py
 python scripts/validate_operant_external_resources.py --summary
 python -m unittest tests.test_operant_external_resources -v
+python scripts/search_operant_external_catalog.py --live-proof --summary --receipt-output Outputs/operant-external-resources/catalog-search-live-proof.json
 node --check docs/prompt-kit-external-resources.js
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
@@ -65,4 +66,4 @@ git diff --check
 
 ## Proof ceiling
 
-These checks prove registered-source resolution, commit-pinned metadata projection, deterministic coverage/gap routing, size budgets, lazy-load source semantics, and repository integration on the tested commit. They do not prove that every upstream skill is good, safe, license-compatible for reuse, successfully fetched in every browser, or deserving of a new Operant prompt.
+These checks prove registered-source resolution, commit-pinned metadata projection, catalog floor-only receipts, deterministic coverage/gap routing, fixture catalog search, CI live catalog-search latency budget against the pinned SHA, size budgets, lazy-load source semantics, and repository integration on the tested commit. They do not prove that every upstream skill or catalog row is good, safe, license-compatible for reuse, successfully fetched in every browser, reachable through MCP, or deserving of a new Operant prompt.

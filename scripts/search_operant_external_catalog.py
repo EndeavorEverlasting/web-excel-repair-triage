@@ -7,6 +7,7 @@ import csv
 import io
 import json
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -177,41 +178,131 @@ def search_catalog(
     }
 
 
+def catalog_search_budget_seconds(contract: dict[str, Any], override: float | None = None) -> float:
+    if override is not None:
+        return float(override)
+    configured = contract.get("catalog_search", {}).get("maximum_live_search_seconds", 30)
+    return float(configured)
+
+
+def run_timed_search(
+    *,
+    contract: dict[str, Any],
+    source: dict[str, Any],
+    query_text: str,
+    limit: int,
+    sha: str,
+    catalog_file: Path | None,
+) -> tuple[dict[str, Any], float]:
+    started = time.perf_counter()
+    result = search_catalog(
+        contract=contract,
+        source=source,
+        query_text=query_text,
+        limit=limit,
+        sha=sha,
+        catalog_file=catalog_file,
+    )
+    elapsed = time.perf_counter() - started
+    return result, elapsed
+
+
+def build_live_proof_receipt(
+    *,
+    contract: dict[str, Any],
+    result: dict[str, Any],
+    elapsed_seconds: float,
+    budget_seconds: float,
+    mode: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": str(contract.get("catalog_search", {}).get("receipt_schema", "operant-external-catalog-search-live-proof/v1")),
+        "mode": mode,
+        "source_id": result["source_id"],
+        "query": result["query"],
+        "resolved_sha": result["resolved_sha"],
+        "catalog_path": result["catalog_path"],
+        "catalog_entry_count": result["catalog_entry_count"],
+        "hit_count": result["hit_count"],
+        "elapsed_seconds": round(elapsed_seconds, 3),
+        "budget_seconds": budget_seconds,
+        "within_budget": elapsed_seconds <= budget_seconds,
+        "automatic_prompt_authoring": False,
+        "top_titles": [hit["title"] for hit in result["hits"][:5]],
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Search a registered catalog_csv donor without projecting rows into Operant.")
     parser.add_argument("--contract", type=Path, default=CONTRACT)
     parser.add_argument("--index", type=Path, default=INDEX)
     parser.add_argument("--source", default="prompts-chat")
-    parser.add_argument("--query", required=True)
-    parser.add_argument("--limit", type=int, default=10)
+    parser.add_argument("--query", default="")
+    parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--sha", default="")
     parser.add_argument("--catalog-file", type=Path, default=None, help="Offline fixture CSV; skips live network fetch.")
     parser.add_argument("--summary", action="store_true")
+    parser.add_argument(
+        "--live-proof",
+        action="store_true",
+        help="Fail closed when fetch+search exceeds the contract live-search budget; emit a machine receipt.",
+    )
+    parser.add_argument("--max-seconds", type=float, default=None, help="Override catalog_search.maximum_live_search_seconds.")
+    parser.add_argument("--receipt-output", type=Path, default=None, help="Write live-proof receipt JSON to this path.")
     args = parser.parse_args(argv)
     try:
         contract = sync.load_json(args.contract)
-        source = load_source(contract, args.source)
+        catalog_cfg = contract.get("catalog_search", {}) if isinstance(contract.get("catalog_search"), dict) else {}
+        source_id = args.source or str(catalog_cfg.get("default_source_id", "prompts-chat"))
+        query_text = (args.query or "").strip() or str(catalog_cfg.get("ci_proof_query", "")).strip()
+        if not query_text:
+            raise ValueError("query required: pass --query or configure catalog_search.ci_proof_query")
+        limit = int(args.limit) if args.limit is not None else int(catalog_cfg.get("ci_proof_limit", 10))
+        source = load_source(contract, source_id)
         index = sync.load_json(args.index) if args.index.exists() else None
-        floor = floor_for(index, args.source)
+        floor = floor_for(index, source_id)
         sha = (args.sha or "").strip() or (str(floor.get("resolved_sha", "")) if floor else "")
         if not sha and args.catalog_file is None:
             raise ValueError("resolved SHA required: pass --sha, refresh the projection floor, or use --catalog-file")
         if not sha:
             sha = "fixture"
-        result = search_catalog(
+        result, elapsed = run_timed_search(
             contract=contract,
             source=source,
-            query_text=args.query,
-            limit=args.limit,
+            query_text=query_text,
+            limit=limit,
             sha=sha,
             catalog_file=args.catalog_file,
         )
+        mode = "fixture" if args.catalog_file is not None else "live"
+        budget = catalog_search_budget_seconds(contract, args.max_seconds)
+        if args.live_proof:
+            receipt = build_live_proof_receipt(
+                contract=contract,
+                result=result,
+                elapsed_seconds=elapsed,
+                budget_seconds=budget,
+                mode=mode,
+            )
+            if args.receipt_output is not None:
+                args.receipt_output.parent.mkdir(parents=True, exist_ok=True)
+                args.receipt_output.write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+            print(json.dumps(receipt, indent=None if args.summary else 2, sort_keys=True, ensure_ascii=False))
+            if not receipt["within_budget"]:
+                print(
+                    f"Operant external catalog search exceeded budget: "
+                    f"{receipt['elapsed_seconds']}s > {receipt['budget_seconds']}s",
+                    file=sys.stderr,
+                )
+                return 1
+            return 0
         if args.summary:
             print(json.dumps({
                 "source_id": result["source_id"],
                 "resolved_sha": result["resolved_sha"],
                 "catalog_entry_count": result["catalog_entry_count"],
                 "hit_count": result["hit_count"],
+                "elapsed_seconds": round(elapsed, 3),
                 "top_titles": [hit["title"] for hit in result["hits"][:5]],
             }, sort_keys=True))
         else:

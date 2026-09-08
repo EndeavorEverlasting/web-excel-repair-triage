@@ -48,6 +48,23 @@ def validate() -> dict[str, Any]:
     evidence = contract.get("coverage", {}).get("p79_external_evidence")
     if not isinstance(evidence, dict) or "registered_external_source_or_catalog_search" not in evidence.get("required_before_add", []):
         raise ValidationError("coverage.p79_external_evidence must require catalog/source search before ADD")
+    catalog_search = contract.get("catalog_search")
+    if not isinstance(catalog_search, dict):
+        raise ValidationError("catalog_search contract block is required")
+    if float(catalog_search.get("maximum_live_search_seconds", 0)) <= 0:
+        raise ValidationError("catalog_search.maximum_live_search_seconds must be positive")
+    if not str(catalog_search.get("ci_proof_query", "")).strip():
+        raise ValidationError("catalog_search.ci_proof_query is required")
+    if catalog_search.get("live_proof_required_in_refresh_workflow") is not True:
+        raise ValidationError("catalog_search.live_proof_required_in_refresh_workflow must remain true")
+    workflow = (ROOT / ".github" / "workflows" / "operant-external-resource-refresh.yml").read_text(encoding="utf-8")
+    for marker in (
+        "scripts/search_operant_external_catalog.py",
+        "--live-proof",
+        "catalog-search-live-proof.json",
+    ):
+        if marker not in workflow:
+            raise ValidationError(f"refresh workflow missing live catalog-search proof marker: {marker}")
 
     configured = {str(source["id"]): source for source in contract.get("sources", [])}
     floors = index.get("source_floor", [])

@@ -7,6 +7,7 @@ on:
       - .ai/skills/operant-external-resource-intake/SKILL.md
       - scripts/sync_operant_external_resources.py
       - scripts/validate_operant_external_resources.py
+      - scripts/search_operant_external_catalog.py
       - docs/prompt-kit-external-resources.js
       - web/prompt-kit/resources.v1.json
       - registry/resources/operant-external-resource-gaps.v1.json
@@ -54,6 +55,12 @@ jobs:
         run: |
           cmp Outputs/operant-external-resources/resources.v1.json web/prompt-kit/resources.v1.json
           cmp Outputs/operant-external-resources/gaps.v1.json registry/resources/operant-external-resource-gaps.v1.json
+      - name: Prove live catalog search within latency budget
+        run: |
+          python scripts/search_operant_external_catalog.py \
+            --live-proof \
+            --summary \
+            --receipt-output Outputs/operant-external-resources/catalog-search-live-proof.json
       - name: Upload refresh evidence
         if: always()
         uses: actions/upload-artifact@v4
