@@ -5,7 +5,7 @@ Design the keyboard-command subsystem before configurable prompt shortcuts are b
 
 ## User outcomes and invariants
 - Filters support semantic **show**, **hide**, and **toggle** commands through one state owner.
-- Every current Favorite automatically publishes its canonical lower-case prompt ID as a typed shortcut such as `p95`; manual shortcut configuration remains a compatibility/repair path, not a second commitment step.
+- Every current Favorite automatically publishes its canonical lower-case prompt ID as a stored shortcut such as `p95`; the keyboard matching grammar publishes digit aliases (`95`) so operators type digits only. Manual shortcut configuration remains a compatibility/repair path, not a second commitment step.
 - Keyboard commands do not fire in `input`, `textarea`, `select`, or content-editable surfaces.
 - Built-ins and user bindings cannot silently collide.
 - A prompt binding is valid only when its target exists in the canonical prompt catalog.

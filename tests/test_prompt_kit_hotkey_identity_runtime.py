@@ -44,6 +44,9 @@ class PromptKitHotkeyIdentityRuntimeTests(unittest.TestCase):
             function_block(source, name)
             for name in (
                 "normalizePromptShortcutId",
+                "promptShortcutDigitGesture",
+                "publishPromptShortcutDigitAliases",
+                "clonePromptShortcutBindings",
                 "resetPromptShortcutBuffer",
                 "schedulePromptShortcutBufferReset",
                 "promptShortcutHasLongerPrefix",
@@ -59,6 +62,8 @@ var promptShortcutBuffer='';
 var promptShortcutBufferTimer=null;
 var activations=[];
 function activatePromptShortcutTarget(promptId){{activations.push(promptId);return true}}
+function isFavoritePrompt(){{return true}}
+function favoritePromptShortcutBindings(){{return {{}}}}
 {blocks}
 function eventStub(){{return{{preventDefault:function(){{}},stopImmediatePropagation:function(){{}}}}}}
 function press(key){{return handleConfiguredPromptShortcutKey(eventStub(),key)}}
@@ -68,6 +73,7 @@ function assert(condition,message){{if(!condition)throw new Error(message)}}
 (async function(){{
   assert(normalizePromptShortcutId('p1.1')==='P11','p1.1 normalization');
   assert(normalizePromptShortcutId('p1.11')==='P111','p1.11 normalization');
+  assert(promptShortcutDigitGesture('P111')==='111','digit gesture');
 
   ['p','1','1'].forEach(press);
   assert(activations.length===0,'p11 fired before longer-prefix ambiguity closed');
@@ -83,6 +89,16 @@ function assert(condition,message){{if(!condition)throw new Error(message)}}
   assert(JSON.stringify(activations)==='["P111"]','p111 longer exact resolution');
 
   resetProbe();
+  ['1','1'].forEach(press);
+  assert(activations.length===0,'digit 11 fired before longer-prefix ambiguity closed');
+  await sleep(40);
+  assert(JSON.stringify(activations)==='["P11"]','digit-only 11 timeout resolution');
+
+  resetProbe();
+  ['1','1','1'].forEach(press);
+  assert(JSON.stringify(activations)==='["P111"]','digit-only 111 longer exact resolution');
+
+  resetProbe();
   ['p','1','.','1'].forEach(press);
   assert(activations.length===0,'p1.1 fired before longer-prefix ambiguity closed');
   await sleep(40);
@@ -92,7 +108,7 @@ function assert(condition,message){{if(!condition)throw new Error(message)}}
   ['p','1','.','1','1'].forEach(press);
   assert(JSON.stringify(activations)==='["P111"]','p1.11 dotted longer resolution');
 
-  console.log(JSON.stringify({{status:'PASS',cases:['p11','p13','p111','p1.1','p1.11']}}));
+  console.log(JSON.stringify({{status:'PASS',cases:['p11','p13','p111','11','111','p1.1','p1.11']}}));
 }})().catch(function(error){{console.error(error.stack||error);process.exit(1)}});
 """
         completed = subprocess.run(
@@ -100,13 +116,15 @@ function assert(condition,message){{if(!condition)throw new Error(message)}}
         )
         proof = json.loads(completed.stdout)
         self.assertEqual(proof["status"], "PASS")
-        self.assertEqual(proof["cases"], ["p11", "p13", "p111", "p1.1", "p1.11"])
+        self.assertEqual(proof["cases"], ["p11", "p13", "p111", "11", "111", "p1.1", "p1.11"])
 
     def test_generated_runtime_contains_exact_identity_dispatcher(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         deployed = DEPLOYED.read_text(encoding="utf-8")
         for name in (
             "normalizePromptShortcutId",
+            "promptShortcutDigitGesture",
+            "publishPromptShortcutDigitAliases",
             "schedulePromptShortcutBufferReset",
             "promptShortcutHasLongerPrefix",
             "computeSharedPromptShortcutBindings",
@@ -118,9 +136,9 @@ function assert(condition,message){{if(!condition)throw new Error(message)}}
             "replace(/\\./g,'')",
             "if(key==='.'&&promptShortcutBuffer)",
             "if(exact&&!promptShortcutHasLongerPrefix(candidate,gestures))",
+            "return publishPromptShortcutDigitAliases(merged)",
         ):
             self.assertIn(marker, deployed)
-
     def test_header_and_prompt_identity_domains_do_not_overlap(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         base = (ROOT / "docs" / "prompt-kit.js").read_text(encoding="utf-8")

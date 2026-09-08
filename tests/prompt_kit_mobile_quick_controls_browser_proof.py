@@ -65,8 +65,9 @@ def main() -> int:
                 detail_favorite.click()
                 assert detail_favorite.get_attribute("aria-pressed") == "true"
                 shortcut_rows = page.locator("#promptShortcutBindings").inner_text()
-                assert "p111" in shortcut_rows.lower() and "P111" in shortcut_rows, shortcut_rows
+                assert "111" in shortcut_rows and "P111" in shortcut_rows, shortcut_rows
                 assert "Favorite" in shortcut_rows, shortcut_rows
+                # Digit-only keyboard keycaps; do not require a visible leading p in the Hotkeys list.
                 page.locator(".prompt-detail-close").click()
 
                 # Exhaust every current exact ID that is also a prefix of another prompt.
