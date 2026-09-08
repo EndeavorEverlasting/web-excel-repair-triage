@@ -118,6 +118,33 @@ def test_project_report_is_sorted_and_counts_days_without_double_counting() -> N
     }
 
 
+def test_workbook_mode_counts_distinct_projects_not_allocation_rows(tmp_path: Path) -> None:
+    state = _base_state()
+    state["allocations"] = [
+        {"allocation_id": "A1", "date": "2026-09-01", "staff": "Operator", "project": "Northwell", "basis": "EXPLICIT", "workstream": "PM", "hours": 3},
+        {"allocation_id": "A2", "date": "2026-09-01", "staff": "Operator", "project": "Northwell", "basis": "EXPLICIT", "workstream": "Configuration", "hours": 5},
+    ]
+    rec = reconcile_state(state)[0]
+    assert rec.mode == "SINGLE"
+    assert rec.project_count == 1
+
+    out = tmp_path / "same_project_two_rows.xlsx"
+    result = build_roster_workbook(state, out, require_reconciled=True)
+    assert result["project_report"] == [
+        {"project": "Northwell", "allocated_hours": 8.0, "day_count": 1, "staff_count": 1, "allocation_count": 2}
+    ]
+
+    wb = openpyxl.load_workbook(out, data_only=False)
+    try:
+        assert wb["Project Allocations"]["J1"].value == "Distinct Project First?"
+        assert "COUNTIFS($B$2:B2" in wb["Project Allocations"]["J2"].value
+        assert "COUNTIFS($B$2:B3" in wb["Project Allocations"]["J3"].value
+        assert "$J$2:$J$3" in wb["Attendance"]["G2"].value
+        assert wb["Project Allocations"].column_dimensions["J"].hidden
+    finally:
+        wb.close()
+
+
 def test_operator_can_call_whole_day_one_project() -> None:
     state = _base_state()
     state["allocations"] = [
@@ -170,22 +197,25 @@ def test_generated_workbook_is_webexcel_safe_and_has_reporting_contract(tmp_path
     assert result["report_version"] == "roster-log-v2-project-report/v1"
     assert result["paid_hours"] == result["allocated_hours"] == 8
     assert result["multi_project_days"] == 1
+    assert [row["project"] for row in result["project_report"]] == ["H&H", "Northwell"]
     assert inspect_web_excel_package(out) == []
 
     wb = openpyxl.load_workbook(out, data_only=False)
     try:
         assert wb.sheetnames == ["Dashboard", "Attendance", "Project Allocations", "Project Report", "Dictionaries", "Review Queue", "Read Me"]
         assert wb["Attendance"]["F1"].value == "Default / Fallback Project"
-        assert wb["Attendance"]["G2"].value.startswith("=IF(COUNTIFS")
+        assert "$J$2:$J$3" in wb["Attendance"]["G2"].value
         assert "$G$2:$G$3" in wb["Attendance"]["H2"].value
         assert wb["Project Allocations"]["E1"].value == "Allocation Basis"
         assert wb["Project Allocations"]["E2"].value == "EXPLICIT"
         assert wb["Project Report"]["A2"].value == "H&H"
         assert wb["Project Report"]["B2"].value == 6.4
         assert wb["Project Report"]["A3"].value == "Northwell"
+        assert wb["Project Report"]["C4"].value is None
         assert wb["Review Queue"].max_row == 1
         readme = " ".join(str(wb["Read Me"].cell(r, 1).value or "") for r in range(1, wb["Read Me"].max_row + 1))
         assert "Once explicit Project Allocations exist" in readme
+        assert "Project Mode counts distinct projects" in readme
         assert "Project Report is deterministic" in readme
         assert "does not manufacture an 80/20 split" in readme
     finally:
