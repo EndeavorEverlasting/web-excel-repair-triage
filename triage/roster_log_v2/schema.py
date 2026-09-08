@@ -5,10 +5,11 @@ from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import date
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 SCHEMA_VERSION = "roster-log-v2/v1"
 TOLERANCE_HOURS = 0.01
+ALLOCATION_BASES = ("DEFAULT", "EXPLICIT", "OVERRIDE")
 
 
 @dataclass(frozen=True)
@@ -45,12 +46,23 @@ def _day_key(row: Dict[str, Any]) -> Tuple[str, str]:
     return work_date, staff
 
 
-def normalize_state(payload: Dict[str, Any]) -> Dict[str, Any]:
-    """Normalize an operator state document without inventing allocation policy.
+def _allocation_basis(value: Any, *, default: str = "EXPLICIT") -> str:
+    basis = str(value or default).strip().upper()
+    if basis not in ALLOCATION_BASES:
+        raise ValueError(
+            f"allocation basis must be one of {', '.join(ALLOCATION_BASES)}: {basis or '<blank>'}"
+        )
+    return basis
 
-    A paid day defaults to one project. When no explicit allocation rows exist for
-    that staff/date, one allocation is created for the attendance row's default
-    project and the full paid hours. Explicit multi-project rows are preserved.
+
+def normalize_state(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize operator state without inventing project-allocation policy.
+
+    ``default_project`` is fallback metadata on attendance, not final project truth.
+    When no explicit allocation rows exist for a paid staff/date, one ``DEFAULT``
+    allocation is created for the full paid hours. Once explicit rows exist, project
+    membership and reporting derive only from those allocation rows. Existing v1
+    allocation rows without a basis remain backward-compatible as ``EXPLICIT``.
     """
     if not isinstance(payload, dict):
         raise ValueError("roster state must be an object")
@@ -90,6 +102,7 @@ def normalize_state(payload: Dict[str, Any]) -> Dict[str, Any]:
             raise ValueError(f"allocation project required: {key[0]} / {key[1]}")
         row["project"] = project
         row["hours"] = _number(row.get("hours", 0), field="allocation hours")
+        row["basis"] = _allocation_basis(row.get("basis"), default="EXPLICIT")
         alloc_id = str(row.get("allocation_id") or f"ALLOC-{key[0].replace('-', '')}-{idx:04d}").strip()
         if alloc_id in ids:
             raise ValueError(f"duplicate allocation_id: {alloc_id}")
@@ -110,6 +123,7 @@ def normalize_state(payload: Dict[str, Any]) -> Dict[str, Any]:
             "date": key[0],
             "staff": key[1],
             "project": attendance_row["default_project"],
+            "basis": "DEFAULT",
             "workstream": "",
             "hours": attendance_row["paid_hours"],
             "status": "RECONCILED",
