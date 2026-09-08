@@ -1,0 +1,75 @@
+name: Temporary natural prompt hotkey repair
+
+on:
+  push:
+    branches:
+      - fix/operant-natural-prompt-hotkeys-20260908
+
+permissions:
+  contents: write
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout owning branch
+        uses: actions/checkout@v7
+        with:
+          ref: fix/operant-natural-prompt-hotkeys-20260908
+          fetch-depth: 0
+
+      - name: Verify current main floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune
+          git merge-base --is-ancestor origin/main HEAD
+          echo "branch_head=$(git rev-parse HEAD)"
+          echo "main_floor=$(git rev-parse origin/main)"
+
+      - name: Apply bounded repair
+        run: python scripts/tmp_repair_natural_prompt_hotkeys.py
+
+      - name: Regenerate canonical Prompt Kit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          node --check docs/prompt-kit-polish.js
+
+      - name: Validate natural hotkey contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest \
+            tests.test_prompt_kit_interactions_contract \
+            tests.test_prompt_kit_hotkey_completion \
+            tests.test_observed_behavior_proof_harness -v
+          python scripts/validate_prompt_kit_interactions.py --summary
+          git diff --check
+
+      - name: Commit durable repair and remove transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f scripts/tmp_repair_natural_prompt_hotkeys.py .github/workflows/tmp-natural-prompt-hotkey-repair.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git status --short
+          git diff --stat
+          git diff --check
+          git add \
+            docs/prompt-kit-polish.js \
+            docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md \
+            docs/PROMPT_KIT_OPERATOR_GUIDE.md \
+            web/README.md \
+            tests/test_prompt_kit_interactions_contract.py \
+            tests/test_prompt_kit_hotkey_completion.py \
+            tests/prompt_kit_hotkey_identity_browser_proof.py \
+            .github/workflows/prompt-kit-observed-browser-proof.yml \
+            web/prompt-kit/index.html \
+            scripts/tmp_repair_natural_prompt_hotkeys.py \
+            .github/workflows/tmp-natural-prompt-hotkey-repair.yml
+          git commit -m "fix(operant): derive numeric prompt hotkeys from catalog"
+          git push origin HEAD:fix/operant-natural-prompt-hotkeys-20260908
