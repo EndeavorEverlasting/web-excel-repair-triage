@@ -1443,8 +1443,7 @@ function performMobileQuickAction(action,origin){
   if(action==='favorites'){activateFavoritesView();return true}
   if(action==='filters'){toggleCompactFilters();return true}
   if(action==='reference'){
-    var ref=document.getElementById('refBtn');
-    if(ref){ref.click();return true}
+    if(typeof toggleRef==='function'){toggleRef();return true}
     return false
   }
   if(action==='top'){scrollPromptKitTo('top');return true}

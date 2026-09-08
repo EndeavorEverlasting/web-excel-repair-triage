@@ -5,9 +5,11 @@ on:
     paths:
       - 'docs/prompt-kit-polish.js'
       - 'harness/contracts/prompt-kit-mobile.v1.json'
+      - 'harness/contracts/prompt-kit-cross-input-modality.v1.json'
       - 'OPEN_PROMPT_KIT_ON_PHONE.md'
       - 'tests/test_prompt_kit_mobile.py'
       - 'tests/test_prompt_kit_mobile_quick_controls.py'
+      - 'tests/test_prompt_kit_cross_input_modality.py'
       - 'tests/prompt_kit_mobile_quick_controls_browser_proof.py'
       - 'web/prompt-kit/index.html'
       - '.github/workflows/prompt-kit-mobile-quick-controls.yml'
@@ -16,9 +18,11 @@ on:
     paths:
       - 'docs/prompt-kit-polish.js'
       - 'harness/contracts/prompt-kit-mobile.v1.json'
+      - 'harness/contracts/prompt-kit-cross-input-modality.v1.json'
       - 'OPEN_PROMPT_KIT_ON_PHONE.md'
       - 'tests/test_prompt_kit_mobile.py'
       - 'tests/test_prompt_kit_mobile_quick_controls.py'
+      - 'tests/test_prompt_kit_cross_input_modality.py'
       - 'tests/prompt_kit_mobile_quick_controls_browser_proof.py'
       - 'web/prompt-kit/index.html'
       - '.github/workflows/prompt-kit-mobile-quick-controls.yml'
@@ -37,7 +41,7 @@ jobs:
       - name: Static mobile contract
         run: |
           node --check docs/prompt-kit-polish.js
-          python -m unittest tests.test_prompt_kit_mobile tests.test_prompt_kit_mobile_quick_controls -v
+          python -m unittest tests.test_prompt_kit_mobile tests.test_prompt_kit_mobile_quick_controls tests.test_prompt_kit_cross_input_modality -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
       - name: Install Chromium proof dependency
