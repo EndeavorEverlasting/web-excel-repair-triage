@@ -6,6 +6,15 @@ Roster Log V2 is a **replacement candidate**. The existing roster remains untouc
 
 This file is the canonical V2 doctrine. Future humans and agents must extend these owners instead of rediscovering project-attribution rules from historical workbooks.
 
+## Authority boundary
+
+Roster V2 has exactly one mutable state owner and one publication path:
+
+- **EDITABLE AUTHORITY:** the local-first website plus canonical `roster-log-v2/v1` JSON state.
+- **DERIVED / PUBLISH-ONLY:** generated XLSX workbooks and project-report exports.
+
+Do not hand-edit a generated workbook and treat that as new roster truth. Change the website/JSON state, validate it, and regenerate. Generated workbooks are protected snapshots specifically so they cannot drift into a second editable authority.
+
 ## Core invariant
 
 Roster V2 has two grains and they must never be collapsed:
@@ -76,6 +85,8 @@ Zero or more explicit rows per attendance day:
 
 Existing v1 allocation rows that predate `basis` remain backward-compatible and normalize to `EXPLICIT`; producers must not guess `OVERRIDE` merely because an allocation differs from the attendance default.
 
+Malformed numeric values, invalid ISO dates, duplicate attendance days/allocation IDs, allocations without attendance, unknown basis strings, and non-string basis values fail closed. Browser import validation and Python normalization must enforce the same boundary rather than allowing malformed local state to fail later during workbook generation.
+
 ## Reconciliation
 
 For each staff/date:
@@ -91,6 +102,8 @@ Valid examples for an 8-hour attendance day include:
 - Northwell 8.0 after an explicit full-day decision;
 - a dated Neuron OVERRIDE of an iPhone-support default / 8.0 hours;
 - three projects whose hours sum to 8.0.
+
+Two allocation rows for the **same** project remain one project for mode/reporting purposes. `MULTI` means more than one distinct project, not more than one allocation/workstream row.
 
 The system does **not** manufacture an 80/20 split and does not reject a deliberate full-day decision because other activity may have occurred. Allocation is an operator/evidence decision; reconciliation is arithmetic.
 
@@ -117,7 +130,7 @@ Human-facing and machine-facing reports therefore answer the same question:
 
 ## Local-first website
 
-`web/roster-log-v2/` is the daily entry and local reporting surface.
+`web/roster-log-v2/` is the daily entry and local reporting surface and the human mutation owner.
 
 The website must make the model visible rather than relying on training:
 
@@ -132,6 +145,8 @@ The website must make the model visible rather than relying on training:
 - show a deterministic Project Report on-page;
 - export canonical JSON, Attendance CSV, Allocations CSV (including basis), Project Report CSV, and Project Report JSON;
 - normalize imported v1 state so old basis-less allocations become `EXPLICIT` and missing explicit allocations receive a `DEFAULT` row;
+- reject malformed imported numbers/dates/bases before storing/exporting them;
+- compute report reconciliation against the normalized report snapshot, not hidden global state;
 - use stable ordering for exports;
 - make no network call for local operation.
 
@@ -141,7 +156,9 @@ The website must make the model visible rather than relying on training:
 python -m triage.roster_log_v2.cli --state <state.json> --output Outputs/.../Roster_Log_V2.xlsx
 ```
 
-The generated workbook contains:
+The generated workbook is a **protected derived snapshot**, not a parallel roster editor. New/changed attendance and allocations must be made in the website/JSON and regenerated.
+
+The workbook contains:
 
 1. `Dashboard`
 2. `Attendance`
@@ -153,12 +170,14 @@ The generated workbook contains:
 
 Workbook-specific invariants:
 
-- `Attendance` labels the fallback field `Default / Fallback Project`.
-- `Project Allocations` contains `Allocation Basis`.
-- `Project Report` is generated from the same normalized allocation report contract.
-- dropdowns remain range-backed through `Dictionaries`.
-- bounded formulas are required for Web Excel compatibility.
-- V2 preflight fails if the reporting sheet, basis field, or core doctrine text disappears.
+- every sheet is protected as an authority/UX guardrail (not a security boundary);
+- `Attendance` labels the fallback field `Default / Fallback Project`;
+- `Project Allocations` contains `Allocation Basis`;
+- a hidden first-occurrence helper makes `Project Mode` count distinct projects, not allocation rows;
+- `Project Report` is generated from the same normalized allocation report contract and is a build-time snapshot;
+- bounded formulas cover exactly the state that produced the artifact; regeneration is the update mechanism;
+- range-backed dictionary metadata remains available for downstream consumers;
+- V2 preflight fails if protection, the reporting sheet, basis/helper fields, or core doctrine text disappears.
 
 The producer uses Triage output-path protection, shared-string repair, and Web Excel package validation.
 
@@ -168,14 +187,16 @@ The producer uses Triage output-path protection, shared-string repair, and Web E
 
 - default single-project normalization;
 - backward-compatible basis normalization;
+- malformed number/date/basis rejection;
 - explicit NTH/Neuron override of a non-NTH iPhone/mobile default does not report the default project;
 - valid same-day multi-project allocation;
+- two allocation rows for one project remain `SINGLE`;
 - deterministic project sorting/totals/day counts;
-- invalid basis rejection;
 - variance-only review behavior;
-- workbook `Project Report` + `Allocation Basis` contract;
+- protected/publish-only workbook authority;
+- workbook `Project Report` + `Allocation Basis` + distinct-project helper contract;
 - Web Excel package safety;
-- website basis/report/export semantics and absence of locale-dependent project sorting.
+- website basis/report/export/import-validation semantics and absence of locale-dependent project sorting.
 
 A future implementation that removes one of these behaviors must fail the owning test/preflight rather than silently changing semantics.
 
