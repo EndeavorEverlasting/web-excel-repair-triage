@@ -97,6 +97,8 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("roll back registry/site writes if validation fails", content)
         self.assertIn("focused semantic assertion", content)
         self.assertIn("materially overlapping prompt", content)
+        self.assertIn("search_operant_external_catalog.py", content)
+        self.assertIn("distinct residual before ADD", content)
         self.assertIn("genuinely missing bounded behavior", content)
         self.assertIn("Do not fall back to loading the entire Prompt Kit architecture", content)
         self.assertIn("merge the exact green authorized head", content)

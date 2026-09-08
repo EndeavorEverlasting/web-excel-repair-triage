@@ -18,18 +18,15 @@
       "id": "prompts-chat",
       "repository": "f/prompts.chat",
       "expected_default_branch": "main",
-      "enumeration": "http_json_catalog",
-      "catalog_url": "https://prompts.chat/prompts.json",
-      "items_key": "prompts",
-      "slug_field": "slug",
-      "title_field": "title",
-      "description_field": "description",
-      "resource_root": "catalog",
-      "resource_filename": "prompt.meta.json",
-      "resource_kind": "community-prompt",
-      "url_mode": "public_template",
-      "url_template": "https://prompts.chat/prompts/{slug}",
-      "description_max_chars": 160
+      "enumeration": "catalog_csv",
+      "resource_root": ".",
+      "resource_filename": "prompts.csv",
+      "resource_kind": "prompt-catalog",
+      "search_mode": "on_demand",
+      "license": {
+        "prompt_data": "CC0-1.0",
+        "source_code": "MIT"
+      }
     },
     {
       "id": "mattpocock-skills",
@@ -59,12 +56,13 @@
     "copy_upstream_skill_body": false,
     "pin_urls_to_resolved_commit": true,
     "maximum_entries": 5000,
-    "maximum_index_bytes": 2500000,
+    "maximum_index_bytes": 1500000,
     "maximum_search_terms_per_resource": 12,
     "default_render_page_size": 40,
     "lazy_fetch_required": true,
     "default_page_load_must_not_fetch_index": true,
-    "default_page_load_must_not_embed_resource_records": true
+    "default_page_load_must_not_embed_resource_records": true,
+    "catalog_csv_projects_rows_into_index": false
   },
   "coverage": {
     "match_threshold": 0.65,
@@ -75,7 +73,16 @@
     "existing_coverage_prompt_action": "NO_NEW_PROMPT",
     "promotion_owner_prompt": "P79",
     "automatic_prompt_authoring": false,
-    "rule": "Prefer an existing Operant prompt or local skill when deterministic title/keyword coverage is strong; otherwise keep the donor resource directly usable and route the missing internal capability to P79 for strategic strengthen-before-add review."
+    "catalog_hit_dispositions": ["REFERENCE_ONLY", "ADAPT"],
+    "rule": "Prefer an existing Operant prompt or local skill when deterministic title/keyword coverage is strong; otherwise keep the donor resource directly usable and route the missing internal capability to P79 for strategic strengthen-before-add review. Before P79 may ADD a new identity for a prompt-like use case, search registered external sources/catalogs, extract commonality with current owners, and prove a distinct residual; REVIEW_ADD_PROMPT is a candidate for that comparison, not permission to author.",
+    "p79_external_evidence": {
+      "required_before_add": [
+        "registered_external_source_or_catalog_search",
+        "commonality_extraction_against_existing_owners",
+        "distinct_residual_proof"
+      ],
+      "review_add_prompt_means": "candidate_for_strategic_comparison_not_authoring_permission"
+    }
   },
   "authority": {
     "donors_are_reference_and_resource_sources_not_operant_authority": true,
@@ -83,5 +90,5 @@
     "license_review_required_before_copy_or_adaptation": true,
     "resource_links_may_point_to_upstream_without_copying_content": true
   },
-  "proof_ceiling": "Repository sync, source-SHA pinning, metadata projection, deterministic coverage classification, lazy-loading contract, generated-site parity, and scheduled drift evidence. It does not prove upstream resource quality, license compatibility for copied/adapted content, live browser network success, or automatic prompt quality."
+  "proof_ceiling": "Repository sync, source-SHA pinning, metadata projection, catalog floor-only receipts, deterministic coverage classification, on-demand catalog search (fixture or live), lazy-loading contract, generated-site parity, and scheduled drift evidence. It does not prove upstream resource quality, license compatibility for copied/adapted content, live browser network success, MCP client success, or automatic prompt quality."
 }

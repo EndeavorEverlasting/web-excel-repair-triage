@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import tempfile
 import unittest
 
 import build_prompt_kit
@@ -113,7 +114,10 @@ process.stdout.write(JSON.stringify({artifact:artifact,close:close}));
             + "var out={};queries.forEach(function(q){out[q]=filterPromptsForQuery(prompts,q).map(function(p){return p.id})});\n"
             + "process.stdout.write(JSON.stringify(out));\n"
         )
-        completed = subprocess.run(["node", "-e", script], check=True, capture_output=True, text=True)
+        with tempfile.TemporaryDirectory() as tmp:
+            script_path = Path(tmp) / "phone_native_rank.js"
+            script_path.write_text(script, encoding="utf-8")
+            completed = subprocess.run(["node", str(script_path)], check=True, capture_output=True, text=True)
         result = json.loads(completed.stdout)
         for query in ("mobile interaction design", "touch first ux", "phone native ux"):
             self.assertEqual(result[query][0], "P129", f"{query!r} must route to the specialist before P65")

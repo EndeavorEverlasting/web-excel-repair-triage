@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import csv
+import io
 import json
 import os
 import re
@@ -11,6 +13,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
+
+csv.field_size_limit(min(sys.maxsize, 16 * 1024 * 1024))
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -23,6 +27,7 @@ DEFAULT_INDEX = ROOT / "web" / "prompt-kit" / "resources.v1.json"
 DEFAULT_GAPS = ROOT / "registry" / "resources" / "operant-external-resource-gaps.v1.json"
 SKILLS_ROOT = ROOT / ".ai" / "skills"
 API_ROOT = "https://api.github.com"
+RAW_ROOT = "https://raw.githubusercontent.com"
 TOKEN_RE = re.compile(r"[a-z0-9]+")
 STOPWORDS = {
     "a", "an", "and", "agent", "agents", "dsh", "for", "from", "in", "of", "on",
@@ -71,6 +76,18 @@ def http_json(url: str) -> Any:
         user_agent="OperantExternalResourceSync/1.0",
         auth_bearer=False,
     )
+
+
+def github_text(url: str, *, timeout: int = 120) -> str:
+    request = urllib.request.Request(
+        url,
+        headers={"User-Agent": "OperantExternalResourceSync/1.0"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return response.read().decode("utf-8")
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"GitHub content request failed for {url}: {exc}") from exc
 
 
 def tokens(value: str) -> set[str]:
@@ -190,55 +207,50 @@ def enumerate_git_skill_tree(
     return resources
 
 
-def enumerate_http_json_catalog(
+def enumerate_catalog_csv(
     source: dict[str, Any],
     *,
     repo: str,
     sha: str,
-) -> list[dict[str, Any]]:
-    catalog_url = str(source["catalog_url"])
-    payload = http_json(catalog_url)
-    items_key = str(source.get("items_key", "prompts"))
-    items = payload.get(items_key)
-    if not isinstance(items, list):
-        raise ValueError(f"{source['id']} catalog missing list at key {items_key}")
-
-    root = str(source["resource_root"]).rstrip("/")
+    branch: dict[str, Any],
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    tree_sha = str(branch["commit"]["commit"]["tree"]["sha"])
+    tree = github_json(f"/repos/{repo}/git/trees/{tree_sha}?recursive=1")
+    if tree.get("truncated"):
+        raise ValueError(f"{repo} recursive Git tree was truncated")
+    root = str(source.get("resource_root", ".")).rstrip("/")
     filename = str(source["resource_filename"])
-    slug_field = str(source.get("slug_field", "slug"))
-    title_field = str(source.get("title_field", "title"))
-    description_field = str(source.get("description_field", "description"))
-    description_max = int(source.get("description_max_chars", 160))
-    resources: list[dict[str, Any]] = []
-    seen: set[str] = set()
-    for item in items:
-        if not isinstance(item, dict):
-            continue
-        slug = str(item.get(slug_field, "")).strip()
-        title = str(item.get(title_field, "")).strip() or display_title(slug)
-        if not slug or slug in seen:
-            continue
-        seen.add(slug)
-        path = f"{root}/{slug}/{filename}"
-        description = str(item.get(description_field, "") or "").strip()
-        if len(description) > description_max:
-            description = description[: description_max - 1].rstrip() + "…"
-        resource: dict[str, Any] = {
-            "id": f"{source['id']}:{slug}",
-            "source_id": source["id"],
-            "source_repo": repo,
-            "source_sha": sha,
-            "kind": source["resource_kind"],
-            "slug": slug,
-            "title": title,
-            "path": path,
-            "url": resource_url(source, repo=repo, sha=sha, path=path, slug=slug),
-        }
-        if description:
-            resource["description"] = description
-        resources.append(resource)
-    resources.sort(key=lambda row: (str(row["title"]).lower(), str(row["id"])))
-    return resources
+    catalog_path = filename if root in {"", "."} else f"{root}/{filename}"
+    blob = next(
+        (item for item in tree.get("tree", []) if item.get("type") == "blob" and str(item.get("path", "")) == catalog_path),
+        None,
+    )
+    if blob is None:
+        raise ValueError(f"{repo}@{sha} missing catalog path {catalog_path}")
+    catalog_text = github_text(f"{RAW_ROOT}/{repo}/{sha}/{catalog_path}")
+    reader = csv.DictReader(io.StringIO(catalog_text))
+    if reader.fieldnames is None:
+        raise ValueError(f"{repo} catalog CSV has no header")
+    entry_count = sum(1 for _ in reader)
+    license_meta = source.get("license") if isinstance(source.get("license"), dict) else {}
+    receipt = {
+        "id": source["id"],
+        "repository": repo,
+        "default_branch": str(branch.get("name") or source["expected_default_branch"]),
+        "resolved_sha": sha,
+        "resource_root": root if root else ".",
+        "resource_count": 0,
+        "enumeration": "catalog_csv",
+        "catalog_path": catalog_path,
+        "catalog_entry_count": entry_count,
+        "catalog_blob_sha": str(blob.get("sha", "")),
+        "search_mode": "on_demand",
+        "license": {
+            "prompt_data": license_meta.get("prompt_data"),
+            "source_code": license_meta.get("source_code"),
+        },
+    }
+    return receipt, []
 
 
 def enumerate_source(source: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, Any]]]:
@@ -248,20 +260,21 @@ def enumerate_source(source: dict[str, Any]) -> tuple[dict[str, Any], list[dict[
     root = str(source["resource_root"]).rstrip("/")
     if enumeration == "git_skill_tree":
         resources = enumerate_git_skill_tree(source, repo=repo, sha=sha, branch=branch)
-    elif enumeration == "http_json_catalog":
-        resources = enumerate_http_json_catalog(source, repo=repo, sha=sha)
-    else:
-        raise ValueError(f"unsupported enumeration for {source.get('id')}: {enumeration}")
-    receipt = {
-        "id": source["id"],
-        "repository": repo,
-        "default_branch": default_branch,
-        "resolved_sha": sha,
-        "resource_root": root,
-        "resource_count": len(resources),
-        "enumeration": enumeration,
-    }
-    return receipt, resources
+        receipt = {
+            "id": source["id"],
+            "repository": repo,
+            "default_branch": default_branch,
+            "resolved_sha": sha,
+            "resource_root": root,
+            "resource_count": len(resources),
+            "enumeration": enumeration,
+        }
+        return receipt, resources
+    if enumeration == "catalog_csv":
+        receipt, resources = enumerate_catalog_csv(source, repo=repo, sha=sha, branch=branch)
+        receipt["default_branch"] = default_branch
+        return receipt, resources
+    raise ValueError(f"unsupported enumeration for {source.get('id')}: {enumeration}")
 
 
 def build_projection(contract: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -336,6 +349,8 @@ def build_projection(contract: dict[str, Any]) -> tuple[dict[str, Any], dict[str
         "point_to_existing_skill": sum(r["coverage"]["disposition"] == "POINT_TO_EXISTING_SKILL" for r in resources),
         "point_to_external": sum(r["coverage"]["disposition"] == "POINT_TO_EXTERNAL" for r in resources),
         "review_add_prompt": len(gaps),
+        "catalog_sources": sum(1 for row in receipts if row.get("enumeration") == "catalog_csv"),
+        "catalog_entries_indexed": 0,
     }
     index = {
         "schema_version": "operant-external-resource-index/v1",
@@ -350,6 +365,7 @@ def build_projection(contract: dict[str, Any]) -> tuple[dict[str, Any], dict[str
             "promotion_owner_prompt": contract["coverage"]["promotion_owner_prompt"],
             "automatic_prompt_authoring": contract["coverage"]["automatic_prompt_authoring"],
             "rule": contract["coverage"]["rule"],
+            "p79_external_evidence": contract["coverage"].get("p79_external_evidence"),
         },
         "summary": summary,
         "actions": gaps,
@@ -393,7 +409,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"OPERANT_EXTERNAL_RESOURCE_COUNT={index['summary']['resource_count']}")
         print(f"OPERANT_EXTERNAL_RESOURCE_GAPS={index['summary']['review_add_prompt']}")
         for source in index["source_floor"]:
-            print(f"OPERANT_DONOR={source['id']}@{source['resolved_sha']} resources={source['resource_count']}")
+            if source.get("enumeration") == "catalog_csv":
+                print(
+                    f"OPERANT_DONOR={source['id']}@{source['resolved_sha']} "
+                    f"mode=catalog_csv catalog_entries={source.get('catalog_entry_count', 0)} projected=0"
+                )
+            else:
+                print(f"OPERANT_DONOR={source['id']}@{source['resolved_sha']} resources={source['resource_count']}")
         return 0
     except (OSError, ValueError, RuntimeError, KeyError, json.JSONDecodeError) as exc:
         print(f"Operant external resource sync failed: {exc}", file=sys.stderr)
