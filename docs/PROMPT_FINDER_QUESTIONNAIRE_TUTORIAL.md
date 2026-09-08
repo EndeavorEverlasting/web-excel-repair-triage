@@ -91,11 +91,24 @@ The table is explanatory documentation, not the browser recommendation implement
 
 Recommendations are evidence-informed routing aids, not automatic authorization. Read the selected prompt's owned scope, forbidden scope, dependencies, and proof gate before using it.
 
+## When Prompt Kit does not cover the use case
+
+The tutorial must not trap a user inside Prompt Kit when the current registry does not fit the job. Internal Prompt Kit routing remains first because Operant prompts are canonical for Operant behavior. When the finder produces no registered candidate, or when the user reviews the candidates and selects **Search external resources** because none fits, the tutorial continues into the existing lazy **Resources** surface instead of looping back to another internal prompt.
+
+The fallback mapping is deterministic and reuses existing authority:
+
+1. The finder derives one compact external search query from the selected **goal** option first; if goal evidence is unavailable it falls back in order to **known problem**, **work shape**, then **starting point**. It uses the first canonical query phrase already attached to that answer rather than inventing a second routing vocabulary.
+2. The Resources surface lazily loads `resources.v1.json` only after the user takes the fallback. Indexed skill sources with concrete matches rank first. An on-demand catalog receives a deterministic fallback preference when the local sidecar has no matching row, while stable source-floor order breaks ties.
+3. The registered source floor is the authority for the external libraries: `f/prompts.chat` (prompt catalog), `mattpocock/skills` (agent skills), and `deepseek-ai/deepseek-harness` (agent/harness skills). The browser derives repository links from that source floor rather than maintaining a second URL table in the tutorial.
+4. Resources that already have strong internal coverage continue to point back to the existing Operant prompt. External-only resources remain directly usable references; they do not auto-create Prompt Kit prompts. P79 still owns strengthen-before-add review, and license review remains required before copying or adapting donor content.
+
+This fallback is a capability-gap route, not a declaration that an upstream resource is better. The user can edit the prefilled resource search before opening a donor library.
+
 ## Conversational fallback
 
 The website questionnaire is the fastest general path. When the generated website cannot be opened—or when you need a conversational distinction the current browser questions do not represent—search for or copy **P65 — Guided Prompt Finder Questionnaire** into an AI chat.
 
-P65 asks one concise question at a time, recommends one primary prompt and no more than two follow-ons, and refuses to fabricate prompt IDs that are not present in its supplied/current routing vocabulary.
+P65 asks one concise question at a time, recommends one primary prompt and no more than two follow-ons, and refuses to fabricate prompt IDs that are not present in its supplied/current routing vocabulary. Use P65 for conversational distinctions inside Prompt Kit; when Prompt Kit itself does not cover the capability, use the tutorial's external Resources fallback instead.
 
 When you already know the exact specialist, such as P83 for verifying another agent's claimed completion, open that prompt directly rather than using P65 merely for ceremony.
 
@@ -126,16 +139,17 @@ From the repository root:
 python -m py_compile scripts/build_prompt_kit_registry.py scripts/validate_prompt_kit_discovery.py tests/test_prompt_kit_discovery.py tests/test_prompt_kit_guidance.py
 node --check docs/prompt-kit.js
 node --check docs/prompt-kit-guided-recommendations.js
+node --check docs/prompt-kit-external-resources.js
 node --check docs/prompt-kit-journey.js
 node --check docs/prompt-kit-polish.js
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 python scripts/validate_prompt_kit_discovery.py --summary
-python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
+python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance tests.test_operant_external_resources -v
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 ```
 
 ## Proof ceiling
 
-Repository validation can prove registry integrity, the current four-question shared-search implementation, registry-owned next-step extraction, session-only completion state, JavaScript syntax, current Favorite/shortcut semantics, generated-site parity, and focused documentation assertions.
+Repository validation can prove registry integrity, the current four-question shared-search implementation, deterministic Prompt Kit-to-Resources fallback wiring, registered source-floor links, registry-owned next-step extraction, session-only completion state, JavaScript syntax, current Favorite/shortcut semantics, generated-site parity, and focused documentation assertions.
 
 It does not prove every browser or assistive-technology combination, clipboard permissions on every device, live Windows launcher behavior on a particular workstation, organizational acceptance of a recommendation, or that a recommended prompt succeeds without the environment and permissions it requires.
