@@ -106,6 +106,11 @@ def validate(baseline_ref: str) -> dict[str, Any]:
     }
 
 
+def write_report(path: Path, report: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--baseline-ref", required=True)
@@ -114,12 +119,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         report = validate(args.baseline_ref)
+        if args.output:
+            write_report(args.output, report)
     except (OSError, json.JSONDecodeError, ValueError) as exc:
         print(f"Prompt Kit ontology append-only validation failed: {exc}", file=sys.stderr)
         return 2
-    if args.output:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if args.summary or not args.output:
         print(
             json.dumps(
