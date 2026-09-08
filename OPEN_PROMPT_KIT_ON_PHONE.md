@@ -1,25 +1,27 @@
-# Open the AI Harness Prompt Kit on Android
+# Open Operant on Android
 
 ## One tap — no download required
 
 **[Open the phone launcher](https://endeavoreverlasting.github.io/web-excel-repair-triage/)**
 
-GitHub does not need to download `index.html` to your phone. The public GitHub Pages launcher opens the same responsive Prompt Kit published from the repository's canonical `main` release.
+GitHub does not need to download `index.html` to your phone. The public GitHub Pages launcher opens the same responsive Operant release published from the repository's canonical `main` release.
 
 ### From the GitHub Android app
 
 1. Tap **Open the phone launcher** above.
 2. When GitHub uses its in-app browser, open the browser menu and choose **Open in browser** so the page opens in Chrome.
-3. Tap **Open Prompt Kit** for immediate use.
-4. Tap **Install on this Android phone** to place **AI Prompt Kit** on the home screen. When Chrome does not display the native prompt, use Chrome's menu and choose **Install app** or **Add to Home screen**.
+3. Tap **Open Operant** for immediate use.
+4. Tap **Install Operant on this Android phone** to place **Operant** on the home screen. When Chrome does not display the native prompt, use Chrome's menu and choose **Install app** or **Add to Home screen**.
 
 The installed home-screen app starts at:
 
 ```text
-https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/
+https://endeavoreverlasting.github.io/web-excel-repair-triage/operant
 ```
 
-It is the same Prompt Kit used on desktop, not a separate Android copy or prompt database.
+It is the same Operant release used on desktop, not a separate Android copy or prompt database.
+
+The former public path `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/` is a compatibility redirect only. Agents and users should name `/operant` as the canonical public product route.
 
 ## Moving from a computer to the phone
 
@@ -35,10 +37,11 @@ https://endeavoreverlasting.github.io/web-excel-repair-triage/
 - Implementation source: `docs/prompt-kit.js`
 - Android/mobile launcher source: `web/prompt-kit-mobile/`
 - Pages deployment: `.github/workflows/prompt-kit-pages.yml`
-- Stable Prompt Kit URL: `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`
+- Stable Operant URL: `https://endeavoreverlasting.github.io/web-excel-repair-triage/operant`
+- Legacy compatibility URL: `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`
 - Launcher URL: `https://endeavoreverlasting.github.io/web-excel-repair-triage/`
 
-The launcher adds install, share, copy-link, QR, and offline-fallback surfaces without changing prompt content or creating a parallel mobile application.
+The launcher adds install, share, copy-link, QR, and offline-fallback surfaces without changing prompt content or creating a parallel mobile application. Share and Copy Link use the canonical direct Operant URL rather than forcing recipients through the launcher.
 
 ## Fastest path to a known prompt ID
 
@@ -48,7 +51,7 @@ If you already know the prompt ID, do **not** open More and do **not** use a swi
 2. For `P111`, type **111**. The `P` is already supplied by the control.
 3. When the ID is exact and unambiguous, **P111 opens automatically**. There is no search-results tap.
 
-You do not open **More** first. **Swiping is not required.** This path also avoids opening Chrome's **Find in page**, typing the `P`, and stepping through text matches that do not understand Prompt Kit IDs.
+You do not open **More** first. **Swiping is not required.** This path also avoids opening Chrome's **Find in page**, typing the `P`, and stepping through text matches that do not understand Operant prompt IDs.
 
 If a shorter ID is also the start of a longer ID (for example `P11` and `P111`), the shorter one waits instead of stealing the route. For **P11**, type `11`; the button changes to **Open P11** and the status tells you the ID is exact. Press **Enter** (including the phone keyboard's Go/Enter key) or tap **Open P11** to open it, or keep typing `1` to continue to P111. There is no timing race.
 
@@ -58,4 +61,4 @@ For the zero-padded IDs `P00` through `P09`, keep the **leading zero**: type `00
 
 The second floating control is **More**. Open it only when you need a secondary action: **Find Prompt, Previous profile, Next profile, Search, Favorites, Filters, Reference, Top, or Bottom**. These are ordinary labeled buttons; there is no hidden swipe vocabulary to memorize.
 
-Desktop keyboard users keep the existing Hotkeys panel and prompt-ID sequences. The phone controls call the same underlying Prompt Kit actions and do not create a second prompt database or parallel state.
+Desktop keyboard users keep the existing Hotkeys panel and prompt-ID sequences. The phone controls call the same underlying Operant actions and do not create a second prompt database or parallel state.
