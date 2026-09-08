@@ -1,22 +1,22 @@
 # Get Operant
 
-> **Transition:** Operant is the current product identity. Existing `Prompt Kit`, `prompt-kit`, and `PromptKit` names below are compatibility paths and launcher/storage identifiers until the dedicated `UnderDeskDev/Operant` cutover is proven.
+> **Transition:** Operant is the current product identity. Existing `Prompt Kit`, `prompt-kit`, and `PromptKit` names below are compatibility paths, internal source identifiers, and launcher/storage identifiers until the dedicated `UnderDeskDev/Operant` cutover is proven. The canonical public product route is `/operant`.
 
 <!-- PROMPT_KIT_FAST_PATH_START -->
 ## Choose the easiest path
 
 | Device / need | Do this |
 |---|---|
-| Browser on any computer | Open **https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/** |
+| Browser on any computer | Open **https://endeavoreverlasting.github.io/web-excel-repair-triage/operant** |
 | Phone / tablet / install / QR | Open **https://endeavoreverlasting.github.io/web-excel-repair-triage/** |
 | Windows Favorites-preserving local app | Download **https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/Open-Latest-PromptKit.cmd** and double-click it |
 | No Git client | Download **https://github.com/EndeavorEverlasting/web-excel-repair-triage/archive/refs/heads/main.zip** and open `web/prompt-kit/index.html` after extraction |
 | Git user | `git clone --branch main --single-branch https://github.com/EndeavorEverlasting/web-excel-repair-triage.git` |
 
-Normal browser/phone users should prefer the public URL. The Windows CMD path adds a stable local origin and portable Favorites while preserving the same canonical `main` release. ZIP and clone are fallback acquisition paths, not prerequisites for using the web app.
+Normal browser/phone users should prefer the public Operant route. The Windows CMD path adds a stable local origin and portable Favorites while preserving the same canonical `main` release. ZIP and clone are fallback acquisition paths, not prerequisites for using the web app.
 <!-- PROMPT_KIT_FAST_PATH_END -->
 
-The canonical checked-in website is:
+The canonical checked-in website source artifact is:
 
 ```text
 web/prompt-kit/index.html
@@ -25,27 +25,29 @@ web/prompt-kit/index.html
 The canonical public browser URL is:
 
 ```text
-https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/
+https://endeavoreverlasting.github.io/web-excel-repair-triage/operant
 ```
 
-The release source is the repository's `main` branch. GitHub Pages and the Windows portable runtime are delivery surfaces generated from that exact release, not competing editable Prompt Kits.
+The former public path `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/` is a compatibility redirect only. Do not present it to users or agents as the canonical Operant URL.
+
+The release source is the repository's `main` branch. GitHub Pages and the Windows portable runtime are delivery surfaces generated from that exact release, not competing editable Operant instances.
 
 ## Phone, tablet, or any browser
 
 After GitHub Pages is enabled for this repository and the `Prompt Kit GitHub Pages` workflow has deployed `main`, open:
 
 ```text
-https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/
+https://endeavoreverlasting.github.io/web-excel-repair-triage/operant
 ```
 
 No repository clone, ZIP extraction, Git client, Python installation, PowerShell, or local web server is required for normal browser use.
 
-To keep the Prompt Kit one tap away:
+To keep Operant one tap away:
 
 - iPhone or iPad Safari: open the public URL, use **Share**, choose **Add to Home Screen**, then choose **Add**.
 - Android Chrome: open the public URL, use the browser menu, then choose **Add to Home screen** or **Install app** when that option is offered.
 
-The home-screen shortcut opens the same responsive Prompt Kit used on desktop. It does not create a separate prompt database or bypass the `main` release source.
+The home-screen shortcut opens the same responsive Operant release used on desktop. It does not create a separate prompt database or bypass the `main` release source.
 
 ### One-time repository publishing gate
 
@@ -56,7 +58,7 @@ GitHub Pages must use GitHub Actions as its publishing source:
 3. under **Code and automation**, choose **Pages**;
 4. under **Build and deployment**, set **Source** to **GitHub Actions**.
 
-After that one-time repository setting is enabled, `.github/workflows/prompt-kit-pages.yml` automatically rebuilds and deploys the canonical Prompt Kit when relevant files land on `main`. Pull requests run the Pages build contract but do not deploy.
+After that one-time repository setting is enabled, `.github/workflows/prompt-kit-pages.yml` automatically rebuilds and deploys the canonical Operant site when relevant files land on `main`. Pull requests run the Pages build contract but do not deploy.
 
 The deployment workflow fails closed before publishing if the checked-in release no longer matches `scripts/build_prompt_kit_registry.py`.
 
@@ -64,7 +66,7 @@ The deployment workflow fails closed before publishing if the checked-in release
 
 Download `Open-Latest-PromptKit.cmd` and double-click it.
 
-The quick launcher now treats the Prompt Kit like a local app while retaining the repository's existing safety rules:
+The quick launcher now treats Operant like a local app while retaining the repository's existing safety rules:
 
 1. if the CMD is already inside the canonical tracked checkout, it reuses that checkout; otherwise it resolves the Windows Desktop and uses exactly `Desktop\dev\web-excel-repair-triage`, independent of the folder where the CMD was downloaded;
 2. it reuses the existing safe acquisition functions and canonical `main` origin;
@@ -141,7 +143,7 @@ To launch that validated checkout through the supported stable origin:
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\Open-LatestPromptKitPortable.ps1 -Destination (Get-Location).Path
 ```
 
-If the canonical checkout contains local work, do not reset or clean it merely to run the Prompt Kit, and do not let automation create a second `-latest` repository beside it. Preserve/commit the work first, or deliberately create an isolated Git worktree under the Desktop `dev` workspace when a separate writing lane is actually required.
+If the canonical checkout contains local work, do not reset or clean it merely to run Operant, and do not let automation create a second `-latest` repository beside it. Preserve/commit the work first, or deliberately create an isolated Git worktree under the Desktop `dev` workspace when a separate writing lane is actually required.
 
 ## Fresh clone
 
@@ -178,7 +180,7 @@ prompt-kit-current-preview
 prompt-kit-portable-runtime
 ```
 
-`prompt-kit-current-preview` is the canonical builder preview. `prompt-kit-portable-runtime` contains the generated stable-origin artifact, its SHA-256 manifest, and portability validation output. Neither artifact replaces `main` as the source of truth. GitHub-hosted runner temp paths are ephemeral CI evidence and must not be copied into the workstation as another persistent Prompt Kit checkout.
+`prompt-kit-current-preview` is the canonical builder preview. `prompt-kit-portable-runtime` contains the generated stable-origin artifact, its SHA-256 manifest, and portability validation output. Neither artifact replaces `main` as the source of truth.
 
 ## Rebuild and open locally
 
@@ -215,7 +217,8 @@ python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html -
 - Portable builder/server: `scripts/serve_prompt_kit_portable.py`
 - Portable launcher: `scripts/Open-LatestPromptKitPortable.ps1`
 - Public deployment workflow: `.github/workflows/prompt-kit-pages.yml`
-- Public share path: `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`
+- Canonical public share path: `https://endeavoreverlasting.github.io/web-excel-repair-triage/operant`
+- Legacy public compatibility path: `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`
 - Web usage notes: `web/README.md`
 - Zero-dialog normal-user Windows launcher: `Open-Latest-PromptKit.cmd`
 - Advanced acquisition bootstrap: `Acquire-Latest-PromptKit.cmd`
