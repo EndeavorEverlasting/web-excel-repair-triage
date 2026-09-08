@@ -47,6 +47,16 @@ jobs:
         run: |
           set -euo pipefail
           python scripts/tmp_prompt_kit_external_fallback_carrier.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('docs/prompt-kit-external-resources.js')
+          text = path.read_text(encoding='utf-8')
+          old = "function openExternalResources(request){\n  ensureExternalResourceSurface();"
+          new = "function openExternalResources(){\n  var request=arguments.length?arguments[0]:null;\n  ensureExternalResourceSurface();"
+          if old not in text:
+              raise SystemExit('compatibility-signature anchor missing')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 
       - name: Validate pass 1
@@ -76,6 +86,7 @@ jobs:
           checks = {
               'internal-first external escape': 'data-finder-external' in guided and 'OperantExternalResources.openForUseCase' in guided,
               'deterministic query order': "var order=['goal','problemKnown','shape','startingPoint']" in guided,
+              'backward-compatible resource open signature': 'function openExternalResources()' in resources and 'var request=arguments.length?arguments[0]:null' in resources,
               'registered floor source cards': 'externalResourceIndex.source_floor' in resources and 'function renderExternalSourceChoices()' in resources,
               'prompts.chat fallback preference': 'catalogBonus' in resources,
               'all requested donors documented': all(repo in tutorial for repo in ('f/prompts.chat','mattpocock/skills','deepseek-ai/deepseek-harness')),
