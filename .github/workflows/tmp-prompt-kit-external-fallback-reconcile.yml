@@ -1,0 +1,132 @@
+name: Temporary Prompt Kit external fallback reconciliation
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-external-fallback-routing-20260908
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-external-fallback-reconcile-20260908
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-external-fallback-routing-20260908
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Refresh and merge current main floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/prompt-kit-external-fallback-routing-20260908 --prune
+          test "$(git rev-parse origin/main)" = "947dd607eac4eda3ea47ce99c75c2a7121a87832"
+          set +e
+          git merge --no-commit --no-ff origin/main
+          merge_code=$?
+          set -e
+          if [ "$merge_code" -ne 0 ]; then
+            unresolved="$(git diff --name-only --diff-filter=U)"
+            test "$unresolved" = "tests/test_operant_external_resources.py"
+            git checkout --theirs tests/test_operant_external_resources.py
+            git add tests/test_operant_external_resources.py
+          fi
+          git diff --name-only --diff-filter=U | grep -q . && { echo 'unresolved merge conflict remains'; exit 1; } || true
+
+      - name: Reapply bounded fallback regression on reconciled owner
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/test_operant_external_resources.py')
+          text = path.read_text(encoding='utf-8')
+          old = 'RUNTIME = ROOT / "docs" / "prompt-kit-external-resources.js"\nSITE = ROOT / "web" / "prompt-kit" / "index.html"'
+          new = 'RUNTIME = ROOT / "docs" / "prompt-kit-external-resources.js"\nGUIDED_RUNTIME = ROOT / "docs" / "prompt-kit-guided-recommendations.js"\nFINDER_TUTORIAL = ROOT / "docs" / "PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md"\nSITE = ROOT / "web" / "prompt-kit" / "index.html"'
+          if new not in text:
+              if old not in text: raise SystemExit('reconciled constants anchor missing')
+              text = text.replace(old, new, 1)
+          old = '        cls.runtime = RUNTIME.read_text(encoding="utf-8")\n        cls.site = SITE.read_text(encoding="utf-8")'
+          new = '        cls.runtime = RUNTIME.read_text(encoding="utf-8")\n        cls.guided = GUIDED_RUNTIME.read_text(encoding="utf-8")\n        cls.tutorial = FINDER_TUTORIAL.read_text(encoding="utf-8")\n        cls.site = SITE.read_text(encoding="utf-8")'
+          if new not in text:
+              if old not in text: raise SystemExit('reconciled setup anchor missing')
+              text = text.replace(old, new, 1)
+          if 'def test_prompt_finder_routes_internal_gaps_to_registered_external_floor' not in text:
+              anchor = '    def test_full_validator_accepts_current_projection(self) -> None:\n'
+              addition = '''    def test_prompt_finder_routes_internal_gaps_to_registered_external_floor(self) -> None:\n        for marker in (\n            "function promptFinderFallbackQuery(answers)",\n            "var order=['goal','problemKnown','shape','startingPoint']",\n            "data-finder-external",\n            "Prompt Kit does not cover this use case",\n            "OperantExternalResources.openForUseCase",\n            "window.promptFinderFallbackQuery=promptFinderFallbackQuery",\n        ):\n            self.assertIn(marker, self.guided)\n        self.assertNotIn(\n            "No registered prompt matched strongly enough. Search for P65",\n            self.guided,\n        )\n        for marker in (\n            "function renderExternalSourceChoices()",\n            "externalResourceIndex.source_floor",\n            "catalogBonus",\n            "https://github.com/",\n            "openForUseCase:openExternalResourcesForUseCase",\n            "Registered external source libraries",\n        ):\n            self.assertIn(marker, self.runtime)\n        for repository in ("f/prompts.chat", "mattpocock/skills", "deepseek-ai/deepseek-harness"):\n            self.assertIn(repository, self.tutorial)\n        self.assertIn("When Prompt Kit does not cover the use case", self.tutorial)\n        self.assertIn("data-finder-external", self.site)\n        self.assertIn("openForUseCase:openExternalResourcesForUseCase", self.site)\n\n'''
+              if anchor not in text: raise SystemExit('reconciled test insertion anchor missing')
+              text = text.replace(anchor, addition + anchor, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+      - name: Validate reconciled pass 1
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check docs/prompt-kit-guided-recommendations.js
+          node --check docs/prompt-kit-external-resources.js
+          python -m unittest tests.test_external_prior_art_gate tests.test_operant_external_resources -v
+          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
+          python scripts/validate_operant_external_resources.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/validate_harness.py
+          git diff --check
+
+      - name: Deliberate reconciled second pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          test = Path('tests/test_operant_external_resources.py').read_text(encoding='utf-8')
+          guided = Path('docs/prompt-kit-guided-recommendations.js').read_text(encoding='utf-8')
+          runtime = Path('docs/prompt-kit-external-resources.js').read_text(encoding='utf-8')
+          site = Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
+          checks = {
+              'prior-art mainline owner retained': 'prompt_registry_external_prior_art' in test and 'prompt_draft' in test,
+              'fallback regression retained': 'test_prompt_finder_routes_internal_gaps_to_registered_external_floor' in test,
+              'legacy external open API retained': 'function openExternalResources()' in runtime,
+              'deterministic answer precedence retained': "var order=['goal','problemKnown','shape','startingPoint']" in guided,
+              'generated fallback parity retained': 'data-finder-external' in site and 'openForUseCase:openExternalResourcesForUseCase' in site,
+          }
+          failed = [name for name, ok in checks.items() if not ok]
+          if failed: raise SystemExit(f'reconciled second-pass failures: {failed}')
+          PY
+          python -m unittest tests.test_external_prior_art_gate tests.test_operant_external_resources -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Commit reconciled exact head and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/tmp-prompt-kit-external-fallback-reconcile.yml
+          git add tests/test_operant_external_resources.py web/prompt-kit/index.html
+          git diff --cached --check
+          git status --short
+          git commit -m "merge: reconcile external prior-art gate into fallback routing"
+          git push origin HEAD:feat/prompt-kit-external-fallback-routing-20260908
+          git fetch origin main feat/prompt-kit-external-fallback-routing-20260908 --prune
+          test "$(git rev-parse origin/main)" = "947dd607eac4eda3ea47ce99c75c2a7121a87832"
+          test "$(git merge-base origin/main origin/feat/prompt-kit-external-fallback-routing-20260908)" = "947dd607eac4eda3ea47ce99c75c2a7121a87832"
+          files="$(git diff --name-only origin/main...origin/feat/prompt-kit-external-fallback-routing-20260908)"
+          expected=$'docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md\ndocs/prompt-kit-external-resources.js\ndocs/prompt-kit-guided-recommendations.js\ntests/test_operant_external_resources.py\nweb/prompt-kit/index.html'
+          test "$files" = "$expected"
