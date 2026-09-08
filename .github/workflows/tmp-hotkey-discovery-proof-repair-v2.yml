@@ -1,0 +1,69 @@
+name: Temporary hotkey discovery proof repair v2
+
+on:
+  push:
+    branches:
+      - fix/operant-natural-prompt-hotkeys-20260908
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout owning branch
+        uses: actions/checkout@v7
+        with:
+          ref: fix/operant-natural-prompt-hotkeys-20260908
+          fetch-depth: 0
+
+      - name: Align discovery assertions with instant numeric snap contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('tests/test_prompt_kit_discovery.py')
+          text = path.read_text(encoding='utf-8')
+          required = (
+              'revealPromptShortcutTarget(promptId)',
+              'Copy + reveal ',
+              'self.assertIn("**does not open prompt detail**", guide)',
+              'self.assertIn("**without opening prompt detail**", web)',
+          )
+          missing = [marker for marker in required if marker not in text]
+          if missing:
+              raise SystemExit(f'discovery contract anchors missing: {missing}')
+          text = text.replace(
+              'revealPromptShortcutTarget(promptId)',
+              "revealPromptShortcutTarget(promptId,'instant')",
+              1,
+          )
+          text = text.replace('Copy + reveal ', 'Copy + snap to ', 1)
+          text = text.replace(
+              'self.assertIn("**does not open prompt detail**", guide)',
+              'self.assertIn("type **`126`**", guide)\n        self.assertIn("No Favorite and no Hotkeys-panel Save step is required.", guide)',
+              1,
+          )
+          text = text.replace(
+              'self.assertIn("**without opening prompt detail**", web)',
+              'self.assertIn("without opening detail", web)',
+              1,
+          )
+          path.write_text(text, encoding='utf-8')
+          PY
+          python -m unittest tests.test_prompt_kit_discovery -v
+          git diff --check
+
+      - name: Commit and publish assertion repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- tests/test_prompt_kit_discovery.py
+          git diff --cached --check
+          git commit -m "test(operant): align discovery proof with instant snap"
+          git push origin HEAD:fix/operant-natural-prompt-hotkeys-20260908
