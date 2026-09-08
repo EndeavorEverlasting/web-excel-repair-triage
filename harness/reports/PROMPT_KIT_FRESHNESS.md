@@ -2,7 +2,7 @@
 
 ## Status
 
-Freshness is now a first-class acquisition guardrail. A user-reported Prompt Kit or prompt **version label** is treated as a freshness signal, not proof that the copy is current.
+Freshness is now a first-class acquisition guardrail. A user-reported Operant / Prompt Kit or prompt **version label** is treated as a freshness signal, not proof that the copy is current.
 
 If a user says they are on a version such as `V39`, or says the kit was downloaded, installed, cached, or cloned earlier, the operator/agent must recommend a refresh before troubleshooting, tutorial guidance, or prompt selection unless currentness has already been proven in the current interaction.
 
@@ -10,7 +10,7 @@ If a user says they are on a version such as `V39`, or says the kit was download
 
 1. Say that the reported copy may be stale or unverified.
 2. Route to the lowest-friction latest surface for the actual intent:
-   - normal browser use → `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`;
+   - normal browser use → `https://endeavoreverlasting.github.io/web-excel-repair-triage/operant`;
    - phone/tablet install → `https://endeavoreverlasting.github.io/web-excel-repair-triage/` in the system browser;
    - Windows stable local app → `Open-Latest-PromptKit.cmd`;
    - editable checkout → preservation-first origin/worktree/branch/divergence gates, then `git merge --ff-only origin/main`;
@@ -18,11 +18,13 @@ If a user says they are on a version such as `V39`, or says the kit was download
 3. Continue normal guidance after the refresh/currentness gate.
 4. If the user declines refresh, label the copy **stale-or-unverified** and keep that limitation visible.
 
+The legacy `/prompt-kit/` Pages path is compatibility-only. Agent/user guidance must call `/operant` the canonical public route.
+
 ## What this prevents
 
 - continuing a support conversation against an old version merely because it has a familiar version number;
 - assuming `V39`, `V40`, or any future label is current without checking the canonical route;
-- telling a normal phone/browser user to clone or pull Git just to get the latest Prompt Kit;
+- telling a normal phone/browser user to clone or pull Git just to get the latest Operant release;
 - using a bare `git pull` as proof that an editable checkout is safely current.
 
 ## Validation
