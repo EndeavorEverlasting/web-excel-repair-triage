@@ -10,6 +10,7 @@ REQUIRED_SHEETS = [
     "Dashboard",
     "Attendance",
     "Project Allocations",
+    "Project Report",
     "Dictionaries",
     "Review Queue",
     "Read Me",
@@ -36,24 +37,39 @@ def preflight_roster_v2(path: str | Path) -> Dict[str, Any]:
         for name in REQUIRED_SHEETS:
             if name not in wb.sheetnames:
                 errors.append(f"missing_sheet:{name}")
+
         if all(name in wb.sheetnames for name in ("Attendance", "Project Allocations")):
             attendance_headers = [cell.value for cell in wb["Attendance"][1]]
             allocation_headers = [cell.value for cell in wb["Project Allocations"][1]]
-            for header in ("Default Project", "Allocated Hours", "Variance", "Reconciled?"):
+            for header in ("Default / Fallback Project", "Allocated Hours", "Variance", "Reconciled?"):
                 if header not in attendance_headers:
                     errors.append(f"attendance_header:{header}")
-            for header in ("Allocation ID", "Project / Billing Scope", "Allocated Hours"):
+            for header in ("Allocation ID", "Project / Billing Scope", "Allocation Basis", "Allocated Hours"):
                 if header not in allocation_headers:
                     errors.append(f"allocation_header:{header}")
+
+        if "Project Report" in wb.sheetnames:
+            report_headers = [cell.value for cell in wb["Project Report"][1]]
+            for header in ("Project", "Allocated Hours", "Days", "Staff", "Allocation Rows"):
+                if header not in report_headers:
+                    errors.append(f"project_report_header:{header}")
+
+        if "Dictionaries" in wb.sheetnames:
+            dictionary_headers = [cell.value for cell in wb["Dictionaries"][1]]
+            if "Allocation Basis" not in dictionary_headers:
+                errors.append("dictionary_header:Allocation Basis")
+
         if "Read Me" in wb.sheetnames:
             text = " ".join(
                 str(wb["Read Me"].cell(row=r, column=1).value or "")
-                for r in range(1, min(wb["Read Me"].max_row, 20) + 1)
+                for r in range(1, min(wb["Read Me"].max_row, 24) + 1)
             )
             for phrase in (
-                "One project is the default",
+                "Default / Fallback Project is attendance metadata",
+                "Once explicit Project Allocations exist",
                 "Multi-project days are supported",
                 "allocated hours must reconcile",
+                "Project Report is deterministic",
             ):
                 if phrase not in text:
                     errors.append(f"missing_contract_text:{phrase}")
