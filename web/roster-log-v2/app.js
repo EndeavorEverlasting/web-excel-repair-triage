@@ -67,6 +67,21 @@
     return basis;
   }
 
+  function validateDefaultAllocation(attendance, rows) {
+    const defaults = rows.filter((row) => row.basis === "DEFAULT");
+    if (!defaults.length) return;
+    if (rows.length !== 1 || defaults.length !== 1) {
+      throw new Error(`DEFAULT allocation cannot coexist with explicit allocations: ${attendance.date} / ${attendance.staff}`);
+    }
+    const row = defaults[0];
+    if (row.project !== attendance.default_project) {
+      throw new Error(`DEFAULT allocation must use default / fallback project: ${attendance.date} / ${attendance.staff}`);
+    }
+    if (Math.abs(row.hours - attendance.paid_hours) > 0.01) {
+      throw new Error(`DEFAULT allocation must equal paid hours: ${attendance.date} / ${attendance.staff}`);
+    }
+  }
+
   function normalizeLocalState(payload) {
     if (!payload || payload.schema_version !== SCHEMA || !Array.isArray(payload.attendance) || !Array.isArray(payload.allocations)) {
       throw new Error("Not a roster-log-v2/v1 state file");
@@ -102,7 +117,7 @@
     });
 
     const allocationIds = new Set();
-    const allocatedDays = new Set();
+    const allocationsByDay = new Map();
     normalized.allocations.forEach((row, index) => {
       if (!validIsoDate(row.date) || !row.staff) throw new Error("Allocation rows require a valid ISO date and staff.");
       const key = keyOf(row.date, row.staff);
@@ -114,15 +129,21 @@
       row.workstream = String(row.workstream || "").trim();
       row.status = String(row.status || "RECONCILED").trim();
       row.notes = String(row.notes || "").trim();
-      allocatedDays.add(key);
+      if (!allocationsByDay.has(key)) allocationsByDay.set(key, []);
+      allocationsByDay.get(key).push(row);
     });
 
     normalized.attendance.forEach((row, index) => {
       const key = keyOf(row.date, row.staff);
-      if (row.paid_hours <= 0 || allocatedDays.has(key)) return;
+      const rows = allocationsByDay.get(key) || [];
+      if (rows.length) {
+        validateDefaultAllocation(row, rows);
+        return;
+      }
+      if (row.paid_hours <= 0) return;
       let allocationId = `DEFAULT-${row.date.replaceAll("-", "")}-${index + 1}`;
       while (allocationIds.has(allocationId)) allocationId += "D";
-      normalized.allocations.push({
+      const defaultRow = {
         allocation_id: allocationId,
         date: row.date,
         staff: row.staff,
@@ -132,8 +153,10 @@
         hours: row.paid_hours,
         status: "RECONCILED",
         notes: "Default single-project allocation"
-      });
+      };
+      normalized.allocations.push(defaultRow);
       allocationIds.add(allocationId);
+      allocationsByDay.set(key, [defaultRow]);
     });
     return normalized;
   }
@@ -217,6 +240,14 @@
     recalc();
   }
 
+  function addExplicitProject() {
+    allocationCards().forEach((card) => {
+      const basis = card.querySelector(".basis");
+      if (basis.value === "DEFAULT") basis.value = "EXPLICIT";
+    });
+    addAllocation({ basis: "EXPLICIT", hours: 0 });
+  }
+
   function renumberAllocations() {
     const cards = allocationCards();
     cards.forEach((card, index) => {
@@ -261,6 +292,16 @@
     card.querySelector(".project").value = els.defaultProject.value;
   }
 
+  function nextAllocationId(workDate, staff, index, usedIds) {
+    const staffToken = staff.replace(/[^A-Za-z0-9]/g, "").slice(0, 24) || "STAFF";
+    const stem = `LOCAL-${workDate.replaceAll("-", "")}-${staffToken}-${index + 1}`;
+    let candidate = stem;
+    let suffix = 2;
+    while (usedIds.has(candidate)) candidate = `${stem}-${suffix++}`;
+    usedIds.add(candidate);
+    return candidate;
+  }
+
   function saveDay() {
     const workDate = els.date.value;
     const staff = els.staff.value.trim();
@@ -275,13 +316,22 @@
       show("Every allocation needs a project, basis, and non-negative hours.", true);
       return;
     }
+    if (allocations.length > 1 && allocations.some((row) => row.basis === "DEFAULT")) {
+      show("DEFAULT is fallback-only. Split days must use EXPLICIT or OVERRIDE allocations.", true);
+      return;
+    }
+
     const allocated = allocations.reduce((sum, item) => sum + item.hours, 0);
     const status = Math.abs(paid - allocated) <= 0.01 ? "RECONCILED" : "DRAFT";
     const newKey = keyOf(workDate, staff);
-    if (editingKey && editingKey !== newKey) removeDay(editingKey, false);
-    else removeDay(newKey, false);
-
-    state.attendance.push({
+    const keysToReplace = new Set([newKey]);
+    if (editingKey) keysToReplace.add(editingKey);
+    const nextState = {
+      ...state,
+      attendance: state.attendance.filter((row) => !keysToReplace.has(keyOf(row.date, row.staff))),
+      allocations: state.allocations.filter((row) => !keysToReplace.has(keyOf(row.date, row.staff)))
+    };
+    nextState.attendance.push({
       date: workDate,
       staff,
       clock_in: els.clockIn.value,
@@ -290,8 +340,10 @@
       default_project: defaultProject,
       notes: els.notes.value.trim()
     });
-    allocations.forEach((row, index) => state.allocations.push({
-      allocation_id: `LOCAL-${workDate.replaceAll("-", "")}-${staff.replace(/[^A-Za-z0-9]/g, "").slice(0, 12)}-${index + 1}`,
+
+    const usedIds = new Set(nextState.allocations.map((row) => String(row.allocation_id || "")));
+    allocations.forEach((row, index) => nextState.allocations.push({
+      allocation_id: nextAllocationId(workDate, staff, index, usedIds),
       date: workDate,
       staff,
       project: row.project,
@@ -301,7 +353,13 @@
       status,
       notes: row.notes
     }));
-    state = normalizeLocalState(state);
+
+    try {
+      state = normalizeLocalState(nextState);
+    } catch (error) {
+      show(error.message, true);
+      return;
+    }
     state.projects = projectList();
     persist();
     render();
@@ -473,7 +531,7 @@
 
   function show(text, bad = false) { els.message.textContent = text; els.message.className = bad ? "bad-text" : ""; }
 
-  $("addProject").onclick = () => addAllocation({ basis: "EXPLICIT", hours: 0 });
+  $("addProject").onclick = addExplicitProject;
   $("singleProject").onclick = makeSingleProject;
   $("saveDay").onclick = saveDay;
   $("clearEditor").onclick = clearEditor;
