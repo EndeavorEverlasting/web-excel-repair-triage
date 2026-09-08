@@ -110,14 +110,20 @@ def validate(baseline_ref: str) -> dict[str, Any]:
 
 def write_report(path: Path, report: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    destination = path
+    if path.is_symlink():
+        try:
+            destination = path.resolve(strict=False)
+        except RuntimeError as exc:
+            raise OSError(f"cannot resolve report output symlink: {exc}") from exc
     payload = json.dumps(report, indent=2, sort_keys=True) + "\n"
-    existing_mode = stat.S_IMODE(path.stat().st_mode) if path.is_file() else None
-    with TemporaryDirectory(dir=path.parent, prefix=f".{path.name}.") as temp_dir:
-        temp_path = Path(temp_dir) / path.name
+    existing_mode = stat.S_IMODE(destination.stat().st_mode) if destination.is_file() else None
+    with TemporaryDirectory(dir=destination.parent, prefix=f".{destination.name}.") as temp_dir:
+        temp_path = Path(temp_dir) / destination.name
         temp_path.write_text(payload, encoding="utf-8")
         if existing_mode is not None:
             temp_path.chmod(existing_mode)
-        temp_path.replace(path)
+        temp_path.replace(destination)
 
 
 def main(argv: list[str] | None = None) -> int:
