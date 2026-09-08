@@ -74,14 +74,12 @@ jobs:
           if proof_suffix.strip() not in p95['proofGate']:
               p95['proofGate'] += proof_suffix
 
-          section = '''
-
-1D. DECOMPOSE STORAGE BEFORE ARCHITECTURE CONCLUSIONS
-Aggregate database/storage size is not application-state demand. When database or storage footprint is used to justify hosting, scaling, or serverless/container/orchestration choices, first decompose current footprint and growth by table/data class/owner. Separate durable application/business state from telemetry/logs/diagnostics, audit-like operational exhaust, caches, temporary material, and rebuildable derivatives. For generated observability data inspect retention/TTL/rotation, write rate and cardinality, sampling, indexing/duplication, and growth trend. An unbounded telemetry sink is an observability defect, not evidence that the product itself requires a larger hosting tier.
-
-Treat “a small application database buried under a telemetry accident” as a diagnostic counterexample: before redesigning topology, isolate the irreducible app-state/workload floor and quantify what remains when accidental/generated exhaust is excluded. Prefer bounded retention, sampling, rotation, or an explicitly budgeted diagnostic sink where compatible; do not persist every recurring diagnostic event in the primary relational database by default.
-
-After containment/removal, rerun the deployment operating-model decision against the corrected floor. If footprint ownership or growth cannot be proven, mark the architecture conclusion UNKNOWN/BLOCKED rather than converting aggregate size into a topology requirement.'''
+          section = (
+              '\n\n1D. DECOMPOSE STORAGE BEFORE ARCHITECTURE CONCLUSIONS\n'
+              'Aggregate database/storage size is not application-state demand. When database or storage footprint is used to justify hosting, scaling, or serverless/container/orchestration choices, first decompose current footprint and growth by table/data class/owner. Separate durable application/business state from telemetry/logs/diagnostics, audit-like operational exhaust, caches, temporary material, and rebuildable derivatives. For generated observability data inspect retention/TTL/rotation, write rate and cardinality, sampling, indexing/duplication, and growth trend. An unbounded telemetry sink is an observability defect, not evidence that the product itself requires a larger hosting tier.\n\n'
+              'Treat "a small application database buried under a telemetry accident" as a diagnostic counterexample: before redesigning topology, isolate the irreducible app-state/workload floor and quantify what remains when accidental/generated exhaust is excluded. Prefer bounded retention, sampling, rotation, or an explicitly budgeted diagnostic sink where compatible; do not persist every recurring diagnostic event in the primary relational database by default.\n\n'
+              'After containment/removal, rerun the deployment operating-model decision against the corrected floor. If footprint ownership or growth cannot be proven, mark the architecture conclusion UNKNOWN/BLOCKED rather than converting aggregate size into a topology requirement.'
+          )
           anchor = '\n\n2. BUILD A PRECISE DOMAIN VOCABULARY'
           if '1D. DECOMPOSE STORAGE BEFORE ARCHITECTURE CONCLUSIONS' not in p95['copyContent']:
               if anchor not in p95['copyContent']:
@@ -108,15 +106,16 @@ After containment/removal, rerun the deployment operating-model decision against
           test_path = Path('tests/test_prompt_registry_expansion_regression_design_teach.py')
           test_text = test_path.read_text(encoding='utf-8')
           marker = '            "only after current evidence makes that tier decision-relevant",\n'
-          additions = '''            "DECOMPOSE STORAGE BEFORE ARCHITECTURE CONCLUSIONS",
-            "Aggregate database/storage size is not application-state demand",
-            "durable application/business state",
-            "telemetry/logs/diagnostics",
-            "retention/TTL/rotation",
-            "write rate and cardinality",
-            "small application database buried under a telemetry accident",
-            "rerun the deployment operating-model decision",
-'''
+          additions = (
+              '            "DECOMPOSE STORAGE BEFORE ARCHITECTURE CONCLUSIONS",\n'
+              '            "Aggregate database/storage size is not application-state demand",\n'
+              '            "durable application/business state",\n'
+              '            "telemetry/logs/diagnostics",\n'
+              '            "retention/TTL/rotation",\n'
+              '            "write rate and cardinality",\n'
+              '            "small application database buried under a telemetry accident",\n'
+              '            "rerun the deployment operating-model decision",\n'
+          )
           if 'small application database buried under a telemetry accident' not in test_text:
               if marker not in test_text:
                   raise SystemExit('focused P95 hosting regression anchor moved')
