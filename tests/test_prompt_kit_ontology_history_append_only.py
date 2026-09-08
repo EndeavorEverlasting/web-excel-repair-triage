@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from contextlib import redirect_stderr
 from io import StringIO
+import os
 from pathlib import Path
+import stat
 from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
@@ -16,6 +18,16 @@ class PromptKitOntologyHistoryAppendOnlyTests(unittest.TestCase):
             "schema_version": "prompt-kit-ontology-history/v1",
             "append_only": True,
             "records": records,
+        }
+
+    def _report(self) -> dict[str, object]:
+        return {
+            "schema_version": "prompt-kit-ontology-history-append-only-validation/v1",
+            "status": "PASS",
+            "baseline_ref": "baseline",
+            "baseline_records": 1,
+            "current_records": 1,
+            "errors": [],
         }
 
     def test_accepts_exact_prior_prefix_with_new_records_appended(self) -> None:
@@ -62,18 +74,10 @@ class PromptKitOntologyHistoryAppendOnlyTests(unittest.TestCase):
         self.assertTrue(any("changed or moved" in item for item in errors))
 
     def test_output_io_failure_returns_2_without_traceback(self) -> None:
-        report = {
-            "schema_version": "prompt-kit-ontology-history-append-only-validation/v1",
-            "status": "PASS",
-            "baseline_ref": "baseline",
-            "baseline_records": 1,
-            "current_records": 1,
-            "errors": [],
-        }
         with TemporaryDirectory() as tmp_dir:
             output_directory = Path(tmp_dir)
             stderr = StringIO()
-            with patch.object(append_only_validator, "validate", return_value=report):
+            with patch.object(append_only_validator, "validate", return_value=self._report()):
                 with redirect_stderr(stderr):
                     return_code = append_only_validator.main(
                         [
@@ -88,24 +92,41 @@ class PromptKitOntologyHistoryAppendOnlyTests(unittest.TestCase):
         self.assertIn("Prompt Kit ontology append-only validation failed", stderr.getvalue())
 
     def test_failed_atomic_replace_preserves_existing_report_and_cleans_temp(self) -> None:
-        report = {
-            "schema_version": "prompt-kit-ontology-history-append-only-validation/v1",
-            "status": "PASS",
-            "baseline_ref": "baseline",
-            "baseline_records": 1,
-            "current_records": 1,
-            "errors": [],
-        }
         prior_report = '{"status":"PRIOR"}\n'
         with TemporaryDirectory() as tmp_dir:
             output_path = Path(tmp_dir) / "report.json"
             output_path.write_text(prior_report, encoding="utf-8")
             with patch.object(Path, "replace", side_effect=OSError("replace failed")):
                 with self.assertRaises(OSError):
-                    append_only_validator.write_report(output_path, report)
+                    append_only_validator.write_report(output_path, self._report())
 
             self.assertEqual(output_path.read_text(encoding="utf-8"), prior_report)
-            self.assertEqual(list(Path(tmp_dir).glob(".report.json.*.tmp")), [])
+            self.assertEqual(list(Path(tmp_dir).glob(".report.json.*")), [])
+
+    @unittest.skipIf(os.name == "nt", "POSIX permission semantics")
+    def test_atomic_replace_preserves_existing_report_permissions(self) -> None:
+        with TemporaryDirectory() as tmp_dir:
+            output_path = Path(tmp_dir) / "report.json"
+            output_path.write_text('{"status":"PRIOR"}\n', encoding="utf-8")
+            output_path.chmod(0o644)
+
+            append_only_validator.write_report(output_path, self._report())
+
+            self.assertEqual(stat.S_IMODE(output_path.stat().st_mode), 0o644)
+
+    @unittest.skipIf(os.name == "nt", "POSIX permission semantics")
+    def test_new_report_uses_default_creation_permissions(self) -> None:
+        with TemporaryDirectory() as tmp_dir:
+            output_path = Path(tmp_dir) / "report.json"
+            reference_path = Path(tmp_dir) / "reference.json"
+            reference_path.write_text("reference\n", encoding="utf-8")
+
+            append_only_validator.write_report(output_path, self._report())
+
+            self.assertEqual(
+                stat.S_IMODE(output_path.stat().st_mode),
+                stat.S_IMODE(reference_path.stat().st_mode),
+            )
 
 
 if __name__ == "__main__":
