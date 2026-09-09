@@ -234,7 +234,7 @@ The desktop and mobile layouts use the same prompts, filters, renderers, and act
 - **GNHF** remains available as a predefined profile pack for custom profile composition.
 - Press **Home** for the true document top and **End** for the document bottom; neither key changes the active A–E profile.
 - Use the glowing **Tutorial · Find My Prompt** control when you do not know which prompt to choose; it reuses the same search/synonym/registry logic.
-- Single click or tap on a prompt card copies the prompt; the current polish layer gives green clipboard confirmation.
+- Single click or tap on a prompt card copies the prompt; the current polish layer gives green clipboard confirmation that shows the prompt id and a bounded preview of the copied text.
 - Double-click expands on desktop; touch users receive explicit **Open**.
 - Favorite / Open / Copy occupy one guarded action rail rather than overlapping absolute coordinates.
 - Library, category, type, search, Favorites, and collapsible sections remain the same model on narrow screens.
