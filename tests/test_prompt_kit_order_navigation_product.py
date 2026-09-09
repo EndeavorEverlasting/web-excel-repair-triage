@@ -79,10 +79,11 @@ class PromptKitOrderNavigationProductTests(unittest.TestCase):
 
     def test_visible_product_identity_is_operant(self) -> None:
         html = build_prompt_kit_registry.render()
-        self.assertIn('<title>Operant 0.1</title>', html)
-        self.assertIn('Operant <span>0.1</span>', html)
+        version = build_prompt_kit_registry.build_prompt_kit.load_operant_version()
+        self.assertIn(f'<title>Operant {version}</title>', html)
+        self.assertIn(f'Operant <span>{version}</span>', html)
         self.assertIn('Capabilities · Skills · Implementations · Evidence', html)
-        self.assertIn('id=\"versionBadge\">0.1</div>', html)
+        self.assertIn(f'id=\"versionBadge\">{version}</div>', html)
         self.assertNotIn('AI Harness Prompt Kit <span>v40</span>', html)
 
     def test_dynamic_prompt_id_is_not_embedded_in_inline_copy_javascript(self) -> None:
