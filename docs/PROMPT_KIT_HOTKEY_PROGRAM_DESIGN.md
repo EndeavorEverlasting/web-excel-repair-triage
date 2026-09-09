@@ -1,193 +1,107 @@
 # Prompt Kit hotkey program design
 
 ## Scope
-Design the keyboard-command subsystem before configurable prompt shortcuts are broadly implemented. This design extends the existing Prompt Kit runtime; it must not create a second shortcut system, patch generated HTML directly, or turn the responsive-layout harness into a keyboard implementation owner.
+This document owns the keyboard-command boundary for Prompt Kit. Production behavior extends the existing runtime in `docs/prompt-kit-polish.js`; generated HTML is never hand-edited and the responsive-layout harness is not a second keyboard implementation owner.
 
-## User outcomes and invariants
-- Filters support semantic **show**, **hide**, and **toggle** commands through one state owner.
-- Every current Favorite automatically publishes its canonical lower-case prompt ID as a stored shortcut such as `p95`; the keyboard matching grammar publishes digit aliases (`95`) so operators type digits only. Manual shortcut configuration remains a compatibility/repair path, not a second commitment step.
-- Keyboard commands do not fire in `input`, `textarea`, `select`, or content-editable surfaces.
-- Built-ins and user bindings cannot silently collide.
-- A prompt binding is valid only when its target exists in the canonical prompt catalog.
-- Durable binding writes are fail-closed: storage failure does not publish a new in-memory binding.
-- Hotkey help is a projection of the effective shortcut registry, not a second truth source.
+## Current invariants
+- The canonical `PROMPTS` catalog owns prompt-number hotkeys for every prompt.
+- The bare numeric identity is the primary gesture: `126` → `P126`. `p126` remains a compatibility alias.
+- A prompt does not need to be a Favorite, recommended, or manually configured before its numeric hotkey works.
+- Manual prompt-shortcut persistence is retired. `promptKit.promptShortcuts.v1` is not production activation authority.
+- Completing a prompt-number sequence performs canonical copy + instant snap to the rendered card; it does not open prompt detail.
+- Favorites remain durable organizational state only. Favoriting and unfavoriting never create or revoke the catalog hotkey.
+- `sharedShortcut: true` is recommendation/discoverability metadata only; it does not authorize activation.
+- Keyboard commands are suppressed in `input`, `textarea`, `select`, and content-editable surfaces and for modified chords.
+- Header navigation is letter-only (`A`–`E`). Digits belong to prompt identity and never double as profile-tab commands.
+- Hotkey help is a projection of effective behavior, not a second truth source.
 
 ## Domain vocabulary
-- **ShortcutGesture**: normalized key or typed sequence (`f`, `[`, `]`, `p95`).
-- **ShortcutCommand**: semantic action such as `FILTER_HIDE`, `FILTER_SHOW`, `FILTER_TOGGLE`, or `OPEN_PROMPT`.
-- **PromptTarget**: canonical prompt identity such as `P95`.
-- **ShortcutBinding**: gesture → command + optional PromptTarget.
-- **ShortcutPolicy**: normalization, reserved gestures, collisions, target validation, editable-target suppression.
-- **ShortcutRegistry**: canonical effective map of built-ins plus persisted user bindings.
-- **ShortcutDispatcher**: keyboard-event orchestration and typed-sequence buffer owner.
+- **ShortcutGesture**: a normalized key or sequence such as `f`, `[`, `]`, `126`, or compatibility form `p126`.
+- **PromptTarget**: canonical prompt identity such as `P126`.
+- **ShortcutRegistry**: effective built-ins plus prompt identities derived from the canonical `PROMPTS` catalog.
+- **ShortcutDispatcher**: keyboard-event orchestration and transient sequence-buffer owner.
 - **FilterVisibility**: sole owner of visible/hidden filter state.
-- **PromptNavigator**: port from PromptTarget to rendered prompt navigation/open behavior.
-- **ShortcutStore**: persistence port for user bindings; a namespaced/versioned `localStorage` adapter is the expected production implementation.
+- **PromptNavigator**: translation from a PromptTarget to the existing reveal/center/copy behavior.
 
-## Module and interface map
-
-### ShortcutPolicy
-Owns validation decisions; no DOM or storage side effects.
-
-Public seam:
-- `normalizeGesture(raw)`
-- `validateBinding(binding, effectiveBindings, promptCatalog)`
-- keyboard classification helpers
-
-Expected rejections: `INVALID_GESTURE`, `RESERVED_COLLISION`, `UNKNOWN_PROMPT`, `EDITABLE_TARGET`.
-
-### ShortcutRegistry
-Owns built-ins and user bindings.
-
-Public seam:
-- `effectiveBindings()`
-- `configure(binding)`
-- later: `remove(gesture)`
-
-Mutation rule: validate → assemble candidate → persist candidate → publish candidate. A failed save returns `PERSISTENCE_FAILED` and leaves the prior effective map intact.
-
-### ShortcutDispatcher
-Owns transient sequence state (`p` → `p9` → `p95`).
-
-Public seam:
-- `handleKey(event)`
-- `resetSequence(reason)`
-
-Dependencies: ShortcutRegistry, ShortcutPolicy, FilterVisibility, PromptNavigator, and existing semantic navigation actions. It must not know card selectors or storage serialization.
-
-### FilterVisibility
-Owns the one filter visibility transaction.
-
-Public seam:
-- `show()`
-- `hide()`
-- `toggle()`
-- `isVisible()`
-
-Production implementation should synchronize CSS class, `aria-expanded`, title, and control text in one setter. Pointer clicks and hotkeys call that setter rather than duplicating DOM mutations.
-
-### PromptNavigator
-Public seam: `openPrompt(promptId)`.
-
-It owns translation from PromptTarget to current Prompt Kit card/render behavior. The dispatcher supplies `P95`; the navigator decides how to reveal, focus, scroll, or open it through existing product functions.
-
-### ShortcutStore
-Public seam: `load()` / `save(config)`.
-
-Serialization ends here. Domain validation begins after loading.
+There is no production `ShortcutStore` for prompt-number activation. Earlier persistence experiments remain historical/prototype evidence only.
 
 ## State ownership
 | State | Owner | Persistence |
 | --- | --- | --- |
-| Built-in bindings | ShortcutRegistry | code |
-| User bindings | ShortcutRegistry | ShortcutStore |
+| Built-in commands | runtime shortcut table | code |
+| Prompt-number bindings | canonical `PROMPTS` catalog | generated registry |
 | Typed-sequence buffer | ShortcutDispatcher | none |
-| Filter visible/hidden | FilterVisibility | none initially |
-| Prompt identities | canonical `PROMPTS` catalog | generated registry |
-| Hotkey help rows | projection of ShortcutRegistry | none |
+| Filter visibility | FilterVisibility | none initially |
+| Favorite membership | existing Favorites owner | browser Favorites storage |
+| Recommended labels | canonical prompt metadata | generated registry |
+| Hotkey help rows | projection of runtime/catalog + metadata | none |
 
 Dependency direction:
 
-`keydown / pointer UI → ShortcutDispatcher → ShortcutPolicy + ShortcutRegistry → semantic action → DOM/storage adapter`
+`keydown → ShortcutDispatcher → catalog-derived binding resolution → semantic action → existing DOM/copy adapters`
 
-No adapter may become a second policy or state owner.
+No Favorite store, recommendation flag, generated HTML patch, or help row may become a second activation policy.
 
-## Success call stack: filters
-`USER KEY EVENT`
-→ keyboard entrypoint
-→ `ShortcutDispatcher.handleKey`
-→ binding resolution
-→ `FILTER_HIDE` / `FILTER_SHOW` / `FILTER_TOGGLE`
-→ `FilterVisibility.hide/show/toggle`
-→ one state/DOM synchronization transaction
-→ handled result + trace.
+## Prompt identity behavior
+Starting state: `P11`, `P13`, `P111`, and `P126` exist in the catalog. No setup is required.
 
-## Success call stack: prompt identities
-Starting state: `P11`, `P13`, and `P111` exist and their canonical lower-case sequences are configured.
+- `126` resolves `P126` immediately, copies canonical `copyContent`, and snaps its card to center.
+- `p126` follows the same path as a compatibility alias.
+- `13` resolves `P13` immediately when no longer catalog identity shares that prefix.
+- `11` is also a prefix of `111`, so the dispatcher holds the shorter exact candidate until the 1.2-second sequence boundary.
+- `111` arriving before that boundary resolves `P111` and cancels the pending `P11` candidate.
+- Dots are visual separators while a prompt-number buffer is active: `p1.1` follows `P11`; `p1.11` follows `P111`.
+- When the prompt-number buffer is active, a nonmatching letter can settle a pending exact prompt and then continue to its normal command domain; header `A`–`E` remains independently usable.
 
-`p13` → exact non-prefix binding resolves immediately → `PromptNavigator.openPrompt('P13')`.
+## Failure boundaries
+- **Editable target:** ignore prompt hotkeys while the user is typing in an editable surface.
+- **Modified chord:** modifier-bearing input does not enter the prompt-number buffer.
+- **Unknown target:** a numeric candidate without a catalog prefix performs no prompt activation.
+- **Prefix ambiguity:** the shorter exact target waits for the sequence boundary; continued valid input wins.
+- **Reveal failure:** do not claim success or copy a different prompt when the canonical target cannot be rendered/revealed.
 
-`p11` → exact binding is also a prefix of `p111` → dispatcher holds the candidate → the existing
-1.2-second boundary expires with no continuation → `PromptNavigator.openPrompt('P11')`.
+## Favorites and recommendations
+Favorites answer **what the user wants grouped**, not **which prompts are keyboard-addressable**. The Hotkeys panel may label Favorite and Recommended prompts for discoverability, but every canonical prompt already has its numeric route. Removing a Favorite therefore leaves its numeric hotkey available.
 
-`p111` → the buffered `p11` candidate receives the final `1` before timeout → the longer exact binding
-resolves → the pending shorter match is cancelled → `PromptNavigator.openPrompt('P111')`.
+## Built-in command boundary
+- unmodified backtick `` ` `` toggles Hotkeys and keeps the core shortcut cluster reachable with one hand;
+- `/` focuses search;
+- `F` toggles filters, `[` hides them, and `]` shows them;
+- `Home` and `End` navigate the page;
+- `A`–`E` activate the five profile slots;
+- `Escape` closes/clears the active keyboard surface and resets transient prompt sequence state.
 
-Dots are visual separators, not identity characters, while a prompt-ID buffer is active: `p1.1` follows
-the `P11` path and `p1.11` follows the `P111` path. Exact prompt identifiers therefore use the normal
-binding path; they do not require a second global search/router implementation.
+## Executable prototype status
+`docs/prompt-kit-hotkey-prototype.js` remains a seam/failure-model prototype. Its historical persistence-failure simulation is intentionally prototype-only; production prompt-number activation no longer loads, saves, configures, or validates a persisted shortcut binding.
 
-## Failure call stacks
-- **Collision:** configure `f → OPEN_PROMPT(P95)` → policy sees reserved built-in → `RESERVED_COLLISION` → no store write.
-- **Unknown target:** configure `p999 → OPEN_PROMPT(P999)` → catalog rejection → `UNKNOWN_PROMPT` → no store write.
-- **Storage failure:** validated `p95` candidate → `ShortcutStore.save` fails → `PERSISTENCE_FAILED` → previous effective registry remains authoritative.
-- **Editable target:** key event from search/input → `EDITABLE_TARGET`/ignored → sequence state and product state unchanged.
-
-## Executable seam prototype
-`docs/prompt-kit-hotkey-prototype.js` implements the domain seams without DOM coupling and self-tests:
-- success: hide, show, toggle, `OPEN_PROMPT(P95)`;
-- failure: editable target, reserved collision, unknown prompt, persistence failure.
-
-Run:
-
-```text
-node docs/prompt-kit-hotkey-prototype.js
-```
-
-Expected top-level result: `status: PASS` with all eight paths represented.
-
-## Seam comparison
-**Rejected:** per-widget key listeners with local state/persistence/help rules. They minimize the first patch but duplicate collision policy, input safety, state ownership, and help truth.
-
-**Selected:** one dispatcher + semantic state owners. It keeps the interface small while centralizing the hard behavior: collision resolution, sequence buffering, persistence publication, and command dispatch.
+## Superseded production decisions
+The following earlier decisions are explicitly superseded and must not be reintroduced:
+- Favorite-authorized prompt activation;
+- a Favorite prompt-ID Save field in Hotkeys;
+- `promptKit.promptShortcuts.v1` as an activation store;
+- requiring `p###` as the primary typed identity;
+- treating `sharedShortcut` recommendation metadata as activation authority.
 
 ## Routing hook for agents
-When work mentions **hotkey**, **shortcut**, **keyboard navigation**, **show/hide/toggle filters**, **favorite prompt shortcut**, **prompt-ID shortcut**, or an example such as **`p95`**, inspect these owners before creating new machinery:
+For hotkey, shortcut, keyboard navigation, Favorite shortcut, prompt-ID shortcut, or filter-key work, inspect in order:
 1. this design;
-2. `docs/prompt-kit-polish.js` for current runtime behavior;
-3. focused Prompt Kit interaction/header/filter tests;
-4. `scripts/build_prompt_kit_registry.py` for generated-site parity;
-5. `harness/prompt-kit-layout/CODEBASE_MAP.md` for routing only.
+2. `docs/prompt-kit-polish.js`;
+3. `tests/test_prompt_kit_hotkey_completion.py` and `tests/test_prompt_kit_hotkey_identity_runtime.py`;
+4. `tests/prompt_kit_hotkey_identity_browser_proof.py` and the observed-browser workflow;
+5. `scripts/build_prompt_kit_registry.py` for generated-site parity;
+6. interaction/cross-input contracts for collision regression evidence.
 
-Do not create another shortcut registry, another filter visibility owner, or a generated-site-only patch unless current ownership is proven insufficient.
+Do not create another shortcut registry or patch generated HTML directly.
 
-## Second-pass critique
-Prototype and production evidence changed the initial sketch in five useful ways:
-- `p95` is an ordinary configured sequence, not a special prompt-ID handler.
-- sequence state belongs in the dispatcher, not storage or PromptNavigator.
-- persistence must succeed before a new binding becomes effective.
-- hide/show/toggle are three commands over one filter state owner, not three DOM paths.
-- header navigation is letter-only (`A`–`E`), so digits never double as header commands; when one configured prompt ID prefixes another, the dispatcher delays the shorter exact match until the sequence boundary or a longer exact match resolves.
+## Proof contract
+Completion requires all of the following on the exact candidate head:
+- production source asserts catalog-derived numeric authority and contains no manual prompt-shortcut persistence/configuration path;
+- focused runtime tests prove bare numeric identities, compatibility aliases, timeout/prefix behavior, editable/modifier safety, and header-domain separation;
+- generated `web/prompt-kit/index.html` is rebuilt through the canonical generator and matches source;
+- observed Chromium literally types bare `126` through the page keyboard path from a non-Favorite state, then verifies canonical P126 clipboard content and centered-card geometry;
+- the broader interaction/discovery/cross-input validators remain green.
 
-Production decisions closed on 2026-08-22:
-- unmodified backtick `` ` `` toggles the Hotkeys surface. This keeps the core shortcut cluster reachable with one hand; `/` remains dedicated to Focus search.
-- modifier chords and editable fields suppress the backtick Hotkeys command.
-- `F` remains filter toggle; `[` explicitly hides filters and `]` explicitly shows filters.
-- configured prompt-ID sequences expire after 1.2 seconds.
-- every current Favorite automatically participates in the effective prompt-ID shortcut registry; unfavoriting removes that derived shortcut immediately, while the versioned explicit-binding store remains a compatibility/repair path.
-- a completed prompt-ID shortcut copies the canonical prompt and scrolls its card into view without opening prompt detail through `showPromptDetail`.
-- shortcut persistence uses versioned `promptKit.promptShortcuts.v1` storage and publishes only after a successful durable write.
-- opening Hotkeys by either the visible button or unmodified backtick reveals and focuses the Favorite prompt ID input; `Escape` closes Hotkeys even while that editable input owns focus and restores focus to the Hotkeys toggle.
-- configured shortcut rows sort by numeric prompt sequence rather than lexicographic ID text.
-
-These production choices preserve the selected seams and remove the prior UX-policy ambiguity.
-
-Production decisions extended on 2026-09-01:
-- a registry prompt may publish a shared recommended shortcut by shipping `sharedShortcut: true` in its canonical registry record; the effective typed sequence is the lowercase prompt ID.
-- shared recommended shortcuts are active for every user without requiring a Favorite and complete through the same copy + reveal dispatch path.
-- built-ins keep precedence; Favorite-derived bindings require no duplicate shortcut write because durable Favorite state is their authority. Explicit stored bindings remain fail-closed compatibility data and are effective only while their prompt remains a Favorite.
-- Hotkey help lists shared recommended shortcuts as a projection of the registry with a Recommended label and no Remove control, because the registry owns them.
-
-## Proof ceiling
-Repository proof must cover the production source, generated-site parity, input/modifier suppression, filter commands, sequence collision ordering, timeout semantics, fail-closed persistence, target validation, and canonical prompt-detail dispatch. The user's direct browser exercise supplies additional live evidence that the existing visible hotkeys operate on the deployed UI.
-
-The remaining ceiling is limited to environment diversity that cannot be exhaustively certified by this repository: every browser/keyboard-layout combination, future browser-storage policy changes, and subjective ergonomics on devices not exercised by the current operator. Those are not unresolved ownership or implementation gaps; future reports should name a concrete failing environment before reopening architecture.
+Repository/browser CI cannot certify every physical keyboard layout or every browser clipboard policy. Those environments remain the proof ceiling; they do not justify weakening the catalog-derived contract.
 
 ## Fixed implementation seam
-Production behavior is owned in `docs/prompt-kit-polish.js`; `web/prompt-kit/index.html` is rebuilt only through `scripts/build_prompt_kit_registry.py`. New hotkeys must extend the existing dispatcher/state owners and focused tests rather than introduce a second keyboard registry, second filter state owner, or generated-only patch.
-
-The owning CI gate is `.github/workflows/prompt-kit-web.yml`, which compiles and executes `tests/test_prompt_kit_hotkey_completion.py` alongside the existing Prompt Kit interaction, discovery, navigation, filtering, mobile, portability, and exact-generated-site checks.
-
-Production decision extended on 2026-09-08:
-- Opening prompt detail centers the already-rendered prompt card without changing the current filter/profile context. Direct Go to P# first reveals the canonical target in the library, centers it, and then opens detail.
-- Prompt detail exposes the same Favorite state as the card star. Favoriting from either surface immediately makes the canonical lower-case prompt ID an effective hotkey; no second Save-shortcut action is required.
+Production behavior is owned in `docs/prompt-kit-polish.js`; `web/prompt-kit/index.html` is rebuilt only through `scripts/build_prompt_kit_registry.py`. New hotkeys extend the existing dispatcher/state owners rather than introducing a second keyboard registry, second filter state owner, or generated-only patch.

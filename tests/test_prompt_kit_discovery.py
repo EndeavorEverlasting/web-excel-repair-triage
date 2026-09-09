@@ -291,12 +291,13 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         start = polish.index("function activatePromptShortcutTarget")
         end = polish.index("\n\nfunction handleConfiguredPromptShortcutKey", start)
         activation = polish[start:end]
-        self.assertIn("revealPromptShortcutTarget(promptId)", activation)
+        self.assertIn("revealPromptShortcutTarget(promptId,'instant')", activation)
         self.assertIn("copyPrompt(promptId)", activation)
         self.assertNotIn("showPromptDetail", activation)
-        self.assertIn("Copy + reveal '+promptId", polish)
-        self.assertIn("**does not open prompt detail**", guide)
-        self.assertIn("**without opening prompt detail**", web)
+        self.assertIn("Copy + snap to '+promptId", polish)
+        self.assertIn("type **`126`**", guide)
+        self.assertIn("No Favorite and no Hotkeys-panel Save step is required.", guide)
+        self.assertIn("without opening detail", web)
         self.assertNotIn("open the canonical prompt detail immediately", web)
 
         self.assertIn("Favorites do **not** reorder the normal library", guide)
