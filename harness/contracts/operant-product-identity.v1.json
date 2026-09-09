@@ -79,6 +79,8 @@
       "build_prompt_kit.py",
       "web/prompt-kit/**",
       "docs/prompt-kit*.js",
+      "docs/prompts.json",
+      "docs/reference.json",
       "registry/prompts/**",
       "PROMPT_KIT_ACCESS.md",
       "OPEN_PROMPT_KIT_ON_PHONE.md",
@@ -122,6 +124,9 @@
       "workflow": ".github/workflows/operant-versioning.yml",
       "release_pr_prefix": "automation/operant-release-",
       "one_open_release_pr": true,
+      "refresh_open_release_pr_in_place": true,
+      "reject_stale_release_candidate": true,
+      "workflow_dispatch_ref": "main",
       "release_after_validated_mainline_version_change": true
     },
     "rollback": "Restore or redeploy a previously tagged commit/artifact. Never decrement, rename, erase, or reuse a released version."

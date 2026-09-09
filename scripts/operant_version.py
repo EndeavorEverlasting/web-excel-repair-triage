@@ -233,10 +233,17 @@ def _baseline(current: SemVer, policy: dict) -> tuple[str, str | None]:
     return sha, None
 
 
-def plan(base: str | None = None, head: str = "HEAD") -> dict:
+def plan(
+    base: str | None = None,
+    head: str = "HEAD",
+    *,
+    current: SemVer | None = None,
+) -> dict:
     policy = _policy()
-    current = current_version()
-    baseline, baseline_tag = _baseline(current, policy) if base is None else (base, None)
+    resolved_current = current if current is not None else current_version()
+    baseline, baseline_tag = (
+        _baseline(resolved_current, policy) if base is None else (base, None)
+    )
     revs = _run_git("rev-list", "--reverse", "--no-merges", f"{baseline}..{head}")
     relevant: list[dict] = []
     classifications: list[str | None] = []
@@ -245,7 +252,7 @@ def plan(base: str | None = None, head: str = "HEAD") -> dict:
         paths = _commit_paths(sha)
         if not is_release_relevant(paths, message, policy):
             continue
-        release_type = classify_message(message, current, policy)
+        release_type = classify_message(message, resolved_current, policy)
         classifications.append(release_type)
         relevant.append(
             {
@@ -256,10 +263,10 @@ def plan(base: str | None = None, head: str = "HEAD") -> dict:
             }
         )
     release_type = highest_release_type(classifications)
-    next_version = derive_next_version(current, release_type)
+    next_version = derive_next_version(resolved_current, release_type)
     return {
         "schema_version": "operant-version-plan/v1",
-        "current_version": str(current),
+        "current_version": str(resolved_current),
         "release_type": release_type,
         "next_version": str(next_version),
         "baseline_sha": baseline,
@@ -281,7 +288,7 @@ def assert_version_not_released(version: SemVer | str, tags: Iterable[str] | Non
         raise VersioningError(f"released Operant version would be reused: {tag}")
 
 
-def _changelog_section(plan_payload: dict, version: str) -> str:
+def _changelog_section(plan_payload: dict, version: str, release_date: str | None = None) -> str:
     groups = {
         "major": "Breaking changes",
         "minor": "Features / breaking pre-1.0 changes",
@@ -292,7 +299,8 @@ def _changelog_section(plan_payload: dict, version: str) -> str:
         kind = commit.get("release_type")
         if kind in by_kind:
             by_kind[kind].append(commit)
-    lines = [f"## {version} - {date.today().isoformat()}", ""]
+    stamped = release_date or date.today().isoformat()
+    lines = [f"## {version} - {stamped}", ""]
     for kind in RELEASE_TYPES:
         commits = by_kind[kind]
         if not commits:
@@ -304,6 +312,145 @@ def _changelog_section(plan_payload: dict, version: str) -> str:
     if not any(by_kind.values()):
         lines.extend(["- Deterministic repository versioning maintenance.", ""])
     return "\n".join(lines).rstrip() + "\n\n"
+
+
+_CHANGELOG_HEADER_RE = re.compile(
+    r"^## (?P<version>\d+\.\d+\.\d+) - (?P<date>\d{4}-\d{2}-\d{2})\s*$",
+    re.MULTILINE,
+)
+
+
+def _split_changelog_sections(text: str) -> tuple[str, list[tuple[str, str, str]]]:
+    """Return (preamble, [(version, date, body_including_heading), ...])."""
+    matches = list(_CHANGELOG_HEADER_RE.finditer(text))
+    if not matches:
+        return text, []
+    preamble = text[: matches[0].start()]
+    sections: list[tuple[str, str, str]] = []
+    for index, match in enumerate(matches):
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        sections.append((match.group("version"), match.group("date"), text[match.start() : end]))
+    return preamble, sections
+
+
+def replace_candidate_changelog_section(
+    changelog_text: str,
+    plan_payload: dict,
+    version: str,
+    previous_versions: Sequence[str] | None = None,
+) -> str:
+    """Replace open-candidate section(s) with the recomputed section for version."""
+    header = (
+        "# Operant Changelog\n\n"
+        "Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.\n\n"
+    )
+    if not changelog_text.startswith("# Operant Changelog"):
+        raise VersioningError("unexpected Operant changelog format")
+    preamble, sections = _split_changelog_sections(changelog_text)
+    if not preamble.strip():
+        preamble = header
+    drop = {str(value) for value in (previous_versions or ())}
+    drop.add(version)
+    retained = [body for ver, _date, body in sections if ver not in drop]
+    release_date = next((d for ver, d, _body in sections if ver == version), None)
+    insertion = _changelog_section(plan_payload, version, release_date=release_date)
+    return preamble.rstrip() + "\n\n" + insertion + "".join(retained).lstrip()
+
+
+def _version_at_ref(ref: str) -> SemVer | None:
+    probe = subprocess.run(
+        ["git", "cat-file", "-e", f"{ref}:OPERANT_VERSION"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if probe.returncode != 0:
+        return None
+    text = _run_git("show", f"{ref}:OPERANT_VERSION")
+    return SemVer.parse(text.strip().splitlines()[0])
+
+
+def validate_release_candidate(base: str = "origin/main", head: str = "HEAD") -> list[str]:
+    """Reject automation release candidates that no longer match a recomputed mainline plan.
+
+    Non-release heads (authority matches base) pass without further checks so ordinary
+    feature PRs can reuse the same workflow job. When the default branch does not yet
+    carry OPERANT_VERSION, the establishing PR also passes.
+    """
+    findings: list[str] = []
+    try:
+        base_sha = _run_git("rev-parse", base)
+        head_sha = _run_git("rev-parse", head)
+        base_version = _version_at_ref(base)
+        head_version = current_version() if head == "HEAD" else _version_at_ref(head)
+    except VersioningError as exc:
+        return [str(exc)]
+
+    if base_version is None:
+        return findings
+    if head_version is None:
+        findings.append(f"release candidate head is missing OPERANT_VERSION: {head}")
+        return findings
+    if head_version == base_version:
+        return findings
+
+    if subprocess.run(
+        ["git", "merge-base", "--is-ancestor", base_sha, head_sha], cwd=ROOT, check=False
+    ).returncode != 0:
+        findings.append(
+            f"stale Operant release candidate: {base} is not an ancestor of {head}"
+        )
+
+    try:
+        expected = plan(base=None, head=base, current=base_version)
+    except VersioningError as exc:
+        return findings + [f"cannot recompute release plan from {base}: {exc}"]
+
+    if expected.get("release_type") is None:
+        findings.append(
+            f"stale Operant release candidate: {base} no longer has a release-worthy change"
+        )
+        return findings
+
+    expected_version = SemVer.parse(str(expected["next_version"]))
+    if head_version != expected_version:
+        findings.append(
+            "stale Operant release candidate version: "
+            f"head={head_version} expected={expected_version}"
+        )
+
+    changelog_text = CHANGELOG.read_text(encoding="utf-8") if CHANGELOG.exists() else ""
+    _preamble, sections = _split_changelog_sections(changelog_text)
+    matching = [body for ver, _date, body in sections if ver == str(expected_version)]
+    if not matching:
+        findings.append(
+            f"stale Operant release candidate changelog: missing section for {expected_version}"
+        )
+    else:
+        release_date = next(d for ver, d, _body in sections if ver == str(expected_version))
+        expected_section = _changelog_section(
+            expected, str(expected_version), release_date=release_date
+        ).rstrip()
+        actual_section = matching[0].rstrip()
+        if _changelog_commit_fingerprint(actual_section) != _changelog_commit_fingerprint(
+            expected_section
+        ):
+            findings.append(
+                f"stale Operant release candidate changelog for {expected_version}: "
+                "relevant commits no longer match recomputed plan"
+            )
+    return findings
+
+
+def _changelog_commit_fingerprint(section: str) -> tuple[str, ...]:
+    """Normalize a changelog section to ordered subject+sha markers for stale detection."""
+    markers: list[str] = []
+    for line in section.splitlines():
+        match = re.match(r"^- (.+) \(`([0-9a-f]{8})`\)$", line.strip())
+        if match:
+            markers.append(f"{match.group(1)}|{match.group(2)}")
+    return tuple(markers)
 
 
 def _write_temp(path: Path, content: bytes) -> Path:
@@ -372,11 +519,17 @@ def apply_plan(plan_payload: dict) -> None:
 
     header = "# Operant Changelog\n\nHuman-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.\n\n"
     existing = CHANGELOG.read_text(encoding="utf-8") if CHANGELOG.exists() else header
-    if not existing.startswith("# Operant Changelog"):
-        raise VersioningError("unexpected Operant changelog format")
-    insertion = _changelog_section(plan_payload, str(next_version))
-    body = existing[len(header) :] if existing.startswith(header) else existing.split("\n\n", 2)[-1]
-    changelog_text = header + insertion + body.lstrip()
+    previous_candidate = None
+    if existing.startswith("# Operant Changelog"):
+        _preamble, sections = _split_changelog_sections(existing)
+        if sections and SemVer.parse(sections[0][0]) > current:
+            previous_candidate = sections[0][0]
+    changelog_text = replace_candidate_changelog_section(
+        existing if existing.startswith("# Operant Changelog") else header + existing,
+        plan_payload,
+        str(next_version),
+        previous_versions=[previous_candidate] if previous_candidate else None,
+    )
 
     _atomic_write_many(
         {
@@ -461,6 +614,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     apply_parser.add_argument("--plan", required=True, type=Path)
     validate_parser = sub.add_parser("validate", help="validate canonical authority and mirrors")
     validate_parser.add_argument("--require-tag", action="store_true")
+    candidate_parser = sub.add_parser(
+        "validate-release-candidate",
+        help="reject stale automation release candidates against recomputed mainline plan",
+    )
+    candidate_parser.add_argument("--base", default="origin/main")
+    candidate_parser.add_argument("--head", default="HEAD")
     sub.add_parser("current", help="print the canonical Operant version")
     args = parser.parse_args(argv)
     try:
@@ -487,6 +646,15 @@ def main(argv: Sequence[str] | None = None) -> int:
                     print(f"- {finding}")
                 return 1
             print(f"OPERANT_VERSION_PASS version={current_version()}")
+            return 0
+        if args.command == "validate-release-candidate":
+            findings = validate_release_candidate(base=args.base, head=args.head)
+            if findings:
+                print("OPERANT_RELEASE_CANDIDATE_FAIL")
+                for finding in findings:
+                    print(f"- {finding}")
+                return 1
+            print("OPERANT_RELEASE_CANDIDATE_PASS")
             return 0
     except VersioningError as exc:
         print(f"OPERANT_VERSION_FAIL: {exc}", file=sys.stderr)

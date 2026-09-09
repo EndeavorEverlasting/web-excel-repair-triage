@@ -7,6 +7,8 @@ on:
       - build_prompt_kit.py
       - docs/OPERANT_CHANGELOG.md
       - docs/OPERANT_VERSIONING.md
+      - docs/prompts.json
+      - docs/reference.json
       - harness/contracts/operant-product-identity.v1.json
       - scripts/build_prompt_kit_registry.py
       - scripts/operant_version.py
@@ -47,7 +49,9 @@ jobs:
       - name: Verify deterministic authority and mirrors
         run: |
           set -euo pipefail
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
           python scripts/operant_version.py validate
+          python scripts/operant_version.py validate-release-candidate --base origin/main
           python scripts/validate_operant_product_identity.py --summary
           python -m unittest tests.test_operant_product_identity tests.test_prompt_kit_order_navigation_product -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
@@ -65,6 +69,7 @@ jobs:
       - name: Checkout exact mainline head with release history
         uses: actions/checkout@v7
         with:
+          ref: main
           fetch-depth: 0
           fetch-tags: true
 
@@ -100,8 +105,9 @@ jobs:
                 exit 1
               fi
             else
+              head_sha="$(git rev-parse HEAD)"
               gh release create "$tag" \
-                --target "$GITHUB_SHA" \
+                --target "$head_sha" \
                 --title "Operant v${version}" \
                 --generate-notes
             fi
@@ -115,6 +121,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p Outputs
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
           python scripts/operant_version.py plan --output Outputs/operant-version-plan.json
           release_type="$(python - <<'PY'
           import json
@@ -133,38 +141,56 @@ jobs:
           echo "release_type=${release_type}" >> "$GITHUB_OUTPUT"
           echo "next_version=${next_version}" >> "$GITHUB_OUTPUT"
 
-      - name: Prepare one reviewable release PR when a bump is earned
+      - name: Prepare or refresh one reviewable release PR when a bump is earned
         if: ${{ steps.plan.outputs.release_type != '' }}
         shell: bash
         run: |
           set -euo pipefail
-          existing="$(gh pr list --state open --base main --json headRefName,url --jq '.[] | select(.headRefName | startswith("automation/operant-release-")) | .url' | head -n 1)"
-          if [[ -n "$existing" ]]; then
-            echo "An Operant release PR already owns the pending release boundary: $existing"
-            exit 0
+          next_version="${{ steps.plan.outputs.next_version }}"
+          main_sha="$(git rev-parse origin/main)"
+          existing_branch="$(gh pr list --state open --base main --json headRefName,url,number --jq '[.[] | select(.headRefName | startswith("automation/operant-release-"))] | first | .headRefName // empty')"
+          existing_url="$(gh pr list --state open --base main --json headRefName,url --jq '[.[] | select(.headRefName | startswith("automation/operant-release-"))] | first | .url // empty')"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if [[ -n "$existing_branch" ]]; then
+            echo "Refreshing open Operant release PR branch in place: $existing_branch ($existing_url)"
+            git fetch origin "$existing_branch"
+            git checkout -B "$existing_branch" "origin/$existing_branch"
+            git merge --no-edit origin/main
+            git checkout origin/main -- \
+              OPERANT_VERSION \
+              harness/contracts/operant-product-identity.v1.json \
+              docs/OPERANT_CHANGELOG.md \
+              web/prompt-kit/index.html
+            branch="$existing_branch"
+          else
+            branch="automation/operant-release-v${next_version}-${main_sha:0:8}"
+            git checkout -B "$branch" origin/main
           fi
 
-          next_version="${{ steps.plan.outputs.next_version }}"
           python scripts/operant_version.py apply --plan Outputs/operant-version-plan.json
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           python scripts/operant_version.py validate
+          python scripts/operant_version.py validate-release-candidate --base origin/main
           python scripts/validate_operant_product_identity.py --summary
           python -m unittest tests.test_operant_product_identity tests.test_prompt_kit_order_navigation_product -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
-          branch="automation/operant-release-v${next_version}-${GITHUB_SHA:0:8}"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -b "$branch"
           git add OPERANT_VERSION \
             harness/contracts/operant-product-identity.v1.json \
             docs/OPERANT_CHANGELOG.md \
             web/prompt-kit/index.html
-          git commit -m "chore(operant): release v${next_version}"
+          if git diff --cached --quiet; then
+            echo "Release candidate already matches recomputed plan on $branch"
+          else
+            git commit -m "chore(operant): release v${next_version}"
+          fi
           git push origin HEAD:"$branch"
 
-          NEXT_VERSION="$next_version" SOURCE_SHA="$GITHUB_SHA" python - <<'PY'
+          NEXT_VERSION="$next_version" SOURCE_SHA="$main_sha" python - <<'PY'
           import os
           from pathlib import Path
 
@@ -178,14 +204,21 @@ jobs:
           - source mainline: `{source_sha}`
           - plan: `Outputs/operant-version-plan.json` in the workflow run
           - authority: `OPERANT_VERSION`
-          - validation: Operant version + identity tests, generated-site parity, and `git diff --check`
+          - validation: Operant version + identity tests, generated-site parity, stale-candidate rejection, and `git diff --check`
 
           Merge is the explicit release gate. After this exact version change reaches `main`, the mainline owner validates it again and creates `operant-v{version}` plus the GitHub Release at the exact merged commit.
           """
           Path("Outputs/operant-release-pr.md").write_text(body, encoding="utf-8")
           PY
-          gh pr create \
-            --base main \
-            --head "$branch" \
-            --title "chore(operant): release v${next_version}" \
-            --body-file Outputs/operant-release-pr.md
+
+          if [[ -n "$existing_url" ]]; then
+            gh pr edit "$existing_url" \
+              --title "chore(operant): release v${next_version}" \
+              --body-file Outputs/operant-release-pr.md
+          else
+            gh pr create \
+              --base main \
+              --head "$branch" \
+              --title "chore(operant): release v${next_version}" \
+              --body-file Outputs/operant-release-pr.md
+          fi

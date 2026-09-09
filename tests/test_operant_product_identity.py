@@ -134,6 +134,18 @@ class OperantProductIdentityTests(unittest.TestCase):
                 "feat(prompt-kit): add version policy",
             )
         )
+        self.assertTrue(
+            operant_version.is_release_relevant(
+                ["docs/prompts.json"],
+                "feat(prompt-kit): refine existing prompt body",
+            )
+        )
+        self.assertTrue(
+            operant_version.is_release_relevant(
+                ["docs/reference.json"],
+                "feat(prompt-kit): extend reference record",
+            )
+        )
         self.assertFalse(
             operant_version.is_release_relevant(
                 ["triage/roster_log_v2/builder.py"], "feat(roster-v2): add report"
@@ -148,6 +160,99 @@ class OperantProductIdentityTests(unittest.TestCase):
             operant_version.is_release_relevant(
                 ["harness/manifest.v1.json"], "feat(roster-v2): register report"
             )
+        )
+
+    def test_candidate_changelog_replacement_preserves_released_history(self) -> None:
+        existing = (
+            "# Operant Changelog\n\n"
+            "Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.\n\n"
+            "## 0.2.1 - 2026-09-08\n\n"
+            "### Fixes / performance\n\n"
+            "- fix(operant): old candidate (`aaaaaaaa`)\n\n"
+            "## 0.2.0 - 2026-09-01\n\n"
+            "- Cutover release.\n"
+        )
+        refreshed = operant_version.replace_candidate_changelog_section(
+            existing,
+            {
+                "relevant_commits": [
+                    {
+                        "sha": "b" * 40,
+                        "subject": "feat(operant): later accepted work",
+                        "release_type": "minor",
+                    }
+                ]
+            },
+            "0.3.0",
+            previous_versions=["0.2.1"],
+        )
+        self.assertIn("## 0.3.0 - ", refreshed)
+        self.assertIn("feat(operant): later accepted work (`bbbbbbbb`)", refreshed)
+        self.assertNotIn("## 0.2.1 - ", refreshed)
+        self.assertIn("## 0.2.0 - 2026-09-01", refreshed)
+        self.assertIn("- Cutover release.", refreshed)
+
+    def test_stale_release_candidate_version_is_rejected(self) -> None:
+        self.assertEqual(
+            operant_version.validate_release_candidate(base="HEAD", head="HEAD"),
+            [],
+        )
+        with mock.patch.object(
+            operant_version,
+            "_run_git",
+            side_effect=["a" * 40, "b" * 40],
+        ):
+            with mock.patch.object(
+                operant_version,
+                "_version_at_ref",
+                return_value=operant_version.SemVer.parse("0.2.0"),
+            ):
+                with mock.patch.object(
+                    operant_version,
+                    "current_version",
+                    return_value=operant_version.SemVer.parse("9.9.9"),
+                ):
+                    with mock.patch.object(
+                        operant_version,
+                        "plan",
+                        return_value={
+                            "schema_version": "operant-version-plan/v1",
+                            "current_version": "0.2.0",
+                            "release_type": "patch",
+                            "next_version": "0.2.1",
+                            "relevant_commits": [
+                                {
+                                    "sha": "c" * 40,
+                                    "subject": "fix(operant): example",
+                                    "release_type": "patch",
+                                }
+                            ],
+                        },
+                    ):
+                        with mock.patch.object(
+                            operant_version.subprocess,
+                            "run",
+                            return_value=mock.Mock(returncode=0),
+                        ):
+                            stale = operant_version.validate_release_candidate(
+                                base="origin/main", head="HEAD"
+                            )
+        self.assertTrue(
+            any("stale Operant release candidate version" in item for item in stale)
+        )
+
+    def test_workflow_refreshes_open_release_pr_and_pins_dispatch_to_main(self) -> None:
+        workflow = (
+            ROOT / ".github/workflows/operant-versioning.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("ref: main", workflow)
+        self.assertIn("Refreshing open Operant release PR branch in place", workflow)
+        self.assertIn("validate-release-candidate", workflow)
+        self.assertIn("docs/prompts.json", workflow)
+        self.assertIn("docs/reference.json", workflow)
+        self.assertNotIn(
+            'echo "An Operant release PR already owns the pending release boundary',
+            workflow,
         )
 
     def test_ambiguous_relevant_commit_fails_closed(self) -> None:

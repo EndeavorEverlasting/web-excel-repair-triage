@@ -63,7 +63,7 @@ The release type for a set of accepted commits is the highest applicable bump: M
 
 ## Multi-product relevance boundary
 
-Product-specific Operant paths are release-relevant directly. Shared repository governance/harness indexes are release-relevant only when their Conventional Commit scope is `operant` or `prompt-kit`. Generated `web/prompt-kit/index.html` alone never creates a bump; it mirrors canonical source changes.
+Product-specific Operant paths are release-relevant directly, including the renderer inputs `docs/prompts.json` and `docs/reference.json`. Shared repository governance/harness indexes are release-relevant only when their Conventional Commit scope is `operant` or `prompt-kit`. Generated `web/prompt-kit/index.html` alone never creates a bump; it mirrors canonical source changes.
 
 The exact patterns are machine-owned in the `release_versioning` block of `harness/contracts/operant-product-identity.v1.json` and consumed by `scripts/operant_version.py`.
 
@@ -74,8 +74,8 @@ The exact patterns are machine-owned in the `release_versioning` block of `harne
 3. The planner starts from the latest reachable `operant-v*` tag; before the first canonical tag it uses the PR #329 identity merge as the bootstrap floor.
 4. Non-Operant and no-bump-only work produces no release PR.
 5. Release-worthy work produces a deterministic plan and an automatically prepared `chore(operant): release vX.Y.Z` PR containing the authority, mirrors, changelog, and regenerated site.
-6. While one Operant release PR is open, later changes wait for the next release instead of creating competing version authorities.
-7. After the release PR reaches `main`, the same workflow validates the exact mainline version change, creates `operant-vX.Y.Z`, and creates the GitHub Release against that exact commit.
+6. While one Operant release PR is open, later accepted mainline Operant work refreshes that same `automation/operant-release-*` branch in place (merge refreshed `main`, recompute, replace the candidate changelog section) instead of creating competing version authorities. PR CI rejects a stale candidate whose version/changelog no longer matches a recomputed plan from current `main`.
+7. After the release PR reaches `main`, the same workflow validates the exact mainline version change, creates `operant-vX.Y.Z`, and creates the GitHub Release against that exact commit. Manual `workflow_dispatch` runs are pinned to `main` so unaccepted feature refs cannot plan a release.
 8. The tag is release identity; rollback means redeploying/restoring a previously tagged commit/artifact. Versions are never decremented, renamed, or reused.
 
 ## Commands
@@ -85,6 +85,7 @@ python scripts/operant_version.py current
 python scripts/operant_version.py plan --output Outputs/operant-version-plan.json
 python scripts/operant_version.py apply --plan Outputs/operant-version-plan.json
 python scripts/operant_version.py validate
+python scripts/operant_version.py validate-release-candidate --base origin/main
 python scripts/validate_operant_product_identity.py --summary
 python -m unittest tests.test_operant_product_identity -v
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
