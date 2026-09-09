@@ -21,4 +21,13 @@ if identity_write_anchor not in text:
     raise SystemExit("identity-runtime write anchor missing")
 text = text.replace(identity_write_anchor, identity_write_replacement, 1)
 
+hotkey_read_anchor = '    text = hotkey_test.read_text(encoding="utf-8")\n'
+hotkey_read_replacement = (
+    hotkey_read_anchor
+    + '    text = text.replace("\\\"bindings[promptId.slice(1)]=promptId\\\",", "\\\"bindings[digits]=promptId\\\",", 1)\n'
+)
+if hotkey_read_anchor not in text:
+    raise SystemExit("favorite-binding assertion anchor missing")
+text = text.replace(hotkey_read_anchor, hotkey_read_replacement, 1)
+
 path.write_text(text, encoding="utf-8")
