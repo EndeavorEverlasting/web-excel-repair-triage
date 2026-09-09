@@ -2,6 +2,17 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.4.0 - 2026-09-09
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): make P79 synthesize registered upstream prior art (`0f571710`)
+- feat(prompt-kit): show copied prompt in toast and hide filters on snap (`1b30d233`)
+
+### Fixes / performance
+
+- fix(prompt-kit): preserve P79 semantics while adding upstream synthesis (`b9e6b398`)
+
 ## 0.3.0 - 2026-09-09
 
 ### Features / breaking pre-1.0 changes
