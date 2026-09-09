@@ -1,0 +1,179 @@
+name: Operant Deterministic Versioning
+
+on:
+  pull_request:
+    paths:
+      - OPERANT_VERSION
+      - build_prompt_kit.py
+      - docs/OPERANT_CHANGELOG.md
+      - docs/OPERANT_VERSIONING.md
+      - harness/contracts/operant-product-identity.v1.json
+      - scripts/operant_version.py
+      - scripts/validate_operant_product_identity.py
+      - tests/test_operant_product_identity.py
+      - tests/test_prompt_kit_order_navigation_product.py
+      - web/prompt-kit/index.html
+      - .github/workflows/operant-versioning.yml
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: operant-versioning-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify-policy:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout proposed exact head
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Verify deterministic authority and mirrors
+        run: |
+          set -euo pipefail
+          python scripts/operant_version.py validate
+          python scripts/validate_operant_product_identity.py --summary
+          python -m unittest tests.test_operant_product_identity tests.test_prompt_kit_order_navigation_product -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+  mainline-version-owner:
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout exact mainline head with release history
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Tag validated mainline version changes before planning again
+        shell: bash
+        run: |
+          set -euo pipefail
+          version_changed=false
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]] && git rev-parse HEAD^ >/dev/null 2>&1; then
+            if ! git diff --quiet HEAD^ HEAD -- OPERANT_VERSION; then
+              version_changed=true
+            fi
+          fi
+
+          if [[ "$version_changed" == "true" ]]; then
+            python scripts/operant_version.py validate
+            python scripts/validate_operant_product_identity.py --summary
+            python -m unittest tests.test_operant_product_identity -v
+            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+
+            version="$(python scripts/operant_version.py current)"
+            tag="operant-v${version}"
+            if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+              target="$(git rev-list -n 1 "$tag")"
+              head="$(git rev-parse HEAD)"
+              if [[ "$target" != "$head" ]]; then
+                echo "Released version reuse/drift: ${tag} -> ${target}; HEAD=${head}" >&2
+                exit 1
+              fi
+            else
+              gh release create "$tag" \
+                --target "$GITHUB_SHA" \
+                --title "Operant v${version}" \
+                --generate-notes
+            fi
+            git fetch --tags
+            python scripts/operant_version.py validate --require-tag
+          fi
+
+      - name: Derive next release from natural mainline development
+        id: plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p Outputs
+          python scripts/operant_version.py plan --output Outputs/operant-version-plan.json
+          release_type="$(python - <<'PY'
+          import json
+          from pathlib import Path
+          payload=json.loads(Path('Outputs/operant-version-plan.json').read_text(encoding='utf-8'))
+          print(payload['release_type'] or '')
+          PY
+          )"
+          next_version="$(python - <<'PY'
+          import json
+          from pathlib import Path
+          payload=json.loads(Path('Outputs/operant-version-plan.json').read_text(encoding='utf-8'))
+          print(payload['next_version'])
+          PY
+          )"
+          echo "release_type=${release_type}" >> "$GITHUB_OUTPUT"
+          echo "next_version=${next_version}" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare one reviewable release PR when a bump is earned
+        if: ${{ steps.plan.outputs.release_type != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          existing="$(gh pr list --state open --base main --json headRefName,url --jq '.[] | select(.headRefName | startswith("automation/operant-release-")) | .url' | head -n 1)"
+          if [[ -n "$existing" ]]; then
+            echo "An Operant release PR already owns the pending release boundary: $existing"
+            exit 0
+          fi
+
+          next_version="${{ steps.plan.outputs.next_version }}"
+          python scripts/operant_version.py apply --plan Outputs/operant-version-plan.json
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/operant_version.py validate
+          python scripts/validate_operant_product_identity.py --summary
+          python -m unittest tests.test_operant_product_identity tests.test_prompt_kit_order_navigation_product -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+          branch="automation/operant-release-v${next_version}-${GITHUB_SHA:0:8}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add OPERANT_VERSION \
+            harness/contracts/operant-product-identity.v1.json \
+            docs/OPERANT_CHANGELOG.md \
+            web/prompt-kit/index.html
+          git commit -m "chore(operant): release v${next_version}"
+          git push origin HEAD:"$branch"
+
+          cat > Outputs/operant-release-pr.md <<EOF
+          ## Operant deterministic release
+
+          This PR was derived AFK from accepted mainline development by `scripts/operant_version.py`.
+
+          - next version: `${next_version}`
+          - source mainline: `${GITHUB_SHA}`
+          - plan: `Outputs/operant-version-plan.json` in the workflow run
+          - authority: `OPERANT_VERSION`
+          - validation: Operant version + identity tests, generated-site parity, and `git diff --check`
+
+          Merge is the explicit release gate. After this exact version change reaches `main`, the mainline owner validates it again and creates `operant-v${next_version}` plus the GitHub Release at the exact merged commit.
+          EOF
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "chore(operant): release v${next_version}" \
+            --body-file Outputs/operant-release-pr.md
