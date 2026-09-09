@@ -2,6 +2,12 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.4.0 - 2026-09-09
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): show copied prompt in toast and hide filters on snap (`1b30d233`)
+
 ## 0.3.0 - 2026-09-09
 
 ### Features / breaking pre-1.0 changes
