@@ -70,6 +70,9 @@ def observe(port: int, screenshot: Path) -> list[dict]:
             press("126")
             page.wait_for_timeout(220)
             p126_final = clipboard()
+            p126_toast = page.locator('#toast').inner_text()
+            p126_toast_id = page.locator('#toast').get_attribute('data-prompt-id') or ''
+            p126_toast_ok = p126_toast.strip().startswith('✓ Copied to clipboard · P126') and p126_toast_id == 'P126'
             p126_geometry = page.evaluate("""() => {
               const card=document.querySelector('[data-prompt-id="P126"]');
               if(!card)return null;
@@ -82,10 +85,13 @@ def observe(port: int, screenshot: Path) -> list[dict]:
             )
             observations.append({
                 "id": "numeric_p126_copies_and_snaps",
-                "event": "typing bare 126 copies P126 and centers its canonical card without Favorite/manual setup",
+                "event": "typing bare 126 copies P126, names P126 in the green toast, and centers its canonical card without Favorite/manual setup",
                 "occurred": True,
-                "passed": p126_final == expected["P126"] and p126_snapped,
+                "passed": p126_final == expected["P126"] and p126_snapped and p126_toast_ok,
                 "clipboard_matches": p126_final == expected["P126"],
+                "toast_names_prompt": p126_toast_ok,
+                "toast": p126_toast,
+                "toast_prompt_id": p126_toast_id,
                 "favorite_required": False,
                 "geometry": p126_geometry,
                 "snapped": p126_snapped,

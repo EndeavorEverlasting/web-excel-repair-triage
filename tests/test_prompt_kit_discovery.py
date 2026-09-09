@@ -237,10 +237,13 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         for marker in (
             "showCopyConfirmation",
             "✓ Copied to clipboard",
+            "label:id?'✓ Copied to clipboard · '+id:'✓ Copied to clipboard'",
             "formatCopyConfirmationPreview",
             "buildCopyConfirmationToastModel",
             "renderCopyConfirmationToast",
+            "toast-copy-label",
             "toast-copy-preview",
+            "data-prompt-id",
             "data-copy-preview",
             "PROMPT_KIT_COPY_CONFIRMATION_PREVIEW_CHARS",
             ".toast.success",
@@ -256,6 +259,7 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         self.assertIn("buildCopyConfirmationToastModel", confirmation)
         self.assertIn("renderCopyConfirmationToast", confirmation)
         self.assertIn("copyContent", confirmation)
+        self.assertIn("data-prompt-id", confirmation)
 
     def test_snap_to_prompt_hides_compact_filters(self) -> None:
         polish = POLISH_JS.read_text(encoding="utf-8")
