@@ -146,7 +146,9 @@ def observe(port: int, screenshot: Path):
                 pass
             page.wait_for_timeout(150)
             toast_text = page.locator('#toast').inner_text()
-            shortcut_copied = 'Copied' in toast_text
+            shortcut_copied = 'Copied to clipboard' in toast_text and 'P126' in toast_text
+            filters_collapsed = page.evaluate("() => !!(document.querySelector('.header') && document.querySelector('.header').classList.contains('filters-collapsed'))")
+            copy_preview = page.locator('#toast').get_attribute('data-copy-preview') or ''
             try:
                 actual = page.evaluate('navigator.clipboard.readText()')
                 clipboard_read = True
@@ -192,8 +194,8 @@ def observe(port: int, screenshot: Path):
                 {"id": "hotkey_backtick_exposes_numeric_route", "event": "Backtick opens Hotkeys with its close control focused and numeric route visible", "occurred": True, "passed": bool(backtick_focus and backtick_visible and natural_help_visible), "focused": bool(backtick_focus), "visible": bool(backtick_visible)},
                 {"id": "natural_numeric_route_discoverable", "event": "Hotkeys teaches bare 126 without a manual Favorite shortcut setup step", "occurred": True, "passed": bool(natural_help_visible)},
                 {"id": "alternate_scope_precondition", "event": "A nonmatching search excludes P126 before the catalog shortcut", "occurred": True, "passed": bool(not before_present), "present_before": bool(before_present)},
-                {"id": "catalog_numeric_shortcut_dispatched", "event": "typed bare catalog shortcut 126", "occurred": True, "passed": bool(shortcut_copied), "toast": toast_text},
-                {"id": "prompt_card_scrolled_visible", "event": "P126 card exists and intersects viewport after shortcut", "occurred": True, "passed": bool(target_present and visible), "present": bool(target_present), "visible": bool(visible)},
+                {"id": "catalog_numeric_shortcut_dispatched", "event": "typed bare catalog shortcut 126", "occurred": True, "passed": bool(shortcut_copied and copy_preview), "toast": toast_text, "preview_length": len(copy_preview)},
+                {"id": "prompt_card_scrolled_visible", "event": "P126 card exists and intersects viewport after shortcut with filters collapsed", "occurred": True, "passed": bool(target_present and visible and filters_collapsed), "present": bool(target_present), "visible": bool(visible), "filters_collapsed": bool(filters_collapsed)},
                 {"id": "clipboard_exact_match", "event": "clipboard equals canonical P126 copyContent", "occurred": bool(clipboard_read), "passed": bool(clipboard_read and canonical_clipboard_text(actual) == canonical_clipboard_text(expected)), "actual_length": len(actual), "expected_length": len(expected)},
                 {"id": "detail_modal_closed", "event": "catalog shortcut does not open detail modal or focus its close control", "occurred": True, "passed": bool(modal_closed and not close_focused), "modal_closed": bool(modal_closed), "close_focused": bool(close_focused)},
                 {"id": "enter_does_not_close_prompt", "event": "Enter after shortcut leaves detail modal closed and clipboard intact", "occurred": True, "passed": bool(enter_modal_closed and canonical_clipboard_text(after_enter) == canonical_clipboard_text(expected))},

@@ -115,6 +115,7 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             "function favoritePromptShortcutBindings()",
             "bindings[digits]=promptId",
             "function centerRenderedPromptCard(promptId,behavior)",
+            "hideCompactFilters();",
             "function toggleFavoritePromptAndRefreshShortcut(rawPromptId)",
             "function decoratePromptDetailFavorite(promptId)",
             "prompt-detail-favorite-btn",
@@ -125,6 +126,10 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         ):
             self.assertIn(marker, source)
             self.assertIn(marker, deployed)
+        center = source[
+            source.index("function centerRenderedPromptCard") : source.index("function revealPromptShortcutTarget")
+        ]
+        self.assertIn("hideCompactFilters();", center)
         self.assertIn("return catalogPromptShortcutBindings()", source)
 
     def test_keyboard_digit_grammar_does_not_require_leading_p(self) -> None:
@@ -301,6 +306,8 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         self.assertIn("bare numeric identity is the primary gesture", design)
         self.assertIn("manual prompt-shortcut persistence is retired", design.lower())
         self.assertIn("copy + instant snap", design)
+        self.assertIn("hideCompactFilters", design)
+        self.assertIn("formatCopyConfirmationPreview", design)
         self.assertIn("buffer is active", design)
         self.assertIn("one hand", design)
         for stale in (

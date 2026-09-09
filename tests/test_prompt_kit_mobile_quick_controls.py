@@ -27,6 +27,7 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
             "input.pattern='[0-9]*'",
             "input.enterKeyHint='go'",
             "revealPromptShortcutTarget(promptId,'instant')",
+            "hideCompactFilters();",
             "tap the prompt card to copy",
             "input.addEventListener('input',function(){resolveMobilePromptJump(false)})",
             "form.addEventListener('submit',function(e){e.preventDefault();resolveMobilePromptJump(true)})",
@@ -40,6 +41,10 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
         self.assertNotIn("window.showPromptDetail(promptId,toggle||null)", jump)
         self.assertIn("document.querySelector('[data-prompt-id=\"'+promptId+'\"]')", jump)
         self.assertIn("card.focus({preventScroll:true})", jump)
+        center = source[
+            source.index("function centerRenderedPromptCard") : source.index("function revealPromptShortcutTarget")
+        ]
+        self.assertIn("hideCompactFilters();", center)
 
     def test_prefix_collision_requires_explicit_exact_confirmation_without_timing_race(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
