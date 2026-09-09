@@ -214,6 +214,21 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("terminal user value", content)
         self.assertIn("semantic completion events", content)
         self.assertIn("must not erase an active query", content)
+        for phrase in (
+            "a semaphore will make this faster",
+            "A semaphore limits in-flight work, not operation cost",
+            "p50/p95/p99 latency",
+            "queue depth",
+            "required fairness/order",
+            "cancellation/timeouts",
+            "backpressure",
+            "Keep the simpler baseline",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("semaphore", prompt["useWhen"])
+        self.assertIn("downstream quotas or rate limits", prompt["inspectFirst"])
+        self.assertIn("representative before/after evidence", prompt["proofGate"])
+        self.assertIn("KEEP/ADJUST/REVERT", prompt["expectedOutput"])
         self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
 
     def test_flow_friction_prompt_owns_terminal_actions_and_preference_telemetry(self) -> None:
