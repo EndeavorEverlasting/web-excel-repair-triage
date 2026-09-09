@@ -162,7 +162,7 @@ These remain touch-usable and do not reset library view, category, type, search 
 
 ### Hotkeys
 
-The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference and five-tab profile editor. Select it or press the unmodified **backtick** key (`` ` ``) to toggle it; select outside it, use its close control, or press **Esc** to dismiss it. The five header identities are always `A`–`E`; their visible names and profile compositions are user configuration. Numeric keys are never header navigation.
+The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference and five-tab profile editor. Select it or press the unmodified **backtick** key (`` ` ``) to toggle it; select outside it, use its close control, or press **Esc** to dismiss it. The five header identities are always `A`–`E`; their visible names and profile compositions are user configuration. Numeric keys are not header navigation.
 
 | Key | Action |
 |---|---|
