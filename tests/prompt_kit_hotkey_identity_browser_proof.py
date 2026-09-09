@@ -17,7 +17,7 @@ if str(ROOT / "scripts") not in sys.path:
     sys.path.insert(0, str(ROOT / "scripts"))
 from prepare_observed_behavior_subject import ExactHeadError, prepare_exact_head_subject
 
-TARGETS = ("P11", "P13", "P111")
+TARGETS = ("P11", "P13", "P111", "P126")
 
 
 class Quiet(SimpleHTTPRequestHandler):
@@ -50,22 +50,7 @@ def observe(port: int, screenshot: Path) -> list[dict]:
                 for prompt_id in TARGETS
             }
 
-            # Configure all three overlapping identities through the real product UI.
-            for prompt_id in TARGETS:
-                card = page.locator(f'[data-prompt-id="{prompt_id}"]')
-                if card.count() != 1:
-                    raise AssertionError(f"missing canonical card {prompt_id}")
-                card.locator('.prompt-favorite-btn').click()
-            page.locator('#hotkeyHelpToggle').click()
-            page.wait_for_timeout(50)
-            for prompt_id in TARGETS:
-                page.locator('#promptShortcutPromptId').fill(prompt_id)
-                page.get_by_role('button', name='Save favorite prompt keyboard shortcut').click()
-                page.wait_for_timeout(75)
-                if f"Shortcut {prompt_id.lower()} saved" not in page.locator('#toast').inner_text():
-                    raise AssertionError(f"shortcut save failed for {prompt_id}")
-            page.locator('.hotkey-help-close').click()
-            page.evaluate("document.activeElement && document.activeElement.blur()")
+            # Natural prompt hotkeys are catalog-derived; no Favorite or manual Save setup is required.
 
             def set_clipboard(value: str) -> None:
                 page.evaluate("value => navigator.clipboard.writeText(value)", value)
@@ -76,6 +61,47 @@ def observe(port: int, screenshot: Path) -> list[dict]:
             def press(sequence: str) -> None:
                 for char in sequence:
                     page.keyboard.press(char)
+
+            p126_favorite = page.locator('[data-prompt-id="P126"] .prompt-favorite-btn')
+            if p126_favorite.count() != 1 or p126_favorite.get_attribute('aria-pressed') != 'false':
+                raise AssertionError('P126 proof did not start from a non-favorite state')
+
+            set_clipboard("sentinel-126")
+            press("126")
+            page.wait_for_timeout(220)
+            p126_final = clipboard()
+            p126_geometry = page.evaluate("""() => {
+              const card=document.querySelector('[data-prompt-id="P126"]');
+              if(!card)return null;
+              const rect=card.getBoundingClientRect();
+              return {center:(rect.top+rect.bottom)/2,viewport:window.innerHeight/2};
+            }""")
+            p126_snapped = bool(
+                p126_geometry
+                and abs(p126_geometry["center"] - p126_geometry["viewport"]) <= max(120, 900 * 0.18)
+            )
+            observations.append({
+                "id": "numeric_p126_copies_and_snaps",
+                "event": "typing bare 126 copies P126 and centers its canonical card without Favorite/manual setup",
+                "occurred": True,
+                "passed": p126_final == expected["P126"] and p126_snapped,
+                "clipboard_matches": p126_final == expected["P126"],
+                "favorite_required": False,
+                "geometry": p126_geometry,
+                "snapped": p126_snapped,
+            })
+
+            set_clipboard("sentinel-p126")
+            press("p126")
+            page.wait_for_timeout(220)
+            p126_compat = clipboard()
+            observations.append({
+                "id": "p126_compatibility_alias",
+                "event": "p126 remains a compatibility alias for canonical P126",
+                "occurred": True,
+                "passed": p126_compat == expected["P126"],
+                "clipboard_matches": p126_compat == expected["P126"],
+            })
 
             # P11 is a prefix of P111: it must remain pending until timeout.
             set_clipboard("sentinel-p11")
@@ -308,11 +334,11 @@ def main(argv=None) -> int:
         "environment": {
             "kind": environment_kind(),
             "engine": "chromium",
-            "scenario": "overlapping-and-dotted-prompt-identity-hotkeys",
+            "scenario": "catalog-derived-numeric-prompt-hotkeys",
         },
         "claims": [{
             "id": "prompt_identity_disambiguation",
-            "statement": "p11, p13, p111, p1.1, and p1.11 resolve to distinct canonical prompt identities without numeric header collisions",
+            "statement": "bare 126 resolves P126 with canonical copy + snap without Favorite setup while p-prefixed compatibility, prefix disambiguation, and header separation remain intact",
             "status": "PASS" if passed else "FAIL",
             "required_evidence_class": "browser_runtime_observed",
             "observation_ids": [item["id"] for item in observations],

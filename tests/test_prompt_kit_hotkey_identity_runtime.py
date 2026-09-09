@@ -38,15 +38,14 @@ def function_block(text: str, name: str) -> str:
 
 
 class PromptKitHotkeyIdentityRuntimeTests(unittest.TestCase):
-    def test_production_dispatcher_distinguishes_prefix_and_dotted_prompt_ids(self) -> None:
+    def test_production_dispatcher_uses_catalog_for_numeric_and_compatibility_identities(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         blocks = "\n\n".join(
             function_block(source, name)
             for name in (
                 "normalizePromptShortcutId",
                 "promptShortcutDigitGesture",
-                "publishPromptShortcutDigitAliases",
-                "clonePromptShortcutBindings",
+                "catalogPromptShortcutBindings",
                 "resetPromptShortcutBuffer",
                 "schedulePromptShortcutBufferReset",
                 "promptShortcutHasLongerPrefix",
@@ -56,14 +55,11 @@ class PromptKitHotkeyIdentityRuntimeTests(unittest.TestCase):
         )
         script = f"""
 var PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS=25;
-var promptShortcutBindings={{p11:'P11',p13:'P13',p111:'P111'}};
-var sharedPromptShortcutBindings={{}};
+var PROMPTS=[{{id:'P11'}},{{id:'P13'}},{{id:'P111'}},{{id:'P126'}}];
 var promptShortcutBuffer='';
 var promptShortcutBufferTimer=null;
 var activations=[];
 function activatePromptShortcutTarget(promptId){{activations.push(promptId);return true}}
-function isFavoritePrompt(){{return true}}
-function favoritePromptShortcutBindings(){{return {{}}}}
 {blocks}
 function eventStub(){{return{{preventDefault:function(){{}},stopImmediatePropagation:function(){{}}}}}}
 function press(key){{return handleConfiguredPromptShortcutKey(eventStub(),key)}}
@@ -99,6 +95,14 @@ function assert(condition,message){{if(!condition)throw new Error(message)}}
   assert(JSON.stringify(activations)==='["P111"]','digit-only 111 longer exact resolution');
 
   resetProbe();
+  ['1','2','6'].forEach(press);
+  assert(JSON.stringify(activations)==='["P126"]','digit-only 126 exact resolution');
+
+  resetProbe();
+  ['p','1','2','6'].forEach(press);
+  assert(JSON.stringify(activations)==='["P126"]','p126 compatibility resolution');
+
+  resetProbe();
   ['p','1','.','1'].forEach(press);
   assert(activations.length===0,'p1.1 fired before longer-prefix ambiguity closed');
   await sleep(40);
@@ -108,7 +112,7 @@ function assert(condition,message){{if(!condition)throw new Error(message)}}
   ['p','1','.','1','1'].forEach(press);
   assert(JSON.stringify(activations)==='["P111"]','p1.11 dotted longer resolution');
 
-  console.log(JSON.stringify({{status:'PASS',cases:['p11','p13','p111','11','111','p1.1','p1.11']}}));
+  console.log(JSON.stringify({{status:'PASS',cases:['p11','p13','p111','11','111','126','p126','p1.1','p1.11']}}));
 }})().catch(function(error){{console.error(error.stack||error);process.exit(1)}});
 """
         completed = subprocess.run(
@@ -116,18 +120,20 @@ function assert(condition,message){{if(!condition)throw new Error(message)}}
         )
         proof = json.loads(completed.stdout)
         self.assertEqual(proof["status"], "PASS")
-        self.assertEqual(proof["cases"], ["p11", "p13", "p111", "11", "111", "p1.1", "p1.11"])
+        self.assertEqual(
+            proof["cases"],
+            ["p11", "p13", "p111", "11", "111", "126", "p126", "p1.1", "p1.11"],
+        )
 
-    def test_generated_runtime_contains_exact_identity_dispatcher(self) -> None:
+    def test_generated_runtime_contains_catalog_identity_dispatcher(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         deployed = DEPLOYED.read_text(encoding="utf-8")
         for name in (
             "normalizePromptShortcutId",
             "promptShortcutDigitGesture",
-            "publishPromptShortcutDigitAliases",
+            "catalogPromptShortcutBindings",
             "schedulePromptShortcutBufferReset",
             "promptShortcutHasLongerPrefix",
-            "computeSharedPromptShortcutBindings",
             "effectivePromptShortcutBindings",
             "handleConfiguredPromptShortcutKey",
         ):
@@ -136,9 +142,12 @@ function assert(condition,message){{if(!condition)throw new Error(message)}}
             "replace(/\\./g,'')",
             "if(key==='.'&&promptShortcutBuffer)",
             "if(exact&&!promptShortcutHasLongerPrefix(candidate,gestures))",
-            "return publishPromptShortcutDigitAliases(merged)",
+            "return catalogPromptShortcutBindings()",
+            "bindings[digits]=promptId",
+            "bindings['p'+digits]=promptId",
         ):
             self.assertIn(marker, deployed)
+
     def test_header_and_prompt_identity_domains_do_not_overlap(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         base = (ROOT / "docs" / "prompt-kit.js").read_text(encoding="utf-8")
