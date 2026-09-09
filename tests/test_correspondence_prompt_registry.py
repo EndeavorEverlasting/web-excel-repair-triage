@@ -60,7 +60,6 @@ class CorrespondencePromptRegistryTests(unittest.TestCase):
         self.assertIn("Never turn an unresolved issue into `complete`", content)
         self.assertNotIn("ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT", content)
 
-
     def test_correspondence_prompts_gate_self_inflicted_disclosure(self) -> None:
         p72 = self.prompts["P72"]["copyContent"]
         p73 = self.prompts["P73"]["copyContent"]
@@ -98,6 +97,18 @@ class CorrespondencePromptRegistryTests(unittest.TestCase):
         self.assertIn(
             "Evidence that convinced the sender is not automatically evidence the recipient needs",
             p73,
+        )
+        self.assertIn(
+            "minimum sufficient recipient context",
+            self.prompts["P72"]["proofGate"],
+        )
+        self.assertIn(
+            "self-inflicted disclosure",
+            self.prompts["P73"]["proofGate"],
+        )
+        self.assertIn(
+            "answer, decide, authorize, or act",
+            self.prompts["P73"]["proofGate"],
         )
 
     def test_render_includes_correspondence_runtime_and_profile_tokens(self) -> None:
