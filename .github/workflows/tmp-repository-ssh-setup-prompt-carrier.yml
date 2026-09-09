@@ -1,0 +1,106 @@
+name: Temporary repository SSH setup prompt carrier
+
+on:
+  pull_request:
+    types: [synchronize]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repository-ssh-setup-prompt-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/repository-ssh-setup-usage-prompt-20260909'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/repository-ssh-setup-usage-prompt-20260909
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Reconcile, add through helper, prove twice, and push durable candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/repository-ssh-setup-usage-prompt-20260909 --prune
+          if [ ! -f scripts/tmp_add_repository_ssh_setup_prompt.py ]; then
+            echo 'repository SSH setup prompt already materialized; no transport work remains'
+            exit 0
+          fi
+          git merge --no-edit origin/main
+
+          echo 'PASS 1 — canonical helper ADD + focused proof'
+          python scripts/tmp_add_repository_ssh_setup_prompt.py | tee "$RUNNER_TEMP/repository-ssh-helper.log"
+          python scripts/prompt_registry_ops.py validate | tee "$RUNNER_TEMP/repository-ssh-registry-validation.json"
+          python -m unittest tests.test_repository_ssh_setup_prompt -v
+          python -m unittest tests.test_operant_external_resources tests.test_external_prior_art_gate -v
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+          echo 'PASS 2 — semantic falsification / owner-boundary review'
+          python - <<'PY'
+          from scripts.build_prompt_kit_registry import load_prompt_registry
+          prompts = load_prompt_registry()
+          by_name = {p['name']: p for p in prompts}
+          ssh = by_name['Repository SSH Setup + Usage Completer']
+          p55 = by_name['GitHub CLI Repository Bootstrapper']
+          p61 = by_name['Existing Repository Clone + Working-Directory Bootstrapper']
+          text = ssh['copyContent'].lower()
+          assert ssh['id'] not in {p55['id'], p61['id']}
+          assert p55['class'] == 'STANDARD AI / GITHUB CLI REPOSITORY CREATION'
+          assert p61['class'] == 'STANDARD AI / EXISTING REPOSITORY CLONE + DIRECTORY'
+          assert 'complete this repository\'s ssh setup' in text
+          assert text.index('prove the transport fail-fast') < text.index('how to use this ssh setup')
+          assert 'public key' in text and 'private key' in text
+          assert 'never ask the operator to send a private key or passphrase in chat' in text
+          assert 'do not make a global git/ssh-policy change' in text
+          assert 'batchmode=yes' in text and 'connecttimeout=8' in text
+          assert 'git ls-remote --heads origin' in text
+          assert 'git push --dry-run' in text
+          assert 'do not blindly answer `yes`' in text
+          assert 'blocked_user_only' in text and 'blocked_network_policy' in text
+          assert 'git bash/msys2' in text
+          assert 'git clone <verified-ssh-url>' in text
+          print(f"PASS2_SSH_PROMPT_ID={ssh['id']}")
+          print(f"PASS2_PROMPT_COUNT={len(prompts)}")
+          PY
+          python -m unittest tests.test_repository_ssh_setup_prompt -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+          git rm -f \
+            scripts/tmp_add_repository_ssh_setup_prompt.py \
+            scripts/tmp_repository_ssh_prompt_trigger.txt \
+            .github/workflows/tmp-repository-ssh-setup-prompt-carrier.yml
+          git add \
+            registry/prompts/ai-engineering-level-up-prompts.v1.json \
+            tests/test_repository_ssh_setup_prompt.py \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          git status --short
+          git diff --cached --stat
+          git diff --cached -- registry/prompts/ai-engineering-level-up-prompts.v1.json tests/test_repository_ssh_setup_prompt.py
+          git commit -m 'feat(prompt-kit): add repository SSH setup completer'
+          git push origin HEAD:feat/repository-ssh-setup-usage-prompt-20260909
+
+      - name: Upload helper evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-ssh-setup-prompt-evidence
+          path: |
+            ${{ runner.temp }}/repository-ssh-helper.log
+            ${{ runner.temp }}/repository-ssh-registry-validation.json
+          if-no-files-found: warn
+          retention-days: 14
