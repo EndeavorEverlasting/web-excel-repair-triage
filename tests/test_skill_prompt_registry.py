@@ -122,19 +122,18 @@ class SkillPromptRegistryTests(unittest.TestCase):
     def test_prompt_override_registry_is_explicit_and_identity_preserving(self) -> None:
         payload = json.loads(build_prompt_kit_registry.PROMPT_OVERRIDES.read_text(encoding="utf-8"))
         self.assertEqual(payload["schema_version"], "prompt-registry-overrides/v1")
-        self.assertEqual(len(payload["overrides"]), 2)
         by_id = {item["id"]: item for item in payload["overrides"]}
-        self.assertEqual(set(by_id), {"P02", "P13"})
-        self.assertEqual((by_id["P02"]["id"], by_id["P02"]["seq"]), ("P02", "02"))
-        self.assertEqual(by_id["P02"]["copySheet"], "P02_COPY_SAFE")
-        self.assertEqual((by_id["P13"]["id"], by_id["P13"]["seq"]), ("P13", "13"))
-        self.assertEqual(by_id["P13"]["copySheet"], "P13_COPY_SAFE")
+        self.assertEqual(len(by_id), len(payload["overrides"]))
+        self.assertTrue({"P02", "P13", "P19"}.issubset(by_id))
         source_by_id = {
             item["id"]: item
             for item in json.loads(build_prompt_kit_registry.BASE_REGISTRY.read_text(encoding="utf-8"))
         }
-        self.assertEqual(source_by_id["P02"]["seq"], by_id["P02"]["seq"])
-        self.assertEqual(source_by_id["P13"]["seq"], by_id["P13"]["seq"])
+        for prompt_id, override in by_id.items():
+            self.assertIn(prompt_id, source_by_id)
+            source = source_by_id[prompt_id]
+            self.assertEqual((override["id"], override["seq"]), (source["id"], source["seq"]))
+            self.assertEqual(override["copySheet"], source["copySheet"])
 
     def test_prompt_override_rejects_id_casing_drift(self) -> None:
         source_p02 = next(
