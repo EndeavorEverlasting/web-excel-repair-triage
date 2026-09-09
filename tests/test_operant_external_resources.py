@@ -317,6 +317,33 @@ class OperantExternalResourceTests(unittest.TestCase):
             ])
             self.assertEqual(over_budget, 1)
 
+
+    def test_prompt_adder_exposes_predraft_all_registered_source_review(self) -> None:
+        query = "prompt registry upstream synthesis zeta"
+        configured = {item["id"] for item in self.contract["sources"]}
+        receipt = {
+            "schema_version": add_prior_art.RECEIPT_SCHEMA,
+            "query": query,
+            "sources": [{"source_id": source_id} for source_id in sorted(configured)],
+            "all_registered_sources_searched": True,
+            "distinct_residual_terms": ["synthesis"],
+            "automatic_prompt_authoring": False,
+        }
+        with mock.patch.object(
+            add_prior_art, "review_external_prior_art", return_value=receipt
+        ) as review:
+            result = prompt_ops.review_prior_art(query)
+        review.assert_called_once_with(query)
+        self.assertTrue(result["all_registered_sources_searched"])
+        self.assertEqual({row["source_id"] for row in result["sources"]}, configured)
+
+        with (
+            mock.patch.object(prompt_ops, "review_prior_art", return_value=receipt) as cli_review,
+            mock.patch("builtins.print"),
+        ):
+            self.assertEqual(prompt_ops.main(["prior-art", "--query", query]), 0)
+        cli_review.assert_called_once_with(query)
+
     def test_prompt_adder_binds_external_gate_before_identity_allocation(self) -> None:
         text = PROMPT_ADDER.read_text(encoding="utf-8")
         gate = "external_prior_art = prior_art.require_external_prior_art(draft)"
