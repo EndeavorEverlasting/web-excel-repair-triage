@@ -101,8 +101,21 @@ def display_version(version: SemVer | str) -> str:
     return str(version)
 
 
-def classify_message(message: str, current: SemVer) -> str | None:
-    """Map one accepted Conventional Commit to the repository's release semantics."""
+def _release_rule(value: object, label: str) -> str:
+    if value not in RELEASE_TYPES:
+        raise VersioningError(f"release policy {label} must be one of {RELEASE_TYPES}: {value!r}")
+    return str(value)
+
+
+def classify_message(
+    message: str,
+    current: SemVer,
+    policy: dict | None = None,
+) -> str | None:
+    """Map one accepted Conventional Commit to repository-owned release semantics."""
+    policy = policy or _policy()
+    pre_one = policy.get("pre_1_policy", {})
+    no_bump_types = {str(value).lower() for value in policy.get("no_bump_types", [])}
     first_line = message.strip().splitlines()[0] if message.strip() else ""
     match = CONVENTIONAL_RE.match(first_line)
     if not match:
@@ -114,13 +127,17 @@ def classify_message(message: str, current: SemVer) -> str | None:
         re.search(r"(?mi)^BREAKING[ -]CHANGE:\s+\S", message)
     )
     if breaking:
-        # Pre-1.0 breakage remains inside the unstable minor line. 1.0 promotion is explicit.
-        return "minor" if current.major == 0 else "major"
+        if current.major == 0:
+            return _release_rule(pre_one.get("breaking"), "pre_1_policy.breaking")
+        return "major"
     if commit_type == "feat":
-        return "minor"
+        return _release_rule(pre_one.get("feature"), "pre_1_policy.feature")
     if commit_type in {"fix", "perf", "revert"}:
-        return "patch"
-    if commit_type in {"docs", "test", "tests", "refactor", "style", "chore", "ci", "build"}:
+        return _release_rule(
+            pre_one.get("fix_or_performance"),
+            "pre_1_policy.fix_or_performance",
+        )
+    if commit_type in no_bump_types:
         return None
     raise VersioningError(
         f"release-relevant commit type {commit_type!r} has no deterministic bump rule"
@@ -206,7 +223,6 @@ def _baseline(current: SemVer, policy: dict) -> tuple[str, str | None]:
     sha = bootstrap.get("identity_merge_sha")
     if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{40}", sha):
         raise VersioningError("missing 40-hex bootstrap identity merge SHA")
-    # Prove the configured bootstrap exists and is an ancestor of this checkout.
     _run_git("cat-file", "-e", f"{sha}^{{commit}}")
     if subprocess.run(
         ["git", "merge-base", "--is-ancestor", sha, "HEAD"], cwd=ROOT, check=False
@@ -227,7 +243,7 @@ def plan(base: str | None = None, head: str = "HEAD") -> dict:
         paths = _commit_paths(sha)
         if not is_release_relevant(paths, message, policy):
             continue
-        release_type = classify_message(message, current)
+        release_type = classify_message(message, current, policy)
         classifications.append(release_type)
         relevant.append(
             {
@@ -264,23 +280,26 @@ def assert_version_not_released(version: SemVer | str, tags: Iterable[str] | Non
 
 
 def _changelog_section(plan_payload: dict, version: str) -> str:
-    groups = {"minor": "Features / breaking pre-1.0 changes", "patch": "Fixes / performance", None: "Internal / no-bump context"}
-    by_kind: dict[str | None, list[dict]] = {"minor": [], "patch": [], None: []}
+    groups = {
+        "major": "Breaking changes",
+        "minor": "Features / breaking pre-1.0 changes",
+        "patch": "Fixes / performance",
+    }
+    by_kind: dict[str, list[dict]] = {kind: [] for kind in RELEASE_TYPES}
     for commit in plan_payload.get("relevant_commits", []):
         kind = commit.get("release_type")
-        if kind == "major":
-            kind = "minor" if SemVer.parse(version).major == 0 else "minor"
-        by_kind.setdefault(kind, []).append(commit)
+        if kind in by_kind:
+            by_kind[kind].append(commit)
     lines = [f"## {version} - {date.today().isoformat()}", ""]
-    for kind in ("minor", "patch"):
-        commits = by_kind.get(kind, [])
+    for kind in RELEASE_TYPES:
+        commits = by_kind[kind]
         if not commits:
             continue
         lines.extend([f"### {groups[kind]}", ""])
         for commit in commits:
             lines.append(f"- {commit['subject']} (`{commit['sha'][:8]}`)")
         lines.append("")
-    if not any(by_kind.get(kind) for kind in ("minor", "patch")):
+    if not any(by_kind.values()):
         lines.extend(["- Deterministic repository versioning maintenance.", ""])
     return "\n".join(lines).rstrip() + "\n\n"
 
@@ -333,6 +352,18 @@ def validate(require_tag: bool = False) -> list[str]:
         findings.append("release policy scheme drifted")
     if policy.get("tag_prefix") != TAG_PREFIX_DEFAULT:
         findings.append("release policy tag prefix drifted")
+    pre_one = policy.get("pre_1_policy", {})
+    expected_pre_one = {
+        "breaking": "minor",
+        "feature": "minor",
+        "fix_or_performance": "patch",
+    }
+    for key, expected in expected_pre_one.items():
+        if pre_one.get(key) != expected:
+            findings.append(f"pre-1 release rule {key} drifted: {pre_one.get(key)!r}")
+    required_no_bump = {"docs", "test", "tests", "refactor", "style", "chore", "ci", "build"}
+    if set(policy.get("no_bump_types", [])) != required_no_bump:
+        findings.append("no-bump commit-type policy drifted")
     if not CHANGELOG.exists():
         findings.append("Operant changelog is missing")
     if GENERATED_SITE.exists():
