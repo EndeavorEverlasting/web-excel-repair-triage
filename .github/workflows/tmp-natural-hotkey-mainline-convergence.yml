@@ -38,8 +38,10 @@ jobs:
         run: |
           set -euo pipefail
           python scripts/tmp_fix_converger_quotes.py
+          python scripts/tmp_fix_converger_indentation.py
           python -m py_compile scripts/tmp_converge_natural_hotkeys.py
           python scripts/tmp_converge_natural_hotkeys.py
+          python -m py_compile tests/test_prompt_kit_hotkey_completion.py tests/test_prompt_kit_hotkey_identity_runtime.py tests/prompt_kit_favorite_browser_proof.py tests/prompt_kit_hotkey_identity_browser_proof.py
 
       - name: Regenerate canonical Prompt Kit and validate
         shell: bash
@@ -49,7 +51,6 @@ jobs:
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           node --check docs/prompt-kit-polish.js
           node --check docs/prompt-kit-hotkey-prototype.js
-          python -m py_compile tests/prompt_kit_favorite_browser_proof.py tests/prompt_kit_hotkey_identity_browser_proof.py
           python -m unittest tests.test_prompt_kit_hotkey_completion tests.test_prompt_kit_hotkey_identity_runtime tests.test_prompt_kit_interactions_contract tests.test_prompt_kit_discovery tests.test_prompt_kit_cross_input_modality tests.test_observed_behavior_proof_harness tests.test_prompt_kit_product_interactions tests.test_prompt_kit_filtering_access -v
           python scripts/validate_prompt_kit_interactions.py --summary
           python scripts/validate_prompt_kit_discovery.py --summary
@@ -62,7 +63,7 @@ jobs:
           unexpected=0
           while IFS= read -r file; do
             case "$file" in
-              docs/prompt-kit-polish.js|docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md|docs/PROMPT_KIT_OPERATOR_GUIDE.md|web/README.md|web/prompt-kit/index.html|tests/test_prompt_kit_hotkey_completion.py|tests/test_prompt_kit_hotkey_identity_runtime.py|tests/test_prompt_kit_discovery.py|tests/prompt_kit_favorite_browser_proof.py|tests/prompt_kit_hotkey_identity_browser_proof.py|.github/workflows/prompt-kit-observed-browser-proof.yml|scripts/tmp_converge_natural_hotkeys.py|scripts/tmp_fix_converger_quotes.py|.github/workflows/tmp-natural-hotkey-mainline-convergence.yml) ;;
+              docs/prompt-kit-polish.js|docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md|docs/PROMPT_KIT_OPERATOR_GUIDE.md|web/README.md|web/prompt-kit/index.html|tests/test_prompt_kit_hotkey_completion.py|tests/test_prompt_kit_hotkey_identity_runtime.py|tests/test_prompt_kit_discovery.py|tests/prompt_kit_favorite_browser_proof.py|tests/prompt_kit_hotkey_identity_browser_proof.py|.github/workflows/prompt-kit-observed-browser-proof.yml|scripts/tmp_converge_natural_hotkeys.py|scripts/tmp_fix_converger_quotes.py|scripts/tmp_fix_converger_indentation.py|.github/workflows/tmp-natural-hotkey-mainline-convergence.yml) ;;
               *) echo "unexpected changed surface: $file" >&2; unexpected=1 ;;
             esac
           done < <(git diff --name-only)
@@ -72,11 +73,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f scripts/tmp_converge_natural_hotkeys.py scripts/tmp_fix_converger_quotes.py .github/workflows/tmp-natural-hotkey-mainline-convergence.yml
+          rm -f scripts/tmp_converge_natural_hotkeys.py scripts/tmp_fix_converger_quotes.py scripts/tmp_fix_converger_indentation.py .github/workflows/tmp-natural-hotkey-mainline-convergence.yml
           git status --short
           git diff --stat
           git diff --check
-          git add -A -- docs/prompt-kit-polish.js docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md docs/PROMPT_KIT_OPERATOR_GUIDE.md web/README.md web/prompt-kit/index.html tests/test_prompt_kit_hotkey_completion.py tests/test_prompt_kit_hotkey_identity_runtime.py tests/test_prompt_kit_discovery.py tests/prompt_kit_favorite_browser_proof.py tests/prompt_kit_hotkey_identity_browser_proof.py .github/workflows/prompt-kit-observed-browser-proof.yml scripts/tmp_converge_natural_hotkeys.py scripts/tmp_fix_converger_quotes.py .github/workflows/tmp-natural-hotkey-mainline-convergence.yml
+          git add -A -- docs/prompt-kit-polish.js docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md docs/PROMPT_KIT_OPERATOR_GUIDE.md web/README.md web/prompt-kit/index.html tests/test_prompt_kit_hotkey_completion.py tests/test_prompt_kit_hotkey_identity_runtime.py tests/test_prompt_kit_discovery.py tests/prompt_kit_favorite_browser_proof.py tests/prompt_kit_hotkey_identity_browser_proof.py .github/workflows/prompt-kit-observed-browser-proof.yml scripts/tmp_converge_natural_hotkeys.py scripts/tmp_fix_converger_quotes.py scripts/tmp_fix_converger_indentation.py .github/workflows/tmp-natural-hotkey-mainline-convergence.yml
           git diff --cached --check
           git commit -m "fix(operant): make catalog prompt numbers authoritative"
           git push origin HEAD:fix/operant-natural-prompt-hotkeys-mainline-20260908
