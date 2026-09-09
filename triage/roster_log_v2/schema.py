@@ -5,10 +5,11 @@ from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import date
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 SCHEMA_VERSION = "roster-log-v2/v1"
 TOLERANCE_HOURS = 0.01
+ALLOCATION_BASES = ("DEFAULT", "EXPLICIT", "OVERRIDE")
 
 
 @dataclass(frozen=True)
@@ -24,6 +25,8 @@ class DayReconciliation:
 
 
 def _number(value: Any, *, field: str) -> float:
+    if isinstance(value, bool):
+        raise ValueError(f"{field} must be numeric")
     try:
         result = float(value)
     except (TypeError, ValueError) as exc:
@@ -45,12 +48,49 @@ def _day_key(row: Dict[str, Any]) -> Tuple[str, str]:
     return work_date, staff
 
 
-def normalize_state(payload: Dict[str, Any]) -> Dict[str, Any]:
-    """Normalize an operator state document without inventing allocation policy.
+def _allocation_basis(value: Any, *, default: str = "EXPLICIT") -> str:
+    if value is None or (isinstance(value, str) and not value.strip()):
+        basis = default
+    elif not isinstance(value, str):
+        raise ValueError("allocation basis must be a string when provided")
+    else:
+        basis = value.strip().upper()
+    if basis not in ALLOCATION_BASES:
+        raise ValueError(
+            f"allocation basis must be one of {', '.join(ALLOCATION_BASES)}: {basis or '<blank>'}"
+        )
+    return basis
 
-    A paid day defaults to one project. When no explicit allocation rows exist for
-    that staff/date, one allocation is created for the attendance row's default
-    project and the full paid hours. Explicit multi-project rows are preserved.
+
+def _validate_default_allocation(
+    attendance_row: Dict[str, Any], rows: List[Dict[str, Any]], key: Tuple[str, str]
+) -> None:
+    defaults = [row for row in rows if row["basis"] == "DEFAULT"]
+    if not defaults:
+        return
+    if len(rows) != 1 or len(defaults) != 1:
+        raise ValueError(
+            f"DEFAULT allocation cannot coexist with explicit allocations: {key[0]} / {key[1]}"
+        )
+    default_row = defaults[0]
+    if default_row["project"] != attendance_row["default_project"]:
+        raise ValueError(
+            f"DEFAULT allocation must use attendance default_project: {key[0]} / {key[1]}"
+        )
+    if abs(float(default_row["hours"]) - float(attendance_row["paid_hours"])) > TOLERANCE_HOURS:
+        raise ValueError(
+            f"DEFAULT allocation must equal paid_hours: {key[0]} / {key[1]}"
+        )
+
+
+def normalize_state(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize operator state without inventing project-allocation policy.
+
+    ``default_project`` is fallback metadata on attendance, not final project truth.
+    When no explicit allocation rows exist for a paid staff/date, one ``DEFAULT``
+    allocation is created for the full paid hours. Once explicit rows exist, project
+    membership and reporting derive only from those allocation rows. Existing v1
+    allocation rows without a basis remain backward-compatible as ``EXPLICIT``.
     """
     if not isinstance(payload, dict):
         raise ValueError("roster state must be an object")
@@ -90,6 +130,7 @@ def normalize_state(payload: Dict[str, Any]) -> Dict[str, Any]:
             raise ValueError(f"allocation project required: {key[0]} / {key[1]}")
         row["project"] = project
         row["hours"] = _number(row.get("hours", 0), field="allocation hours")
+        row["basis"] = _allocation_basis(row.get("basis"), default="EXPLICIT")
         alloc_id = str(row.get("allocation_id") or f"ALLOC-{key[0].replace('-', '')}-{idx:04d}").strip()
         if alloc_id in ids:
             raise ValueError(f"duplicate allocation_id: {alloc_id}")
@@ -103,13 +144,18 @@ def normalize_state(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     for attendance_row in normalized_attendance:
         key = _day_key(attendance_row)
-        if attendance_row["paid_hours"] <= 0 or grouped.get(key):
+        rows = grouped.get(key, [])
+        if rows:
+            _validate_default_allocation(attendance_row, rows, key)
+            continue
+        if attendance_row["paid_hours"] <= 0:
             continue
         row = {
             "allocation_id": f"DEFAULT-{key[0].replace('-', '')}-{len(normalized_allocations)+1:04d}",
             "date": key[0],
             "staff": key[1],
             "project": attendance_row["default_project"],
+            "basis": "DEFAULT",
             "workstream": "",
             "hours": attendance_row["paid_hours"],
             "status": "RECONCILED",
