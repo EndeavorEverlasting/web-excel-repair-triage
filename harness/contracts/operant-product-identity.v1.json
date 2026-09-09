@@ -2,7 +2,7 @@
   "schema_version": "operant-product-identity/v1",
   "product_id": "operant",
   "product_name": "Operant",
-  "product_version": "0.1.0",
+  "product_version": "0.2.0",
   "status": "transition",
   "tagline": "Agentic Capability & Execution System",
   "purpose": "Map capabilities, skills, implementations, agents, hooks, and evidence into fast, evidence-bounded execution routes.",
@@ -33,7 +33,7 @@
   },
   "compatibility": {
     "visible_brand": "Operant",
-    "visible_version": "0.1",
+    "visible_version": "0.2.0",
     "preserve_paths": [
       "web/prompt-kit/index.html",
       "docs/prompt-kit*.js",
@@ -43,5 +43,87 @@
     ],
     "internal_path_renames_deferred": true,
     "reason": "Avoid breaking launchers, public URLs, storage keys, workflows, and stale/open branch references before dedicated-repository cutover."
+  },
+  "release_versioning": {
+    "schema_version": "operant-release-versioning/v1",
+    "authority_file": "OPERANT_VERSION",
+    "scheme": "semver",
+    "scheme_reason": "Operant has observable public compatibility boundaries across routes, launcher/acquisition behavior, durable browser state, prompt/capability behavior, and release artifacts. Schema/protocol versions remain independent. Pre-1.0 policy keeps unstable breaking changes within MINOR until an explicit 1.0 compatibility declaration.",
+    "tag_prefix": "operant-v",
+    "changelog": "docs/OPERANT_CHANGELOG.md",
+    "bootstrap": {
+      "from_version": "0.1.0",
+      "identity_pr": 329,
+      "identity_merge_sha": "781616a1a42893fb5b521e41b217f5cef04b2701",
+      "cutover_version": "0.2.0",
+      "rule": "Do not rewrite the historical 0.1 identity. The first deterministic release is 0.2.0; after its tag exists, tags are the version-planning baseline."
+    },
+    "pre_1_policy": {
+      "breaking": "minor",
+      "feature": "minor",
+      "fix_or_performance": "patch",
+      "promotion_to_1_0": "explicit operator-reviewed compatibility declaration; never inferred from an ordinary commit"
+    },
+    "no_bump_types": [
+      "docs",
+      "test",
+      "tests",
+      "refactor",
+      "style",
+      "chore",
+      "ci",
+      "build"
+    ],
+    "product_paths": [
+      "OPERANT_VERSION",
+      "build_prompt_kit.py",
+      "web/prompt-kit/**",
+      "docs/prompt-kit*.js",
+      "registry/prompts/**",
+      "PROMPT_KIT_ACCESS.md",
+      "OPEN_PROMPT_KIT_ON_PHONE.md",
+      "Open-Latest-PromptKit.cmd",
+      "Acquire-Latest-PromptKit.cmd",
+      "scripts/*PromptKit*",
+      "scripts/*prompt_kit*",
+      "scripts/*operant*",
+      "harness/contracts/operant-*",
+      "harness/reports/*OPERANT*",
+      ".ai/skills/operant-*/**",
+      ".github/workflows/operant-*"
+    ],
+    "shared_paths": [
+      "AGENTS.md",
+      "SKILLS.md",
+      "CAPABILITIES.md",
+      "TRIGGERS.md",
+      "harness/manifest.v1.json",
+      "harness/capabilities.v1.json",
+      "harness/triggers.v1.json",
+      "harness/validators.v1.json"
+    ],
+    "shared_scopes": [
+      "operant",
+      "prompt-kit"
+    ],
+    "generated_only_paths": [
+      "web/prompt-kit/index.html",
+      "Outputs/**"
+    ],
+    "mirrors": [
+      "harness/contracts/operant-product-identity.v1.json#product_version",
+      "harness/contracts/operant-product-identity.v1.json#compatibility.visible_version",
+      "web/prompt-kit/index.html#title",
+      "web/prompt-kit/index.html#header",
+      "web/prompt-kit/index.html#versionBadge"
+    ],
+    "automation": {
+      "planner": "scripts/operant_version.py",
+      "workflow": ".github/workflows/operant-versioning.yml",
+      "release_pr_prefix": "automation/operant-release-",
+      "one_open_release_pr": true,
+      "release_after_validated_mainline_version_change": true
+    },
+    "rollback": "Restore or redeploy a previously tagged commit/artifact. Never decrement, rename, erase, or reuse a released version."
   }
 }
