@@ -118,7 +118,8 @@ Navigation shortcuts are ignored while typing in input, textarea, select, or con
 - Double-click opens prompt detail on desktop.
 - **Open** is the explicit detail action and remains available on touch/coarse-pointer layouts.
 - **Copy** is always available on cards and prompt detail.
-- Successful copy uses the current green confirmation path.
+- Successful copy uses the current green confirmation path, which shows the prompt id and a bounded preview of the copied prompt text.
+- Snapping to a prompt (numeric shortcut, mobile jump, or detail open centering) hides the compact filter panel.
 - **Esc** closes the active detail/help surface before broader filter clearing.
 - Activating the **AI Harness Prompt Kit** title resets temporary browsing state while preserving saved Favorites.
 

@@ -73,13 +73,25 @@ def main() -> int:
                 assert page.evaluate("document.activeElement && document.activeElement.getAttribute('data-prompt-id')") == 'P111'
                 toast = page.locator('#toast').inner_text()
                 assert 'P111 ready' in toast and 'tap the prompt card to copy' in toast, toast
+                assert page.locator('.header').evaluate("el=>el.classList.contains('filters-collapsed')"), 'snap must hide compact filters'
+                assert page.locator('#filterPanelToggle').get_attribute('aria-expanded') == 'false'
 
                 expected = page.evaluate("PROMPTS.find(function(item){return item.id==='P111'}).copyContent")
                 target.click(position={"x": 24, "y": 44})
                 page.wait_for_timeout(380)
                 actual = page.evaluate('navigator.clipboard.readText()')
                 assert canonical(actual) == canonical(expected), (len(actual), len(expected))
-                assert 'Copied to clipboard' in page.locator('#toast').inner_text()
+                toast_el = page.locator('#toast')
+                toast_text = toast_el.inner_text()
+                assert 'Copied to clipboard' in toast_text, toast_text
+                assert 'P111' in toast_text, toast_text
+                assert toast_el.get_attribute('data-copy-confirmation') == '1'
+                assert toast_el.get_attribute('data-prompt-id') == 'P111'
+                preview = toast_el.get_attribute('data-copy-preview') or ''
+                assert preview, 'copy confirmation must expose a prompt preview'
+                normalized_preview = canonical(preview).rstrip('…').rstrip()
+                assert normalized_preview and canonical(expected).startswith(normalized_preview), (preview[:80], expected[:80])
+                assert toast_el.locator('.toast-copy-preview').count() == 1
                 assert_detail_closed(page, 'card tap copy must not open detail')
 
                 # Explicit Open remains available for deliberate inspection only.

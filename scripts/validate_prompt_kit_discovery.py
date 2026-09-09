@@ -35,6 +35,7 @@ REQUIRED_IDS = {
     "tutorial_beacon",
     "card_action_rail",
     "clipboard_confirmation",
+    "snap_hides_filters",
     "stable_identity_resequence",
     "registry_prompt_fallback",
     "distribution_front_door",
@@ -160,10 +161,21 @@ def audit() -> dict[str, object]:
         "clipboard_confirmation": (
             "showCopyConfirmation",
             "✓ Copied to clipboard",
+            "formatCopyConfirmationPreview",
+            "buildCopyConfirmationToastModel",
+            "renderCopyConfirmationToast",
+            "toast-copy-preview",
+            "data-copy-preview",
             ".toast.success",
             "prompt-copy-confirm",
             "copy-confirmed",
             "prefers-reduced-motion:reduce",
+        ),
+        "snap_hides_filters": (
+            "function centerRenderedPromptCard(promptId,behavior)",
+            "hideCompactFilters();",
+            "function revealPromptShortcutTarget(promptId,behavior)",
+            "return centerRenderedPromptCard(promptId,behavior||hotkeyScrollBehavior())",
         ),
     }
     for requirement_id, markers in polish_markers.items():
