@@ -1,1 +1,2 @@
 temporary trigger; carrier removes this before durable proof
+sync=2
