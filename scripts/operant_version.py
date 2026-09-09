@@ -9,9 +9,11 @@ from __future__ import annotations
 import argparse
 import fnmatch
 import json
+import os
 import re
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -304,6 +306,50 @@ def _changelog_section(plan_payload: dict, version: str) -> str:
     return "\n".join(lines).rstrip() + "\n\n"
 
 
+def _write_temp(path: Path, content: bytes) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, raw_temp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    temp_path = Path(raw_temp)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+    except Exception:
+        temp_path.unlink(missing_ok=True)
+        raise
+    return temp_path
+
+
+def _atomic_write_many(updates: dict[Path, str]) -> None:
+    """Prepare every write first; on replace failure restore already-replaced targets."""
+    originals = {path: path.read_bytes() if path.exists() else None for path in updates}
+    prepared: list[tuple[Path, Path]] = []
+    replaced: list[Path] = []
+    try:
+        for path, text in updates.items():
+            prepared.append((path, _write_temp(path, text.encode("utf-8"))))
+        for path, temp_path in prepared:
+            os.replace(temp_path, path)
+            replaced.append(path)
+    except Exception as exc:
+        rollback_errors: list[str] = []
+        for path in reversed(replaced):
+            try:
+                prior = originals[path]
+                if prior is None:
+                    path.unlink(missing_ok=True)
+                else:
+                    os.replace(_write_temp(path, prior), path)
+            except Exception as rollback_exc:  # pragma: no cover - catastrophic filesystem failure
+                rollback_errors.append(f"{path}: {rollback_exc}")
+        detail = f"; rollback failures: {', '.join(rollback_errors)}" if rollback_errors else ""
+        raise VersioningError(f"Operant version mirror transaction failed: {exc}{detail}") from exc
+    finally:
+        for _, temp_path in prepared:
+            temp_path.unlink(missing_ok=True)
+
+
 def apply_plan(plan_payload: dict) -> None:
     if plan_payload.get("schema_version") != "operant-version-plan/v1":
         raise VersioningError("unsupported version-plan schema")
@@ -319,11 +365,10 @@ def apply_plan(plan_payload: dict) -> None:
         raise VersioningError(f"plan next_version drifted: expected {expected}, got {next_version}")
     assert_version_not_released(next_version)
 
-    VERSION_FILE.write_text(f"{next_version}\n", encoding="utf-8")
     payload = _load_contract()
     payload["product_version"] = str(next_version)
     payload.setdefault("compatibility", {})["visible_version"] = str(next_version)
-    IDENTITY_CONTRACT.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    contract_text = json.dumps(payload, indent=2) + "\n"
 
     header = "# Operant Changelog\n\nHuman-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.\n\n"
     existing = CHANGELOG.read_text(encoding="utf-8") if CHANGELOG.exists() else header
@@ -331,7 +376,15 @@ def apply_plan(plan_payload: dict) -> None:
         raise VersioningError("unexpected Operant changelog format")
     insertion = _changelog_section(plan_payload, str(next_version))
     body = existing[len(header) :] if existing.startswith(header) else existing.split("\n\n", 2)[-1]
-    CHANGELOG.write_text(header + insertion + body.lstrip(), encoding="utf-8")
+    changelog_text = header + insertion + body.lstrip()
+
+    _atomic_write_many(
+        {
+            VERSION_FILE: f"{next_version}\n",
+            IDENTITY_CONTRACT: contract_text,
+            CHANGELOG: changelog_text,
+        }
+    )
 
 
 def validate(require_tag: bool = False) -> list[str]:
@@ -366,7 +419,9 @@ def validate(require_tag: bool = False) -> list[str]:
         findings.append("no-bump commit-type policy drifted")
     if not CHANGELOG.exists():
         findings.append("Operant changelog is missing")
-    if GENERATED_SITE.exists():
+    if not GENERATED_SITE.exists():
+        findings.append("generated Operant site is missing")
+    else:
         html = GENERATED_SITE.read_text(encoding="utf-8")
         expected_markers = (
             f"<title>Operant {version}</title>",
