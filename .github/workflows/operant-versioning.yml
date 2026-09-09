@@ -8,6 +8,7 @@ on:
       - docs/OPERANT_CHANGELOG.md
       - docs/OPERANT_VERSIONING.md
       - harness/contracts/operant-product-identity.v1.json
+      - scripts/build_prompt_kit_registry.py
       - scripts/operant_version.py
       - scripts/validate_operant_product_identity.py
       - tests/test_operant_product_identity.py
@@ -20,8 +21,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+  pull-requests: read
 
 concurrency:
   group: operant-versioning-${{ github.event_name }}-${{ github.ref }}
@@ -36,6 +37,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -54,6 +56,9 @@ jobs:
   mainline-version-owner:
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -159,19 +164,26 @@ jobs:
           git commit -m "chore(operant): release v${next_version}"
           git push origin HEAD:"$branch"
 
-          cat > Outputs/operant-release-pr.md <<EOF
-          ## Operant deterministic release
+          NEXT_VERSION="$next_version" SOURCE_SHA="$GITHUB_SHA" python - <<'PY'
+          import os
+          from pathlib import Path
+
+          version = os.environ["NEXT_VERSION"]
+          source_sha = os.environ["SOURCE_SHA"]
+          body = f"""## Operant deterministic release
 
           This PR was derived AFK from accepted mainline development by `scripts/operant_version.py`.
 
-          - next version: `${next_version}`
-          - source mainline: `${GITHUB_SHA}`
+          - next version: `{version}`
+          - source mainline: `{source_sha}`
           - plan: `Outputs/operant-version-plan.json` in the workflow run
           - authority: `OPERANT_VERSION`
           - validation: Operant version + identity tests, generated-site parity, and `git diff --check`
 
-          Merge is the explicit release gate. After this exact version change reaches `main`, the mainline owner validates it again and creates `operant-v${next_version}` plus the GitHub Release at the exact merged commit.
-          EOF
+          Merge is the explicit release gate. After this exact version change reaches `main`, the mainline owner validates it again and creates `operant-v{version}` plus the GitHub Release at the exact merged commit.
+          """
+          Path("Outputs/operant-release-pr.md").write_text(body, encoding="utf-8")
+          PY
           gh pr create \
             --base main \
             --head "$branch" \
