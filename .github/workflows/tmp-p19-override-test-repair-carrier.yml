@@ -1,0 +1,52 @@
+name: Temporary P19 override identity test repair carrier
+
+on:
+  pull_request:
+    types: [synchronize]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p19-override-test-repair-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/p19-direct-deployment-guidance-20260909'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/p19-direct-deployment-guidance-20260909
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Repair stale override-count regression and re-prove Prompt Kit
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main fix/p19-direct-deployment-guidance-20260909 --prune
+          if [ ! -f scripts/tmp_repair_prompt_override_identity_test.py ]; then
+            echo 'override identity test already repaired; no transport work remains'
+            exit 0
+          fi
+          git merge --no-edit origin/main
+          python scripts/tmp_repair_prompt_override_identity_test.py
+          python -m unittest tests.test_skill_prompt_registry -v
+          python -m unittest \
+            tests.test_prompt_kit_mainline_delivery.PromptKitMainlineDeliveryTests.test_p19_gives_direct_operator_deployment_guidance_without_hunting \
+            tests.test_prompt_kit_mainline_delivery.PromptKitMainlineDeliveryTests.test_p13_routes_specialized_failures_without_absorbing_their_doctrine \
+            -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          git rm -f scripts/tmp_repair_prompt_override_identity_test.py
+          git add tests/test_skill_prompt_registry.py
+          git diff --cached --check
+          git commit -m 'test(prompt-kit): generalize override identity contract'
+          git push origin HEAD:fix/p19-direct-deployment-guidance-20260909
