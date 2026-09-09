@@ -83,6 +83,7 @@ class PromptKitMainlineDeliveryTests(unittest.TestCase):
             "route to P76",
             "route verification to P83",
             "route certification to P48",
+            "route the specialist repair to P19",
             "Routing is not a stopping condition",
             "Do not copy the specialist prompt's full checklist into P13",
         ):
@@ -101,6 +102,34 @@ class PromptKitMainlineDeliveryTests(unittest.TestCase):
         ledger_ids = {item["id"] for item in ledger["prompts"]}
         self.assertIn("P83", ledger_ids)
         self.assertLess(len(copy), 18000)
+
+
+    def test_p19_gives_direct_operator_deployment_guidance_without_hunting(self):
+        payload = load_json("registry/prompts/prompt-overrides.v1.json")
+        p19 = next(item for item in payload["overrides"] if item["id"] == "P19")
+        copy = p19["copyContent"]
+        for phrase in (
+            "RECOVER CONTEXT + PIN THE DEPLOYMENT SUBJECT",
+            "DIRECT OPERATOR INTERFACE GUIDANCE — NO HUNTING",
+            "DIRECT ENTRY POINT",
+            "exact visible button, tab, menu, field, row, link, or selector label",
+            "RELATIVE LOCATION",
+            "EXPECTED STATE",
+            "one operator action at a time",
+            "Do not substitute vague navigation",
+            "VERSION / GENERATION BINDING — PREVENT WRONG-APP DEPLOYS",
+            "highest proven deployment gate",
+            "DEPLOYMENT PROOF LADDER",
+            "OPERATOR ACTION NOW",
+            "Never make the operator hunt",
+        ):
+            self.assertIn(phrase, copy)
+        self.assertIn("browser", p19["useWhen"])
+        self.assertIn("current operator screen", p19["inspectFirst"])
+        self.assertIn("direct entry point", p19["expectedOutput"])
+        self.assertIn("visible control", p19["proofGate"])
+        self.assertIn("wrong/legacy generation", p19["proofGate"])
+        self.assertLess(len(copy), 12000)
 
     def test_p65_can_route_repeated_friction_without_browser_finder(self):
         payload = load_json("registry/prompts/tutorial-discovery-prompts.v1.json")
