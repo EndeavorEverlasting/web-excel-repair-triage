@@ -60,6 +60,46 @@ class CorrespondencePromptRegistryTests(unittest.TestCase):
         self.assertIn("Never turn an unresolved issue into `complete`", content)
         self.assertNotIn("ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT", content)
 
+
+    def test_correspondence_prompts_gate_self_inflicted_disclosure(self) -> None:
+        p72 = self.prompts["P72"]["copyContent"]
+        p73 = self.prompts["P73"]["copyContent"]
+
+        for phrase in (
+            "MINIMUM SUFFICIENT CONTEXT",
+            "QUESTION-SURFACE CONTROL",
+            "self-inflicted disclosure",
+            "reporting expectation",
+            "smallest sufficient external question",
+        ):
+            with self.subTest(prompt="P72", phrase=phrase):
+                self.assertIn(phrase, p72)
+
+        for phrase in (
+            "RECIPIENT-NEED GATE / MINIMUM SUFFICIENT CONTEXT",
+            "QUESTION-SURFACE CONTROL / SELF-INFLICTED DISCLOSURE",
+            "private tracker",
+            "daily",
+            "hourly",
+            "same-day",
+            "reporting expectations",
+            "smallest sufficient external question",
+            "EXTERNAL-MATERIAL EXCEPTION",
+            "audience selection, not concealment",
+            "queue/view/report",
+        ):
+            with self.subTest(prompt="P73", phrase=phrase):
+                self.assertIn(phrase, p73)
+
+        self.assertIn(
+            "Do not hide a detail the recipient genuinely needs",
+            p72,
+        )
+        self.assertIn(
+            "Evidence that convinced the sender is not automatically evidence the recipient needs",
+            p73,
+        )
+
     def test_render_includes_correspondence_runtime_and_profile_tokens(self) -> None:
         html = build_prompt_kit_registry.render()
         self.assertIn("prompt-kit-correspondence-styles", html)
