@@ -263,6 +263,16 @@ def _validate_site_parity() -> tuple[bool, int]:
     return output.read_text(encoding="utf-8") == expected, len(prompts)
 
 
+
+def review_prior_art(query_text: str) -> dict[str, Any]:
+    """Expose the all-registered-source gate before a semantic ADD draft exists."""
+    try:
+        return prior_art.review_external_prior_art(query_text)
+    except prior_art.PriorArtGateError as exc:
+        raise SystemExit(
+            f"Prompt pre-authoring external prior-art review failed closed: {exc}"
+        ) from exc
+
 def add_prompt(
     draft: dict[str, Any], explicit_registry: str | None, dry_run: bool
 ) -> dict[str, Any]:
@@ -348,9 +358,18 @@ def main(argv: list[str] | None = None) -> int:
     )
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("inspect", help="Print next identity and compact registry routing choices as JSON.")
+    prior = sub.add_parser(
+        "prior-art",
+        help="Search every registered upstream before authoring a semantic ADD draft.",
+    )
+    prior.add_argument(
+        "--query",
+        required=True,
+        help="User use case plus candidate mechanics to compare with internal owners and registered upstreams.",
+    )
     add = sub.add_parser(
         "add",
-        help="Search registered external prior art, then add one prompt draft, allocate identity, rebuild, and validate.",
+        help="Recheck every registered upstream, then add one prompt draft, allocate identity, rebuild, and validate.",
     )
     add.add_argument("--input", required=True, help="Draft JSON path, or - for stdin.")
     add.add_argument("--registry", help="Existing registry_id; otherwise resolve from draft profile.")
@@ -360,6 +379,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "inspect":
         result = inspect_state()
+    elif args.command == "prior-art":
+        result = review_prior_art(args.query)
     elif args.command == "add":
         result = add_prompt(_read_json(args.input), args.registry, args.dry_run)
     else:

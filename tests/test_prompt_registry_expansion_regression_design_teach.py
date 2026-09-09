@@ -268,6 +268,21 @@ class PromptRegistryExpansionTests(unittest.TestCase):
             "Stop at a bounded fixed point",
             "search_operant_external_catalog.py",
             "distinct residual before ADD",
+            "UPSTREAM PRIOR-ART BEFORE AUTHORING",
+            "prompt_registry_ops.py prior-art --query",
+            "all_registered_sources_searched=true",
+            "deepseek-harness",
+            "mattpocock-skills",
+            "UPSTREAM SYNTHESIS INTO THE USER USE CASE",
+            "upstream insight | source | current owner | overlap/residual | adoption",
+            "Construct sound overlapping value",
+            "Do not bulk-import donor prompts",
+            "re-run every registered upstream against the final draft",
+            "CANONICAL REPO",
+            "Recover approved/rejected wording",
+            "Look for missed `also`, `another`, `we skipped`",
+            "roll back registry/site writes if validation fails",
+            "Verify new prompts remain distinct and strengthened prompts retain their original role",
         ):
             self.assertIn(phrase, content)
         raw = json.loads((ROOT / "registry/prompts/spec-architecture-prompts.v1.json").read_text(encoding="utf-8"))
