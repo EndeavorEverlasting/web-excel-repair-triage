@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roster Log V2</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div>
+      <p class="eyebrow">LOCAL-FIRST / ROSTER LOG V2</p>
+      <h1>Attendance + Project Allocations</h1>
+      <p class="lede">Attendance is recorded once. Project allocations say where those hours belong. One project is the normal default; split a day only when more than one project should receive hours.</p>
+    </div>
+    <div class="cache-pill" id="cacheStatus">Local cache ready</div>
+  </header>
+
+  <main>
+    <section class="panel editor" aria-labelledby="entry-title">
+      <div class="panel-title">
+        <div>
+          <p class="eyebrow">DAY ENTRY</p>
+          <h2 id="entry-title">Record attendance</h2>
+        </div>
+        <button id="singleProject" class="secondary" type="button">Use one project for whole day</button>
+      </div>
+
+      <div class="grid attendance-grid">
+        <label>Date<input id="workDate" type="date"></label>
+        <label>Staff<input id="staff" autocomplete="name" placeholder="Staff name"></label>
+        <label>Clock in<input id="clockIn" type="time"></label>
+        <label>Clock out<input id="clockOut" type="time"></label>
+        <label>Paid hours<input id="paidHours" type="number" min="0" step="0.01" value="8"></label>
+        <label class="wide">Default / fallback project
+          <input id="defaultProject" list="projectNames" placeholder="Used only if no explicit allocation replaces it">
+          <span class="field-help">This is attendance metadata, not an extra project. Explicit allocations below control project reporting.</span>
+        </label>
+        <label class="wide">Attendance notes<input id="attendanceNotes" placeholder="Optional internal note"></label>
+      </div>
+
+      <datalist id="projectNames"></datalist>
+      <div class="allocation-heading">
+        <div>
+          <p class="eyebrow">PROJECT ALLOCATIONS</p>
+          <h3>Where does this paid day belong?</h3>
+          <p class="field-help">Add one row per project that should receive hours. Multiple projects are normal when their hours reconcile to the paid day.</p>
+        </div>
+        <button id="addProject" type="button">+ Add project</button>
+      </div>
+      <div id="allocations" class="allocation-list"></div>
+
+      <div class="reconcile-bar">
+        <div><span>Paid</span><strong id="paidTotal">8.00</strong></div>
+        <div><span>Allocated</span><strong id="allocatedTotal">8.00</strong></div>
+        <div><span>Variance</span><strong id="variance">0.00</strong></div>
+        <div id="reconcileState" class="state good">RECONCILED</div>
+      </div>
+
+      <div class="actions">
+        <button id="saveDay" type="button">Save day</button>
+        <button id="clearEditor" class="secondary" type="button">Clear editor</button>
+      </div>
+      <p id="message" role="status"></p>
+    </section>
+
+    <section class="panel" aria-labelledby="ledger-title">
+      <div class="panel-title">
+        <div>
+          <p class="eyebrow">LEDGER</p>
+          <h2 id="ledger-title">Saved days</h2>
+        </div>
+        <div class="actions compact">
+          <button id="exportJson" class="secondary" type="button">Export JSON</button>
+          <button id="exportAttendance" class="secondary" type="button">Attendance CSV</button>
+          <button id="exportAllocations" class="secondary" type="button">Allocations CSV</button>
+          <label class="file-button">Import JSON<input id="importJson" type="file" accept="application/json,.json"></label>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Staff</th><th>Paid</th><th>Mode</th><th>Allocated</th><th>Variance</th><th>Actual projects</th><th></th></tr></thead>
+          <tbody id="dayRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="report-title">
+      <div class="panel-title">
+        <div>
+          <p class="eyebrow">DETERMINISTIC REPORT</p>
+          <h2 id="report-title">Project hours</h2>
+          <p class="field-help">Derived only from normalized project allocations. The default / fallback field is never double-counted when explicit allocations exist.</p>
+        </div>
+        <div class="actions compact">
+          <button id="exportProjectReportCsv" class="secondary" type="button">Project report CSV</button>
+          <button id="exportProjectReportJson" class="secondary" type="button">Project report JSON</button>
+        </div>
+      </div>
+      <div class="report-metrics">
+        <div><span>Paid</span><strong id="reportPaid">0.00</strong></div>
+        <div><span>Allocated</span><strong id="reportAllocated">0.00</strong></div>
+        <div><span>Variance</span><strong id="reportVariance">0.00</strong></div>
+        <div><span>Multi-project days</span><strong id="reportMulti">0</strong></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Project</th><th>Allocated hours</th><th>Days</th><th>Staff</th><th>Allocation rows</th></tr></thead>
+          <tbody id="projectReportRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel rules">
+      <p class="eyebrow">OPERATING RULE</p>
+      <h2>Attendance owns hours. Allocations own project attribution.</h2>
+      <p>The default / fallback project is used only when no explicit project allocation exists for that paid day. Once allocations exist, those rows are the project truth. A deliberate full-day project decision, a two-project split, or a three-project split are all valid when the allocation arithmetic reconciles.</p>
+      <p>Allocation basis explains why a row exists: <strong>DEFAULT</strong> is fallback-created, <strong>EXPLICIT</strong> is intentionally entered, and <strong>OVERRIDE</strong> intentionally corrects a default or prior classification. The tracker does not invent an 80/20 split or infer an override.</p>
+      <p>Everything stays in this browser's local storage until you export it. JSON is the canonical portable state consumed by the repo workbook generator; report exports are deterministic projections of that state.</p>
+    </section>
+  </main>
+
+  <template id="allocationTemplate">
+    <article class="allocation-card">
+      <div class="allocation-number"></div>
+      <label>Project<input class="project" list="projectNames" placeholder="Project / billing scope"></label>
+      <label>Allocation basis
+        <select class="basis">
+          <option value="DEFAULT">DEFAULT — fallback</option>
+          <option value="EXPLICIT">EXPLICIT — intentional</option>
+          <option value="OVERRIDE">OVERRIDE — correction</option>
+        </select>
+      </label>
+      <label>Workstream<input class="workstream" placeholder="Optional workstream"></label>
+      <label>Hours<input class="hours" type="number" min="0" step="0.01"></label>
+      <label class="wide">Notes<input class="notes" placeholder="Optional internal note / evidence pointer"></label>
+      <button class="remove secondary" type="button">Remove</button>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>

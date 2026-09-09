@@ -39,3 +39,26 @@ https://endeavoreverlasting.github.io/web-excel-repair-triage/
 - Launcher URL: `https://endeavoreverlasting.github.io/web-excel-repair-triage/`
 
 The launcher adds install, share, copy-link, QR, and offline-fallback surfaces without changing prompt content or creating a parallel mobile application.
+
+## Fastest path to a known prompt ID
+
+If you already know the prompt ID, do **not** open More and do **not** use a swipe gesture. Use the dedicated thumb-zone jump:
+
+1. Tap **Go to P#**.
+2. For `P111`, type **111**. The `P` is already supplied by the control.
+3. When the ID is exact and unambiguous, **P111 snaps into view automatically with prompt detail closed**. There is no search-results tap and no space-heavy prompt modal between you and the card.
+4. **Tap anywhere on the prompt card outside its explicit controls to copy the prompt.** The card itself is the primary copy surface; the Copy button is a secondary affordance. Use **Open** only when you deliberately want prompt detail, and use the card's star when you want to keep it as a Favorite.
+
+You do not open **More** first. **Swiping is not required.** This path also avoids opening Chrome's **Find in page**, typing the `P`, and stepping through text matches that do not understand Prompt Kit IDs.
+
+If a shorter ID is also the start of a longer ID (for example `P11` and `P111`), the shorter one waits instead of stealing the route. For **P11**, type `11`; the button changes to **Go to P11** and the status tells you the ID is exact. Press **Enter** (including the phone keyboard's Go/Enter key) or tap **Go to P11** to jump to it, or keep typing `1` to continue to P111. There is no timing race.
+
+For the zero-padded IDs `P00` through `P09`, keep the **leading zero**: type `00` for P00, `01` for P01, and so on. A prefix such as `1` that is not itself a canonical prompt stays in **Keep typing** state and cannot submit a fake exact target. A nonexistent number stays closed with a clear no-match message. Pasting `P111` is also safe: the control strips the `P` and resolves the same canonical ID.
+
+## More controls on touch devices
+
+The second floating control is **More**. Open it only when you need a secondary action: **Find Prompt, Previous profile, Next profile, Search, Favorites, Filters, Reference, Top, or Bottom**. These are ordinary labeled buttons; there is no hidden swipe vocabulary to memorize.
+
+Inside **Reference**, tap any item that links a prompt ID (for example Prompt Sequence rows). That tap opens the prompt. Long-press on reference items is not a product gesture and does nothing extra.
+
+Desktop keyboard users keep the existing Hotkeys panel. For favorite/recommended prompts they type **digits only** (for `P111`, type `111`) — no leading `p`. Phone users use the **Go to P#** handle instead. Mouse users locate a card and use Open/Copy; there is no mouse digit sequence. The phone controls call the same underlying Prompt Kit actions (`toggleRef`, Favorites activation, filter toggle, scroll, finder/search, profile slots) and do not create a second prompt database or parallel state. Known-ID phone jumps reveal and snap the canonical card without opening detail; tap the card surface to copy. Keyboard digit sequences remain the power-user copy+reveal path, while explicit Open remains the deliberate inspection route on phone.

@@ -69,6 +69,10 @@ class PromptRegistryExpansionTests(unittest.TestCase):
             "2-4 materially different candidates",
             "P97 Open-Source Prior-Art & Gap Analyst",
             "Creativity is disciplined recombination",
+            "ACQUIRE COHESIVE REPOSITORY CONTEXT",
+            "Do not treat a single pasted file as sufficient evidence",
+            "Repomix/code2prompt",
+            "root manifests/configuration",
         ):
             self.assertIn(phrase, content)
         design = self.by_name["Program Design & Call-Stack Prototype Architect"]
@@ -77,7 +81,38 @@ class PromptRegistryExpansionTests(unittest.TestCase):
         self.assertNotIn("BUILD THE SOLVED-BASELINE VS PRIORITIZED-GAP MAP", content)
         raw_payload = json.loads((ROOT / "registry/prompts/spec-architecture-prompts.v1.json").read_text(encoding="utf-8"))
         raw = next(p for p in raw_payload["prompts"] if p["id"] == "P95")
-        self.assertLessEqual(len(raw["copyContent"]), 9300)
+        self.assertLessEqual(len(raw["copyContent"]), 10000)
+
+    def test_greenfield_repository_architecture_selects_hosting_tier_from_evidence(self) -> None:
+        design = self.by_name["Program Design & Call-Stack Prototype Architect"]
+        content = design["copyContent"]
+        for phrase in (
+            "CHOOSE THE DEPLOYMENT OPERATING MODEL FROM EVIDENCE",
+            "managed PaaS/serverless",
+            "Docker or Podman",
+            "Kubernetes/managed orchestration",
+            "millions someday",
+            "OCI containers",
+            "p95/p99/SLO",
+            "Keep this branch progressive-disclosure",
+            "do not preload tier-specific Docker/Podman/Kubernetes",
+            "only after current evidence makes that tier decision-relevant",
+            "Aggregate database/storage size is not application-state demand",
+            "durable application/business state",
+            "telemetry/log/diagnostic exhaust",
+            "retention/TTL/rotation",
+            "write rate/cardinality",
+            "small application database buried under a telemetry accident",
+            "rerun against the irreducible app-state/workload floor",
+            "Diagnostics are not durable product state",
+        ):
+            self.assertIn(phrase, content)
+        p03 = self.full["P03"]["copyContent"]
+        self.assertIn("GREENFIELD REPOSITORY CREATION", p03)
+        self.assertIn("route that bounded design decision to P95", p03)
+        self.assertIn("Do not make Docker, Podman, Kubernetes", p03)
+        self.assertIn("P00 remains governance owner", p03)
+        self.assertIn("P01 remains harness", p03)
 
     def test_teach_prompt_is_grounded_stateful_and_active(self) -> None:
         content = self.by_name["Stateful Socratic Technical Tutor Workspace"]["copyContent"]
@@ -107,6 +142,63 @@ class PromptRegistryExpansionTests(unittest.TestCase):
         ):
             self.assertIn(phrase, content)
 
+    def test_teach_immersive_local_html_demos_are_first_class_learning_tools(self) -> None:
+        teach = self.by_name["Stateful Socratic Technical Tutor Workspace"]
+        content = teach["copyContent"]
+        for phrase in (
+            "BUILD IMMERSIVE LOCAL HTML/JS LEARNING DEMOS WHEN INTERACTION CAN CARRY THE CONCEPT",
+            "Do not treat interactive artifacts as a rare flourish",
+            ".teach/lessons/<NN>-<topic>.html",
+            "IMMERSIVE DEMO LOOP — PREDICT -> MANIPULATE -> OBSERVE -> EXPLAIN",
+            "step/back/reset",
+            "Design for active causality, not passive animation",
+            "meaningful agency, visible causality, and rapid feedback",
+            "Keep demos local-first and self-contained when practical",
+            "exact local path and launch/open command",
+            "one reset/failure path",
+            "keep that interaction UNPROVEN",
+            "Do not build decorative UI that does not improve comprehension",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("immersive local HTML/JS learning demos", teach["sprintRole"])
+        self.assertIn("local self-contained HTML/JS learning demo", teach["expectedOutput"])
+        self.assertIn("interactive demo materially lowers abstraction cost", teach["proofGate"])
+        for keyword in ("immersive teaching demos", "local html learning demo", "interactive html lesson"):
+            self.assertIn(keyword, teach["keywords"])
+
+        bootstrap = self.by_name["Teach Workspace Protocol Bootstrapper"]
+        self.assertIn("folders + Markdown/HTML lesson artifacts", bootstrap["copyContent"])
+        self.assertIn("`.html` is allowed when a visual simulator materially helps", bootstrap["copyContent"])
+
+    def test_teach_mermaid_is_optional_structural_layer_not_interactive_replacement(self) -> None:
+        teach = self.by_name["Stateful Socratic Technical Tutor Workspace"]
+        content = teach["copyContent"]
+        for phrase in (
+            "OFFER MERMAID AS AN OPTIONAL STRUCTURAL LAYER",
+            "Treat Mermaid as a layer or option, not a mandatory artifact",
+            "Mermaid plus HTML/JS only when the static map genuinely helps",
+            "architecture/dependency maps",
+            "sequence/call flows",
+            "entity/class relationships",
+            "ownership/lifecycle boundaries",
+            "ask the learner to predict a missing edge",
+            "Do not install a Mermaid package, add a CDN",
+            "visual rendering is UNPROVEN",
+            "Do not create Mermaid for ceremony",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("optional Mermaid structural overlays", teach["sprintRole"])
+        self.assertIn("compact Mermaid diagram as an optional explanatory layer", teach["expectedOutput"])
+        self.assertIn("Mermaid structural overlay first", teach["nextStep"])
+        self.assertIn("A Mermaid layer is optional and evidence-grounded", teach["proofGate"])
+        for keyword in ("mermaid diagram", "mermaid teaching", "architecture diagram", "data flow diagram"):
+            self.assertIn(keyword, teach["keywords"])
+
+        # Preserve the immersive-demo owner and bootstrap boundary while adding a diagram layer.
+        self.assertIn("IMMERSIVE DEMO LOOP — PREDICT -> MANIPULATE -> OBSERVE -> EXPLAIN", content)
+        bootstrap = self.by_name["Teach Workspace Protocol Bootstrapper"]
+        self.assertIn("folders + Markdown/HTML lesson artifacts", bootstrap["copyContent"])
+
     def test_teach_bootstrap_is_distinct_pure_workspace_setup(self) -> None:
         bootstrap = self.by_name["Teach Workspace Protocol Bootstrapper"]
         teach = self.by_name["Stateful Socratic Technical Tutor Workspace"]
@@ -129,6 +221,39 @@ class PromptRegistryExpansionTests(unittest.TestCase):
         self.assertIn("system understanding", teach["keywords"])
         self.assertIn("Read teaching state before explaining", teach["nextStep"])
 
+    def test_teach_repo_data_structure_grill_upscales_the_human(self) -> None:
+        teach = self.by_name["Stateful Socratic Technical Tutor Workspace"]
+        content = teach["copyContent"]
+        for phrase in (
+            "REPOSITORY DATA-STRUCTURE GRILL MODE",
+            "MATT POCOCK'S `grill-me` DISCIPLINE",
+            "GROUND THE STRUCTURE MAP BEFORE ASKING FACT QUESTIONS",
+            "identity and keys",
+            "ownership and lifecycle",
+            "serializers/deserializers",
+            "If a question can be answered by exploring the codebase",
+            "SKILL_UNAVAILABLE",
+            "Ask exactly one data-structure question at a time",
+            "TRACE REAL DATA THROUGH THE REPOSITORY",
+            "COMPLEMENT-AI MASTERY GATE",
+            "predict which structures and boundaries",
+            "challenge an AI-generated design or diff",
+            "the human must upscale enough",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("repository data-structure grilling", teach["useWhen"])
+        self.assertIn("evidence-backed structure map", teach["expectedOutput"])
+        self.assertIn("critically review an AI-generated change", teach["proofGate"])
+        self.assertIn("repository data structures", teach["keywords"])
+
+    def test_p65_routes_repository_data_structure_grilling_to_p96(self) -> None:
+        p65 = self.full["P65"]
+        content = p65["copyContent"]
+        self.assertIn("Explicit requests to be grilled on a repository’s data structures", content)
+        self.assertIn("P65’s own grilling is only for selecting the right Prompt Kit route", content)
+        self.assertIn("repository data structure grill", p65["keywords"])
+        self.assertIn("grill repo data model", p65["keywords"])
+
     def test_p79_harvests_whole_chat_twice_and_complements_utility(self) -> None:
         p79 = self.full["P79"]
         content = p79["copyContent"]
@@ -141,6 +266,8 @@ class PromptRegistryExpansionTests(unittest.TestCase):
             "Multiple genuinely distinct prompts may be added from one chat",
             "WHOLE-CHAT HARVEST — PASS 2",
             "Stop at a bounded fixed point",
+            "search_operant_external_catalog.py",
+            "distinct residual before ADD",
         ):
             self.assertIn(phrase, content)
         raw = json.loads((ROOT / "registry/prompts/spec-architecture-prompts.v1.json").read_text(encoding="utf-8"))
@@ -164,12 +291,12 @@ class PromptRegistryExpansionTests(unittest.TestCase):
 
     def test_agent_verifier_independently_derives_regressions_and_live_proof(self) -> None:
         p83 = self.full["P83"]
-        self.assertIn("green test/live run is historical evidence", p83["copyContent"])
-        self.assertIn("Re-derive impacted regression controls", p83["copyContent"])
-        self.assertIn("canonical path yourself", p83["copyContent"])
+        self.assertIn("Re-derive regression controls", p83["copyContent"])
+        self.assertIn("run safe runtime proof yourself or keep it UNPROVEN", p83["copyContent"])
         self.assertIn("UNPROVEN", p83["copyContent"])
         self.assertIn("impacted callers/call stacks", p83["inspectFirst"])
         self.assertIn("independently derives a regression/control set", p83["proofGate"])
+        self.assertIn("canonical live proof when safely executable", p83["proofGate"])
 
     def test_p65_routes_all_three_new_capabilities(self) -> None:
         p65 = self.full["P65"]["copyContent"]

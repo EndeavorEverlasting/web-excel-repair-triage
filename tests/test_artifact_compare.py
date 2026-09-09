@@ -136,7 +136,10 @@ def test_hidden_sheet_diff_does_not_poison_visible_semantic_hash(april_workbook,
     assert report["semantic_sha_match"] is True
     assert report["all_sheets_semantic_sha_match"] is False
     assert report["semantic_compare"] == "PASS"
-    assert report["compare_pass"] is True
+    # Hidden extra tabs must not change visible hashes, but client compare
+    # still fail-closes on any sheet outside the client allowlist.
+    assert report["package_preflight"] == "FAIL"
+    assert report["compare_pass"] is False
 
 
 def test_column_corpse_fails_semantic_compare(april_workbook, tmp_path):

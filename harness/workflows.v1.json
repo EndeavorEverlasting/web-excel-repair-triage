@@ -277,6 +277,41 @@
         "proof ceiling",
         "next executable action"
       ]
+    },
+    {
+      "id": "prompt-kit-feedback-afk-routing",
+      "document": "WORKFLOW.md#i-prompt-kit-feedback-afk-routing",
+      "trigger": "Accepted explicit Prompt Kit feedback has an unconsumed actionable signal that should create bounded AFK development work.",
+      "focused_contract": "harness/contracts/prompt-kit-feedback-afk-routing.v1.json",
+      "owned_scope": [
+        "single-signal classification and deduplication",
+        "private machine-readable P115 work request",
+        "bounded invocation of one configured capable worker",
+        "private feedback bridge routing boundaries",
+        "read-only provider wakeup evidence"
+      ],
+      "forbidden_scope": [
+        "direct PR merge",
+        "second scheduler or infinite polling loop",
+        "browser or tracked credentials",
+        "raw written feedback in provider dispatch payloads",
+        "replacement of P99, P115, P07, P32, or P105 ownership"
+      ],
+      "entry_points": [
+        "scripts/prompt_kit_afk_signal_router.py",
+        "scripts/validate_prompt_kit_feedback_afk_routing.py",
+        "harness/contracts/prompt-kit-feedback-afk-routing.v1.json"
+      ],
+      "validation_profile": "harness",
+      "failure_policy": "Fail closed on malformed/sensitive/duplicate signals, create an exact BLOCKED_WORKER_UNCONFIGURED work request when no capable worker adapter exists, and route validated candidates to P105/pr-floor rather than merging here.",
+      "handoff_fields": [
+        "signal identity and disposition",
+        "P115 work-request path",
+        "worker result or exact blocker",
+        "focused validator/tests",
+        "browser/provider proof ceiling",
+        "promotion owner"
+      ]
     }
   ]
 }

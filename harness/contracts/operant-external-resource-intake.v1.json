@@ -1,0 +1,103 @@
+{
+  "schema_version": "operant-external-resource-intake/v1",
+  "contract_id": "operant-external-resource-intake",
+  "product": "Operant",
+  "sources": [
+    {
+      "id": "deepseek-harness",
+      "repository": "deepseek-ai/deepseek-harness",
+      "expected_default_branch": "master",
+      "enumeration": "git_skill_tree",
+      "resource_root": ".agents/skills",
+      "resource_filename": "SKILL.md",
+      "resource_kind": "agent-skill",
+      "max_depth": 1,
+      "url_mode": "github_blob"
+    },
+    {
+      "id": "prompts-chat",
+      "repository": "f/prompts.chat",
+      "expected_default_branch": "main",
+      "enumeration": "catalog_csv",
+      "resource_root": ".",
+      "resource_filename": "prompts.csv",
+      "resource_kind": "prompt-catalog",
+      "search_mode": "on_demand",
+      "license": {
+        "prompt_data": "CC0-1.0",
+        "source_code": "MIT"
+      }
+    },
+    {
+      "id": "mattpocock-skills",
+      "repository": "mattpocock/skills",
+      "expected_default_branch": "main",
+      "enumeration": "git_skill_tree",
+      "resource_root": "skills",
+      "resource_filename": "SKILL.md",
+      "resource_kind": "agent-skill",
+      "max_depth": 2,
+      "exclude_root_segments": ["deprecated"],
+      "url_mode": "github_blob"
+    }
+  ],
+  "refresh": {
+    "cadence": "daily",
+    "provider_schedule": "37 5 * * *",
+    "canonical_command": "python scripts/sync_operant_external_resources.py",
+    "candidate_artifact_only_on_schedule": true,
+    "direct_default_branch_mutation_from_schedule": false,
+    "drift_requires_strategic_owner_integration": true
+  },
+  "projection": {
+    "public_index": "web/prompt-kit/resources.v1.json",
+    "gap_ledger": "registry/resources/operant-external-resource-gaps.v1.json",
+    "metadata_only": true,
+    "copy_upstream_skill_body": false,
+    "pin_urls_to_resolved_commit": true,
+    "maximum_entries": 5000,
+    "maximum_index_bytes": 1500000,
+    "maximum_search_terms_per_resource": 12,
+    "default_render_page_size": 40,
+    "lazy_fetch_required": true,
+    "default_page_load_must_not_fetch_index": true,
+    "default_page_load_must_not_embed_resource_records": true,
+    "catalog_csv_projects_rows_into_index": false
+  },
+  "catalog_search": {
+    "canonical_command": "python scripts/search_operant_external_catalog.py",
+    "default_source_id": "prompts-chat",
+    "ci_proof_query": "code review",
+    "ci_proof_limit": 5,
+    "maximum_live_search_seconds": 30,
+    "live_proof_required_in_refresh_workflow": true,
+    "receipt_schema": "operant-external-catalog-search-live-proof/v1"
+  },
+  "coverage": {
+    "match_threshold": 0.65,
+    "existing_prompt_disposition": "POINT_TO_EXISTING_PROMPT",
+    "existing_skill_disposition": "POINT_TO_EXISTING_SKILL",
+    "external_only_disposition": "POINT_TO_EXTERNAL",
+    "missing_prompt_action": "REVIEW_ADD_PROMPT",
+    "existing_coverage_prompt_action": "NO_NEW_PROMPT",
+    "promotion_owner_prompt": "P79",
+    "automatic_prompt_authoring": false,
+    "catalog_hit_dispositions": ["REFERENCE_ONLY", "ADAPT"],
+    "rule": "Prefer an existing Operant prompt or local skill when deterministic title/keyword coverage is strong; otherwise keep the donor resource directly usable and route the missing internal capability to P79 for strategic strengthen-before-add review. Before P79 may ADD a new identity for a prompt-like use case, search registered external sources/catalogs, extract commonality with current owners, and prove a distinct residual; REVIEW_ADD_PROMPT is a candidate for that comparison, not permission to author.",
+    "p79_external_evidence": {
+      "required_before_add": [
+        "registered_external_source_or_catalog_search",
+        "commonality_extraction_against_existing_owners",
+        "distinct_residual_proof"
+      ],
+      "review_add_prompt_means": "candidate_for_strategic_comparison_not_authoring_permission"
+    }
+  },
+  "authority": {
+    "donors_are_reference_and_resource_sources_not_operant_authority": true,
+    "operant_registries_remain_canonical_for_operant_prompts": true,
+    "license_review_required_before_copy_or_adaptation": true,
+    "resource_links_may_point_to_upstream_without_copying_content": true
+  },
+  "proof_ceiling": "Repository sync, source-SHA pinning, metadata projection, catalog floor-only receipts, deterministic coverage classification, on-demand catalog search (fixture plus CI live latency budget against the pinned catalog SHA), lazy-loading contract, generated-site parity, and scheduled drift evidence. It does not prove upstream resource quality, license compatibility for copied/adapted content, live browser network success, MCP client success, or automatic prompt quality."
+}

@@ -8,13 +8,25 @@ Usage:
 import argparse
 import json
 import os
+import re
 import sys
 
+from scripts.prompt_classification import site_sections
+
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+OPERANT_VERSION_PATH = os.path.join(REPO_ROOT, "OPERANT_VERSION")
 DATA_DIR = os.path.join(REPO_ROOT, "docs")
 PROMPTS_PATH = os.path.join(DATA_DIR, "prompts.json")
 REFERENCE_PATH = os.path.join(DATA_DIR, "reference.json")
 JS_PATH = os.path.join(DATA_DIR, "prompt-kit.js")
+
+
+def load_operant_version():
+    with open(OPERANT_VERSION_PATH, 'r', encoding='utf-8') as f:
+        value = f.read().strip()
+    if not re.fullmatch(r'(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)', value):
+        raise ValueError(f'Invalid Operant version authority: {value!r}')
+    return value
 
 
 def load_json(path):
@@ -31,29 +43,7 @@ COLOR_HEX = {
     "mint": "#34d399", "night": "#1e293b", "violet": "#7c3aed", "cream": "#fef3c7",
 }
 
-SECTIONS = [
-    {"name": "Foundation", "glow": "#64748b",
-     "types": ["SETUP", "HARVEST", "CLOSEOUT", "CLOSEOUT + VALIDATE"]},
-    {"name": "Discover & Plan", "glow": "#f59e0b",
-     "types": ["DISCOVERY + BUILD", "PLAN", "PORTFOLIO PLAN", "TUTORIAL PLAN",
-               "CONSOLIDATE + EXECUTE", "ANALYZE + DIRECTORY", "ANALYZE + FACTOR",
-               "ANALYZE + TEST"]},
-    {"name": "Build & Repair", "glow": "#22c55e",
-     "types": ["BUILD", "CLEANUP", "REPAIR", "REVIEW + REPAIR", "REVIEW + BUILD",
-               "BUILD + FACTOR", "BUILD + ARTIFACT", "BUILD + BOOTSTRAP",
-               "BUILD + SAFETY"]},
-    {"name": "Validate & Protect", "glow": "#14b8a6",
-     "types": ["VALIDATE", "VALIDATE + CLOSE", "SAFETY", "RUNTIME PROOF", "IMPROVE"]},
-    {"name": "Integrate & Ship", "glow": "#6366f1",
-     "types": ["INTEGRATE", "INTEROP", "MAINTENANCE", "MAINTENANCE + BUILD",
-               "ENABLEMENT", "ENABLEMENT + BUILD", "OPERATE", "OPPORTUNITY",
-               "COMPILE ONLY", "INSTALL + ENFORCE", "ENVIRONMENT + CONFIGURE"]},
-    {"name": "Autonomy & Night Shift", "glow": "#7c3aed",
-     "types": ["AUTONOMY + VALIDATE", "AUTONOMY + BUILD", "AUTONOMY + PLAN",
-               "AUTONOMY + PREFLIGHT", "AUTONOMY + QUEUE", "RECOVER + BUILD",
-               "RECOVER + COMMIT", "HARNESS + BUILD", "HARNESS + EXECUTE",
-               "CURSOR + LIVE CERT"]},
-]
+SECTIONS = site_sections()
 
 SYNONYMS = {
     "doctrine": "P00 P01", "repo rules": "P00 P01", "agent rules": "P00 P01",
@@ -61,6 +51,8 @@ SYNONYMS = {
     "night shift": "P37 P38 P39 P40 P41 P42 P43 P44",
     "overnight": "P37 P38 P39 P40 P41 P42 P43 P44",
     "cleanup": "P06", "pr cleanup": "P06",
+    "code readability": "P124", "codebase readability": "P124", "code cleanup": "P124", "code refactor": "P124",
+    "structural refactor": "P124", "maintainability refactor": "P124", "god file": "P124", "giant function": "P124",
     "sprint": "P07", "implement": "P07", "code change": "P07",
     "validate": "P11", "validator": "P11", "gate": "P11",
     "closeout": "P12", "handoff": "P12", "compress": "P12",
@@ -97,6 +89,8 @@ SYNONYMS = {
     "ci repair": "P32", "validation repair": "P32",
     "harness hardening": "P33", "harden": "P33",
     "technician": "P34", "ux": "P34",
+    "phone native ux": "P129", "mobile interaction design": "P129", "touch first ux": "P129",
+    "cross input ux": "P129", "input modality ux": "P129", "mouse keyboard phone ux": "P129",
     "pr branch": "P36", "branch repair": "P36",
     "compiler": "P45", "ai to gnhf": "P45",
     "repo harness builder": "P46",
@@ -109,6 +103,9 @@ SYNONYMS = {
     "canonical path": "P92", "canonical repository path": "P92", "canonical checkout": "P92",
     "development path": "P92", "production path": "P92", "local deployment path": "P92",
     "repo location": "P92", "repository location": "P92", "path drift": "P92", "scattered clones": "P92",
+    "onedrive path": "P92", "onedrive repository path": "P92", "onedrive desktop": "P92",
+    "known folder redirection": "P92", "user profile path": "P92", "home directory path": "P92",
+    "os path resolution": "P92", "environment-derived path": "P92", "path input receipt": "P92",
     "test planner": "P51", "zero token": "P51",
     "factoring analyzer": "P52", "factoring builder": "P53",
     "local validation": "P54", "bootstrap": "P55", "github cli": "P55",
@@ -468,6 +465,7 @@ def build_html(prompts, ref):
     doctrine = build_doctrine()
     prompt_json = json.dumps(prompts, ensure_ascii=False)
     ref_json = json.dumps(ref, ensure_ascii=False)
+    operant_version = load_operant_version()
     color_json = json.dumps(COLOR_HEX)
     sections_json = json.dumps(SECTIONS)
     synonyms_json = json.dumps(SYNONYMS)
@@ -477,7 +475,7 @@ def build_html(prompts, ref):
     html.append('<!DOCTYPE html>\n<html lang="en">\n<head>')
     html.append('<meta charset="UTF-8">')
     html.append('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
-    html.append('<title>AI Harness Prompt Kit v40</title>')
+    html.append(f'<title>Operant {operant_version}</title>')
     html.append('<style>')
     html.append(CSS_TEXT)
     html.append('</style>\n</head>\n<body>')
@@ -486,8 +484,8 @@ def build_html(prompts, ref):
     html.append('  <div class="header-top">')
     html.append('    <div class="logo">')
     html.append('      <div class="logo-icon">AK</div>')
-    html.append('      <div><h1>AI Harness Prompt Kit <span>v40</span></h1>'
-                '<div style="font-size:10px;color:var(--text-muted)">Agent Control Panel</div></div>')
+    html.append(f'      <div><h1>Operant <span>{operant_version}</span></h1>'
+                '<div style="font-size:10px;color:var(--text-muted)">Capabilities · Skills · Implementations · Evidence</div></div>')
     html.append('    </div>')
     html.append('    <div class="search-container">')
     html.append('      <span class="search-icon">&#128269;</span>')
@@ -497,10 +495,11 @@ def build_html(prompts, ref):
     html.append('    </div>')
     html.append('    <div class="header-controls">')
     html.append('      <div class="cat-tabs">')
-    html.append('        <button class="cat-tab active" data-cat="all"><span class="tab-icon">&#128203;</span>All<span class="kbd">1</span></button>')
-    html.append('        <button class="cat-tab" data-cat="standard"><span class="tab-icon">&#128196;</span>Standard<span class="kbd">2</span></button>')
-    html.append('        <button class="cat-tab" data-cat="gnhf"><span class="tab-icon">&#9733;</span>GNHF<span class="kbd">3</span></button>')
-    html.append('        <button class="cat-tab" data-cat="doctrine"><span class="tab-icon">&#128220;</span>Doctrine<span class="kbd">4</span></button>')
+    html.append('        <button class="cat-tab active profile-slot" data-profile-slot="A" data-cat="all" aria-keyshortcuts="A" aria-pressed="true">All<span class="kbd">A</span></button>')
+    html.append('        <button class="cat-tab profile-slot" data-profile-slot="B" data-cat="standard" aria-keyshortcuts="B" aria-pressed="false">Standard<span class="kbd">B</span></button>')
+    html.append('        <button class="cat-tab profile-slot" id="favoritesShortcut" data-profile-slot="C" data-view="favorites" aria-keyshortcuts="C" aria-pressed="false">Favorites<span class="kbd">C</span></button>')
+    html.append('        <button class="cat-tab profile-slot" data-profile-slot="D" aria-keyshortcuts="D" aria-pressed="false">SAS<span class="kbd">D</span></button>')
+    html.append('        <button class="cat-tab profile-slot" data-profile-slot="E" aria-keyshortcuts="E" aria-pressed="false">PM<span class="kbd">E</span></button>')
     html.append('      </div>')
     html.append('      <button class="add-prompt-btn" id="addPromptBtn">+ Add Prompt</button>')
     html.append('      <div class="stats">')
@@ -531,7 +530,7 @@ def build_html(prompts, ref):
     html.append('<div class="prompt-detail-overlay" id="promptDetailOverlay">')
     html.append('  <div class="prompt-detail" id="promptDetail"></div>')
     html.append('</div>')
-    html.append('<div class="version-badge" id="versionBadge">v40</div>')
+    html.append(f'<div class="version-badge" id="versionBadge">{operant_version}</div>')
 
     html.append('<script>')
     html.append('var PROMPTS=' + prompt_json + ';')

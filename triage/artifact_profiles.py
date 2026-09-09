@@ -373,7 +373,11 @@ def run_profile_checks(
             res.failures.append(f"missing_sheet:{sheet}")
 
     gate_name = gate_profile_for(profile.profile)
-    gate = run_semantic_gate(str(p), profile=gate_name)
+    gate = run_semantic_gate(
+        str(p),
+        profile=gate_name,
+        variant=profile.variant,
+    )
     if gate.get("semantic_integrity") != "PASS":
         for f in gate.get("sentinel_failures") or []:
             res.failures.append(f"semantic_gate:{f}")

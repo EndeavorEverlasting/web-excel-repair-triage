@@ -19,6 +19,7 @@ DEFAULT_PORT = 8765
 ALLOWED_HOSTS = {"127.0.0.1", "localhost", "::1"}
 RUNTIME_MARKER = "prompt-kit-favorites/v1"
 CLOSING_BODY = "</body>"
+RESOURCE_INDEX_NAME = "resources.v1.json"
 
 
 def sha256_bytes(value: bytes) -> str:
@@ -44,7 +45,7 @@ def require_file(path: Path, label: str) -> bytes:
 def require_output_path(repo_root: Path, path: Path) -> None:
     outputs = (repo_root / "Outputs").resolve()
     try:
-        path.relative_to(outputs)
+        path.resolve().relative_to(outputs)
     except ValueError as exc:
         raise ValueError(f"portable artifact output must remain under {outputs}") from exc
 
@@ -55,7 +56,7 @@ def backup_existing_output(repo_root: Path, path: Path) -> Path | None:
         return None
     if not path.is_file():
         raise ValueError(f"portable output exists but is not a file: {path}")
-    backup_root = (repo_root / "Outputs" / "backups" / "prompt-kit-portable").resolve()
+    backup_root = repo_root / "Outputs" / "backups" / "prompt-kit-portable"
     backup_root.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     destination = backup_root / f"{stamp}-{path.name}"
@@ -92,17 +93,25 @@ def build_portable_artifact(
     """Generate the served artifact and its reproducible receipt."""
     require_output_path(repo_root, output_path)
     require_output_path(repo_root, manifest_path)
+    resource_source_path = repo_root / "web" / "prompt-kit" / RESOURCE_INDEX_NAME
+    resource_output_path = output_path.parent / RESOURCE_INDEX_NAME
+    if output_path.resolve() == resource_output_path.resolve():
+        raise ValueError("portable artifact path must not be resources.v1.json")
+    require_output_path(repo_root, resource_output_path)
 
     source_bytes = require_file(source_path, "canonical Prompt Kit site")
     runtime_bytes = require_file(runtime_path, "portable Favorites runtime")
+    resource_bytes = require_file(resource_source_path, "canonical Operant resource index")
     source = source_bytes.decode("utf-8")
     runtime = runtime_bytes.decode("utf-8").strip()
     artifact = compose_portable_html(source, runtime)
     artifact_bytes = artifact.encode("utf-8")
 
     artifact_backup = backup_existing_output(repo_root, output_path)
+    resource_backup = backup_existing_output(repo_root, resource_output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_bytes(artifact_bytes)
+    resource_output_path.write_bytes(resource_bytes)
 
     receipt: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
@@ -124,8 +133,15 @@ def build_portable_artifact(
             "sha256": sha256_bytes(artifact_bytes),
             "bytes": len(artifact_bytes),
         },
+        "resource_index": {
+            "source_path": str(resource_source_path.relative_to(repo_root)),
+            "path": str(resource_output_path.relative_to(repo_root)),
+            "sha256": sha256_bytes(resource_bytes),
+            "bytes": len(resource_bytes),
+        },
         "backups": {
             "artifact": str(artifact_backup.relative_to(repo_root)) if artifact_backup else None,
+            "resource_index": str(resource_backup.relative_to(repo_root)) if resource_backup else None,
             "manifest": None,
         },
         "guardrails": {
@@ -134,6 +150,7 @@ def build_portable_artifact(
             "protected_inputs_untouched": True,
             "canonical_site_untouched": True,
             "health_hash_matches_served_artifact": True,
+            "resource_sidecar_matches_canonical": True,
             "overwrite_backup_required": True,
         },
         "proof_ceiling": (
@@ -253,6 +270,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"PROMPT_KIT_PORTABLE_ARTIFACT={output_path}")
     print(f"PROMPT_KIT_PORTABLE_SHA256={receipt['artifact']['sha256']}")
     print(f"PROMPT_KIT_PORTABLE_MANIFEST={manifest_path}")
+    print(f"PROMPT_KIT_PORTABLE_RESOURCES={output_path.parent / RESOURCE_INDEX_NAME}")
     print(f"PROMPT_KIT_PORTABLE_URL={origin}")
 
     if args.serve:

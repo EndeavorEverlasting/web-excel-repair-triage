@@ -1,80 +1,43 @@
 # Agent Governance Contract
-
-This file is the single repository governance authority for `EndeavorEverlasting/web-excel-repair-triage`. Domain law is incorporated by reference in section 7.
+This file is the single repository governance authority for `EndeavorEverlasting/web-excel-repair-triage`.
 
 ## 1. Agent operating principles
-
-1. **Evidence before action.** Inspect Git/PR truth and the smallest authoritative repo surface before mutation.
-2. **Floor before furniture.** Repair unsafe shared state or broken contracts before dependent work.
-3. **Bounded sprints.** Declare mission, ownership, exclusions, artifacts, validation, and proof ceiling.
+1. **Evidence before action.** Inspect authoritative evidence first.
+2. **Floor before furniture.** Repair unsafe shared state/contracts first.
+3. **Bounded sprints.** Declare mission, scope, artifacts, validation, proof ceiling.
 4. **One writer per branch.** Preserve unrelated work; isolate unclear ownership.
-5. **Reuse before replacing.** Extend canonical code/contracts/registries/validators/workflows instead of competing authorities.
-6. **No completion without proof.** Plans, prose, process start, and acknowledgment are not completion.
+5. **Reuse before replacing.** Extend canonical owners.
+6. **No completion without proof.** Plans/process start are not completion.
 
 ## 2. Instruction precedence
-
-Apply conflicts in this order:
-
-1. Platform, security, legal, and repository-owner instructions.
-2. This governance contract plus any selected binding domain spec.
-3. Task-specific prompts and sprint instructions.
-4. Generic agent defaults.
-
-Lower authority may narrow scope or strengthen safety, never weaken higher authority.
+Order: (1) Platform, security, legal, and repository-owner instructions. (2) This governance contract. (3) Task-specific prompts and sprint instructions. (4) Generic agent defaults. Domain specs remain subordinate. Lower authority may strengthen safety, never weaken higher authority.
 
 ## 3. Mandatory sprint declaration
-
-Before tracked writes state: repository and branch or worktree; lane and mission; owned scope and forbidden scope; expected artifacts; validation commands and their order; proof ceiling; push/PR/merge/deploy authority.
-
-Preserve dirty, conflicted, stale, or separately owned work and isolate the sprint. Never discard unrelated work merely to become current.
+Every writing sprint must state repository and branch or worktree; lane and mission; owned scope and forbidden scope; expected artifacts; validation commands and their order; proof ceiling; integration authority.
+Before modifying or integrating overlapping prior work, refresh the default branch. Prove each required integrated slice is an ancestor with `git merge-base --is-ancestor <required-sha> <refreshed-default>` and still materially present using current content plus its owning validator. Ancestry alone cannot prove current content after a revert. Any failed check requires reconciliation and fresh proof before mutation or integration.
 
 ## 4. Completion standard
-
-Report exact files changed, validations run, commit SHA, push state, PR/integration state, blockers/skips, proof ceiling, final Git state, and one exact next command.
-
-NEXT COMMAND must advance the next useful unproven state. For remote/unmerged work, fetch without force, pin exact branch/commit, preserve dirty work through an isolated worktree, run the owner validator/builder/launcher, resolve the canonical artifact from tracked authority, and propagate nonzero exit codes; it must not execute production by default.
-
-Use `none; no safe actionable work remains` only after authorized implementation, validation, integration, preservation/cleanup reporting, and artifact consumption are complete.
+A task is complete only when exact files changed, validations run, commit SHA, push or PR/integration state, blockers/skips, proof ceiling, final Git state, and one exact next command are reported.
+NEXT COMMAND advances the next unproven state. Remote/unmerged: fetch without force; pin branch/commit; preserve dirty work in an isolated worktree; run the owner validator/builder/launcher; resolve canonical artifacts from tracked authority; propagate nonzero exit codes; it must not execute production by default.
+Use `none; no safe actionable work remains` only after authorized implementation, validation, integration, preservation/cleanup, and artifact consumption.
 
 ## 5. Safety and mutation boundaries
-
-Agents must not:
-
-- substitute acknowledgment/planning for an authorized safe mutation;
-- claim completion without checks;
-- expose secrets, credentials, private workbook data, protected inputs, or machine-local evidence;
-- force-push, rewrite default history, destructively clean unknown work, or delete unique work without authority;
-- hide deterministic product behavior only in prompts/skills/prose;
-- weaken tests/validators/fixtures to obtain green checks;
-- write generated outputs into protected inputs;
-- guess the latest artifact from generic filenames.
-
-Material behavior changes require implementation and proof. Run focused checks and `git diff --check` before commit.
+Forbidden: acknowledgment without mutation; plans without execution; summaries without proof; completion claims without running checks; secret or credential exposure; private workbook/protected/machine-local evidence exposure; force-push/default rewrites/destructive cleanup of unique work; prose-only deterministic behavior; weakened tests/validators/fixtures; protected-input generated outputs; guessed latest artifacts.
+Material behavior changes require proof and `git diff --check`.
+Client-facing delivery uses the **minimum sufficient explanation**: purpose, period, totals, attachment, consequence. Omit internal evidence mechanics, private allocation logic, singled-out edge cases, defensive caveats, and invitation-to-question closings unless needed for recipient action.
 
 ## 6. Repository identity and product boundary
-
-This repository's core product domain is **spreadsheet intelligence**: inspect, validate, repair, transform, and safely deliver spreadsheet artifacts. Web Excel compatibility, billing, roster/time evidence, and triage are first-class concerns.
-
-The Prompt Kit began here as a spreadsheet and evolved into a website/app, but it is now separable. Its intended long-term core home is a dedicated repository under `UnderDeskDev`. That repository is not yet named or created; agents must not invent its name or claim migration is complete.
-
-Until that repository exists and migration/integration is proven, Prompt Kit sources here remain operationally authoritative and must not be silently moved. After external authority is established, this repo may source, pin, mirror, package, link to, or consume Prompt Kit releases, but must not become a competing Prompt Kit authority.
-
-Deepen spreadsheet intelligence here. Move Prompt Kit product identity/evolution to its dedicated repo once established; keep cross-repo dependencies explicit and versioned.
+The core product domain is **spreadsheet intelligence**. Web Excel compatibility, billing, roster/time evidence, and triage are first-class.
+**Operant** is the operator-approved product identity, formerly Prompt Kit; it began here as a spreadsheet. Target: `UnderDeskDev/Operant`; not yet created/proven.
+Until cutover, legacy `prompt-kit` paths and sources here remain authoritative compatibility surfaces and must not be silently moved. This repo may pin, mirror, package, link to, or consume Operant releases; it must not become a competing Operant authority; keep cross-repo dependencies explicit and versioned.
 
 ## 7. Progressive disclosure and binding domain law
+Orient: `AGENTS.md` → `harness/CONTEXT.md` → selected domain. Do **not** preload full harness/skills/history. Escalate context only for evidence, ownership, validation, or safety.
+Bindings: `harness/specs/operator-delivery.md`; `harness/specs/prompt-operations.md`; `harness/specs/billing-artifact-safety.md`. `harness/contracts/context-architecture.v1.json` owns budgets/routes.
 
-Default orientation is exactly:
+### Repository-local `/teach` protocol
+`/teach <topic>` uses `.teach/`, repo truth, first principles, one mechanism + one code exercise. VERIFIED/MASTERED requires demonstrated understanding. `/teach recap` resumes the first weak frontier. No fabricated mastery or private evidence.
 
-1. `AGENTS.md` — universal governance.
-2. `harness/CONTEXT.md` — 50,000-foot router.
-3. Select one task domain, then load only its routed 30,000-foot map/contract and one 15,000-foot workflow/skill/spec as needed.
-
-Do **not** preload `CODEBASE_MAP.md`, `WORKFLOW.md`, `CAPABILITIES.md`, `SKILLS.md`, `TRIGGERS.md`, the harness manifest, every skill, or historical reports as a bundle. Escalate context only when evidence, ownership, validation, or safety requires it.
-
-Binding only in the selected domain:
-
-- operator delivery/live certification: `harness/specs/operator-delivery.md`;
-- Prompt Kit operations: `harness/specs/prompt-operations.md`;
-- billing/artifact safety: `harness/specs/billing-artifact-safety.md`.
-
-`harness/contracts/context-architecture.v1.json` defines context budgets/routes. `scripts/validate_context_architecture.py --summary` fails closed on bloat or routing drift.
+### Agent execution tiering and parallel delegation
+Parallelism is capability-earned, not equal-authority. Strategic/harness owners are `ChatGPT` and `Auggie`; they may own governance, harness spine, skills, capabilities, triggers, routing, proof gates, or cross-repo migration authority. `desktop-app` and `OpenCode` are executors; they may consume settled product/test/doc contracts but may not mutate strategic surfaces without promotion.
+Machine policy: `harness/contracts/agent-execution-tiering.v1.json`. Availability is not authority. Promotion requires explicit operator approval and evaluation evidence. Shared contracts precede parallel consumers; collision owners stay singular.

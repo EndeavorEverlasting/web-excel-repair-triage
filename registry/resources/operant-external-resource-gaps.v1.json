@@ -1,0 +1,475 @@
+{
+  "schema_version": "operant-external-resource-gap-ledger/v1",
+  "source_floor": [
+    {
+      "id": "deepseek-harness",
+      "repository": "deepseek-ai/deepseek-harness",
+      "default_branch": "master",
+      "resolved_sha": "5dda764ed3aa172535a7967b06ff95d9cbfe536a",
+      "resource_root": ".agents/skills",
+      "resource_count": 12,
+      "enumeration": "git_skill_tree"
+    },
+    {
+      "id": "prompts-chat",
+      "repository": "f/prompts.chat",
+      "default_branch": "main",
+      "resolved_sha": "eaab6b14a085f3b9e4461be90367fcd9a16d3204",
+      "resource_root": ".",
+      "resource_count": 0,
+      "enumeration": "catalog_csv",
+      "catalog_path": "prompts.csv",
+      "catalog_entry_count": 2169,
+      "catalog_blob_sha": "3b985c0084fb28e1b9acace419ed34696ac63a92",
+      "search_mode": "on_demand",
+      "license": {
+        "prompt_data": "CC0-1.0",
+        "source_code": "MIT"
+      }
+    },
+    {
+      "id": "mattpocock-skills",
+      "repository": "mattpocock/skills",
+      "default_branch": "main",
+      "resolved_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "resource_root": "skills",
+      "resource_count": 37,
+      "enumeration": "git_skill_tree"
+    }
+  ],
+  "policy": {
+    "promotion_owner_prompt": "P79",
+    "automatic_prompt_authoring": false,
+    "rule": "Prefer an existing Operant prompt or local skill when deterministic title/keyword coverage is strong; otherwise keep the donor resource directly usable and route the missing internal capability to P79 for strategic strengthen-before-add review. Before P79 may ADD a new identity for a prompt-like use case, search registered external sources/catalogs, extract commonality with current owners, and prove a distinct residual; REVIEW_ADD_PROMPT is a candidate for that comparison, not permission to author.",
+    "p79_external_evidence": {
+      "required_before_add": [
+        "registered_external_source_or_catalog_search",
+        "commonality_extraction_against_existing_owners",
+        "distinct_residual_proof"
+      ],
+      "review_add_prompt_means": "candidate_for_strategic_comparison_not_authoring_permission"
+    }
+  },
+  "summary": {
+    "source_count": 3,
+    "resource_count": 49,
+    "point_to_existing_prompt": 8,
+    "point_to_existing_skill": 0,
+    "point_to_external": 41,
+    "review_add_prompt": 41,
+    "catalog_sources": 1,
+    "catalog_entries_indexed": 0
+  },
+  "actions": [
+    {
+      "resource_id": "deepseek-harness:dsh-archive-agent-notes",
+      "source_id": "deepseek-harness",
+      "title": "Dsh Archive Agent Notes",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-archive-agent-notes/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "deepseek-harness:dsh-doc",
+      "source_id": "deepseek-harness",
+      "title": "Dsh Doc",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-doc/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "deepseek-harness:dsh-find-simplifications",
+      "source_id": "deepseek-harness",
+      "title": "Dsh Find Simplifications",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-find-simplifications/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "deepseek-harness:dsh-merging-stacked-prs",
+      "source_id": "deepseek-harness",
+      "title": "Dsh Merging Stacked Prs",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-merging-stacked-prs/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "deepseek-harness:dsh-prose-standard",
+      "source_id": "deepseek-harness",
+      "title": "Dsh Prose Standard",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-prose-standard/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "deepseek-harness:dsh-speed-up-perf",
+      "source_id": "deepseek-harness",
+      "title": "Dsh Speed Up Perf",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-speed-up-perf/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.333
+    },
+    {
+      "resource_id": "deepseek-harness:dsh-translate-docs",
+      "source_id": "deepseek-harness",
+      "title": "Dsh Translate Docs",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-translate-docs/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "deepseek-harness:dsh-trim-cot-leakage",
+      "source_id": "deepseek-harness",
+      "title": "Dsh Trim Cot Leakage",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-trim-cot-leakage/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "deepseek-harness:record-browser-gif",
+      "source_id": "deepseek-harness",
+      "title": "Record Browser Gif",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/record-browser-gif/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.333
+    },
+    {
+      "resource_id": "mattpocock-skills:engineering/ask-matt",
+      "source_id": "mattpocock-skills",
+      "title": "Ask Matt",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/ask-matt/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.333
+    },
+    {
+      "resource_id": "mattpocock-skills:in-progress/claude-handoff",
+      "source_id": "mattpocock-skills",
+      "title": "Claude Handoff",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/in-progress/claude-handoff/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.333
+    },
+    {
+      "resource_id": "mattpocock-skills:engineering/diagnosing-bugs",
+      "source_id": "mattpocock-skills",
+      "title": "Diagnosing Bugs",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/diagnosing-bugs/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.333
+    },
+    {
+      "resource_id": "mattpocock-skills:engineering/domain-modeling",
+      "source_id": "mattpocock-skills",
+      "title": "Domain Modeling",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/domain-modeling/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.333
+    },
+    {
+      "resource_id": "mattpocock-skills:misc/git-guardrails-claude-code",
+      "source_id": "mattpocock-skills",
+      "title": "Git Guardrails Claude Code",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/misc/git-guardrails-claude-code/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.2
+    },
+    {
+      "resource_id": "mattpocock-skills:productivity/grilling",
+      "source_id": "mattpocock-skills",
+      "title": "Grilling",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/productivity/grilling/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "mattpocock-skills:productivity/handoff",
+      "source_id": "mattpocock-skills",
+      "title": "Handoff",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/productivity/handoff/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "mattpocock-skills:engineering/implement",
+      "source_id": "mattpocock-skills",
+      "title": "Implement",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/implement/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "mattpocock-skills:in-progress/implement-spec",
+      "source_id": "mattpocock-skills",
+      "title": "Implement Spec",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/in-progress/implement-spec/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.333
+    },
+    {
+      "resource_id": "mattpocock-skills:engineering/improve-codebase-architecture",
+      "source_id": "mattpocock-skills",
+      "title": "Improve Codebase Architecture",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/improve-codebase-architecture/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.25
+    },
+    {
+      "resource_id": "mattpocock-skills:misc/migrate-to-shoehorn",
+      "source_id": "mattpocock-skills",
+      "title": "Migrate To Shoehorn",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/misc/migrate-to-shoehorn/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "mattpocock-skills:engineering/prototype",
+      "source_id": "mattpocock-skills",
+      "title": "Prototype",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/prototype/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "mattpocock-skills:engineering/research",
+      "source_id": "mattpocock-skills",
+      "title": "Research",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/research/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "mattpocock-skills:engineering/resolving-merge-conflicts",
+      "source_id": "mattpocock-skills",
+      "title": "Resolving Merge Conflicts",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/resolving-merge-conflicts/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.25
+    },
+    {
+      "resource_id": "mattpocock-skills:in-progress/retro",
+      "source_id": "mattpocock-skills",
+      "title": "Retro",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/in-progress/retro/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "mattpocock-skills:misc/scaffold-exercises",
+      "source_id": "mattpocock-skills",
+      "title": "Scaffold Exercises",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/misc/scaffold-exercises/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "mattpocock-skills:engineering/setup-matt-pocock-skills",
+      "source_id": "mattpocock-skills",
+      "title": "Setup Matt Pocock Skills",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/setup-matt-pocock-skills/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.25
+    },
+    {
+      "resource_id": "mattpocock-skills:misc/setup-pre-commit",
+      "source_id": "mattpocock-skills",
+      "title": "Setup Pre Commit",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/misc/setup-pre-commit/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.25
+    },
+    {
+      "resource_id": "mattpocock-skills:in-progress/setup-ts-deep-modules",
+      "source_id": "mattpocock-skills",
+      "title": "Setup Ts Deep Modules",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/in-progress/setup-ts-deep-modules/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.4
+    },
+    {
+      "resource_id": "mattpocock-skills:engineering/tdd",
+      "source_id": "mattpocock-skills",
+      "title": "Tdd",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/tdd/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "mattpocock-skills:productivity/teach",
+      "source_id": "mattpocock-skills",
+      "title": "Teach",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/productivity/teach/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "mattpocock-skills:productivity/to-questionnaire",
+      "source_id": "mattpocock-skills",
+      "title": "To Questionnaire",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/productivity/to-questionnaire/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "mattpocock-skills:engineering/to-spec",
+      "source_id": "mattpocock-skills",
+      "title": "To Spec",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/to-spec/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "mattpocock-skills:engineering/to-tickets",
+      "source_id": "mattpocock-skills",
+      "title": "To Tickets",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/to-tickets/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "mattpocock-skills:engineering/triage",
+      "source_id": "mattpocock-skills",
+      "title": "Triage",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/triage/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "mattpocock-skills:productivity/wait-what",
+      "source_id": "mattpocock-skills",
+      "title": "Wait What",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/productivity/wait-what/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.333
+    },
+    {
+      "resource_id": "mattpocock-skills:engineering/wayfinder",
+      "source_id": "mattpocock-skills",
+      "title": "Wayfinder",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/wayfinder/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "mattpocock-skills:engineering/wizard",
+      "source_id": "mattpocock-skills",
+      "title": "Wizard",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/wizard/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "mattpocock-skills:in-progress/writing-beats",
+      "source_id": "mattpocock-skills",
+      "title": "Writing Beats",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/in-progress/writing-beats/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.333
+    },
+    {
+      "resource_id": "mattpocock-skills:productivity/writing-for-agents",
+      "source_id": "mattpocock-skills",
+      "title": "Writing For Agents",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/productivity/writing-for-agents/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "mattpocock-skills:in-progress/writing-fragments",
+      "source_id": "mattpocock-skills",
+      "title": "Writing Fragments",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/in-progress/writing-fragments/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.333
+    },
+    {
+      "resource_id": "mattpocock-skills:in-progress/writing-shape",
+      "source_id": "mattpocock-skills",
+      "title": "Writing Shape",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/in-progress/writing-shape/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.333
+    }
+  ]
+}

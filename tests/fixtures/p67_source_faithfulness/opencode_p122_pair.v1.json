@@ -1,0 +1,42 @@
+{
+  "schema_version": "p67-source-faithfulness/v1",
+  "case_id": "opencode-p122-source-faithfulness-pair",
+  "owner": "P67",
+  "guard_owner": "P100",
+  "source_fixture": "tests/fixtures/p100_closeout_replay/opencode_p122_closeout_01ac559.v1.json",
+  "cases": [
+    {
+      "id": "missing-authoritative-context",
+      "context_mode": "missing",
+      "observed_closeout_text": "Blockers/Risks/Remaining gaps - None\nNEXT COMMAND — none; no safe actionable work remains",
+      "evidence_refs": [],
+      "expected": {
+        "decision": "GROUND",
+        "classification": "FACTUALITY_CONTEXT_MISSING",
+        "remediation": "TARGETED_GROUNDING",
+        "reasons": [
+          "missing_authoritative_evidence"
+        ]
+      }
+    },
+    {
+      "id": "present-authoritative-context",
+      "context_mode": "present",
+      "observed_closeout_from_source": true,
+      "evidence_refs": [
+        "deterministic-test-floor-red",
+        "acknowledged-p122-identity-conflict"
+      ],
+      "expected": {
+        "decision": "CONTINUE",
+        "classification": "FAITHFULNESS_CONTEXT_IGNORED",
+        "remediation": "REANCHOR_EXISTING_CONTEXT",
+        "reasons": [
+          "required_gate_failure",
+          "acknowledged_identity_conflict"
+        ]
+      }
+    }
+  ],
+  "proof_ceiling": "The offline lane proves fixture separation, scoring, runtime invocation contracts, and fail-closed proof handling. Only an actually executed OpenCode CLI run with current P100 and the paired cases can produce target_runtime_observed proof; absence of a configured runtime remains UNPROVEN."
+}

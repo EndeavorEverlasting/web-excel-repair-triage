@@ -1,0 +1,307 @@
+from __future__ import annotations
+
+import json
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+REGISTRY = ROOT / "registry" / "prompts" / "ai-engineering-level-up-prompts.v1.json"
+BASE = ROOT / "docs" / "prompts.json"
+SITE = ROOT / "web" / "prompt-kit" / "index.html"
+# Identity is allocated by prompt_registry_ops.py from the refreshed combined registry.
+EXPECTED_ID = "P123"
+EXPECTED_NAME = "Gemini YouTube Video / Playlist Ingestion Builder"
+
+
+class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
+        cls.prompt = next(item for item in payload["prompts"] if item["id"] == EXPECTED_ID)
+        cls.content = cls.prompt["copyContent"]
+
+    def assert_markers(self, *markers: str) -> None:
+        for marker in markers:
+            self.assertIn(marker, self.content)
+
+    def test_helper_allocated_identity_and_distinct_role(self) -> None:
+        self.assertEqual(self.prompt["name"], EXPECTED_NAME)
+        self.assertEqual(self.prompt["seq"], "123")
+        self.assertEqual(self.prompt["copySheet"], "P123_COPY_SAFE")
+        self.assertEqual(self.prompt["class"], "AI ENGINEERING / YOUTUBE INGESTION")
+        self.assertIn("YouTube video", self.prompt["useWhen"])
+        self.assertIn("playlist", self.prompt["useWhen"])
+        self.assertIn("Gemini", self.prompt["useWhen"])
+        self.assertIn("standalone", self.prompt["expectedOutput"].lower())
+
+    def test_helper_contribution_stays_within_copy_ceiling(self) -> None:
+        # prompt_registry_ops.py owns the 12,000-character contribution ceiling.
+        # Keep this regression on the durable semantic record so a future edit
+        # cannot recreate the oversized P122/P123 collision-repair failure.
+        self.assertGreaterEqual(len(self.content), 300)
+        self.assertLessEqual(len(self.content), 12000)
+
+    def test_review_repair_requires_path_safety_and_repo_closeout(self) -> None:
+        self.assert_markers(
+            "OUTPUT PATH SAFETY CONTRACT",
+            "under `Outputs/` by default",
+            "reject equal resolved input/output paths",
+            "source fixture remains byte-identical",
+            "timestamped backup under `Outputs/backups/`",
+            "repository governance and current Git/PR state",
+            "one writer per mutation surface",
+            "`git diff --check`",
+            "normal commit and push when authorized",
+            "changed files, executed checks and results, commit SHA, push/PR state, blockers, Git status, proof ceiling, and the exact next command",
+        )
+
+    def test_gemini_no_repo_access_boundary_is_operational(self) -> None:
+        self.assert_markers(
+            "GEMINI CAPABILITY BOUNDARY",
+            "target repository is NOT accessible",
+            "PROPOSED LOCATION — REQUIRES REPO-CAPABLE AGENT TO VERIFY",
+            "SUPPLIED_CONTEXT",
+            "PROPOSED",
+            "UNKNOWN_REQUIRES_REPO_INSPECTION",
+            "MUST NOT fabricate a repository patch",
+        )
+
+
+    def test_immediately_preceding_video_or_link_is_implicit_source_input(self) -> None:
+        self.assert_markers(
+            "SOURCE INPUT RESOLUTION",
+            "immediately above this prompt",
+            "bind it as `SOURCE_INPUT` automatically",
+            "Do not ask the operator to paste, repeat, or restate it into a placeholder",
+            "`SOURCE_INPUT_KIND`",
+            "`SOURCE_INPUT_IDENTITY`",
+            "If the video itself is directly inspectable",
+            "grounded semantic analysis",
+            "If only a URL is present and the environment cannot inspect its content, do not invent what the video says",
+            "Source placement is input binding, not repository access",
+        )
+        self.assertIn("single video is valid input", self.content)
+        for keyword in (
+            "youtube video ingestion",
+            "single youtube video",
+            "youtube short",
+            "youtube video attachment",
+            "video above prompt",
+            "preceding youtube video",
+        ):
+            self.assertIn(keyword, self.prompt["keywords"])
+
+
+    def test_domain_agnostic_knowledge_ledger_contract(self) -> None:
+        self.assert_markers(
+            "DOMAIN-AGNOSTIC KNOWLEDGE / LEDGER CONTRACT",
+            "recent conversation themes",
+            "Examples prove range, not defaults",
+            "Cybersecurity",
+            "Agentic Software Development",
+            "Culinary & Food",
+            "`Sources`, `Findings`, and `Domains`",
+            "favored views are projections, not separate data authorities",
+            "Unknown / Needs Verification",
+            "Prompt Kit Candidate",
+            "Software Candidate",
+            "Resolve spreadsheet write capability + authority",
+            "exact written ranges/IDs as the mutation receipt",
+            "Otherwise emit row-ready Source and Findings records",
+            "Never claim the spreadsheet was updated without an observed write receipt",
+        )
+        self.assertIn("domain-agnostic", self.prompt["sprintRole"])
+        self.assertIn("without domain bias", self.prompt["useWhen"])
+        self.assertIn("canonical domain vocabulary", self.prompt["inspectFirst"])
+        self.assertIn("one Finding record per distinct reusable insight", self.prompt["expectedOutput"])
+        self.assertIn("written with exact mutation receipt", self.prompt["expectedOutput"])
+        self.assertIn("writable and write authority exists", self.prompt["proofGate"])
+        self.assertIn("exact written ranges/IDs", self.prompt["proofGate"])
+        self.assertIn("favorite domains", self.prompt["proofGate"])
+        for keyword in (
+            "youtube knowledge extraction",
+            "youtube knowledge base",
+            "domain agnostic youtube",
+            "knowledge ledger",
+            "youtube findings ledger",
+        ):
+            self.assertIn(keyword, self.prompt["keywords"])
+
+    def test_yt_dlp_is_single_extraction_authority(self) -> None:
+        self.assert_markers(
+            "yt-dlp owns machine-readable YouTube metadata extraction",
+            "does not forbid semantic analysis of video/transcript content directly available in Gemini context",
+            "do not reimplement YouTube HTML parsing",
+            "do not create two competing extraction authorities",
+            "runtime `yt-dlp --version`",
+        )
+
+    def test_windows_metadata_path_never_downloads_media(self) -> None:
+        self.assert_markers(
+            "WINDOWS-FIRST EXTRACTION CONTRACT",
+            "--skip-download",
+            "--dump-single-json",
+            "--flat-playlist",
+            "--input-json",
+            "without downloading media",
+            "does not request media download",
+        )
+
+    def test_entity_and_occurrence_models_are_separate(self) -> None:
+        self.assert_markers(
+            "SOURCE INPUT RESOLUTION",
+            "bind it as `SOURCE_INPUT` automatically",
+            "IDENTITY / OCCURRENCE INVARIANTS",
+            "unique source/video entity",
+            "playlist occurrence is ordered membership",
+            "references source identity",
+            "must not duplicate the canonical source entity",
+            "preserve every observed occurrence",
+        )
+
+    def test_real_source_list_regression_preserves_25_occurrences_and_23_identities(self) -> None:
+        self.assert_markers(
+            "SOURCE-LIST REGRESSION EXAMPLE",
+            "25 URL occurrences",
+            "23 unique video IDs",
+            "_CuibYl_Fh0",
+            "bBdq2hf5R0I",
+            "share/tracking parameter such as `si=`",
+            "must not create a new video identity",
+        )
+
+    def test_unavailable_entries_preserve_tombstones_and_completeness(self) -> None:
+        self.assert_markers(
+            "UNAVAILABLE / COMPLETENESS CONTRACT",
+            "occurrence tombstone",
+            "must not silently shrink",
+            "COMPLETE",
+            "PARTIAL",
+            "EMPTY_CONFIRMED",
+            "EMPTY_UNPROVEN",
+            "FAILED",
+            "--allow-empty",
+        )
+
+    def test_ordering_prefers_extractor_position_and_records_fallback(self) -> None:
+        self.assert_markers(
+            "extractor-supplied `playlist_index`",
+            "encounter-order fallback",
+            "position_source",
+        )
+
+    def test_json_csv_and_spreadsheet_safety_contract_is_strict(self) -> None:
+        self.assert_markers(
+            "normalized JSON is canonical",
+            "CSV is a projection",
+            "utf-8-sig",
+            "UTF-8 BOM",
+            "beginning with `=`, `+`, `-`, or `@`",
+            "canonical JSON must remain unchanged",
+        )
+
+    def test_donor_evidence_and_dispositions_cannot_be_invented(self) -> None:
+        self.assert_markers(
+            "DONOR EVIDENCE / VERSION CONTRACT",
+            "NOT_SUPPLIED",
+            "UNKNOWN",
+            "ADOPT / ADAPT / REFERENCE_ONLY / REJECT / DEFER",
+            "must not silently change a supplied donor disposition",
+            "normalization_schema_version",
+            "adapter_version",
+            "donor_manifest.json",
+        )
+
+    def test_backend_contract_is_canonical_not_ytdlp_raw_shape(self) -> None:
+        self.assert_markers(
+            "BACKEND-NEUTRAL NORMALIZATION CONTRACT",
+            "Raw extractor responses are backend-local",
+            "must not be the shared domain contract",
+            "YouTube Data API adapter must not impersonate yt-dlp JSON",
+        )
+
+    def test_runnability_gate_requires_actual_or_explicitly_unrun_tests(self) -> None:
+        self.assert_markers(
+            "RUNNABILITY GATE",
+            "UNRUN",
+            "import `subprocess`",
+            "actual non-ASCII Unicode fixture",
+            "embedded quote",
+            "output directory",
+            "deterministic timestamp",
+            "fixture-mode CLI",
+            "writes both JSON and CSV",
+        )
+
+    def test_donor_license_and_standalone_packet_boundaries(self) -> None:
+        self.assert_markers(
+            "TubeArchivist and NewPipeExtractor",
+            "do not copy GPL implementation code",
+            "source_ingest_youtube.py",
+            "source_import_contract.json",
+            "youtube_playlist_fixture.json",
+            "test_youtube_source_ingestion.py",
+            "donor_manifest.json",
+            "Do not import from hypothetical consumer-repository modules",
+        )
+
+    def test_fixture_tests_and_live_proof_ceiling_are_explicit(self) -> None:
+        self.assert_markers(
+            "MINIMUM DETERMINISTIC TESTS",
+            "repeated video ID preserves multiple ordered occurrences",
+            "spreadsheet-safe while JSON remains",
+            "fixture-mode CLI writes both JSON and CSV deterministically",
+            "LIVE-PROOF CEILING",
+            "do NOT prove current YouTube behavior",
+        )
+
+    def test_repo_capable_handoff_is_complete(self) -> None:
+        self.assert_markers(
+            "REPOSITORY-CAPABLE HANDOFF",
+            "PRE-MUTATION MISSION DECLARATION",
+            "repository and branch/worktree",
+            "lane and mission",
+            "owned and forbidden scope",
+            "expected artifacts",
+            "validation order",
+            "proof ceiling",
+            "mutation authority",
+            "yt-dlp owns YouTube parsing, consumer owns normalization/schema/tests/exports",
+            "find the existing source/import/domain owners",
+            "Do not make the operator restate the donor research",
+        )
+
+    def test_generated_site_contains_gemini_ingestion_semantics(self) -> None:
+        deployed = SITE.read_text(encoding="utf-8")
+        for marker in (
+            EXPECTED_ID,
+            EXPECTED_NAME,
+            "IDENTITY / OCCURRENCE INVARIANTS",
+            "25 URL occurrences",
+            "UNAVAILABLE / COMPLETENESS CONTRACT",
+            "DONOR EVIDENCE / VERSION CONTRACT",
+            "BACKEND-NEUTRAL NORMALIZATION CONTRACT",
+            "RUNNABILITY GATE",
+            "OUTPUT PATH SAFETY CONTRACT",
+            "one writer per mutation surface",
+            "`git diff --check`",
+            "PRE-MUTATION MISSION DECLARATION",
+            "DOMAIN-AGNOSTIC KNOWLEDGE / LEDGER CONTRACT",
+            "`Sources`, `Findings`, and `Domains`",
+            "Resolve spreadsheet write capability + authority",
+            "exact written ranges/IDs as the mutation receipt",
+            "row-ready Source and Findings records",
+        ):
+            self.assertIn(marker, deployed)
+
+    def test_prompt_remains_distinct_from_generic_p56(self) -> None:
+        base = json.loads(BASE.read_text(encoding="utf-8"))
+        p56 = next(item for item in base if item["id"] == "P56")
+        self.assertEqual(p56["name"], "Context-to-Artifact Generator")
+        self.assertNotIn("yt-dlp owns YouTube extraction", p56["copyContent"])
+        self.assertNotEqual(p56["useWhen"], self.prompt["useWhen"])
+        self.assertNotIn("StudySyndicate", self.content)
+
+
+if __name__ == "__main__":
+    unittest.main()

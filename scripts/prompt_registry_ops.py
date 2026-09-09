@@ -14,6 +14,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts import build_prompt_kit_registry as registry  # noqa: E402
+from scripts import prompt_registry_external_prior_art as prior_art  # noqa: E402
 
 PROMPT_ID_RE = re.compile(r"^P(\d+)$")
 AUTO_FIELDS = {"id", "seq", "copySheet"}
@@ -110,6 +111,7 @@ def inspect_state() -> dict[str, Any]:
         "registries": registries,
         "required_draft_fields": sorted(REQUIRED_DRAFT_FIELDS),
         "auto_fields": sorted(AUTO_FIELDS),
+        "classification": registry.prompt_classification.classification_summary(registry.load_prompt_kit_registry()),
     }
 
 
@@ -140,6 +142,7 @@ def _validate_draft(draft: dict[str, Any]) -> None:
         raise SystemExit("Every prompt draft keyword must be a non-empty string")
     if len(keywords) != len({_normalize_text(item) for item in keywords}):
         raise SystemExit("Prompt draft keywords must not contain duplicates")
+    registry.prompt_classification.require_known_prompt_type(str(draft["type"]).strip())
     copy_content = str(draft["copyContent"]).strip()
     if len(copy_content) < 300:
         raise SystemExit("Prompt draft copyContent is too small to be operational (<300 chars)")
@@ -233,9 +236,9 @@ def _build_record(
     return record
 
 
-def _reject_obvious_duplicate(record: dict[str, Any]) -> None:
-    wanted_name = _normalize_text(str(record["name"]))
-    wanted_content = _normalize_text(str(record["copyContent"]))
+def _reject_obvious_duplicate(candidate: dict[str, Any]) -> None:
+    wanted_name = _normalize_text(str(candidate["name"]))
+    wanted_content = _normalize_text(str(candidate["copyContent"]))
     for prompt in registry.load_prompt_kit_registry():
         if _normalize_text(str(prompt.get("name", ""))) == wanted_name:
             raise SystemExit(
@@ -264,14 +267,22 @@ def add_prompt(
     draft: dict[str, Any], explicit_registry: str | None, dry_run: bool
 ) -> dict[str, Any]:
     target_path, target_payload = _resolve_target(draft, explicit_registry)
+    _validate_draft(draft)
+    _reject_obvious_duplicate(draft)
+    try:
+        external_prior_art = prior_art.require_external_prior_art(draft)
+    except prior_art.PriorArtGateError as exc:
+        raise SystemExit(
+            f"Prompt ADD external prior-art gate failed before identity allocation: {exc}"
+        ) from exc
     record = _build_record(draft, target_payload)
-    _reject_obvious_duplicate(record)
     if dry_run:
         return {
             "status": "dry-run",
             "registry_id": target_payload["registry_id"],
             "registry_path": str(target_path.relative_to(REPO_ROOT)),
             "record": record,
+            "external_prior_art": external_prior_art,
         }
 
     original_registry = target_path.read_text(encoding="utf-8")
@@ -313,6 +324,7 @@ def add_prompt(
         "prompt_count": prompt_count,
         "site_parity": True,
         "actionability_policy": registry.load_actionability_policy()["policy_id"],
+        "external_prior_art": external_prior_art,
     }
 
 
@@ -336,7 +348,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("inspect", help="Print next identity and compact registry routing choices as JSON.")
-    add = sub.add_parser("add", help="Add one prompt draft, allocate identity, rebuild, and validate.")
+    add = sub.add_parser(
+        "add",
+        help="Search registered external prior art, then add one prompt draft, allocate identity, rebuild, and validate.",
+    )
     add.add_argument("--input", required=True, help="Draft JSON path, or - for stdin.")
     add.add_argument("--registry", help="Existing registry_id; otherwise resolve from draft profile.")
     add.add_argument("--dry-run", action="store_true", help="Resolve and validate without writing files.")

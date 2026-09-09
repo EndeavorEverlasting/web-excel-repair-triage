@@ -1,0 +1,1165 @@
+{
+  "schema_version": "operant-external-resource-index/v1",
+  "source_floor": [
+    {
+      "id": "deepseek-harness",
+      "repository": "deepseek-ai/deepseek-harness",
+      "default_branch": "master",
+      "resolved_sha": "5dda764ed3aa172535a7967b06ff95d9cbfe536a",
+      "resource_root": ".agents/skills",
+      "resource_count": 12,
+      "enumeration": "git_skill_tree"
+    },
+    {
+      "id": "prompts-chat",
+      "repository": "f/prompts.chat",
+      "default_branch": "main",
+      "resolved_sha": "eaab6b14a085f3b9e4461be90367fcd9a16d3204",
+      "resource_root": ".",
+      "resource_count": 0,
+      "enumeration": "catalog_csv",
+      "catalog_path": "prompts.csv",
+      "catalog_entry_count": 2169,
+      "catalog_blob_sha": "3b985c0084fb28e1b9acace419ed34696ac63a92",
+      "search_mode": "on_demand",
+      "license": {
+        "prompt_data": "CC0-1.0",
+        "source_code": "MIT"
+      }
+    },
+    {
+      "id": "mattpocock-skills",
+      "repository": "mattpocock/skills",
+      "default_branch": "main",
+      "resolved_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "resource_root": "skills",
+      "resource_count": 37,
+      "enumeration": "git_skill_tree"
+    }
+  ],
+  "summary": {
+    "source_count": 3,
+    "resource_count": 49,
+    "point_to_existing_prompt": 8,
+    "point_to_existing_skill": 0,
+    "point_to_external": 41,
+    "review_add_prompt": 41,
+    "catalog_sources": 1,
+    "catalog_entries_indexed": 0
+  },
+  "resources": [
+    {
+      "id": "deepseek-harness:dsh-archive-agent-notes",
+      "source_id": "deepseek-harness",
+      "source_repo": "deepseek-ai/deepseek-harness",
+      "source_sha": "5dda764ed3aa172535a7967b06ff95d9cbfe536a",
+      "kind": "agent-skill",
+      "slug": "dsh-archive-agent-notes",
+      "title": "Dsh Archive Agent Notes",
+      "path": ".agents/skills/dsh-archive-agent-notes/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-archive-agent-notes/SKILL.md",
+      "search_terms": [
+        "archive",
+        "notes"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.0,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "deepseek-harness:dsh-ci-test-reliability",
+      "source_id": "deepseek-harness",
+      "source_repo": "deepseek-ai/deepseek-harness",
+      "source_sha": "5dda764ed3aa172535a7967b06ff95d9cbfe536a",
+      "kind": "agent-skill",
+      "slug": "dsh-ci-test-reliability",
+      "title": "Dsh Ci Test Reliability",
+      "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-ci-test-reliability/SKILL.md",
+      "search_terms": [
+        "ci",
+        "reliability",
+        "test"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXISTING_PROMPT",
+        "target_id": "P112",
+        "target_title": "AFK Deterministic Automated Test Harness Builder",
+        "score": 0.667,
+        "prompt_action": "NO_NEW_PROMPT"
+      }
+    },
+    {
+      "id": "deepseek-harness:dsh-code-review",
+      "source_id": "deepseek-harness",
+      "source_repo": "deepseek-ai/deepseek-harness",
+      "source_sha": "5dda764ed3aa172535a7967b06ff95d9cbfe536a",
+      "kind": "agent-skill",
+      "slug": "dsh-code-review",
+      "title": "Dsh Code Review",
+      "path": ".agents/skills/dsh-code-review/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-code-review/SKILL.md",
+      "search_terms": [
+        "code",
+        "review"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXISTING_PROMPT",
+        "target_id": "P115",
+        "target_title": "AFK Feedback-Driven Development Loop Executor",
+        "score": 1.0,
+        "prompt_action": "NO_NEW_PROMPT"
+      }
+    },
+    {
+      "id": "deepseek-harness:dsh-doc",
+      "source_id": "deepseek-harness",
+      "source_repo": "deepseek-ai/deepseek-harness",
+      "source_sha": "5dda764ed3aa172535a7967b06ff95d9cbfe536a",
+      "kind": "agent-skill",
+      "slug": "dsh-doc",
+      "title": "Dsh Doc",
+      "path": ".agents/skills/dsh-doc/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-doc/SKILL.md",
+      "search_terms": [
+        "doc"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.0,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "deepseek-harness:dsh-find-simplifications",
+      "source_id": "deepseek-harness",
+      "source_repo": "deepseek-ai/deepseek-harness",
+      "source_sha": "5dda764ed3aa172535a7967b06ff95d9cbfe536a",
+      "kind": "agent-skill",
+      "slug": "dsh-find-simplifications",
+      "title": "Dsh Find Simplifications",
+      "path": ".agents/skills/dsh-find-simplifications/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-find-simplifications/SKILL.md",
+      "search_terms": [
+        "find",
+        "simplifications"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "deepseek-harness:dsh-merging-stacked-prs",
+      "source_id": "deepseek-harness",
+      "source_repo": "deepseek-ai/deepseek-harness",
+      "source_sha": "5dda764ed3aa172535a7967b06ff95d9cbfe536a",
+      "kind": "agent-skill",
+      "slug": "dsh-merging-stacked-prs",
+      "title": "Dsh Merging Stacked Prs",
+      "path": ".agents/skills/dsh-merging-stacked-prs/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-merging-stacked-prs/SKILL.md",
+      "search_terms": [
+        "merging",
+        "prs",
+        "stacked"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.0,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "deepseek-harness:dsh-pre-push-checks",
+      "source_id": "deepseek-harness",
+      "source_repo": "deepseek-ai/deepseek-harness",
+      "source_sha": "5dda764ed3aa172535a7967b06ff95d9cbfe536a",
+      "kind": "agent-skill",
+      "slug": "dsh-pre-push-checks",
+      "title": "Dsh Pre Push Checks",
+      "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-pre-push-checks/SKILL.md",
+      "search_terms": [
+        "checks",
+        "pre",
+        "push"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXISTING_PROMPT",
+        "target_id": "P105",
+        "target_title": "Validated CI/CD Promotion Pipeline Builder",
+        "score": 0.667,
+        "prompt_action": "NO_NEW_PROMPT"
+      }
+    },
+    {
+      "id": "deepseek-harness:dsh-prose-standard",
+      "source_id": "deepseek-harness",
+      "source_repo": "deepseek-ai/deepseek-harness",
+      "source_sha": "5dda764ed3aa172535a7967b06ff95d9cbfe536a",
+      "kind": "agent-skill",
+      "slug": "dsh-prose-standard",
+      "title": "Dsh Prose Standard",
+      "path": ".agents/skills/dsh-prose-standard/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-prose-standard/SKILL.md",
+      "search_terms": [
+        "prose",
+        "standard"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.0,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "deepseek-harness:dsh-speed-up-perf",
+      "source_id": "deepseek-harness",
+      "source_repo": "deepseek-ai/deepseek-harness",
+      "source_sha": "5dda764ed3aa172535a7967b06ff95d9cbfe536a",
+      "kind": "agent-skill",
+      "slug": "dsh-speed-up-perf",
+      "title": "Dsh Speed Up Perf",
+      "path": ".agents/skills/dsh-speed-up-perf/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-speed-up-perf/SKILL.md",
+      "search_terms": [
+        "perf",
+        "speed",
+        "up"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.333,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "deepseek-harness:dsh-translate-docs",
+      "source_id": "deepseek-harness",
+      "source_repo": "deepseek-ai/deepseek-harness",
+      "source_sha": "5dda764ed3aa172535a7967b06ff95d9cbfe536a",
+      "kind": "agent-skill",
+      "slug": "dsh-translate-docs",
+      "title": "Dsh Translate Docs",
+      "path": ".agents/skills/dsh-translate-docs/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-translate-docs/SKILL.md",
+      "search_terms": [
+        "docs",
+        "translate"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "deepseek-harness:dsh-trim-cot-leakage",
+      "source_id": "deepseek-harness",
+      "source_repo": "deepseek-ai/deepseek-harness",
+      "source_sha": "5dda764ed3aa172535a7967b06ff95d9cbfe536a",
+      "kind": "agent-skill",
+      "slug": "dsh-trim-cot-leakage",
+      "title": "Dsh Trim Cot Leakage",
+      "path": ".agents/skills/dsh-trim-cot-leakage/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/dsh-trim-cot-leakage/SKILL.md",
+      "search_terms": [
+        "cot",
+        "leakage",
+        "trim"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.0,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "deepseek-harness:record-browser-gif",
+      "source_id": "deepseek-harness",
+      "source_repo": "deepseek-ai/deepseek-harness",
+      "source_sha": "5dda764ed3aa172535a7967b06ff95d9cbfe536a",
+      "kind": "agent-skill",
+      "slug": "record-browser-gif",
+      "title": "Record Browser Gif",
+      "path": ".agents/skills/record-browser-gif/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/5dda764ed3aa172535a7967b06ff95d9cbfe536a/.agents/skills/record-browser-gif/SKILL.md",
+      "search_terms": [
+        "browser",
+        "gif",
+        "record"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.333,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/ask-matt",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/ask-matt",
+      "title": "Ask Matt",
+      "path": "skills/engineering/ask-matt/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/ask-matt/SKILL.md",
+      "search_terms": [
+        "ask",
+        "engineering",
+        "matt"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.333,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:in-progress/claude-handoff",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "in-progress/claude-handoff",
+      "title": "Claude Handoff",
+      "path": "skills/in-progress/claude-handoff/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/in-progress/claude-handoff/SKILL.md",
+      "search_terms": [
+        "claude",
+        "handoff",
+        "progress"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.333,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/code-review",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/code-review",
+      "title": "Code Review",
+      "path": "skills/engineering/code-review/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/code-review/SKILL.md",
+      "search_terms": [
+        "code",
+        "engineering",
+        "review"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXISTING_PROMPT",
+        "target_id": "P115",
+        "target_title": "AFK Feedback-Driven Development Loop Executor",
+        "score": 0.667,
+        "prompt_action": "NO_NEW_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/codebase-design",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/codebase-design",
+      "title": "Codebase Design",
+      "path": "skills/engineering/codebase-design/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/codebase-design/SKILL.md",
+      "search_terms": [
+        "codebase",
+        "design",
+        "engineering"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXISTING_PROMPT",
+        "target_id": "P65",
+        "target_title": "Guided Prompt Finder Questionnaire",
+        "score": 0.667,
+        "prompt_action": "NO_NEW_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/diagnosing-bugs",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/diagnosing-bugs",
+      "title": "Diagnosing Bugs",
+      "path": "skills/engineering/diagnosing-bugs/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/diagnosing-bugs/SKILL.md",
+      "search_terms": [
+        "bugs",
+        "diagnosing",
+        "engineering"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.333,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/domain-modeling",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/domain-modeling",
+      "title": "Domain Modeling",
+      "path": "skills/engineering/domain-modeling/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/domain-modeling/SKILL.md",
+      "search_terms": [
+        "domain",
+        "engineering",
+        "modeling"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.333,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:misc/git-guardrails-claude-code",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "misc/git-guardrails-claude-code",
+      "title": "Git Guardrails Claude Code",
+      "path": "skills/misc/git-guardrails-claude-code/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/misc/git-guardrails-claude-code/SKILL.md",
+      "search_terms": [
+        "claude",
+        "code",
+        "git",
+        "guardrails",
+        "misc"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.2,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:productivity/grill-me",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "productivity/grill-me",
+      "title": "Grill Me",
+      "path": "skills/productivity/grill-me/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/productivity/grill-me/SKILL.md",
+      "search_terms": [
+        "grill",
+        "me",
+        "productivity"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXISTING_PROMPT",
+        "target_id": "P65",
+        "target_title": "Guided Prompt Finder Questionnaire",
+        "score": 0.667,
+        "prompt_action": "NO_NEW_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/grill-with-docs",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/grill-with-docs",
+      "title": "Grill With Docs",
+      "path": "skills/engineering/grill-with-docs/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/grill-with-docs/SKILL.md",
+      "search_terms": [
+        "docs",
+        "engineering",
+        "grill"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXISTING_PROMPT",
+        "target_id": "P65",
+        "target_title": "Guided Prompt Finder Questionnaire",
+        "score": 0.667,
+        "prompt_action": "NO_NEW_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:productivity/grilling",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "productivity/grilling",
+      "title": "Grilling",
+      "path": "skills/productivity/grilling/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/productivity/grilling/SKILL.md",
+      "search_terms": [
+        "grilling",
+        "productivity"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.0,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:productivity/handoff",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "productivity/handoff",
+      "title": "Handoff",
+      "path": "skills/productivity/handoff/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/productivity/handoff/SKILL.md",
+      "search_terms": [
+        "handoff",
+        "productivity"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/implement",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/implement",
+      "title": "Implement",
+      "path": "skills/engineering/implement/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/implement/SKILL.md",
+      "search_terms": [
+        "engineering",
+        "implement"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:in-progress/implement-spec",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "in-progress/implement-spec",
+      "title": "Implement Spec",
+      "path": "skills/in-progress/implement-spec/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/in-progress/implement-spec/SKILL.md",
+      "search_terms": [
+        "implement",
+        "progress",
+        "spec"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.333,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/improve-codebase-architecture",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/improve-codebase-architecture",
+      "title": "Improve Codebase Architecture",
+      "path": "skills/engineering/improve-codebase-architecture/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/improve-codebase-architecture/SKILL.md",
+      "search_terms": [
+        "architecture",
+        "codebase",
+        "engineering",
+        "improve"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.25,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:in-progress/loop-me",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "in-progress/loop-me",
+      "title": "Loop Me",
+      "path": "skills/in-progress/loop-me/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/in-progress/loop-me/SKILL.md",
+      "search_terms": [
+        "loop",
+        "me",
+        "progress"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXISTING_PROMPT",
+        "target_id": "P13",
+        "target_title": "Repeated Friction → Urgency Recovery + Rule Repair",
+        "score": 0.667,
+        "prompt_action": "NO_NEW_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:misc/migrate-to-shoehorn",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "misc/migrate-to-shoehorn",
+      "title": "Migrate To Shoehorn",
+      "path": "skills/misc/migrate-to-shoehorn/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/misc/migrate-to-shoehorn/SKILL.md",
+      "search_terms": [
+        "migrate",
+        "misc",
+        "shoehorn"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.0,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/prototype",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/prototype",
+      "title": "Prototype",
+      "path": "skills/engineering/prototype/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/prototype/SKILL.md",
+      "search_terms": [
+        "engineering",
+        "prototype"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/research",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/research",
+      "title": "Research",
+      "path": "skills/engineering/research/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/research/SKILL.md",
+      "search_terms": [
+        "engineering",
+        "research"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/resolving-merge-conflicts",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/resolving-merge-conflicts",
+      "title": "Resolving Merge Conflicts",
+      "path": "skills/engineering/resolving-merge-conflicts/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/resolving-merge-conflicts/SKILL.md",
+      "search_terms": [
+        "conflicts",
+        "engineering",
+        "merge",
+        "resolving"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.25,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:in-progress/retro",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "in-progress/retro",
+      "title": "Retro",
+      "path": "skills/in-progress/retro/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/in-progress/retro/SKILL.md",
+      "search_terms": [
+        "progress",
+        "retro"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:misc/scaffold-exercises",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "misc/scaffold-exercises",
+      "title": "Scaffold Exercises",
+      "path": "skills/misc/scaffold-exercises/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/misc/scaffold-exercises/SKILL.md",
+      "search_terms": [
+        "exercises",
+        "misc",
+        "scaffold"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.0,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/setup-matt-pocock-skills",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/setup-matt-pocock-skills",
+      "title": "Setup Matt Pocock Skills",
+      "path": "skills/engineering/setup-matt-pocock-skills/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/setup-matt-pocock-skills/SKILL.md",
+      "search_terms": [
+        "engineering",
+        "matt",
+        "pocock",
+        "setup"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.25,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:misc/setup-pre-commit",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "misc/setup-pre-commit",
+      "title": "Setup Pre Commit",
+      "path": "skills/misc/setup-pre-commit/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/misc/setup-pre-commit/SKILL.md",
+      "search_terms": [
+        "commit",
+        "misc",
+        "pre",
+        "setup"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.25,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:in-progress/setup-ts-deep-modules",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "in-progress/setup-ts-deep-modules",
+      "title": "Setup Ts Deep Modules",
+      "path": "skills/in-progress/setup-ts-deep-modules/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/in-progress/setup-ts-deep-modules/SKILL.md",
+      "search_terms": [
+        "deep",
+        "modules",
+        "progress",
+        "setup",
+        "ts"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.4,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/tdd",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/tdd",
+      "title": "Tdd",
+      "path": "skills/engineering/tdd/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/tdd/SKILL.md",
+      "search_terms": [
+        "engineering",
+        "tdd"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:productivity/teach",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "productivity/teach",
+      "title": "Teach",
+      "path": "skills/productivity/teach/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/productivity/teach/SKILL.md",
+      "search_terms": [
+        "productivity",
+        "teach"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:productivity/to-questionnaire",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "productivity/to-questionnaire",
+      "title": "To Questionnaire",
+      "path": "skills/productivity/to-questionnaire/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/productivity/to-questionnaire/SKILL.md",
+      "search_terms": [
+        "productivity",
+        "questionnaire"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/to-spec",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/to-spec",
+      "title": "To Spec",
+      "path": "skills/engineering/to-spec/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/to-spec/SKILL.md",
+      "search_terms": [
+        "engineering",
+        "spec"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/to-tickets",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/to-tickets",
+      "title": "To Tickets",
+      "path": "skills/engineering/to-tickets/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/to-tickets/SKILL.md",
+      "search_terms": [
+        "engineering",
+        "tickets"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/triage",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/triage",
+      "title": "Triage",
+      "path": "skills/engineering/triage/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/triage/SKILL.md",
+      "search_terms": [
+        "engineering",
+        "triage"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:productivity/wait-what",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "productivity/wait-what",
+      "title": "Wait What",
+      "path": "skills/productivity/wait-what/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/productivity/wait-what/SKILL.md",
+      "search_terms": [
+        "productivity",
+        "wait",
+        "what"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.333,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/wayfinder",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/wayfinder",
+      "title": "Wayfinder",
+      "path": "skills/engineering/wayfinder/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/wayfinder/SKILL.md",
+      "search_terms": [
+        "engineering",
+        "wayfinder"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:engineering/wizard",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "engineering/wizard",
+      "title": "Wizard",
+      "path": "skills/engineering/wizard/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering/wizard/SKILL.md",
+      "search_terms": [
+        "engineering",
+        "wizard"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:in-progress/writing-beats",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "in-progress/writing-beats",
+      "title": "Writing Beats",
+      "path": "skills/in-progress/writing-beats/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/in-progress/writing-beats/SKILL.md",
+      "search_terms": [
+        "beats",
+        "progress",
+        "writing"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.333,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:productivity/writing-for-agents",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "productivity/writing-for-agents",
+      "title": "Writing For Agents",
+      "path": "skills/productivity/writing-for-agents/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/productivity/writing-for-agents/SKILL.md",
+      "search_terms": [
+        "productivity",
+        "writing"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:in-progress/writing-fragments",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "in-progress/writing-fragments",
+      "title": "Writing Fragments",
+      "path": "skills/in-progress/writing-fragments/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/in-progress/writing-fragments/SKILL.md",
+      "search_terms": [
+        "fragments",
+        "progress",
+        "writing"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.333,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "mattpocock-skills:in-progress/writing-shape",
+      "source_id": "mattpocock-skills",
+      "source_repo": "mattpocock/skills",
+      "source_sha": "3cca18b368ae95cdbdebbff572ccafa662551015",
+      "kind": "agent-skill",
+      "slug": "in-progress/writing-shape",
+      "title": "Writing Shape",
+      "path": "skills/in-progress/writing-shape/SKILL.md",
+      "url": "https://github.com/mattpocock/skills/blob/3cca18b368ae95cdbdebbff572ccafa662551015/skills/in-progress/writing-shape/SKILL.md",
+      "search_terms": [
+        "progress",
+        "shape",
+        "writing"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.333,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    }
+  ]
+}

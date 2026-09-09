@@ -1,15 +1,73 @@
-"""Web Excel preflight for OpenAI-format admin billing summaries."""
+"""Web Excel and audience-boundary preflight for admin billing summaries."""
 from __future__ import annotations
 
+import html
 import re
 import zipfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from triage.webexcel_semantic_gate import run_semantic_gate
 
 _INLINE_CELL = 't="inlineStr"'
 _STOP_SHIP = ["ns0:", "xmlns:ns0"]
+_CLIENT_FORBIDDEN_TABS = {
+    "Tech Summary",
+    "Tech Project Summary",
+    "Review Flags",
+    "CF Dictionary",
+    "WebExcel QC",
+}
+_CLIENT_FORBIDDEN_TEXT = (
+    "Clock In",
+    "Clock Out",
+    "Review Net Hours",
+    "Review row count",
+    "Source roster",
+    "Override > Worked > Assignment > Live default",
+)
+_CLIENT_REQUIRED_TEXT = (
+    "Client billing support copy",
+    "not a standalone invoice or new billing request",
+    "not reopened, rebilled, or superseded",
+    "retained internally and excluded from this client copy",
+)
+_CLIENT_REQUIRED_TABLE = "ClientNeuronSummaryTable"
+# Exact Bonita two-line punch cells. Substring "START"/"TOTAL" would false-hit
+# "Start Here" / "Total Net Hours"; match whole XML cells instead.
+_CLIENT_FORBIDDEN_XML_CELLS = ("TECH", "ASSIGNMENT")
+
+
+def client_text_violations(blob: str) -> List[str]:
+    """Return forbidden client-disclosure labels found in workbook XML or cell text.
+
+    Shared-string XML escapes ``>`` as ``&gt;``, so scans must decode entities
+    before matching human-readable sentinels.
+    """
+    decoded = html.unescape(blob)
+    lowered = decoded.lower()
+    hits = [text for text in _CLIENT_FORBIDDEN_TEXT if text.lower() in lowered]
+    for cell in _CLIENT_FORBIDDEN_XML_CELLS:
+        if f">{cell}</t>" in blob or re.search(rf"(?<![A-Za-z]){re.escape(cell)}(?![A-Za-z])", decoded):
+            if cell not in hits:
+                hits.append(cell)
+    return hits
+
+
+def _client_missing_required_text(blob: str) -> List[str]:
+    decoded = html.unescape(blob)
+    lowered = decoded.lower()
+    return [text for text in _CLIENT_REQUIRED_TEXT if text.lower() not in lowered]
+
+
+def _table_display_names(zf: zipfile.ZipFile, names: List[str]) -> List[str]:
+    found: List[str] = []
+    for name in names:
+        if not (name.startswith("xl/tables/") and name.endswith(".xml")):
+            continue
+        xml = zf.read(name).decode("utf-8", errors="ignore")
+        found.extend(re.findall(r'(?:name|displayName)="([^"]+)"', xml))
+    return found
 
 
 def preflight_billing_summary(
@@ -18,7 +76,7 @@ def preflight_billing_summary(
     variant: str,
     expect_neuron_tab: str,
 ) -> Dict[str, Any]:
-    """Validate package structure for Internal or Client billing workbook."""
+    """Validate package structure and the Internal/Client disclosure contract."""
     p = Path(path)
     res: Dict[str, Any] = {
         "artifact": p.name,
@@ -33,6 +91,8 @@ def preflight_billing_summary(
         "native_table_count": 0,
         "tabs": [],
         "expected_neuron_tab": expect_neuron_tab,
+        "client_hygiene_pass": None if variant != "client" else False,
+        "client_hygiene_failures": [],
         # Semantic gate fields (populated below)
         "semantic_integrity": "FAIL",
         "sentinel_failures": [],
@@ -85,6 +145,38 @@ def preflight_billing_summary(
             if expect_neuron_tab not in res["tabs"]:
                 res["token_failures"].append(f"missing_tab:{expect_neuron_tab}")
 
+            if variant == "client":
+                failures = res["client_hygiene_failures"]
+                required = {
+                    "Start Here",
+                    "Executive Dashboard",
+                    "Monthly Summary",
+                    "Project Summary",
+                    expect_neuron_tab,
+                }
+                for tab in sorted(required):
+                    if tab not in res["tabs"]:
+                        failures.append(f"missing_client_tab:{tab}")
+                lowered_tabs = {t.lower() for t in res["tabs"]}
+                for tab in sorted(_CLIENT_FORBIDDEN_TABS):
+                    if tab in res["tabs"] or tab.lower() in lowered_tabs:
+                        failures.append(f"forbidden_client_tab:{tab}")
+                for tab in [t for t in res["tabs"] if t.lower().endswith(" neuron hours")]:
+                    failures.append(f"forbidden_client_tab:{tab}")
+                for tab in res["tabs"]:
+                    if tab not in required:
+                        failures.append(f"unexpected_client_tab:{tab}")
+                for text in client_text_violations(all_text):
+                    failures.append(f"forbidden_client_text:{text}")
+                for text in _client_missing_required_text(all_text):
+                    failures.append(f"missing_client_text:{text}")
+                table_names = _table_display_names(z, names)
+                if _CLIENT_REQUIRED_TABLE not in table_names:
+                    failures.append(f"missing_client_table:{_CLIENT_REQUIRED_TABLE}")
+                res["client_hygiene_pass"] = not failures
+                if failures:
+                    res["token_failures"].extend(failures)
+
             refs = sum(
                 z.read(n).decode("utf-8", errors="ignore").count('t="s"')
                 for n in names
@@ -111,9 +203,10 @@ def preflight_billing_summary(
         return res
 
     # Semantic integrity gate
-    gate = run_semantic_gate(path, profile="admin_billing")
+    gate = run_semantic_gate(path, profile="admin_billing", variant=variant)
     res.update(gate)
 
+    audience_ok = variant != "client" or res.get("client_hygiene_pass") is True
     res["preflight_pass"] = (
         bool(res["zip_valid"])
         and not res["token_failures"]
@@ -122,5 +215,6 @@ def preflight_billing_summary(
         and bool(res["sharedstrings_count_ok"])
         and res["semantic_integrity"] == "PASS"
         and not res["generic_column_strings_only"]
+        and audience_ok
     )
     return res

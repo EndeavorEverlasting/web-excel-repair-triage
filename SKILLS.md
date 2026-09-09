@@ -21,6 +21,7 @@ Skills own repeatable procedure and judgment. Code, schemas, registries, manifes
 | Skill | Use when | Canonical file |
 |---|---|---|
 | Harness infrastructure maintenance | harness maps/contracts/workflows/skills drift or context architecture | `.ai/skills/harness-infrastructure-maintenance/SKILL.md` |
+| Repository hook integration | tracked Git hooks need safe activation, coexistence review, or provider-adapter factoring | `.ai/skills/repository-hook-integration/SKILL.md` |
 | Share artifact alias handoff | create/download a human-facing alias copy without filename encoding or byte drift | `.ai/skills/share-artifact-alias-handoff/SKILL.md` |
 | Prompt language audit | prompt language quality/repair | `.ai/skills/prompt-language-audit/SKILL.md` |
 | Skill evaluation | skill correctness/quality is unproven | `.ai/skills/skill-evaluation/SKILL.md` |
@@ -28,6 +29,8 @@ Skills own repeatable procedure and judgment. Code, schemas, registries, manifes
 | Technician Prompt Kit acquisition | open/install/update/edit Prompt Kit across devices | `.ai/skills/technician-prompt-kit-acquisition/SKILL.md` |
 | Prompt Kit browser-proof cleanup | browser-proof scratch cleanup | `.ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md` |
 | Prompt Kit responsive layout | Prompt Kit overlap/responsive layout work | `.ai/skills/prompt-kit-responsive-layout/SKILL.md` |
+| Prompt Kit feedback AFK routing | turn accepted explicit feedback into one bounded P115 work request without merge authority | `.ai/skills/prompt-kit-feedback-afk-routing/SKILL.md` |
+| Operant external resource intake | discover/refresh approved open-source skills and route existing coverage before prompt gaps | `.ai/skills/operant-external-resource-intake/SKILL.md` |
 
 Other domain skills may exist under `.ai/skills/`; route to them only from a selected domain contract or capability.
 
@@ -37,10 +40,13 @@ Other domain skills may exist under `.ai/skills/`; route to them only from a sel
 
 Use `harness/triggers.v1.json` when a deterministic trigger owns the choice. Otherwise:
 - structure/ownership/context bloat → Harness infrastructure maintenance;
+- tracked hook activation/coexistence/provider adaptation → Repository hook integration;
 - human-facing artifact download/alias naming → Share artifact alias handoff;
 - duplicated reusable procedure → Skill factoring;
 - skill quality/evals → Skill evaluation;
 - Prompt Kit cross-device acquisition → Technician Prompt Kit acquisition;
+- Prompt Kit actionable explicit feedback → Prompt Kit feedback AFK routing;
+- Operant/open-source donor resource discovery or drift → Operant external resource intake;
 - prompt wording/audit → Prompt language audit.
 
 If none fits, work directly from the selected workflow/contract rather than loading unrelated skills.

@@ -87,7 +87,8 @@
       "manifest": "Outputs/prompt-kit-portable/manifest.json",
       "source": "web/prompt-kit/index.html",
       "runtime": "docs/prompt-kit-favorites-portability.js",
-      "tracking": "gitignored_runtime_artifact"
+      "tracking": "gitignored_runtime_artifact",
+      "resource_sidecar": "Outputs/prompt-kit-portable/resources.v1.json"
     },
     "prompt_library": {
       "linked_prompt_columns": [
@@ -152,7 +153,8 @@
     "tests": "tests/test_prompt_kit_portability.py",
     "workflow": ".github/workflows/prompt-kit-web.yml",
     "harness_manifest": "harness/manifest.v1.json",
-    "agent_entry_surface": "web/README.md"
+    "agent_entry_surface": "web/README.md",
+    "external_resource_sidecar": "web/prompt-kit/resources.v1.json"
   },
   "proof_ceiling": "Source, stable-origin generator, runtime receipt, focused tests, canonical-site parity, Prompt Library OOXML checks, and CI prove repository integration. Physical browser download/file-picker, workbook link-click behavior, browser-profile transfer, and cross-device acceptance require observed runtime proof."
 }

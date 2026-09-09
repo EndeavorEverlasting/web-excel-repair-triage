@@ -40,6 +40,9 @@ ADMIN_BILLING_SENTINELS: List = [
     ("Project Summary",     5, 1, "equals",    "Month"),
     ("Tech Summary",        5, 1, "equals",    "Month"),
 ]
+# Technician summary is internal-only. Client billing-support copies omit it by
+# contract; the sentinel still applies when the sheet is present.
+_ADMIN_BILLING_INTERNAL_ONLY_SENTINELS = {"Tech Summary"}
 
 # Bonita sentinels are checked dynamically (see _check_bonita_sentinels).
 BONITA_SENTINELS: List = []
@@ -118,7 +121,12 @@ def _rc(row: int, col: int) -> str:
     return f"{_col_letter(col)}{row}"
 
 
-def _check_admin_billing_sentinels(path: str, tabs: List[str]) -> List[str]:
+def _check_admin_billing_sentinels(
+    path: str,
+    tabs: List[str],
+    *,
+    variant: Optional[str] = None,
+) -> List[str]:
     """Return list of sentinel failure descriptions (empty list = pass)."""
     try:
         import openpyxl
@@ -137,6 +145,11 @@ def _check_admin_billing_sentinels(path: str, tabs: List[str]) -> List[str]:
                 (n for n in wb.sheetnames if sheet_frag.lower() in n.lower()), None
             )
             if matched is None:
+                if (
+                    sheet_frag in _ADMIN_BILLING_INTERNAL_ONLY_SENTINELS
+                    and variant == "client"
+                ):
+                    continue
                 failures.append(f"missing_sheet:{sheet_frag}")
                 continue
             val = wb[matched].cell(row=row, column=col).value
@@ -332,7 +345,12 @@ def check_repair_preservation(path: str, profile: str) -> bool:
 # ───────────────────────── main gate entrypoint ───────────────────────────────
 
 
-def run_semantic_gate(path: str, profile: str = "admin_billing") -> Dict[str, Any]:
+def run_semantic_gate(
+    path: str,
+    profile: str = "admin_billing",
+    *,
+    variant: Optional[str] = None,
+) -> Dict[str, Any]:
     """Run the full semantic integrity gate on a workbook.
 
     Parameters
@@ -342,6 +360,9 @@ def run_semantic_gate(path: str, profile: str = "admin_billing") -> Dict[str, An
     profile:
         ``"admin_billing"`` (Admin Billing Summary workbooks) or
         ``"bonita"`` (Bonita Neuron Track Hours two-tab workbooks).
+    variant:
+        ``"client"`` omits the internal-only Tech Summary sentinel. Any other
+        value, including ``None``, keeps that sentinel mandatory.
 
     Returns
     -------
@@ -411,7 +432,9 @@ def run_semantic_gate(path: str, profile: str = "admin_billing") -> Dict[str, An
 
     # 2. Sentinel cell checks
     if profile == "admin_billing":
-        sentinel_failures = _check_admin_billing_sentinels(path, tabs)
+        sentinel_failures = _check_admin_billing_sentinels(
+            path, tabs, variant=variant
+        )
     elif profile == "bonita":
         sentinel_failures = _check_bonita_sentinels(path, tabs)
     elif profile == "neuron_track":

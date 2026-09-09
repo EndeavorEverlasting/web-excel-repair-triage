@@ -3,12 +3,14 @@ name: Operator documentation contracts
 on:
   pull_request:
     paths:
+      - GLOSSARY.md
       - docs/README.md
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
       - docs/PROMPT_KIT_GENERATOR_OPERATOR_GUIDE.md
       - docs/TECHNICIAN_PROMPT_KIT_ACQUISITION_TUTORIAL.md
       - docs/PROMPT_KIT_GENERATOR_TUTORIAL.md
       - docs/PROMPT_KIT_ADMIN_VERIFICATION.md
+      - docs/PROMPT_KIT_WEB_MAINLINE_RELEASE.md
       - Open-Latest-PromptKit.cmd
       - Acquire-Latest-PromptKit.cmd
       - scripts/Acquire-LatestPromptKit.ps1
@@ -18,17 +20,20 @@ on:
       - scripts/build_prompt_kit_registry.py
       - configs/prompt_kit/generators.v1.json
       - tests/test_operator_documentation.py
+      - tests/test_prompt_kit_documentation_authority.py
       - tests/test_prompt_kit_mobile.py
       - .github/workflows/operator-documentation.yml
   push:
     branches: [main]
     paths:
+      - GLOSSARY.md
       - docs/README.md
       - docs/GET_LATEST_PROMPT_KIT_WEBSITE.md
       - docs/PROMPT_KIT_GENERATOR_OPERATOR_GUIDE.md
       - docs/TECHNICIAN_PROMPT_KIT_ACQUISITION_TUTORIAL.md
       - docs/PROMPT_KIT_GENERATOR_TUTORIAL.md
       - docs/PROMPT_KIT_ADMIN_VERIFICATION.md
+      - docs/PROMPT_KIT_WEB_MAINLINE_RELEASE.md
       - Open-Latest-PromptKit.cmd
       - Acquire-Latest-PromptKit.cmd
       - scripts/Acquire-LatestPromptKit.ps1
@@ -38,6 +43,7 @@ on:
       - scripts/build_prompt_kit_registry.py
       - configs/prompt_kit/generators.v1.json
       - tests/test_operator_documentation.py
+      - tests/test_prompt_kit_documentation_authority.py
       - tests/test_prompt_kit_mobile.py
       - .github/workflows/operator-documentation.yml
 
@@ -56,14 +62,15 @@ jobs:
         with:
           python-version: "3.11"
       - name: Compile documentation and mobile contracts
-        run: python -m py_compile tests/test_operator_documentation.py tests/test_prompt_kit_mobile.py
+        run: python -m py_compile tests/test_operator_documentation.py tests/test_prompt_kit_documentation_authority.py tests/test_prompt_kit_mobile.py
       - name: Validate acquisition PowerShell syntax
         shell: pwsh
         run: |
           $null = [scriptblock]::Create((Get-Content -Raw scripts/Acquire-LatestPromptKit.ps1))
-      - name: Validate documentation, links, controls, examples, and mobile acquisition
+      - name: Validate documentation, links, authority pointers, controls, examples, and mobile acquisition
         run: |
           python -m unittest tests.test_operator_documentation -v
+          python -m unittest tests.test_prompt_kit_documentation_authority -v
           python -m unittest tests.test_prompt_kit_mobile -v
       - name: Validate connected harness contracts
         run: |

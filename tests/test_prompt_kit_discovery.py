@@ -2,8 +2,13 @@ from __future__ import annotations
 
 import json
 import subprocess
+import tempfile
 import unittest
+
+import build_prompt_kit
 from pathlib import Path
+
+from scripts import build_prompt_kit_registry
 
 ROOT = Path(__file__).resolve().parents[1]
 JS = ROOT / "docs" / "prompt-kit.js"
@@ -13,6 +18,10 @@ POLISH_JS = ROOT / "docs" / "prompt-kit-polish.js"
 CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-discovery.v1.json"
 DISPLAY_ORDER = ROOT / "registry" / "prompts" / "prompt-display-order.v1.json"
 TUTORIAL_PROMPTS = ROOT / "registry" / "prompts" / "tutorial-discovery-prompts.v1.json"
+P83_REGISTRY = ROOT / "registry" / "prompts" / "repository-work-ledger-prompts.v1.json"
+FINDER_TUTORIAL = ROOT / "docs" / "PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md"
+OPERATOR_GUIDE = ROOT / "docs" / "PROMPT_KIT_OPERATOR_GUIDE.md"
+WEB_README = ROOT / "web" / "README.md"
 ACCESS_GUIDE = ROOT / "PROMPT_KIT_ACCESS.md"
 README = ROOT / "README.md"
 DEPLOYED = ROOT / "web" / "prompt-kit" / "index.html"
@@ -88,6 +97,32 @@ process.stdout.write(JSON.stringify({artifact:artifact,close:close}));
         self.assertNotIn("P20", result["artifact"], "copyContent-only artifact noise must be suppressed")
         self.assertIn("P12", result["close"], "partial close must resolve closeout synonym and metadata")
 
+    def test_phone_native_queries_rank_p129_before_generic_finder(self) -> None:
+        js = JS.read_text(encoding="utf-8")
+        start = js.index("function normalizeSearchText")
+        end = js.index("function promptSequenceValue")
+        helpers = js[start:end]
+        full = {p["id"]: p for p in build_prompt_kit_registry.load_prompt_kit_registry()}
+        fields = ("id", "seq", "name", "type", "class", "useWhen", "sprintRole", "proofGate", "copyContent", "keywords")
+        prompts = [{key: full[prompt_id].get(key) for key in fields} for prompt_id in ("P129", "P65", "P34")]
+        script = (
+            "var SYNONYMS=" + json.dumps(build_prompt_kit.SYNONYMS) + ";\n"
+            "function promptSequenceValue(p){var raw=String((p&&p.seq)||((p&&p.id)||''));var n=parseInt(raw.replace(/\\D/g,''),10);return isNaN(n)?Number.MAX_SAFE_INTEGER:n}\n"
+            + helpers
+            + "\nvar prompts=" + json.dumps(prompts) + ";\n"
+            + "var queries=['mobile interaction design','touch first ux','phone native ux'];\n"
+            + "var out={};queries.forEach(function(q){out[q]=filterPromptsForQuery(prompts,q).map(function(p){return p.id})});\n"
+            + "process.stdout.write(JSON.stringify(out));\n"
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            script_path = Path(tmp) / "phone_native_rank.js"
+            script_path.write_text(script, encoding="utf-8")
+            completed = subprocess.run(["node", str(script_path)], check=True, capture_output=True, text=True)
+        result = json.loads(completed.stdout)
+        for query in ("mobile interaction design", "touch first ux", "phone native ux"):
+            self.assertEqual(result[query][0], "P129", f"{query!r} must route to the specialist before P65")
+            self.assertIn("P65", result[query], "guided finder should remain discoverable as a secondary router")
+
     def test_favorites_persist_as_explicit_filter_without_reordering_default(self) -> None:
         js = JS.read_text(encoding="utf-8")
         for marker in (
@@ -126,14 +161,14 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         guided = GUIDED_JS.read_text(encoding="utf-8")
         for marker in (
             "id:'startingPoint'",
-            "I do not have the repository checked out yet",
-            "I have a repository but it is unfamiliar",
-            "id:'intent'",
-            "What is your job to be done?",
-            "id:'stage'",
-            "id:'discriminator'",
+            "I am just starting out or do not have the repository checked out",
+            "I am already inside an existing repository",
+            "id:'problemKnown'",
+            "Do you have a known problem you want to solve?",
+            "id:'goal'",
+            "id:'shape'",
             "filterPromptsForQuery(PROMPTS,query)",
-            "(allPrompts||PROMPTS).find",
+            "PROMPTS.find",
             "slice(0,3)",
             "copyPrompt(",
             "showPromptDetail(",
@@ -143,7 +178,7 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             self.assertIn(marker, guided)
         self.assertNotIn("var R=", guided)
         self.assertNotIn("replaceChild(button,old)", guided)
-        question_ids = ("startingPoint", "intent", "stage", "discriminator")
+        question_ids = ("startingPoint", "problemKnown", "goal", "shape")
         self.assertEqual(sum(guided.count(f"id:'{item}'") for item in question_ids), 4)
         self.assertLessEqual(len(question_ids), 5)
 
@@ -227,6 +262,100 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         self.assertEqual(by_id["P96"]["name"], "Stateful Socratic Technical Tutor Workspace")
         self.assertIn("active retrieval", by_id["P96"]["copyContent"].lower())
         self.assertEqual(by_id["P98"]["name"], "Teach Workspace Protocol Bootstrapper")
+
+    def test_operator_docs_match_current_finder_p83_favorites_and_shortcuts(self) -> None:
+        guide = OPERATOR_GUIDE.read_text(encoding="utf-8")
+        tutorial = FINDER_TUTORIAL.read_text(encoding="utf-8")
+        web = WEB_README.read_text(encoding="utf-8")
+        guided = GUIDED_JS.read_text(encoding="utf-8")
+        polish = POLISH_JS.read_text(encoding="utf-8")
+        payload = json.loads(P83_REGISTRY.read_text(encoding="utf-8"))
+        p83 = next(item for item in payload["prompts"] if item["id"] == "P83")
+
+        question_ids = ("startingPoint", "problemKnown", "goal", "shape")
+        self.assertEqual(sum(guided.count(f"id:'{item}'") for item in question_ids), 4)
+        self.assertIn("slice(0,5)", guided)
+        self.assertIn("slice(0,3)", guided)
+        self.assertIn("Answer the **four** current questions", guide)
+        self.assertIn("first five shared-search results", guide)
+        self.assertIn("returns at most three recommendations", guide)
+        self.assertIn("Answer the four current questions", tutorial)
+
+        self.assertEqual(p83["name"], "Agent Work Verifier & Iterative Advancer")
+        self.assertIn("claims work is complete or partially complete", p83["useWhen"])
+        self.assertIn("P83 — Agent Work Verifier & Iterative Advancer", guide)
+        self.assertIn("search **`P83`**", guide)
+        self.assertIn("P83 — Agent Work Verifier & Iterative Advancer", tutorial)
+        self.assertIn("Another agent claims work is complete or partially complete", tutorial)
+
+        start = polish.index("function activatePromptShortcutTarget")
+        end = polish.index("\n\nfunction handleConfiguredPromptShortcutKey", start)
+        activation = polish[start:end]
+        self.assertIn("revealPromptShortcutTarget(promptId,'instant')", activation)
+        self.assertIn("copyPrompt(promptId)", activation)
+        self.assertNotIn("showPromptDetail", activation)
+        self.assertIn("Copy + snap to '+promptId", polish)
+        self.assertIn("type **`126`**", guide)
+        self.assertIn("No Favorite and no Hotkeys-panel Save step is required.", guide)
+        self.assertIn("without opening detail", web)
+        self.assertNotIn("open the canonical prompt detail immediately", web)
+
+        self.assertIn("Favorites do **not** reorder the normal library", guide)
+        self.assertIn("Favorites remain in the normal chronological/numeric library order by default", web)
+        self.assertNotIn(
+            "Visible favorited prompts are promoted into one **Favorites** section before the normal sections.",
+            web,
+        )
+        self.assertIn("PROMPT_KIT_OPERATOR_GUIDE.md", tutorial)
+        self.assertIn("PROMPT_KIT_OPERATOR_GUIDE.md", web)
+
+    def test_guided_finder_granularly_resolves_need_and_prompt_behavior(self) -> None:
+        payload = json.loads(TUTORIAL_PROMPTS.read_text(encoding="utf-8"))
+        p65 = next(item for item in payload["prompts"] if item["id"] == "P65")
+        content = p65["copyContent"]
+        for marker in (
+            "ADAPTIVE ROUTING INTERVIEW",
+            "QUESTION POOL — ASK ONLY UNRESOLVED BRANCHES",
+            "User outcome:",
+            "Desired prompt behavior:",
+            "GRANULAR GRILLING DISCIPLINE",
+            "If a fact can be recovered from the current conversation, repository, runtime, Prompt Kit registry, or tools",
+            "Facts are agent-owned; decisions are user-owned",
+            "state your current read and recommended answer",
+            "recompute the unresolved frontier",
+            "Do not ask a question merely because it appears in the pool",
+            "Default to 2-4 questions",
+            "continue up to six only when materially different primary routes are still plausible",
+            "ROUTE CONFIDENCE GATE",
+            "starting state | user outcome | desired prompt behavior | work shape | proof need | material constraints",
+        ):
+            self.assertIn(marker, content)
+        question_pool = content.split("QUESTION POOL — ASK ONLY UNRESOLVED BRANCHES", 1)[1].split(
+            "GRANULAR GRILLING DISCIPLINE", 1
+        )[0]
+        grilling = content.split("GRANULAR GRILLING DISCIPLINE", 1)[1].split(
+            "ROUTE CONFIDENCE GATE", 1
+        )[0]
+        confidence = content.split("ROUTE CONFIDENCE GATE", 1)[1].split(
+            "PRIMARY ROUTING MAP", 1
+        )[0]
+
+        self.assertIn("2. User outcome:", question_pool)
+        self.assertIn("3. Desired prompt behavior:", question_pool)
+        self.assertIn("For each question, state your current read and recommended answer", grilling)
+        self.assertIn("After each answer, recompute the unresolved frontier", grilling)
+        self.assertIn("stop early as soon as one primary route", grilling)
+        self.assertIn("If a missing user-owned decision could change the primary prompt, ask it before routing", confidence)
+        self.assertIn("If remaining uncertainty would change only a follow-on detail, recommend the primary prompt now", confidence)
+        self.assertNotIn("ask no more than four questions", content.lower())
+        self.assertNotIn("marching through a fixed script", question_pool)
+        self.assertIn("adaptive", p65["sprintRole"].lower())
+        self.assertIn("probe granularly", p65["useWhen"].lower())
+        self.assertIn("recomputes only the unresolved routing frontier after each response", p65["proofGate"])
+        self.assertIn("2-4 questions", p65["proofGate"])
+        self.assertIn("up to six", p65["proofGate"])
+        self.assertIn("desired prompt behavior", p65["proofGate"].lower())
+        self.assertIn("grill me", p65["keywords"])
 
     def test_repo_front_door_exposes_browser_phone_zip_cmd_and_clone(self) -> None:
         readme = README.read_text(encoding="utf-8")

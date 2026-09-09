@@ -57,11 +57,25 @@ class PromptKitLayoutHarnessTests(unittest.TestCase):
         proof = json.loads(completed.stdout)
         self.assertEqual("PASS", proof["status"])
         self.assertEqual(
-            {"FILTER_HIDE", "FILTER_SHOW", "FILTER_TOGGLE", "OPEN_PROMPT(P95)"},
+            {
+                "HOTKEY_HELP_TOGGLE",
+                "FILTER_HIDE",
+                "FILTER_SHOW",
+                "FILTER_TOGGLE",
+                "COPY_REVEAL_PROMPT(P95)",
+                "COPY_REVEAL_PROMPT(P14)",
+                "VIEW_DOCTRINE",
+            },
             set(proof["success_paths"]),
         )
         self.assertEqual(
-            {"EDITABLE_TARGET", "RESERVED_COLLISION", "UNKNOWN_PROMPT", "PERSISTENCE_FAILED"},
+            {
+                "EDITABLE_TARGET",
+                "MODIFIED_OR_PREVENTED",
+                "RESERVED_COLLISION",
+                "UNKNOWN_PROMPT",
+                "PERSISTENCE_FAILED",
+            },
             set(proof["failure_paths"]),
         )
 

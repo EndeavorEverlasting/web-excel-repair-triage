@@ -4,6 +4,8 @@
 
 **Canonical access guide:** [`../PROMPT_KIT_ACCESS.md`](../PROMPT_KIT_ACCESS.md)
 
+**Operator guide and tutorials:** [`../docs/PROMPT_KIT_OPERATOR_GUIDE.md`](../docs/PROMPT_KIT_OPERATOR_GUIDE.md)
+
 The fastest normal Windows path is `Open-Latest-PromptKit.cmd`. It finds or creates a safe canonical checkout, syncs `main`, validates exact Prompt Kit parity, generates a portable runtime artifact, and opens the stable origin `http://127.0.0.1:8765/` without a configuration dialog.
 
 The stable origin preserves the browser's Favorites storage across repository and website upgrades. The generated runtime artifact and hash receipt are written to:
@@ -48,13 +50,21 @@ A short click-delay continues to distinguish desktop single-click from double-cl
 
 ### Guided prompt tutorial
 
-Use the glowing **Tutorial · Find My Prompt** control when the correct prompt is not obvious. The questionnaire uses the same registry/search/synonym ranking functions as the normal search box, asks no more than five questions, and returns one primary recommendation with no more than two follow-ons. Its behavior is owned by `docs/prompt-kit-guided-recommendations.js`; it does not create a second prompt database or private routing table.
+Use the glowing **Tutorial · Find My Prompt** control when the correct prompt is not obvious. The current browser questionnaire asks exactly four questions, uses the same registry/search/synonym ranking functions as the normal search box, and returns one primary recommendation with no more than two additional candidates. Its behavior is owned by `docs/prompt-kit-guided-recommendations.js`; it does not create a second prompt database or private routing table.
+
+For the full current workflow—including the direct **P83** path when another agent claims work is complete—see [`../docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md`](../docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md) and [`../docs/PROMPT_KIT_OPERATOR_GUIDE.md`](../docs/PROMPT_KIT_OPERATOR_GUIDE.md).
+
+### Five-tab named profiles
+
+The top rail exposes five persistent keyboard slots, `A` through `E`. Every slot can be renamed and assigned the built-in All, Standard, Favorites, or Doctrine view, or a custom union of profile packs from the Hotkeys panel. Defaults are **All / Standard / Favorites / SAS / PM**; SAS selects the SAS pack, while PM composes PM + FUN + TRIAGE + H&H. Built-in packs also include CYBERSEC, AGENTIC LOOPING, GNHF, Gardening, and Future Projects. Doctrine is a dedicated view mode rather than a prompt-filter pack, so assigning it to a slot opens the canonical Doctrine renderer instead of filtering the normal prompt list.
+
+Imported profile packs use `prompt-kit-profile-import/v1` JSON and pass a bounded parse → validate → compile evaluator. Imports are data only: JavaScript `eval`, `Function`, and `new Function` are not used. The runtime caps import size, pack count, installed pack count, rule nodes/depth, matcher length, and packs selected per tab, and rejects malformed or unknown operators before persistence. See `docs/PROMPT_KIT_FIVE_TAB_PROFILES.md`.
 
 ### Category and type filtering
 
 There are three separate browsing layers:
 
-1. **Library view:** All / Standard / GNHF / Doctrine.
+1. **Profile tab:** five configurable slots A–E, defaulting to All / Standard / Favorites / SAS / PM.
 2. **Category:** All Categories, Foundation, Discover & Plan, Build & Repair, Validate & Protect, Integrate & Ship, or Autonomy & Night Shift.
 3. **Type:** All Types or one concrete prompt type.
 
@@ -84,9 +94,9 @@ This specifically prevents common policy words such as `artifact` from making ne
 The current browser stores Favorites under `promptKit.favoritePromptIds.v1`. The Windows portable launcher keeps that storage under the stable loopback origin `http://127.0.0.1:8765/`, so ordinary Prompt Kit upgrades retain the saved collection automatically.
 
 - Select the star on any prompt card to save or remove it.
-- Visible favorited prompts are promoted into one **Favorites** section before the normal sections.
-- A favorited prompt appears only once during a render.
-- Active library/category/type/search filters still apply before Favorites are promoted.
+- Favorites remain in the normal chronological/numeric library order by default; saving a Favorite does not promote that prompt ahead of the ordinary library.
+- Use the explicit **Favorites** profile tab or press **C** to show the complete saved Favorites collection.
+- A favorited prompt still renders once; Favorites are stored user state, not a second prompt registry.
 - **Export Favorites** downloads a portable JSON backup using schema `prompt-kit-favorites/v1`.
 - **Import Favorites** validates, normalizes, deduplicates, and merges a backup without deleting Favorites already saved in the current browser.
 - Legacy browser keys and legacy array backups are merged into current Favorites rather than being skipped when current Favorites already exist.
@@ -136,6 +146,7 @@ Mobile is a responsive form of the existing Prompt Kit, not a second application
 - Favorite, **Open**, and **Copy** actions remain directly reachable; **Export Favorites** and **Import Favorites** are also touch-sized when the portable runtime is served.
 - Prompt detail uses the available mobile viewport and keeps the existing close/copy behavior.
 - The existing reference panel expands to the mobile viewport.
+- Reference items with `data-prompt` open that prompt on tap/click; long-press on reference items is not a product gesture and has no extra action.
 - Search uses a touch-sized control and avoids mobile browser zoom caused by undersized input text.
 - The floating reference control remains reachable.
 - Prompt display fields are escaped before insertion into rendered card/detail HTML.
@@ -151,42 +162,44 @@ These remain touch-usable and do not reset library view, category, type, search 
 
 ### Hotkeys
 
-The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference and favorite-prompt shortcut configurator. Select it or press the unmodified **backtick** key (`` ` ``) to toggle it; select outside it, use its close control, or press **Esc** to dismiss it. Backtick joins `1`–`5` as the one-hand core shortcut cluster, while `/` remains dedicated to Focus search.
+The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference and five-tab profile editor. Select it or press the unmodified **backtick** key (`` ` ``) to toggle it; select outside it, use its close control, or press **Esc** to dismiss it. The five header identities are always `A`–`E`; their visible names and profile compositions are user configuration. Numeric keys are not header navigation.
 
 | Key | Action |
 |---|---|
 | `` ` `` | Show / hide Hotkeys |
+| `126` | Example prompt-number route: copy + snap to `P126` |
 | `/` | Focus search |
-| `1` | All prompts |
-| `2` | Standard prompts |
-| `3` | GNHF prompts |
-| `4` | Favorites |
-| `5` | Doctrine |
+| `A` | All |
+| `B` | Standard |
+| `C` | Favorites |
+| `D` | SAS |
+| `E` | PM |
 | `R` | Toggle reference panel |
 | `F` | Show / hide filters |
 | `[` | Hide filters |
 | `]` | Show filters |
-| `T` | Scroll to top |
-| `B` | Scroll to bottom |
+| `Home` | Scroll to top |
+| `End` | Scroll to bottom |
 | `Esc` | Close the active surface or clear filters |
 
-Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prompt first, enter its canonical ID such as `P95`, and save it; the persisted binding is then the lower-case prompt ID (`p95`). Typed prompt sequences expire after 1.2 seconds, are ignored in editable fields, and open the canonical prompt detail immediately. A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it receives the next digit before built-in `1`, `4`, or `5` navigation so valid prompt IDs cannot be interrupted; built-in digit shortcuts keep their normal meaning when no sequence is active.
+Every canonical prompt has a natural numeric keyboard route. Type the digits after `P`: **`126` → `P126`**. A leading `p`/`P` remains a compatibility alias (`p126` → `P126`), not a setup requirement. No Favorite and no Hotkeys-panel Save step is required. Sequences expire after 1.2 seconds and are ignored in editable fields. If one catalog ID prefixes another (`P11` vs `P111`), the shorter exact match waits for that boundary and continued typing selects the longer identity. Dots remain visual separators while a prompt-number buffer is active. Completing the sequence clears transient restrictions needed to reveal the target, copies canonical prompt content, and instantly snaps the canonical card to center without opening detail.
+
+Favorites are organizational state only. Favoriting or unfavoriting a prompt never creates or revokes its numeric hotkey. Registry `sharedShortcut: true` metadata may label a prompt **Recommended** in Hotkeys, but recommendation metadata is not activation authority. Manual prompt-shortcut persistence/configuration is retired.
+
+**Mode separation for known prompt IDs:**
+- **Mouse:** locate the card, then use Open/Copy.
+- **Keyboard:** catalog-derived digits such as `126` perform copy + instant snap.
+- **Phone:** use **Go to P#** (P prefix shown; type digits) to reach the canonical card/detail path documented for touch.
 
 Navigation shortcuts are ignored while typing in an input, textarea, select, or content-editable surface. Modified backtick chords are ignored. Top/bottom scrolling respects reduced-motion preferences.
 
 ### Header navigation contract
 
-The first three library-view filters are fixed and ordered:
-
-1. All
-2. Standard
-3. GNHF
-
-Their keyboard shortcuts are `1`, `2`, and `3` respectively. The generated base header still carries Doctrine's legacy `4` label before supplemental runtime enhancement. The supplemental polish runtime assigns `4` to Favorites and remaps Doctrine to `5`; the visible Hotkeys module and effective dispatcher must remain aligned without displacing GNHF.
+The five visible profile slots have stable letter identities: `A` All, `B` Standard, `C` Favorites, `D` SAS, and `E` PM by default. Their labels/profile packs may be customized without changing those key identities. Header navigation has no numeric shortcuts and does not reserve digit keys, leaving digit-only prompt sequences such as `11`/`P11`, `13`/`P13`, and `111`/`P111` exclusively to the prompt shortcut dispatcher.
 
 ### Validation
 
-The owning `Prompt Kit web contracts` workflow compiles and runs `tests/test_prompt_kit_hotkey_completion.py`; shortcut changes must keep that focused contract green in addition to the broader interaction, discovery, ordering, filtering, mobile, portability, and generated-parity gates.
+The owning `Prompt Kit web contracts` workflow compiles and runs `tests/test_prompt_kit_hotkey_completion.py`; shortcut changes must keep that focused contract green in addition to the broader interaction, discovery, ordering, filtering, mobile, portability, and generated-parity gates. Operator-documentation assertions live in the existing `tests/test_prompt_kit_discovery.py` discovery owner.
 
 ```powershell
 node --check docs\prompt-kit.js
@@ -200,11 +213,15 @@ python tests\test_prompt_kit_header_contract.py
 python -m unittest tests.test_prompt_kit_product_interactions -v
 python -m unittest tests.test_prompt_kit_filtering_access -v
 python -m unittest tests.test_prompt_kit_mobile -v
-python -m unittest tests.test_prompt_kit_discovery -v
+python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
 python -m unittest tests.test_prompt_kit_hotkey_completion -v
 python scripts\validate_prompt_kit_interactions.py --require-implementation --output Outputs\prompt-kit-interaction-audit.json --summary
 python scripts\validate_prompt_kit_discovery.py --summary
 python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html --check
 ```
 
-Repository validation does not substitute for physical browser download/file-picker behavior, browser-profile transfer, cross-device acceptance, phone/tablet touch acceptance, or a Windows field run of the quick launcher.
+Repository validation does not substitute for physical browser download/file-picker behavior, browser-profile transfer, cross-device acceptance, phone/tablet touch acceptance, clipboard permissions in every browser, live Pages publication, or a Windows field run of the quick launcher.
+
+### External resources
+
+The **Resources** control uses `docs/prompt-kit-external-resources.js` and lazily fetches the compact `prompt-kit/resources.v1.json` sidecar only after the user opens it. Donor skill bodies are never embedded in the main generated page; results are paged and existing Operant prompt coverage is preferred before upstream links.

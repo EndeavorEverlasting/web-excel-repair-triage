@@ -19,6 +19,7 @@ PORTABLE_BUILDER = ROOT / "scripts" / "serve_prompt_kit_portable.py"
 PORTABLE_LAUNCHER = ROOT / "scripts" / "Open-LatestPromptKitPortable.ps1"
 WINDOWS_ENTRY = ROOT / "Open-Latest-PromptKit.cmd"
 SITE = ROOT / "web" / "prompt-kit" / "index.html"
+RESOURCE_INDEX = ROOT / "web" / "prompt-kit" / "resources.v1.json"
 WORKFLOW = ROOT / ".github" / "workflows" / "prompt-kit-web.yml"
 HARNESS_MANIFEST = ROOT / "harness" / "manifest.v1.json"
 README = ROOT / "web" / "README.md"
@@ -152,6 +153,8 @@ def validate_policy(policy: dict[str, Any]) -> None:
         fail("portable artifact path drift")
     if runtime_artifact.get("manifest") != "Outputs/prompt-kit-portable/manifest.json":
         fail("portable artifact manifest path drift")
+    if runtime_artifact.get("resource_sidecar") != "Outputs/prompt-kit-portable/resources.v1.json":
+        fail("portable resource sidecar path drift")
     if runtime_artifact.get("tracking") != "gitignored_runtime_artifact":
         fail("portable runtime artifact must remain gitignored")
 
@@ -185,6 +188,13 @@ def validate_artifact(artifact_path: Path, manifest_path: Path) -> dict[str, Any
     source_bytes = SITE.read_bytes()
     runtime_bytes = RUNTIME.read_bytes()
     artifact_bytes = artifact_path.read_bytes()
+    resource_path = artifact_path.parent / "resources.v1.json"
+    if not resource_path.is_file():
+        fail(f"portable resource sidecar is missing: {resource_path}")
+    canonical_resource_bytes = RESOURCE_INDEX.read_bytes()
+    resource_bytes = resource_path.read_bytes()
+    if resource_bytes != canonical_resource_bytes:
+        fail("portable resource sidecar differs from tracked canonical index")
     runtime = runtime_bytes.decode("utf-8").strip()
     source = source_bytes.decode("utf-8")
     if RUNTIME_MARKER in source:
@@ -205,6 +215,7 @@ def validate_artifact(artifact_path: Path, manifest_path: Path) -> dict[str, Any
         "source": sha256_bytes(source_bytes),
         "runtime": sha256_bytes(runtime_bytes),
         "artifact": sha256_bytes(artifact_bytes),
+        "resource_index": sha256_bytes(resource_bytes),
     }
     for key, expected_hash in expected_hashes.items():
         actual_hash = str(manifest.get(key, {}).get("sha256", ""))
@@ -217,6 +228,7 @@ def validate_artifact(artifact_path: Path, manifest_path: Path) -> dict[str, Any
         "cache_disabled",
         "protected_inputs_untouched",
         "canonical_site_untouched",
+        "resource_sidecar_matches_canonical",
         "overwrite_backup_required",
     ):
         if guardrails.get(key) is not True:
@@ -227,6 +239,9 @@ def validate_artifact(artifact_path: Path, manifest_path: Path) -> dict[str, Any
         "manifest": str(manifest_path),
         "sha256": expected_hashes["artifact"],
         "bytes": len(artifact_bytes),
+        "resource_index": str(resource_path),
+        "resource_index_sha256": expected_hashes["resource_index"],
+        "resource_index_bytes": len(resource_bytes),
     }
 
 
@@ -298,6 +313,9 @@ def validate_repository_surfaces(
             "DEFAULT_PORT = 8765",
             "ALLOWED_HOSTS",
             "build_portable_artifact",
+            "RESOURCE_INDEX_NAME",
+            "resource_sidecar_matches_canonical",
+            "PROMPT_KIT_PORTABLE_RESOURCES",
             "Cache-Control",
             "canonical_site_untouched",
             "overwrite_backup_required",

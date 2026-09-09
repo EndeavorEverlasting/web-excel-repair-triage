@@ -14,6 +14,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 import build_prompt_kit  # noqa: E402
+from scripts import prompt_classification  # noqa: E402
 
 BASE_REGISTRY = REPO_ROOT / "docs" / "prompts.json"
 EXTENSION_REGISTRIES = (
@@ -33,10 +34,19 @@ DISPLAY_ORDER_POLICY = (
 )
 GUIDED_RECOMMENDATIONS = REPO_ROOT / "docs" / "prompt-kit-guided-recommendations.js"
 PROMPT_JOURNEY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-journey.js"
+PROFILE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-profiles.js"
 POLISH_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-polish.js"
 CORRESPONDENCE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-correspondence.js"
 MANAGEMENT_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-management.js"
 SPEC_ARCHITECTURE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-spec-architecture.js"
+FEEDBACK_PRODUCTION_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-feedback-production.js"
+ONTOLOGY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-ontology.js"
+EXTERNAL_RESOURCES_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-external-resources.js"
+CAPABILITIES_REGISTRY = REPO_ROOT / "harness" / "capabilities.v1.json"
+ONTOLOGY_EVIDENCE_CONTRACT = (
+    REPO_ROOT / "harness" / "contracts" / "prompt-kit-ontology-evidence.v1.json"
+)
+SKILLS_ROOT = REPO_ROOT / ".ai" / "skills"
 ACTIONABILITY_POLICY = (
     REPO_ROOT / "registry" / "prompts" / "actionable-next-step-policy.v1.json"
 )
@@ -392,6 +402,7 @@ def load_prompt_registry() -> list[dict[str, Any]]:
 
     prompts = apply_prompt_overrides(prompts)
     _validate_unique_prompt_identity(prompts, "operational")
+    prompt_classification.validate_prompt_classification(prompts, "operational")
     actionability_policy = load_actionability_policy()
     strengthened_prompts = [
         apply_actionability_policy(prompt, actionability_policy) for prompt in prompts
@@ -420,6 +431,7 @@ def load_content_prompt_registry() -> list[dict[str, Any]]:
         prompts.extend(content_prompts)
 
     _validate_unique_prompt_identity(prompts, "content")
+    prompt_classification.validate_prompt_classification(prompts, "content")
     prepared: list[dict[str, Any]] = []
     for prompt in prompts:
         prompt_id = str(prompt["id"])
@@ -442,6 +454,7 @@ def load_prompt_kit_registry() -> list[dict[str, Any]]:
     prompts = [dict(prompt) for prompt in load_prompt_registry()]
     prompts.extend(load_content_prompt_registry())
     _validate_unique_prompt_identity(prompts, "Prompt Kit")
+    prompt_classification.validate_prompt_classification(prompts, "Prompt Kit")
     annotated_prompts = apply_display_order(prompts, load_display_order_policy())
     return sorted(
         annotated_prompts,
@@ -456,13 +469,180 @@ def _read_runtime(path: Path, label: str) -> str:
         raise SystemExit(f"{label} is missing: {path}") from exc
 
 
+def _skill_title(path: Path) -> str:
+    text = path.read_text(encoding="utf-8")
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("# "):
+            return stripped[2:].strip()
+    return path.parent.name
+
+
+def load_ontology_evidence() -> dict[str, Any]:
+    """Attach the settled evidence contract and append-only history ledger to the ontology model."""
+    from scripts import validate_prompt_kit_ontology_evidence as ontology_evidence
+
+    contract = _load_json(ONTOLOGY_EVIDENCE_CONTRACT)
+    if not isinstance(contract, dict):
+        raise SystemExit(f"Ontology evidence contract must be an object: {ONTOLOGY_EVIDENCE_CONTRACT}")
+    if contract.get("schema_version") != "prompt-kit-ontology-evidence/v1":
+        raise SystemExit("Unsupported ontology evidence contract schema")
+    history_path = ontology_evidence.history_ledger_path(contract)
+    history = _load_json(history_path)
+    if not isinstance(history, dict):
+        raise SystemExit(f"Ontology history ledger must be an object: {history_path}")
+    errors = ontology_evidence.validate_history_ledger(contract, history)
+    if errors:
+        raise SystemExit("Ontology history ledger is invalid: " + "; ".join(errors))
+    records = history.get("records") if isinstance(history.get("records"), list) else []
+    return {
+        "schema_version": contract.get("schema_version"),
+        "relation_chain": list(contract.get("relation_chain") or []),
+        "required_lineage_fields": list(contract.get("required_lineage_fields") or []),
+        "record_kinds": dict(contract.get("record_kinds") or {}),
+        "separation_rules": dict(contract.get("separation_rules") or {}),
+        "history": {
+            "schema_version": history.get("schema_version"),
+            "append_only": history.get("append_only") is True,
+            "records": list(records),
+            "count": len(records),
+            "proof_ceiling": str(history.get("proof_ceiling") or ""),
+        },
+        "proof_ceiling": str(contract.get("proof_ceiling") or ""),
+    }
+
+
+def build_ontology_model(prompts: list[dict[str, Any]]) -> dict[str, Any]:
+    """Build a repository-backed capability/skill/implementation lens for Prompt Kit."""
+    payload = _load_json(CAPABILITIES_REGISTRY)
+    if not isinstance(payload, dict):
+        raise SystemExit(f"Capability registry must be an object: {CAPABILITIES_REGISTRY}")
+    if payload.get("schema_version") != "web-excel-capabilities/v1":
+        raise SystemExit(f"Unsupported capability registry schema in {CAPABILITIES_REGISTRY}")
+    source_capabilities = payload.get("capabilities")
+    if not isinstance(source_capabilities, list):
+        raise SystemExit("Capability registry must define a capabilities array")
+
+    prompt_by_id = {str(prompt["id"]): prompt for prompt in prompts}
+    capability_ids: set[str] = set()
+    skill_links: dict[str, list[str]] = {}
+    capabilities: list[dict[str, Any]] = []
+    implementations: list[dict[str, Any]] = []
+
+    for index, source in enumerate(source_capabilities):
+        if not isinstance(source, dict):
+            raise SystemExit(f"Capability record {index} is not an object")
+        capability_id = str(source.get("id", "")).strip()
+        if not capability_id:
+            raise SystemExit(f"Capability record {index} has no id")
+        if capability_id in capability_ids:
+            raise SystemExit(f"Duplicate capability id: {capability_id}")
+        capability_ids.add(capability_id)
+
+        skill = str(source.get("skill", "")).strip()
+        operation = str(source.get("operation", "")).strip()
+        proof_ceiling = str(source.get("proof_ceiling", "")).strip()
+        implementation = source.get("implementation")
+        trigger_ids = source.get("trigger_ids", [])
+        inputs = source.get("inputs", [])
+        outputs = source.get("outputs", [])
+        if not skill or not operation or not proof_ceiling:
+            raise SystemExit(
+                f"Capability {capability_id} must define skill, operation, and proof_ceiling"
+            )
+        if not isinstance(implementation, dict):
+            raise SystemExit(f"Capability {capability_id} implementation must be an object")
+        if not isinstance(trigger_ids, list) or not isinstance(inputs, list) or not isinstance(outputs, list):
+            raise SystemExit(
+                f"Capability {capability_id} trigger_ids, inputs, and outputs must be arrays"
+            )
+        kind = str(implementation.get("kind", "")).strip()
+        if not kind:
+            raise SystemExit(f"Capability {capability_id} implementation has no kind")
+
+        normalized = {
+            "id": capability_id,
+            "version": source.get("version"),
+            "status": source.get("status"),
+            "skill": skill,
+            "trigger_ids": list(trigger_ids),
+            "operation": operation,
+            "inputs": list(inputs),
+            "outputs": list(outputs),
+            "implementation": dict(implementation),
+            "proof_ceiling": proof_ceiling,
+        }
+        capabilities.append(normalized)
+        skill_links.setdefault(skill, []).append(capability_id)
+
+        prompt_id = str(implementation.get("prompt_id", "")).strip()
+        path = str(implementation.get("path", "")).strip()
+        if prompt_id:
+            locator = prompt_id
+        elif path:
+            locator = path
+        else:
+            locator = ", ".join(
+                f"{key}: {value}"
+                for key, value in implementation.items()
+                if key != "kind"
+            ) or "registered without locator"
+        implementation_record: dict[str, Any] = {
+            "capability_id": capability_id,
+            "skill": skill,
+            "kind": kind,
+            "locator": locator,
+        }
+        if prompt_id:
+            if prompt_id not in prompt_by_id:
+                raise SystemExit(
+                    f"Capability {capability_id} references unknown prompt implementation: {prompt_id}"
+                )
+            implementation_record["prompt_id"] = prompt_id
+            implementation_record["prompt_name"] = str(prompt_by_id[prompt_id].get("name", ""))
+        if path:
+            implementation_record["path"] = path
+        implementations.append(implementation_record)
+
+    skills: list[dict[str, Any]] = []
+    for path in sorted(SKILLS_ROOT.glob("*/SKILL.md")):
+        relative = path.relative_to(REPO_ROOT).as_posix()
+        skills.append(
+            {
+                "id": path.parent.name,
+                "title": _skill_title(path),
+                "path": relative,
+                "capability_ids": list(skill_links.get(relative, [])),
+            }
+        )
+
+    registered_skill_paths = set(skill_links)
+    actual_skill_paths = {item["path"] for item in skills}
+    missing_skills = sorted(registered_skill_paths - actual_skill_paths)
+    if missing_skills:
+        raise SystemExit(
+            "Capability registry references missing skill files: " + ", ".join(missing_skills)
+        )
+
+    return {
+        "schema_version": "prompt-kit-ontology/v1",
+        "capabilities": capabilities,
+        "skills": skills,
+        "implementations": implementations,
+        "evidence": load_ontology_evidence(),
+    }
+
+
 def render() -> str:
     """Return the exact combined Prompt Kit HTML without writing it."""
     prompts = load_prompt_kit_registry()
     reference = _load_json(REFERENCE)
+    ontology = build_ontology_model(prompts)
+    ontology_json = json.dumps(ontology, ensure_ascii=False, separators=(",", ":")).replace("</", "<\/")
     html = build_prompt_kit.build_html(prompts, reference)
     guided_script = _read_runtime(GUIDED_RECOMMENDATIONS, "Guided recommendation behavior")
     journey_script = _read_runtime(PROMPT_JOURNEY_RUNTIME, "Guided next-step journey behavior")
+    profile_script = _read_runtime(PROFILE_RUNTIME, "Prompt Kit named profile behavior")
     polish_script = _read_runtime(POLISH_RUNTIME, "Prompt Kit polish behavior")
     correspondence_script = _read_runtime(
         CORRESPONDENCE_RUNTIME, "Prompt Kit correspondence profile behavior"
@@ -473,16 +653,30 @@ def render() -> str:
     spec_architecture_script = _read_runtime(
         SPEC_ARCHITECTURE_RUNTIME, "Prompt Kit spec architecture profile behavior"
     )
+    feedback_production_script = _read_runtime(
+        FEEDBACK_PRODUCTION_RUNTIME, "Prompt Kit production feedback behavior"
+    )
+    ontology_script = _read_runtime(
+        ONTOLOGY_RUNTIME, "Prompt Kit ontology lens behavior"
+    )
+    external_resources_script = _read_runtime(
+        EXTERNAL_RESOURCES_RUNTIME, "Operant external resource browsing behavior"
+    )
     closing = "</body>"
     if closing not in html:
         raise SystemExit("Prompt Kit builder output is missing </body>")
     supplemental = (
+        f"<script>\nwindow.PROMPT_KIT_ONTOLOGY = {ontology_json};\n</script>\n"
         f"<script>\n{guided_script}\n</script>\n"
         f"<script>\n{journey_script}\n</script>\n"
+        f"<script>\n{profile_script}\n</script>\n"
         f"<script>\n{polish_script}\n</script>\n"
         f"<script>\n{correspondence_script}\n</script>\n"
         f"<script>\n{management_script}\n</script>\n"
         f"<script>\n{spec_architecture_script}\n</script>\n"
+        f"<script>\n{feedback_production_script}\n</script>\n"
+        f"<script>\n{ontology_script}\n</script>\n"
+        f"<script>\n{external_resources_script}\n</script>\n"
     )
     return html.replace(closing, supplemental + closing, 1)
 

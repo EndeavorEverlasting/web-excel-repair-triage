@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 JS = ROOT / "docs" / "prompt-kit.js"
+POLISH = ROOT / "docs" / "prompt-kit-polish.js"
 CONTRACT = ROOT / "harness" / "contracts" / "prompt-kit-mobile.v1.json"
 QUICK_CMD = ROOT / "Open-Latest-PromptKit.cmd"
 PORTABLE_PS1 = ROOT / "scripts" / "Open-LatestPromptKitPortable.ps1"
@@ -25,6 +26,10 @@ class PromptKitMobileTests(unittest.TestCase):
                 "title_reset",
                 "explicit_mobile_open",
                 "touch_copy_preserved",
+                "mobile_prompt_id_jump",
+                "favorites_quick_access",
+                "favorites_group_jump_navigation",
+                "favorites_empty_state_and_persistence",
                 "horizontal_filter_rails",
                 "single_column_cards",
                 "mobile_detail_surface",
@@ -78,6 +83,122 @@ class PromptKitMobileTests(unittest.TestCase):
             ".prompt-open-btn,.prompt-copy-btn{opacity:1;min-width:64px;min-height:40px;padding:8px 12px;touch-action:manipulation}",
             js,
         )
+
+    def test_mobile_favorites_quick_action_is_persistent_and_reuses_canonical_view(self) -> None:
+        polish = POLISH.read_text(encoding="utf-8")
+        for marker in (
+            "id='mobileFavoritesQuick'",
+            "className='mobile-favorites-quick'",
+            "setAttribute('data-view','favorites')",
+            "setAttribute('aria-label','Open saved favorite prompts')",
+            "textContent='★ Favorites'",
+            "activateFavoritesView()",
+            "if(search)headerTop.insertBefore(mobileFavoritesQuick,search);else headerTop.appendChild(mobileFavoritesQuick)",
+            ".mobile-favorites-quick{display:none",
+            ".header-top>.mobile-favorites-quick{display:inline-flex;width:100%;grid-column:1/-1}",
+        ):
+            self.assertIn(marker, polish)
+        self.assertEqual(polish.count("id='mobileFavoritesQuick'"), 1)
+        self.assertNotIn("mobileFavoritePromptIds", polish)
+        self.assertNotIn("mobileFavoritesStorage", polish)
+
+    def test_favorites_group_jump_navigation_reuses_rendered_sections(self) -> None:
+        polish = POLISH.read_text(encoding="utf-8")
+        for marker in (
+            "function renderFavoritesGroupJumpNavigation()",
+            "nav.id='favoritesGroupJumpNav'",
+            "nav.setAttribute('aria-label','Saved favorite groups')",
+            "label.textContent='Saved groups'",
+            "grid.querySelectorAll('.section-divider[data-category]')",
+            "countNode=divider.querySelector('.sd-count')",
+            "link.setAttribute('data-favorite-group',name)",
+            "target.scrollIntoView({block:'start',behavior:hotkeyScrollBehavior()})",
+            "installFavoritesGroupJumpNavigation()",
+            "wrapped=function(){baseRender();renderFavoritesGroupJumpNavigation()}",
+            ".favorite-group-jump{",
+        ):
+            self.assertIn(marker, polish)
+        self.assertIn("if(activeSection!=='__favorites__')return", polish)
+        self.assertNotIn("favoriteGroupsStorage", polish)
+        self.assertNotIn("favoriteCollections", polish)
+
+    def test_favorites_empty_state_reuses_canonical_membership_and_has_two_recovery_paths(self) -> None:
+        polish = POLISH.read_text(encoding="utf-8")
+        for marker in (
+            "function renderFavoritesEmptyState(grid)",
+            "storedFavoritePromptCount()",
+            "currentFavoritePromptCount()",
+            "catalog.filter(function(prompt){return prompt&&isFavoritePrompt(prompt.id)}).length",
+            "state.id='favoritesEmptyState'",
+            "state.setAttribute('data-empty-kind','none-saved')",
+            "title.textContent='No Favorites yet'",
+            "action.textContent='Browse all prompts'",
+            "action.setAttribute('aria-label','Browse all prompts')",
+            "state.setAttribute('data-empty-kind','unavailable')",
+            "title.textContent='Saved Favorites unavailable in this version'",
+            "action.textContent='Browse current prompts'",
+            "action.setAttribute('aria-label','Browse current prompts')",
+            "activateAllPromptsView()",
+            "state.setAttribute('data-empty-kind','filtered')",
+            "title.textContent='No Favorites match these filters'",
+            "action.textContent='Clear Favorites filters'",
+            "action.setAttribute('aria-label','Clear Favorites filters')",
+            "clearTransientPromptFilters();renderTypes();render()",
+            "if(!dividers.length){renderFavoritesEmptyState(grid);return}",
+            "ensureFavoritesJourneyStyles();",
+        ):
+            self.assertIn(marker, polish)
+        self.assertIn("favoritePromptIds", polish)
+        self.assertNotIn("favoritesEmptyStorage", polish)
+        self.assertNotIn("favoritesSessionStorage", polish)
+
+    def test_mobile_favorites_definitive_journey_is_linear_and_complete(self) -> None:
+        proof = (ROOT / "tests" / "prompt_kit_favorite_browser_proof.py").read_text(encoding="utf-8")
+        for marker in (
+            "mobile_favorites_definitive_journey",
+            "promptKit.favoritePromptIds.v1",
+            "saved_in_canonical_key",
+            "persisted_after_reload",
+            "favorites_appear_after_reload",
+            "JSON.stringify(['P79','P999999'])",
+            "unknown_id_preserved_before_mutation",
+            "unknown_id_preserved_after_mutation",
+            "membership_unchanged_after_clear",
+            "get_by_role(\"button\", name=\"Browse all prompts\")",
+            "get_by_role(\"button\", name=\"Clear Favorites filters\")",
+            "get_by_role(\"button\", name=\"Browse current prompts\")",
+            "browse_current.click()",
+            "Saved Favorites unavailable in this version",
+            "recovery_controls_tappable",
+            "subject = prepare_exact_head_subject()",
+            "canonical_clipboard_text(actual)",
+            "canonical_clipboard_text(after_enter)",
+        ):
+            self.assertIn(marker, proof)
+        self.assertLess(
+            proof.index("saved_in_canonical_key = all"),
+            proof.index("mobile_page.reload(wait_until=\"domcontentloaded\")"),
+        )
+        self.assertLess(
+            proof.index('name="Browse all prompts"'),
+            proof.index("definitely-no-favorite-match-xyz"),
+        )
+        self.assertLess(
+            proof.index("definitely-no-favorite-match-xyz"),
+            proof.index("JSON.stringify(['P79','P999999'])"),
+        )
+        self.assertLess(
+            proof.index("JSON.stringify(['P79','P999999'])"),
+            proof.index("unknown_id_preserved_after_mutation = \"P999999\" in stored_after_mutation"),
+        )
+        self.assertLess(
+            proof.index("unknown_id_preserved_after_mutation = \"P999999\" in stored_after_mutation"),
+            proof.index("browse_current.click()"),
+        )
+        self.assertNotIn("mobile_favorites_persistence_and_empty_state", proof)
+        self.assertNotIn("mobile_favorites_quick_access", proof)
+        self.assertNotIn("mobile_favorites_group_jump_navigation", proof)
+        self.assertNotIn("unknown_favorite_portability_recovery", proof)
 
     def test_category_collapse_control_is_touch_sized_and_native(self) -> None:
         js = JS.read_text(encoding="utf-8")

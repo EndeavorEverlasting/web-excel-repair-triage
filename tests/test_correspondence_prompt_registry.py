@@ -68,6 +68,19 @@ class CorrespondencePromptRegistryTests(unittest.TestCase):
         self.assertIn("Concise Confident Message Polisher", html)
         self.assertIn("Client-Facing Correspondence Refiner", html)
 
+    def test_correspondence_prompts_bind_role_source_done_and_self_check(self) -> None:
+        for prompt_id in ("P72", "P73"):
+            content = self.prompts[prompt_id]["copyContent"]
+            with self.subTest(prompt=prompt_id):
+                self.assertIn("ROLE / SOURCE / DONE / SELF-CHECK", content)
+                self.assertIn("- ROLE:", content)
+                self.assertIn("- SOURCE:", content)
+                self.assertIn("- DEFINITION OF DONE:", content)
+                self.assertIn("- SELF-CHECK:", content)
+        self.assertIn("senior correspondence editor", self.prompts["P72"]["copyContent"])
+        self.assertIn("compare the final message back to the source", self.prompts["P72"]["copyContent"])
+        self.assertIn("senior client-communications editor", self.prompts["P73"]["copyContent"])
+        self.assertIn("preserve that uncertainty instead of manufacturing confidence", self.prompts["P73"]["copyContent"])
 
 if __name__ == "__main__":
     unittest.main()
