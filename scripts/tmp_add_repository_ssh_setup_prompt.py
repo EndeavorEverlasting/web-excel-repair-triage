@@ -20,7 +20,7 @@ Provider/account: xyz_provider_account_or_infer
 Preferred existing key: xyz_key_path_or_auto_reuse_safe_existing
 
 MISSION
-Leave the requested Git repository using a verified SSH transport path for the access actually required. Preserve existing keys, SSH config, remotes, and unrelated work. Complete every agent-capable step now. After proof, give a short shell-correct `HOW TO USE THIS SSH SETUP` guide for clone/fetch/pull/push and explain what key material must never be shared.
+Leave the requested Git repository using a verified SSH transport path for the access actually required. Preserve existing keys, SSH config, remotes, and unrelated work. Complete every agent-capable step now. After proof, give a short shell-correct post-setup usage guide for clone/fetch/pull/push and explain what key material must never be shared.
 
 SUCCESS
 Do not claim COMPLETE until every applicable layer is proved: exact repo/root and host; SSH tool; suitable key pair; provider registration/authorization; host trust; correct SSH remote; fail-fast noninteractive repository read; safe write authorization proof when push access is required; and the post-setup usage guide. Key generation, key upload, `ssh -T`, a remote URL change, or one successful fetch alone is not enough when a stronger gate remains.
