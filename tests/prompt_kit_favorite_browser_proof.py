@@ -46,7 +46,7 @@ def observe(port: int, screenshot: Path):
             )
             page = context.new_page()
             page.goto(f"http://127.0.0.1:{port}/web/prompt-kit/index.html", wait_until="domcontentloaded")
-            expected = page.evaluate("PROMPTS.find(p => p.id === 'P79').copyContent")
+            expected = page.evaluate("PROMPTS.find(p => p.id === 'P126').copyContent")
 
             # Exercise search mode exactly as a keyboard user does: slash, type, Escape.
             page.keyboard.press("/")
@@ -111,65 +111,40 @@ def observe(port: int, screenshot: Path):
             page.keyboard.press("a")
             page.wait_for_timeout(50)
 
-            # Configure the Favorite through the actual product UI, not closure internals.
-            card = page.locator('[data-prompt-id="P79"]')
-            card.locator('.prompt-favorite-btn').click()
+            # Hotkeys help must expose the natural numeric route without manual shortcut setup.
             page.locator('#hotkeyHelpToggle').click()
             page.wait_for_timeout(50)
-            click_focus = page.evaluate("document.activeElement && document.activeElement.id === 'promptShortcutPromptId'")
-            click_visible = page.evaluate("""() => {
-              const input=document.getElementById('promptShortcutPromptId');
-              const panel=document.getElementById('hotkeyHelpPanel');
-              if(!input||!panel||panel.hidden)return false;
-              const r=input.getBoundingClientRect();
-              const pr=panel.getBoundingClientRect();
-              return r.bottom>pr.top && r.top<pr.bottom && r.bottom>0 && r.top<innerHeight;
-            }""")
+            click_focus = page.evaluate("document.activeElement && document.activeElement.classList.contains('hotkey-help-close')")
+            click_visible = page.locator('#hotkeyHelpPanel').is_visible()
+            help_text = page.locator('#hotkeyHelpPanel').inner_text()
+            natural_help_visible = '126' in help_text and 'Favorites need no shortcut setup' in help_text
             page.keyboard.press('Escape')
             page.wait_for_timeout(50)
             escape_closed = page.evaluate("document.getElementById('hotkeyHelpPanel').hidden")
             escape_focus_returned = page.evaluate("document.activeElement && document.activeElement.id === 'hotkeyHelpToggle'")
             page.keyboard.press('Backquote')
             page.wait_for_timeout(50)
-            backtick_focus = page.evaluate("document.activeElement && document.activeElement.id === 'promptShortcutPromptId'")
-            backtick_visible = page.evaluate("""() => {
-              const input=document.getElementById('promptShortcutPromptId');
-              const panel=document.getElementById('hotkeyHelpPanel');
-              if(!input||!panel||panel.hidden)return false;
-              const r=input.getBoundingClientRect();
-              const pr=panel.getBoundingClientRect();
-              return r.bottom>pr.top && r.top<pr.bottom && r.bottom>0 && r.top<innerHeight;
-            }""")
-            page.locator('#promptShortcutPromptId').fill('P79')
-            page.get_by_role('button', name='Save favorite prompt keyboard shortcut').click()
-            page.wait_for_timeout(100)
-            setup_saved = 'Shortcut p79 saved' in page.locator('#toast').inner_text()
-            page.locator('.hotkey-help-close').click()
+            backtick_focus = page.evaluate("document.activeElement && document.activeElement.classList.contains('hotkey-help-close')")
+            backtick_visible = page.locator('#hotkeyHelpPanel').is_visible()
+            page.keyboard.press('Escape')
+            page.wait_for_timeout(50)
 
-            # Enter custom profile D through its real hotkey so the Favorite shortcut must restore All and reveal P79.
-            page.keyboard.press("d")
+            # Force a filtered-out target, then type the bare catalog number through the real keyboard path.
+            page.locator('#search').fill('definitely-no-p126-match-xyz')
             page.wait_for_timeout(100)
-            d_active = page.evaluate(
-                """() => {
-                  const button=document.querySelector('.cat-tab[data-profile-slot="D"]');
-                  return !!(button && button.classList.contains('active') && button.getAttribute('aria-pressed')==='true');
-                }"""
-            )
-            before_present = page.locator('[data-prompt-id="P79"]').count() > 0
+            before_present = page.locator('[data-prompt-id="P126"]').count() > 0
             page.evaluate("document.activeElement && document.activeElement.blur()")
-
-            page.keyboard.press('p')
-            page.keyboard.press('7')
-            page.keyboard.press('9')
+            page.keyboard.type("126")
             try:
                 page.wait_for_function("""() => {
-                  const card=document.querySelector('[data-prompt-id=\"P79\"]');
+                  const card=document.querySelector('[data-prompt-id=\"P126\"]');
                   if(!card)return false;
                   const r=card.getBoundingClientRect();
                   return r.bottom>0 && r.top<innerHeight;
                 }""", timeout=4000)
             except Exception:
                 pass
+            page.wait_for_timeout(150)
             toast_text = page.locator('#toast').inner_text()
             shortcut_copied = 'Copied' in toast_text
             try:
@@ -179,12 +154,12 @@ def observe(port: int, screenshot: Path):
                 actual = ''
                 clipboard_read = False
 
-            target = page.locator('[data-prompt-id="P79"]')
+            target = page.locator('[data-prompt-id="P126"]')
             target_present = target.count() > 0
             visible = False
             if target_present:
                 visible = page.evaluate("""() => {
-                  const r=document.querySelector('[data-prompt-id="P79"]').getBoundingClientRect();
+                  const r=document.querySelector('[data-prompt-id="P126"]').getBoundingClientRect();
                   return r.bottom>0 && r.top<innerHeight;
                 }""")
             modal_closed = page.evaluate("""() => {
@@ -212,15 +187,15 @@ def observe(port: int, screenshot: Path):
             observations = [
                 {"id": "search_escape_recovery", "event": "Slash focuses search; Escape clears and releases populated or empty search and restores global hotkeys", "occurred": True, "passed": bool(all((search_escape["slash_focused"], search_escape["typed_value"] == "P79", search_escape["clear_visible_before"], search_escape["cleared"], search_escape["focus_released"], search_escape["clear_hidden_after"], search_escape["empty_refocused"], search_escape["empty_focus_released"], search_escape["global_hotkey_restored"]))), **search_escape},
                 {"id": "profile_header_hotkeys_a_to_e", "event": "A-E header hotkeys activate their matching profile slots", "occurred": True, "passed": bool(set(profile_hotkeys) == set("ABCDE") and all(profile_hotkeys.values())), "slots": profile_hotkeys},
-                {"id": "hotkey_click_focuses_favorite_input", "event": "Hotkeys button opens the panel with Favorite prompt ID input focused and revealed", "occurred": True, "passed": bool(click_focus and click_visible), "focused": bool(click_focus), "visible": bool(click_visible)},
-                {"id": "escape_closes_hotkeys_from_favorite_input", "event": "Escape closes Hotkeys while Favorite prompt ID input owns focus and returns focus to Hotkeys toggle", "occurred": True, "passed": bool(escape_closed and escape_focus_returned), "closed": bool(escape_closed), "toggle_focused": bool(escape_focus_returned)},
-                {"id": "hotkey_backtick_focuses_favorite_input", "event": "Backtick opens Hotkeys with Favorite prompt ID input focused and revealed", "occurred": True, "passed": bool(backtick_focus and backtick_visible), "focused": bool(backtick_focus), "visible": bool(backtick_visible)},
-                {"id": "favorite_setup_saved", "event": "P79 favorited and p79 shortcut saved through product UI", "occurred": True, "passed": bool(setup_saved)},
-                {"id": "alternate_scope_precondition", "event": "D custom profile hotkey activates and excludes P79 before shortcut", "occurred": True, "passed": bool(d_active and not before_present), "profile_d_active": bool(d_active), "present_before": bool(before_present)},
-                {"id": "favorite_shortcut_dispatched", "event": "typed favorite shortcut p79", "occurred": True, "passed": bool(shortcut_copied), "toast": toast_text},
-                {"id": "prompt_card_scrolled_visible", "event": "P79 card exists and intersects viewport after shortcut", "occurred": True, "passed": bool(target_present and visible), "present": bool(target_present), "visible": bool(visible)},
-                {"id": "clipboard_exact_match", "event": "clipboard equals canonical P79 copyContent", "occurred": bool(clipboard_read), "passed": bool(clipboard_read and canonical_clipboard_text(actual) == canonical_clipboard_text(expected)), "actual_length": len(actual), "expected_length": len(expected)},
-                {"id": "detail_modal_closed", "event": "favorite shortcut does not open detail modal or focus its close control", "occurred": True, "passed": bool(modal_closed and not close_focused), "modal_closed": bool(modal_closed), "close_focused": bool(close_focused)},
+                {"id": "hotkey_click_exposes_numeric_route", "event": "Hotkeys button opens the panel, focuses its close control, and exposes the natural numeric route", "occurred": True, "passed": bool(click_focus and click_visible and natural_help_visible), "focused": bool(click_focus), "visible": bool(click_visible)},
+                {"id": "escape_closes_hotkeys_from_close", "event": "Escape closes Hotkeys and returns focus to the Hotkeys toggle", "occurred": True, "passed": bool(escape_closed and escape_focus_returned), "closed": bool(escape_closed), "toggle_focused": bool(escape_focus_returned)},
+                {"id": "hotkey_backtick_exposes_numeric_route", "event": "Backtick opens Hotkeys with its close control focused and numeric route visible", "occurred": True, "passed": bool(backtick_focus and backtick_visible and natural_help_visible), "focused": bool(backtick_focus), "visible": bool(backtick_visible)},
+                {"id": "natural_numeric_route_discoverable", "event": "Hotkeys teaches bare 126 without a manual Favorite shortcut setup step", "occurred": True, "passed": bool(natural_help_visible)},
+                {"id": "alternate_scope_precondition", "event": "A nonmatching search excludes P126 before the catalog shortcut", "occurred": True, "passed": bool(not before_present), "present_before": bool(before_present)},
+                {"id": "catalog_numeric_shortcut_dispatched", "event": "typed bare catalog shortcut 126", "occurred": True, "passed": bool(shortcut_copied), "toast": toast_text},
+                {"id": "prompt_card_scrolled_visible", "event": "P126 card exists and intersects viewport after shortcut", "occurred": True, "passed": bool(target_present and visible), "present": bool(target_present), "visible": bool(visible)},
+                {"id": "clipboard_exact_match", "event": "clipboard equals canonical P126 copyContent", "occurred": bool(clipboard_read), "passed": bool(clipboard_read and canonical_clipboard_text(actual) == canonical_clipboard_text(expected)), "actual_length": len(actual), "expected_length": len(expected)},
+                {"id": "detail_modal_closed", "event": "catalog shortcut does not open detail modal or focus its close control", "occurred": True, "passed": bool(modal_closed and not close_focused), "modal_closed": bool(modal_closed), "close_focused": bool(close_focused)},
                 {"id": "enter_does_not_close_prompt", "event": "Enter after shortcut leaves detail modal closed and clipboard intact", "occurred": True, "passed": bool(enter_modal_closed and canonical_clipboard_text(after_enter) == canonical_clipboard_text(expected))},
             ]
             with closing(browser.new_context(
@@ -624,9 +599,9 @@ def main(argv=None) -> int:
     by_id = {item['id']: item for item in observations}
     search_escape_recovery = by_id['search_escape_recovery']['passed']
     profile_header_navigation = by_id['profile_header_hotkeys_a_to_e']['passed']
-    hotkey_config_recovery = all(by_id[item]['passed'] for item in ('hotkey_click_focuses_favorite_input', 'escape_closes_hotkeys_from_favorite_input', 'hotkey_backtick_focuses_favorite_input'))
-    auto_copy = all(by_id[item]['passed'] for item in ('favorite_setup_saved', 'favorite_shortcut_dispatched', 'clipboard_exact_match'))
-    reveal = all(by_id[item]['passed'] for item in ('alternate_scope_precondition', 'favorite_shortcut_dispatched', 'prompt_card_scrolled_visible'))
+    hotkey_config_recovery = all(by_id[item]['passed'] for item in ('hotkey_click_exposes_numeric_route', 'escape_closes_hotkeys_from_close', 'hotkey_backtick_exposes_numeric_route'))
+    auto_copy = all(by_id[item]['passed'] for item in ('natural_numeric_route_discoverable', 'catalog_numeric_shortcut_dispatched', 'clipboard_exact_match'))
+    reveal = all(by_id[item]['passed'] for item in ('alternate_scope_precondition', 'catalog_numeric_shortcut_dispatched', 'prompt_card_scrolled_visible'))
     focus_safe = all(by_id[item]['passed'] for item in ('detail_modal_closed', 'enter_does_not_close_prompt'))
     verdict = 'PASS' if all(item['passed'] for item in observations) else 'FAIL'
     receipt = {
@@ -634,14 +609,14 @@ def main(argv=None) -> int:
         "verdict": verdict,
         "evidence_class": "browser_runtime_observed",
         "subject": subject,
-        "environment": {"kind": execution_environment_kind(), "engine": "chromium", "scenario": "search-escape-profile-tabs-a-e-favorite-shortcut-and-mobile-favorites-definitive-journey"},
+        "environment": {"kind": execution_environment_kind(), "engine": "chromium", "scenario": "search-escape-profile-tabs-a-e-catalog-numeric-shortcut-and-mobile-favorites-definitive-journey"},
         "claims": [
             {"id": "mobile_favorites_definitive_journey", "statement": "One 390x844 Favorites journey proves canonical save/reload persistence, structured group jumps, zero-saved and filter recovery, unknown-ID preservation through known-Favorite mutation, Browse current prompts, and tappable recovery controls", "status": "PASS" if by_id["mobile_favorites_definitive_journey"]["passed"] else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["mobile_favorites_definitive_journey"]},
             {"id": "search_escape_recovery", "statement": "Slash focuses search; one Escape clears a populated query, hides the clear affordance, releases focus, also releases an empty focused search, and restores global hotkeys", "status": "PASS" if search_escape_recovery else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["search_escape_recovery"]},
             {"id": "profile_header_navigation", "statement": "A-E header hotkeys activate their matching profile slots in the browser", "status": "PASS" if profile_header_navigation else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["profile_header_hotkeys_a_to_e"]},
-            {"id": "hotkey_config_focus_escape", "statement": "Opening Hotkeys by button or backtick focuses and reveals the Favorite prompt ID field, and Escape closes Hotkeys from that field", "status": "PASS" if hotkey_config_recovery else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["hotkey_click_focuses_favorite_input", "escape_closes_hotkeys_from_favorite_input", "hotkey_backtick_focuses_favorite_input"]},
-            {"id": "favorite_auto_copy", "statement": "Typing configured Favorite P79 automatically copies canonical prompt content", "status": "PASS" if auto_copy else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["favorite_setup_saved", "favorite_shortcut_dispatched", "clipboard_exact_match"]},
-            {"id": "favorite_scroll", "statement": "Typing configured Favorite P79 exits an alternate scope and scrolls the P79 card into view", "status": "PASS" if reveal else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["alternate_scope_precondition", "favorite_shortcut_dispatched", "prompt_card_scrolled_visible"]},
+            {"id": "hotkey_config_focus_escape", "statement": "Opening Hotkeys by button or backtick exposes the natural numeric route, focuses close, and Escape returns focus to the Hotkeys toggle", "status": "PASS" if hotkey_config_recovery else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["hotkey_click_exposes_numeric_route", "escape_closes_hotkeys_from_close", "hotkey_backtick_exposes_numeric_route"]},
+            {"id": "catalog_numeric_auto_copy", "statement": "Typing bare numeric 126 automatically copies canonical P126 content without Favorite setup", "status": "PASS" if auto_copy else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["natural_numeric_route_discoverable", "catalog_numeric_shortcut_dispatched", "clipboard_exact_match"]},
+            {"id": "catalog_numeric_snap", "statement": "Typing bare numeric 126 clears the filtered scope and snaps the P126 card into view", "status": "PASS" if reveal else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["alternate_scope_precondition", "catalog_numeric_shortcut_dispatched", "prompt_card_scrolled_visible"]},
             {"id": "non_destructive_focus", "statement": "Shortcut does not open detail with close focused; Enter cannot immediately close the prompt", "status": "PASS" if focus_safe else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["detail_modal_closed", "enter_does_not_close_prompt"]},
         ],
         "observations": observations,

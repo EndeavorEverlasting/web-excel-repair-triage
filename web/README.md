@@ -162,11 +162,12 @@ These remain touch-usable and do not reset library view, category, type, search 
 
 ### Hotkeys
 
-The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference, five-tab profile editor, profile-pack importer, and favorite-prompt shortcut configurator. Select it or press the unmodified **backtick** key (`` ` ``) to toggle it; select outside it, use its close control, or press **Esc** to dismiss it. The five header identities are always `A`–`E`; their visible names and profile compositions are user configuration. Numeric keys are not header navigation, and no header key uses `P`, so configured prompt sequences such as `P111` retain the digit stream.
+The glowing **Hotkeys** module beside the floating reference control is the in-product shortcut reference and five-tab profile editor. Select it or press the unmodified **backtick** key (`` ` ``) to toggle it; select outside it, use its close control, or press **Esc** to dismiss it. The five header identities are always `A`–`E`; their visible names and profile compositions are user configuration. Numeric keys are not header navigation.
 
 | Key | Action |
 |---|---|
 | `` ` `` | Show / hide Hotkeys |
+| `126` | Example prompt-number route: copy + snap to `P126` |
 | `/` | Focus search |
 | `A` | All |
 | `B` | Standard |
@@ -181,22 +182,20 @@ The glowing **Hotkeys** module beside the floating reference control is the in-p
 | `End` | Scroll to bottom |
 | `Esc` | Close the active surface or clear filters |
 
-Favorite-prompt shortcuts are configured from the Hotkeys panel. Favorite a prompt first, enter its canonical ID such as `P95`, and save it; storage may keep the lower-case prompt ID (`p95`). **Keyboard grammar:** type the digits only (`95`, `111`) — a leading `p`/`P` is not required. Sequences expire after 1.2 seconds and are ignored in editable fields. If one configured ID prefixes another, the shorter exact match waits for that boundary and continued typing selects the longer exact ID. Dots may be typed as separators inside an active sequence (`1.1` → `P11`, `1.11` → `P111`). Completing a configured sequence clears the transient restrictions needed to reveal the target, scrolls the canonical prompt card into view, and copies the canonical prompt through the normal copy path **without opening prompt detail**. The Hotkeys panel labels configured rows as **Copy + reveal P##** with digit-only keycaps.
+Every canonical prompt has a natural numeric keyboard route. Type the digits after `P`: **`126` → `P126`**. A leading `p`/`P` remains a compatibility alias (`p126` → `P126`), not a setup requirement. No Favorite and no Hotkeys-panel Save step is required. Sequences expire after 1.2 seconds and are ignored in editable fields. If one catalog ID prefixes another (`P11` vs `P111`), the shorter exact match waits for that boundary and continued typing selects the longer identity. Dots remain visual separators while a prompt-number buffer is active. Completing the sequence clears transient restrictions needed to reveal the target, copies canonical prompt content, and instantly snaps the canonical card to center without opening detail.
+
+Favorites are organizational state only. Favoriting or unfavoriting a prompt never creates or revokes its numeric hotkey. Registry `sharedShortcut: true` metadata may label a prompt **Recommended** in Hotkeys, but recommendation metadata is not activation authority. Manual prompt-shortcut persistence/configuration is retired.
 
 **Mode separation for known prompt IDs:**
-- **Mouse:** no dedicated digit sequence; locate the card, then use Open/Copy.
-- **Keyboard:** digits-only sequences for favorite/recommended bindings (copy + reveal).
-- **Phone:** use **Go to P#** (P prefix shown; type digits) to snap to the canonical card with detail closed; tap anywhere on the non-control card surface to Copy, and use Open only for deliberate inspection.
-
-A configured shortcut is rejected when its target is unknown or not currently a Favorite. Shortcut storage uses the versioned key `promptKit.promptShortcuts.v1` and publishes an in-memory binding only after the browser storage write succeeds. Once a configured prompt sequence buffer is active, it owns the following digits. Numeric keys have no header-navigation meaning, so digit sequences cannot fall through into a tab command.
-
-Registry prompts may additionally publish a **recommended shortcut** by shipping `sharedShortcut: true` in their canonical registry record (currently `P95`). Recommended sequences are active for every user without favoriting, use the same copy + reveal path with digit-only typing, and appear in the Hotkeys panel labeled **Recommended** without a Remove control because the registry owns them. Personal bindings and built-ins keep precedence, and configuring or removing a personal binding still requires the Favorite gate and a durable storage write.
+- **Mouse:** locate the card, then use Open/Copy.
+- **Keyboard:** catalog-derived digits such as `126` perform copy + instant snap.
+- **Phone:** use **Go to P#** (P prefix shown; type digits) to reach the canonical card/detail path documented for touch.
 
 Navigation shortcuts are ignored while typing in an input, textarea, select, or content-editable surface. Modified backtick chords are ignored. Top/bottom scrolling respects reduced-motion preferences.
 
 ### Header navigation contract
 
-The five visible profile slots have stable letter identities: `A` All, `B` Standard, `C` Favorites, `D` SAS, and `E` PM by default. Their labels/profile packs may be customized without changing those key identities. Header navigation has no numeric shortcuts and does not reserve digit keys, leaving digit-only prompt sequences such as `11`, `13`, and `111` exclusively to the prompt shortcut dispatcher.
+The five visible profile slots have stable letter identities: `A` All, `B` Standard, `C` Favorites, `D` SAS, and `E` PM by default. Their labels/profile packs may be customized without changing those key identities. Header navigation has no numeric shortcuts and does not reserve digit keys, leaving digit-only prompt sequences such as `11`/`P11`, `13`/`P13`, and `111`/`P111` exclusively to the prompt shortcut dispatcher.
 
 ### Validation
 
