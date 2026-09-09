@@ -66,24 +66,14 @@ jobs:
               'proofGate': p82['proofGate'] + " A claimed performance win from concurrency control requires representative before/after evidence; correctness, required ordering/fairness, cancellation/backpressure, error handling, and release/cleanup remain green; and the simpler baseline is retained when the bounded candidate does not produce a material measured gain.",
           }
 
-          anchor = "A prototype may be narrow; it may not fake the very behavior being evaluated.\n\nPROTOTYPE LADDER"
-          if anchor not in p82['copyContent']:
-              raise SystemExit('P82 performance insertion anchor missing')
-          section = "\n".join([
-              "A prototype may be narrow; it may not fake the very behavior being evaluated.",
-              "",
-              "2A. PERFORMANCE / CONCURRENCY HYPOTHESIS — MEASURE, DON'T CARGO-CULT",
-              "When a proposal claims that a semaphore, worker pool, queue cap, rate limiter, batching, or more parallelism will make a system faster, treat the mechanism as a falsifiable hypothesis. A semaphore caps in-flight work; it does not make each operation intrinsically faster. It can improve wall clock, throughput, or tail latency when the current path is oversubscribed or contending for CPU, memory, I/O, sockets/connections, downstream quotas, or another finite resource. It can also make performance worse when the cap is too low or the true bottleneck is elsewhere.",
-              "",
-              "- Measure the representative baseline first. Record workload shape plus throughput/wall clock, p50/p95/p99 latency when meaningful, CPU/memory/I/O/network saturation, active workers/connections, queue depth, error/retry/rate-limit counts, and the actual limiting resource when evidence can identify it.",
-              "- Compare the current path with a bounded candidate under the SAME workload. Sweep a practical concurrency range rather than choosing one magic semaphore count. Include a deliberately high/unbounded control only when safe and useful for diagnosis.",
-              "- Set candidate bounds from evidence such as available parallelism, memory budget, connection/thread/process pools, downstream rate limits, queue behavior, and service SLOs—not folklore.",
-              "- Preserve correctness before speed: ordering where required, fairness/starvation behavior, cancellation/timeouts, backpressure, idempotency, and release permits/resources on every success, error, timeout, and cancellation path.",
-              "- Decide from evidence: KEEP the simpler baseline when bounding concurrency gives no material gain; ADJUST the cap when a stable knee is measured; adopt a different mechanism when the bottleneck is not in-flight concurrency. Do not label serialization or mutual exclusion itself a performance optimization without measured proof.",
-              "",
-              "Performance experiment path: baseline → bounded candidate → practical concurrency sweep → correctness/resource review → KEEP / ADJUST / REVERT.",
-          ])
-          updates['copyContent'] = p82['copyContent'].replace(anchor, section + "\n\nPROTOTYPE LADDER", 1)
+          old_paragraph = "Do not prototype the easy decorative parts while the core uncertainty remains untouched. Identify the assumption most likely to force rework: feasibility, data shape, interaction flow, architecture, performance, integration, compatibility, safety, or user comprehension. Build the smallest REAL end-to-end slice that tests it. A prototype may be narrow; it may not fake the very behavior being evaluated."
+          new_paragraph = "Do not prototype easy parts while the core uncertainty remains untouched. Identify the highest-risk assumption: feasibility, data shape, interaction flow, architecture, performance/concurrency, integration, compatibility, safety, or comprehension. For claims like \"a semaphore will make this faster\", measure baseline, compare the SAME workload across current and bounded candidates, and sweep caps. A semaphore limits in-flight work, not operation cost; it helps only when reduced contention beats waiting. Track throughput/wall clock, p50/p95/p99 latency, saturation, queue depth, errors/retries; preserve correctness, required fairness/order, cancellation/timeouts, backpressure, and resource release. Keep the simpler baseline when no material gain appears. Build the smallest REAL slice that tests the claim; never fake the behavior under evaluation."
+          if p82['copyContent'].count(old_paragraph) != 1:
+              raise SystemExit('P82 performance paragraph anchor missing or ambiguous')
+          new_copy = p82['copyContent'].replace(old_paragraph, new_paragraph, 1)
+          if len(new_copy) >= 8000:
+              raise SystemExit(f'P82 copyContent budget regression: {len(new_copy)} chars')
+          updates['copyContent'] = new_copy
 
           for key, new_value in updates.items():
               text = replace_json_value(text, key, p82[key], new_value)
@@ -95,18 +85,18 @@ jobs:
           new = "\n".join([
               '        self.assertIn("must not erase an active query", content)',
               '        for phrase in (',
-              '            "PERFORMANCE / CONCURRENCY HYPOTHESIS — MEASURE, DON\'T CARGO-CULT",',
-              '            "A semaphore caps in-flight work; it does not make each operation intrinsically faster.",',
+              '            "a semaphore will make this faster",',
+              '            "A semaphore limits in-flight work, not operation cost",',
               '            "p50/p95/p99 latency",',
               '            "queue depth",',
-              '            "fairness/starvation behavior",',
+              '            "required fairness/order",',
+              '            "cancellation/timeouts",',
               '            "backpressure",',
-              '            "release permits/resources on every success, error, timeout, and cancellation path",',
-              '            "baseline → bounded candidate → practical concurrency sweep",',
-              '            "KEEP the simpler baseline",',
+              '            "Keep the simpler baseline",',
               '        ):',
               '            self.assertIn(phrase, content)',
               '        self.assertIn("semaphore", prompt["useWhen"])',
+              '        self.assertIn("downstream quotas or rate limits", prompt["inspectFirst"])',
               '        self.assertIn("representative before/after evidence", prompt["proofGate"])',
               '        self.assertIn("KEEP/ADJUST/REVERT", prompt["expectedOutput"])',
               '        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])',
@@ -152,21 +142,23 @@ jobs:
               raise SystemExit('strengthen-only sprint unexpectedly changed prompt identities')
           p82 = next(p for p in current['prompts'] if p['id'] == 'P82')
           markers = (
-              "falsifiable hypothesis",
-              "does not make each operation intrinsically faster",
+              "a semaphore will make this faster",
+              "limits in-flight work, not operation cost",
+              "SAME workload across current and bounded candidates",
               "p50/p95/p99 latency",
-              "practical concurrency range",
-              "actual limiting resource",
-              "fairness/starvation behavior",
+              "queue depth",
+              "required fairness/order",
               "cancellation/timeouts",
               "backpressure",
-              "KEEP the simpler baseline",
-              "bottleneck is not in-flight concurrency",
+              "Keep the simpler baseline",
           )
           missing = [m for m in markers if m not in p82['copyContent']]
           if missing:
               raise SystemExit(f'P82 bounded-concurrency semantic gaps: {missing}')
-          if p82['name'] != next(p for p in base['prompts'] if p['id'] == 'P82')['name']:
+          if len(p82['copyContent']) >= 8000:
+              raise SystemExit(f'P82 boundedness regression: {len(p82["copyContent"])}')
+          base_p82 = next(p for p in base['prompts'] if p['id'] == 'P82')
+          if p82['name'] != base_p82['name']:
               raise SystemExit('P82 owner identity/name drifted during strengthening')
           PY
           python scripts/prompt_registry_ops.py validate
