@@ -1,4 +1,4 @@
-name: Temporary hotkey discovery proof repair v2
+name: Temporary natural hotkey convergence
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  repair:
+  converge:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout owning branch
@@ -18,52 +18,187 @@ jobs:
           ref: fix/operant-natural-prompt-hotkeys-20260908
           fetch-depth: 0
 
-      - name: Align discovery assertions with instant numeric snap contract
+      - name: Reconcile current main without rewriting owned history
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "branch_before=$(git rev-parse HEAD)"
+          echo "main_floor=$(git rev-parse origin/main)"
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+          fi
+          git merge-base --is-ancestor origin/main HEAD
+          echo "reconciled_head=$(git rev-parse HEAD)"
+
+      - name: Remove stale persistence doctrine and lock the current contract
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
 
-          path = Path('tests/test_prompt_kit_discovery.py')
-          text = path.read_text(encoding='utf-8')
-          required = (
-              'revealPromptShortcutTarget(promptId)',
-              'Copy + reveal ',
-              'self.assertIn("**does not open prompt detail**", guide)',
-              'self.assertIn("**without opening prompt detail**", web)',
-          )
-          missing = [marker for marker in required if marker not in text]
+          design_path = Path('docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md')
+          design = design_path.read_text(encoding='utf-8')
+          replacements = [
+              (
+                  "- Every current Favorite automatically publishes its canonical lower-case prompt ID as a typed shortcut such as `p95`; manual shortcut configuration remains a compatibility/repair path, not a second commitment step.",
+                  "- Every canonical prompt publishes its bare numeric identity as the primary typed shortcut (`126` → `P126`); the `p126` form remains a compatibility alias. Favorites are organizational metadata and never authorize shortcut activation.",
+              ),
+              (
+                  "- Built-ins and user bindings cannot silently collide.",
+                  "- Built-ins and header commands keep their reserved key domains outside an active prompt-number buffer; prompt digits belong to catalog-derived prompt identity.",
+              ),
+              (
+                  "- Durable binding writes are fail-closed: storage failure does not publish a new in-memory binding.\n",
+                  "- Manual prompt-shortcut persistence is retired; the canonical catalog is the only production authority for prompt-number activation.\n",
+              ),
+              (
+                  "- **ShortcutGesture**: normalized key or typed sequence (`f`, `[`, `]`, `p95`).",
+                  "- **ShortcutGesture**: normalized key or typed sequence (`f`, `[`, `]`, `126`, `p126`).",
+              ),
+              (
+                  "- **ShortcutRegistry**: canonical effective map of built-ins plus persisted user bindings.",
+                  "- **ShortcutRegistry**: effective map of built-ins plus prompt bindings derived from the canonical `PROMPTS` catalog.",
+              ),
+              (
+                  "- **ShortcutStore**: persistence port for user bindings; a namespaced/versioned `localStorage` adapter is the expected production implementation.\n",
+                  "",
+              ),
+              (
+                  "### ShortcutRegistry\nOwns built-ins and user bindings.\n\nPublic seam:\n- `effectiveBindings()`\n- `configure(binding)`\n- later: `remove(gesture)`\n\nMutation rule: validate → assemble candidate → persist candidate → publish candidate. A failed save returns `PERSISTENCE_FAILED` and leaves the prior effective map intact.",
+                  "### ShortcutRegistry\nOwns built-ins and catalog-derived prompt bindings.\n\nPublic seam:\n- `effectiveBindings()`\n\nPrompt bindings are rebuilt from canonical prompt identities; there is no production configure/remove persistence path for prompt shortcuts.",
+              ),
+              (
+                  "### ShortcutDispatcher\nOwns transient sequence state (`p` → `p9` → `p95`).",
+                  "### ShortcutDispatcher\nOwns transient sequence state (`1` → `12` → `126`, with optional compatibility prefix `p`).",
+              ),
+              (
+                  "Dependencies: ShortcutRegistry, ShortcutPolicy, FilterVisibility, PromptNavigator, and existing semantic navigation actions. It must not know card selectors or storage serialization.",
+                  "Dependencies: ShortcutRegistry, ShortcutPolicy, FilterVisibility, PromptNavigator, and existing semantic navigation actions. It must not know card selectors or invent a second prompt-identity source.",
+              ),
+              (
+                  "### ShortcutStore\nPublic seam: `load()` / `save(config)`.\n\nSerialization ends here. Domain validation begins after loading.\n\n",
+                  "",
+              ),
+              (
+                  "`keydown / pointer UI → ShortcutDispatcher → ShortcutPolicy + ShortcutRegistry → semantic action → DOM/storage adapter`",
+                  "`keydown / pointer UI → ShortcutDispatcher → ShortcutPolicy + ShortcutRegistry → semantic action → DOM adapter`",
+              ),
+              (
+                  "Starting state: `P11`, `P13`, and `P111` exist and their canonical lower-case sequences are configured.\n\n`p13` → exact non-prefix binding resolves immediately → `PromptNavigator.openPrompt('P13')`.\n\n`p11` → exact binding is also a prefix of `p111` → dispatcher holds the candidate → the existing\n1.2-second boundary expires with no continuation → `PromptNavigator.openPrompt('P11')`.\n\n`p111` → the buffered `p11` candidate receives the final `1` before timeout → the longer exact binding\nresolves → the pending shorter match is cancelled → `PromptNavigator.openPrompt('P111')`.",
+                  "Starting state: `P11`, `P13`, and `P111` exist in the canonical catalog; no Favorite or manual setup is required.\n\n`13` → exact non-prefix binding resolves immediately → copy + snap `P13`.\n\n`11` → exact binding is also a prefix of `111` → dispatcher holds the candidate → the existing\n1.2-second boundary expires with no continuation → copy + snap `P11`.\n\n`111` → the buffered `11` candidate receives the final `1` before timeout → the longer exact binding\nresolves → the pending shorter match is cancelled → copy + snap `P111`. `p13`, `p11`, and `p111` remain compatibility aliases.",
+              ),
+              (
+                  "- **Collision:** configure `f → OPEN_PROMPT(P95)` → policy sees reserved built-in → `RESERVED_COLLISION` → no store write.\n- **Unknown target:** configure `p999 → OPEN_PROMPT(P999)` → catalog rejection → `UNKNOWN_PROMPT` → no store write.\n- **Storage failure:** validated `p95` candidate → `ShortcutStore.save` fails → `PERSISTENCE_FAILED` → previous effective registry remains authoritative.\n- **Editable target:** key event from search/input → `EDITABLE_TARGET`/ignored → sequence state and product state unchanged.",
+                  "- **Reserved domain:** outside an active prompt-number buffer, built-ins/header keys retain precedence and are not reinterpreted as prompt identities.\n- **Unknown target:** an unmatched numeric candidate has no canonical prompt target and performs no prompt activation.\n- **Editable target:** key event from search/input → `EDITABLE_TARGET`/ignored → sequence state and product state unchanged.",
+              ),
+              (
+                  "`docs/prompt-kit-hotkey-prototype.js` implements the domain seams without DOM coupling and self-tests:\n- success: hide, show, toggle, `OPEN_PROMPT(P95)`;\n- failure: editable target, reserved collision, unknown prompt, persistence failure.",
+                  "`docs/prompt-kit-hotkey-prototype.js` remains an executable seam/failure-model prototype without DOM coupling. Its historical persistence-failure case is retained as a prototype-only falsification path; production prompt activation no longer uses a persisted shortcut store. The production catalog-derived route is enforced by the runtime and browser-proof tests.",
+              ),
+              (
+                  "**Selected:** one dispatcher + semantic state owners. It keeps the interface small while centralizing the hard behavior: collision resolution, sequence buffering, persistence publication, and command dispatch.",
+                  "**Selected:** one dispatcher + semantic state owners. It keeps the interface small while centralizing the hard behavior: reserved-domain resolution, sequence buffering, catalog-derived prompt lookup, and command dispatch.",
+              ),
+              (
+                  "- `p95` is an ordinary configured sequence, not a special prompt-ID handler.\n- sequence state belongs in the dispatcher, not storage or PromptNavigator.\n- persistence must succeed before a new binding becomes effective.\n- hide/show/toggle are three commands over one filter state owner, not three DOM paths.\n- header navigation is letter-only (`A`–`E`), so digits never double as header commands; when one configured prompt ID prefixes another, the dispatcher delays the shorter exact match until the sequence boundary or a longer exact match resolves.",
+                  "- bare numeric identity is the ordinary catalog-derived prompt route; `p###` is compatibility only.\n- sequence state belongs in the dispatcher, not Favorites or PromptNavigator.\n- manual prompt-shortcut persistence is retired; catalog membership is the activation authority.\n- hide/show/toggle are three commands over one filter state owner, not three DOM paths.\n- header navigation is letter-only (`A`–`E`), so digits never double as header commands; when one prompt ID prefixes another, the dispatcher delays the shorter exact match until the sequence boundary or a longer exact match resolves.",
+              ),
+              (
+                  "- configured prompt-ID sequences expire after 1.2 seconds.",
+                  "- prompt-number sequences expire after 1.2 seconds.",
+              ),
+              (
+                  "- shortcut persistence uses versioned `promptKit.promptShortcuts.v1` storage and publishes only after a successful durable write.",
+                  "- **Superseded:** the earlier `promptKit.promptShortcuts.v1` persistence design is retired; production derives prompt shortcuts directly from `PROMPTS`.",
+              ),
+              (
+                  "- opening Hotkeys by either the visible button or unmodified backtick reveals and focuses the Favorite prompt ID input; `Escape` closes Hotkeys even while that editable input owns focus and restores focus to the Hotkeys toggle.",
+                  "- **Superseded:** Hotkeys no longer exposes a Favorite prompt-ID shortcut input. Opening by the visible button or backtick reveals the help surface and focuses its close control; `Escape` closes it and restores focus to the Hotkeys toggle.",
+              ),
+              (
+                  "- configured shortcut rows sort by numeric prompt sequence rather than lexicographic ID text.",
+                  "- displayed prompt-shortcut rows sort by numeric prompt identity rather than lexicographic ID text.",
+              ),
+              (
+                  "- a registry prompt may publish a shared recommended shortcut by shipping `sharedShortcut: true` in its canonical registry record; the effective typed sequence is the lowercase prompt ID.\n- shared recommended shortcuts are active for every user without requiring a Favorite and complete through the same copy + reveal dispatch path.",
+                  "- a registry prompt may publish `sharedShortcut: true` as recommendation/discoverability metadata; that flag does not authorize activation.\n- every canonical prompt is active for every user through the same catalog-derived copy + snap dispatch path, regardless of recommendation or Favorite metadata.",
+              ),
+              (
+                  "Repository proof must cover the production source, generated-site parity, input/modifier suppression, filter commands, sequence collision ordering, timeout semantics, fail-closed persistence, target validation, and canonical prompt-detail dispatch.",
+                  "Repository proof must cover the production source, generated-site parity, input/modifier suppression, filter commands, sequence collision ordering, timeout semantics, catalog target validation, copy + snap dispatch, and observed bare-numeric browser input.",
+              ),
+              (
+                  "- Prompt detail exposes the same Favorite state as the card star. Favoriting from either surface immediately makes the canonical lower-case prompt ID an effective hotkey; no second Save-shortcut action is required.",
+                  "- Prompt detail exposes the same Favorite state as the card star. Favoriting from either surface changes organization only; the prompt's catalog-derived numeric hotkey was already effective and remains effective after unfavoriting.",
+              ),
+          ]
+          missing = []
+          for old, new in replacements:
+              if old not in design:
+                  missing.append(old[:90])
+              else:
+                  design = design.replace(old, new, 1)
           if missing:
-              raise SystemExit(f'discovery contract anchors missing: {missing}')
-          text = text.replace(
-              'revealPromptShortcutTarget(promptId)',
-              "revealPromptShortcutTarget(promptId,'instant')",
-              1,
+              raise SystemExit(f'design anchors missing after main reconciliation: {missing}')
+          stale = (
+              'Every current Favorite automatically publishes',
+              'manual shortcut configuration remains a compatibility/repair path',
+              '**ShortcutStore**',
+              'ShortcutStore.save',
+              'Favoriting from either surface immediately makes the canonical lower-case prompt ID an effective hotkey',
           )
-          text = text.replace('Copy + reveal ', 'Copy + snap to ', 1)
-          text = text.replace(
-              'self.assertIn("**does not open prompt detail**", guide)',
-              'self.assertIn("type **`126`**", guide)\n        self.assertIn("No Favorite and no Hotkeys-panel Save step is required.", guide)',
-              1,
-          )
-          text = text.replace(
-              'self.assertIn("**without opening prompt detail**", web)',
-              'self.assertIn("without opening detail", web)',
-              1,
-          )
-          path.write_text(text, encoding='utf-8')
-          PY
-          python -m unittest tests.test_prompt_kit_discovery -v
-          git diff --check
+          found = [marker for marker in stale if marker in design]
+          if found:
+              raise SystemExit(f'stale production doctrine remains: {found}')
+          design_path.write_text(design, encoding='utf-8')
 
-      - name: Commit and publish assertion repair
+          test_path = Path('tests/test_prompt_kit_hotkey_completion.py')
+          test = test_path.read_text(encoding='utf-8')
+          anchor = '        self.assertIn("one hand", design)\n'
+          guard = '''        for stale in (\n            "Every current Favorite automatically publishes",\n            "manual shortcut configuration remains a compatibility/repair path",\n            "**ShortcutStore**",\n            "ShortcutStore.save",\n            "Favoriting from either surface immediately makes the canonical lower-case prompt ID an effective hotkey",\n        ):\n            self.assertNotIn(stale, design)\n'''
+          if guard not in test:
+              if anchor not in test:
+                  raise SystemExit('hotkey design regression-test anchor missing')
+              test = test.replace(anchor, anchor + guard, 1)
+              test_path.write_text(test, encoding='utf-8')
+          PY
+
+      - name: Regenerate canonical Prompt Kit and validate bounded contract
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- tests/test_prompt_kit_discovery.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          node --check docs/prompt-kit-polish.js
+          node --check docs/prompt-kit-hotkey-prototype.js
+          python -m unittest \
+            tests.test_prompt_kit_hotkey_completion \
+            tests.test_prompt_kit_interactions_contract \
+            tests.test_prompt_kit_discovery \
+            tests.test_observed_behavior_proof_harness -v
+          python scripts/validate_prompt_kit_interactions.py --summary
+          git diff --check
+
+      - name: Commit durable convergence and remove temporary carriers
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f \
+            .github/workflows/tmp-hotkey-discovery-proof-repair.yml \
+            .github/workflows/tmp-hotkey-discovery-proof-repair-v2.yml
+          git status --short
+          git diff --stat
+          git diff --check
+          git add -A -- \
+            docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md \
+            tests/test_prompt_kit_hotkey_completion.py \
+            web/prompt-kit/index.html \
+            .github/workflows/tmp-hotkey-discovery-proof-repair.yml \
+            .github/workflows/tmp-hotkey-discovery-proof-repair-v2.yml
           git diff --cached --check
-          git commit -m "test(operant): align discovery proof with instant snap"
+          git commit -m "fix(operant): converge natural numeric hotkey contract"
           git push origin HEAD:fix/operant-natural-prompt-hotkeys-20260908
