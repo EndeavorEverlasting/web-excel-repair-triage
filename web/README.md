@@ -46,7 +46,7 @@ It does not reload the browser or create a second filter state. Saved Favorites 
 - The **star** control saves or removes that prompt from Favorites without triggering copy/open.
 - **Esc** closes an open prompt detail before falling back to broader filter clearing.
 
-A short click-delay continues to distinguish desktop single-click from double-click. Mobile users never need to rely on double-tap timing because **Open** is explicit. Prompt cards are semantic groups containing explicit Favorite/Open/Copy buttons rather than button containers with nested buttons. The generated site also includes the current non-overlapping action rail and green clipboard confirmation (prompt id + copied-text preview) owned by `docs/prompt-kit-polish.js`. Snapping to a prompt card collapses the compact filter chrome so filters cannot obscure the target.
+A short click-delay continues to distinguish desktop single-click from double-click. Mobile users never need to rely on double-tap timing because **Open** is explicit. Prompt cards are semantic groups containing explicit Favorite/Open/Copy buttons rather than button containers with nested buttons. The generated site also includes the current non-overlapping action rail and green clipboard confirmation (**✓ Copied to clipboard · P##**, with a copied-text preview) owned by `docs/prompt-kit-polish.js`. Snapping to a prompt card collapses the compact filter chrome so filters cannot obscure the target.
 
 ### Guided prompt tutorial
 

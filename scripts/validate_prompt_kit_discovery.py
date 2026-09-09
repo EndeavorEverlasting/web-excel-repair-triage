@@ -161,10 +161,13 @@ def audit() -> dict[str, object]:
         "clipboard_confirmation": (
             "showCopyConfirmation",
             "✓ Copied to clipboard",
+            "label:id?'✓ Copied to clipboard · '+id:'✓ Copied to clipboard'",
             "formatCopyConfirmationPreview",
             "buildCopyConfirmationToastModel",
             "renderCopyConfirmationToast",
+            "toast-copy-label",
             "toast-copy-preview",
+            "data-prompt-id",
             "data-copy-preview",
             ".toast.success",
             "prompt-copy-confirm",
