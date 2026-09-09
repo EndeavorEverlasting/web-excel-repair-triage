@@ -2,6 +2,14 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.3.0 - 2026-09-09
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): make P105 provider-agnostic with outage fail-closed (`a5e8f66d`)
+- feat(prompt-kit): harden P82 concurrency performance proof (`6de745e1`)
+- feat(prompt-kit): harden P19 direct deployment guidance (`0264289d`)
+
 ## 0.2.0 - 2026-09-09
 
 ### Features / breaking pre-1.0 changes
