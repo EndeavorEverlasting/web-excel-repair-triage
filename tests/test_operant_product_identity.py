@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
@@ -22,11 +25,12 @@ class OperantProductIdentityTests(unittest.TestCase):
         version = str(operant_version.current_version())
         self.assertEqual(payload["schema_version"], "operant-product-identity/v1")
         self.assertEqual(payload["product_name"], "Operant")
-        self.assertEqual(version, "0.2.0")
+        self.assertEqual(str(operant_version.SemVer.parse(version)), version)
         self.assertEqual(payload["product_version"], version)
         self.assertEqual(payload["compatibility"]["visible_version"], version)
         self.assertEqual(payload["release_versioning"]["authority_file"], "OPERANT_VERSION")
         self.assertEqual(payload["release_versioning"]["scheme"], "semver")
+        self.assertEqual(payload["release_versioning"]["bootstrap"]["cutover_version"], "0.2.0")
         self.assertEqual(
             payload["release_versioning"]["bootstrap"]["identity_merge_sha"],
             "781616a1a42893fb5b521e41b217f5cef04b2701",
@@ -164,6 +168,40 @@ class OperantProductIdentityTests(unittest.TestCase):
         operant_version.assert_version_not_released(
             "0.2.2", tags=["operant-v0.2.0", "operant-v0.2.1"]
         )
+
+    def test_missing_generated_site_is_version_drift(self) -> None:
+        with mock.patch.object(
+            operant_version,
+            "GENERATED_SITE",
+            ROOT / "web/prompt-kit/definitely-missing-operant-site.html",
+        ):
+            self.assertIn("generated Operant site is missing", operant_version.validate())
+
+    def test_multi_file_version_write_rolls_back_on_replace_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            first = root / "first.txt"
+            second = root / "second.txt"
+            first.write_text("old-first\n", encoding="utf-8")
+            second.write_text("old-second\n", encoding="utf-8")
+            real_replace = os.replace
+            failed = False
+
+            def fail_second_once(source: os.PathLike[str] | str, destination: os.PathLike[str] | str) -> None:
+                nonlocal failed
+                if Path(destination) == second and not failed:
+                    failed = True
+                    raise OSError("simulated second replace failure")
+                real_replace(source, destination)
+
+            with mock.patch.object(operant_version.os, "replace", side_effect=fail_second_once):
+                with self.assertRaises(operant_version.VersioningError):
+                    operant_version._atomic_write_many(
+                        {first: "new-first\n", second: "new-second\n"}
+                    )
+
+            self.assertEqual(first.read_text(encoding="utf-8"), "old-first\n")
+            self.assertEqual(second.read_text(encoding="utf-8"), "old-second\n")
 
     def test_validator_has_no_version_drift(self) -> None:
         self.assertEqual(operant_version.validate(), [])
