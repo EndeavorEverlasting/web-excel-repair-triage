@@ -119,16 +119,19 @@ def observe(port: int, screenshot: Path) -> list[dict]:
                 "final_matches": p11_final == expected["P11"],
             })
 
-            # P13 has no longer configured prefix and resolves immediately.
+            # P13 is also a prefix of P130: wait for the sequence boundary, then resolve to P13.
             set_clipboard("sentinel-p13")
             press("p13")
             page.wait_for_timeout(180)
+            p13_early = clipboard()
+            page.wait_for_timeout(1150)
             p13_final = clipboard()
             observations.append({
                 "id": "p13_resolves_exactly",
-                "event": "p13 resolves to P13 without being confused with the p11 family",
+                "event": "p13 remains pending for the P130 prefix window and resolves to P13 without being confused with the p11 family",
                 "occurred": True,
-                "passed": p13_final == expected["P13"],
+                "passed": p13_early == "sentinel-p13" and p13_final == expected["P13"],
+                "early_unchanged": p13_early == "sentinel-p13",
                 "final_matches": p13_final == expected["P13"],
             })
 
