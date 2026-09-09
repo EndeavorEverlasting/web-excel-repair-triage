@@ -8,15 +8,25 @@ Usage:
 import argparse
 import json
 import os
+import re
 import sys
 
 from scripts.prompt_classification import site_sections
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+OPERANT_VERSION_PATH = os.path.join(REPO_ROOT, "OPERANT_VERSION")
 DATA_DIR = os.path.join(REPO_ROOT, "docs")
 PROMPTS_PATH = os.path.join(DATA_DIR, "prompts.json")
 REFERENCE_PATH = os.path.join(DATA_DIR, "reference.json")
 JS_PATH = os.path.join(DATA_DIR, "prompt-kit.js")
+
+
+def load_operant_version():
+    with open(OPERANT_VERSION_PATH, 'r', encoding='utf-8') as f:
+        value = f.read().strip()
+    if not re.fullmatch(r'(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)', value):
+        raise ValueError(f'Invalid Operant version authority: {value!r}')
+    return value
 
 
 def load_json(path):
@@ -455,6 +465,7 @@ def build_html(prompts, ref):
     doctrine = build_doctrine()
     prompt_json = json.dumps(prompts, ensure_ascii=False)
     ref_json = json.dumps(ref, ensure_ascii=False)
+    operant_version = load_operant_version()
     color_json = json.dumps(COLOR_HEX)
     sections_json = json.dumps(SECTIONS)
     synonyms_json = json.dumps(SYNONYMS)
@@ -464,7 +475,7 @@ def build_html(prompts, ref):
     html.append('<!DOCTYPE html>\n<html lang="en">\n<head>')
     html.append('<meta charset="UTF-8">')
     html.append('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
-    html.append('<title>Operant 0.1</title>')
+    html.append(f'<title>Operant {operant_version}</title>')
     html.append('<style>')
     html.append(CSS_TEXT)
     html.append('</style>\n</head>\n<body>')
@@ -473,7 +484,7 @@ def build_html(prompts, ref):
     html.append('  <div class="header-top">')
     html.append('    <div class="logo">')
     html.append('      <div class="logo-icon">AK</div>')
-    html.append('      <div><h1>Operant <span>0.1</span></h1>'
+    html.append(f'      <div><h1>Operant <span>{operant_version}</span></h1>'
                 '<div style="font-size:10px;color:var(--text-muted)">Capabilities · Skills · Implementations · Evidence</div></div>')
     html.append('    </div>')
     html.append('    <div class="search-container">')
@@ -519,7 +530,7 @@ def build_html(prompts, ref):
     html.append('<div class="prompt-detail-overlay" id="promptDetailOverlay">')
     html.append('  <div class="prompt-detail" id="promptDetail"></div>')
     html.append('</div>')
-    html.append('<div class="version-badge" id="versionBadge">0.1</div>')
+    html.append(f'<div class="version-badge" id="versionBadge">{operant_version}</div>')
 
     html.append('<script>')
     html.append('var PROMPTS=' + prompt_json + ';')
