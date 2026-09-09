@@ -278,6 +278,11 @@ class PromptRegistryExpansionTests(unittest.TestCase):
             "Construct sound overlapping value",
             "Do not bulk-import donor prompts",
             "re-run every registered upstream against the final draft",
+            "CANONICAL REPO",
+            "Recover approved/rejected wording",
+            "Look for missed `also`, `another`, `we skipped`",
+            "roll back registry/site writes if validation fails",
+            "Verify new prompts remain distinct and strengthened prompts retain their original role",
         ):
             self.assertIn(phrase, content)
         raw = json.loads((ROOT / "registry/prompts/spec-architecture-prompts.v1.json").read_text(encoding="utf-8"))
