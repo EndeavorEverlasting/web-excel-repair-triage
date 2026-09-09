@@ -71,8 +71,26 @@ class OperantProductIdentityTests(unittest.TestCase):
             with self.subTest(message=message):
                 self.assertEqual(operant_version.classify_message(message, current), expected)
         self.assertEqual(
-            operant_version.classify_message("feat(operant)!: break stable API", operant_version.SemVer.parse("1.2.3")),
+            operant_version.classify_message(
+                "feat(operant)!: break stable API",
+                operant_version.SemVer.parse("1.2.3"),
+            ),
             "major",
+        )
+
+    def test_classifier_consumes_machine_owned_policy(self) -> None:
+        policy = json.loads(
+            (ROOT / "harness/contracts/operant-product-identity.v1.json").read_text(encoding="utf-8")
+        )["release_versioning"]
+        policy = json.loads(json.dumps(policy))
+        policy["pre_1_policy"]["feature"] = "patch"
+        self.assertEqual(
+            operant_version.classify_message(
+                "feat(operant): policy-driven probe",
+                operant_version.SemVer.parse("0.2.0"),
+                policy,
+            ),
+            "patch",
         )
 
     def test_highest_bump_and_calculation_are_idempotent(self) -> None:
@@ -83,6 +101,22 @@ class OperantProductIdentityTests(unittest.TestCase):
         second = operant_version.derive_next_version(current, release_type)
         self.assertEqual(first, operant_version.SemVer.parse("0.3.0"))
         self.assertEqual(first, second)
+
+    def test_stable_major_changelog_is_not_mislabeled_minor(self) -> None:
+        section = operant_version._changelog_section(
+            {
+                "relevant_commits": [
+                    {
+                        "sha": "a" * 40,
+                        "subject": "feat(operant)!: replace stable API",
+                        "release_type": "major",
+                    }
+                ]
+            },
+            "2.0.0",
+        )
+        self.assertIn("### Breaking changes", section)
+        self.assertNotIn("### Features / breaking pre-1.0 changes", section)
 
     def test_no_bump_and_release_relevance_do_not_confuse_generated_or_other_products(self) -> None:
         self.assertFalse(
