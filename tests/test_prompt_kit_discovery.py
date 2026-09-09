@@ -233,7 +233,7 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         polish = POLISH_JS.read_text(encoding="utf-8")
         for marker in (
             "showCopyConfirmation",
-            "✓ Copied to clipboard",
+            "✓ Copied '+String(id||'').toUpperCase()+' to clipboard",
             ".toast.success",
             "var(--success)",
             "prompt-copy-confirm",

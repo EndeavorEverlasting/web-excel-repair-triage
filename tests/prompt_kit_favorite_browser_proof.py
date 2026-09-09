@@ -146,7 +146,7 @@ def observe(port: int, screenshot: Path):
                 pass
             page.wait_for_timeout(150)
             toast_text = page.locator('#toast').inner_text()
-            shortcut_copied = 'Copied' in toast_text
+            shortcut_copied = 'Copied P126' in toast_text
             try:
                 actual = page.evaluate('navigator.clipboard.readText()')
                 clipboard_read = True

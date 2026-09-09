@@ -159,7 +159,7 @@ def audit() -> dict[str, object]:
         ),
         "clipboard_confirmation": (
             "showCopyConfirmation",
-            "✓ Copied to clipboard",
+            "✓ Copied '+String(id||'').toUpperCase()+' to clipboard",
             ".toast.success",
             "prompt-copy-confirm",
             "copy-confirmed",

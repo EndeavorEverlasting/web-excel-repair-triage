@@ -79,7 +79,7 @@ def main() -> int:
                 page.wait_for_timeout(380)
                 actual = page.evaluate('navigator.clipboard.readText()')
                 assert canonical(actual) == canonical(expected), (len(actual), len(expected))
-                assert 'Copied to clipboard' in page.locator('#toast').inner_text()
+                assert 'Copied P111 to clipboard' in page.locator('#toast').inner_text()
                 assert_detail_closed(page, 'card tap copy must not open detail')
 
                 # Explicit Open remains available for deliberate inspection only.

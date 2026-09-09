@@ -43,7 +43,7 @@ window.copyToClipboard=function(text,onSuccess){
 };
 
 window.showCopyConfirmation=function(id){
-  showToast('✓ Copied to clipboard','success');
+  showToast('✓ Copied '+String(id||'').toUpperCase()+' to clipboard','success');
   var selector='[data-prompt-id="'+String(id||'').replace(/"/g,'')+'"]';
   document.querySelectorAll(selector).forEach(function(card){card.classList.remove('copy-confirmed');void card.offsetWidth;card.classList.add('copy-confirmed');setTimeout(function(){card.classList.remove('copy-confirmed')},850)})
 };
