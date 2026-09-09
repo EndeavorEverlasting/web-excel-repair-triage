@@ -51,11 +51,12 @@ jobs:
           payload = json.loads(text)
           p82 = next(p for p in payload['prompts'] if p['id'] == 'P82')
 
-          def replace_json_value(raw: str, key: str, old_value: str, new_value: str) -> str:
+          def replace_json_value(raw, key, old_value, new_value):
               old = f'"{key}": ' + json.dumps(old_value, ensure_ascii=False)
               new = f'"{key}": ' + json.dumps(new_value, ensure_ascii=False)
-              if raw.count(old) != 1:
-                  raise SystemExit(f'{key}: expected exactly one P82 value anchor, found {raw.count(old)}')
+              count = raw.count(old)
+              if count != 1:
+                  raise SystemExit(f'{key}: expected exactly one P82 value anchor, found {count}')
               return raw.replace(old, new, 1)
 
           updates = {
@@ -68,18 +69,20 @@ jobs:
           anchor = "A prototype may be narrow; it may not fake the very behavior being evaluated.\n\nPROTOTYPE LADDER"
           if anchor not in p82['copyContent']:
               raise SystemExit('P82 performance insertion anchor missing')
-          section = """A prototype may be narrow; it may not fake the very behavior being evaluated.
-
-2A. PERFORMANCE / CONCURRENCY HYPOTHESIS — MEASURE, DON'T CARGO-CULT
-When a proposal claims that a semaphore, worker pool, queue cap, rate limiter, batching, or more parallelism will make a system faster, treat the mechanism as a falsifiable hypothesis. A semaphore caps in-flight work; it does not make each operation intrinsically faster. It can improve wall clock, throughput, or tail latency when the current path is oversubscribed or contending for CPU, memory, I/O, sockets/connections, downstream quotas, or another finite resource. It can also make performance worse when the cap is too low or the true bottleneck is elsewhere.
-
-- Measure the representative baseline first. Record workload shape plus throughput/wall clock, p50/p95/p99 latency when meaningful, CPU/memory/I/O/network saturation, active workers/connections, queue depth, error/retry/rate-limit counts, and the actual limiting resource when evidence can identify it.
-- Compare the current path with a bounded candidate under the SAME workload. Sweep a practical concurrency range rather than choosing one magic semaphore count. Include a deliberately high/unbounded control only when safe and useful for diagnosis.
-- Set candidate bounds from evidence such as available parallelism, memory budget, connection/thread/process pools, downstream rate limits, queue behavior, and service SLOs—not folklore.
-- Preserve correctness before speed: ordering where required, fairness/starvation behavior, cancellation/timeouts, backpressure, idempotency, and release permits/resources on every success, error, timeout, and cancellation path.
-- Decide from evidence: KEEP the simpler baseline when bounding concurrency gives no material gain; ADJUST the cap when a stable knee is measured; adopt a different mechanism when the bottleneck is not in-flight concurrency. Do not label serialization or mutual exclusion itself a performance optimization without measured proof.
-
-Performance experiment path: baseline → bounded candidate → practical concurrency sweep → correctness/resource review → KEEP / ADJUST / REVERT."""
+          section = "\n".join([
+              "A prototype may be narrow; it may not fake the very behavior being evaluated.",
+              "",
+              "2A. PERFORMANCE / CONCURRENCY HYPOTHESIS — MEASURE, DON'T CARGO-CULT",
+              "When a proposal claims that a semaphore, worker pool, queue cap, rate limiter, batching, or more parallelism will make a system faster, treat the mechanism as a falsifiable hypothesis. A semaphore caps in-flight work; it does not make each operation intrinsically faster. It can improve wall clock, throughput, or tail latency when the current path is oversubscribed or contending for CPU, memory, I/O, sockets/connections, downstream quotas, or another finite resource. It can also make performance worse when the cap is too low or the true bottleneck is elsewhere.",
+              "",
+              "- Measure the representative baseline first. Record workload shape plus throughput/wall clock, p50/p95/p99 latency when meaningful, CPU/memory/I/O/network saturation, active workers/connections, queue depth, error/retry/rate-limit counts, and the actual limiting resource when evidence can identify it.",
+              "- Compare the current path with a bounded candidate under the SAME workload. Sweep a practical concurrency range rather than choosing one magic semaphore count. Include a deliberately high/unbounded control only when safe and useful for diagnosis.",
+              "- Set candidate bounds from evidence such as available parallelism, memory budget, connection/thread/process pools, downstream rate limits, queue behavior, and service SLOs—not folklore.",
+              "- Preserve correctness before speed: ordering where required, fairness/starvation behavior, cancellation/timeouts, backpressure, idempotency, and release permits/resources on every success, error, timeout, and cancellation path.",
+              "- Decide from evidence: KEEP the simpler baseline when bounding concurrency gives no material gain; ADJUST the cap when a stable knee is measured; adopt a different mechanism when the bottleneck is not in-flight concurrency. Do not label serialization or mutual exclusion itself a performance optimization without measured proof.",
+              "",
+              "Performance experiment path: baseline → bounded candidate → practical concurrency sweep → correctness/resource review → KEEP / ADJUST / REVERT.",
+          ])
           updates['copyContent'] = p82['copyContent'].replace(anchor, section + "\n\nPROTOTYPE LADDER", 1)
 
           for key, new_value in updates.items():
@@ -89,25 +92,28 @@ Performance experiment path: baseline → bounded candidate → practical concur
           test_path = Path('tests/test_spec_architecture_prompt_registry.py')
           test_text = test_path.read_text(encoding='utf-8')
           old = '        self.assertIn("must not erase an active query", content)\n        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])'
-          new = '''        self.assertIn("must not erase an active query", content)
-        for phrase in (
-            "PERFORMANCE / CONCURRENCY HYPOTHESIS — MEASURE, DON'T CARGO-CULT",
-            "A semaphore caps in-flight work; it does not make each operation intrinsically faster.",
-            "p50/p95/p99 latency",
-            "queue depth",
-            "fairness/starvation behavior",
-            "backpressure",
-            "release permits/resources on every success, error, timeout, and cancellation path",
-            "baseline → bounded candidate → practical concurrency sweep",
-            "KEEP the simpler baseline",
-        ):
-            self.assertIn(phrase, content)
-        self.assertIn("semaphore", prompt["useWhen"])
-        self.assertIn("representative before/after evidence", prompt["proofGate"])
-        self.assertIn("KEEP/ADJUST/REVERT", prompt["expectedOutput"])
-        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])'''
-          if test_text.count(old) != 1:
-              raise SystemExit(f'focused P82 test anchor count: {test_text.count(old)}')
+          new = "\n".join([
+              '        self.assertIn("must not erase an active query", content)',
+              '        for phrase in (',
+              '            "PERFORMANCE / CONCURRENCY HYPOTHESIS — MEASURE, DON\'T CARGO-CULT",',
+              '            "A semaphore caps in-flight work; it does not make each operation intrinsically faster.",',
+              '            "p50/p95/p99 latency",',
+              '            "queue depth",',
+              '            "fairness/starvation behavior",',
+              '            "backpressure",',
+              '            "release permits/resources on every success, error, timeout, and cancellation path",',
+              '            "baseline → bounded candidate → practical concurrency sweep",',
+              '            "KEEP the simpler baseline",',
+              '        ):',
+              '            self.assertIn(phrase, content)',
+              '        self.assertIn("semaphore", prompt["useWhen"])',
+              '        self.assertIn("representative before/after evidence", prompt["proofGate"])',
+              '        self.assertIn("KEEP/ADJUST/REVERT", prompt["expectedOutput"])',
+              '        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])',
+          ])
+          count = test_text.count(old)
+          if count != 1:
+              raise SystemExit(f'focused P82 test anchor count: {count}')
           test_path.write_text(test_text.replace(old, new, 1), encoding='utf-8')
           PY
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
@@ -167,8 +173,6 @@ Performance experiment path: baseline → bounded candidate → practical concur
           python -m unittest tests.test_spec_architecture_prompt_registry -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
-          changed="$(git diff --name-only origin/main...HEAD; git diff --name-only)"
-          printf '%s\n' "$changed"
 
       - name: Commit durable contribution and remove transport
         shell: bash
