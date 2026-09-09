@@ -1,0 +1,66 @@
+name: Temporary P79 additive upstream repair carrier
+
+on:
+  pull_request:
+    types: [synchronize]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p79-additive-repair-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/p79-upstream-synthesis-20260909'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/p79-upstream-synthesis-20260909
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restore P79 base semantics, add upstream gates, prove, and clean transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main fix/p79-upstream-synthesis-20260909 --prune --tags
+          git merge --no-edit origin/main
+
+          python scripts/tmp_repair_p79_additive_upstream.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+          python -m unittest \
+            tests.test_prompt_registry_expansion_regression_design_teach.PromptRegistryExpansionTests.test_p79_harvests_whole_chat_twice_and_complements_utility \
+            tests.test_operant_external_resources.OperantExternalResourceTests.test_prompt_adder_exposes_predraft_all_registered_source_review \
+            tests.test_operant_external_resources.OperantExternalResourceTests.test_prompt_adder_binds_external_gate_before_identity_allocation \
+            -v
+          python -m unittest tests.test_operant_external_resources -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_order_navigation_contract -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+          git rm -f \
+            scripts/tmp_repair_p79_additive_upstream.py \
+            .github/workflows/tmp-p79-additive-repair-carrier.yml \
+            .p79-additive-repair-trigger
+          git add \
+            registry/prompts/spec-architecture-prompts.v1.json \
+            tests/test_prompt_registry_expansion_regression_design_teach.py \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'fix(prompt-kit): preserve P79 semantics while adding upstream synthesis'
+          git push origin HEAD:fix/p79-upstream-synthesis-20260909
