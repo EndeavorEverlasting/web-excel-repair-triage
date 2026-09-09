@@ -40,9 +40,9 @@ class PromptKitHotkeyHeaderHandoffTests(unittest.TestCase):
     def test_pending_prompt_identity_hands_back_to_header_key(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         blocks = "\n\n".join(function_block(source, name) for name in (
+            "normalizePromptShortcutId",
             "promptShortcutDigitGesture",
-            "publishPromptShortcutDigitAliases",
-            "clonePromptShortcutBindings",
+            "catalogPromptShortcutBindings",
             "resetPromptShortcutBuffer",
             "schedulePromptShortcutBufferReset",
             "promptShortcutHasLongerPrefix",
@@ -51,7 +51,7 @@ class PromptKitHotkeyHeaderHandoffTests(unittest.TestCase):
         ))
         script = f"""
 var PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS=25;
-var promptShortcutBindings={{p11:'P11',p111:'P111'}};
+var PROMPTS=[{{id:'P11'}},{{id:'P111'}}];
 var sharedPromptShortcutBindings={{}};
 var promptShortcutBuffer='';
 var promptShortcutBufferTimer=null;

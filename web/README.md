@@ -182,7 +182,7 @@ The glowing **Hotkeys** module beside the floating reference control is the in-p
 | `End` | Scroll to bottom |
 | `Esc` | Close the active surface or clear filters |
 
-Every canonical prompt has a natural numeric keyboard route. Type the digits after `P`: **`126` → `P126`**. A leading `p`/`P` remains a compatibility alias (`p126` → `P126`), not a setup requirement. No Favorite and no Hotkeys-panel Save step is required. Sequences expire after 1.2 seconds and are ignored in editable fields. If one catalog ID prefixes another, the shorter exact match waits for that boundary and continued typing selects the longer identity. Dots remain visual separators while a prompt-number buffer is active. Completing the sequence clears transient restrictions needed to reveal the target, copies canonical prompt content, and instantly snaps the canonical card to center without opening detail.
+Every canonical prompt has a natural numeric keyboard route. Type the digits after `P`: **`126` → `P126`**. A leading `p`/`P` remains a compatibility alias (`p126` → `P126`), not a setup requirement. No Favorite and no Hotkeys-panel Save step is required. Sequences expire after 1.2 seconds and are ignored in editable fields. If one catalog ID prefixes another (`P11` vs `P111`), the shorter exact match waits for that boundary and continued typing selects the longer identity. Dots remain visual separators while a prompt-number buffer is active. Completing the sequence clears transient restrictions needed to reveal the target, copies canonical prompt content, and instantly snaps the canonical card to center without opening detail.
 
 Favorites are organizational state only. Favoriting or unfavoriting a prompt never creates or revokes its numeric hotkey. Registry `sharedShortcut: true` metadata may label a prompt **Recommended** in Hotkeys, but recommendation metadata is not activation authority. Manual prompt-shortcut persistence/configuration is retired.
 
@@ -195,7 +195,7 @@ Navigation shortcuts are ignored while typing in an input, textarea, select, or 
 
 ### Header navigation contract
 
-The five visible profile slots have stable letter identities: `A` All, `B` Standard, `C` Favorites, `D` SAS, and `E` PM by default. Their labels/profile packs may be customized without changing those key identities. Header navigation has no numeric shortcuts and does not reserve digit keys, leaving digit-only prompt sequences such as `11`, `13`, and `111` exclusively to the prompt shortcut dispatcher.
+The five visible profile slots have stable letter identities: `A` All, `B` Standard, `C` Favorites, `D` SAS, and `E` PM by default. Their labels/profile packs may be customized without changing those key identities. Header navigation has no numeric shortcuts and does not reserve digit keys, leaving digit-only prompt sequences such as `11`/`P11`, `13`/`P13`, and `111`/`P111` exclusively to the prompt shortcut dispatcher.
 
 ### Validation
 
