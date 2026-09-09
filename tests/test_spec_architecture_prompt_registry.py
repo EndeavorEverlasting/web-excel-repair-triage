@@ -271,12 +271,29 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
             "GitHub App/workflow permissions",
             "merge API/queue response",
             "missing/renamed/pending/failing blocks",
+            "PROVIDER-AGNOSTIC AT THE CONTRACT",
+            "provider capability map",
+            "8B. DEGRADED PROVIDER, OUTAGE, AND RATE LIMIT — FAIL CLOSED",
+            "PROVIDER_UNAVAILABLE",
+            "PROVIDER_RATE_LIMITED",
+            "PROVIDER_PARTIAL_TRUTH",
+            "Never treat a local `git merge` or local branch tip as substitute provider promotion",
+            "GitHub Actions is the first worked adapter",
         ):
             self.assertIn(phrase, content)
         self.assertIn("last-mile provider-side merge", prompt["useWhen"])
+        self.assertIn("canonical SCM/CI provider", prompt["useWhen"])
+        self.assertIn("route to P112", prompt["useWhen"])
+        self.assertIn("route to P102", prompt["useWhen"])
+        self.assertIn("provider-agnostic", prompt["sprintRole"])
         self.assertIn("provider-side executor", prompt["expectedOutput"])
+        self.assertIn("PROVIDER_UNAVAILABLE", prompt["expectedOutput"])
         self.assertIn("unresolved review threads", prompt["proofGate"])
+        self.assertIn("PROVIDER_RATE_LIMITED", prompt["proofGate"])
         self.assertIn("explicit repository-owned required-check set", prompt["nextStep"])
+        self.assertIn("hardcoding github.com", prompt["nextStep"])
+        self.assertIn("provider-agnostic CI/CD", prompt["keywords"])
+        self.assertIn("GitHub rate limit", prompt["keywords"])
         self.assertNotIn("git switch main", content)
 
     def test_repository_automation_prompts_have_distinct_generation_and_promotion_roles(self) -> None:
