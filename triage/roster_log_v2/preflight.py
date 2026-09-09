@@ -31,7 +31,7 @@ def preflight_roster_v2(path: str | Path) -> Dict[str, Any]:
     try:
         wb = load_workbook(p, read_only=False, data_only=False)
     except Exception as exc:  # pragma: no cover - package gate normally catches this
-        return {"preflight_pass": False, "errors": errors + [f"open:{exc}"]
+        return {"preflight_pass": False, "errors": errors + [f"open:{exc}"]}
 
     try:
         for name in REQUIRED_SHEETS:
