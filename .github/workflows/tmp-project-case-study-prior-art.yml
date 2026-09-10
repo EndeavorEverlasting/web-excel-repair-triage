@@ -1,0 +1,50 @@
+name: Temporary project case-study prompt prior-art
+
+on:
+  push:
+    branches:
+      - feat/project-development-case-study-presentation-20260909
+    paths:
+      - .github/workflows/tmp-project-case-study-prior-art.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-prior-art:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/project-development-case-study-presentation-20260909
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Verify fresh base
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune
+          BASE=$(git merge-base HEAD origin/main)
+          echo "HEAD=$(git rev-parse HEAD)"
+          echo "origin/main=$(git rev-parse origin/main)"
+          echo "merge-base=$BASE"
+      - name: Inspect prompt registry routing
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py inspect | tee /tmp/prompt-inspect.json
+      - name: Run all-source prior-art gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py prior-art --query "Create an evidence-backed demo presentation and project-development case study from a real repository or PM project: inspiration and origin, first steps and evolution, what was learned, how to repeat the approach, what is needed to scale or expand, system-design alternatives, time-spent analysis, actual work/output/task-distribution pie charts, and scenario or perspective pie charts that model how deliberate future process changes could shift effort, outputs, and task distributions. Use repository/history/project evidence without inventing metrics; distinguish measured, derived, estimated, and counterfactual values; produce a portfolio-ready narrative useful for software projects, PM repositories, and data-analysis case studies." | tee /tmp/prior-art.json
+          python - <<'PY'
+          import json
+          p=json.load(open('/tmp/prior-art.json', encoding='utf-8'))
+          assert p.get('all_registered_sources_searched') is True, p
+          print('ALL_REGISTERED_SOURCES_SEARCHED=true')
+          print(json.dumps(p, indent=2))
+          PY
