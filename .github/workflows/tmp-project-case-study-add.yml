@@ -1,0 +1,229 @@
+name: Temporary project case-study prompt contribution
+
+on:
+  push:
+    branches:
+      - feat/project-development-case-study-presentation-20260909
+    paths:
+      - .github/workflows/tmp-project-case-study-add.yml
+
+permissions:
+  contents: write
+
+jobs:
+  contribute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/project-development-case-study-presentation-20260909
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Refresh and reconcile current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune --tags
+          echo "branch-before=$(git rev-parse HEAD)"
+          echo "main=$(git rev-parse origin/main)"
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit origin/main
+          fi
+          git merge-base --is-ancestor origin/main HEAD
+      - name: Create semantic draft without identity fields
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          draft = {
+            "name": "Evidence-Backed Project Case Study & Demo Deck Builder",
+            "type": "BUILD + ARTIFACT",
+            "class": "PROJECT DEVELOPMENT / PORTFOLIO ANALYTICS",
+            "sprintRole": "Turn a real software, operations, or project-management project into a portfolio-grade demo presentation and case study that reconstructs how it developed, quantifies supported work patterns, compares system-design alternatives, and models evidence-labeled future process scenarios without inventing project facts.",
+            "useWhen": "You want to turn a real repository or PM project into a demo presentation, portfolio case study, retrospective, or data-analysis story showing the inspiration, first steps, lessons, repeatable method, scale requirements, architecture alternatives, time spent, actual task/output distributions, and plausible future distributions under explicit process changes.",
+            "inspectFirst": "The project's current repository/source workspace and governance; README/specs/plans; git history, PRs/issues/releases when accessible; project-management artifacts, task/evidence ledgers, time records, decisions, milestones, demos/screenshots and measured outcomes; current architecture/system boundaries; audience/privacy constraints; and any existing canonical artifact or presentation contract. Distinguish direct evidence from inference before calculating or charting anything.",
+            "expectedOutput": "An actual demo deck and companion case study when artifact tooling is available, plus a reusable evidence table/chart dataset: project origin and evolution, lessons and repeatable method, scale/expansion needs, current design and credible alternatives, time-spent and task/output distribution visuals, and baseline-versus-scenario perspective charts whose assumptions and deltas are explicit. Every material metric is labeled measured, derived, estimated, or counterfactual and traces to evidence or a stated model.",
+            "nextStep": "Recover the project chronology and quantitative evidence first, build the baseline evidence table, then create the narrative, actual-distribution charts, system-design alternatives, and counterfactual scenarios; render the presentation/case-study artifacts, inspect them for factual and visual integrity, and revise until the evidence, calculations, and story agree.",
+            "proofGate": "The delivered case study and presentation are grounded in accessible project evidence; inspiration through repeatable-method narrative is complete; time and distribution totals reconcile to their stated denominators; every pie chart sums to 100% within rounding; actual and counterfactual charts are visually and semantically separated; scenario changes state assumptions and conserve/reallocate a defined baseline rather than manufacturing hours or outcomes; system-design alternatives include tradeoffs; sensitive/private data is excluded from shareable artifacts; and generated artifacts are opened/rendered or otherwise inspected when the environment supports it.",
+            "profile": "spec-architecture",
+            "color": "Cyan",
+            "category": "standard",
+            "copyContent": """CREATE THE PROJECT DEVELOPMENT DEMO PRESENTATION AND CASE STUDY NOW. DO NOT STOP AT AN OUTLINE WHEN THE ENVIRONMENT CAN PRODUCE THE ARTIFACTS.
+
+PROJECT / REPOSITORY
+[repo, workspace, project name, or resolve from current context]
+
+AUDIENCE / PURPOSE
+[portfolio, interview, stakeholder demo, PM case study, data-analysis case study, internal retrospective, or resolve from context]
+
+MISSION
+Turn this real project into an evidence-backed story of how it came to exist, how it was built or delivered, what the work teaches, and how a stronger future version of the process could change effort and output distributions. Produce a demo presentation and companion case study that are useful for software projects, operational tooling, and PM repositories alike. AxTask, ASB, Triage, and PM repositories are representative use cases, not special-case logic.
+
+EVIDENCE FLOOR BEFORE STORYTELLING
+Recover the strongest accessible project truth before writing the narrative: repository history, commits/PRs/issues/releases, plans/specs, task or project ledgers, time records, milestones, architecture, artifacts, screenshots/demos, decision records, measured outcomes, and relevant current-state docs. Prefer canonical current evidence over memory or polished retrospective prose. Do not invent dates, hours, impact, adoption, savings, team size, performance, task counts, or outcomes to make the story look better.
+
+Maintain an evidence table for material claims with: claim/metric, value, unit/denominator, evidence source, evidence date/version, derivation if any, and evidence class. Use exactly these evidence classes where applicable: MEASURED, DERIVED, ESTIMATED, COUNTERFACTUAL. A DERIVED value shows its formula. An ESTIMATED value states the estimation basis/range. COUNTERFACTUAL values describe modeled futures, never historical fact.
+
+CASE-STUDY STORY ARC
+1. INSPIRATION / ORIGIN — What problem, frustration, opportunity, observation, or real-world need started the project? Separate documented inspiration from later interpretation.
+2. FIRST STEPS — What was the smallest first useful move, prototype, workflow, repository shape, spreadsheet, script, manual process, or architecture? Show why that step made sense with what was known then.
+3. EVOLUTION / DECISION POINTS — Reconstruct the important pivots, regressions, discoveries, constraints, rejected approaches, and decisions. Tie claims to evidence instead of creating a heroic linear story.
+4. WHAT I LEARNED — Extract technical, product, project-management, data, workflow, and human lessons that the evidence supports. Distinguish a local lesson from a generally reusable principle.
+5. HOW I WOULD DO IT AGAIN — Convert lessons into a repeatable sequence: what to preserve, move earlier, automate, measure, parallelize, simplify, or stop doing. Make the future method executable rather than motivational.
+6. SCALE AND EXPANSION — Explain what would actually be needed to support more users, larger data, more projects, stronger reliability, broader teams, production operations, or richer features. Separate demonstrated bottlenecks from anticipated ones.
+7. SYSTEM-DESIGN ALTERNATIVES — Show the current design plus credible alternatives. For each, compare boundaries, data/state flow, deployment/operations, complexity, cost/effort, failure modes, scalability, and migration consequences. Do not declare an alternative superior without an explicit decision criterion.
+
+TIME-SPENT MODEL
+Build the best-supported time model available. Prefer direct time records. When only dated activity or repository evidence exists, do not convert commits/messages into precise hours without a defensible estimation method. Show coverage: what period and work are included, what is missing, and whether the denominator is measured or estimated.
+
+At minimum, prepare a baseline time/work table suitable for visualization. Use meaningful project categories such as discovery/design, implementation, testing/validation, deployment/integration, documentation/communication, operations/rework, or project-specific equivalents. Categories must be mutually understandable and their values must reconcile to the stated total.
+
+ACTUAL DISTRIBUTION PIE CHARTS
+Include useful pie/donut charts only when the parts genuinely form one whole. At minimum include:
+- time/effort distribution by meaningful work category when supported;
+- task or output distribution by meaningful deliverable/workstream category when supported.
+Every chart must name its denominator, period/scope, evidence class, and unknown/unclassified share if material. Percentages sum to 100% within rounding. Do not use a pie chart for unrelated measures or hide missing data by renormalizing silently.
+
+PERSPECTIVE / COUNTERFACTUAL PIE CHARTS
+Create a reusable scenario mechanism for intelligent future-process decisions rather than decorative alternative charts.
+1. Freeze one BASELINE VECTOR from the actual evidence: categories, values/shares, denominator, evidence class, and uncertainty.
+2. Define each INTERVENTION explicitly, such as more upfront design, automated tests, reusable scaffolding, better requirements, parallel independent work, stronger observability, reduced manual deployment, or another project-specific change supported by the retrospective.
+3. State the CAUSAL ASSUMPTION: which categories the intervention is expected to increase/decrease and why. Do not present correlation or preference as proven causality.
+4. Produce a SCENARIO VECTOR using one transparent model: reallocate a fixed total, change the total with an explicit assumption, or model a bounded range. Never silently create or destroy hours/tasks.
+5. Validate the vector: nonnegative values; shares reconcile; pie shares sum to 100% within rounding.
+6. Visualize BASELINE vs SCENARIO side by side using the same category definitions where comparison is intended.
+7. Add a DELTA TABLE with absolute/percentage-point change, expected benefit, tradeoff, confidence, and what future observation would confirm or falsify the assumption.
+
+Create only decision-relevant scenarios. Two or three strong perspectives are better than many arbitrary ones. When uncertainty is high, use scenario ranges/sensitivity rather than false decimal precision.
+
+DATA-ANALYSIS PORTFOLIO VALUE
+Use the project as a real-life data point. Show how raw evidence became a dataset, how categories/denominators were chosen, what transformations were applied, what the charts can and cannot establish, and how the analysis changes a future decision. The case study should demonstrate analytical judgment, not merely chart production.
+
+PRESENTATION / DEMO ARTIFACT
+Build a coherent visual deck appropriate to the audience. Favor a clear sequence such as: problem/inspiration -> first useful version -> evolution -> current demo/system -> evidence and time distribution -> lessons -> repeatable method -> scale needs -> architecture alternatives -> future-process scenarios -> recommended next experiment. Use screenshots/diagrams where they clarify the real system. Include speaker notes or a concise talk track when supported by the artifact format.
+
+Create a companion written case study that can stand without the deck. Keep an evidence/provenance appendix or sidecar rich enough to audit the quantitative claims, while the outward presentation stays readable. Remove secrets, private operational details, client-sensitive data, personal data, and internal-only evidence from shareable outputs; anonymize or aggregate where needed without changing the underlying meaning.
+
+ARTIFACT AND VISUAL PROOF
+When presentation/document/chart tooling is available, create the actual files, render/open them, inspect chart labels/legibility/layout, verify that quantitative callouts match the evidence table, and repair visible defects. If a required artifact tool is genuinely unavailable, produce the strongest executable content/data package the environment supports and name that exact capability ceiling; do not pretend an outline is a finished deck.
+
+DELIVER
+Return the presentation and case-study artifact paths/links, evidence-table or chart-data artifact, a compact list of evidence classes/coverage limits, the baseline distribution, scenario assumptions and deltas, system-design alternatives, and the true proof ceiling. The finished story must answer: what inspired this, how it began, what changed, what I learned, how I would do it again, what scaling requires, what alternatives exist, how the work was actually distributed, and how deliberate process changes might plausibly shift that distribution next time.""",
+            "keywords": [
+              "project case study",
+              "demo presentation",
+              "demo deck",
+              "portfolio case study",
+              "project retrospective presentation",
+              "product development case study",
+              "project management case study",
+              "data analysis portfolio",
+              "time spent analysis",
+              "task distribution pie chart",
+              "effort distribution",
+              "counterfactual pie chart",
+              "scenario distribution",
+              "perspective chart",
+              "system design alternatives",
+              "architecture alternatives",
+              "how I would do it again",
+              "scale and expand"
+            ]
+          }
+          Path('/tmp/project-case-study-draft.json').write_text(json.dumps(draft, indent=2), encoding='utf-8')
+          assert not ({'id','seq','copySheet'} & set(draft))
+          print('semantic draft ready')
+          PY
+      - name: Add prompt through canonical helper and re-run upstream gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py add --input /tmp/project-case-study-draft.json --registry spec-architecture-prompts | tee /tmp/add-receipt.json
+          python - <<'PY'
+          import json
+          p=json.load(open('/tmp/add-receipt.json', encoding='utf-8'))
+          assert p['status']=='added', p
+          assert p['registry_id']=='spec-architecture-prompts', p
+          assert p['site_parity'] is True, p
+          ext=p['external_prior_art']
+          assert ext['all_registered_sources_searched'] is True, ext
+          print('ADDED_ID='+p['id'])
+          print('PROMPT_COUNT='+str(p['prompt_count']))
+          print('ALL_REGISTERED_SOURCES_SEARCHED=true')
+          PY
+      - name: Add focused semantic regression for helper-allocated identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          receipt=json.load(open('/tmp/add-receipt.json', encoding='utf-8'))
+          pid=receipt['id']
+          path=Path('tests/test_spec_architecture_prompt_registry.py')
+          text=path.read_text(encoding='utf-8')
+          marker='\n\nif __name__ == "__main__":'
+          test=f'''\n\n    def test_{pid.lower()}_builds_evidence_backed_project_case_study_and_demo_deck(self) -> None:\n        prompt = self.full["{pid}"]\n        content = prompt["copyContent"]\n        self.assertEqual(prompt["name"], "Evidence-Backed Project Case Study & Demo Deck Builder")\n        self.assertEqual(prompt["type"], "BUILD + ARTIFACT")\n        self.assertEqual(prompt["class"], "PROJECT DEVELOPMENT / PORTFOLIO ANALYTICS")\n        self.assertEqual(prompt["profile"], "spec-architecture")\n        for phrase in (\n            "INSPIRATION / ORIGIN",\n            "FIRST STEPS",\n            "WHAT I LEARNED",\n            "HOW I WOULD DO IT AGAIN",\n            "SCALE AND EXPANSION",\n            "SYSTEM-DESIGN ALTERNATIVES",\n            "TIME-SPENT MODEL",\n            "ACTUAL DISTRIBUTION PIE CHARTS",\n            "PERSPECTIVE / COUNTERFACTUAL PIE CHARTS",\n            "MEASURED, DERIVED, ESTIMATED, COUNTERFACTUAL",\n            "BASELINE VECTOR",\n            "SCENARIO VECTOR",\n            "DELTA TABLE",\n            "sum to 100% within rounding",\n            "AxTask, ASB, Triage",\n            "DATA-ANALYSIS PORTFOLIO VALUE",\n        ):\n            self.assertIn(phrase, content)\n        self.assertIn("measured, derived, estimated, or counterfactual", prompt["proofGate"].lower())\n        self.assertIn("scenario", " ".join(prompt["keywords"]).lower())\n        self.assertNotEqual(prompt["id"], "P64")\n        self.assertNotEqual(prompt["id"], "P79")\n        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])\n        self.assertIn(self.policy["marker"], content)\n'''
+          if marker in text:
+              text=text.replace(marker, test+marker, 1)
+          else:
+              text += test
+          path.write_text(text, encoding='utf-8')
+          print('focused regression added for', pid)
+          PY
+      - name: Validate helper, focused semantics, discovery, language, order, and parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_language_audit tests.test_prompt_kit_order_navigation_contract -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Deliberate second-pass semantic review
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          receipt=json.load(open('/tmp/add-receipt.json', encoding='utf-8'))
+          pid=receipt['id']
+          registry=json.loads(Path('registry/prompts/spec-architecture-prompts.v1.json').read_text(encoding='utf-8'))
+          item=next(p for p in registry['prompts'] if p['id']==pid)
+          c=item['copyContent']
+          checks={
+            'origin_arc': all(x in c for x in ['INSPIRATION / ORIGIN','FIRST STEPS','WHAT I LEARNED','HOW I WOULD DO IT AGAIN']),
+            'scale_design': all(x in c for x in ['SCALE AND EXPANSION','SYSTEM-DESIGN ALTERNATIVES']),
+            'actual_pies': 'ACTUAL DISTRIBUTION PIE CHARTS' in c and 'sum to 100% within rounding' in c,
+            'counterfactual_model': all(x in c for x in ['BASELINE VECTOR','INTERVENTION','CAUSAL ASSUMPTION','SCENARIO VECTOR','DELTA TABLE']),
+            'evidence_classes': all(x in c for x in ['MEASURED','DERIVED','ESTIMATED','COUNTERFACTUAL']),
+            'portfolio_analysis': 'DATA-ANALYSIS PORTFOLIO VALUE' in c,
+            'real_artifact': 'DO NOT STOP AT AN OUTLINE' in c and 'create the actual files' in c,
+            'privacy': 'Remove secrets, private operational details' in c,
+          }
+          print(json.dumps(checks, indent=2))
+          assert all(checks.values()), checks
+          PY
+          git diff --stat
+          git diff -- registry/prompts/spec-architecture-prompts.v1.json tests/test_spec_architecture_prompt_registry.py | sed -n '1,260p'
+      - name: Commit durable contribution and remove temporary carriers
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -f .github/workflows/tmp-project-case-study-prior-art.yml .github/workflows/tmp-project-case-study-add.yml
+          git diff --check
+          git status --short
+          git diff --stat
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add registry/prompts/spec-architecture-prompts.v1.json tests/test_spec_architecture_prompt_registry.py web/prompt-kit/index.html
+          git commit -m "feat(prompt-kit): add project case-study demo deck builder"
+          git push origin HEAD:feat/project-development-case-study-presentation-20260909
+          echo "DURABLE_HEAD=$(git rev-parse HEAD)"
