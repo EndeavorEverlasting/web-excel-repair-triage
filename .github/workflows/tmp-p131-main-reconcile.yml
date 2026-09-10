@@ -1,0 +1,72 @@
+name: Temporary P131 mainline reconciliation
+
+on:
+  push:
+    branches:
+      - feat/project-development-case-study-presentation-20260909
+    paths:
+      - .github/workflows/tmp-p131-main-reconcile.yml
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/project-development-case-study-presentation-20260909
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Merge refreshed main and resolve only generated-site collision
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune --tags
+          echo "branch-before=$(git rev-parse HEAD)"
+          echo "main=$(git rev-parse origin/main)"
+          if git merge-base --is-ancestor origin/main HEAD; then
+            echo "already-current=true"
+          else
+            set +e
+            git merge --no-commit --no-ff origin/main
+            rc=$?
+            set -e
+            conflicts=$(git diff --name-only --diff-filter=U)
+            if [ "$rc" -ne 0 ]; then
+              printf 'conflicts=%s\n' "$conflicts"
+              test "$conflicts" = "web/prompt-kit/index.html"
+              git checkout --ours web/prompt-kit/index.html
+              git add web/prompt-kit/index.html
+            fi
+            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+            git add web/prompt-kit/index.html
+            git diff --check
+            git commit -m "merge: reconcile P131 with current main"
+          fi
+      - name: Validate combined current-main candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor origin/main HEAD
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_language_audit tests.test_prompt_kit_order_navigation_contract -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python tests/test_prompt_kit_header_contract.py
+          git diff --check
+      - name: Remove carrier and push durable current-main head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -f .github/workflows/tmp-p131-main-reconcile.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(prompt-kit): remove P131 reconciliation carrier"
+          git push origin HEAD:feat/project-development-case-study-presentation-20260909
+          echo "DURABLE_HEAD=$(git rev-parse HEAD)"
