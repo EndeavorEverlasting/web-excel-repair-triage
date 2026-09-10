@@ -1,0 +1,155 @@
+name: Temporary P114 unknown-issued review repair
+
+on:
+  pull_request:
+    types: [synchronize]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p114-unknown-issued-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/p114-query-issued-timestamp-20260910' && github.event.pull_request.user.login == github.repository_owner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply review repair and validate
+        shell: bash
+        env:
+          EXPECTED_EVENT_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_EVENT_HEAD"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/p114-query-issued-timestamp-20260910 --prune
+          test "$(git rev-parse origin/feat/p114-query-issued-timestamp-20260910)" = "$EXPECTED_EVENT_HEAD"
+          git merge --no-edit origin/main
+
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          registry = Path('registry/prompts/spec-architecture-prompts.v1.json')
+          tests = Path('tests/test_conversation_context_canary_prompt.py')
+          data = json.loads(registry.read_text(encoding='utf-8'))
+          matches = [p for p in data['prompts'] if p.get('id') == 'P114' and p.get('name') == 'Conversation Context Canary & Handoff Guard']
+          if len(matches) != 1:
+              raise SystemExit('expected exact P114 owner')
+          p = matches[0]
+          if p.get('seq') != '114' or p.get('copySheet') != 'P114_COPY_SAFE':
+              raise SystemExit('P114 identity drifted')
+
+          old_gate = 'unavailable time fails closed as ISSUED=UNKNOWN; a material elapsed gap causes affected time-sensitive evidence to be refreshed'
+          new_gate = 'unavailable time fails closed as ISSUED=UNKNOWN and freshness-bounded evidence is not reused until a targeted refresh succeeds or its owner independently confirms current validity; a material elapsed gap causes affected time-sensitive evidence to be refreshed'
+          if p['proofGate'].count(old_gate) != 1:
+              raise SystemExit('proofGate review anchor moved')
+          p['proofGate'] = p['proofGate'].replace(old_gate, new_gate, 1)
+
+          content = p['copyContent']
+          unknown_anchor = 'If neither message metadata nor a trustworthy turn-start clock is available, emit `ISSUED=UNKNOWN`; do not fabricate a clock value.'
+          unknown_repair = unknown_anchor + ' When `ISSUED=UNKNOWN` and freshness-bounded evidence would otherwise be reused, timestamp comparison is unavailable: perform a targeted refresh of the affected evidence, or block reuse until its owner independently confirms current validity.'
+          if content.count(unknown_anchor) != 1:
+              raise SystemExit('unknown-issued anchor moved')
+          content = content.replace(unknown_anchor, unknown_repair, 1)
+
+          loop_anchor = '3. Before reusing freshness-bounded evidence, compare prior/current ISSUED values and refresh only the affected evidence when its owning contract or material elapsed time makes prior proof stale or uncertain.'
+          loop_repair = loop_anchor + ' If either required ISSUED value is `UNKNOWN`, do not reuse freshness-bounded evidence through timestamp comparison; require a targeted refresh or independent current-validity confirmation from the evidence owner.'
+          if content.count(loop_anchor) != 1:
+              raise SystemExit('normal-loop freshness anchor moved')
+          content = content.replace(loop_anchor, loop_repair, 1)
+
+          fail_anchor = '- Never fabricate ISSUED, profile, network, execution context, account, ownership, or role.'
+          fail_repair = fail_anchor + '\n- Never carry freshness-bounded evidence through an `ISSUED=UNKNOWN` gap without a targeted refresh or independent current-validity confirmation from its owner.'
+          if content.count(fail_anchor) != 1:
+              raise SystemExit('fail-closed anchor moved')
+          content = content.replace(fail_anchor, fail_repair, 1)
+
+          falsify_anchor = '`ISSUED=UNKNOWN` when no trustworthy clock is available; a large query gap that forces refresh of time-sensitive provider/repository evidence;'
+          falsify_repair = '`ISSUED=UNKNOWN` when no trustworthy clock is available; an unknown-clock freshness-bounded reuse attempt that must refresh or obtain independent owner confirmation; a large query gap that forces refresh of time-sensitive provider/repository evidence;'
+          if content.count(falsify_anchor) != 1:
+              raise SystemExit('semantic-falsification anchor moved')
+          content = content.replace(falsify_anchor, falsify_repair, 1)
+          p['copyContent'] = content
+          registry.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          test_text = tests.read_text(encoding='utf-8')
+          insertion = '''    def test_unknown_issued_blocks_freshness_bounded_reuse_without_independent_validity(self) -> None:\n        content = self.target["copyContent"]\n        for phrase in (\n            "When `ISSUED=UNKNOWN` and freshness-bounded evidence would otherwise be reused",\n            "perform a targeted refresh of the affected evidence, or block reuse until its owner independently confirms current validity",\n            "If either required ISSUED value is `UNKNOWN`",\n            "Never carry freshness-bounded evidence through an `ISSUED=UNKNOWN` gap",\n            "an unknown-clock freshness-bounded reuse attempt that must refresh or obtain independent owner confirmation",\n        ):\n            self.assertIn(phrase, content)\n        self.assertIn(\n            "freshness-bounded evidence is not reused until a targeted refresh succeeds or its owner independently confirms current validity",\n            self.target["proofGate"],\n        )\n\n'''
+          marker = '    def test_network_and_conditional_execution_context_survive_account_strengthening(self) -> None:\n'
+          if 'def test_unknown_issued_blocks_freshness_bounded_reuse_without_independent_validity' not in test_text:
+              if test_text.count(marker) != 1:
+                  raise SystemExit('focused-test insertion anchor moved')
+              test_text = test_text.replace(marker, insertion + marker, 1)
+          tests.write_text(test_text, encoding='utf-8')
+          PY
+
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python -m unittest tests.test_conversation_context_canary_prompt -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python -m unittest tests.test_prompt_language_audit -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_discovery -v
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output /tmp/p114-unknown-issued-order-navigation.json --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+          # Review-specific semantic proof.
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          data = json.loads(Path('registry/prompts/spec-architecture-prompts.v1.json').read_text(encoding='utf-8'))
+          p = next(x for x in data['prompts'] if x.get('id') == 'P114')
+          required = [
+              'freshness-bounded evidence is not reused until a targeted refresh succeeds or its owner independently confirms current validity',
+              'When `ISSUED=UNKNOWN` and freshness-bounded evidence would otherwise be reused',
+              'If either required ISSUED value is `UNKNOWN`',
+              'Never carry freshness-bounded evidence through an `ISSUED=UNKNOWN` gap',
+              'an unknown-clock freshness-bounded reuse attempt that must refresh or obtain independent owner confirmation',
+          ]
+          missing = [x for x in required if x not in (p['proofGate'] + '\n' + p['copyContent'])]
+          if missing:
+              raise SystemExit(f'P114 unknown-issued review proof missing: {missing}')
+          print('P114_UNKNOWN_ISSUED_REVIEW_PASS')
+          PY
+
+          git rm -f .github/workflows/tmp-p114-unknown-issued-review-repair.yml scripts/tmp_p114_unknown_issued_review_trigger.txt
+          git add registry/prompts/spec-architecture-prompts.v1.json tests/test_conversation_context_canary_prompt.py web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'fix(prompt-kit): fail closed on unknown P114 issuance time'
+
+          mapfile -t durable < <(git diff --name-only origin/main...HEAD | sort)
+          expected=(
+            registry/prompts/spec-architecture-prompts.v1.json
+            tests/test_conversation_context_canary_prompt.py
+            web/prompt-kit/index.html
+          )
+          mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+          test "$(printf '%s\n' "${durable[@]}")" = "$(printf '%s\n' "${expected_sorted[@]}")"
+          git status --short
+
+      - name: Push exact repaired candidate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_EVENT_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          git fetch https://github.com/${GITHUB_REPOSITORY}.git feat/p114-query-issued-timestamp-20260910
+          test "$(git rev-parse FETCH_HEAD)" = "$EXPECTED_EVENT_HEAD"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push origin HEAD:feat/p114-query-issued-timestamp-20260910
+          git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"
