@@ -943,5 +943,83 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertEqual(self.full["P79"]["name"], "Prompt Registry Prompt Adder")
 
 
+    def test_p131_builds_evidence_backed_project_case_study_and_demo_deck(self) -> None:
+        prompt = self.full["P131"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["name"], "Evidence-Backed Project Case Study & Demo Deck Builder")
+        self.assertEqual(prompt["type"], "BUILD + ARTIFACT")
+        self.assertEqual(prompt["class"], "PROJECT DEVELOPMENT / PORTFOLIO ANALYTICS")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        for phrase in (
+            "INSPIRATION / ORIGIN",
+            "FIRST STEPS",
+            "DELIVERY / OUTCOME QUALITY",
+            "WHAT I LEARNED",
+            "HOW I WOULD DO IT AGAIN",
+            "SCALE AND EXPANSION",
+            "SYSTEM-DESIGN ALTERNATIVES",
+            "TIME-SPENT MODEL",
+            "ACTUAL DISTRIBUTION PIE CHARTS",
+            "PERSPECTIVE / COUNTERFACTUAL PIE CHARTS",
+            "MEASURED, DERIVED, ESTIMATED, COUNTERFACTUAL",
+            "BASELINE VECTOR",
+            "SCENARIO VECTOR",
+            "DELTA TABLE",
+            "scenario-data table/sidecar",
+            "sum to 100% within rounding",
+            "AxTask, ASB, Triage",
+            "DATA-ANALYSIS PORTFOLIO VALUE",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("measured, derived, estimated, or counterfactual", prompt["expectedOutput"].lower())
+        self.assertIn("outcome-quality claims are tied to supported criteria", prompt["proofGate"].lower())
+        self.assertIn("counterfactual pie chart", " ".join(prompt["keywords"]).lower())
+
+
+        boundary_start = content.index("SPRINT / ARTIFACT BOUNDARY")
+        artifact_start = content.index("PRESENTATION / DEMO ARTIFACT")
+        self.assertLess(boundary_start, artifact_start)
+        boundary = content[boundary_start:artifact_start]
+        for phrase in (
+            "REPOSITORY / WORKSPACE",
+            "BRANCH / REF",
+            "MUTATION AUTHORITY",
+            "OWNED SCOPE",
+            "FORBIDDEN SCOPE",
+            "source evidence as read-only by default",
+            "under `Outputs/`",
+            "timestamped backup",
+            "Outputs/backups/YYYYMMDD-HHMMSS/",
+            "Never use this overwrite path for source evidence",
+            "stop before file mutation",
+        ):
+            self.assertIn(phrase, boundary)
+        self.assertIn("source evidence remains preserved", prompt["expectedOutput"])
+        self.assertIn("timestamped backup and mapping", prompt["proofGate"])
+
+        scenario_start = content.index("PERSPECTIVE / COUNTERFACTUAL PIE CHARTS")
+        scenario_end = content.index("DATA-ANALYSIS PORTFOLIO VALUE", scenario_start)
+        scenario = content[scenario_start:scenario_end]
+        ordered_steps = (
+            "BASELINE VECTOR",
+            "INTERVENTION",
+            "CAUSAL ASSUMPTION",
+            "SCENARIO VECTOR",
+            "Validate the vector",
+            "Visualize BASELINE vs SCENARIO",
+            "DELTA TABLE",
+            "scenario-data table/sidecar",
+        )
+        positions = [scenario.index(step) for step in ordered_steps]
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn("Never silently create or destroy hours/tasks", scenario)
+        self.assertIn("pie shares sum to 100% within rounding", scenario)
+        self.assertIn("same category definitions", scenario)
+        self.assertNotEqual(prompt["id"], "P64")
+        self.assertNotEqual(prompt["id"], "P79")
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+
+
 if __name__ == "__main__":
     unittest.main()
