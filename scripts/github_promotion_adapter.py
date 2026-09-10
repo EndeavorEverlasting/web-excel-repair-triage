@@ -39,10 +39,11 @@ def write(path: Path, data: dict[str, Any]) -> None:
 class GitHub:
     def __init__(self) -> None:
         self.repo = os.environ.get("GITHUB_REPOSITORY", "")
+        self.server_url = os.environ.get("GITHUB_SERVER_URL", "").rstrip("/")
         self.api = os.environ.get("GITHUB_API_URL", "").rstrip("/")
         self.graphql_url = os.environ.get("GITHUB_GRAPHQL_URL", "")
         self.token = os.environ.get("GITHUB_TOKEN", "")
-        if "/" not in self.repo or not self.api or not self.graphql_url or not self.token:
+        if "/" not in self.repo or not self.server_url or not self.api or not self.graphql_url or not self.token:
             raise ProviderError("PROVIDER_PARTIAL_TRUTH", "required GitHub runtime identity is unavailable")
 
     def call(self, method: str, url: str, body: dict[str, Any] | None = None) -> Any:
@@ -153,13 +154,19 @@ def branch_policy(gh: GitHub, target: str) -> dict[str, Any]:
 def validation_run(gh: GitHub, number: int, head_sha: str, explicit: int | None) -> dict[str, Any]:
     if explicit:
         candidates = [gh.rest("GET", f"/repos/{gh.repo}/actions/runs/{explicit}")]
+        has_more = False
     else:
         payload = gh.rest("GET", f"/repos/{gh.repo}/actions/workflows/promotion-candidate.yml/runs?event=pull_request&per_page=100")
-        candidates = exact_list(payload, "workflow_runs")
+        if not isinstance(payload, dict) or not isinstance(payload.get("workflow_runs"), list):
+            raise ProviderError("PROVIDER_PARTIAL_TRUTH", "provider response lacks workflow_runs")
+        candidates = [item for item in payload["workflow_runs"] if isinstance(item, dict)]
+        has_more = int(payload.get("total_count", len(candidates))) > len(candidates)
     matches = [run for run in candidates if run.get("name") == "Promotion Candidate Validation" and run.get("head_sha") == head_sha and any(isinstance(pr, dict) and pr.get("number") == number for pr in (run.get("pull_requests") or []))]
-    if not matches:
-        raise ProviderError("PROVIDER_PARTIAL_TRUTH", "no exact candidate validation run is attributable to this PR head")
-    return sorted(matches, key=lambda item: str(item.get("created_at", "")), reverse=True)[0]
+    if matches:
+        return sorted(matches, key=lambda item: str(item.get("created_at", "")), reverse=True)[0]
+    if has_more:
+        raise ProviderError("PROVIDER_PARTIAL_TRUTH", "no exact candidate validation run found on bounded newest page while older provider pages remain")
+    raise ProviderError("PROVIDER_PARTIAL_TRUTH", "no exact candidate validation run is attributable to this PR head")
 
 
 def run_base_sha(run: dict[str, Any], number: int) -> str:
@@ -186,7 +193,7 @@ def snapshot(gh: GitHub, number: int, policy: dict[str, Any], explicit_run: int 
     if not isinstance(files, list) or len(files) >= 100:
         raise ProviderError("PROVIDER_PARTIAL_TRUTH", "PR file truth is incomplete or exceeds bounded page")
     return {
-        "provider_status": "AVAILABLE", "target": target, "repository": gh.repo,
+        "provider_status": "AVAILABLE", "provider_host": gh.server_url, "target": target, "repository": gh.repo,
         "pr": {"number": number, "state": pr.get("state"), "merged": bool(pr.get("merged")), "draft": bool(pr.get("draft")), "mergeable": pr.get("mergeable"), "head_sha": head_sha, "base_sha": base_sha, "base_ref": str(base.get("ref") or ""), "head_ref": str(head.get("ref") or ""), "head_repository": str((head.get("repo") or {}).get("full_name") or ""), "author_association": str(pr.get("author_association") or ""), "body": str(pr.get("body") or ""), "merge_commit_sha": pr.get("merge_commit_sha")},
         "expected_head_sha": head_sha,
         "validation": {"run_id": int(run["id"]), "head_sha": str(run.get("head_sha") or ""), "base_sha": run_base_sha(run, number), "policy_version": policy["policy_version"], "conclusion": str(run.get("conclusion") or "").lower(), "checks": [{"name": str(job.get("name") or ""), "conclusion": str(job.get("conclusion") or "").lower()} for job in jobs], "artifacts": [{"name": str(a.get("name") or ""), "id": a.get("id"), "expired": bool(a.get("expired"))} for a in artifacts], "changed_paths": [str(item.get("filename") or "").replace("\\", "/") for item in files]},
@@ -222,69 +229,60 @@ def enqueue(gh: GitHub, number: int, head: str) -> dict[str, Any]:
 
 
 def base_receipt(contract: dict[str, Any], pr_number: int | None, event_name: str) -> dict[str, Any]:
-    return {"schema_version": contract["receipt_schema"]["schema_version"], "status": "UNKNOWN", "provider_status": "UNKNOWN", "provider_adapter": "github-actions-v1", "repository": os.environ.get("GITHUB_REPOSITORY"), "event_name": event_name, "event_id": os.environ.get("GITHUB_RUN_ID"), "actor": os.environ.get("GITHUB_ACTOR"), "pr_number": pr_number, "candidate_head_sha": None, "candidate_base_sha": None, "target": "main", "policy_version": None, "required_checks": [], "review_decision": None, "unresolved_review_threads": None, "validation_run_id": None, "validation_artifacts": [], "mutation": None, "integration_sha": None, "containment": False, "proof_ceiling": "No provider promotion proof.", "created_at": datetime.now(timezone.utc).isoformat()}
+    return {"schema_version": contract["receipt_schema"]["schema_version"], "status": "UNKNOWN", "provider_status": "UNKNOWN", "provider_adapter": "github-actions-v1", "provider_host": os.environ.get("GITHUB_SERVER_URL"), "repository": os.environ.get("GITHUB_REPOSITORY"), "event_name": event_name, "event_id": os.environ.get("GITHUB_RUN_ID"), "actor": os.environ.get("GITHUB_ACTOR"), "pr_number": pr_number, "candidate_head_sha": None, "candidate_base_sha": None, "target": "main", "policy_version": None, "required_checks": [], "review_decision": None, "unresolved_review_threads": None, "validation_run_id": None, "validation_artifacts": [], "mutation": None, "integration_sha": None, "containment": False, "proof_ceiling": "No provider promotion proof.", "created_at": datetime.now(timezone.utc).isoformat()}
 
 
 def summary(receipt: dict[str, Any]) -> None:
-    path = os.environ.get("GITHUB_STEP_SUMMARY")
-    if path:
-        with open(path, "a", encoding="utf-8") as f:
-            f.write("## Repository promotion\n" f"- status: `{receipt['status']}`\n" f"- PR: `{receipt['pr_number']}`\n" f"- candidate: `{receipt['candidate_head_sha']}`\n" f"- integration: `{receipt['integration_sha']}`\n" f"- containment: `{receipt['containment']}`\n" f"- proof ceiling: {receipt['proof_ceiling']}\n")
+    print(f"Promotion adapter: status={receipt.get('status')} provider={receipt.get('provider_status')} pr={receipt.get('pr_number')} head={receipt.get('candidate_head_sha')} target={receipt.get('target')}")
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--event-path", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--pr-number", type=int)
     args = parser.parse_args(argv)
+    policy, contract = load(POLICY_PATH), load(CONTRACT_PATH)
     event_name = os.environ.get("GITHUB_EVENT_NAME", "")
     event = load(args.event_path)
-    inferred, explicit_run = event_target(event, event_name)
-    number = args.pr_number or inferred
-    contract, policy = load(CONTRACT_PATH), load(POLICY_PATH)
+    number, explicit_run = event_target(event, event_name)
     receipt = base_receipt(contract, number, event_name)
-    receipt["policy_version"] = policy.get("policy_version")
-    if not number:
-        receipt.update(status="BLOCKED", provider_status="PROVIDER_PARTIAL_TRUTH", proof_ceiling="Wakeup does not identify exactly one PR.")
-        write(args.output, receipt); summary(receipt); return 3
     try:
-        from validate_repository_promotion import evaluate_readiness
+        if number is None:
+            raise ProviderError("PROVIDER_PARTIAL_TRUTH", "provider event does not identify exactly one promotion candidate")
         gh = GitHub()
         first = snapshot(gh, number, policy, explicit_run)
+        receipt.update({"provider_status":"AVAILABLE","provider_host":gh.server_url,"candidate_head_sha":first["pr"]["head_sha"],"candidate_base_sha":first["pr"]["base_sha"],"target":first["target"],"policy_version":policy["policy_version"],"required_checks":first["validation"]["checks"],"review_decision":first["reviews"]["decision"],"unresolved_review_threads":first["reviews"]["unresolved_threads"],"validation_run_id":first["validation"]["run_id"],"validation_artifacts":first["validation"]["artifacts"]})
+        sys.path.insert(0, str(ROOT / "scripts"))
+        from validate_repository_promotion import evaluate_readiness
         decision = evaluate_readiness(first, policy)
-        receipt.update(provider_status="AVAILABLE", candidate_head_sha=first["pr"]["head_sha"], candidate_base_sha=first["pr"]["base_sha"], target=first["target"], required_checks=first["validation"]["checks"], review_decision=first["reviews"]["decision"], unresolved_review_threads=first["reviews"]["unresolved_threads"], validation_run_id=first["validation"]["run_id"], validation_artifacts=first["validation"]["artifacts"])
+        receipt["decision"] = decision
         if decision["decision"] == "ALREADY_MERGED":
-            integration = str(first["pr"].get("merge_commit_sha") or "")
-            ok = contained(gh, integration, first["target"])
-            receipt.update(status="ALREADY_MERGED_VERIFIED" if ok else "BLOCKED", integration_sha=integration or None, containment=ok, proof_ceiling="Existing provider merge and refreshed containment verified." if ok else "Existing merge containment is unproven.")
-            write(args.output, receipt); summary(receipt); return 0 if ok else 3
+            integration = first["pr"].get("merge_commit_sha")
+            if not isinstance(integration, str) or not contained(gh, integration, first["target"]):
+                raise ProviderError("PROVIDER_PARTIAL_TRUTH", "already-merged PR lacks verified default-branch containment")
+            receipt.update({"status":"ALREADY_MERGED_VERIFIED","mutation":{"mode":"existing_merge"},"integration_sha":integration,"containment":True,"proof_ceiling":"Provider merge and default-branch containment are verified for the already-integrated candidate."})
+            write(args.output, receipt); summary(receipt); return 0
         if decision["blocker"]:
-            receipt.update(status="BLOCKED", blocker_reason=decision["reason"], required_action=decision["required_action"], repair_signal={"owner":"P115","candidate_head_sha":first["pr"]["head_sha"],"candidate_base_sha":first["pr"]["base_sha"],"failing_gate":decision["reason"],"required_acceptance":decision["required_action"],"proof_reuse_forbidden":True}, proof_ceiling="Provider truth reconstructed; promotion remains blocked.")
+            receipt.update({"status":decision["reason"],"proof_ceiling":"Promotion blocked before provider mutation."})
             write(args.output, receipt); summary(receipt); return 2
         second = snapshot(gh, number, policy, first["validation"]["run_id"])
-        final = evaluate_readiness(second, policy)
-        if final["decision"] != decision["decision"] or second["pr"]["head_sha"] != first["pr"]["head_sha"]:
-            receipt.update(status="BLOCKED", blocker_reason="STALE_READINESS", proof_ceiling="Final provider re-read invalidated the earlier readiness result.")
-            write(args.output, receipt); summary(receipt); return 2
-        if final["decision"] == "READY_QUEUE":
-            receipt["mutation"] = enqueue(gh, number, second["pr"]["head_sha"])
-            receipt.update(status="QUEUED", proof_ceiling="Merge-queue admission only; integration awaits a later provider containment wakeup.")
+        second_decision = evaluate_readiness(second, policy)
+        if second_decision["decision"] != decision["decision"] or second["pr"]["head_sha"] != first["pr"]["head_sha"] or second["pr"]["base_sha"] != first["pr"]["base_sha"]:
+            raise ProviderError("PROVIDER_PARTIAL_TRUTH", "provider truth changed between readiness evaluation and final mutation read")
+        method = policy["destinations"][first["target"]]["merge_method"]
+        mutation = enqueue(gh, number, first["pr"]["head_sha"]) if decision["decision"] == "READY_QUEUE" else merge_direct(gh, number, first["pr"]["head_sha"], method)
+        receipt["mutation"] = mutation
+        if mutation["mode"] == "merge_queue":
+            receipt.update({"status":"QUEUED","proof_ceiling":"Candidate entered provider merge queue; integration is not yet proven."})
             write(args.output, receipt); summary(receipt); return 0
-        receipt["mutation"] = merge_direct(gh, number, second["pr"]["head_sha"], policy["destinations"]["main"]["merge_method"])
-        integration = receipt["mutation"]["integration_sha"]
-        ok = False
-        for _ in range(5):
-            if contained(gh, integration, second["target"]):
-                ok = True; break
-            time.sleep(1)
-        receipt.update(status="PROMOTED" if ok else "BLOCKED", integration_sha=integration, containment=ok, proof_ceiling="Provider-side expected-head merge and refreshed default-branch containment proven." if ok else "Provider merge returned an integration SHA, but containment is unproven.")
-        write(args.output, receipt); summary(receipt); return 0 if ok else 3
+        integration = mutation["integration_sha"]
+        ok = contained(gh, integration, first["target"])
+        if not ok:
+            raise ProviderError("PROVIDER_PARTIAL_TRUTH", "provider merge returned but default-branch containment was not observed")
+        receipt.update({"status":"PROMOTED","integration_sha":integration,"containment":True,"proof_ceiling":"Provider-side expected-head merge and refreshed default-branch containment are observed for this exact candidate."})
+        write(args.output, receipt); summary(receipt); return 0
     except ProviderError as exc:
-        receipt.update(status="BLOCKED", provider_status=exc.status, provider_error=str(exc), proof_ceiling="Promotion failed closed because authoritative provider truth is degraded.")
-        write(args.output, receipt); summary(receipt); return 3
-    except Exception as exc:
-        receipt.update(status="BLOCKED", provider_status="PROVIDER_PARTIAL_TRUTH", provider_error=f"{type(exc).__name__}: {exc}", proof_ceiling="Promotion failed closed because complete provider proof is unavailable.")
+        receipt.update({"status":exc.status,"provider_status":exc.status,"error":str(exc),"proof_ceiling":"Provider promotion is not proven because authoritative provider truth or mutation evidence is incomplete."})
         write(args.output, receipt); summary(receipt); return 3
 
 
