@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from scripts import build_prompt_kit_registry
 from scripts import prompt_registry_ops
@@ -128,6 +129,30 @@ class LocalFirstPromotionAndTutorialFreshnessTests(unittest.TestCase):
         self.assertIsNotNone(plan)
         assert plan is not None
         self.assertEqual(plan["coverage_paths"], ["docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md"])
+
+    def test_prompt_add_helper_accepts_reference_only_without_tutorial_paths(self) -> None:
+        plan = prompt_registry_ops._validate_tutorial_plan(
+            {
+                "name": "Reference-only example",
+                "tutorial": {
+                    "disposition": "REFERENCE_ONLY_WITH_REASON",
+                    "tutorial_paths": [],
+                    "reason": "Existing reference material already owns the operator explanation.",
+                },
+            },
+            require=True,
+        )
+        self.assertIsNotNone(plan)
+        assert plan is not None
+        self.assertEqual(plan["tutorial_paths"], [])
+        self.assertEqual(plan["coverage_paths"], [])
+
+    def test_tutorial_freshness_ledger_requires_policy_identity(self) -> None:
+        invalid = dict(self.tutorial_freshness)
+        invalid.pop("policy_id", None)
+        with mock.patch.object(prompt_registry_ops.registry, "_load_json", return_value=invalid):
+            with self.assertRaisesRegex(SystemExit, "policy_id"):
+                prompt_registry_ops._load_tutorial_freshness()
 
     def test_tutorial_freshness_ledger_reuses_existing_privacy_contract(self) -> None:
         ledger = self.tutorial_freshness
