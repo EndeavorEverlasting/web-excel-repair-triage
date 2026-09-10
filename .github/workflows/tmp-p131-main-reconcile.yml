@@ -25,6 +25,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main --prune --tags
           echo "branch-before=$(git rev-parse HEAD)"
           echo "main=$(git rev-parse origin/main)"
@@ -38,6 +40,7 @@ jobs:
             conflicts=$(git diff --name-only --diff-filter=U)
             if [ "$rc" -ne 0 ]; then
               printf 'conflicts=%s\n' "$conflicts"
+              test -n "$conflicts"
               test "$conflicts" = "web/prompt-kit/index.html"
               git checkout --ours web/prompt-kit/index.html
               git add web/prompt-kit/index.html
@@ -65,8 +68,6 @@ jobs:
         run: |
           set -euo pipefail
           git rm -f .github/workflows/tmp-p131-main-reconcile.yml
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore(prompt-kit): remove P131 reconciliation carrier"
           git push origin HEAD:feat/project-development-case-study-presentation-20260909
           echo "DURABLE_HEAD=$(git rev-parse HEAD)"
