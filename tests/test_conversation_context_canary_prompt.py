@@ -141,6 +141,21 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
         ):
             self.assertIn(phrase, content)
 
+    def test_unknown_issued_blocks_freshness_bounded_reuse_without_independent_validity(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "When `ISSUED=UNKNOWN` and freshness-bounded evidence would otherwise be reused",
+            "perform a targeted refresh of the affected evidence, or block reuse until its owner independently confirms current validity",
+            "If either required ISSUED value is `UNKNOWN`",
+            "Never carry freshness-bounded evidence through an `ISSUED=UNKNOWN` gap",
+            "an unknown-clock freshness-bounded reuse attempt that must refresh or obtain independent owner confirmation",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn(
+            "freshness-bounded evidence is not reused until a targeted refresh succeeds or its owner independently confirms current validity",
+            self.target["proofGate"],
+        )
+
     def test_network_and_conditional_execution_context_survive_account_strengthening(self) -> None:
         content = self.target["copyContent"]
         for phrase in (
