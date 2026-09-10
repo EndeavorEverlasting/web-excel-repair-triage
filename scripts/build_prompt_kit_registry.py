@@ -538,13 +538,13 @@ def load_prompt_registry() -> list[dict[str, Any]]:
         prompts.extend(extension_prompts)
 
     prompts = apply_prompt_overrides(prompts)
-    prompts = apply_prompt_strengthenings(prompts)
     _validate_unique_prompt_identity(prompts, "operational")
     prompt_classification.validate_prompt_classification(prompts, "operational")
     actionability_policy = load_actionability_policy()
-    strengthened_prompts = [
+    actionable_prompts = [
         apply_actionability_policy(prompt, actionability_policy) for prompt in prompts
     ]
+    strengthened_prompts = apply_prompt_strengthenings(actionable_prompts)
     annotated_prompts = apply_display_order(
         strengthened_prompts, load_display_order_policy()
     )
@@ -565,7 +565,7 @@ def load_content_prompt_registry() -> list[dict[str, Any]]:
             raise SystemExit(f"Unsupported content registry schema in {path}")
         content_prompts = payload.get("prompts")
         if not isinstance(content_prompts, list):
-            raise SystemExit(f"Content registry prompts must be an array: {path}")
+            raise SystemExit(f"Registry extension prompts must be an array: {path}")
         prompts.extend(content_prompts)
 
     _validate_unique_prompt_identity(prompts, "content")
