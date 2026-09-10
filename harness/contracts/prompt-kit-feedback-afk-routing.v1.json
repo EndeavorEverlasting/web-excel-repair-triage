@@ -85,6 +85,26 @@
       "required_permissions": "contents:read",
       "mutation_authority": false
     },
+    "remote_repository_dispatch_adapter": {
+      "primary_surface": "provider_adapter",
+      "path": "scripts/prompt_kit_afk_repository_dispatch.py",
+      "workflow": ".github/workflows/prompt-kit-feedback-hook.yml",
+      "event_type": "operant-friction-receipt",
+      "owns": [
+        "extracting only the sanitized repository_dispatch client_payload",
+        "delegating one accepted friction receipt to the provider-neutral AFK router",
+        "emitting bounded state/work-request evidence as a workflow artifact"
+      ],
+      "forbidden": [
+        "raw browser telemetry collection",
+        "provider identity propagation into work-request evidence",
+        "worker polling",
+        "direct pull-request mutation or merge",
+        "pretending a canonical Operant upgrade engine exists before it is implemented"
+      ],
+      "required_permissions": "contents:read",
+      "mutation_authority": false
+    },
     "promotion": {
       "primary_surface": "harness_spine",
       "owner": "pr-floor-integration/P105",
@@ -154,6 +174,10 @@
     "contract": "Local workers and remote SCM/CI adapters consume the same sanitized signal/work-request semantics.",
     "provider_neutral_router": true,
     "github_actions_role": "worked adapter only",
+    "github_actions_repository_dispatch_event": "operant-friction-receipt",
+    "github_actions_adapter": "scripts/prompt_kit_afk_repository_dispatch.py",
+    "github_actions_workflow": ".github/workflows/prompt-kit-feedback-hook.yml",
+    "worker_boundary": "Without a configured provider-neutral worker argv, remote intake stops at a BLOCKED_WORKER_UNCONFIGURED work-request artifact and does not claim repository mutation.",
     "promotion_owner": "P105/pr-floor-integration",
     "second_scheduler_allowed": false
   },
