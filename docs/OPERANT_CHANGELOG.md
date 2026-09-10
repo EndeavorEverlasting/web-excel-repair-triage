@@ -2,6 +2,20 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.6.0 - 2026-09-10
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): add project case-study demo deck builder (`81af4168`)
+- feat(operant): add canonical upgrade recipe engine (`b3b22808`)
+- feat(prompt-kit): stabilize mobile UX across portrait and landscape (`5d6c24bd`)
+
+### Fixes / performance
+
+- fix(prompt-kit): protect P131 artifact outputs (`1b3c0b92`)
+- fix(prompt-kit): make P07 parallel execution binary (`e21a09bd`)
+- fix(prompt-kit): restore P07 non-parallel proof gates (`e6737d06`)
+
 ## 0.5.0 - 2026-09-10
 
 ### Features / breaking pre-1.0 changes
