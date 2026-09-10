@@ -68,6 +68,7 @@
     "required_fields": [
       "provider_status",
       "provider_adapter",
+      "provider_host",
       "repository",
       "event_name",
       "event_id",
