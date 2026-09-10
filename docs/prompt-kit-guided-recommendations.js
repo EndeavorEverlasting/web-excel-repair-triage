@@ -13,6 +13,7 @@ var PROMPT_FINDER_QUESTIONS=[
   {id:'not-yet',label:'Not yet — I need to discover or plan first',queries:['discovery','plan','opportunity']}
  ]},
  {id:'goal',prompt:'What are you trying to accomplish?',options:[
+  {id:'ad-campaign',label:'Plan, produce, or improve an ad campaign',queries:['ad campaign doctrine','ad campaign planner','ad-campaign']},
   {id:'plan',label:'Plan or divide the work',queries:['plan','factor','sprint plan']},
   {id:'coordinate',label:'Keep human and agent work continuous in a repository ledger',queries:['repository ledger','work ledger','agent queue','shared work state']},
   {id:'build',label:'Implement a bounded change',queries:['implement','build','sprint']},
