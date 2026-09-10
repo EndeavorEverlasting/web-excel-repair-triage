@@ -36,8 +36,8 @@ jobs:
           python scripts/prompt_registry_ops.py validate
           python scripts/validate_prompt_kit_discovery.py --summary
           python scripts/evaluate_prompt_language.py --summary
-          node scripts/analyze_prompt_finder_routes.js
-          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/p07-prompt-kit-order-navigation-audit.json --summary
+          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance tests.test_skill_prompt_registry -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
       - name: Second-pass semantic and scope review
