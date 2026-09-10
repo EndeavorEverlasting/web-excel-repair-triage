@@ -42,7 +42,7 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
         for phrase in (
             "MANDATORY FIRST LINE",
             "Before every response, emit one compact first line",
-            "CANARY | PROFILE=<canonical computer profile>",
+            "CANARY | ISSUED=<query-issued offset-aware RFC3339> | PROFILE=<canonical computer profile>",
             "Do not expand the normal Canary into scope narration",
             "Keep the normal Canary to one line",
         ):
@@ -82,7 +82,7 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
         self.assertIn("ONE CANONICAL CONTRACT, LIGHTWEIGHT EMBEDDING", content)
         self.assertIn("do not paste this entire contract into every prompt", content)
         self.assertIn(
-            "CANARY STUB — Before every response emit CANARY | PROFILE=<canonical computer profile>",
+            "CANARY STUB — Capture one offset-aware query-issued timestamp at turn start",
             content,
         )
         self.assertIn("The host prompt still owns its mission, scope, proof, and closure", content)
@@ -111,6 +111,33 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
             "a legitimate profile change backed by new evidence",
             "repeated drift after re-anchor",
             "unrecoverable profile state",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_query_issuance_timestamp_is_offset_aware_and_frozen_per_turn(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "QUERY ISSUANCE TIME / TEMPORAL FRESHNESS",
+            "Query issued at: xyz_offset_aware_RFC3339_turn_start_or_resolve_from_accessible_runtime",
+            "CANARY | ISSUED=<query-issued offset-aware RFC3339>",
+            "capture it once at user-query receipt or the earliest trustworthy turn-start observation",
+            "Freeze that ISSUED value for every progress update and the final answer produced for the same user query",
+            "Preserve `Z` or a numeric UTC offset",
+            "ISSUED=UNKNOWN",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_temporal_gap_triggers_freshness_review_not_fake_context_exhaustion(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "The previous Canary's ISSUED value is temporal provenance",
+            "A large elapsed gap is a freshness signal, not proof of context exhaustion",
+            "Do not invent a universal stale-minutes threshold",
+            "refresh only the affected evidence before carrying its prior proof forward",
+            "A long gap on a timeless task is not itself a handoff condition",
+            "Evaluators can use the ISSUED sequence",
+            "a large query gap that forces refresh of time-sensitive provider/repository evidence",
+            "a large gap on a timeless task that does not falsely trigger handoff",
         ):
             self.assertIn(phrase, content)
 
