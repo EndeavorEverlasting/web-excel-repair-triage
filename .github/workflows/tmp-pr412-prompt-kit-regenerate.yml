@@ -7,9 +7,14 @@ on:
     paths:
       - .github/workflows/tmp-pr412-prompt-kit-regenerate.yml
       - .github/workflows/promotion-candidate.yml
+      - docs/prompts.json
+      - registry/prompts/prompt-strengthenings.v1.json
+      - registry/prompts/spec-architecture-prompts.v1.json
+      - scripts/build_prompt_kit_registry.py
+      - scripts/prompt_registry_ops.py
+      - tests/test_p105_local_first_tutorial_freshness.py
       - tests/test_repository_promotion.py
       - tests/test_sysadminsuite_prompt_registry.py
-      - registry/prompts/spec-architecture-prompts.v1.json
       - tests/test_ux_design_prompt_suite.py
 
 permissions:
