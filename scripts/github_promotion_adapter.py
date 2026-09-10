@@ -36,6 +36,23 @@ def write(path: Path, data: dict[str, Any]) -> None:
     path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def repair_signal(receipt: dict[str, Any], gate: str, acceptance_condition: str) -> dict[str, Any]:
+    """Return the promotion-only handoff to P115 without authoring a repair here."""
+    return {
+        "owner":"P115",
+        "candidate_sha": receipt.get("candidate_head_sha"),
+        "candidate_base": receipt.get("candidate_base_sha"),
+        "failing_gate": gate,
+        "acceptance_condition": acceptance_condition,
+        "artifact_or_log_identity": (
+            f"github-actions-run:{receipt['validation_run_id']}"
+            if receipt.get("validation_run_id") is not None
+            else f"provider-event:{receipt.get('event_id')}"
+        ),
+        "proof_ceiling": "Promotion remains blocked. Repair must create a new exact candidate; failed-candidate proof may not be reused.",
+    }
+
+
 class GitHub:
     def __init__(self) -> None:
         self.repo = os.environ.get("GITHUB_REPOSITORY", "")
@@ -264,6 +281,7 @@ def main(argv: list[str] | None = None) -> int:
             write(args.output, receipt); summary(receipt); return 0
         if decision["blocker"]:
             receipt.update({"status":decision["reason"],"proof_ceiling":"Promotion blocked before provider mutation."})
+            receipt["repair_signal"] = repair_signal(receipt, str(decision["reason"]), str(decision["required_action"]))
             write(args.output, receipt); summary(receipt); return 2
         second = snapshot(gh, number, policy, first["validation"]["run_id"])
         second_decision = evaluate_readiness(second, policy)
