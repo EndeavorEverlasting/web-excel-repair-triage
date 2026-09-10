@@ -1,0 +1,93 @@
+name: Temporary P131 review fix
+
+on:
+  push:
+    branches:
+      - feat/project-development-case-study-presentation-20260909
+    paths:
+      - .github/workflows/tmp-p131-review-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/project-development-case-study-presentation-20260909
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Refresh exact base
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune --tags
+          echo "head=$(git rev-parse HEAD)"
+          echo "main=$(git rev-parse origin/main)"
+          git merge-base --is-ancestor origin/main HEAD
+      - name: Strengthen P131 scenario workflow regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('tests/test_spec_architecture_prompt_registry.py')
+          text=path.read_text(encoding='utf-8')
+          old='''        self.assertIn("measured, derived, estimated, or counterfactual", prompt["expectedOutput"].lower())
+        self.assertIn("outcome-quality claims are tied to supported criteria", prompt["proofGate"].lower())
+        self.assertIn("counterfactual pie chart", " ".join(prompt["keywords"]).lower())
+'''
+          new='''        self.assertIn("measured, derived, estimated, or counterfactual", prompt["expectedOutput"].lower())
+        self.assertIn("outcome-quality claims are tied to supported criteria", prompt["proofGate"].lower())
+        self.assertIn("counterfactual pie chart", " ".join(prompt["keywords"]).lower())
+
+        scenario_start = content.index("PERSPECTIVE / COUNTERFACTUAL PIE CHARTS")
+        scenario_end = content.index("DATA-ANALYSIS PORTFOLIO VALUE", scenario_start)
+        scenario = content[scenario_start:scenario_end]
+        ordered_steps = (
+            "BASELINE VECTOR",
+            "INTERVENTION",
+            "CAUSAL ASSUMPTION",
+            "SCENARIO VECTOR",
+            "Validate the vector",
+            "Visualize BASELINE vs SCENARIO",
+            "DELTA TABLE",
+            "scenario-data table/sidecar",
+        )
+        positions = [scenario.index(step) for step in ordered_steps]
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn("Never silently create or destroy hours/tasks", scenario)
+        self.assertIn("pie shares sum to 100% within rounding", scenario)
+        self.assertIn("same category definitions", scenario)
+'''
+          count=text.count(old)
+          assert count == 1, f'expected one replacement target, found {count}'
+          path.write_text(text.replace(old,new,1), encoding='utf-8')
+          PY
+          python -m py_compile tests/test_spec_architecture_prompt_registry.py
+      - name: Validate strengthened proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit durable review repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -f .github/workflows/tmp-p131-review-fix.yml
+          git diff --check
+          git status --short
+          git diff --stat
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/test_spec_architecture_prompt_registry.py
+          git commit -m "test(prompt-kit): bind P131 scenario workflow order"
+          git push origin HEAD:feat/project-development-case-study-presentation-20260909
+          echo "DURABLE_HEAD=$(git rev-parse HEAD)"
