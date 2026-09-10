@@ -1,0 +1,243 @@
+name: Temporary Teams attendance prompt add carrier
+
+on:
+  pull_request:
+    types: [synchronize]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: teams-attendance-add-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  add-and-prove:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/teams-attendance-roster-20260910' && github.event.pull_request.user.login == github.repository_owner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Add prompt through canonical helper and validate
+        shell: bash
+        env:
+          EXPECTED_EVENT_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_EVENT_HEAD"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/teams-attendance-roster-20260910 --prune
+          test "$(git rev-parse origin/feat/teams-attendance-roster-20260910)" = "$EXPECTED_EVENT_HEAD"
+          git merge --no-edit origin/main
+
+          python scripts/prompt_registry_ops.py validate > /tmp/pre-validate.json
+          python scripts/prompt_registry_ops.py add --input scripts/tmp_teams_attendance_prompt_draft.json --registry management-operations-prompts | tee /tmp/teams-attendance-add-receipt.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          pre = json.loads(Path('/tmp/pre-validate.json').read_text())
+          receipt = json.loads(Path('/tmp/teams-attendance-add-receipt.json').read_text())
+          assert receipt['status'] == 'added', receipt
+          assert receipt['name'] == 'Teams Attendance Roster Reconstructor', receipt
+          assert receipt['registry_id'] == 'management-operations-prompts', receipt
+          assert receipt['site_parity'] is True, receipt
+          assert receipt['prompt_count'] == pre['prompt_count'] + 1, (pre, receipt)
+          ext = receipt['external_prior_art']
+          assert ext['all_registered_sources_searched'] is True, ext
+          assert ext['internal_best_match']['prompt_id'] == 'P89', ext
+          print('TEAMS_ATTENDANCE_ADD_RECEIPT_PASS', receipt['id'], receipt['prompt_count'])
+          Path('/tmp/new_prompt_id.txt').write_text(receipt['id'])
+          PY
+
+          cat > tests/test_teams_attendance_roster_prompt.py <<'PY'
+          from __future__ import annotations
+
+          import unittest
+          from scripts import build_prompt_kit_registry
+
+          TARGET = "Teams Attendance Roster Reconstructor"
+
+
+          class TeamsAttendanceRosterPromptTests(unittest.TestCase):
+              @classmethod
+              def setUpClass(cls) -> None:
+                  cls.prompts = build_prompt_kit_registry.load_prompt_kit_registry()
+                  cls.by_name = {item["name"]: item for item in cls.prompts}
+                  matches = [item for item in cls.prompts if item.get("name") == TARGET]
+                  if len(matches) != 1:
+                      raise AssertionError(f"expected one {TARGET!r}, found {len(matches)}")
+                  cls.target = matches[0]
+
+              def test_is_distinct_from_p89_billing_harvester(self) -> None:
+                  self.assertIn("Teams Work-Evidence Harvester", self.by_name)
+                  p89 = self.by_name["Teams Work-Evidence Harvester"]
+                  self.assertEqual(p89["id"], "P89")
+                  self.assertNotEqual(self.target["id"], "P89")
+                  self.assertEqual(p89["class"], "BILLING / EVIDENCE DISCOVERY")
+                  self.assertEqual(self.target["class"], "MANAGEMENT / ATTENDANCE EVIDENCE")
+                  self.assertIn("P89 `Teams Work-Evidence Harvester` owns", self.target["copyContent"])
+                  self.assertIn("must not assign billing categories", self.target["copyContent"])
+
+              def test_named_sources_are_primary_and_coverage_is_fail_closed(self) -> None:
+                  content = self.target["copyContent"]
+                  for phrase in (
+                      "Named Teams chats or channels",
+                      "Resolve every named chat/channel to a unique source",
+                      "Start with the explicitly named chats",
+                      "EXECUTED-PARTIAL",
+                      "FAILED",
+                      "UNAVAILABLE",
+                      "Zero matches is not the same as failed access",
+                  ):
+                      self.assertIn(phrase, content)
+
+              def test_notches_drive_recovery_not_absence(self) -> None:
+                  content = self.target["copyContent"]
+                  for phrase in (
+                      "A NOTCH is an expected evidence checkpoint, not an attendance fact",
+                      "explicit manager/team rule",
+                      "repeated observed check-in pattern",
+                      "Do not invent a universal morning/noon/end-of-day cadence",
+                      "A missing notch means MISSING EVIDENCE / FOLLOW-UP",
+                      "it does not mean absent, zero hours, late, or noncompliant",
+                  ):
+                      self.assertIn(phrase, content)
+
+              def test_presence_event_is_not_full_shift_or_paid_hours(self) -> None:
+                  content = self.target["copyContent"]
+                  for phrase in (
+                      "A single check-in supports presence at that observed moment",
+                      "It does not automatically establish an eight-hour day",
+                      "do not convert first/last message timestamps into worked hours",
+                      "DO NOT TURN CHAT ACTIVITY INTO PAID HOURS, BILLING, OR DISCIPLINARY CONCLUSIONS",
+                  ):
+                      self.assertIn(phrase, content)
+
+              def test_person_date_states_preserve_expected_only_conflict_and_unknown(self) -> None:
+                  content = self.target["copyContent"]
+                  for phrase in (
+                      "PRESENT — DIRECT CHECK-IN",
+                      "PRESENT — CORROBORATED",
+                      "EXPLICIT NOT WORKING",
+                      "EXPECTED ONLY",
+                      "CONFLICT",
+                      "UNKNOWN",
+                  ):
+                      self.assertIn(phrase, content)
+
+              def test_multi_chat_corrections_and_source_provenance_survive(self) -> None:
+                  content = self.target["copyContent"]
+                  for phrase in (
+                      "MULTI-CHAT RECONCILIATION",
+                      "retaining every source reference",
+                      "Normalize aliases without merging distinct people",
+                      "moves sites or tasks during a day",
+                      "Never choose whichever source makes the roster look most complete",
+                  ):
+                      self.assertIn(phrase, content)
+
+              def test_other_attendance_mechanisms_are_bounded_and_separate(self) -> None:
+                  content = self.target["copyContent"]
+                  self.assertIn("Other known attendance mechanism", content)
+                  self.assertIn("follow it only when it is accessible and relevant to a specific gap", content)
+                  self.assertIn("Preserve that mechanism as a separate source", content)
+                  self.assertIn("do not pretend Teams supplied evidence that came from somewhere else", content)
+
+              def test_two_pass_roster_closes_each_person_date_or_gap(self) -> None:
+                  content = self.target["copyContent"]
+                  self.assertIn("PASS 1 — CHRONOLOGICAL CHECK-IN CENSUS", content)
+                  self.assertIn("PASS 2 — NOTCH RECOVERY + CONFLICT SEARCH", content)
+                  self.assertIn("This pass is required even when pass 1 produced a plausible roster", content)
+                  self.assertIn("every in-scope person/date is represented by an evidence-supported state or an explicit gap", content)
+
+              def test_generated_site_is_exact_and_prompt_is_discoverable(self) -> None:
+                  html = build_prompt_kit_registry.DEFAULT_OUTPUT.read_text(encoding="utf-8")
+                  self.assertEqual(html, build_prompt_kit_registry.render())
+                  self.assertIn(self.target["id"], html)
+                  self.assertIn(TARGET, html)
+                  searchable = " ".join([self.target["name"], *self.target["keywords"]]).casefold()
+                  for term in ("teams attendance", "attendance roster", "check-in cadence", "named teams chats"):
+                      self.assertIn(term, searchable)
+
+
+          if __name__ == "__main__":
+              unittest.main()
+          PY
+
+          # Whole-chat pass 2: prove the residual and adjacent-owner boundaries survived the final draft/helper mutation.
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('registry/prompts/management-operations-prompts.v1.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          p = next(x for x in data['prompts'] if x.get('name') == 'Teams Attendance Roster Reconstructor')
+          p89 = next(x for x in data['prompts'] if x.get('id') == 'P89')
+          assert p89['name'] == 'Teams Work-Evidence Harvester'
+          required = [
+              'one or more named Microsoft Teams chats',
+              'expected evidence notches',
+              'missing check-ins remain gaps rather than automatic absences',
+              'site/task',
+              'alternate mechanisms are followed only when supplied/referenced and accessible',
+              'P89 remains the billing/work-evidence harvester rather than the attendance-roster owner',
+          ]
+          joined = '\n'.join([p['sprintRole'], p['useWhen'], p['expectedOutput'], p['proofGate'], p['copyContent']])
+          missing = [x for x in required if x not in joined]
+          assert not missing, missing
+          print('TEAMS_ATTENDANCE_WHOLE_CHAT_PASS2_PASS', p['id'])
+          PY
+
+          python -m unittest tests.test_teams_attendance_roster_prompt -v
+          python -m unittest tests.test_management_operations_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python -m unittest tests.test_prompt_language_audit -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_discovery -v
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output /tmp/teams-attendance-order-navigation.json --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+          # Keep only durable Prompt Kit surfaces.
+          git rm -f \
+            .github/workflows/tmp-teams-attendance-add-carrier.yml \
+            scripts/tmp_teams_attendance_add_trigger.txt \
+            scripts/tmp_teams_attendance_prompt_draft.json \
+            scripts/tmp_teams_attendance_prior_art_receipt.txt \
+            scripts/tmp_teams_attendance_scope_note.txt \
+            scripts/tmp_teams_attendance_pr_body.txt \
+            scripts/tmp_teams_attendance_pr_ready.txt
+          git add registry/prompts/management-operations-prompts.v1.json tests/test_teams_attendance_roster_prompt.py web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'feat(prompt-kit): add Teams attendance roster reconstructor'
+
+          mapfile -t durable < <(git diff --name-only origin/main...HEAD | sort)
+          expected=(
+            registry/prompts/management-operations-prompts.v1.json
+            tests/test_teams_attendance_roster_prompt.py
+            web/prompt-kit/index.html
+          )
+          mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+          test "$(printf '%s\n' "${durable[@]}")" = "$(printf '%s\n' "${expected_sorted[@]}")"
+          git status --short
+
+      - name: Push exact durable candidate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_EVENT_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          git fetch https://github.com/${GITHUB_REPOSITORY}.git feat/teams-attendance-roster-20260910
+          test "$(git rev-parse FETCH_HEAD)" = "$EXPECTED_EVENT_HEAD"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push origin HEAD:feat/teams-attendance-roster-20260910
+          git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"
