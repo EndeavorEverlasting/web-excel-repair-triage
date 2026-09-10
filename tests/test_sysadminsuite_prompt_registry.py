@@ -95,6 +95,12 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
             payload["prompts"] = [item for item in payload["prompts"] if item.get("name") not in ORDER]
             sandbox_raw.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
+            tutorial_path = sandbox / "docs" / "sysadminsuite-prompt-replay-test-tutorial.md"
+            tutorial_path.write_text(
+                "# SysAdminSuite prompt replay fixture\n\n" + "\n".join(f"- {name}" for name in ORDER) + "\n",
+                encoding="utf-8",
+            )
+
             inspect_proc = subprocess.run(
                 [sys.executable, "scripts/prompt_registry_ops.py", "inspect"],
                 cwd=sandbox,
@@ -110,6 +116,11 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
             receipts = []
             for index, name in enumerate(ORDER, start=1):
                 draft = {key: value for key, value in records[name].items() if key in allowed}
+                draft["tutorial"] = {
+                    "disposition": "REFERENCE_ONLY_WITH_REASON",
+                    "tutorial_paths": ["docs/sysadminsuite-prompt-replay-test-tutorial.md"],
+                    "reason": "Historical replay test supplies an explicit pre-existing tutorial fixture without changing prompt semantics.",
+                }
                 draft_path = sandbox / f"sas-draft-{index}.json"
                 draft_path.write_text(json.dumps(draft, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
                 proc = subprocess.run(

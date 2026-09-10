@@ -44,9 +44,9 @@ class RepositoryPromotionTests(unittest.TestCase):
         self.assertEqual(main["merge_intent"]["pr_body_marker"], "[promotion:auto-main]")
         self.assertTrue(main["unresolved_review_threads_must_be_zero"])
 
-    def test_candidate_workflow_is_read_only_and_exact_candidate_bound(self) -> None:
+    def test_candidate_workflow_is_read_only_exact_candidate_bound_and_edit_aware(self) -> None:
         text = (ROOT / ".github/workflows/promotion-candidate.yml").read_text(encoding="utf-8")
-        for marker in ("pull_request:", "contents: read", "pull-requests: read", "ref: ${{ github.event.pull_request.head.sha }}", "persist-credentials: false", "harness/evals/fixtures/repository-promotion-*.v1.json", "Promotion / Contract", "Promotion / Harness E2E", "Promotion / Application E2E", "Promotion / Exact Candidate Gate"):
+        for marker in ("pull_request:", "types: [opened, synchronize, reopened, ready_for_review, edited]", "contents: read", "pull-requests: read", "ref: ${{ github.event.pull_request.head.sha }}", "persist-credentials: false", "harness/evals/fixtures/repository-promotion-*.v1.json", "Promotion / Contract", "Promotion / Harness E2E", "Promotion / Application E2E", "Promotion / Exact Candidate Gate"):
             self.assertIn(marker, text)
         self.assertNotIn("pull_request_target:", text)
         self.assertNotIn("contents: write", text)
@@ -59,8 +59,16 @@ class RepositoryPromotionTests(unittest.TestCase):
 
     def test_github_adapter_is_host_parameterized_and_expected_head_guarded(self) -> None:
         text = (ROOT / "scripts/github_promotion_adapter.py").read_text(encoding="utf-8")
-        for marker in ("GITHUB_SERVER_URL", "GITHUB_API_URL", "GITHUB_GRAPHQL_URL", "GITHUB_REPOSITORY", "reviewThreads", "/rules/branches/", "/actions/runs/", "/artifacts", '{"sha": head', "enqueuePullRequest", "/compare/", "PROVIDER_RATE_LIMITED", "PROVIDER_PARTIAL_TRUTH", "PROVIDER_UNAVAILABLE", "ALREADY_MERGED_VERIFIED", '"containment"', '"owner": "P115"'):
+        for marker in ("GITHUB_SERVER_URL", "GITHUB_API_URL", "GITHUB_GRAPHQL_URL", "GITHUB_REPOSITORY", "reviewThreads", "/rules/branches/", "/actions/runs/", "/artifacts", '{"sha": head', "enqueuePullRequest", "/compare/", "PROVIDER_RATE_LIMITED", "PROVIDER_PARTIAL_TRUTH", "PROVIDER_UNAVAILABLE", "ALREADY_MERGED_VERIFIED", '"containment"'):
             self.assertIn(marker, text)
+        signal = github_adapter.repair_signal(
+            {"candidate_head_sha": "a" * 40, "candidate_base_sha": "b" * 40, "validation_run_id": 9, "event_id": "10"},
+            "REQUIRED_CHECK_NOT_GREEN",
+            "Repair the required check.",
+        )
+        self.assertEqual(signal["owner"], "P115")
+        self.assertEqual(signal["candidate_sha"], "a" * 40)
+        self.assertIn("new exact candidate", signal["proof_ceiling"])
         self.assertNotIn("https://api.github.com", text)
         self.assertNotIn("PERSONAL_ACCESS_TOKEN", text)
         self.assertNotIn("git merge", text)

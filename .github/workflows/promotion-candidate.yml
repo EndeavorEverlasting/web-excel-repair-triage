@@ -6,7 +6,7 @@ run-name: >-
 on:
   pull_request:
     branches: [main]
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, edited]
     paths:
       - harness/contracts/repository-promotion.v1.json
       - harness/contracts/pr-merge-gate.v1.json

@@ -1,0 +1,106 @@
+name: Temporary PR 412 Prompt Kit Regenerator
+
+on:
+  pull_request:
+    branches: [main]
+    types: [synchronize]
+    paths:
+      - .github/workflows/tmp-pr412-prompt-kit-regenerate.yml
+      - .github/workflows/promotion-candidate.yml
+      - tests/test_repository_promotion.py
+      - tests/test_sysadminsuite_prompt_registry.py
+      - registry/prompts/spec-architecture-prompts.v1.json
+      - tests/test_ux_design_prompt_suite.py
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: >-
+      github.event.pull_request.number == 412 &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login == 'EndeavorEverlasting' &&
+      github.head_ref == 'feat/repository-promotion-pipeline-20260909'
+    runs-on: ubuntu-latest
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+    steps:
+      - name: Checkout exact candidate without credentials
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Generate canonical Prompt Kit candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py --output "$RUNNER_TEMP/index.html"
+          test -s "$RUNNER_TEMP/index.html"
+          sha256sum "$RUNNER_TEMP/index.html"
+      - name: Upload generated candidate
+        id: upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr412-prompt-kit-generated-index
+          path: ${{ runner.temp }}/index.html
+          if-no-files-found: error
+
+  commit-generated-site:
+    needs: [build]
+    if: ${{ needs.build.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+      HEAD_REF: ${{ github.head_ref }}
+      ARTIFACT_ID: ${{ needs.build.outputs.artifact_id }}
+    steps:
+      - name: Verify candidate has not moved
+        shell: bash
+        run: |
+          set -euo pipefail
+          current="$(gh api "repos/$GITHUB_REPOSITORY/branches/$HEAD_REF" --jq '.commit.sha')"
+          test "$current" = "$EXPECTED_HEAD"
+      - name: Download generated artifact without executing repository code
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$ARTIFACT_ID"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARTIFACT_ID/zip" > artifact.zip
+          mkdir generated
+          unzip -q artifact.zip -d generated
+          test -s generated/index.html
+          sha256sum generated/index.html
+      - name: Commit exact generated site through Contents API
+        shell: bash
+        run: |
+          set -euo pipefail
+          blob_sha="$(gh api "repos/$GITHUB_REPOSITORY/contents/web/prompt-kit/index.html?ref=$HEAD_REF" --jq '.sha')"
+          export BLOB_SHA="$blob_sha"
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          from pathlib import Path
+
+          content = base64.b64encode(Path("generated/index.html").read_bytes()).decode("ascii")
+          payload = {
+              "message": "build(prompt-kit): regenerate canonical site for PR 412",
+              "branch": os.environ["HEAD_REF"],
+              "sha": os.environ["BLOB_SHA"],
+              "content": content,
+          }
+          Path("payload.json").write_text(json.dumps(payload), encoding="utf-8")
+          PY
+          result="$(gh api -X PUT "repos/$GITHUB_REPOSITORY/contents/web/prompt-kit/index.html" --input payload.json)"
+          new_commit="$(printf '%s' "$result" | python -c 'import json,sys; print(json.load(sys.stdin)["commit"]["sha"])')"
+          test -n "$new_commit"
+          echo "generated-site-commit=$new_commit"
