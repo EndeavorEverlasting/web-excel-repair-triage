@@ -2,6 +2,20 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.5.0 - 2026-09-10
+
+### Features / breaking pre-1.0 changes
+
+- feat(operant): admit bounded friction receipts to P115 (`8145f31d`)
+- feat(operant): register derived friction as AFK trigger (`f4aa247a`)
+- feat(operant): expose privacy-bounded friction AFK capability (`9252b16d`)
+- feat(operant): add repository-dispatch friction adapter (`91aebc43`)
+
+### Fixes / performance
+
+- fix(operant): preserve sanitized friction provenance (`97edee75`)
+- fix(operant): harden AFK signal admission (`cb2d3b2a`)
+
 ## 0.4.0 - 2026-09-09
 
 ### Features / breaking pre-1.0 changes
