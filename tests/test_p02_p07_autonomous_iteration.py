@@ -85,9 +85,18 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
         self.assertEqual("PLAN", self.raw["P04"]["type"])
         self.assertIn("[PARALLEL]", self.raw["P04"]["name"])
         self.assertIn("parallel-safe sub-agent orchestration", prompt["sprintRole"])
-        self.assertIn("parallel sub-agents", prompt["expectedOutput"])
-        self.assertIn("dispatch safe parallel sub-agents", prompt["nextStep"])
         self.assertIn("Parallel-execution proof requires", prompt["proofGate"])
+        dispatch_condition = (
+            "a usable sub-agent mechanism, at least two concurrent worker slots, and at least two meaningful "
+            "non-conflicting lanes"
+        )
+        for field in ("expectedOutput", "nextStep", "proofGate"):
+            self.assertIn(dispatch_condition, prompt[field])
+            self.assertIn("dispatch", prompt[field].lower())
+        self.assertIn("parallel sub-agents", prompt["expectedOutput"])
+        self.assertIn("dispatch those lanes immediately", prompt["nextStep"])
+        self.assertIn("leaves the sprint incomplete", prompt["expectedOutput"])
+        self.assertIn("the sprint is incomplete", prompt["proofGate"])
         for phrase in (
             "PARALLEL EXECUTION IS AN EXECUTION REQUIREMENT, NOT A PLANNING OR REPORTING TOPIC.",
             "Before substantial serial work, probe whether the environment exposes a usable sub-agent",
@@ -105,8 +114,12 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
             "Final closeout must report only parallel lanes actually dispatched",
         ):
             self.assertIn(phrase, content)
-        self.assertNotIn("parallelization disposition", content)
-        self.assertNotIn("lanes considered", content)
+        for field in ("copyContent", "expectedOutput", "nextStep", "proofGate"):
+            self.assertNotIn("parallelization disposition", prompt[field])
+            self.assertNotIn("lanes considered", prompt[field])
+        self.assertIn("readability/editability regression", prompt["proofGate"])
+        self.assertIn("P128", prompt["proofGate"])
+        self.assertIn("Generated-surface proof", prompt["proofGate"])
 
     def test_p07_coordinates_repository_generated_mutation_lanes(self) -> None:
         prompt = self.effective["P07"]
@@ -138,6 +151,11 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
             content.count("PARALLEL EXECUTION: unavailable — <exact capability limitation>."),
             1,
         )
+        self.assertIn("PARALLEL EXECUTION: unavailable", prompt["nextStep"])
+        self.assertIn("without hypothetical lanes", prompt["nextStep"])
+        for field in ("expectedOutput", "nextStep", "proofGate"):
+            self.assertNotIn("parallelization disposition", prompt[field])
+            self.assertNotIn("lanes considered", prompt[field])
         self.assertIn(
             "if those conditions held and no workers were dispatched, the sprint is incomplete",
             prompt["proofGate"].lower(),
