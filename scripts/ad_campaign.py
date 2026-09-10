@@ -6,10 +6,11 @@ import argparse
 import hashlib
 import json
 import math
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from fractions import Fraction
 from pathlib import Path
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "harness/ad-campaign/campaign.v1.json"
@@ -72,12 +73,23 @@ def timestamp(value) -> bool:
         return False
 
 
+def reporting_zone(name):
+    return timezone.utc if name == "UTC" else ZoneInfo(name)
+
+
 def period(value) -> bool:
     try:
         return (isinstance(value, dict) and text(value.get("timezone"))
+                and bool(reporting_zone(value["timezone"]))
                 and date.fromisoformat(value["start"]) <= date.fromisoformat(value["end"]))
-    except (ValueError, KeyError, TypeError):
+    except (ValueError, KeyError, TypeError, ZoneInfoNotFoundError):
         return False
+
+
+def not_before(later, earlier) -> bool:
+    return (timestamp(later) and timestamp(earlier)
+            and datetime.fromisoformat(later.replace("Z", "+00:00"))
+            >= datetime.fromisoformat(earlier.replace("Z", "+00:00")))
 
 
 def metrics(results: dict) -> dict:
@@ -248,6 +260,7 @@ def validate(packet: dict, target: str) -> dict:
     require(launch.get("observed_state") == "live", "launch.observed_state is not live")
     strings(launch, ("campaign_platform_id", "evidence"), "launch")
     require(timestamp(launch.get("at")), "launch.at")
+    require(not_before(launch.get("at"), auth.get("at")), "launch precedes authorization")
     if done("LIVE"):
         return report()
 
@@ -256,6 +269,20 @@ def validate(packet: dict, target: str) -> dict:
     strings(results, ("source", "attribution_model", "attribution_window", "conversion_definition"), "results")
     require(timestamp(results.get("extracted_at")), "results.extracted_at")
     require(period(results.get("period")), "results.period")
+    reporting, planned = results.get("period"), brief.get("period")
+    if period(reporting) and period(planned):
+        require(reporting["timezone"] == planned["timezone"]
+                and date.fromisoformat(planned["start"]) <= date.fromisoformat(reporting["start"])
+                <= date.fromisoformat(reporting["end"]) <= date.fromisoformat(planned["end"]),
+                "results.period must be within campaign period and use its timezone")
+    require(not_before(results.get("extracted_at"), launch.get("at")), "results extraction precedes launch")
+    if period(reporting) and timestamp(results.get("extracted_at")) and timestamp(launch.get("at")):
+        zone = reporting_zone(reporting["timezone"])
+        launched = datetime.fromisoformat(launch["at"].replace("Z", "+00:00")).astimezone(zone).date()
+        extracted = datetime.fromisoformat(results["extracted_at"].replace("Z", "+00:00")).astimezone(zone).date()
+        require(launched <= date.fromisoformat(reporting["start"])
+                <= date.fromisoformat(reporting["end"]) <= extracted,
+                "results.period falls before launch or after extraction")
     require(results.get("currency") == brief.get("currency"), "results.currency differs from campaign")
     for key in ("impressions", "clicks", "spend", "conversions"):
         require(number(results.get(key), integer=key in {"impressions", "clicks"}), "results." + key)

@@ -3,6 +3,10 @@ name: Ad campaign domain
 on:
   pull_request:
     paths:
+      - 'harness/CONTEXT.md'
+      - 'harness/manifest.v1.json'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/prompt_registry_ops.py'
       - 'harness/ad-campaign/**'
       - 'docs/ad-campaign/**'
       - 'registry/prompts/management-operations-prompts.v1.json'
@@ -16,6 +20,10 @@ on:
   push:
     branches: [main]
     paths:
+      - 'harness/CONTEXT.md'
+      - 'harness/manifest.v1.json'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/prompt_registry_ops.py'
       - 'harness/ad-campaign/**'
       - 'docs/ad-campaign/**'
       - 'registry/prompts/management-operations-prompts.v1.json'
