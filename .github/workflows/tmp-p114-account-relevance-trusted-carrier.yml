@@ -32,12 +32,16 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main feat/p114-account-relevance-20260910 --prune
 
-          # The feature lane was cut from the exact material floor immediately
-          # before this trusted transport was installed. Refuse to execute if
-          # another material main commit appeared in between.
-          carrier_parent="$(git rev-parse origin/main^)"
-          if [[ "$carrier_parent" != "0ccae5bd4289fb7961f39a33941157597371326e" ]]; then
-            echo "Trusted-carrier parent moved: $carrier_parent" >&2
+          # Permit only this temporary carrier's transport commits after the
+          # original material floor; fail closed on any unrelated main change.
+          if ! git merge-base --is-ancestor 0ccae5bd4289fb7961f39a33941157597371326e origin/main; then
+            echo "Proven material floor is no longer an ancestor of main." >&2
+            exit 1
+          fi
+          material_changes="$(git diff --name-only 0ccae5bd4289fb7961f39a33941157597371326e origin/main -- . ':(exclude).github/workflows/tmp-p114-account-relevance-trusted-carrier.yml')"
+          if [[ -n "$material_changes" ]]; then
+            echo "Main moved materially after the proven floor:" >&2
+            printf '%s\n' "$material_changes" >&2
             exit 1
           fi
           if ! git merge-base --is-ancestor 0ccae5bd4289fb7961f39a33941157597371326e HEAD; then
@@ -53,7 +57,7 @@ jobs:
           python -m unittest tests.test_spec_architecture_prompt_registry -v
           python scripts/prompt_registry_ops.py validate
           python scripts/evaluate_prompt_language.py --summary
-          python -m unittest tests.test_prompt_language_quality -v
+          python -m unittest tests.test_prompt_language_audit -v
           python scripts/validate_prompt_kit_discovery.py --summary
           python -m unittest tests.test_prompt_kit_discovery -v
           python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output /tmp/p114-order-navigation.json --summary
