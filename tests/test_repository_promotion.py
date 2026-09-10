@@ -59,7 +59,7 @@ class RepositoryPromotionTests(unittest.TestCase):
 
     def test_github_adapter_is_host_parameterized_and_expected_head_guarded(self) -> None:
         text = (ROOT / "scripts/github_promotion_adapter.py").read_text(encoding="utf-8")
-        for marker in ("GITHUB_SERVER_URL", "GITHUB_API_URL", "GITHUB_GRAPHQL_URL", "GITHUB_REPOSITORY", "reviewThreads", "/rulesets", "/actions/runs/", "/artifacts", '{"sha": head', "enqueuePullRequest", "/compare/", "PROVIDER_RATE_LIMITED", "PROVIDER_PARTIAL_TRUTH", "PROVIDER_UNAVAILABLE", "ALREADY_MERGED_VERIFIED", '"containment"', '"owner":"P115"'):
+        for marker in ("GITHUB_SERVER_URL", "GITHUB_API_URL", "GITHUB_GRAPHQL_URL", "GITHUB_REPOSITORY", "reviewThreads", "/rules/branches/", "/actions/runs/", "/artifacts", '{"sha": head', "enqueuePullRequest", "/compare/", "PROVIDER_RATE_LIMITED", "PROVIDER_PARTIAL_TRUTH", "PROVIDER_UNAVAILABLE", "ALREADY_MERGED_VERIFIED", '"containment"', '"owner":"P115"'):
             self.assertIn(marker, text)
         self.assertNotIn("https://api.github.com", text)
         self.assertNotIn("PERSONAL_ACCESS_TOKEN", text)
