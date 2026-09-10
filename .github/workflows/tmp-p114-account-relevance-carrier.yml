@@ -1,0 +1,77 @@
+name: Temporary P114 account relevance carrier
+
+on:
+  pull_request:
+    types: [synchronize]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p114-account-relevance-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/p114-account-relevance-20260910'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p114-account-relevance-20260910
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Reconcile, strengthen P114, prove, and push durable candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/p114-account-relevance-20260910 --prune
+          git merge --no-edit origin/main
+
+          # PASS 1 — implement on the refreshed floor and prove the focused owner.
+          python -m py_compile scripts/tmp_apply_p114_account_relevance.py
+          python scripts/tmp_apply_p114_account_relevance.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python -m unittest tests.test_conversation_context_canary_prompt -v
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python -m unittest tests.test_prompt_language_quality -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_discovery -v
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output /tmp/p114-order-navigation.json --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+          # PASS 2 — opposite-direction semantic falsification / preservation check.
+          python scripts/tmp_apply_p114_account_relevance.py --verify-only
+          python -m unittest tests.test_conversation_context_canary_prompt -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output /tmp/p114-order-navigation-pass2.json --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+          # Keep only durable Prompt Kit surfaces; carrier/trigger must self-remove.
+          git rm -f scripts/tmp_apply_p114_account_relevance.py .github/workflows/tmp-p114-account-relevance-carrier.yml scripts/tmp_p114_account_relevance_trigger.txt
+          git add registry/prompts/spec-architecture-prompts.v1.json tests/test_conversation_context_canary_prompt.py web/prompt-kit/index.html
+          mapfile -t changed < <(git diff --cached --name-only | sort)
+          expected=(
+            registry/prompts/spec-architecture-prompts.v1.json
+            tests/test_conversation_context_canary_prompt.py
+            web/prompt-kit/index.html
+          )
+          mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+          if [[ "$(printf '%s\n' "${changed[@]}")" != "$(printf '%s\n' "${expected_sorted[@]}")" ]]; then
+            printf 'Unexpected durable staged surface(s):\n%s\n' "${changed[*]}" >&2
+            exit 1
+          fi
+          git diff --cached --check
+          git commit -m 'feat(prompt-kit): add account relevance to P114 canary'
+          git push origin HEAD:feat/p114-account-relevance-20260910
