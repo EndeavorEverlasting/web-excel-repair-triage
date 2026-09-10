@@ -1,0 +1,67 @@
+{
+  "schema_version": "prompt-tutorial-freshness/v1",
+  "policy_id": "prompt-tutorial-freshness-v1",
+  "tutorial_owner_prompt": "P64",
+  "contribution_owner_prompt": "P79",
+  "allowed_dispositions": [
+    "UPDATE_EXISTING_TUTORIAL",
+    "ADD_TUTORIAL",
+    "REFERENCE_ONLY_WITH_REASON"
+  ],
+  "privacy": {
+    "raw_prompt_usage_is_durable_input": false,
+    "raw_search_text_is_durable_input": false,
+    "raw_typed_content_is_durable_input": false,
+    "prompt_body_is_durable_input": false,
+    "clipboard_content_is_durable_input": false,
+    "user_identity_is_durable_input": false,
+    "accepted_operant_friction_receipts_may_inform_tutorial_priority": true,
+    "source_contract": "harness/contracts/prompt-kit-feedback-afk-routing.v1.json"
+  },
+  "recycle_evidence": [
+    "current verified commands",
+    "sanitized fixtures",
+    "expected results",
+    "failure and recovery examples",
+    "safe screenshots or diagrams",
+    "current candidate-bound validation or acceptance proof"
+  ],
+  "lifecycle": {
+    "prompt_added": "The canonical prompt-add helper requires a tutorial disposition before identity allocation and writes the disposition to this ledger in the same rollback boundary as the prompt registry and generated Prompt Kit site.",
+    "prompt_strengthened": "Material strengthenings carry an explicit tutorial disposition; update the tutorial surface or record REFERENCE_ONLY_WITH_REASON so teaching drift is visible.",
+    "prompt_used": "Raw ordinary usage stays local/information-only. Repeated patterns may influence tutorial work only after the existing P99/feedback path reduces them to accepted coarse privacy-bounded operant_friction receipts.",
+    "repository_behavior": "Current commits, tests, launchers, help surfaces, support failures, and validated workflow evidence are tutorial freshness signals; revalidate identity-sensitive evidence before reuse."
+  },
+  "records": [
+    {
+      "prompt_id": "P105",
+      "event": "STRENGTHEN",
+      "disposition": "UPDATE_EXISTING_TUTORIAL",
+      "tutorial_paths": [
+        "docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md"
+      ],
+      "reason": "Teach local-first/provider-minimal promotion and provider rate-budget behavior.",
+      "status": "CLOSED_BY_SPRINT"
+    },
+    {
+      "prompt_id": "P79",
+      "event": "STRENGTHEN",
+      "disposition": "UPDATE_EXISTING_TUTORIAL",
+      "tutorial_paths": [
+        "docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md"
+      ],
+      "reason": "Teach prompt-to-tutorial parity as part of prompt contribution work.",
+      "status": "CLOSED_BY_SPRINT"
+    },
+    {
+      "prompt_id": "P64",
+      "event": "STRENGTHEN",
+      "disposition": "UPDATE_EXISTING_TUTORIAL",
+      "tutorial_paths": [
+        "docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md"
+      ],
+      "reason": "Teach tutorial refresh from lifecycle and privacy-bounded friction signals.",
+      "status": "CLOSED_BY_SPRINT"
+    }
+  ]
+}
