@@ -943,5 +943,42 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertEqual(self.full["P79"]["name"], "Prompt Registry Prompt Adder")
 
 
+    def test_p131_builds_evidence_backed_project_case_study_and_demo_deck(self) -> None:
+        prompt = self.full["P131"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["name"], "Evidence-Backed Project Case Study & Demo Deck Builder")
+        self.assertEqual(prompt["type"], "BUILD + ARTIFACT")
+        self.assertEqual(prompt["class"], "PROJECT DEVELOPMENT / PORTFOLIO ANALYTICS")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        for phrase in (
+            "INSPIRATION / ORIGIN",
+            "FIRST STEPS",
+            "DELIVERY / OUTCOME QUALITY",
+            "WHAT I LEARNED",
+            "HOW I WOULD DO IT AGAIN",
+            "SCALE AND EXPANSION",
+            "SYSTEM-DESIGN ALTERNATIVES",
+            "TIME-SPENT MODEL",
+            "ACTUAL DISTRIBUTION PIE CHARTS",
+            "PERSPECTIVE / COUNTERFACTUAL PIE CHARTS",
+            "MEASURED, DERIVED, ESTIMATED, COUNTERFACTUAL",
+            "BASELINE VECTOR",
+            "SCENARIO VECTOR",
+            "DELTA TABLE",
+            "scenario-data table/sidecar",
+            "sum to 100% within rounding",
+            "AxTask, ASB, Triage",
+            "DATA-ANALYSIS PORTFOLIO VALUE",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("measured, derived, estimated, or counterfactual", prompt["expectedOutput"].lower())
+        self.assertIn("outcome-quality claims are tied to supported criteria", prompt["proofGate"].lower())
+        self.assertIn("counterfactual pie chart", " ".join(prompt["keywords"]).lower())
+        self.assertNotEqual(prompt["id"], "P64")
+        self.assertNotEqual(prompt["id"], "P79")
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+
+
 if __name__ == "__main__":
     unittest.main()
