@@ -63,7 +63,7 @@ class PromptKitFeedbackAfkRoutingTests(unittest.TestCase):
             "occurrence_count": 3,
             "timestamp": "2026-09-09T22:00:00Z",
             "sequence": 9,
-            "source_hash": "local-pseudonym",
+            "source_hash": "a" * 64,
         }
         payload.update(extra)
         return payload
@@ -84,6 +84,7 @@ class PromptKitFeedbackAfkRoutingTests(unittest.TestCase):
         self.assertFalse(self.contract["privacy"]["raw_search_or_typed_content"])
         self.assertFalse(self.contract["privacy"]["user_identity_in_friction_receipt"])
         self.assertTrue(self.contract["privacy"]["friction_receipts_local_first"])
+        self.assertIn("source_hash", self.contract["privacy"]["provider_receipt_fields"])
         self.assertTrue(self.contract["friction_policy"]["raw_usage_is_never_directly_actionable"])
         self.assertEqual(
             self.contract["friction_policy"]["evidence_kinds"]["deterministic_runtime_failure"]["minimum_occurrences"],
@@ -200,6 +201,7 @@ class PromptKitFeedbackAfkRoutingTests(unittest.TestCase):
                     "surface_id": "tutorial",
                     "evidence_kind": "deterministic_runtime_failure",
                     "occurrence_count": 1,
+                    "source_hash": "a" * 64,
                 },
             )
             self.assertNotIn("private_comment", request["evidence"])
@@ -213,6 +215,7 @@ class PromptKitFeedbackAfkRoutingTests(unittest.TestCase):
             self.friction_event("bad-surface", "route_miss", surface_id="Tutorial / Search"),
             self.friction_event("bad-count", "route_miss", occurrence_count=0),
             self.friction_event("bad-kind", "route_miss", evidence_kind="remote_profile"),
+            self.friction_event("bad-source-hash", "route_miss", source_hash="local-pseudonym"),
             self.friction_event("search-text", "route_miss", search_query="how do I deploy"),
             self.friction_event("typed-text", "route_miss", typed_text="private user text"),
             self.friction_event("user-id", "route_miss", user_id="person-123"),
@@ -246,8 +249,13 @@ class PromptKitFeedbackAfkRoutingTests(unittest.TestCase):
         self.assertEqual(len(capabilities), 1)
         self.assertEqual(len(triggers), 1)
         self.assertEqual(len(workflows), 1)
+        self.assertEqual(capabilities[0]["version"], "1.1.0")
         self.assertEqual(capabilities[0]["implementation"]["path"], "scripts/prompt_kit_afk_signal_router.py")
+        self.assertIn("P99-derived Operant friction receipt", capabilities[0]["operation"])
         self.assertEqual(triggers[0]["capability_id"], "prompt-kit-feedback-afk-routing")
+        self.assertTrue(any("privacy-bounded Operant friction receipt" in text for text in triggers[0]["conditions"]))
+        self.assertTrue(any("raw usage observation" in text for text in triggers[0]["forbidden_conditions"]))
+        self.assertTrue(any("search or typed content" in text for text in triggers[0]["forbidden_conditions"]))
         for heading in ("## Trigger", "## Required inputs", "## Outputs", "## Procedure", "## Guardrails", "## Validation", "## Proof ceiling"):
             self.assertIn(heading, self.skill)
         self.assertIn("privacy-bounded Operant friction receipt", self.skill)
