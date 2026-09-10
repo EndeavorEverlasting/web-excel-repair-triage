@@ -116,7 +116,7 @@ class RepositoryPromotionTests(unittest.TestCase):
         self.assertEqual(registered["contract"], "harness/contracts/repository-promotion.v1.json")
         self.assertEqual(registered["github_adapter"], "scripts/github_promotion_adapter.py")
         self.assertEqual(registered["promotion_workflow"], ".github/workflows/promotion-executor.yml")
-        self.assertEqual(registered["receipt"], "Outputs/repository-promotion-receipt.json")
+        self.assertEqual(registered["receipt"], "github-actions-artifact://repository-promotion-receipt/repository-promotion-receipt.json")
 
     def test_ready_fixture_requires_mergeable_exact_head_and_complete_provider_truth(self) -> None:
         policy = self.load("harness/promotion/required-checks.v1.json")
@@ -126,6 +126,22 @@ class RepositoryPromotionTests(unittest.TestCase):
         self.assertEqual(promotion.evaluate_readiness(snapshot, policy)["decision"], "READY_DIRECT")
         snapshot["pr"]["mergeable"] = None
         self.assertEqual(promotion.evaluate_readiness(snapshot, policy)["reason"], "MERGEABILITY_UNRESOLVED_OR_CONFLICTED")
+
+    def test_required_artifacts_require_positive_numeric_provider_ids(self) -> None:
+        policy = self.load("harness/promotion/required-checks.v1.json")
+        fixtures = self.load("harness/evals/fixtures/repository-promotion-cases.v1.json")
+        ready = next(case for case in fixtures["cases"] if case["id"] == "ready_direct")
+        required_name = policy["destinations"]["main"]["required_validation_artifacts"][0]
+
+        for invalid_id in (None, 0, -1, "1", True, 1.5):
+            with self.subTest(invalid_id=invalid_id):
+                snapshot = json.loads(json.dumps(ready["snapshot"]))
+                artifact = next(item for item in snapshot["validation"]["artifacts"] if item["name"] == required_name)
+                artifact["id"] = invalid_id
+                result = promotion.evaluate_readiness(snapshot, policy)
+                self.assertEqual(result["decision"], "BLOCKED")
+                self.assertEqual(result["reason"], "PROVIDER_PARTIAL_TRUTH")
+                self.assertIn(required_name, result["required_action"])
 
     def test_failed_candidate_proof_is_not_reused_by_promotion_contract(self) -> None:
         routing = self.load("harness/contracts/repository-promotion.v1.json")["failure_routing"]
