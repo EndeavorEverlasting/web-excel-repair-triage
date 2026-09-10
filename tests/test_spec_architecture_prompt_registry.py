@@ -974,6 +974,25 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("measured, derived, estimated, or counterfactual", prompt["expectedOutput"].lower())
         self.assertIn("outcome-quality claims are tied to supported criteria", prompt["proofGate"].lower())
         self.assertIn("counterfactual pie chart", " ".join(prompt["keywords"]).lower())
+
+        scenario_start = content.index("PERSPECTIVE / COUNTERFACTUAL PIE CHARTS")
+        scenario_end = content.index("DATA-ANALYSIS PORTFOLIO VALUE", scenario_start)
+        scenario = content[scenario_start:scenario_end]
+        ordered_steps = (
+            "BASELINE VECTOR",
+            "INTERVENTION",
+            "CAUSAL ASSUMPTION",
+            "SCENARIO VECTOR",
+            "Validate the vector",
+            "Visualize BASELINE vs SCENARIO",
+            "DELTA TABLE",
+            "scenario-data table/sidecar",
+        )
+        positions = [scenario.index(step) for step in ordered_steps]
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn("Never silently create or destroy hours/tasks", scenario)
+        self.assertIn("pie shares sum to 100% within rounding", scenario)
+        self.assertIn("same category definitions", scenario)
         self.assertNotEqual(prompt["id"], "P64")
         self.assertNotEqual(prompt["id"], "P79")
         self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
