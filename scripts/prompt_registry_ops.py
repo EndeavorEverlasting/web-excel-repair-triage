@@ -142,8 +142,11 @@ def _load_tutorial_freshness() -> dict[str, Any]:
         raise SystemExit("Tutorial freshness ledger must be a JSON object")
     if payload.get("schema_version") != "prompt-tutorial-freshness/v1":
         raise SystemExit("Unsupported tutorial freshness ledger schema")
+    policy_id = payload.get("policy_id")
     allowed = payload.get("allowed_dispositions")
     records = payload.get("records")
+    if not isinstance(policy_id, str) or not policy_id.strip():
+        raise SystemExit("Tutorial freshness ledger must define policy_id")
     if not isinstance(allowed, list) or not allowed:
         raise SystemExit("Tutorial freshness ledger must define allowed_dispositions")
     if any(not isinstance(item, str) or not item.strip() for item in allowed):
@@ -179,7 +182,8 @@ def _validate_tutorial_plan(
         )
     if not reason:
         raise SystemExit("Prompt draft tutorial reason must be non-empty")
-    if not isinstance(paths, list) or not paths:
+    reference_only = disposition == "REFERENCE_ONLY_WITH_REASON"
+    if not isinstance(paths, list) or (not paths and not reference_only):
         raise SystemExit("Prompt draft tutorial_paths must be a non-empty list")
     if any(not isinstance(item, str) or not item.strip() for item in paths):
         raise SystemExit("Every tutorial path must be a non-empty string")
@@ -200,7 +204,7 @@ def _validate_tutorial_plan(
         if prompt_name and prompt_name in path.read_text(encoding="utf-8"):
             covered_paths.append(relative)
 
-    if not covered_paths:
+    if not covered_paths and not reference_only:
         raise SystemExit(
             "Prompt ADD tutorial freshness failed: at least one declared tutorial path must "
             "already mention the new prompt name before the registry write"
