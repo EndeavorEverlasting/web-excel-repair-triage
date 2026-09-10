@@ -33,6 +33,7 @@ class RepositoryPromotionTests(unittest.TestCase):
         self.assertFalse(contract["provider_contract"]["local_git_merge_is_sufficient"])
         self.assertTrue(contract["provider_contract"]["provider_mutation_required_for_success"])
         self.assertEqual(contract["provider_contract"]["degraded_statuses"], ["PROVIDER_UNAVAILABLE", "PROVIDER_RATE_LIMITED", "PROVIDER_PARTIAL_TRUTH"])
+        self.assertIn("provider_host", contract["receipt_schema"]["required_fields"])
 
     def test_required_checks_are_explicit_and_application_e2e_scope_is_bounded(self) -> None:
         main = self.load("harness/promotion/required-checks.v1.json")["destinations"]["main"]
