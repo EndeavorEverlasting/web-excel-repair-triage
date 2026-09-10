@@ -34,6 +34,8 @@ When the plan/assets are final, `python scripts/ad_campaign.py snapshot --input 
 
 Only a real platform observation can support a launch record. Pending review stays pending. Permission and prepared assets cannot substitute for observed live evidence. Review and approval timestamps must include timezone offsets.
 
+The launch timestamp must not precede authorization. Reporting dates must lie within the campaign period, use the same IANA timezone, and fall between the launch and extraction dates in that timezone. Partial campaign reports are valid. Python needs system timezone data or the `tzdata` package (commonly needed on Windows).
+
 ## Measurement
 
 `python scripts/ad_campaign.py metrics --input results.json` accepts one reporting aggregate with `impressions`, `clicks`, `spend`, `conversions`, and optional `revenue`. Keep its source, period, currency and attribution context in the campaign packet. Never combine incompatible reporting windows, currencies or attribution definitions merely to fit the input.

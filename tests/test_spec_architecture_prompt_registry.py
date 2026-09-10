@@ -943,8 +943,8 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertEqual(self.full["P79"]["name"], "Prompt Registry Prompt Adder")
 
 
-    def test_p131_builds_evidence_backed_project_case_study_and_demo_deck(self) -> None:
-        prompt = self.full["P131"]
+    def test_p137_builds_evidence_backed_project_case_study_and_demo_deck(self) -> None:
+        prompt = self.full["P137"]
         content = prompt["copyContent"]
         self.assertEqual(prompt["name"], "Evidence-Backed Project Case Study & Demo Deck Builder")
         self.assertEqual(prompt["type"], "BUILD + ARTIFACT")

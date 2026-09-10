@@ -1,5 +1,13 @@
 # Campaign contribution record
 
+## Final integration repair, 2026-09-10
+
+PR #407 was independently merged while review repairs were in progress. Refreshed main `f1c84bb1b9b7da9dbf3ee78021179ed8b7579e1b` contains the original campaign commit, preserves campaign P131-P136, and assigns the case-study prompt P137. The follow-up branch `codex/ad-campaign-final-checks-20260910` preserves those settled identities and the separately added working doctrine/claims documents. An unmerged helper-reallocation attempt was discarded; its drafts remain outside tracked authority.
+
+The follow-up registers campaign semantic tests with the deterministic test floor, adds workflow dependency triggers, and binds launch time to prior authorization and reporting dates to the campaign, launch and extraction. Partial reporting windows remain supported; comparisons parse ISO dates instead of comparing their spelling. Four added regression tests cover temporal failures, mixed ISO formats, and the documented aggregate-only metrics CLI. The case-study test now follows main's P137 identity without weakening its assertions. Independent fault review found the mixed-format gap and verified the repair.
+
+Review dispositions: the metrics CLI deliberately accepts a standalone aggregate, as documented; a regression proves that interface. The reusable launch-review prompt can act only under explicit future campaign authorization; installing this offline validator performs no live action. The pack builder updates a tracked generated projection from canonical source; Git preserves its prior version, and the reviewed timestamped-backup rule belongs to case-study output artifacts, not this deterministic repository build. No global governance or live campaign activity was added.
+
 Repository: `EndeavorEverlasting/web-excel-repair-triage`. Branch: `codex/ad-campaign-domain-20260909`. Initial floor `3f4cca6176a4d530d4d538f929c2ccd242856d6d`; refreshed through P79 synthesis merge `7a145cfac7711525a9c33c41950bc2909b582750` and release floor `54f490253297a1de4c81e023cd71c7164657af36` before registry additions.
 
 ## Authority and scope

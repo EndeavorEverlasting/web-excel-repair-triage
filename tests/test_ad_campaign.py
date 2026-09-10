@@ -146,6 +146,47 @@ class AdCampaignTests(unittest.TestCase):
         packet["results"]["attribution_model"] = ""
         self.assert_blocked(packet, "MEASURED", "attribution_model")
 
+    def test_launch_requires_prior_authorization_in_absolute_time(self):
+        packet = synthetic_packet()
+        packet["launch"]["at"] = "2026-09-01T10:59:59Z"
+        self.assert_blocked(packet, "LIVE", "precedes authorization")
+        packet["launch"]["at"] = "2026-09-01T07:00:00-04:00"
+        self.assertEqual(campaign.validate(packet, "LIVE")["status"], "PASS")
+
+    def test_reporting_window_and_extraction_belong_to_campaign(self):
+        for field, value in (("start", "2025-01-01"), ("end", "2026-10-01"), ("timezone", "other")):
+            packet = synthetic_packet()
+            packet["results"]["period"][field] = value
+            self.assert_blocked(packet, "MEASURED", "results.period")
+        packet = synthetic_packet()
+        packet["results"]["extracted_at"] = "2025-01-01T00:00:00Z"
+        self.assert_blocked(packet, "MEASURED", "extraction precedes launch")
+        packet = synthetic_packet()
+        packet["results"]["extracted_at"] = "2026-09-02T00:00:00Z"
+        self.assert_blocked(packet, "MEASURED", "after extraction")
+        packet = synthetic_packet()
+        packet["results"]["period"]["end"] = "2026-09-15"
+        self.assertEqual(campaign.validate(packet, "MEASURED")["status"], "PASS")
+
+    def test_metrics_cli_accepts_documented_reporting_aggregate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "results.json"
+            data = synthetic_packet()["results"]
+            path.write_text(json.dumps(data), encoding="utf-8")
+            run = subprocess.run([sys.executable, str(ROOT / "scripts/ad_campaign.py"), "metrics", "--input", str(path)], capture_output=True, text=True)
+            self.assertEqual(run.returncode, 0)
+            self.assertEqual(json.loads(run.stdout), campaign.metrics(data))
+
+    def test_mixed_iso_formats_cannot_hide_reporting_overrun(self):
+        packet = synthetic_packet()
+        packet["brief"]["period"]["end"] = "20260930"
+        for key in ("review", "authorization", "launch", "results"):
+            packet[key]["snapshot_sha256"] = campaign.snapshot(packet)
+        packet["results"]["period"]["end"] = "2026-10-01"
+        self.assert_blocked(packet, "MEASURED", "within campaign period")
+        packet["results"]["period"].update(start="20260901", end="20260915")
+        self.assertEqual(campaign.validate(packet, "MEASURED")["status"], "PASS")
+
     def test_known_metrics_and_missing_revenue(self):
         data = synthetic_packet()["results"]
         actual = campaign.metrics(data)
