@@ -29,6 +29,9 @@ CONTENT_REGISTRIES = (
     REPO_ROOT / "registry" / "prompts" / "correspondence-prompts.v1.json",
 )
 PROMPT_OVERRIDES = REPO_ROOT / "registry" / "prompts" / "prompt-overrides.v1.json"
+PROMPT_STRENGTHENINGS = (
+    REPO_ROOT / "registry" / "prompts" / "prompt-strengthenings.v1.json"
+)
 DISPLAY_ORDER_POLICY = (
     REPO_ROOT / "registry" / "prompts" / "prompt-display-order.v1.json"
 )
@@ -74,6 +77,20 @@ REQUIRED_PROMPT_FIELDS = {
     "category",
     "copyContent",
     "keywords",
+}
+STRENGTHENABLE_STRING_FIELDS = {
+    "sprintRole",
+    "useWhen",
+    "inspectFirst",
+    "expectedOutput",
+    "nextStep",
+    "proofGate",
+    "copyContent",
+}
+TUTORIAL_STRENGTHENING_DISPOSITIONS = {
+    "UPDATE_EXISTING_TUTORIAL",
+    "ADD_TUTORIAL",
+    "REFERENCE_ONLY_WITH_REASON",
 }
 REQUIRED_ACTIONABILITY_POLICY_FIELDS = {
     "schema_version",
@@ -294,6 +311,126 @@ def apply_prompt_overrides(prompts: list[dict[str, Any]]) -> list[dict[str, Any]
     return result
 
 
+def apply_prompt_strengthenings(prompts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Append bounded semantic strengthenings without duplicating canonical prompt bodies."""
+    payload = _load_json(PROMPT_STRENGTHENINGS)
+    if not isinstance(payload, dict):
+        raise SystemExit(
+            f"Prompt strengthening registry must be an object: {PROMPT_STRENGTHENINGS}"
+        )
+    if payload.get("schema_version") != "prompt-registry-strengthenings/v1":
+        raise SystemExit(
+            f"Unsupported prompt strengthening schema in {PROMPT_STRENGTHENINGS}"
+        )
+    strengthenings = payload.get("strengthenings")
+    if not isinstance(strengthenings, list):
+        raise SystemExit("Prompt strengthening registry must define a strengthenings array")
+
+    positions = {
+        str(prompt.get("id", "")).upper(): index
+        for index, prompt in enumerate(prompts)
+        if str(prompt.get("id", "")).strip()
+    }
+    result = [dict(prompt) for prompt in prompts]
+    seen: set[str] = set()
+    for index, strengthening in enumerate(strengthenings):
+        if not isinstance(strengthening, dict):
+            raise SystemExit(f"Prompt strengthening {index} is not an object")
+        raw_id = strengthening.get("id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            raise SystemExit(f"Prompt strengthening {index} has no id")
+        prompt_id = raw_id.upper()
+        if prompt_id in seen:
+            raise SystemExit(f"Duplicate prompt strengthening id: {prompt_id}")
+        seen.add(prompt_id)
+        if prompt_id not in positions:
+            raise SystemExit(f"Prompt strengthening references unknown prompt id: {prompt_id}")
+        current = result[positions[prompt_id]]
+        canonical_id = str(current.get("id", ""))
+        if raw_id != canonical_id:
+            raise SystemExit(
+                "Prompt strengthening id must exactly match canonical identity: "
+                f"{raw_id} != {canonical_id}"
+            )
+
+        append = strengthening.get("append")
+        if not isinstance(append, dict) or not append:
+            raise SystemExit(f"Prompt strengthening {prompt_id} must define append fields")
+        unknown = sorted(set(append) - STRENGTHENABLE_STRING_FIELDS)
+        if unknown:
+            raise SystemExit(
+                f"Prompt strengthening {prompt_id} has unsupported append fields: {unknown}"
+            )
+        strengthened = dict(current)
+        for field, addition in append.items():
+            if not isinstance(addition, str) or not addition.strip():
+                raise SystemExit(
+                    f"Prompt strengthening {prompt_id} field must be non-empty: {field}"
+                )
+            original = str(strengthened.get(field, "")).rstrip()
+            if not original:
+                raise SystemExit(
+                    f"Prompt strengthening {prompt_id} cannot append to empty field: {field}"
+                )
+            separator = "\n\n" if field == "copyContent" else " "
+            strengthened[field] = f"{original}{separator}{addition.strip()}"
+
+        keywords = strengthening.get("keywords", [])
+        if not isinstance(keywords, list):
+            raise SystemExit(f"Prompt strengthening {prompt_id} keywords must be an array")
+        if any(not isinstance(item, str) or not item.strip() for item in keywords):
+            raise SystemExit(
+                f"Prompt strengthening {prompt_id} keywords must be non-empty strings"
+            )
+        existing_keywords = [str(item) for item in strengthened.get("keywords", [])]
+        normalized = {item.casefold().strip() for item in existing_keywords}
+        for keyword in keywords:
+            value = keyword.strip()
+            if value.casefold() not in normalized:
+                existing_keywords.append(value)
+                normalized.add(value.casefold())
+        strengthened["keywords"] = existing_keywords
+
+        tutorial = strengthening.get("tutorial")
+        if not isinstance(tutorial, dict):
+            raise SystemExit(
+                f"Prompt strengthening {prompt_id} must define tutorial freshness metadata"
+            )
+        disposition = str(tutorial.get("disposition", "")).strip()
+        reason = str(tutorial.get("reason", "")).strip()
+        paths = tutorial.get("paths", [])
+        if disposition not in TUTORIAL_STRENGTHENING_DISPOSITIONS:
+            raise SystemExit(
+                f"Prompt strengthening {prompt_id} has invalid tutorial disposition: {disposition}"
+            )
+        if not reason:
+            raise SystemExit(
+                f"Prompt strengthening {prompt_id} tutorial reason must be non-empty"
+            )
+        if not isinstance(paths, list) or any(
+            not isinstance(path, str) or not path.strip() for path in paths
+        ):
+            raise SystemExit(
+                f"Prompt strengthening {prompt_id} tutorial paths must be strings"
+            )
+        if disposition != "REFERENCE_ONLY_WITH_REASON" and not paths:
+            raise SystemExit(
+                f"Prompt strengthening {prompt_id} requires at least one tutorial path"
+            )
+        for relative in paths:
+            if not (REPO_ROOT / relative).is_file():
+                raise SystemExit(
+                    f"Prompt strengthening {prompt_id} references missing tutorial path: {relative}"
+                )
+        strengthened["tutorialFreshness"] = {
+            "disposition": disposition,
+            "paths": list(paths),
+            "reason": reason,
+        }
+        result[positions[prompt_id]] = strengthened
+    return result
+
+
 def apply_actionability_policy(
     prompt: dict[str, Any], policy: dict[str, Any]
 ) -> dict[str, Any]:
@@ -401,6 +538,7 @@ def load_prompt_registry() -> list[dict[str, Any]]:
         prompts.extend(extension_prompts)
 
     prompts = apply_prompt_overrides(prompts)
+    prompts = apply_prompt_strengthenings(prompts)
     _validate_unique_prompt_identity(prompts, "operational")
     prompt_classification.validate_prompt_classification(prompts, "operational")
     actionability_policy = load_actionability_policy()
