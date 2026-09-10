@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
+import github_promotion_adapter as github_adapter
 import validate_repository_promotion as promotion
 
 
@@ -55,11 +58,55 @@ class RepositoryPromotionTests(unittest.TestCase):
 
     def test_github_adapter_is_host_parameterized_and_expected_head_guarded(self) -> None:
         text = (ROOT / "scripts/github_promotion_adapter.py").read_text(encoding="utf-8")
-        for marker in ("GITHUB_API_URL", "GITHUB_GRAPHQL_URL", "GITHUB_REPOSITORY", "reviewThreads", "/rulesets", "/actions/runs/", "/artifacts", '{"sha": head', "enqueuePullRequest", "/compare/", "PROVIDER_RATE_LIMITED", "PROVIDER_PARTIAL_TRUTH", "PROVIDER_UNAVAILABLE", "ALREADY_MERGED_VERIFIED", '"containment"', '"owner":"P115"'):
+        for marker in ("GITHUB_SERVER_URL", "GITHUB_API_URL", "GITHUB_GRAPHQL_URL", "GITHUB_REPOSITORY", "reviewThreads", "/rulesets", "/actions/runs/", "/artifacts", '{"sha": head', "enqueuePullRequest", "/compare/", "PROVIDER_RATE_LIMITED", "PROVIDER_PARTIAL_TRUTH", "PROVIDER_UNAVAILABLE", "ALREADY_MERGED_VERIFIED", '"containment"', '"owner":"P115"'):
             self.assertIn(marker, text)
         self.assertNotIn("https://api.github.com", text)
         self.assertNotIn("PERSONAL_ACCESS_TOKEN", text)
         self.assertNotIn("git merge", text)
+
+    def test_github_runtime_requires_explicit_server_identity(self) -> None:
+        env = {
+            "GITHUB_REPOSITORY": "EndeavorEverlasting/web-excel-repair-triage",
+            "GITHUB_API_URL": "https://api.github.com",
+            "GITHUB_GRAPHQL_URL": "https://api.github.com/graphql",
+            "GITHUB_TOKEN": "token",
+        }
+        with mock.patch.dict(os.environ, env, clear=True):
+            with self.assertRaisesRegex(github_adapter.ProviderError, "runtime identity"):
+                github_adapter.GitHub()
+        env["GITHUB_SERVER_URL"] = "https://github.com"
+        with mock.patch.dict(os.environ, env, clear=True):
+            gh = github_adapter.GitHub()
+        self.assertEqual(gh.server_url, "https://github.com")
+
+    def test_validation_run_accepts_exact_match_before_pagination_ceiling(self) -> None:
+        exact = {
+            "id": 9,
+            "name": "Promotion Candidate Validation",
+            "head_sha": "a" * 40,
+            "created_at": "2026-09-10T00:00:00Z",
+            "pull_requests": [{"number": 42}],
+        }
+
+        class FakeGitHub:
+            repo = "EndeavorEverlasting/web-excel-repair-triage"
+
+            def rest(self, method: str, path: str, body=None):
+                self.last_path = path
+                return {"total_count": 101, "workflow_runs": [exact]}
+
+        result = github_adapter.validation_run(FakeGitHub(), 42, "a" * 40, None)
+        self.assertEqual(result["id"], 9)
+
+    def test_validation_run_fails_closed_when_match_may_be_on_older_page(self) -> None:
+        class FakeGitHub:
+            repo = "EndeavorEverlasting/web-excel-repair-triage"
+
+            def rest(self, method: str, path: str, body=None):
+                return {"total_count": 101, "workflow_runs": []}
+
+        with self.assertRaisesRegex(github_adapter.ProviderError, "older provider pages remain"):
+            github_adapter.validation_run(FakeGitHub(), 42, "a" * 40, None)
 
     def test_pr_floor_integration_registers_concrete_promotion_pipeline(self) -> None:
         owner = self.load("harness/contracts/pr-merge-gate.v1.json")
