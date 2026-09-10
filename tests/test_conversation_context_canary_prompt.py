@@ -114,6 +114,57 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
         ):
             self.assertIn(phrase, content)
 
+    def test_network_and_conditional_execution_context_survive_account_strengthening(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "NETWORK=<WAB|Guest|Hardwire|Local|Arbitrary/N/A>",
+            "Arbitrary/N/A` means the task has no specific network requirement",
+            "NETWORK=UNKNOWN",
+            "EXEC=<shell>@<kernel/runtime>",
+            "EXEC=UNKNOWN",
+            "P92 owns canonical path",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_account_relevance_resolves_role_before_navigation(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "ACCOUNT / ROLE RELEVANCE",
+            "active account or auth principal",
+            "browser/workstation profile",
+            "target resource or container and its owner/authority",
+            "current role or permission",
+            "required role or permission",
+            "If the active account differs from the resource owner but the current role is sufficient, continue without forcing an account switch.",
+            "If the required role is stronger than the current role, emit `ACCOUNT SWITCH GATE` before giving UI navigation or mutation steps",
+            "The identity under which an entry point is traversed is part of the execution path.",
+        ):
+            self.assertIn(phrase, content)
+        self.assertLess(
+            content.index("ACCOUNT SWITCH GATE", content.index("ACCOUNT / ROLE RELEVANCE")),
+            content.index("AUTHORITATIVE CONTEXT RULE"),
+        )
+
+    def test_route_convergence_is_diagnostic_not_operator_error(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "Two valid navigation paths that converge on the same bound/container resource are diagnostic evidence.",
+            "Do not infer operator error when two valid navigation paths converge",
+            "account/container binding",
+            "Do not tell the operator to repeat the same copy/navigation step",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_account_signal_is_conditional_and_privacy_bounded(self) -> None:
+        content = self.target["copyContent"]
+        self.assertIn("ACCOUNT=<provider/account-or-profile alias>", content)
+        self.assertIn("ACCOUNT=UNKNOWN", content)
+        self.assertIn("least-sensitive", content)
+        self.assertIn("Never expose passwords, tokens, cookies, OAuth secrets, private keys, recovery codes", content)
+        self.assertIn("append only the least-sensitive disambiguating fields", content)
+        self.assertIn("P19 owns installation/deployment execution and direct UI control guidance", content)
+        self.assertIn("Never treat `ACTIVE ACCOUNT != RESOURCE OWNER` as an automatic blocker", content)
+
     def test_registered_in_deterministic_test_floor(self) -> None:
         floor = json.loads(TEST_FLOOR.read_text(encoding="utf-8"))
         self.assertEqual(floor["self_tests"].count(TEST_PATH), 1)
