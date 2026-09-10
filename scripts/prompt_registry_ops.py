@@ -31,7 +31,17 @@ REQUIRED_DRAFT_FIELDS = {
     "copyContent",
     "keywords",
 }
-OPTIONAL_DRAFT_FIELDS = {"registry_id", "profile", "color", "category", "progress"}
+OPTIONAL_DRAFT_FIELDS = {
+    "registry_id",
+    "profile",
+    "color",
+    "category",
+    "progress",
+    "tutorial",
+}
+TUTORIAL_FRESHNESS_LEDGER = (
+    REPO_ROOT / "registry" / "prompts" / "tutorial-freshness.v1.json"
+)
 
 
 def _read_json(path_value: str) -> dict[str, Any]:
@@ -110,13 +120,117 @@ def inspect_state() -> dict[str, Any]:
         "next_seq": next_seq,
         "registries": registries,
         "required_draft_fields": sorted(REQUIRED_DRAFT_FIELDS),
+        "optional_draft_fields": sorted(OPTIONAL_DRAFT_FIELDS),
         "auto_fields": sorted(AUTO_FIELDS),
-        "classification": registry.prompt_classification.classification_summary(registry.load_prompt_kit_registry()),
+        "tutorial_freshness": {
+            "required_before_write": True,
+            "ledger": str(TUTORIAL_FRESHNESS_LEDGER.relative_to(REPO_ROOT)),
+        },
+        "classification": registry.prompt_classification.classification_summary(
+            registry.load_prompt_kit_registry()
+        ),
     }
 
 
 def _normalize_text(value: str) -> str:
     return " ".join(value.casefold().split())
+
+
+def _load_tutorial_freshness() -> dict[str, Any]:
+    payload = registry._load_json(TUTORIAL_FRESHNESS_LEDGER)
+    if not isinstance(payload, dict):
+        raise SystemExit("Tutorial freshness ledger must be a JSON object")
+    if payload.get("schema_version") != "prompt-tutorial-freshness/v1":
+        raise SystemExit("Unsupported tutorial freshness ledger schema")
+    allowed = payload.get("allowed_dispositions")
+    records = payload.get("records")
+    if not isinstance(allowed, list) or not allowed:
+        raise SystemExit("Tutorial freshness ledger must define allowed_dispositions")
+    if any(not isinstance(item, str) or not item.strip() for item in allowed):
+        raise SystemExit("Tutorial freshness dispositions must be non-empty strings")
+    if not isinstance(records, list):
+        raise SystemExit("Tutorial freshness ledger must define a records array")
+    return payload
+
+
+def _validate_tutorial_plan(
+    draft: dict[str, Any], *, require: bool
+) -> dict[str, Any] | None:
+    tutorial = draft.get("tutorial")
+    if tutorial is None:
+        if require:
+            raise SystemExit(
+                "Prompt ADD requires draft.tutorial before identity allocation; update the tutorial "
+                "surface first, then provide disposition, tutorial_paths, and reason"
+            )
+        return None
+    if not isinstance(tutorial, dict):
+        raise SystemExit("Prompt draft tutorial must be one object")
+
+    ledger = _load_tutorial_freshness()
+    allowed = {str(item) for item in ledger["allowed_dispositions"]}
+    disposition = str(tutorial.get("disposition", "")).strip()
+    reason = str(tutorial.get("reason", "")).strip()
+    paths = tutorial.get("tutorial_paths")
+    if disposition not in allowed:
+        raise SystemExit(
+            "Prompt draft tutorial disposition must be one of: "
+            + ", ".join(sorted(allowed))
+        )
+    if not reason:
+        raise SystemExit("Prompt draft tutorial reason must be non-empty")
+    if not isinstance(paths, list) or not paths:
+        raise SystemExit("Prompt draft tutorial_paths must be a non-empty list")
+    if any(not isinstance(item, str) or not item.strip() for item in paths):
+        raise SystemExit("Every tutorial path must be a non-empty string")
+
+    prompt_name = str(draft.get("name", "")).strip()
+    covered_paths: list[str] = []
+    normalized_paths: list[str] = []
+    for value in paths:
+        relative = value.strip()
+        path = (REPO_ROOT / relative).resolve()
+        try:
+            path.relative_to(REPO_ROOT.resolve())
+        except ValueError as exc:
+            raise SystemExit(f"Tutorial path escapes repository: {relative}") from exc
+        if not path.is_file():
+            raise SystemExit(f"Tutorial path does not exist: {relative}")
+        normalized_paths.append(relative)
+        if prompt_name and prompt_name in path.read_text(encoding="utf-8"):
+            covered_paths.append(relative)
+
+    if not covered_paths:
+        raise SystemExit(
+            "Prompt ADD tutorial freshness failed: at least one declared tutorial path must "
+            "already mention the new prompt name before the registry write"
+        )
+    return {
+        "disposition": disposition,
+        "tutorial_paths": normalized_paths,
+        "reason": reason,
+        "coverage_paths": covered_paths,
+    }
+
+
+def _append_tutorial_add_record(
+    payload: dict[str, Any], record: dict[str, Any], tutorial: dict[str, Any]
+) -> dict[str, Any]:
+    updated = dict(payload)
+    records = list(payload.get("records", []))
+    records.append(
+        {
+            "prompt_id": str(record["id"]),
+            "prompt_name": str(record["name"]),
+            "event": "ADD",
+            "disposition": str(tutorial["disposition"]),
+            "tutorial_paths": list(tutorial["tutorial_paths"]),
+            "reason": str(tutorial["reason"]),
+            "status": "RECORDED_BY_ADD_HELPER",
+        }
+    )
+    updated["records"] = records
+    return updated
 
 
 def _validate_draft(draft: dict[str, Any]) -> None:
@@ -152,6 +266,8 @@ def _validate_draft(draft: dict[str, Any]) -> None:
         raise SystemExit(
             "Prompt draft must not copy the shared actionability appendix; the builder owns it"
         )
+    if "tutorial" in draft:
+        _validate_tutorial_plan(draft, require=False)
 
 
 def _resolve_target(
@@ -263,7 +379,6 @@ def _validate_site_parity() -> tuple[bool, int]:
     return output.read_text(encoding="utf-8") == expected, len(prompts)
 
 
-
 def review_prior_art(query_text: str) -> dict[str, Any]:
     """Expose the all-registered-source gate before a semantic ADD draft exists."""
     try:
@@ -272,6 +387,7 @@ def review_prior_art(query_text: str) -> dict[str, Any]:
         raise SystemExit(
             f"Prompt pre-authoring external prior-art review failed closed: {exc}"
         ) from exc
+
 
 def add_prompt(
     draft: dict[str, Any], explicit_registry: str | None, dry_run: bool
@@ -286,6 +402,7 @@ def add_prompt(
             f"Prompt ADD external prior-art gate failed before identity allocation: {exc}"
         ) from exc
     record = _build_record(draft, target_payload)
+    tutorial_plan = _validate_tutorial_plan(draft, require=not dry_run)
     if dry_run:
         return {
             "status": "dry-run",
@@ -293,16 +410,29 @@ def add_prompt(
             "registry_path": str(target_path.relative_to(REPO_ROOT)),
             "record": record,
             "external_prior_art": external_prior_art,
+            "tutorial_freshness": tutorial_plan
+            or {
+                "status": "required-before-write",
+                "ledger": str(TUTORIAL_FRESHNESS_LEDGER.relative_to(REPO_ROOT)),
+            },
         }
 
+    assert tutorial_plan is not None
     original_registry = target_path.read_text(encoding="utf-8")
     output = registry.DEFAULT_OUTPUT
     original_output = output.read_text(encoding="utf-8") if output.exists() else None
+    original_tutorial_ledger = TUTORIAL_FRESHNESS_LEDGER.read_text(encoding="utf-8")
     try:
         payload = dict(target_payload)
         payload["prompts"] = [*target_payload["prompts"], record]
         target_path.write_text(
             json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        ledger = _load_tutorial_freshness()
+        updated_ledger = _append_tutorial_add_record(ledger, record, tutorial_plan)
+        TUTORIAL_FRESHNESS_LEDGER.write_text(
+            json.dumps(updated_ledger, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
         effective = {prompt["id"]: prompt for prompt in registry.load_prompt_registry()}
@@ -317,6 +447,7 @@ def add_prompt(
             raise SystemExit("Generated Prompt Kit site is not in exact registry parity")
     except BaseException:
         target_path.write_text(original_registry, encoding="utf-8")
+        TUTORIAL_FRESHNESS_LEDGER.write_text(original_tutorial_ledger, encoding="utf-8")
         if original_output is None:
             output.unlink(missing_ok=True)
         else:
@@ -335,6 +466,11 @@ def add_prompt(
         "site_parity": True,
         "actionability_policy": registry.load_actionability_policy()["policy_id"],
         "external_prior_art": external_prior_art,
+        "tutorial_freshness": {
+            **tutorial_plan,
+            "ledger": str(TUTORIAL_FRESHNESS_LEDGER.relative_to(REPO_ROOT)),
+            "status": "RECORDED_BY_ADD_HELPER",
+        },
     }
 
 
@@ -344,11 +480,14 @@ def validate_current() -> dict[str, Any]:
         raise SystemExit(
             "Prompt Kit registry is valid but web/prompt-kit/index.html is stale; rebuild it"
         )
+    tutorial = _load_tutorial_freshness()
     return {
         "status": "valid",
         "prompt_count": prompt_count,
         "site_parity": True,
         "next_id": _next_identity()[0],
+        "tutorial_freshness_policy": tutorial["policy_id"],
+        "tutorial_freshness_records": len(tutorial["records"]),
     }
 
 
@@ -369,7 +508,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     add = sub.add_parser(
         "add",
-        help="Recheck every registered upstream, then add one prompt draft, allocate identity, rebuild, and validate.",
+        help=(
+            "Recheck every registered upstream, require tutorial freshness coverage, then add one "
+            "prompt draft, allocate identity, rebuild, and validate."
+        ),
     )
     add.add_argument("--input", required=True, help="Draft JSON path, or - for stdin.")
     add.add_argument("--registry", help="Existing registry_id; otherwise resolve from draft profile.")
