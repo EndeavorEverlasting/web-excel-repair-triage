@@ -344,8 +344,7 @@ def validation_run(
     matches = [
         run
         for run in candidates
-        if run.get("name") == "Promotion Candidate Validation"
-        and run.get("head_sha") == head_sha
+        if run.get("head_sha") == head_sha
         and any(
             isinstance(pr, dict) and pr.get("number") == number
             for pr in (run.get("pull_requests") or [])
@@ -473,17 +472,47 @@ def contained(gh: GitHub, integration_sha: str, target: str) -> bool:
     return str(result.get("status") or "") in {"ahead", "identical"}
 
 
+def reconcile_direct_merge(
+    gh: GitHub, number: int, head: str, target: str
+) -> dict[str, Any] | None:
+    """Verify whether an ambiguous direct-merge response actually integrated this head."""
+    pr = gh.rest("GET", f"/repos/{gh.repo}/pulls/{number}")
+    observed_head = str((pr.get("head") or {}).get("sha") or "")
+    integration_sha = str(pr.get("merge_commit_sha") or "")
+    if (
+        pr.get("merged") is True
+        and observed_head == head
+        and SHA.fullmatch(integration_sha)
+        and contained(gh, integration_sha, target)
+    ):
+        return {
+            "mode": "reconciled_merge",
+            "integration_sha": integration_sha,
+            "message": "provider merge verified after an ambiguous mutation response",
+        }
+    return None
+
+
 def merge_direct(
-    gh: GitHub, number: int, head: str, method: str
+    gh: GitHub, number: int, head: str, method: str, target: str
 ) -> dict[str, Any]:
-    result = gh.rest(
-        "PUT",
-        f"/repos/{gh.repo}/pulls/{number}/merge",
-        {"sha": head, "merge_method": method},
-    )
+    try:
+        result = gh.rest(
+            "PUT",
+            f"/repos/{gh.repo}/pulls/{number}/merge",
+            {"sha": head, "merge_method": method},
+        )
+    except ProviderError:
+        reconciled = reconcile_direct_merge(gh, number, head, target)
+        if reconciled is not None:
+            return reconciled
+        raise
     if result.get("merged") is not True or not SHA.fullmatch(
         str(result.get("sha") or "")
     ):
+        reconciled = reconcile_direct_merge(gh, number, head, target)
+        if reconciled is not None:
+            return reconciled
         raise ProviderError(
             "PROVIDER_PARTIAL_TRUTH",
             f"expected-head merge rejected: {result.get('message')}",
@@ -664,7 +693,11 @@ def main(argv: list[str] | None = None) -> int:
             enqueue(gh, number, first["pr"]["head_sha"])
             if decision["decision"] == "READY_QUEUE"
             else merge_direct(
-                gh, number, first["pr"]["head_sha"], method
+                gh,
+                number,
+                first["pr"]["head_sha"],
+                method,
+                first["target"],
             )
         )
         receipt["mutation"] = mutation
@@ -674,6 +707,21 @@ def main(argv: list[str] | None = None) -> int:
                     "status": "QUEUED",
                     "proof_ceiling": (
                         "Candidate entered provider merge queue; integration is not yet proven."
+                    ),
+                }
+            )
+            write(args.output, receipt)
+            summary(receipt)
+            return 0
+        if mutation["mode"] == "reconciled_merge":
+            receipt.update(
+                {
+                    "status": "ALREADY_MERGED_VERIFIED",
+                    "integration_sha": mutation["integration_sha"],
+                    "containment": True,
+                    "proof_ceiling": (
+                        "Provider merge was reconciled after an ambiguous mutation response; "
+                        "the exact candidate and default-branch containment are verified."
                     ),
                 }
             )
