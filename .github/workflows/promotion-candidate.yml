@@ -65,6 +65,7 @@ jobs:
           --event-path "$GITHUB_EVENT_PATH"
           --output "$RUNNER_TEMP/promotion-harness-receipt.json"
       - name: Upload harness E2E receipt
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: promotion-harness-receipt
@@ -94,6 +95,7 @@ jobs:
           --event-path "$GITHUB_EVENT_PATH"
           --output "$RUNNER_TEMP/promotion-application-e2e-receipt.json"
       - name: Upload application E2E receipt
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: promotion-application-e2e-receipt
@@ -124,6 +126,7 @@ jobs:
           --event-path "$GITHUB_EVENT_PATH"
           --output "$RUNNER_TEMP/promotion-candidate-receipt.json"
       - name: Upload exact-candidate receipt
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: promotion-candidate-receipt
