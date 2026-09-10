@@ -1,0 +1,107 @@
+name: Temporary P131 artifact-boundary repair
+
+on:
+  push:
+    branches:
+      - feat/project-development-case-study-presentation-20260909
+    paths:
+      - .github/workflows/tmp-p131-artifact-boundary.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/project-development-case-study-presentation-20260909
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Refresh and reconcile current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main --prune --tags
+          echo "branch-before=$(git rev-parse HEAD)"
+          echo "main=$(git rev-parse origin/main)"
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            set +e
+            git merge --no-commit --no-ff origin/main
+            rc=$?
+            set -e
+            if [ "$rc" -ne 0 ]; then
+              conflicts=$(git diff --name-only --diff-filter=U)
+              printf 'conflicts=%s\n' "$conflicts"
+              test "$conflicts" = "web/prompt-kit/index.html"
+              git checkout --ours web/prompt-kit/index.html
+              git add web/prompt-kit/index.html
+            fi
+            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+            git add web/prompt-kit/index.html
+            git diff --check
+            git commit -m "merge: reconcile P131 with current main"
+          fi
+          git merge-base --is-ancestor origin/main HEAD
+      - name: Apply bounded P131 artifact-boundary repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .tmp_p131_artifact_boundary_patch.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          git diff --check
+      - name: Validate focused and Prompt Kit contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile tests/test_spec_architecture_prompt_registry.py
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_language_audit tests.test_prompt_kit_order_navigation_contract -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python tests/test_prompt_kit_header_contract.py
+          git diff --check
+      - name: Second-pass boundary and diff review
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('registry/prompts/spec-architecture-prompts.v1.json').read_text(encoding='utf-8'))
+          p=next(x for x in data['prompts'] if x['id']=='P131')
+          c=p['copyContent']
+          b=c[c.index('SPRINT / ARTIFACT BOUNDARY'):c.index('MISSION')]
+          checks={
+            'declares_repo_ref': all(x in b for x in ['REPOSITORY / WORKSPACE','BRANCH / REF']),
+            'declares_authority_scope': all(x in b for x in ['MUTATION AUTHORITY','OWNED SCOPE','FORBIDDEN SCOPE']),
+            'protects_source': 'source evidence as read-only by default' in b and 'Never use this overwrite path for source evidence' in b,
+            'outputs_boundary': 'under `Outputs/`' in b,
+            'backup_before_overwrite': 'timestamped backup under `Outputs/backups/YYYYMMDD-HHMMSS/`' in b,
+            'fail_closed': 'stop before file mutation' in b,
+            'semantic_fields_match': 'source evidence remains preserved' in p['expectedOutput'] and 'timestamped backup and mapping' in p['proofGate'],
+          }
+          print(json.dumps(checks, indent=2))
+          assert all(checks.values()), checks
+          PY
+          git diff --stat
+          git diff -- registry/prompts/spec-architecture-prompts.v1.json tests/test_spec_architecture_prompt_registry.py | sed -n '1,260p'
+      - name: Commit durable repair and remove temporary carriers
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -f .tmp_p131_artifact_boundary_patch.py .github/workflows/tmp-p131-artifact-boundary.yml
+          git diff --check
+          git status --short
+          git diff --stat
+          git add registry/prompts/spec-architecture-prompts.v1.json tests/test_spec_architecture_prompt_registry.py web/prompt-kit/index.html
+          git commit -m "fix(prompt-kit): protect P131 artifact outputs"
+          git push origin HEAD:feat/project-development-case-study-presentation-20260909
+          echo "DURABLE_HEAD=$(git rev-parse HEAD)"
