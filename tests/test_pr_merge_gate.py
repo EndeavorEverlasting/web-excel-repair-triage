@@ -11,6 +11,7 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import validate_pr_merge_gate
+import validate_repository_promotion
 
 
 class PrMergeGateTests(unittest.TestCase):
@@ -35,6 +36,9 @@ class PrMergeGateTests(unittest.TestCase):
 
     def test_contract_and_fixture_validator_passes(self) -> None:
         self.assertEqual(validate_pr_merge_gate.main(["--summary"]), 0)
+
+    def test_repository_promotion_contract_runs_under_pr_floor_owner(self) -> None:
+        self.assertEqual(validate_repository_promotion.main(["--summary"]), 0)
 
     def test_green_mergeable_authorized_pr_is_merge_now_not_blocker(self) -> None:
         result = validate_pr_merge_gate.classify_pr_state(

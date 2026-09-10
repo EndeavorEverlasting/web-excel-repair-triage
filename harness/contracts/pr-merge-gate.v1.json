@@ -53,6 +53,17 @@
     "merge authority is unavailable when merge intent exists"
   ],
   "required_merge_action": "Merge immediately with expected-head protection, then verify the canonical default branch advanced to a commit containing the merged head before declaring integration complete.",
+  "promotion_pipeline": {
+    "contract": "harness/contracts/repository-promotion.v1.json",
+    "policy": "harness/promotion/required-checks.v1.json",
+    "contract_validator": "scripts/validate_repository_promotion.py",
+    "candidate_gate_runner": "scripts/run_repository_promotion_gate.py",
+    "github_adapter": "scripts/github_promotion_adapter.py",
+    "candidate_workflow": ".github/workflows/promotion-candidate.yml",
+    "promotion_workflow": ".github/workflows/promotion-executor.yml",
+    "receipt": "github-actions-artifact://repository-promotion-receipt/repository-promotion-receipt.json",
+    "scope": "provider-agnostic contract bound to the observed SCM/CI host adapter at runtime"
+  },
   "post_merge_consumption": {
     "canonical_default_branch": "main",
     "normal_consumer_intents": [
@@ -77,5 +88,5 @@
     "claiming integration complete without verifying the default branch advanced",
     "merging when required checks, review findings, mergeability, expected-head identity, or authority remain unresolved"
   ],
-  "proof_ceiling": "The contract and classifier prove deterministic merge-gate classification and post-merge handoff rules for supplied PR state. Actual provider merge success and default-branch advancement require observed Git/GitHub evidence."
+  "proof_ceiling": "The classifier proves deterministic merge-gate classification and post-merge handoff rules for supplied PR state. The registered repository-promotion contract and host adapter define the provider-side evidence-and-mutation path, but actual provider merge or queue success and default-branch containment require an observed provider run for the exact candidate."
 }

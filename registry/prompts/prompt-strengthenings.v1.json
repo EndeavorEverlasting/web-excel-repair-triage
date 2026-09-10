@@ -1,0 +1,86 @@
+{
+  "schema_version": "prompt-registry-strengthenings/v1",
+  "strengthenings": [
+    {
+      "id": "P105",
+      "append": {
+        "sprintRole": "Prefer a repository-native local/Git control plane for validation and candidate preparation, and spend provider API calls only on capabilities that plain Git and local proof cannot establish.",
+        "useWhen": "Prefer this local-first/provider-minimal mode when hosted CI or forge API rate limits are a recurring source of friction and the repository can perform meaningful validation, packaging, provenance, or generic Git transport without the provider.",
+        "inspectFirst": "Repository-owned scripts/task runners that can execute without hosted CI; plain Git transport/ref capabilities; the exact boundary between facts Git can prove and provider-only gates; provider request/reset headers, event sources, polling loops, cacheability, and prior rate-limit failures.",
+        "expectedOutput": "A local-first promotion core that can validate, build/package, record candidate provenance, and use generic Git transport without GitHub where repository policy permits, plus thin provider adapters only for provider-governed checks, reviews, merge queues, protected environments, or authoritative provider receipts; include an explicit provider-request budget and evidence-reuse strategy.",
+        "nextStep": "Before adding another provider call, prove the repository-owned core can execute locally for the same candidate and classify the call as GIT_PROVABLE or PROVIDER_ONLY; remove or reuse calls that duplicate current candidate-bound evidence.",
+        "proofGate": "The canonical validation/promotion core runs without GitHub for provider-independent work, at least one host adapter invokes the same repository-owned commands rather than reimplementing them, provider-only calls are inventoried and bounded, rate-limit recovery preserves candidate-bound local proof, and unchanged local gates are not rerun merely because provider truth temporarily became unavailable.",
+        "copyContent": "11. LOCAL-FIRST / PROVIDER-MINIMAL CONTROL PLANE\nTreat hosted CI and forge APIs as adapters, not as the workflow itself. Build the canonical validation, build/package, provenance, candidate-receipt, and policy-evaluation path as repository-owned commands that can run from a local shell or another runner without GitHub. Classify execution into three modes: LOCAL_ONLY for provider-independent validation/build/provenance; GIT_REMOTE_MINIMAL for generic fetch/push/tag/ref transport when repository policy permits and no provider-only gate is required; PROVIDER_GOVERNED when required checks, review/thread state, merge queue, protected environment, provider deployment, or authoritative provider mutation receipts make a host API necessary. Prefer plain Git transport for facts and mutations Git can safely prove. Use the provider API only for facts Git cannot prove. Never downgrade a provider-governed destination into a local merge merely to avoid the provider. GitHub Actions remains a thin adapter over the same repo-owned commands, not the canonical implementation. A GitLab CI, Azure Pipelines, Gitea/Forgejo, self-hosted runner, or local invocation should be able to call the same core when its capability map permits.\n\n12. PROVIDER REQUEST BUDGET / RATE-LIMIT ECONOMY\nInventory provider calls by purpose and candidate SHA. Cache and reuse provider truth only while its candidate/base/policy identity remains current; do not refetch unchanged evidence for ceremony. Prefer event-driven wakeups over status polling. Batch compatible reads when the provider supports it. Honor Retry-After and provider reset metadata, use bounded exponential backoff with jitter for transient failures, cap refresh attempts, and serialize provider writers. When PROVIDER_RATE_LIMITED occurs, preserve the locally complete candidate receipt and highest proven local gate, fail closed on provider-only proof, and resume from that same candidate without rerunning unchanged local work after the provider recovers. Immediately before an authorized provider mutation, perform the one authoritative fresh read required by the owning policy even when earlier provider truth was cached.\n\n13. PORTABLE CORE / THIN ADAPTER PROOF\nProve that local execution and the observed host adapter invoke the same canonical repo-owned commands and consume the same candidate identity/artifact contract. Where practical, exercise a second adapter or a provider-free dry-run against the same fixture to expose hidden GitHub assumptions. Provider YAML may orchestrate triggers, credentials, caching, and hosted services; it must not become a second implementation of validation or release logic. Preserve build-once/promote-the-same-artifact semantics across adapters."
+      },
+      "keywords": [
+        "local-first CI/CD",
+        "provider-minimal promotion",
+        "provider optional workflow",
+        "plain Git promotion",
+        "Git transport promotion",
+        "provider request budget",
+        "rate-limit economy",
+        "thin CI adapter"
+      ],
+      "tutorial": {
+        "disposition": "UPDATE_EXISTING_TUTORIAL",
+        "paths": [
+          "docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md"
+        ],
+        "reason": "Teach local-first/provider-minimal promotion and when provider-only proof remains mandatory."
+      }
+    },
+    {
+      "id": "P79",
+      "append": {
+        "sprintRole": "Keep tutorial coverage current whenever Prompt Kit identities are added or materially strengthened, and recycle privacy-bounded usage/friction evidence into tutorial refresh candidates instead of rediscovering proven workflows.",
+        "useWhen": "Also use this owner to keep tutorial coverage synchronized with ADD/STRENGTHEN work and to route repeated privacy-bounded prompt-use friction into P64 tutorial discovery without exporting raw usage.",
+        "inspectFirst": "The tutorial-freshness contract and ledger; P64 tutorial owner; existing Prompt Kit tutorial paths; privacy-bounded operant_friction receipts and their P99 ownership; verified commands, fixtures, failure cases, and proof artifacts already produced by the prompt work.",
+        "expectedOutput": "Every ADD or material STRENGTHEN has an explicit tutorial disposition and same-sprint tutorial/coverage update; reusable verified execution evidence is linked rather than rewritten; privacy boundaries remain intact; generated-site parity and tutorial-freshness validation both pass.",
+        "nextStep": "For every ADD, update tutorial coverage before declaring the prompt contribution complete; for repeated accepted usage/friction evidence, route a bounded refresh candidate to P64 and reuse current verified artifacts after revalidating them on the current head.",
+        "proofGate": "No new prompt identity can complete without a tutorial freshness disposition; tutorial paths or reference-only reasons resolve; raw ordinary prompt usage remains local/information-only; only privacy-bounded accepted friction evidence informs usage-driven tutorial refresh; reused commands/fixtures/proof are current-head validated rather than copied from stale runs.",
+        "copyContent": "PROMPT -> TUTORIAL FRESHNESS CONTRACT\n- Every ADD must update tutorial coverage in the same bounded change. Disposition it as UPDATE_EXISTING_TUTORIAL, ADD_TUTORIAL, or REFERENCE_ONLY_WITH_REASON; silence is not a disposition. The canonical prompt-add helper must fail closed when the tutorial freshness input is missing, and its mutation/rollback boundary must include the tutorial freshness ledger.\n- A material STRENGTHEN must likewise declare whether an existing tutorial changes, a new tutorial is warranted, or the change is reference-only. Do not let Prompt Kit capability evolve while the teaching surface silently describes an older workflow.\n- Recycle work: reuse verified commands, sanitized fixtures, expected results, failure/recovery examples, screenshots/diagrams when safe, and proof artifacts produced during prompt execution instead of rediscovering the same path. Revalidate reused evidence against the current head before teaching it.\n- Prompt use may inform tutorial maintenance only through existing privacy rules. Raw ordinary prompt_usage, search text, typed content, navigation history, clipboard content, prompt bodies, and user identity remain local/information-only. Consume only accepted coarse privacy-bounded operant_friction or equivalent repository-owned receipts already authorized by P99 and the feedback routing contract.\n- Route tutorial prioritization and journey factoring to P64 Repository Tutorial Portfolio Ranker. P79 owns ADD/STRENGTHEN contribution completeness; P64 owns tutorial portfolio judgment. Do not duplicate either owner's doctrine.\n- Treat normal repository behavior as reusable tutorial evidence when current commits, tests, launchers, help surfaces, support failures, or accepted friction receipts reveal a repeatable user journey. A changed implementation is a refresh signal, not automatic permission to teach unproven behavior."
+      },
+      "keywords": [
+        "tutorial freshness",
+        "prompt tutorial parity",
+        "prompt addition tutorial update",
+        "recycle prompt work",
+        "operant friction tutorial"
+      ],
+      "tutorial": {
+        "disposition": "UPDATE_EXISTING_TUTORIAL",
+        "paths": [
+          "docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md"
+        ],
+        "reason": "Document tutorial parity as part of the canonical prompt contribution path."
+      }
+    },
+    {
+      "id": "P64",
+      "append": {
+        "sprintRole": "Continuously refresh tutorial priorities from prompt-registry change receipts, current repository behavior, and accepted privacy-bounded friction signals while reusing already-proven workflow evidence.",
+        "useWhen": "Also use after a prompt ADD/STRENGTHEN tutorial freshness receipt or repeated accepted operant_friction signal indicates the teaching surface may be stale.",
+        "inspectFirst": "Prompt tutorial-freshness ledger and recent prompt registry changes; current tutorial paths; accepted privacy-bounded operant_friction receipts; recent implementation/tests/help changes; reusable verified commands, sanitized fixtures, expected results, and recovery evidence from prior prompt execution.",
+        "expectedOutput": "A tutorial refresh disposition for each relevant prompt/change/signal, with existing verified evidence reused where current, stale evidence rejected or revalidated, and no raw private usage promoted into repository artifacts.",
+        "nextStep": "Consume the oldest unresolved tutorial freshness signal first, revalidate reusable execution evidence against current behavior, update or add the smallest useful tutorial surface, and close the signal with tutorial-path plus proof evidence.",
+        "proofGate": "Every consumed freshness signal is closed as updated tutorial, new tutorial, reference-only with reason, blocked, or rejected; reusable steps are current-head verified; privacy-bounded usage evidence stays coarse; and tutorial instructions match current implementation rather than remembered prompt behavior.",
+        "copyContent": "TUTORIAL FRESHNESS / RECYCLING LOOP\nTreat prompt evolution and repeated proven use as tutorial-maintenance inputs. Read the repository-owned tutorial freshness ledger before ranking new work. A prompt ADD or material STRENGTHEN must have a tutorial disposition; consume unresolved UPDATE_EXISTING_TUTORIAL or ADD_TUTORIAL records before inventing unrelated tutorials. REFERENCE_ONLY_WITH_REASON remains visible so the same non-tutorial decision is not rediscovered later.\n\nFor usage-driven refresh, reuse the existing privacy boundary: raw ordinary prompt_usage remains local/information-only. Only accepted coarse privacy-bounded operant_friction or equivalent repository-owned receipts may enter durable tutorial prioritization. Never persist search text, typed content, prompt bodies, navigation history, clipboard content, or user identity merely to improve tutorials.\n\nRecycle proven work instead of re-performing discovery. Prefer current verified commands, sanitized fixtures, successful and failure-state examples, screenshots/diagrams when safe, and acceptance/proof artifacts already produced by the owning prompt or repository workflow. Revalidate identity-sensitive evidence when head, dependencies, UI, schema, or commands moved. Use current commits, tests, launchers, help text, and support evidence as freshness signals, but teach only implemented and independently verifiable behavior."
+      },
+      "keywords": [
+        "tutorial refresh",
+        "tutorial freshness ledger",
+        "prompt usage tutorial",
+        "reuse verified tutorial evidence",
+        "privacy-bounded tutorial signal"
+      ],
+      "tutorial": {
+        "disposition": "UPDATE_EXISTING_TUTORIAL",
+        "paths": [
+          "docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md"
+        ],
+        "reason": "Teach how tutorial ranking consumes lifecycle and privacy-bounded usage signals."
+      }
+    }
+  ]
+}

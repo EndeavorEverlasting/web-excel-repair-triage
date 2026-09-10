@@ -1,0 +1,206 @@
+from __future__ import annotations
+
+import json
+import os
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = ROOT / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
+import github_promotion_adapter as github_adapter
+import validate_repository_promotion as promotion
+
+
+class RepositoryPromotionTests(unittest.TestCase):
+    def load(self, path: str) -> dict:
+        return json.loads((ROOT / path).read_text(encoding="utf-8"))
+
+    def test_contract_policy_and_negative_fixtures_pass(self) -> None:
+        self.assertEqual(promotion.main([]), 0)
+
+    def test_contract_is_provider_agnostic_but_runtime_is_bound_to_github(self) -> None:
+        contract = self.load("harness/contracts/repository-promotion.v1.json")
+        policy = self.load("harness/promotion/required-checks.v1.json")
+        self.assertEqual(contract["provider_contract"]["interface_version"], "scm-ci-provider/v1")
+        self.assertEqual(contract["github_actions_adapter"]["adapter_id"], "github-actions-v1")
+        self.assertEqual(policy["provider_adapter"], "github-actions-v1")
+        self.assertFalse(contract["authoring_boundary"]["pipeline_authors_source"])
+        self.assertFalse(contract["provider_contract"]["local_git_merge_is_sufficient"])
+        self.assertTrue(contract["provider_contract"]["provider_mutation_required_for_success"])
+        self.assertEqual(contract["provider_contract"]["degraded_statuses"], ["PROVIDER_UNAVAILABLE", "PROVIDER_RATE_LIMITED", "PROVIDER_PARTIAL_TRUTH"])
+        self.assertIn("provider_host", contract["receipt_schema"]["required_fields"])
+
+    def test_required_checks_are_explicit_and_application_e2e_scope_is_bounded(self) -> None:
+        main = self.load("harness/promotion/required-checks.v1.json")["destinations"]["main"]
+        self.assertEqual(main["required_check_names"], ["Promotion / Contract", "Promotion / Harness E2E", "Promotion / Application E2E", "Promotion / Exact Candidate Gate"])
+        self.assertEqual(main["allowed_change_paths"], ["harness/evals/fixtures/repository-promotion-canary.v1.json"])
+        self.assertEqual(main["application_e2e"]["classification"], "INAPPLICABLE")
+        self.assertEqual(main["merge_intent"]["head_prefix"], "promote/")
+        self.assertEqual(main["merge_intent"]["pr_body_marker"], "[promotion:auto-main]")
+        self.assertTrue(main["unresolved_review_threads_must_be_zero"])
+
+    def test_candidate_workflow_is_read_only_exact_candidate_bound_and_edit_aware(self) -> None:
+        text = (ROOT / ".github/workflows/promotion-candidate.yml").read_text(encoding="utf-8")
+        for marker in ("pull_request:", "types: [opened, synchronize, reopened, ready_for_review, edited]", "contents: read", "pull-requests: read", "ref: ${{ github.event.pull_request.head.sha }}", "persist-credentials: false", "harness/evals/fixtures/repository-promotion-*.v1.json", "Promotion / Contract", "Promotion / Harness E2E", "Promotion / Application E2E", "Promotion / Exact Candidate Gate"):
+            self.assertIn(marker, text)
+        self.assertEqual(text.count("        if: always()"), 3)
+        self.assertNotIn("pull_request_target:", text)
+        self.assertNotIn("contents: write", text)
+
+    def test_executor_runs_trusted_default_branch_adapter_with_serialized_write_authority(self) -> None:
+        text = (ROOT / ".github/workflows/promotion-executor.yml").read_text(encoding="utf-8")
+        for marker in ("workflow_run:", "pull_request_target:", "pull_request_review:", "pull_request_review_comment:", "workflow_dispatch:", "actions: read", "checks: read", "contents: write", "pull-requests: write", "group: repository-promotion-main", "cancel-in-progress: false", "ref: ${{ github.event.repository.default_branch }}", "persist-credentials: false", "scripts/github_promotion_adapter.py", "repository-promotion-receipt"):
+            self.assertIn(marker, text)
+        self.assertNotIn("pull_request:\n", text)
+
+    def test_workflow_contract_rejects_untrusted_pull_request_executor_trigger(self) -> None:
+        policy = self.load("harness/promotion/required-checks.v1.json")
+        executor_text = (ROOT / ".github/workflows/promotion-executor.yml").read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as directory:
+            unsafe_executor = Path(directory) / "promotion-executor.yml"
+            unsafe_executor.write_text(executor_text + "\n  pull_request:\n", encoding="utf-8")
+            with mock.patch.object(promotion, "EXECUTOR_WORKFLOW", unsafe_executor):
+                with self.assertRaisesRegex(promotion.PromotionContractError, "untrusted pull_request"):
+                    promotion.validate_workflow_contract(policy)
+
+    def test_github_adapter_is_host_parameterized_and_expected_head_guarded(self) -> None:
+        text = (ROOT / "scripts/github_promotion_adapter.py").read_text(encoding="utf-8")
+        for marker in ("GITHUB_SERVER_URL", "GITHUB_API_URL", "GITHUB_GRAPHQL_URL", "GITHUB_REPOSITORY", "reviewThreads", "/rules/branches/", "/actions/runs/", "/artifacts", '{"sha": head', "enqueuePullRequest", "/compare/", "PROVIDER_RATE_LIMITED", "PROVIDER_PARTIAL_TRUTH", "PROVIDER_UNAVAILABLE", "ALREADY_MERGED_VERIFIED", '"containment"'):
+            self.assertIn(marker, text)
+        signal = github_adapter.repair_signal(
+            {"candidate_head_sha": "a" * 40, "candidate_base_sha": "b" * 40, "validation_run_id": 9, "event_id": "10"},
+            "REQUIRED_CHECK_NOT_GREEN",
+            "Repair the required check.",
+        )
+        self.assertEqual(signal["owner"], "P115")
+        self.assertEqual(signal["candidate_sha"], "a" * 40)
+        self.assertIn("new exact candidate", signal["proof_ceiling"])
+        self.assertNotIn("https://api.github.com", text)
+        self.assertNotIn("PERSONAL_ACCESS_TOKEN", text)
+        self.assertNotIn("git merge", text)
+
+    def test_github_runtime_requires_explicit_server_identity(self) -> None:
+        env = {
+            "GITHUB_REPOSITORY": "EndeavorEverlasting/web-excel-repair-triage",
+            "GITHUB_API_URL": "https://api.github.com",
+            "GITHUB_GRAPHQL_URL": "https://api.github.com/graphql",
+            "GITHUB_TOKEN": "token",
+        }
+        with mock.patch.dict(os.environ, env, clear=True):
+            with self.assertRaisesRegex(github_adapter.ProviderError, "runtime identity"):
+                github_adapter.GitHub()
+        env["GITHUB_SERVER_URL"] = "https://github.com"
+        with mock.patch.dict(os.environ, env, clear=True):
+            gh = github_adapter.GitHub()
+        self.assertEqual(gh.server_url, "https://github.com")
+
+    def test_validation_run_accepts_dynamic_run_name_before_pagination_ceiling(self) -> None:
+        exact = {
+            "id": 9,
+            "name": "Promotion Candidate Validation | PR #42 | head=aaaa | base=bbbb",
+            "head_sha": "a" * 40,
+            "created_at": "2026-09-10T00:00:00Z",
+            "pull_requests": [{"number": 42}],
+        }
+
+        class FakeGitHub:
+            repo = "EndeavorEverlasting/web-excel-repair-triage"
+
+            def rest(self, method: str, path: str, body=None):
+                self.last_path = path
+                return {"total_count": 101, "workflow_runs": [exact]}
+
+        result = github_adapter.validation_run(FakeGitHub(), 42, "a" * 40, None)
+        self.assertEqual(result["id"], 9)
+
+    def test_validation_run_fails_closed_when_match_may_be_on_older_page(self) -> None:
+        class FakeGitHub:
+            repo = "EndeavorEverlasting/web-excel-repair-triage"
+
+            def rest(self, method: str, path: str, body=None):
+                return {"total_count": 101, "workflow_runs": []}
+
+        with self.assertRaisesRegex(github_adapter.ProviderError, "older provider pages remain"):
+            github_adapter.validation_run(FakeGitHub(), 42, "a" * 40, None)
+
+    def test_direct_merge_reconciles_ambiguous_provider_response(self) -> None:
+        head = "a" * 40
+        integration = "c" * 40
+
+        class FakeGitHub:
+            repo = "EndeavorEverlasting/web-excel-repair-triage"
+
+            def rest(self, method: str, path: str, body=None):
+                if method == "PUT":
+                    raise github_adapter.ProviderError("PROVIDER_UNAVAILABLE", "ambiguous merge response")
+                if path.endswith("/pulls/42"):
+                    return {
+                        "merged": True,
+                        "merge_commit_sha": integration,
+                        "head": {"sha": head},
+                    }
+                if "/compare/" in path:
+                    return {"status": "identical"}
+                raise AssertionError(path)
+
+        result = github_adapter.merge_direct(FakeGitHub(), 42, head, "merge", "main")
+        self.assertEqual(result["mode"], "reconciled_merge")
+        self.assertEqual(result["integration_sha"], integration)
+
+    def test_pr_floor_integration_registers_concrete_promotion_pipeline(self) -> None:
+        owner = self.load("harness/contracts/pr-merge-gate.v1.json")
+        registered = owner["promotion_pipeline"]
+        self.assertEqual(owner["workflow_id"], "pr-floor-integration")
+        self.assertEqual(registered["contract"], "harness/contracts/repository-promotion.v1.json")
+        self.assertEqual(registered["github_adapter"], "scripts/github_promotion_adapter.py")
+        self.assertEqual(registered["promotion_workflow"], ".github/workflows/promotion-executor.yml")
+        self.assertEqual(registered["receipt"], "github-actions-artifact://repository-promotion-receipt/repository-promotion-receipt.json")
+
+    def test_ready_fixture_requires_mergeable_exact_head_and_complete_provider_truth(self) -> None:
+        policy = self.load("harness/promotion/required-checks.v1.json")
+        fixtures = self.load("harness/evals/fixtures/repository-promotion-cases.v1.json")
+        ready = next(case for case in fixtures["cases"] if case["id"] == "ready_direct")
+        snapshot = json.loads(json.dumps(ready["snapshot"]))
+        self.assertEqual(promotion.evaluate_readiness(snapshot, policy)["decision"], "READY_DIRECT")
+        snapshot["pr"]["mergeable"] = None
+        self.assertEqual(promotion.evaluate_readiness(snapshot, policy)["reason"], "MERGEABILITY_UNRESOLVED_OR_CONFLICTED")
+
+    def test_unauthorized_scope_has_distinct_reason_and_paths(self) -> None:
+        policy = self.load("harness/promotion/required-checks.v1.json")
+        fixtures = self.load("harness/evals/fixtures/repository-promotion-cases.v1.json")
+        case = next(case for case in fixtures["cases"] if case["id"] == "unauthorized_scope")
+        result = promotion.evaluate_readiness(case["snapshot"], policy)
+        self.assertEqual(result["reason"], "UNAUTHORIZED_CHANGE_SCOPE")
+        self.assertIn("docs/prompt-kit.js", result["required_action"])
+
+    def test_required_artifacts_require_positive_numeric_provider_ids(self) -> None:
+        policy = self.load("harness/promotion/required-checks.v1.json")
+        fixtures = self.load("harness/evals/fixtures/repository-promotion-cases.v1.json")
+        ready = next(case for case in fixtures["cases"] if case["id"] == "ready_direct")
+        required_name = policy["destinations"]["main"]["required_validation_artifacts"][0]
+
+        for invalid_id in (None, 0, -1, "1", True, 1.5):
+            with self.subTest(invalid_id=invalid_id):
+                snapshot = json.loads(json.dumps(ready["snapshot"]))
+                artifact = next(item for item in snapshot["validation"]["artifacts"] if item["name"] == required_name)
+                artifact["id"] = invalid_id
+                result = promotion.evaluate_readiness(snapshot, policy)
+                self.assertEqual(result["decision"], "BLOCKED")
+                self.assertEqual(result["reason"], "PROVIDER_PARTIAL_TRUTH")
+                self.assertIn(required_name, result["required_action"])
+
+    def test_failed_candidate_proof_is_not_reused_by_promotion_contract(self) -> None:
+        routing = self.load("harness/contracts/repository-promotion.v1.json")["failure_routing"]
+        self.assertEqual(routing["repair_owner"], "P115")
+        self.assertTrue(routing["repair_creates_new_candidate"])
+        self.assertTrue(routing["failed_candidate_proof_reuse_forbidden"])
+
+
+if __name__ == "__main__":
+    unittest.main()

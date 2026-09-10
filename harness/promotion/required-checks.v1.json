@@ -1,0 +1,66 @@
+{
+  "schema_version": "repository-promotion-policy/v1",
+  "policy_version": "main-promotion-v1",
+  "provider_adapter": "github-actions-v1",
+  "repository": "EndeavorEverlasting/web-excel-repair-triage",
+  "destinations": {
+    "main": {
+      "enabled": true,
+      "merge_method": "merge",
+      "head_repository_must_equal_base_repository": true,
+      "authorized_author_associations": ["OWNER"],
+      "merge_intent": {
+        "head_prefix": "promote/",
+        "pr_body_marker": "[promotion:auto-main]"
+      },
+      "required_check_names": [
+        "Promotion / Contract",
+        "Promotion / Harness E2E",
+        "Promotion / Application E2E",
+        "Promotion / Exact Candidate Gate"
+      ],
+      "required_validation_artifacts": [
+        "promotion-harness-receipt",
+        "promotion-application-e2e-receipt",
+        "promotion-candidate-receipt"
+      ],
+      "required_approvals": 0,
+      "unresolved_review_threads_must_be_zero": true,
+      "allowed_change_paths": [
+        "harness/evals/fixtures/repository-promotion-canary.v1.json"
+      ],
+      "application_e2e": {
+        "classification": "INAPPLICABLE",
+        "reason": "The bounded v1 auto-promotion canary changes only the repository-promotion fixture and does not mutate an application/runtime surface."
+      },
+      "harness_e2e_commands": [
+        "python scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
+        "python -m unittest tests.test_harness_contract -v",
+        "python scripts/validate_repository_promotion.py --summary",
+        "python -m unittest tests.test_repository_promotion -v"
+      ],
+      "exact_candidate_commands": [
+        "python scripts/validate_repository_promotion.py --summary",
+        "git diff --check {base_sha}...{head_sha}"
+      ]
+    }
+  },
+  "provider_degraded_statuses": [
+    "PROVIDER_UNAVAILABLE",
+    "PROVIDER_RATE_LIMITED",
+    "PROVIDER_PARTIAL_TRUTH"
+  ],
+  "revalidation": {
+    "base_move_requires_new_validation": true,
+    "head_move_requires_new_validation": true,
+    "policy_move_requires_new_validation": true
+  },
+  "permissions": {
+    "candidate_validation": ["contents:read", "pull-requests:read"],
+    "promotion_executor": ["actions:read", "checks:read", "contents:write", "pull-requests:write"]
+  },
+  "concurrency": {
+    "scope": "destination",
+    "cancel_in_progress": false
+  }
+}

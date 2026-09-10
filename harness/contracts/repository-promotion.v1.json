@@ -1,0 +1,123 @@
+{
+  "schema_version": "repository-promotion/v1",
+  "contract_id": "repository-promotion",
+  "workflow_id": "pr-floor-integration",
+  "role": "validation-and-promotion-only",
+  "authoring_boundary": {
+    "pipeline_authors_source": false,
+    "repo_native_generators_may_prepare_candidate_before_promotion": true,
+    "provider_yaml_orchestrates_repository_owned_commands": true,
+    "local_git_merge_is_provider_promotion": false
+  },
+  "provider_contract": {
+    "required_capabilities": [
+      "resolve_host_identity",
+      "resolve_default_branch",
+      "query_candidate_state",
+      "query_explicit_required_checks",
+      "query_review_decision",
+      "query_unresolved_review_threads",
+      "query_branch_protection_and_rulesets",
+      "expected_head_merge_or_merge_queue",
+      "artifact_identity",
+      "post_promotion_containment"
+    ],
+    "degraded_statuses": [
+      "PROVIDER_UNAVAILABLE",
+      "PROVIDER_RATE_LIMITED",
+      "PROVIDER_PARTIAL_TRUTH"
+    ],
+    "promotion_requires_complete_provider_truth": true,
+    "provider_mutation_required_for_success": true,
+    "local_git_merge_is_sufficient": false,
+    "interface_version": "scm-ci-provider/v1"
+  },
+  "candidate_identity": {
+    "required_fields": [
+      "repository",
+      "provider_adapter",
+      "pr_number",
+      "head_sha",
+      "base_sha",
+      "base_ref",
+      "policy_version",
+      "validation_run_id"
+    ],
+    "invalidate_when": [
+      "head_sha changes",
+      "base_sha changes",
+      "required-check policy version changes",
+      "owning validation command changes",
+      "required artifact identity changes"
+    ]
+  },
+  "gate_classes": [
+    "REQUIRED",
+    "OPTIONAL",
+    "INAPPLICABLE",
+    "ENVIRONMENT_BLOCKED"
+  ],
+  "required_gate_rules": [
+    "REQUIRED plus SKIP is blocking",
+    "cancelled timed_out neutral stale missing or failing required results are blocking",
+    "deterministic validation failures are not retried into green",
+    "application E2E and harness E2E retain separate receipts"
+  ],
+  "receipt_schema": {
+    "schema_version": "repository-promotion-receipt/v1",
+    "required_fields": [
+      "provider_status",
+      "provider_adapter",
+      "provider_host",
+      "repository",
+      "event_name",
+      "event_id",
+      "actor",
+      "pr_number",
+      "candidate_head_sha",
+      "candidate_base_sha",
+      "target",
+      "policy_version",
+      "required_checks",
+      "review_decision",
+      "unresolved_review_threads",
+      "validation_run_id",
+      "validation_artifacts",
+      "mutation",
+      "integration_sha",
+      "containment",
+      "proof_ceiling"
+    ]
+  },
+  "github_actions_adapter": {
+    "adapter_id": "github-actions-v1",
+    "runtime_script": "scripts/github_promotion_adapter.py",
+    "candidate_workflow": ".github/workflows/promotion-candidate.yml",
+    "promotion_workflow": ".github/workflows/promotion-executor.yml",
+    "required_check_policy": "harness/promotion/required-checks.v1.json",
+    "server_url_env": "GITHUB_SERVER_URL",
+    "api_url_env": "GITHUB_API_URL",
+    "graphql_url_env": "GITHUB_GRAPHQL_URL",
+    "repository_env": "GITHUB_REPOSITORY",
+    "token_env": "GITHUB_TOKEN",
+    "direct_merge_compare_and_set": true,
+    "merge_queue_mode": "enqueue when a current provider ruleset requires merge queue; queued is not integrated",
+    "long_lived_pat_forbidden": true
+  },
+  "failure_routing": {
+    "repair_owner": "P115",
+    "promotion_owner": "P105/pr-floor-integration",
+    "repair_creates_new_candidate": true,
+    "failed_candidate_proof_reuse_forbidden": true,
+    "required_signal_fields": [
+      "candidate_sha",
+      "candidate_base",
+      "failing_gate",
+      "owner",
+      "acceptance_condition",
+      "artifact_or_log_identity",
+      "proof_ceiling"
+    ]
+  },
+  "proof_ceiling": "Repository/static tests prove the contract and adapter decision model. Only an observed provider run can prove GitHub API readiness reconstruction, expected-head merge or queue mutation, and post-promotion containment for one exact candidate."
+}

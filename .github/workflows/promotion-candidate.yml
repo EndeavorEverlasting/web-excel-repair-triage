@@ -1,0 +1,134 @@
+name: Promotion Candidate Validation
+run-name: >-
+  Promotion Candidate Validation | PR #${{ github.event.pull_request.number }} |
+  head=${{ github.event.pull_request.head.sha }} | base=${{ github.event.pull_request.base.sha }}
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+    paths:
+      - harness/contracts/repository-promotion.v1.json
+      - harness/contracts/pr-merge-gate.v1.json
+      - harness/promotion/**
+      - harness/evals/fixtures/repository-promotion-*.v1.json
+      - scripts/validate_repository_promotion.py
+      - scripts/run_repository_promotion_gate.py
+      - scripts/github_promotion_adapter.py
+      - tests/test_repository_promotion.py
+      - tests/test_pr_merge_gate.py
+      - .github/workflows/promotion-candidate.yml
+      - .github/workflows/promotion-executor.yml
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  contract:
+    name: Promotion / Contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Validate provider-neutral promotion contract
+        run: |
+          python scripts/validate_repository_promotion.py --summary
+          python -m unittest tests.test_repository_promotion tests.test_pr_merge_gate -v
+
+  harness-e2e:
+    name: Promotion / Harness E2E
+    needs: [contract]
+    if: >-
+      startsWith(github.head_ref, 'promote/') &&
+      contains(github.event.pull_request.body, '[promotion:auto-main]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Run repository harness E2E
+        run: >-
+          python scripts/run_repository_promotion_gate.py
+          --gate harness-e2e
+          --event-path "$GITHUB_EVENT_PATH"
+          --output "$RUNNER_TEMP/promotion-harness-receipt.json"
+      - name: Upload harness E2E receipt
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: promotion-harness-receipt
+          path: ${{ runner.temp }}/promotion-harness-receipt.json
+          if-no-files-found: error
+
+  application-e2e:
+    name: Promotion / Application E2E
+    needs: [contract]
+    if: >-
+      startsWith(github.head_ref, 'promote/') &&
+      contains(github.event.pull_request.body, '[promotion:auto-main]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Run application E2E classification
+        run: >-
+          python scripts/run_repository_promotion_gate.py
+          --gate application-e2e
+          --event-path "$GITHUB_EVENT_PATH"
+          --output "$RUNNER_TEMP/promotion-application-e2e-receipt.json"
+      - name: Upload application E2E receipt
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: promotion-application-e2e-receipt
+          path: ${{ runner.temp }}/promotion-application-e2e-receipt.json
+          if-no-files-found: error
+
+  exact-candidate:
+    name: Promotion / Exact Candidate Gate
+    needs: [harness-e2e, application-e2e]
+    if: >-
+      always() &&
+      needs.harness-e2e.result == 'success' &&
+      needs.application-e2e.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Run exact-candidate gate
+        run: >-
+          python scripts/run_repository_promotion_gate.py
+          --gate candidate
+          --event-path "$GITHUB_EVENT_PATH"
+          --output "$RUNNER_TEMP/promotion-candidate-receipt.json"
+      - name: Upload exact-candidate receipt
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: promotion-candidate-receipt
+          path: ${{ runner.temp }}/promotion-candidate-receipt.json
+          if-no-files-found: error
