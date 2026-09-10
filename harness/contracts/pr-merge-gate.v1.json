@@ -61,7 +61,7 @@
     "github_adapter": "scripts/github_promotion_adapter.py",
     "candidate_workflow": ".github/workflows/promotion-candidate.yml",
     "promotion_workflow": ".github/workflows/promotion-executor.yml",
-    "receipt": "Outputs/repository-promotion-receipt.json",
+    "receipt": "github-actions-artifact://repository-promotion-receipt/repository-promotion-receipt.json",
     "scope": "provider-agnostic contract bound to the observed SCM/CI host adapter at runtime"
   },
   "post_merge_consumption": {
