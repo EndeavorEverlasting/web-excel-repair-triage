@@ -975,6 +975,28 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("outcome-quality claims are tied to supported criteria", prompt["proofGate"].lower())
         self.assertIn("counterfactual pie chart", " ".join(prompt["keywords"]).lower())
 
+
+        boundary_start = content.index("SPRINT / ARTIFACT BOUNDARY")
+        artifact_start = content.index("PRESENTATION / DEMO ARTIFACT")
+        self.assertLess(boundary_start, artifact_start)
+        boundary = content[boundary_start:artifact_start]
+        for phrase in (
+            "REPOSITORY / WORKSPACE",
+            "BRANCH / REF",
+            "MUTATION AUTHORITY",
+            "OWNED SCOPE",
+            "FORBIDDEN SCOPE",
+            "source evidence as read-only by default",
+            "under `Outputs/`",
+            "timestamped backup",
+            "Outputs/backups/YYYYMMDD-HHMMSS/",
+            "Never use this overwrite path for source evidence",
+            "stop before file mutation",
+        ):
+            self.assertIn(phrase, boundary)
+        self.assertIn("source evidence remains preserved", prompt["expectedOutput"])
+        self.assertIn("timestamped backup and mapping", prompt["proofGate"])
+
         scenario_start = content.index("PERSPECTIVE / COUNTERFACTUAL PIE CHARTS")
         scenario_end = content.index("DATA-ANALYSIS PORTFOLIO VALUE", scenario_start)
         scenario = content[scenario_start:scenario_end]
