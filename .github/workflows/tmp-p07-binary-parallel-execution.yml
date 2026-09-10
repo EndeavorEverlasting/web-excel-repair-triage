@@ -43,7 +43,7 @@ jobs:
       - name: Second-pass semantic and scope review
         run: |
           set -euo pipefail
-          python .github/tmp_p07_binary_parallel_execution.py review
+          PYTHONPATH=. python .github/tmp_p07_binary_parallel_execution.py review
           changed="$(git diff --name-only)"
           printf '%s\n' "$changed"
           printf '%s\n' "$changed" | grep -Fx 'docs/prompts.json'
