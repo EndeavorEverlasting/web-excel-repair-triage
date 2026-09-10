@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -48,6 +49,7 @@ class RepositoryPromotionTests(unittest.TestCase):
         text = (ROOT / ".github/workflows/promotion-candidate.yml").read_text(encoding="utf-8")
         for marker in ("pull_request:", "types: [opened, synchronize, reopened, ready_for_review, edited]", "contents: read", "pull-requests: read", "ref: ${{ github.event.pull_request.head.sha }}", "persist-credentials: false", "harness/evals/fixtures/repository-promotion-*.v1.json", "Promotion / Contract", "Promotion / Harness E2E", "Promotion / Application E2E", "Promotion / Exact Candidate Gate"):
             self.assertIn(marker, text)
+        self.assertEqual(text.count("        if: always()"), 3)
         self.assertNotIn("pull_request_target:", text)
         self.assertNotIn("contents: write", text)
 
@@ -56,6 +58,16 @@ class RepositoryPromotionTests(unittest.TestCase):
         for marker in ("workflow_run:", "pull_request_target:", "pull_request_review:", "pull_request_review_comment:", "workflow_dispatch:", "actions: read", "checks: read", "contents: write", "pull-requests: write", "group: repository-promotion-main", "cancel-in-progress: false", "ref: ${{ github.event.repository.default_branch }}", "persist-credentials: false", "scripts/github_promotion_adapter.py", "repository-promotion-receipt"):
             self.assertIn(marker, text)
         self.assertNotIn("pull_request:\n", text)
+
+    def test_workflow_contract_rejects_untrusted_pull_request_executor_trigger(self) -> None:
+        policy = self.load("harness/promotion/required-checks.v1.json")
+        executor_text = (ROOT / ".github/workflows/promotion-executor.yml").read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as directory:
+            unsafe_executor = Path(directory) / "promotion-executor.yml"
+            unsafe_executor.write_text(executor_text + "\n  pull_request:\n", encoding="utf-8")
+            with mock.patch.object(promotion, "EXECUTOR_WORKFLOW", unsafe_executor):
+                with self.assertRaisesRegex(promotion.PromotionContractError, "untrusted pull_request"):
+                    promotion.validate_workflow_contract(policy)
 
     def test_github_adapter_is_host_parameterized_and_expected_head_guarded(self) -> None:
         text = (ROOT / "scripts/github_promotion_adapter.py").read_text(encoding="utf-8")
@@ -88,10 +100,10 @@ class RepositoryPromotionTests(unittest.TestCase):
             gh = github_adapter.GitHub()
         self.assertEqual(gh.server_url, "https://github.com")
 
-    def test_validation_run_accepts_exact_match_before_pagination_ceiling(self) -> None:
+    def test_validation_run_accepts_dynamic_run_name_before_pagination_ceiling(self) -> None:
         exact = {
             "id": 9,
-            "name": "Promotion Candidate Validation",
+            "name": "Promotion Candidate Validation | PR #42 | head=aaaa | base=bbbb",
             "head_sha": "a" * 40,
             "created_at": "2026-09-10T00:00:00Z",
             "pull_requests": [{"number": 42}],
@@ -117,6 +129,30 @@ class RepositoryPromotionTests(unittest.TestCase):
         with self.assertRaisesRegex(github_adapter.ProviderError, "older provider pages remain"):
             github_adapter.validation_run(FakeGitHub(), 42, "a" * 40, None)
 
+    def test_direct_merge_reconciles_ambiguous_provider_response(self) -> None:
+        head = "a" * 40
+        integration = "c" * 40
+
+        class FakeGitHub:
+            repo = "EndeavorEverlasting/web-excel-repair-triage"
+
+            def rest(self, method: str, path: str, body=None):
+                if method == "PUT":
+                    raise github_adapter.ProviderError("PROVIDER_UNAVAILABLE", "ambiguous merge response")
+                if path.endswith("/pulls/42"):
+                    return {
+                        "merged": True,
+                        "merge_commit_sha": integration,
+                        "head": {"sha": head},
+                    }
+                if "/compare/" in path:
+                    return {"status": "identical"}
+                raise AssertionError(path)
+
+        result = github_adapter.merge_direct(FakeGitHub(), 42, head, "merge", "main")
+        self.assertEqual(result["mode"], "reconciled_merge")
+        self.assertEqual(result["integration_sha"], integration)
+
     def test_pr_floor_integration_registers_concrete_promotion_pipeline(self) -> None:
         owner = self.load("harness/contracts/pr-merge-gate.v1.json")
         registered = owner["promotion_pipeline"]
@@ -134,6 +170,14 @@ class RepositoryPromotionTests(unittest.TestCase):
         self.assertEqual(promotion.evaluate_readiness(snapshot, policy)["decision"], "READY_DIRECT")
         snapshot["pr"]["mergeable"] = None
         self.assertEqual(promotion.evaluate_readiness(snapshot, policy)["reason"], "MERGEABILITY_UNRESOLVED_OR_CONFLICTED")
+
+    def test_unauthorized_scope_has_distinct_reason_and_paths(self) -> None:
+        policy = self.load("harness/promotion/required-checks.v1.json")
+        fixtures = self.load("harness/evals/fixtures/repository-promotion-cases.v1.json")
+        case = next(case for case in fixtures["cases"] if case["id"] == "unauthorized_scope")
+        result = promotion.evaluate_readiness(case["snapshot"], policy)
+        self.assertEqual(result["reason"], "UNAUTHORIZED_CHANGE_SCOPE")
+        self.assertIn("docs/prompt-kit.js", result["required_action"])
 
     def test_required_artifacts_require_positive_numeric_provider_ids(self) -> None:
         policy = self.load("harness/promotion/required-checks.v1.json")
