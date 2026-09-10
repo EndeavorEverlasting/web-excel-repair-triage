@@ -7,8 +7,11 @@ on:
       - scripts/prompt_kit_feedback_hook.py
       - scripts/prompt_kit_afk_repository_dispatch.py
       - scripts/prompt_kit_afk_signal_router.py
+      - scripts/operant_upgrade.py
+      - scripts/validate_operant_upgrade.py
       - tests/test_prompt_kit_feedback_production.py
       - tests/test_operant_friction_repository_dispatch_adapter.py
+      - tests/test_operant_upgrade.py
       - feedback/inbox/**
       - .github/workflows/prompt-kit-feedback-hook.yml
   repository_dispatch:
@@ -39,8 +42,9 @@ jobs:
           python-version: '3.11'
       - name: Validate production feedback runtime and hooks
         run: |
-          python -m unittest tests.test_prompt_kit_feedback_production tests.test_operant_friction_repository_dispatch_adapter -v
+          python -m unittest tests.test_prompt_kit_feedback_production tests.test_operant_friction_repository_dispatch_adapter tests.test_operant_upgrade -v
           python scripts/validate_prompt_kit_feedback_afk_routing.py --summary
+          python scripts/validate_operant_upgrade.py --summary
       - name: Process explicit feedback ingest boundary
         run: python scripts/prompt_kit_feedback_hook.py --input feedback/inbox --output Outputs/prompt-kit-feedback-maintenance.json
       - name: Publish maintenance evidence
@@ -54,6 +58,8 @@ jobs:
   route-operant-friction:
     if: github.event_name == 'repository_dispatch'
     runs-on: ubuntu-latest
+    env:
+      PROMPT_KIT_AFK_WORKER_ARGV_JSON: '["python","scripts/operant_upgrade.py","plan","--request","{request}","--output-dir","Outputs/operant-upgrade/recipes"]'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -62,20 +68,23 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Validate repository-dispatch adapter
+      - name: Validate repository-dispatch adapter and canonical upgrade engine
         run: |
-          python -m unittest tests.test_operant_friction_repository_dispatch_adapter -v
+          python -m unittest tests.test_operant_friction_repository_dispatch_adapter tests.test_operant_upgrade -v
           python scripts/validate_prompt_kit_feedback_afk_routing.py --summary
-      - name: Route sanitized friction receipt
+          python scripts/validate_operant_upgrade.py --summary
+      - name: Route sanitized friction receipt into deterministic upgrade recipe
         run: >-
           python scripts/prompt_kit_afk_repository_dispatch.py
           --event "$GITHUB_EVENT_PATH"
           --state Outputs/prompt-kit-afk/state.json
           --requests-dir Outputs/prompt-kit-afk/work-requests
-      - name: Publish bounded AFK intake evidence
+      - name: Publish bounded AFK intake and upgrade recipe evidence
         uses: actions/upload-artifact@v4
         with:
           name: operant-friction-afk-intake-${{ github.sha }}
-          path: Outputs/prompt-kit-afk
+          path: |
+            Outputs/prompt-kit-afk
+            Outputs/operant-upgrade
           if-no-files-found: error
           retention-days: 14
