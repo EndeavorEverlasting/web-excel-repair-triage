@@ -170,8 +170,15 @@ def evaluate_readiness(snapshot: dict[str, Any], policy: dict[str, Any]) -> dict
     changed_paths = validation.get("changed_paths")
     if not isinstance(changed_paths, list) or not changed_paths:
         return _blocked("PROVIDER_PARTIAL_TRUTH", action="Provide the exact changed-path set.")
-    if sorted(set(changed_paths) - set(main["allowed_change_paths"])):
-        return _blocked("APPLICATION_E2E_PROFILE_MISSING", action="Register a real application-E2E profile before widening auto-promotion scope.")
+    out_of_scope = sorted(set(changed_paths) - set(main["allowed_change_paths"]))
+    if out_of_scope:
+        return _blocked(
+            "UNAUTHORIZED_CHANGE_SCOPE",
+            action=(
+                "Register a real application-E2E profile before widening auto-promotion scope; "
+                f"out-of-scope paths: {out_of_scope}"
+            ),
+        )
     checks = validation.get("checks")
     if not isinstance(checks, list):
         return _blocked("PROVIDER_PARTIAL_TRUTH", action="Query the named validation checks.")
@@ -232,7 +239,7 @@ def validate_workflow_contract(policy: dict[str, Any]) -> None:
     for marker in ("workflow_run:","pull_request_target:","pull_request_review:","pull_request_review_comment:","workflow_dispatch:","concurrency:","actions: read","checks: read","contents: write","pull-requests: write","scripts/github_promotion_adapter.py","persist-credentials: false"):
         if marker not in executor:
             raise PromotionContractError(f"promotion executor missing safety marker: {marker}")
-    if "pull_request:" in executor and "pull_request_target:" not in executor:
+    if any(line.strip() == "pull_request:" for line in executor.splitlines()):
         raise PromotionContractError("privileged promotion workflow must not execute from untrusted pull_request YAML")
 
 
