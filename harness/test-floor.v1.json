@@ -36,6 +36,7 @@
     "tests/test_repository_work_ledger_prompt.py",
     "tests/test_spec_architecture_prompt_registry.py",
     "tests/test_sysadminsuite_prompt_registry.py",
+    "tests/test_teams_attendance_roster_prompt.py",
     "tests/test_test_floor_evolution_prompt.py",
     "tests/test_ux_design_prompt_suite.py",
     "tests/test_hh_ticket_tracking_prompt.py"
