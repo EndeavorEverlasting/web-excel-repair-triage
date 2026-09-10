@@ -2,6 +2,12 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.6.0 - 2026-09-10
+
+### Features / breaking pre-1.0 changes
+
+- feat(operant): add canonical upgrade recipe engine (`b3b22808`)
+
 ## 0.5.0 - 2026-09-10
 
 ### Features / breaking pre-1.0 changes
