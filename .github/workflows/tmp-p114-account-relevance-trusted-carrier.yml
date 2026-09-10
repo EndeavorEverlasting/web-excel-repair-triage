@@ -74,20 +74,24 @@ jobs:
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
-          # Transport is not a durable Prompt Kit surface.
+          # Transport is not a durable Prompt Kit surface. Stage its deletion
+          # together with the three durable outputs, then prove the committed
+          # tree against the original material floor before pushing it.
           git rm -f scripts/tmp_apply_p114_account_relevance.py .github/workflows/tmp-p114-account-relevance-carrier.yml scripts/tmp_p114_account_relevance_trigger.txt
           git add registry/prompts/spec-architecture-prompts.v1.json tests/test_conversation_context_canary_prompt.py web/prompt-kit/index.html
-          mapfile -t changed < <(git diff --cached --name-only | sort)
+          git diff --cached --check
+          git commit -m 'feat(prompt-kit): add account relevance to P114 canary'
+
+          mapfile -t durable_changed < <(git diff --name-only 0ccae5bd4289fb7961f39a33941157597371326e HEAD | sort)
           expected=(
             registry/prompts/spec-architecture-prompts.v1.json
             tests/test_conversation_context_canary_prompt.py
             web/prompt-kit/index.html
           )
           mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
-          if [[ "$(printf '%s\n' "${changed[@]}")" != "$(printf '%s\n' "${expected_sorted[@]}")" ]]; then
-            printf 'Unexpected durable staged surface(s):\n%s\n' "${changed[*]}" >&2
+          if [[ "$(printf '%s\n' "${durable_changed[@]}")" != "$(printf '%s\n' "${expected_sorted[@]}")" ]]; then
+            printf 'Unexpected final durable diff from material floor:\n%s\n' "${durable_changed[*]}" >&2
             exit 1
           fi
-          git diff --cached --check
-          git commit -m 'feat(prompt-kit): add account relevance to P114 canary'
+          git diff 0ccae5bd4289fb7961f39a33941157597371326e HEAD --check
           git push origin HEAD:feat/p114-account-relevance-20260910
