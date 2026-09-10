@@ -79,28 +79,68 @@ jobs:
           unzip -q artifact.zip -d generated
           test -s generated/index.html
           sha256sum generated/index.html
-      - name: Commit exact generated site through Contents API
+      - name: Commit exact generated site with expected-head parent
         shell: bash
         run: |
           set -euo pipefail
-          blob_sha="$(gh api "repos/$GITHUB_REPOSITORY/contents/web/prompt-kit/index.html?ref=$HEAD_REF" --jq '.sha')"
-          export BLOB_SHA="$blob_sha"
+          base_tree="$(gh api "repos/$GITHUB_REPOSITORY/git/commits/$EXPECTED_HEAD" --jq '.tree.sha')"
+          export BASE_TREE="$base_tree"
           python - <<'PY'
           import base64
           import json
           import os
           from pathlib import Path
 
-          content = base64.b64encode(Path("generated/index.html").read_bytes()).decode("ascii")
+          encoded = base64.b64encode(Path("generated/index.html").read_bytes()).decode("ascii")
+          Path("blob.json").write_text(
+              json.dumps({"content": encoded, "encoding": "base64"}), encoding="utf-8"
+          )
+          PY
+          blob_sha="$(gh api -X POST "repos/$GITHUB_REPOSITORY/git/blobs" --input blob.json --jq '.sha')"
+          export BLOB_SHA="$blob_sha"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = {
+              "base_tree": os.environ["BASE_TREE"],
+              "tree": [
+                  {
+                      "path": "web/prompt-kit/index.html",
+                      "mode": "100644",
+                      "type": "blob",
+                      "sha": os.environ["BLOB_SHA"],
+                  }
+              ],
+          }
+          Path("tree.json").write_text(json.dumps(payload), encoding="utf-8")
+          PY
+          tree_sha="$(gh api -X POST "repos/$GITHUB_REPOSITORY/git/trees" --input tree.json --jq '.sha')"
+          export TREE_SHA="$tree_sha"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
           payload = {
               "message": "build(prompt-kit): regenerate canonical site for PR 412",
-              "branch": os.environ["HEAD_REF"],
-              "sha": os.environ["BLOB_SHA"],
-              "content": content,
+              "tree": os.environ["TREE_SHA"],
+              "parents": [os.environ["EXPECTED_HEAD"]],
           }
-          Path("payload.json").write_text(json.dumps(payload), encoding="utf-8")
+          Path("commit.json").write_text(json.dumps(payload), encoding="utf-8")
           PY
-          result="$(gh api -X PUT "repos/$GITHUB_REPOSITORY/contents/web/prompt-kit/index.html" --input payload.json)"
-          new_commit="$(printf '%s' "$result" | python -c 'import json,sys; print(json.load(sys.stdin)["commit"]["sha"])')"
-          test -n "$new_commit"
+          new_commit="$(gh api -X POST "repos/$GITHUB_REPOSITORY/git/commits" --input commit.json --jq '.sha')"
+          export NEW_COMMIT="$new_commit"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          Path("ref.json").write_text(
+              json.dumps({"sha": os.environ["NEW_COMMIT"], "force": False}),
+              encoding="utf-8",
+          )
+          PY
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/heads/$HEAD_REF" --input ref.json >/dev/null
           echo "generated-site-commit=$new_commit"
