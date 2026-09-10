@@ -1,0 +1,5 @@
+{
+  "schema_version": "repository-promotion-canary/v1",
+  "sequence": 1,
+  "purpose": "Sanitized no-product-change provider promotion canary."
+}
