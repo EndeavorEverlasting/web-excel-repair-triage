@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate the provider-agnostic repository promotion contract and decision model."""
 from __future__ import annotations
+
 import argparse
 import json
 from pathlib import Path
@@ -14,8 +15,10 @@ CANDIDATE_WORKFLOW = ROOT / ".github" / "workflows" / "promotion-candidate.yml"
 EXECUTOR_WORKFLOW = ROOT / ".github" / "workflows" / "promotion-executor.yml"
 PR_MERGE_CONTRACT = ROOT / "harness" / "contracts" / "pr-merge-gate.v1.json"
 
+
 class PromotionContractError(RuntimeError):
     pass
+
 
 def load_json(path: Path) -> Any:
     try:
@@ -24,6 +27,7 @@ def load_json(path: Path) -> Any:
         raise PromotionContractError(f"missing JSON file: {path.relative_to(ROOT)}") from exc
     except json.JSONDecodeError as exc:
         raise PromotionContractError(f"invalid JSON in {path.relative_to(ROOT)}: {exc}") from exc
+
 
 def validate_contract(contract: dict[str, Any]) -> None:
     if contract.get("schema_version") != "repository-promotion/v1":
@@ -64,6 +68,7 @@ def validate_contract(contract: dict[str, Any]) -> None:
     if adapter.get("long_lived_pat_forbidden") is not True:
         raise PromotionContractError("long-lived PAT must remain forbidden")
 
+
 def validate_owner_registration(contract: dict[str, Any]) -> None:
     owner = load_json(PR_MERGE_CONTRACT)
     if owner.get("workflow_id") != "pr-floor-integration":
@@ -80,6 +85,7 @@ def validate_owner_registration(contract: dict[str, Any]) -> None:
             raise PromotionContractError(f"registered promotion owner path is missing: {registered[key]}")
     if contract.get("workflow_id") != owner.get("workflow_id"):
         raise PromotionContractError("promotion contract workflow owner diverged from pr-merge-gate")
+
 
 def validate_policy(policy: dict[str, Any]) -> dict[str, Any]:
     if policy.get("schema_version") != "repository-promotion-policy/v1":
@@ -116,8 +122,10 @@ def validate_policy(policy: dict[str, Any]) -> dict[str, Any]:
         raise PromotionContractError("unresolved review threads must block promotion")
     return main
 
+
 def _blocked(reason: str, *, action: str) -> dict[str, Any]:
     return {"decision":"BLOCKED","blocker":True,"reason":reason,"required_action":action}
+
 
 def evaluate_readiness(snapshot: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
     main = validate_policy(policy)
@@ -210,6 +218,7 @@ def evaluate_readiness(snapshot: dict[str, Any], policy: dict[str, Any]) -> dict
         return {"decision":"READY_QUEUE","blocker":False,"reason":None,"required_action":"Re-read provider truth, then enqueue this exact pull request through the provider merge queue."}
     return {"decision":"READY_DIRECT","blocker":False,"reason":None,"required_action":"Re-read provider truth, then merge through the provider API with expected-head compare-and-set."}
 
+
 def validate_workflow_contract(policy: dict[str, Any]) -> None:
     main = validate_policy(policy)
     candidate = CANDIDATE_WORKFLOW.read_text(encoding="utf-8")
@@ -225,6 +234,7 @@ def validate_workflow_contract(policy: dict[str, Any]) -> None:
             raise PromotionContractError(f"promotion executor missing safety marker: {marker}")
     if "pull_request:" in executor and "pull_request_target:" not in executor:
         raise PromotionContractError("privileged promotion workflow must not execute from untrusted pull_request YAML")
+
 
 def validate_fixtures(fixtures: dict[str, Any], policy: dict[str, Any]) -> int:
     if fixtures.get("schema_version") != "repository-promotion-fixtures/v1":
@@ -245,6 +255,7 @@ def validate_fixtures(fixtures: dict[str, Any], policy: dict[str, Any]) -> int:
             raise PromotionContractError(f"fixture {case_id} blocker classification drifted")
     return len(cases)
 
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--summary", action="store_true")
@@ -263,6 +274,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Repository promotion validation failed: {exc}")
         return 1
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
