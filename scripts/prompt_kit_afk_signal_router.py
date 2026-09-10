@@ -43,6 +43,7 @@ SENSITIVE_MARKERS = (
 )
 PROMPT_ID_RE = re.compile(r"^P\d{2,4}$")
 SURFACE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,79}$")
+SOURCE_HASH_RE = re.compile(r"^[0-9a-f]{16,128}$")
 FRICTION_VALUES = {"stale_guidance", "route_miss", "action_failure", "recovery_loop"}
 FRICTION_MINIMUMS = {
     "deterministic_runtime_failure": 1,
@@ -150,6 +151,12 @@ def normalize_signal(raw: object) -> dict[str, Any]:
         evidence_kind = require_text(raw.get("evidence_kind"), "evidence_kind", 80).lower()
         if evidence_kind not in FRICTION_MINIMUMS:
             raise RoutingError(f"unsupported evidence_kind: {evidence_kind}")
+        source_hash = raw.get("source_hash")
+        if source_hash not in {None, ""}:
+            source_hash = require_text(source_hash, "source_hash", 128).lower()
+            if not SOURCE_HASH_RE.fullmatch(source_hash):
+                raise RoutingError("source_hash must be a 16-128 character hexadecimal pseudonymous digest")
+            normalized["source_hash"] = source_hash
         normalized.update(
             {
                 "surface_id": surface_id,
@@ -214,6 +221,8 @@ def work_request(signal: dict[str, Any]) -> dict[str, Any]:
                 "occurrence_count": signal["occurrence_count"],
             }
         )
+        if signal.get("source_hash"):
+            evidence["source_hash"] = signal["source_hash"]
 
     if signal.get("prompt_id"):
         target = f"Prompt Kit {signal['prompt_id']}"
