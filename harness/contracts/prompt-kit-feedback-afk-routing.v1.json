@@ -16,7 +16,8 @@
       "path": "docs/prompt-kit-feedback-production.js",
       "owns": [
         "append-only browser-local explicit feedback",
-        "explicit user consent for any future private loopback sync"
+        "explicit user consent for any future private loopback sync",
+        "browser-local cursor state"
       ],
       "forbidden": [
         "GitHub credentials",
