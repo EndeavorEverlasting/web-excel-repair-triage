@@ -1,0 +1,103 @@
+name: Temporary Operant friction parity carrier
+
+on:
+  push:
+    branches:
+      - feat/operant-usage-friction-afk-routing-20260909
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-operant-friction-parity-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  regenerate-and-prove:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v7
+        with:
+          ref: feat/operant-usage-friction-afk-routing-20260909
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Verify exact pushed head and unchanged main floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          git fetch origin main --prune
+          git merge-base --is-ancestor 84ee148a9dac594d7b1f92e47b5f09fedfdf6ea5 origin/main
+          git status --porcelain=v1 --untracked-files=all
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+      - name: Align human workflow owner and regenerate canonical Operant artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('WORKFLOW.md')
+          text = path.read_text(encoding='utf-8')
+          old = '''### I. Prompt Kit feedback AFK routing
+
+          **Workflow ID:** `prompt-kit-feedback-afk-routing`
+          **Trigger:** `prompt-kit-actionable-feedback`
+          **Capability:** `prompt-kit-feedback-afk-routing`
+          **Skill:** `.ai/skills/prompt-kit-feedback-afk-routing/SKILL.md`
+          **Focused contract:** `harness/contracts/prompt-kit-feedback-afk-routing.v1.json`
+
+          1. Accept one explicit feedback signal from the current feedback seam; reject malformed or sensitive payloads.
+          2. Classify written feedback and dislikes as `ACTIONABLE_REPAIR`; keep likes and usage `INFORMATION_ONLY` unless independent repository evidence creates work.
+          3. Deduplicate the stable signal identity before work dispatch.
+          4. Create a private P115-owned machine work request that names the smallest capable mutation owner, acceptance condition, forbidden scope, and validation entry point.
+          5. Invoke at most one configured worker through argv. No background polling loop or second scheduler belongs here.
+          6. Keep the bridge as transport/sanitization only. Raw comments remain local; provider wakeups carry only allow-listed receipt metadata.
+          7. When a coherent candidate is ready, leave this workflow and route promotion to P105 / `pr-floor-integration`; never merge from the feedback router.
+          8. Run the focused validator/tests and preserve browser-loopback/provider behavior as separate runtime proof.
+          '''
+          new = '''### I. Prompt Kit feedback AFK routing
+
+          **Workflow ID:** `prompt-kit-feedback-afk-routing`
+          **Trigger:** `prompt-kit-actionable-feedback`
+          **Capability:** `prompt-kit-feedback-afk-routing`
+          **Skill:** `.ai/skills/prompt-kit-feedback-afk-routing/SKILL.md`
+          **Focused contract:** `harness/contracts/prompt-kit-feedback-afk-routing.v1.json`
+
+          1. Accept one explicit feedback signal or one already-derived privacy-bounded Operant friction receipt; reject malformed or sensitive payloads.
+          2. Keep raw likes and ordinary `prompt_usage` `INFORMATION_ONLY`. P99 owns any derivation from ordinary use; only a coarse `operant_friction` receipt that reaches the contract threshold may become `ACTIONABLE_REPAIR`.
+          3. Reject friction receipts carrying raw session/navigation history, search or typed content, user identity, URLs/referrers, clipboard content, or prompt bodies.
+          4. Deduplicate the stable signal identity before work dispatch.
+          5. Create a private P115-owned machine work request that names the smallest capable mutation owner, acceptance condition, forbidden scope, and validation entry point.
+          6. Invoke at most one configured worker through argv. Local workers and remote SCM/CI adapters consume the same sanitized semantics; GitHub Actions is a worked adapter, not the owner. No background polling loop or second scheduler belongs here.
+          7. Keep the bridge as transport/sanitization only. Raw comments remain local; provider wakeups carry only allow-listed receipt metadata.
+          8. When a coherent candidate is ready, leave this workflow and route promotion to P105 / `pr-floor-integration`; never merge from the feedback router.
+          9. Run the focused validator/tests and preserve friction derivation, browser collection/loopback, provider-adapter runtime, and promotion as separate proof levels.
+          '''
+          if text.count(old) != 1:
+              raise SystemExit('expected exactly one stale AFK workflow block')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Validate focused AFK routing and harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/validate_prompt_kit_feedback_afk_routing.py --summary
+          python -m unittest tests.test_prompt_kit_feedback_afk_routing tests.test_prompt_kit_feedback_production -v
+          python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
+          python -m unittest tests.test_harness_contract -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit generated parity and remove temporary carrier
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/tmp-operant-friction-parity-carrier.yml
+          git add WORKFLOW.md web/prompt-kit/index.html
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore(operant): regenerate AFK friction routing surfaces'
+          git push origin HEAD:feat/operant-usage-friction-afk-routing-20260909
