@@ -167,14 +167,15 @@ Define the eval contract and baseline, add positive/negative/near-miss/boundary/
 **Skill:** `.ai/skills/prompt-kit-feedback-afk-routing/SKILL.md`
 **Focused contract:** `harness/contracts/prompt-kit-feedback-afk-routing.v1.json`
 
-1. Accept one explicit feedback signal from the current feedback seam; reject malformed or sensitive payloads.
-2. Classify written feedback and dislikes as `ACTIONABLE_REPAIR`; keep likes and usage `INFORMATION_ONLY` unless independent repository evidence creates work.
-3. Deduplicate the stable signal identity before work dispatch.
-4. Create a private P115-owned machine work request that names the smallest capable mutation owner, acceptance condition, forbidden scope, and validation entry point.
-5. Invoke at most one configured worker through argv. No background polling loop or second scheduler belongs here.
-6. Keep the bridge as transport/sanitization only. Raw comments remain local; provider wakeups carry only allow-listed receipt metadata.
-7. When a coherent candidate is ready, leave this workflow and route promotion to P105 / `pr-floor-integration`; never merge from the feedback router.
-8. Run the focused validator/tests and preserve browser-loopback/provider behavior as separate runtime proof.
+1. Accept one explicit feedback signal or one already-derived privacy-bounded Operant friction receipt; reject malformed or sensitive payloads.
+2. Keep raw likes and ordinary `prompt_usage` `INFORMATION_ONLY`. P99 owns any derivation from ordinary use; only a coarse `operant_friction` receipt that reaches the contract threshold may become `ACTIONABLE_REPAIR`.
+3. Reject friction receipts carrying raw session/navigation history, search or typed content, user identity, URLs/referrers, clipboard content, or prompt bodies.
+4. Deduplicate the stable signal identity before work dispatch.
+5. Create a private P115-owned machine work request that names the smallest capable mutation owner, acceptance condition, forbidden scope, and validation entry point.
+6. Invoke at most one configured worker through argv. Local workers and remote SCM/CI adapters consume the same sanitized semantics; GitHub Actions is a worked adapter, not the owner. No background polling loop or second scheduler belongs here.
+7. Keep the bridge as transport/sanitization only. Raw comments remain local; provider wakeups carry only allow-listed receipt metadata.
+8. When a coherent candidate is ready, leave this workflow and route promotion to P105 / `pr-floor-integration`; never merge from the feedback router.
+9. Run the focused validator/tests and preserve friction derivation, browser collection/loopback, provider-adapter runtime, and promotion as separate proof levels.
 
 ## 3. Validate before committing
 

@@ -144,10 +144,12 @@
       "conditions": [
         "accepted Prompt Kit written feedback requires follow-through",
         "accepted Prompt Kit dislike vote requires follow-through",
+        "an accepted privacy-bounded Operant friction receipt crosses the contract actionability floor",
         "a sanitized prompt-kit-feedback provider wakeup maps to an unconsumed local actionable signal"
       ],
       "forbidden_conditions": [
-        "signal is only a like or usage observation",
+        "signal is only a like or raw usage observation that has not been transformed by P99 into an accepted friction receipt",
+        "signal contains raw session or navigation history, search or typed content, user identity, URLs or referrers, clipboard content, or prompt bodies",
         "signal is malformed, sensitive, unknown, or already consumed",
         "the next action is only PR promotion or merge; route that gate to P105/pr-floor-integration",
         "routing would require a second polling scheduler"
