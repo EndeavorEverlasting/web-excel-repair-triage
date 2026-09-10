@@ -159,9 +159,15 @@ class UXDesignPromptSuiteTests(unittest.TestCase):
             "shortcut -> terminal action occurs exactly once",
             "CHECK VISUAL GEOMETRY + ACTION REACHABILITY",
             "exact head",
+            "STABILIZE MOBILE PORTRAIT + LANDSCAPE TO A BOUNDED FIXED POINT",
+            "PORTRAIT -> LANDSCAPE -> PORTRAIT",
+            "do not fix portrait by breaking landscape",
+            "one full orientation cycle after the final repair",
         ):
             self.assertIn(phrase, content)
         self.assertIn("40px", content)
+        for keyword in ("portrait ux", "landscape ux", "portrait landscape", "mobile orientation", "orientation change", "screen rotation", "rotation regression", "responsive stability"):
+            self.assertIn(keyword, prompt["keywords"])
         self.assertIn("P94 Regression Test & Live Behavior Guard", content)
         for phrase in ("MOUSE / POINTER", "KEYBOARD POWER LANGUAGE", "PHONE / TOUCH-NATIVE", "physical-phone ergonomics"):
             self.assertIn(phrase, content)
