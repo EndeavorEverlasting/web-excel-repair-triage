@@ -28,6 +28,30 @@ For each phrase, the finder considers the first five shared-search results, give
 
 That means the tutorial reuses the current prompt registry, synonyms, metadata, search ranking, and filters rather than creating a second recommendation database. It also means the questionnaire is a routing aid—not an authorization or correctness oracle. If you already know the exact specialist you need, search its ID or exact name directly.
 
+## Classifier-assisted coverage and wiring debt
+
+Every canonical prompt must have a tutorial path even when its prompt-specific teaching content has not been curated yet. AFKAF derives that path from the existing lifecycle classifier rather than maintaining a second taxonomy:
+
+`Tutorial · Find My Prompt → <classifier lifecycle section> → <Pxx — prompt name>`
+
+The canonical classifier is `registry/prompts/prompt-classification.v1.json`; the tutorial coverage policy is `registry/prompts/tutorial-coverage.v1.json`. The coverage audit enumerates the canonical combined Prompt Kit registry, so a newly added prompt cannot disappear from tutorial accounting.
+
+Each prompt has one of two tutorial-wiring states:
+
+- **`WIRED`** — the policy records a prompt-specific tutorial anchor and reason. The classifier route still exists, but the tutorial has an explicit curated path.
+- **`CLASSIFIER_FALLBACK_NEEDS_WIRING`** — the prompt remains reachable through its classifier section immediately, but its prompt-specific tutorial wording, example, decision branch, or other curated teaching path still needs to be wired.
+
+Adding a prompt therefore creates visible tutorial debt automatically unless the same contribution records a curated tutorial path. This marker is not a route failure: the classifier fallback preserves reachability while making the unfinished tutorial work explicit. `ready: true` in the coverage audit means every current prompt has a valid path and all explicit tutorial records refer to real prompts; the separate `needs_wiring_count` and `needs_wiring_prompt_ids` fields show the remaining debt.
+
+From the repository root, inspect the whole state or one prompt directly:
+
+```powershell
+python scripts/prompt_kit_tutorial_coverage.py --summary
+python scripts/prompt_kit_tutorial_coverage.py --prompt-id P79
+```
+
+The Prompt Kit web workflow runs this audit on relevant registry, tutorial, classifier-support, and Prompt Kit test changes. A prompt addition is therefore immediately classified, routed, and reported as either wired or still requiring tutorial wiring.
+
 ## When another agent says the work is complete
 
 A specific inherited-completion claim is an important case that the current four-question browser questionnaire does not represent with a dedicated answer.
@@ -123,19 +147,20 @@ Use P64 before P18 when the team has several possible tutorials and does not yet
 From the repository root:
 
 ```powershell
-python -m py_compile scripts/build_prompt_kit_registry.py scripts/validate_prompt_kit_discovery.py tests/test_prompt_kit_discovery.py tests/test_prompt_kit_guidance.py
+python -m py_compile scripts/build_prompt_kit_registry.py scripts/validate_prompt_kit_discovery.py scripts/prompt_kit_tutorial_coverage.py tests/test_prompt_kit_discovery.py tests/test_prompt_kit_guidance.py tests/test_prompt_kit_tutorial_coverage.py
 node --check docs/prompt-kit.js
 node --check docs/prompt-kit-guided-recommendations.js
 node --check docs/prompt-kit-journey.js
 node --check docs/prompt-kit-polish.js
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 python scripts/validate_prompt_kit_discovery.py --summary
-python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance -v
+python scripts/prompt_kit_tutorial_coverage.py --summary
+python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance tests.test_prompt_kit_tutorial_coverage -v
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 ```
 
 ## Proof ceiling
 
-Repository validation can prove registry integrity, the current four-question shared-search implementation, registry-owned next-step extraction, session-only completion state, JavaScript syntax, current Favorite/shortcut semantics, generated-site parity, and focused documentation assertions.
+Repository validation can prove registry integrity, classifier-backed tutorial reachability for every canonical prompt, explicit wiring-debt accounting, the current four-question shared-search implementation, registry-owned next-step extraction, session-only completion state, JavaScript syntax, current Favorite/shortcut semantics, generated-site parity, and focused documentation assertions.
 
 It does not prove every browser or assistive-technology combination, clipboard permissions on every device, live Windows launcher behavior on a particular workstation, organizational acceptance of a recommendation, or that a recommended prompt succeeds without the environment and permissions it requires.
