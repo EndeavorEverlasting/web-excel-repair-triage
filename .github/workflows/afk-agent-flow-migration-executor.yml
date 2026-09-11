@@ -6,7 +6,6 @@ on:
       - feat/afk-agent-flow-brand-route-20260911
     paths:
       - .github/workflows/afk-agent-flow-migration-executor.yml
-      - scripts/migrate_afk_agent_flow_brand.py
 
 permissions:
   contents: write
@@ -31,7 +30,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Repair migration owner
+      - name: Repair canonical migration owner
         shell: bash
         run: |
           set -euo pipefail
@@ -41,22 +40,9 @@ jobs:
           path = Path("scripts/migrate_afk_agent_flow_brand.py")
           text = path.read_text(encoding="utf-8")
 
-          tests_anchor = '''    apply(
-              "tests/test_operant_product_identity.py",
-              'self.assertTrue(access.startswith("# Get Operant"))',
-              'self.assertTrue(access.startswith("# Get AFK Agent Flow"))',
-              expected=1,
-          )
-
-          apply(
+          test_marker = '''    apply(
               "tests/test_prompt_kit_order_navigation_product.py",'''
-          tests_replacement = '''    apply(
-              "tests/test_operant_product_identity.py",
-              'self.assertTrue(access.startswith("# Get Operant"))',
-              'self.assertTrue(access.startswith("# Get AFK Agent Flow"))',
-              expected=1,
-          )
-          apply(
+          test_addition = '''    apply(
               "tests/test_operant_product_identity.py",
               'self.assertIn("legacy `prompt-kit` paths", governance)',
               'self.assertIn("legacy `operant` / `prompt-kit` paths", governance)',
@@ -69,41 +55,38 @@ jobs:
               expected=1,
           )
 
-          apply(
-              "tests/test_prompt_kit_order_navigation_product.py",'''
-          if tests_anchor in text:
-              text = text.replace(tests_anchor, tests_replacement, 1)
-          elif 'self.assertIn("compatibility and historical release identifiers", access)' not in text:
-              raise SystemExit("migration test-owner anchor drifted")
+          '''
+          if 'self.assertIn("compatibility and historical release identifiers", access)' not in text:
+              if text.count(test_marker) != 1:
+                  raise SystemExit("migration test insertion point drifted")
+              text = text.replace(test_marker, test_addition + test_marker, 1)
 
-          route_anchor = '''    # Keep technical internal Prompt Kit path names, but make the main mobile
-              # instructions and visible title current where exact text is known.'''
-          route_replacement = '''    # The generic public-route replacement above also touches the legacy
-              # /prompt-kit/ URL in the transition note. Restore that compatibility
-              # alias explicitly while keeping /afk-agent-flow/ canonical elsewhere.
+          route_marker = "    # Keep technical internal Prompt Kit path names, but make the main mobile\n"
+          route_addition = '''    # The public-route sweep above also touches the prompt-kit URL embedded
+              # in the transition note. Restore that documented compatibility alias
+              # while keeping /afk-agent-flow/ canonical everywhere else.
               apply(
                   "PROMPT_KIT_ACCESS.md",
-                  "Legacy public compatibility URLs remain https://endeavoreverlasting.github.io/web-excel-repair-triage/operant/ and https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/.",
-                  "Legacy public compatibility URLs remain https://endeavoreverlasting.github.io/web-excel-repair-triage/operant/ and https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/.",
+                  f"Legacy public compatibility URLs remain {LEGACY_OPERANT_URL} and {NEW_PUBLIC_URL}.",
+                  f"Legacy public compatibility URLs remain {LEGACY_OPERANT_URL} and {OLD_PUBLIC_URL}.",
                   expected=1,
               )
 
-              # Keep technical internal Prompt Kit path names, but make the main mobile
-              # instructions and visible title current where exact text is known.'''
-          if route_anchor in text:
-              text = text.replace(route_anchor, route_replacement, 1)
-          elif "The generic public-route replacement above also touches the legacy" not in text:
-              raise SystemExit("migration route-repair anchor drifted")
+          '''
+          if "The public-route sweep above also touches the prompt-kit URL embedded" not in text:
+              if text.count(route_marker) != 1:
+                  raise SystemExit("migration compatibility insertion point drifted")
+              text = text.replace(route_marker, route_addition + route_marker, 1)
 
-          contains_anchor = '''    ensure_contains("PROMPT_KIT_ACCESS.md", LEGACY_OPERANT_URL)
+          old_contains = '''    ensure_contains("PROMPT_KIT_ACCESS.md", LEGACY_OPERANT_URL)
               ensure_contains("PROMPT_KIT_ACCESS.md", NEW_PUBLIC_URL)'''
-          contains_replacement = '''    ensure_contains("PROMPT_KIT_ACCESS.md", LEGACY_OPERANT_URL)
+          new_contains = '''    ensure_contains("PROMPT_KIT_ACCESS.md", LEGACY_OPERANT_URL)
               ensure_contains("PROMPT_KIT_ACCESS.md", OLD_PUBLIC_URL)
               ensure_contains("PROMPT_KIT_ACCESS.md", NEW_PUBLIC_URL)'''
-          if contains_anchor in text:
-              text = text.replace(contains_anchor, contains_replacement, 1)
-          elif 'ensure_contains("PROMPT_KIT_ACCESS.md", OLD_PUBLIC_URL)' not in text:
-              raise SystemExit("migration compatibility-proof anchor drifted")
+          if 'ensure_contains("PROMPT_KIT_ACCESS.md", OLD_PUBLIC_URL)' not in text:
+              if text.count(old_contains) != 1:
+                  raise SystemExit("migration compatibility proof point drifted")
+              text = text.replace(old_contains, new_contains, 1)
 
           path.write_text(text, encoding="utf-8")
           PY
@@ -129,6 +112,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -- .github/workflows/afk-agent-flow-migration-executor.yml
           git add -- \
             AGENTS.md \
             build_prompt_kit.py \
@@ -147,10 +131,6 @@ jobs:
             docs/REPOSITORY_PRESENTATION.md \
             .ai/skills/technician-prompt-kit-acquisition/SKILL.md \
             web/prompt-kit/index.html
-          if git diff --cached --quiet; then
-            echo "Migration already applied; no commit required."
-            exit 0
-          fi
           git diff --cached --check
           git diff --cached --stat
           git commit -m "feat(afk-agent-flow): complete canonical brand migration"
