@@ -1,0 +1,57 @@
+name: Temporary P139 current-main builder
+
+on:
+  push:
+    branches: [feat/repository-ssh-setup-usage-prompt-20260909]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p139-current-main-builder
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Build and prove P139 on exact current-main inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          mkdir -p Outputs
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python -m unittest tests.test_repository_ssh_setup_prompt -v
+          python scripts/prompt_registry_ops.py validate | tee Outputs/p139-registry-validation.json
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          git status --short
+          git diff --stat
+      - name: Package exact durable P139 candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p139-candidate"
+          mkdir -p "$root/registry/prompts" "$root/tests" "$root/web/prompt-kit" "$root/Outputs"
+          cp registry/prompts/ai-engineering-level-up-prompts.v1.json "$root/registry/prompts/"
+          cp tests/test_repository_ssh_setup_prompt.py "$root/tests/"
+          cp web/prompt-kit/index.html "$root/web/prompt-kit/"
+          cp Outputs/p139-registry-validation.json "$root/Outputs/"
+          (cd "$root" && find registry tests web Outputs -type f ! -name sha256.txt -print0 | sort -z | xargs -0 sha256sum) > "$root/Outputs/sha256.txt"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: p139-current-main-${{ github.sha }}
+          path: ${{ runner.temp }}/p139-candidate/
+          if-no-files-found: error
+          retention-days: 3
