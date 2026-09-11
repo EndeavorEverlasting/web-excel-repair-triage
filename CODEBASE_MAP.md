@@ -70,7 +70,7 @@ Workbook/product changes require their focused engine tests. Prompt Kit changes 
 
 Canonical browser surface:
 
-`https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`
+`https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/`
 
 Normal browser users should not clone the repository. Cross-device acquisition is routed through `PROMPT_KIT_ACCESS.md` and the selected technician skill.
 

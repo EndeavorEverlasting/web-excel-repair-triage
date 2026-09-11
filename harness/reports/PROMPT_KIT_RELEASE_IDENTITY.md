@@ -10,7 +10,7 @@ There is one Prompt Kit website release authority: `web/prompt-kit/index.html`, 
 
 The canonical public Prompt Kit is:
 
-`https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`
+`https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/`
 
 A visible label such as `v40` is descriptive UI metadata. It is not sufficient proof that a local file, loopback site, installed app, browser cache, or public deployment matches current `main`.
 

@@ -28,8 +28,8 @@ Client-facing delivery uses the **minimum sufficient explanation**: purpose, per
 
 ## 6. Repository identity and product boundary
 The core product domain is **spreadsheet intelligence**. Web Excel compatibility, billing, roster/time evidence, and triage are first-class.
-**Operant** is the operator-approved product identity, formerly Prompt Kit; it began here as a spreadsheet. Target: `UnderDeskDev/Operant`; not yet created/proven.
-Until cutover, legacy `prompt-kit` paths and sources here remain authoritative compatibility surfaces and must not be silently moved. This repo may pin, mirror, package, link to, or consume Operant releases; it must not become a competing Operant authority; keep cross-repo dependencies explicit and versioned.
+**AFK Agent Flow** is the operator-approved product identity, formerly Operant / Prompt Kit; it began here as a spreadsheet. Target: `UnderDeskDev/AFK-Agent-Flow`; not yet created/proven.
+Until cutover, legacy `operant` / `prompt-kit` paths and sources here remain authoritative compatibility surfaces and must not be silently moved. This repo may pin, mirror, package, link to, or consume AFK Agent Flow releases through the historical Operant release seams; it must not become a competing AFK Agent Flow authority; keep cross-repo dependencies explicit and versioned.
 
 ## 7. Progressive disclosure and binding domain law
 Orient: `AGENTS.md` → `harness/CONTEXT.md` → selected domain. Do **not** preload full harness/skills/history. Escalate context only for evidence, ownership, validation, or safety.

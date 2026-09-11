@@ -16,10 +16,10 @@ GitHub does not need to download `index.html` to your phone. The public GitHub P
 The installed home-screen app starts at:
 
 ```text
-https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/
+https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/
 ```
 
-It is the same Prompt Kit used on desktop, not a separate Android copy or prompt database.
+It is the same AFK Agent Flow experience used on desktop, not a separate Android copy or prompt database.
 
 ## Moving from a computer to the phone
 
@@ -35,7 +35,7 @@ https://endeavoreverlasting.github.io/web-excel-repair-triage/
 - Implementation source: `docs/prompt-kit.js`
 - Android/mobile launcher source: `web/prompt-kit-mobile/`
 - Pages deployment: `.github/workflows/prompt-kit-pages.yml`
-- Stable Prompt Kit URL: `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`
+- Stable Prompt Kit URL: `https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/`
 - Launcher URL: `https://endeavoreverlasting.github.io/web-excel-repair-triage/`
 
 The launcher adds install, share, copy-link, QR, and offline-fallback surfaces without changing prompt content or creating a parallel mobile application.

@@ -145,6 +145,18 @@ def migrate() -> list[str]:
         'self.assertTrue(access.startswith("# Get AFK Agent Flow"))',
         expected=1,
     )
+    apply(
+        "tests/test_operant_product_identity.py",
+        'self.assertIn("legacy `prompt-kit` paths", governance)',
+        'self.assertIn("legacy `operant` / `prompt-kit` paths", governance)',
+        expected=1,
+    )
+    apply(
+        "tests/test_operant_product_identity.py",
+        'self.assertIn("compatibility paths", access)',
+        'self.assertIn("compatibility and historical release identifiers", access)',
+        expected=1,
+    )
 
     apply(
         "tests/test_prompt_kit_order_navigation_product.py",
@@ -197,6 +209,16 @@ def migrate() -> list[str]:
         elif NEW_PUBLIC_URL not in text:
             raise MigrationError(f"{path}: neither old nor new public URL found")
 
+    # The public-route sweep above also touches the prompt-kit URL embedded
+    # in the transition note. Restore that documented compatibility alias
+    # while keeping /afk-agent-flow/ canonical everywhere else.
+    apply(
+        "PROMPT_KIT_ACCESS.md",
+        f"Legacy public compatibility URLs remain {LEGACY_OPERANT_URL} and {NEW_PUBLIC_URL}.",
+        f"Legacy public compatibility URLs remain {LEGACY_OPERANT_URL} and {OLD_PUBLIC_URL}.",
+        expected=1,
+    )
+
     # Keep technical internal Prompt Kit path names, but make the main mobile
     # instructions and visible title current where exact text is known.
     apply(
@@ -226,6 +248,7 @@ def migrate() -> list[str]:
     # documented. The prompt-kit URL is present in the transition note above;
     # this marker makes the Operant compatibility route explicit as well.
     ensure_contains("PROMPT_KIT_ACCESS.md", LEGACY_OPERANT_URL)
+    ensure_contains("PROMPT_KIT_ACCESS.md", OLD_PUBLIC_URL)
     ensure_contains("PROMPT_KIT_ACCESS.md", NEW_PUBLIC_URL)
 
     return sorted(changed)

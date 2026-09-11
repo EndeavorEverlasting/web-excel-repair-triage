@@ -8,8 +8,8 @@ Repository: `EndeavorEverlasting/web-excel-repair-triage`
 
 | Surface | Expected state |
 |---|---|
-| GitHub About description | `Spreadsheet intelligence, Excel-for-Web repair tooling, and the current Operant operator surface.` |
-| GitHub About website | `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/` |
+| GitHub About description | `Spreadsheet intelligence, Excel-for-Web repair tooling, and the current AFK Agent Flow operator surface.` |
+| GitHub About website | `https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/` |
 | GitHub topics | `excel`, `xlsx`, `ooxml`, `spreadsheet`, `excel-for-web`, `ai-agents`, `prompt-engineering`, `agentic-workflows` |
 | Visibility | Public |
 | GitHub Pages | Enabled |
