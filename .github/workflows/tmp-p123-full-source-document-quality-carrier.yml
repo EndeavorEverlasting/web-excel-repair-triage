@@ -42,6 +42,7 @@ jobs:
           fi
 
           python scripts/tmp_apply_p123_full_source_document_quality.py
+          python scripts/tmp_patch_p123_legacy_markers.py
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 
           echo '--- focused P123 proof ---'
@@ -70,6 +71,7 @@ jobs:
 
           git rm -f \
             scripts/tmp_apply_p123_full_source_document_quality.py \
+            scripts/tmp_patch_p123_legacy_markers.py \
             .github/workflows/tmp-p123-full-source-document-quality-carrier.yml
           git add \
             registry/prompts/ai-engineering-level-up-prompts.v1.json \
