@@ -1,0 +1,139 @@
+name: AFK Agent Flow contract reconcile
+
+on:
+  push:
+    branches:
+      - feat/afk-agent-flow-brand-route-20260911
+    paths:
+      - .github/workflows/afk-agent-flow-contract-reconcile.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: afk-agent-flow-contract-reconcile-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Reconcile canonical route owners
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          old = "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/"
+          new = "https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/"
+          for name in (
+              "harness/workflows.v1.json",
+              "harness/artifacts.v1.json",
+          ):
+              path = Path(name)
+              text = path.read_text(encoding="utf-8")
+              if old not in text and new not in text:
+                  raise SystemExit(f"route owner drifted: {name}")
+              path.write_text(text.replace(old, new), encoding="utf-8")
+
+          validator = Path("scripts/validate_prompt_kit_cross_device_access.py")
+          text = validator.read_text(encoding="utf-8")
+          text = text.replace(
+              'PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/"',
+              'PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/"',
+          )
+          text = text.replace(
+              '"same Prompt Kit used on desktop",',
+              '"same AFK Agent Flow experience used on desktop",',
+          )
+          validator.write_text(text, encoding="utf-8")
+
+          migration = Path("scripts/migrate_afk_agent_flow_brand.py")
+          text = migration.read_text(encoding="utf-8")
+          text = text.replace(
+              '"**AFK Agent Flow** is the operator-approved product identity, formerly Operant / Prompt Kit; it began here as a spreadsheet. Target: `UnderDeskDev/AFK-Agent-Flow`; not yet created/proven.",',
+              '"**AFK Agent Flow** is the operator-approved product identity, formerly Operant / Prompt Kit. Target: `UnderDeskDev/AFK-Agent-Flow`; unproven.",',
+          )
+          text = text.replace(
+              '"Until cutover, legacy `operant` / `prompt-kit` paths and sources here remain authoritative compatibility surfaces and must not be silently moved. This repo may pin, mirror, package, link to, or consume AFK Agent Flow releases through the historical Operant release seams; it must not become a competing AFK Agent Flow authority; keep cross-repo dependencies explicit and versioned.",',
+              '"Until cutover, legacy `operant` / `prompt-kit` paths remain authoritative compatibility surfaces and must not be silently moved. This repo may consume AFK Agent Flow through historical Operant release seams but must not become a competing authority; keep cross-repo dependencies explicit and versioned.",',
+          )
+          marker = '        "harness/contracts/prompt-kit-freshness-guidance.v1.json",\n'
+          additions = (
+              '        "harness/contracts/prompt-kit-cross-device-access.v1.json",\n'
+              '        "harness/workflows.v1.json",\n'
+              '        "harness/artifacts.v1.json",\n'
+              '        "scripts/validate_prompt_kit_cross_device_access.py",\n'
+          )
+          if '"harness/contracts/prompt-kit-cross-device-access.v1.json"' not in text:
+              if marker not in text:
+                  raise SystemExit("migration public-route owner marker drifted")
+              text = text.replace(marker, marker + additions, 1)
+
+          freshness_anchor = '''    apply(
+              "scripts/validate_prompt_kit_freshness_guidance.py",
+              "canonical public Prompt Kit URL",
+              "canonical public AFK Agent Flow URL",
+              expected=1,
+          )
+          '''
+          cross_additions = '''    apply(
+              "harness/contracts/prompt-kit-cross-device-access.v1.json",
+              "Open the public Prompt Kit directly.",
+              "Open the public AFK Agent Flow surface directly.",
+              expected=1,
+          )
+              apply(
+              "scripts/validate_prompt_kit_cross_device_access.py",
+              '"same Prompt Kit used on desktop",',
+              '"same AFK Agent Flow experience used on desktop",',
+              expected=1,
+          )
+              apply(
+              "tests/test_operant_external_resources.py",
+              'cp web/prompt-kit/resources.v1.json "$SITE_ROOT/prompt-kit/resources.v1.json"',
+              'cp web/prompt-kit/resources.v1.json "$SITE_ROOT/afk-agent-flow/resources.v1.json"',
+              expected=1,
+          )
+              apply(
+              "tests/test_operant_external_resources.py",
+              'cmp "$SITE_ROOT/prompt-kit/resources.v1.json" web/prompt-kit/resources.v1.json',
+              'cmp "$SITE_ROOT/afk-agent-flow/resources.v1.json" web/prompt-kit/resources.v1.json',
+              expected=1,
+          )
+          '''
+          if 'Open the public AFK Agent Flow surface directly.' not in text:
+              if freshness_anchor not in text:
+                  raise SystemExit("migration focused-owner marker drifted")
+              text = text.replace(freshness_anchor, freshness_anchor + cross_additions, 1)
+          migration.write_text(text, encoding="utf-8")
+          PY
+          python -m py_compile scripts/migrate_afk_agent_flow_brand.py scripts/validate_prompt_kit_cross_device_access.py
+          python scripts/validate_context_architecture.py --summary
+          python scripts/validate_prompt_kit_cross_device_access.py --summary
+          python -m unittest tests.test_harness_contract -v
+          git diff --check
+      - name: Commit validated reconciliation and remove carrier
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -- .github/workflows/afk-agent-flow-contract-reconcile.yml
+          git add -- \
+            harness/workflows.v1.json \
+            harness/artifacts.v1.json \
+            scripts/validate_prompt_kit_cross_device_access.py \
+            scripts/migrate_afk_agent_flow_brand.py
+          git diff --cached --check
+          git commit -m "fix(afk-agent-flow): reconcile route contract owners"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
