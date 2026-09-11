@@ -129,6 +129,12 @@ def migrate() -> list[str]:
     )
     apply(
         "tests/test_operant_product_identity.py",
+        'def test_governance_and_access_surface_name_operant(self) -> None:',
+        'def test_governance_and_access_surface_name_afk_agent_flow(self) -> None:',
+        expected=1,
+    )
+    apply(
+        "tests/test_operant_product_identity.py",
         'self.assertIn("**Operant** is the operator-approved product identity", governance)',
         'self.assertIn("**AFK Agent Flow** is the operator-approved product identity", governance)',
         expected=1,
@@ -177,7 +183,8 @@ def migrate() -> list[str]:
         expected=1,
     )
 
-    # User-facing acquisition/access docs move to the canonical public route.
+    # User-facing acquisition/access docs and freshness owners move to the
+    # canonical public route together so replay cannot leave split guidance.
     apply("PROMPT_KIT_ACCESS.md", "# Get Operant", "# Get AFK Agent Flow", expected=1)
     apply(
         "PROMPT_KIT_ACCESS.md",
@@ -193,8 +200,10 @@ def migrate() -> list[str]:
         "CAPABILITIES.md",
         "CODEBASE_MAP.md",
         "WORKFLOW.md",
+        "harness/contracts/prompt-kit-freshness-guidance.v1.json",
         "harness/reports/PROMPT_KIT_RELEASE_IDENTITY.md",
         "harness/reports/PROMPT_KIT_FRESHNESS.md",
+        "scripts/validate_prompt_kit_freshness_guidance.py",
         "docs/REPOSITORY_PRESENTATION.md",
         ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
     )
@@ -208,6 +217,19 @@ def migrate() -> list[str]:
             changed.add(path)
         elif NEW_PUBLIC_URL not in text:
             raise MigrationError(f"{path}: neither old nor new public URL found")
+
+    apply(
+        "harness/contracts/prompt-kit-freshness-guidance.v1.json",
+        "canonical public Prompt Kit URL",
+        "canonical public AFK Agent Flow URL",
+        expected=1,
+    )
+    apply(
+        "scripts/validate_prompt_kit_freshness_guidance.py",
+        "canonical public Prompt Kit URL",
+        "canonical public AFK Agent Flow URL",
+        expected=1,
+    )
 
     # The public-route sweep above also touches the prompt-kit URL embedded
     # in the transition note. Restore that documented compatibility alias
