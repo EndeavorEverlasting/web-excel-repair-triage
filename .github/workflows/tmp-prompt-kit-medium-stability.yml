@@ -1,0 +1,107 @@
+name: Temporary Prompt Kit medium stability carrier
+
+on:
+  push:
+    branches: [fix/prompt-kit-medium-stability-20260911]
+    paths:
+      - '.github/workflows/tmp-prompt-kit-medium-stability.yml'
+      - 'scripts/tmp_prompt_kit_medium_stability.py'
+
+permissions:
+  contents: write
+
+jobs:
+  repair-validate-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout owned branch
+        uses: actions/checkout@v7
+        with:
+          ref: fix/prompt-kit-medium-stability-20260911
+          fetch-depth: 0
+      - name: Refresh current main floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune
+          git merge --no-edit origin/main
+          printf 'base=%s\nhead=%s\n' "$(git rev-parse origin/main)" "$(git rev-parse HEAD)"
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Apply bounded medium-stability patch
+        run: python scripts/tmp_prompt_kit_medium_stability.py
+      - name: Regenerate canonical Prompt Kit
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Pass 1 static and focused regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check docs/prompt-kit-polish.js
+          python -m unittest tests.test_prompt_kit_mobile tests.test_prompt_kit_mobile_quick_controls tests.test_prompt_kit_cross_input_modality -v
+          python -m unittest tests.test_prompt_kit_product_interactions tests.test_prompt_kit_filtering_access -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Install Chromium proof dependency
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+      - name: Pass 1 browser proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tests/prompt_kit_mobile_quick_controls_browser_proof.py
+          python tests/prompt_kit_medium_stability_browser_proof.py
+      - name: Remove transport and perform second-pass fixed-point proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/tmp-prompt-kit-medium-stability.yml scripts/tmp_prompt_kit_medium_stability.py
+          python - <<'PY'
+          from pathlib import Path
+          source = Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
+          medium = '@media (hover:none) and (pointer:coarse)'
+          required = [
+              medium + '{.prompt-card .prompt-header',
+              medium + '{.favorites-group-jump-nav',
+              medium + '{.hotkey-help{display:flex',
+              medium + '{.ref-toggle{display:none!important',
+              medium + '{.prompt-detail-favorite-btn',
+              '@media(max-width:980px){.header-top',
+              '.hotkey-help{position:fixed;right:80px;bottom:16px',
+          ]
+          missing = [item for item in required if item not in source]
+          if missing:
+              raise SystemExit(f'missing fixed-point markers: {missing}')
+          forbidden = [
+              '@media(max-width:760px){.prompt-card .prompt-header',
+              '@media(max-width:760px){.hotkey-help{display:flex',
+              '@media(max-width:760px){.ref-toggle{display:none!important',
+          ]
+          leaked = [item for item in forbidden if item in source]
+          if leaked:
+              raise SystemExit(f'viewport-width interaction identity leak remains: {leaked}')
+          print('fixed-point semantic review: PASS')
+          PY
+          node --check docs/prompt-kit-polish.js
+          python -m unittest tests.test_prompt_kit_mobile tests.test_prompt_kit_mobile_quick_controls tests.test_prompt_kit_cross_input_modality -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python tests/prompt_kit_medium_stability_browser_proof.py
+          git diff --check
+          git status --short
+          git diff --stat origin/main -- . ':(exclude).github/workflows/tmp-prompt-kit-medium-stability.yml' ':(exclude)scripts/tmp_prompt_kit_medium_stability.py'
+      - name: Commit and push exact durable candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/prompt-kit-polish.js harness/contracts/prompt-kit-mobile.v1.json tests/test_prompt_kit_mobile.py tests/test_prompt_kit_mobile_quick_controls.py tests/prompt_kit_medium_stability_browser_proof.py .github/workflows/prompt-kit-mobile-quick-controls.yml web/prompt-kit/index.html
+          git add -u .github/workflows/tmp-prompt-kit-medium-stability.yml scripts/tmp_prompt_kit_medium_stability.py
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m 'fix(prompt-kit): preserve interaction mode across orientation'
+          git push origin HEAD:fix/prompt-kit-medium-stability-20260911
+          git status --short
+          git rev-parse HEAD
