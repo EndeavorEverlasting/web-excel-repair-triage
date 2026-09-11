@@ -127,6 +127,43 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
         ):
             self.assertIn(keyword, self.prompt["keywords"])
 
+
+    def test_full_source_coverage_document_identity_and_mission_routing(self) -> None:
+        self.assert_markers(
+            "MISSION MODE / PRIMARY DELIVERABLE ROUTING",
+            "`KNOWLEDGE_EXTRACT`",
+            "`INGESTION_BUILD`",
+            "`BOTH`",
+            "knowledge report first",
+            "FULL-SOURCE COVERAGE / TAIL-CHECK CONTRACT",
+            "chronological forward pass",
+            "reverse/tail pass",
+            "`COVERAGE_LEDGER`",
+            "`UNACCOUNTED_SPANS`",
+            "`FULL_SOURCE_COVERAGE`",
+            "`COMPLETE` is allowed only",
+            "DOCUMENT IDENTITY / EXPORT CONTRACT",
+            "`DOCUMENT_TITLE`",
+            "first visible line/H1",
+            "`EXPORT_BASENAME`",
+            "do not use the raw source URL",
+            "Do not export unresolved `xyz_` placeholders",
+            "per-source exported report/document",
+            "source coverage silently trails off",
+        )
+        self.assertIn("full source", self.prompt["expectedOutput"].lower())
+        self.assertIn("source-specific", self.prompt["expectedOutput"].lower())
+        self.assertIn("tail", self.prompt["proofGate"].lower())
+        self.assertIn("generic", self.prompt["proofGate"].lower())
+        for keyword in (
+            "full source coverage",
+            "youtube tail coverage",
+            "source specific document title",
+            "document export naming",
+            "knowledge report",
+        ):
+            self.assertIn(keyword, self.prompt["keywords"])
+
     def test_yt_dlp_is_single_extraction_authority(self) -> None:
         self.assert_markers(
             "yt-dlp owns machine-readable YouTube metadata extraction",
@@ -291,6 +328,11 @@ class GeminiYouTubePlaylistIngestionPromptTests(unittest.TestCase):
             "Resolve spreadsheet write capability + authority",
             "exact written ranges/IDs as the mutation receipt",
             "row-ready Source and Findings records",
+            "MISSION MODE / PRIMARY DELIVERABLE ROUTING",
+            "FULL-SOURCE COVERAGE / TAIL-CHECK CONTRACT",
+            "DOCUMENT IDENTITY / EXPORT CONTRACT",
+            "`DOCUMENT_TITLE`",
+            "`EXPORT_BASENAME`",
         ):
             self.assertIn(marker, deployed)
 
