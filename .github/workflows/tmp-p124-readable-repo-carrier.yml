@@ -34,54 +34,50 @@ jobs:
           payload = json.loads(registry_path.read_text(encoding='utf-8'))
           prompt = next(item for item in payload['prompts'] if item.get('id') == 'P124')
 
-          old_use = prompt['useWhen']
           addition = (
               ' Also use when the operator names only a bloated or hard-to-edit repository and '
               'wants it made more readable; rank concrete hotspots from repository evidence instead '
               'of making the operator choose a file.'
           )
-          if addition.strip() not in old_use:
-              prompt['useWhen'] = old_use + addition
+          if addition.strip() not in prompt['useWhen']:
+              prompt['useWhen'] += addition
 
-          old_inspect = prompt['inspectFirst']
-          inspect_add = (
-              ' representative maintainer edits and the current owner/change sites they require;'
-              ' review/churn hotspots when repository evidence is available;'
-          )
-          if 'representative maintainer edits' not in old_inspect:
-              prompt['inspectFirst'] = old_inspect.replace(
+          if 'representative maintainer edits' not in prompt['inspectFirst']:
+              prompt['inspectFirst'] = prompt['inspectFirst'].replace(
                   ' recent change hotspots and regressions;',
-                  ' recent change hotspots and regressions;' + inspect_add,
+                  ' recent change hotspots and regressions; representative maintainer edits and the current owner/change sites they require; review/churn hotspots when repository evidence is available;',
               )
 
-          old_output = prompt['expectedOutput']
-          if 'ranked repository hotspot map' not in old_output:
-              prompt['expectedOutput'] = old_output.replace(
+          if 'ranked repository hotspot map' not in prompt['expectedOutput']:
+              prompt['expectedOutput'] = prompt['expectedOutput'].replace(
                   'a structural-debt ledger,',
                   'a structural-debt ledger and ranked repository hotspot map when scope starts broad,',
               )
 
-          old_next = prompt['nextStep']
-          if 'When no hotspot is named' not in old_next:
+          if 'When no hotspot is named' not in prompt['nextStep']:
+              old_next = prompt['nextStep']
               prompt['nextStep'] = (
                   'When no hotspot is named, rank the strongest evidence-backed repository hotspots '
-                  'and select the smallest top-ranked behavior-preserving slice; otherwise ' + old_next[0].lower() + old_next[1:]
+                  'and select the smallest top-ranked behavior-preserving slice; otherwise '
+                  + old_next[0].lower() + old_next[1:]
               )
 
           content = prompt['copyContent']
           anchor = '\n\n3. PROTECT BEHAVIOR BEFORE MOVING IT\n'
-          insertion = '''
-
-2A. RANK THE REPOSITORY BEFORE PICKING A FILE
-When the operator says only that the repo is bloated, hard to read, or difficult to edit, do not make them nominate a file. Rank 3-7 evidence-backed hotspots using mixed responsibility, duplicated change sites, churn/regressions, hidden coupling, nesting/branching, unclear generated ownership, and repeated difficulty locating the correct edit site. Record `rank | path/owner | evidence | representative change | current change sites | risk | disposition`. Size is a clue, never a verdict. Pick the smallest top-ranked slice that can materially reduce edit ambiguity without broad behavior change.
-
-2B. RUN A REPRESENTATIVE EDIT TEST
-Before mutation, choose one real maintainer task such as `Where do I change <behavior>?` and record the current owner/change sites. After the refactor, answer the same task from a fresh-maintainer perspective. Improvement means a clearer owner set, less duplicated or scattered change work, and no extra indirection—not merely fewer lines or files.'''
+          insertion = (
+              '\n\n2A. RANK THE REPOSITORY BEFORE PICKING A FILE\n'
+              'When the operator says only that the repo is bloated, hard to read, or difficult to edit, do not make them nominate a file. '
+              'Rank 3-7 evidence-backed hotspots using mixed responsibility, duplicated change sites, churn/regressions, hidden coupling, nesting/branching, unclear generated ownership, and repeated difficulty locating the correct edit site. '
+              'Record `rank | path/owner | evidence | representative change | current change sites | risk | disposition`. Size is a clue, never a verdict. '
+              'Pick the smallest top-ranked slice that can materially reduce edit ambiguity without broad behavior change.\n\n'
+              '2B. RUN A REPRESENTATIVE EDIT TEST\n'
+              'Before mutation, choose one real maintainer task such as `Where do I change <behavior>?` and record the current owner/change sites. '
+              'After the refactor, answer the same task from a fresh-maintainer perspective. Improvement means a clearer owner set, less duplicated or scattered change work, and no extra indirection—not merely fewer lines or files.'
+          )
           if '2A. RANK THE REPOSITORY BEFORE PICKING A FILE' not in content:
               if anchor not in content:
                   raise SystemExit('P124 behavior-protection anchor moved; refusing blind strengthening')
-              content = content.replace(anchor, insertion + anchor, 1)
-              prompt['copyContent'] = content
+              prompt['copyContent'] = content.replace(anchor, insertion + anchor, 1)
 
           for keyword in ('repository readability audit', 'hard to edit repository', 'readability hotspot'):
               if keyword not in prompt['keywords']:
@@ -115,7 +111,7 @@ Before mutation, choose one real maintainer task such as `Where do I change <beh
               )
           test_path.write_text(test_text, encoding='utf-8')
 
-          print('P124_BYTES', len(prompt['copyContent']))
+          print('P124_CHARS', len(prompt['copyContent']))
           print('P124_KEYWORDS', len(prompt['keywords']))
           PY
 
