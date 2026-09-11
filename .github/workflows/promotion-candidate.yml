@@ -64,8 +64,18 @@ jobs:
           --gate harness-e2e
           --event-path "$GITHUB_EVENT_PATH"
           --output "$RUNNER_TEMP/promotion-harness-receipt.json"
+      - name: Detect harness E2E receipt
+        id: harness-receipt
+        if: always() && !cancelled()
+        shell: bash
+        run: |
+          if test -f "$RUNNER_TEMP/promotion-harness-receipt.json"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Upload harness E2E receipt
-        if: always()
+        if: always() && !cancelled() && steps.harness-receipt.outputs.exists == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: promotion-harness-receipt
@@ -94,8 +104,18 @@ jobs:
           --gate application-e2e
           --event-path "$GITHUB_EVENT_PATH"
           --output "$RUNNER_TEMP/promotion-application-e2e-receipt.json"
+      - name: Detect application E2E receipt
+        id: application-receipt
+        if: always() && !cancelled()
+        shell: bash
+        run: |
+          if test -f "$RUNNER_TEMP/promotion-application-e2e-receipt.json"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Upload application E2E receipt
-        if: always()
+        if: always() && !cancelled() && steps.application-receipt.outputs.exists == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: promotion-application-e2e-receipt
@@ -125,8 +145,18 @@ jobs:
           --gate candidate
           --event-path "$GITHUB_EVENT_PATH"
           --output "$RUNNER_TEMP/promotion-candidate-receipt.json"
+      - name: Detect exact-candidate receipt
+        id: candidate-receipt
+        if: always() && !cancelled()
+        shell: bash
+        run: |
+          if test -f "$RUNNER_TEMP/promotion-candidate-receipt.json"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Upload exact-candidate receipt
-        if: always()
+        if: always() && !cancelled() && steps.candidate-receipt.outputs.exists == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: promotion-candidate-receipt

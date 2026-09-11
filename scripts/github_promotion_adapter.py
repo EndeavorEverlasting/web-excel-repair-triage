@@ -469,6 +469,11 @@ def contained(gh: GitHub, integration_sha: str, target: str) -> bool:
         "GET",
         f"/repos/{gh.repo}/compare/{integration_sha}...{urllib.parse.quote(target, safe='')}",
     )
+    if not isinstance(result, dict):
+        raise ProviderError(
+            "PROVIDER_PARTIAL_TRUTH",
+            "default-branch containment response is malformed",
+        )
     return str(result.get("status") or "") in {"ahead", "identical"}
 
 
@@ -477,6 +482,11 @@ def reconcile_direct_merge(
 ) -> dict[str, Any] | None:
     """Verify whether an ambiguous direct-merge response actually integrated this head."""
     pr = gh.rest("GET", f"/repos/{gh.repo}/pulls/{number}")
+    if not isinstance(pr, dict):
+        raise ProviderError(
+            "PROVIDER_PARTIAL_TRUTH",
+            "pull-request reconciliation response is malformed",
+        )
     observed_head = str((pr.get("head") or {}).get("sha") or "")
     integration_sha = str(pr.get("merge_commit_sha") or "")
     if (

@@ -49,7 +49,8 @@ class RepositoryPromotionTests(unittest.TestCase):
         text = (ROOT / ".github/workflows/promotion-candidate.yml").read_text(encoding="utf-8")
         for marker in ("pull_request:", "types: [opened, synchronize, reopened, ready_for_review, edited]", "contents: read", "pull-requests: read", "ref: ${{ github.event.pull_request.head.sha }}", "persist-credentials: false", "harness/evals/fixtures/repository-promotion-*.v1.json", "Promotion / Contract", "Promotion / Harness E2E", "Promotion / Application E2E", "Promotion / Exact Candidate Gate"):
             self.assertIn(marker, text)
-        self.assertEqual(text.count("        if: always()"), 3)
+        self.assertEqual(text.count("        if: always() && !cancelled()\n        shell: bash"), 3)
+        self.assertEqual(text.count("if: always() && !cancelled() && steps."), 3)
         self.assertNotIn("pull_request_target:", text)
         self.assertNotIn("contents: write", text)
 
@@ -152,6 +153,46 @@ class RepositoryPromotionTests(unittest.TestCase):
         result = github_adapter.merge_direct(FakeGitHub(), 42, head, "merge", "main")
         self.assertEqual(result["mode"], "reconciled_merge")
         self.assertEqual(result["integration_sha"], integration)
+
+
+    def test_direct_merge_reconciliation_rejects_malformed_provider_truth(self) -> None:
+        head = "a" * 40
+        integration = "c" * 40
+
+        class BadPullRequestGitHub:
+            repo = "EndeavorEverlasting/web-excel-repair-triage"
+
+            def rest(self, method: str, path: str, body=None):
+                return []
+
+        with self.assertRaisesRegex(github_adapter.ProviderError, "pull-request reconciliation response"):
+            github_adapter.reconcile_direct_merge(BadPullRequestGitHub(), 42, head, "main")
+
+        class BadComparisonGitHub:
+            repo = "EndeavorEverlasting/web-excel-repair-triage"
+
+            def rest(self, method: str, path: str, body=None):
+                if path.endswith("/pulls/42"):
+                    return {
+                        "merged": True,
+                        "merge_commit_sha": integration,
+                        "head": {"sha": head},
+                    }
+                if "/compare/" in path:
+                    return []
+                raise AssertionError(path)
+
+        with self.assertRaisesRegex(github_adapter.ProviderError, "containment response"):
+            github_adapter.reconcile_direct_merge(BadComparisonGitHub(), 42, head, "main")
+
+    def test_checkout_identity_failure_writes_receipt_before_return(self) -> None:
+        text = (ROOT / "scripts/run_repository_promotion_gate.py").read_text(encoding="utf-8")
+        start = text.index('if actual_head != candidate["head_sha"]:')
+        end = text.index("    paths = changed_paths", start)
+        block = text[start:end]
+        self.assertIn("args.output.write_text", block)
+        self.assertLess(block.index("args.output.write_text"), block.index("return 1"))
+        self.assertIn('"status": "FAIL"', block)
 
     def test_pr_floor_integration_registers_concrete_promotion_pipeline(self) -> None:
         owner = self.load("harness/contracts/pr-merge-gate.v1.json")

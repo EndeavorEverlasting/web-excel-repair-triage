@@ -65,7 +65,33 @@ def main(argv: list[str] | None = None) -> int:
     candidate = event_candidate(args.event_path)
     actual_head = git("rev-parse", "HEAD")
     if actual_head != candidate["head_sha"]:
-        print(f"Promotion gate blocked: checkout HEAD {actual_head} != event head {candidate['head_sha']}", file=sys.stderr)
+        reason = (
+            f"Promotion gate blocked: checkout HEAD {actual_head} != "
+            f"event head {candidate['head_sha']}"
+        )
+        receipt = {
+            "schema_version": "repository-promotion-validation-receipt/v1",
+            "gate": args.gate,
+            "status": "FAIL",
+            "repository": candidate["repository"],
+            "pr_number": candidate["pr_number"],
+            "candidate_head_sha": candidate["head_sha"],
+            "candidate_base_sha": candidate["base_sha"],
+            "base_ref": candidate["base_ref"],
+            "head_ref": candidate["head_ref"],
+            "policy_version": policy["policy_version"],
+            "changed_paths": [],
+            "commands": [],
+            "run_id": os.environ.get("GITHUB_RUN_ID"),
+            "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "reason": reason,
+            "actual_head": actual_head,
+            "proof_ceiling": "Promotion blocked before repository validation because checkout identity is stale.",
+        }
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+        print(reason, file=sys.stderr)
         return 1
     paths = changed_paths(candidate["base_sha"], candidate["head_sha"])
     unexpected = sorted(set(paths) - set(main_policy["allowed_change_paths"]))
