@@ -37,6 +37,19 @@ jobs:
           set -euo pipefail
           test "$(git branch --show-current)" = "feat/afk-agent-flow-brand-route-20260911"
           python scripts/migrate_afk_agent_flow_brand.py
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("tests/test_operant_product_identity.py")
+          text = path.read_text(encoding="utf-8")
+          old = 'self.assertIn("legacy `prompt-kit` paths", governance)'
+          new = 'self.assertIn("legacy `operant` / `prompt-kit` paths", governance)'
+          if old in text:
+              text = text.replace(old, new, 1)
+              path.write_text(text, encoding="utf-8")
+          elif new not in text:
+              raise SystemExit("focused governance assertion is neither pre- nor post-migration form")
+          PY
           python scripts/operant_version.py validate
           python scripts/validate_operant_product_identity.py --summary
           python -m unittest tests.test_operant_product_identity tests.test_prompt_kit_order_navigation_product -v
