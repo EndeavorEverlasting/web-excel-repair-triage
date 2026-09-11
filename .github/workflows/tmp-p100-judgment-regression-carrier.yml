@@ -1,0 +1,178 @@
+name: Temporary P100 Judgment Regression Carrier
+
+on:
+  push:
+    branches:
+      - feat/p100-conversation-judgment-regression-20260911
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-prove:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p100-conversation-judgment-regression-20260911
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Strengthen P100 and focused regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          registry_path = Path('registry/prompts/ai-engineering-level-up-prompts.v1.json')
+          payload = json.loads(registry_path.read_text(encoding='utf-8'))
+          p100 = next(item for item in payload['prompts'] if item['id'] == 'P100')
+          assert p100['name'] == 'Factuality vs Faithfulness Hallucination Diagnoser'
+          assert '7. CLOSEOUT CONSISTENCY CHECK' in p100['copyContent']
+          assert '8. TRANSCRIPT-WIDE JUDGMENT REGRESSION MODE' not in p100['copyContent']
+
+          p100['sprintRole'] = (
+              'Classify one or repeated agent judgment failures by whether required truth was missing, ignored despite being present, '
+              'or lost inside attention-saturating context, then match remediation, cluster recurring decision errors, and route durable prevention to the canonical owner'
+          )
+          p100['useWhen'] = (
+              'An LLM or agent confidently produced a wrong, incomplete, contradictory, or invented answer/code/plan/report and the next step depends on knowing whether the source truth was absent from context or already present but not followed; '
+              'also use when a conversation or incident sequence contains repeated corrections/rework and the operator wants the recurring judgment errors classified and prevented rather than merely summarized.'
+          )
+          p100['inspectFirst'] = (
+              'The exact failed claim/output; authoritative truth; relevant generation-time prompt/context when recoverable; retrieved sources and tool results; system/user instructions; context size/composition; validation failures; whether the disputed fact or constraint was actually available before generation; '
+              'and, for transcript-wide review, the correction chronology, evidence/capabilities available at each decision, unfinished safe work, and resulting rework or risk.'
+          )
+          p100['expectedOutput'] = (
+              'An evidence-linked causal classification of FACTUALITY_MISSING_CONTEXT, FAITHFULNESS_CONTEXT_IGNORED, ATTENTION_SATURATION, MIXED, or UNKNOWN; matched remediation; a rerun of the same bounded case; and a proof ceiling that does not infer internal attention from output alone. '
+              'For transcript recurrence, also produce a second operational failure-family axis, recurrence clusters by wrong decision rule, prevention contracts, counterfactual replay, and canonical downstream owners without replacing the causal taxonomy.'
+          )
+          p100['nextStep'] = (
+              'Pin one concrete false claim or representative correction, recover what evidence and capability were actually available at that decision, classify the causal failure, then—when recurrence is alleged—sweep the related transcript for the same decision rule, replay one nearby counterexample, and route the smallest durable prevention to its existing owner.'
+          )
+          p100['proofGate'] = (
+              'The diagnosis proves whether the needed truth was absent or present in recoverable context; remediation matches that classification; UNKNOWN remains explicit when historical context cannot be recovered; a counterexample prevents labeling every error as one class; and the repaired case passes without claiming access to hidden model reasoning. '
+              'Transcript-wide claims additionally distinguish an implementation defect from the upstream judgment that failed to anticipate/test/classify/continue through it, preserve causal taxonomy separately from operational failure families, and reject false blockers or operator delegation when the agent still has the evidence and authority to continue. Runtime/UI PASS claims require an exact-head observed-outcome receipt; absent observation remains UNKNOWN/UNPROVEN.'
+          )
+
+          block = '''8. TRANSCRIPT-WIDE JUDGMENT REGRESSION MODE
+          When the evidence is a conversation or incident sequence, do not merely list bad outputs. For each material correction/rework capture: transcript evidence; judgment/decision; resulting action; evidence and capability actually available then; the better decision that was possible then; and downstream rework/risk. Separate IMPLEMENTATION_DEFECT from UPSTREAM_JUDGMENT_FAILURE: a code bug becomes a judgment failure only when a reusable decision error explains why it was not anticipated, tested, classified, or continued through.
+
+          Keep the causal classes in section 3 as the first axis. Add a second OPERATIONAL FAILURE FAMILY axis for the consequence pattern, strengthening an existing family before inventing another. Candidate families from proven incidents include DELEGATION_LEAKAGE, ARTIFACTIZATION_FAILURE, SCOPE_ANCHORING, AUTHORITY_DISCOVERY_LATE, ENFORCEMENT_GAP, ORACLE_CO_DRIFT, ADVERSARIAL_COVERAGE_GAP, TRIGGER_UNDERCOVERAGE, PROOF_INFLATION, SELF_REVIEW_DEPTH_FAILURE, PREMATURE_TERMINATION, and FALSE_BLOCKER_CLASSIFICATION. These do not replace factuality/faithfulness/attention diagnosis.
+
+          Cluster recurrence by common decision rule, not similar wording. Convert each recurring cluster to `trigger -> wrong heuristic -> required inspection -> required decision -> forbidden shortcut -> executable action -> evidence gate`. Then run COUNTERFACTUAL REPLAY on the observed case and one nearby case where the rule should not fire. In particular: when the agent can create the artifact or diagnose/repair the next gate, it must keep the work; when capability/authority is genuinely unavailable, a precise blocker/handoff is valid. A failing test or CI gate is continuation evidence, not BLOCKED, while its logs and safe mutation authority remain accessible.
+
+          Route repository-wide failure-class propagation to P91, Prompt Kit owner mutation to P79, repeated-friction execution to P13, and executable eval/regression implementation to P67/P94 as appropriate. Do not duplicate those owners.
+          '''.replace('\n          ', '\n').strip()
+          p100['copyContent'] = p100['copyContent'].replace('\n\nDELIVER\n', f'\n\n{block}\n\nDELIVER\n', 1)
+          for keyword in (
+              'conversation judgment regression',
+              'transcript failure mining',
+              'delegation leakage',
+              'artifactization failure',
+              'false blocker',
+              'counterfactual replay',
+          ):
+              if keyword not in p100['keywords']:
+                  p100['keywords'].append(keyword)
+          registry_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          test_path = Path('tests/test_ai_engineering_level_up.py')
+          text = test_path.read_text(encoding='utf-8')
+          marker = '    def test_p68_repeats_context_refactor_until_fixed_point_and_mainline(self) -> None:\n'
+          assert marker in text
+          assert 'test_p100_mines_transcript_judgment_regressions_without_collapsing_owners' not in text
+          method = '''    def test_p100_mines_transcript_judgment_regressions_without_collapsing_owners(self) -> None:
+              prompts = build_prompt_kit_registry.load_prompt_registry()
+              p100 = {item["id"]: item for item in prompts}["P100"]
+              copy = p100["copyContent"]
+              for phrase in (
+                  "8. TRANSCRIPT-WIDE JUDGMENT REGRESSION MODE",
+                  "IMPLEMENTATION_DEFECT",
+                  "UPSTREAM_JUDGMENT_FAILURE",
+                  "OPERATIONAL FAILURE FAMILY",
+                  "DELEGATION_LEAKAGE",
+                  "ARTIFACTIZATION_FAILURE",
+                  "AUTHORITY_DISCOVERY_LATE",
+                  "ORACLE_CO_DRIFT",
+                  "PROOF_INFLATION",
+                  "PREMATURE_TERMINATION",
+                  "FALSE_BLOCKER_CLASSIFICATION",
+                  "trigger -> wrong heuristic -> required inspection -> required decision -> forbidden shortcut -> executable action -> evidence gate",
+                  "COUNTERFACTUAL REPLAY",
+                  "failing test or CI gate is continuation evidence, not BLOCKED",
+                  "failure-class propagation to P91",
+                  "Prompt Kit owner mutation to P79",
+                  "repeated-friction execution to P13",
+                  "eval/regression implementation to P67/P94",
+              ):
+                  self.assertIn(phrase, copy)
+              for causal in (
+                  "FACTUALITY_MISSING_CONTEXT",
+                  "FAITHFULNESS_CONTEXT_IGNORED",
+                  "ATTENTION_SATURATION",
+                  "MIXED",
+                  "UNKNOWN",
+              ):
+                  self.assertIn(causal, copy)
+              self.assertIn("conversation judgment regression", p100["keywords"])
+              self.assertIn("counterfactual replay", p100["keywords"])
+
+          '''
+          text = text.replace(marker, method + marker, 1)
+          test_path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Build canonical Prompt Kit site
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+      - name: Focused P100 semantic proof
+        run: |
+          python -m unittest tests.test_ai_engineering_level_up -v
+          python -m unittest tests.test_prompt_kit_mainline_delivery -v
+
+      - name: Registry and discovery proof
+        run: |
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_discovery -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+
+      - name: Bound durable diff and self-remove carrier
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/tmp-p100-judgment-regression-carrier.yml
+          mapfile -t changed < <(git status --short | sed -E 's/^.. //' | sort)
+          printf '%s\n' "${changed[@]}"
+          allowed=(
+            registry/prompts/ai-engineering-level-up-prompts.v1.json
+            tests/test_ai_engineering_level_up.py
+            web/prompt-kit/index.html
+            .github/workflows/tmp-p100-judgment-regression-carrier.yml
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for candidate in "${allowed[@]}"; do
+              [[ "$path" == "$candidate" ]] && ok=true && break
+            done
+            $ok || { echo "unexpected changed path: $path" >&2; exit 1; }
+          done
+          git diff --check
+
+      - name: Commit durable P100 strengthening
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add registry/prompts/ai-engineering-level-up-prompts.v1.json tests/test_ai_engineering_level_up.py web/prompt-kit/index.html .github/workflows/tmp-p100-judgment-regression-carrier.yml
+          git commit -m 'feat(prompt-kit): mine recurring judgment failures in P100'
+          git push origin HEAD:feat/p100-conversation-judgment-regression-20260911
