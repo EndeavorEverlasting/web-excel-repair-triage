@@ -139,7 +139,7 @@
       "user_disposition": "POINT_TO_EXTERNAL",
       "prompt_action": "REVIEW_ADD_PROMPT",
       "promotion_owner_prompt": "P79",
-      "best_internal_score": 0.0
+      "best_internal_score": 0.333
     },
     {
       "resource_id": "deepseek-harness:record-browser-gif",
