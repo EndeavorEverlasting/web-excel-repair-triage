@@ -30,6 +30,14 @@ def observe(port: int, screenshot: Path) -> list[dict]:
     expected_count = int(expected["summary"]["resource_count"])
     expected_page = min(40, expected_count)
     source_shas = {row["id"]: row["resolved_sha"] for row in expected["source_floor"]}
+    expected_floor_links = {
+        row["id"]: (
+            f'https://github.com/{row["repository"]}/blob/{row["resolved_sha"]}/{row["catalog_path"]}'
+            if row.get("catalog_path")
+            else f'https://github.com/{row["repository"]}/tree/{row["resolved_sha"]}'
+        )
+        for row in expected["source_floor"]
+    }
     portable_root = ROOT / "Outputs" / "observed-proof" / "external-resource-portable"
     portable_root.mkdir(parents=True, exist_ok=True)
     subprocess.run(
@@ -85,6 +93,10 @@ def observe(port: int, screenshot: Path) -> list[dict]:
             loaded_requests = len(resource_requests)
             rendered_rows = page.locator(".operant-resource-row").count()
             loaded_panel_visible = not page.locator("#operantExternalResources").evaluate("el => el.hidden")
+            source_card_links = page.locator(".operant-resource-source").evaluate_all(
+                "cards => Object.fromEntries(cards.map(card => [card.dataset.sourceId, card.querySelector('a').href]))"
+            )
+            floor_links_pinned = source_card_links == expected_floor_links
 
             search = page.locator(".operant-resource-search")
             search.fill("code review")
@@ -113,6 +125,12 @@ def observe(port: int, screenshot: Path) -> list[dict]:
 
             page.keyboard.press("Escape")
             closed_by_escape = page.locator("#operantExternalResources").evaluate("el => el.hidden")
+            manual_focus_restored = page.evaluate("document.activeElement && document.activeElement.id") == "externalResourcesButton"
+
+            page.evaluate("window.OperantExternalResources.openForUseCase('code review', document.getElementById('promptFinderBtn'))")
+            page.wait_for_function("() => !document.getElementById('operantExternalResources').hidden")
+            page.keyboard.press("Escape")
+            fallback_focus_restored = page.evaluate("document.activeElement && document.activeElement.id") == "promptFinderBtn"
 
             portable_request_floor = len(resource_requests)
             page.goto(f"http://127.0.0.1:{port}/Outputs/observed-proof/external-resource-portable/index.html",wait_until="domcontentloaded")
@@ -153,6 +171,14 @@ def observe(port: int, screenshot: Path) -> list[dict]:
             "passed": loaded_requests == 1 and loaded_panel_visible,
             "resource_requests": loaded_requests,
             "panel_visible": loaded_panel_visible,
+        },
+        {
+            "id": "source_floor_links_are_commit_pinned",
+            "event": "source-library cards navigate to the registered resolved SHA rather than a moving default branch",
+            "occurred": True,
+            "passed": floor_links_pinned,
+            "source_links": source_card_links,
+            "expected_links": expected_floor_links,
         },
         {
             "id": "render_is_bounded",
@@ -198,6 +224,14 @@ def observe(port: int, screenshot: Path) -> list[dict]:
             "occurred": True,
             "passed": bool(closed_by_escape),
         },
+        {
+            "id": "resource_close_restores_keyboard_origin",
+            "event": "closing Resources restores focus for both the header launcher and the finder fallback origin",
+            "occurred": True,
+            "passed": manual_focus_restored and fallback_focus_restored,
+            "manual_focus_restored": manual_focus_restored,
+            "fallback_focus_restored": fallback_focus_restored,
+        },
     ]
 
 
@@ -232,9 +266,9 @@ def main(argv=None) -> int:
         {
             "id": "resource_navigation",
             "statement": "Resource search exposes commit-pinned upstream navigation without embedding donor bodies",
-            "status": "PASS" if by_id["search_preserves_pinned_source_navigation"]["passed"] and by_id["portable_package_serves_sidecar"]["passed"] and by_id["escape_closes_resources"]["passed"] else "FAIL",
+            "status": "PASS" if by_id["search_preserves_pinned_source_navigation"]["passed"] and by_id["source_floor_links_are_commit_pinned"]["passed"] and by_id["portable_package_serves_sidecar"]["passed"] and by_id["escape_closes_resources"]["passed"] and by_id["resource_close_restores_keyboard_origin"]["passed"] else "FAIL",
             "required_evidence_class": "browser_runtime_observed",
-            "observation_ids": ["search_preserves_pinned_source_navigation", "portable_package_serves_sidecar", "escape_closes_resources"],
+            "observation_ids": ["search_preserves_pinned_source_navigation", "source_floor_links_are_commit_pinned", "portable_package_serves_sidecar", "escape_closes_resources", "resource_close_restores_keyboard_origin"],
         },
     ]
     verdict = "PASS" if all(item["passed"] for item in observations) else "FAIL"

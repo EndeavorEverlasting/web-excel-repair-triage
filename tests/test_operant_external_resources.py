@@ -21,6 +21,8 @@ CONTRACT = ROOT / "harness" / "contracts" / "operant-external-resource-intake.v1
 INDEX = ROOT / "web" / "prompt-kit" / "resources.v1.json"
 GAPS = ROOT / "registry" / "resources" / "operant-external-resource-gaps.v1.json"
 RUNTIME = ROOT / "docs" / "prompt-kit-external-resources.js"
+GUIDED_RUNTIME = ROOT / "docs" / "prompt-kit-guided-recommendations.js"
+FINDER_TUTORIAL = ROOT / "docs" / "PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md"
 SITE = ROOT / "web" / "prompt-kit" / "index.html"
 PAGES_WORKFLOW = ROOT / ".github" / "workflows" / "prompt-kit-pages.yml"
 PORTABLE_BUILDER = ROOT / "scripts" / "serve_prompt_kit_portable.py"
@@ -40,6 +42,8 @@ class OperantExternalResourceTests(unittest.TestCase):
         cls.index = json.loads(INDEX.read_text(encoding="utf-8"))
         cls.gaps = json.loads(GAPS.read_text(encoding="utf-8"))
         cls.runtime = RUNTIME.read_text(encoding="utf-8")
+        cls.guided = GUIDED_RUNTIME.read_text(encoding="utf-8")
+        cls.tutorial = FINDER_TUTORIAL.read_text(encoding="utf-8")
         cls.site = SITE.read_text(encoding="utf-8")
 
     @staticmethod
@@ -409,6 +413,39 @@ class OperantExternalResourceTests(unittest.TestCase):
         self.assertFalse(receipt["automatic_prompt_authoring"])
         self.assertTrue(receipt["distinct_residual_terms"])
         self.assertEqual(receipt["promotion_owner_prompt"], "P79")
+
+    def test_prompt_finder_routes_internal_gaps_to_registered_external_floor(self) -> None:
+        for marker in (
+            "function promptFinderFallbackQuery(answers)",
+            "var order=['goal','problemKnown','shape','startingPoint']",
+            "data-finder-external",
+            "Prompt Kit does not cover this use case",
+            "OperantExternalResources.openForUseCase",
+            "window.promptFinderFallbackQuery=promptFinderFallbackQuery",
+        ):
+            self.assertIn(marker, self.guided)
+        self.assertNotIn(
+            "No registered prompt matched strongly enough. Search for P65",
+            self.guided,
+        )
+        for marker in (
+            "function renderExternalSourceChoices()",
+            "externalResourceIndex.source_floor",
+            "catalogBonus",
+            "resolved_sha",
+            "catalogPath?'/blob/'+sha+'/'+catalogPath:'/tree/'+sha",
+            "externalResourceOrigin",
+            "if(!surface.hidden)input.focus()",
+            "document.contains(origin)",
+            "openForUseCase:openExternalResourcesForUseCase",
+            "Registered external source libraries",
+        ):
+            self.assertIn(marker, self.runtime)
+        for repository in ("f/prompts.chat", "mattpocock/skills", "deepseek-ai/deepseek-harness"):
+            self.assertIn(repository, self.tutorial)
+        self.assertIn("When Prompt Kit does not cover the use case", self.tutorial)
+        self.assertIn("data-finder-external", self.site)
+        self.assertIn("openForUseCase:openExternalResourcesForUseCase", self.site)
 
     def test_full_validator_accepts_current_projection(self) -> None:
         result = validator.validate()
