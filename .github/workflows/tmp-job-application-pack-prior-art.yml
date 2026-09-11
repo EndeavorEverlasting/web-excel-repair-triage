@@ -1,4 +1,4 @@
-name: Temporary Job Application Pack Prior-Art
+name: Temporary Job Application Pack Executor
 
 on:
   push:
@@ -6,39 +6,73 @@ on:
       - feat/job-application-pack-prompt-20260911
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: job-application-pack-prompt-20260911
+  cancel-in-progress: false
 
 jobs:
-  prior-art:
+  execute:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out exact branch head
+      - name: Check out owned branch
         uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          ref: feat/job-application-pack-prompt-20260911
+          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Inspect Prompt Kit identity floor
-        run: python scripts/prompt_registry_ops.py inspect | tee /tmp/prompt-inspect.json
-      - name: Run registered upstream prior-art gate
+      - name: Reconcile, implement, validate, clean transport, and push
+        shell: bash
         run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin main feat/job-application-pack-prompt-20260911 --prune --tags
+          git merge --no-edit origin/main
+
           python scripts/prompt_registry_ops.py prior-art \
             --query "single verified job opportunity recruiter outreach legitimacy official posting fit analysis truthful tailored resume application packet Google Drive tracker ready to apply manual submission privacy application checklist" \
-            | tee /tmp/job-application-pack-prior-art.json
-      - name: Publish gate evidence to summary
-        if: always()
-        run: |
-          echo '## Prompt Kit identity floor' >> "$GITHUB_STEP_SUMMARY"
-          if [ -f /tmp/prompt-inspect.json ]; then
-            echo '```json' >> "$GITHUB_STEP_SUMMARY"
-            cat /tmp/prompt-inspect.json >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-          fi
-          echo '## Prior-art receipt' >> "$GITHUB_STEP_SUMMARY"
-          if [ -f /tmp/job-application-pack-prior-art.json ]; then
-            echo '```json' >> "$GITHUB_STEP_SUMMARY"
-            cat /tmp/job-application-pack-prior-art.json >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-          fi
+            | tee /tmp/job-application-pack-prior-art-final.json
+          python scripts/tmp_add_job_application_pack_prompt.py | tee /tmp/job-application-pack-mutation.json
+
+          python -m unittest tests.test_job_search_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_discovery -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/validate_harness.py
+          git diff --check
+
+          git rm -f \
+            scripts/tmp_add_job_application_pack_prompt.py \
+            .github/tmp-job-application-pack-prior-art.trigger \
+            .github/workflows/tmp-job-application-pack-prior-art.yml
+          git add \
+            registry/prompts/management-operations-prompts.v1.json \
+            tests/test_job_search_prompt_registry.py \
+            docs/JOB_APPLICATION_PROMPT_WORKFLOW.md \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'feat(prompt-kit): add verified job application pack builder'
+
+          # Exact committed-head proof after transport cleanup.
+          python -m unittest tests.test_job_search_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_discovery -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/validate_harness.py
+          git diff --check
+          test -z "$(git status --porcelain)"
+
+          echo "EXACT_HEAD=$(git rev-parse HEAD)"
+          python scripts/prompt_registry_ops.py inspect
+          git push origin HEAD:feat/job-application-pack-prompt-20260911
