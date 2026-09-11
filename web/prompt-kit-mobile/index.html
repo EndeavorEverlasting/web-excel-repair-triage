@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111827">
-  <meta name="description" content="Open or install the AI Harness Prompt Kit on Android without downloading repository files.">
+  <meta name="description" content="Open or install AFK Agent Flow without downloading repository files.">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
   <link rel="apple-touch-icon" href="./icon-192.png">
-  <title>Open AI Harness Prompt Kit</title>
+  <title>Open AFK Agent Flow</title>
   <style>
     *{box-sizing:border-box}
     :root{color-scheme:dark;--bg:#080d16;--panel:#121a29;--panel2:#182235;--line:#2c3a53;--text:#e5edf8;--muted:#9aa9bf;--accent:#4f8cff;--accent2:#8b5cf6;--ok:#34d399}
@@ -43,49 +43,48 @@
 <main>
   <div class="brand">
     <img src="./icon-192.png" alt="">
-    <div><strong>AI Harness</strong><br><span style="color:var(--muted)">Prompt Kit</span></div>
+    <div><strong>AFK</strong><br><span style="color:var(--muted)">Agent Flow</span></div>
   </div>
 
-  <h1>Open the Prompt Kit on your phone</h1>
-  <p class="lead">No GitHub download, ZIP file, Git client, or local server is required. Open the same responsive Prompt Kit used on desktop.</p>
+  <h1>Go AFK. Work keeps moving.</h1>
+  <p class="lead">AFK Agent Flow routes intent through prompts, skills, agents, validation, and evidence so work can continue without constant workstation supervision.</p>
 
   <div class="actions">
-    <a class="button primary" id="openPromptKit" href="./prompt-kit/">Open Prompt Kit</a>
-    <button class="secondary" id="installButton" type="button">Install on this Android phone</button>
+    <a class="button primary" id="openPromptKit" href="./afk-agent-flow/">Open AFK Agent Flow</a>
+    <button class="secondary" id="installButton" type="button">Install on this device</button>
     <div class="share-row">
-      <button class="secondary" id="shareButton" type="button">Share link</button>
-      <button class="secondary" id="copyButton" type="button">Copy link</button>
+      <button class="secondary" id="shareButton" type="button">Share AFK Agent Flow</button>
+      <button class="secondary" id="copyButton" type="button">Copy direct link</button>
     </div>
   </div>
 
   <div class="status" id="status" role="status" aria-live="polite">
-    <strong>Ready.</strong> In the GitHub app, open this page in Chrome before installing.
+    <strong>Ready.</strong> In an in-app browser, open this page in your system browser before installing.
   </div>
-  <div class="status installed-only" hidden><strong>Installed.</strong> The home-screen app opens the canonical Prompt Kit directly.</div>
+  <div class="status installed-only" hidden><strong>Installed.</strong> The home-screen app opens AFK Agent Flow directly.</div>
 
   <details>
-    <summary>Android Chrome steps</summary>
+    <summary>Mobile install steps</summary>
     <ol>
-      <li>Open this page in Chrome. From GitHub's in-app browser, use its menu and choose <strong>Open in browser</strong>.</li>
-      <li>Tap <strong>Install on this Android phone</strong>. When Chrome does not offer the prompt, use Chrome's menu and choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
-      <li>Open <strong>AI Prompt Kit</strong> from the home screen. It refreshes from GitHub Pages when online and retains a cached fallback for interrupted connections.</li>
+      <li>Open this page in your system browser. From an in-app browser, use its menu and choose <strong>Open in browser</strong>.</li>
+      <li>Tap <strong>Install on this device</strong>. If the browser does not offer the prompt, use its menu and choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
+      <li>Open <strong>AFK Agent Flow</strong> from the home screen. It refreshes from GitHub Pages when online and retains a cached fallback for interrupted connections.</li>
     </ol>
   </details>
 
   <div class="qr">
-    <img src="./qr-prompt-kit.png" alt="QR code for the public Prompt Kit launcher">
+    <img src="./qr-prompt-kit.png" alt="QR code for the AFK Agent Flow public launcher">
     <div>
       <strong>Moving from a computer to your phone?</strong>
       <small>https://endeavoreverlasting.github.io/web-excel-repair-triage/</small>
     </div>
   </div>
 
-  <p class="foot">Canonical Prompt Kit: <code>main:web/prompt-kit/index.html</code></p>
+  <p class="foot">Canonical generated artifact remains <code>main:web/prompt-kit/index.html</code> during the compatibility migration.</p>
 </main>
 <script>
 (() => {
-  const appUrl = new URL("./prompt-kit/", window.location.href).href;
-  const launcherUrl = new URL("./", window.location.href).href;
+  const appUrl = new URL("./afk-agent-flow/", window.location.href).href;
   const installButton = document.getElementById("installButton");
   const shareButton = document.getElementById("shareButton");
   const copyButton = document.getElementById("copyButton");
@@ -109,14 +108,14 @@
   window.addEventListener("beforeinstallprompt", event => {
     event.preventDefault();
     deferredInstallPrompt = event;
-    installButton.textContent = "Install AI Prompt Kit";
-    setStatus("Chrome is ready to install the Prompt Kit.", true);
+    installButton.textContent = "Install AFK Agent Flow";
+    setStatus("The browser is ready to install AFK Agent Flow.", true);
   });
 
   window.addEventListener("appinstalled", () => {
     deferredInstallPrompt = null;
     installButton.hidden = true;
-    setStatus("Installed. Open AI Prompt Kit from your home screen.", true);
+    setStatus("Installed. Open AFK Agent Flow from your home screen.", true);
   });
 
   installButton.addEventListener("click", async () => {
@@ -125,18 +124,18 @@
       const choice = await deferredInstallPrompt.userChoice;
       deferredInstallPrompt = null;
       if (choice.outcome === "accepted") {
-        setStatus("Installation accepted. Look for AI Prompt Kit on the home screen.", true);
+        setStatus("Installation accepted. Look for AFK Agent Flow on the home screen.", true);
       } else {
-        setStatus("Installation was dismissed. Chrome menu → Install app remains available.");
+        setStatus("Installation was dismissed. The browser install menu remains available.");
       }
       return;
     }
-    setStatus("Chrome did not expose the install prompt here. Use Chrome menu → Install app or Add to Home screen.");
+    setStatus("The browser did not expose the install prompt here. Use its menu → Install app or Add to Home screen.");
     document.querySelector("details").open = true;
   });
 
   shareButton.addEventListener("click", async () => {
-    const data = {title: "AI Harness Prompt Kit", text: "Open the AI Harness Prompt Kit", url: launcherUrl};
+    const data = {title: "AFK Agent Flow", text: "Go AFK. Work keeps moving.", url: appUrl};
     if (navigator.share) {
       try {
         await navigator.share(data);
@@ -151,10 +150,10 @@
 
   copyButton.addEventListener("click", async () => {
     try {
-      await navigator.clipboard.writeText(launcherUrl);
-      setStatus("Launcher link copied.", true);
+      await navigator.clipboard.writeText(appUrl);
+      setStatus("AFK Agent Flow link copied.", true);
     } catch {
-      window.prompt("Copy this Prompt Kit link:", launcherUrl);
+      window.prompt("Copy this AFK Agent Flow link:", appUrl);
     }
   });
 })();
