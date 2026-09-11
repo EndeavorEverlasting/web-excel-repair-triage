@@ -475,7 +475,7 @@ def build_html(prompts, ref):
     html.append('<!DOCTYPE html>\n<html lang="en">\n<head>')
     html.append('<meta charset="UTF-8">')
     html.append('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
-    html.append(f'<title>Operant {operant_version}</title>')
+    html.append(f'<title>AFK Agent Flow {operant_version}</title>')
     html.append('<style>')
     html.append(CSS_TEXT)
     html.append('</style>\n</head>\n<body>')
@@ -483,8 +483,8 @@ def build_html(prompts, ref):
     html.append('<div class="header">')
     html.append('  <div class="header-top">')
     html.append('    <div class="logo">')
-    html.append('      <div class="logo-icon">AK</div>')
-    html.append(f'      <div><h1>Operant <span>{operant_version}</span></h1>'
+    html.append('      <div class="logo-icon">AF</div>')
+    html.append(f'      <div><h1>AFK Agent Flow <span>{operant_version}</span></h1>'
                 '<div style="font-size:10px;color:var(--text-muted)">Capabilities · Skills · Implementations · Evidence</div></div>')
     html.append('    </div>')
     html.append('    <div class="search-container">')

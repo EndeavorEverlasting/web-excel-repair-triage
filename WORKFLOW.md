@@ -31,7 +31,7 @@ This file defines how agents and operators enter, select, validate, recover, com
 
 Route by **intent first**, then by device. Do not default every acquisition question into a Git checkout.
 
-1. **Normal browser use / sharing** — open `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`. No repository clone, ZIP extraction, Git client, Python, PowerShell, Termux, or local server is required.
+1. **Normal browser use / sharing** — open `https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/`. No repository clone, ZIP extraction, Git client, Python, PowerShell, Termux, or local server is required.
 2. **Phone/tablet install** — open `https://endeavoreverlasting.github.io/web-excel-repair-triage/` in the system browser and use the install/Add to Home Screen surface. If the GitHub mobile app uses its in-app browser, move to the system browser first.
 3. **Windows stable local app / portable Favorites** — use `Open-Latest-PromptKit.cmd`. The repository-owned launcher owns safe clone-or-fast-forward, parity validation, portable runtime generation, and stable loopback serving.
 4. **Edit, commit, push, inspect source, or run repository tooling locally** — use a real Git checkout. A fresh clone is:

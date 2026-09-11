@@ -43,7 +43,7 @@ Focused implementation proof remains `tests/test_local_hook_activation.py` plus 
 
 `technician-prompt-kit-acquisition` is intentionally one capability across devices rather than separate phone, browser, Windows, and Git implementations. `harness/contracts/prompt-kit-cross-device-access.v1.json` owns the routing boundary.
 
-- **Use/open/share:** open `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`; no Git checkout is required.
+- **Use/open/share:** open `https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/`; no Git checkout is required.
 - **Phone/tablet install:** open `https://endeavoreverlasting.github.io/web-excel-repair-triage/` in the system browser and use the install/Add to Home Screen surface.
 - **Windows stable local app:** use `Open-Latest-PromptKit.cmd` so repository-owned clone/update/validation and portable Favorites behavior remain centralized.
 - **Edit/commit/push/local tooling:** use a real `main` checkout. Android source work uses Termux from F-Droid and Git. Before updating any existing editable checkout, prove canonical origin, a clean worktree, current branch `main`, and zero local-only commits; fetch `origin/main` and finish with `git merge --ff-only origin/main`.

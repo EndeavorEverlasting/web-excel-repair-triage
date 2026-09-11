@@ -577,8 +577,8 @@ def validate(require_tag: bool = False) -> list[str]:
     else:
         html = GENERATED_SITE.read_text(encoding="utf-8")
         expected_markers = (
-            f"<title>Operant {version}</title>",
-            f"Operant <span>{version}</span>",
+            f"<title>AFK Agent Flow {version}</title>",
+            f"AFK Agent Flow <span>{version}</span>",
             f'id="versionBadge">{version}</div>',
         )
         for marker in expected_markers:

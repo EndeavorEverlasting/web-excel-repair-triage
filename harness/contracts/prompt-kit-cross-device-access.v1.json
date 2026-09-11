@@ -4,7 +4,7 @@
   "default_branch": "main",
   "canonical_repository_url": "https://github.com/EndeavorEverlasting/web-excel-repair-triage.git",
   "canonical_site": "web/prompt-kit/index.html",
-  "public_prompt_kit_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
+  "public_prompt_kit_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/",
   "public_launcher_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
   "windows_checkout_policy": {
     "desktop_dev_relative_root": "Desktop\\dev",
@@ -43,8 +43,8 @@
         "tablet"
       ],
       "manual_clone_required": false,
-      "entry_point": "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
-      "operator_message": "Open the public Prompt Kit directly. Do not require Git, ZIP extraction, PowerShell, Python, or Termux for normal use."
+      "entry_point": "https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/",
+      "operator_message": "Open the public AFK Agent Flow surface directly. Do not require Git, ZIP extraction, PowerShell, Python, or Termux for normal use."
     },
     {
       "id": "phone-install",
