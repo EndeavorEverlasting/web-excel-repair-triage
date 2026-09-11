@@ -46,7 +46,7 @@ jobs:
           mkdir -p staging
           gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "$ARTIFACT_NAME" --dir staging
           test -s staging/Outputs/sha256.txt
-          (cd staging && sha256sum -c Outputs/sha256.txt)
+          (cd staging && grep -v ' ./Outputs/sha256.txt$' Outputs/sha256.txt | sha256sum -c -)
           python - <<'PY'
           import json
           from pathlib import Path
