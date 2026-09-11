@@ -65,16 +65,12 @@ jobs:
           content = prompt['copyContent']
           anchor = '\n\n3. PROTECT BEHAVIOR BEFORE MOVING IT\n'
           insertion = (
-              '\n\n2A. RANK THE REPOSITORY BEFORE PICKING A FILE\n'
-              'When the operator says only that the repo is bloated, hard to read, or difficult to edit, do not make them nominate a file. '
-              'Rank 3-7 evidence-backed hotspots using mixed responsibility, duplicated change sites, churn/regressions, hidden coupling, nesting/branching, unclear generated ownership, and repeated difficulty locating the correct edit site. '
-              'Record `rank | path/owner | evidence | representative change | current change sites | risk | disposition`. Size is a clue, never a verdict. '
-              'Pick the smallest top-ranked slice that can materially reduce edit ambiguity without broad behavior change.\n\n'
-              '2B. RUN A REPRESENTATIVE EDIT TEST\n'
-              'Before mutation, choose one real maintainer task such as `Where do I change <behavior>?` and record the current owner/change sites. '
-              'After the refactor, answer the same task from a fresh-maintainer perspective. Improvement means a clearer owner set, less duplicated or scattered change work, and no extra indirection—not merely fewer lines or files.'
+              '\n\n2A. REPO-WIDE INTAKE + REPRESENTATIVE EDIT\n'
+              'If no hotspot is named, do not ask the operator to pick one. Rank 3-5 candidates by mixed responsibility, duplicated change sites, churn/regressions, hidden coupling, and difficulty locating a real edit. '
+              'Record `rank | path/owner | evidence | representative edit | change sites | risk`. Size is a clue, never a verdict. Pick the smallest high-value slice. '
+              'Before and after, answer `Where do I change <behavior>?`; success means clearer ownership and fewer ambiguous change sites without new indirection.'
           )
-          if '2A. RANK THE REPOSITORY BEFORE PICKING A FILE' not in content:
+          if '2A. REPO-WIDE INTAKE + REPRESENTATIVE EDIT' not in content:
               if anchor not in content:
                   raise SystemExit('P124 behavior-protection anchor moved; refusing blind strengthening')
               prompt['copyContent'] = content.replace(anchor, insertion + anchor, 1)
@@ -91,12 +87,11 @@ jobs:
           test_text = test_path.read_text(encoding='utf-8')
           anchor_test = '            "BUILD A STRUCTURAL-DEBT LEDGER",\n'
           additions = (
-              '            "RANK THE REPOSITORY BEFORE PICKING A FILE",\n'
+              '            "REPO-WIDE INTAKE + REPRESENTATIVE EDIT",\n'
               '            "Size is a clue, never a verdict",\n'
-              '            "RUN A REPRESENTATIVE EDIT TEST",\n'
               '            "Where do I change <behavior>?",\n'
           )
-          if '"RANK THE REPOSITORY BEFORE PICKING A FILE"' not in test_text:
+          if '"REPO-WIDE INTAKE + REPRESENTATIVE EDIT"' not in test_text:
               if anchor_test not in test_text:
                   raise SystemExit('P124 focused-test anchor moved; refusing blind edit')
               test_text = test_text.replace(anchor_test, anchor_test + additions, 1)
