@@ -1,19 +1,19 @@
 name: Temporary P123 full-source document quality carrier
 
 on:
-  pull_request:
-    types: [opened, synchronize]
+  push:
+    branches:
+      - fix/p123-full-source-document-quality-20260910
 
 permissions:
   contents: write
 
 concurrency:
-  group: p123-full-source-document-quality-${{ github.event.pull_request.number }}
+  group: p123-full-source-document-quality-branch
   cancel-in-progress: false
 
 jobs:
   execute:
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/p123-full-source-document-quality-20260910'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
