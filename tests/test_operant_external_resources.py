@@ -150,8 +150,8 @@ class OperantExternalResourceTests(unittest.TestCase):
     def test_release_packages_include_sidecar_without_embedding_records(self) -> None:
         pages = PAGES_WORKFLOW.read_text(encoding="utf-8")
         portable = PORTABLE_BUILDER.read_text(encoding="utf-8")
-        self.assertIn('cp web/prompt-kit/resources.v1.json "$SITE_ROOT/prompt-kit/resources.v1.json"', pages)
-        self.assertIn('cmp "$SITE_ROOT/prompt-kit/resources.v1.json" web/prompt-kit/resources.v1.json', pages)
+        self.assertIn('cp web/prompt-kit/resources.v1.json "$SITE_ROOT/afk-agent-flow/resources.v1.json"', pages)
+        self.assertIn('cmp "$SITE_ROOT/afk-agent-flow/resources.v1.json" web/prompt-kit/resources.v1.json', pages)
         self.assertIn('RESOURCE_INDEX_NAME = "resources.v1.json"', portable)
         self.assertIn('resource_source_path = repo_root / "web" / "prompt-kit" / RESOURCE_INDEX_NAME', portable)
         self.assertIn('resource_sidecar_matches_canonical', portable)

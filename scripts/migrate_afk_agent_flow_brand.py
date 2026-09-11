@@ -91,13 +91,13 @@ def migrate() -> list[str]:
     apply(
         "AGENTS.md",
         "**Operant** is the operator-approved product identity, formerly Prompt Kit; it began here as a spreadsheet. Target: `UnderDeskDev/Operant`; not yet created/proven.",
-        "**AFK Agent Flow** is the operator-approved product identity, formerly Operant / Prompt Kit; it began here as a spreadsheet. Target: `UnderDeskDev/AFK-Agent-Flow`; not yet created/proven.",
+        "**AFK Agent Flow** is the operator-approved product identity, formerly Operant / Prompt Kit. Target: `UnderDeskDev/AFK-Agent-Flow`; unproven.",
         expected=1,
     )
     apply(
         "AGENTS.md",
         "Until cutover, legacy `prompt-kit` paths and sources here remain authoritative compatibility surfaces and must not be silently moved. This repo may pin, mirror, package, link to, or consume Operant releases; it must not become a competing Operant authority; keep cross-repo dependencies explicit and versioned.",
-        "Until cutover, legacy `operant` / `prompt-kit` paths and sources here remain authoritative compatibility surfaces and must not be silently moved. This repo may pin, mirror, package, link to, or consume AFK Agent Flow releases through the historical Operant release seams; it must not become a competing AFK Agent Flow authority; keep cross-repo dependencies explicit and versioned.",
+        "Until cutover, legacy `operant` / `prompt-kit` paths remain authoritative compatibility surfaces and must not be silently moved. This repo may consume AFK Agent Flow through historical Operant release seams but must not become a competing authority; keep cross-repo dependencies explicit and versioned.",
         expected=1,
     )
 
@@ -201,6 +201,10 @@ def migrate() -> list[str]:
         "CODEBASE_MAP.md",
         "WORKFLOW.md",
         "harness/contracts/prompt-kit-freshness-guidance.v1.json",
+        "harness/contracts/prompt-kit-cross-device-access.v1.json",
+        "harness/workflows.v1.json",
+        "harness/artifacts.v1.json",
+        "scripts/validate_prompt_kit_cross_device_access.py",
         "harness/reports/PROMPT_KIT_RELEASE_IDENTITY.md",
         "harness/reports/PROMPT_KIT_FRESHNESS.md",
         "scripts/validate_prompt_kit_freshness_guidance.py",
@@ -225,9 +229,33 @@ def migrate() -> list[str]:
         expected=1,
     )
     apply(
+        "harness/contracts/prompt-kit-cross-device-access.v1.json",
+        "Open the public Prompt Kit directly.",
+        "Open the public AFK Agent Flow surface directly.",
+        expected=1,
+    )
+    apply(
+        "scripts/validate_prompt_kit_cross_device_access.py",
+        '"same Prompt Kit used on desktop",',
+        '"same AFK Agent Flow experience used on desktop",',
+        expected=1,
+    )
+    apply(
         "scripts/validate_prompt_kit_freshness_guidance.py",
         "canonical public Prompt Kit URL",
         "canonical public AFK Agent Flow URL",
+        expected=1,
+    )
+    apply(
+        "tests/test_operant_external_resources.py",
+        'cp web/prompt-kit/resources.v1.json "$SITE_ROOT/prompt-kit/resources.v1.json"',
+        'cp web/prompt-kit/resources.v1.json "$SITE_ROOT/afk-agent-flow/resources.v1.json"',
+        expected=1,
+    )
+    apply(
+        "tests/test_operant_external_resources.py",
+        'cmp "$SITE_ROOT/prompt-kit/resources.v1.json" web/prompt-kit/resources.v1.json',
+        'cmp "$SITE_ROOT/afk-agent-flow/resources.v1.json" web/prompt-kit/resources.v1.json',
         expected=1,
     )
 
