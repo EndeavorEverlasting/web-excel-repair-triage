@@ -40,9 +40,17 @@ jobs:
           path = Path("scripts/migrate_afk_agent_flow_brand.py")
           text = path.read_text(encoding="utf-8")
 
-          test_marker = '''    apply(
-              "tests/test_prompt_kit_order_navigation_product.py",'''
-          test_addition = '''    apply(
+          if 'self.assertIn("compatibility and historical release identifiers", access)' not in text:
+              access_anchor = 'self.assertTrue(access.startswith("# Get Operant"))'
+              anchor_index = text.find(access_anchor)
+              if anchor_index < 0:
+                  raise SystemExit("migration access-test owner drifted")
+              block_end = text.find("\n    )", anchor_index)
+              if block_end < 0:
+                  raise SystemExit("migration access-test block end drifted")
+              block_end += len("\n    )")
+              addition = '''
+          apply(
               "tests/test_operant_product_identity.py",
               'self.assertIn("legacy `prompt-kit` paths", governance)',
               'self.assertIn("legacy `operant` / `prompt-kit` paths", governance)',
@@ -53,16 +61,15 @@ jobs:
               'self.assertIn("compatibility paths", access)',
               'self.assertIn("compatibility and historical release identifiers", access)',
               expected=1,
-          )
+          )'''
+              text = text[:block_end] + addition + text[block_end:]
 
-          '''
-          if 'self.assertIn("compatibility and historical release identifiers", access)' not in text:
-              if text.count(test_marker) != 1:
-                  raise SystemExit("migration test insertion point drifted")
-              text = text.replace(test_marker, test_addition + test_marker, 1)
-
-          route_marker = "    # Keep technical internal Prompt Kit path names, but make the main mobile\n"
-          route_addition = '''    # The public-route sweep above also touches the prompt-kit URL embedded
+          if "The public-route sweep above also touches the prompt-kit URL embedded" not in text:
+              route_marker = "    # Keep technical internal Prompt Kit path names, but make the main mobile\n"
+              route_index = text.find(route_marker)
+              if route_index < 0:
+                  raise SystemExit("migration compatibility insertion point drifted")
+              route_addition = '''    # The public-route sweep above also touches the prompt-kit URL embedded
               # in the transition note. Restore that documented compatibility alias
               # while keeping /afk-agent-flow/ canonical everywhere else.
               apply(
@@ -73,20 +80,15 @@ jobs:
               )
 
           '''
-          if "The public-route sweep above also touches the prompt-kit URL embedded" not in text:
-              if text.count(route_marker) != 1:
-                  raise SystemExit("migration compatibility insertion point drifted")
-              text = text.replace(route_marker, route_addition + route_marker, 1)
+              text = text[:route_index] + route_addition + text[route_index:]
 
-          old_contains = '''    ensure_contains("PROMPT_KIT_ACCESS.md", LEGACY_OPERANT_URL)
-              ensure_contains("PROMPT_KIT_ACCESS.md", NEW_PUBLIC_URL)'''
-          new_contains = '''    ensure_contains("PROMPT_KIT_ACCESS.md", LEGACY_OPERANT_URL)
-              ensure_contains("PROMPT_KIT_ACCESS.md", OLD_PUBLIC_URL)
-              ensure_contains("PROMPT_KIT_ACCESS.md", NEW_PUBLIC_URL)'''
           if 'ensure_contains("PROMPT_KIT_ACCESS.md", OLD_PUBLIC_URL)' not in text:
-              if text.count(old_contains) != 1:
+              proof_anchor = '    ensure_contains("PROMPT_KIT_ACCESS.md", LEGACY_OPERANT_URL)\n'
+              proof_index = text.find(proof_anchor)
+              if proof_index < 0:
                   raise SystemExit("migration compatibility proof point drifted")
-              text = text.replace(old_contains, new_contains, 1)
+              insert_at = proof_index + len(proof_anchor)
+              text = text[:insert_at] + '    ensure_contains("PROMPT_KIT_ACCESS.md", OLD_PUBLIC_URL)\n' + text[insert_at:]
 
           path.write_text(text, encoding="utf-8")
           PY
