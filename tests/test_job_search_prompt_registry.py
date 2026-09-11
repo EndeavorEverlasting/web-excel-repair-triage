@@ -97,40 +97,40 @@ class JobSearchPromptRegistryTests(unittest.TestCase):
         self.assertNotIn("Richard Perez", p)
         self.assertNotIn("Pat", p)
 
+    def test_application_pack_verifies_tailors_and_stops_before_submission(self) -> None:
+        p = self.application_pack
+        c = p["copyContent"]
+        self.assertEqual(p["id"], 'P139')
+        self.assertEqual(p["name"], 'Verified Job Opportunity Application Pack Builder')
+        self.assertEqual(p["type"], "BUILD + ARTIFACT")
+        self.assertEqual(p["class"], "CAREER / APPLICATION EXECUTION")
+        for required in (
+            "OPPORTUNITY VERIFICATION RECEIPT",
+            "FIT / GAP MATRIX",
+            "Ready to Apply",
+            "DO NOT AUTO-SUBMIT",
+            "recruiter message is evidence of outreach",
+            "Job Opportunity Search & Trajectory Mapper",
+            "Connected Job Search Workspace & Tracker Synchronizer",
+            "EndeavorEverlasting/EscapeHatch",
+            "sensitive PII",
+            "MUTATION RECEIPT",
+        ):
+            self.assertIn(required, c)
+        self.assertNotIn("Richard Perez", c)
+        self.assertNotIn("micro1", c.casefold())
+        self.assertEqual(p["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], c)
+        self.assertIn(p["name"], self.site)
 
-def test_application_pack_verifies_tailors_and_stops_before_submission(self) -> None:
-    p = self.application_pack
-    c = p["copyContent"]
-    self.assertEqual(p["id"], 'P139')
-    self.assertEqual(p["name"], 'Verified Job Opportunity Application Pack Builder')
-    self.assertEqual(p["type"], "BUILD + ARTIFACT")
-    self.assertEqual(p["class"], "CAREER / APPLICATION EXECUTION")
-    for required in (
-        "OPPORTUNITY VERIFICATION RECEIPT",
-        "FIT / GAP MATRIX",
-        "Ready to Apply",
-        "DO NOT AUTO-SUBMIT",
-        "recruiter message is evidence of outreach",
-        "Job Opportunity Search & Trajectory Mapper",
-        "Connected Job Search Workspace & Tracker Synchronizer",
-        "EndeavorEverlasting/EscapeHatch",
-        "sensitive PII",
-        "MUTATION RECEIPT",
-    ):
-        self.assertIn(required, c)
-    self.assertNotIn("Richard Perez", c)
-    self.assertNotIn("micro1", c.casefold())
-    self.assertEqual(p["actionabilityPolicy"], self.policy["policy_id"])
-    self.assertIn(self.policy["marker"], c)
-    self.assertIn(p["name"], self.site)
+    def test_job_application_tutorial_connects_discovery_pack_and_sync(self) -> None:
+        self.assertIn("P126", self.tutorial)
+        self.assertIn('P139', self.tutorial)
+        self.assertIn("P127", self.tutorial)
+        self.assertIn('Verified Job Opportunity Application Pack Builder', self.tutorial)
+        self.assertIn("manual submission", self.tutorial.casefold())
+        self.assertIn("Ready to Apply", self.tutorial)
 
-def test_job_application_tutorial_connects_discovery_pack_and_sync(self) -> None:
-    self.assertIn("P126", self.tutorial)
-    self.assertIn('P139', self.tutorial)
-    self.assertIn("P127", self.tutorial)
-    self.assertIn('Verified Job Opportunity Application Pack Builder', self.tutorial)
-    self.assertIn("manual submission", self.tutorial.casefold())
-    self.assertIn("Ready to Apply", self.tutorial)
 
 if __name__ == "__main__":
     unittest.main()
