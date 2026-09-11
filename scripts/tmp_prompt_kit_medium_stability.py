@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+# Temporary one-shot carrier input; the workflow removes this file from the durable candidate.
 import json
 from pathlib import Path
 
