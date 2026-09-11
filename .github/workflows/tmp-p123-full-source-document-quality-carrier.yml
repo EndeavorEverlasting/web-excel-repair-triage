@@ -1,0 +1,82 @@
+name: Temporary P123 full-source document quality carrier
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p123-full-source-document-quality-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/p123-full-source-document-quality-20260910'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/p123-full-source-document-quality-20260910
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Materialize P123 source-analysis quality strengthening
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main fix/p123-full-source-document-quality-20260910 --prune --tags
+          git merge --no-edit origin/main
+
+          if [ ! -f scripts/tmp_apply_p123_full_source_document_quality.py ]; then
+            echo 'P123 durable slice already materialized; no carrier work remains'
+            exit 0
+          fi
+
+          python scripts/tmp_apply_p123_full_source_document_quality.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+          echo '--- focused P123 proof ---'
+          python -m unittest \
+            tests.test_p123_source_document_quality_regression \
+            tests.test_gemini_youtube_playlist_ingestion_prompt \
+            tests.test_p123_youtube_ingestion_behavior_eval_prompt \
+            -v
+
+          echo '--- owning Prompt Kit proof ---'
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_order_navigation_contract -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+          echo '--- second-pass fixed-point proof ---'
+          python -m unittest \
+            tests.test_p123_source_document_quality_regression \
+            tests.test_gemini_youtube_playlist_ingestion_prompt \
+            -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+          git rm -f \
+            scripts/tmp_apply_p123_full_source_document_quality.py \
+            .github/workflows/tmp-p123-full-source-document-quality-carrier.yml
+          git add \
+            registry/prompts/ai-engineering-level-up-prompts.v1.json \
+            tests/test_gemini_youtube_playlist_ingestion_prompt.py \
+            tests/test_p123_source_document_quality_regression.py \
+            tests/fixtures/p123_source_document_quality/drive_7UyhyhxdFsQ_20260910.v1.json \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'feat(prompt-kit): strengthen P123 full-source document quality'
+          git push origin HEAD:fix/p123-full-source-document-quality-20260910
