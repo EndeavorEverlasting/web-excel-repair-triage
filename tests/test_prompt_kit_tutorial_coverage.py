@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import unittest
 
 from scripts import build_prompt_kit_registry as registry
@@ -54,6 +55,16 @@ class PromptKitTutorialCoverageTests(unittest.TestCase):
         self.assertEqual(route["wiring_source"], "explicit")
         self.assertEqual(route["tutorial_anchor"], "conversational-fallback")
         self.assertTrue(route["classifier_section"])
+
+    def test_wired_status_fails_closed_when_tutorial_anchor_disappears(self) -> None:
+        policy = copy.deepcopy(coverage._load_policy())
+        policy["wired_prompts"][0]["tutorial_anchor"] = "missing-tutorial-anchor"
+        tutorial_path = coverage.REPO_ROOT / policy["tutorial_document"]
+        with self.assertRaisesRegex(SystemExit, "missing-tutorial-anchor"):
+            coverage._validate_tutorial_anchors(
+                policy,
+                tutorial_path.read_text(encoding="utf-8"),
+            )
 
 
 if __name__ == "__main__":
