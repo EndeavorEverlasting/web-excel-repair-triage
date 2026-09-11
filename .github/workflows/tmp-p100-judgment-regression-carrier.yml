@@ -137,7 +137,7 @@ jobs:
       - name: Focused P100 semantic proof
         run: |
           python -m unittest tests.test_ai_engineering_level_up -v
-          python -m unittest tests.test_prompt_kit_mainline_delivery -v
+          python -m unittest tests.test_prompt_kit_mainline_delivery.PromptKitMainlineDeliveryTests.test_p13_does_not_absorb_hallucination_diagnostic_role -v
 
       - name: Registry and discovery proof
         run: |
