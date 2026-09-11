@@ -10,44 +10,102 @@ FOCUSED_TEST = ROOT / "tests/test_gemini_youtube_playlist_ingestion_prompt.py"
 FIXTURE = ROOT / "tests/fixtures/p123_source_document_quality/drive_7UyhyhxdFsQ_20260910.v1.json"
 QUALITY_TEST = ROOT / "tests/test_p123_source_document_quality_regression.py"
 
-MISSION_OLD = """MISSION
-Turn source + mission + ledger/schema + donor evidence into grounded knowledge + runnable packet. Build real artifacts; never fake repo work."""
-MISSION_NEW = """MISSION
-Turn source + mission + ledger/schema + donor evidence into grounded knowledge and only the artifacts the user's mission actually calls for. Build real artifacts; never fake repo work, bury the requested knowledge behind implementation scaffolding, or let an early-source summary stand in for full-source review.
+P123_COPY = r'''GEMINI YOUTUBE INGESTION. USE SOURCE; EXTRACT KNOWLEDGE, BUILD ONLY REQUESTED ARTIFACTS, AND DO NOT PRETEND REPOSITORY ACCESS.
+
+Consumer/product: xyz_consumer_product
+Target repository identity, if one exists: xyz_repo_name_for_handoff_only
+YouTube source: use the immediately preceding accessible YouTube video/link/attachment when unambiguous; otherwise xyz_video_playlist_or_fixture
+Verified donor dossier / pinned source research: xyz_donor_dossier
+Consumer data-model requirements: xyz_consumer_contract
+Required JSON fields / CSV columns: xyz_output_fields
+
+MISSION
+Turn source + mission + ledger/schema + donor evidence into grounded knowledge and only the artifacts the user's mission calls for. Never let early-source fluency substitute for full-source review.
 
 MISSION MODE / PRIMARY DELIVERABLE ROUTING
-Resolve `MISSION_MODE` from the user's actual request before producing artifacts: `KNOWLEDGE_EXTRACT`, `INGESTION_BUILD`, or `BOTH`.
-- `KNOWLEDGE_EXTRACT`: the primary deliverable is the source-specific knowledge report plus ledger writes/row-ready records. Do not emit the Python adapter, donor packet, repository handoff, or implementation appendix unless the user requested implementation or those artifacts are materially required.
-- `INGESTION_BUILD`: the implementation packet is primary; still preserve bounded source understanding needed by the build.
-- `BOTH`: present the knowledge report first, then implementation artifacts as a clearly secondary section/appendix.
-Never default every source/use case to the same document shape merely because P123 can build an ingestion adapter."""
+Resolve `MISSION_MODE`: `KNOWLEDGE_EXTRACT`, `INGESTION_BUILD`, or `BOTH`.
+- `KNOWLEDGE_EXTRACT`: knowledge report + ledger write/row-ready records are primary. Do not emit adapter/donor/repo-handoff boilerplate unless requested or materially required.
+- `INGESTION_BUILD`: implementation packet is primary; retain source understanding needed by the build.
+- `BOTH`: knowledge report first; implementation packet is secondary.
+Never default every use case to the same document shape.
 
-SOURCE_ANCHOR = "- Source placement is input binding, not repository access."
-SOURCE_INSERT = """
+SOURCE INPUT RESOLUTION
+- A YouTube video, Short, playlist URL, directly attached media item, saved yt-dlp JSON, or supplied transcript/captions is valid input; a single video is valid input.
+- If exactly one usable source appears immediately above this prompt or in the same turn, bind it as `SOURCE_INPUT` automatically. Do not ask the operator to paste, repeat, or restate it into a placeholder.
+- Record `SOURCE_INPUT_KIND` and `SOURCE_INPUT_IDENTITY`. If the video itself is directly inspectable, perform grounded semantic analysis from accessible audiovisual/transcript evidence. If only a URL is present and the environment cannot inspect its content, do not invent what the video says; state the proof ceiling.
+- Source placement is input binding, not repository access.
 
 FULL-SOURCE COVERAGE / TAIL-CHECK CONTRACT
-- When source content is inspectable, traverse the available source from its first position through its last available position. Do not stop after the first few useful themes establish a plausible summary.
-- Run a chronological forward pass, then a deliberate reverse/tail pass from the end toward the beginning to catch insights skipped as attention or novelty declines.
-- Maintain `COVERAGE_LEDGER` rows as `span | evidence | disposition | finding_ids`. Every available span is dispositioned as `NEW_FINDING`, `SUPPORTS_EXISTING`, `NO_REUSABLE_INSIGHT`, or `UNAVAILABLE_UNVERIFIED`; no span silently disappears merely because it yields no new finding.
-- When timing/position metadata exists, report `SOURCE_EXTENT`, `LAST_INSPECTED_POSITION`, `UNACCOUNTED_SPANS`, and `FULL_SOURCE_COVERAGE`. `COMPLETE` is allowed only when the available source extent, including the tail, is accounted for; otherwise use `PARTIAL` and name the unprocessed span/reason.
-- If context/tool limits prevent one-pass review, chunk or iterate while preserving order/provenance, then reconcile duplicate findings. Never convert a truncated pass into a COMPLETE claim.
+- Inspect the available source from first through last available position. Run a chronological forward pass, then a deliberate reverse/tail pass.
+- Maintain `COVERAGE_LEDGER`: `span | evidence | disposition | finding_ids`. Disposition every span as NEW_FINDING, SUPPORTS_EXISTING, NO_REUSABLE_INSIGHT, or UNAVAILABLE_UNVERIFIED.
+- With timing/position metadata report `SOURCE_EXTENT`, `LAST_INSPECTED_POSITION`, `UNACCOUNTED_SPANS`, `FULL_SOURCE_COVERAGE`. `COMPLETE` is allowed only when the available extent including the tail is accounted for; otherwise report `PARTIAL` and the exact gap.
+- If context/tool limits require chunking, preserve order/provenance, reconcile duplicates, and never promote a truncated pass to COMPLETE.
 
 DOCUMENT IDENTITY / EXPORT CONTRACT
-- Before any body content, derive a human-readable source-specific `DOCUMENT_TITLE` from the actual source title/topic plus the user's extraction mission. The first visible line/H1 of a generated report must be that title, not code, `Python`, a raw URL, the prompt name, or a generic template label.
-- Derive a matching filesystem/Drive-safe `EXPORT_BASENAME`; do not use the raw source URL as the document/file name. If disambiguation is needed, append a short source ID/date rather than collapsing unrelated use cases to the same generic name.
-- A reusable ledger/template may keep its canonical workbook name, but any per-source exported report/document must identify the source/use case distinctly.
-- Do not export unresolved `xyz_` placeholders or irrelevant consumer/repository scaffolding into a knowledge-only document. Omit unavailable optional sections or mark genuinely required unknowns explicitly.
-- Report the final `DOCUMENT_TITLE` and `EXPORT_BASENAME`, plus the observed Drive/file ID or URL when an actual write/export occurs."""
+- Derive a source/use-case-specific `DOCUMENT_TITLE`; the first visible line/H1 must be that title, not code, `Python`, a raw URL, prompt name, or generic template label.
+- Derive a matching safe `EXPORT_BASENAME`; do not use the raw source URL as the document/file name. Add a short source ID/date only when disambiguation is needed.
+- Reusable ledgers may retain canonical names, but each per-source exported report/document must identify its source/use case distinctly.
+- Do not export unresolved `xyz_` placeholders or irrelevant repository scaffolding into a knowledge-only document.
+- Report `DOCUMENT_TITLE`, `EXPORT_BASENAME`, and observed file/Drive ID or URL when an actual export/write occurs.
 
-IMPLEMENTATION_OLD = """IMPLEMENTATION PACKET — PRODUCE ALL APPLICABLE FILES
-Return complete contents for:"""
-IMPLEMENTATION_NEW = """IMPLEMENTATION PACKET — ONLY WHEN MISSION MODE INCLUDES `INGESTION_BUILD`
-When `MISSION_MODE` is `INGESTION_BUILD` or `BOTH`, return complete contents for:"""
+DOMAIN-AGNOSTIC KNOWLEDGE / LEDGER CONTRACT
+- Classify from source + mission, never recent conversation themes, favorite domains, or examples. Examples prove range, not defaults: Cybersecurity; Agentic Software Development; Culinary & Food.
+- With a supplied ledger/schema, `Sources`, `Findings`, and `Domains` are canonical; reuse its canonical domain vocabulary. favored views are projections, not separate data authorities.
+- Produce one Finding record per distinct reusable insight with provenance/evidence/confidence/validation. Use Unknown / Needs Verification when needed. Set Prompt Kit Candidate / Software Candidate only when applicable.
+- Resolve spreadsheet write capability + authority. If writable and write authority exists, perform the canonical Source/Findings write and report exact written ranges/IDs as the mutation receipt. Otherwise emit row-ready Source and Findings records. Never claim the spreadsheet was updated without an observed write receipt.
 
-FINAL_OLD = """FINAL RESPONSE
-Return capability mode; source/donor authority ledger; complete standalone files; deterministic test results actually run; representative outputs; Windows commands; live proof performed or explicitly unperformed; repository claim ledger; risks/gaps; proof ceiling; and repo-capable handoff. The result is incomplete if it is only design, pseudocode, a repository plan, or a fake repository patch."""
-FINAL_NEW = """FINAL RESPONSE
-Always start with `DOCUMENT_TITLE`, source identity, `MISSION_MODE`, and the full-source coverage receipt. For `KNOWLEDGE_EXTRACT`, return the polished source-specific knowledge report and ledger mutation/row-ready records first and stop when that mission is complete; do not append unrelated implementation boilerplate. For `BOTH`, keep that knowledge report first, then the standalone implementation packet. For `INGESTION_BUILD`, return the applicable standalone files, deterministic test results actually run, representative outputs, Windows commands, live proof performed or explicitly unperformed, repository claim ledger, risks/gaps, proof ceiling, and repo-capable handoff. Report `EXPORT_BASENAME` and any observed export/write receipt. The result is incomplete if source coverage silently trails off, the visible/exported document identity is generic, or proof is fabricated."""
+GEMINI CAPABILITY BOUNDARY
+Assume the target repository is NOT accessible unless actually exposed. Repository names/excerpts are not access.
+- Use only supplied/accessed source material and verified donor evidence; MUST NOT fabricate a repository patch, imports, paths, schemas, tests, CI, branches, SHAs, merges, or runtime proof.
+- Suggested destinations are `PROPOSED LOCATION — REQUIRES REPO-CAPABLE AGENT TO VERIFY`.
+- Classify repository claims as SUPPLIED_CONTEXT, PROPOSED, or UNKNOWN_REQUIRES_REPO_INSPECTION.
+
+SOURCE AUTHORITY / DONOR CONTRACT
+- yt-dlp owns machine-readable YouTube metadata extraction; consume its JSON, do not reimplement YouTube HTML parsing, and do not create two competing extraction authorities. This does not forbid semantic analysis of video/transcript content directly available in Gemini context.
+- Consumer code owns normalization/schema/tests/exports.
+- TubeArchivist and NewPipeExtractor are reference sources only where license boundaries require it; do not copy GPL implementation code.
+- Record supplied donor pins and runtime `yt-dlp --version`; never invent observations.
+
+WINDOWS-FIRST EXTRACTION CONTRACT
+Live metadata uses external yt-dlp with `--skip-download`, `--dump-single-json`, and `--no-warnings` when suitable, without downloading media and does not request media download. `--flat-playlist` is explicit lower-metadata census mode. Support `--input-json` for deterministic fixtures.
+
+NORMALIZATION + IDENTITY / OCCURRENCE INVARIANTS
+normalized JSON is canonical; CSV is a projection.
+- A unique source/video entity represents stable identity; a playlist occurrence is ordered membership, references source identity, and must not duplicate the canonical source entity. preserve every observed occurrence.
+- Tracking/share parameters such as `si=` do not create identity. Prefer extractor-supplied `playlist_index`; use encounter-order fallback only when needed and record `position_source`.
+- SOURCE-LIST REGRESSION EXAMPLE: synthetic corpus has 25 URL occurrences and 23 unique video IDs; `_CuibYl_Fh0` and `bBdq2hf5R0I` repeat. A share/tracking parameter such as `si=` must not create a new video identity.
+- UNAVAILABLE / COMPLETENESS CONTRACT: null/private/deleted slots retain occurrence tombstone and must not silently shrink. States: COMPLETE, PARTIAL, EMPTY_CONFIRMED, EMPTY_UNPROVEN, FAILED. Empty usable results require extractor evidence or explicit `--allow-empty`.
+
+JSON + CSV CONTRACT
+Preserve Unicode/commas/quotes/newlines/missing values. Use `utf-8-sig` and verify UTF-8 BOM for spreadsheet-facing CSV unless overridden. Cells beginning with `=`, `+`, `-`, or `@` must be spreadsheet-safe while canonical JSON must remain unchanged.
+
+DONOR EVIDENCE / VERSION CONTRACT
+Missing pins/releases/licenses/observations are NOT_SUPPLIED or UNKNOWN. Preserve ADOPT / ADAPT / REFERENCE_ONLY / REJECT / DEFER; must not silently change a supplied donor disposition. Separate `normalization_schema_version` and `adapter_version`; emit `donor_manifest.json`.
+
+BACKEND-NEUTRAL NORMALIZATION CONTRACT
+Raw extractor responses are backend-local and must not be the shared domain contract. A YouTube Data API adapter must not impersonate yt-dlp JSON. All backends adapt to the canonical schema.
+
+IMPLEMENTATION PACKET — ONLY WHEN MISSION MODE INCLUDES `INGESTION_BUILD`
+For `INGESTION_BUILD` or `BOTH`, produce standalone applicable files: `source_ingest_youtube.py`, `source_import_contract.json`, `youtube_playlist_fixture.json`, `test_youtube_source_ingestion.py`, `donor_manifest.json`, representative normalized JSON/CSV, compact Windows run sheet. Do not import from hypothetical consumer-repository modules.
+
+OUTPUT PATH SAFETY CONTRACT
+Generated outputs live under `Outputs/` by default. Resolve paths and reject equal resolved input/output paths; source fixture remains byte-identical after rejection. Any authorized non-Outputs overwrite gets a timestamped backup under `Outputs/backups/`.
+
+RUNNABILITY GATE
+Run deterministic tests when execution exists; else mark UNRUN. Tests must import subprocess when used, create/validate output directory, include actual non-ASCII Unicode fixture and embedded quote, exercise formula prefixes, verify BOM, support deterministic timestamp, and fixture-mode CLI that writes both JSON and CSV plus donor manifest.
+
+MINIMUM DETERMINISTIC TESTS
+Test full no-download command; explicit flat mode; normal metadata; repeated video ID preserves multiple ordered occurrences; CSV derives from JSON; Unicode/comma/newline round trip; spreadsheet-safe while JSON remains semantically unchanged; malformed donor case; collision rejection; fixture-mode CLI writes both JSON and CSV deterministically.
+
+LIVE-PROOF CEILING
+Fixture tests do NOT prove current YouTube behavior, live metadata/auth/private access, repository compatibility, or integration. Directly inspectable media supports only bounded semantic observations. If live proof runs, record runtime version/source identity/count/outputs/failures without credentials.
+
+REPOSITORY-CAPABLE HANDOFF
+Only when repository integration is part of `MISSION_MODE`, end with a copy-paste handoff.
+PRE-MUTATION MISSION DECLARATION: declare repository and branch/worktree, lane and mission, owned and forbidden scope, expected artifacts, validation order, proof ceiling, mutation authority. Refresh remote truth; read repository governance and current Git/PR state; find the existing source/import/domain owners; enforce one writer per mutation surface. Run focused/repository gates and `git diff --check`; use normal commit and push when authorized. Report changed files, executed checks and results, commit SHA, push/PR state, blockers, Git status, proof ceiling, and the exact next command. Preserve authority: yt-dlp owns YouTube parsing, consumer owns normalization/schema/tests/exports. Do not make the operator restate the donor research.
+
+FINAL RESPONSE
+Start with `DOCUMENT_TITLE`, source identity, `MISSION_MODE`, and full-source coverage receipt. For `KNOWLEDGE_EXTRACT`, return the polished source-specific knowledge report and ledger mutation/row-ready records first and stop when that mission is complete. For `BOTH`, knowledge first, implementation second. For `INGESTION_BUILD`, return applicable packet/proof/handoff. Report `EXPORT_BASENAME` and observed export receipt. The result is incomplete if source coverage silently trails off, document identity is generic, or proof is fabricated.'''
 
 TEST_METHOD = r'''
     def test_full_source_coverage_document_identity_and_mission_routing(self) -> None:
@@ -88,7 +146,6 @@ TEST_METHOD = r'''
 
 '''
 TEST_ANCHOR = "    def test_yt_dlp_is_single_extraction_authority(self) -> None:\n"
-
 SITE_MARKER_ANCHOR = '            "row-ready Source and Findings records",\n'
 SITE_MARKERS = '''            "MISSION MODE / PRIMARY DELIVERABLE ROUTING",\n            "FULL-SOURCE COVERAGE / TAIL-CHECK CONTRACT",\n            "DOCUMENT IDENTITY / EXPORT CONTRACT",\n            "`DOCUMENT_TITLE`",\n            "`EXPORT_BASENAME`",\n'''
 
@@ -216,51 +273,17 @@ if __name__ == "__main__":
 '''
 
 
-def replace_once(text: str, old: str, new: str, label: str) -> str:
-    if new in text:
-        return text
-    if old not in text:
-        raise SystemExit(f"missing anchor for {label}")
-    return text.replace(old, new, 1)
-
-
 def main() -> int:
     payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
     p123 = next(item for item in payload["prompts"] if item.get("id") == "P123")
 
-    p123["sprintRole"] = (
-        p123["sprintRole"].rstrip(".")
-        + "; route knowledge-only versus ingestion-build missions explicitly, force full-source/tail coverage when source content is inspectable, and give every per-source report a source-specific visible/exported document identity."
-    )
-    p123["useWhen"] = (
-        p123["useWhen"].rstrip(".")
-        + " This owner also applies when prior Gemini/P123 output summarized the beginning well but trailed off later, buried knowledge under implementation output, or exported generic/URL-named documents without a source-specific title."
-    )
-    p123["inspectFirst"] = (
-        p123["inspectFirst"].rstrip(".")
-        + " Resolve the user's primary mission mode, available source extent/timestamps or transcript ordering, and the actual export/write surface so coverage and document identity can be proven rather than assumed."
-    )
-    p123["expectedOutput"] = (
-        p123["expectedOutput"].rstrip(".")
-        + " The primary artifact is mission-routed: knowledge extraction produces a polished source-specific report first, with a human-readable document title/export basename and a full source coverage/tail receipt; implementation artifacts are emitted only when requested or materially required."
-    )
-    p123["proofGate"] = (
-        p123["proofGate"].rstrip(".")
-        + " When source content is inspectable, coverage may be COMPLETE only after the available source extent including its tail is dispositioned and unaccounted spans are empty; otherwise it is PARTIAL with the exact gap. Per-source exports must use a source/use-case-specific visible title and basename rather than a raw URL or generic repeated template title, and knowledge-only missions must not be buried under implementation scaffolding."
-    )
-    p123["nextStep"] = (
-        "Finish the user's primary mission at the correct proof layer: for knowledge extraction, reconcile the forward and reverse/tail passes, close the coverage ledger, write or emit the ledger findings, and verify the source-specific document/export identity; when ingestion build is also requested, then hand the completed packet to a repository-capable executor for integration and live acceptance."
-    )
-
-    content = p123["copyContent"]
-    content = replace_once(content, MISSION_OLD, MISSION_NEW, "mission routing")
-    if "FULL-SOURCE COVERAGE / TAIL-CHECK CONTRACT" not in content:
-        if SOURCE_ANCHOR not in content:
-            raise SystemExit("missing source-resolution insertion anchor")
-        content = content.replace(SOURCE_ANCHOR, SOURCE_ANCHOR + SOURCE_INSERT, 1)
-    content = replace_once(content, IMPLEMENTATION_OLD, IMPLEMENTATION_NEW, "conditional implementation packet")
-    content = replace_once(content, FINAL_OLD, FINAL_NEW, "mission-routed final response")
-    p123["copyContent"] = content
+    p123["sprintRole"] = "Give Gemini a domain-agnostic YouTube source brief that routes knowledge extraction versus ingestion-build missions, binds the immediately preceding source, forces full-source/tail coverage for inspectable content, writes reusable findings when authorized, and produces source-specific documents or standalone ingestion artifacts without pretending repository access"
+    p123["useWhen"] = "You have a YouTube video, Short, playlist, directly attached accessible media, saved yt-dlp JSON, or transcript and want Gemini to extract reusable knowledge without domain bias, build ingestion artifacts, or both; especially when prior output was front-loaded, trailed off later, buried knowledge under implementation scaffolding, or exported generic/URL-named documents."
+    p123["inspectFirst"] = "Resolve the immediately preceding unambiguous source, the user's mission mode, available source extent/timestamps or transcript ordering, supplied ledger/schema and canonical domain vocabulary, export/write surface and authority, then verified donor dossier and actual available tools. Never infer inaccessible repository state."
+    p123["expectedOutput"] = "A mission-routed result: for knowledge extraction, a polished source-specific report with one Finding record per distinct reusable insight, full source coverage/tail receipt, human-readable document title/export basename, and canonical ledger write with exact mutation receipt when writable/authorized or row-ready records otherwise; for ingestion build, the existing standalone yt-dlp adapter/contracts/fixtures/tests/JSON/CSV packet and repository-capable handoff; for both, knowledge first and implementation second."
+    p123["nextStep"] = "Finish the primary mission at the correct proof layer: close the forward plus reverse/tail coverage ledger, write or emit reusable findings, verify source-specific document/export identity, and only when ingestion build is in scope hand the standalone packet to a repository-capable executor for integration and live acceptance."
+    p123["proofGate"] = "The immediately preceding unambiguous source is bound without restatement; semantic claims are source-grounded; domain classification follows source+mission rather than favorite domains; supplied Sources/Findings/Domains ownership is preserved; writable authorized ledger mutations have exact written ranges/IDs; inspectable content is COMPLETE only when the available extent including its tail is dispositioned with no unaccounted span, otherwise PARTIAL names the gap; per-source exports have a source/use-case-specific visible title and basename rather than a raw URL or generic repeated title; knowledge-only missions are not buried under implementation scaffolding; yt-dlp remains the metadata extraction authority; existing normalization, spreadsheet-safety, donor-license, proof-ceiling, and repository-access boundaries remain enforced."
+    p123["copyContent"] = P123_COPY
 
     for keyword in (
         "full source coverage",
@@ -272,8 +295,8 @@ def main() -> int:
         if keyword not in p123["keywords"]:
             p123["keywords"].append(keyword)
 
-    if len(content) > 12000:
-        raise SystemExit(f"P123 copyContent exceeds helper ceiling: {len(content)}")
+    if len(P123_COPY) > 12000:
+        raise SystemExit(f"P123 copyContent exceeds helper ceiling: {len(P123_COPY)}")
     REGISTRY.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     test_text = FOCUSED_TEST.read_text(encoding="utf-8")
@@ -281,7 +304,8 @@ def main() -> int:
         if TEST_ANCHOR not in test_text:
             raise SystemExit("missing focused-test insertion anchor")
         test_text = test_text.replace(TEST_ANCHOR, TEST_METHOD + TEST_ANCHOR, 1)
-    if '"MISSION MODE / PRIMARY DELIVERABLE ROUTING"' not in test_text.split("def test_generated_site_contains_gemini_ingestion_semantics", 1)[1]:
+    generated_section = test_text.split("def test_generated_site_contains_gemini_ingestion_semantics", 1)[1]
+    if '"MISSION MODE / PRIMARY DELIVERABLE ROUTING"' not in generated_section:
         if SITE_MARKER_ANCHOR not in test_text:
             raise SystemExit("missing generated-site marker anchor")
         test_text = test_text.replace(SITE_MARKER_ANCHOR, SITE_MARKER_ANCHOR + SITE_MARKERS, 1)
@@ -291,7 +315,7 @@ def main() -> int:
     FIXTURE.write_text(json.dumps(FIXTURE_PAYLOAD, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     QUALITY_TEST.write_text(QUALITY_TEST_CONTENT, encoding="utf-8")
 
-    print(f"P123_FULL_SOURCE_DOCUMENT_QUALITY_APPLIED chars={len(content)}")
+    print(f"P123_FULL_SOURCE_DOCUMENT_QUALITY_APPLIED chars={len(P123_COPY)}")
     return 0
 
 
