@@ -100,8 +100,12 @@ class SkillPromptRegistryTests(unittest.TestCase):
             "INSTALL THE SMALLEST DURABLE PREVENTION",
             "REGRESSION SCENARIO",
             "no stopping at plan/status while safe action remains",
+            "actual P07 dispatch evidence when worker capacity and collision-safe lanes exist",
         ):
             self.assertIn(phrase, content)
+        self.assertNotIn("explicit Sub-Part Agent plan or serialized-dependency reason", content)
+        self.assertNotIn("prepared for a Sub-Part Agent", content)
+
         for routing_phrase in (
             "cluttered, noisy, or space-heavy UI keeps getting reported",
             "route the specialized UX repair to P99 and continue the critical path here",
