@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'registry/prompts/**'
+      - 'docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md'
       - 'docs/prompt-kit-*.js'
       - 'docs/prompt-kit-ontology-history.v1.json'
       - 'docs/prompt-kit-favorites-portability.js'
@@ -27,6 +28,7 @@ on:
     branches: [main]
     paths:
       - 'registry/prompts/**'
+      - 'docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md'
       - 'docs/prompt-kit-*.js'
       - 'docs/prompt-kit-ontology-history.v1.json'
       - 'docs/prompt-kit-favorites-portability.js'
@@ -64,6 +66,10 @@ jobs:
         run: |
           python scripts/validate_prompt_kit_feedback_afk_routing.py --summary
           python -m unittest tests.test_prompt_kit_feedback_afk_routing tests.test_prompt_kit_feedback_production -v
+      - name: Validate tutorial route coverage and wiring debt
+        run: |
+          python scripts/prompt_kit_tutorial_coverage.py --summary
+          python -m unittest tests.test_prompt_kit_tutorial_coverage -v
       - name: Validate repository ontology lens and canonical Prompt Kit parity
         env:
           ONTOLOGY_HISTORY_BASELINE: ${{ github.event.pull_request.base.sha || github.event.before }}
