@@ -1,0 +1,74 @@
+name: Temporary SSH current-floor materializer
+
+on:
+  push:
+    branches: [feat/repository-ssh-setup-usage-prompt-20260909]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ssh-current-floor-materialize
+  cancel-in-progress: false
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Materialize through canonical helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          mkdir -p Outputs
+          python scripts/prompt_registry_ops.py inspect > Outputs/ssh-prompt-inspect.json
+          python scripts/prompt_registry_ops.py add \
+            --input scripts/tmp_repository_ssh_prompt_draft.json \
+            --registry ai-engineering-level-up-prompts \
+            | tee Outputs/ssh-prompt-helper-receipt.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          receipt=json.loads(Path('Outputs/ssh-prompt-helper-receipt.json').read_text(encoding='utf-8'))
+          assert receipt['status']=='added', receipt
+          prompt_id=receipt['id']
+          ext=receipt.get('external_prior_art') or {}
+          assert ext.get('all_registered_sources_searched') is True, ext
+          assert ext.get('automatic_prompt_authoring') is False, ext
+          assert ext.get('distinct_residual_terms'), ext
+          Path('tests/test_repository_ssh_setup_prompt.py').write_text(f'''import unittest\nfrom scripts.build_prompt_kit_registry import load_prompt_registry\n\nclass RepositorySshSetupPromptTests(unittest.TestCase):\n    @classmethod\n    def setUpClass(cls):\n        cls.prompts=load_prompt_registry()\n        cls.prompt=next(p for p in cls.prompts if p.get("name")=="Repository SSH Setup + Usage Completer")\n        cls.p55=next(p for p in cls.prompts if p.get("id")=="P55")\n        cls.p61=next(p for p in cls.prompts if p.get("id")=="P61")\n    def test_fresh_identity_and_owner_boundaries(self):\n        self.assertEqual(self.prompt["id"], {prompt_id!r})\n        self.assertNotIn(self.prompt["id"], {{"P55","P61","P131","P138"}})\n        self.assertEqual(self.p55["name"], "GitHub CLI Repository Bootstrapper")\n        self.assertEqual(self.p61["name"], "Existing Repository Clone + Working-Directory Bootstrapper")\n    def test_setup_proof_and_usage_contract(self):\n        t=self.prompt["copyContent"].lower()\n        for s in ["public key", "private key", "batchmode=yes", "connecttimeout=8", "git ls-remote --heads origin", "git push --dry-run", "git remote set-url origin", "how to use this ssh setup", "git clone <verified-ssh-url>", "blocked_user_only", "blocked_permission", "blocked_network_policy", "do not blindly answer yes", "git bash/msys2"]:\n            self.assertIn(s,t)\n        self.assertLess(t.index("6. prove the transport fail-fast"), t.index("9. how to use this ssh setup"))\n    def test_secret_and_mutation_boundaries(self):\n        t=self.prompt["copyContent"].lower()\n        for s in ["never ask the operator to send a private key or passphrase in chat", "do not make a global git/ssh-policy change", "preserve every unrelated remote", "never overwrite an existing key file", "do not delete old keys", "do not create a remote branch, tag, commit, or force update merely to test credentials", "distinguish authentication from authorization"]:\n            self.assertIn(s,t)\n\nif __name__ == "__main__":\n    unittest.main()\n''', encoding='utf-8')
+          print(f"MATERIALIZED_PROMPT_ID={prompt_id}")
+          PY
+          python -m unittest tests.test_repository_ssh_setup_prompt -v
+          python scripts/prompt_registry_ops.py validate | tee Outputs/ssh-prompt-registry-validation.json
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          git status --short
+          git diff --stat
+      - name: Package exact durable candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/ssh-candidate/registry/prompts" "$RUNNER_TEMP/ssh-candidate/tests" "$RUNNER_TEMP/ssh-candidate/web/prompt-kit" "$RUNNER_TEMP/ssh-candidate/Outputs"
+          cp registry/prompts/ai-engineering-level-up-prompts.v1.json "$RUNNER_TEMP/ssh-candidate/registry/prompts/"
+          cp tests/test_repository_ssh_setup_prompt.py "$RUNNER_TEMP/ssh-candidate/tests/"
+          cp web/prompt-kit/index.html "$RUNNER_TEMP/ssh-candidate/web/prompt-kit/"
+          cp Outputs/ssh-prompt-helper-receipt.json "$RUNNER_TEMP/ssh-candidate/Outputs/"
+          cp Outputs/ssh-prompt-registry-validation.json "$RUNNER_TEMP/ssh-candidate/Outputs/"
+          (cd "$RUNNER_TEMP/ssh-candidate" && find . -type f -print0 | sort -z | xargs -0 sha256sum) > "$RUNNER_TEMP/ssh-candidate/Outputs/sha256.txt"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ssh-current-floor-candidate-${{ github.sha }}
+          path: ${{ runner.temp }}/ssh-candidate/
+          if-no-files-found: error
+          retention-days: 3
