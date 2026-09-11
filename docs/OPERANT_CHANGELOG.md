@@ -2,6 +2,27 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.6.0 - 2026-09-11
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): add complete ad campaign domain and prompt suite (`74d53816`)
+- feat(prompt-kit): add project case-study demo deck builder (`81af4168`)
+- feat(operant): add canonical upgrade recipe engine (`b3b22808`)
+- feat(prompt-kit): stabilize mobile UX across portrait and landscape (`5d6c24bd`)
+- feat(prompt-kit): add account relevance to P114 canary (#417) (`0a627a5d`)
+- feat(prompt-kit): timestamp P114 query issuance (`cae7dbb6`)
+- feat(prompt-kit): add Teams attendance roster reconstructor (`7ddcdbe7`)
+- feat(prompt-kit): gate P13 on execution posture canary (`ff8b3b12`)
+
+### Fixes / performance
+
+- fix(prompt-kit): protect P131 artifact outputs (`1b3c0b92`)
+- fix(prompt-kit): make P07 parallel execution binary (`e21a09bd`)
+- fix(prompt-kit): restore P07 non-parallel proof gates (`e6737d06`)
+- fix(prompt-kit): fail closed on unknown P114 issuance time (`3259c91b`)
+- fix(prompt-kit): align P13 regression with P07 dispatch (`11c021dc`)
+
 ## 0.5.0 - 2026-09-10
 
 ### Features / breaking pre-1.0 changes
