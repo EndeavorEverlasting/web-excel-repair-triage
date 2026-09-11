@@ -22,6 +22,12 @@ if old_subprocess not in p123["copyContent"] and new_subprocess not in p123["cop
     raise SystemExit("P123 subprocess legacy marker anchor missing")
 p123["copyContent"] = p123["copyContent"].replace(old_subprocess, new_subprocess, 1)
 
+old_authority = "writable authorized ledger mutations have exact written ranges/IDs"
+new_authority = "when the ledger is writable and write authority exists, mutations have exact written ranges/IDs"
+if old_authority not in p123["proofGate"] and new_authority not in p123["proofGate"]:
+    raise SystemExit("P123 writable-authority legacy proof anchor missing")
+p123["proofGate"] = p123["proofGate"].replace(old_authority, new_authority, 1)
+
 if len(p123["copyContent"]) > 12000:
     raise SystemExit(f"P123 copyContent exceeds helper ceiling after reconciliation: {len(p123['copyContent'])}")
 
