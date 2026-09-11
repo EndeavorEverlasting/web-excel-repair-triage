@@ -13,7 +13,7 @@ MANIFEST_PATH = ROOT / "harness" / "manifest.v1.json"
 SKILL_PATH = ROOT / ".ai" / "skills" / "technician-prompt-kit-acquisition" / "SKILL.md"
 REPORT_PATH = ROOT / "harness" / "reports" / "PROMPT_KIT_FRESHNESS.md"
 
-PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/"
+PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/"
 LAUNCHER_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/"
 FRESHNESS_TRIGGER = "user reports a Prompt Kit or prompt version label and currentness is not proven"
 
@@ -88,7 +88,7 @@ def validate_contract(payload: dict[str, Any]) -> None:
         raise FreshnessGuidanceError("freshness routes drifted")
 
     evidence = "\n".join(string_list(payload.get("currentness_evidence"), "currentness_evidence"))
-    for phrase in ("canonical public Prompt Kit URL", "repository-owned launcher", "origin/main", "freshly downloaded"):
+    for phrase in ("canonical public AFK Agent Flow URL", "repository-owned launcher", "origin/main", "freshly downloaded"):
         if phrase not in evidence:
             raise FreshnessGuidanceError(f"currentness evidence is missing: {phrase}")
 
