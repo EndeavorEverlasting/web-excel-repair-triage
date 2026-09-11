@@ -2,7 +2,7 @@
   "schema_version": "operant-product-identity/v1",
   "product_id": "operant",
   "product_name": "Operant",
-  "product_version": "0.5.0",
+  "product_version": "0.6.0",
   "status": "transition",
   "tagline": "Agentic Capability & Execution System",
   "purpose": "Map capabilities, skills, implementations, agents, hooks, and evidence into fast, evidence-bounded execution routes.",
@@ -33,7 +33,7 @@
   },
   "compatibility": {
     "visible_brand": "Operant",
-    "visible_version": "0.5.0",
+    "visible_version": "0.6.0",
     "preserve_paths": [
       "web/prompt-kit/index.html",
       "docs/prompt-kit*.js",
