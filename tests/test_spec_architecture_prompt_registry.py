@@ -860,6 +860,9 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertEqual(prompt["color"], "Cyan")
         for phrase in (
             "BUILD A STRUCTURAL-DEBT LEDGER",
+            "REPO-WIDE INTAKE + REPRESENTATIVE EDIT",
+            "Size is a clue, never a verdict",
+            "Where do I change <behavior>?",
             "PROTECT BEHAVIOR BEFORE MOVING IT",
             "REFACTOR FOR COHESION, NOT SMALLNESS ALONE",
             "DO NOT REPLACE A MONOLITH WITH A MAZE",
