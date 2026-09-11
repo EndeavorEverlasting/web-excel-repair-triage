@@ -1,0 +1,75 @@
+name: Temporary external resource projection refresh
+
+on:
+  push:
+    branches:
+      - fix/external-resource-projection-refresh-20260911
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-and-prove:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/external-resource-projection-refresh-20260911
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Refresh canonical external-resource projections
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python scripts/sync_operant_external_resources.py
+
+      - name: Prove external-resource contract and Prompt Kit parity
+        run: |
+          set -euo pipefail
+          node --check docs/prompt-kit-external-resources.js
+          python scripts/validate_operant_external_resources.py --summary
+          python -m unittest tests.test_operant_external_resources tests.test_external_prior_art_gate -v
+          python scripts/search_operant_external_catalog.py \
+            --live-proof \
+            --summary \
+            --receipt-output Outputs/operant-external-resources/catalog-search-live-proof.json
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
+          git diff --check
+
+      - name: Bound durable diff and remove carrier
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/tmp-external-resource-projection-refresh.yml
+          mapfile -t changed < <(git status --short | sed -E 's/^.. //' | sort)
+          printf '%s\n' "${changed[@]}"
+          allowed=(
+            .github/workflows/tmp-external-resource-projection-refresh.yml
+            registry/resources/operant-external-resource-gaps.v1.json
+            web/prompt-kit/resources.v1.json
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for candidate in "${allowed[@]}"; do
+              [[ "$path" == "$candidate" ]] && ok=true && break
+            done
+            $ok || { echo "unexpected changed path: $path" >&2; exit 1; }
+          done
+          git diff --check
+
+      - name: Commit durable projection refresh
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add registry/resources/operant-external-resource-gaps.v1.json web/prompt-kit/resources.v1.json .github/workflows/tmp-external-resource-projection-refresh.yml
+          git commit -m 'fix(harness): refresh external resource coverage projection'
+          git push origin HEAD:fix/external-resource-projection-refresh-20260911
