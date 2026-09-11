@@ -1,0 +1,150 @@
+name: Temporary P124 Readable Repo Carrier
+
+on:
+  push:
+    branches:
+      - feat/p124-readable-repo-audit-20260911
+
+permissions:
+  contents: write
+
+jobs:
+  strengthen-p124:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p124-readable-repo-audit-20260911
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Strengthen canonical P124 and focused regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          registry_path = Path('registry/prompts/spec-architecture-prompts.v1.json')
+          test_path = Path('tests/test_spec_architecture_prompt_registry.py')
+          payload = json.loads(registry_path.read_text(encoding='utf-8'))
+          prompt = next(item for item in payload['prompts'] if item.get('id') == 'P124')
+
+          old_use = prompt['useWhen']
+          addition = (
+              ' Also use when the operator names only a bloated or hard-to-edit repository and '
+              'wants it made more readable; rank concrete hotspots from repository evidence instead '
+              'of making the operator choose a file.'
+          )
+          if addition.strip() not in old_use:
+              prompt['useWhen'] = old_use + addition
+
+          old_inspect = prompt['inspectFirst']
+          inspect_add = (
+              ' representative maintainer edits and the current owner/change sites they require;'
+              ' review/churn hotspots when repository evidence is available;'
+          )
+          if 'representative maintainer edits' not in old_inspect:
+              prompt['inspectFirst'] = old_inspect.replace(
+                  ' recent change hotspots and regressions;',
+                  ' recent change hotspots and regressions;' + inspect_add,
+              )
+
+          old_output = prompt['expectedOutput']
+          if 'ranked repository hotspot map' not in old_output:
+              prompt['expectedOutput'] = old_output.replace(
+                  'a structural-debt ledger,',
+                  'a structural-debt ledger and ranked repository hotspot map when scope starts broad,',
+              )
+
+          old_next = prompt['nextStep']
+          if 'When no hotspot is named' not in old_next:
+              prompt['nextStep'] = (
+                  'When no hotspot is named, rank the strongest evidence-backed repository hotspots '
+                  'and select the smallest top-ranked behavior-preserving slice; otherwise ' + old_next[0].lower() + old_next[1:]
+              )
+
+          content = prompt['copyContent']
+          anchor = '\n\n3. PROTECT BEHAVIOR BEFORE MOVING IT\n'
+          insertion = '''
+
+2A. RANK THE REPOSITORY BEFORE PICKING A FILE
+When the operator says only that the repo is bloated, hard to read, or difficult to edit, do not make them nominate a file. Rank 3-7 evidence-backed hotspots using mixed responsibility, duplicated change sites, churn/regressions, hidden coupling, nesting/branching, unclear generated ownership, and repeated difficulty locating the correct edit site. Record `rank | path/owner | evidence | representative change | current change sites | risk | disposition`. Size is a clue, never a verdict. Pick the smallest top-ranked slice that can materially reduce edit ambiguity without broad behavior change.
+
+2B. RUN A REPRESENTATIVE EDIT TEST
+Before mutation, choose one real maintainer task such as `Where do I change <behavior>?` and record the current owner/change sites. After the refactor, answer the same task from a fresh-maintainer perspective. Improvement means a clearer owner set, less duplicated or scattered change work, and no extra indirection—not merely fewer lines or files.'''
+          if '2A. RANK THE REPOSITORY BEFORE PICKING A FILE' not in content:
+              if anchor not in content:
+                  raise SystemExit('P124 behavior-protection anchor moved; refusing blind strengthening')
+              content = content.replace(anchor, insertion + anchor, 1)
+              prompt['copyContent'] = content
+
+          for keyword in ('repository readability audit', 'hard to edit repository', 'readability hotspot'):
+              if keyword not in prompt['keywords']:
+                  prompt['keywords'].append(keyword)
+
+          if len(prompt['copyContent']) >= 7000:
+              raise SystemExit(f"P124 copyContent exceeded bounded owner ceiling: {len(prompt['copyContent'])}")
+
+          registry_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          test_text = test_path.read_text(encoding='utf-8')
+          anchor_test = '            "BUILD A STRUCTURAL-DEBT LEDGER",\n'
+          additions = (
+              '            "RANK THE REPOSITORY BEFORE PICKING A FILE",\n'
+              '            "Size is a clue, never a verdict",\n'
+              '            "RUN A REPRESENTATIVE EDIT TEST",\n'
+              '            "Where do I change <behavior>?",\n'
+          )
+          if '"RANK THE REPOSITORY BEFORE PICKING A FILE"' not in test_text:
+              if anchor_test not in test_text:
+                  raise SystemExit('P124 focused-test anchor moved; refusing blind edit')
+              test_text = test_text.replace(anchor_test, anchor_test + additions, 1)
+          if 'self.assertLess(len(raw_content), 7000)' not in test_text:
+              needle = '        raw_content = self.raw[prompt["id"]]["copyContent"]\n'
+              if needle not in test_text:
+                  raise SystemExit('P124 boundedness test insertion anchor moved')
+              test_text = test_text.replace(
+                  needle,
+                  needle + '        self.assertLess(len(raw_content), 7000)\n',
+                  1,
+              )
+          test_path.write_text(test_text, encoding='utf-8')
+
+          print('P124_BYTES', len(prompt['copyContent']))
+          print('P124_KEYWORDS', len(prompt['keywords']))
+          PY
+
+      - name: Rebuild canonical Prompt Kit
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+      - name: Focused and convergence proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest tests.test_prompt_kit_discovery tests.test_prompt_kit_order_navigation_contract -v
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Commit durable contribution and self-remove carrier
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/tmp-p124-readable-repo-carrier.yml
+          git add registry/prompts/spec-architecture-prompts.v1.json tests/test_spec_architecture_prompt_registry.py web/prompt-kit/index.html
+          git diff --cached --check
+          git status --short
+          git diff --cached --stat
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'feat(prompt-kit): make P124 repo-wide readability actionable'
+          git push origin HEAD:feat/p124-readable-repo-audit-20260911
