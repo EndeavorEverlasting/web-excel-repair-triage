@@ -49,20 +49,19 @@ jobs:
               if block_end < 0:
                   raise SystemExit("migration access-test block end drifted")
               block_end += len("\n    )")
-              addition = '''
-          apply(
-              "tests/test_operant_product_identity.py",
-              'self.assertIn("legacy `prompt-kit` paths", governance)',
-              'self.assertIn("legacy `operant` / `prompt-kit` paths", governance)',
-              expected=1,
-          )
-          apply(
-              "tests/test_operant_product_identity.py",
-              'self.assertIn("compatibility paths", access)',
-              'self.assertIn("compatibility and historical release identifiers", access)',
-              expected=1,
-          )'''
-              text = text[:block_end] + addition + text[block_end:]
+              addition = '''    apply(
+                  "tests/test_operant_product_identity.py",
+                  'self.assertIn("legacy `prompt-kit` paths", governance)',
+                  'self.assertIn("legacy `operant` / `prompt-kit` paths", governance)',
+                  expected=1,
+              )
+              apply(
+                  "tests/test_operant_product_identity.py",
+                  'self.assertIn("compatibility paths", access)',
+                  'self.assertIn("compatibility and historical release identifiers", access)',
+                  expected=1,
+              )'''
+              text = text[:block_end] + "\n" + addition + text[block_end:]
 
           if "The public-route sweep above also touches the prompt-kit URL embedded" not in text:
               route_marker = "    # Keep technical internal Prompt Kit path names, but make the main mobile\n"
