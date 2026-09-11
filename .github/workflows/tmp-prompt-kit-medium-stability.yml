@@ -98,7 +98,6 @@ jobs:
         run: |
           set -euo pipefail
           git add docs/prompt-kit-polish.js harness/contracts/prompt-kit-mobile.v1.json tests/test_prompt_kit_mobile.py tests/test_prompt_kit_mobile_quick_controls.py tests/prompt_kit_medium_stability_browser_proof.py .github/workflows/prompt-kit-mobile-quick-controls.yml web/prompt-kit/index.html
-          git add -u .github/workflows/tmp-prompt-kit-medium-stability.yml scripts/tmp_prompt_kit_medium_stability.py
           git diff --cached --check
           git diff --cached --stat
           git commit -m 'fix(prompt-kit): preserve interaction mode across orientation'
