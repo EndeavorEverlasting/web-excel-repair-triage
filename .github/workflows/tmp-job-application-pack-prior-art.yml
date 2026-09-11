@@ -1,0 +1,44 @@
+name: Temporary Job Application Pack Prior-Art
+
+on:
+  push:
+    branches:
+      - feat/job-application-pack-prompt-20260911
+
+permissions:
+  contents: read
+
+jobs:
+  prior-art:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact branch head
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Inspect Prompt Kit identity floor
+        run: python scripts/prompt_registry_ops.py inspect | tee /tmp/prompt-inspect.json
+      - name: Run registered upstream prior-art gate
+        run: |
+          python scripts/prompt_registry_ops.py prior-art \
+            --query "single verified job opportunity recruiter outreach legitimacy official posting fit analysis truthful tailored resume application packet Google Drive tracker ready to apply manual submission privacy application checklist" \
+            | tee /tmp/job-application-pack-prior-art.json
+      - name: Publish gate evidence to summary
+        if: always()
+        run: |
+          echo '## Prompt Kit identity floor' >> "$GITHUB_STEP_SUMMARY"
+          if [ -f /tmp/prompt-inspect.json ]; then
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat /tmp/prompt-inspect.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo '## Prior-art receipt' >> "$GITHUB_STEP_SUMMARY"
+          if [ -f /tmp/job-application-pack-prior-art.json ]; then
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat /tmp/job-application-pack-prior-art.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
