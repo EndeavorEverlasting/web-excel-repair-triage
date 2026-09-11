@@ -51,7 +51,7 @@ class OperantProductIdentityTests(unittest.TestCase):
         self.assertNotIn("<title>AI Harness Prompt Kit v40</title>", html)
         self.assertTrue((ROOT / "web/prompt-kit").is_dir())
 
-    def test_governance_and_access_surface_name_operant(self) -> None:
+    def test_governance_and_access_surface_name_afk_agent_flow(self) -> None:
         governance = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         access = (ROOT / "PROMPT_KIT_ACCESS.md").read_text(encoding="utf-8")
         self.assertIn("**AFK Agent Flow** is the operator-approved product identity", governance)
