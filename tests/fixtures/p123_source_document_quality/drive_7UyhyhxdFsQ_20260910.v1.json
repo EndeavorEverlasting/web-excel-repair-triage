@@ -1,0 +1,37 @@
+{
+  "schema_version": "p123-source-document-quality/v1",
+  "case_id": "drive-7UyhyhxdFsQ-20260910",
+  "owner": "P123",
+  "eval_owner": "P67",
+  "source": {
+    "kind": "youtube_short",
+    "identity": "7UyhyhxdFsQ",
+    "title": "How WhatsApp Video Sharing Works?",
+    "channel": "KodeKloud",
+    "duration_seconds": 128
+  },
+  "observed_output": {
+    "exported_document_name": "https:__youtube.com_shorts_7UyhyhxdFsQ?is=TeA49Ke...",
+    "first_visible_heading": "Python",
+    "knowledge_section_first_page": 15,
+    "last_timestamped_finding_seconds": 97,
+    "explicit_end_coverage_receipt": false,
+    "implementation_packet_precedes_knowledge": true,
+    "generic_or_source_unsafe_document_identity": true
+  },
+  "derived_regression_facts": {
+    "unaccounted_tail_seconds_from_last_timestamped_finding": 31,
+    "finding": "The observed artifact does not prove that the available tail from 01:37 through the 02:08 source extent was reviewed; absence of a coverage receipt is the regression, not an assertion that the tail contains a specific missing fact."
+  },
+  "required_repairs": [
+    "mission_mode_routing",
+    "knowledge_first_when_knowledge_is_the_user_mission",
+    "forward_plus_reverse_full_source_coverage",
+    "explicit_tail_and_unaccounted_span_receipt",
+    "source_specific_visible_document_title",
+    "source_specific_export_basename",
+    "no_raw_url_or_generic_template_export_name",
+    "no_unresolved_xyz_placeholders_in_user_facing_knowledge_report"
+  ],
+  "proof_ceiling": "This fixture preserves observable structure from the supplied P123 result: source duration, visible document start, placement of the knowledge section, last explicit timestamped finding, and exported document name. It does not claim what unrepresented source time contains; it proves the prior result lacked explicit end-of-source coverage evidence and source-specific document presentation."
+}
