@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -16,6 +17,45 @@ from scripts import build_prompt_kit_registry as registry  # noqa: E402
 from scripts import prompt_classification  # noqa: E402
 
 POLICY_PATH = REPO_ROOT / "registry" / "prompts" / "tutorial-coverage.v1.json"
+
+
+def _heading_anchor(title: str) -> str:
+    """Return the deterministic GitHub-style anchor used by the tutorial policy."""
+    normalized = re.sub(r"[^\w\- ]", "", title.strip().casefold())
+    return re.sub(r"\s+", "-", normalized).strip("-")
+
+
+def _tutorial_anchors(text: str) -> set[str]:
+    """Collect deterministic Markdown heading anchors, including duplicate suffixes."""
+    anchors: set[str] = set()
+    counts: dict[str, int] = {}
+    for line in text.splitlines():
+        match = re.match(r"^#{1,6}\s+(.+?)\s*#*\s*$", line)
+        if not match:
+            continue
+        base = _heading_anchor(match.group(1))
+        if not base:
+            continue
+        occurrence = counts.get(base, 0)
+        counts[base] = occurrence + 1
+        anchors.add(base if occurrence == 0 else f"{base}-{occurrence}")
+    return anchors
+
+
+def _validate_tutorial_anchors(policy: dict[str, Any], tutorial_text: str) -> None:
+    anchors = _tutorial_anchors(tutorial_text)
+    required = {str(policy["fallback_anchor"]).strip()}
+    required.update(
+        str(record["tutorial_anchor"]).strip()
+        for record in policy["wired_prompts"]
+        if isinstance(record, dict)
+    )
+    missing = sorted(anchor for anchor in required if anchor not in anchors)
+    if missing:
+        raise SystemExit(
+            "Tutorial coverage policy references missing tutorial anchors: "
+            + ", ".join(missing)
+        )
 
 
 def _load_policy(path: Path = POLICY_PATH) -> dict[str, Any]:
@@ -59,6 +99,7 @@ def _load_policy(path: Path = POLICY_PATH) -> dict[str, Any]:
     tutorial_path = REPO_ROOT / str(payload["tutorial_document"])
     if not tutorial_path.is_file():
         raise SystemExit(f"Tutorial coverage document is missing: {tutorial_path}")
+    _validate_tutorial_anchors(payload, tutorial_path.read_text(encoding="utf-8"))
     return payload
 
 
