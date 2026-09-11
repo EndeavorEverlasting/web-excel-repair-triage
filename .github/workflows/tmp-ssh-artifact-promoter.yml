@@ -1,0 +1,101 @@
+name: Temporary trusted SSH artifact promoter
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: trusted-ssh-artifact-promoter
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    if: github.event.issue.pull_request && github.event.issue.number == 399 && github.event.comment.body == '/promote-ssh-artifact-e617529'
+    runs-on: ubuntu-latest
+    env:
+      FEATURE_BRANCH: feat/repository-ssh-setup-usage-prompt-20260909
+      EXPECTED_FEATURE_HEAD: e61752904253ebfddc0d2e10d1effe3d2bc1b639
+      PROVEN_FLOOR: c3478d5fafea8b9d0c1aa7996b968ee6cb635b72
+      SOURCE_RUN_ID: '34550862211'
+      ARTIFACT_NAME: ssh-current-floor-candidate-e61752904253ebfddc0d2e10d1effe3d2bc1b639
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout trusted current main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          path: trusted
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Checkout exact feature candidate without executing it
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.FEATURE_BRANCH }}
+          path: candidate
+          fetch-depth: 0
+      - name: Verify provenance and download exact read-only-built artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C candidate rev-parse HEAD)" = "$EXPECTED_FEATURE_HEAD"
+          git -C trusted merge-base --is-ancestor "$PROVEN_FLOOR" HEAD
+          mkdir -p staging
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "$ARTIFACT_NAME" --dir staging
+          test -s staging/Outputs/sha256.txt
+          (cd staging && grep -v ' ./Outputs/sha256.txt$' Outputs/sha256.txt | sha256sum -c -)
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          receipt=json.loads(Path('staging/Outputs/ssh-prompt-helper-receipt.json').read_text(encoding='utf-8'))
+          assert receipt['status']=='added', receipt
+          assert receipt['id']=='P139', receipt
+          assert receipt['prompt_count']==140, receipt
+          assert receipt['site_parity'] is True, receipt
+          ext=receipt['external_prior_art']
+          assert ext['all_registered_sources_searched'] is True
+          assert ext['automatic_prompt_authoring'] is False
+          print('trusted receipt verified: P139 / 140 prompts / parity true')
+          PY
+      - name: Revalidate artifact with trusted default-branch code only
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp staging/registry/prompts/ai-engineering-level-up-prompts.v1.json trusted/registry/prompts/
+          cp staging/web/prompt-kit/index.html trusted/web/prompt-kit/
+          cd trusted
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Materialize only durable P139 surfaces on feature branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp staging/registry/prompts/ai-engineering-level-up-prompts.v1.json candidate/registry/prompts/
+          cp staging/tests/test_repository_ssh_setup_prompt.py candidate/tests/
+          cp staging/web/prompt-kit/index.html candidate/web/prompt-kit/
+          rm -f candidate/.github/workflows/tmp-ssh-current-floor-materialize.yml
+          rm -f candidate/scripts/tmp_repository_ssh_prompt_draft.json
+          rm -f candidate/.github/workflows/tmp-repository-ssh-reconcile-builder.yml
+          rm -f candidate/scripts/tmp_ssh_materialize_marker.txt
+          test "$(git -C candidate rev-parse HEAD)" = "$EXPECTED_FEATURE_HEAD"
+          git -C candidate diff --check
+          changed="$(git -C candidate status --short | sed -E 's/^.. //')"
+          printf '%s\n' "$changed"
+          test "$(printf '%s\n' "$changed" | sort)" = "$(printf '%s\n' \
+            registry/prompts/ai-engineering-level-up-prompts.v1.json \
+            tests/test_repository_ssh_setup_prompt.py \
+            web/prompt-kit/index.html \
+            .github/workflows/tmp-ssh-current-floor-materialize.yml \
+            scripts/tmp_repository_ssh_prompt_draft.json | sort)"
+          git -C candidate config user.name 'github-actions[bot]'
+          git -C candidate config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C candidate add -A
+          git -C candidate diff --cached --check
+          git -C candidate commit -m 'feat(prompt-kit): add P139 repository SSH setup completer'
+          git -C candidate push origin HEAD:"$FEATURE_BRANCH"
