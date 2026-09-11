@@ -87,14 +87,25 @@ class SkillPromptRegistryTests(unittest.TestCase):
             "current proven floor or stage",
             "next unproven gate",
             "EXECUTE ONE CRITICAL-PATH ADVANCEMENT NOW",
-            "SUB-PART AGENT PLAN IS MANDATORY",
-            "Sub-Part Agent: none — serialized dependency",
-            "Never use a Sub-Part Agent plan as an excuse to stop the primary critical path",
+            "MANDATORY CANARY / EXECUTION POSTURE GATE",
+            "P114 Conversation Context Canary & Handoff Guard",
+            "CAPABILITY / ACCESS MATRIX",
+            "REPLIT / RUNTIME",
+            "WORKSTATION POSTURE",
+            "AMBIGUOUS_EXECUTION_POSTURE",
+            "PARALLEL EXECUTION — P07 OWNS ACTUAL DISPATCH",
+            "P07 owns the execution/coordinator contract",
+            "PARALLEL EXECUTION: unavailable — <exact capability limitation>",
+            "Do not emit a hypothetical lane list or copy-paste worker packet merely because dispatch is unavailable",
             "INSTALL THE SMALLEST DURABLE PREVENTION",
             "REGRESSION SCENARIO",
             "no stopping at plan/status while safe action remains",
+            "actual P07 dispatch evidence when worker capacity and collision-safe lanes exist",
         ):
             self.assertIn(phrase, content)
+        self.assertNotIn("explicit Sub-Part Agent plan or serialized-dependency reason", content)
+        self.assertNotIn("prepared for a Sub-Part Agent", content)
+
         for routing_phrase in (
             "cluttered, noisy, or space-heavy UI keeps getting reported",
             "route the specialized UX repair to P99 and continue the critical path here",
