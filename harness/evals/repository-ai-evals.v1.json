@@ -61,6 +61,7 @@
       "command": [
         "python",
         "scripts/evaluate_prompt_language.py",
+        "--strict",
         "--output",
         "Outputs/repository-ai-evals/prompt-language-audit.json",
         "--summary"
