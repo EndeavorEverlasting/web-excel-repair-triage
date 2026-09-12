@@ -28,7 +28,7 @@ class HealthRecordWorkspaceSyncPromptTests(unittest.TestCase):
         self.assertNotEqual(prompt["class"], generic["class"])
         self.assertIn("health connector discovery", prompt["keywords"])
 
-    def test_prompt_preserves_private_canonical_health_contract(self) -> None:
+    def test_prompt_preserves_canonical_health_contract_without_brand_binding(self) -> None:
         content = self.prompt()["copyContent"]
         for phrase in (
             "DISCOVER CAPABILITIES BEFORE ASKING",
@@ -63,18 +63,22 @@ class HealthRecordWorkspaceSyncPromptTests(unittest.TestCase):
         ):
             self.assertIn(phrase, content)
 
-    def test_prompt_does_not_advertise_private_implementation_identity(self) -> None:
+    def test_prompt_does_not_advertise_private_implementation_topology(self) -> None:
         content = self.prompt()["copyContent"]
         for forbidden in (
-            "MedsPetsAndPeople",
-            "EndeavorEverlasting",
-            "1tSPSFP2v3yq6Kir0mt2gg0i1EsbLvRhiJQdlnk_ahOE",
-            "0AHPtF1SfaW7gUk9PVA",
-            "1QkhAVNwoucvsDx8KKd98J5hjKp8yHri_nGgbLSjUfow",
+            "github.com/",
+            "drive.google.com/",
+            "docs.google.com/",
+            "repository_full_name",
+            "connector_id",
+            "spreadsheet_id",
+            "folder_id",
+            "document_id",
         ):
             self.assertNotIn(forbidden, content)
         self.assertIn("Do not volunteer private application names", content)
         self.assertIn("Access only resources needed for this health-record operation", content)
+        self.assertIn("implementation details", content)
 
     def test_prompt_is_in_generated_site_and_has_tutorial_fallback_route(self) -> None:
         prompt = self.prompt()
