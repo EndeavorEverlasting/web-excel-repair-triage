@@ -87,9 +87,9 @@ def validate_baseline_report(payload: dict[str, Any], expected_sha: str) -> None
 
 
 def write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
     temporary: Path | None = None
     try:
+        path.parent.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile(
             mode="w",
             encoding="utf-8",
@@ -104,9 +104,16 @@ def write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
             os.fsync(handle.fileno())
             temporary = Path(handle.name)
         temporary.replace(path)
+    except OSError as exc:
+        raise BaselineSeedError(f"failed to write baseline report atomically: {exc}") from exc
     finally:
-        if temporary is not None and temporary.exists():
-            temporary.unlink()
+        if temporary is not None:
+            try:
+                temporary.unlink(missing_ok=True)
+            except OSError:
+                # The primary write error, if any, is already converted above. A stale temp file is
+                # preferable to replacing that controlled error with a cleanup traceback.
+                pass
 
 
 def seed_baseline(ref: str, output: Path, timeout_seconds: int) -> dict[str, Any]:
@@ -119,15 +126,15 @@ def seed_baseline(ref: str, output: Path, timeout_seconds: int) -> dict[str, Any
 
     destination = resolve_output(output)
     runner_timeout = max(300, min(timeout_seconds * 4 + 60, 1100))
-    worktree_path: Path | None = None
-    try:
-        with tempfile.TemporaryDirectory(prefix="repository-ai-eval-baseline-") as tmp:
-            worktree_path = Path(tmp) / "worktree"
-            add = run_git("worktree", "add", "--detach", str(worktree_path), baseline_sha, timeout=90)
-            if add.returncode != 0:
-                detail = add.stderr.strip() or add.stdout.strip() or f"exit {add.returncode}"
-                raise BaselineSeedError(f"failed to create detached baseline worktree: {detail}")
 
+    with tempfile.TemporaryDirectory(prefix="repository-ai-eval-baseline-") as tmp:
+        worktree_path = Path(tmp) / "worktree"
+        add = run_git("worktree", "add", "--detach", str(worktree_path), baseline_sha, timeout=90)
+        if add.returncode != 0:
+            detail = add.stderr.strip() or add.stdout.strip() or f"exit {add.returncode}"
+            raise BaselineSeedError(f"failed to create detached baseline worktree: {detail}")
+
+        try:
             relative_report = Path("Outputs/repository-ai-eval-baseline.json")
             command = [
                 sys.executable,
@@ -163,14 +170,16 @@ def seed_baseline(ref: str, output: Path, timeout_seconds: int) -> dict[str, Any
                 raise BaselineSeedError("baseline evaluator did not produce its report") from exc
             except json.JSONDecodeError as exc:
                 raise BaselineSeedError(f"baseline evaluator produced invalid JSON: {exc}") from exc
+            except OSError as exc:
+                raise BaselineSeedError(f"failed to read seeded baseline report: {exc}") from exc
             if not isinstance(payload, dict):
                 raise BaselineSeedError("baseline evaluator report must be a JSON object")
             validate_baseline_report(payload, baseline_sha)
             write_json_atomic(destination, payload)
-    finally:
-        if worktree_path is not None:
-            run_git("worktree", "remove", "--force", str(worktree_path), timeout=90)
-            run_git("worktree", "prune", timeout=30)
+        finally:
+            remove = run_git("worktree", "remove", "--force", str(worktree_path), timeout=90)
+            if remove.returncode != 0:
+                run_git("worktree", "prune", timeout=30)
 
     return {
         "status": "PASS",
