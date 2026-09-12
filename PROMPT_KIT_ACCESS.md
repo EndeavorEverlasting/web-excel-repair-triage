@@ -1,13 +1,13 @@
-# Get Operant
+# Get AFK Agent Flow
 
-> **Transition:** Operant is the current product identity. Existing `Prompt Kit`, `prompt-kit`, and `PromptKit` names below are compatibility paths and launcher/storage identifiers until the dedicated `UnderDeskDev/Operant` cutover is proven.
+> **Transition:** AFK Agent Flow is the current product identity. `Operant`, `Prompt Kit`, `prompt-kit`, and `PromptKit` remain compatibility and historical release identifiers until the dedicated `UnderDeskDev/AFK-Agent-Flow` cutover is proven. Legacy public compatibility URLs remain https://endeavoreverlasting.github.io/web-excel-repair-triage/operant/ and https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/.
 
 <!-- PROMPT_KIT_FAST_PATH_START -->
 ## Choose the easiest path
 
 | Device / need | Do this |
 |---|---|
-| Browser on any computer | Open **https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/** |
+| Browser on any computer | Open **https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/** |
 | Phone / tablet / install / QR | Open **https://endeavoreverlasting.github.io/web-excel-repair-triage/** |
 | Windows Favorites-preserving local app | Download **https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/Open-Latest-PromptKit.cmd** and double-click it |
 | No Git client | Download **https://github.com/EndeavorEverlasting/web-excel-repair-triage/archive/refs/heads/main.zip** and open `web/prompt-kit/index.html` after extraction |
@@ -25,7 +25,7 @@ web/prompt-kit/index.html
 The canonical public browser URL is:
 
 ```text
-https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/
+https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/
 ```
 
 The release source is the repository's `main` branch. GitHub Pages and the Windows portable runtime are delivery surfaces generated from that exact release, not competing editable Prompt Kits.
@@ -35,7 +35,7 @@ The release source is the repository's `main` branch. GitHub Pages and the Windo
 After GitHub Pages is enabled for this repository and the `Prompt Kit GitHub Pages` workflow has deployed `main`, open:
 
 ```text
-https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/
+https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/
 ```
 
 No repository clone, ZIP extraction, Git client, Python installation, PowerShell, or local web server is required for normal browser use.
@@ -45,7 +45,7 @@ To keep the Prompt Kit one tap away:
 - iPhone or iPad Safari: open the public URL, use **Share**, choose **Add to Home Screen**, then choose **Add**.
 - Android Chrome: open the public URL, use the browser menu, then choose **Add to Home screen** or **Install app** when that option is offered.
 
-The home-screen shortcut opens the same responsive Prompt Kit used on desktop. It does not create a separate prompt database or bypass the `main` release source.
+The home-screen shortcut opens the same responsive AFK Agent Flow experience used on desktop. It does not create a separate prompt database or bypass the `main` release source.
 
 ### One-time repository publishing gate
 
@@ -215,7 +215,7 @@ python scripts\build_prompt_kit_registry.py --output web\prompt-kit\index.html -
 - Portable builder/server: `scripts/serve_prompt_kit_portable.py`
 - Portable launcher: `scripts/Open-LatestPromptKitPortable.ps1`
 - Public deployment workflow: `.github/workflows/prompt-kit-pages.yml`
-- Public share path: `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`
+- Public share path: `https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/`
 - Web usage notes: `web/README.md`
 - Zero-dialog normal-user Windows launcher: `Open-Latest-PromptKit.cmd`
 - Advanced acquisition bootstrap: `Acquire-Latest-PromptKit.cmd`
@@ -227,7 +227,7 @@ Generated HTML is not the primary editable source. Repair canonical tracked sour
 
 The desktop and mobile layouts use the same prompts, filters, renderers, and action functions.
 
-- Tap/click the **Operant** title to reset the temporary browsing state while preserving Favorites.
+- Tap/click the **AFK Agent Flow** title to reset the temporary browsing state while preserving Favorites.
 - Use **Hide filters** to collapse the search/category/section/type filter chrome and maximize the screen area available to prompt cards; **Show filters** restores it.
 - Press **A** for All, **B** for Standard, or **C** for Favorites. Slots **D** and **E** are persisted user profiles (default SAS and PM) and may be renamed or reassigned in the Hotkeys panel.
 - **Doctrine** remains a first-class built-in profile mode without consuming a sixth header slot: assign any A–E slot to **Doctrine** in the Hotkeys panel, then activate that slot by click/tap or its A–E key. The dedicated Doctrine view is restored after reload because slot configuration and the active slot are persisted.

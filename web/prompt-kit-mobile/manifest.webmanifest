@@ -1,9 +1,9 @@
 {
-  "id": "./prompt-kit/",
-  "name": "AI Harness Prompt Kit",
-  "short_name": "AI Prompt Kit",
-  "description": "Responsive AI Harness Prompt Kit published from the canonical GitHub repository.",
-  "start_url": "./prompt-kit/",
+  "id": "./afk-agent-flow/",
+  "name": "AFK Agent Flow",
+  "short_name": "AFK Agent Flow",
+  "description": "Away-from-keyboard agentic execution routing prompts, skills, agents, validation, and evidence into reliable work flows.",
+  "start_url": "./afk-agent-flow/",
   "scope": "./",
   "display": "standalone",
   "background_color": "#080d16",
@@ -25,9 +25,9 @@
   ],
   "shortcuts": [
     {
-      "name": "Open Prompt Kit",
+      "name": "Open AFK Agent Flow",
       "short_name": "Open",
-      "url": "./prompt-kit/",
+      "url": "./afk-agent-flow/",
       "icons": [
         {
           "src": "./icon-192.png",

@@ -1,0 +1,74 @@
+[
+  {
+    "status": "added",
+    "id": "P131",
+    "seq": "131",
+    "name": "Ad Campaign Doctrine Builder",
+    "registry_id": "management-operations-prompts",
+    "registry_path": "registry\\prompts\\management-operations-prompts.v1.json",
+    "site_path": "web\\prompt-kit\\index.html",
+    "prompt_count": 132,
+    "site_parity": true,
+    "actionability_policy": "actionable-next-command/v1"
+  },
+  {
+    "status": "added",
+    "id": "P132",
+    "seq": "132",
+    "name": "Ad Campaign Harness Builder",
+    "registry_id": "management-operations-prompts",
+    "registry_path": "registry\\prompts\\management-operations-prompts.v1.json",
+    "site_path": "web\\prompt-kit\\index.html",
+    "prompt_count": 133,
+    "site_parity": true,
+    "actionability_policy": "actionable-next-command/v1"
+  },
+  {
+    "status": "added",
+    "id": "P133",
+    "seq": "133",
+    "name": "Ad Campaign Planner",
+    "registry_id": "management-operations-prompts",
+    "registry_path": "registry\\prompts\\management-operations-prompts.v1.json",
+    "site_path": "web\\prompt-kit\\index.html",
+    "prompt_count": 134,
+    "site_parity": true,
+    "actionability_policy": "actionable-next-command/v1"
+  },
+  {
+    "status": "added",
+    "id": "P134",
+    "seq": "134",
+    "name": "Ad Campaign Creative Executor",
+    "registry_id": "management-operations-prompts",
+    "registry_path": "registry\\prompts\\management-operations-prompts.v1.json",
+    "site_path": "web\\prompt-kit\\index.html",
+    "prompt_count": 135,
+    "site_parity": true,
+    "actionability_policy": "actionable-next-command/v1"
+  },
+  {
+    "status": "added",
+    "id": "P135",
+    "seq": "135",
+    "name": "Ad Campaign Launch Reviewer",
+    "registry_id": "management-operations-prompts",
+    "registry_path": "registry\\prompts\\management-operations-prompts.v1.json",
+    "site_path": "web\\prompt-kit\\index.html",
+    "prompt_count": 136,
+    "site_parity": true,
+    "actionability_policy": "actionable-next-command/v1"
+  },
+  {
+    "status": "added",
+    "id": "P136",
+    "seq": "136",
+    "name": "Ad Campaign Results Analyst",
+    "registry_id": "management-operations-prompts",
+    "registry_path": "registry\\prompts\\management-operations-prompts.v1.json",
+    "site_path": "web\\prompt-kit\\index.html",
+    "prompt_count": 137,
+    "site_parity": true,
+    "actionability_policy": "actionable-next-command/v1"
+  }
+]

@@ -41,7 +41,7 @@ REQUIRED_IDS = {
     "distribution_front_door",
     "generated_site_parity",
 }
-PUBLIC_PROMPT_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/"
+PUBLIC_PROMPT_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/"
 PUBLIC_LAUNCHER_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/"
 DIRECT_ZIP_URL = "https://github.com/EndeavorEverlasting/web-excel-repair-triage/archive/refs/heads/main.zip"
 DIRECT_CMD_URL = "https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/Open-Latest-PromptKit.cmd"
@@ -161,10 +161,13 @@ def audit() -> dict[str, object]:
         "clipboard_confirmation": (
             "showCopyConfirmation",
             "✓ Copied to clipboard",
+            "label:id?'✓ Copied to clipboard · '+id:'✓ Copied to clipboard'",
             "formatCopyConfirmationPreview",
             "buildCopyConfirmationToastModel",
             "renderCopyConfirmationToast",
+            "toast-copy-label",
             "toast-copy-preview",
+            "data-prompt-id",
             "data-copy-preview",
             ".toast.success",
             "prompt-copy-confirm",

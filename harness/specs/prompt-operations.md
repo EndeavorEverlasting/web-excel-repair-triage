@@ -31,7 +31,7 @@ Run the canonical audit:
 
 ```bash
 python scripts/evaluate_prompt_language.py --summary
-python -m unittest tests.test_prompt_language_quality -v
+python -m unittest tests.test_prompt_language_audit -v
 ```
 
 The audit must cover the effective combined registry rather than a sample. Each registered prompt receives an explicit disposition and coverage must be complete. Repair canonical sources, not generated HTML. Empty/placeholder/non-executable next actions, operator reconstruction, ownership ambiguity, proof inflation, and stale generated output are defects.

@@ -27,6 +27,7 @@ class PromptKitMobileTests(unittest.TestCase):
                 "explicit_mobile_open",
                 "touch_copy_preserved",
                 "mobile_prompt_id_jump",
+                "mobile_medium_orientation_invariant",
                 "favorites_quick_access",
                 "favorites_group_jump_navigation",
                 "favorites_empty_state_and_persistence",

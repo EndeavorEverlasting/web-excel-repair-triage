@@ -42,7 +42,7 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
         for phrase in (
             "MANDATORY FIRST LINE",
             "Before every response, emit one compact first line",
-            "CANARY | PROFILE=<canonical computer profile>",
+            "CANARY | ISSUED=<query-issued offset-aware RFC3339> | PROFILE=<canonical computer profile>",
             "Do not expand the normal Canary into scope narration",
             "Keep the normal Canary to one line",
         ):
@@ -82,7 +82,7 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
         self.assertIn("ONE CANONICAL CONTRACT, LIGHTWEIGHT EMBEDDING", content)
         self.assertIn("do not paste this entire contract into every prompt", content)
         self.assertIn(
-            "CANARY STUB — Before every response emit CANARY | PROFILE=<canonical computer profile>",
+            "CANARY STUB — Capture one offset-aware query-issued timestamp at turn start",
             content,
         )
         self.assertIn("The host prompt still owns its mission, scope, proof, and closure", content)
@@ -113,6 +113,99 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
             "unrecoverable profile state",
         ):
             self.assertIn(phrase, content)
+
+    def test_query_issuance_timestamp_is_offset_aware_and_frozen_per_turn(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "QUERY ISSUANCE TIME / TEMPORAL FRESHNESS",
+            "Query issued at: xyz_offset_aware_RFC3339_turn_start_or_resolve_from_accessible_runtime",
+            "CANARY | ISSUED=<query-issued offset-aware RFC3339>",
+            "capture it once at user-query receipt or the earliest trustworthy turn-start observation",
+            "Freeze that ISSUED value for every progress update and the final answer produced for the same user query",
+            "Preserve `Z` or a numeric UTC offset",
+            "ISSUED=UNKNOWN",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_temporal_gap_triggers_freshness_review_not_fake_context_exhaustion(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "The previous Canary's ISSUED value is temporal provenance",
+            "A large elapsed gap is a freshness signal, not proof of context exhaustion",
+            "Do not invent a universal stale-minutes threshold",
+            "refresh only the affected evidence before carrying its prior proof forward",
+            "A long gap on a timeless task is not itself a handoff condition",
+            "Evaluators can use the ISSUED sequence",
+            "a large query gap that forces refresh of time-sensitive provider/repository evidence",
+            "a large gap on a timeless task that does not falsely trigger handoff",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_unknown_issued_blocks_freshness_bounded_reuse_without_independent_validity(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "When `ISSUED=UNKNOWN` and freshness-bounded evidence would otherwise be reused",
+            "perform a targeted refresh of the affected evidence, or block reuse until its owner independently confirms current validity",
+            "If either required ISSUED value is `UNKNOWN`",
+            "Never carry freshness-bounded evidence through an `ISSUED=UNKNOWN` gap",
+            "an unknown-clock freshness-bounded reuse attempt that must refresh or obtain independent owner confirmation",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn(
+            "freshness-bounded evidence is not reused until a targeted refresh succeeds or its owner independently confirms current validity",
+            self.target["proofGate"],
+        )
+
+    def test_network_and_conditional_execution_context_survive_account_strengthening(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "NETWORK=<WAB|Guest|Hardwire|Local|Arbitrary/N/A>",
+            "Arbitrary/N/A` means the task has no specific network requirement",
+            "NETWORK=UNKNOWN",
+            "EXEC=<shell>@<kernel/runtime>",
+            "EXEC=UNKNOWN",
+            "P92 owns canonical path",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_account_relevance_resolves_role_before_navigation(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "ACCOUNT / ROLE RELEVANCE",
+            "active account or auth principal",
+            "browser/workstation profile",
+            "target resource or container and its owner/authority",
+            "current role or permission",
+            "required role or permission",
+            "If the active account differs from the resource owner but the current role is sufficient, continue without forcing an account switch.",
+            "If the required role is stronger than the current role, emit `ACCOUNT SWITCH GATE` before giving UI navigation or mutation steps",
+            "The identity under which an entry point is traversed is part of the execution path.",
+        ):
+            self.assertIn(phrase, content)
+        self.assertLess(
+            content.index("ACCOUNT SWITCH GATE", content.index("ACCOUNT / ROLE RELEVANCE")),
+            content.index("AUTHORITATIVE CONTEXT RULE"),
+        )
+
+    def test_route_convergence_is_diagnostic_not_operator_error(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "Two valid navigation paths that converge on the same bound/container resource are diagnostic evidence.",
+            "Do not infer operator error when two valid navigation paths converge",
+            "account/container binding",
+            "Do not tell the operator to repeat the same copy/navigation step",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_account_signal_is_conditional_and_privacy_bounded(self) -> None:
+        content = self.target["copyContent"]
+        self.assertIn("ACCOUNT=<provider/account-or-profile alias>", content)
+        self.assertIn("ACCOUNT=UNKNOWN", content)
+        self.assertIn("least-sensitive", content)
+        self.assertIn("Never expose passwords, tokens, cookies, OAuth secrets, private keys, recovery codes", content)
+        self.assertIn("append only the least-sensitive disambiguating fields", content)
+        self.assertIn("P19 owns installation/deployment execution and direct UI control guidance", content)
+        self.assertIn("Never treat `ACTIVE ACCOUNT != RESOURCE OWNER` as an automatic blocker", content)
 
     def test_registered_in_deterministic_test_floor(self) -> None:
         floor = json.loads(TEST_FLOOR.read_text(encoding="utf-8"))

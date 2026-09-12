@@ -114,8 +114,8 @@ class PromptKitReleaseIdentityTests(unittest.TestCase):
         path = self.root / validator.PAGES_WORKFLOW_REL
         text = path.read_text(encoding="utf-8")
         text = text.replace(
-            '          cmp "$SITE_ROOT/prompt-kit/index.html" web/prompt-kit/index.html',
-            '          # cmp "$SITE_ROOT/prompt-kit/index.html" web/prompt-kit/index.html',
+            '          cmp "$SITE_ROOT/afk-agent-flow/index.html" web/prompt-kit/index.html',
+            '          # cmp "$SITE_ROOT/afk-agent-flow/index.html" web/prompt-kit/index.html',
         )
         path.write_text(text, encoding="utf-8")
         report = validator.build_report(self.root)
@@ -126,10 +126,10 @@ class PromptKitReleaseIdentityTests(unittest.TestCase):
         path = self.root / validator.PAGES_WORKFLOW_REL
         text = path.read_text(encoding="utf-8")
         text = text.replace(
-            '          cmp "$SITE_ROOT/prompt-kit/index.html" web/prompt-kit/index.html',
+            '          cmp "$SITE_ROOT/afk-agent-flow/index.html" web/prompt-kit/index.html',
             '          echo "preview only"',
         )
-        text += '\n# cmp "$SITE_ROOT/prompt-kit/index.html" web/prompt-kit/index.html\n'
+        text += '\n# cmp "$SITE_ROOT/afk-agent-flow/index.html" web/prompt-kit/index.html\n'
         path.write_text(text, encoding="utf-8")
         report = validator.build_report(self.root)
         self.assertEqual(report["status"], "FAIL")

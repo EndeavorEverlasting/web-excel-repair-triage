@@ -105,6 +105,26 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
         self.assertNotIn("ref.click()", action)
         self.assertNotIn("getElementById('refBtn')", action)
 
+    def test_interaction_medium_is_not_viewport_width(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        medium = "@media (hover:none) and (pointer:coarse)"
+        for marker in (
+            medium + "{.prompt-card .prompt-header",
+            medium + "{.favorites-group-jump-nav",
+            medium + "{.hotkey-help{display:flex",
+            medium + "{.ref-toggle{display:none!important",
+            medium + "{.prompt-detail-favorite-btn",
+        ):
+            self.assertIn(marker, source)
+        for forbidden in (
+            "@media(max-width:760px){.prompt-card .prompt-header",
+            "@media(max-width:760px){.hotkey-help{display:flex",
+            "@media(max-width:760px){.ref-toggle{display:none!important",
+        ):
+            self.assertNotIn(forbidden, source)
+        self.assertIn("@media(max-width:980px){.header-top", source)
+        self.assertIn(".hotkey-help{position:fixed;right:80px;bottom:16px", source)
+
     def test_contract_and_phone_guide_define_fast_p111_route(self) -> None:
         contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
         requirement = next(item for item in contract["requirements"] if item["id"] == "mobile_prompt_id_jump")

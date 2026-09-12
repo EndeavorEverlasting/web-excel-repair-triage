@@ -38,6 +38,10 @@
       "expected": "On narrow touch layouts, a persistent Go to P# control is the fastest locator when the user already knows a prompt ID. The user taps Go to P#, enters digits only (for P111, type 111), and an exact unambiguous ID reveals and instant-snaps its canonical prompt card into the actionable viewport with prompt detail closed, without opening More, browser Find, or a search-result step. The landed card itself is the primary terminal copy surface: tapping any non-control area copies the canonical prompt; explicit Copy remains available and explicit Open is reserved for deliberate inspection. When an exact ID is also a prefix of a longer prompt ID (for example P11 versus P111), it must not steal the longer route: the status says the shorter ID is exact, the submit control becomes Go to P11, and Enter or that button deliberately jumps to P11 while continued typing can reach P111. Prefix-only or nonexistent IDs have no enabled exact-submit target; canonical P00-P09 IDs require their leading zero; pasted values such as P111 normalize to the same digits-only resolver. A separate compact More control exposes Find Prompt, previous/next profile, Search, Favorites, Filters, Reference, Top, and Bottom as labeled buttons. Swiping is not required and no hidden gesture vocabulary is part of the primary phone interaction contract. Desktop Hotkeys and shared semantic actions remain authoritative; phone controls do not create parallel prompt state. Go to P# must never auto-open the space-heavy detail modal merely to expose Copy."
     },
     {
+      "id": "mobile_medium_orientation_invariant",
+      "expected": "Mobile interaction identity is derived from the touch/coarse-pointer medium rather than viewport width alone. The same loaded phone page preserves Go to P#, More, touch action rails, and hidden desktop reference handles across PORTRAIT -> LANDSCAPE -> PORTRAIT without reload or state reset. Width may still compress layout geometry inside a mode, but rotating a phone must not switch it to desktop controls. Conversely, a narrow or unusually tall desktop viewport may reflow content but retains desktop Hotkeys and the bottom-right Reference handle and must not expose mobile-only controls."
+    },
+    {
       "id": "horizontal_filter_rails",
       "expected": "Library, category, and type filters remain the same controls and semantics; narrow layouts may present them as horizontally scrollable touch rails rather than wrapping into an unstable header."
     },
@@ -68,7 +72,8 @@
     "python -m unittest tests.test_prompt_kit_mobile_quick_controls -v",
     "python -m unittest tests.test_prompt_kit_product_interactions -v",
     "python -m unittest tests.test_prompt_kit_filtering_access -v",
-    "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check"
+    "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
+    "python tests/prompt_kit_medium_stability_browser_proof.py"
   ],
-  "proof_ceiling": "Static source, deterministic tests, generated-site parity, CI, and an exact-head 390x844 Chromium journey prove the tracked responsive/browser behavior they exercise, including Go to P# snap-without-detail, whole-card tap copy, explicit Open inspection, and the exact/prefix, leading-zero, pasted-ID, and missing-ID edge-case matrix. Physical Android thumb reach, real software-keyboard timing, browser-specific clipboard prompts, and device-specific viewport/browser UI remain field acceptance gates."
+  "proof_ceiling": "Static source, deterministic tests, generated-site parity, CI, and exact-head Chromium journeys prove the tracked responsive/browser behavior they exercise, including Go to P# snap-without-detail, whole-card tap copy, explicit Open inspection, the exact/prefix, leading-zero, pasted-ID, and missing-ID edge-case matrix, a same-page 390x844 -> 844x390 -> 390x844 phone orientation cycle, and a narrow/tall desktop control-identity regression. Physical Android thumb reach, real software-keyboard timing, browser-specific clipboard prompts, hybrid-device primary-input heuristics, and device-specific viewport/browser UI remain field acceptance gates."
 }

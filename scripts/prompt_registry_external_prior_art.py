@@ -127,6 +127,14 @@ def _projected_hits(
     return ranked[:limit]
 
 
+
+def review_external_prior_art(query_text: str) -> dict[str, Any]:
+    """Search every registered upstream before semantic prompt authoring begins."""
+    query = str(query_text).strip()
+    if not query:
+        raise PriorArtGateError("pre-authoring external prior-art query is empty")
+    return require_external_prior_art({"name": query, "keywords": []})
+
 def require_external_prior_art(draft: dict[str, Any]) -> dict[str, Any]:
     """Search every registered external source before a new prompt identity is allocated."""
     try:

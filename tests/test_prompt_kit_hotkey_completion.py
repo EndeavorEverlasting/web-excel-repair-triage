@@ -108,6 +108,33 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         self.assertNotIn("isFavoritePrompt", activation)
         self.assertNotIn("sharedPromptShortcutBindings", activation)
 
+    def test_catalog_hotkey_copy_confirmation_names_prompt_id(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        deployed = DEPLOYED.read_text(encoding="utf-8")
+        for marker in (
+            "label:id?'✓ Copied to clipboard · '+id:'✓ Copied to clipboard'",
+            "window.buildCopyConfirmationToastModel=buildCopyConfirmationToastModel",
+            "toastEl.setAttribute('data-prompt-id',model.promptId||'')",
+            "function activatePromptShortcutTarget(promptId)",
+            "copyPrompt(promptId)",
+            "showCopyConfirmation(id)",
+        ):
+            self.assertIn(marker, source)
+            self.assertIn(marker, deployed)
+        activation = source[
+            source.index("function activatePromptShortcutTarget") : source.index(
+                "function handleConfiguredPromptShortcutKey"
+            )
+        ]
+        self.assertIn("copyPrompt(promptId)", activation)
+        self.assertIn("revealPromptShortcutTarget(promptId,'instant')", activation)
+        model = source[
+            source.index("function buildCopyConfirmationToastModel") : source.index(
+                "function renderCopyConfirmationToast"
+            )
+        ]
+        self.assertIn("✓ Copied to clipboard · '+id", model)
+
     def test_favorites_are_organizational_and_detail_control_keeps_numeric_shortcut_visible(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
         deployed = DEPLOYED.read_text(encoding="utf-8")
@@ -239,12 +266,18 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             'clipboard equals canonical P126 copyContent',
             "def canonical_clipboard_text(text: str) -> str:",
             'canonical_clipboard_text(actual) == canonical_clipboard_text(expected)',
+            "toast_text.strip().startswith('✓ Copied to clipboard · P126')",
+            "get_attribute('data-prompt-id') or ''",
+            "toast_prompt_id == 'P126'",
         ):
             self.assertIn(marker, proof)
         for marker in (
             'TARGETS = ("P11", "P13", "P111", "P126")',
             'Natural prompt hotkeys are catalog-derived',
             'P126',
+            "p126_toast.strip().startswith('✓ Copied to clipboard · P126')",
+            "toast_names_prompt",
+            "data-prompt-id') or ''",
         ):
             self.assertIn(marker, identity)
         self.assertNotIn('promptShortcutPromptId', proof)
@@ -308,8 +341,13 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
         self.assertIn("copy + instant snap", design)
         self.assertIn("hideCompactFilters", design)
         self.assertIn("formatCopyConfirmationPreview", design)
+        self.assertIn("✓ Copied to clipboard · {promptId}", design)
         self.assertIn("buffer is active", design)
         self.assertIn("one hand", design)
+        self.assertIn("✓ Copied to clipboard · P##", readme)
+        operator = (ROOT / "docs" / "PROMPT_KIT_OPERATOR_GUIDE.md").read_text(encoding="utf-8")
+        self.assertIn("✓ Copied to clipboard · P##", operator)
+        self.assertIn("✓ Copied to clipboard · P02", operator)
         for stale in (
             "Every current Favorite automatically publishes",
             "Manual shortcut configuration remains a compatibility/repair path",

@@ -18,7 +18,7 @@ ACCESS_GUIDE_PATH = ROOT / "PROMPT_KIT_ACCESS.md"
 PHONE_GUIDE_PATH = ROOT / "OPEN_PROMPT_KIT_ON_PHONE.md"
 SKILL_PATH = ROOT / ".ai" / "skills" / "technician-prompt-kit-acquisition" / "SKILL.md"
 
-PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/"
+PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/"
 LAUNCHER_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/"
 REPOSITORY_URL = "https://github.com/EndeavorEverlasting/web-excel-repair-triage.git"
 ZIP_URL = "https://github.com/EndeavorEverlasting/web-excel-repair-triage/archive/refs/heads/main.zip"
@@ -395,7 +395,7 @@ def validate_repository_surfaces() -> None:
             PUBLIC_URL,
             "Open in browser",
             "Install on this Android phone",
-            "same Prompt Kit used on desktop",
+            "same AFK Agent Flow experience used on desktop",
         ),
     )
     require_markdown_section(

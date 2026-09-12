@@ -1,6 +1,7 @@
 (function(){
 'use strict';
 var PROFILES={
+  'ad-campaign':{className:'ad-campaign',accent:'#14b8a6',badgeClass:'ad-campaign-badge',badge:'Ad Campaigns'},
   'billing-management':{
     className:'billing-management',accent:'#10b981',badgeClass:'billing-management-badge',badge:'▦ NTH Billing'
   },
@@ -17,6 +18,7 @@ function ensureManagementStyles(){
   var style=document.createElement('style');
   style.id='prompt-kit-management-styles';
   style.textContent=''
+    +'.ad-campaign-badge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:4px;background:#123b36;color:#99f6e4;border:1px solid #2dd4bf;margin-left:6px}'
     +'.prompt-card.billing-management{background:linear-gradient(145deg,#10241d 0%,#112a22 46%,#0d1d19 100%);border-color:rgba(16,185,129,.34);box-shadow:inset 0 0 34px rgba(16,185,129,.035)}'
     +'.prompt-card.billing-management:hover{border-color:#10b981;box-shadow:0 8px 32px rgba(0,0,0,.42),0 0 26px rgba(16,185,129,.2),inset 0 0 34px rgba(16,185,129,.06)}'
     +'.prompt-card.billing-management .glow-bar{background:linear-gradient(90deg,#047857,#10b981,#34d399,#10b981,#047857)!important;box-shadow:0 0 9px rgba(16,185,129,.72),0 0 18px rgba(52,211,153,.3)!important}'

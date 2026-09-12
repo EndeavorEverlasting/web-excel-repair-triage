@@ -1,0 +1,60 @@
+name: Ad campaign domain
+
+on:
+  pull_request:
+    paths:
+      - 'harness/CONTEXT.md'
+      - 'harness/manifest.v1.json'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/prompt_registry_ops.py'
+      - 'harness/ad-campaign/**'
+      - 'docs/ad-campaign/**'
+      - 'registry/prompts/management-operations-prompts.v1.json'
+      - 'scripts/ad_campaign.py'
+      - 'scripts/build_ad_campaign_pack.py'
+      - 'docs/prompt-kit-profiles.js'
+      - 'docs/prompt-kit-management.js'
+      - 'docs/prompt-kit-guided-recommendations.js'
+      - 'tests/test_ad_campaign*.py'
+      - '.github/workflows/ad-campaign.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'harness/CONTEXT.md'
+      - 'harness/manifest.v1.json'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/prompt_registry_ops.py'
+      - 'harness/ad-campaign/**'
+      - 'docs/ad-campaign/**'
+      - 'registry/prompts/management-operations-prompts.v1.json'
+      - 'scripts/ad_campaign.py'
+      - 'scripts/build_ad_campaign_pack.py'
+      - 'docs/prompt-kit-profiles.js'
+      - 'docs/prompt-kit-management.js'
+      - 'docs/prompt-kit-guided-recommendations.js'
+      - 'tests/test_ad_campaign*.py'
+      - '.github/workflows/ad-campaign.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  campaign-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exercise campaign failure cases and discovery
+        run: python -m unittest tests.test_ad_campaign tests.test_ad_campaign_prompts -v
+      - name: Prove generated campaign pack and website parity
+        run: |
+          python scripts/build_ad_campaign_pack.py --check
+          python scripts/prompt_registry_ops.py validate
+          git diff --check

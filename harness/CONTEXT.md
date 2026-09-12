@@ -19,6 +19,7 @@ Then choose one domain. Do not eagerly read every root contract, every skill, th
 | **Artifact creation / derivation** | `harness/artifact-derivation/CODEBASE_MAP.md` | `.ai/skills/artifact-derivation/SKILL.md`, `harness/artifact-derivation/contracts/create-new-from-source.v1.json` |
 | Human-facing artifact alias/download handoff | `harness/artifact-handoff/CODEBASE_MAP.md` | `.ai/skills/share-artifact-alias-handoff/SKILL.md`, `harness/artifact-handoff/contracts/share-alias-download.v1.json` |
 | Prompt Kit use/acquisition | `PROMPT_KIT_ACCESS.md` | `.ai/skills/technician-prompt-kit-acquisition/SKILL.md` |
+| Ad campaign prompts, workflow or measurement | `harness/ad-campaign/CODEBASE_MAP.md` | Selected campaign contract, CLI or prompt |
 | Prompt authoring/repair/language | `harness/specs/prompt-operations.md` | selected registry, prompt skill, builder, validator |
 | Workbook/Web Excel artifact behavior | `CODEBASE_MAP.md` → artifact-engine route | selected workflow/contract/engine/test |
 | Billing/NTH/operator evidence | `harness/specs/billing-artifact-safety.md` | selected NTH contract/skill/validator |

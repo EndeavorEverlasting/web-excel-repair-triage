@@ -11,6 +11,7 @@ on:
       - 'tests/test_prompt_kit_mobile_quick_controls.py'
       - 'tests/test_prompt_kit_cross_input_modality.py'
       - 'tests/prompt_kit_mobile_quick_controls_browser_proof.py'
+      - 'tests/prompt_kit_medium_stability_browser_proof.py'
       - 'web/prompt-kit/index.html'
       - '.github/workflows/prompt-kit-mobile-quick-controls.yml'
   push:
@@ -24,6 +25,7 @@ on:
       - 'tests/test_prompt_kit_mobile_quick_controls.py'
       - 'tests/test_prompt_kit_cross_input_modality.py'
       - 'tests/prompt_kit_mobile_quick_controls_browser_proof.py'
+      - 'tests/prompt_kit_medium_stability_browser_proof.py'
       - 'web/prompt-kit/index.html'
       - '.github/workflows/prompt-kit-mobile-quick-controls.yml'
 
@@ -48,5 +50,7 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check playwright
           python -m playwright install --with-deps chromium
-      - name: Chromium quick-controls journey
-        run: python tests/prompt_kit_mobile_quick_controls_browser_proof.py
+      - name: Chromium quick-controls and medium-stability journeys
+        run: |
+          python tests/prompt_kit_mobile_quick_controls_browser_proof.py
+          python tests/prompt_kit_medium_stability_browser_proof.py
