@@ -2,6 +2,52 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.6.0 - 2026-09-12
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): add complete ad campaign domain and prompt suite (`74d53816`)
+- feat(prompt-kit): add project case-study demo deck builder (`81af4168`)
+- feat(operant): add canonical upgrade recipe engine (`b3b22808`)
+- feat(prompt-kit): stabilize mobile UX across portrait and landscape (`5d6c24bd`)
+- feat(prompt-kit): add account relevance to P114 canary (#417) (`0a627a5d`)
+- feat(prompt-kit): timestamp P114 query issuance (`cae7dbb6`)
+- feat(prompt-kit): add Teams attendance roster reconstructor (`7ddcdbe7`)
+- feat(prompt-kit): gate P13 on execution posture canary (`ff8b3b12`)
+- feat(prompt-kit): add verified job application pack builder (#422) (`7beeace0`)
+- feat(afk-agent-flow): establish product identity and route contract (`eaba0189`)
+- feat(afk-agent-flow): validate renamed public identity (`851930a0`)
+- feat(afk-agent-flow): point installed app at canonical route (`dfaffae3`)
+- feat(afk-agent-flow): move offline fallback to canonical route (`6fd910ca`)
+- feat(afk-agent-flow): add Prompt Kit compatibility redirect (`ff71f005`)
+- feat(afk-agent-flow): add Operant compatibility redirect (`79764d93`)
+- feat(afk-agent-flow): rebrand mobile launcher and direct sharing (`a9ddd675`)
+- feat(afk-agent-flow): complete canonical brand migration (`095785c8`)
+- feat(prompt-kit): mine recurring judgment failures in P100 (`3a36d26e`)
+- feat(prompt-kit): add tutorial coverage policy (`6ed8a1e0`)
+- feat(prompt-kit): derive classifier-backed tutorial coverage (`a1cbe61d`)
+- feat(prompt-kit): make P124 repo-wide readability actionable (`15d518d9`)
+- feat: add connected health record sync prompt (`015cf653`)
+
+### Fixes / performance
+
+- fix(prompt-kit): protect P131 artifact outputs (`1b3c0b92`)
+- fix(prompt-kit): make P07 parallel execution binary (`e21a09bd`)
+- fix(prompt-kit): restore P07 non-parallel proof gates (`e6737d06`)
+- fix(prompt-kit): fail closed on unknown P114 issuance time (`3259c91b`)
+- fix(prompt-kit): align P13 regression with P07 dispatch (`11c021dc`)
+- fix(afk-agent-flow): validate AFK freshness route (`e0ca5c04`)
+- fix(afk-agent-flow): keep governance within context budget (`836f579f`)
+- fix(afk-agent-flow): reconcile route, governance, and release identity contracts (`77c26952`)
+- fix(afk-agent-flow): align discovery validator to canonical afk route (`968d8cac`)
+- fix(harness): refresh external resource coverage projection (`bebc8223`)
+- fix(prompt-kit): fail closed on stale tutorial anchors (`8831cc13`)
+- fix(prompt-kit): preserve interaction mode across orientation (`01b57bf3`)
+- fix(prompt-kit): exclude Prompt Finder self recommendation (`df8a0772`)
+- fix(prompt-kit): bind classifier eval provenance and output safety (`233539cf`)
+- fix(prompt-kit): make classifier routes complete tutorial wiring (`e0c1ae4d`)
+- fix(prompt-kit): treat classifier route as complete wiring (`74a42c96`)
+
 ## 0.5.0 - 2026-09-10
 
 ### Features / breaking pre-1.0 changes
