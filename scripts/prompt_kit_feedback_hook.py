@@ -14,6 +14,7 @@ EXPORT_SCHEMA='prompt-feedback-export/v1'
 REPORT_SCHEMA='prompt-feedback-maintenance-report/v1'
 SENSITIVE_MARKERS=('prompt_body','clipboard','secret','token','password','credential')
 USAGE_VALUES={'open','copy','invoke','favorite'}
+USAGE_EVENT_FIELDS={'event_id','prompt_id','event_type','value','timestamp','schema_version','source','context','sequence'}
 FINDER_ANSWER_VALUES={
     'startingPoint': {'new-repo','in-repo','app-open'},
     'problemKnown': {'known-failure','known-task','repeated-stall','not-yet'},
@@ -87,15 +88,19 @@ def validate_event(event: dict, prompt_ids: set[str]) -> dict:
     reject_sensitive_payload(event)
     required={'event_id','prompt_id','event_type','value','timestamp','schema_version','source'}
     if not required.issubset(event): raise SystemExit(f'malformed feedback event: {event.get("event_id","unknown")}')
+    event_type=require_text(event['event_type'],'event_type',40)
+    if event_type not in {'prompt_vote','prompt_feedback','prompt_usage'}: raise SystemExit('unsupported feedback event type')
+    if event_type=='prompt_usage':
+        unknown=set(event)-USAGE_EVENT_FIELDS
+        if unknown: raise SystemExit(f'unsupported prompt_usage fields: {sorted(unknown)}')
     normalized=dict(event)
     normalized['event_id']=require_text(event['event_id'],'event_id',160)
     normalized['prompt_id']=require_text(event['prompt_id'],'prompt_id',40).upper()
     if normalized['prompt_id'] not in prompt_ids: raise SystemExit(f'unknown prompt identity: {normalized["prompt_id"]}')
     normalized['source']=require_text(event['source'],'source',120)
-    normalized['event_type']=require_text(event['event_type'],'event_type',40)
+    normalized['event_type']=event_type
     normalized['_timestamp']=parse_timestamp(event['timestamp'])
     if event['schema_version']!=EVENT_SCHEMA: raise SystemExit('unsupported feedback event schema')
-    if normalized['event_type'] not in {'prompt_vote','prompt_feedback','prompt_usage'}: raise SystemExit('unsupported feedback event type')
     if normalized['event_type']=='prompt_vote':
         if event['value'] not in {'like','dislike'}: raise SystemExit('unsupported vote')
         normalized['value']=event['value']
@@ -107,6 +112,7 @@ def validate_event(event: dict, prompt_ids: set[str]) -> dict:
         if event['value'] not in USAGE_VALUES: raise SystemExit('unsupported prompt_usage value')
         normalized['value']=event['value']
         if event.get('context') is not None:
+            if event['value'] not in {'open','copy'}: raise SystemExit('prompt finder selection intent must be open or copy')
             normalized['context']=validate_usage_context(event['context'],normalized['prompt_id'],prompt_ids)
     sequence=event.get('sequence',0)
     if sequence is not None and (not isinstance(sequence,int) or sequence<0): raise SystemExit('sequence must be a non-negative integer')

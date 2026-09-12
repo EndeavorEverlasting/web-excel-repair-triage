@@ -240,4 +240,6 @@ The maintenance hook projects two distinct products from the same append-only ex
 
 Prompt Finder usage observations are persisted separately from the append-only vote/comment cursor log: one `localStorage` key per usage event under `promptKit.feedbackUsage.v1.*`, with a bounded retention window of 500 observations. Independent event keys prevent concurrent browser tabs from overwriting each other's Finder observations. `pollSince` remains scoped to the sequenced vote/comment log; `exportBundle` merges the bounded usage ledger back in for statistics and candidate-eval ingestion.
 
+Only `open` and `copy` may carry Prompt Finder `selection_intent` context. Generic `invoke` and `favorite` usage remain valid information-only events only when context-free; they cannot enter the candidate-eval path. Prompt-usage ingest also enforces an explicit top-level field allow-list, so undeclared fields fail closed before normalization.
+
 The first production measurement is **selection intent** (`open` / `copy` selected from a recommendation card), not proof that the downstream prompt succeeded or that clipboard completion occurred. A later semantic-completion sprint may strengthen the usage ledger once the production command kernel exposes truthful terminal outcomes; until then, stats and eval mining must preserve this proof ceiling.
