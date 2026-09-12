@@ -80,11 +80,11 @@ Do not claim that prose, a copied snippet, or a screenshot has graduated the beh
         p34["copyContent"],
         P34_MARKER,
         r'''## SNIPPET-TO-OPERATOR-PATH GRADUATION
-A technician repeatedly retrieving a command or snippet from chat is evidence that the operator path is incomplete, not a documentation success. Recover and reuse the canonical repository behavior first. When the operation is recurring and proven, graduate it into a stable executable/operator entry point using the repository-appropriate form (for example CMD, PowerShell, Bash, Python, task runner, workflow, or launcher) with bounded inputs, useful failure output, preserved exit status, and durable evidence.
+Repeatedly retrieving a command or snippet from chat means the operator path is incomplete. Reuse canonical repository behavior first; when recurring and proven, promote it to a stable repository-native executable/operator entry point with bounded inputs, useful failure output, exit status, and durable evidence.
 
-After the executable path is grounded and validated, remove unnecessary invocation knowledge when that materially improves technician usability: expose the same canonical behavior through an appropriate launcher, GUI/web control, spreadsheet surface, menu, dashboard, or generated artifact. The surface must invoke or consume the canonical implementation rather than reimplementing the command logic independently.
+After that path is validated, remove unnecessary invocation knowledge when it creates user friction: expose the same canonical behavior through an appropriate launcher, GUI/web control, spreadsheet surface, menu, or generated artifact. The surface must invoke or consume the canonical implementation; never duplicate its logic or put a clickable veneer over an unproven snippet.
 
-Do not build a GUI or spreadsheet veneer over an unproven snippet merely to make it easier to click. If proof is not sufficient for the next graduation, retain the earlier stage explicitly and record the missing proof. Technician acceptance, terminal survival, durable logs/artifacts, and real interface/runtime behavior remain evidence gates rather than assumptions.''',
+If proof does not support the next stage, keep the earlier stage and name the missing proof. Terminal survival, durable logs/artifacts, and real interface/runtime behavior remain evidence gates.''',
     )
     add_keywords(p34, ["chat snippet", "snippet graduation", "operator entry point", "stable executable"])
 
@@ -160,12 +160,12 @@ class PromptDurabilityGraduationTests(unittest.TestCase):
         content = prompt["copyContent"]
         for phrase in (
             "SNIPPET-TO-OPERATOR-PATH GRADUATION",
-            "repeatedly retrieving a command or snippet from chat",
-            "Recover and reuse the canonical repository behavior first",
-            "stable executable/operator entry point",
+            "retrieving a command or snippet from chat means the operator path is incomplete",
+            "Reuse canonical repository behavior first",
+            "stable repository-native executable/operator entry point",
             "launcher, GUI/web control, spreadsheet surface",
             "must invoke or consume the canonical implementation",
-            "Do not build a GUI or spreadsheet veneer over an unproven snippet",
+            "clickable veneer over an unproven snippet",
         ):
             self.assertIn(phrase, content)
 
