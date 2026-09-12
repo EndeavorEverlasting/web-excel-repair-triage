@@ -106,10 +106,12 @@ jobs:
                       "H-CYYYYMMDD-###",
                       "MEDREC-###",
                       "Health Records/",
-                      "Ledgers/Health Tracking Ledger",
-                      "References/Medication & Product Reference",
-                      "Narrative/Health Symptom Narrative Archive",
-                      "Evidence/",
+                      "Health Records/Ledgers/",
+                      "Health Records/References/",
+                      "Health Records/Narrative/",
+                      "Health Records/Evidence/",
+                      "Health Tracking Ledger",
+                      "stable file identity over name-only matching or path cosmetics",
                       "Treatment response is evidence about response, not proof of etiology",
                       "READ BACK EVERY CLAIMED MUTATION",
                       "FALLBACK WHEN THE CANONICAL WORKSPACE IS ABSENT",
@@ -158,12 +160,12 @@ jobs:
           python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/health-prompt-order-navigation-audit.json --summary
           python scripts/build_prompt_kit_registry.py --check
           git diff --check
-      - name: Commit generated contribution and proof
+      - name: Commit generated contribution
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add registry/prompts/repository-work-ledger-prompts.v1.json web/prompt-kit/index.html tests/test_health_record_workspace_sync_prompt.py .tmp-health-prompt-sprint/add-receipt.json .tmp-health-prompt-sprint/prompt-id.txt .tmp-health-prompt-sprint/validate-receipt.json Outputs/health-prompt-order-navigation-audit.json
+          git add registry/prompts/repository-work-ledger-prompts.v1.json web/prompt-kit/index.html tests/test_health_record_workspace_sync_prompt.py
           git commit -m "feat: add connected health record sync prompt"
           git push origin HEAD:feat/prompt-kit-health-record-sync-20260912
