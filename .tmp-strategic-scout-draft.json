@@ -1,6 +1,6 @@
 {
   "name": "Repository Strategic Opportunity Scout",
-  "type": "ANALYZE",
+  "type": "PLAN",
   "class": "REPOSITORY STRATEGY / OPPORTUNITY DISCOVERY",
   "sprintRole": "Explore one repository before bounded execution to discover the highest-leverage next durable capability, contract, simplification, integration, evaluation surface, or architectural investment; generate competing strategic theses, falsify them, recommend exactly one bounded investigation, and route it to the correct existing owner without implementing the selected initiative.",
   "useWhen": "There is no single bounded implementation request yet and the operator wants to understand what this repository should strategically care about next, which long-term contract or capability deserves investigation, which existing systems could create leverage if connected, or which attractive directions should be rejected or deferred. Do not use for an already-selected Opportunity_Discovery row, cross-repository portfolio ranking, or a known bounded implementation.",
