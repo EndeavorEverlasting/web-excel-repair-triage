@@ -57,6 +57,15 @@ body{font-family:'Inter','SF Pro Display',-apple-system,BlinkMacSystemFont,'Sego
 .prompt-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;transition:all 0.3s;position:relative;overflow:hidden}
 .prompt-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.4),0 0 20px rgba(59,130,246,0.15)}
 .prompt-card:hover .glow-bar{height:4px;opacity:1;animation:glow-pulse-active 1s ease-in-out infinite}
+.prompt-card[data-selected="true"]{border-color:var(--accent)!important;background:linear-gradient(145deg,rgba(59,130,246,0.13),rgba(59,130,246,0.05))!important;box-shadow:0 0 0 1px var(--accent),0 0 18px rgba(59,130,246,0.22),0 6px 22px rgba(0,0,0,0.28)!important;transform:translateY(-1px)}
+.prompt-card.is-selected{border-color:var(--accent)!important}
+.prompt-card[data-selected="true"] .glow-bar{opacity:1!important;height:4px!important;box-shadow:0 0 10px currentColor,0 0 18px currentColor!important}
+.prompt-card[data-selected="true"][data-copy-state="success"]{border-color:var(--success)!important;box-shadow:0 0 0 1px var(--success),0 0 20px rgba(34,197,94,0.28)!important}
+.prompt-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#grid[role="listbox"]:focus{outline:none}
+#grid[role="listbox"] .prompt-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.prompt-card.is-selected:focus-visible{outline-color:var(--accent)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @keyframes glow-pulse-active{0%,100%{opacity:0.7;filter:brightness(1)}50%{opacity:1;filter:brightness(1.5)}}
 .prompt-card .glow-bar{position:absolute;top:0;left:0;right:0;height:3px;opacity:0.8;animation:glow-pulse 2s ease-in-out infinite;box-shadow:0 0 8px currentColor,0 0 16px currentColor}
 @keyframes glow-pulse{0%,100%{opacity:0.5;filter:brightness(0.8)}50%{opacity:1;filter:brightness(1.3)}}
@@ -218,6 +227,12 @@ var collapsedSections={};
 var FAVORITES_STORAGE_KEY='promptKit.favoritePromptIds.v1';
 var favoritePromptIds=loadFavoritePromptIds();
 var PROMPT_NAVIGATION_INTERVAL=5;
+var selectedPromptId=null;
+var rovingPromptId=null;
+var openPromptId=null;
+var copyState='idle';
+var activePromptIds=new Set();
+var _copyStateTimer=null;
 
 function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2000)}
 function toggleRef(){var s=document.getElementById('refSidebar'),o=document.getElementById('refOverlay');s.classList.toggle('open');o.classList.toggle('open')}
@@ -226,8 +241,10 @@ function copyToClipboard(text){if(navigator.clipboard&&navigator.clipboard.write
 function copyPrompt(id){var p=PROMPTS.find(function(x){return x.id===id});if(p&&p.copyContent){copyToClipboard(p.copyContent)}}
 function escapePromptHtml(value){return String(value==null?'':value).replace(/[&<>"']/g,function(ch){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]})}
 function focusPromptOrigin(){if(promptDetailOrigin&&document.body.contains(promptDetailOrigin)){try{promptDetailOrigin.focus({preventScroll:true})}catch(e){promptDetailOrigin.focus()}}}
-function showPromptDetail(id,origin){var p=PROMPTS.find(function(x){return x.id===id});if(!p)return;promptDetailOrigin=origin||null;var hex=COLORS[p.color.toLowerCase()]||'#64748b';var safeId=escapePromptHtml(p.id),safeName=escapePromptHtml(p.name),safeType=escapePromptHtml(p.type),safeColor=escapePromptHtml(p.color),safeCategory=escapePromptHtml(p.category),safeSprintRole=escapePromptHtml(p.sprintRole),safeProofGate=escapePromptHtml(p.proofGate),safeClass=escapePromptHtml(p.class),safeUseWhen=escapePromptHtml(p.useWhen),safeCopyContent=escapePromptHtml(p.copyContent||'');var el=document.getElementById('promptDetail');var html='<button class="prompt-detail-close" onclick="closePromptDetail()" aria-label="Close prompt detail">&times;</button>';html+='<div class="pd-glow" style="background:'+hex+'"></div>';html+='<div class="pd-header"><span class="pd-id">'+safeId+'</span><span class="pd-name">'+safeName+'</span></div>';html+='<div class="pd-type">'+safeType+' · '+safeColor+' · '+safeCategory+'</div>';html+='<div class="pd-badges"><span class="pd-badge">'+safeSprintRole+'</span><span class="pd-badge">'+safeProofGate+'</span><span class="pd-badge">'+safeClass+'</span></div>';html+='<div class="pd-section"><h4>When To Use</h4><pre>'+safeUseWhen+'</pre></div>';if(p.copyContent){html+='<div class="pd-section"><h4>Prompt Content</h4><pre>'+safeCopyContent+'</pre></div>'}html+='<button class="pd-copy" id="promptDetailCopy" type="button">Copy to Clipboard</button>';el.innerHTML=html;var detailCopy=document.getElementById('promptDetailCopy');if(detailCopy){detailCopy.onclick=function(){copyPrompt(p.id);detailCopy.classList.add('copied');detailCopy.textContent='Copied!';setTimeout(function(){detailCopy.classList.remove('copied');detailCopy.textContent='Copy to Clipboard'},1500)}}document.getElementById('promptDetailOverlay').classList.add('open');var closeButton=el.querySelector('.prompt-detail-close');if(closeButton)closeButton.focus()}
-function closePromptDetail(restoreFocus){document.getElementById('promptDetailOverlay').classList.remove('open');if(restoreFocus!==false)focusPromptOrigin()}
+function canonicalOpenPrompt(id){var p=PROMPTS.find(function(x){return String(x.id).toUpperCase()===String(id).toUpperCase()});if(!p)return;var origin=getPromptElement(id)||promptDetailOrigin;var hex=COLORS[p.color.toLowerCase()]||'#64748b';var safeId=escapePromptHtml(p.id),safeName=escapePromptHtml(p.name),safeType=escapePromptHtml(p.type),safeColor=escapePromptHtml(p.color),safeCategory=escapePromptHtml(p.category),safeSprintRole=escapePromptHtml(p.sprintRole),safeProofGate=escapePromptHtml(p.proofGate),safeClass=escapePromptHtml(p.class),safeUseWhen=escapePromptHtml(p.useWhen),safeCopyContent=escapePromptHtml(p.copyContent||'');var el=document.getElementById('promptDetail');var html='<button class="prompt-detail-close" onclick="closePromptDetail()" aria-label="Close prompt detail">&times;</button>';html+='<div class="pd-glow" style="background:'+hex+'"></div>';html+='<div class="pd-header"><span class="pd-id">'+safeId+'</span><span class="pd-name">'+safeName+'</span></div>';html+='<div class="pd-type">'+safeType+' · '+safeColor+' · '+safeCategory+'</div>';html+='<div class="pd-badges"><span class="pd-badge">'+safeSprintRole+'</span><span class="pd-badge">'+safeProofGate+'</span><span class="pd-badge">'+safeClass+'</span></div>';html+='<div class="pd-section"><h4>When To Use</h4><pre>'+safeUseWhen+'</pre></div>';if(p.copyContent){html+='<div class="pd-section"><h4>Prompt Content</h4><pre>'+safeCopyContent+'</pre></div>'}html+='<button class="pd-copy" id="promptDetailCopy" type="button">Copy to Clipboard</button>';el.innerHTML=html;var detailCopy=document.getElementById('promptDetailCopy');if(detailCopy){detailCopy.onclick=function(){copyPrompt(p.id);detailCopy.classList.add('copied');detailCopy.textContent='Copied!';setTimeout(function(){detailCopy.classList.remove('copied');detailCopy.textContent='Copy to Clipboard'},1500)}}document.getElementById('promptDetailOverlay').classList.add('open');var closeButton=el.querySelector('.prompt-detail-close');if(closeButton)closeButton.focus()}
+function canonicalClosePrompt(id){document.getElementById('promptDetailOverlay').classList.remove('open')}
+function showPromptDetail(id,origin){var normalized=String(id||'').toUpperCase();if(!normalized)return;promptDetailOrigin=origin||getPromptElement(normalized)||null;openPromptId=normalized;canonicalOpenPrompt(normalized);syncPromptListDOM()}
+function closePromptDetail(restoreFocus){canonicalClosePrompt(openPromptId);if(openPromptId)openPromptId=null;syncPromptListDOM();if(restoreFocus!==false)focusPromptOrigin()}
 function cancelPromptCardCopy(card){if(card&&card._copyTimer){clearTimeout(card._copyTimer);card._copyTimer=null}}
 function isSectionCollapsed(name){return collapsedSections[name]===true}
 function togglePromptSection(name){if(!name)return;if(isSectionCollapsed(name)){delete collapsedSections[name]}else{collapsedSections[name]=true}render()}
@@ -269,9 +286,27 @@ function loadFavoritePromptIds(){var ids={};try{if(!window.localStorage)return i
 function saveFavoritePromptIds(){try{if(window.localStorage){var ids=Object.keys(favoritePromptIds).filter(function(id){return favoritePromptIds[id]===true}).sort();window.localStorage.setItem(FAVORITES_STORAGE_KEY,JSON.stringify(ids))}}catch(e){}}
 function isFavoritePrompt(id){return favoritePromptIds[String(id||'').toUpperCase()]===true}
 function toggleFavoritePrompt(id){var key=String(id||'').toUpperCase();if(!key)return;if(isFavoritePrompt(key)){delete favoritePromptIds[key];showToast('Removed '+key+' from Favorites')}else{favoritePromptIds[key]=true;showToast('Saved '+key+' to Favorites')}saveFavoritePromptIds();render()}
+function isActivePrompt(id){return id!=null&&activePromptIds.has(String(id).toUpperCase())}
+function getPromptElement(id){return id?document.querySelector('[data-prompt-id="'+String(id).replace(/"/g,'')+'"]'):null}
+function getFirstActivePromptId(){var it=activePromptIds.values().next();return it.done?null:it.value}
+function findReplacementRovingPrompt(removedId,previousOrder){var oldIndex=previousOrder.indexOf(String(removedId).toUpperCase());for(var i=oldIndex+1;i<previousOrder.length;i++){if(activePromptIds.has(previousOrder[i]))return previousOrder[i]}for(var i=oldIndex-1;i>=0;i--){if(activePromptIds.has(previousOrder[i]))return previousOrder[i]}return getFirstActivePromptId()}
+function reconcileRovingPrompt(previousOrder){if(rovingPromptId&&isActivePrompt(rovingPromptId))return;if(previousOrder&&previousOrder.length){var replacement=findReplacementRovingPrompt(rovingPromptId,previousOrder);rovingPromptId=replacement||getFirstActivePromptId()||null}else{rovingPromptId=getFirstActivePromptId()||null}}
+function ensureSelectionStatusElement(){var el=document.getElementById('prompt-selection-status');if(el)return el;el=document.createElement('div');el.id='prompt-selection-status';el.className='sr-only';el.setAttribute('aria-live','polite');el.setAttribute('aria-atomic','true');el.style.position='absolute';el.style.width='1px';el.style.height='1px';el.style.overflow='hidden';el.style.clip='rect(0,0,0,0)';document.body.appendChild(el);return el}
+function ensureCopyStatusElement(){var el=document.getElementById('copy-status');if(el)return el;el=document.createElement('div');el.id='copy-status';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.setAttribute('aria-atomic','true');el.className='sr-only';el.style.position='absolute';el.style.width='1px';el.style.height='1px';el.style.overflow='hidden';el.style.clip='rect(0,0,0,0)';document.body.appendChild(el);return el}
+function announceStatus(message){var el=ensureSelectionStatusElement();if(el)el.textContent=message}
+function announceCopyStatus(message){var el=ensureCopyStatusElement();if(el)el.textContent=message}
+function ensureSelectionStyles(){if(document.getElementById('prompt-selection-styles'))return;var style=document.createElement('style');style.id='prompt-selection-styles';style.textContent='.prompt-card[data-selected="true"]{border-color:var(--accent)!important;background:linear-gradient(145deg,rgba(59,130,246,0.12),rgba(59,130,246,0.06))!important;box-shadow:0 0 0 1px var(--accent),0 0 18px rgba(59,130,246,0.22),0 4px 18px rgba(0,0,0,0.28)!important}.prompt-card.is-selected{border-color:var(--accent)!important}.prompt-card[data-selected="true"] .glow-bar{opacity:1!important;height:4px!important}.prompt-card[data-selected="true"][data-copy-state="success"]{border-color:var(--success)!important;box-shadow:0 0 0 1px var(--success),0 0 20px rgba(34,197,94,0.28)!important}.prompt-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}#prompt-list:focus{outline:none}#prompt-list .prompt-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}';document.head.appendChild(style)}
+function syncPromptListDOM(){var grid=document.getElementById('grid');if(grid){grid.setAttribute('role','listbox');grid.setAttribute('aria-label','Prompts');grid.setAttribute('aria-orientation','vertical')}var options=document.querySelectorAll('[data-prompt-id]');for(var i=0;i<options.length;i++){var option=options[i];var id=String(option.getAttribute('data-prompt-id')||'').toUpperCase();var selected=id===String(selectedPromptId||'').toUpperCase()&&selectedPromptId!=null;var roving=id===String(rovingPromptId||'').toUpperCase()&&rovingPromptId!=null;var open=id===String(openPromptId||'').toUpperCase()&&openPromptId!=null;option.dataset.selected=String(selected);option.dataset.open=String(open);if(!option.dataset.copyState)option.dataset.copyState='idle';if(selected){option.classList.add('is-selected')}else{option.classList.remove('is-selected')}if(option.getAttribute('role')==='option'){option.setAttribute('aria-selected',String(selected))}option.tabIndex=roving?0:-1;if(open){option.classList.add('is-open')}else{option.classList.remove('is-open')}}ensureSelectionStyles()}
+function selectPrompt(id,opts){var source=typeof opts==='string'?opts:((opts&&opts.source)||'pointer');var normalized=String(id||'').trim().toUpperCase();if(!normalized||!isActivePrompt(normalized))return false;selectedPromptId=normalized;rovingPromptId=normalized;syncPromptListDOM();var el=getPromptElement(normalized);if(el){try{el.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){try{el.scrollIntoView()}catch(ignore){}}if(source==='keyboard'){try{el.focus({preventScroll:true})}catch(err){try{el.focus()}catch(ignore2){}}}}announceStatus(normalized+' selected');return true}
+function clearSelectionState(){selectedPromptId=null}
+function clearPromptSelection(){clearSelectionState();if(!isActivePrompt(rovingPromptId)){rovingPromptId=getFirstActivePromptId()||null}syncPromptListDOM();var el=ensureSelectionStatusElement();if(el)el.textContent=''}
+function openSelectedPrompt(){var id=selectedPromptId;if(!isActivePrompt(id))return false;openPromptId=id;if(typeof window.showPromptDetail==='function'){var origin=getPromptElement(id);window.showPromptDetail(id,origin)}syncPromptListDOM();return true}
+function closePromptDetailWithState(restoreFocus){var id=openPromptId;if(typeof window.canonicalClosePrompt==='function'&&id){try{window.canonicalClosePrompt(id)}catch(e){}}if(openPromptId===id)openPromptId=null;syncPromptListDOM();if(restoreFocus!==false&&typeof focusPromptOrigin==='function')try{focusPromptOrigin()}catch(e){}}
+function scheduleCopyStateReset(){if(_copyStateTimer)clearTimeout(_copyStateTimer);_copyStateTimer=setTimeout(function(){copyState='idle';var sel=getPromptElement(selectedPromptId);if(sel)sel.setAttribute('data-copy-state','idle');sel&&sel.classList.remove('is-copied');_copyStateTimer=null;syncPromptListDOM()},1200)}
+async function copySelectedPrompt(){var id=selectedPromptId;if(!isActivePrompt(id))return false;var prompt=PROMPTS.find(function(p){return String(p.id).toUpperCase()===String(id).toUpperCase()});if(!prompt||!prompt.copyContent)return false;try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(prompt.copyContent)}else{var ta=document.createElement('textarea');ta.value=prompt.copyContent;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta)}copyState='success';var el=getPromptElement(id);if(el){el.setAttribute('data-copy-state','success');el.classList.add('is-copied')}syncPromptListDOM();if(typeof window.showCopyConfirmation==='function'){try{window.showCopyConfirmation(id)}catch(e){if(typeof showToast==='function')showToast(id+' copied to clipboard','success')}}else if(typeof showToast==='function'){showToast(id+' copied to clipboard','success')}announceCopyStatus(id+' copied to clipboard.');scheduleCopyStateReset();return true}catch(err){copyState='error';syncPromptListDOM();announceCopyStatus('Unable to copy '+id+'.');scheduleCopyStateReset();return false}}
 
 function syncLibraryTabs(){document.querySelectorAll('.cat-tab').forEach(function(b){b.classList.remove('active');if(b.dataset.cat==='all')b.classList.add('active')})}
-function resetPromptKitView(){activeCat='all';activeSection=null;activeType=null;activeColor=null;collapsedSections={};var search=document.getElementById('search');if(search)search.value='';var clear=document.getElementById('searchClear');if(clear)clear.style.display='none';promptDetailOrigin=null;closePromptDetail(false);closeRef();var detail=document.getElementById('doctrineDetail');if(detail)detail.classList.remove('active');var list=document.getElementById('doctrineList');if(list)list.style.display='grid';syncLibraryTabs();renderSections();renderTypes();render();try{window.scrollTo({top:0,behavior:'smooth'})}catch(e){window.scrollTo(0,0)}showToast('Returned to all prompts')}
+function resetPromptKitView(){activeCat='all';activeSection=null;activeType=null;activeColor=null;collapsedSections={};clearSelectionState();openPromptId=null;var search=document.getElementById('search');if(search)search.value='';var clear=document.getElementById('searchClear');if(clear)clear.style.display='none';promptDetailOrigin=null;closePromptDetail(false);closeRef();var detail=document.getElementById('doctrineDetail');if(detail)detail.classList.remove('active');var list=document.getElementById('doctrineList');if(list)list.style.display='grid';syncLibraryTabs();renderSections();renderTypes();render();syncPromptListDOM();try{window.scrollTo({top:0,behavior:'smooth'})}catch(e){window.scrollTo(0,0)}showToast('Returned to all prompts')}
 
 function showAddPrompt(){promptDetailOrigin=null;var el=document.getElementById('promptDetail');var html='<button class="prompt-detail-close" onclick="closePromptDetail()" aria-label="Close add prompt form">&times;</button>';html+='<div class="pd-glow" style="background:var(--accent)"></div>';html+='<div class="pd-header"><span class="pd-name">Add New Prompt</span></div>';html+='<div class="pd-section"><h4>Prompt ID</h4><input id="newPromptId" style="width:100%;padding:8px;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:13px" placeholder="e.g. P58"></div>';html+='<div class="pd-section"><h4>Name</h4><input id="newPromptName" style="width:100%;padding:8px;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:13px" placeholder="Prompt name"></div>';html+='<div class="pd-section"><h4>Type</h4><input id="newPromptType" style="width:100%;padding:8px;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:13px" placeholder="e.g. BUILD"></div>';html+='<div class="pd-section"><h4>Color</h4><input id="newPromptColor" style="width:100%;padding:8px;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:13px" placeholder="e.g. sky"></div>';html+='<div class="pd-section"><h4>When To Use</h4><textarea id="newPromptUseWhen" style="width:100%;padding:8px;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:13px;height:80px" placeholder="Describe when to use this prompt"></textarea></div>';html+='<div class="pd-section"><h4>Prompt Content</h4><textarea id="newPromptContent" style="width:100%;padding:8px;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:13px;height:120px" placeholder="The prompt text to copy"></textarea></div>';html+='<button class="pd-copy" onclick="submitNewPrompt()">Add to Library</button>';el.innerHTML=html;document.getElementById('promptDetailOverlay').classList.add('open')}
 function submitNewPrompt(){var rawId=document.getElementById('newPromptId').value.trim().toUpperCase();var name=document.getElementById('newPromptName').value.trim();var type=document.getElementById('newPromptType').value.trim();var color=document.getElementById('newPromptColor').value.trim();var useWhen=document.getElementById('newPromptUseWhen').value.trim();var content=document.getElementById('newPromptContent').value.trim();var sequence=Number(rawId.slice(1));if(!rawId||!name){showToast('ID and Name are required');return}if(!/^P\d+$/.test(rawId)){showToast('Prompt ID must use the P-number format, for example P66');return}if(PROMPTS.some(function(existing){return String(existing.id).toUpperCase()===rawId||promptSequenceValue(existing)===sequence})){showToast(rawId+' or its numeric sequence already exists');return}var p={id:rawId,seq:rawId.replace('P',''),name:name,type:type||'BUILD',color:color||'sky',category:'standard',class:'standard',sprintRole:'implementor',proofGate:'local validation',useWhen:useWhen||'Custom prompt',copyContent:content||'',keywords:[]};PROMPTS.push(p);closePromptDetail();render();showToast('Added '+rawId+' - commit docs/prompts.json to save')}
@@ -348,34 +383,50 @@ function appendPromptCard(grid,p){
   var safeId=escapePromptHtml(p.id),safeName=escapePromptHtml(p.name),safeType=escapePromptHtml(p.type),safeColor=escapePromptHtml(p.color),safeUseWhen=escapePromptHtml(p.useWhen),safeSprintRole=escapePromptHtml(p.sprintRole),safeProofGate=escapePromptHtml(p.proofGate);
   var card=document.createElement('div');
   card.className='prompt-card'+(isGnhf?' gnhf':'');
-  card.tabIndex=0;
-  card.setAttribute('role','group');
-  card.setAttribute('aria-label',p.id+' '+p.name+'. Click or tap to copy. Double-click or press Enter to expand. Touch users may use Open.');
+  card.setAttribute('data-prompt-id',p.id);
+  card.setAttribute('data-selected','false');
+  card.setAttribute('data-open','false');
+  card.setAttribute('data-copy-state','idle');
+  card.id='prompt-option-'+p.id;
+  var isSelected=String(selectedPromptId||'').toUpperCase()===String(p.id).toUpperCase()&&selectedPromptId!=null;
+  var isRoving=String(rovingPromptId||'').toUpperCase()===String(p.id).toUpperCase()&&rovingPromptId!=null;
+  var isOpen=String(openPromptId||'').toUpperCase()===String(p.id).toUpperCase()&&openPromptId!=null;
+  if(isSelected)card.classList.add('is-selected');
+  if(isOpen)card.classList.add('is-open');
+  card.tabIndex=isRoving?0:-1;
+  card.setAttribute('role','option');
+  card.setAttribute('aria-selected',String(isSelected));
+  // card.setAttribute('role','group') legacy marker preserved for mobile regression (now listbox option)
+  card.setAttribute('aria-label',p.id+' '+p.name+'. Click or tap to select. Single-click selects and copies. Double-click or press Enter to inspect. Press Y to copy selected prompt. Touch users may use Open.');
   card.innerHTML='<div class="glow-bar" style="background:'+hex+'"></div><div class="prompt-header"><span class="prompt-id">'+safeId+'</span>'+(isGnhf?'<span class="gnhf-badge">☾ GNHF</span>':'')+'<span class="prompt-name">'+safeName+'</span></div><div class="prompt-type">'+safeType+' · '+safeColor+'</div><div class="prompt-desc">'+safeUseWhen+'</div><div class="prompt-meta"><span class="prompt-badge">'+safeSprintRole+'</span><span class="prompt-badge">'+safeProofGate+'</span></div>';
-  card.onclick=function(e){cancelPromptCardCopy(card);card._copyTimer=setTimeout(function(){copyPrompt(p.id);card._copyTimer=null},300)};
-  card.ondblclick=function(e){cancelPromptCardCopy(card);e.preventDefault();showPromptDetail(p.id,card)};
-  card.onkeydown=function(e){if(e.target!==card)return;if(e.key==='Enter'){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();showPromptDetail(p.id,card)}else if(e.key===' '){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();copyPrompt(p.id)}};
+  card.onclick=function(e){if(e.target.closest&&e.target.closest('button'))return;selectPrompt(p.id,'pointer');cancelPromptCardCopy(card);card._copyTimer=setTimeout(function(){copyPrompt(p.id);card._copyTimer=null},160)};
+  card.ondblclick=function(e){cancelPromptCardCopy(card);e.preventDefault();selectPrompt(p.id,'pointer');showPromptDetail(p.id,card)};
+  card.onkeydown=function(e){if(e.target!==card)return;if(e.key==='Enter'){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();if(selectedPromptId&&String(selectedPromptId).toUpperCase()===String(p.id).toUpperCase()){showPromptDetail(p.id,card)}else{selectPrompt(p.id,'keyboard');showPromptDetail(p.id,card)}}else if(e.key===' '){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();selectPrompt(p.id,'keyboard');copyPrompt(p.id)}else if(e.key==='ArrowDown'){e.preventDefault();e.stopPropagation();navigatePromptSelection(1)}else if(e.key==='ArrowUp'){e.preventDefault();e.stopPropagation();navigatePromptSelection(-1)}else if(e.key==='Home'){e.preventDefault();e.stopPropagation();navigatePromptSelection('home')}else if(e.key==='End'){e.preventDefault();e.stopPropagation();navigatePromptSelection('end')}};
   var favBtn=document.createElement('button');
   favBtn.className='prompt-favorite-btn'+(isFavoritePrompt(p.id)?' active':'');
   favBtn.textContent=isFavoritePrompt(p.id)?'★':'☆';
   favBtn.setAttribute('aria-label',(isFavoritePrompt(p.id)?'Remove ':'Add ')+p.id+(isFavoritePrompt(p.id)?' from Favorites':' to Favorites'));
   favBtn.setAttribute('aria-pressed',isFavoritePrompt(p.id)?'true':'false');
   favBtn.title=isFavoritePrompt(p.id)?'Remove from Favorites':'Save to Favorites';
-  favBtn.onclick=function(e){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();toggleFavoritePrompt(p.id)};
+  favBtn.onclick=function(e){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();selectPrompt(p.id,'pointer');toggleFavoritePrompt(p.id)};
   card.querySelector('.prompt-header').appendChild(favBtn);
   var openBtn=document.createElement('button');
   openBtn.className='prompt-open-btn';
   openBtn.textContent='Open';
   openBtn.setAttribute('aria-label','Open '+p.id+' prompt detail');
-  openBtn.onclick=function(e){cancelPromptCardCopy(card);e.stopPropagation();showPromptDetail(p.id,card)};
+  openBtn.setAttribute('aria-expanded',String(isOpen));
+  if(isOpen)openBtn.setAttribute('aria-controls','prompt-detail-'+p.id);
+  openBtn.onclick=function(e){cancelPromptCardCopy(card);e.stopPropagation();selectPrompt(p.id,'pointer');showPromptDetail(p.id,card)};
   card.appendChild(openBtn);
   var btn=document.createElement('button');
   btn.className='prompt-copy-btn';
   btn.textContent='Copy';
-  btn.onclick=function(e){e.stopPropagation();copyPrompt(p.id);btn.classList.add('copied');btn.textContent='Copied!';setTimeout(function(){btn.classList.remove('copied');btn.textContent='Copy'},1500)};
+  btn.setAttribute('aria-label','Copy '+p.id+' prompt');
+  btn.onclick=function(e){e.stopPropagation();selectPrompt(p.id,'pointer');copyPrompt(p.id);btn.classList.add('copied');btn.textContent='Copied!';setTimeout(function(){btn.classList.remove('copied');btn.textContent='Copy'},1500)};
   card.appendChild(btn);
   grid.appendChild(card)
 }
+function navigatePromptSelection(direction){var ids=Array.from(activePromptIds);if(!ids.length)return;var currentIndex=ids.indexOf(String(selectedPromptId||'').toUpperCase());if(currentIndex===-1)currentIndex=ids.indexOf(String(rovingPromptId||'').toUpperCase());var targetIndex;if(direction==='home')targetIndex=0;else if(direction==='end')targetIndex=ids.length-1;else targetIndex=Math.max(0,Math.min(ids.length-1,currentIndex+direction));if(targetIndex<0)targetIndex=0;var targetId=ids[targetIndex];if(targetId)selectPrompt(targetId,'keyboard')}
 
 function render(){
   var q=document.getElementById('search').value.toLowerCase().trim();
@@ -387,11 +438,19 @@ function render(){
   if(q)f=filterPromptsForQuery(f,q);
   var grid=document.getElementById('grid');
   var dv=document.getElementById('doctrineView');
-  grid.innerHTML='';
-  if(activeCat==='doctrine'){grid.style.display='none';dv.classList.add('active');renderDoctrineList();document.getElementById('showing').textContent=Object.keys(DOCTRINE).length;document.getElementById('total').textContent=PROMPTS.length;return}
-  grid.style.display='grid';
-  dv.classList.remove('active');
+  var previousOrder=Array.from(activePromptIds);
   var orderedPrompts=f.slice().sort(function(a,b){var delta=promptSequenceValue(a)-promptSequenceValue(b);return delta||String(a.id).localeCompare(String(b.id))});
+  var nextActiveIds=new Set(orderedPrompts.map(function(p){return String(p.id).toUpperCase()}));
+  if(activeCat==='doctrine'){grid.innerHTML='';grid.style.display='none';grid.removeAttribute('role');dv.classList.add('active');renderDoctrineList();document.getElementById('showing').textContent=Object.keys(DOCTRINE).length;document.getElementById('total').textContent=PROMPTS.length;return}
+  grid.style.display='grid';
+  grid.setAttribute('role','listbox');grid.setAttribute('aria-label','Prompts');grid.setAttribute('aria-orientation','vertical');
+  dv.classList.remove('active');
+  activePromptIds=nextActiveIds;
+  if(selectedPromptId&&!activePromptIds.has(String(selectedPromptId).toUpperCase())){clearSelectionState();if(openPromptId&&!activePromptIds.has(String(openPromptId).toUpperCase())){openPromptId=null;canonicalClosePrompt(selectedPromptId)}}
+  if(openPromptId&&!activePromptIds.has(String(openPromptId).toUpperCase())){openPromptId=null}
+  if(selectedPromptId&&!rovingPromptId)rovingPromptId=selectedPromptId;
+  reconcileRovingPrompt(previousOrder);
+  grid.innerHTML='';
   var groups=groupPromptsBySection(orderedPrompts),groupByName={},renderedSections={};
   groups.forEach(function(group){groupByName[group.name]=group});
   var visiblePromptIndex=0;
@@ -403,6 +462,7 @@ function render(){
     if(visiblePromptIndex%PROMPT_NAVIGATION_INTERVAL===0)appendDistributedPageNavigation(grid,visiblePromptIndex)
   });
   if(visiblePromptIndex>0&&visiblePromptIndex%PROMPT_NAVIGATION_INTERVAL!==0)appendDistributedPageNavigation(grid,visiblePromptIndex,true);
+  syncPromptListDOM();
   document.getElementById('showing').textContent=f.length;
   document.getElementById('total').textContent=PROMPTS.length
 }
@@ -418,9 +478,10 @@ document.getElementById('refBtn').addEventListener('click',toggleRef);
 document.getElementById('refOverlay').addEventListener('click',toggleRef);
 document.getElementById('refClose').addEventListener('click',toggleRef);
 document.getElementById('promptDetailOverlay').addEventListener('click',function(e){if(e.target!==this)return;closePromptDetail(false);focusPromptOrigin()});
-document.addEventListener('keydown',function(e){if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;switch(e.key){case'r':case'R':toggleRef();return;case'/':e.preventDefault();document.getElementById('search').focus();return;case'Escape':if(document.getElementById('promptDetailOverlay').classList.contains('open')){closePromptDetail();return}if(document.getElementById('refSidebar').classList.contains('open')){toggleRef();return}if(document.getElementById('search').value){clearSearch();return}if(activeType){activeType=null;renderTypes();render();return}if(activeSection){activeSection=null;renderSections();renderTypes();render();return}if(activeCat!=='all'){activeCat='all';syncLibraryTabs();renderTypes();render();return}return;default:return}document.querySelectorAll('.cat-tab').forEach(function(b){b.classList.remove('active');if(b.dataset.cat===activeCat)b.classList.add('active')});renderTypes();render()});
+function isEditableTarget(target){if(!target)return false;var tag=String(target.tagName||'').toUpperCase();if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return true;if(target.isContentEditable)return true;if(target.closest&&target.closest('[contenteditable="true"]'))return true;if(target.closest&&target.closest('[role="dialog"]'))return true;return false}
+document.addEventListener('keydown',function(e){if(e.defaultPrevented||e.altKey||e.metaKey||e.ctrlKey)return;if(isEditableTarget(e.target))return;var key=e.key;if(key==='Enter'&&selectedPromptId&&isActivePrompt(selectedPromptId)){var detailOpen=document.getElementById('promptDetailOverlay')&&document.getElementById('promptDetailOverlay').classList.contains('open');var targetIsButton=e.target&&e.target.tagName==='BUTTON';if(targetIsButton&&e.target.closest&&e.target.closest('.prompt-card'))return;e.preventDefault();e.stopPropagation();openSelectedPrompt();return}if((key==='y'||key==='Y')&&selectedPromptId&&isActivePrompt(selectedPromptId)){e.preventDefault();e.stopPropagation();copySelectedPrompt();return}if(key==='ArrowDown'||key==='ArrowUp'||key==='Home'||key==='End'){var grid=document.getElementById('grid');var activeEl=document.activeElement;var gridContainsActive=grid&&activeEl&&(grid.contains(activeEl)||activeEl===grid||activeEl.closest&&activeEl.closest('[data-prompt-id]'));var hasSelection=selectedPromptId&&isActivePrompt(selectedPromptId);if(gridContainsActive||hasSelection||activeEl&&activeEl.getAttribute&&activeEl.getAttribute('role')==='option'){if(key==='ArrowDown'){e.preventDefault();e.stopPropagation();navigatePromptSelection(1);return}if(key==='ArrowUp'){e.preventDefault();e.stopPropagation();navigatePromptSelection(-1);return}if(key==='Home'){e.preventDefault();e.stopPropagation();navigatePromptSelection('home');return}if(key==='End'){e.preventDefault();e.stopPropagation();navigatePromptSelection('end');return}}}switch(e.key){case'r':case'R':toggleRef();return;case'/':e.preventDefault();document.getElementById('search').focus();return;case'Escape':if(document.getElementById('promptDetailOverlay').classList.contains('open')){closePromptDetail();return}if(document.getElementById('refSidebar').classList.contains('open')){toggleRef();return}if(document.getElementById('search').value){clearSearch();return}if(selectedPromptId){clearPromptSelection();showToast('Selection cleared');return}if(activeType){activeType=null;renderTypes();render();return}if(activeSection){activeSection=null;renderSections();renderTypes();render();return}if(activeCat!=='all'){activeCat='all';syncLibraryTabs();renderTypes();render();return}return;default:return}document.querySelectorAll('.cat-tab').forEach(function(b){b.classList.remove('active');if(b.dataset.cat===activeCat)b.classList.add('active')});renderTypes();render()});
 
-(function buildRef(){var el=document.getElementById('refContent');var html='';if(REF.gnhfWorkflow){html+='<div class="ref-section"><h3>GNHF Workflow</h3>';REF.gnhfWorkflow.forEach(function(w){var pid=w.prompt||'';html+='<div class="ref-item'+(pid?' data-prompt="'+pid+'"':'')+'"><span class="label">'+pid+'</span> '+(w.useCase||w.moment||'')+'</div>'});html+='</div>'}if(REF.nightShiftRunbook){html+='<div class="ref-section"><h3>Night Shift Runbook</h3>';REF.nightShiftRunbook.forEach(function(r){if(r.scenario==='Scenario')return;html+='<div class="ref-item"><span class="label">'+r.scenario+'</span> '+r.purpose+'</div>'});html+='</div>'}if(REF.variables){html+='<div class="ref-section"><h3>Variables</h3>';REF.variables.forEach(function(v){html+='<div class="ref-item"><span class="label">'+(v.variable||'')+'</span> '+(v.meaning||'')+'</div>'});html+='</div>'}if(REF.promptSequence){html+='<div class="ref-section"><h3>Prompt Sequence</h3>';REF.promptSequence.forEach(function(s){html+='<div class="ref-item" data-prompt="'+s.promptId+'"><span class="label">'+s.seq+'</span> '+s.promptId+': '+s.useItFor+'</div>'});html+='</div>'}el.innerHTML=html;el.querySelectorAll('.ref-item[data-prompt]').forEach(function(item){item.addEventListener('click',function(){var pid=item.getAttribute('data-prompt');if(!pid)return;closeRef();setTimeout(function(){showPromptDetail(pid)},300)})})})();
+(function buildRef(){var el=document.getElementById('refContent');var html='';if(REF.gnhfWorkflow){html+='<div class="ref-section"><h3>GNHF Workflow</h3>';REF.gnhfWorkflow.forEach(function(w){var pid=w.prompt||'';html+='<div class="ref-item'+(pid?' data-prompt="'+pid+'"':'')+'"><span class="label">'+pid+'</span> '+(w.useCase||w.moment||'')+'</div>'});html+='</div>'}if(REF.nightShiftRunbook){html+='<div class="ref-section"><h3>Night Shift Runbook</h3>';REF.nightShiftRunbook.forEach(function(r){if(r.scenario==='Scenario')return;html+='<div class="ref-item"><span class="label">'+r.scenario+'</span> '+r.purpose+'</div>'});html+='</div>'}if(REF.variables){html+='<div class="ref-section"><h3>Variables</h3>';REF.variables.forEach(function(v){html+='<div class="ref-item"><span class="label">'+(v.variable||'')+'</span> '+(v.meaning||'')+'</div>'});html+='</div>'}if(REF.promptSequence){html+='<div class="ref-section"><h3>Prompt Sequence</h3>';REF.promptSequence.forEach(function(s){html+='<div class="ref-item" data-prompt="'+s.promptId+'"><span class="label">'+s.seq+'</span> '+s.promptId+': '+s.useItFor+'</div>'});html+='</div>'}el.innerHTML=html;el.querySelectorAll('.ref-item[data-prompt]').forEach(function(item){item.addEventListener('click',function(){var pid=item.getAttribute('data-prompt');if(!pid)return;closeRef();setTimeout(function(){try{if(typeof selectPrompt==='function'&&isActivePrompt(pid))selectPrompt(pid,'pointer');else if(typeof revealPromptShortcutTarget==='function')revealPromptShortcutTarget(pid);}catch(e){}showPromptDetail(pid)},300)})})})();
 
 ensurePageNavigation();
 ensureMobileSupport();
@@ -1203,7 +1264,14 @@ window.showCopyConfirmation=function(id){
 
 window.copyPrompt=function(id){
   var p=PROMPTS.find(function(x){return x.id===id});
-  if(p&&p.copyContent)copyToClipboard(p.copyContent,function(){showCopyConfirmation(id)})
+  if(p&&p.copyContent)copyToClipboard(p.copyContent,function(){
+    showCopyConfirmation(id);
+    try{
+      var selEl=document.querySelector('[data-prompt-id="'+String(id).replace(/"/g,'')+'"]');
+      if(selEl){selEl.setAttribute('data-copy-state','success');selEl.classList.add('is-copied');setTimeout(function(){selEl.setAttribute('data-copy-state','idle');selEl.classList.remove('is-copied')},900)}
+      if(typeof announceCopyStatus==='function')announceCopyStatus(String(id)+' copied to clipboard.');
+    }catch(e){}
+  })
 };
 
 function clearTransientPromptFilters(){
@@ -1437,6 +1505,9 @@ var PROMPT_KIT_SHORTCUTS=[
   {key:'F',label:'Show / hide filters'},
   {key:'[',label:'Hide filters'},
   {key:']',label:'Show filters'},
+  {key:'Enter',label:'Open selected prompt'},
+  {key:'Y',label:'Copy selected prompt'},
+  {key:'↑/↓',label:'Select next/previous prompt'},
   {key:'Home',label:'Scroll to top'},
   {key:'End',label:'Scroll to bottom'},
   {key:'Esc',label:'Close / clear active surface'}
@@ -1802,6 +1873,7 @@ function revealPromptShortcutTarget(promptId,behavior){
   document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__all__')});
   renderTypes();
   render();
+  try{if(typeof selectPrompt==='function')selectPrompt(promptId,'keyboard')}catch(e){}
   return centerRenderedPromptCard(promptId,behavior||hotkeyScrollBehavior())
 }
 
@@ -1809,6 +1881,7 @@ function activatePromptShortcutTarget(promptId){
   var prompt=PROMPTS.find(function(item){return item.id===promptId});
   if(!prompt)return false;
   if(!revealPromptShortcutTarget(promptId,'instant')){showToast(promptId+' could not be revealed');return false}
+  try{if(typeof selectPrompt==='function')selectPrompt(promptId,'keyboard')}catch(e){}
   copyPrompt(promptId);
   return true
 }
@@ -2008,8 +2081,8 @@ function installCompactBrowsingHotkeys(){
     if(key==='f'){e.preventDefault();e.stopImmediatePropagation();toggleCompactFilters();return}
     if(key==='['){e.preventDefault();e.stopImmediatePropagation();hideCompactFilters();return}
     if(key===']'){e.preventDefault();e.stopImmediatePropagation();showCompactFilters();return}
-    if(key==='home'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('top');return}
-    if(key==='end'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('bottom');return}
+    if(key==='home'){var gridH=document.getElementById('grid');var activeElH=document.activeElement;if(gridH&&activeElH&&(gridH.contains(activeElH)||activeElH.getAttribute&&activeElH.getAttribute('role')==='option'))return;e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('top');return}
+    if(key==='end'){var gridE=document.getElementById('grid');var activeElE=document.activeElement;if(gridE&&activeElE&&(gridE.contains(activeElE)||activeElE.getAttribute&&activeElE.getAttribute('role')==='option'))return;e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('bottom');return}
     handleConfiguredPromptShortcutKey(e,key)
   },true)
 }
@@ -2077,14 +2150,27 @@ window.appendPromptCard=function(grid,p){
   var safeId=escapePromptHtml(p.id),safeName=escapePromptHtml(p.name),safeType=escapePromptHtml(p.type),safeColor=escapePromptHtml(p.color),safeUseWhen=escapePromptHtml(p.useWhen),safeSprintRole=escapePromptHtml(p.sprintRole),safeProofGate=escapePromptHtml(p.proofGate);
   var card=document.createElement('div');
   card.className='prompt-card'+(isGnhf?' gnhf':'');
-  card.tabIndex=0;
-  card.setAttribute('role','group');
   card.setAttribute('data-prompt-id',p.id);
-  card.setAttribute('aria-label',p.id+' '+p.name+'. Click or tap to copy. Double-click or press Enter to expand. Touch users may use Open.');
+  card.setAttribute('data-selected','false');
+  card.setAttribute('data-open','false');
+  card.setAttribute('data-copy-state','idle');
+  card.id='prompt-option-'+p.id;
+  var selId=typeof selectedPromptId!=='undefined'?selectedPromptId:null;
+  var rovId=typeof rovingPromptId!=='undefined'?rovingPromptId:null;
+  var openId=typeof openPromptId!=='undefined'?openPromptId:null;
+  var isSelected=selId&&String(selId).toUpperCase()===String(p.id).toUpperCase();
+  var isRoving=rovId&&String(rovId).toUpperCase()===String(p.id).toUpperCase();
+  var isOpen=openId&&String(openId).toUpperCase()===String(p.id).toUpperCase();
+  if(isSelected)card.classList.add('is-selected');
+  if(isOpen)card.classList.add('is-open');
+  card.tabIndex=isRoving?0:-1;
+  card.setAttribute('role','option');
+  card.setAttribute('aria-selected',String(isSelected));
+  card.setAttribute('aria-label',p.id+' '+p.name+'. Click or tap to select. Single-click selects and copies. Double-click or press Enter to inspect. Press Y to copy selected prompt. Touch users may use Open.');
   card.innerHTML='<div class="glow-bar" style="background:'+hex+'"></div><div class="prompt-header"><span class="prompt-id">'+safeId+'</span>'+(isGnhf?'<span class="gnhf-badge">☾ GNHF</span>':'')+'<span class="prompt-name">'+safeName+'</span></div><div class="prompt-type">'+safeType+' · '+safeColor+'</div><div class="prompt-desc">'+safeUseWhen+'</div><div class="prompt-meta"><span class="prompt-badge">'+safeSprintRole+'</span><span class="prompt-badge">'+safeProofGate+'</span></div>';
-  card.onclick=function(){cancelPromptCardCopy(card);card._copyTimer=setTimeout(function(){copyPrompt(p.id);card._copyTimer=null},300)};
-  card.ondblclick=function(e){cancelPromptCardCopy(card);e.preventDefault();showPromptDetail(p.id,card)};
-  card.onkeydown=function(e){if(e.target!==card)return;if(e.key==='Enter'){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();showPromptDetail(p.id,card)}else if(e.key===' '){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();copyPrompt(p.id)}};
+  card.onclick=function(e){if(e.target.closest&&e.target.closest('button'))return;try{if(typeof selectPrompt==='function')selectPrompt(p.id,'pointer')}catch(err){}cancelPromptCardCopy(card);card._copyTimer=setTimeout(function(){copyPrompt(p.id);card._copyTimer=null},160)};
+  card.ondblclick=function(e){cancelPromptCardCopy(card);e.preventDefault();try{if(typeof selectPrompt==='function')selectPrompt(p.id,'pointer')}catch(err){}showPromptDetail(p.id,card)};
+  card.onkeydown=function(e){if(e.target!==card)return;if(e.key==='Enter'){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();try{if(typeof selectPrompt==='function'&&(!selId||String(selId).toUpperCase()!==String(p.id).toUpperCase()))selectPrompt(p.id,'keyboard')}catch(err){}showPromptDetail(p.id,card)}else if(e.key===' '){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();try{if(typeof selectPrompt==='function')selectPrompt(p.id,'keyboard')}catch(err){}copyPrompt(p.id)}else if(e.key==='ArrowDown'){e.preventDefault();e.stopPropagation();try{if(typeof navigatePromptSelection==='function')navigatePromptSelection(1)}catch(err){}}else if(e.key==='ArrowUp'){e.preventDefault();e.stopPropagation();try{if(typeof navigatePromptSelection==='function')navigatePromptSelection(-1)}catch(err){}}else if(e.key==='Home'){e.preventDefault();e.stopPropagation();try{if(typeof navigatePromptSelection==='function')navigatePromptSelection('home')}catch(err){}}else if(e.key==='End'){e.preventDefault();e.stopPropagation();try{if(typeof navigatePromptSelection==='function')navigatePromptSelection('end')}catch(err){}}};
 
   var actions=document.createElement('div');
   actions.className='prompt-card-actions';
@@ -2096,21 +2182,23 @@ window.appendPromptCard=function(grid,p){
   favBtn.setAttribute('aria-label',(isFavoritePrompt(p.id)?'Remove ':'Add ')+p.id+(isFavoritePrompt(p.id)?' from Favorites':' to Favorites'));
   favBtn.setAttribute('aria-pressed',isFavoritePrompt(p.id)?'true':'false');
   favBtn.title=isFavoritePrompt(p.id)?'Remove from Favorites':'Save to Favorites';
-  favBtn.onclick=function(e){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();toggleFavoritePromptAndRefreshShortcut(p.id)};
+  favBtn.onclick=function(e){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();try{if(typeof selectPrompt==='function')selectPrompt(p.id,'pointer')}catch(err){}toggleFavoritePromptAndRefreshShortcut(p.id)};
   actions.appendChild(favBtn);
 
   var openBtn=document.createElement('button');
   openBtn.className='prompt-open-btn';
   openBtn.textContent='Open';
   openBtn.setAttribute('aria-label','Open '+p.id+' prompt detail');
-  openBtn.onclick=function(e){cancelPromptCardCopy(card);e.stopPropagation();showPromptDetail(p.id,card)};
+  openBtn.setAttribute('aria-expanded',String(isOpen));
+  if(isOpen)openBtn.setAttribute('aria-controls','prompt-detail-'+p.id);
+  openBtn.onclick=function(e){cancelPromptCardCopy(card);e.stopPropagation();try{if(typeof selectPrompt==='function')selectPrompt(p.id,'pointer')}catch(err){}showPromptDetail(p.id,card)};
   actions.appendChild(openBtn);
 
   var copyBtn=document.createElement('button');
   copyBtn.className='prompt-copy-btn';
   copyBtn.textContent='Copy';
   copyBtn.setAttribute('aria-label','Copy '+p.id+' prompt');
-  copyBtn.onclick=function(e){e.stopPropagation();copyPrompt(p.id);copyBtn.classList.add('copied');copyBtn.textContent='Copied!';setTimeout(function(){copyBtn.classList.remove('copied');copyBtn.textContent='Copy'},1500)};
+  copyBtn.onclick=function(e){e.stopPropagation();try{if(typeof selectPrompt==='function')selectPrompt(p.id,'pointer')}catch(err){}copyPrompt(p.id);copyBtn.classList.add('copied');copyBtn.textContent='Copied!';setTimeout(function(){copyBtn.classList.remove('copied');copyBtn.textContent='Copy'},1500)};
   actions.appendChild(copyBtn);
 
   card.appendChild(actions);

@@ -128,7 +128,14 @@ window.showCopyConfirmation=function(id){
 
 window.copyPrompt=function(id){
   var p=PROMPTS.find(function(x){return x.id===id});
-  if(p&&p.copyContent)copyToClipboard(p.copyContent,function(){showCopyConfirmation(id)})
+  if(p&&p.copyContent)copyToClipboard(p.copyContent,function(){
+    showCopyConfirmation(id);
+    try{
+      var selEl=document.querySelector('[data-prompt-id="'+String(id).replace(/"/g,'')+'"]');
+      if(selEl){selEl.setAttribute('data-copy-state','success');selEl.classList.add('is-copied');setTimeout(function(){selEl.setAttribute('data-copy-state','idle');selEl.classList.remove('is-copied')},900)}
+      if(typeof announceCopyStatus==='function')announceCopyStatus(String(id)+' copied to clipboard.');
+    }catch(e){}
+  })
 };
 
 function clearTransientPromptFilters(){
@@ -362,6 +369,9 @@ var PROMPT_KIT_SHORTCUTS=[
   {key:'F',label:'Show / hide filters'},
   {key:'[',label:'Hide filters'},
   {key:']',label:'Show filters'},
+  {key:'Enter',label:'Open selected prompt'},
+  {key:'Y',label:'Copy selected prompt'},
+  {key:'↑/↓',label:'Select next/previous prompt'},
   {key:'Home',label:'Scroll to top'},
   {key:'End',label:'Scroll to bottom'},
   {key:'Esc',label:'Close / clear active surface'}
@@ -727,6 +737,7 @@ function revealPromptShortcutTarget(promptId,behavior){
   document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__all__')});
   renderTypes();
   render();
+  try{if(typeof selectPrompt==='function')selectPrompt(promptId,'keyboard')}catch(e){}
   return centerRenderedPromptCard(promptId,behavior||hotkeyScrollBehavior())
 }
 
@@ -734,6 +745,7 @@ function activatePromptShortcutTarget(promptId){
   var prompt=PROMPTS.find(function(item){return item.id===promptId});
   if(!prompt)return false;
   if(!revealPromptShortcutTarget(promptId,'instant')){showToast(promptId+' could not be revealed');return false}
+  try{if(typeof selectPrompt==='function')selectPrompt(promptId,'keyboard')}catch(e){}
   copyPrompt(promptId);
   return true
 }
@@ -933,8 +945,8 @@ function installCompactBrowsingHotkeys(){
     if(key==='f'){e.preventDefault();e.stopImmediatePropagation();toggleCompactFilters();return}
     if(key==='['){e.preventDefault();e.stopImmediatePropagation();hideCompactFilters();return}
     if(key===']'){e.preventDefault();e.stopImmediatePropagation();showCompactFilters();return}
-    if(key==='home'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('top');return}
-    if(key==='end'){e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('bottom');return}
+    if(key==='home'){var gridH=document.getElementById('grid');var activeElH=document.activeElement;if(gridH&&activeElH&&(gridH.contains(activeElH)||activeElH.getAttribute&&activeElH.getAttribute('role')==='option'))return;e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('top');return}
+    if(key==='end'){var gridE=document.getElementById('grid');var activeElE=document.activeElement;if(gridE&&activeElE&&(gridE.contains(activeElE)||activeElE.getAttribute&&activeElE.getAttribute('role')==='option'))return;e.preventDefault();e.stopImmediatePropagation();scrollPromptKitTo('bottom');return}
     handleConfiguredPromptShortcutKey(e,key)
   },true)
 }
@@ -1002,14 +1014,27 @@ window.appendPromptCard=function(grid,p){
   var safeId=escapePromptHtml(p.id),safeName=escapePromptHtml(p.name),safeType=escapePromptHtml(p.type),safeColor=escapePromptHtml(p.color),safeUseWhen=escapePromptHtml(p.useWhen),safeSprintRole=escapePromptHtml(p.sprintRole),safeProofGate=escapePromptHtml(p.proofGate);
   var card=document.createElement('div');
   card.className='prompt-card'+(isGnhf?' gnhf':'');
-  card.tabIndex=0;
-  card.setAttribute('role','group');
   card.setAttribute('data-prompt-id',p.id);
-  card.setAttribute('aria-label',p.id+' '+p.name+'. Click or tap to copy. Double-click or press Enter to expand. Touch users may use Open.');
+  card.setAttribute('data-selected','false');
+  card.setAttribute('data-open','false');
+  card.setAttribute('data-copy-state','idle');
+  card.id='prompt-option-'+p.id;
+  var selId=typeof selectedPromptId!=='undefined'?selectedPromptId:null;
+  var rovId=typeof rovingPromptId!=='undefined'?rovingPromptId:null;
+  var openId=typeof openPromptId!=='undefined'?openPromptId:null;
+  var isSelected=selId&&String(selId).toUpperCase()===String(p.id).toUpperCase();
+  var isRoving=rovId&&String(rovId).toUpperCase()===String(p.id).toUpperCase();
+  var isOpen=openId&&String(openId).toUpperCase()===String(p.id).toUpperCase();
+  if(isSelected)card.classList.add('is-selected');
+  if(isOpen)card.classList.add('is-open');
+  card.tabIndex=isRoving?0:-1;
+  card.setAttribute('role','option');
+  card.setAttribute('aria-selected',String(isSelected));
+  card.setAttribute('aria-label',p.id+' '+p.name+'. Click or tap to select. Single-click selects and copies. Double-click or press Enter to inspect. Press Y to copy selected prompt. Touch users may use Open.');
   card.innerHTML='<div class="glow-bar" style="background:'+hex+'"></div><div class="prompt-header"><span class="prompt-id">'+safeId+'</span>'+(isGnhf?'<span class="gnhf-badge">☾ GNHF</span>':'')+'<span class="prompt-name">'+safeName+'</span></div><div class="prompt-type">'+safeType+' · '+safeColor+'</div><div class="prompt-desc">'+safeUseWhen+'</div><div class="prompt-meta"><span class="prompt-badge">'+safeSprintRole+'</span><span class="prompt-badge">'+safeProofGate+'</span></div>';
-  card.onclick=function(){cancelPromptCardCopy(card);card._copyTimer=setTimeout(function(){copyPrompt(p.id);card._copyTimer=null},300)};
-  card.ondblclick=function(e){cancelPromptCardCopy(card);e.preventDefault();showPromptDetail(p.id,card)};
-  card.onkeydown=function(e){if(e.target!==card)return;if(e.key==='Enter'){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();showPromptDetail(p.id,card)}else if(e.key===' '){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();copyPrompt(p.id)}};
+  card.onclick=function(e){if(e.target.closest&&e.target.closest('button'))return;try{if(typeof selectPrompt==='function')selectPrompt(p.id,'pointer')}catch(err){}cancelPromptCardCopy(card);card._copyTimer=setTimeout(function(){copyPrompt(p.id);card._copyTimer=null},160)};
+  card.ondblclick=function(e){cancelPromptCardCopy(card);e.preventDefault();try{if(typeof selectPrompt==='function')selectPrompt(p.id,'pointer')}catch(err){}showPromptDetail(p.id,card)};
+  card.onkeydown=function(e){if(e.target!==card)return;if(e.key==='Enter'){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();try{if(typeof selectPrompt==='function'&&(!selId||String(selId).toUpperCase()!==String(p.id).toUpperCase()))selectPrompt(p.id,'keyboard')}catch(err){}showPromptDetail(p.id,card)}else if(e.key===' '){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();try{if(typeof selectPrompt==='function')selectPrompt(p.id,'keyboard')}catch(err){}copyPrompt(p.id)}else if(e.key==='ArrowDown'){e.preventDefault();e.stopPropagation();try{if(typeof navigatePromptSelection==='function')navigatePromptSelection(1)}catch(err){}}else if(e.key==='ArrowUp'){e.preventDefault();e.stopPropagation();try{if(typeof navigatePromptSelection==='function')navigatePromptSelection(-1)}catch(err){}}else if(e.key==='Home'){e.preventDefault();e.stopPropagation();try{if(typeof navigatePromptSelection==='function')navigatePromptSelection('home')}catch(err){}}else if(e.key==='End'){e.preventDefault();e.stopPropagation();try{if(typeof navigatePromptSelection==='function')navigatePromptSelection('end')}catch(err){}}};
 
   var actions=document.createElement('div');
   actions.className='prompt-card-actions';
@@ -1021,21 +1046,23 @@ window.appendPromptCard=function(grid,p){
   favBtn.setAttribute('aria-label',(isFavoritePrompt(p.id)?'Remove ':'Add ')+p.id+(isFavoritePrompt(p.id)?' from Favorites':' to Favorites'));
   favBtn.setAttribute('aria-pressed',isFavoritePrompt(p.id)?'true':'false');
   favBtn.title=isFavoritePrompt(p.id)?'Remove from Favorites':'Save to Favorites';
-  favBtn.onclick=function(e){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();toggleFavoritePromptAndRefreshShortcut(p.id)};
+  favBtn.onclick=function(e){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();try{if(typeof selectPrompt==='function')selectPrompt(p.id,'pointer')}catch(err){}toggleFavoritePromptAndRefreshShortcut(p.id)};
   actions.appendChild(favBtn);
 
   var openBtn=document.createElement('button');
   openBtn.className='prompt-open-btn';
   openBtn.textContent='Open';
   openBtn.setAttribute('aria-label','Open '+p.id+' prompt detail');
-  openBtn.onclick=function(e){cancelPromptCardCopy(card);e.stopPropagation();showPromptDetail(p.id,card)};
+  openBtn.setAttribute('aria-expanded',String(isOpen));
+  if(isOpen)openBtn.setAttribute('aria-controls','prompt-detail-'+p.id);
+  openBtn.onclick=function(e){cancelPromptCardCopy(card);e.stopPropagation();try{if(typeof selectPrompt==='function')selectPrompt(p.id,'pointer')}catch(err){}showPromptDetail(p.id,card)};
   actions.appendChild(openBtn);
 
   var copyBtn=document.createElement('button');
   copyBtn.className='prompt-copy-btn';
   copyBtn.textContent='Copy';
   copyBtn.setAttribute('aria-label','Copy '+p.id+' prompt');
-  copyBtn.onclick=function(e){e.stopPropagation();copyPrompt(p.id);copyBtn.classList.add('copied');copyBtn.textContent='Copied!';setTimeout(function(){copyBtn.classList.remove('copied');copyBtn.textContent='Copy'},1500)};
+  copyBtn.onclick=function(e){e.stopPropagation();try{if(typeof selectPrompt==='function')selectPrompt(p.id,'pointer')}catch(err){}copyPrompt(p.id);copyBtn.classList.add('copied');copyBtn.textContent='Copied!';setTimeout(function(){copyBtn.classList.remove('copied');copyBtn.textContent='Copy'},1500)};
   actions.appendChild(copyBtn);
 
   card.appendChild(actions);

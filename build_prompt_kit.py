@@ -364,6 +364,15 @@ body{font-family:'Inter','SF Pro Display',-apple-system,BlinkMacSystemFont,'Sego
 .prompt-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;transition:all 0.3s;position:relative;overflow:hidden}
 .prompt-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.4),0 0 20px rgba(59,130,246,0.15)}
 .prompt-card:hover .glow-bar{height:4px;opacity:1;animation:glow-pulse-active 1s ease-in-out infinite}
+.prompt-card[data-selected="true"]{border-color:var(--accent)!important;background:linear-gradient(145deg,rgba(59,130,246,0.13),rgba(59,130,246,0.05))!important;box-shadow:0 0 0 1px var(--accent),0 0 18px rgba(59,130,246,0.22),0 6px 22px rgba(0,0,0,0.28)!important;transform:translateY(-1px)}
+.prompt-card.is-selected{border-color:var(--accent)!important}
+.prompt-card[data-selected="true"] .glow-bar{opacity:1!important;height:4px!important;box-shadow:0 0 10px currentColor,0 0 18px currentColor!important}
+.prompt-card[data-selected="true"][data-copy-state="success"]{border-color:var(--success)!important;box-shadow:0 0 0 1px var(--success),0 0 20px rgba(34,197,94,0.28)!important}
+.prompt-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#grid[role="listbox"]:focus{outline:none}
+#grid[role="listbox"] .prompt-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.prompt-card.is-selected:focus-visible{outline-color:var(--accent)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @keyframes glow-pulse-active{0%,100%{opacity:0.7;filter:brightness(1)}50%{opacity:1;filter:brightness(1.5)}}
 .prompt-card .glow-bar{position:absolute;top:0;left:0;right:0;height:3px;opacity:0.8;animation:glow-pulse 2s ease-in-out infinite;box-shadow:0 0 8px currentColor,0 0 16px currentColor}
 @keyframes glow-pulse{0%,100%{opacity:0.5;filter:brightness(0.8)}50%{opacity:1;filter:brightness(1.3)}}
