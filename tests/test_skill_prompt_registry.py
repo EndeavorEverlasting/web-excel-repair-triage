@@ -79,8 +79,31 @@ class SkillPromptRegistryTests(unittest.TestCase):
             "sufficient to begin repository exploration and execution",
             "cannot block repository/provider inspection",
             "do not make any one recovery surface a prerequisite for another",
+            "perform multiple targeted retrievals rather than one broad query",
+            "Previous chat resolved: <name and whether retrieval succeeded, including recovery mode>",
+            "Recovery ledger: <material decisions, superseded state, proof floor, unresolved unknowns>",
+            "Remaining gaps: <only still-open items>",
         ):
             self.assertIn(phrase, content)
+
+    def test_p02_declares_mutation_authority_before_repository_changes(self) -> None:
+        prompt = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P02"]
+        content = prompt["copyContent"]
+        for phrase in (
+            "explicit mutation authority",
+            "tracked-file",
+            "commit",
+            "push",
+            "PR creation/update",
+            "merge action",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn(
+            "mutation authority is explicit before tracked-file, commit, push, PR, or merge actions",
+            prompt["proofGate"],
+        )
 
     def test_p02_segmented_transcript_reduces_later_superseding_decisions(self) -> None:
         content = {
