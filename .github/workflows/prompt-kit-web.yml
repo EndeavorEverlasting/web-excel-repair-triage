@@ -19,6 +19,7 @@ on:
       - 'harness/validators.v1.json'
       - 'harness/manifest.v1.json'
       - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/prompt_registry_ops.py'
       - 'scripts/serve_prompt_kit_portable.py'
       - 'scripts/validate_prompt_kit_portability.py'
       - 'scripts/validate_prompt_kit_ontology_evidence.py'
@@ -42,6 +43,7 @@ on:
       - 'harness/evals/prompt-finder-classifier.v1.json'
       - 'harness/evals/fixtures/prompt-finder-classifier-cases.v1.json'
       - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/prompt_registry_ops.py'
       - 'scripts/serve_prompt_kit_portable.py'
       - 'scripts/validate_prompt_kit_portability.py'
       - 'scripts/validate_prompt_kit_ontology_evidence.py'
@@ -74,9 +76,10 @@ jobs:
         run: |
           python scripts/validate_prompt_kit_feedback_afk_routing.py --summary
           python -m unittest tests.test_prompt_kit_feedback_afk_routing tests.test_prompt_kit_feedback_production -v
-      - name: Validate tutorial route coverage and wiring debt
+      - name: Validate complete tutorial wiring
         run: |
           python scripts/prompt_kit_tutorial_coverage.py --summary
+          python scripts/prompt_registry_ops.py validate
           python -m unittest tests.test_prompt_kit_tutorial_coverage -v
       - name: Evaluate Prompt Finder classifier quality
         id: classifier-eval
