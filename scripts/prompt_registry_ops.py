@@ -14,6 +14,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts import build_prompt_kit_registry as registry  # noqa: E402
+from scripts import prompt_kit_tutorial_coverage as tutorial_coverage  # noqa: E402
 from scripts import prompt_registry_external_prior_art as prior_art  # noqa: E402
 
 PROMPT_ID_RE = re.compile(r"^P(\d+)$")
@@ -90,6 +91,52 @@ def _distinct_values(prompts: list[dict[str, Any]], field: str) -> list[str]:
     return sorted(values)
 
 
+def _require_complete_tutorial_coverage() -> dict[str, Any]:
+    report = tutorial_coverage.audit()
+    if not report["ready"]:
+        raise SystemExit(
+            "Prompt tutorial coverage is not ready: "
+            f"route_errors={report['route_errors']} "
+            f"unknown_wired_prompt_ids={report['unknown_wired_prompt_ids']}"
+        )
+    if report["needs_wiring_count"] != 0:
+        raise SystemExit(
+            "Prompt tutorial coverage contains unresolved wiring debt: "
+            + ", ".join(report["needs_wiring_prompt_ids"])
+        )
+    if report["wired_count"] != report["prompt_count"]:
+        raise SystemExit(
+            "Prompt tutorial coverage is incomplete: "
+            f"wired={report['wired_count']} prompts={report['prompt_count']}"
+        )
+    return report
+
+
+def _tutorial_coverage_receipt(
+    prompt_id: str, report: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    coverage_report = report or _require_complete_tutorial_coverage()
+    wanted = str(prompt_id).strip().upper()
+    route = next(
+        (item for item in coverage_report["routes"] if item["prompt_id"] == wanted),
+        None,
+    )
+    if route is None:
+        raise SystemExit(f"Prompt has no tutorial coverage route: {wanted}")
+    if route["needs_wiring"]:
+        raise SystemExit(f"Prompt still requires tutorial wiring: {wanted}")
+    return {
+        "prompt_id": wanted,
+        "coverage_ready": True,
+        "wiring_status": route["wiring_status"],
+        "wiring_source": route["wiring_source"],
+        "needs_wiring": False,
+        "tutorial_route": list(route["tutorial_route"]),
+        "tutorial_document": route["tutorial_document"],
+        "tutorial_anchor": route["tutorial_anchor"],
+    }
+
+
 def inspect_state() -> dict[str, Any]:
     next_id, next_seq = _next_identity()
     registries: list[dict[str, Any]] = []
@@ -105,13 +152,23 @@ def inspect_state() -> dict[str, Any]:
                 "categories": _distinct_values(prompts, "category"),
             }
         )
+    tutorial_report = _require_complete_tutorial_coverage()
     return {
         "next_id": next_id,
         "next_seq": next_seq,
         "registries": registries,
         "required_draft_fields": sorted(REQUIRED_DRAFT_FIELDS),
         "auto_fields": sorted(AUTO_FIELDS),
-        "classification": registry.prompt_classification.classification_summary(registry.load_prompt_kit_registry()),
+        "tutorial_coverage": {
+            "policy_id": tutorial_report["policy_id"],
+            "ready": tutorial_report["ready"],
+            "wired_count": tutorial_report["wired_count"],
+            "prompt_count": tutorial_report["prompt_count"],
+            "needs_wiring_count": tutorial_report["needs_wiring_count"],
+        },
+        "classification": registry.prompt_classification.classification_summary(
+            registry.load_prompt_kit_registry()
+        ),
     }
 
 
@@ -263,7 +320,6 @@ def _validate_site_parity() -> tuple[bool, int]:
     return output.read_text(encoding="utf-8") == expected, len(prompts)
 
 
-
 def review_prior_art(query_text: str) -> dict[str, Any]:
     """Expose the all-registered-source gate before a semantic ADD draft exists."""
     try:
@@ -272,6 +328,7 @@ def review_prior_art(query_text: str) -> dict[str, Any]:
         raise SystemExit(
             f"Prompt pre-authoring external prior-art review failed closed: {exc}"
         ) from exc
+
 
 def add_prompt(
     draft: dict[str, Any], explicit_registry: str | None, dry_run: bool
@@ -286,6 +343,11 @@ def add_prompt(
             f"Prompt ADD external prior-art gate failed before identity allocation: {exc}"
         ) from exc
     record = _build_record(draft, target_payload)
+    preview = tutorial_coverage.coverage_for_prompt(record)
+    if preview["needs_wiring"]:
+        raise SystemExit(
+            f"Prompt ADD would leave tutorial wiring incomplete: {record['id']}"
+        )
     if dry_run:
         return {
             "status": "dry-run",
@@ -293,6 +355,16 @@ def add_prompt(
             "registry_path": str(target_path.relative_to(REPO_ROOT)),
             "record": record,
             "external_prior_art": external_prior_art,
+            "tutorial_coverage": {
+                "prompt_id": record["id"],
+                "coverage_ready": True,
+                "wiring_status": preview["wiring_status"],
+                "wiring_source": preview["wiring_source"],
+                "needs_wiring": False,
+                "tutorial_route": list(preview["tutorial_route"]),
+                "tutorial_document": preview["tutorial_document"],
+                "tutorial_anchor": preview["tutorial_anchor"],
+            },
         }
 
     original_registry = target_path.read_text(encoding="utf-8")
@@ -311,6 +383,8 @@ def add_prompt(
         policy = registry.load_actionability_policy()
         if effective[record["id"]].get("actionabilityPolicy") != policy["policy_id"]:
             raise SystemExit("New prompt did not receive the shared actionability policy")
+        coverage_report = _require_complete_tutorial_coverage()
+        coverage_receipt = _tutorial_coverage_receipt(record["id"], coverage_report)
         registry.build(output)
         parity, prompt_count = _validate_site_parity()
         if not parity:
@@ -335,6 +409,7 @@ def add_prompt(
         "site_parity": True,
         "actionability_policy": registry.load_actionability_policy()["policy_id"],
         "external_prior_art": external_prior_art,
+        "tutorial_coverage": coverage_receipt,
     }
 
 
@@ -344,11 +419,21 @@ def validate_current() -> dict[str, Any]:
         raise SystemExit(
             "Prompt Kit registry is valid but web/prompt-kit/index.html is stale; rebuild it"
         )
+    coverage_report = _require_complete_tutorial_coverage()
     return {
         "status": "valid",
         "prompt_count": prompt_count,
         "site_parity": True,
         "next_id": _next_identity()[0],
+        "tutorial_coverage": {
+            "policy_id": coverage_report["policy_id"],
+            "ready": coverage_report["ready"],
+            "wired_count": coverage_report["wired_count"],
+            "prompt_count": coverage_report["prompt_count"],
+            "classifier_wired_count": coverage_report["classifier_wired_count"],
+            "curated_wired_count": coverage_report["curated_wired_count"],
+            "needs_wiring_count": coverage_report["needs_wiring_count"],
+        },
     }
 
 
@@ -369,12 +454,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     add = sub.add_parser(
         "add",
-        help="Recheck every registered upstream, then add one prompt draft, allocate identity, rebuild, and validate.",
+        help=(
+            "Recheck every registered upstream, prove classifier-backed tutorial wiring, then add "
+            "one prompt draft, allocate identity, rebuild, and validate."
+        ),
     )
     add.add_argument("--input", required=True, help="Draft JSON path, or - for stdin.")
     add.add_argument("--registry", help="Existing registry_id; otherwise resolve from draft profile.")
     add.add_argument("--dry-run", action="store_true", help="Resolve and validate without writing files.")
-    sub.add_parser("validate", help="Validate current registry loading and generated-site parity.")
+    sub.add_parser("validate", help="Validate current registry, tutorial wiring, and generated-site parity.")
     args = parser.parse_args(argv)
 
     if args.command == "inspect":
