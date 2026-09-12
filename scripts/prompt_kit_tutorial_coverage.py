@@ -121,9 +121,9 @@ def coverage_for_prompt(
         raise SystemExit(f"Tutorial coverage requires id/name/type: {prompt}")
 
     section = prompt_classification.require_known_prompt_type(prompt_type)
-    wired = _wired_map(policy).get(prompt_id)
-    status = str(policy["wired_status"] if wired else policy["fallback_status"])
-    anchor = str(wired["tutorial_anchor"] if wired else policy["fallback_anchor"])
+    curated = _wired_map(policy).get(prompt_id)
+    status = str(policy["wired_status"] if curated else policy["fallback_status"])
+    anchor = str(curated["tutorial_anchor"] if curated else policy["fallback_anchor"])
 
     return {
         "prompt_id": prompt_id,
@@ -138,11 +138,12 @@ def coverage_for_prompt(
         "tutorial_document": str(policy["tutorial_document"]),
         "tutorial_anchor": anchor,
         "wiring_status": status,
-        "needs_wiring": wired is None,
-        "wiring_source": "explicit" if wired else "classifier-fallback",
-        "reason": str(wired["reason"]) if wired else (
-            "Classifier route guarantees reachability, but no prompt-specific tutorial path "
-            "has been curated yet."
+        "needs_wiring": False,
+        "wiring_source": "curated" if curated else "classifier",
+        "curated": curated is not None,
+        "reason": str(curated["reason"]) if curated else (
+            "The classifier-derived route is the canonical prompt-specific tutorial path; "
+            "no manual wiring step is required."
         ),
     }
 
@@ -177,8 +178,8 @@ def audit(
             continue
         routes.append(route)
 
-    wired = _wired_map(policy)
-    unknown_wired_ids = sorted(set(wired) - set(prompt_ids))
+    curated = _wired_map(policy)
+    unknown_wired_ids = sorted(set(curated) - set(prompt_ids))
     needs_wiring = sorted(
         (route for route in routes if route["needs_wiring"]),
         key=lambda route: (
@@ -186,12 +187,14 @@ def audit(
             str(route["prompt_id"]),
         ),
     )
-    wired_routes = [route for route in routes if not route["needs_wiring"]]
+    curated_routes = [route for route in routes if route["curated"]]
+    classifier_routes = [route for route in routes if not route["curated"]]
 
     ready = (
         not duplicate_ids
         and not route_errors
         and not unknown_wired_ids
+        and not needs_wiring
         and len(routes) == len(prompt_ids)
     )
     return {
@@ -200,7 +203,9 @@ def audit(
         "tutorial_document": str(policy["tutorial_document"]),
         "prompt_count": len(prompt_ids),
         "route_covered_count": len(routes),
-        "wired_count": len(wired_routes),
+        "wired_count": len(routes),
+        "curated_wired_count": len(curated_routes),
+        "classifier_wired_count": len(classifier_routes),
         "needs_wiring_count": len(needs_wiring),
         "needs_wiring_prompt_ids": [route["prompt_id"] for route in needs_wiring],
         "unknown_wired_prompt_ids": unknown_wired_ids,
@@ -214,7 +219,7 @@ def audit(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Audit classifier-backed tutorial reachability and show prompt-specific wiring debt."
+            "Audit complete classifier-backed tutorial wiring and optional curated teaching paths."
         )
     )
     parser.add_argument(
