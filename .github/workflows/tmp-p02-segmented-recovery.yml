@@ -1,0 +1,221 @@
+name: Temporary P02 segmented recovery executor
+
+on:
+  push:
+    branches:
+      - feat/p02-segmented-transcript-recovery-20260912
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: feat/p02-segmented-transcript-recovery-20260912
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Strengthen P02 and focused regressions
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          prompt_path = Path('registry/prompts/prompt-overrides.v1.json')
+          payload = json.loads(prompt_path.read_text(encoding='utf-8'))
+          p02 = next(item for item in payload['overrides'] if item['id'] == 'P02')
+
+          p02['sprintRole'] = (
+              'Recover previous-chat state through the richest accessible evidence surface, independently refresh current '
+              'repository/provider truth, reconcile superseded context, and execute the highest-value unresolved sprint'
+          )
+          p02['inspectFirst'] = (
+              'Current conversation and operator-supplied handoff/context; available raw or segmented transcript/history '
+              'surfaces; current repository/provider branch, PR, worktree, ledger, recent commits, owning files, validators, '
+              'artifacts, and blockers. No one recovery surface is a prerequisite for inspecting another.'
+          )
+          p02['expectedOutput'] = (
+              'A compact recovery ledger built from the richest available transcript/history/context evidence, independently '
+              'reconciled against current repository/provider truth; actual progress on the first safe unresolved sprint, '
+              'with compact in-flight evidence updates during multi-pass work; tracked changes or exact completion proof; '
+              'validation, commit/push/PR state, proof ceiling, fixed-point reason, and next executable action.'
+          )
+          p02['nextStep'] = (
+              'Keep executing. Harvest raw transcript segments when available; otherwise use targeted semantic retrieval, '
+              'supplied-context bootstrap, and repository/provider reconstruction. Refresh durable repository truth without '
+              'waiting on historical recovery, then continue until the owned gate, bounded fixed point, or exact external blocker.'
+          )
+          p02['proofGate'] = (
+              'Recovery does not depend on one history mechanism: a rich supplied handoff can bootstrap execution even when '
+              'transcript access is unavailable; paginated/segmented history preserves chronology and later superseding '
+              'decisions; unavailable or compacted history falls back to repository/provider reconstruction without a false '
+              'blocker when current truth is sufficient. Recovered claims are reconciled as current, historical, superseded, '
+              'contradicted, or unknown; actual repo/artifact movement plus validation or an exact blocker exists; multi-pass '
+              'work reports at least one concise in-flight evidence update before the final response; and the final report '
+              'states pass count plus fixed-point reason or blocker.'
+          )
+          p02['copyContent'] = '''PREVIOUS CHAT:
+xyz_previous_chat_name
+
+CONTINUE THAT CHAT AS AN ACTIVE IMPLEMENTATION SPRINT. DO NOT MERELY SUMMARIZE IT OR RETURN A PLAN.
+
+Use the named previous conversation as context, but do not make any one recovery surface a prerequisite for another. The current conversation or supplied handoff and the current repository/provider are immediately usable evidence. CONTEXT IS A STARTING MAP, NOT A SEARCH BOUNDARY.
+
+MISSION
+Take the unfinished principles and work from the previous chat and sprint upon them now. Recover prior state through the richest accessible evidence surface, independently refresh durable repository/provider truth, reconcile the two, and execute. A short execution plan is allowed, but planning is subordinate to implementation. Preserve only context that prevents rework.
+
+0. CONCISE PROGRESS LOOP
+- Do not work through multiple meaningful passes silently.
+- After each evidence-changing pass, or roughly every 2-3 tool groups during long execution, emit one compact update and continue.
+- Preferred shape: `CHANGED: ... | PROVED: ... | NEXT: ...`; use `BLOCKED: ...` only for a real blocker.
+- Prefer fragments over filler. Maximum two short sentences. Grammar polish is less important than signal.
+- Do not repeat the plan, narrate polling, or use an update as a stopping point while safe work remains.
+- Before the final response, state pass count and fixed-point reason, or the exact blocker.
+- One trivial pass needs no mid-run update. Multi-pass silent execution fails this prompt.
+
+1. RECOVER THE NAMED CHAT
+- Start from the current conversation plus any operator-supplied handoff, pasted context, transcript excerpt, or prior-chat summary. Treat supplied context as valid bootstrap evidence immediately; do not ask the operator to repeat recoverable information.
+- SEGMENTED TRANSCRIPT MODE: when the environment exposes the named conversation as raw messages, pages, ranges, turns, timestamps, cursors, or other bounded segments, harvest all materially relevant segments in bounded batches. Use a small overlap when a decision may cross a segment boundary. Do not rely on only the first search hit or an earlier summary.
+- For each segment, extract a compact recovery record containing: decisions; implementation performed; open work; operator corrections; proof reached; proof gaps; owned and forbidden scope; repository/branch/PR/SHA/path/artifact identities; blockers; superseded state; proposed next actions; and uncertainties. Tag claims as FACT, OPERATOR INTENT, AGENT PROPOSAL, or UNKNOWN.
+- Reduce the segment records instead of concatenating summaries: normalize identities, deduplicate repetition, preserve chronology, resolve state transitions and later superseding decisions, and retain enough provenance to know which segment supports a material claim. Stop harvesting when the relevant conversation is exhausted or additional batches no longer change the actionable recovered state.
+- SEMANTIC-RETRIEVAL MODE: if raw/paginated transcript access is unavailable but conversation-history, memory, or semantic retrieval exists, perform multiple targeted retrievals rather than one broad query. Query separately for decisions/constraints; unfinished implementation; repository/branch/PR/commit identities; tests/artifacts/proof floors/blockers; operator corrections/repeated failure modes; and next actions/unresolved questions. Merge them into the same recovery ledger.
+- PROVIDED-CONTEXT MODE: a rich pasted handoff or context packet is sufficient to begin repository exploration and execution. History retrieval may deepen or falsify it, but cannot block repository/provider inspection while safe current evidence is available.
+- REPOSITORY RECONSTRUCTION FALLBACK: if historical conversation retrieval is unavailable, incomplete, compacted, or fails, reconstruct the actionable state from the current conversation plus repository/provider truth, including default branch, current head, PRs, commits, workflows/checks, review state, ledger, owning files, validators, artifacts, and recent overlapping work. Loss of historical transcript or tool output is not itself a blocker when current evidence can reconstruct the material state.
+- Ask the operator for the smallest missing input only when a material decision remains unreconstructable after the available context, history mechanisms, and repository/provider evidence have been exhausted. Do not invent prior context.
+
+2. VERIFY THE CURRENT FLOOR
+- Refresh and inspect current repository/provider truth independently of transcript recovery; do not wait for historical retrieval to finish before exploring durable sources.
+- Resolve the current repository and its present main/head, branch, PRs, worktrees, ledger, recent commits, relevant validators, and canonical artifacts.
+- Reconcile recovered claims into CURRENT + CONFIRMED, CURRENT + UNVERIFIED, SUPERSEDED, HISTORICAL, CONTRADICTED, or UNKNOWN. A later decision in the transcript supersedes an earlier one when the evidence shows an actual state transition.
+- Prefer current repository/provider evidence whenever it conflicts with remembered or historical implementation state, while preserving unresolved operator intent that repository evidence cannot answer.
+- Preserve dirty or separately owned work. Use an isolated branch/worktree or equivalent preservation-first lane when needed.
+- Do not revive work that is already merged, superseded, or proven complete merely because the previous chat described it as open.
+
+3. SELECT THE FIRST UNFINISHED EXECUTION SLICE
+- Identify what remains open after the recovery ledger and current-floor reconciliation.
+- Choose the highest-value safe item that is still genuinely unfinished and executable now.
+- State a compact sprint declaration: mission, lane, owned scope, forbidden scope, dependencies, collision risks, expected artifacts, validation, and proof ceiling.
+- Do not fan the work into a multi-chat launch pack unless a real dependency makes immediate implementation unsafe.
+
+4. IMPLEMENT NOW
+- Inspect the owning files and existing repository patterns.
+- Modify useful tracked files or produce the owned artifact.
+- Add or repair tests, validators, registries, workflows, hooks, or docs when they enforce the selected behavior; do not replace application logic with prompt prose.
+- Generate canonical artifacts only through their registered builders or producers.
+- Do not stop at a summary, TODO list, architecture discussion, branch listing, PR status, or plan while safe executable work remains.
+
+5. VALIDATE AND DELIVER
+- Run the focused tests/validators for the changed surface, required build or artifact parity checks, and git diff --check.
+- Run broader registered gates when the repository contract requires them.
+- Commit coherent changes, push normally, and open/update/merge the PR when safe, authorized, and required gates permit.
+- Preserve dependency order and concurrent work; never force-push or destructively clean unrelated state.
+- Do not claim a higher proof level than was actually observed.
+
+FINAL RESPONSE
+Previous chat resolved: <name and whether retrieval succeeded, including recovery mode>
+Repo / branch / PR: <current verified state>
+Recovery ledger: <material decisions, superseded state, proof floor, unresolved unknowns>
+Unfinished work selected: <one bounded execution slice>
+What changed: <actual implementation>
+Files: <changed paths>
+Artifacts: <generated or validated artifacts>
+Validation: <commands and results>
+Commit: <SHA or exact reason no commit is possible>
+Push / PR / merge: <actual state>
+Proof level / ceiling: <reached vs not proven>
+Remaining gaps: <only still-open items>
+Git state: <clean/preserved state>
+NEXT COMMAND: one exact executable action that advances the next unproven state; use `none; no safe actionable work remains` only when all authorized work is genuinely complete.'''
+          p02['keywords'] = list(dict.fromkeys(p02.get('keywords', []) + [
+              'conversation transcript',
+              'transcript recovery',
+              'segmented transcript',
+              'history unavailable',
+              'handoff recovery',
+              'repository reconstruction',
+          ]))
+          prompt_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          test_path = Path('tests/test_skill_prompt_registry.py')
+          text = test_path.read_text(encoding='utf-8')
+          marker = '    def test_p13_recurring_urgency_recovery_advances_and_parallelizes(self) -> None:\n'
+          if 'def test_p02_rich_handoff_bootstraps_without_transcript_dependency' not in text:
+              block = '''    def test_p02_rich_handoff_bootstraps_without_transcript_dependency(self) -> None:
+        content = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P02"]["copyContent"]
+        for phrase in (
+            "CONTEXT IS A STARTING MAP, NOT A SEARCH BOUNDARY",
+            "PROVIDED-CONTEXT MODE",
+            "sufficient to begin repository exploration and execution",
+            "cannot block repository/provider inspection",
+            "do not make any one recovery surface a prerequisite for another",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_p02_segmented_transcript_reduces_later_superseding_decisions(self) -> None:
+        content = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P02"]["copyContent"]
+        for phrase in (
+            "SEGMENTED TRANSCRIPT MODE",
+            "bounded batches",
+            "small overlap",
+            "Tag claims as FACT, OPERATOR INTENT, AGENT PROPOSAL, or UNKNOWN",
+            "Reduce the segment records instead of concatenating summaries",
+            "resolve state transitions and later superseding decisions",
+            "A later decision in the transcript supersedes an earlier one",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_p02_history_unavailable_reconstructs_from_repository_provider(self) -> None:
+        prompt = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P02"]
+        content = prompt["copyContent"]
+        for phrase in (
+            "SEMANTIC-RETRIEVAL MODE",
+            "REPOSITORY RECONSTRUCTION FALLBACK",
+            "unavailable, incomplete, compacted, or fails",
+            "Loss of historical transcript or tool output is not itself a blocker",
+            "do not wait for historical retrieval to finish before exploring durable sources",
+            "CURRENT + CONFIRMED, CURRENT + UNVERIFIED, SUPERSEDED, HISTORICAL, CONTRADICTED, or UNKNOWN",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("repository/provider reconstruction without a false blocker", prompt["proofGate"])
+
+'''
+              if marker not in text:
+                  raise SystemExit('P13 insertion marker not found')
+              text = text.replace(marker, block + marker, 1)
+              test_path.write_text(text, encoding='utf-8')
+          PY
+      - name: Rebuild canonical Prompt Kit artifact
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Validate strengthened P02
+        run: |
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest -v tests.test_skill_prompt_registry tests.test_p02_p07_autonomous_iteration
+          python scripts/evaluate_prompt_language.py --summary
+          python -m unittest -v tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance tests.test_prompt_kit_tutorial_coverage
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit generated and source changes
+        shell: bash
+        run: |
+          if git diff --quiet -- registry/prompts/prompt-overrides.v1.json tests/test_skill_prompt_registry.py web/prompt-kit/index.html; then
+            echo 'No P02 changes remain to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add registry/prompts/prompt-overrides.v1.json tests/test_skill_prompt_registry.py web/prompt-kit/index.html
+          git commit -m 'feat(prompt-kit): harden P02 conversation recovery'
+          git push origin HEAD:feat/p02-segmented-transcript-recovery-20260912
