@@ -5,6 +5,10 @@ on:
     branches:
       - feat/prompt-kit-snippet-artifact-graduation-20260912
 
+concurrency:
+  group: prompt-durability-graduation-20260912
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
