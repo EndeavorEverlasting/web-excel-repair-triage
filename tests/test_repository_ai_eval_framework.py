@@ -53,7 +53,7 @@ class RepositoryAIEvalFrameworkTests(unittest.TestCase):
         self.assertFalse(summary["gold_eval_authority"])
         self.assertFalse(summary["mutation_authority"])
 
-    def test_observed_usage_cannot_promote_itself_or_smuggle_raw_query_text(self) -> None:
+    def test_observed_usage_cannot_promote_itself_or_smuggle_private_fields_anywhere(self) -> None:
         payload = json.loads(OBSERVED.read_text(encoding="utf-8"))
         payload["eval_sample_candidates"][0]["gold_eval_authority"] = True
         with tempfile.TemporaryDirectory() as tmp:
@@ -66,6 +66,14 @@ class RepositoryAIEvalFrameworkTests(unittest.TestCase):
         payload["eval_sample_candidates"][0]["query_text"] = "private user text must not enter candidate corpus"
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "bad-query.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(MOD.EvalFrameworkError, "forbidden fields"):
+                MOD.validate_observed_candidates(path, self.registry)
+
+        payload = json.loads(OBSERVED.read_text(encoding="utf-8"))
+        payload["prompt_body"] = "top-level private text is forbidden too"
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bad-top-level.json"
             path.write_text(json.dumps(payload), encoding="utf-8")
             with self.assertRaisesRegex(MOD.EvalFrameworkError, "forbidden fields"):
                 MOD.validate_observed_candidates(path, self.registry)
@@ -91,6 +99,22 @@ class RepositoryAIEvalFrameworkTests(unittest.TestCase):
             {"id": "prompt-finder-routing", "baseline": "PASS", "candidate": "FAIL"}
         ])
 
+    def test_artifact_declared_failure_cannot_be_promoted_by_zero_exit(self) -> None:
+        self.assertTrue(MOD.artifact_declares_success({"exists": True, "status": "PASS"}))
+        self.assertTrue(MOD.artifact_declares_success({"exists": True, "verdict": "pass"}))
+        self.assertTrue(MOD.artifact_declares_success({"exists": True, "ready": True}))
+        self.assertFalse(MOD.artifact_declares_success({"exists": True, "status": "FAIL"}))
+        self.assertFalse(MOD.artifact_declares_success({"exists": True, "verdict": "fail"}))
+        self.assertFalse(MOD.artifact_declares_success({"exists": True, "ready": False}))
+        self.assertFalse(MOD.artifact_declares_success({"exists": False}))
+
+    def test_runtime_suite_requires_one_bounded_output_path(self) -> None:
+        registry = json.loads(REGISTRY.read_text(encoding="utf-8"))
+        runtime = next(item for item in registry["suites"] if item["id"] == "p67-hallucination-diagnosis")
+        runtime["runtime_command"] = ["python", "scripts/evaluate_p67_source_faithfulness.py", "--runtime", "auto"]
+        with self.assertRaisesRegex(MOD.EvalFrameworkError, "exactly one --output"):
+            MOD.validate_registry(registry)
+
     def test_model_runtime_defaults_to_unproven_after_contract_pass(self) -> None:
         suite = self.by_id["p67-hallucination-diagnosis"]
         original = MOD.run_command
@@ -110,6 +134,13 @@ class RepositoryAIEvalFrameworkTests(unittest.TestCase):
         self.assertEqual(result["status"], "UNPROVEN_RUNTIME")
         self.assertFalse(result["blocking"])
 
+    def test_atomic_report_writer_leaves_one_parseable_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "report.json"
+            MOD.write_json_atomic(path, {"schema_version": "test/v1", "status": "PASS"})
+            self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["status"], "PASS")
+            self.assertEqual(list(path.parent.glob(f".{path.name}.*.tmp")), [])
+
     def test_framework_uses_dedicated_ci_and_reuses_registered_prompt_eval_owners(self) -> None:
         floor = json.loads((ROOT / "harness/test-floor.v1.json").read_text(encoding="utf-8"))
         self.assertNotIn("tests/test_repository_ai_eval_framework.py", floor["self_tests"])
@@ -117,6 +148,7 @@ class RepositoryAIEvalFrameworkTests(unittest.TestCase):
         self.assertIn("tests/test_p67_source_faithfulness_eval_prompt.py", floor["self_tests"])
         workflow = (ROOT / ".github/workflows/repository-ai-evals.yml").read_text(encoding="utf-8")
         for marker in (
+            "ref: ${{ github.event.pull_request.head.sha || github.sha }}",
             "scripts/run_repository_ai_evals.py",
             "Outputs/repository-ai-eval-report.json",
             "tests.test_repository_ai_eval_framework",
