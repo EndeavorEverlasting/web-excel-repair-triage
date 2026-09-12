@@ -165,6 +165,41 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
             prompt["proofGate"].lower(),
         )
 
+    def test_p07_strategic_follow_on_captures_leverage_without_expanding_scope(self) -> None:
+        prompt = self.effective["P07"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["type"], "BUILD")
+        for phrase in (
+            "STRATEGIC FOLLOW-ON — CAPTURE LEVERAGE WITHOUT EXPANDING THE SPRINT",
+            "does not authorize widening owned scope",
+            "RECURRING CONTRACT GAP",
+            "CROSS-CUTTING LEVERAGE",
+            "ARCHITECTURAL PRESSURE",
+            "LATENT COMBINATION",
+            "NEWLY FEASIBLE CAPABILITY",
+            "SYSTEMATIC EVIDENCE GAP",
+            "STRATEGIC SIMPLIFICATION",
+            "observation | supporting evidence | broader opportunity | why current scope must not absorb it",
+            "DO NOT IMPLEMENT THE FOLLOW-ON HERE",
+            "routing artifact, not additional owned work",
+            "EXISTING OWNER; OWNER STRENGTHENING; NEW CONTRACT CANDIDATE; INVESTIGATE FIRST; REJECT / DEFER",
+            "unresolved internal program/system design -> P95",
+            "external systems, reusable prior art, or analogues -> P97",
+            "cheap measured prototype/experiment -> P82",
+            "Prompt Kit owner strengthening/new behavior -> P79",
+            "clear bounded implementation after uncertainty is resolved -> P07",
+            "repository-wide comparison of multiple long-term opportunities -> P141 Repository Strategic Opportunity Scout",
+            "If no qualifying opportunity was exposed, omit the section entirely",
+            "must not replace or weaken the normal NEXT ACTION / NEXT STEPS",
+            "The sprint remains incomplete whenever safe owned execution or integration work remains",
+        ):
+            self.assertIn(phrase, content)
+        self.assertNotIn("Always emit a STRATEGIC FOLLOW-ON", content)
+        self.assertNotIn("Implement the strategic follow-on", content)
+        self.assertIn("evidence-triggered", prompt["expectedOutput"])
+        self.assertIn("does not replace", prompt["nextStep"])
+        self.assertIn("never authorizes unfinished owned work", prompt["proofGate"])
+
     def test_effective_prompts_keep_shared_actionability_policy(self) -> None:
         policy = build_prompt_kit_registry.load_actionability_policy()
         for prompt_id in ("P02", "P07"):

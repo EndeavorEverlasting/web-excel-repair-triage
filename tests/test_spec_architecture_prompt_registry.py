@@ -1024,5 +1024,45 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn(self.policy["marker"], content)
 
 
+    def test_p141_strategic_scout_falsifies_theses_and_routes_without_execution(self) -> None:
+        prompt = self.full["P141"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["name"], "Repository Strategic Opportunity Scout")
+        self.assertEqual(prompt["type"], "PLAN")
+        self.assertEqual(prompt["class"], "REPOSITORY STRATEGY / OPPORTUNITY DISCOVERY")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        for phrase in (
+            "3-5 COMPETING STRATEGIC THESES",
+            "FALSIFY EACH THESIS BEFORE RANKING",
+            "SURVIVES",
+            "WEAKENED",
+            "REJECTED",
+            "DEFERRED",
+            "SELECT EXACTLY ONE NEXT THESIS TO INVESTIGATE",
+            "CHEAPEST DISCRIMINATING INVESTIGATION",
+            "P95 Program Design & Call-Stack Prototype Architect",
+            "P97 Open-Source Prior-Art & Gap Analyst",
+            "P82 prototyping owner",
+            "P79 Prompt Registry Prompt Adder",
+            "P07 Repo Sprint Executor",
+            "use only when strategic uncertainty is resolved",
+            "NEW CONTRACT CANDIDATE",
+            "PRESERVE THE EXPLORATION / EXECUTION BOUNDARY",
+            "Do not continue into bounded execution",
+            "P20 executes an already-selected Opportunity_Discovery row",
+            "P22/P23 rank which repository should move first across a portfolio",
+        ):
+            self.assertIn(phrase, content)
+        self.assertLess(content.index("FALSIFY EACH THESIS BEFORE RANKING"), content.index("COMPARE SURVIVING THESES"))
+        self.assertLess(content.index("COMPARE SURVIVING THESES"), content.index("SELECT EXACTLY ONE NEXT THESIS TO INVESTIGATE"))
+        self.assertIn("at least 3 and no more than 5", content)
+        self.assertIn("No selected initiative is implemented", prompt["expectedOutput"])
+        self.assertIn("Do not implement that routed contract", prompt["nextStep"])
+        self.assertIn("P07 is selected only after strategic uncertainty is resolved", prompt["proofGate"])
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+        for existing in ("P03", "P20", "P22", "P23", "P79", "P82", "P95", "P97"):
+            self.assertNotEqual(prompt["id"], existing)
+
 if __name__ == "__main__":
     unittest.main()
