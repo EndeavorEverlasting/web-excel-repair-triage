@@ -1,5 +1,5 @@
 name: Repository AI Evals
-run-name: Repository AI Evals | ${{ github.event_name }} | ${{ github.sha }}
+run-name: Repository AI Evals | ${{ github.event_name }} | ${{ github.event.pull_request.head.sha || github.sha }}
 
 on:
   pull_request:
@@ -59,6 +59,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-python@v7
