@@ -1,0 +1,47 @@
+name: Temporary P02 review repair executor
+
+on:
+  push:
+    branches:
+      - feat/p02-segmented-transcript-recovery-20260912
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: feat/p02-segmented-transcript-recovery-20260912
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Apply review repair
+        run: python scripts/tmp_p02_review_repair.py
+      - name: Rebuild canonical Prompt Kit artifact
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Validate repaired P02
+        run: |
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest -v tests.test_skill_prompt_registry tests.test_p02_p07_autonomous_iteration
+          python scripts/evaluate_prompt_language.py --summary
+          python -m unittest -v tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance tests.test_prompt_kit_tutorial_coverage
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit durable review repair
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add registry/prompts/prompt-overrides.v1.json tests/test_skill_prompt_registry.py web/prompt-kit/index.html
+          if git diff --cached --quiet; then
+            echo 'No durable P02 review changes to commit.'
+            exit 0
+          fi
+          git commit -m 'fix(prompt-kit): close P02 review gaps'
+          git push origin HEAD:feat/p02-segmented-transcript-recovery-20260912
