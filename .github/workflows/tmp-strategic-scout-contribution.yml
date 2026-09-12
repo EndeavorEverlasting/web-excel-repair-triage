@@ -44,7 +44,7 @@ jobs:
           forbidden={'id','seq','copySheet'} & set(p)
           assert not forbidden, forbidden
           assert p['name']=='Repository Strategic Opportunity Scout'
-          assert p['type']=='ANALYZE'
+          assert p['type']=='PLAN'
           print('SEMANTIC_DRAFT_ONLY=true')
           PY
       - name: Add Scout through canonical helper
@@ -67,6 +67,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          sed -i 's/"ANALYZE"/"PLAN"/g' .tmp-strategic-scout-mutator.py
           python .tmp-strategic-scout-mutator.py /tmp/add-receipt.json
           python -m py_compile tests/test_p02_p07_autonomous_iteration.py tests/test_spec_architecture_prompt_registry.py
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
@@ -88,7 +89,6 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           import json
-          from pathlib import Path
           from scripts import build_prompt_kit_registry
           receipt=json.load(open('/tmp/add-receipt.json', encoding='utf-8'))
           sid=receipt['id']
@@ -97,6 +97,7 @@ jobs:
           p07=prompts['P07']
           checks={
             'scout_identity_distinct': sid not in {'P03','P20','P22','P23','P79','P82','P95','P97'},
+            'discover_plan_type': scout['type']=='PLAN',
             'three_to_five': 'at least 3 and no more than 5' in scout['copyContent'],
             'falsify_before_rank': scout['copyContent'].index('FALSIFY EACH THESIS BEFORE RANKING') < scout['copyContent'].index('COMPARE SURVIVING THESES'),
             'one_recommendation': 'SELECT EXACTLY ONE NEXT THESIS TO INVESTIGATE' in scout['copyContent'],
