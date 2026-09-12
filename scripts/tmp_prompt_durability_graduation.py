@@ -80,11 +80,7 @@ Do not claim that prose, a copied snippet, or a screenshot has graduated the beh
         p34["copyContent"],
         P34_MARKER,
         r'''## SNIPPET-TO-OPERATOR-PATH GRADUATION
-Repeatedly retrieving a command or snippet from chat means the operator path is incomplete. Reuse canonical repository behavior first; when recurring and proven, promote it to a stable repository-native executable/operator entry point with bounded inputs, useful failure output, exit status, and durable evidence.
-
-After that path is validated, remove unnecessary invocation knowledge when it creates user friction: expose the same canonical behavior through an appropriate launcher, GUI/web control, spreadsheet surface, menu, or generated artifact. The surface must invoke or consume the canonical implementation; never duplicate its logic or put a clickable veneer over an unproven snippet.
-
-If proof does not support the next stage, keep the earlier stage and name the missing proof. Terminal survival, durable logs/artifacts, and real interface/runtime behavior remain evidence gates.''',
+Repeated chat retrieval means the operator path is incomplete. Reuse proven canonical behavior; graduate recurring work to a stable executable. Only after proof, expose that same implementation through a launcher, GUI/web control, spreadsheet, or artifact. Never veneer an unproven snippet.''',
     )
     add_keywords(p34, ["chat snippet", "snippet graduation", "operator entry point", "stable executable"])
 
@@ -160,12 +156,11 @@ class PromptDurabilityGraduationTests(unittest.TestCase):
         content = prompt["copyContent"]
         for phrase in (
             "SNIPPET-TO-OPERATOR-PATH GRADUATION",
-            "retrieving a command or snippet from chat means the operator path is incomplete",
-            "Reuse canonical repository behavior first",
-            "stable repository-native executable/operator entry point",
-            "launcher, GUI/web control, spreadsheet surface",
-            "must invoke or consume the canonical implementation",
-            "clickable veneer over an unproven snippet",
+            "Repeated chat retrieval means the operator path is incomplete",
+            "Reuse proven canonical behavior",
+            "stable executable",
+            "launcher, GUI/web control, spreadsheet, or artifact",
+            "Never veneer an unproven snippet",
         ):
             self.assertIn(phrase, content)
 
