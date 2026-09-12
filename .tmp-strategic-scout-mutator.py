@@ -91,42 +91,43 @@ p07_test = p07_test_path.read_text(encoding="utf-8")
 p07_marker = '\n\n    def test_effective_prompts_keep_shared_actionability_policy(self) -> None:'
 assert p07_marker in p07_test
 method = f'''
-    def test_p07_strategic_follow_on_captures_leverage_without_expanding_scope(self) -> None:
-        prompt = self.effective["P07"]
-        content = prompt["copyContent"]
-        self.assertEqual(prompt["type"], "BUILD")
-        for phrase in (
-            "STRATEGIC FOLLOW-ON — CAPTURE LEVERAGE WITHOUT EXPANDING THE SPRINT",
-            "does not authorize widening owned scope",
-            "RECURRING CONTRACT GAP",
-            "CROSS-CUTTING LEVERAGE",
-            "ARCHITECTURAL PRESSURE",
-            "LATENT COMBINATION",
-            "NEWLY FEASIBLE CAPABILITY",
-            "SYSTEMATIC EVIDENCE GAP",
-            "STRATEGIC SIMPLIFICATION",
-            "observation | supporting evidence | broader opportunity | why current scope must not absorb it",
-            "DO NOT IMPLEMENT THE FOLLOW-ON HERE",
-            "routing artifact, not additional owned work",
-            "EXISTING OWNER; OWNER STRENGTHENING; NEW CONTRACT CANDIDATE; INVESTIGATE FIRST; REJECT / DEFER",
-            "unresolved internal program/system design -> P95",
-            "external systems, reusable prior art, or analogues -> P97",
-            "cheap measured prototype/experiment -> P82",
-            "Prompt Kit owner strengthening/new behavior -> P79",
-            "clear bounded implementation after uncertainty is resolved -> P07",
-            "repository-wide comparison of multiple long-term opportunities -> {scout_id} {scout_name}",
-            "If no qualifying opportunity was exposed, omit the section entirely",
-            "must not replace or weaken the normal NEXT ACTION / NEXT STEPS",
-            "The sprint remains incomplete whenever safe owned execution or integration work remains",
-        ):
-            self.assertIn(phrase, content)
-        self.assertNotIn("Always emit a STRATEGIC FOLLOW-ON", content)
-        self.assertNotIn("Implement the strategic follow-on", content)
-        self.assertIn("evidence-triggered", prompt["expectedOutput"])
-        self.assertIn("does not replace", prompt["nextStep"])
-        self.assertIn("never authorizes unfinished owned work", prompt["proofGate"])
+def test_p07_strategic_follow_on_captures_leverage_without_expanding_scope(self) -> None:
+    prompt = self.effective["P07"]
+    content = prompt["copyContent"]
+    self.assertEqual(prompt["type"], "BUILD")
+    for phrase in (
+        "STRATEGIC FOLLOW-ON — CAPTURE LEVERAGE WITHOUT EXPANDING THE SPRINT",
+        "does not authorize widening owned scope",
+        "RECURRING CONTRACT GAP",
+        "CROSS-CUTTING LEVERAGE",
+        "ARCHITECTURAL PRESSURE",
+        "LATENT COMBINATION",
+        "NEWLY FEASIBLE CAPABILITY",
+        "SYSTEMATIC EVIDENCE GAP",
+        "STRATEGIC SIMPLIFICATION",
+        "observation | supporting evidence | broader opportunity | why current scope must not absorb it",
+        "DO NOT IMPLEMENT THE FOLLOW-ON HERE",
+        "routing artifact, not additional owned work",
+        "EXISTING OWNER; OWNER STRENGTHENING; NEW CONTRACT CANDIDATE; INVESTIGATE FIRST; REJECT / DEFER",
+        "unresolved internal program/system design -> P95",
+        "external systems, reusable prior art, or analogues -> P97",
+        "cheap measured prototype/experiment -> P82",
+        "Prompt Kit owner strengthening/new behavior -> P79",
+        "clear bounded implementation after uncertainty is resolved -> P07",
+        "repository-wide comparison of multiple long-term opportunities -> {scout_id} {scout_name}",
+        "If no qualifying opportunity was exposed, omit the section entirely",
+        "must not replace or weaken the normal NEXT ACTION / NEXT STEPS",
+        "The sprint remains incomplete whenever safe owned execution or integration work remains",
+    ):
+        self.assertIn(phrase, content)
+    self.assertNotIn("Always emit a STRATEGIC FOLLOW-ON", content)
+    self.assertNotIn("Implement the strategic follow-on", content)
+    self.assertIn("evidence-triggered", prompt["expectedOutput"])
+    self.assertIn("does not replace", prompt["nextStep"])
+    self.assertIn("never authorizes unfinished owned work", prompt["proofGate"])
 '''
-p07_test = p07_test.replace(p07_marker, "\n" + textwrap.dedent(method).rstrip() + p07_marker, 1)
+p07_method = textwrap.indent(textwrap.dedent(method).strip("\n"), "    ")
+p07_test = p07_test.replace(p07_marker, "\n\n" + p07_method + p07_marker, 1)
 p07_test_path.write_text(p07_test, encoding="utf-8")
 
 # Focused scout regression after helper identity allocation.
@@ -135,47 +136,48 @@ spec_test = spec_test_path.read_text(encoding="utf-8")
 spec_marker = '\n\nif __name__ == "__main__":'
 assert spec_marker in spec_test
 scout_method = f'''
-    def test_{scout_id.lower()}_strategic_scout_falsifies_theses_and_routes_without_execution(self) -> None:
-        prompt = self.full["{scout_id}"]
-        content = prompt["copyContent"]
-        self.assertEqual(prompt["name"], "{scout_name}")
-        self.assertEqual(prompt["type"], "ANALYZE")
-        self.assertEqual(prompt["class"], "REPOSITORY STRATEGY / OPPORTUNITY DISCOVERY")
-        self.assertEqual(prompt["profile"], "spec-architecture")
-        for phrase in (
-            "3-5 COMPETING STRATEGIC THESES",
-            "FALSIFY EACH THESIS BEFORE RANKING",
-            "SURVIVES",
-            "WEAKENED",
-            "REJECTED",
-            "DEFERRED",
-            "SELECT EXACTLY ONE NEXT THESIS TO INVESTIGATE",
-            "CHEAPEST DISCRIMINATING INVESTIGATION",
-            "P95 Program Design & Call-Stack Prototype Architect",
-            "P97 Open-Source Prior-Art & Gap Analyst",
-            "P82 prototyping owner",
-            "P79 Prompt Registry Prompt Adder",
-            "P07 Repo Sprint Executor",
-            "use only when strategic uncertainty is resolved",
-            "NEW CONTRACT CANDIDATE",
-            "PRESERVE THE EXPLORATION / EXECUTION BOUNDARY",
-            "Do not continue into bounded execution",
-            "P20 executes an already-selected Opportunity_Discovery row",
-            "P22/P23 rank which repository should move first across a portfolio",
-        ):
-            self.assertIn(phrase, content)
-        self.assertLess(content.index("FALSIFY EACH THESIS BEFORE RANKING"), content.index("COMPARE SURVIVING THESES"))
-        self.assertLess(content.index("COMPARE SURVIVING THESES"), content.index("SELECT EXACTLY ONE NEXT THESIS TO INVESTIGATE"))
-        self.assertIn("at least 3 and no more than 5", content)
-        self.assertIn("No selected initiative is implemented", prompt["expectedOutput"])
-        self.assertIn("Do not implement that routed contract", prompt["nextStep"])
-        self.assertIn("P07 is selected only after strategic uncertainty is resolved", prompt["proofGate"])
-        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
-        self.assertIn(self.policy["marker"], content)
-        for existing in ("P03", "P20", "P22", "P23", "P79", "P82", "P95", "P97"):
-            self.assertNotEqual(prompt["id"], existing)
+def test_{scout_id.lower()}_strategic_scout_falsifies_theses_and_routes_without_execution(self) -> None:
+    prompt = self.full["{scout_id}"]
+    content = prompt["copyContent"]
+    self.assertEqual(prompt["name"], "{scout_name}")
+    self.assertEqual(prompt["type"], "ANALYZE")
+    self.assertEqual(prompt["class"], "REPOSITORY STRATEGY / OPPORTUNITY DISCOVERY")
+    self.assertEqual(prompt["profile"], "spec-architecture")
+    for phrase in (
+        "3-5 COMPETING STRATEGIC THESES",
+        "FALSIFY EACH THESIS BEFORE RANKING",
+        "SURVIVES",
+        "WEAKENED",
+        "REJECTED",
+        "DEFERRED",
+        "SELECT EXACTLY ONE NEXT THESIS TO INVESTIGATE",
+        "CHEAPEST DISCRIMINATING INVESTIGATION",
+        "P95 Program Design & Call-Stack Prototype Architect",
+        "P97 Open-Source Prior-Art & Gap Analyst",
+        "P82 prototyping owner",
+        "P79 Prompt Registry Prompt Adder",
+        "P07 Repo Sprint Executor",
+        "use only when strategic uncertainty is resolved",
+        "NEW CONTRACT CANDIDATE",
+        "PRESERVE THE EXPLORATION / EXECUTION BOUNDARY",
+        "Do not continue into bounded execution",
+        "P20 executes an already-selected Opportunity_Discovery row",
+        "P22/P23 rank which repository should move first across a portfolio",
+    ):
+        self.assertIn(phrase, content)
+    self.assertLess(content.index("FALSIFY EACH THESIS BEFORE RANKING"), content.index("COMPARE SURVIVING THESES"))
+    self.assertLess(content.index("COMPARE SURVIVING THESES"), content.index("SELECT EXACTLY ONE NEXT THESIS TO INVESTIGATE"))
+    self.assertIn("at least 3 and no more than 5", content)
+    self.assertIn("No selected initiative is implemented", prompt["expectedOutput"])
+    self.assertIn("Do not implement that routed contract", prompt["nextStep"])
+    self.assertIn("P07 is selected only after strategic uncertainty is resolved", prompt["proofGate"])
+    self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+    self.assertIn(self.policy["marker"], content)
+    for existing in ("P03", "P20", "P22", "P23", "P79", "P82", "P95", "P97"):
+        self.assertNotEqual(prompt["id"], existing)
 '''
-spec_test = spec_test.replace(spec_marker, "\n" + textwrap.dedent(scout_method).rstrip() + spec_marker, 1)
+spec_method = textwrap.indent(textwrap.dedent(scout_method).strip("\n"), "    ")
+spec_test = spec_test.replace(spec_marker, "\n\n" + spec_method + spec_marker, 1)
 spec_test_path.write_text(spec_test, encoding="utf-8")
 
 print(json.dumps({"scout_id": scout_id, "p07_strengthened": True, "tests_added": 2}, indent=2))
