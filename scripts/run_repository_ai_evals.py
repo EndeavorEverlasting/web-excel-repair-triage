@@ -5,9 +5,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -60,8 +62,12 @@ def resolve_output(path: Path) -> Path:
 def git_head() -> str | None:
     try:
         proc = subprocess.run(
-            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
-            capture_output=True, timeout=15, check=False,
+            ["git", "rev-parse", "HEAD"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=15,
+            check=False,
         )
     except (OSError, subprocess.TimeoutExpired):
         return None
@@ -73,6 +79,14 @@ def sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
+def _text(value: str | bytes | None) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return value
+
+
 def validate_command(command: Any, suite_id: str, field: str) -> list[str]:
     if not isinstance(command, list) or not command or not all(isinstance(x, str) and x for x in command):
         raise EvalFrameworkError(f"suite {suite_id} {field} must be a non-empty argv array")
@@ -81,12 +95,24 @@ def validate_command(command: Any, suite_id: str, field: str) -> list[str]:
     return command
 
 
+def command_output_path(command: list[str], suite_id: str, field: str) -> Path:
+    positions = [index for index, value in enumerate(command) if value == "--output"]
+    if len(positions) != 1:
+        raise EvalFrameworkError(f"suite {suite_id} {field} must contain exactly one --output")
+    index = positions[0]
+    if index + 1 >= len(command) or command[index + 1].startswith("--"):
+        raise EvalFrameworkError(f"suite {suite_id} {field} --output must name a path")
+    return resolve_output(Path(command[index + 1]))
+
+
 def validate_registry(registry: dict[str, Any]) -> list[dict[str, Any]]:
     if registry.get("schema_version") != "repository-ai-evals/v1":
         raise EvalFrameworkError("unsupported repository AI eval registry schema")
     layers = registry.get("layers")
     if not isinstance(layers, list) or set(layers) != ALLOWED_LAYERS:
-        raise EvalFrameworkError("repository AI eval layers must declare the full deterministic/synthetic/model_runtime/human_review pyramid")
+        raise EvalFrameworkError(
+            "repository AI eval layers must declare the full deterministic/synthetic/model_runtime/human_review pyramid"
+        )
     suites = registry.get("suites")
     if not isinstance(suites, list) or not suites:
         raise EvalFrameworkError("repository AI eval registry must contain suites")
@@ -114,22 +140,33 @@ def validate_registry(registry: dict[str, Any]) -> list[dict[str, Any]]:
         contract = suite.get("contract")
         if contract and not resolve_repo_path(contract).is_file():
             raise EvalFrameworkError(f"suite {suite_id} contract missing: {contract}")
+
         if layer in {"deterministic", "synthetic"}:
-            validate_command(suite.get("command"), suite_id, "command")
+            command = validate_command(suite.get("command"), suite_id, "command")
             artifact = suite.get("artifact")
             if not isinstance(artifact, str) or not artifact.startswith("Outputs/"):
                 raise EvalFrameworkError(f"suite {suite_id} must write its artifact under Outputs/")
+            declared_output = command_output_path(command, suite_id, "command")
+            if declared_output != resolve_output(Path(artifact)):
+                raise EvalFrameworkError(f"suite {suite_id} command --output does not match declared artifact")
         elif layer == "model_runtime":
             validate_command(suite.get("contract_command"), suite_id, "contract_command")
-            validate_command(suite.get("runtime_command"), suite_id, "runtime_command")
+            runtime_command = validate_command(suite.get("runtime_command"), suite_id, "runtime_command")
+            command_output_path(runtime_command, suite_id, "runtime_command")
             pair = suite.get("required_pair")
             if not isinstance(pair, dict):
                 raise EvalFrameworkError(f"suite {suite_id} must declare required_pair")
             missing = pair.get("missing_context") or {}
             present = pair.get("present_but_ignored") or {}
-            if missing.get("classification") != "FACTUALITY_CONTEXT_MISSING" or missing.get("remediation") != "TARGETED_GROUNDING":
+            if (
+                missing.get("classification") != "FACTUALITY_CONTEXT_MISSING"
+                or missing.get("remediation") != "TARGETED_GROUNDING"
+            ):
                 raise EvalFrameworkError(f"suite {suite_id} missing-context pair must require targeted grounding")
-            if present.get("classification") != "FAITHFULNESS_CONTEXT_IGNORED" or present.get("remediation") != "REANCHOR_EXISTING_CONTEXT":
+            if (
+                present.get("classification") != "FAITHFULNESS_CONTEXT_IGNORED"
+                or present.get("remediation") != "REANCHOR_EXISTING_CONTEXT"
+            ):
                 raise EvalFrameworkError(f"suite {suite_id} present-context pair must require re-anchoring")
 
     candidate = registry.get("candidate_corpus")
@@ -156,6 +193,10 @@ def recursive_keys(value: Any) -> set[str]:
 def validate_observed_candidates(path: Path, registry: dict[str, Any]) -> dict[str, Any]:
     payload = load_json(path)
     policy = registry["candidate_corpus"]
+    forbidden = {str(item).lower() for item in policy.get("forbidden_fields", [])}
+    forbidden_hits = sorted(recursive_keys(payload) & forbidden)
+    if forbidden_hits:
+        raise EvalFrameworkError(f"observed candidate report contains forbidden fields: {forbidden_hits}")
     if payload.get("schema_version") != policy["schema_version"]:
         raise EvalFrameworkError("observed candidate report schema does not match repository policy")
     if payload.get("gold_eval_authority") is not False or payload.get("mutation_authority") is not False:
@@ -164,16 +205,12 @@ def validate_observed_candidates(path: Path, registry: dict[str, Any]) -> dict[s
     candidates = payload.get(field)
     if not isinstance(candidates, list):
         raise EvalFrameworkError(f"observed candidate report missing list field: {field}")
-    forbidden = {str(item).lower() for item in policy.get("forbidden_fields", [])}
     for candidate in candidates:
         if not isinstance(candidate, dict):
             raise EvalFrameworkError("every observed eval candidate must be an object")
         for flag, expected in policy["required_flags"].items():
             if candidate.get(flag) is not expected:
                 raise EvalFrameworkError(f"observed eval candidate must keep {flag}={expected!r}")
-        bad = sorted(recursive_keys(candidate) & forbidden)
-        if bad:
-            raise EvalFrameworkError(f"observed eval candidate contains forbidden fields: {bad}")
         if candidate.get("surface") != "prompt_finder" or candidate.get("measurement") != "selection_intent":
             raise EvalFrameworkError("unsupported observed candidate surface/measurement")
         recommendations = candidate.get("recommendations")
@@ -194,17 +231,23 @@ def validate_observed_candidates(path: Path, registry: dict[str, Any]) -> dict[s
 def run_command(command: list[str], timeout_seconds: int) -> dict[str, Any]:
     try:
         proc = subprocess.run(
-            command, cwd=ROOT, text=True, capture_output=True,
-            timeout=timeout_seconds, check=False,
+            command,
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=timeout_seconds,
+            check=False,
         )
     except subprocess.TimeoutExpired as exc:
+        stdout = _text(exc.stdout)
+        stderr = _text(exc.stderr)
         return {
             "exit_code": None,
             "timed_out": True,
-            "stdout_sha256": sha256_text(exc.stdout or ""),
-            "stderr_sha256": sha256_text(exc.stderr or ""),
-            "stdout_tail": (exc.stdout or "")[-2000:],
-            "stderr_tail": (exc.stderr or "")[-2000:],
+            "stdout_sha256": sha256_text(stdout),
+            "stderr_sha256": sha256_text(stderr),
+            "stdout_tail": stdout[-2000:],
+            "stderr_tail": stderr[-2000:],
         }
     except OSError as exc:
         return {
@@ -236,8 +279,22 @@ def artifact_summary(path: Path) -> dict[str, Any]:
         "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         "schema_version": payload.get("schema_version"),
         "status": payload.get("status"),
+        "verdict": payload.get("verdict"),
         "ready": payload.get("ready"),
     }
+
+
+def artifact_declares_success(summary: dict[str, Any]) -> bool:
+    if summary.get("exists") is not True:
+        return False
+    checks: list[bool] = []
+    if summary.get("status") is not None:
+        checks.append(str(summary["status"]).upper() == "PASS")
+    if summary.get("verdict") is not None:
+        checks.append(str(summary["verdict"]).lower() == "pass")
+    if summary.get("ready") is not None:
+        checks.append(summary["ready"] is True)
+    return all(checks) if checks else True
 
 
 def run_suite(suite: dict[str, Any], *, include_model_runtime: bool, timeout_seconds: int) -> dict[str, Any]:
@@ -254,19 +311,25 @@ def run_suite(suite: dict[str, Any], *, include_model_runtime: bool, timeout_sec
         execution = run_command(suite["command"], timeout_seconds)
         artifact = resolve_repo_path(suite["artifact"])
         summary = artifact_summary(artifact)
-        passed = execution.get("exit_code") == 0 and summary.get("exists") is True
-        result.update({
-            "status": "PASS" if passed else "FAIL",
-            "command": suite["command"],
-            "execution": execution,
-            "artifact": summary,
-        })
+        passed = execution.get("exit_code") == 0 and artifact_declares_success(summary)
+        result.update(
+            {
+                "status": "PASS" if passed else "FAIL",
+                "command": suite["command"],
+                "execution": execution,
+                "artifact": summary,
+            }
+        )
         return result
 
     if layer == "model_runtime":
         contract = run_command(suite["contract_command"], timeout_seconds)
         contract_pass = contract.get("exit_code") == 0
-        result["contract"] = {"status": "PASS" if contract_pass else "FAIL", "command": suite["contract_command"], "execution": contract}
+        result["contract"] = {
+            "status": "PASS" if contract_pass else "FAIL",
+            "command": suite["contract_command"],
+            "execution": contract,
+        }
         if not contract_pass:
             result["status"] = "FAIL"
             result["blocking"] = bool(suite.get("contract_blocking", True))
@@ -277,8 +340,8 @@ def run_suite(suite: dict[str, Any], *, include_model_runtime: bool, timeout_sec
             result["runtime_command"] = suite["runtime_command"]
             return result
         runtime = run_command(suite["runtime_command"], timeout_seconds)
-        artifact_arg = suite["runtime_command"][suite["runtime_command"].index("--output") + 1]
-        summary = artifact_summary(resolve_repo_path(artifact_arg))
+        runtime_output = command_output_path(suite["runtime_command"], suite["id"], "runtime_command")
+        summary = artifact_summary(runtime_output)
         runtime_status = summary.get("status")
         if runtime.get("exit_code") == 0 and runtime_status == "PASS":
             status = "PASS"
@@ -286,7 +349,14 @@ def run_suite(suite: dict[str, Any], *, include_model_runtime: bool, timeout_sec
             status = "UNPROVEN_RUNTIME"
         else:
             status = "FAIL"
-        result.update({"status": status, "runtime_command": suite["runtime_command"], "runtime": runtime, "artifact": summary})
+        result.update(
+            {
+                "status": status,
+                "runtime_command": suite["runtime_command"],
+                "runtime": runtime,
+                "artifact": summary,
+            }
+        )
         result["blocking"] = False if status == "UNPROVEN_RUNTIME" else bool(suite.get("blocking"))
         return result
 
@@ -301,15 +371,26 @@ def baseline_delta(results: list[dict[str, Any]], baseline_path: Path | None) ->
     baseline = load_json(baseline_path)
     if baseline.get("schema_version") != "repository-ai-eval-report/v1":
         raise EvalFrameworkError("baseline report has unsupported schema")
-    before = {item.get("id"): item.get("status") for item in baseline.get("suites", []) if isinstance(item, dict)}
+    before = {
+        item.get("id"): item.get("status")
+        for item in baseline.get("suites", [])
+        if isinstance(item, dict)
+    }
     after = {item["id"]: item["status"] for item in results}
     changed = [
         {"id": suite_id, "baseline": before.get(suite_id), "candidate": status}
         for suite_id, status in sorted(after.items())
         if before.get(suite_id) != status
     ]
-    regressions = [item for item in changed if item["baseline"] == "PASS" and item["candidate"] == "FAIL"]
-    return {"baseline_path": str(baseline_path), "changed": changed, "regressions": regressions}
+    regressions = [
+        item for item in changed
+        if item["baseline"] == "PASS" and item["candidate"] == "FAIL"
+    ]
+    return {
+        "baseline_path": str(baseline_path),
+        "changed": changed,
+        "regressions": regressions,
+    }
 
 
 def build_report(
@@ -318,7 +399,11 @@ def build_report(
     observed: dict[str, Any] | None,
     baseline: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    blocking_failures = [item["id"] for item in results if item.get("blocking") and item.get("status") != "PASS"]
+    blocking_failures = [
+        item["id"]
+        for item in results
+        if item.get("blocking") and item.get("status") != "PASS"
+    ]
     return {
         "schema_version": "repository-ai-eval-report/v1",
         "registry_schema_version": registry["schema_version"],
@@ -331,14 +416,43 @@ def build_report(
             "suite_count": len(results),
             "pass_count": sum(item["status"] == "PASS" for item in results),
             "fail_count": sum(item["status"] == "FAIL" for item in results),
-            "runtime_unproven_count": sum(item["status"] == "UNPROVEN_RUNTIME" for item in results),
+            "runtime_unproven_count": sum(
+                item["status"] == "UNPROVEN_RUNTIME" for item in results
+            ),
             "observed_candidate_count": 0 if observed is None else observed["candidate_count"],
         },
         "candidate_corpus": observed,
         "baseline_comparison": baseline,
         "suites": results,
-        "proof_ceiling": "Aggregated deterministic/synthetic exact-head eval evidence plus registered runtime-eval contract status. Candidate-only usage samples never become gold labels automatically; model/runtime and human quality remain explicit when unobserved."
+        "proof_ceiling": (
+            "Aggregated deterministic/synthetic exact-head eval evidence plus registered runtime-eval contract status. "
+            "Candidate-only usage samples never become gold labels automatically; model/runtime and human quality "
+            "remain explicit when unobserved."
+        ),
     }
+
+
+def write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            json.dump(payload, handle, indent=2, ensure_ascii=False)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+            temporary = Path(handle.name)
+        temporary.replace(path)
+    finally:
+        if temporary is not None and temporary.exists():
+            temporary.unlink()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -356,17 +470,31 @@ def main(argv: list[str] | None = None) -> int:
     try:
         registry = load_json(args.registry)
         suites = validate_registry(registry)
-        observed = validate_observed_candidates(args.observed_candidates, registry) if args.observed_candidates else None
+        observed = (
+            validate_observed_candidates(args.observed_candidates, registry)
+            if args.observed_candidates
+            else None
+        )
         if args.validate_only:
             if args.summary:
-                print(f"repository_ai_evals registry=PASS suites={len(suites)} observed_candidates={0 if observed is None else observed['candidate_count']}")
+                print(
+                    "repository_ai_evals "
+                    f"registry=PASS suites={len(suites)} "
+                    f"observed_candidates={0 if observed is None else observed['candidate_count']}"
+                )
             return 0
-        results = [run_suite(item, include_model_runtime=args.include_model_runtime, timeout_seconds=args.timeout_seconds) for item in suites]
+        results = [
+            run_suite(
+                item,
+                include_model_runtime=args.include_model_runtime,
+                timeout_seconds=args.timeout_seconds,
+            )
+            for item in suites
+        ]
         baseline = baseline_delta(results, args.baseline_report)
         report = build_report(registry, results, observed, baseline)
         output = resolve_output(args.output)
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        write_json_atomic(output, report)
         if args.summary:
             print(
                 "repository_ai_evals "
@@ -376,7 +504,10 @@ def main(argv: list[str] | None = None) -> int:
                 f"observed_candidates={report['summary']['observed_candidate_count']}"
             )
             for item in results:
-                print(f"suite={item['id']} layer={item['layer']} status={item['status']} blocking={item['blocking']}")
+                print(
+                    f"suite={item['id']} layer={item['layer']} "
+                    f"status={item['status']} blocking={item['blocking']}"
+                )
         return 0 if report["status"] == "PASS" else 1
     except EvalFrameworkError as exc:
         print(f"repository AI eval framework error: {exc}", file=sys.stderr)
