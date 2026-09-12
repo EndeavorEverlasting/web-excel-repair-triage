@@ -31,7 +31,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Repair carrier fixture delimiter
+      - name: Repair carrier transport literals
         shell: bash
         run: |
           set -euo pipefail
@@ -41,10 +41,15 @@ jobs:
           text = path.read_text(encoding='utf-8')
           opening = "test_text = r'''"
           closing = "'''\nwrite(test_path, test_text)"
+          candidate_old = "candidate_id=hashlib.sha256(f'{source}\\\\0{session_id}'.encode('utf-8')).hexdigest()[:20]"
+          candidate_new = "candidate_id=hashlib.sha256(json.dumps([source,session_id],separators=(',',':')).encode('utf-8')).hexdigest()[:20]"
           if text.count(opening) != 1 or text.count(closing) != 1:
               raise SystemExit('carrier fixture delimiter repair did not match exactly once')
+          if text.count(candidate_old) != 1:
+              raise SystemExit(f'candidate id transport repair expected one match, found {text.count(candidate_old)}')
           text = text.replace(opening, 'test_text = r"""', 1)
           text = text.replace(closing, '"""\nwrite(test_path, test_text)', 1)
+          text = text.replace(candidate_old, candidate_new, 1)
           path.write_text(text, encoding='utf-8')
           PY
           python -m py_compile scripts/tmp_classifier_observation_carrier.py
