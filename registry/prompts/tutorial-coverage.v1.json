@@ -3,10 +3,10 @@
   "policy_id": "afkaf-classifier-tutorial-coverage-v1",
   "tutorial_entry": "Tutorial · Find My Prompt",
   "tutorial_document": "docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md",
-  "fallback_anchor": "classifier-assisted-coverage-and-wiring-debt",
-  "wired_status": "WIRED",
-  "fallback_status": "CLASSIFIER_FALLBACK_NEEDS_WIRING",
-  "wiring_rule": "Every canonical prompt receives a deterministic tutorial route through its lifecycle classifier section. Prompts without an explicit curated tutorial record remain reachable through that classifier route but are marked as wiring debt until a tutorial owner records a curated path.",
+  "fallback_anchor": "classifier-assisted-coverage-and-prompt-paths",
+  "wired_status": "CURATED_WIRED",
+  "fallback_status": "CLASSIFIER_WIRED",
+  "wiring_rule": "Every canonical prompt is fully wired into the tutorial through its deterministic classifier route: Tutorial · Find My Prompt -> lifecycle classifier section -> prompt identity. Curated tutorial anchors add deeper teaching but are optional enrichment, not a prerequisite for tutorial completeness.",
   "wired_prompts": [
     {
       "prompt_id": "P03",
