@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import sys
 import unittest
 from pathlib import Path
@@ -11,6 +10,7 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import build_prompt_kit_registry
+from scripts import prompt_kit_tutorial_coverage
 
 
 class HealthRecordWorkspaceSyncPromptTests(unittest.TestCase):
@@ -80,18 +80,21 @@ class HealthRecordWorkspaceSyncPromptTests(unittest.TestCase):
         self.assertIn("Access only resources needed for this health-record operation", content)
         self.assertIn("implementation details", content)
 
-    def test_prompt_is_in_generated_site_and_has_tutorial_fallback_route(self) -> None:
+    def test_prompt_is_in_generated_site_and_has_complete_tutorial_route(self) -> None:
         prompt = self.prompt()
         html = build_prompt_kit_registry.render()
         self.assertIn(f'"id": "{prompt["id"]}"', html)
         self.assertIn("Connected Health Record Workspace Synchronizer", html)
         deployed = (ROOT / "web" / "prompt-kit" / "index.html").read_text(encoding="utf-8")
         self.assertEqual(deployed, html)
-        coverage = json.loads((ROOT / "registry" / "prompts" / "tutorial-coverage.v1.json").read_text(encoding="utf-8"))
-        wired = {item["prompt_id"] for item in coverage["wired_prompts"]}
-        self.assertNotIn(prompt["id"], wired)
-        self.assertEqual(coverage["fallback_status"], "CLASSIFIER_FALLBACK_NEEDS_WIRING")
-        self.assertIn("Every canonical prompt", coverage["wiring_rule"])
+
+        route = prompt_kit_tutorial_coverage.coverage_for_prompt(prompt)
+        self.assertEqual(route["wiring_status"], "CLASSIFIER_WIRED")
+        self.assertEqual(route["wiring_source"], "classifier")
+        self.assertFalse(route["needs_wiring"])
+        self.assertEqual(route["tutorial_route"][0], "Tutorial · Find My Prompt")
+        self.assertIn(prompt["id"], route["tutorial_route"][2])
+        self.assertIn(prompt["name"], route["tutorial_route"][2])
 
 
 if __name__ == "__main__":
