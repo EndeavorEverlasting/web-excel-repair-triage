@@ -218,3 +218,24 @@ A green happy path without these checks is not fixed-point proof.
 This sprint can prove the event schema, append/replacement semantics, idempotency, polling/cursor behavior, checkpoint failure atomicity, privacy guards, aggregation, and no-auto-rewrite boundary in Node/Python/GitHub Actions.
 
 It cannot prove user-visible like/dislike controls, browser persistence/migration, cross-device synchronization, authenticated multi-user identity, real hook scheduling, subjective usefulness, or production prompt-maintenance decisions. Those remain later product/runtime/integration gates rather than being inferred from this prototype.
+
+## Production Prompt Finder observation candidates
+
+The production feedback runtime also accepts `prompt_usage` as an **information-only** event class. Prompt Finder result selections may attach a bounded `context` containing only:
+
+- `surface=prompt_finder`;
+- `measurement=selection_intent`;
+- an opaque local `session_id`;
+- the four questionnaire **option IDs** (`startingPoint`, `problemKnown`, `goal`, `shape`);
+- up to three canonical recommended prompt IDs.
+
+The browser does **not** persist arbitrary finder query text, question text, prompt bodies, clipboard contents, credentials, or a general-purpose metadata bag for this path. Invalid option IDs, unknown recommendations, extra context fields, or a selected prompt outside the recorded recommendation set fail closed.
+
+The maintenance hook projects two distinct products from the same append-only export:
+
+1. **statistics** — information-only action counts by prompt/action; and
+2. **`eval_sample_candidates`** — privacy-bounded Prompt Finder answer/recommendation/action observations.
+
+`eval_sample_candidates` are deliberately **not gold eval cases**. They carry `candidate_only=true`, `gold_eval_authority=false`, omit raw browser/source/session identity, and require manual review before any case may be promoted into `harness/evals/fixtures/prompt-finder-classifier-cases.v1.json`. This prevents popularity or one user's behavior from silently redefining classifier correctness. Dedicated eval sprints retain ownership of labels, expected routes, adversarial cases, scoring policy, and regression gates.
+
+The first production measurement is **selection intent** (`open` / `copy` selected from a recommendation card), not proof that the downstream prompt succeeded or that clipboard completion occurred. A later semantic-completion sprint may strengthen the usage ledger once the production command kernel exposes truthful terminal outcomes; until then, stats and eval mining must preserve this proof ceiling.
