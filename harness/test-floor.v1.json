@@ -30,7 +30,6 @@
     "tests/test_p100_closeout_replay_prompt.py",
     "tests/test_p123_youtube_ingestion_behavior_eval_prompt.py",
     "tests/test_p67_source_faithfulness_eval_prompt.py",
-    "tests/test_repository_ai_eval_framework.py",
     "tests/test_permissioned_repository_polling_prompt.py",
     "tests/test_prompt_classification_refiner_prompt.py",
     "tests/test_prompt_registry_expansion_regression_design_teach.py",
@@ -118,5 +117,5 @@
   "validator_registry": "harness/validators.v1.json",
   "validator_profile": "pre_push",
   "required_canary_failure": "test-floor-self-tests",
-  "proof_ceiling": "Deterministic clean-checkout Python, pinned direct CI dependencies, test-floor self-contract, convention-covered Prompt Kit semantic regressions with explicit low-cost execution registration, public/synthetic artifact-engine tests with fail-closed registered private-input skips, harness, Prompt Kit static/generated-parity, repository hygiene, exact-candidate provider-workflow proof, and the registered repository AI eval framework contract. The separate canonical private-input gate fails closed when its three registered operator inputs are absent and runs the exact real-input regressions when they are supplied. Public CI does not claim a private-input PASS, model-runtime behavior without an observed receipt, production, privileged-device, secret-bearing, or operator acceptance proof."
+  "proof_ceiling": "Deterministic clean-checkout Python, pinned direct CI dependencies, test-floor self-contract, convention-covered Prompt Kit semantic regressions with explicit low-cost execution registration, public/synthetic artifact-engine tests with fail-closed registered private-input skips, harness, Prompt Kit static/generated-parity, repository hygiene, and exact-candidate provider-workflow proof on the observed SHA. The separate canonical private-input gate fails closed when its three registered operator inputs are absent and runs the exact real-input regressions when they are supplied. Public CI does not claim a private-input PASS, production, privileged-device, secret-bearing, or operator acceptance proof."
 }
