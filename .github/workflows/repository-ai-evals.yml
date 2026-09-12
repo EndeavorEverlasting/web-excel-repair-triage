@@ -75,15 +75,17 @@ jobs:
       - name: Resolve refreshed default-branch baseline
         id: baseline
         shell: bash
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          PUSH_BEFORE: ${{ github.event.before }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
-            BASE_REF="${{ github.base_ref }}"
             test -n "$BASE_REF"
             git fetch --no-tags origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
             REF="refs/remotes/origin/${BASE_REF}"
           elif [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
-            REF="${{ github.event.before }}"
+            REF="$PUSH_BEFORE"
             test -n "$REF"
             test "$REF" != "0000000000000000000000000000000000000000"
             git cat-file -e "${REF}^{commit}"
