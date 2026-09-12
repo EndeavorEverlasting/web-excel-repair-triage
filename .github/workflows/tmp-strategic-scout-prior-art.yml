@@ -1,0 +1,48 @@
+name: Temporary strategic scout prior-art
+
+on:
+  push:
+    branches:
+      - feat/repository-strategic-opportunity-scout-20260912
+    paths:
+      - .github/workflows/tmp-strategic-scout-prior-art.yml
+
+permissions:
+  contents: read
+
+jobs:
+  prior-art:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/repository-strategic-opportunity-scout-20260912
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Refresh main floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune --tags
+          echo "HEAD=$(git rev-parse HEAD)"
+          echo "MAIN=$(git rev-parse origin/main)"
+          git merge-base --is-ancestor origin/main HEAD
+      - name: Inspect current registry routing
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py inspect | tee /tmp/inspect.json
+      - name: Run registered-source prior-art
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py prior-art --query "Explore one repository before bounded execution to discover the highest-leverage next durable contract or capability. Build a repository situation model, identify recurring contract gaps, cross-cutting leverage, latent combinations, skeletal systems, manual work, evaluation blindness, architectural pressure, strategic simplification, newly feasible capabilities, and operator pull. Generate 3 to 5 materially different strategic theses, falsify each, compare surviving candidates without fake-precision scoring, recommend exactly one next thesis to investigate, define the cheapest discriminating investigation, then route without implementing to P95 architecture/design, P97 external prior art/gap analysis, P82 measured prototype, P79 Prompt Kit contribution, or P07 bounded execution. Preserve a strict exploration-versus-execution boundary and do not widen an active sprint." | tee /tmp/prior-art.json
+          python - <<'PY'
+          import json
+          p=json.load(open('/tmp/prior-art.json', encoding='utf-8'))
+          assert p.get('all_registered_sources_searched') is True, p
+          print('ALL_REGISTERED_SOURCES_SEARCHED=true')
+          print(json.dumps(p, indent=2))
+          PY
