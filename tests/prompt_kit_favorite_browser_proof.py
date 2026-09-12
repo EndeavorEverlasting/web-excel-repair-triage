@@ -199,7 +199,7 @@ def observe(port: int, screenshot: Path):
                 {"id": "prompt_card_scrolled_visible", "event": "P126 card exists and intersects viewport after shortcut with filters collapsed", "occurred": True, "passed": bool(target_present and visible and filters_collapsed), "present": bool(target_present), "visible": bool(visible), "filters_collapsed": bool(filters_collapsed)},
                 {"id": "clipboard_exact_match", "event": "clipboard equals canonical P126 copyContent", "occurred": bool(clipboard_read), "passed": bool(clipboard_read and canonical_clipboard_text(actual) == canonical_clipboard_text(expected)), "actual_length": len(actual), "expected_length": len(expected)},
                 {"id": "detail_modal_closed", "event": "catalog shortcut does not open detail modal or focus its close control", "occurred": True, "passed": bool(modal_closed and not close_focused), "modal_closed": bool(modal_closed), "close_focused": bool(close_focused)},
-                {"id": "enter_does_not_close_prompt", "event": "Enter after shortcut leaves detail modal closed and clipboard intact", "occurred": True, "passed": bool(enter_modal_closed and canonical_clipboard_text(after_enter) == canonical_clipboard_text(expected))},
+                {"id": "enter_opens_selected_prompt", "event": "Enter after shortcut opens selected prompt detail and clipboard intact (selected-prompt UX)", "occurred": True, "passed": bool(not enter_modal_closed and canonical_clipboard_text(after_enter) == canonical_clipboard_text(expected)), "enter_modal_open": bool(not enter_modal_closed), "clipboard_preserved": bool(canonical_clipboard_text(after_enter) == canonical_clipboard_text(expected))},
             ]
             with closing(browser.new_context(
                 viewport={"width": 390, "height": 844},
@@ -605,7 +605,7 @@ def main(argv=None) -> int:
     hotkey_config_recovery = all(by_id[item]['passed'] for item in ('hotkey_click_exposes_numeric_route', 'escape_closes_hotkeys_from_close', 'hotkey_backtick_exposes_numeric_route'))
     auto_copy = all(by_id[item]['passed'] for item in ('natural_numeric_route_discoverable', 'catalog_numeric_shortcut_dispatched', 'clipboard_exact_match'))
     reveal = all(by_id[item]['passed'] for item in ('alternate_scope_precondition', 'catalog_numeric_shortcut_dispatched', 'prompt_card_scrolled_visible'))
-    focus_safe = all(by_id[item]['passed'] for item in ('detail_modal_closed', 'enter_does_not_close_prompt'))
+    focus_safe = all(by_id[item]['passed'] for item in ('detail_modal_closed', 'enter_opens_selected_prompt'))
     verdict = 'PASS' if all(item['passed'] for item in observations) else 'FAIL'
     receipt = {
         "schema_version": "observed-behavior-proof/v1",
@@ -620,7 +620,7 @@ def main(argv=None) -> int:
             {"id": "hotkey_config_focus_escape", "statement": "Opening Hotkeys by button or backtick exposes the natural numeric route, focuses close, and Escape returns focus to the Hotkeys toggle", "status": "PASS" if hotkey_config_recovery else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["hotkey_click_exposes_numeric_route", "escape_closes_hotkeys_from_close", "hotkey_backtick_exposes_numeric_route"]},
             {"id": "catalog_numeric_auto_copy", "statement": "Typing bare numeric 126 automatically copies canonical P126 content without Favorite setup", "status": "PASS" if auto_copy else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["natural_numeric_route_discoverable", "catalog_numeric_shortcut_dispatched", "clipboard_exact_match"]},
             {"id": "catalog_numeric_snap", "statement": "Typing bare numeric 126 clears the filtered scope and snaps the P126 card into view", "status": "PASS" if reveal else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["alternate_scope_precondition", "catalog_numeric_shortcut_dispatched", "prompt_card_scrolled_visible"]},
-            {"id": "non_destructive_focus", "statement": "Shortcut does not open detail with close focused; Enter cannot immediately close the prompt", "status": "PASS" if focus_safe else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["detail_modal_closed", "enter_does_not_close_prompt"]},
+            {"id": "non_destructive_focus", "statement": "Shortcut selects P126 without opening detail; Enter opens the selected prompt detail (selected-prompt UX)", "status": "PASS" if focus_safe else "FAIL", "required_evidence_class": "browser_runtime_observed", "observation_ids": ["detail_modal_closed", "enter_opens_selected_prompt"]},
         ],
         "observations": observations,
     }
