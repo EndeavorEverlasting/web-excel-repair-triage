@@ -25,6 +25,7 @@ CASES_PATH = ROOT / "harness" / "evals" / "fixtures" / "prompt-finder-classifier
 SEARCH_RUNTIME = ROOT / "docs" / "prompt-kit.js"
 GUIDED_RUNTIME = ROOT / "docs" / "prompt-kit-guided-recommendations.js"
 DEFAULT_OUTPUT = ROOT / "Outputs" / "prompt-finder-classifier-eval.json"
+OUTPUT_ROOT = ROOT / "Outputs"
 PROMPT_FIELDS = (
     "id",
     "seq",
@@ -60,6 +61,10 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _sha256_bytes(payload: bytes) -> str:
+    return hashlib.sha256(payload).hexdigest()
+
+
 def _git_head() -> str | None:
     try:
         completed = subprocess.run(
@@ -87,12 +92,101 @@ def _extract_between(text: str, start_marker: str, end_marker: str, source: Path
     return text[start:end]
 
 
+def _registry_source_paths() -> tuple[Path, ...]:
+    """Return every file that can influence load_prompt_kit_registry()."""
+    candidates = [
+        Path(__file__),
+        Path(build_prompt_kit.__file__),
+        Path(build_prompt_kit_registry.__file__),
+        Path(build_prompt_kit_registry.prompt_classification.__file__),
+        build_prompt_kit_registry.BASE_REGISTRY,
+        *build_prompt_kit_registry.EXTENSION_REGISTRIES,
+        *build_prompt_kit_registry.CONTENT_REGISTRIES,
+        build_prompt_kit_registry.PROMPT_OVERRIDES,
+        build_prompt_kit_registry.ACTIONABILITY_POLICY,
+        build_prompt_kit_registry.DISPLAY_ORDER_POLICY,
+    ]
+    unique: list[Path] = []
+    seen: set[Path] = set()
+    for candidate in candidates:
+        resolved = Path(candidate).resolve()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        unique.append(resolved)
+    return tuple(unique)
+
+
+def _all_source_paths() -> tuple[Path, ...]:
+    candidates = [POLICY_PATH, CASES_PATH, SEARCH_RUNTIME, GUIDED_RUNTIME, *_registry_source_paths()]
+    unique: list[Path] = []
+    seen: set[Path] = set()
+    for candidate in candidates:
+        resolved = Path(candidate).resolve()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        unique.append(resolved)
+    return tuple(unique)
+
+
+def _resolve_output(output: Path) -> Path:
+    candidate = output.expanduser()
+    if not candidate.is_absolute():
+        candidate = ROOT / candidate
+    resolved = candidate.resolve()
+    output_root = OUTPUT_ROOT.resolve()
+    try:
+        relative = resolved.relative_to(output_root)
+    except ValueError as exc:
+        raise EvalError(f"output must be inside Outputs/: {resolved}") from exc
+    if relative == Path("."):
+        raise EvalError("output must name a file below Outputs/")
+    source_paths = set(_all_source_paths())
+    if resolved in source_paths:
+        raise EvalError(f"output path collides with an eval source: {resolved}")
+    return resolved
+
+
+def _expected_target() -> dict[str, str]:
+    return {
+        "runtime": str(GUIDED_RUNTIME.relative_to(ROOT)),
+        "classifier_function": "scorePromptFinderAnswers",
+        "shared_search_runtime": str(SEARCH_RUNTIME.relative_to(ROOT)),
+        "registry_builder": str(Path(build_prompt_kit_registry.__file__).resolve().relative_to(ROOT)),
+    }
+
+
+def _validate_target(policy: dict[str, Any]) -> dict[str, str]:
+    declared = policy.get("target")
+    expected = _expected_target()
+    if declared != expected:
+        raise EvalError(
+            "eval policy target does not match the executed canonical runtime: "
+            f"expected={expected!r} declared={declared!r}"
+        )
+    return expected
+
+
 def _project_registry() -> list[dict[str, Any]]:
-    prompts = build_prompt_kit_registry.load_prompt_kit_registry()
+    try:
+        prompts = build_prompt_kit_registry.load_prompt_kit_registry()
+    except SystemExit as exc:
+        raise EvalError(f"canonical Prompt Kit registry failed to load: {exc}") from exc
     projected: list[dict[str, Any]] = []
     for prompt in prompts:
         projected.append({field: prompt.get(field) for field in PROMPT_FIELDS})
     return projected
+
+
+def _projected_registry_sha256(prompts: list[dict[str, Any]]) -> str:
+    canonical = json.dumps(
+        prompts,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return _sha256_bytes(canonical)
 
 
 def _validate_contract(policy: dict[str, Any], fixtures: dict[str, Any]) -> list[dict[str, Any]]:
@@ -130,7 +224,11 @@ def _validate_contract(policy: dict[str, Any], fixtures: dict[str, Any]) -> list
     return cases
 
 
-def _build_node_program(cases: list[dict[str, Any]], repetitions: int) -> str:
+def _build_node_program(
+    cases: list[dict[str, Any]],
+    repetitions: int,
+    prompts: list[dict[str, Any]],
+) -> str:
     search_text = SEARCH_RUNTIME.read_text(encoding="utf-8")
     guided_text = GUIDED_RUNTIME.read_text(encoding="utf-8")
     search_helpers = _extract_between(
@@ -145,7 +243,6 @@ def _build_node_program(cases: list[dict[str, Any]], repetitions: int) -> str:
         "function shell(",
         GUIDED_RUNTIME,
     )
-    prompts = _project_registry()
     prompt_sequence = (
         "function promptSequenceValue(p){"
         "var raw=String((p&&p.seq)||((p&&p.id)||''));"
@@ -174,11 +271,15 @@ def _build_node_program(cases: list[dict[str, Any]], repetitions: int) -> str:
     )
 
 
-def _run_canonical_classifier(cases: list[dict[str, Any]], repetitions: int) -> list[dict[str, Any]]:
+def _run_canonical_classifier(
+    cases: list[dict[str, Any]],
+    repetitions: int,
+    prompts: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     node = shutil.which("node")
     if not node:
         raise EvalError("Node.js is required to execute the canonical Prompt Finder runtime")
-    program = _build_node_program(cases, repetitions)
+    program = _build_node_program(cases, repetitions, prompts)
     with tempfile.TemporaryDirectory(prefix="prompt-finder-eval-") as tmp:
         script_path = Path(tmp) / "evaluate.js"
         script_path.write_text(program, encoding="utf-8")
@@ -206,12 +307,15 @@ def _run_canonical_classifier(cases: list[dict[str, Any]], repetitions: int) -> 
 
 def evaluate(policy: dict[str, Any], fixtures: dict[str, Any]) -> dict[str, Any]:
     cases = _validate_contract(policy, fixtures)
+    target = _validate_target(policy)
+    prompts = _project_registry()
+    projected_registry_sha256 = _projected_registry_sha256(prompts)
     thresholds = policy.get("metrics", {})
     repetitions = int(thresholds.get("deterministic_repetitions", 3))
     max_recommendations = int(thresholds.get("max_recommendations", 3))
-    runtime_results = _run_canonical_classifier(cases, repetitions)
+    runtime_results = _run_canonical_classifier(cases, repetitions, prompts)
     by_id = {item.get("id"): item for item in runtime_results if isinstance(item, dict)}
-    canonical_ids = {prompt["id"] for prompt in _project_registry() if prompt.get("id")}
+    canonical_ids = {prompt["id"] for prompt in prompts if prompt.get("id")}
 
     primary_total = 0
     primary_hits = 0
@@ -320,11 +424,13 @@ def evaluate(policy: dict[str, Any], fixtures: dict[str, Any]) -> dict[str, Any]
         and required_recall >= float(thresholds.get("required_recall_at_3_min", 1.0))
         and deterministic_cases == case_count
     )
+    proof_ceiling = str(policy.get("proof_ceiling", ""))
+    registry_sources = _registry_source_paths()
     return {
         "schema_version": "prompt-finder-classifier-eval-result/v1",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "git_head": _git_head(),
-        "target": policy.get("target", {}),
+        "target": target,
         "sources": {
             "policy": str(POLICY_PATH.relative_to(ROOT)),
             "policy_sha256": _sha256(POLICY_PATH),
@@ -334,12 +440,26 @@ def evaluate(policy: dict[str, Any], fixtures: dict[str, Any]) -> dict[str, Any]
             "shared_search_runtime_sha256": _sha256(SEARCH_RUNTIME),
             "classifier_runtime": str(GUIDED_RUNTIME.relative_to(ROOT)),
             "classifier_runtime_sha256": _sha256(GUIDED_RUNTIME),
+            "projected_registry_sha256": projected_registry_sha256,
+            "projected_registry_prompt_count": len(prompts),
+            "registry_source_files": [
+                {
+                    "path": str(path.relative_to(ROOT)),
+                    "sha256": _sha256(path),
+                }
+                for path in registry_sources
+            ],
         },
         "thresholds": thresholds,
         "metrics": metrics,
         "verdict": "pass" if passes_thresholds else "fail",
         "cases": case_reports,
-        "proof_ceiling": policy.get("proof_ceiling", ""),
+        "proof_ceiling": proof_ceiling,
+        "proof_binding": {
+            "policy_proof_ceiling": proof_ceiling,
+            "validated_target": target,
+            "projected_registry_sha256": projected_registry_sha256,
+        },
     }
 
 
@@ -350,6 +470,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        output = _resolve_output(args.output)
         policy = _load_json(POLICY_PATH)
         fixtures = _load_json(CASES_PATH)
         report = evaluate(policy, fixtures)
@@ -357,7 +478,6 @@ def main(argv: list[str] | None = None) -> int:
         print(f"PROMPT_FINDER_CLASSIFIER_EVAL_ERROR: {exc}", file=sys.stderr)
         return 2
 
-    output = args.output if args.output.is_absolute() else ROOT / args.output
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 
@@ -370,7 +490,7 @@ def main(argv: list[str] | None = None) -> int:
             + f"primary={metrics['primary_hits']}/{metrics['primary_expected']} "
             + f"recall@3={metrics['required_top3_hits']}/{metrics['required_top3_targets']} "
             + f"deterministic={metrics['deterministic_cases']}/{metrics['case_count']} "
-            + f"output={output.relative_to(ROOT) if output.is_relative_to(ROOT) else output}"
+            + f"output={output.relative_to(ROOT)}"
         )
     return 0 if report["verdict"] == "pass" else 1
 
