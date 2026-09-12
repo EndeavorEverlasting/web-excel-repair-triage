@@ -1,0 +1,58 @@
+name: Temporary Prompt Kit durability graduation executor
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-snippet-artifact-graduation-20260912
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: feat/prompt-kit-snippet-artifact-graduation-20260912
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Strengthen P07 P18 P34 and focused regression
+        run: python scripts/tmp_prompt_durability_graduation.py
+      - name: Rebuild canonical Prompt Kit artifact
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Focused durability and owner-boundary proof
+        run: |
+          python -m unittest -v tests.test_prompt_kit_durability_graduation
+          python -m unittest -v tests.test_p02_p07_autonomous_iteration tests.test_actionable_prompt_registry
+      - name: Registry and tutorial parity
+        run: python scripts/prompt_registry_ops.py validate
+      - name: Language and discovery proof
+        run: |
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python -m unittest -v tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance tests.test_prompt_kit_tutorial_coverage
+      - name: Order and navigation proof
+        run: |
+          python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary
+          python -m unittest -v tests.test_prompt_kit_order_navigation_contract tests.test_prompt_kit_order_navigation_product
+      - name: Generated-site and patch hygiene proof
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit durable Prompt Kit contribution
+        shell: bash
+        run: |
+          if git diff --quiet -- docs/prompts.json tests/test_prompt_kit_durability_graduation.py web/prompt-kit/index.html; then
+            echo 'No durability-graduation changes remain to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/prompts.json tests/test_prompt_kit_durability_graduation.py web/prompt-kit/index.html
+          git commit -m 'feat(prompt-kit): graduate recurring snippets into durable tooling'
+          git push origin HEAD:feat/prompt-kit-snippet-artifact-graduation-20260912
