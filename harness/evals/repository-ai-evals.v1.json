@@ -1,0 +1,141 @@
+{
+  "schema_version": "repository-ai-evals/v1",
+  "owner": "P67",
+  "purpose": "Orchestrate repository AI/agent evaluations without replacing their owning fixtures, runners, or proof ceilings.",
+  "layers": [
+    "deterministic",
+    "synthetic",
+    "model_runtime",
+    "human_review"
+  ],
+  "candidate_corpus": {
+    "schema_version": "prompt-feedback-maintenance-report/v1",
+    "field": "eval_sample_candidates",
+    "authority": "candidate_only",
+    "required_flags": {
+      "candidate_only": true,
+      "gold_eval_authority": false
+    },
+    "forbidden_fields": [
+      "query_text",
+      "prompt_body",
+      "clipboard",
+      "secret",
+      "token",
+      "password",
+      "credential"
+    ],
+    "promotion_rule": "Observed usage may propose sanitized cases, but only an owning eval sprint may curate labels into a gold fixture."
+  },
+  "suites": [
+    {
+      "id": "prompt-finder-routing",
+      "owner": "P67",
+      "surface": "Prompt Finder recommendation routing",
+      "layer": "deterministic",
+      "blocking": true,
+      "command": [
+        "python",
+        "scripts/prompt_kit_classifier_eval.py",
+        "--output",
+        "Outputs/repository-ai-evals/prompt-finder-classifier.json",
+        "--summary"
+      ],
+      "artifact": "Outputs/repository-ai-evals/prompt-finder-classifier.json",
+      "case_source": "harness/evals/fixtures/prompt-finder-classifier-cases.v1.json",
+      "contract": "harness/evals/prompt-finder-classifier.v1.json",
+      "failure_classes": [
+        "wrong_primary_route",
+        "required_route_missing_from_top3",
+        "fabricated_route",
+        "non_deterministic_result"
+      ],
+      "proof_ceiling": "Deterministic canonical-runtime routing quality for curated gold cases at one exact repository head."
+    },
+    {
+      "id": "prompt-language-actionability",
+      "owner": "prompt-language-audit",
+      "surface": "Prompt Kit actionability and next-step language",
+      "layer": "deterministic",
+      "blocking": true,
+      "command": [
+        "python",
+        "scripts/evaluate_prompt_language.py",
+        "--strict",
+        "--output",
+        "Outputs/repository-ai-evals/prompt-language-audit.json",
+        "--summary"
+      ],
+      "artifact": "Outputs/repository-ai-evals/prompt-language-audit.json",
+      "case_source": "harness/evals/fixtures/prompt-language-cases.v1.json",
+      "contract": "harness/evals/prompt-language-audit.v1.json",
+      "failure_classes": [
+        "lazy_next_step",
+        "missing_actionability_contract",
+        "incomplete_prompt_coverage"
+      ],
+      "proof_ceiling": "Deterministic prompt-language contract coverage; not task-completion or model-quality proof."
+    },
+    {
+      "id": "p123-source-proof-boundary",
+      "owner": "P123/P67",
+      "surface": "P123 source fidelity and proof-boundary behavior",
+      "layer": "synthetic",
+      "blocking": true,
+      "command": [
+        "python",
+        "scripts/evaluate_p123_youtube_ingestion_behavior.py",
+        "--output",
+        "Outputs/repository-ai-evals/p123-youtube-ingestion-behavior.json",
+        "--summary"
+      ],
+      "artifact": "Outputs/repository-ai-evals/p123-youtube-ingestion-behavior.json",
+      "case_source": "tests/fixtures/p123_youtube_ingestion_behavior/drive_ud64uounlw_20260831.v1.json",
+      "failure_classes": [
+        "SOURCE_CONTEXT_REPLACED",
+        "UNSUPPORTED_DONOR_PIN",
+        "UNSUPPORTED_LIVE_PROOF",
+        "UNBOUND_EXECUTION_PROOF",
+        "ABSOLUTE_RISK_OVERCLAIM",
+        "REPOSITORY_BOUNDARY_BREACH"
+      ],
+      "proof_ceiling": "Deterministic scoring of a real historical regression fixture; future model outputs remain separately unproven."
+    },
+    {
+      "id": "p67-hallucination-diagnosis",
+      "owner": "P67",
+      "surface": "Missing-context factuality versus present-but-ignored faithfulness diagnosis",
+      "layer": "model_runtime",
+      "blocking": false,
+      "contract_blocking": true,
+      "contract_command": [
+        "python",
+        "-m",
+        "unittest",
+        "tests.test_p67_source_faithfulness_eval_prompt",
+        "-v"
+      ],
+      "runtime_command": [
+        "python",
+        "scripts/evaluate_p67_source_faithfulness.py",
+        "--runtime",
+        "auto",
+        "--output",
+        "Outputs/repository-ai-evals/p67-source-faithfulness-runtime.json",
+        "--summary"
+      ],
+      "case_source": "tests/fixtures/p67_source_faithfulness/opencode_p122_pair.v1.json",
+      "required_pair": {
+        "missing_context": {
+          "classification": "FACTUALITY_CONTEXT_MISSING",
+          "remediation": "TARGETED_GROUNDING"
+        },
+        "present_but_ignored": {
+          "classification": "FAITHFULNESS_CONTEXT_IGNORED",
+          "remediation": "REANCHOR_EXISTING_CONTEXT"
+        }
+      },
+      "proof_ceiling": "CI proves the paired deterministic oracle and runtime contract. Actual model behavior is UNPROVEN until an observed runtime receipt is produced for the exact candidate."
+    }
+  ]
+}
