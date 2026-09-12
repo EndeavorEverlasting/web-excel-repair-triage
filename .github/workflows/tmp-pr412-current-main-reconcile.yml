@@ -1,0 +1,77 @@
+name: Temporary PR 412 Current Main Reconcile
+
+on:
+  push:
+    branches: [feat/repository-promotion-pipeline-20260909]
+    paths:
+      - .github/workflows/tmp-pr412-current-main-reconcile.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pr412-current-main-reconcile
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v7
+        with:
+          ref: feat/repository-promotion-pipeline-20260909
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Reconcile current main, validate, and stage exact commit
+        shell: bash
+        env:
+          BRANCH: feat/repository-promotion-pipeline-20260909
+        run: |
+          set -euo pipefail
+          START_HEAD="$(git rev-parse HEAD)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          BASE_SHA="$(git rev-parse origin/main)"
+          echo "start-head=$START_HEAD"
+          echo "main-floor=$BASE_SHA"
+
+          if ! git merge --no-commit --no-ff "$BASE_SHA"; then
+            mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+            printf 'conflicts=%s\n' "${conflicts[*]-}"
+            if [[ "${#conflicts[@]}" -ne 1 || "${conflicts[0]}" != "web/prompt-kit/index.html" ]]; then
+              echo "Unexpected reconciliation conflict; refusing mutation." >&2
+              exit 1
+            fi
+            git checkout --ours -- web/prompt-kit/index.html
+            git add web/prompt-kit/index.html
+          fi
+
+          git rm -f .github/workflows/tmp-pr412-current-main-reconcile.yml
+          python scripts/build_prompt_kit_registry.py
+          python scripts/validate_repository_promotion.py --summary
+          python -m unittest -v \
+            tests.test_repository_promotion \
+            tests.test_pr_merge_gate \
+            tests.test_p105_local_first_tutorial_freshness \
+            tests.test_sysadminsuite_prompt_registry \
+            tests.test_prompt_kit_selected_prompt
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          git status --short
+          git diff --stat
+
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+          remote_head="$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)"
+          test "$remote_head" = "$START_HEAD"
+
+          git add -A
+          git commit -m "chore(promotion): reconcile current main into PR 412"
+          STAGED_COMMIT="$(git rev-parse HEAD)"
+          echo "staged-commit=$STAGED_COMMIT"
+          git push origin "HEAD:$BRANCH"
