@@ -1,21 +1,27 @@
 {
   "schema_version": "prompt-topology-classifier/v1",
   "contract_id": "afkaf-prompt-topology-classifier",
-  "lane": "classifier architecture + generated ordering",
-  "branch": "design-only",
+  "lane": "classifier architecture + executable Phase A semantic topology",
+  "branch": "feat/prompt-topology-phase-a-executable",
   "authority": {
     "schema": "harness/prompt-topology/schema.v1.json",
     "config": "harness/prompt-topology/config.v1.json",
+    "phase_a_refinements": "harness/prompt-topology/phase-a-refinements.v1.json",
     "spec": "harness/prompt-topology/README.md",
+    "phase_a_execution_spec": "harness/prompt-topology/EXECUTABLE_PHASE_A.md",
     "registry_sources": ["docs/prompts.json", "registry/prompts/*.json"],
-    "family_authority": "registry/prompts/prompt-classification.v1.json"
+    "family_authority": "registry/prompts/prompt-classification.v1.json",
+    "tutorial_authority": "scripts/prompt_kit_tutorial_coverage.py:audit"
   },
   "forbidden_scope": [
     "NodeWeaver implementation",
     "wholesale Prompt Kit ontology rewrite",
     "prompt-ID or seq renumbering",
     "replacing existing registry truth",
-    "UI/3D viewer implementation (future visualization coordinates are artifacts only)"
+    "UI/3D viewer implementation",
+    "projection-driven classification",
+    "live browser telemetry/background event collection/session tracking/user analytics",
+    "vector-database infrastructure"
   ],
   "pipeline_contract": {
     "stages": [
@@ -29,36 +35,61 @@
       "8-kit-ordering",
       "9-validation-report"
     ],
+    "phase_a_executable_stages": [
+      "canonical-nodes",
+      "deterministic-local-embeddings",
+      "multi-channel-graph",
+      "pca+hdbscan",
+      "persistent-cluster-reconciliation",
+      "opportunity-scoring",
+      "canonical-topology-artifact",
+      "live-registry-validation"
+    ],
     "single_input_contract": "canonical_prompt_record",
     "embedding_input": "feature_views (semantic_view + role_view + structural_vector) derived only from canonical records",
     "similarity_weights": { "semantic": 0.7, "role": 0.2, "metadata": 0.1 },
     "similarity_formula": "0.70*cosine(semantic)+0.20*cosine(role)+0.10*metadata_similarity",
     "clustering": { "algorithm": "hdbscan", "not": "k-means", "reduction": "pca 30-50D (optional umap 10-15D)", "never": "3D coordinates" },
-    "projection": { "algorithm": "umap", "n_components": 3, "visualization_only": true },
+    "projection": { "algorithm": "umap", "n_components": 3, "visualization_only": true, "phase": "future Phase B; not executed by Phase A" },
+    "phase_a_channels": ["SEMANTIC_NEIGHBOR", "WORKFLOW_NEXT", "CLASS_FAMILY", "SHARED_SCOPE", "SHARED_EVIDENCE", "TUTORIAL_ROUTE"],
+    "reserved_channels": ["CO_USAGE", "TRANSITION", "SUBSTITUTION", "COMPLEMENT"],
+    "cluster_identity": "persistent cluster_id reconciled against previous accepted topology; membership_fingerprint_sha256 separately records exact membership",
+    "opportunity_intelligence": "deterministic advisory scoring only; never mutates canonical prompt registry truth",
+    "canonical_artifact": "artifacts/prompt-topology/topology.v1.json",
     "ordering_is_derived": true,
     "ordering_does_not_mutate_ids": true,
-    "disposability_test": "rm -rf artifacts/prompt-topology/* && python scripts/prompt-topology/run.py => byte-identical rederivation given same registry+config+embedding responses"
+    "disposability_test": "delete artifacts/prompt-topology/topology.v1.json && python scripts/prompt-topology/run.py => byte-identical topology.v1.json for identical registry+config+previous-topology input"
   },
   "ordering_contract": {
     "policy_version": "1.0.0",
     "family_order": ["foundation", "discover-plan", "build-repair", "validate-protect", "integrate-ship", "autonomy"],
-    "cluster_order_within_family": "sort by (-member_count, cluster_id_lexicographic) where cluster_id=C- + first 6 hex of SHA256(sorted member ids joined by ',') uppercase; OUTLIER last",
+    "cluster_order_within_family": "sort by (-member_count, persistent cluster_id lexicographic); OUTLIER last. Exact membership is membership_fingerprint_sha256 and does not redefine a continuous cluster identity.",
     "intra_cluster_key": "(role_rank, -centrality, seq_int, prompt_id)",
     "role_rank": "index in config.ordering.sprint_role_order; unlisted types sort after listed lexicographically",
-    "centrality": "mean composite similarity to all members of same cluster (higher first, rounded 4 decimals)",
+    "centrality": "mean composite similarity to all members of same cluster (higher first, integer micros in Phase A canonical artifact)",
     "final_tie_break": "prompt_id lexicographic; guarantees strict total order and stability",
-    "linear_order": "flatten(groups in family_order -> clusters in cluster_order -> prompts in intra_cluster order); outliers_group appended last",
-    "source_vs_derived": "canonical library order remains sequence_ascending per prompt-kit-order-navigation contract; topology linear_order is complementary recommendation metadata",
-    "determinism_guarantees": ["sorted keys + canonical JSON", "L2-normalized vectors rounded 6 decimals", "scores rounded 4 decimals", "explicit random_seed=42 for every stochastic stage", "content-addressed cluster IDs"]
+    "linear_order": "historical design output remains future-compatible; Phase A canonical topology does not replace stable Prompt Kit sequence order",
+    "source_vs_derived": "canonical library order remains sequence_ascending per prompt-kit-order-navigation contract; topology is complementary recommendation/semantic metadata",
+    "determinism_guarantees": [
+      "sorted keys + canonical JSON",
+      "deterministic local hashing-vectorizer fixture/provider seam for Phase A CI",
+      "persist similarity/centrality/probability scores as integer micros where emitted by topology.v1.json",
+      "explicit deterministic PCA and HDBSCAN configuration",
+      "persistent cluster IDs reconciled against previous accepted topology with separate exact membership fingerprint",
+      "repeat build bytes == shuffled-source build bytes"
+    ]
   },
   "artifacts": {
     "tracked_contracts": [
       "harness/prompt-topology/schema.v1.json",
       "harness/prompt-topology/config.v1.json",
+      "harness/prompt-topology/phase-a-refinements.v1.json",
       "harness/prompt-topology/README.md",
+      "harness/prompt-topology/EXECUTABLE_PHASE_A.md",
       "harness/contracts/prompt-topology-classifier.v1.json"
     ],
     "generated_disposable": [
+      "artifacts/prompt-topology/topology.v1.json",
       "artifacts/prompt-topology/canonical-prompts.json",
       "artifacts/prompt-topology/feature-views.json",
       "artifacts/prompt-topology/embeddings.json",
@@ -71,21 +102,20 @@
       "artifacts/prompt-topology/run-manifest.json"
     ],
     "orchestrator": "scripts/prompt-topology/run.py",
-    "future_visualization_ready": "artifacts/prompt-topology/projection-3d.json (x,y,z per prompt) + cluster shape metadata in kit-order.json — consumed by future viewer, not classifier correctness"
+    "phase_a_validator": "scripts/prompt-topology/validate.py",
+    "future_visualization_ready": "historical projection-3d/shape design is retained for future Phase B/C but cannot influence Phase A semantic topology"
   },
   "validation": {
     "structural_hard_fail": [
       "PROMPT_MISSING_FROM_TOPOLOGY",
       "DUPLICATE_PROMPT_ID",
-      "EMBEDDING_COUNT_MISMATCH",
-      "INVALID_VECTOR_DIMENSION",
-      "NONDETERMINISTIC_INPUT_HASH",
-      "KIT_ORDER_DUPLICATE",
-      "KIT_ORDER_MISSING_PROMPT",
-      "UNKNOWN_CLUSTER_REFERENCE",
-      "EMBEDDING_MODEL_MISMATCH",
-      "PROJECTION_MISSING_PROMPT",
-      "NEIGHBOR_COUNT_MISMATCH"
+      "UNKNOWN_EDGE_ENDPOINT",
+      "SELF_EDGE",
+      "DUPLICATE_EDGE_OR_CHANNEL",
+      "CLUSTER_PARTITION_MISMATCH",
+      "MEMBERSHIP_FINGERPRINT_MISMATCH",
+      "CONTENT_HASH_MISMATCH",
+      "NONDETERMINISTIC_REBUILD"
     ],
     "semantic_warnings": [
       "CLASSIFICATION_DRIFT",
@@ -99,14 +129,16 @@
     ],
     "gates": {
       "structural_errors_required": 0,
-      "new_prompt_possible_duplicate_blocks_afkaf": "composite>=0.94 && role>=0.88 && same sprint_path_role => fail creation gate until explicit STRENGTHEN|CREATE_NEW disposition",
-      "validator_command": "python scripts/prompt-topology/validate.py --artifacts artifacts/prompt-topology --config harness/prompt-topology/config.v1.json --summary",
-      "promotion_gate": "harness-completeness must remain PASS; new prompt-topology domain contract registers only when implementation proves definition-of-done bullets"
+      "static_contract_validator": "python scripts/validate_prompt_topology.py --summary",
+      "focused_fixture_validator": "python -m unittest tests.test_prompt_topology_phase_a -v",
+      "live_builder": "python scripts/prompt-topology/run.py --summary",
+      "repeat_and_shuffle_determinism": "python scripts/prompt-topology/run.py --check",
+      "live_registry_rebuild_validator": "python scripts/prompt-topology/validate.py --rebuild --summary"
     }
   },
   "afkaf_gate": {
-    "flow": "proposed prompt -> canonicalize -> embed -> compare vs current topology -> top neighbors + candidate family/cluster -> decision packet {STRENGTHEN|POSSIBLE_DUPLICATE|CREATE_NEW} -> only then may prompt_registry_ops allocate new ID",
+    "flow": "proposed prompt -> canonicalize -> compare vs current topology -> top neighbors + candidate family/cluster -> decision packet {STRENGTHEN|POSSIBLE_DUPLICATE|CREATE_NEW} -> only then may prompt_registry_ops allocate new ID",
     "thresholds": { "POSSIBLE_DUPLICATE": 0.94, "STRENGTHEN": 0.88, "RELATED": 0.78 }
   },
-  "proof_ceiling": "Design contract and deterministic schema/config/ordering policy proof only. No embedding execution, no clustering run, no 3D browser rendering, no live AFKAF allocation, no production population of artifacts/prompt-topology/* is proven until the implementation sprint executes the orchestrated pipeline and the validator reproduces byte-identical disposable artifacts on the tested commit."
+  "proof_ceiling": "Executable repository/runtime Phase A proof: live-registry graph generation, multi-channel relationships, real HDBSCAN clustering/outliers, persistent cluster reconciliation, advisory opportunity scoring, canonical topology.v1.json, and repeat/shuffled-input byte determinism. Phase B 3D projection/spatial stability, Phase C viewer behavior, live telemetry, and production behavioral evidence remain unproven and out of scope."
 }
