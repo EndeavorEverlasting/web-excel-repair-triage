@@ -1,0 +1,126 @@
+{
+  "next_id": "P140",
+  "next_seq": "140",
+  "registries": [
+    {
+      "registry_id": "skill-development-prompts",
+      "path": "registry/prompts/skill-development-prompts.v1.json",
+      "prompt_count": 2,
+      "profiles": [],
+      "colors": [
+        "Lavender",
+        "Teal"
+      ],
+      "categories": [
+        "standard"
+      ]
+    },
+    {
+      "registry_id": "tutorial-discovery-prompts",
+      "path": "registry/prompts/tutorial-discovery-prompts.v1.json",
+      "prompt_count": 4,
+      "profiles": [],
+      "colors": [
+        "Amber",
+        "Sky"
+      ],
+      "categories": [
+        "standard"
+      ]
+    },
+    {
+      "registry_id": "ai-engineering-level-up-prompts",
+      "path": "registry/prompts/ai-engineering-level-up-prompts.v1.json",
+      "prompt_count": 8,
+      "profiles": [],
+      "colors": [
+        "Gold",
+        "Green",
+        "Orange",
+        "Purple",
+        "Teal"
+      ],
+      "categories": [
+        "standard"
+      ]
+    },
+    {
+      "registry_id": "repository-work-ledger-prompts",
+      "path": "registry/prompts/repository-work-ledger-prompts.v1.json",
+      "prompt_count": 5,
+      "profiles": [],
+      "colors": [
+        "Teal"
+      ],
+      "categories": [
+        "standard"
+      ]
+    },
+    {
+      "registry_id": "management-operations-prompts",
+      "path": "registry/prompts/management-operations-prompts.v1.json",
+      "prompt_count": 16,
+      "profiles": [
+        "ad-campaign",
+        "billing-management",
+        "fun-management",
+        "triage-management"
+      ],
+      "colors": [
+        "Emerald",
+        "Indigo",
+        "Teal"
+      ],
+      "categories": [
+        "standard"
+      ]
+    },
+    {
+      "registry_id": "spec-architecture-prompts",
+      "path": "registry/prompts/spec-architecture-prompts.v1.json",
+      "prompt_count": 41,
+      "profiles": [
+        "spec-architecture",
+        "sysadminsuite"
+      ],
+      "colors": [
+        "Cyan",
+        "Orange",
+        "Teal"
+      ],
+      "categories": [
+        "standard"
+      ]
+    }
+  ],
+  "required_draft_fields": [
+    "class",
+    "copyContent",
+    "expectedOutput",
+    "inspectFirst",
+    "keywords",
+    "name",
+    "nextStep",
+    "proofGate",
+    "sprintRole",
+    "type",
+    "useWhen"
+  ],
+  "auto_fields": [
+    "copySheet",
+    "id",
+    "seq"
+  ],
+  "classification": {
+    "policy_id": "prompt-kit-lifecycle-sections-v1",
+    "prompt_counts_by_section": {
+      "Foundation": 10,
+      "Discover & Plan": 25,
+      "Build & Repair": 39,
+      "Validate & Protect": 19,
+      "Integrate & Ship": 27,
+      "Autonomy & Night Shift": 20
+    },
+    "unused_mapped_types": []
+  }
+}
