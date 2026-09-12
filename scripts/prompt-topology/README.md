@@ -1,49 +1,16 @@
-# scripts/prompt-topology — Future Orchestrator Stubs
+# scripts/prompt-topology — Phase A executors
 
-This directory will own the deterministic pipeline executors. It is **not implemented** in the `design-only` branch — this README records the intended surface so future implementation does not invent a competing location.
+This directory owns the executable, deterministic semantic-topology pipeline. It intentionally stops before 3D projection and live behavior collection.
 
-## Intended executables
+| File | Responsibility |
+|---|---|
+| `topology_core.py` | Canonical prompt records, deterministic local vector seam, pair similarity, shared enums/helpers |
+| `topology_graph.py` | Multi-channel edge construction |
+| `topology_cluster.py` | PCA/HDBSCAN, persistent-cluster reconciliation, opportunity scoring |
+| `pipeline.py` | Phase A orchestration, canonical artifact assembly, structural validation, serialization |
+| `run.py` | Loads the live Prompt Kit/classification/tutorial owners and writes `artifacts/prompt-topology/topology.v1.json`; `--check` proves repeated and shuffled-input byte identity |
+| `validate.py` | Fails closed on live registry parity, edge/cluster/opportunity invariants, content hash, and optional byte-identical live rebuild |
 
-| Script | Stage | Input → Output |
-|---|---|---|
-| `build-records.py` | 1. Canonical records | `registry` + `prompt-classification` → `canonical-prompts.json` |
-| `feature-views.py` | 2. Feature views | `canonical-prompts.json` → `feature-views.json` (semantic/role/structural) |
-| `embed.py` | 3. Embeddings | `feature-views.json` → `embeddings.json` (provider adapter `embed(text)->vector`) |
-| `neighbors.py` | 4. Similarity index | `embeddings.json` → `neighbors.json` (brute-force cosine, 0.70/0.20/0.10) |
-| `cluster.py` | 5+7. Clustering + classification | `embeddings.json` + `neighbors.json` → `clusters.json` + `classifications.json` |
-| `project.py` | 6. 3D projection | `embeddings.json` → `projection-3d.json` (UMAP 3D, seed 42, visualization only) |
-| `order.py` | 8. Kit ordering | `classifications.json` + `neighbors.json` + `projection-3d.json` → `kit-order.json` |
-| `validate.py` | 9. Validation | all artifacts → `validation-report.json` + exit code (0 = no structural errors) |
-| `run.py` | orchestrator | runs 1→9 in order, writes `run-manifest.json`, enforces `--check` byte-identical rederivation |
+Install the scoped runtime dependencies with `python -m pip install -r requirements-prompt-topology.txt`. The default embedding seam is `local-hashing-vectorizer/v1`: deterministic, network-free, and replaceable. The semantic graph—not any future projection—is authoritative derived evidence.
 
-## Determinism requirements (all future scripts must obey)
-
-- Canonical JSON: sorted keys, UTF-8, LF, 2-space indent, no trailing whitespace; hashes computed over that form.
-- Rounded persistence: vectors 6 decimals, scores/centrality 4 decimals.
-- Explicit seeds: HDBSCAN 42, UMAP 42; no unseeded randomness.
-- Content-addressed cluster IDs: `C-` + first 6 hex of `SHA256(sorted member ids joined by ',')`.
-- Ordering never reads `projection-3d.json` coordinates.
-
-## Provider adapter
-
-```python
-# embed.py
-def embed(text: str, model: str, provider: str) -> list[float]:
-    # adapter — route to OpenAI / local sentence-transformers / Ollama / enterprise
-    # return L2-normalized vector
-```
-
-V1 must support `--provider local` fixture mode that replays canned vectors for deterministic CI (no network).
-
-## Disposability test
-
-```bash
-rm -rf artifacts/prompt-topology/*
-python scripts/prompt-topology/run.py --provider local
-python scripts/prompt-topology/validate.py --artifacts artifacts/prompt-topology --summary
-python scripts/prompt-topology/run.py --provider local --check  # must pass byte-identical
-```
-
-## Forbidden this lane
-
-No implementation in the design-only branch. Do not add NodeWeaver, ontology rewrite, prompt-ID renumbering, or UI/3D viewer code here.
+Use `--previous-topology <accepted topology.v1.json>` when proving persistent cluster identity across an accepted prior topology. The previous topology is an explicit versioned input; the current output is never silently used as its own predecessor.
