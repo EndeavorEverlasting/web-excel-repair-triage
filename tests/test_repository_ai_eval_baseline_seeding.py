@@ -80,6 +80,9 @@ class RepositoryAIEvalBaselineSeedingTests(unittest.TestCase):
         for marker in (
             "Resolve refreshed default-branch baseline",
             "git fetch --no-tags origin",
+            "BASE_REF: ${{ github.base_ref }}",
+            "PUSH_BEFORE: ${{ github.event.before }}",
+            'REF="$PUSH_BEFORE"',
             "scripts/seed_repository_ai_eval_baseline.py",
             "--baseline-ref \"${{ steps.baseline.outputs.ref }}\"",
             "--baseline-report Outputs/repository-ai-eval-baseline.json",
@@ -87,12 +90,22 @@ class RepositoryAIEvalBaselineSeedingTests(unittest.TestCase):
             "Verify PASS-to-FAIL comparator sentinel",
         ):
             self.assertIn(marker, workflow)
+        self.assertNotIn('BASE_REF="${{ github.base_ref }}"', workflow)
+        self.assertNotIn('REF="${{ github.event.before }}"', workflow)
 
     def test_seed_output_contract_stays_under_outputs(self) -> None:
         inside = SEED.resolve_output(Path("Outputs/repository-ai-eval-baseline.json"))
         self.assertTrue(inside.is_relative_to((ROOT / "Outputs").resolve()))
         with self.assertRaisesRegex(SEED.BaselineSeedError, "must remain under Outputs"):
             SEED.resolve_output(ROOT.parent / "baseline.json")
+
+    def test_atomic_write_filesystem_errors_are_controlled(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            blocker = Path(tmp) / "not-a-directory"
+            blocker.write_text("occupied", encoding="utf-8")
+            destination = blocker / "baseline.json"
+            with self.assertRaisesRegex(SEED.BaselineSeedError, "failed to write baseline report atomically"):
+                SEED.write_json_atomic(destination, {"status": "PASS"})
 
 
 if __name__ == "__main__":
