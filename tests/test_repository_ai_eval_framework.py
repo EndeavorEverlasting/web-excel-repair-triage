@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -114,6 +115,25 @@ class RepositoryAIEvalFrameworkTests(unittest.TestCase):
         runtime["runtime_command"] = ["python", "scripts/evaluate_p67_source_faithfulness.py", "--runtime", "auto"]
         with self.assertRaisesRegex(MOD.EvalFrameworkError, "exactly one --output"):
             MOD.validate_registry(registry)
+
+    def test_timeout_is_attributed_and_cannot_look_green(self) -> None:
+        original = MOD.subprocess.run
+        try:
+            def raise_timeout(*args, **kwargs):
+                raise subprocess.TimeoutExpired(
+                    cmd=kwargs.get("args", args[0] if args else ["python", "fake.py"]),
+                    timeout=kwargs.get("timeout", 1),
+                    output="partial stdout",
+                    stderr="timeout stderr",
+                )
+            MOD.subprocess.run = raise_timeout
+            result = MOD.run_command(["python", "fake.py"], 1)
+        finally:
+            MOD.subprocess.run = original
+        self.assertTrue(result["timed_out"])
+        self.assertIsNone(result["exit_code"])
+        self.assertIn("partial stdout", result["stdout_tail"])
+        self.assertIn("timeout stderr", result["stderr_tail"])
 
     def test_model_runtime_defaults_to_unproven_after_contract_pass(self) -> None:
         suite = self.by_id["p67-hallucination-diagnosis"]
