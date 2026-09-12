@@ -47,7 +47,7 @@ jobs:
           python -m unittest tests.test_prompt_kit_feedback_production tests.test_prompt_finder_observation_pipeline tests.test_operant_friction_repository_dispatch_adapter tests.test_operant_upgrade -v
           python scripts/validate_prompt_kit_feedback_afk_routing.py --summary
           python scripts/validate_operant_upgrade.py --summary
-      - name: Process explicit feedback ingest boundary
+      - name: Process explicit feedback and usage ingest boundary
         run: python scripts/prompt_kit_feedback_hook.py --input feedback/inbox --output Outputs/prompt-kit-feedback-maintenance.json
       - name: Publish maintenance evidence
         uses: actions/upload-artifact@v4
