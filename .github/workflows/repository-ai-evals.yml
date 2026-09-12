@@ -82,6 +82,11 @@ jobs:
             test -n "$BASE_REF"
             git fetch --no-tags origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
             REF="refs/remotes/origin/${BASE_REF}"
+          elif [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            REF="${{ github.event.before }}"
+            test -n "$REF"
+            test "$REF" != "0000000000000000000000000000000000000000"
+            git cat-file -e "${REF}^{commit}"
           else
             REF="HEAD^1"
           fi
