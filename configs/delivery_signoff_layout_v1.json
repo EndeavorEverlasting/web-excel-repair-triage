@@ -1,0 +1,50 @@
+{
+  "schema": "delivery-signoff-layout/v1",
+  "name": "Serial-first ink-ready pragmatic sign-off",
+  "page": {
+    "target_count": 1,
+    "maximum_count": 2,
+    "orientation_strategy": "choose_portrait_or_landscape_from_serial_density",
+    "minimum_margin_inches": 0.35,
+    "maximum_unused_page_fraction": 0.22
+  },
+  "typography": {
+    "minimum_body_points": 8.5,
+    "minimum_serial_points": 8.5,
+    "minimum_heading_points": 11,
+    "prefer_condensed_spacing_before_smaller_font": true
+  },
+  "identity": {
+    "priority": ["serial_number", "mac_address", "asset_tag", "temporary_hostname"],
+    "temporary_hostname_in_primary_drawbox": false,
+    "neuron_pair_format": "serial_number / mac_address",
+    "duplicate_identifiers_forbidden": true
+  },
+  "equipment": {
+    "one_row_per_distinct_physical_item": true,
+    "separate_cable_color_and_model_rows": true,
+    "quantity_must_be_evidence_backed": true,
+    "initials_column_required": true
+  },
+  "draw_surfaces": {
+    "document_protection": "none",
+    "flattened_document_forbidden": true,
+    "required": ["asset_mark_cells", "field_annotation_box", "receiver_signature"],
+    "static_proof_label": "draw_ready_static",
+    "operator_smoke_test_label": "draw_smoke_tested"
+  },
+  "layout": {
+    "serial_drawbox": "dominant_content_region",
+    "equipment_checklist": "compact_but_legible",
+    "acceptance_block": "must_not_be_stranded_on_extra_page",
+    "multi_page_strategy": "page_1_project_equipment_and_first_asset_group_page_2_remaining_asset_group_annotation_and_signature",
+    "reject_large_dead_space_beside_overflow": true,
+    "reject_clipping_or_truncation": true
+  },
+  "contamination_checks": {
+    "reject_stale_site_name": true,
+    "reject_stale_recipient": true,
+    "reject_stale_asset_range": true,
+    "reject_stale_source_footer": true
+  }
+}
