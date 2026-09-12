@@ -4,7 +4,9 @@ on:
   pull_request:
     paths:
       - 'registry/prompts/**'
+      - 'build_prompt_kit.py'
       - 'docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md'
+      - 'docs/prompt-kit.js'
       - 'docs/prompt-kit-*.js'
       - 'docs/prompt-kit-ontology-history.v1.json'
       - 'docs/prompt-kit-favorites-portability.js'
@@ -30,7 +32,9 @@ on:
     branches: [main]
     paths:
       - 'registry/prompts/**'
+      - 'build_prompt_kit.py'
       - 'docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md'
+      - 'docs/prompt-kit.js'
       - 'docs/prompt-kit-*.js'
       - 'docs/prompt-kit-ontology-history.v1.json'
       - 'docs/prompt-kit-favorites-portability.js'
