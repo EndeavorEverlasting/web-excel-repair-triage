@@ -68,22 +68,26 @@ jobs:
           python -m py_compile scripts/tmp_classifier_observation_carrier.py
       - name: Mutate bounded sources and run proof
         run: python scripts/tmp_classifier_observation_carrier.py
-      - name: Commit exact durable result and remove carrier
+      - name: Commit proven non-workflow result
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # The Actions token cannot update workflow files. Restore those paths and the
+          # temporary carrier before committing; the authorized connector owns cleanup
+          # and the permanent workflow update after this proven product commit lands.
+          git restore --source=HEAD -- \
+            .github/workflows/prompt-kit-feedback-hook.yml \
+            .github/workflows/tmp-classifier-observation-carrier.yml \
+            scripts/tmp_classifier_observation_carrier.py
           git add -A \
             docs/prompt-kit-feedback-production.js \
             docs/prompt-kit-guided-recommendations.js \
             docs/PROMPT_KIT_FEEDBACK_POLLING_DESIGN.md \
             scripts/prompt_kit_feedback_hook.py \
             tests/test_prompt_finder_observation_pipeline.py \
-            .github/workflows/prompt-kit-feedback-hook.yml \
-            web/prompt-kit/index.html \
-            scripts/tmp_classifier_observation_carrier.py \
-            .github/workflows/tmp-classifier-observation-carrier.yml
+            web/prompt-kit/index.html
           git diff --cached --check
           git status --short
           git commit -m "feat(prompt-kit): mine classifier observation candidates"
