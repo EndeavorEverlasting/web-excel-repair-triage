@@ -1,0 +1,66 @@
+name: Temporary prompt usage review contract fix
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - scripts/tmp_prompt_usage_review_contract_fix.py
+      - .github/workflows/tmp-prompt-usage-review-contract-fix.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-prompt-usage-review-contract-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  fix-prove-push:
+    if: github.head_ref == 'feat/prompt-finder-observation-corpus-20260912'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply review contract fixes and prove bounded result
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('scripts/tmp_prompt_usage_review_contract_fix.py')
+          text=path.read_text(encoding='utf-8')
+          opening="new_tests = '''"
+          closing="'''\ntest = replace_once(test, anchor, new_tests + anchor"
+          if text.count(opening)!=1 or text.count(closing)!=1:
+              raise SystemExit(f'fixture delimiter repair mismatch: open={text.count(opening)} close={text.count(closing)}')
+          text=text.replace(opening,'new_tests = """',1)
+          text=text.replace(closing,'"""\ntest = replace_once(test, anchor, new_tests + anchor',1)
+          path.write_text(text,encoding='utf-8')
+          PY
+          python -m py_compile scripts/tmp_prompt_usage_review_contract_fix.py
+          python scripts/tmp_prompt_usage_review_contract_fix.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git restore --source=HEAD -- .github/workflows/tmp-prompt-usage-review-contract-fix.yml
+          rm scripts/tmp_prompt_usage_review_contract_fix.py
+          git add -A \
+            docs/prompt-kit-feedback-production.js \
+            docs/PROMPT_KIT_FEEDBACK_POLLING_DESIGN.md \
+            scripts/prompt_kit_feedback_hook.py \
+            tests/test_prompt_finder_observation_pipeline.py \
+            web/prompt-kit/index.html \
+            scripts/tmp_prompt_usage_review_contract_fix.py
+          git diff --cached --check
+          git status --short
+          git commit -m 'fix(prompt-kit): harden usage observation contract'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
