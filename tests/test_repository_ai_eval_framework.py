@@ -110,9 +110,11 @@ class RepositoryAIEvalFrameworkTests(unittest.TestCase):
         self.assertEqual(result["status"], "UNPROVEN_RUNTIME")
         self.assertFalse(result["blocking"])
 
-    def test_framework_is_registered_in_deterministic_floor_and_ci(self) -> None:
+    def test_framework_uses_dedicated_ci_and_reuses_registered_prompt_eval_owners(self) -> None:
         floor = json.loads((ROOT / "harness/test-floor.v1.json").read_text(encoding="utf-8"))
-        self.assertIn("tests/test_repository_ai_eval_framework.py", floor["self_tests"])
+        self.assertNotIn("tests/test_repository_ai_eval_framework.py", floor["self_tests"])
+        self.assertIn("tests/test_p123_youtube_ingestion_behavior_eval_prompt.py", floor["self_tests"])
+        self.assertIn("tests/test_p67_source_faithfulness_eval_prompt.py", floor["self_tests"])
         workflow = (ROOT / ".github/workflows/repository-ai-evals.yml").read_text(encoding="utf-8")
         for marker in (
             "scripts/run_repository_ai_evals.py",
