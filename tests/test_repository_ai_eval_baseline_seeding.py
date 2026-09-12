@@ -47,7 +47,7 @@ class RepositoryAIEvalBaselineSeedingTests(unittest.TestCase):
         with self.assertRaisesRegex(SEED.BaselineSeedError, "degraded baseline"):
             SEED.validate_baseline_report(degraded, sha)
 
-    def test_pass_to_fail_regression_sentinel_is_attributed(self) -> None:
+    def test_pass_to_fail_regression_sentinel(self) -> None:
         baseline = {
             "schema_version": "repository-ai-eval-report/v1",
             "commit_sha": "a" * 40,
