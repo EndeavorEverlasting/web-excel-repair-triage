@@ -153,7 +153,7 @@ jobs:
           python tests/test_health_record_workspace_sync_prompt.py
           python scripts/prompt_registry_ops.py validate | tee .tmp-health-prompt-sprint/validate-receipt.json
           python scripts/evaluate_prompt_language.py --summary
-          python -m unittest tests.test_prompt_language_quality tests.test_prompt_kit_tutorial_coverage tests.test_prompt_kit_discovery -v
+          python -m unittest tests.test_prompt_language_audit tests.test_prompt_kit_tutorial_coverage tests.test_prompt_kit_discovery -v
           mkdir -p Outputs
           python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/health-prompt-order-navigation-audit.json --summary
           python scripts/build_prompt_kit_registry.py --check
