@@ -20,6 +20,7 @@ from scripts import prompt_classification  # noqa: E402
 from scripts import prompt_kit_tutorial_coverage as tutorial_coverage  # noqa: E402
 
 CONFIG_PATH = REPO_ROOT / "harness" / "prompt-topology" / "config.v1.json"
+REFINEMENTS_PATH = REPO_ROOT / "harness" / "prompt-topology" / "phase-a-refinements.v1.json"
 DEFAULT_OUTPUT = REPO_ROOT / "artifacts" / "prompt-topology" / "topology.v1.json"
 
 
@@ -37,6 +38,8 @@ def _runtime_config() -> pipeline.RuntimeConfig:
     hdbscan = pipe["clustering"]["hdbscan_params"]
     family = pipe["classification"]["family_assignment"]
     duplicate = pipe["classification"]["duplicate_detection"]["thresholds"]
+    refinements = _load_json(REFINEMENTS_PATH)
+    identity = refinements["supersedes"]["config.pipeline.clustering.cluster_id_policy"]
     return pipeline.RuntimeConfig(
         semantic_weight=float(weights["semantic"]),
         role_weight=float(weights["role"]),
@@ -48,7 +51,7 @@ def _runtime_config() -> pipeline.RuntimeConfig:
         min_samples=int(hdbscan["min_samples"]),
         cluster_selection_method=str(hdbscan["cluster_selection_method"]),
         family_majority_threshold=float(family["threshold"]),
-        cluster_reconcile_min_jaccard=0.50,
+        cluster_reconcile_min_jaccard=float(identity["reconcile_min_jaccard"]),
         duplicate_threshold=float(duplicate["STRENGTHEN_EXISTING_CANDIDATE"]),
     )
 
@@ -84,6 +87,7 @@ def build(*, shuffle_source: bool = False, previous_topology: dict | None = None
             "classification_policy": "registry/prompts/prompt-classification.v1.json",
             "tutorial_coverage": "scripts/prompt_kit_tutorial_coverage.py:audit",
             "runtime_config": "harness/prompt-topology/config.v1.json",
+            "phase_a_refinements": "harness/prompt-topology/phase-a-refinements.v1.json",
         },
     )
 
