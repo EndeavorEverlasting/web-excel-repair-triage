@@ -1,0 +1,63 @@
+name: Temporary P02 current-main reconciliation
+
+on:
+  push:
+    branches:
+      - feat/p02-segmented-transcript-recovery-20260912
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: feat/p02-segmented-transcript-recovery-20260912
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Reconcile current main at canonical source boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main feat/p02-segmented-transcript-recovery-20260912 --prune
+          test "$(git rev-parse origin/main)" = "8e49a469937cbc63186564606df37d924356d4f8"
+          set +e
+          git merge --no-commit --no-ff origin/main
+          rc=$?
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            conflicts="$(git diff --name-only --diff-filter=U)"
+            test "$conflicts" = "web/prompt-kit/index.html"
+            git checkout --ours -- web/prompt-kit/index.html
+            git add web/prompt-kit/index.html
+          fi
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          git add web/prompt-kit/index.html
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'merge: reconcile current main into P02 recovery sprint'
+      - name: Validate combined current-main floor
+        run: |
+          python scripts/prompt_registry_ops.py validate
+          python -m unittest -v tests.test_skill_prompt_registry tests.test_p02_p07_autonomous_iteration tests.test_prompt_kit_durability_graduation
+          python scripts/evaluate_prompt_language.py --summary
+          python -m unittest -v tests.test_prompt_kit_discovery tests.test_prompt_kit_guidance tests.test_prompt_kit_tutorial_coverage
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check HEAD^1 HEAD
+      - name: Verify reconciliation semantics
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 8e49a469937cbc63186564606df37d924356d4f8 HEAD
+          git grep -F 'explicit mutation authority for every planned tracked-file' -- registry/prompts/prompt-overrides.v1.json
+          git grep -F 'perform multiple targeted retrievals rather than one broad query' -- tests/test_skill_prompt_registry.py
+          test ! -e scripts/tmp_p02_review_repair.py
+          test ! -e .github/workflows/tmp-p02-review-repair.yml
+      - name: Push reconciled branch
+        run: git push origin HEAD:feat/p02-segmented-transcript-recovery-20260912
