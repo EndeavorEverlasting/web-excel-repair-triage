@@ -25,6 +25,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch origin main feat/p02-segmented-transcript-recovery-20260912 --prune
           test "$(git rev-parse origin/main)" = "8e49a469937cbc63186564606df37d924356d4f8"
           set +e
@@ -39,8 +41,6 @@ jobs:
           fi
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           git add web/prompt-kit/index.html
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'merge: reconcile current main into P02 recovery sprint'
       - name: Validate combined current-main floor
         run: |
