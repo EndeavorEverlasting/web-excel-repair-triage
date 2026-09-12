@@ -9,6 +9,8 @@ on:
       - 'docs/prompt-kit-ontology-history.v1.json'
       - 'docs/prompt-kit-favorites-portability.js'
       - 'harness/contracts/prompt-kit-*.json'
+      - 'harness/evals/prompt-finder-classifier.v1.json'
+      - 'harness/evals/fixtures/prompt-finder-classifier-cases.v1.json'
       - 'harness/capabilities.v1.json'
       - 'harness/triggers.v1.json'
       - 'harness/workflows.v1.json'
@@ -33,6 +35,8 @@ on:
       - 'docs/prompt-kit-ontology-history.v1.json'
       - 'docs/prompt-kit-favorites-portability.js'
       - 'harness/contracts/prompt-kit-*.json'
+      - 'harness/evals/prompt-finder-classifier.v1.json'
+      - 'harness/evals/fixtures/prompt-finder-classifier-cases.v1.json'
       - 'scripts/build_prompt_kit_registry.py'
       - 'scripts/serve_prompt_kit_portable.py'
       - 'scripts/validate_prompt_kit_portability.py'
@@ -70,6 +74,17 @@ jobs:
         run: |
           python scripts/prompt_kit_tutorial_coverage.py --summary
           python -m unittest tests.test_prompt_kit_tutorial_coverage -v
+      - name: Evaluate Prompt Finder classifier quality
+        run: |
+          python scripts/prompt_kit_classifier_eval.py --output Outputs/prompt-finder-classifier-eval.json --summary
+          python -m unittest tests.test_prompt_kit_classifier_eval -v
+      - name: Publish Prompt Finder classifier proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-finder-classifier-eval
+          path: Outputs/prompt-finder-classifier-eval.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Validate repository ontology lens and canonical Prompt Kit parity
         env:
           ONTOLOGY_HISTORY_BASELINE: ${{ github.event.pull_request.base.sha || github.event.before }}
