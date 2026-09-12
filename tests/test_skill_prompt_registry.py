@@ -69,6 +69,50 @@ class SkillPromptRegistryTests(unittest.TestCase):
         ):
             self.assertIn(keyword, prompt["keywords"])
 
+    def test_p02_rich_handoff_bootstraps_without_transcript_dependency(self) -> None:
+        content = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P02"]["copyContent"]
+        for phrase in (
+            "CONTEXT IS A STARTING MAP, NOT A SEARCH BOUNDARY",
+            "PROVIDED-CONTEXT MODE",
+            "sufficient to begin repository exploration and execution",
+            "cannot block repository/provider inspection",
+            "do not make any one recovery surface a prerequisite for another",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_p02_segmented_transcript_reduces_later_superseding_decisions(self) -> None:
+        content = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P02"]["copyContent"]
+        for phrase in (
+            "SEGMENTED TRANSCRIPT MODE",
+            "bounded batches",
+            "small overlap",
+            "Tag claims as FACT, OPERATOR INTENT, AGENT PROPOSAL, or UNKNOWN",
+            "Reduce the segment records instead of concatenating summaries",
+            "resolve state transitions and later superseding decisions",
+            "A later decision in the transcript supersedes an earlier one",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_p02_history_unavailable_reconstructs_from_repository_provider(self) -> None:
+        prompt = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P02"]
+        content = prompt["copyContent"]
+        for phrase in (
+            "SEMANTIC-RETRIEVAL MODE",
+            "REPOSITORY RECONSTRUCTION FALLBACK",
+            "unavailable, incomplete, compacted, or fails",
+            "Loss of historical transcript or tool output is not itself a blocker",
+            "do not wait for historical retrieval to finish before exploring durable sources",
+            "CURRENT + CONFIRMED, CURRENT + UNVERIFIED, SUPERSEDED, HISTORICAL, CONTRADICTED, or UNKNOWN",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("repository/provider reconstruction without a false blocker", prompt["proofGate"])
+
     def test_p13_recurring_urgency_recovery_advances_and_parallelizes(self) -> None:
         prompt = {
             item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
