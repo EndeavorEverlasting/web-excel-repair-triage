@@ -12,6 +12,7 @@ from pathlib import Path
 from scripts import prompt_kit_classifier_eval
 
 ROOT = Path(__file__).resolve().parents[1]
+OUTPUTS = ROOT / "Outputs"
 POLICY = ROOT / "harness" / "evals" / "prompt-finder-classifier.v1.json"
 CASES = ROOT / "harness" / "evals" / "fixtures" / "prompt-finder-classifier-cases.v1.json"
 RUNNER = ROOT / "scripts" / "prompt_kit_classifier_eval.py"
@@ -21,6 +22,7 @@ class PromptKitClassifierEvalTests(unittest.TestCase):
     def setUp(self) -> None:
         self.policy = json.loads(POLICY.read_text(encoding="utf-8"))
         self.fixtures = json.loads(CASES.read_text(encoding="utf-8"))
+        OUTPUTS.mkdir(parents=True, exist_ok=True)
 
     def test_contract_requires_quality_routing_and_failure_case_families(self) -> None:
         self.assertEqual(self.policy["schema_version"], "prompt-finder-classifier-eval/v1")
@@ -50,9 +52,31 @@ class PromptKitClassifierEvalTests(unittest.TestCase):
         for duplicated_route in ("'P07'", '"P07"', "'P67'", '"P67"'):
             self.assertNotIn(duplicated_route, source)
 
+    def test_policy_target_must_match_executed_runtime(self) -> None:
+        mutated = copy.deepcopy(self.policy)
+        mutated["target"]["runtime"] = "docs/not-the-runtime.js"
+        with self.assertRaisesRegex(
+            prompt_kit_classifier_eval.EvalError,
+            "target does not match the executed canonical runtime",
+        ):
+            prompt_kit_classifier_eval.evaluate(mutated, self.fixtures)
+
+    def test_cli_rejects_output_outside_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            outside = Path(tmp) / "classifier-eval.json"
+            completed = subprocess.run(
+                [sys.executable, str(RUNNER), "--output", str(outside)],
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+        self.assertEqual(completed.returncode, 2)
+        self.assertIn("output must be inside Outputs/", completed.stderr)
+
     @unittest.skipUnless(shutil.which("node"), "Node.js is required for canonical classifier execution")
     def test_cli_emits_passing_machine_readable_baseline(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory(prefix="classifier-eval-test-", dir=OUTPUTS) as tmp:
             output = Path(tmp) / "classifier-eval.json"
             completed = subprocess.run(
                 [sys.executable, str(RUNNER), "--output", str(output), "--summary"],
@@ -72,6 +96,14 @@ class PromptKitClassifierEvalTests(unittest.TestCase):
         self.assertEqual(report["metrics"]["deterministic_rate"], 1.0)
         self.assertTrue(report["sources"]["classifier_runtime_sha256"])
         self.assertTrue(report["sources"]["shared_search_runtime_sha256"])
+        self.assertTrue(report["sources"]["projected_registry_sha256"])
+        self.assertGreater(report["sources"]["projected_registry_prompt_count"], 0)
+        self.assertTrue(report["sources"]["registry_source_files"])
+        self.assertEqual(
+            report["proof_binding"]["projected_registry_sha256"],
+            report["sources"]["projected_registry_sha256"],
+        )
+        self.assertEqual(report["proof_binding"]["validated_target"], report["target"])
 
     @unittest.skipUnless(shutil.which("node"), "Node.js is required for canonical classifier execution")
     def test_wrong_gold_target_fails_closed(self) -> None:
