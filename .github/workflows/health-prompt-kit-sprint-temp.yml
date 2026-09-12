@@ -1,0 +1,49 @@
+name: Temporary health prompt prior-art gate
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-health-record-sync-20260912
+    paths:
+      - .github/workflows/health-prompt-kit-sprint-temp.yml
+
+permissions:
+  contents: write
+
+jobs:
+  prior-art:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-health-record-sync-20260912
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run canonical pre-authoring gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .tmp-health-prompt-sprint
+          python scripts/prompt_registry_ops.py inspect | tee .tmp-health-prompt-sprint/inspect.json
+          python scripts/prompt_registry_ops.py prior-art --query "synchronize health records from conversation by discovering available repositories documents databases and connectors; silently prefer an established canonical health workspace; preserve canonical record schema directory organization identifiers relationships evidence provenance and history; do not disclose private app repository connector provider ids paths or topology; fall back to existing health data resources without duplicates; verify every write by readback" | tee .tmp-health-prompt-sprint/prior-art.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          receipt=json.loads(Path('.tmp-health-prompt-sprint/prior-art.json').read_text())
+          assert receipt['all_registered_sources_searched'] is True
+          ids={row['source_id'] for row in receipt['sources']}
+          required={'deepseek-harness','prompts-chat','mattpocock-skills'}
+          missing=required-ids
+          assert not missing, f'missing required prior-art sources: {sorted(missing)}'
+          PY
+      - name: Commit gate receipts for sprint evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .tmp-health-prompt-sprint/inspect.json .tmp-health-prompt-sprint/prior-art.json
+          git commit -m "chore: record health prompt prior-art receipt"
+          git push origin HEAD:feat/prompt-kit-health-record-sync-20260912
