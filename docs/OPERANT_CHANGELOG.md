@@ -30,6 +30,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - feat: add connected health record sync prompt (`015cf653`)
 - feat(prompt-kit): add persistent selected-prompt state with snap+highlight, Enter-to-open, Y-to-copy (`d4d19ffe`)
 - feat(prompt-kit): add repository strategic opportunity scout (`4f9d8434`)
+- feat(prompt-kit): harden P02 conversation recovery (`3013d626`)
 - feat(prompt-kit): graduate recurring snippets into durable tooling (`02d0f3ab`)
 
 ### Fixes / performance
@@ -50,6 +51,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(prompt-kit): bind classifier eval provenance and output safety (`233539cf`)
 - fix(prompt-kit): make classifier routes complete tutorial wiring (`e0c1ae4d`)
 - fix(prompt-kit): treat classifier route as complete wiring (`74a42c96`)
+- fix(prompt-kit): close P02 review gaps (`da9127dc`)
 
 ## 0.5.0 - 2026-09-10
 
