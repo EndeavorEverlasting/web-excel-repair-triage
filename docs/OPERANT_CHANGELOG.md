@@ -2,6 +2,16 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.7.0 - 2026-09-13
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): gate P141 to P82 experiments (`6857ffa2`)
+
+### Fixes / performance
+
+- fix(prompt-kit): persist repo plans and validate thread handoffs (`43bab5f6`)
+
 ## 0.6.2 - 2026-09-13
 
 ### Fixes / performance
