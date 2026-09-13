@@ -1,0 +1,269 @@
+name: Repository plan durability carrier
+
+on:
+  push:
+    branches: [fix/repository-plan-durability-20260912]
+    paths:
+      - '.github/workflows/repository-plan-durability-carrier.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-build-prove:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/repository-plan-durability-20260912
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Patch canonical policy and durable roadmap
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          policy_path = Path('registry/prompts/actionable-next-step-policy.v1.json')
+          policy = json.loads(policy_path.read_text(encoding='utf-8'))
+
+          suffix = (
+              ' When repository planning produces a materially actionable plan, persist the complete plan '
+              'to tracked repository/provider state before treating planning as complete or handing execution '
+              'to another agent; chat text is provisional rather than canonical repository state. If an active '
+              'pull request exists, the approved plan must be present there directly or by an explicit canonical '
+              'tracked-plan reference.'
+          )
+          if 'chat text is provisional rather than canonical repository state' not in policy['next_step_suffix']:
+              policy['next_step_suffix'] = policy['next_step_suffix'].rstrip() + suffix
+
+          marker = 'REPOSITORY PLAN DURABILITY CONTRACT'
+          section = '''REPOSITORY PLAN DURABILITY CONTRACT
+- When work concerns a repository and planning produces a materially actionable roadmap, sprint map, architecture plan, migration plan, phase plan, implementation sequence, or other execution dependency, the complete accepted plan MUST live in durable repository/provider state; chat alone is not a canonical planning surface.
+- Chat may carry a provisional sketch, critique, or short orientation note. Before the plan becomes an execution dependency, is called approved/ready, or is handed to another agent, persist the complete plan in the existing canonical tracked plan/spec/handoff path or in the active pull request. Reuse an existing plan owner/path before creating another plan file.
+- If an active pull request exists, approval must be reflected in that PR immediately: include the complete plan there or identify the exact committed canonical plan path plus its status/commit. Do not leave the approved version only in chat.
+- A plan approved in chat triggers synchronization, not closure: update the tracked plan or PR in the same execution thread before implementation/handoff continues.
+- Multi-phase repository work must persist the whole phase map, not only the current phase: completed floor, successor phases, dependencies, owned and forbidden scope, expected artifacts, validation/proof gates, proof ceiling, and explicit deferred work. Future phases may remain unimplemented, but they may not exist only as conversational leftovers when they are already actionable.
+- If a materially actionable repository plan changes, update the durable plan/PR before handing off or claiming the planning state current. Agents entering later must be able to recover the plan from refreshed repository/provider truth without needing the originating chat.
+- Closeout is invalid when an actionable repository plan, approved plan revision, or successor-phase map exists only in chat. Persist it first, then report the canonical path/PR and exact revision.
+'''
+          appendix = policy['copy_content_appendix']
+          if marker not in appendix:
+              needle = '\n\nREMOTE FRESHNESS / BRANCH FLOOR CONTRACT'
+              if needle not in appendix:
+                  raise SystemExit('Remote freshness marker not found in shared appendix')
+              appendix = appendix.replace(needle, '\n\n' + section.rstrip() + needle, 1)
+              policy['copy_content_appendix'] = appendix
+
+          policy_path.write_text(json.dumps(policy, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          roadmap = '''# Prompt Topology Successor Roadmap — Phase B / Phase C
+
+**Status:** durable successor plan; Phase A is complete and is not reopened by this document.  
+**Plan owner:** `harness/prompt-topology/PHASE_B_C_ROADMAP.md`  
+**Semantic authority:** the current Prompt Kit registry plus `harness/prompt-topology/schema.v1.json`, `config.v1.json`, `phase-a-refinements.v1.json`, and the executable Phase A pipeline.  
+**Historical Phase A integration:** `b627ce43254b603d8b197ca704aaebfc3730572e`.
+
+## Why this file exists
+
+The original topology design already specified visualization-only UMAP projection and downstream shapes, while `EXECUTABLE_PHASE_A.md` deliberately stopped before projection/viewer work. Phase A later became executable without creating one current successor plan. This file closes that durability gap: future agents should recover the successor roadmap from the repository, not from the chat that discussed it.
+
+## Proven floor — Phase A COMPLETE
+
+Phase A owns semantic truth:
+
+`registry -> deterministic feature/embedding seam -> multi-channel graph -> deterministic PCA -> HDBSCAN/outliers -> persistent cluster reconciliation -> advisory opportunities -> artifacts/prompt-topology/topology.v1.json`
+
+Phase A invariants remain binding throughout later phases:
+
+- prompt IDs remain canonical node identity;
+- semantic topology is derived evidence and never silently rewrites registry truth;
+- projection/viewer output cannot influence clustering, classification, opportunities, or registry mutation;
+- generated topology is reproducible from current canonical inputs;
+- later visualization work consumes Phase A output rather than replacing it.
+
+## Phase B — Deterministic 3D projection + spatial stability
+
+### Dependency
+A freshly rebuilt and validated Phase A topology for the current registry floor.
+
+### Owned scope
+- a renderer-neutral 3D projection artifact derived from Phase A node vectors/topology;
+- deterministic projection implementation using the existing `config.v1.json` UMAP contract (`n_components=3`, cosine metric, fixed seed 42 unless the canonical config is explicitly revised);
+- projection provenance and validator coverage;
+- spatial-stability reconciliation against a previous accepted projection when one exists;
+- visualization-only cluster envelopes, beginning with the existing bounding-sphere contract;
+- focused CI evidence for determinism and semantic non-interference.
+
+### Spatial-stability rule
+Fixed randomness is necessary but not sufficient once the corpus changes. Phase B must align a new projection to the previous accepted projection using unchanged prompt IDs as anchors before publishing coordinates. The implementation may use a deterministic rigid/orthogonal Procrustes-style alignment or an equivalently bounded canonical method, but the chosen method must be encoded in config/schema and proven by fixtures. If the anchor set is insufficient, publish an explicit lineage/reset state rather than pretending coordinates are spatially continuous.
+
+### Required artifacts
+- `artifacts/prompt-topology/projection-3d.json` (or an explicitly versioned successor chosen by schema migration);
+- projection provenance: algorithm, dimensions, parameters, random seed, Phase A content hash/input identity, prior projection identity when aligned, stability method/result;
+- cluster envelope metadata downstream of coordinates;
+- validation receipt proving node parity, determinism, and semantic non-interference.
+
+### Acceptance gates
+- identical Phase A inputs + identical projection config produce byte-identical canonical projection output;
+- shuffled input order does not alter canonical output;
+- every projected prompt references exactly one Phase A node and no unknown node appears;
+- deleting/regenerating projection cannot change Phase A semantic topology/content hash;
+- unchanged anchor nodes preserve orientation/continuity within an explicit tested tolerance after alignment;
+- insufficient continuity evidence fails closed to a declared reset/lineage state;
+- projection remains visualization-only.
+
+### Forbidden in Phase B
+Interactive viewer implementation, live usage/session telemetry, `CO_USAGE`, `TRANSITION`, `SUBSTITUTION`, `COMPLEMENT`, vector database introduction, prompt renumbering, or registry mutation driven by coordinates.
+
+## Phase C — Read-only interactive topology viewer
+
+### Dependency
+Accepted Phase B projection plus current validated Phase A semantic topology.
+
+### Owned scope
+- an interactive 3D explorer that consumes canonical Phase A + Phase B artifacts without recomputing semantic truth;
+- node selection/search and readable prompt identity/title/family/cluster/outlier/opportunity context;
+- family/cluster visibility controls and relationship-edge inspection;
+- navigation that preserves stable prompt IDs and existing canonical Prompt Kit sequence semantics;
+- graceful failure when projection or semantic artifacts are stale/mismatched;
+- accessibility/performance checks appropriate to the chosen renderer.
+
+### Viewer invariants
+- renderer state is presentation state only;
+- moving/hiding/filtering nodes cannot mutate registry, cluster identity, or topology artifacts;
+- the viewer must bind displayed data to exact artifact/provenance identities and reject mismatched Phase A/Phase B generations;
+- topology recommendation order may aid discovery but never silently replaces canonical sequence ordering.
+
+### Acceptance gates
+- viewer loads the exact canonical artifacts and exposes their identities/provenance;
+- representative nodes, outliers, clusters, multi-channel edges, and opportunities can be inspected;
+- stale/mismatched artifacts fail visibly rather than being combined;
+- no viewer action changes semantic artifact hashes or canonical registry state;
+- observed browser proof covers navigation, selection, filtering, and artifact-mismatch behavior.
+
+### Forbidden in Phase C
+Telemetry-driven topology mutation, automatic prompt rewriting, vector DB migration, prompt renumbering, or treating visual proximity as classification truth.
+
+## Later / explicitly deferred lanes
+
+### Behavioral telemetry channels
+`CO_USAGE`, `TRANSITION`, `SUBSTITUTION`, and `COMPLEMENT` remain a later evidence layer. They require a separate privacy/provenance/session-identity contract and must join the graph as typed evidence without rewriting semantic channels by default.
+
+### Vector database
+Deferred. Current corpus scale does not justify it. Reconsider only when measured corpus/query/runtime evidence shows brute-force/local storage is the limiting factor.
+
+### Prompt identity / ontology rewrites
+Prompt renumbering remains forbidden. Family/ontology changes require their own explicit P07/P79-owned registry mutation and proof; neither projection nor viewer behavior authorizes them.
+
+## Execution order
+
+1. Refresh current default branch and rebuild/validate Phase A on the current registry.
+2. Declare a new bounded **Prompt Topology Phase B** sprint from this file; implement and integrate projection + spatial-stability proof.
+3. Refresh main and verify Phase B containment/provenance.
+4. Declare a new bounded **Prompt Topology Phase C** sprint; implement and integrate the read-only viewer.
+5. Only after Phase C proof, evaluate whether behavioral telemetry has enough evidence and privacy/provenance design to justify a separate successor sprint.
+
+This roadmap is the durable execution dependency. Chat may summarize it, but future agents should sprint from this file and refreshed repository/provider truth.
+'''
+          Path('harness/prompt-topology/PHASE_B_C_ROADMAP.md').write_text(roadmap, encoding='utf-8')
+
+          test = '''from __future__ import annotations
+
+import json
+import sys
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = ROOT / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
+import build_prompt_kit_registry
+
+POLICY = ROOT / "registry" / "prompts" / "actionable-next-step-policy.v1.json"
+ROADMAP = ROOT / "harness" / "prompt-topology" / "PHASE_B_C_ROADMAP.md"
+MARKER = "REPOSITORY PLAN DURABILITY CONTRACT"
+
+
+class RepositoryPlanDurabilityTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.policy = json.loads(POLICY.read_text(encoding="utf-8"))
+        cls.prompts = {p["id"]: p for p in build_prompt_kit_registry.load_prompt_registry()}
+        cls.roadmap = ROADMAP.read_text(encoding="utf-8")
+
+    def test_shared_policy_makes_chat_only_repo_plans_noncanonical(self) -> None:
+        appendix = self.policy["copy_content_appendix"]
+        self.assertIn(MARKER, appendix)
+        for phrase in (
+            "chat alone is not a canonical planning surface",
+            "persist the complete plan",
+            "active pull request",
+            "plan approved in chat triggers synchronization",
+            "Multi-phase repository work must persist the whole phase map",
+            "Closeout is invalid",
+        ):
+            self.assertIn(phrase, appendix)
+
+    def test_next_step_contract_requires_durable_plan_before_handoff(self) -> None:
+        suffix = self.policy["next_step_suffix"]
+        self.assertIn("chat text is provisional rather than canonical repository state", suffix)
+        self.assertIn("active pull request", suffix)
+
+    def test_representative_planning_and_execution_prompts_receive_contract(self) -> None:
+        for prompt_id in ("P02", "P04", "P07", "P95", "P141"):
+            self.assertIn(prompt_id, self.prompts)
+            self.assertIn(MARKER, self.prompts[prompt_id]["copyContent"])
+            self.assertIn("chat alone is not a canonical planning surface", self.prompts[prompt_id]["copyContent"])
+
+    def test_topology_successor_plan_is_durable_and_complete_enough_to_sprint(self) -> None:
+        self.assertTrue(ROADMAP.is_file())
+        for phrase in (
+            "Phase A COMPLETE",
+            "Phase B — Deterministic 3D projection + spatial stability",
+            "Phase C — Read-only interactive topology viewer",
+            "Behavioral telemetry channels",
+            "Vector database",
+            "Prompt identity / ontology rewrites",
+            "Execution order",
+            "Acceptance gates",
+        ):
+            self.assertIn(phrase, self.roadmap)
+
+    def test_roadmap_preserves_semantic_visualization_boundary(self) -> None:
+        for phrase in (
+            "projection/viewer output cannot influence clustering",
+            "projection remains visualization-only",
+            "visual proximity as classification truth",
+        ):
+            self.assertIn(phrase, self.roadmap)
+
+
+if __name__ == "__main__":
+    unittest.main()
+'''
+          Path('tests/test_repository_plan_durability.py').write_text(test, encoding='utf-8')
+          PY
+      - name: Regenerate canonical Prompt Kit
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Validate focused durability contract
+        run: |
+          python -m unittest -v tests.test_repository_plan_durability tests.test_actionable_prompt_registry tests.test_p02_p07_autonomous_iteration
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit durable changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add registry/prompts/actionable-next-step-policy.v1.json harness/prompt-topology/PHASE_B_C_ROADMAP.md tests/test_repository_plan_durability.py web/prompt-kit/index.html
+          git commit -m "fix(prompt-kit): persist actionable repository plans"
+          git push origin HEAD:fix/repository-plan-durability-20260912
