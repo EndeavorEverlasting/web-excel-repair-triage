@@ -14,6 +14,7 @@ on:
       - scripts/operant_version.py
       - scripts/validate_operant_product_identity.py
       - tests/test_operant_product_identity.py
+      - tests/test_operant_release_anchor.py
       - tests/test_prompt_kit_order_navigation_product.py
       - web/prompt-kit/index.html
       - .github/workflows/operant-versioning.yml
@@ -53,7 +54,7 @@ jobs:
           python scripts/operant_version.py validate
           python scripts/operant_version.py validate-release-candidate --base origin/main
           python scripts/validate_operant_product_identity.py --summary
-          python -m unittest tests.test_operant_product_identity tests.test_prompt_kit_order_navigation_product -v
+          python -m unittest tests.test_operant_product_identity tests.test_operant_release_anchor tests.test_prompt_kit_order_navigation_product -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
