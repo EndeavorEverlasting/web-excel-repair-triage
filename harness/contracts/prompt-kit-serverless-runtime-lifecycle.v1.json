@@ -33,7 +33,7 @@
       "status": "planned",
       "phase": 1,
       "required_use_cases": [
-        "separate Personal State, Local Journal, PrivacyReducer buffer, sync retry state, and secrets",
+        "separate Personal State, Local Journal, PrivacyReducer buffer, sync retry state, polling state, and secrets",
         "automatic retention cleanup",
         "manual clear controls",
         "storage-pressure fail-closed behavior"
@@ -158,6 +158,7 @@
         ]
       },
       "polling_state": {
+        "max_age_hours": 24,
         "persistent_request_history_allowed": false,
         "persistent_response_history_allowed": false,
         "persistent_cycle_log_allowed": false,
@@ -165,10 +166,17 @@
         "backoff_state": "ephemeral-preferred",
         "delete_on": [
           "successful-cycle",
+          "age-expiry",
           "transport-disabled",
           "cursor-invalidated",
           "manual-user-clear"
         ]
+      },
+      "secrets": {
+        "automatic_purge": false,
+        "retention": "until-user-revocation-or-rotation",
+        "telemetry_cleanup_may_delete": false,
+        "notes": "Encryption keys, recovery material, and pairing secrets are a distinct protected store. Telemetry cleanup cannot delete material still required to decrypt an existing user save."
       }
     },
     "storage_pressure_policy": {
