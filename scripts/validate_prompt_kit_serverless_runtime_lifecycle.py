@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -64,14 +65,40 @@ EXPECTED_LIMITS = {
     "privacy_reducer_buffer": {"max_age_days": 30, "max_bytes": 524288, "max_aggregate_keys": 2048},
     "sync_retry_queue": {"max_age_days": 7, "max_bytes": 262144, "max_items": 64},
 }
+REQUIRED_USER_CONTROLS = {
+    "clear_usage_and_local_journal_required",
+    "clear_collective_buffer_required",
+    "clear_sync_retry_and_polling_state_required",
+    "clear_personal_state_must_be_separate",
+    "clear_personal_state_confirmation_required",
+}
 EXPECTED_PHASE4_DEPENDENCY = (
     "phase-1-local-lifecycle plus Prompt Topology Phase C closeout plus resolved P95 "
     "evidence-spine/state-ownership investigation"
 )
+EXPECTED_PHASE5_DEPENDENCY = "phase-4-local-collective-learning plus network-anonymity investigation"
 EXPECTED_STRATEGIC_GATE = (
     "Prompt Topology Phase C closeout integrated and P95 Prompt Execution Evidence Spine/"
     "state-ownership investigation resolved"
 )
+REQUIRED_WORKFLOW_PATHS = {
+    "harness/contracts/prompt-kit-serverless-runtime-lifecycle.v1.json",
+    "harness/contracts/prompt-kit-cross-device-access.v1.json",
+    "harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md",
+    "docs/PROMPT_KIT_SERVERLESS_RUNTIME_PHASE_PLAN.md",
+    "docs/prompt-kit-preference-gameplay.js",
+    "scripts/validate_prompt_kit_serverless_runtime_lifecycle.py",
+    "tests/test_prompt_kit_serverless_runtime_lifecycle.py",
+}
+REQUIRED_WORKFLOW_COMMANDS = {
+    "python scripts/validate_prompt_kit_serverless_runtime_lifecycle.py --summary",
+    "python -m unittest tests.test_prompt_kit_serverless_runtime_lifecycle -v",
+    "python scripts/validate_prompt_kit_privacy_storage.py --summary",
+    "python -m unittest tests.test_prompt_kit_privacy_storage -v",
+    "python scripts/validate_prompt_kit_cross_device_access.py --summary",
+    "python -m unittest tests.test_prompt_kit_cross_device_access -v",
+    "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
+}
 
 
 class LifecycleError(RuntimeError):
@@ -153,13 +180,26 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
         raise LifecycleError("cleanup run points drifted")
 
     stores = lifecycle.get("stores")
-    required_stores = {"personal_state", "local_journal", "privacy_reducer_buffer", "sync_retry_queue", "polling_state"}
+    required_stores = {
+        "personal_state",
+        "local_journal",
+        "privacy_reducer_buffer",
+        "sync_retry_queue",
+        "polling_state",
+        "secrets",
+    }
     stores = _require_exact_keys(stores, required_stores, "local_storage_lifecycle.stores")
     personal = stores["personal_state"]
     if personal.get("automatic_purge") is not False or personal.get("retention") != "until-user-delete":
         raise LifecycleError("Personal State must never be automatically purged")
     if personal.get("user_clear_required") is not True:
         raise LifecycleError("Personal State must have an explicit user-clear path")
+
+    secrets = stores["secrets"]
+    if secrets.get("automatic_purge") is not False or secrets.get("telemetry_cleanup_may_delete") is not False:
+        raise LifecycleError("secret/recovery material must remain outside telemetry auto-cleanup")
+    if secrets.get("retention") != "until-user-revocation-or-rotation":
+        raise LifecycleError("secret/recovery retention ownership drifted")
 
     for store_name, expected in EXPECTED_LIMITS.items():
         store = stores[store_name]
@@ -169,12 +209,16 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
         _require_nonempty_list(store.get("delete_on"), f"{store_name}.delete_on")
 
     polling = stores["polling_state"]
+    if polling.get("max_age_hours") != 24:
+        raise LifecycleError("polling state max age must remain 24 hours")
     for field in ("persistent_request_history_allowed", "persistent_response_history_allowed", "persistent_cycle_log_allowed"):
         if polling.get(field) is not False:
             raise LifecycleError(f"polling_state.{field} must remain false")
     if polling.get("max_persistent_cursor_records") != 1:
         raise LifecycleError("polling state may persist at most one cursor record")
-    _require_nonempty_list(polling.get("delete_on"), "polling_state.delete_on")
+    polling_delete = set(_require_nonempty_list(polling.get("delete_on"), "polling_state.delete_on"))
+    if "age-expiry" not in polling_delete:
+        raise LifecycleError("polling state must delete on age expiry")
 
     pressure = lifecycle.get("storage_pressure_policy")
     if not isinstance(pressure, dict):
@@ -183,8 +227,8 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
     if "Personal State" not in must_never:
         raise LifecycleError("storage pressure policy must protect Personal State")
 
-    controls = lifecycle.get("user_controls")
-    if not isinstance(controls, dict) or not all(value is True for value in controls.values()):
+    controls = _require_exact_keys(lifecycle.get("user_controls"), REQUIRED_USER_CONTROLS, "local_storage_lifecycle.user_controls")
+    if not all(value is True for value in controls.values()):
         raise LifecycleError("all lifecycle user-clear controls must remain required")
 
     telemetry = payload.get("polling_and_telemetry_policy")
@@ -214,6 +258,8 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
     forbidden_phase4 = set(phases["phase-4-local-collective-learning"].get("forbidden_scope", []))
     if "new route/usage/outcome event model before evidence-spine ownership is resolved" not in forbidden_phase4:
         raise LifecycleError("Phase 4 must forbid a duplicate evidence event model before P95 resolution")
+    if phases["phase-5-serverless-collective-ingestion"].get("dependency") != EXPECTED_PHASE5_DEPENDENCY:
+        raise LifecycleError("Phase 5 dependency drifted")
 
     collision = payload.get("known_runtime_collision")
     if not isinstance(collision, dict) or collision.get("pull_request") != 242:
@@ -225,7 +271,8 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
         "capabilities": len(ids),
         "phases": len(phases),
         "cleanup_run_points": len(run_points),
-        "bounded_stores": len(EXPECTED_LIMITS) + 1,
+        "bounded_disposable_stores": 4,
+        "protected_stores": 2,
     }
 
 
@@ -286,28 +333,174 @@ def validate_strategy_dependency() -> None:
             raise LifecycleError(f"post-Phase-C strategic dependency drifted: {phrase}")
 
 
+def _strip_js_comments(text: str) -> str:
+    out: list[str] = []
+    i = 0
+    quote: str | None = None
+    escaped = False
+    while i < len(text):
+        ch = text[i]
+        nxt = text[i + 1] if i + 1 < len(text) else ""
+        if quote is not None:
+            out.append(ch)
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == quote:
+                quote = None
+            i += 1
+            continue
+        if ch in {"'", '"', "`"}:
+            quote = ch
+            out.append(ch)
+            i += 1
+            continue
+        if ch == "/" and nxt == "/":
+            i += 2
+            while i < len(text) and text[i] != "\n":
+                i += 1
+            out.append("\n")
+            continue
+        if ch == "/" and nxt == "*":
+            i += 2
+            while i + 1 < len(text) and not (text[i] == "*" and text[i + 1] == "/"):
+                i += 1
+            i += 2
+            continue
+        out.append(ch)
+        i += 1
+    return "".join(out)
+
+
+def _js_function_body(text: str, name: str) -> str | None:
+    match = re.search(rf"function\s+{re.escape(name)}\s*\([^)]*\)\s*\{{", text)
+    if not match:
+        return None
+    open_index = match.end() - 1
+    depth = 0
+    quote: str | None = None
+    escaped = False
+    i = open_index
+    while i < len(text):
+        ch = text[i]
+        nxt = text[i + 1] if i + 1 < len(text) else ""
+        if quote is not None:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == quote:
+                quote = None
+            i += 1
+            continue
+        if ch in {"'", '"', "`"}:
+            quote = ch
+            i += 1
+            continue
+        if ch == "/" and nxt == "/":
+            i += 2
+            while i < len(text) and text[i] != "\n":
+                i += 1
+            continue
+        if ch == "/" and nxt == "*":
+            i += 2
+            while i + 1 < len(text) and not (text[i] == "*" and text[i + 1] == "/"):
+                i += 1
+            i += 2
+            continue
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return text[open_index + 1 : i]
+        i += 1
+    return None
+
+
 def validate_gameplay_if_present() -> None:
     if not GAMEPLAY_PATH.exists():
         return
-    text = GAMEPLAY_PATH.read_text(encoding="utf-8")
+    raw = GAMEPLAY_PATH.read_text(encoding="utf-8")
+    text = _strip_js_comments(raw)
     if "promptKit.usage.v1" not in text:
         return
-    has_reachable_clear = (
-        "clearUsageData" in text
-        or "clearUsage" in text
-        or "PromptKitStorageLifecycle" in text
-    )
-    has_delete_primitive = (
-        "removeItem(STORAGE_KEY)" in text
-        or "removeItem( STORAGE_KEY )" in text
-        or "PromptKitStorageLifecycle" in text
-    )
-    if not has_reachable_clear or not has_delete_primitive:
+
+    load_bound = re.search(r"next\.recent\s*=\s*[^;\n]*\.slice\(\s*0\s*,\s*12\s*\)", text)
+    write_bound = re.search(r"state\.recent\s*=\s*[^;\n]*\.slice\(\s*0\s*,\s*12\s*\)", text)
+    if not load_bound or not write_bound:
         raise LifecycleError(
-            "prompt-kit-preference-gameplay persists promptKit.usage.v1 but lacks a reachable lifecycle clear/delete path"
+            "prompt-kit-preference-gameplay must assign the 12-item slice into both loaded and persisted recent state"
         )
-    if "slice(0,12)" not in text and "slice(0, 12)" not in text:
-        raise LifecycleError("gameplay recent-usage list lost its bounded cap")
+
+    body = _js_function_body(text, "clearUsageData")
+    if body is None:
+        raise LifecycleError("prompt-kit-preference-gameplay usage storage lacks clearUsageData()")
+    compact_body = re.sub(r"\s+", "", _strip_js_comments(body))
+    if not (
+        "root.localStorage.removeItem(STORAGE_KEY)" in compact_body
+        or "localStorage.removeItem(STORAGE_KEY)" in compact_body
+    ):
+        raise LifecycleError("clearUsageData() must delete the promptKit.usage.v1 storage key")
+    if "state=emptyState()" not in compact_body:
+        raise LifecycleError("clearUsageData() must clear the in-memory usage state")
+
+    exported = re.search(r"PromptKitPreferenceGameplay\s*=\s*\{[^}]*clearUsageData\s*:\s*clearUsageData", text, re.S)
+    direct_binding = re.search(
+        r"querySelector\([^)]*data-clear-usage[^)]*\)\.addEventListener\(\s*['\"]click['\"]\s*,\s*clearUsageData\s*\)",
+        text,
+    )
+    wrapper_binding = re.search(
+        r"querySelector\([^)]*data-clear-usage[^)]*\)\.addEventListener\(\s*['\"]click['\"]\s*,\s*function\s*\(\s*\)\s*\{\s*clearUsageData\(\)\s*\}\s*\)",
+        text,
+    )
+    if not exported or not (direct_binding or wrapper_binding):
+        raise LifecycleError(
+            "clearUsageData() must be exported and wired to a data-clear-usage user control"
+        )
+
+
+def _workflow_event_paths(text: str, event: str) -> set[str]:
+    lines = text.splitlines()
+    event_marker = f"  {event}:"
+    try:
+        event_index = next(i for i, line in enumerate(lines) if line == event_marker)
+    except StopIteration as exc:
+        raise LifecycleError(f"lifecycle workflow missing event: {event}") from exc
+    paths_index: int | None = None
+    for i in range(event_index + 1, len(lines)):
+        line = lines[i]
+        if line and len(line) - len(line.lstrip()) <= 2:
+            break
+        if line == "    paths:":
+            paths_index = i
+            break
+    if paths_index is None:
+        raise LifecycleError(f"lifecycle workflow missing {event}.paths")
+    paths: set[str] = set()
+    for line in lines[paths_index + 1 :]:
+        if line and len(line) - len(line.lstrip()) <= 4:
+            break
+        if line.startswith("      - "):
+            paths.add(line[len("      - ") :].strip().strip("'\""))
+    return paths
+
+
+def _workflow_run_commands(text: str) -> set[str]:
+    lines = text.splitlines()
+    commands: set[str] = set()
+    for index, line in enumerate(lines):
+        if line.strip() != "run: |":
+            continue
+        indent = len(line) - len(line.lstrip())
+        for child in lines[index + 1 :]:
+            if child.strip() and len(child) - len(child.lstrip()) <= indent:
+                break
+            stripped = child.strip()
+            if stripped and not stripped.startswith("#"):
+                commands.add(stripped)
+    return commands
 
 
 def validate_workflow() -> None:
@@ -315,19 +508,15 @@ def validate_workflow() -> None:
         text = WORKFLOW_PATH.read_text(encoding="utf-8")
     except FileNotFoundError as exc:
         raise LifecycleError("missing lifecycle workflow") from exc
-    required = (
-        "harness/contracts/prompt-kit-serverless-runtime-lifecycle.v1.json",
-        "docs/PROMPT_KIT_SERVERLESS_RUNTIME_PHASE_PLAN.md",
-        "harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md",
-        "docs/prompt-kit-preference-gameplay.js",
-        "scripts/validate_prompt_kit_serverless_runtime_lifecycle.py",
-        "tests/test_prompt_kit_serverless_runtime_lifecycle.py",
-        "python scripts/validate_prompt_kit_serverless_runtime_lifecycle.py --summary",
-        "python -m unittest tests.test_prompt_kit_serverless_runtime_lifecycle -v",
-    )
-    for fragment in required:
-        if fragment not in text:
-            raise LifecycleError(f"lifecycle workflow missing required trigger/command: {fragment}")
+    for event in ("pull_request", "push"):
+        paths = _workflow_event_paths(text, event)
+        missing = sorted(REQUIRED_WORKFLOW_PATHS - paths)
+        if missing:
+            raise LifecycleError(f"lifecycle workflow {event}.paths missing: {missing}")
+    commands = _workflow_run_commands(text)
+    missing_commands = sorted(REQUIRED_WORKFLOW_COMMANDS - commands)
+    if missing_commands:
+        raise LifecycleError(f"lifecycle workflow missing active run commands: {missing_commands}")
 
 
 def validate() -> dict[str, Any]:
@@ -353,7 +542,8 @@ def main(argv: list[str] | None = None) -> int:
         print(
             "prompt-kit-serverless-runtime-lifecycle: PASS "
             f"({report['capabilities']} capabilities, {report['phases']} phases, "
-            f"{report['bounded_stores']} bounded disposable stores, "
+            f"{report['bounded_disposable_stores']} bounded disposable stores, "
+            f"{report['protected_stores']} protected stores, "
             f"{report['cleanup_run_points']} cleanup run points)"
         )
     return 0
