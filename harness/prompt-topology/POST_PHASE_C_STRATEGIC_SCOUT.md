@@ -28,7 +28,7 @@ This document is the durable result of a repository-wide strategic scouting pass
 11. The merged repository AI eval framework already composes deterministic, synthetic, model-runtime, and human-review layers. Deterministic/synthetic evidence can block CI; live model-runtime and irreducible human judgment remain explicit proof ceilings rather than being inferred from static tests.
 12. PR #454 made product ownership explicit and declared a future dedicated AFK Agent Flow cutover as a conditional successor. The current combined Prompt Kit remains an intentional compatibility surface.
 13. `.ai/WORK_QUEUE.md` is a valid local coordination ledger but its visible task set currently ends in older DONE TRQ work while several substantial September PR lanes remain open. Provider PR state therefore carries materially newer unfinished-work evidence than the local queue.
-14. The tracked Prompt Topology directory still contains `PHASE_C_HANDOFF.md` rather than a merged Phase C closeout. This scout does not absorb or silently complete that separately bounded documentation lane.
+14. The tracked Prompt Topology directory still contains `PHASE_C_HANDOFF.md` rather than a merged Phase C closeout. The handoff requires the closeout/handoff pair to become the future recovery floor, so Phase C closeout integration is a prerequisite to the routed P95 investigation. This scout records that dependency but does not absorb the separate closeout lane.
 
 ### DERIVED PATTERNS
 
@@ -247,6 +247,10 @@ The architectural question is therefore both **timely and discriminable**: can t
 
 The unresolved uncertainty is **internal architecture/state ownership**, not external prior art and not yet an empirical behavior question. P82 therefore fails closed at this point.
 
+### P95 admission dependency
+
+Before P95 starts, integrate the Phase C closeout/handoff recovery floor required by `PHASE_C_HANDOFF.md`. The closeout must record the current integrated Phase C identity and strongest proof, and the pair must be reachable from refreshed main. The existing `docs/prompt-topology-phase-c-closeout` branch currently points only at the Phase C hardening floor and does not yet satisfy that recovery dependency.
+
 ### P95 mission
 
 Determine whether current route, usage, outcome, recovery/eval, privacy-reduction, and topology behavior surfaces require:
@@ -255,12 +259,13 @@ Determine whether current route, usage, outcome, recovery/eval, privacy-reductio
 2. adapter-only interoperability with no common envelope; or
 3. continued isolation with an explicit non-composition boundary.
 
-Do not implement any of those alternatives during the investigation.
+Do not implement production feature behavior as part of this architecture investigation. P95 **may and should** create bounded non-production executable seam prototypes, representative call stacks, and explicit failure-propagation tests when needed to distinguish those alternatives. Prototype artifacts are evidence for the architecture decision; they are not authorization to ship Phase D or another production path.
 
 ### Required inputs
 
+- integrated Phase C closeout/handoff pair on refreshed main;
 - current `main` and `harness/contracts/prompt-kit-cross-device-access.v1.json`;
-- `harness/prompt-topology/PHASE_C_HANDOFF.md` plus current Phase A/B/C contracts;
+- current Phase A/B/C contracts;
 - open PR #431 observation-corpus schema/runtime;
 - open PR #450 prompt-routing receipt/control-plane contract;
 - open PR #452 outcome-receipt/classification contract;
@@ -270,7 +275,7 @@ Do not implement any of those alternatives during the investigation.
 
 ### Required traces
 
-Trace at least these three representative lifecycles without implementing them:
+Trace at least these three representative lifecycles and execute them through thin non-production seam prototypes where static mapping alone cannot prove ownership/failure semantics:
 
 1. **Recommendation path:** Prompt Finder recommends prompts → user selects/open/copy → route decision → prompt invocation → later outcome observation → candidate eval/recovery.
 2. **Autonomous repair path:** deterministic repository failure → outcome classification → recovery owner → reroute/repair decision → new receipt/outcome without double-counting the original failure.
@@ -291,20 +296,21 @@ It must contain:
 - adapter boundaries and forbidden direction-of-authority flows;
 - alternatives A/B/C above with concrete tradeoffs;
 - collision/reconciliation implications for the three open PRs;
+- executable prototype/test traces for representative success and failure propagation across every architecture alternative that survives static mapping;
 - whether a new shared schema is actually necessary;
 - minimal successor contract if one is necessary;
-- explicit non-goals: no live collection, no topology mutation, no network ingestion, no vector DB, no AFK extraction, no encrypted sync implementation.
+- explicit non-goals: no live collection, no production topology mutation, no network ingestion, no vector DB, no AFK extraction, no encrypted sync implementation.
 
 ### Decision rule
 
-- **PROMOTE TO BOUNDED CONTRACT/IMPLEMENTATION:** exactly one architecture preserves all current semantic owners, maps all three traces without ambiguous lifecycle identity or duplicate persistence, obeys #460 privacy planes, and requires a bounded set of explicit adapters/contracts.
-- **PREFER ADAPTER-ONLY / NO NEW SPINE:** existing schemas can compose through explicit adapters with no shared canonical envelope and no duplicated lifecycle truth.
+- **PROMOTE TO BOUNDED CONTRACT/IMPLEMENTATION:** exactly one architecture preserves all current semantic owners, maps all three traces without ambiguous lifecycle identity or duplicate persistence, obeys #460 privacy planes, survives representative executable seam/failure-propagation prototypes, and requires a bounded set of explicit adapters/contracts.
+- **PREFER ADAPTER-ONLY / NO NEW SPINE:** existing schemas can compose through explicit adapters with no shared canonical envelope and no duplicated lifecycle truth, including through representative executable seam traces.
 - **REJECT THE THESIS:** current owners should remain intentionally isolated and cross-linking adds more authority/coupling than useful evidence.
 - **DEFER PHASE D:** any useful behavioral path requires prohibited data, undefined retention/consent, or an unimplemented prerequisite that dominates the architecture question.
 
 ### P82 admission disposition
 
-**NOT ADMITTED YET.** The primary uncertainty is architecture/ownership. No single empirical metric can currently distinguish success because the lifecycle being measured is not yet canonically related across schemas. A prototype now would risk baking in the very ownership decision that P95 must discriminate.
+**NOT ADMITTED YET.** The primary uncertainty is architecture/ownership. No single empirical metric can currently distinguish success because the lifecycle being measured is not yet canonically related across schemas. A Phase D prototype now would risk baking in the very ownership decision that P95 must discriminate. Thin P95 architecture prototypes do not count as P82 admission or Phase D implementation.
 
 If P95 resolves the state model and the remaining question becomes “does privacy-bounded behavioral evidence materially improve recommendations/topology over the static baseline?”, then P82 becomes appropriate. That later P82 record must define an offline baseline, bounded fixture/replay corpus, measurable improvement criterion, and a REJECT outcome that can stop Phase D.
 
@@ -314,10 +320,11 @@ If P95 resolves the state model and the remaining question becomes “does priva
 |---|---|---|
 | Prompt Topology A | IMPLEMENTED / INTEGRATED | completed on main |
 | Prompt Topology B | IMPLEMENTED / INTEGRATED | completed on main |
-| Prompt Topology C viewer | IMPLEMENTED / VALIDATED / INTEGRATED | hardened through PR #459; tracked closeout documentation remains a separate continuity task |
+| Prompt Topology C viewer | IMPLEMENTED / VALIDATED / INTEGRATED | hardened through PR #459; closeout/handoff recovery floor must be integrated before P95 |
 | Privacy/storage planes | DESIGNED / TRACKED / VALIDATED / INTEGRATED | PR #460 on main; runtime stores/reducer/sync not implemented |
 | **P141 strategic scout** | **TRACKED by this document** | no production implementation |
-| **P95 Evidence Spine architecture investigation** | **NEXT OWNER** | current main + #431/#450/#452 + #460 + topology/evals |
+| **Phase C closeout continuity** | **IMMEDIATE PREREQUISITE** | integrate required closeout/handoff pair on current main before P95 |
+| **P95 Evidence Spine architecture investigation** | **STRATEGIC ROUTE AFTER PREREQUISITE** | integrated Phase C recovery floor + current main + #431/#450/#452 + #460 + topology/evals |
 | Open evidence lanes #431/#450/#452 | IMPLEMENTED on branches, not integrated | must be reconciled only after P95 ownership decision; do not blindly merge all three |
 | Phase D Passive Learning | AUTHORIZED FUTURE PHASE, DEFERRED BY STRATEGIC ORDER | evidence-spine ownership + later empirical value gate |
 | Phase E Historical Intelligence | AUTHORIZED FUTURE PHASE, DEFERRED | authoritative accepted-epoch retention/corpus first |
@@ -353,8 +360,9 @@ Those unknowns belong to later owners and must not be promoted from this strateg
 
 ## 11. Continuation contract
 
-**NEXT OWNER:** P95 — Program Design & Call-Stack Prototype Architect.
-**DEPENDENCY:** refresh current main and the three open evidence lanes before the investigation; do not assume their current heads remain unchanged.
-**FIRST EXECUTABLE ACTION:** trace the Recommendation Path across the current-main Prompt Finder/eval/privacy owners and the exact #431/#450/#452 schemas, then write the first state-owner/identity compatibility matrix in `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md`.
-**EXPECTED PROOF:** each lifecycle field has one semantic owner, one persistence/privacy plane, and explicit adapters or an explicit non-composition boundary; all three required traces are resolved; alternatives are dispositioned; no runtime feature implementation is present in the diff.
-**P95 COMPLETION GATE:** architecture recommendation is durable, falsification-friendly, compatible with current privacy/topology/eval contracts, and specific enough to route the next bounded owner without reopening repository-wide strategy.
+**STRATEGIC ROUTE:** P95 — Program Design & Call-Stack Prototype Architect.
+**ADMISSION DEPENDENCY:** integrate the Phase C closeout/handoff recovery floor on refreshed main before P95 begins.
+**FIRST EXECUTABLE ACTION:** Phase C continuity owner must complete and integrate the required closeout/handoff pair, proving the current Phase C mainline identity and strongest validation as the durable recovery floor.
+**P95 FIRST ACTION AFTER DEPENDENCY:** refresh current main and exact #431/#450/#452 heads, trace the Recommendation Path across Prompt Finder/eval/privacy owners, and write the first state-owner/identity compatibility matrix plus the smallest representative executable seam trace in `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md`.
+**EXPECTED PROOF:** each lifecycle field has one semantic owner, one persistence/privacy plane, and explicit adapters or an explicit non-composition boundary; all three required traces are resolved; surviving alternatives are exercised through bounded non-production seam prototypes including failure propagation; no production feature implementation is present in the diff.
+**P95 COMPLETION GATE:** architecture recommendation is durable, falsification-friendly, compatible with current privacy/topology/eval contracts, executable-prototype-backed where ambiguity remains, and specific enough to route the next bounded owner without reopening repository-wide strategy.
