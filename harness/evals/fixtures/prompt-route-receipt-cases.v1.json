@@ -1,0 +1,15 @@
+{
+  "schema_version": "prompt-route-receipt-cases/v1",
+  "surface": "canonical prompt routing control plane",
+  "cases": [
+    {"id": "precedence-conflict", "failure_class": "precedence_conflict"},
+    {"id": "arrival-order-independence", "failure_class": "arrival_order_dependence"},
+    {"id": "deterministic-tiebreak", "failure_class": "tie_break_nondeterminism"},
+    {"id": "cas-stale-rejection", "failure_class": "stale_route_mutation"},
+    {"id": "idempotent-replay", "failure_class": "duplicate_second_mutation"},
+    {"id": "idempotency-key-collision", "failure_class": "idempotency_key_collision"},
+    {"id": "human-dependency-autonomy-gap", "failure_class": "human_dependency_accepted"},
+    {"id": "validation-remediation-routing", "failure_class": "validation_repair_unrouted"},
+    {"id": "headless-route", "failure_class": "dom_dependency"}
+  ]
+}
