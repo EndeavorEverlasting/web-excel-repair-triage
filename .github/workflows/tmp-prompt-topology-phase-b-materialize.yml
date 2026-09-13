@@ -87,6 +87,9 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # Stage tracked modifications/deletions first. This deliberately captures removal
+          # of the ignored-but-tracked transport payload without trying to re-add `.tmp`.
+          git add -u
           git add \
             .github/workflows/prompt-topology-phase-b.yml \
             harness/contracts/prompt-topology-classifier.v1.json \
@@ -98,9 +101,7 @@ jobs:
             scripts/prompt-topology/projection.py \
             scripts/prompt-topology/validate_projection.py \
             scripts/validate_prompt_topology.py \
-            tests/test_prompt_topology_phase_b.py \
-            .github/workflows/tmp-prompt-topology-phase-b-materialize.yml \
-            .tmp/phase-b-payload
+            tests/test_prompt_topology_phase_b.py
           git status --short
           git diff --cached --check
           git commit -m 'feat(prompt-topology): execute deterministic Phase B projection'
