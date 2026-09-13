@@ -11,59 +11,69 @@ TEST = ROOT / "tests" / "test_repository_plan_durability.py"
 STALE_TOPOLOGY_ROADMAP = ROOT / "harness" / "prompt-topology" / "PHASE_B_C_ROADMAP.md"
 PLAN_MARKER = "REPOSITORY PLAN DURABILITY CONTRACT"
 STATE_MARKER = "EVIDENCE STATE / NO PROMOTION CONTRACT"
+REMOTE_MARKER = "REMOTE FRESHNESS / BRANCH FLOOR CONTRACT"
+
+
+def _replace_policy_section(text: str, marker: str, replacement: str) -> str:
+    if marker not in text:
+        anchor = f"\n\n{REMOTE_MARKER}"
+        if anchor not in text:
+            raise SystemExit(f"Missing policy anchor: {REMOTE_MARKER}")
+        return text.replace(anchor, "\n\n" + replacement.rstrip() + anchor, 1)
+    start = text.index(marker)
+    end = text.find(f"\n\n{REMOTE_MARKER}", start)
+    if end < 0:
+        raise SystemExit(f"Cannot bound policy section: {marker}")
+    return text[:start] + replacement.rstrip() + text[end:]
 
 
 def patch_policy() -> None:
     policy = json.loads(POLICY.read_text(encoding="utf-8"))
-
-    plan_suffix = (
-        " When repository planning produces a materially actionable plan, persist the complete plan "
-        "to tracked repository/provider state before treating planning as complete or handing execution "
-        "to another agent; chat text is provisional rather than canonical repository state. If an active "
-        "pull request exists, the approved plan must be present there directly or by an explicit canonical "
-        "tracked-plan reference."
-    )
-    if "chat text is provisional rather than canonical repository state" not in policy["next_step_suffix"]:
-        policy["next_step_suffix"] = policy["next_step_suffix"].rstrip() + plan_suffix
-
-    state_suffix = (
+    additions = (
+        " When repository planning produces a materially actionable plan, persist the complete plan to tracked "
+        "repository/provider state before treating planning as complete or handing execution to another agent; "
+        "chat text is provisional rather than canonical repository state. If an active pull request exists, the "
+        "approved plan must be present there directly or by an explicit canonical tracked-plan reference."
         " Do not promote evidence states: a plan, design, schema, config entry, test, branch, PR, or mention in "
         "another chat is not proof that behavior is wired, implemented, validated, integrated, deployed, or "
         "observed. Name the strongest state actually proven by refreshed repository/provider/runtime evidence."
     )
-    if "Do not promote evidence states" not in policy["next_step_suffix"]:
-        policy["next_step_suffix"] = policy["next_step_suffix"].rstrip() + state_suffix
+    suffix = policy["next_step_suffix"]
+    if "chat text is provisional rather than canonical repository state" not in suffix:
+        suffix = suffix.rstrip() + additions.split(" Do not promote evidence states:", 1)[0]
+    if "Do not promote evidence states" not in suffix:
+        suffix = suffix.rstrip() + " Do not promote evidence states:" + additions.split(" Do not promote evidence states:", 1)[1]
+    policy["next_step_suffix"] = suffix
 
     plan_section = """REPOSITORY PLAN DURABILITY CONTRACT
-- When work concerns a repository and planning produces a materially actionable roadmap, sprint map, architecture plan, migration plan, phase plan, implementation sequence, or other execution dependency, the complete accepted plan MUST live in durable repository/provider state; chat alone is not a canonical planning surface.
-- Chat may carry a provisional sketch, critique, or short orientation note. Before the plan becomes an execution dependency, is called approved/ready, or is handed to another agent, persist the complete plan in the existing canonical tracked plan/spec/handoff path or in the active pull request. Reuse an existing plan owner/path before creating another plan file.
-- If an active pull request exists, approval must be reflected in that PR immediately: include the complete plan there or identify the exact committed canonical plan path plus its status/commit. Do not leave the approved version only in chat.
-- A plan approved in chat triggers synchronization, not closure: update the tracked plan or PR in the same execution thread before implementation/handoff continues.
-- Multi-phase repository work must persist the whole phase map, not only the current phase: completed floor, successor phases, dependencies, owned and forbidden scope, expected artifacts, validation/proof gates, proof ceiling, and explicit deferred work. Future phases may remain unimplemented, but they may not exist only as conversational leftovers when they are already actionable.
-- If a materially actionable repository plan changes, update the durable plan/PR before handing off or claiming the planning state current. Agents entering later must be able to recover the plan from refreshed repository/provider truth without needing the originating chat.
-- When the repository already has a work-ledger owner such as P66, use it as the continuity index and link the complete canonical plan/PR rather than pasting the whole implementation design into a second ledger authority.
-- Closeout is invalid when an actionable repository plan, approved plan revision, or successor-phase map exists only in chat. Persist it first, then report the canonical path/PR and exact revision.
+- When repository planning produces a materially actionable roadmap, sprint map, architecture plan, migration plan, phase plan, implementation sequence, or other execution dependency, the complete accepted plan MUST live in durable repository/provider state; chat alone is not a canonical planning surface.
+- Chat may carry a provisional sketch, critique, or orientation note. Before the plan becomes an execution dependency, is called approved/ready, or is handed to another agent, persist the complete plan in the existing canonical tracked plan/spec/handoff path or active pull request. Reuse an existing plan owner before creating another plan file.
+- If an active pull request exists, approval must be reflected there immediately: include the complete plan or the exact committed canonical plan path and revision. A plan approved in chat triggers synchronization, not closure.
+- Multi-phase repository work must persist the whole phase map, not only the current phase: completed floor, successor phases, dependencies, owned/forbidden scope, expected artifacts, validation/proof gates, proof ceiling, and deferred work.
+- When P66 or another repository work ledger exists, use it as the continuity index that points to the canonical plan/PR, current proof, owner, and next action; do not replace the complete plan with a terse ledger row or duplicate implementation specification.
+- If a materially actionable plan changes, update the durable plan/PR before handoff or completion. Later agents must be able to recover it from refreshed repository/provider truth without the originating chat.
+- Closeout is invalid when an actionable repository plan, approved revision, or successor-phase map exists only in chat. Persist it first, then report its canonical path/PR and exact revision.
 """
-
     state_section = """EVIDENCE STATE / NO PROMOTION CONTRACT
-- Keep repository state claims typed. At minimum distinguish PLANNED/DESIGNED, TRACKED, IMPLEMENTED, WIRED/REACHABLE, VALIDATED, INTEGRATED, DEPLOYED, and OBSERVED when those distinctions matter to the task.
-- Evidence for a weaker state never silently proves a stronger one. A design document or config field does not prove implementation; implementation does not prove wiring; a test or branch does not prove mainline integration; mainline integration does not prove deployment; deployment does not prove observed runtime behavior.
-- A different chat, agent, worktree, branch, or PR may be concurrent evidence to inspect, but its existence is not completion evidence for this thread. Promote state only after refreshed repository/provider/runtime truth resolves the exact artifact, commit, PR, integration, deployment, or observation that proves the stronger state.
-- Do not infer that a named future phase was executed merely because its design ingredients, schema fields, tests, or historical plan exist. Report the strongest proven state and the missing transition explicitly.
-- Before terminal closeout, compare the requested target state with the strongest proven state. If the target requires a stronger state and the transition is SAFE & EXECUTABLE, continue; if blocked, name the exact gate. Do not manufacture completion by relabeling design or partial evidence.
+- Keep repository progress claims typed. Distinguish PLANNED/DESIGNED, TRACKED, IMPLEMENTED, WIRED/REACHABLE, VALIDATED, INTEGRATED, DEPLOYED, and OBSERVED when those states matter.
+- Evidence for a weaker state never silently proves a stronger one. Design/config does not prove implementation; implementation does not prove wiring; a test/branch/PR does not prove mainline integration; integration does not prove deployment; deployment does not prove observed runtime behavior.
+- A different chat, agent, worktree, branch, or PR is evidence to inspect, not completion evidence for this thread. Promote state only after refreshed repository/provider/runtime truth resolves the exact artifact, commit, integration, deployment, or observation that proves it.
+- Do not infer that a named future phase was executed because design ingredients, schema fields, tests, branches, or historical plans exist. Report the strongest proven state and the missing transition explicitly.
+- Before terminal closeout, compare the requested target state with the strongest proven state. If the missing transition is SAFE & EXECUTABLE, continue; otherwise name the exact blocker. Never manufacture completion by relabeling partial evidence.
 """
-
     appendix = policy["copy_content_appendix"]
-    insert_before = "\n\nREMOTE FRESHNESS / BRANCH FLOOR CONTRACT"
-    if PLAN_MARKER not in appendix:
-        if insert_before not in appendix:
-            raise SystemExit("Remote freshness marker not found in shared appendix")
-        appendix = appendix.replace(insert_before, "\n\n" + plan_section.rstrip() + insert_before, 1)
-    if STATE_MARKER not in appendix:
-        if insert_before not in appendix:
-            raise SystemExit("Remote freshness marker not found after plan insertion")
-        appendix = appendix.replace(insert_before, "\n\n" + state_section.rstrip() + insert_before, 1)
+    appendix = _replace_policy_section(appendix, PLAN_MARKER, plan_section)
+    appendix = _replace_policy_section(appendix, STATE_MARKER, state_section)
     policy["copy_content_appendix"] = appendix
+
+    forbidden = policy["forbidden_solo_actions"]
+    for item in (
+        "treat an actionable repository plan that exists only in chat as durable completion or handoff state",
+        "promote PLANNED/DESIGNED evidence to IMPLEMENTED, WIRED/REACHABLE, VALIDATED, INTEGRATED, DEPLOYED, or OBSERVED without exact supporting proof",
+    ):
+        if item not in forbidden:
+            forbidden.append(item)
+
     POLICY.write_text(json.dumps(policy, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
@@ -76,83 +86,83 @@ def patch_core_owners() -> None:
 
     p02 = by_id["P02"]
     p02["expectedOutput"] = (
-        "A context-grounded launch order and executable build panels that have been privately prototyped, "
-        "checked against recovered requirements and repo evidence, revised to a bounded fixed point, and—when "
-        "they concern actionable repository work—persisted in the repository's canonical tracked plan/handoff "
-        "surface or active PR before another agent depends on them. Chat presentation is an orientation/copy "
-        "surface, not the sole durable owner."
+        "A context-grounded launch order and executable build panels privately prototyped and checked against "
+        "recovered requirements/repo evidence, with any materially actionable repository launch map persisted in "
+        "the canonical tracked plan/handoff surface or active PR before another agent depends on it. Chat is an "
+        "orientation/copy surface, not the sole durable owner."
     )
     p02["nextStep"] = (
-        "Privately prototype and validate the launch pack; for actionable repository work, synchronize the "
-        "complete accepted launch map into the existing canonical tracked plan/handoff path or active PR, then "
-        "present the concise chat-facing copy panels and launch the first executable panel from that durable state."
+        "Prototype and validate the launch pack; persist any actionable repository plan to the existing canonical "
+        "plan/handoff path or active PR, update the work ledger to reference it when one exists, then present the "
+        "concise chat-facing panels and launch the first executable panel from that durable state."
     )
     p02["proofGate"] = (
-        "Prior context is recovered as far as available; at least one deliberate prototype -> critique -> revise "
-        "pass occurs; every identified gap has an executable owner or evidence no build is needed; and any "
-        "materially actionable repository launch map is recoverable in full from tracked repository/provider "
-        "state (and reflected in the active PR when one exists) before handoff or completion."
+        "Recovered context is reconciled; at least one prototype -> critique -> revise pass occurs; every gap has "
+        "an executable owner or no-build evidence; and every actionable repository launch map is recoverable in "
+        "full from tracked repository/provider state and reflected in the active PR when one exists."
     )
-    if "DURABLE REPOSITORY PLAN HANDOFF" not in p02["copyContent"]:
-        p02["copyContent"] = p02["copyContent"].rstrip() + """
-
-DURABLE REPOSITORY PLAN HANDOFF
-- A chat launch pack is provisional presentation, not canonical repository state. When the recovered work belongs to a repository and the resulting map is materially actionable, persist the complete accepted launch order, dependencies, lanes, proof gates, and deferred phases in the existing canonical tracked plan/handoff surface or active PR before another agent depends on it.
-- If an active PR exists, synchronize approval there immediately: include the complete plan or the exact committed canonical plan path and revision. A plan approved in chat triggers repository/PR synchronization in the same execution thread.
-- When a repository work ledger already exists, update it to point at the canonical plan/PR and current continuation state; do not make the ledger or the chat a duplicate implementation specification.
-- Do not close a repository-planning conversation with a plan that later agents can recover only by finding this chat.
+    p02_block = """DURABLE REPOSITORY PLAN HANDOFF
+- A chat launch pack is provisional presentation, not canonical repository state. Persist every materially actionable repository launch map in the existing canonical tracked plan/handoff surface or active PR before another agent depends on it.
+- If an active PR exists, synchronize approval there immediately: include the complete plan or exact committed canonical plan path/revision. Approval in chat triggers repository/PR synchronization in the same execution thread.
+- When P66 or another repository work ledger exists, update it to point at the canonical plan/PR, proof, owner, and next action; do not turn the ledger or chat into a duplicate implementation specification.
+- Do not close a repository-planning conversation with a plan later agents can recover only by finding this chat.
 """
+    if "DURABLE REPOSITORY PLAN HANDOFF" in p02["copyContent"]:
+        p02["copyContent"] = p02["copyContent"].split("DURABLE REPOSITORY PLAN HANDOFF", 1)[0].rstrip() + "\n\n" + p02_block
+    else:
+        p02["copyContent"] = p02["copyContent"].rstrip() + "\n\n" + p02_block
 
     p04 = by_id["P04"]
     p04["expectedOutput"] = (
-        "Launch order first, ordered copy-panel sprint candidates, and harness/skill/capability/trigger/app-logic "
-        "factoring ledgers, with the complete actionable repository plan persisted to the existing canonical "
-        "tracked plan/spec/handoff owner or active PR rather than existing only in chat."
+        "Launch order, ordered copy-panel sprint candidates, and factoring ledgers, with the complete actionable "
+        "repository plan persisted to the existing canonical tracked plan/spec/handoff owner or active PR instead "
+        "of existing only in chat."
     )
     p04["nextStep"] = (
         "Persist the complete accepted factoring plan to the canonical repository plan/handoff path or active PR, "
-        "update the repository work ledger to reference it when a ledger exists, then use P05 or P07 from that durable revision."
+        "update P66/the repository work ledger to reference it when present, then use P05 or P07 from that revision."
     )
     p04["proofGate"] = (
         "Dependencies, collision ownership, exact panel sequence, successor phases, and proof gates are explicit; "
-        "for actionable repository work the complete plan is tracked and recoverable from repository/provider "
-        "truth, and any active PR points to or contains the approved revision."
+        "the complete actionable repository plan is tracked/recoverable from provider truth, and any active PR "
+        "contains or points to the approved revision."
     )
-    if "DURABLE PLAN OUTPUT" not in p04["copyContent"]:
-        p04["copyContent"] = p04["copyContent"].rstrip() + """
-
-DURABLE PLAN OUTPUT
-- Do not make chat the sole owner of an actionable repository plan. The chat response may be a concise orientation or copy surface, but the complete accepted sprint map must be committed to the existing canonical repository plan/spec/handoff path, or carried directly in the active PR when that is the repository's planning owner.
-- Reuse the existing plan owner before inventing a second plan file. Persist the whole dependency map, not only the first lane: completed floor, ordered successor phases, parallel groups, collision ownership, owned/forbidden scope, expected artifacts, validation/proof gates, proof ceiling, and deferred work.
-- If a P66-style repository ledger exists, use it to index the canonical plan, current owner, proof, and next action; do not replace the complete plan with a terse ledger row.
-- If the operator approves or materially changes the plan in chat, synchronize that revision to the tracked plan/PR before handing execution to P05/P07 or another agent.
+    p04_block = """DURABLE PLAN OUTPUT
+- Chat may present the plan, but it may not be the sole owner of an actionable repository plan. Commit the complete accepted sprint map to the existing canonical plan/spec/handoff path or carry it directly in the active PR.
+- Persist the whole dependency map: completed floor, ordered successor phases, parallel groups, collision ownership, owned/forbidden scope, expected artifacts, validation/proof gates, proof ceiling, and deferred work.
+- When P66 or another repository work ledger exists, use it to index the canonical plan, current proof, owner, and next action; a terse ledger row is not a substitute for the complete plan.
+- Approval or material plan change in chat triggers synchronization to the tracked plan/PR before P05/P07 or another agent takes over.
 """
+    if "DURABLE PLAN OUTPUT" in p04["copyContent"]:
+        p04["copyContent"] = p04["copyContent"].split("DURABLE PLAN OUTPUT", 1)[0].rstrip() + "\n\n" + p04_block
+    else:
+        p04["copyContent"] = p04["copyContent"].rstrip() + "\n\n" + p04_block
 
     p12 = by_id["P12"]
-    p12["expectedOutput"] = (
-        str(p12["expectedOutput"]).rstrip(".")
-        + ", with every actionable repository continuation recoverable from durable repository/provider state rather than chat alone."
-    ) if "durable repository/provider state" not in str(p12["expectedOutput"]) else p12["expectedOutput"]
+    if "durable repository/provider state" not in p12["expectedOutput"]:
+        p12["expectedOutput"] = p12["expectedOutput"].rstrip(".") + (
+            ", with actionable repository continuations recoverable from durable repository/provider state rather than chat alone."
+        )
     p12["nextStep"] = (
-        "Before final compression, reconcile the requested target state against refreshed repository/provider truth, "
-        "persist any actionable plan/successor map that exists only in chat to its canonical plan/PR owner, update the "
-        "work ledger when present, then emit the handoff only after no safe agent-capable continuation is being hidden by closeout."
+        "Before final compression, reconcile requested target state against refreshed repository/provider truth; "
+        "persist any actionable plan/successor map that exists only in chat to its canonical plan/PR owner, update "
+        "the work ledger when present, and route any safe successor back to execution rather than hiding it in closeout."
     )
-    p12["proofGate"] = (
-        str(p12["proofGate"]).rstrip(".")
-        + "; closeout is invalid if an actionable repository plan or successor phase exists only in chat, if a phase-local scope boundary is being treated as a whole-mission terminal boundary, or if a weaker evidence state is promoted into completion without exact proof."
-    ) if "actionable repository plan or successor phase exists only in chat" not in str(p12["proofGate"]) else p12["proofGate"]
-    if "DURABLE CLOSEOUT GATE" not in p12["copyContent"]:
-        p12["copyContent"] = p12["copyContent"].rstrip() + """
-
-DURABLE CLOSEOUT GATE
-- Compress durable state; do not create terminality by omission. Before closeout, inspect whether any materially actionable repository plan, approved plan revision, successor phase, or execution dependency exists only in chat. Persist it to the existing canonical plan/spec/handoff path or active PR first, and update the repository work ledger when one exists.
-- A phase-local forbidden/out-of-scope boundary does not by itself make the overall mission terminal. If a safe evidence-backed successor exists and the user/repository has not prohibited it, route back to the execution owner instead of emitting a terminal closeout.
-- Do not promote PLANNED/DESIGNED/TRACKED evidence into IMPLEMENTED/WIRED/VALIDATED/INTEGRATED/DEPLOYED/OBSERVED. State the strongest proven level and the exact missing transition.
+    if "actionable repository plan or successor phase exists only in chat" not in p12["proofGate"]:
+        p12["proofGate"] = p12["proofGate"].rstrip(".") + (
+            "; closeout is invalid if an actionable repository plan or successor phase exists only in chat, if a "
+            "phase-local boundary is treated as whole-mission terminal, or if weaker evidence is promoted into a stronger completion state."
+        )
+    p12_block = """DURABLE CLOSEOUT GATE
+- Compress durable state; do not create terminality by omission. Persist actionable repository plans, approved revisions, and successor maps to their canonical plan/PR owner before closeout, and update the repository work ledger when one exists.
+- A phase-local forbidden/out-of-scope boundary is not a whole-mission stop. If a safe evidence-backed successor exists and user/repo law does not prohibit it, route back to execution.
+- Do not promote PLANNED/DESIGNED/TRACKED evidence into IMPLEMENTED/WIRED/VALIDATED/INTEGRATED/DEPLOYED/OBSERVED. State the strongest proven level and missing transition.
 """
+    if "DURABLE CLOSEOUT GATE" in p12["copyContent"]:
+        p12["copyContent"] = p12["copyContent"].split("DURABLE CLOSEOUT GATE", 1)[0].rstrip() + "\n\n" + p12_block
+    else:
+        p12["copyContent"] = p12["copyContent"].rstrip() + "\n\n" + p12_block
 
-    # P07 already owns the original phase-boundary defect. Preserve it and fail if
-    # the previously merged repair disappears while this sprint changes adjacent contracts.
     p07 = by_id["P07"]
     for phrase in (
         "PHASE-LOCAL OUT OF SCOPE",
@@ -167,44 +177,33 @@ DURABLE CLOSEOUT GATE
 
 def patch_diagnosis_owner() -> None:
     payload = json.loads(AI_PROMPTS.read_text(encoding="utf-8"))
-    prompts = payload.get("prompts", [])
-    p100 = next((prompt for prompt in prompts if prompt.get("id") == "P100"), None)
+    p100 = next((p for p in payload.get("prompts", []) if p.get("id") == "P100"), None)
     if p100 is None:
         raise SystemExit("P100 diagnosis owner missing")
-
-    if "evidence-state promotion" not in p100.get("keywords", []):
-        p100.setdefault("keywords", []).extend([
-            "evidence-state promotion",
-            "designed vs implemented",
-            "wired vs planned",
-            "concurrent chat false completion",
-        ])
-
-    if "evidence-state ledger" not in p100["expectedOutput"]:
-        p100["expectedOutput"] = p100["expectedOutput"].rstrip(".") + (
-            "; when the failure is a premature completion/state claim, also produce an evidence-state ledger that "
-            "distinguishes PLANNED/DESIGNED, TRACKED, IMPLEMENTED, WIRED/REACHABLE, VALIDATED, INTEGRATED, DEPLOYED, "
-            "and OBSERVED and names the unsupported promotion."
-        )
-
+    for keyword in (
+        "evidence-state promotion",
+        "designed vs implemented",
+        "wired vs planned",
+        "concurrent chat false completion",
+    ):
+        if keyword not in p100["keywords"]:
+            p100["keywords"].append(keyword)
     if "DESIGNED is not WIRED" not in p100["proofGate"]:
         p100["proofGate"] = p100["proofGate"].rstrip(".") + (
-            "; evidence-state diagnosis proves the exact transition rather than inferring it: DESIGNED is not WIRED, "
-            "a branch/PR is not INTEGRATED, and concurrent work in another chat/agent is UNKNOWN for this thread until "
-            "refreshed repository/provider/runtime evidence resolves and proves the stronger state."
+            "; for progress-state failures, DESIGNED is not WIRED and concurrent chat/branch/PR activity is not "
+            "COMPLETED until refreshed exact evidence proves the stronger state."
         )
-
-    if "EVIDENCE-STATE PROMOTION FAILURE" not in p100["copyContent"]:
-        p100["copyContent"] = p100["copyContent"].rstrip() + """
-
-EVIDENCE-STATE PROMOTION FAILURE
-When the wrong answer is a completion/progress claim, classify the state transition explicitly before repairing it.
-- Distinguish PLANNED/DESIGNED -> TRACKED -> IMPLEMENTED -> WIRED/REACHABLE -> VALIDATED -> INTEGRATED -> DEPLOYED -> OBSERVED as separate evidence states when relevant. Do not skip a state merely because a design, schema, config field, test, branch, PR, or historical plan exists.
-- A different chat, agent, worktree, branch, or PR is evidence to inspect, not evidence that this thread completed the work. Resolve refreshed provider/repository/runtime truth and the exact artifact/commit before promoting the state.
-- Record the unsupported promotion that caused the error (for example DESIGN_EXISTENCE -> WIRED or CONCURRENT_ACTIVITY -> COMPLETED), the missing proof transition, the resulting premature stop/rework, and the smallest owner contract that prevents recurrence.
-- Replay the nearby counterfactual: what should the agent have said and done if it had named the strongest proven state rather than the desired state?
-"""
-
+    # Keep P100's established <8000-character raw prompt budget. The shared policy
+    # carries the full state ladder; P100's direct contract only needs the trigger.
+    direct = (
+        "\n\nEVIDENCE-STATE CHECK\nFor progress/completion errors, name the unsupported promotion "
+        "(for example DESIGN->WIRED or CONCURRENT->COMPLETE), the missing proof transition, and the correct owner."
+    )
+    if "EVIDENCE-STATE CHECK" not in p100["copyContent"]:
+        candidate = p100["copyContent"].rstrip() + direct
+        if len(candidate) >= 8000:
+            raise SystemExit(f"P100 budget exceeded by concise evidence-state trigger: {len(candidate)}")
+        p100["copyContent"] = candidate
     AI_PROMPTS.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
@@ -245,14 +244,14 @@ class RepositoryPlanDurabilityTests(unittest.TestCase):
         self.assertIn(PLAN_MARKER, appendix)
         for phrase in (
             "chat alone is not a canonical planning surface",
-            "persist the complete plan",
             "active pull request",
-            "plan approved in chat triggers synchronization",
+            "approved in chat triggers synchronization",
             "Multi-phase repository work must persist the whole phase map",
             "P66",
             "Closeout is invalid",
         ):
             self.assertIn(phrase, appendix)
+        self.assertTrue(any("exists only in chat" in item for item in self.policy["forbidden_solo_actions"]))
 
     def test_shared_policy_forbids_evidence_state_promotion(self) -> None:
         appendix = self.policy["copy_content_appendix"]
@@ -272,10 +271,10 @@ class RepositoryPlanDurabilityTests(unittest.TestCase):
     def test_p02_and_p04_persist_actionable_repository_plans(self) -> None:
         self.assertIn("DURABLE REPOSITORY PLAN HANDOFF", self.raw["P02"]["copyContent"])
         self.assertIn("DURABLE PLAN OUTPUT", self.raw["P04"]["copyContent"])
-        self.assertIn("canonical tracked plan", self.raw["P02"]["expectedOutput"])
-        self.assertIn("canonical", self.raw["P04"]["expectedOutput"])
-        self.assertIn("active PR", self.raw["P04"]["proofGate"])
+        self.assertIn("P66", self.raw["P02"]["copyContent"])
         self.assertIn("P66", self.raw["P04"]["copyContent"])
+        self.assertIn("canonical tracked plan", self.raw["P02"]["expectedOutput"])
+        self.assertIn("active PR", self.raw["P04"]["proofGate"])
 
     def test_p12_refuses_chat_only_or_state_promoted_closeout(self) -> None:
         p12 = self.raw["P12"]
@@ -293,15 +292,16 @@ class RepositoryPlanDurabilityTests(unittest.TestCase):
         ):
             self.assertIn(phrase, p07)
 
-    def test_p100_names_state_promotion_and_concurrent_lane_error(self) -> None:
+    def test_p100_names_state_promotion_without_breaking_prompt_budget(self) -> None:
         p100 = self.ai_raw["P100"]
-        self.assertIn("EVIDENCE-STATE PROMOTION FAILURE", p100["copyContent"])
-        self.assertIn("DESIGN_EXISTENCE -> WIRED", p100["copyContent"])
-        self.assertIn("CONCURRENT_ACTIVITY -> COMPLETED", p100["copyContent"])
+        self.assertIn("EVIDENCE-STATE CHECK", p100["copyContent"])
+        self.assertIn("DESIGN->WIRED", p100["copyContent"])
+        self.assertIn("CONCURRENT->COMPLETE", p100["copyContent"])
         self.assertIn("DESIGNED is not WIRED", p100["proofGate"])
         self.assertIn("evidence-state promotion", p100["keywords"])
+        self.assertLess(len(p100["copyContent"]), 8000)
 
-    def test_shared_contract_reaches_planning_build_closeout_and_diagnosis_types(self) -> None:
+    def test_shared_contract_reaches_plan_build_closeout_ledger_and_diagnosis(self) -> None:
         for prompt_id in ("P02", "P04", "P07", "P12", "P66", "P83", "P95", "P100", "P141"):
             self.assertIn(prompt_id, self.effective)
             copy = self.effective[prompt_id]["copyContent"]
