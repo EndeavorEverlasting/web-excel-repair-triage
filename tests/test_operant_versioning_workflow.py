@@ -143,6 +143,7 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
     def test_existing_release_pr_refresh_remains_actions_owned(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn('gh pr edit "$existing_url"', workflow)
+        existing_pr_url = "https://github.example.invalid/org/repo/pull/999"
 
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -159,7 +160,7 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
                     "--head",
                     "automation/operant-release-v0.6.1-abc123",
                     "--existing-pr-url",
-                    "https://github.com/EndeavorEverlasting/web-excel-repair-triage/pull/444",
+                    existing_pr_url,
                     "--output",
                     str(request_path),
                     "--body-output",
@@ -174,10 +175,7 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
             payload = json.loads(request_path.read_text(encoding="utf-8"))
             self.assertEqual(payload["publication_mode"], "refresh-existing-pr")
             self.assertFalse(payload["requires_external_pr_creation"])
-            self.assertEqual(
-                payload["existing_pr_url"],
-                "https://github.com/EndeavorEverlasting/web-excel-repair-triage/pull/444",
-            )
+            self.assertEqual(payload["existing_pr_url"], existing_pr_url)
 
 
 if __name__ == "__main__":
