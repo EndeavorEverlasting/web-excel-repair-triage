@@ -46,6 +46,27 @@ class PromptKitPrivacyStorageTests(unittest.TestCase):
         }
         self.assertEqual(actual, privacy_storage.EXPECTED_PAGES_BUNDLE)
 
+    def test_privacy_workflow_watches_publication_and_owner_inputs(self) -> None:
+        workflow = (ROOT / ".github" / "workflows" / "prompt-kit-privacy-storage.yml").read_text(encoding="utf-8")
+        required = (
+            "docs/prompts.json",
+            "registry/prompts/**",
+            "harness/artifacts.v1.json",
+            "harness/contracts/prompt-kit-cross-device-access.v1.json",
+            "scripts/build_prompt_kit_registry.py",
+            "scripts/validate_prompt_kit_cross_device_access.py",
+            "tests/test_prompt_kit_cross_device_access.py",
+            "web/prompt-kit-mobile/**",
+            "web/prompt-kit/**",
+            "web/prompt-kit-legacy-redirect/**",
+            "web/operant-legacy-redirect/**",
+            "web/roster-log-v2/**",
+            ".github/workflows/prompt-kit-pages.yml",
+        )
+        for path in required:
+            with self.subTest(path=path):
+                self.assertGreaterEqual(workflow.count(f"- {path}"), 2)
+
     def test_public_source_roots_have_no_tracked_private_artifact_paths(self) -> None:
         tracked = privacy_storage.tracked_public_files()
         self.assertTrue(tracked)

@@ -5,8 +5,11 @@ on:
     paths:
       - docs/prompts.json
       - registry/prompts/**
+      - harness/artifacts.v1.json
       - harness/contracts/prompt-kit-cross-device-access.v1.json
       - scripts/build_prompt_kit_registry.py
+      - scripts/validate_prompt_kit_cross_device_access.py
+      - tests/test_prompt_kit_cross_device_access.py
       - scripts/validate_prompt_kit_privacy_storage.py
       - tests/test_prompt_kit_privacy_storage.py
       - docs/PROMPT_KIT_PRIVACY_STORAGE.md
@@ -23,8 +26,11 @@ on:
     paths:
       - docs/prompts.json
       - registry/prompts/**
+      - harness/artifacts.v1.json
       - harness/contracts/prompt-kit-cross-device-access.v1.json
       - scripts/build_prompt_kit_registry.py
+      - scripts/validate_prompt_kit_cross_device_access.py
+      - tests/test_prompt_kit_cross_device_access.py
       - scripts/validate_prompt_kit_privacy_storage.py
       - tests/test_prompt_kit_privacy_storage.py
       - docs/PROMPT_KIT_PRIVACY_STORAGE.md
