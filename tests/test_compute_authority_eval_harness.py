@@ -27,7 +27,7 @@ class ComputeAuthorityEvalHarnessTests(unittest.TestCase):
         )
         for condition in ("control", "treatment"):
             meta = identities[condition]
-            body = (ROOT / meta["prompt_path"]).read_text(encoding="utf-8")
+            body = (ROOT / meta["prompt_path"]).read_text(encoding="utf-8").replace("\r\n", "\n")
             digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
             self.assertEqual(digest, meta["prompt_contract_sha"], condition)
 

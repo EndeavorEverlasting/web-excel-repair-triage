@@ -255,14 +255,18 @@ def validate_prompts() -> None:
     for condition in ("control", "treatment"):
         meta = identities[condition]
         path = ROOT / meta["prompt_path"]
-        body = path.read_text(encoding="utf-8")
+        body = path.read_text(encoding="utf-8").replace("\r\n", "\n")
         digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
         if digest != meta["prompt_contract_sha"]:
             raise AssertionError(
                 f"{condition} prompt SHA drift: file={digest} identities={meta['prompt_contract_sha']}"
             )
-    control = (ROOT / identities["control"]["prompt_path"]).read_text(encoding="utf-8")
-    treatment = (ROOT / identities["treatment"]["prompt_path"]).read_text(encoding="utf-8")
+    control = (ROOT / identities["control"]["prompt_path"]).read_text(encoding="utf-8").replace(
+        "\r\n", "\n"
+    )
+    treatment = (ROOT / identities["treatment"]["prompt_path"]).read_text(encoding="utf-8").replace(
+        "\r\n", "\n"
+    )
     if "COMPUTE AUTHORITY / SCOPE-BOUNDARY CONTRACT" in control:
         raise AssertionError("control prompt must not include compute-authority contract")
     if "EXHAUSTIVE AVAILABLE COMPUTE RULE" not in treatment:
