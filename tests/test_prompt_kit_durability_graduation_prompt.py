@@ -37,6 +37,10 @@ class PromptDurabilityGraduationTests(unittest.TestCase):
             "The interface MUST call or consume the validated canonical implementation",
             "Do not force a later stage before evidence justifies it",
             "previous stage; resulting stage; canonical implementation owner",
+            "created/modified files; stable invocation or interface",
+            "validation actually executed; runtime/field proof ceiling",
+            "whether another graduation is now evidence-warranted",
+            "Creating a wrapper, button, workbook element, or other surface is not completion unless it is proven to reach the canonical behavior",
         ):
             self.assertIn(phrase, content)
         for keyword in ("snippet hell", "snippet to tool", "durability graduation", "artifact graduation"):
@@ -90,6 +94,8 @@ class PromptDurabilityGraduationTests(unittest.TestCase):
             "DURABILITY / GRADUATION GATE — NO SNIPPET HELL",
             "DURABILITY BOUNDARY — DOCUMENT THE DURABLE PATH",
             "SNIPPET-TO-OPERATOR-PATH GRADUATION",
+            "whether another graduation is now evidence-warranted",
+            "Creating a wrapper, button, workbook element, or other surface is not completion unless it is proven to reach the canonical behavior",
         ):
             self.assertIn(marker, site)
 
