@@ -31,6 +31,7 @@ DISPLAY_ORDER_POLICY = (
 )
 GUIDED_RECOMMENDATIONS = REPO_ROOT / "docs" / "prompt-kit-guided-recommendations.js"
 PROMPT_JOURNEY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-journey.js"
+STORAGE_LIFECYCLE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-storage-lifecycle.js"
 PROFILE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-profiles.js"
 POLISH_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-polish.js"
 CORRESPONDENCE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-correspondence.js"
@@ -639,6 +640,9 @@ def render() -> str:
     html = build_prompt_kit.build_html(prompts, reference)
     guided_script = _read_runtime(GUIDED_RECOMMENDATIONS, "Guided recommendation behavior")
     journey_script = _read_runtime(PROMPT_JOURNEY_RUNTIME, "Guided next-step journey behavior")
+    storage_lifecycle_script = _read_runtime(
+        STORAGE_LIFECYCLE_RUNTIME, "Prompt Kit local storage lifecycle behavior"
+    )
     profile_script = _read_runtime(PROFILE_RUNTIME, "Prompt Kit named profile behavior")
     polish_script = _read_runtime(POLISH_RUNTIME, "Prompt Kit polish behavior")
     correspondence_script = _read_runtime(
@@ -666,6 +670,7 @@ def render() -> str:
         f"<script>\nwindow.PROMPT_KIT_ONTOLOGY = {ontology_json};\n</script>\n"
         f"<script>\n{guided_script}\n</script>\n"
         f"<script>\n{journey_script}\n</script>\n"
+        f"<script>\n{storage_lifecycle_script}\n</script>\n"
         f"<script>\n{profile_script}\n</script>\n"
         f"<script>\n{polish_script}\n</script>\n"
         f"<script>\n{correspondence_script}\n</script>\n"
