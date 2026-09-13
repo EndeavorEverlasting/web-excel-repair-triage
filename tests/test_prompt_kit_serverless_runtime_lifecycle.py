@@ -148,6 +148,31 @@ class PromptKitServerlessRuntimeLifecycleTests(unittest.TestCase):
     def test_strategy_dependency_is_present_on_current_floor(self) -> None:
         lifecycle.validate_strategy_dependency()
 
+    def test_strategy_dependency_requires_integrated_closeout_and_surviving_p95_gate(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            scout = root / "scout.md"
+            closeout = root / "closeout.md"
+            scout.write_text(
+                "Recommended next owner:** P95\n"
+                "Prompt execution evidence-spine/state-ownership architecture before Phase D Passive Learning\n",
+                encoding="utf-8",
+            )
+            closeout.write_text(
+                "**Status:** COMPLETE / INTEGRATED / POST-MERGE VALIDATED\n"
+                "The next **approved** owner is **P95 — Program Design & Call-Stack Prototype Architect**.\n"
+                "EVIDENCE_SPINE_ARCHITECTURE.md\n"
+                "Phase D is deferred until evidence-lifecycle ownership is resolved.\n",
+                encoding="utf-8",
+            )
+            with mock.patch.object(lifecycle, "SCOUT_PATH", scout), mock.patch.object(
+                lifecycle, "PHASE_C_CLOSEOUT_PATH", closeout
+            ):
+                lifecycle.validate_strategy_dependency()
+                closeout.write_text("**Status:** COMPLETE / INTEGRATED / POST-MERGE VALIDATED\n", encoding="utf-8")
+                with self.assertRaisesRegex(lifecycle.LifecycleError, "closeout/P95 admission evidence drifted"):
+                    lifecycle.validate_strategy_dependency()
+
     def test_plan_has_required_headings_and_runtime_capabilities(self) -> None:
         lifecycle.validate_plan()
 
