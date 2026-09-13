@@ -231,6 +231,89 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("KEEP/ADJUST/REVERT", prompt["expectedOutput"])
         self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
 
+    def test_p141_to_p82_seam_routes_only_bounded_empirical_uncertainty(self) -> None:
+        p141 = self.full["P141"]["copyContent"]
+        p82 = self.full["P82"]["copyContent"]
+
+        sender_fixture = {
+            "admission_artifact": "P82 Experiment Admission Record",
+            "selected_thesis": "one surviving thesis",
+            "empirical_uncertainty": "primary empirical uncertainty",
+            "hypothesis": "falsifiable hypothesis",
+            "baseline": "baseline/comparator",
+            "prototype": "prototype boundary",
+            "measurement": "measurement",
+        }
+        receiver_fixture = {
+            "admission_artifact": "P82 Experiment Admission Record",
+            "hypothesis": "falsifiable hypothesis",
+            "baseline": "baseline/comparator",
+            "prototype": "prototype boundary",
+            "measurement": "measurement",
+            "decision_rule": "decision rule",
+        }
+
+        for field, phrase in sender_fixture.items():
+            self.assertIn(
+                phrase,
+                p141,
+                f"P141->P82 sender contract missing {field}: expected {phrase!r}.",
+            )
+        for field, phrase in receiver_fixture.items():
+            self.assertIn(
+                phrase,
+                p82,
+                f"P141->P82 receiver contract missing {field}: expected {phrase!r}.",
+            )
+
+        self.assertIn(
+            "remaining uncertainty is empirical",
+            p141,
+            "P141 must admit P82 only when the remaining uncertainty is empirical.",
+        )
+        self.assertIn(
+            "multiple strategic theses",
+            p141.lower(),
+            "P141 must retain routing when multiple strategic theses remain viable.",
+        )
+        self.assertIn(
+            "P95",
+            p141,
+            "P141 must route dominant architecture uncertainty to P95.",
+        )
+        self.assertIn(
+            "P95",
+            p82,
+            "P82 must reject architecture-dominant work toward P95.",
+        )
+        self.assertIn(
+            "P07",
+            p141,
+            "P141 must route implementation-ready work to P07 instead of P82.",
+        )
+
+        for forbidden in (
+            "generate 3-5 competing strategic theses",
+            "decide what the repository should build next",
+        ):
+            self.assertNotIn(
+                forbidden,
+                p82.lower(),
+                f"P141->P82 seam collapsed: P82 absorbed P141 behavior {forbidden!r}.",
+            )
+
+        for outcome in ("PROMOTE", "WEAKEN", "REJECT", "INCONCLUSIVE"):
+            self.assertIn(
+                outcome,
+                p82,
+                f"P82 decision contract missing experiment outcome {outcome}.",
+            )
+        self.assertIn(
+            "P141",
+            p82,
+            "P82 must return strategically weakened/rejected evidence to P141.",
+        )
+
     def test_flow_friction_prompt_owns_terminal_actions_and_preference_telemetry(self) -> None:
         prompt = self.full["P99"]
         content = prompt["copyContent"]
