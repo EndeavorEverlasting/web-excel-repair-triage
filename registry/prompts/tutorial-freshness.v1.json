@@ -62,6 +62,14 @@
       ],
       "reason": "Teach tutorial refresh from lifecycle and privacy-bounded friction signals.",
       "status": "CLOSED_BY_SPRINT"
+    },
+    {
+      "prompt_id": "P114",
+      "event": "STRENGTHEN",
+      "disposition": "REFERENCE_ONLY_WITH_REASON",
+      "tutorial_paths": [],
+      "reason": "P114 is itself the operational continuity/reference contract; account-qualified access-route mapping is self-contained and does not introduce a separate tutorial journey.",
+      "status": "CLOSED_BY_SPRINT"
     }
   ]
 }
