@@ -111,6 +111,41 @@ class CorrespondencePromptRegistryTests(unittest.TestCase):
             self.prompts["P73"]["proofGate"],
         )
 
+    def test_content_only_prompts_exhaust_editing_compute_without_repo_contract(self) -> None:
+        for prompt_id in ("P72", "P73"):
+            prompt = self.prompts[prompt_id]
+            content = prompt["copyContent"]
+            with self.subTest(prompt=prompt_id):
+                for phrase in (
+                    "EXHAUSTIVE AVAILABLE EDITING COMPUTE",
+                    "Brevity constrains the final output, not internal editing effort",
+                    "Treat the first sendable draft as a checkpoint, not an automatic stop",
+                    "editing fixed point is evidence-defined, not pass-count-defined",
+                    "Do not reveal scratch work, candidate variants, chain-of-thought",
+                    "Extra compute never authorizes invented facts",
+                ):
+                    self.assertIn(phrase, content)
+                self.assertIn(
+                    "silently exhaust materially useful editing passes",
+                    prompt["nextStep"],
+                )
+                self.assertIn(
+                    "exhaustive editing has reached an evidence-defined fixed point",
+                    prompt["proofGate"],
+                )
+                self.assertEqual(
+                    prompt["actionabilityPolicy"],
+                    "not-applicable:content-only",
+                )
+                self.assertNotIn(
+                    "ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT",
+                    content,
+                )
+                self.assertNotIn(
+                    "GREEN BRANCH INTEGRATION CONTRACT",
+                    content,
+                )
+
     def test_render_includes_correspondence_runtime_and_profile_tokens(self) -> None:
         html = build_prompt_kit_registry.render()
         self.assertIn("prompt-kit-correspondence-styles", html)
