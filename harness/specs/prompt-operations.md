@@ -50,6 +50,17 @@ Serial multi-tool use is not parallel execution. The local-process/tool rung cou
 
 Planning surfaces must produce a machine-executable `PARALLEL DISPATCH MANIFEST` as the primary orchestration artifact. Each ready lane names its dependencies, mutation owner, forbidden surfaces, branch/worktree or read-only posture, chosen adapter/rung, exact launch action, return artifact/contract, validator, convergence owner, and status. Copyable chat panels are portability/recovery fallback only. Do not make the operator create chats, paste prompts, shuttle context, or act as the scheduler when any autonomous adapter can carry the lane.
 
+Canonical executable surfaces:
+
+- contract: `harness/contracts/prompt-parallel-dispatch.v1.json`;
+- manifest: `Outputs/prompt-parallel-dispatch/manifest.json` using `prompt-parallel-dispatch/v1`;
+- validator/argv dispatcher: `scripts/prompt_parallel_dispatch.py`;
+- receipt: `Outputs/prompt-parallel-dispatch/receipt.json` using `prompt-parallel-dispatch-receipt/v1`;
+- `validate` must pass before launch; `run` launches command-addressable lanes in deterministic dependency waves; `verify-receipt` rejects REQUIRED width >= 2 claims without observed parallel dispatch evidence;
+- `runtime_tool` records remain machine-readable but are executed only by the active agent runtime. The CLI fails closed rather than pretending to own unavailable tool APIs.
+
+A planning response that prints manifest-shaped prose without materializing and validating the JSON artifact is incomplete. A validated manifest without actual launch/receipt evidence is planning/validation proof, not parallel execution proof.
+
 ## Validation boundary
 
 Use the specific registry, Prompt Kit web, discovery, language, ordering, portability, or release-identity validators owned by the changed surface. Static/CI proof never becomes browser/device/production proof without observation.

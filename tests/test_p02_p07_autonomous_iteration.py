@@ -104,6 +104,18 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
         self.assertIn("parallel proof remains UNPROVEN", prompt["proofGate"])
         self.assertIn("readability/P124", prompt["proofGate"])
         self.assertIn("paradigm/P128", prompt["proofGate"])
+        probe = content.index("Probe execution adapters in order")
+        missing_one = content.index("no connected self-hosted workers")
+        dispatch = content.index("At the first safe rung")
+        degraded = content.index("If graph width is at least two but every safe rung")
+        self.assertLess(probe, missing_one)
+        self.assertLess(missing_one, dispatch)
+        self.assertLess(dispatch, degraded)
+        self.assertNotIn("If no usable mechanism exists", content)
+        self.assertNotIn("no connected self-hosted workers. Proceeding serially", content)
+        self.assertIn("scripts/prompt_parallel_dispatch.py validate", content)
+        self.assertIn("scripts/prompt_parallel_dispatch.py run", content)
+        self.assertIn("observed_parallelism=true", content)
 
     def test_p07_coordinates_repository_generated_mutation_lanes(self) -> None:
         prompt = self.effective["P07"]
@@ -131,6 +143,10 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
         self.assertIn("PARALLEL EXECUTION: NOT_APPLICABLE", content)
         self.assertIn("dependency graph width is 1", content)
         self.assertIn("User scheduling is never the fallback", prompt["expectedOutput"])
+        self.assertNotIn("PARALLEL EXECUTION: unavailable", content)
+        self.assertNotIn("proceed serially", content)
+        self.assertIn("If graph width is at least two but every safe rung is genuinely unavailable or blocked", content)
+        self.assertIn("serial progress may continue only to avoid deadlock", content)
 
     def test_p07_strategic_follow_on_captures_leverage_without_expanding_scope(self) -> None:
         prompt = self.effective["P07"]
