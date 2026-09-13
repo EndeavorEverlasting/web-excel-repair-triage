@@ -246,13 +246,16 @@ on:
 jobs:
   validate:
     steps:
-      - run: |
+      - name: Validate serverless runtime lifecycle
+        run: |
           # python scripts/validate_prompt_kit_serverless_runtime_lifecycle.py --summary
           echo nope
 """
+        commands = lifecycle._workflow_run_commands(workflow)
+        self.assertIn("echo nope", commands)
         self.assertNotIn(
             "python scripts/validate_prompt_kit_serverless_runtime_lifecycle.py --summary",
-            lifecycle._workflow_run_commands(workflow),
+            commands,
         )
 
 
