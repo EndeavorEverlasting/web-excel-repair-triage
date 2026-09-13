@@ -1,0 +1,93 @@
+{
+  "schema_version": "operant-prompt-routing/v1",
+  "receipt_schema": "harness/schemas/prompt-route-receipt.v1.schema.json",
+  "purpose": "Provide one canonical prompt-routing control plane for humans, agents, classifiers, scripts, and workflows without requiring simulated human interaction.",
+  "routing_invariant": "A route is a backend state transition that may have presentation metadata; presentation is never routing authority.",
+  "authority_classes": {
+    "interactive-navigation": {"rank": 100, "mutating": true},
+    "classifier-recommendation": {"rank": 400, "mutating": false},
+    "classifier-auto-route": {"rank": 500, "mutating": true},
+    "authorized-agent": {"rank": 600, "mutating": true},
+    "deterministic-script": {"rank": 700, "mutating": true},
+    "deterministic-workflow": {"rank": 800, "mutating": true},
+    "operator-override": {"rank": 900, "mutating": true},
+    "policy-safety-recovery": {"rank": 1000, "mutating": true}
+  },
+  "precedence": {
+    "order": [
+      "authority_rank_desc",
+      "decision_priority_desc",
+      "request_fingerprint_asc",
+      "receipt_id_asc"
+    ],
+    "arrival_order_authority": false,
+    "compare_and_set_required_for_stateful_automation": true,
+    "tie_break_rule": "Equal authority and decision priority resolve by lexical request fingerprint, then receipt ID. The tie-break is deterministic only; semantic priority belongs in authority_class or decision.priority."
+  },
+  "route_statuses": [
+    "ROUTED",
+    "IDEMPOTENT_NOOP",
+    "ALREADY_AT_TARGET",
+    "BLOCKED",
+    "HUMAN_GATE_REQUIRED",
+    "AUTONOMY_GAP",
+    "PROMPT_NOT_FOUND",
+    "PROMPT_INACTIVE",
+    "STALE_REJECTED",
+    "PRECEDENCE_REJECTED",
+    "SUPERSEDED",
+    "POLICY_REJECTED",
+    "PARTIAL_TRUTH",
+    "ERROR"
+  ],
+  "gate_aggregates": [
+    "PASS",
+    "BLOCKED",
+    "HUMAN_REQUIRED",
+    "ENVIRONMENT_BLOCKED",
+    "PARTIAL_TRUTH",
+    "UNKNOWN"
+  ],
+  "required_gate_blocking_outcomes": [
+    "FAIL",
+    "BLOCKED",
+    "HUMAN_REQUIRED",
+    "ENVIRONMENT_BLOCKED",
+    "SKIPPED",
+    "UNKNOWN"
+  ],
+  "autonomy_policy": {
+    "human_presence_never_satisfies_gate": true,
+    "human_required_is_success": false,
+    "human_required_default_failure_class": "UNIMPLEMENTED_AUTOMATION",
+    "default_prototype_prompt_id": "P07",
+    "validation_evidence_should_route_repair": true,
+    "prototype_before_handoff": true,
+    "irreducible_external_authority_is_still_autonomy_debt": true,
+    "rule": "If deterministic validation already identifies what failed, route or prototype the repair instead of requesting human diagnosis. Human-required states are explicit autonomy failures, not healthy completion states."
+  },
+  "idempotency": {
+    "identity": ["scope", "request.idempotency_key"],
+    "same_key_same_fingerprint": "IDEMPOTENT_NOOP",
+    "same_key_different_fingerprint": "POLICY_REJECTED",
+    "second_mutation_allowed": false
+  },
+  "presentation": {
+    "modes": ["none", "select", "open", "snap"],
+    "headless_success_allowed": true,
+    "presentation_failure_may_rewrite_route_truth": false,
+    "backend_may_require_dom": false
+  },
+  "evidence": {
+    "candidate_eval_eligible": true,
+    "gold_eval_authority": false,
+    "raw_user_content_stored": false,
+    "health_dimensions": [
+      "routing_correctness",
+      "routing_autonomy",
+      "gate_recovery",
+      "staleness_rejection",
+      "idempotency"
+    ]
+  }
+}
