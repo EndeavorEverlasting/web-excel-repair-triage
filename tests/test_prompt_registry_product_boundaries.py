@@ -48,7 +48,7 @@ class PromptRegistryProductBoundaryTests(unittest.TestCase):
             triage["target_repository"], boundaries.TRIAGE_TARGET_REPOSITORY
         )
         self.assertEqual(triage["ownership"], "repository-local")
-        self.assertEqual(triage["must_not_ship_with"], [boundaries.AFK_PRODUCT])
+        self.assertEqual(triage["must_not_export_to"], [boundaries.AFK_PRODUCT])
 
     def test_afk_product_boundary_excludes_triage_management_registry(self) -> None:
         afk = {
@@ -76,13 +76,13 @@ class PromptRegistryProductBoundaryTests(unittest.TestCase):
         self.assertEqual(prompts["P74"]["profile"], "billing-management")
         self.assertIn("Neuron Track Hours", prompts["P74"]["name"])
 
-    def test_legacy_combined_prompt_kit_behavior_is_preserved(self) -> None:
+    def test_legacy_combined_prompt_kit_composition_is_preserved(self) -> None:
         legacy = {
             path.resolve().relative_to(ROOT).as_posix()
             for path in build_prompt_kit_registry.EXTENSION_REGISTRIES
         }
         self.assertIn(boundaries.MANAGEMENT_REGISTRY, legacy)
-        self.assertTrue(self.summary["legacy_behavior_preserved"])
+        self.assertTrue(self.summary["legacy_composition_preserved"])
         self.assertEqual(
             self.contract["legacy_combined_surface"]["site"],
             "web/prompt-kit/index.html",
