@@ -2,6 +2,14 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.6.1 - 2026-09-13
+
+### Fixes / performance
+
+- fix(prompt-kit): require fresh repo floor before operator commands (`ccf60d3b`)
+- fix(p07): continue across proven phase boundaries (#442) (`34a03423`)
+- fix(operant): detect release version across full push range (`1809b9f0`)
+
 ## 0.6.0 - 2026-09-12
 
 ### Features / breaking pre-1.0 changes
