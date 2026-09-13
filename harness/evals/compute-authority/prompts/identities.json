@@ -4,7 +4,7 @@
     "condition": "control",
     "source_commit": "49951e238bd47e536b40815552ceb32a1aac7815",
     "prompt_path": "harness/evals/compute-authority/prompts/prompt-control.txt",
-    "prompt_contract_sha": "609da3ed2d83246e07029ed103a6882cad842891f5d1e87b70a9d90e4006d240",
+    "prompt_contract_sha": "6330edbc6b510fa6f09e204c0faba50d93bbdb749c52d773804b3227fe1ae78d",
     "markers": {
       "compute_authority": false,
       "exhaustive_compute": false,
