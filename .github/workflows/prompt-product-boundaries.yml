@@ -3,6 +3,7 @@ name: Prompt product boundaries
 on:
   pull_request:
     paths:
+      - 'docs/prompts.json'
       - 'registry/prompts/product-boundaries.v1.json'
       - 'registry/prompts/*-prompts.v1.json'
       - 'scripts/build_prompt_kit_registry.py'
@@ -12,6 +13,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'docs/prompts.json'
       - 'registry/prompts/product-boundaries.v1.json'
       - 'registry/prompts/*-prompts.v1.json'
       - 'scripts/build_prompt_kit_registry.py'
