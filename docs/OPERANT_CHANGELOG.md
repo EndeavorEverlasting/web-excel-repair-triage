@@ -2,6 +2,12 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.6.2 - 2026-09-13
+
+### Fixes / performance
+
+- fix(operant): externalize first release PR publication (`7f13553c`)
+
 ## 0.6.1 - 2026-09-13
 
 ### Fixes / performance
