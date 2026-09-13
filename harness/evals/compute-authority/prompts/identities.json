@@ -1,0 +1,26 @@
+{
+  "schema_version": "compute-authority-prompt-identities/v1",
+  "control": {
+    "condition": "control",
+    "source_commit": "49951e238bd47e536b40815552ceb32a1aac7815",
+    "prompt_path": "harness/evals/compute-authority/prompts/prompt-control.txt",
+    "prompt_contract_sha": "609da3ed2d83246e07029ed103a6882cad842891f5d1e87b70a9d90e4006d240",
+    "markers": {
+      "compute_authority": false,
+      "exhaustive_compute": false,
+      "end_state_horizon": false
+    }
+  },
+  "treatment": {
+    "condition": "treatment",
+    "source_commit": "fd3b3910e0ce80f3880ebd15426278354b065f48",
+    "prompt_path": "harness/evals/compute-authority/prompts/prompt-treatment.txt",
+    "prompt_contract_sha": "703cf2a28bee88618e5734e9d6a7cb8caa6c84514b3ef263d9132706fc07eed6",
+    "markers": {
+      "compute_authority": true,
+      "exhaustive_compute": true,
+      "end_state_horizon": true
+    }
+  },
+  "freeze_note": "Treatment is the current strengthened actionable-next-step policy. Control is the same policy immediately before a583b333 (compute authority + contract horizon expansion). Exhaustive-compute wording landed later in 2f258b09 and is included in treatment only."
+}

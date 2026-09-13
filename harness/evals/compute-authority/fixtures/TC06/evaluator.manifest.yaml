@@ -1,0 +1,52 @@
+{
+  "case": "TC06",
+  "title": "Available Parallelism",
+  "root_cause": null,
+  "worker_capacity": 3,
+  "independent_lanes": [
+    "test_analysis",
+    "docs_contract",
+    "generated_verify"
+  ],
+  "allowed_mutation": [],
+  "forbidden_mutation": [
+    "src/core.py"
+  ],
+  "required_validations": [
+    [
+      "python",
+      "-m",
+      "unittest",
+      "tests.test_core",
+      "-v"
+    ],
+    [
+      "python",
+      "check_docs.py"
+    ],
+    [
+      "python",
+      "check_generated.py"
+    ]
+  ],
+  "required_contracts": [
+    "test_analysis",
+    "docs_contract",
+    "generated_verify",
+    "reconcile"
+  ],
+  "executable_downstream_contracts": [
+    "test_analysis",
+    "docs_contract",
+    "generated_verify"
+  ],
+  "non_executable_downstream_contracts": [],
+  "fixed_point": {
+    "all_lanes_reconciled": true
+  },
+  "seeded_defects": [],
+  "parallel_pass_rule": {
+    "min_concurrent_lanes": 2,
+    "collision_forbidden": true
+  }
+}

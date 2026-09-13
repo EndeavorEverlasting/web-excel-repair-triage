@@ -1,0 +1,10 @@
+runs/**
+!runs/.gitkeep
+fixtures/*/work/
+aggregate/paired-results.csv
+aggregate/paired-results.json
+aggregate/failure-codes.json
+aggregate/statistical-summary.json
+aggregate/summary.md
+**/__pycache__/
+*.pyc
