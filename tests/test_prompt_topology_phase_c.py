@@ -117,6 +117,16 @@ class PhaseCViewerTests(unittest.TestCase):
         self.assertIn('Text index · 2 prompts', first)
         self.assertIn('id="prompt-P00"', first)
 
+    def test_mixed_case_script_closing_sequence_is_escaped(self):
+        topology, projection, state = fixture()
+        topology['nodes'][0]['title'] = 'Alpha </ScRiPt><script>alert(1)</script>'
+        rebind_topology(topology, state)
+        rendered = mod.render_document(mod.compact_payload(topology, projection, state))
+        self.assertNotIn('</ScRiPt>', rendered)
+        self.assertNotIn('</script>"', rendered)
+        self.assertIn('<\\/ScRiPt>', rendered)
+        self.assertIn('<\\/script>', rendered)
+
     def test_exact_hash_binding_and_prompt_point_parity(self):
         topology, projection, state = fixture()
         mod.validate_inputs(topology, projection, state)
@@ -164,23 +174,56 @@ class PhaseCViewerTests(unittest.TestCase):
             with self.assertRaisesRegex(mod.ViewerBuildError, 'must not equal input'):
                 mod.validate_output_path(topology, (topology, projection, state))
 
-    def test_external_overwrite_creates_backup(self):
+    def test_symlink_output_path_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            outputs_root = root / 'Outputs'
+            outputs_root.mkdir()
+            target = outputs_root / 'target.html'
+            target.write_text('target', encoding='utf-8')
+            external_link = root / 'viewer.html'
+            try:
+                external_link.symlink_to(target)
+            except (OSError, NotImplementedError):
+                self.skipTest('symlinks are unavailable in this environment')
+            inputs = (root / 'topology.json', root / 'projection.json', root / 'state.json')
+            for path in inputs:
+                path.write_text('{}', encoding='utf-8')
+            with self.assertRaisesRegex(mod.ViewerBuildError, 'symlink'):
+                mod.validate_output_path(external_link, inputs)
+
+    def test_external_overwrite_creates_unique_backups(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             outputs_root = root / 'Outputs'
             backup_root = outputs_root / 'backups'
             external = root / 'viewer.html'
-            external.write_text('previous viewer', encoding='utf-8')
-            backup = mod.backup_existing_external_output(
+            external.write_text('first viewer', encoding='utf-8')
+            first = mod.backup_existing_external_output(
                 external,
                 outputs_root=outputs_root,
                 backup_root=backup_root,
             )
-            self.assertIsNotNone(backup)
-            assert backup is not None
-            self.assertTrue(backup.is_file())
-            self.assertEqual(backup.read_text(encoding='utf-8'), 'previous viewer')
-            self.assertEqual(external.read_text(encoding='utf-8'), 'previous viewer')
+            external.write_text('second viewer', encoding='utf-8')
+            second = mod.backup_existing_external_output(
+                external,
+                outputs_root=outputs_root,
+                backup_root=backup_root,
+            )
+            self.assertIsNotNone(first)
+            self.assertIsNotNone(second)
+            assert first is not None and second is not None
+            self.assertNotEqual(first, second)
+            self.assertEqual(first.read_text(encoding='utf-8'), 'first viewer')
+            self.assertEqual(second.read_text(encoding='utf-8'), 'second viewer')
+
+    def test_atomic_write_replaces_complete_output(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'viewer.html'
+            output.write_text('old', encoding='utf-8')
+            mod.atomic_write_text(output, 'new viewer')
+            self.assertEqual(output.read_text(encoding='utf-8'), 'new viewer')
+            self.assertEqual(list(output.parent.glob(f'.{output.name}.*.tmp')), [])
 
     def test_viewer_source_has_no_collection_or_persistence_apis(self):
         source = (ROOT / 'docs/prompt-topology-viewer.js').read_text(encoding='utf-8')

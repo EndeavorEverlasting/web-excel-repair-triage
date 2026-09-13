@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 import hashlib
 import html
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -152,6 +153,7 @@ def compact_payload(
 def render_document(payload: dict[str, Any]) -> str:
     css = CSS_PATH.read_text(encoding='utf-8').strip()
     js = JS_PATH.read_text(encoding='utf-8').strip()
+    # Escaping every closing-tag prefix protects script data regardless of tag casing.
     data = json.dumps(payload, sort_keys=True, separators=(',', ':'), ensure_ascii=False).replace('</', '<\\/')
     cluster_count = len(payload['clusters'])
     outliers = len(payload['outlier_prompt_ids'])
@@ -204,7 +206,15 @@ def resolve_inputs(
     raise ViewerBuildError('incomplete explicit input bundle; missing: ' + ', '.join(str(path) for path in missing))
 
 
+def _has_symlink_component(path: Path) -> bool:
+    absolute = path.absolute()
+    candidates = [absolute, *absolute.parents]
+    return any(candidate.exists() and candidate.is_symlink() for candidate in candidates)
+
+
 def validate_output_path(output: Path, inputs: tuple[Path, Path, Path]) -> None:
+    if _has_symlink_component(output):
+        raise ViewerBuildError(f'output path must not traverse a symlink: {output}')
     resolved_output = output.resolve()
     for input_path in inputs:
         if resolved_output == input_path.resolve():
@@ -219,23 +229,43 @@ def backup_existing_external_output(
 ) -> Path | None:
     if not output.exists():
         return None
-    resolved_output = output.resolve()
+    absolute_output = output.absolute()
     try:
-        resolved_output.relative_to(outputs_root.resolve())
+        absolute_output.relative_to(outputs_root.absolute())
         return None
     except ValueError:
         pass
 
-    stamp = datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')
-    backup_dir = backup_root / stamp
-    backup_dir.mkdir(parents=True, exist_ok=True)
+    backup_root.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S-%f')
+    backup_dir = Path(tempfile.mkdtemp(prefix=f'{stamp}-', dir=backup_root))
     backup_path = backup_dir / output.name
-    counter = 1
-    while backup_path.exists():
-        backup_path = backup_dir / f'{output.stem}-{counter}{output.suffix}'
-        counter += 1
     shutil.copy2(output, backup_path)
     return backup_path
+
+
+def atomic_write_text(output: Path, rendered: str) -> None:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    temp_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode='w',
+            encoding='utf-8',
+            newline='\n',
+            dir=output.parent,
+            prefix=f'.{output.name}.',
+            suffix='.tmp',
+            delete=False,
+        ) as handle:
+            handle.write(rendered)
+            handle.flush()
+            os.fsync(handle.fileno())
+            temp_path = Path(handle.name)
+        os.replace(temp_path, output)
+        temp_path = None
+    finally:
+        if temp_path is not None:
+            temp_path.unlink(missing_ok=True)
 
 
 def build(topology_path: Path, projection_path: Path, state_path: Path) -> str:
@@ -270,8 +300,7 @@ def main() -> int:
                 raise ViewerBuildError('generated viewer is stale; rebuild canonical artifact')
         else:
             backup_existing_external_output(args.output)
-            args.output.parent.mkdir(parents=True, exist_ok=True)
-            args.output.write_text(rendered, encoding='utf-8', newline='\n')
+            atomic_write_text(args.output, rendered)
         if args.summary:
             payload = load_json(topology_path)
             state = load_json(state_path)
