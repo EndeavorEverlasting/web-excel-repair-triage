@@ -613,7 +613,7 @@ function byteLength(value){
   try{return unescape(encodeURIComponent(text)).length}catch(error){return text.length}
 }
 function clone(value){return JSON.parse(JSON.stringify(value))}
-function nowMs(value){var parsed=Number(value);return Number.isFinite(parsed)&&parsed>=0?Math.floor(parsed):Date.now()}
+function nowMs(value){if(value==null||value==='')return Date.now();var parsed=Number(value);return Number.isFinite(parsed)&&parsed>=0?Math.floor(parsed):Date.now()}
 function emptyEnvelope(name){return{schema:SCHEMA,store:name,items:[]}}
 function hasStorage(storage){return !!(storage&&typeof storage.getItem==='function'&&typeof storage.setItem==='function'&&typeof storage.removeItem==='function')}
 function safeRemove(storage,key){try{storage.removeItem(key);return true}catch(error){return false}}
@@ -626,7 +626,7 @@ function normalizedItem(item,now){
   return normalized
 }
 function dedupeLatestById(items){
-  var latest={};
+  var latest=Object.create(null);
   var passthrough=[];
   items.forEach(function(item){
     if(!item.id){passthrough.push(item);return}
@@ -714,7 +714,7 @@ function create(storage,host){
     if(policy.uniqueIds&&!item.id)return{ok:false,reason:'aggregate-id-required',store:name};
     var items=policy.replaceOnWrite?[item]:existing.items.concat([item]);
     var candidate=trimEnvelope(name,{items:items},at);
-    if(!candidate.items.length)return block('item-exceeds-store-bounds',name);
+    if(!candidate.items.length)return{ok:false,reason:'item-exceeds-store-bounds',store:name};
     return persist(name,candidate)
   }
   function clearKeys(keys){
@@ -761,8 +761,14 @@ function create(storage,host){
       var result=clearPersonalState(confirmation);
       toast(result.ok?'Personal settings deleted':'Personal settings were not deleted')
     });
-    var close=dialog.querySelector('[data-close-storage]');if(close)close.addEventListener('click',function(){dialog.hidden=true});
-    button.addEventListener('click',function(){dialog.hidden=false});
+    function closeDialog(){dialog.hidden=true;if(typeof button.focus==='function')button.focus()}
+    var close=dialog.querySelector('[data-close-storage]');if(close)close.addEventListener('click',closeDialog);
+    dialog.addEventListener('keydown',function(event){if(event.key==='Escape'){event.stopPropagation();closeDialog()}});
+    button.addEventListener('click',function(){
+      dialog.hidden=false;
+      var first=dialog.querySelector('button');
+      if(first&&typeof first.focus==='function')first.focus()
+    });
     controls.appendChild(button);doc.body.appendChild(dialog)
   }
 
