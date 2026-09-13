@@ -55,6 +55,48 @@ class ActionablePromptRegistryTests(unittest.TestCase):
         ):
             self.assertIn(phrase, self.policy["copy_content_appendix"])
 
+    def test_compute_authority_and_end_state_contract_horizon_are_global_policy(self) -> None:
+        appendix = self.policy["copy_content_appendix"]
+        for phrase in (
+            "COMPUTE AUTHORITY / SCOPE-BOUNDARY CONTRACT",
+            "bounded sprint limits mutation ownership and blast radius",
+            "use as much safe available compute as is materially useful",
+            "EXHAUSTIVE AVAILABLE COMPUTE RULE",
+            "Treat exhaustive available compute as authorized by default",
+            "Exhaust the decision-relevant safe compute available",
+            "Do not conserve tokens, tool calls, context windows",
+            "fixed point is evidence-defined, not attempt-count-defined",
+            "dispatch them immediately and execute them concurrently",
+            "residual-compute sweep",
+            "first PASS as a checkpoint",
+            "Broad compute authority never expands safety or mutation authority",
+            "END-STATE CONTRACT HORIZON",
+            "implementation/behavior",
+            "operator/user acceptance",
+            "durability/automation/observability",
+            "The contract horizon is broader than mutation authority",
+            "LOCAL PROMPT CONTRACT CLOSED",
+            "WHOLE OUTCOME CONTRACT CLOSED",
+            "CONTRACT HORIZON",
+        ):
+            self.assertIn(phrase, appendix)
+
+        self.assertIn(
+            "A bounded sprint limits mutation scope, not useful compute volume",
+            self.policy["next_step_suffix"],
+        )
+        self.assertIn(
+            "Treat exhaustive available compute as authorized by default",
+            self.policy["next_step_suffix"],
+        )
+        self.assertIn(
+            "stop only at an evidence-defined fixed point or exact ceiling/blocker",
+            self.policy["next_step_suffix"],
+        )
+        by_id = {prompt["id"]: prompt for prompt in self.prompts}
+        self.assertIn("COMPUTE AUTHORITY / SCOPE-BOUNDARY CONTRACT", by_id["P08"]["copyContent"])
+        self.assertIn("END-STATE CONTRACT HORIZON", by_id["P08"]["copyContent"])
+
     def test_existing_work_and_pr_reuse_is_global_policy(self) -> None:
         reuse = self.policy["existing_work_reuse"]
         self.assertIn(
@@ -90,6 +132,9 @@ class ActionablePromptRegistryTests(unittest.TestCase):
             with self.subTest(prompt=prompt["id"]):
                 self.assertEqual(prompt["actionabilityPolicy"], policy_id)
                 self.assertIn(marker, prompt["copyContent"])
+                self.assertIn("EXHAUSTIVE AVAILABLE COMPUTE RULE", prompt["copyContent"])
+                self.assertIn("Exhaust the decision-relevant safe compute available", prompt["copyContent"])
+                self.assertIn("dispatch them immediately and execute them concurrently", prompt["copyContent"])
                 self.assertIn(suffix, prompt["nextStep"])
                 self.assertTrue(prompt["nextStep"].strip())
                 self.assertTrue(prompt["copyContent"].strip())
