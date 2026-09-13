@@ -108,7 +108,11 @@
     state.hoverId=id;
     if(!id){hoverEl.classList.remove('visible');return;}
     const n=nodesById.get(id); hoverEl.innerHTML=`<strong>${escapeHtml(id)}</strong> · ${escapeHtml(n.title)}`;
-    const stage=canvas.parentElement.getBoundingClientRect(); hoverEl.style.left=`${Math.min(stage.width-290,Math.max(8,evt.clientX-stage.left+12))}px`;hoverEl.style.top=`${Math.min(stage.height-54,Math.max(8,evt.clientY-stage.top+12))}px`;hoverEl.classList.add('visible');
+    const stage=canvas.parentElement.getBoundingClientRect();
+    const maxLeft=Math.max(8,stage.width-290), maxTop=Math.max(8,stage.height-54);
+    hoverEl.style.left=`${Math.min(maxLeft,Math.max(8,evt.clientX-stage.left+12))}px`;
+    hoverEl.style.top=`${Math.min(maxTop,Math.max(8,evt.clientY-stage.top+12))}px`;
+    hoverEl.classList.add('visible');
   }
   function renderDetail(id) {
     if(!id){detail.innerHTML='<div class="empty">Hover or select a prompt to inspect its topology evidence.</div>';return;}
@@ -151,12 +155,12 @@
   });
   search.addEventListener('input',()=>{
     state.query=search.value.trim().toLowerCase(); state.activeCluster=null;
-    if(!state.query){state.selectedId=null;renderDetail(null);return;}
+    if(!state.query){state.selectedId=null;renderDetail(null);renderClusters();return;}
     const exact=nodes.find(n=>n.prompt_id.toLowerCase()===state.query);
     const first=exact||nodes.find(matches);
     state.selectedId=first?first.prompt_id:null; renderDetail(state.selectedId); renderClusters();
   });
-  search.addEventListener('keydown',e=>{if(e.key==='Escape'){search.value='';state.query='';state.selectedId=null;renderDetail(null);search.blur();}});
+  search.addEventListener('keydown',e=>{if(e.key==='Escape'){search.value='';state.query='';state.selectedId=null;state.activeCluster=null;renderDetail(null);renderClusters();search.blur();}});
   reset.addEventListener('click',resetView);
   window.addEventListener('resize',resize);
 
