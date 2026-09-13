@@ -88,13 +88,15 @@ jobs:
           print('OPERANT_RELEASE_ANCHOR_PLAN_PASS', plan['next_version'])
           PY
           git diff --check
-      - name: Commit durable hardening and remove carrier
+      - name: Publish non-workflow owner and staged workflow bytes
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          rm .github/workflows/operant-release-recovery-carrier.yml
-          git add .github/workflows/operant-versioning.yml scripts/operant_version.py tests/test_operant_release_anchor.py .github/workflows/operant-release-recovery-carrier.yml
+          mkdir -p harness/tmp
+          cp .github/workflows/operant-versioning.yml harness/tmp/operant-versioning.patched.yml
+          git checkout -- .github/workflows/operant-versioning.yml
+          git add scripts/operant_version.py tests/test_operant_release_anchor.py harness/tmp/operant-versioning.patched.yml
           git commit -m 'fix(operant): recover deterministic release anchors'
           git push origin HEAD:fix/operant-release-anchor-recovery-20260912
