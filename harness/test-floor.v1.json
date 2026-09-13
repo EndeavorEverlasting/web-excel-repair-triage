@@ -33,6 +33,7 @@
     "tests/test_permissioned_repository_polling_prompt.py",
     "tests/test_prompt_classification_refiner_prompt.py",
     "tests/test_prompt_kit_selected_prompt.py",
+    "tests/test_prompt_outcome_receipt_prompt.py",
     "tests/test_prompt_registry_expansion_regression_design_teach.py",
     "tests/test_repository_versioning_system_prompt.py",
     "tests/test_repository_work_ledger_prompt.py",
