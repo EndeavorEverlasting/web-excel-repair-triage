@@ -9,6 +9,7 @@ on:
       - docs/PROMPT_KIT_SERVERLESS_RUNTIME_PHASE_PLAN.md
       - docs/PROMPT_KIT_PRIVACY_STORAGE.md
       - docs/prompt-kit*.js
+      - docs/prompt-kit-preference-gameplay.js
       - scripts/validate_prompt_kit_serverless_runtime_lifecycle.py
       - tests/test_prompt_kit_serverless_runtime_lifecycle.py
       - scripts/validate_prompt_kit_privacy_storage.py
@@ -27,6 +28,7 @@ on:
       - docs/PROMPT_KIT_SERVERLESS_RUNTIME_PHASE_PLAN.md
       - docs/PROMPT_KIT_PRIVACY_STORAGE.md
       - docs/prompt-kit*.js
+      - docs/prompt-kit-preference-gameplay.js
       - scripts/validate_prompt_kit_serverless_runtime_lifecycle.py
       - tests/test_prompt_kit_serverless_runtime_lifecycle.py
       - scripts/validate_prompt_kit_privacy_storage.py
