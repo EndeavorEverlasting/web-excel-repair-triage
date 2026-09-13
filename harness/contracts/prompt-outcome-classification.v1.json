@@ -1,0 +1,61 @@
+{
+  "schema_version": "prompt-outcome-classification/v1",
+  "receipt_schema": "harness/contracts/prompt-outcome-receipt.schema.v1.json",
+  "semantic_owner": "P99",
+  "coordination_owner": "P115",
+  "upstream_contract": "harness/contracts/prompt-kit-feedback-afk-routing.v1.json",
+  "mission": "Derive privacy-bounded outcome evidence from natural usage and repository/provider/runtime observations without treating ordinary use as success or failure and without granting mutation or promotion authority.",
+  "outcome_classes": {
+    "routing": "The wrong prompt, owner, workflow, lane, or mutation surface was selected.",
+    "interpretation": "The correct prompt/owner was selected but an explicit instruction, invariant, scope, or authority boundary was misunderstood or ignored.",
+    "execution": "The intended operation was understood and attempted, but implementation or action failed under otherwise available conditions.",
+    "progression": "Work repeats on the same mission without advancing durable evidence state.",
+    "durability": "Required state exists transiently or conversationally but not in the durable repository/provider artifact that should own it.",
+    "premature-terminal": "Work was classified terminal while safe actionable continuation remained.",
+    "evidence-promotion": "A stronger evidence state was claimed than current evidence proves.",
+    "regression": "Behavior previously proven against the same intended requirement later violates that requirement.",
+    "environment": "External provider, permission, credential, runtime, network, hardware, quota, or tooling conditions prevented otherwise-correct execution.",
+    "unknown": "Available evidence cannot safely distinguish success, failure, abandonment, or environmental effects."
+  },
+  "evidence_state_order": ["PLANNED_DESIGNED", "TRACKED", "IMPLEMENTED", "WIRED_REACHABLE", "VALIDATED", "INTEGRATED", "DEPLOYED", "OBSERVED"],
+  "signal_policy": {
+    "ordinary_usage_signals": ["prompt_opened", "prompt_viewed", "prompt_copied", "prompt_invoked", "prompt_favorited"],
+    "ordinary_usage_is_failure": false,
+    "ordinary_usage_is_success": false,
+    "single_dislike_without_reason_is_failure": false,
+    "deterministic_contradiction_minimum_occurrences": 1,
+    "repeated_local_pattern_minimum_occurrences": 3,
+    "unknown_is_valid_terminal_observation": true,
+    "environment_does_not_count_as_prompt_failure_without_independent_prompt_defect": true,
+    "multiple_receipts_per_invocation": true,
+    "receipts_are_append_only_evidence": true
+  },
+  "rules": [
+    {"id": "evidence-promotion", "primary": "evidence-promotion", "when": "claimed evidence-state rank is stronger than observed evidence-state rank, or success is claimed across a proven unresolved blocker", "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"},
+    {"id": "premature-terminal", "primary": "premature-terminal", "when": "terminal_claim and safe_successor_observed are both present for the same mission", "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"},
+    {"id": "durability", "primary": "durability", "when": "a durable artifact is required and deterministically observed absent, or repeated manual context transfer proves the canonical owner was bypassed", "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"},
+    {"id": "regression", "primary": "regression", "when": "the same intended requirement has prior validated evidence and later broken or reverted evidence", "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"},
+    {"id": "routing", "primary": "routing", "when": "wrong_owner_or_route is proven, or a replacement canonical owner advances the same task after the original route did not", "result": "FAILURE", "confidence": "MEDIUM", "attribution": "CORRELATED", "actionability": "CONDITIONAL_ACTIONABLE_REPAIR"},
+    {"id": "interpretation", "primary": "interpretation", "when": "explicit invariant or requirement is present and later violated by the selected owner", "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"},
+    {"id": "execution", "primary": "execution", "when": "deterministic action/validator/build failure occurs without an external environment cause", "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"},
+    {"id": "progression", "primary": "progression", "when": "the same prompt is invoked on the same mission at least three times with no durable evidence-state advance", "result": "FAILURE", "confidence": "HIGH", "attribution": "CORRELATED", "actionability": "CONDITIONAL_ACTIONABLE_REPAIR"},
+    {"id": "environment", "primary": "environment", "when": "an external provider/access/runtime/tooling failure is independently observed and no stronger prompt defect is proven", "result": "BLOCKED", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "INFORMATION_ONLY"},
+    {"id": "unknown", "primary": "unknown", "when": "only ordinary usage, unreasoned dislike, healthy repeat use, or unobservable external execution is available", "result": "UNKNOWN", "confidence": "NONE", "attribution": "UNOBSERVED", "actionability": "INFORMATION_ONLY"}
+  ],
+  "primary_precedence": ["evidence-promotion", "premature-terminal", "durability", "regression", "routing", "interpretation", "execution", "progression", "environment", "unknown"],
+  "routing_boundary": {
+    "outcome_receipt_is_evidence_not_mutation_authority": true,
+    "P99_derives_semantics": true,
+    "P115_consumes_actionable_or_conditional_receipts": true,
+    "P07_or_P32_owns_repair": true,
+    "P105_owns_promotion": true
+  },
+  "privacy_boundary": {
+    "raw_prompt_body": false,
+    "raw_clipboard_content": false,
+    "raw_search_or_typed_content": false,
+    "credentials_or_secrets": false,
+    "user_identity_required": false,
+    "evidence_refs_are_bounded_references_not_raw_payloads": true
+  }
+}
