@@ -29,20 +29,23 @@ REPO_FIELDS = {"repository", "default_branch", "working_branch", "head_sha", "fi
 
 
 class ContractError(ValueError):
-    pass
+    """Raised when a checkpoint violates the repository continuity contract."""
 
 
 def _require(condition: bool, message: str) -> None:
+    """Raise ``ContractError`` when a contract predicate is false."""
     if not condition:
         raise ContractError(message)
 
 
 def _nonempty(value: Any, field: str) -> str:
+    """Return a non-empty string value or fail with a field-specific error."""
     _require(isinstance(value, str) and bool(value.strip()), f"{field} must be a non-empty string")
     return value
 
 
 def _required_keys(value: Any, required: set[str], field: str) -> dict[str, Any]:
+    """Require an object containing every key needed by a checkpoint field."""
     _require(isinstance(value, dict), f"{field} must be an object")
     missing = sorted(required - set(value))
     _require(not missing, f"{field} missing required fields: {missing}")
@@ -50,11 +53,13 @@ def _required_keys(value: Any, required: set[str], field: str) -> dict[str, Any]
 
 
 def _no_extra_keys(value: dict[str, Any], allowed: set[str], field: str) -> None:
+    """Reject object keys that the strict checkpoint schema does not allow."""
     extras = sorted(set(value) - allowed)
     _require(not extras, f"{field} has unsupported fields: {extras}")
 
 
 def _date_time(value: Any, field: str) -> str:
+    """Require an RFC 3339-compatible timestamp with an explicit timezone."""
     raw = _nonempty(value, field)
     try:
         parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
@@ -65,6 +70,7 @@ def _date_time(value: Any, field: str) -> str:
 
 
 def load_json(path: Path) -> dict[str, Any]:
+    """Load a JSON object while converting file and parse failures to contract errors."""
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -74,6 +80,7 @@ def load_json(path: Path) -> dict[str, Any]:
 
 
 def validate_schema_contract(schema: dict[str, Any] | None = None) -> None:
+    """Verify that the tracked JSON Schema still matches validator-owned invariants."""
     schema = schema or load_json(SCHEMA_PATH)
     _require(schema.get("$schema") == "https://json-schema.org/draft/2020-12/schema", "checkpoint schema must use JSON Schema 2020-12")
     _require(schema.get("$id") == SCHEMA_VERSION, "checkpoint schema $id drift")
@@ -93,6 +100,7 @@ def validate_schema_contract(schema: dict[str, Any] | None = None) -> None:
 
 
 def _validate_decisions(items: Any, prefix: str) -> None:
+    """Validate preserved decisions and their evidence/status fields."""
     _require(isinstance(items, list), f"{prefix}.decisions must be an array")
     for index, item in enumerate(items):
         field = f"{prefix}.decisions[{index}]"
@@ -104,6 +112,7 @@ def _validate_decisions(items: Any, prefix: str) -> None:
 
 
 def _validate_evidence(items: Any, prefix: str) -> bool:
+    """Validate evidence anchors and report whether repository state is required."""
     _require(isinstance(items, list), f"{prefix}.evidence must be an array")
     has_repository = False
     for index, item in enumerate(items):
@@ -119,6 +128,7 @@ def _validate_evidence(items: Any, prefix: str) -> bool:
 
 
 def _validate_validations(items: Any, prefix: str) -> None:
+    """Validate proof records without promoting UNKNOWN or SKIPPED results."""
     _require(isinstance(items, list), f"{prefix}.validations must be an array")
     for index, item in enumerate(items):
         field = f"{prefix}.validations[{index}]"
@@ -131,6 +141,7 @@ def _validate_validations(items: Any, prefix: str) -> None:
 
 
 def _validate_remaining_work(items: Any, prefix: str) -> None:
+    """Validate classified remaining work and its dependency/consequence fields."""
     _require(isinstance(items, list), f"{prefix}.remaining_work must be an array")
     for index, item in enumerate(items):
         field = f"{prefix}.remaining_work[{index}]"
@@ -142,6 +153,7 @@ def _validate_remaining_work(items: Any, prefix: str) -> None:
 
 
 def _validate_next_action(value: Any, prefix: str) -> None:
+    """Require a complete executable continuation for a nonterminal thread."""
     obj = _required_keys(value, NEXT_ACTION_FIELDS, f"{prefix}.next_action")
     _no_extra_keys(obj, NEXT_ACTION_FIELDS, f"{prefix}.next_action")
     for key in NEXT_ACTION_FIELDS:
@@ -149,6 +161,7 @@ def _validate_next_action(value: Any, prefix: str) -> None:
 
 
 def _validate_repository_state(value: Any, prefix: str) -> None:
+    """Require exact repository identity/head data when repository evidence exists."""
     obj = _required_keys(value, REPO_FIELDS, f"{prefix}.repository_state")
     for key in ("repository", "default_branch", "working_branch", "first_unproven_repository_gate"):
         _nonempty(obj[key], f"{prefix}.repository_state.{key}")
@@ -156,6 +169,7 @@ def _validate_repository_state(value: Any, prefix: str) -> None:
 
 
 def validate_checkpoint(payload: dict[str, Any]) -> None:
+    """Enforce cross-field resumability rules for every checkpoint thread."""
     _require(isinstance(payload, dict), "checkpoint must be an object")
     _no_extra_keys(payload, {"handoff_version", "source_controller", "source_conversation_state", "created_at", "threads"}, "checkpoint")
     _require(payload.get("handoff_version") == SCHEMA_VERSION, "unsupported handoff_version")
@@ -212,6 +226,7 @@ def validate_checkpoint(payload: dict[str, Any]) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run schema-only or checkpoint-instance validation from the command line."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("checkpoint", nargs="?", type=Path)
     parser.add_argument("--schema-only", action="store_true", help="Validate the repository-owned schema contract without an instance")
