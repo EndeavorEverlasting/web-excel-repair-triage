@@ -20,8 +20,11 @@ STATE_MARKER = "EVIDENCE STATE / NO PROMOTION CONTRACT"
 
 
 class RepositoryPlanDurabilityTests(unittest.TestCase):
+    """Protect durable repository plans and evidence-state boundaries across prompts."""
+
     @classmethod
     def setUpClass(cls) -> None:
+        """Load raw/effective prompt registries once for contract assertions."""
         cls.policy = json.loads(POLICY.read_text(encoding="utf-8"))
         cls.raw = {p["id"]: p for p in json.loads(BASE.read_text(encoding="utf-8"))}
         ai_payload = json.loads(AI.read_text(encoding="utf-8"))
@@ -29,6 +32,7 @@ class RepositoryPlanDurabilityTests(unittest.TestCase):
         cls.effective = {p["id"]: p for p in build_prompt_kit_registry.load_prompt_registry()}
 
     def test_shared_policy_makes_chat_only_repository_plans_noncanonical(self) -> None:
+        """Chat-only plans cannot satisfy the durable repository planning contract."""
         appendix = self.policy["copy_content_appendix"]
         self.assertIn(PLAN_MARKER, appendix)
         for phrase in (
@@ -43,6 +47,7 @@ class RepositoryPlanDurabilityTests(unittest.TestCase):
         self.assertTrue(any("exists only in chat" in item for item in self.policy["forbidden_solo_actions"]))
 
     def test_shared_policy_forbids_evidence_state_promotion(self) -> None:
+        """Weaker evidence states cannot be promoted into stronger completion claims."""
         appendix = self.policy["copy_content_appendix"]
         self.assertIn(STATE_MARKER, appendix)
         for phrase in (
@@ -58,6 +63,7 @@ class RepositoryPlanDurabilityTests(unittest.TestCase):
         self.assertIn("Do not promote evidence states", self.policy["next_step_suffix"])
 
     def test_p02_and_p04_persist_actionable_repository_plans(self) -> None:
+        """P02/P04 must synchronize actionable plans into durable repository state."""
         self.assertIn("DURABLE REPOSITORY PLAN HANDOFF", self.raw["P02"]["copyContent"])
         self.assertIn("DURABLE PLAN OUTPUT", self.raw["P04"]["copyContent"])
         self.assertIn("P66", self.raw["P02"]["copyContent"])
@@ -74,6 +80,7 @@ class RepositoryPlanDurabilityTests(unittest.TestCase):
         self.assertIn("relevant writable active PR owned by this lane", self.raw["P04"]["nextStep"])
 
     def test_p12_refuses_chat_only_or_state_promoted_closeout(self) -> None:
+        """P12 must reject closeout backed only by chat or promoted evidence states."""
         p12 = self.raw["P12"]
         self.assertIn("DURABLE CLOSEOUT GATE", p12["copyContent"])
         self.assertIn("phase-local", p12["copyContent"].lower())
@@ -81,6 +88,7 @@ class RepositoryPlanDurabilityTests(unittest.TestCase):
         self.assertIn("actionable repository plan or successor phase exists only in chat", p12["proofGate"])
 
     def test_p07_phase_continuity_repair_remains_present(self) -> None:
+        """P07 must preserve the distinction between phase-local and global exclusions."""
         p07 = self.raw["P07"]["copyContent"]
         for phrase in (
             "PHASE-LOCAL OUT OF SCOPE",
@@ -90,6 +98,7 @@ class RepositoryPlanDurabilityTests(unittest.TestCase):
             self.assertIn(phrase, p07)
 
     def test_p100_names_state_promotion_without_breaking_prompt_budget(self) -> None:
+        """P100 must name evidence promotion while remaining inside its prompt budget."""
         p100 = self.ai_raw["P100"]
         self.assertIn("DESIGNED is not WIRED", p100["proofGate"])
         self.assertIn("concurrent chat/branch/PR activity", p100["proofGate"])
@@ -98,6 +107,7 @@ class RepositoryPlanDurabilityTests(unittest.TestCase):
         self.assertLess(len(p100["copyContent"]), 8000)
 
     def test_shared_contract_reaches_plan_build_closeout_ledger_and_diagnosis(self) -> None:
+        """The shared durability/evidence contracts must propagate to every owner."""
         for prompt_id in ("P02", "P04", "P07", "P12", "P66", "P83", "P95", "P100", "P141"):
             self.assertIn(prompt_id, self.effective)
             copy = self.effective[prompt_id]["copyContent"]
