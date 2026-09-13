@@ -23,7 +23,7 @@ This document is the durable result of a repository-wide strategic scouting pass
 6. PR #460 is now on main and defines four privacy/storage planes: Prompt Canon, Personal State, Private Sync, and Collective Learning. It also defines a device-only Local Journal and PrivacyReducer buffer. Collective Learning may receive only allowlisted, privacy-reduced aggregate evidence; the reducer itself has no network authority. Runtime browser/device persistence, reducer execution, encrypted `.pkenc` import/export, and network ingestion remain unimplemented/unobserved.
 7. PR #431 is open and implements a privacy-bounded Prompt Finder observation corpus around `prompt_usage` / selection-intent events and candidate-only eval samples. It explicitly does not treat selection intent as terminal success and strips session identity before candidate-eval output.
 8. PR #450 is open and implements a canonical prompt-routing control plane with actor-neutral route receipts, precedence, compare-and-set state, idempotency, headless routing, and autonomy-gap semantics.
-9. PR #452 is open and implements prompt outcome receipts with invocation identity, multiple observers per invocation, evidence-state tracking, failure taxonomy, correction burden, and explicit UNKNOWN/environment behavior.
+9. PR #452 is merged on main (`fd3b3910e0ce80f3880ebd15426278354b065f48`) and implements prompt outcome receipts with invocation identity, multiple observers per invocation, evidence-state tracking, failure taxonomy, correction burden, and explicit UNKNOWN/environment behavior. Treat it as current-main outcome truth for P95, not as an open branch.
 10. Those three open lanes are not present on current main and were authored against different earlier floors. Their semantics overlap around prompt identity, event/receipt identity, time, source/surface, causality, evidence, and progression, but they currently have separate schema ownership.
 11. The merged repository AI eval framework already composes deterministic, synthetic, model-runtime, and human-review layers. Deterministic/synthetic evidence can block CI; live model-runtime and irreducible human judgment remain explicit proof ceilings rather than being inferred from static tests.
 12. PR #454 made product ownership explicit and declared a future dedicated AFK Agent Flow cutover as a conditional successor. The current combined Prompt Kit remains an intentional compatibility surface.
@@ -268,7 +268,7 @@ Do not implement production feature behavior as part of this architecture invest
 - current Phase A/B/C contracts;
 - open PR #431 observation-corpus schema/runtime;
 - open PR #450 prompt-routing receipt/control-plane contract;
-- open PR #452 outcome-receipt/classification contract;
+- merged PR #452 outcome-receipt/classification contract on current main (`fd3b3910`);
 - merged repository AI eval registry/framework;
 - existing P99/P115 feedback/AFK routing capability and privacy restrictions;
 - product-boundary contract only where lifecycle ownership crosses AFK/Triage surfaces.
@@ -325,7 +325,8 @@ If P95 resolves the state model and the remaining question becomes “does priva
 | **P141 strategic scout** | **TRACKED by this document** | no production implementation |
 | **Phase C closeout continuity** | **INTEGRATED RECOVERY FLOOR** | `PHASE_C_CLOSEOUT.md` + `PHASE_C_HANDOFF.md` on refreshed main; prerequisite for P95 |
 | **P95 Evidence Spine architecture investigation** | **NEXT APPROVED OWNER** | integrated Phase C recovery floor + current main + evidence lanes + #460 + topology/evals |
-| Open evidence lanes #431/#450/#452 | IMPLEMENTED on branches, not integrated | must be reconciled only after P95 ownership decision; do not blindly merge all three |
+| Open evidence lanes #431/#450 | IMPLEMENTED on branches, not integrated | reconcile only after P95 ownership decision |
+| Outcome receipts #452 | IMPLEMENTED / INTEGRATED on main (`fd3b3910`) | current-main outcome truth for P95; do not re-analyze as an open branch |
 | Phase D Passive Learning | AUTHORIZED FUTURE PHASE, DEFERRED BY STRATEGIC ORDER | evidence-spine ownership + later empirical value gate |
 | Phase E Historical Intelligence | AUTHORIZED FUTURE PHASE, DEFERRED | authoritative accepted-epoch retention/corpus first |
 | Personal State / Private Sync runtime | AUTHORIZED FUTURE BOUNDED EXECUTION | #460 already supplies strategy; prioritize separately under P07 when chosen |
@@ -334,7 +335,7 @@ If P95 resolves the state model and the remaining question becomes “does priva
 ## 9. Not now
 
 - Do not add behavioral channels to canonical topology merely because their names are reserved.
-- Do not merge #431, #450, and #452 independently without checking their lifecycle/state ownership interactions against current main.
+- Do not merge #431 and #450 independently without checking their lifecycle/state ownership interactions against current main (including already-merged #452 outcome receipts).
 - Do not create a generic analytics/event-bus abstraction as a demonstration of the evidence-spine thesis.
 - Do not implement Local Journal, PrivacyReducer, Collective Learning ingestion, Private Sync, or hosted telemetry in this scout.
 - Do not build a vector database.
@@ -363,6 +364,6 @@ Those unknowns belong to later owners and must not be promoted from this strateg
 **STRATEGIC ROUTE:** P95 — Program Design & Call-Stack Prototype Architect.
 **ADMISSION DEPENDENCY:** verify the Phase C closeout/handoff recovery floor (`PHASE_C_CLOSEOUT.md` + `PHASE_C_HANDOFF.md`) is reachable on refreshed main before P95 begins.
 **FIRST EXECUTABLE ACTION:** P95 owner refreshes current main, confirms the Phase C recovery pair, then traces Recommendation Path through routing, invocation, outcome, recovery/eval, privacy reduction, and topology-adjacent evidence into `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md`.
-**P95 FIRST ACTION AFTER DEPENDENCY:** refresh current main and exact #431/#450/#452 heads, trace the Recommendation Path across Prompt Finder/eval/privacy owners, and write the first state-owner/identity compatibility matrix plus the smallest representative executable seam trace in `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md`.
+**P95 FIRST ACTION AFTER DEPENDENCY:** refresh current main, confirm the Phase C closeout/handoff pair, resolve exact open #431/#450 heads plus merged #452 on main, trace the Recommendation Path across Prompt Finder/eval/privacy owners, and write the first state-owner/identity compatibility matrix plus the smallest representative executable seam trace in `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md`.
 **EXPECTED PROOF:** each lifecycle field has one semantic owner, one persistence/privacy plane, and explicit adapters or an explicit non-composition boundary; all three required traces are resolved; surviving alternatives are exercised through bounded non-production seam prototypes including failure propagation; no production feature implementation is present in the diff.
 **P95 COMPLETION GATE:** architecture recommendation is durable, falsification-friendly, compatible with current privacy/topology/eval contracts, executable-prototype-backed where ambiguity remains, and specific enough to route the next bounded owner without reopening repository-wide strategy.

@@ -11,7 +11,8 @@
 **Validated Phase C hardening PR head:** `bad915e7597e7968445ecf57036fdf5d496b40a4`
 **Phase C hardening integration commit:** `b9cd839c4910402073e9e84476fb1b8d5e3060ef`
 **Strategic scout context:** PR #461, commit `f58c9d47a3a5d281895a1015eb8e429583e58bb5` (`POST_PHASE_C_STRATEGIC_SCOUT.md`)
-**Closeout floor:** `450026a94b288ad0a5ff532b61f77049f0791c77` (`main` at documentation authoring; must contain `b9cd839c` and, after integration, this closeout/handoff pair)
+**Closeout authoring floor:** `450026a94b288ad0a5ff532b61f77049f0791c77` (`main` when this recovery pair was authored; contains Phase C hardening `b9cd839c`)
+**Closeout integration identity:** the provider merge commit that lands this closeout/handoff pair on refreshed `main` (verify after merge with ancestry + content proof of `PHASE_C_CLOSEOUT.md` and `PHASE_C_HANDOFF.md`; do not confuse with the stale remote branch tip `b9cd839c` historically named `docs/prompt-topology-phase-c-closeout`)
 
 Phase C is closed. Do not reopen or rebuild this phase merely because an older chat, handoff, branch, worktree, or historical hash describes it as unfinished. Refresh `main`, verify containment of `358e1eea` and `b9cd839c`, and treat this document plus [`PHASE_C_HANDOFF.md`](./PHASE_C_HANDOFF.md) and `phase-c-viewer.v1.json` as the durable recovery floor.
 
@@ -57,7 +58,8 @@ Companion continuity documents (not viewer code):
 
 Observed proof for the integrated Phase C slice includes:
 
-- `python scripts/validate_prompt_topology.py --summary` — PASS (Phase A/B/C contracts);
+- `python scripts/validate_prompt_topology.py --summary` — PASS (Phase A/B contracts; script does not load `phase-c-viewer.v1.json`);
+- Phase C focused gates — `python -m unittest tests.test_prompt_topology_phase_c -v`, `node --check docs/prompt-topology-viewer.js`, builder byte-parity/`--check`, and `python tests/prompt_topology_viewer_browser_proof.py` — PASS;
 - `python -m unittest tests.test_prompt_topology_phase_a tests.test_prompt_topology_phase_b tests.test_prompt_topology_phase_c -v` — PASS;
 - `node --check docs/prompt-topology-viewer.js` — PASS;
 - live Phase A topology rebuild + Phase B projection rebuild + Phase C viewer build with repeated-build byte parity — PASS;
@@ -79,7 +81,7 @@ Those counts, hashes, and runtime paths are **historical proof identities, not p
 
 1. **Post-merge review gaps after #456** — provider refresh showed remaining valid findings (duplicate partition membership, unsafe output overwrite/alias paths, hover clamping, search/cluster control coherence, browser failure receipts/cleanup, script-data escaping). Repaired in PR #459 before durable closeout.
 2. **Misnamed closeout branch** — `docs/prompt-topology-phase-c-closeout` pointed only at hardening integration `b9cd839c` and contained no `PHASE_C_CLOSEOUT.md`. Treated as stale naming, not recovery proof.
-3. **Moving main floor** — after Phase C hardening, `main` advanced through privacy/storage strategy (#460), strategic scout (#461), outcome-receipts (#452), and ledger/eval indexing. Closeout records Phase C identity against refreshed containment, not against a frozen scout SHA alone.
+3. **Moving main floor** — after Phase C hardening, `main` advanced through privacy/storage strategy (#460), strategic scout (#461), merged outcome-receipts (#452 / `fd3b3910`), and ledger/eval indexing. Closeout records Phase C identity against refreshed containment, not against a frozen scout SHA alone. PR #431 and #450 remain open branches and are not treated as integrated by this closeout.
 4. **Strategic dependency sequencing** — PR #461 correctly routed P95 Evidence Spine investigation but left Phase C closeout/handoff recovery as an explicit prerequisite. This closeout closes that recovery gap without absorbing Evidence Spine architecture, Phase D, or Phase E implementation.
 
 ## Proof ceiling
@@ -122,7 +124,8 @@ Continue from:
 
 - **Phase D — Passive Learning**: authorized as a future phase by repository strategy, but strategically deferred until evidence-lifecycle ownership is resolved and an empirical admission test later justifies value.
 - **Phase E — Historical Intelligence**: authorized as a future phase, but deferred until an authoritative retained accepted-epoch corpus exists.
-- **Usage / routing / outcome lanes** (historically PR #431 / #450 / #452): reconcile only after P95 ownership decision; do not treat independent attractiveness as integration authority.
+- **Usage / routing lanes still open** (PR #431 / #450): reconcile only after P95 ownership decision; do not treat independent attractiveness as integration authority.
+- **Outcome receipts (PR #452):** already integrated on `main` at `fd3b3910e0ce80f3880ebd15426278354b065f48`. P95 must treat that merged contract as current-main outcome truth, not as a still-open branch head.
 - **GitHub Pages publication of the viewer**: separate successor gate outside Phase C proof.
 - **Dedicated AFK Agent Flow cutover**: authorized future work; weakened as the immediate next strategic bet relative to evidence-lifecycle reconciliation.
 
