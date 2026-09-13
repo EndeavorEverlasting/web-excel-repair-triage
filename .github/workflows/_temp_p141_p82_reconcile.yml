@@ -19,6 +19,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch origin main
           set +e
           git merge --no-ff --no-commit origin/main
@@ -45,8 +47,6 @@ jobs:
           python scripts/evaluate_prompt_language.py --summary
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           rm .github/workflows/_temp_p141_p82_reconcile.yml
           git add .github/workflows/_temp_p141_p82_reconcile.yml web/prompt-kit/index.html
           git commit -m 'merge: reconcile P141 P82 seam with current main'
