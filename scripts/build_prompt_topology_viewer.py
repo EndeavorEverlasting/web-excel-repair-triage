@@ -35,8 +35,10 @@ def validate_inputs(topology: dict[str,Any], projection: dict[str,Any], state: d
     if contract.get('schema_version')!='prompt-topology-phase-c-viewer/v1': raise ViewerBuildError('Phase C contract version drift')
     if topology.get('schema_version')!='prompt-topology-artifact/v1': raise ViewerBuildError('unsupported topology schema')
     if state.get('schema_version')!='prompt-topology-projection-state/v1': raise ViewerBuildError('unsupported projection state schema')
-    topology_hash=topology.get('content_hash_sha256')
-    if not topology_hash or state.get('topology_content_hash_sha256')!=topology_hash: raise ViewerBuildError('topology/state binding mismatch')
+    topology_hash=str(topology.get('content_hash_sha256') or '')
+    unhashed=dict(topology);unhashed.pop('content_hash_sha256',None)
+    if not topology_hash or topology_hash!=canonical_hash(unhashed): raise ViewerBuildError('topology content hash mismatch')
+    if state.get('topology_content_hash_sha256')!=topology_hash: raise ViewerBuildError('topology/state binding mismatch')
     projection_hash=canonical_hash(projection)
     if state.get('projection_sha256')!=projection_hash: raise ViewerBuildError('projection/state hash mismatch')
     node_id_list=[n.get('prompt_id') for n in topology.get('nodes',[])]
@@ -70,6 +72,13 @@ def rebuild_inputs() -> tuple[Path,Path,Path,tempfile.TemporaryDirectory[str]]:
     subprocess.run([sys.executable,str(ROOT/'scripts/prompt-topology/project.py'),'--topology',str(topology),'--output',str(projection),'--state-output',str(state)],cwd=ROOT,check=True)
     return topology,projection,state,temp
 
+def resolve_inputs(topology:Path,projection:Path,state:Path) -> tuple[Path,Path,Path,tempfile.TemporaryDirectory[str]|None]:
+    supplied=(topology,projection,state);defaults=(DEFAULT_TOPOLOGY,DEFAULT_PROJECTION,DEFAULT_STATE)
+    missing=[path for path in supplied if not path.exists()]
+    if not missing: return topology,projection,state,None
+    if supplied==defaults: return rebuild_inputs()
+    raise ViewerBuildError('incomplete explicit input bundle; missing: '+', '.join(str(path) for path in missing))
+
 def build(topology_path:Path,projection_path:Path,state_path:Path)->str:
     topology=load_json(topology_path);projection=load_json(projection_path);state=load_json(state_path);validate_inputs(topology,projection,state)
     return render_document(compact_payload(topology,projection,state))
@@ -79,8 +88,7 @@ def main()->int:
     ap.add_argument('--topology',type=Path,default=DEFAULT_TOPOLOGY);ap.add_argument('--projection',type=Path,default=DEFAULT_PROJECTION);ap.add_argument('--state',type=Path,default=DEFAULT_STATE);ap.add_argument('--output',type=Path,default=DEFAULT_OUTPUT);ap.add_argument('--check',action='store_true');ap.add_argument('--summary',action='store_true')
     args=ap.parse_args(); temp=None
     try:
-      tp,pp,sp=args.topology,args.projection,args.state
-      if not (tp.exists() and pp.exists() and sp.exists()): tp,pp,sp,temp=rebuild_inputs()
+      tp,pp,sp,temp=resolve_inputs(args.topology,args.projection,args.state)
       rendered=build(tp,pp,sp)
       if args.check:
         if not args.output.exists(): raise ViewerBuildError(f'generated viewer missing: {args.output}')
