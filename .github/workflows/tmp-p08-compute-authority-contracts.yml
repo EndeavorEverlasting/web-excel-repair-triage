@@ -1,10 +1,8 @@
 name: Temporary P08 compute authority contracts carrier
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/tmp-p08-compute-authority-contracts.yml'
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: write
@@ -15,6 +13,7 @@ concurrency:
 
 jobs:
   execute:
+    if: github.event.issue.pull_request && github.event.comment.body == '/apply-p08-compute-authority-contracts'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -62,7 +61,7 @@ jobs:
               policy['next_step_suffix'] = policy['next_step_suffix'].rstrip() + suffix_sentence
 
           appendix = policy['copy_content_appendix'].rstrip()
-          section = '''
+          section = """
 
 COMPUTE AUTHORITY / SCOPE-BOUNDARY CONTRACT
 - A bounded sprint limits mutation ownership and blast radius; it does not imply minimal reasoning, one attempt, one test case, or the earliest passing stop.
@@ -80,7 +79,7 @@ END-STATE CONTRACT HORIZON
 - Distinguish `LOCAL PROMPT CONTRACT CLOSED` from `WHOLE OUTCOME CONTRACT CLOSED`. A local pass may close the current prompt while deployment, runtime, acceptance, durability, or another required contract remains open.
 - If a required contract outside the current slice is SAFE & EXECUTABLE now and an authorized canonical owner can advance it, continue into that successor owner instead of stopping at the local pass. If it is blocked, name the exact external/user-only gate and the action that advances it.
 - Include a compact `CONTRACT HORIZON` table or equivalent structured block in the final response whenever more than one material completion contract applies.
-'''.rstrip()
+""".rstrip()
           if 'COMPUTE AUTHORITY / SCOPE-BOUNDARY CONTRACT' not in appendix:
               appendix = appendix + '\n\n' + section
           policy['copy_content_appendix'] = appendix
@@ -97,7 +96,7 @@ END-STATE CONTRACT HORIZON
 
           policy_test = policy_test_path.read_text(encoding='utf-8')
           method_anchor = '    def test_existing_work_and_pr_reuse_is_global_policy(self) -> None:\n'
-          new_method = '''    def test_compute_authority_and_end_state_contract_horizon_are_global_policy(self) -> None:\n        appendix = self.policy["copy_content_appendix"]\n        for phrase in (\n            "COMPUTE AUTHORITY / SCOPE-BOUNDARY CONTRACT",\n            "bounded sprint limits mutation ownership and blast radius",\n            "use as much safe available compute as is materially useful",\n            "first PASS as a checkpoint",\n            "Broad compute authority never expands safety or mutation authority",\n            "END-STATE CONTRACT HORIZON",\n            "implementation/behavior",\n            "operator/user acceptance",\n            "durability/automation/observability",\n            "The contract horizon is broader than mutation authority",\n            "LOCAL PROMPT CONTRACT CLOSED",\n            "WHOLE OUTCOME CONTRACT CLOSED",\n            "CONTRACT HORIZON",\n        ):\n            self.assertIn(phrase, appendix)\n\n        self.assertIn(\n            "A bounded sprint limits mutation scope, not useful compute volume",\n            self.policy["next_step_suffix"],\n        )\n        by_id = {prompt["id"]: prompt for prompt in self.prompts}\n        self.assertIn("COMPUTE AUTHORITY / SCOPE-BOUNDARY CONTRACT", by_id["P08"]["copyContent"] )\n        self.assertIn("END-STATE CONTRACT HORIZON", by_id["P08"]["copyContent"] )\n\n'''
+          new_method = '''    def test_compute_authority_and_end_state_contract_horizon_are_global_policy(self) -> None:\n        appendix = self.policy["copy_content_appendix"]\n        for phrase in (\n            "COMPUTE AUTHORITY / SCOPE-BOUNDARY CONTRACT",\n            "bounded sprint limits mutation ownership and blast radius",\n            "use as much safe available compute as is materially useful",\n            "first PASS as a checkpoint",\n            "Broad compute authority never expands safety or mutation authority",\n            "END-STATE CONTRACT HORIZON",\n            "implementation/behavior",\n            "operator/user acceptance",\n            "durability/automation/observability",\n            "The contract horizon is broader than mutation authority",\n            "LOCAL PROMPT CONTRACT CLOSED",\n            "WHOLE OUTCOME CONTRACT CLOSED",\n            "CONTRACT HORIZON",\n        ):\n            self.assertIn(phrase, appendix)\n\n        self.assertIn(\n            "A bounded sprint limits mutation scope, not useful compute volume",\n            self.policy["next_step_suffix"],\n        )\n        by_id = {prompt["id"]: prompt for prompt in self.prompts}\n        self.assertIn("COMPUTE AUTHORITY / SCOPE-BOUNDARY CONTRACT", by_id["P08"]["copyContent"])\n        self.assertIn("END-STATE CONTRACT HORIZON", by_id["P08"]["copyContent"])\n\n'''
           if 'def test_compute_authority_and_end_state_contract_horizon_are_global_policy' not in policy_test:
               if method_anchor not in policy_test:
                   raise SystemExit('actionability regression insertion anchor missing')
