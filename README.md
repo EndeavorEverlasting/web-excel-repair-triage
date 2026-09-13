@@ -15,7 +15,7 @@ The Prompt Kit is a separate, self-contained operator surface in this repository
 
 | What you want | Fastest path |
 |---|---|
-| **Use the Prompt Kit now** on any browser | **[Open the Prompt Kit](https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/)** |
+| **Use the Prompt Kit now** on any browser | **[Open the Prompt Kit](https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/)** |
 | **Phone / tablet / install / QR** | **[Open the device launcher](https://endeavoreverlasting.github.io/web-excel-repair-triage/)** |
 | **Windows one-click local copy** | **[Download `Open-Latest-PromptKit.cmd`](https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/Open-Latest-PromptKit.cmd)**, save it, and double-click it. It safely resolves or clones canonical `main`, fast-forwards only, validates the generated site, and opens it. |
 | **Download without Git** | **[Download the latest `main` ZIP](https://github.com/EndeavorEverlasting/web-excel-repair-triage/archive/refs/heads/main.zip)**, extract it, then open `web/prompt-kit/index.html`. |

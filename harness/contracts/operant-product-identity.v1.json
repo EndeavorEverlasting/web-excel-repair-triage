@@ -1,11 +1,21 @@
 {
   "schema_version": "operant-product-identity/v1",
-  "product_id": "operant",
-  "product_name": "Operant",
-  "product_version": "0.3.0",
+  "product_id": "afk-agent-flow",
+  "product_name": "AFK Agent Flow",
+  "product_version": "0.7.0",
   "status": "transition",
-  "tagline": "Agentic Capability & Execution System",
-  "purpose": "Map capabilities, skills, implementations, agents, hooks, and evidence into fast, evidence-bounded execution routes.",
+  "tagline": "Go AFK. Work keeps moving.",
+  "purpose": "Route intent through prompts, skills, implementations, agents, hooks, and evidence so validated work can continue without constant workstation supervision.",
+  "public_identity": {
+    "slug": "afk-agent-flow",
+    "canonical_url": "https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/",
+    "legacy_urls": [
+      "https://endeavoreverlasting.github.io/web-excel-repair-triage/operant/",
+      "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/"
+    ],
+    "public_expansion": "AFK = Away From Keyboard; Agent Flow = autonomous work that knows what comes next.",
+    "reliability_claim": "Failure must not silently become accepted state. Unattended execution remains bounded by validation, evidence, recovery, and escalation gates."
+  },
   "ontology_lenses": [
     "capabilities",
     "skills",
@@ -15,11 +25,14 @@
   ],
   "legacy_identity": {
     "names": [
+      "Operant",
       "AI Harness Prompt Kit",
       "Prompt Kit"
     ],
     "latest_legacy_display_version": "v40",
     "compatibility_prefixes": [
+      "operant",
+      "Operant",
       "prompt-kit",
       "PromptKit"
     ],
@@ -27,13 +40,18 @@
   },
   "authority": {
     "current_repository": "EndeavorEverlasting/web-excel-repair-triage",
-    "target_repository": "UnderDeskDev/Operant",
+    "target_repository": "UnderDeskDev/AFK-Agent-Flow",
     "target_repository_state": "not-created-or-unproven",
     "cutover_rule": "Current repository remains authoritative until the dedicated repository passes source, build, evidence, consumer, and release-identity parity and the old repository is reduced to an explicit versioned consumer."
   },
   "compatibility": {
-    "visible_brand": "Operant",
-    "visible_version": "0.3.0",
+    "visible_brand": "AFK Agent Flow",
+    "visible_version": "0.7.0",
+    "canonical_public_route": "/afk-agent-flow/",
+    "legacy_public_routes": [
+      "/operant/",
+      "/prompt-kit/"
+    ],
     "preserve_paths": [
       "web/prompt-kit/index.html",
       "docs/prompt-kit*.js",
@@ -42,13 +60,13 @@
       "Acquire-Latest-PromptKit.cmd"
     ],
     "internal_path_renames_deferred": true,
-    "reason": "Avoid breaking launchers, public URLs, storage keys, workflows, and stale/open branch references before dedicated-repository cutover."
+    "reason": "Change the public brand and route without breaking launchers, storage keys, workflows, release history, or stale/open branch references. Internal Operant and Prompt Kit identifiers remain compatibility seams until dedicated-repository cutover."
   },
   "release_versioning": {
     "schema_version": "operant-release-versioning/v1",
     "authority_file": "OPERANT_VERSION",
     "scheme": "semver",
-    "scheme_reason": "Operant has observable public compatibility boundaries across routes, launcher/acquisition behavior, durable browser state, prompt/capability behavior, and release artifacts. Schema/protocol versions remain independent. Pre-1.0 policy keeps unstable breaking changes within MINOR until an explicit 1.0 compatibility declaration.",
+    "scheme_reason": "AFK Agent Flow inherits Operant's observable public compatibility boundaries across routes, launcher/acquisition behavior, durable browser state, prompt/capability behavior, and release artifacts. Schema/protocol versions and historical release identifiers remain independent. Pre-1.0 policy keeps unstable breaking changes within MINOR until an explicit 1.0 compatibility declaration.",
     "tag_prefix": "operant-v",
     "changelog": "docs/OPERANT_CHANGELOG.md",
     "bootstrap": {
@@ -56,7 +74,7 @@
       "identity_pr": 329,
       "identity_merge_sha": "781616a1a42893fb5b521e41b217f5cef04b2701",
       "cutover_version": "0.2.0",
-      "rule": "Do not rewrite the historical 0.1 identity. The first deterministic release is 0.2.0; after its tag exists, tags are the version-planning baseline."
+      "rule": "Do not rewrite historical Operant release identity. Existing operant-v* tags remain the version-planning baseline until a separately validated release-identity migration is performed."
     },
     "pre_1_policy": {
       "breaking": "minor",
@@ -78,6 +96,9 @@
       "OPERANT_VERSION",
       "build_prompt_kit.py",
       "web/prompt-kit/**",
+      "web/prompt-kit-mobile/**",
+      "web/prompt-kit-legacy-redirect/**",
+      "web/operant-legacy-redirect/**",
       "docs/prompt-kit*.js",
       "docs/prompts.json",
       "docs/reference.json",
@@ -105,6 +126,7 @@
       "harness/validators.v1.json"
     ],
     "shared_scopes": [
+      "afk-agent-flow",
       "operant",
       "prompt-kit"
     ],

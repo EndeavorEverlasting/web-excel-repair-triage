@@ -1,0 +1,365 @@
+{
+  "schema_version": "prompt-topology-config/v1",
+  "config_id": "prompt-topology-classifier-v1",
+  "classifier_version": "0.1.0",
+  "classifier_schema_version": "1.0.0",
+  "ordering_policy_version": "1.0.0",
+  "description": "Deterministic defaults for AFKAF Prompt Topology Classifier. Same source + same config + same embedding responses => byte-identical outputs. Random seeds are mandatory.",
+  "pipeline": {
+    "canonical_record": {
+      "parser": "scripts/build_prompt_kit_registry.py:load_prompt_kit_registry",
+      "source_of_truth": ["docs/prompts.json", "registry/prompts/*.json", "registry/prompts/prompt-classification.v1.json"],
+      "normalization": {
+        "line_endings": "LF",
+        "trim_trailing_whitespace_per_line": true,
+        "collapse_consecutive_blank_lines_to_one": true,
+        "unicode": "NFC"
+      }
+    },
+    "feature_views": {
+      "semantic_template": "TITLE:\n{title}\n\nUSE THIS WHEN:\n{use_this_when}\n\nINSPECT FIRST:\n{inspect_first}\n\nEXPECTED OUTPUT:\n{expected_output}\n\nACCEPTANCE GATE:\n{acceptance_gate}\n\nPROMPT BODY:\n{body}",
+      "role_template": "PROMPT_CLASS={prompt_class}\nPROMPT_TYPE={prompt_type}\nSPRINT_PATH_ROLE={sprint_path_role}\nDECLARED_FAMILY={family_declared}\nDECLARED_FAMILY_ID={family_declared_id}\nUSE_THIS_WHEN={use_this_when}\nEXPECTED_OUTPUT={expected_output}",
+      "structural_features_v1": [
+        "has_acceptance_gate",
+        "has_repo_scope",
+        "has_remote_truth_requirement",
+        "has_parallel_lane",
+        "prompt_class",
+        "prompt_type",
+        "sprint_path_role",
+        "declared_family_id",
+        "declared_family",
+        "category",
+        "color"
+      ],
+      "note": "V1 starts from metadata already owned by registry. Derived flags (requires_mutation, is_meta_prompt, etc.) are intentionally deferred until validated signal proves value."
+    },
+    "embeddings": {
+      "provider_adapter": "scripts/prompt-topology/embed.py:embed(text) -> vector",
+      "providers_supported": ["openai", "local-sentence-transformers", "ollama", "enterprise"],
+      "default_provider": "openai",
+      "default_model": "text-embedding-3-large",
+      "default_dimensions": 3072,
+      "fallback_model": "sentence-transformers/all-MiniLM-L6-v2",
+      "fallback_dimensions": 384,
+      "normalize": "l2",
+      "rounding": 6,
+      "provenance_required": ["embedding_model", "embedding_dimensions", "classifier_schema_version", "generated_at", "input_sha256"]
+    },
+    "similarity": {
+      "metric": "cosine",
+      "weights": {
+        "semantic": 0.7,
+        "role": 0.2,
+        "metadata": 0.1
+      },
+      "formula": "score(A,B) = 0.70*cosine(semantic_A, semantic_B) + 0.20*cosine(role_A, role_B) + 0.10*metadata_similarity(A,B)",
+      "metadata_similarity": "cosine(structured_one_hot(A), structured_one_hot(B)) where categoricals are one-hot, binaries are 0/1, then L2-normalized",
+      "rounding": 4,
+      "storage": "in-repo JSON artifact, brute-force O(n^2) (40k comparisons for n=200, trivial)",
+      "vector_db_forbidden_in_v1": true,
+      "reason": "Avoid introducing Pinecone/Qdrant/Weaviate as side quest for current corpus size."
+    },
+    "neighbors": {
+      "top_k": 15,
+      "store_reverse_neighbors": true,
+      "asymmetry_detection": "Flag when A ranks B in top-3 but B does not rank A in top-10 — indicates bridge prompt.",
+      "output_path": "artifacts/prompt-topology/neighbors.json"
+    },
+    "clustering": {
+      "algorithm": "hdbscan",
+      "why_not_kmeans": "Unknown k, variable sizes, legitimate outliers, coexisting dense/sparse families, UNKNOWN is desirable.",
+      "input": "semantic_embedding (or composite reduced space) — never the 3D projection coordinates",
+      "reduction": {
+        "method": "pca",
+        "input_dimensions": "embedding_dimensions (e.g. 3072)",
+        "intermediate_pca_dimensions": 50,
+        "final_dimensions": 15,
+        "alternative_v1_simple": "PCA 30-50D directly into HDBSCAN; add UMAP 10-15D only if corpus proves it needs it.",
+        "metric": "euclidean"
+      },
+      "hdbscan_params": {
+        "min_cluster_size": 3,
+        "min_samples": 2,
+        "metric": "euclidean",
+        "cluster_selection_method": "eom",
+        "allow_single_cluster": false,
+        "random_seed": 42
+      },
+      "cluster_id_policy": {
+        "formula": "C- + first 6 hex chars of SHA256(sorted(member_prompt_ids) joined by ',') uppercase",
+        "example": "members [P091,P105,P117] => SHA256('P091,P105,P117') => 18c5a7... => C-18C5A7",
+        "stable": "If membership materially changes, identity changes — useful evidence.",
+        "forbidden": "Do not use raw HDBSCAN label integer as permanent identity."
+      },
+      "output_path": "artifacts/prompt-topology/clusters.json"
+    },
+    "classification": {
+      "family_assignment": {
+        "method": "weighted majority of member declared_families within cluster",
+        "threshold": 0.6,
+        "ambiguous_when": "No family reaches >=0.60 of members => AMBIGUOUS_CLUSTER, family_candidate=null",
+        "example_high": "C-18C5A7: 7/8 repository-operations => candidate repository-operations, confidence high",
+        "example_ambiguous": "4/9, 3/9, 2/9 => AMBIGUOUS_CLUSTER"
+      },
+      "per_prompt_alignment": {
+        "MATCH": "declared_family == inferred_family",
+        "DRIFT": "declared_family != inferred_family (governance signal)",
+        "AMBIGUOUS": "inferred_family is null (cluster has no majority)",
+        "UNKNOWN": "outlier without confident inference"
+      },
+      "confidence_signals": ["neighbor_agreement", "cluster_membership_probability", "family_majority_strength", "distance_from_centroid", "declared_agreement"],
+      "confidence_formula": "classification_confidence = 0.30*neighbor_agreement + 0.30*cluster_membership_probability + 0.20*family_majority_strength + 0.10*(1 - normalized_distance_from_centroid) + 0.10*declared_agreement",
+      "states": {
+        "HIGH": ">=0.85",
+        "MEDIUM": ">=0.65",
+        "LOW": ">=0.45",
+        "UNCLASSIFIED": "<0.45",
+        "AMBIGUOUS": "cluster has no majority (independent of score)",
+        "OUTLIER": "HDBSCAN label -1",
+        "DRIFT": "declared != inferred (alignment signal)"
+      },
+      "duplicate_detection": {
+        "thresholds": {
+          "POSSIBLE_DUPLICATE": 0.94,
+          "STRENGTHEN_EXISTING_CANDIDATE": 0.88,
+          "RELATED": 0.78
+        },
+        "requires_role_similarity": true,
+        "requires_metadata_similarity": true,
+        "note": "Similarity thresholds produce review candidates, not automatic duplicate declarations. AFKAF must surface evidence list."
+      },
+      "output_path": "artifacts/prompt-topology/classifications.json"
+    },
+    "projection_3d": {
+      "algorithm": "umap",
+      "why_umap_not_pca": "Local neighborhoods matter more than global linear variance for visualization.",
+      "parameters": {
+        "n_components": 3,
+        "n_neighbors": 15,
+        "min_dist": 0.15,
+        "metric": "cosine",
+        "random_seed": 42
+      },
+      "input": "semantic_embedding (or composite vectors) — never cluster labels",
+      "output_path": "artifacts/prompt-topology/projection-3d.json",
+      "provenance_required": ["algorithm", "dimensions", "n_neighbors", "min_dist", "metric", "random_seed"],
+      "visualization_only": "3D coordinates must never determine semantic classification. Deleting and regenerating projection must not change clusters or classifications."
+    },
+    "shapes": {
+      "description": "Enveloping shapes downstream of projection, visualization metadata only.",
+      "v1": "bounding sphere: centroid + 95th-percentile member radius",
+      "v2": "convex hull",
+      "v3": "alpha shape (eventual target)",
+      "not_classification": "Shape correctness never blocks classifier correctness."
+    }
+  },
+  "ordering": {
+    "principle": "Stable IDs, derived placement. Prompt IDs never mutated. Generated kit order is presentational manifest derived from topology.",
+    "family_order": [
+      "foundation",
+      "discover-plan",
+      "build-repair",
+      "validate-protect",
+      "integrate-ship",
+      "autonomy"
+    ],
+    "family_order_labels": {
+      "foundation": "Foundation",
+      "discover-plan": "Discover & Plan",
+      "build-repair": "Build & Repair",
+      "validate-protect": "Validate & Protect",
+      "integrate-ship": "Integrate & Ship",
+      "autonomy": "Autonomy & Night Shift"
+    },
+    "family_order_rationale": "Lifecycle dependency order: establish context (Foundation), orient (Discover & Plan), mutate (Build & Repair), prove (Validate & Protect), move (Integrate & Ship), automate (Autonomy). Mirrors registry/prompts/prompt-classification.v1.json section ids and harness/workflows.v1.json progression. Any declared family not in this list (e.g. future extension) sorts after autonomy, lexicographically, before outliers.",
+    "cluster_order_within_family": {
+      "policy": "Deterministic hierarchical key",
+      "key": "sort clusters by (-member_count, cluster_id_lexicographic)",
+      "tie_break": "member_count descending puts most representative (largest) cluster first; cluster_id lexicographic (C-XXXXXX) gives total stability for equal sizes.",
+      "alternative_considered_and_rejected": "Sorting by centroid 3D position would couple ordering to stochastic projection — rejected.",
+      "outlier_position": "OUTLIER bucket always last within its family group, after all real clusters."
+    },
+    "sprint_role_order": {
+      "description": "Tertiary ordering within each cluster before centrality.",
+      "order": [
+        "SETUP",
+        "TEACH SETUP",
+        "TEACH + PRACTICE",
+        "HARVEST",
+        "DISCOVERY + BUILD",
+        "RESEARCH + EVIDENCE",
+        "RESEARCH + GAP",
+        "ANALYZE + DIRECTORY",
+        "ANALYZE + FACTOR",
+        "ANALYZE + TEST",
+        "LEVERAGE",
+        "PLAN",
+        "PORTFOLIO PLAN",
+        "TUTORIAL PLAN",
+        "DESIGN + PROTOTYPE",
+        "CONSOLIDATE + EXECUTE",
+        "BUILD",
+        "BUILD + PRODUCT",
+        "BUILD + ROUTE",
+        "BUILD + VALIDATE",
+        "BUILD + FACTOR",
+        "BUILD + SAFETY",
+        "BUILD + HARDEN",
+        "BUILD + HARNESS",
+        "BUILD + ARTIFACT",
+        "BUILD + BOOTSTRAP",
+        "BUILD + ITERATE",
+        "BUILD + REFINE",
+        "REPAIR",
+        "REPAIR + RECOVER",
+        "REVIEW + REPAIR",
+        "REVIEW + BUILD",
+        "DESIGN + BUILD",
+        "EMULATE + BUILD",
+        "CLEANUP",
+        "REFINE + POLISH",
+        "SYSTEM + FACTOR",
+        "AUDIT + REPAIR",
+        "DIAGNOSE + REPAIR",
+        "VERIFY + REPAIR",
+        "VERIFY + REGRESSION",
+        "VERIFY + FIELD",
+        "VERIFY + ADVANCE",
+        "VERIFY + UX ACCEPTANCE",
+        "VALIDATE",
+        "VALIDATE + CLOSE",
+        "SAFETY",
+        "RUNTIME PROOF",
+        "CERTIFY + REPAIR",
+        "HARDEN + ENFORCE",
+        "TEST + HARDEN",
+        "IMPROVE",
+        "INTEROP",
+        "MAINTENANCE",
+        "MAINTENANCE + BUILD",
+        "MAINTENANCE + FACTOR",
+        "MAINTENANCE + HARNESS",
+        "MAINTENANCE + REGISTRY",
+        "MAINTENANCE + HARDEN",
+        "MAINTENANCE + CROSS-REPO",
+        "ENABLEMENT",
+        "ENABLEMENT + BUILD",
+        "MAP + VERIFY",
+        "MOVE + VERIFY",
+        "SYNC + ARTIFACT",
+        "EXECUTE + ORCHESTRATE",
+        "DEPLOY + VERIFY",
+        "COMPILE ONLY",
+        "INSTALL + ENFORCE",
+        "ENVIRONMENT + CONFIGURE",
+        "OPERATE",
+        "INTEGRATE",
+        "OPPORTUNITY",
+        "AUTONOMY + VALIDATE",
+        "AUTONOMY + BUILD",
+        "AUTONOMY + PLAN",
+        "AUTONOMY + PREFLIGHT",
+        "AUTONOMY + QUEUE",
+        "AUTONOMY + EXECUTE",
+        "RECOVER + BUILD",
+        "RECOVER + COMMIT",
+        "HARNESS + BUILD",
+        "HARNESS + EXECUTE",
+        "CURSOR + LIVE CERT",
+        "EXECUTE + LOOP + INTEGRATE",
+        "MONITOR + HANDOFF",
+        "REPAIR + AUTONOMY",
+        "CLOSEOUT",
+        "CLOSEOUT + VALIDATE"
+      ],
+      "fallback": "Any prompt type not in this explicit list sorts lexicographically after all listed types (ASCII ascending), then by seq_int.",
+      "rationale": "Orders workflow positions from setup through closeout; keeps BUILD before VALIDATE before INTEGRATE, matching sprint lifecycle. Lexicographic fallback guarantees total order even for future types without requiring config amendment to remain deterministic."
+    },
+    "intra_cluster_order": {
+      "key": "Within each (family, cluster) bucket, sort prompts by (role_rank, -centrality, seq_int, prompt_id)",
+      "role_rank": "index in sprint_role_order (lower = earlier); unlisted types sort after listed, lexicographically.",
+      "centrality": "average composite similarity(P, every member of same cluster) — higher first, so most representative prompt leads the cluster. Rounded to 4 decimals; ties broken by seq_int then prompt_id.",
+      "centrality_formula": "centrality(P) = mean_{Q in cluster} score(P,Q) where score is composite similarity (0.70*semantic+0.20*role+0.10*metadata).",
+      "outlier_centrality": "null => treated as -inf, so outliers sort after clustered prompts within same family bucket, then by role_rank then seq_int.",
+      "deterministic_tie_break": "prompt_id lexicographic (P sort) is final tie-break; ensures total order is strict and stable across runs."
+    },
+    "linear_order_construction": "linear_order = flatten(groups in family_order) where each group = flatten(clusters sorted by cluster_order) where each cluster = prompts sorted by intra_cluster key. Outliers group (family_id=outliers, cluster_id=OUTLIER) appended after all real families.",
+    "kits_order_output": "artifacts/prompt-topology/kit-order.json with {groups:[{family,family_id,clusters:[{cluster_id,prompts}]}], linear_order:[P-IDs in total deterministic order], outliers_group}",
+    "source_vs_derived_boundary": "Generated kit presentation may use linear_order for discovery, but web/prompt-kit/index.html canonical library order remains sequence_ascending per harness/contracts/prompt-kit-order-navigation.v1.json. Topology order is discoveryRank-style recommendation metadata, never a silent replacement of stable sequence."
+  },
+  "artifact_tree": {
+    "harness": ["harness/prompt-topology/schema.v1.json", "harness/prompt-topology/config.v1.json", "harness/prompt-topology/README.md"],
+    "scripts": ["scripts/prompt-topology/build-records.py", "scripts/prompt-topology/embed.py", "scripts/prompt-topology/neighbors.py", "scripts/prompt-topology/cluster.py", "scripts/prompt-topology/project.py", "scripts/prompt-topology/order.py", "scripts/prompt-topology/validate.py", "scripts/prompt-topology/run.py"],
+    "artifacts": [
+      "artifacts/prompt-topology/canonical-prompts.json",
+      "artifacts/prompt-topology/feature-views.json",
+      "artifacts/prompt-topology/embeddings.json",
+      "artifacts/prompt-topology/neighbors.json",
+      "artifacts/prompt-topology/clusters.json",
+      "artifacts/prompt-topology/classifications.json",
+      "artifacts/prompt-topology/projection-3d.json",
+      "artifacts/prompt-topology/kit-order.json",
+      "artifacts/prompt-topology/validation-report.json",
+      "artifacts/prompt-topology/run-manifest.json"
+    ],
+    "orchestrator": "python scripts/prompt-topology/run.py [--provider openai|local] [--check] runs whole pipeline; no hand-running seven scripts to get valid state.",
+    "disposability_test": "rm -rf artifacts/prompt-topology/* && python scripts/prompt-topology/run.py must reconstruct identical derived state (given same embedding responses)."
+  },
+  "validation": {
+    "structural_hard_fail": [
+      "PROMPT_MISSING_FROM_TOPOLOGY",
+      "DUPLICATE_PROMPT_ID",
+      "EMBEDDING_COUNT_MISMATCH",
+      "INVALID_VECTOR_DIMENSION",
+      "NONDETERMINISTIC_INPUT_HASH",
+      "KIT_ORDER_DUPLICATE",
+      "KIT_ORDER_MISSING_PROMPT",
+      "UNKNOWN_CLUSTER_REFERENCE",
+      "EMBEDDING_MODEL_MISMATCH",
+      "PROJECTION_MISSING_PROMPT",
+      "NEIGHBOR_COUNT_MISMATCH"
+    ],
+    "semantic_reported": [
+      "CLASSIFICATION_DRIFT",
+      "POSSIBLE_DUPLICATE",
+      "AMBIGUOUS_FAMILY",
+      "OUTLIER",
+      "LOW_CONFIDENCE",
+      "CROSS_FAMILY_NEAREST_NEIGHBOR",
+      "STRENGTHEN_EXISTING_CANDIDATE",
+      "UNCLASSIFIED"
+    ],
+    "thresholds": {
+      "structural_errors_required": 0,
+      "semantic_warnings_permitted": "unbounded but surfaced; AFKAF blocks new prompt with POSSIBLE_DUPLICATE (>=0.94 composite and high role similarity) until explicit disposition (STRENGTHEN vs CREATE_NEW) is recorded.",
+      "new_prompt_gate": "Proposed prompt with composite>=0.94 and role>=0.88 and same sprint_path_role => fail contribution gate, require STRENGTHEN disposition."
+    }
+  },
+  "incremental_rebuild": {
+    "v1": "rebuild everything (trivial cost for <1000 prompts)",
+    "future_cache_key": "SHA256(canonical_sha256 + embedding_model + classifier_schema_version + feature_view_template_version)",
+    "reuse": "unchanged prompt => reuse embedding; changed prompt => regenerate; neighbors and clustering always recompute globally."
+  },
+  "stack_v1": {
+    "parser": "existing Python runtime (scripts/build_prompt_kit_registry.py)",
+    "embeddings": "provider adapter embed(text)->vector (OpenAI/local/Enterprise swappable)",
+    "vector_storage": "JSON artifact (or compact binary) — no vector DB",
+    "similarity": "cosine, local brute-force",
+    "reduction_for_clustering": "PCA 30-50D (add UMAP 10-15D only if needed)",
+    "clustering": "HDBSCAN",
+    "projection_3d": "UMAP(3) with random_seed=42",
+    "ordering": "deterministic local script",
+    "validation": "existing harness pattern (JSON validator + python -m unittest)"
+  },
+  "random_seeds": {
+    "hdbscan": 42,
+    "umap_projection": 42,
+    "global": 42
+  },
+  "weights": {
+    "semantic": 0.7,
+    "role": 0.2,
+    "metadata": 0.1
+  }
+}

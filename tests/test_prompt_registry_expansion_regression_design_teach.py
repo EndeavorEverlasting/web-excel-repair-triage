@@ -268,6 +268,21 @@ class PromptRegistryExpansionTests(unittest.TestCase):
             "Stop at a bounded fixed point",
             "search_operant_external_catalog.py",
             "distinct residual before ADD",
+            "UPSTREAM PRIOR-ART BEFORE AUTHORING",
+            "prompt_registry_ops.py prior-art --query",
+            "all_registered_sources_searched=true",
+            "deepseek-harness",
+            "mattpocock-skills",
+            "UPSTREAM SYNTHESIS INTO THE USER USE CASE",
+            "upstream insight | source | current owner | overlap/residual | adoption",
+            "Construct sound overlapping value",
+            "Do not bulk-import donor prompts",
+            "re-run every registered upstream against the final draft",
+            "CANONICAL REPO",
+            "Recover approved/rejected wording",
+            "Look for missed `also`, `another`, `we skipped`",
+            "roll back registry/site writes if validation fails",
+            "Verify new prompts remain distinct and strengthened prompts retain their original role",
         ):
             self.assertIn(phrase, content)
         raw = json.loads((ROOT / "registry/prompts/spec-architecture-prompts.v1.json").read_text(encoding="utf-8"))
@@ -280,6 +295,25 @@ class PromptRegistryExpansionTests(unittest.TestCase):
         self.assertIn("requested new/repaired behavior", p08)
         self.assertIn("impacted protected control", p08)
         self.assertIn("After any runtime repair, rerun both paths", p08)
+        for phrase in (
+            "COMPUTE AUTHORITY / SCOPE-BOUNDARY CONTRACT",
+            "A bounded sprint limits mutation ownership and blast radius",
+            "EXHAUSTIVE AVAILABLE COMPUTE RULE",
+            "Exhaust the decision-relevant safe compute available",
+            "dispatch them immediately and execute them concurrently",
+            "fixed point is evidence-defined, not attempt-count-defined",
+            "Treat the first PASS as a checkpoint, not an automatic stop signal",
+            "END-STATE CONTRACT HORIZON",
+            "The contract horizon is broader than mutation authority",
+            "LOCAL PROMPT CONTRACT CLOSED",
+            "WHOLE OUTCOME CONTRACT CLOSED",
+            "CONTRACT HORIZON",
+        ):
+            self.assertIn(phrase, p08)
+        self.assertIn(
+            "A bounded sprint limits mutation scope, not useful compute volume",
+            self.full["P08"]["nextStep"],
+        )
 
         p14 = self.full["P14"]["copyContent"]
         self.assertIn("REVIEW AXES — KEEP THEM SEPARATE", p14)

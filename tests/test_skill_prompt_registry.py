@@ -69,6 +69,73 @@ class SkillPromptRegistryTests(unittest.TestCase):
         ):
             self.assertIn(keyword, prompt["keywords"])
 
+    def test_p02_rich_handoff_bootstraps_without_transcript_dependency(self) -> None:
+        content = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P02"]["copyContent"]
+        for phrase in (
+            "CONTEXT IS A STARTING MAP, NOT A SEARCH BOUNDARY",
+            "PROVIDED-CONTEXT MODE",
+            "sufficient to begin repository exploration and execution",
+            "cannot block repository/provider inspection",
+            "do not make any one recovery surface a prerequisite for another",
+            "perform multiple targeted retrievals rather than one broad query",
+            "Previous chat resolved: <name and whether retrieval succeeded, including recovery mode>",
+            "Recovery ledger: <material decisions, superseded state, proof floor, unresolved unknowns>",
+            "Remaining gaps: <only still-open items>",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_p02_declares_mutation_authority_before_repository_changes(self) -> None:
+        prompt = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P02"]
+        content = prompt["copyContent"]
+        for phrase in (
+            "explicit mutation authority",
+            "tracked-file",
+            "commit",
+            "push",
+            "PR creation/update",
+            "merge action",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn(
+            "mutation authority is explicit before tracked-file, commit, push, PR, or merge actions",
+            prompt["proofGate"],
+        )
+
+    def test_p02_segmented_transcript_reduces_later_superseding_decisions(self) -> None:
+        content = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P02"]["copyContent"]
+        for phrase in (
+            "SEGMENTED TRANSCRIPT MODE",
+            "bounded batches",
+            "small overlap",
+            "Tag claims as FACT, OPERATOR INTENT, AGENT PROPOSAL, or UNKNOWN",
+            "Reduce the segment records instead of concatenating summaries",
+            "resolve state transitions and later superseding decisions",
+            "A later decision in the transcript supersedes an earlier one",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_p02_history_unavailable_reconstructs_from_repository_provider(self) -> None:
+        prompt = {
+            item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
+        }["P02"]
+        content = prompt["copyContent"]
+        for phrase in (
+            "SEMANTIC-RETRIEVAL MODE",
+            "REPOSITORY RECONSTRUCTION FALLBACK",
+            "unavailable, incomplete, compacted, or fails",
+            "Loss of historical transcript or tool output is not itself a blocker",
+            "do not wait for historical retrieval to finish before exploring durable sources",
+            "CURRENT + CONFIRMED, CURRENT + UNVERIFIED, SUPERSEDED, HISTORICAL, CONTRADICTED, or UNKNOWN",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("repository/provider reconstruction without a false blocker", prompt["proofGate"])
+
     def test_p13_recurring_urgency_recovery_advances_and_parallelizes(self) -> None:
         prompt = {
             item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
@@ -87,14 +154,25 @@ class SkillPromptRegistryTests(unittest.TestCase):
             "current proven floor or stage",
             "next unproven gate",
             "EXECUTE ONE CRITICAL-PATH ADVANCEMENT NOW",
-            "SUB-PART AGENT PLAN IS MANDATORY",
-            "Sub-Part Agent: none — serialized dependency",
-            "Never use a Sub-Part Agent plan as an excuse to stop the primary critical path",
+            "MANDATORY CANARY / EXECUTION POSTURE GATE",
+            "P114 Conversation Context Canary & Handoff Guard",
+            "CAPABILITY / ACCESS MATRIX",
+            "REPLIT / RUNTIME",
+            "WORKSTATION POSTURE",
+            "AMBIGUOUS_EXECUTION_POSTURE",
+            "PARALLEL EXECUTION — P07 OWNS ACTUAL DISPATCH",
+            "P07 owns the execution/coordinator contract",
+            "PARALLEL EXECUTION: unavailable — <exact capability limitation>",
+            "Do not emit a hypothetical lane list or copy-paste worker packet merely because dispatch is unavailable",
             "INSTALL THE SMALLEST DURABLE PREVENTION",
             "REGRESSION SCENARIO",
             "no stopping at plan/status while safe action remains",
+            "actual P07 dispatch evidence when worker capacity and collision-safe lanes exist",
         ):
             self.assertIn(phrase, content)
+        self.assertNotIn("explicit Sub-Part Agent plan or serialized-dependency reason", content)
+        self.assertNotIn("prepared for a Sub-Part Agent", content)
+
         for routing_phrase in (
             "cluttered, noisy, or space-heavy UI keeps getting reported",
             "route the specialized UX repair to P99 and continue the critical path here",

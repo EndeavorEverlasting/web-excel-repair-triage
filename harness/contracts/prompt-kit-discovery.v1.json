@@ -79,7 +79,11 @@
     },
     {
       "id": "clipboard_confirmation",
-      "expected": "A successful clipboard write produces a green glowing confirmation toast and a bounded green card-flash animation, with reduced-motion support."
+      "expected": "A successful clipboard write produces a green glowing confirmation toast that includes the copied prompt identity and a bounded visible preview of the copied prompt text (via formatCopyConfirmationPreview / buildCopyConfirmationToastModel / renderCopyConfirmationToast hooks and toast-copy-preview markup), plus a bounded green card-flash animation, with reduced-motion support."
+    },
+    {
+      "id": "snap_hides_filters",
+      "expected": "Any snap-to-prompt path that centers a rendered prompt card (centerRenderedPromptCard, including reveal/activate shortcut targets and detail open) automatically collapses the compact filter chrome via hideCompactFilters so the filter menu cannot obscure the snapped prompt."
     },
     {
       "id": "stable_identity_resequence",

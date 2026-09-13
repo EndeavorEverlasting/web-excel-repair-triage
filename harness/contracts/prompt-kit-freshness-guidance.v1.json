@@ -16,14 +16,14 @@
     "If the user explicitly declines to refresh, continue only after labeling the copy stale-or-unverified and keep that limitation visible in the guidance."
   ],
   "freshness_routes": {
-    "browser-use": "Open https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/ and use that public surface as the normal-use latest route.",
+    "browser-use": "Open https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/ and use that public surface as the normal-use latest route.",
     "phone-install": "Open https://endeavoreverlasting.github.io/web-excel-repair-triage/ in the system browser, then use Install app or Add to Home Screen when offered.",
     "windows-local-app": "Run Open-Latest-PromptKit.cmd so the repository-owned launcher performs safe acquisition/update and validation.",
     "editable-checkout": "Verify canonical origin, clean worktree, current branch main, and zero local-only commits; fetch origin/main; then integrate only with git merge --ff-only origin/main.",
     "zip-snapshot": "Explain that the ZIP is point-in-time and re-download main.zip when the user explicitly wants a fresh no-Git source snapshot."
   },
   "currentness_evidence": [
-    "normal browser use has just opened the canonical public Prompt Kit URL",
+    "normal browser use has just opened the canonical public AFK Agent Flow URL",
     "Windows local-app acquisition completed through the repository-owned launcher and its validation/health proof",
     "editable checkout HEAD was proven synchronized with origin/main after the preservation-first update gates",
     "ZIP snapshot was freshly downloaded from the canonical main branch during the current interaction"

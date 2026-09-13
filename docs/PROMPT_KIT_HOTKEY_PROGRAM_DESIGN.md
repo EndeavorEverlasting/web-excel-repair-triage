@@ -9,6 +9,8 @@ This document owns the keyboard-command boundary for Prompt Kit. Production beha
 - A prompt does not need to be a Favorite, recommended, or manually configured before its numeric hotkey works.
 - Manual prompt-shortcut persistence is retired. `promptKit.promptShortcuts.v1` is not production activation authority.
 - Completing a prompt-number sequence performs canonical copy + instant snap to the rendered card; it does not open prompt detail.
+- Snap-to-prompt centering always collapses compact filter chrome (`hideCompactFilters` via `centerRenderedPromptCard`) so filters cannot obscure the target card.
+- Successful copy confirmation shows the prompt id and a bounded preview of the copied prompt text through the `formatCopyConfirmationPreview` / `buildCopyConfirmationToastModel` / `renderCopyConfirmationToast` hooks. Label format: `✓ Copied to clipboard · {promptId}` (example: `✓ Copied to clipboard · P02`).
 - Favorites remain durable organizational state only. Favoriting and unfavoriting never create or revoke the catalog hotkey.
 - `sharedShortcut: true` is recommendation/discoverability metadata only; it does not authorize activation.
 - Keyboard commands are suppressed in `input`, `textarea`, `select`, and content-editable surfaces and for modified chords.

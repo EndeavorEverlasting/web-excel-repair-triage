@@ -178,6 +178,14 @@
       "public_index": "web/prompt-kit/resources.v1.json",
       "gap_ledger": "registry/resources/operant-external-resource-gaps.v1.json",
       "provider_refresh": ".github/workflows/operant-external-resource-refresh.yml"
+    },
+    "ad_campaign": {
+      "contract": "harness/ad-campaign/campaign.v1.json",
+      "validator": "scripts/ad_campaign.py",
+      "contract_tests": "tests/test_ad_campaign.py",
+      "workflow": "harness/ad-campaign/CODEBASE_MAP.md",
+      "harness_gate": "python -m unittest tests.test_ad_campaign tests.test_ad_campaign_prompts -v",
+      "strict_product_gate": "python scripts/build_ad_campaign_pack.py --check"
     }
   },
   "skills": [

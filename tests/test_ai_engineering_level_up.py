@@ -120,6 +120,42 @@ class AIEngineeringLevelUpTests(unittest.TestCase):
         self.assertIn("closeout contradiction", by_id["P100"]["keywords"])
         self.assertIn("no safe actionable work", by_id["P100"]["keywords"])
 
+    def test_p100_mines_transcript_judgment_regressions_without_collapsing_owners(self) -> None:
+        prompts = build_prompt_kit_registry.load_prompt_registry()
+        p100 = {item["id"]: item for item in prompts}["P100"]
+        copy = p100["copyContent"]
+        for phrase in (
+            "8. TRANSCRIPT-WIDE JUDGMENT REGRESSION MODE",
+            "IMPLEMENTATION_DEFECT",
+            "UPSTREAM_JUDGMENT_FAILURE",
+            "OPERATIONAL FAILURE FAMILY",
+            "DELEGATION_LEAKAGE",
+            "ARTIFACTIZATION_FAILURE",
+            "AUTHORITY_DISCOVERY_LATE",
+            "ORACLE_CO_DRIFT",
+            "PROOF_INFLATION",
+            "PREMATURE_TERMINATION",
+            "FALSE_BLOCKER_CLASSIFICATION",
+            "trigger -> wrong heuristic -> required inspection -> required decision -> forbidden shortcut -> executable action -> evidence gate",
+            "COUNTERFACTUAL REPLAY",
+            "failing test or CI gate is continuation evidence, not BLOCKED",
+            "failure-class propagation to P91",
+            "Prompt Kit owner mutation to P79",
+            "repeated-friction execution to P13",
+            "eval/regression implementation to P67/P94",
+        ):
+            self.assertIn(phrase, copy)
+        for causal in (
+            "FACTUALITY_MISSING_CONTEXT",
+            "FAITHFULNESS_CONTEXT_IGNORED",
+            "ATTENTION_SATURATION",
+            "MIXED",
+            "UNKNOWN",
+        ):
+            self.assertIn(causal, copy)
+        self.assertIn("conversation judgment regression", p100["keywords"])
+        self.assertIn("counterfactual replay", p100["keywords"])
+
     def test_p68_repeats_context_refactor_until_fixed_point_and_mainline(self) -> None:
         raw = json.loads((ROOT / "registry/prompts/ai-engineering-level-up-prompts.v1.json").read_text(encoding="utf-8"))
         source = next(item for item in raw["prompts"] if item["id"] == "P68")

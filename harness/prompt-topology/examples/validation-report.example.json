@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "status": "PASS",
+  "structural_errors": [],
+  "semantic_warnings": [
+    {
+      "code": "CLASSIFICATION_DRIFT",
+      "message": "P074 declared Validate & Protect but clusters with Build & Repair majority (C-18C5A7). Review declared type or strengthen target family.",
+      "prompt_ids": ["P074"],
+      "evidence": { "declared": "validate-protect", "inferred": "build-repair", "cluster_id": "C-18C5A7", "neighbor_agreement": 0.4 }
+    },
+    {
+      "code": "POSSIBLE_DUPLICATE",
+      "message": "CANDIDATE-001 is 0.961 composite similar to P105 (role 0.917, metadata 0.883) — same sprint_path_role. Recommend STRENGTHEN P105, not CREATE_NEW.",
+      "prompt_ids": ["CANDIDATE-001", "P105"],
+      "evidence": { "candidate": "CANDIDATE-001", "nearest_owner": "P105", "semantic": 0.961, "role": 0.917, "metadata": 0.883, "composite": 0.951 }
+    },
+    {
+      "code": "OUTLIER",
+      "message": "P99 is HDBSCAN outlier (no cluster). Legitimate niche prompt, not a failure; appears last in outliers_group.",
+      "prompt_ids": ["P99"],
+      "evidence": { "cluster_id": null, "top_neighbor": "P105", "score": 0.412 }
+    }
+  ],
+  "counts": {
+    "prompt_count": 129,
+    "cluster_count": 18,
+    "outlier_count": 5,
+    "structural_error_count": 0,
+    "semantic_warning_count": 3
+  }
+}

@@ -150,8 +150,8 @@ class OperantExternalResourceTests(unittest.TestCase):
     def test_release_packages_include_sidecar_without_embedding_records(self) -> None:
         pages = PAGES_WORKFLOW.read_text(encoding="utf-8")
         portable = PORTABLE_BUILDER.read_text(encoding="utf-8")
-        self.assertIn('cp web/prompt-kit/resources.v1.json "$SITE_ROOT/prompt-kit/resources.v1.json"', pages)
-        self.assertIn('cmp "$SITE_ROOT/prompt-kit/resources.v1.json" web/prompt-kit/resources.v1.json', pages)
+        self.assertIn('cp web/prompt-kit/resources.v1.json "$SITE_ROOT/afk-agent-flow/resources.v1.json"', pages)
+        self.assertIn('cmp "$SITE_ROOT/afk-agent-flow/resources.v1.json" web/prompt-kit/resources.v1.json', pages)
         self.assertIn('RESOURCE_INDEX_NAME = "resources.v1.json"', portable)
         self.assertIn('resource_source_path = repo_root / "web" / "prompt-kit" / RESOURCE_INDEX_NAME', portable)
         self.assertIn('resource_sidecar_matches_canonical', portable)
@@ -316,6 +316,33 @@ class OperantExternalResourceTests(unittest.TestCase):
                 "0.000001",
             ])
             self.assertEqual(over_budget, 1)
+
+
+    def test_prompt_adder_exposes_predraft_all_registered_source_review(self) -> None:
+        query = "prompt registry upstream synthesis zeta"
+        configured = {item["id"] for item in self.contract["sources"]}
+        receipt = {
+            "schema_version": add_prior_art.RECEIPT_SCHEMA,
+            "query": query,
+            "sources": [{"source_id": source_id} for source_id in sorted(configured)],
+            "all_registered_sources_searched": True,
+            "distinct_residual_terms": ["synthesis"],
+            "automatic_prompt_authoring": False,
+        }
+        with mock.patch.object(
+            add_prior_art, "review_external_prior_art", return_value=receipt
+        ) as review:
+            result = prompt_ops.review_prior_art(query)
+        review.assert_called_once_with(query)
+        self.assertTrue(result["all_registered_sources_searched"])
+        self.assertEqual({row["source_id"] for row in result["sources"]}, configured)
+
+        with (
+            mock.patch.object(prompt_ops, "review_prior_art", return_value=receipt) as cli_review,
+            mock.patch("builtins.print"),
+        ):
+            self.assertEqual(prompt_ops.main(["prior-art", "--query", query]), 0)
+        cli_review.assert_called_once_with(query)
 
     def test_prompt_adder_binds_external_gate_before_identity_allocation(self) -> None:
         text = PROMPT_ADDER.read_text(encoding="utf-8")

@@ -38,7 +38,7 @@ One selected acquisition route plus:
 A version label is a freshness signal, not proof of currentness. Before troubleshooting, tutorial guidance, or prompt selection, treat an older or previously acquired copy as potentially stale.
 
 Recommend the lowest-friction refresh route first:
-- browser use → `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`;
+- browser use → `https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/`;
 - phone/tablet → `https://endeavoreverlasting.github.io/web-excel-repair-triage/`;
 - Windows stable local app → `Open-Latest-PromptKit.cmd`;
 - editable checkout → use the preservation-first sequence in section 4 and integrate only with `git merge --ff-only origin/main`;
@@ -51,7 +51,7 @@ If refresh is explicitly declined, continue only while labeling the copy `stale-
 Open:
 
 ```text
-https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/
+https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/
 ```
 
 Do not require a clone merely to use the Prompt Kit. Normal browser use needs no repository checkout, ZIP extraction, Python, PowerShell, Termux, or local server.

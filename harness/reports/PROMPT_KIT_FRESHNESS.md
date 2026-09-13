@@ -10,7 +10,7 @@ If a user says they are on a version such as `V39`, or says the kit was download
 
 1. Say that the reported copy may be stale or unverified.
 2. Route to the lowest-friction latest surface for the actual intent:
-   - normal browser use → `https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/`;
+   - normal browser use → `https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/`;
    - phone/tablet install → `https://endeavoreverlasting.github.io/web-excel-repair-triage/` in the system browser;
    - Windows stable local app → `Open-Latest-PromptKit.cmd`;
    - editable checkout → preservation-first origin/worktree/branch/divergence gates, then `git merge --ff-only origin/main`;

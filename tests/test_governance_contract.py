@@ -127,7 +127,7 @@ class GovernanceContractTests(unittest.TestCase):
             "core product domain is **spreadsheet intelligence**",
             "Web Excel compatibility, billing",
             "roster/time evidence",
-            "began here as a spreadsheet",
+            "AFK Agent Flow",
         ):
             self.assertIn(phrase, section)
 
@@ -136,13 +136,13 @@ class GovernanceContractTests(unittest.TestCase):
             "## 6. Repository identity and product boundary", "## 7."
         )
         for phrase in (
-            "`UnderDeskDev/Operant`",
-            "not yet created/proven",
+            "`UnderDeskDev/AFK-Agent-Flow`",
+            "unproven",
             "operator-approved product identity",
-            "legacy `prompt-kit` paths and sources here remain authoritative compatibility surfaces",
+            "legacy `operant` / `prompt-kit` paths remain authoritative compatibility surfaces",
             "must not be silently moved",
-            "pin, mirror, package, link to, or consume Operant releases",
-            "must not become a competing Operant authority",
+            "consume AFK Agent Flow through historical Operant release seams",
+            "must not become a competing authority",
             "cross-repo dependencies explicit and versioned",
         ):
             self.assertIn(phrase, section)

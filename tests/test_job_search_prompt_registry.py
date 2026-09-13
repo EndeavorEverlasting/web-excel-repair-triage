@@ -7,6 +7,7 @@ from scripts import build_prompt_kit_registry
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "web" / "prompt-kit" / "index.html"
+TUTORIAL = ROOT / "docs" / "JOB_APPLICATION_PROMPT_WORKFLOW.md"
 
 
 class JobSearchPromptRegistryTests(unittest.TestCase):
@@ -15,6 +16,11 @@ class JobSearchPromptRegistryTests(unittest.TestCase):
         cls.prompts = {p["id"]: p for p in build_prompt_kit_registry.load_prompt_kit_registry()}
         cls.portable = cls.prompts['P126']
         cls.sync = cls.prompts['P127']
+        cls.application_pack = next(
+            p for p in cls.prompts.values()
+            if p["name"] == 'Verified Job Opportunity Application Pack Builder'
+        )
+        cls.tutorial = TUTORIAL.read_text(encoding="utf-8")
         cls.policy = build_prompt_kit_registry.load_actionability_policy()
         cls.site = SITE.read_text(encoding="utf-8")
 
@@ -90,6 +96,40 @@ class JobSearchPromptRegistryTests(unittest.TestCase):
         self.assertIn("follow-up due", p.casefold())
         self.assertNotIn("Richard Perez", p)
         self.assertNotIn("Pat", p)
+
+    def test_application_pack_verifies_tailors_and_stops_before_submission(self) -> None:
+        p = self.application_pack
+        c = p["copyContent"]
+        self.assertEqual(p["id"], 'P139')
+        self.assertEqual(p["name"], 'Verified Job Opportunity Application Pack Builder')
+        self.assertEqual(p["type"], "BUILD + ARTIFACT")
+        self.assertEqual(p["class"], "CAREER / APPLICATION EXECUTION")
+        for required in (
+            "OPPORTUNITY VERIFICATION RECEIPT",
+            "FIT / GAP MATRIX",
+            "Ready to Apply",
+            "DO NOT AUTO-SUBMIT",
+            "recruiter message is evidence of outreach",
+            "Job Opportunity Search & Trajectory Mapper",
+            "Connected Job Search Workspace & Tracker Synchronizer",
+            "EndeavorEverlasting/EscapeHatch",
+            "sensitive PII",
+            "MUTATION RECEIPT",
+        ):
+            self.assertIn(required, c)
+        self.assertNotIn("Richard Perez", c)
+        self.assertNotIn("micro1", c.casefold())
+        self.assertEqual(p["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], c)
+        self.assertIn(p["name"], self.site)
+
+    def test_job_application_tutorial_connects_discovery_pack_and_sync(self) -> None:
+        self.assertIn("P126", self.tutorial)
+        self.assertIn('P139', self.tutorial)
+        self.assertIn("P127", self.tutorial)
+        self.assertIn('Verified Job Opportunity Application Pack Builder', self.tutorial)
+        self.assertIn("manual submission", self.tutorial.casefold())
+        self.assertIn("Ready to Apply", self.tutorial)
 
 
 if __name__ == "__main__":

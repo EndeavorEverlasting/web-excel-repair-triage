@@ -27,6 +27,7 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
             "input.pattern='[0-9]*'",
             "input.enterKeyHint='go'",
             "revealPromptShortcutTarget(promptId,'instant')",
+            "hideCompactFilters();",
             "tap the prompt card to copy",
             "input.addEventListener('input',function(){resolveMobilePromptJump(false)})",
             "form.addEventListener('submit',function(e){e.preventDefault();resolveMobilePromptJump(true)})",
@@ -40,6 +41,10 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
         self.assertNotIn("window.showPromptDetail(promptId,toggle||null)", jump)
         self.assertIn("document.querySelector('[data-prompt-id=\"'+promptId+'\"]')", jump)
         self.assertIn("card.focus({preventScroll:true})", jump)
+        center = source[
+            source.index("function centerRenderedPromptCard") : source.index("function revealPromptShortcutTarget")
+        ]
+        self.assertIn("hideCompactFilters();", center)
 
     def test_prefix_collision_requires_explicit_exact_confirmation_without_timing_race(self) -> None:
         source = POLISH.read_text(encoding="utf-8")
@@ -99,6 +104,26 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
         action = source[action_start:action_end]
         self.assertNotIn("ref.click()", action)
         self.assertNotIn("getElementById('refBtn')", action)
+
+    def test_interaction_medium_is_not_viewport_width(self) -> None:
+        source = POLISH.read_text(encoding="utf-8")
+        medium = "@media (hover:none) and (pointer:coarse)"
+        for marker in (
+            medium + "{.prompt-card .prompt-header",
+            medium + "{.favorites-group-jump-nav",
+            medium + "{.hotkey-help{display:flex",
+            medium + "{.ref-toggle{display:none!important",
+            medium + "{.prompt-detail-favorite-btn",
+        ):
+            self.assertIn(marker, source)
+        for forbidden in (
+            "@media(max-width:760px){.prompt-card .prompt-header",
+            "@media(max-width:760px){.hotkey-help{display:flex",
+            "@media(max-width:760px){.ref-toggle{display:none!important",
+        ):
+            self.assertNotIn(forbidden, source)
+        self.assertIn("@media(max-width:980px){.header-top", source)
+        self.assertIn(".hotkey-help{position:fixed;right:80px;bottom:16px", source)
 
     def test_contract_and_phone_guide_define_fast_p111_route(self) -> None:
         contract = json.loads(CONTRACT.read_text(encoding="utf-8"))

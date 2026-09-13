@@ -25,7 +25,7 @@ WEB_README = ROOT / "web" / "README.md"
 ACCESS_GUIDE = ROOT / "PROMPT_KIT_ACCESS.md"
 README = ROOT / "README.md"
 DEPLOYED = ROOT / "web" / "prompt-kit" / "index.html"
-PUBLIC_PROMPT_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/"
+PUBLIC_PROMPT_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/"
 PUBLIC_LAUNCHER_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/"
 DIRECT_ZIP_URL = "https://github.com/EndeavorEverlasting/web-excel-repair-triage/archive/refs/heads/main.zip"
 DIRECT_CMD_URL = "https://raw.githubusercontent.com/EndeavorEverlasting/web-excel-repair-triage/main/Open-Latest-PromptKit.cmd"
@@ -54,6 +54,7 @@ class PromptKitDiscoveryTests(unittest.TestCase):
                 "tutorial_beacon",
                 "card_action_rail",
                 "clipboard_confirmation",
+                "snap_hides_filters",
                 "stable_identity_resequence",
                 "registry_prompt_fallback",
                 "distribution_front_door",
@@ -63,6 +64,8 @@ class PromptKitDiscoveryTests(unittest.TestCase):
         expected = {item["id"]: item["expected"] for item in payload["requirements"]}
         self.assertIn("explicit local filter", expected["favorites_first"])
         self.assertIn("canonical library defaults to ascending numeric sequence", expected["stable_identity_resequence"])
+        self.assertIn("formatCopyConfirmationPreview", expected["clipboard_confirmation"])
+        self.assertIn("hideCompactFilters", expected["snap_hides_filters"])
 
     def test_section_button_has_explicit_dark_surface_contrast(self) -> None:
         js = JS.read_text(encoding="utf-8")
@@ -234,6 +237,15 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         for marker in (
             "showCopyConfirmation",
             "✓ Copied to clipboard",
+            "label:id?'✓ Copied to clipboard · '+id:'✓ Copied to clipboard'",
+            "formatCopyConfirmationPreview",
+            "buildCopyConfirmationToastModel",
+            "renderCopyConfirmationToast",
+            "toast-copy-label",
+            "toast-copy-preview",
+            "data-prompt-id",
+            "data-copy-preview",
+            "PROMPT_KIT_COPY_CONFIRMATION_PREVIEW_CHARS",
             ".toast.success",
             "var(--success)",
             "prompt-copy-confirm",
@@ -241,6 +253,24 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             "@media(prefers-reduced-motion:reduce)",
         ):
             self.assertIn(marker, polish)
+        confirmation = polish[
+            polish.index("window.showCopyConfirmation=function") : polish.index("window.copyPrompt=function")
+        ]
+        self.assertIn("buildCopyConfirmationToastModel", confirmation)
+        self.assertIn("renderCopyConfirmationToast", confirmation)
+        self.assertIn("copyContent", confirmation)
+        self.assertIn("data-prompt-id", confirmation)
+
+    def test_snap_to_prompt_hides_compact_filters(self) -> None:
+        polish = POLISH_JS.read_text(encoding="utf-8")
+        center = polish[
+            polish.index("function centerRenderedPromptCard") : polish.index("function revealPromptShortcutTarget")
+        ]
+        self.assertIn("hideCompactFilters();", center)
+        reveal = polish[
+            polish.index("function revealPromptShortcutTarget") : polish.index("function activatePromptShortcutTarget")
+        ]
+        self.assertIn("return centerRenderedPromptCard(promptId,behavior||hotkeyScrollBehavior())", reveal)
 
     def test_display_order_keeps_recommendation_priority_metadata_without_changing_ids(self) -> None:
         payload = json.loads(DISPLAY_ORDER.read_text(encoding="utf-8"))

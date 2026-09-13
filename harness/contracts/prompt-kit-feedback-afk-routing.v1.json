@@ -1,9 +1,10 @@
 {
   "schema_version": "prompt-kit-feedback-afk-routing/v1",
   "prompt_surface": "standard-ai",
-  "mission": "Route explicit Prompt Kit feedback into bounded AFK development work without giving browser telemetry, transport code, or a local coordinator independent merge authority.",
+  "mission": "Route explicit Prompt Kit feedback and privacy-bounded derived Operant friction into bounded AFK development work without giving browser telemetry, transport code, or a local coordinator independent merge authority.",
   "semantic_owners": {
     "explicit_feedback": "P99",
+    "usage_and_friction_semantics": "P99",
     "afk_coordination": "P115",
     "general_repository_execution": "P07",
     "established_ci_repair": "P32",
@@ -22,7 +23,23 @@
         "GitHub credentials",
         "pull-request merge authority",
         "implicit historical upload when consent is enabled",
-        "provider polling"
+        "provider polling",
+        "raw ordinary-usage export without a separate accepted privacy contract"
+      ]
+    },
+    "friction_derivation": {
+      "primary_surface": "P99-owned telemetry semantic boundary",
+      "owns": [
+        "deriving a coarse friction receipt from deterministic runtime failure or repeated local patterns",
+        "keeping raw ordinary usage local and non-actionable",
+        "dropping search text, typed content, navigation history, identity, URL, clipboard, and prompt body before AFK routing"
+      ],
+      "forbidden": [
+        "raw session replay",
+        "cross-user behavior profiling",
+        "engagement optimization",
+        "automatic promotion authority",
+        "turning one ordinary click, copy, open, invoke, or favorite event into repository work"
       ]
     },
     "private_bridge": {
@@ -48,13 +65,15 @@
         "single-signal classification",
         "signal-id deduplication",
         "machine-readable work-request creation",
-        "bounded invocation of one configured capable worker"
+        "bounded invocation of one configured capable worker",
+        "privacy-bounded Operant friction receipt admission"
       ],
       "forbidden": [
         "background polling loop",
         "provider PR scanning",
         "direct merge execution",
-        "replacement of P115 or P105"
+        "replacement of P115 or P105",
+        "telemetry collection or friction derivation"
       ]
     },
     "provider_feedback_hook": {
@@ -65,6 +84,82 @@
       ],
       "required_permissions": "contents:read",
       "mutation_authority": false
+    },
+    "remote_repository_dispatch_adapter": {
+      "primary_surface": "provider_adapter",
+      "path": "scripts/prompt_kit_afk_repository_dispatch.py",
+      "workflow": ".github/workflows/prompt-kit-feedback-hook.yml",
+      "event_type": "operant-friction-receipt",
+      "owns": [
+        "extracting only the sanitized repository_dispatch client_payload",
+        "delegating one accepted friction receipt to the provider-neutral AFK router",
+        "emitting bounded state/work-request/recipe evidence as workflow artifacts"
+      ],
+      "forbidden": [
+        "raw browser telemetry collection",
+        "provider identity propagation into work-request evidence",
+        "worker polling",
+        "direct pull-request mutation or merge",
+        "provider-specific semantic authority"
+      ],
+      "required_permissions": "contents:read",
+      "mutation_authority": false
+    },
+    "canonical_upgrade_engine": {
+      "primary_surface": "agent_harness",
+      "path": "scripts/operant_upgrade.py",
+      "recipe_schema": "operant-upgrade-recipe/v1",
+      "validator": "scripts/validate_operant_upgrade.py",
+      "output_dir": "Outputs/operant-upgrade/recipes",
+      "allowed_mutation_owners": [
+        "P07 Repo Sprint Executor",
+        "P32 GNHF Validation and CI Repair"
+      ],
+      "canonical_sources": [
+        "harness/contracts/prompt-kit-feedback-afk-routing.v1.json",
+        ".ai/skills/prompt-kit-feedback-afk-routing/SKILL.md",
+        "docs/prompts.json",
+        "build_prompt_kit.py",
+        "harness/contracts/pr-merge-gate.v1.json"
+      ],
+      "generator": {
+        "command": [
+          "python",
+          "build_prompt_kit.py",
+          "--output",
+          "web/prompt-kit/index.html"
+        ],
+        "output": "web/prompt-kit/index.html",
+        "condition": "Run after an owned Operant/Prompt Kit source mutation when the generated site can be affected; never repair the generated output instead of its canonical source."
+      },
+      "validators": [
+        "python scripts/validate_prompt_kit_feedback_afk_routing.py --summary",
+        "python scripts/validate_operant_upgrade.py --summary",
+        "python -m unittest tests.test_operant_upgrade tests.test_prompt_kit_feedback_afk_routing tests.test_operant_friction_repository_dispatch_adapter -v",
+        "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
+        "python scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
+        "git diff --check"
+      ],
+      "owns": [
+        "validating one actionable prompt-kit-afk-work-request/v1 input",
+        "compiling a deterministic operant-upgrade-recipe/v1 identity from the exact work request",
+        "preserving the already-declared P07 or P32 mutation owner rather than inventing a new owner",
+        "deriving one deterministic isolated branch name from the exact work-request hash",
+        "binding canonical source, generator, validator, and P105 integration instructions without executing promotion"
+      ],
+      "forbidden": [
+        "raw telemetry collection or friction derivation",
+        "provider polling",
+        "provider identity ingestion",
+        "inventing a mutation owner not declared by the work request and allowlist",
+        "direct source mutation",
+        "branch creation or push",
+        "pull-request creation or merge",
+        "promotion authority",
+        "copying raw private feedback text into the portable recipe"
+      ],
+      "mutation_authority": false,
+      "merge_authority": false
     },
     "promotion": {
       "primary_surface": "harness_spine",
@@ -77,26 +172,86 @@
     "prompt_feedback": "ACTIONABLE_REPAIR",
     "prompt_vote:dislike": "ACTIONABLE_REPAIR",
     "prompt_vote:like": "INFORMATION_ONLY",
-    "prompt_usage": "INFORMATION_ONLY"
+    "prompt_usage": "INFORMATION_ONLY",
+    "operant_friction": "CONDITIONAL_ACTIONABLE_REPAIR"
+  },
+  "friction_policy": {
+    "allowed_values": [
+      "stale_guidance",
+      "route_miss",
+      "action_failure",
+      "recovery_loop"
+    ],
+    "evidence_kinds": {
+      "deterministic_runtime_failure": {
+        "minimum_occurrences": 1
+      },
+      "repeated_local_pattern": {
+        "minimum_occurrences": 3
+      }
+    },
+    "required_fields": [
+      "signal_id",
+      "event_type",
+      "value",
+      "surface_id",
+      "evidence_kind",
+      "occurrence_count"
+    ],
+    "raw_usage_is_never_directly_actionable": true,
+    "prompt_id_optional": true,
+    "derivation_owner": "P99",
+    "coordination_owner": "P115"
   },
   "privacy": {
     "browser_credentials": false,
     "raw_comment_provider_dispatch": false,
     "raw_comment_local_worker_request": true,
+    "raw_comment_upgrade_recipe": false,
+    "raw_usage_history_provider_dispatch": false,
+    "raw_search_or_typed_content": false,
+    "user_identity_in_friction_receipt": false,
+    "friction_receipts_local_first": true,
     "provider_receipt_fields": [
       "schema_version",
       "signal_id",
       "prompt_id",
+      "surface_id",
       "event_type",
       "value",
+      "evidence_kind",
+      "occurrence_count",
       "has_comment",
       "source_hash",
-      "sequence"
+      "sequence",
+      "timestamp"
     ]
+  },
+  "execution_adapters": {
+    "contract": "Local workers and remote SCM/CI adapters consume the same sanitized signal/work-request semantics.",
+    "provider_neutral_router": true,
+    "github_actions_role": "worked adapter only",
+    "github_actions_repository_dispatch_event": "operant-friction-receipt",
+    "github_actions_adapter": "scripts/prompt_kit_afk_repository_dispatch.py",
+    "github_actions_workflow": ".github/workflows/prompt-kit-feedback-hook.yml",
+    "canonical_upgrade_engine": "scripts/operant_upgrade.py",
+    "github_actions_worker_argv": [
+      "python",
+      "scripts/operant_upgrade.py",
+      "plan",
+      "--request",
+      "{request}",
+      "--output-dir",
+      "Outputs/operant-upgrade/recipes"
+    ],
+    "worker_boundary": "The worked GitHub adapter invokes the canonical upgrade engine to emit a deterministic recipe. Any other adapter without a configured worker argv stops at BLOCKED_WORKER_UNCONFIGURED and does not claim repository mutation.",
+    "promotion_owner": "P105/pr-floor-integration",
+    "second_scheduler_allowed": false
   },
   "wakeups": {
     "event_driven": [
       "accepted local feedback event",
+      "accepted privacy-bounded Operant friction receipt",
       "sanitized repository_dispatch receipt"
     ],
     "schedule_role": "bounded recovery or revalidation only",
@@ -104,8 +259,9 @@
   },
   "proof_levels": {
     "static": "Contract, registries, source boundaries, and generated-site parity on the tested commit.",
+    "upgrade_recipe": "Exact work-request hashing and deterministic recipe recompilation prove ownership/scope/generator/validator routing only; execution remains separate.",
     "provider": "Observed workflow/check/review identities for the exact candidate only.",
     "browser_runtime": "Observed browser request/response and persistence behavior; static JavaScript assertions are insufficient.",
-    "promotion": "P105/pr-floor exact-head validation and provider merge receipt; never inferred from the AFK router."
+    "promotion": "P105/pr-floor exact-head validation and provider merge receipt; never inferred from the AFK router or upgrade recipe."
   }
 }

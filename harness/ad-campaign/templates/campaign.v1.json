@@ -1,0 +1,52 @@
+{
+  "schema_version": "ad-campaign/v1",
+  "campaign_id": "",
+  "revision": 1,
+  "brief": {
+    "brand": "",
+    "offer": "",
+    "objective": "",
+    "audience": "",
+    "geography": "",
+    "language": "",
+    "currency": "",
+    "budget_cap": null,
+    "account": "",
+    "period": {
+      "start": "",
+      "end": "",
+      "timezone": ""
+    }
+  },
+  "doctrine": {
+    "version": "",
+    "source": "",
+    "brand_rules": [],
+    "claims": []
+  },
+  "plan": {
+    "version": "",
+    "objective": "",
+    "metric": {
+      "name": "",
+      "numerator": "",
+      "denominator": "",
+      "source": "",
+      "window": ""
+    },
+    "allocations": [],
+    "reserve": null,
+    "experiment": {
+      "hypothesis": "",
+      "comparison": "",
+      "decision_rule": "",
+      "window": "",
+      "stop_rule": ""
+    }
+  },
+  "assets": [],
+  "review": {},
+  "authorization": {},
+  "launch": {},
+  "results": {}
+}

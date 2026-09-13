@@ -77,11 +77,11 @@ class PromptKitOrderNavigationProductTests(unittest.TestCase):
             polish,
         )
 
-    def test_visible_product_identity_is_operant(self) -> None:
+    def test_visible_product_identity_is_afk_agent_flow(self) -> None:
         html = build_prompt_kit_registry.render()
         version = build_prompt_kit_registry.build_prompt_kit.load_operant_version()
-        self.assertIn(f'<title>Operant {version}</title>', html)
-        self.assertIn(f'Operant <span>{version}</span>', html)
+        self.assertIn(f'<title>AFK Agent Flow {version}</title>', html)
+        self.assertIn(f'AFK Agent Flow <span>{version}</span>', html)
         self.assertIn('Capabilities · Skills · Implementations · Evidence', html)
         self.assertIn(f'id=\"versionBadge\">{version}</div>', html)
         self.assertNotIn('AI Harness Prompt Kit <span>v40</span>', html)

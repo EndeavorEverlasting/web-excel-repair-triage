@@ -1,0 +1,185 @@
+name: Repository AI Evals
+run-name: Repository AI Evals | ${{ github.event_name }} | ${{ github.event.pull_request.head.sha || github.sha }}
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'harness/evals/**'
+      - 'tests/fixtures/p123_youtube_ingestion_behavior/**'
+      - 'tests/fixtures/p67_source_faithfulness/**'
+      - 'tests/fixtures/p100_closeout_replay/**'
+      - 'scripts/run_repository_ai_evals.py'
+      - 'scripts/seed_repository_ai_eval_baseline.py'
+      - 'scripts/prompt_kit_classifier_eval.py'
+      - 'scripts/evaluate_prompt_language.py'
+      - 'scripts/evaluate_p123_youtube_ingestion_behavior.py'
+      - 'scripts/evaluate_p67_source_faithfulness.py'
+      - 'docs/prompt-kit.js'
+      - 'docs/prompt-kit-guided-recommendations.js'
+      - 'registry/prompts/**'
+      - 'tests/test_repository_ai_eval_framework.py'
+      - 'tests/test_repository_ai_eval_baseline_seeding.py'
+      - 'tests/test_prompt_kit_classifier_eval.py'
+      - 'tests/test_prompt_language_audit.py'
+      - 'tests/test_p123_youtube_ingestion_behavior_eval_prompt.py'
+      - 'tests/test_p67_source_faithfulness_eval_prompt.py'
+      - 'harness/test-floor.v1.json'
+      - '.github/workflows/repository-ai-evals.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'harness/evals/**'
+      - 'tests/fixtures/p123_youtube_ingestion_behavior/**'
+      - 'tests/fixtures/p67_source_faithfulness/**'
+      - 'tests/fixtures/p100_closeout_replay/**'
+      - 'scripts/run_repository_ai_evals.py'
+      - 'scripts/seed_repository_ai_eval_baseline.py'
+      - 'scripts/prompt_kit_classifier_eval.py'
+      - 'scripts/evaluate_prompt_language.py'
+      - 'scripts/evaluate_p123_youtube_ingestion_behavior.py'
+      - 'scripts/evaluate_p67_source_faithfulness.py'
+      - 'docs/prompt-kit.js'
+      - 'docs/prompt-kit-guided-recommendations.js'
+      - 'registry/prompts/**'
+      - 'tests/test_repository_ai_eval_framework.py'
+      - 'tests/test_repository_ai_eval_baseline_seeding.py'
+      - 'tests/test_prompt_kit_classifier_eval.py'
+      - 'tests/test_prompt_language_audit.py'
+      - 'tests/test_p123_youtube_ingestion_behavior_eval_prompt.py'
+      - 'tests/test_p67_source_faithfulness_eval_prompt.py'
+      - 'harness/test-floor.v1.json'
+      - '.github/workflows/repository-ai-evals.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repository-ai-evals:
+    name: Repository AI Eval Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+      - name: Resolve refreshed default-branch baseline
+        id: baseline
+        shell: bash
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            test -n "$BASE_REF"
+            git fetch --no-tags origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
+            REF="refs/remotes/origin/${BASE_REF}"
+          elif [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            REF="$PUSH_BEFORE"
+            test -n "$REF"
+            test "$REF" != "0000000000000000000000000000000000000000"
+            git cat-file -e "${REF}^{commit}"
+          else
+            REF="HEAD^1"
+          fi
+          BASELINE_SHA="$(git rev-parse --verify "${REF}^{commit}")"
+          CANDIDATE_SHA="$(git rev-parse HEAD)"
+          test "$BASELINE_SHA" != "$CANDIDATE_SHA"
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+          echo "sha=$BASELINE_SHA" >> "$GITHUB_OUTPUT"
+          echo "baseline ref=$REF sha=$BASELINE_SHA candidate=$CANDIDATE_SHA"
+      - name: Validate framework contract and observed-candidate boundary
+        run: >-
+          python scripts/run_repository_ai_evals.py
+          --validate-only
+          --observed-candidates harness/evals/fixtures/repository-ai-eval-observed-candidates.v1.json
+          --summary
+      - name: Run framework regression tests
+        run: >-
+          python -m unittest
+          tests.test_repository_ai_eval_framework
+          tests.test_repository_ai_eval_baseline_seeding
+          -v
+      - name: Verify PASS-to-FAIL comparator sentinel
+        run: >-
+          python -m unittest
+          tests.test_repository_ai_eval_baseline_seeding.RepositoryAIEvalBaselineSeedingTests.test_pass_to_fail_regression_sentinel
+          -v
+      - name: Seed refreshed default-branch baseline report
+        run: >-
+          python scripts/seed_repository_ai_eval_baseline.py
+          --baseline-ref "${{ steps.baseline.outputs.ref }}"
+          --output Outputs/repository-ai-eval-baseline.json
+          --summary
+      - name: Execute repository AI eval pyramid
+        id: evals
+        continue-on-error: true
+        run: >-
+          python scripts/run_repository_ai_evals.py
+          --observed-candidates harness/evals/fixtures/repository-ai-eval-observed-candidates.v1.json
+          --baseline-report Outputs/repository-ai-eval-baseline.json
+          --output Outputs/repository-ai-eval-report.json
+          --summary
+      - name: Verify seeded baseline comparison binding
+        if: always() && hashFiles('Outputs/repository-ai-eval-report.json') != ''
+        env:
+          EXPECTED_BASELINE_SHA: ${{ steps.baseline.outputs.sha }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          baseline_path = Path('Outputs/repository-ai-eval-baseline.json')
+          report_path = Path('Outputs/repository-ai-eval-report.json')
+          baseline = json.loads(baseline_path.read_text(encoding='utf-8'))
+          report = json.loads(report_path.read_text(encoding='utf-8'))
+          expected = os.environ['EXPECTED_BASELINE_SHA']
+          if baseline.get('commit_sha') != expected:
+              raise SystemExit(f"baseline SHA mismatch: expected={expected} actual={baseline.get('commit_sha')}")
+          comparison = report.get('baseline_comparison')
+          if not isinstance(comparison, dict):
+              raise SystemExit('candidate report did not exercise baseline comparison')
+          if comparison.get('baseline_path') != str(baseline_path):
+              raise SystemExit(f"unexpected baseline path: {comparison.get('baseline_path')}")
+          if not isinstance(comparison.get('regressions'), list):
+              raise SystemExit('baseline comparison regressions must be a list')
+          print('baseline_comparison=PASS baseline_sha=', expected, 'regressions=', comparison['regressions'])
+          PY
+      - name: Publish repository AI eval reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-ai-eval-report
+          path: |
+            Outputs/repository-ai-eval-baseline.json
+            Outputs/repository-ai-eval-report.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Enforce repository AI eval gate
+        if: steps.evals.outcome != 'success'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('Outputs/repository-ai-eval-report.json')
+          if path.is_file():
+              report = json.loads(path.read_text(encoding='utf-8'))
+              print('blocking_failures=', report.get('blocking_failures'))
+              comparison = report.get('baseline_comparison') or {}
+              print('baseline_regressions=', comparison.get('regressions'))
+              for suite in report.get('suites', []):
+                  if suite.get('status') == 'FAIL':
+                      print('FAIL', suite.get('id'), suite.get('execution', {}).get('stderr_tail', ''))
+          raise SystemExit('Repository AI eval gate failed; report artifacts preserved above.')
+          PY

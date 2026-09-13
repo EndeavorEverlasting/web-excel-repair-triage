@@ -20,7 +20,7 @@
         "requiring a clone for normal browser or phone use"
       ],
       "entry_points": [
-        "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/",
+        "https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/",
         "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
         "Open-Latest-PromptKit.cmd",
         "Acquire-Latest-PromptKit.cmd"

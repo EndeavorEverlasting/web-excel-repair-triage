@@ -231,6 +231,89 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("KEEP/ADJUST/REVERT", prompt["expectedOutput"])
         self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
 
+    def test_p141_to_p82_seam_routes_only_bounded_empirical_uncertainty(self) -> None:
+        p141 = self.full["P141"]["copyContent"]
+        p82 = self.full["P82"]["copyContent"]
+
+        sender_fixture = {
+            "admission_artifact": "P82 Experiment Admission Record",
+            "selected_thesis": "one surviving thesis",
+            "empirical_uncertainty": "primary empirical uncertainty",
+            "hypothesis": "falsifiable hypothesis",
+            "baseline": "baseline/comparator",
+            "prototype": "prototype boundary",
+            "measurement": "measurement",
+        }
+        receiver_fixture = {
+            "admission_artifact": "P82 Experiment Admission Record",
+            "hypothesis": "falsifiable hypothesis",
+            "baseline": "baseline/comparator",
+            "prototype": "prototype boundary",
+            "measurement": "measurement",
+            "decision_rule": "decision rule",
+        }
+
+        for field, phrase in sender_fixture.items():
+            self.assertIn(
+                phrase,
+                p141,
+                f"P141->P82 sender contract missing {field}: expected {phrase!r}.",
+            )
+        for field, phrase in receiver_fixture.items():
+            self.assertIn(
+                phrase,
+                p82,
+                f"P141->P82 receiver contract missing {field}: expected {phrase!r}.",
+            )
+
+        self.assertIn(
+            "remaining uncertainty is empirical",
+            p141,
+            "P141 must admit P82 only when the remaining uncertainty is empirical.",
+        )
+        self.assertIn(
+            "multiple strategic theses",
+            p141.lower(),
+            "P141 must retain routing when multiple strategic theses remain viable.",
+        )
+        self.assertIn(
+            "P95",
+            p141,
+            "P141 must route dominant architecture uncertainty to P95.",
+        )
+        self.assertIn(
+            "P95",
+            p82,
+            "P82 must reject architecture-dominant work toward P95.",
+        )
+        self.assertIn(
+            "P07",
+            p141,
+            "P141 must route implementation-ready work to P07 instead of P82.",
+        )
+
+        for forbidden in (
+            "generate 3-5 competing strategic theses",
+            "decide what the repository should build next",
+        ):
+            self.assertNotIn(
+                forbidden,
+                p82.lower(),
+                f"P141->P82 seam collapsed: P82 absorbed P141 behavior {forbidden!r}.",
+            )
+
+        for outcome in ("PROMOTE", "WEAKEN", "REJECT", "INCONCLUSIVE"):
+            self.assertIn(
+                outcome,
+                p82,
+                f"P82 decision contract missing experiment outcome {outcome}.",
+            )
+        self.assertIn(
+            "P141",
+            p82,
+            "P82 must return strategically weakened/rejected evidence to P141.",
+        )
+
     def test_flow_friction_prompt_owns_terminal_actions_and_preference_telemetry(self) -> None:
         prompt = self.full["P99"]
         content = prompt["copyContent"]
@@ -860,6 +943,9 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertEqual(prompt["color"], "Cyan")
         for phrase in (
             "BUILD A STRUCTURAL-DEBT LEDGER",
+            "REPO-WIDE INTAKE + REPRESENTATIVE EDIT",
+            "Size is a clue, never a verdict",
+            "Where do I change <behavior>?",
             "PROTECT BEHAVIOR BEFORE MOVING IT",
             "REFACTOR FOR COHESION, NOT SMALLNESS ALONE",
             "DO NOT REPLACE A MONOLITH WITH A MAZE",
@@ -942,6 +1028,124 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertEqual(self.full["P86"]["name"], "Prompt Semantic Hardener & Principle Integrator")
         self.assertEqual(self.full["P79"]["name"], "Prompt Registry Prompt Adder")
 
+
+    def test_p137_builds_evidence_backed_project_case_study_and_demo_deck(self) -> None:
+        prompt = self.full["P137"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["name"], "Evidence-Backed Project Case Study & Demo Deck Builder")
+        self.assertEqual(prompt["type"], "BUILD + ARTIFACT")
+        self.assertEqual(prompt["class"], "PROJECT DEVELOPMENT / PORTFOLIO ANALYTICS")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        for phrase in (
+            "INSPIRATION / ORIGIN",
+            "FIRST STEPS",
+            "DELIVERY / OUTCOME QUALITY",
+            "WHAT I LEARNED",
+            "HOW I WOULD DO IT AGAIN",
+            "SCALE AND EXPANSION",
+            "SYSTEM-DESIGN ALTERNATIVES",
+            "TIME-SPENT MODEL",
+            "ACTUAL DISTRIBUTION PIE CHARTS",
+            "PERSPECTIVE / COUNTERFACTUAL PIE CHARTS",
+            "MEASURED, DERIVED, ESTIMATED, COUNTERFACTUAL",
+            "BASELINE VECTOR",
+            "SCENARIO VECTOR",
+            "DELTA TABLE",
+            "scenario-data table/sidecar",
+            "sum to 100% within rounding",
+            "AxTask, ASB, Triage",
+            "DATA-ANALYSIS PORTFOLIO VALUE",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("measured, derived, estimated, or counterfactual", prompt["expectedOutput"].lower())
+        self.assertIn("outcome-quality claims are tied to supported criteria", prompt["proofGate"].lower())
+        self.assertIn("counterfactual pie chart", " ".join(prompt["keywords"]).lower())
+
+
+        boundary_start = content.index("SPRINT / ARTIFACT BOUNDARY")
+        artifact_start = content.index("PRESENTATION / DEMO ARTIFACT")
+        self.assertLess(boundary_start, artifact_start)
+        boundary = content[boundary_start:artifact_start]
+        for phrase in (
+            "REPOSITORY / WORKSPACE",
+            "BRANCH / REF",
+            "MUTATION AUTHORITY",
+            "OWNED SCOPE",
+            "FORBIDDEN SCOPE",
+            "source evidence as read-only by default",
+            "under `Outputs/`",
+            "timestamped backup",
+            "Outputs/backups/YYYYMMDD-HHMMSS/",
+            "Never use this overwrite path for source evidence",
+            "stop before file mutation",
+        ):
+            self.assertIn(phrase, boundary)
+        self.assertIn("source evidence remains preserved", prompt["expectedOutput"])
+        self.assertIn("timestamped backup and mapping", prompt["proofGate"])
+
+        scenario_start = content.index("PERSPECTIVE / COUNTERFACTUAL PIE CHARTS")
+        scenario_end = content.index("DATA-ANALYSIS PORTFOLIO VALUE", scenario_start)
+        scenario = content[scenario_start:scenario_end]
+        ordered_steps = (
+            "BASELINE VECTOR",
+            "INTERVENTION",
+            "CAUSAL ASSUMPTION",
+            "SCENARIO VECTOR",
+            "Validate the vector",
+            "Visualize BASELINE vs SCENARIO",
+            "DELTA TABLE",
+            "scenario-data table/sidecar",
+        )
+        positions = [scenario.index(step) for step in ordered_steps]
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn("Never silently create or destroy hours/tasks", scenario)
+        self.assertIn("pie shares sum to 100% within rounding", scenario)
+        self.assertIn("same category definitions", scenario)
+        self.assertNotEqual(prompt["id"], "P64")
+        self.assertNotEqual(prompt["id"], "P79")
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+
+
+    def test_p141_strategic_scout_falsifies_theses_and_routes_without_execution(self) -> None:
+        prompt = self.full["P141"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["name"], "Repository Strategic Opportunity Scout")
+        self.assertEqual(prompt["type"], "PLAN")
+        self.assertEqual(prompt["class"], "REPOSITORY STRATEGY / OPPORTUNITY DISCOVERY")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        for phrase in (
+            "3-5 COMPETING STRATEGIC THESES",
+            "FALSIFY EACH THESIS BEFORE RANKING",
+            "SURVIVES",
+            "WEAKENED",
+            "REJECTED",
+            "DEFERRED",
+            "SELECT EXACTLY ONE NEXT THESIS TO INVESTIGATE",
+            "CHEAPEST DISCRIMINATING INVESTIGATION",
+            "P95 Program Design & Call-Stack Prototype Architect",
+            "P97 Open-Source Prior-Art & Gap Analyst",
+            "P82 prototyping owner",
+            "P79 Prompt Registry Prompt Adder",
+            "P07 Repo Sprint Executor",
+            "use only when strategic uncertainty is resolved",
+            "NEW CONTRACT CANDIDATE",
+            "PRESERVE THE EXPLORATION / EXECUTION BOUNDARY",
+            "Do not continue into bounded execution",
+            "P20 executes an already-selected Opportunity_Discovery row",
+            "P22/P23 rank which repository should move first across a portfolio",
+        ):
+            self.assertIn(phrase, content)
+        self.assertLess(content.index("FALSIFY EACH THESIS BEFORE RANKING"), content.index("COMPARE SURVIVING THESES"))
+        self.assertLess(content.index("COMPARE SURVIVING THESES"), content.index("SELECT EXACTLY ONE NEXT THESIS TO INVESTIGATE"))
+        self.assertIn("at least 3 and no more than 5", content)
+        self.assertIn("No selected initiative is implemented", prompt["expectedOutput"])
+        self.assertIn("Do not implement that routed contract", prompt["nextStep"])
+        self.assertIn("P07 is selected only after strategic uncertainty is resolved", prompt["proofGate"])
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+        for existing in ("P03", "P20", "P22", "P23", "P79", "P82", "P95", "P97"):
+            self.assertNotEqual(prompt["id"], existing)
 
 if __name__ == "__main__":
     unittest.main()

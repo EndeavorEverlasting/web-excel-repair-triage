@@ -1,0 +1,76 @@
+{
+  "schema_version": "prompt-topology-phase-a-refinements/v1",
+  "refinement_id": "prompt-topology-executable-phase-a",
+  "base_schema": "harness/prompt-topology/schema.v1.json",
+  "base_config": "harness/prompt-topology/config.v1.json",
+  "principle": "Preserve the established design contract and supersede only fields required to execute renderer-neutral Phase A.",
+  "supersedes": {
+    "config.pipeline.clustering.cluster_id_policy": {
+      "persistent_identity": "cluster_id persists across accepted topology versions when the highest-overlap unused prior cluster has Jaccard overlap >= 0.50",
+      "initial_assignment": "C- + first 6 uppercase hex chars derived deterministically from first accepted membership fingerprint, collision-salted if needed",
+      "membership_fingerprint_sha256": "sha256(sorted current member prompt ids joined by comma)",
+      "lineage": ["NEW", "UNCHANGED", "EXPANDED", "CONTRACTED", "REVISED"],
+      "rule": "Exact membership fingerprint is evidence, not permanent cluster identity.",
+      "reconcile_min_jaccard": 0.5
+    },
+    "schema.$defs.cluster_record.identity": {
+      "required_runtime_fields": [
+        "cluster_id",
+        "member_prompt_ids",
+        "member_count",
+        "membership_fingerprint_sha256",
+        "lineage",
+        "previous_overlap_micros",
+        "representative_prompt_id"
+      ],
+      "rule": "Executable Phase A validation uses persistent cluster identity and separate exact membership fingerprint; the historical fingerprint_sha256/content-addressed-ID wording is superseded for topology.v1.json."
+    },
+    "phase_a_artifact": {
+      "path": "artifacts/prompt-topology/topology.v1.json",
+      "schema_version": "prompt-topology-artifact/v1",
+      "renderer_neutral": true,
+      "required_sections": ["nodes", "edges", "clusters", "outlier_prompt_ids", "opportunities", "provenance", "content_hash_sha256"]
+    }
+  },
+  "edges": {
+    "single_edge_per_prompt_pair": true,
+    "phase_a_channels": [
+      "SEMANTIC_NEIGHBOR",
+      "WORKFLOW_NEXT",
+      "CLASS_FAMILY",
+      "SHARED_SCOPE",
+      "SHARED_EVIDENCE",
+      "TUTORIAL_ROUTE"
+    ],
+    "reserved_behavior_channels": ["CO_USAGE", "TRANSITION", "SUBSTITUTION", "COMPLEMENT"]
+  },
+  "opportunities": {
+    "advisory_only": true,
+    "components": ["semantic_gap", "ambiguity", "underdevelopment", "redundancy_penalty", "workflow_gap"],
+    "formula": "round(0.25*semantic_gap + 0.25*ambiguity + 0.20*underdevelopment + 0.15*redundancy_penalty + 0.15*workflow_gap)",
+    "states": ["HEALTHY", "UNDERDEVELOPED", "AMBIGUOUS", "FRAGMENTED", "REDUNDANT", "EMERGING"],
+    "actions": ["NONE", "INVESTIGATE_CONTRIBUTION", "STRENGTHEN_EXISTING", "CONNECT_WORKFLOW", "IMPROVE_TUTORIAL", "REVIEW_CLASSIFICATION", "CONSOLIDATE"]
+  },
+  "determinism": {
+    "repeat_build_bytes_identical": true,
+    "shuffled_source_bytes_identical": true,
+    "filesystem_enumeration_cannot_define_truth": true,
+    "persisted_similarity_scores": "integer_micros"
+  },
+  "phase_boundary": {
+    "forbidden": [
+      "3D coordinates",
+      "projection epochs",
+      "cluster envelopes",
+      "WebGL/Three.js/React Three Fiber viewer",
+      "live telemetry",
+      "session tracking",
+      "raw search retention",
+      "user analytics",
+      "vector database",
+      "NodeWeaver expansion",
+      "prompt renumbering",
+      "broad ontology rewrite"
+    ]
+  }
+}

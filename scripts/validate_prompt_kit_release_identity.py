@@ -20,7 +20,7 @@ PORTABLE_RUNTIME_REL = Path("docs/prompt-kit-favorites-portability.js")
 FRESHNESS_CONTRACT_REL = Path("harness/contracts/prompt-kit-freshness-guidance.v1.json")
 PAGES_WORKFLOW_REL = Path(".github/workflows/prompt-kit-pages.yml")
 CANONICAL_ARTIFACT = "web/prompt-kit/index.html"
-CANONICAL_PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/"
+CANONICAL_PUBLIC_URL = "https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/"
 PAGES_BUILD_STEP = "Build Pages bundle from canonical registry"
 
 
@@ -115,8 +115,8 @@ def validate_contract(root: Path) -> str:
         if contract.get(field) != value:
             raise ReleaseIdentityError(f"contract {field} drifted: {contract.get(field)!r}")
     identity_rule = str(contract.get("identity_rule", ""))
-    if "one Prompt Kit website release" not in identity_rule:
-        raise ReleaseIdentityError("identity rule no longer declares one Prompt Kit release")
+    if "website release" not in identity_rule or "one AFK Agent Flow" not in identity_rule:
+        raise ReleaseIdentityError("identity rule no longer declares one AFK Agent Flow release")
     release_identity = contract.get("release_identity", {})
     label_policy = str(release_identity.get("version_label_policy", ""))
     if "never sufficient proof" not in label_policy:
@@ -195,8 +195,8 @@ def validate_pages(root: Path) -> str:
     commands = _workflow_run_commands(text, PAGES_BUILD_STEP)
     required = [
         "set -euo pipefail",
-        'python scripts/build_prompt_kit_registry.py --output "$SITE_ROOT/prompt-kit/index.html"',
-        'cmp "$SITE_ROOT/prompt-kit/index.html" web/prompt-kit/index.html',
+        'python scripts/build_prompt_kit_registry.py --output "$SITE_ROOT/afk-agent-flow/index.html"',
+        'cmp "$SITE_ROOT/afk-agent-flow/index.html" web/prompt-kit/index.html',
     ]
     missing = [command for command in required if command not in commands]
     if missing:

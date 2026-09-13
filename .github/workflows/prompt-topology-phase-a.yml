@@ -1,0 +1,103 @@
+name: Prompt topology Phase A
+
+on:
+  pull_request:
+    paths:
+      - 'harness/prompt-topology/**'
+      - 'harness/contracts/prompt-topology-classifier.v1.json'
+      - 'scripts/prompt-topology/**'
+      - 'scripts/validate_prompt_topology.py'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/prompt_classification.py'
+      - 'scripts/prompt_kit_tutorial_coverage.py'
+      - 'registry/prompts/**'
+      - 'docs/prompts.json'
+      - 'tests/test_prompt_topology_phase_a.py'
+      - 'requirements-prompt-topology.txt'
+      - '.github/workflows/prompt-topology-phase-a.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'harness/prompt-topology/**'
+      - 'harness/contracts/prompt-topology-classifier.v1.json'
+      - 'scripts/prompt-topology/**'
+      - 'scripts/validate_prompt_topology.py'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/prompt_classification.py'
+      - 'scripts/prompt_kit_tutorial_coverage.py'
+      - 'registry/prompts/**'
+      - 'docs/prompts.json'
+      - 'tests/test_prompt_topology_phase_a.py'
+      - 'requirements-prompt-topology.txt'
+      - '.github/workflows/prompt-topology-phase-a.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONHASHSEED: '0'
+  TZ: UTC
+  LC_ALL: C.UTF-8
+  LANG: C.UTF-8
+
+jobs:
+  phase-a:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Prove exact candidate and refreshed main floor
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          git diff --check origin/main...HEAD
+          echo "candidate=$EXPECTED_SHA main=$(git rev-parse origin/main)"
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Install scoped topology runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-prompt-topology.txt
+
+      - name: Validate contract and focused engine fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/validate_prompt_topology.py --summary
+          python -m unittest tests.test_prompt_topology_phase_a -v
+
+      - name: Build live canonical topology and prove determinism
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt-topology/run.py --output "$RUNNER_TEMP/topology.v1.json" --summary
+          python scripts/prompt-topology/run.py --output "$RUNNER_TEMP/topology.v1.json" --check
+          python scripts/prompt-topology/run.py --shuffle-source --output "$RUNNER_TEMP/topology.shuffled.v1.json"
+          cmp "$RUNNER_TEMP/topology.v1.json" "$RUNNER_TEMP/topology.shuffled.v1.json"
+          python scripts/prompt-topology/validate.py --artifact "$RUNNER_TEMP/topology.v1.json" --rebuild --summary > "$RUNNER_TEMP/validation.json"
+          cat "$RUNNER_TEMP/validation.json"
+
+      - name: Upload Phase A evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: prompt-topology-phase-a-evidence
+          path: |
+            ${{ runner.temp }}/topology.v1.json
+            ${{ runner.temp }}/topology.shuffled.v1.json
+            ${{ runner.temp }}/validation.json
+          if-no-files-found: error

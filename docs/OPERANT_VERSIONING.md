@@ -30,13 +30,15 @@ No upstream source code is copied. Only workflow/state-model mechanisms are emul
 ### Available to emulate externally
 
 - Conventional-commit classification and highest bump selection.
-- Reviewable, automatically prepared version PRs.
+- Reviewable, automatically prepared release candidates plus a machine-readable first-PR publication request.
 - Synchronized version mirrors generated from one authority.
 - Tag/release creation only after the version change is validated on the default branch.
 
 ### Project-specific gap
 
 Operant lives inside a multi-product repository. A root-wide release tool would incorrectly treat Billing/Roster/Triage commits as Operant releases, while a single-directory component model would miss Operant changes spread across registry, web, launcher, harness, and compatibility surfaces. Therefore Operant needs a small repository-owned path/scope relevance policy rather than a foreign package-directory assumption.
+
+GitHub repository settings currently prohibit the workflow `GITHUB_TOKEN` from creating the first pull request even when the job has `pull-requests: write`. That boundary is deliberate and explicit: Actions owns release planning, candidate generation, validation, pushing, and refreshing an already-open release PR; an external provider/agent with repository PR authority owns creation of the first PR from the emitted request artifact.
 
 ## Canonical authority and synchronized surfaces
 
@@ -72,9 +74,9 @@ The exact patterns are machine-owned in the `release_versioning` block of `harne
 1. Developers and agents work normally and use Conventional Commit semantics for Operant-affecting commits.
 2. A push to `main` runs the Operant version workflow.
 3. The planner starts from the latest reachable `operant-v*` tag; before the first canonical tag it uses the PR #329 identity merge as the bootstrap floor.
-4. Non-Operant and no-bump-only work produces no release PR.
-5. Release-worthy work produces a deterministic plan and an automatically prepared `chore(operant): release vX.Y.Z` PR containing the authority, mirrors, changelog, and regenerated site.
-6. While one Operant release PR is open, later accepted mainline Operant work refreshes that same `automation/operant-release-*` branch in place (merge refreshed `main`, recompute, replace the candidate changelog section) instead of creating competing version authorities. PR CI rejects a stale candidate whose version/changelog no longer matches a recomputed plan from current `main`.
+4. Non-Operant and no-bump-only work produces no release candidate.
+5. Release-worthy work produces a deterministic plan, a validated `automation/operant-release-*` candidate branch, and `Outputs/operant-release-pr-request.json` plus `Outputs/operant-release-pr.md`. If no Operant release PR exists, the request is uploaded as the durable handoff to the external PR publisher instead of failing the workflow on a forbidden `gh pr create` call.
+6. The external provider/agent creates the first release PR from that exact request. While one Operant release PR is open, later accepted mainline Operant work is Actions-owned again: the workflow refreshes that same branch in place (merge refreshed `main`, recompute, replace the candidate changelog section) and updates the existing PR title/body. PR CI rejects a stale candidate whose version/changelog no longer matches a recomputed plan from current `main`.
 7. After the release PR reaches `main`, the same workflow validates the exact mainline version change, creates `operant-vX.Y.Z`, and creates the GitHub Release against that exact commit. Manual `workflow_dispatch` runs are pinned to `main` so unaccepted feature refs cannot plan a release.
 8. The tag is release identity; rollback means redeploying/restoring a previously tagged commit/artifact. Versions are never decremented, renamed, or reused.
 
@@ -87,10 +89,11 @@ python scripts/operant_version.py apply --plan Outputs/operant-version-plan.json
 python scripts/operant_version.py validate
 python scripts/operant_version.py validate-release-candidate --base origin/main
 python scripts/validate_operant_product_identity.py --summary
-python -m unittest tests.test_operant_product_identity -v
+python scripts/operant_release_pr_request.py --version X.Y.Z --source-sha <sha> --head <branch> --output Outputs/operant-release-pr-request.json --body-output Outputs/operant-release-pr.md
+python -m unittest tests.test_operant_product_identity tests.test_operant_versioning_workflow -v
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 ```
 
 ## Proof ceiling
 
-Repository tests and pull-request CI can prove classification, idempotent version calculation, path relevance, mirror synchronization, generated-site parity, and workflow syntax/execution in the tested event. The automatic PR-creation path is not runtime-proven until a later natural Operant change lands on `main`; GitHub repository settings can independently block Actions-created PRs. Exact GitHub Release/tag creation is proven only after a version-changing commit reaches `main` and the push workflow completes.
+Repository tests and pull-request CI can prove classification, idempotent version calculation, path relevance, mirror synchronization, generated-site parity, full-push version-change detection, deterministic publication-request generation, and workflow syntax/execution in the tested event. A successful mainline run can prove the release candidate was generated, validated, pushed, and either refreshed into an existing PR or emitted as a machine-readable external-publication request. First-PR creation remains provider/runtime proof because repository Actions settings independently deny that authority to `GITHUB_TOKEN`. Exact GitHub Release/tag creation is proven only after a version-changing commit reaches `main` and the push workflow completes.

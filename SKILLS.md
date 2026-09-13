@@ -29,7 +29,7 @@ Skills own repeatable procedure and judgment. Code, schemas, registries, manifes
 | Technician Prompt Kit acquisition | open/install/update/edit Prompt Kit across devices | `.ai/skills/technician-prompt-kit-acquisition/SKILL.md` |
 | Prompt Kit browser-proof cleanup | browser-proof scratch cleanup | `.ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md` |
 | Prompt Kit responsive layout | Prompt Kit overlap/responsive layout work | `.ai/skills/prompt-kit-responsive-layout/SKILL.md` |
-| Prompt Kit feedback AFK routing | turn accepted explicit feedback into one bounded P115 work request without merge authority | `.ai/skills/prompt-kit-feedback-afk-routing/SKILL.md` |
+| Prompt Kit feedback AFK routing | turn accepted explicit feedback or privacy-bounded P99-derived Operant friction into one bounded P115 work request without merge authority | `.ai/skills/prompt-kit-feedback-afk-routing/SKILL.md` |
 | Operant external resource intake | discover/refresh approved open-source skills and route existing coverage before prompt gaps | `.ai/skills/operant-external-resource-intake/SKILL.md` |
 
 Other domain skills may exist under `.ai/skills/`; route to them only from a selected domain contract or capability.
@@ -45,7 +45,7 @@ Use `harness/triggers.v1.json` when a deterministic trigger owns the choice. Oth
 - duplicated reusable procedure → Skill factoring;
 - skill quality/evals → Skill evaluation;
 - Prompt Kit cross-device acquisition → Technician Prompt Kit acquisition;
-- Prompt Kit actionable explicit feedback → Prompt Kit feedback AFK routing;
+- Prompt Kit actionable explicit feedback or accepted privacy-bounded Operant friction → Prompt Kit feedback AFK routing;
 - Operant/open-source donor resource discovery or drift → Operant external resource intake;
 - prompt wording/audit → Prompt language audit.
 

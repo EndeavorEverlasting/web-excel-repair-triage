@@ -24,7 +24,7 @@ class OperantProductIdentityTests(unittest.TestCase):
         )
         version = str(operant_version.current_version())
         self.assertEqual(payload["schema_version"], "operant-product-identity/v1")
-        self.assertEqual(payload["product_name"], "Operant")
+        self.assertEqual(payload["product_name"], "AFK Agent Flow")
         self.assertEqual(str(operant_version.SemVer.parse(version)), version)
         self.assertEqual(payload["product_version"], version)
         self.assertEqual(payload["compatibility"]["visible_version"], version)
@@ -35,7 +35,7 @@ class OperantProductIdentityTests(unittest.TestCase):
             payload["release_versioning"]["bootstrap"]["identity_merge_sha"],
             "781616a1a42893fb5b521e41b217f5cef04b2701",
         )
-        self.assertEqual(payload["authority"]["target_repository"], "UnderDeskDev/Operant")
+        self.assertEqual(payload["authority"]["target_repository"], "UnderDeskDev/AFK-Agent-Flow")
         self.assertEqual(payload["authority"]["target_repository_state"], "not-created-or-unproven")
         self.assertTrue(payload["compatibility"]["internal_path_renames_deferred"])
         self.assertIn("web/prompt-kit/index.html", payload["compatibility"]["preserve_paths"])
@@ -44,21 +44,21 @@ class OperantProductIdentityTests(unittest.TestCase):
     def test_visible_brand_is_derived_from_canonical_version(self) -> None:
         version = str(operant_version.current_version())
         html = build_prompt_kit_registry.render()
-        self.assertIn(f"<title>Operant {version}</title>", html)
-        self.assertIn(f"Operant <span>{version}</span>", html)
+        self.assertIn(f"<title>AFK Agent Flow {version}</title>", html)
+        self.assertIn(f"AFK Agent Flow <span>{version}</span>", html)
         self.assertIn(f'id="versionBadge">{version}</div>', html)
         self.assertIn("Capabilities · Skills · Implementations · Evidence", html)
         self.assertNotIn("<title>AI Harness Prompt Kit v40</title>", html)
         self.assertTrue((ROOT / "web/prompt-kit").is_dir())
 
-    def test_governance_and_access_surface_name_operant(self) -> None:
+    def test_governance_and_access_surface_name_afk_agent_flow(self) -> None:
         governance = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         access = (ROOT / "PROMPT_KIT_ACCESS.md").read_text(encoding="utf-8")
-        self.assertIn("**Operant** is the operator-approved product identity", governance)
-        self.assertIn("`UnderDeskDev/Operant`", governance)
-        self.assertIn("legacy `prompt-kit` paths", governance)
-        self.assertTrue(access.startswith("# Get Operant"))
-        self.assertIn("compatibility paths", access)
+        self.assertIn("**AFK Agent Flow** is the operator-approved product identity", governance)
+        self.assertIn("`UnderDeskDev/AFK-Agent-Flow`", governance)
+        self.assertIn("legacy `operant` / `prompt-kit` paths", governance)
+        self.assertTrue(access.startswith("# Get AFK Agent Flow"))
+        self.assertIn("compatibility and historical release identifiers", access)
 
     def test_pre_one_semver_bump_matrix_is_deterministic(self) -> None:
         current = operant_version.SemVer.parse("0.2.0")

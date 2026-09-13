@@ -127,6 +127,7 @@ function anyKeywords(values){
 }
 
 var PREDEFINED_PACKS={
+  AD_CAMPAIGNS:{id:'AD_CAMPAIGNS',label:'Ad Campaigns',rule:{op:'keyword',value:'ad-campaign'}},
   TRIAGE:{id:'TRIAGE',label:'TRIAGE',rule:anyKeywords(['triage','repair','diagnose','diagnostic','recovery'])},
   FUN:{id:'FUN',label:'FUN',rule:anyKeywords(['fun','creative','game','play','brainstorm'])},
   PM:{id:'PM',label:'PM',rule:anyKeywords(['project manager','project management','stakeholder','sprint','planning','coordination'])},
