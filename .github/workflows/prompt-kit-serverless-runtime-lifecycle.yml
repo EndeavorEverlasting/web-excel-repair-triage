@@ -86,7 +86,8 @@ jobs:
           python -m unittest tests.test_prompt_kit_cross_device_access -v
 
       - name: Validate canonical Prompt Kit parity
-        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 
       - name: Validate patch hygiene
         shell: bash
