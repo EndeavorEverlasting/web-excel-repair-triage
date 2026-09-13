@@ -52,6 +52,24 @@ class ConversationHandoffCheckpointTests(unittest.TestCase):
         with self.assertRaisesRegex(ContractError, "first_unproven_gate"):
             validate_checkpoint(payload)
 
+    def test_unknown_top_level_field_is_rejected(self):
+        payload = good_checkpoint()
+        payload["unexpected"] = True
+        with self.assertRaisesRegex(ContractError, "unsupported fields"):
+            validate_checkpoint(payload)
+
+    def test_invalid_evidence_type_is_rejected(self):
+        payload = good_checkpoint()
+        payload["threads"][0]["evidence"][0]["type"] = "wishful-thinking"
+        with self.assertRaisesRegex(ContractError, "type is invalid"):
+            validate_checkpoint(payload)
+
+    def test_created_at_requires_timezone(self):
+        payload = good_checkpoint()
+        payload["created_at"] = "2026-09-13T00:00:00"
+        with self.assertRaisesRegex(ContractError, "timezone"):
+            validate_checkpoint(payload)
+
     def test_suspended_thread_requires_return_trigger(self):
         payload = good_checkpoint()
         payload["threads"][0]["disposition"] = "SUSPENDED"
