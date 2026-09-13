@@ -13,71 +13,88 @@ if str(SCRIPTS) not in sys.path:
 import build_prompt_kit_registry
 
 POLICY = ROOT / "registry" / "prompts" / "actionable-next-step-policy.v1.json"
-ROADMAP = ROOT / "harness" / "prompt-topology" / "PHASE_B_C_ROADMAP.md"
-MARKER = "REPOSITORY PLAN DURABILITY CONTRACT"
+BASE = ROOT / "docs" / "prompts.json"
+AI = ROOT / "registry" / "prompts" / "ai-engineering-level-up-prompts.v1.json"
+PLAN_MARKER = "REPOSITORY PLAN DURABILITY CONTRACT"
+STATE_MARKER = "EVIDENCE STATE / NO PROMOTION CONTRACT"
 
 
 class RepositoryPlanDurabilityTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.policy = json.loads(POLICY.read_text(encoding="utf-8"))
-        raw = json.loads((ROOT / "docs" / "prompts.json").read_text(encoding="utf-8"))
-        cls.raw = {p["id"]: p for p in raw}
-        cls.prompts = {p["id"]: p for p in build_prompt_kit_registry.load_prompt_registry()}
-        cls.roadmap = ROADMAP.read_text(encoding="utf-8")
+        cls.raw = {p["id"]: p for p in json.loads(BASE.read_text(encoding="utf-8"))}
+        ai_payload = json.loads(AI.read_text(encoding="utf-8"))
+        cls.ai_raw = {p["id"]: p for p in ai_payload["prompts"]}
+        cls.effective = {p["id"]: p for p in build_prompt_kit_registry.load_prompt_registry()}
 
-    def test_shared_policy_makes_chat_only_repo_plans_noncanonical(self) -> None:
+    def test_shared_policy_makes_chat_only_repository_plans_noncanonical(self) -> None:
         appendix = self.policy["copy_content_appendix"]
-        self.assertIn(MARKER, appendix)
+        self.assertIn(PLAN_MARKER, appendix)
         for phrase in (
             "chat alone is not a canonical planning surface",
-            "persist the complete plan",
             "active pull request",
-            "plan approved in chat triggers synchronization",
+            "approved in chat triggers synchronization",
             "Multi-phase repository work must persist the whole phase map",
+            "P66",
             "Closeout is invalid",
         ):
             self.assertIn(phrase, appendix)
+        self.assertTrue(any("exists only in chat" in item for item in self.policy["forbidden_solo_actions"]))
 
-    def test_next_step_contract_requires_durable_plan_before_handoff(self) -> None:
-        suffix = self.policy["next_step_suffix"]
-        self.assertIn("chat text is provisional rather than canonical repository state", suffix)
-        self.assertIn("active pull request", suffix)
+    def test_shared_policy_forbids_evidence_state_promotion(self) -> None:
+        appendix = self.policy["copy_content_appendix"]
+        self.assertIn(STATE_MARKER, appendix)
+        for phrase in (
+            "PLANNED/DESIGNED",
+            "IMPLEMENTED",
+            "WIRED/REACHABLE",
+            "INTEGRATED",
+            "different chat, agent, worktree, branch, or PR",
+            "named future phase",
+            "strongest proven state",
+        ):
+            self.assertIn(phrase, appendix)
+        self.assertIn("Do not promote evidence states", self.policy["next_step_suffix"])
 
-    def test_p02_and_p04_raw_owners_no_longer_treat_chat_as_durable_owner(self) -> None:
+    def test_p02_and_p04_persist_actionable_repository_plans(self) -> None:
         self.assertIn("DURABLE REPOSITORY PLAN HANDOFF", self.raw["P02"]["copyContent"])
         self.assertIn("DURABLE PLAN OUTPUT", self.raw["P04"]["copyContent"])
+        self.assertIn("P66", self.raw["P02"]["copyContent"])
+        self.assertIn("P66", self.raw["P04"]["copyContent"])
         self.assertIn("canonical tracked plan", self.raw["P02"]["expectedOutput"])
-        self.assertIn("canonical", self.raw["P04"]["expectedOutput"])
         self.assertIn("active PR", self.raw["P04"]["proofGate"])
 
-    def test_representative_planning_and_execution_prompts_receive_contract(self) -> None:
-        for prompt_id in ("P02", "P04", "P07", "P95", "P141"):
-            self.assertIn(prompt_id, self.prompts)
-            self.assertIn(MARKER, self.prompts[prompt_id]["copyContent"])
-            self.assertIn("chat alone is not a canonical planning surface", self.prompts[prompt_id]["copyContent"])
+    def test_p12_refuses_chat_only_or_state_promoted_closeout(self) -> None:
+        p12 = self.raw["P12"]
+        self.assertIn("DURABLE CLOSEOUT GATE", p12["copyContent"])
+        self.assertIn("phase-local", p12["copyContent"].lower())
+        self.assertIn("PLANNED/DESIGNED/TRACKED", p12["copyContent"])
+        self.assertIn("actionable repository plan or successor phase exists only in chat", p12["proofGate"])
 
-    def test_topology_successor_plan_is_durable_and_complete_enough_to_sprint(self) -> None:
-        self.assertTrue(ROADMAP.is_file())
+    def test_p07_phase_continuity_repair_remains_present(self) -> None:
+        p07 = self.raw["P07"]["copyContent"]
         for phrase in (
-            "Phase A COMPLETE",
-            "Phase B — Deterministic 3D projection + spatial stability",
-            "Phase C — Read-only interactive topology viewer",
-            "Behavioral telemetry channels",
-            "Vector database",
-            "Prompt identity / ontology rewrites",
-            "Execution order",
-            "Acceptance gates",
+            "PHASE-LOCAL OUT OF SCOPE",
+            "USER/REPO FORBIDDEN",
+            "do not by themselves forbid a later successor phase",
         ):
-            self.assertIn(phrase, self.roadmap)
+            self.assertIn(phrase, p07)
 
-    def test_roadmap_preserves_semantic_visualization_boundary(self) -> None:
-        for phrase in (
-            "projection/viewer output cannot influence clustering",
-            "projection remains visualization-only",
-            "visual proximity as classification truth",
-        ):
-            self.assertIn(phrase, self.roadmap)
+    def test_p100_names_state_promotion_without_breaking_prompt_budget(self) -> None:
+        p100 = self.ai_raw["P100"]
+        self.assertIn("DESIGNED is not WIRED", p100["proofGate"])
+        self.assertIn("concurrent chat/branch/PR activity", p100["proofGate"])
+        self.assertIn("evidence-state promotion", p100["keywords"])
+        self.assertIn("designed vs implemented", p100["keywords"])
+        self.assertLess(len(p100["copyContent"]), 8000)
+
+    def test_shared_contract_reaches_plan_build_closeout_ledger_and_diagnosis(self) -> None:
+        for prompt_id in ("P02", "P04", "P07", "P12", "P66", "P83", "P95", "P100", "P141"):
+            self.assertIn(prompt_id, self.effective)
+            copy = self.effective[prompt_id]["copyContent"]
+            self.assertIn(PLAN_MARKER, copy)
+            self.assertIn(STATE_MARKER, copy)
 
 
 if __name__ == "__main__":
