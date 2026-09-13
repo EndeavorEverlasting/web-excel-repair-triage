@@ -6,6 +6,7 @@ on:
       - harness/contracts/prompt-kit-serverless-runtime-lifecycle.v1.json
       - harness/contracts/prompt-kit-cross-device-access.v1.json
       - harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md
+      - harness/prompt-topology/PHASE_C_CLOSEOUT.md
       - docs/PROMPT_KIT_SERVERLESS_RUNTIME_PHASE_PLAN.md
       - docs/PROMPT_KIT_PRIVACY_STORAGE.md
       - docs/prompt-kit*.js
@@ -25,6 +26,7 @@ on:
       - harness/contracts/prompt-kit-serverless-runtime-lifecycle.v1.json
       - harness/contracts/prompt-kit-cross-device-access.v1.json
       - harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md
+      - harness/prompt-topology/PHASE_C_CLOSEOUT.md
       - docs/PROMPT_KIT_SERVERLESS_RUNTIME_PHASE_PLAN.md
       - docs/PROMPT_KIT_PRIVACY_STORAGE.md
       - docs/prompt-kit*.js
