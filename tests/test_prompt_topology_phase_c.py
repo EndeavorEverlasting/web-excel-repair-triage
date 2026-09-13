@@ -13,7 +13,7 @@ def fixture():
 
 class PhaseCViewerTests(unittest.TestCase):
     def test_fixture_build_is_deterministic_and_self_contained(self):
-        t,p,s=fixture(); a=mod.render_document(mod.compact_payload(t,p,s)); b=mod.render_document(mod.compact_payload(t,p,s));self.assertEqual(a,b);self.assertIn('Prompt Topology Universe',a);self.assertIn('window.PROMPT_TOPOLOGY_DATA=',a);self.assertNotIn('<script src=',a);self.assertNotIn('<link rel="stylesheet"',a)
+        t,p,s=fixture(); a=mod.render_document(mod.compact_payload(t,p,s)); b=mod.render_document(mod.compact_payload(t,p,s));self.assertEqual(a,b);self.assertIn('Prompt Topology Universe',a);self.assertIn('window.PROMPT_TOPOLOGY_DATA=',a);self.assertNotIn('<script src=',a);self.assertNotIn('<link rel="stylesheet"',a);self.assertIn('Text index · 2 prompts',a);self.assertIn('id="prompt-P00"',a)
     def test_exact_hash_binding_and_prompt_point_parity(self):
         t,p,s=fixture();mod.validate_inputs(t,p,s)
         bad=dict(s);bad['topology_content_hash_sha256']='f'*64
@@ -21,6 +21,9 @@ class PhaseCViewerTests(unittest.TestCase):
         badp=json.loads(json.dumps(p));badp['points'].pop('P01')
         bads=dict(s);bads['projection_sha256']=ch(badp)
         with self.assertRaisesRegex(mod.ViewerBuildError,'parity'):mod.validate_inputs(t,badp,bads)
+    def test_duplicate_prompt_ids_fail_closed(self):
+        t,p,s=fixture();t['nodes'].append(dict(t['nodes'][0]))
+        with self.assertRaisesRegex(mod.ViewerBuildError,'duplicate'):mod.validate_inputs(t,p,s)
     def test_projection_hash_tamper_fails_closed(self):
         t,p,s=fixture();bad=json.loads(json.dumps(p));bad['points']['P00']['x']=0.9
         with self.assertRaisesRegex(mod.ViewerBuildError,'projection/state'):mod.validate_inputs(t,bad,s)
