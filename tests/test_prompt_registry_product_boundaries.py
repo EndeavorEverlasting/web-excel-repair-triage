@@ -38,6 +38,18 @@ class PromptRegistryProductBoundaryTests(unittest.TestCase):
         self.assertFalse(afk & triage)
         self.assertEqual(legacy, afk | triage)
 
+    def test_product_authority_metadata_is_canonical(self) -> None:
+        afk = self.contract["products"][boundaries.AFK_PRODUCT]
+        triage = self.contract["products"][boundaries.TRIAGE_PRODUCT]
+        self.assertEqual(afk["target_repository"], boundaries.AFK_TARGET_REPOSITORY)
+        self.assertEqual(afk["ownership"], "product-portable")
+        self.assertEqual(afk["must_not_include"], [boundaries.MANAGEMENT_REGISTRY])
+        self.assertEqual(
+            triage["target_repository"], boundaries.TRIAGE_TARGET_REPOSITORY
+        )
+        self.assertEqual(triage["ownership"], "repository-local")
+        self.assertEqual(triage["must_not_ship_with"], [boundaries.AFK_PRODUCT])
+
     def test_afk_product_boundary_excludes_triage_management_registry(self) -> None:
         afk = {
             path.relative_to(ROOT).as_posix()
