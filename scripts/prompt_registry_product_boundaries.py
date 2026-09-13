@@ -196,12 +196,12 @@ def validate_product_boundaries(payload: dict[str, Any] | None = None) -> dict[s
     if triage.get("ownership") != "repository-local":
         raise ProductBoundaryError("Triage-local ownership must remain repository-local")
     triage_exclusions = _require_string_list(
-        triage.get("must_not_ship_with"),
-        f"products.{TRIAGE_PRODUCT}.must_not_ship_with",
+        triage.get("must_not_export_to"),
+        f"products.{TRIAGE_PRODUCT}.must_not_export_to",
     )
     if triage_exclusions != [AFK_PRODUCT]:
         raise ProductBoundaryError(
-            "Triage-local exclusion metadata must reject shipping with AFK Agent Flow"
+            "Triage-local export metadata must reject AFK Agent Flow"
         )
     triage_relative = tuple(_repo_relative(path) for path in triage_paths)
     if triage_relative != (MANAGEMENT_REGISTRY,):
@@ -250,7 +250,7 @@ def validate_product_boundaries(payload: dict[str, Any] | None = None) -> dict[s
         "triage_local_extension_count": len(triage_paths),
         "afk_extension_registries": [_repo_relative(path) for path in afk_paths],
         "triage_local_extension_registries": [_repo_relative(path) for path in triage_paths],
-        "legacy_behavior_preserved": True,
+        "legacy_composition_preserved": True,
     }
 
 
