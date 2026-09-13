@@ -23,20 +23,61 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Patch canonical policy and durable plan owners
-        run: python scripts/_repository_plan_durability_patch_temp.py
-      - name: Regenerate canonical Prompt Kit
-        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
-      - name: Validate plan durability and prompt contracts
-        run: |
-          python -m unittest -v tests.test_repository_plan_durability tests.test_actionable_prompt_registry tests.test_p02_p07_autonomous_iteration
-          python scripts/prompt_registry_ops.py validate
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-          git diff --check
-      - name: Commit durable changes
+      - name: Reconcile refreshed main without losing owned work
+        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/prompts.json registry/prompts/actionable-next-step-policy.v1.json harness/prompt-topology/PHASE_B_C_ROADMAP.md tests/test_repository_plan_durability.py web/prompt-kit/index.html
-          git commit -m "fix(prompt-kit): persist actionable repository plans"
-          git push origin HEAD:fix/repository-plan-durability-20260912
+          git fetch origin main --prune --tags
+          set +e
+          git merge --no-edit origin/main
+          rc=$?
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            conflicts="$(git diff --name-only --diff-filter=U)"
+            if [ "$conflicts" != "web/prompt-kit/index.html" ]; then
+              echo "Unexpected merge conflicts:" >&2
+              printf '%s\n' "$conflicts" >&2
+              exit 1
+            fi
+            git checkout --theirs web/prompt-kit/index.html
+            git add web/prompt-kit/index.html
+            git commit --no-edit
+          fi
+      - name: Patch canonical owners and remove bad assumption artifact
+        run: python scripts/_repository_plan_durability_patch_temp.py
+      - name: Regenerate canonical Prompt Kit
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Validate durability, phase continuity, closeout, and diagnosis contracts
+        run: |
+          python -m unittest -v \
+            tests.test_repository_plan_durability \
+            tests.test_actionable_prompt_registry \
+            tests.test_p02_p07_autonomous_iteration \
+            tests.test_p07_phase_continuity \
+            tests.test_operational_closeout_contract \
+            tests.test_ai_engineering_level_up
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit durable repair
+        shell: bash
+        run: |
+          git add \
+            docs/prompts.json \
+            registry/prompts/actionable-next-step-policy.v1.json \
+            registry/prompts/ai-engineering-level-up-prompts.v1.json \
+            tests/test_repository_plan_durability.py \
+            web/prompt-kit/index.html
+          if git ls-files --error-unmatch harness/prompt-topology/PHASE_B_C_ROADMAP.md >/dev/null 2>&1; then
+            git rm -f harness/prompt-topology/PHASE_B_C_ROADMAP.md
+          fi
+          git commit -m "fix(prompt-kit): prevent chat-only plans and state promotion"
+      - name: Remove temporary transport
+        shell: bash
+        run: |
+          git rm -f .github/workflows/repository-plan-durability-carrier.yml scripts/_repository_plan_durability_patch_temp.py
+          git commit -m "chore(prompt-kit): remove durability repair transport"
+      - name: Push reconciled branch
+        run: git push origin HEAD:fix/repository-plan-durability-20260912
