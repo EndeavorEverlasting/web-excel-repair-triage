@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import json
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github/workflows/operant-versioning.yml"
+PR_REQUEST_SCRIPT = ROOT / "scripts/operant_release_pr_request.py"
 
 
 def run_git(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -92,6 +95,87 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
                 1,
                 "the full push range must detect the earlier OPERANT_VERSION bump",
             )
+
+    def test_first_release_pr_creation_is_externalized_as_machine_readable_request(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertNotIn("gh pr create", workflow)
+        self.assertIn("python scripts/operant_release_pr_request.py", workflow)
+        self.assertIn("Outputs/operant-release-pr-request.json", workflow)
+        self.assertIn("actions/upload-artifact@v7", workflow)
+        self.assertIn("GITHUB_STEP_SUMMARY", workflow)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            request_path = root / "request.json"
+            body_path = root / "body.md"
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(PR_REQUEST_SCRIPT),
+                    "--version",
+                    "0.6.1",
+                    "--source-sha",
+                    "abc123",
+                    "--head",
+                    "automation/operant-release-v0.6.1-abc123",
+                    "--base",
+                    "main",
+                    "--output",
+                    str(request_path),
+                    "--body-output",
+                    str(body_path),
+                ],
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(request_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload["schema_version"], "operant-release-pr-request/v1")
+            self.assertEqual(payload["publication_mode"], "external-create")
+            self.assertTrue(payload["requires_external_pr_creation"])
+            self.assertEqual(payload["base"], "main")
+            self.assertEqual(payload["head"], "automation/operant-release-v0.6.1-abc123")
+            self.assertEqual(payload["title"], "chore(operant): release v0.6.1")
+            self.assertIn("external provider/agent", body_path.read_text(encoding="utf-8"))
+
+    def test_existing_release_pr_refresh_remains_actions_owned(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn('gh pr edit "$existing_url"', workflow)
+        existing_pr_url = "https://github.example.invalid/org/repo/pull/999"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            request_path = root / "request.json"
+            body_path = root / "body.md"
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(PR_REQUEST_SCRIPT),
+                    "--version",
+                    "0.6.1",
+                    "--source-sha",
+                    "abc123",
+                    "--head",
+                    "automation/operant-release-v0.6.1-abc123",
+                    "--existing-pr-url",
+                    existing_pr_url,
+                    "--output",
+                    str(request_path),
+                    "--body-output",
+                    str(body_path),
+                ],
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(request_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload["publication_mode"], "refresh-existing-pr")
+            self.assertFalse(payload["requires_external_pr_creation"])
+            self.assertEqual(payload["existing_pr_url"], existing_pr_url)
 
 
 if __name__ == "__main__":
