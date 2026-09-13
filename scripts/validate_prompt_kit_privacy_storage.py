@@ -50,6 +50,54 @@ REQUIRED_SYNC_ALLOWED_FIELDS = {
     "explicitly_saved_notes",
     "saved_workflows",
 }
+EXPECTED_CANON_MUST_NEVER_RECEIVE = {
+    "user identity or contact data",
+    "private sync vault or recovery identifiers",
+    "persistent device, browser, installation or analytics identifiers",
+    "session or conversation identifiers",
+    "personal favorites, collections, annotations or raw usage history",
+    "private project, repository, file path or customer context",
+    "raw user, agent or clipboard content from usage",
+}
+EXPECTED_PERSONAL_MUST_NEVER_RECEIVE = {
+    "server-assigned account identity",
+    "mandatory persistent device identity",
+}
+EXPECTED_PRIVATE_SYNC_MUST_NEVER_PLAINTEXT = {
+    "personal state",
+    "raw prompt or execution history",
+    "local journal",
+    "project, repository or file path context",
+    "user identity, account identity or persistent device identity",
+    "encryption keys, recovery material or pairing secrets",
+}
+EXPECTED_LEARNING_MUST_NEVER_RECEIVE = {
+    "user, account, installation, device, browser, vault or persistent pseudonymous identifiers",
+    "session, conversation, trace or correlation identifiers",
+    "project, repository, branch, customer, URL or file path context",
+    "raw user, prompt, agent, feedback, error or clipboard text",
+    "exact activity timestamps",
+}
+EXPECTED_PAGES_MUST_NEVER_PUBLISH = {
+    "personal state or favorites",
+    "local journal or raw usage history",
+    "encrypted save files",
+    "vault, session, device or user identifiers",
+    "private project context",
+    "encryption keys, recovery phrases or pairing secrets",
+    "PrivacyReducer local buffers",
+}
+EXPECTED_SYNC_FORBIDDEN_PRE_ENCRYPTION = {
+    "raw prompt or execution history",
+    "raw user requests or agent responses",
+    "local journal",
+    "repository, project, customer, branch, URL or file path context",
+    "session, conversation, trace or correlation identifiers",
+    "persistent user, account, installation, browser, device or vault identifiers",
+    "PrivacyReducer local buffer",
+    "Collective Learning upload state",
+    "encryption keys, recovery phrases or pairing secrets",
+}
 EXPECTED_PAGES_BUNDLE = {
     ("/", "web/prompt-kit-mobile/", "launcher-pwa"),
     (
@@ -122,7 +170,15 @@ FORBIDDEN_PUBLIC_SUFFIXES = (
     ".p12",
     ".kdbx",
 )
-FORBIDDEN_PUBLIC_COMPONENTS = {".promptkit", "saves", "crash_dumps"}
+FORBIDDEN_PUBLIC_COMPONENTS = {
+    ".promptkit",
+    "saves",
+    "crash_dumps",
+    "personal_state",
+    "local_journal",
+    "privacy_reducer_buffer",
+    "secrets",
+}
 
 
 class PrivacyStorageError(RuntimeError):
@@ -149,6 +205,18 @@ def _require_nonempty_string_list(value: Any, field: str) -> list[str]:
     if len(value) != len(set(value)):
         raise PrivacyStorageError(f"{field} contains duplicates")
     return value
+
+
+def _require_exact_string_set(value: Any, expected: set[str], field: str) -> list[str]:
+    items = _require_nonempty_string_list(value, field)
+    actual = set(items)
+    if actual != expected:
+        missing = sorted(expected - actual)
+        unexpected = sorted(actual - expected)
+        raise PrivacyStorageError(
+            f"{field} must match the authoritative exact policy set; missing={missing}, unexpected={unexpected}"
+        )
+    return items
 
 
 def _require_substrings(values: list[str], required: tuple[str, ...], field: str) -> None:
@@ -218,16 +286,20 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
     canon = planes["prompt_canon"]
     if not isinstance(canon, dict):
         raise PrivacyStorageError("prompt_canon plane must be an object")
-    canon_forbidden = _require_nonempty_string_list(canon.get("must_never_receive"), "prompt_canon.must_never_receive")
-    _require_substrings(
-        canon_forbidden,
-        ("user identity", "device", "session", "favorites", "project", "raw user"),
+    _require_exact_string_set(
+        canon.get("must_never_receive"),
+        EXPECTED_CANON_MUST_NEVER_RECEIVE,
         "prompt_canon.must_never_receive",
     )
 
     personal = planes["personal_state"]
     if personal.get("authority") != "user-device" or personal.get("plaintext_location") != "device-only":
         raise PrivacyStorageError("personal_state must remain device-only plaintext authority")
+    _require_exact_string_set(
+        personal.get("must_never_receive"),
+        EXPECTED_PERSONAL_MUST_NEVER_RECEIVE,
+        "personal_state.must_never_receive",
+    )
     personal_egress = _require_nonempty_string_list(personal.get("egress"), "personal_state.egress")
     _require_substrings(personal_egress, ("encrypted", "PrivacyReducer"), "personal_state.egress")
 
@@ -236,25 +308,18 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
         raise PrivacyStorageError("private_sync v1 must not require a Prompt Kit-owned backend")
     if private_sync.get("v1_transport") != "user-selected storage or file transfer":
         raise PrivacyStorageError("private_sync v1 transport drifted")
-    sync_plaintext_forbidden = _require_nonempty_string_list(
+    _require_exact_string_set(
         private_sync.get("must_never_receive_plaintext"),
-        "private_sync.must_never_receive_plaintext",
-    )
-    _require_substrings(
-        sync_plaintext_forbidden,
-        ("raw prompt", "local journal", "project", "user identity", "encryption keys"),
+        EXPECTED_PRIVATE_SYNC_MUST_NEVER_PLAINTEXT,
         "private_sync.must_never_receive_plaintext",
     )
 
     learning = planes["collective_learning"]
     if learning.get("v1_network_ingestion_required") is not False:
         raise PrivacyStorageError("collective_learning v1 network ingestion must remain optional/unimplemented")
-    learning_forbidden = _require_nonempty_string_list(
-        learning.get("must_never_receive"), "collective_learning.must_never_receive"
-    )
-    _require_substrings(
-        learning_forbidden,
-        ("persistent pseudonymous", "session", "project", "raw user", "exact activity"),
+    _require_exact_string_set(
+        learning.get("must_never_receive"),
+        EXPECTED_LEARNING_MUST_NEVER_RECEIVE,
         "collective_learning.must_never_receive",
     )
 
@@ -277,12 +342,9 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
     }
     if actual_bundle != EXPECTED_PAGES_BUNDLE or len(bundle) != len(EXPECTED_PAGES_BUNDLE):
         raise PrivacyStorageError("GitHub Pages bundle mapping drifted from the canonical deployment layout")
-    published_forbidden = _require_nonempty_string_list(
-        github_pages.get("must_never_publish"), "github_pages.must_never_publish"
-    )
-    _require_substrings(
-        published_forbidden,
-        ("personal state", "local journal", "encrypted save", "device", "project", "encryption keys", "PrivacyReducer"),
+    _require_exact_string_set(
+        github_pages.get("must_never_publish"),
+        EXPECTED_PAGES_MUST_NEVER_PUBLISH,
         "github_pages.must_never_publish",
     )
     user_device = deployment["user_device"]
@@ -311,12 +373,9 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
     allowed_fields = set(_require_nonempty_string_list(capsule.get("allowed_fields"), "sync_capsule.allowed_fields"))
     if allowed_fields != REQUIRED_SYNC_ALLOWED_FIELDS:
         raise PrivacyStorageError("sync capsule allowed fields drifted")
-    forbidden_pre_encryption = _require_nonempty_string_list(
-        capsule.get("forbidden_pre_encryption"), "sync_capsule.forbidden_pre_encryption"
-    )
-    _require_substrings(
-        forbidden_pre_encryption,
-        ("raw prompt", "local journal", "repository", "session", "device", "PrivacyReducer", "encryption keys"),
+    _require_exact_string_set(
+        capsule.get("forbidden_pre_encryption"),
+        EXPECTED_SYNC_FORBIDDEN_PRE_ENCRYPTION,
         "sync_capsule.forbidden_pre_encryption",
     )
 

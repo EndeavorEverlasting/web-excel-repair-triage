@@ -36,6 +36,14 @@ class PromptKitPrivacyStorageTests(unittest.TestCase):
             ]
         )
 
+    def test_authoritative_prohibition_cannot_be_reversed_by_matching_words(self) -> None:
+        payload = copy.deepcopy(self.load_contract())
+        payload["data_plane_architecture"]["planes"]["prompt_canon"]["must_never_receive"][0] = (
+            "user identity may be exported"
+        )
+        with self.assertRaisesRegex(privacy_storage.PrivacyStorageError, "authoritative exact policy set"):
+            privacy_storage.validate_contract(payload)
+
     def test_pages_bundle_matches_real_deployment_workflow(self) -> None:
         privacy_storage.validate_repository_surfaces()
         payload = self.load_contract()
@@ -81,6 +89,10 @@ class PromptKitPrivacyStorageTests(unittest.TestCase):
             "web/prompt-kit-mobile/saves/state.json",
             "web/prompt-kit-mobile/.env.production",
             "web/prompt-kit/private.promptkit-key",
+            "web/prompt-kit-mobile/personal_state/state.json",
+            "web/prompt-kit-mobile/Local_Journal/history.txt",
+            "web/prompt-kit-mobile/privacy_reducer_buffer/counts.json",
+            "web/prompt-kit-mobile/Secrets/readme.txt",
         )
         for path in rejected:
             with self.subTest(path=path):
