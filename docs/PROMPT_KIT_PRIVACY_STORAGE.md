@@ -68,6 +68,10 @@ GitHub Pages site root
 
 The generated canonical app is therefore published at `/afk-agent-flow/index.html`; it is not a separately edited public copy.
 
+The privacy/storage workflow watches the recursively copied public source trees plus `docs/prompts.json`, `registry/prompts/**`, and `scripts/build_prompt_kit_registry.py`. That keeps the privacy gate attached to changes that can alter the public bundle rather than only to changes in this document or validator.
+
+The validator also asks Git directly for the currently tracked files under the public source roots using `git ls-files`. It rejects tracked paths that look like Prompt Kit private runtime state, encrypted save files, recovery/key material, environment files, or common credential/secret artifacts. `.gitignore` is defense in depth for files that are not yet tracked; it is not treated as proof that an already tracked artifact is safe to publish.
+
 The public AFK Agent Flow URL is:
 
 ```text
@@ -163,4 +167,4 @@ In particular, a session identifier that is appropriate inside an explicitly loc
 
 ## Proof ceiling
 
-Repository validation can prove the contract, rejection tests, `.gitignore` defenses, and consistency with the current GitHub Pages packaging workflow. It cannot prove physical browser/device storage behavior, cryptographic implementation, `.pkenc` import/export, cross-device pairing, a hosted sync service, network anonymity, or live Collective Learning ingestion until those runtime capabilities exist and are observed.
+Repository validation can prove the contract, rejection tests, `.gitignore` defenses, tracked-public-source path checks, and consistency with the current GitHub Pages packaging workflow. It cannot prove physical browser/device storage behavior, cryptographic implementation, `.pkenc` import/export, cross-device pairing, a hosted sync service, network anonymity, or live Collective Learning ingestion until those runtime capabilities exist and are observed.

@@ -46,6 +46,40 @@ class PromptKitPrivacyStorageTests(unittest.TestCase):
         }
         self.assertEqual(actual, privacy_storage.EXPECTED_PAGES_BUNDLE)
 
+    def test_public_source_roots_have_no_tracked_private_artifact_paths(self) -> None:
+        tracked = privacy_storage.tracked_public_files()
+        self.assertTrue(tracked)
+        privacy_storage.validate_public_tracked_paths(tracked)
+
+    def test_public_path_classifier_rejects_private_and_secret_artifacts(self) -> None:
+        rejected = (
+            "web/prompt-kit-mobile/secrets.json",
+            "web/prompt-kit/example.pkenc",
+            "web/prompt-kit-mobile/.promptkit/state.json",
+            "web/prompt-kit/promptkit.db",
+            "web/prompt-kit-mobile/saves/state.json",
+            "web/prompt-kit-mobile/.env.production",
+            "web/prompt-kit/private.promptkit-key",
+        )
+        for path in rejected:
+            with self.subTest(path=path):
+                self.assertTrue(privacy_storage.is_forbidden_public_path(path))
+
+        allowed = (
+            "web/prompt-kit-mobile/index.html",
+            "web/prompt-kit/resources.v1.json",
+            "web/roster-log-v2/index.html",
+        )
+        for path in allowed:
+            with self.subTest(path=path):
+                self.assertFalse(privacy_storage.is_forbidden_public_path(path))
+
+    def test_tracked_private_artifact_path_fails_closed(self) -> None:
+        with self.assertRaisesRegex(privacy_storage.PrivacyStorageError, "tracked private/secret-like artifacts"):
+            privacy_storage.validate_public_tracked_paths(
+                ["web/prompt-kit-mobile/index.html", "web/prompt-kit-mobile/.promptkit/state.json"]
+            )
+
     def test_private_state_is_not_a_repository_or_pages_surface(self) -> None:
         payload = self.load_contract()
         repository = payload["deployment_surfaces"]["repository_authority"]

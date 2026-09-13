@@ -3,20 +3,36 @@ name: Prompt Kit privacy and storage contract
 on:
   pull_request:
     paths:
+      - docs/prompts.json
+      - registry/prompts/**
       - harness/contracts/prompt-kit-cross-device-access.v1.json
+      - scripts/build_prompt_kit_registry.py
       - scripts/validate_prompt_kit_privacy_storage.py
       - tests/test_prompt_kit_privacy_storage.py
       - docs/PROMPT_KIT_PRIVACY_STORAGE.md
+      - web/prompt-kit-mobile/**
+      - web/prompt-kit/**
+      - web/prompt-kit-legacy-redirect/**
+      - web/operant-legacy-redirect/**
+      - web/roster-log-v2/**
       - .gitignore
       - .github/workflows/prompt-kit-pages.yml
       - .github/workflows/prompt-kit-privacy-storage.yml
   push:
     branches: [main]
     paths:
+      - docs/prompts.json
+      - registry/prompts/**
       - harness/contracts/prompt-kit-cross-device-access.v1.json
+      - scripts/build_prompt_kit_registry.py
       - scripts/validate_prompt_kit_privacy_storage.py
       - tests/test_prompt_kit_privacy_storage.py
       - docs/PROMPT_KIT_PRIVACY_STORAGE.md
+      - web/prompt-kit-mobile/**
+      - web/prompt-kit/**
+      - web/prompt-kit-legacy-redirect/**
+      - web/operant-legacy-redirect/**
+      - web/roster-log-v2/**
       - .gitignore
       - .github/workflows/prompt-kit-pages.yml
       - .github/workflows/prompt-kit-privacy-storage.yml

@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
+import subprocess
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -73,6 +74,13 @@ EXPECTED_PAGES_BUNDLE = {
     ),
     ("/roster-log-v2/", "web/roster-log-v2/", "separate-static-app"),
 }
+PUBLIC_SOURCE_ROOTS = (
+    "web/prompt-kit-mobile",
+    "web/prompt-kit",
+    "web/prompt-kit-legacy-redirect",
+    "web/operant-legacy-redirect",
+    "web/roster-log-v2",
+)
 REQUIRED_PAGES_WORKFLOW_FRAGMENTS = (
     'mkdir -p "$SITE_ROOT/afk-agent-flow"',
     'python scripts/build_prompt_kit_registry.py --output "$SITE_ROOT/afk-agent-flow/index.html"',
@@ -92,6 +100,29 @@ REQUIRED_PRIVATE_IGNORE_PATTERNS = {
     "*.promptkit-recovery",
     "*.pairing-secret",
 }
+FORBIDDEN_PUBLIC_BASENAMES = {
+    "promptkit.db",
+    "promptkit.local.db",
+    "credentials.json",
+    "credential.json",
+    "secrets.json",
+    "secret.json",
+    "tokens.json",
+    "token.json",
+    "auth.json",
+}
+FORBIDDEN_PUBLIC_SUFFIXES = (
+    ".pkenc",
+    ".promptkit-key",
+    ".promptkit-recovery",
+    ".pairing-secret",
+    ".pem",
+    ".key",
+    ".pfx",
+    ".p12",
+    ".kdbx",
+)
+FORBIDDEN_PUBLIC_COMPONENTS = {".promptkit", "saves", "crash_dumps"}
 
 
 class PrivacyStorageError(RuntimeError):
@@ -125,6 +156,48 @@ def _require_substrings(values: list[str], required: tuple[str, ...], field: str
     for fragment in required:
         if fragment.lower() not in joined:
             raise PrivacyStorageError(f"{field} is missing required privacy concept: {fragment}")
+
+
+def is_forbidden_public_path(path: str) -> bool:
+    """Return True when a tracked public-source path looks like private runtime/secret state."""
+    normalized = PurePosixPath(path)
+    parts = {part.lower() for part in normalized.parts}
+    name = normalized.name.lower()
+    if parts & FORBIDDEN_PUBLIC_COMPONENTS:
+        return True
+    if name in FORBIDDEN_PUBLIC_BASENAMES:
+        return True
+    if name == ".env" or name.startswith(".env."):
+        return True
+    if name.startswith("promptkit-journal") or name.startswith("promptkit-reducer-buffer"):
+        return True
+    return name.endswith(FORBIDDEN_PUBLIC_SUFFIXES)
+
+
+def validate_public_tracked_paths(paths: list[str]) -> None:
+    violations = sorted(path for path in paths if is_forbidden_public_path(path))
+    if violations:
+        raise PrivacyStorageError(
+            "tracked private/secret-like artifacts exist under GitHub Pages source roots: "
+            + ", ".join(violations)
+        )
+
+
+def tracked_public_files() -> list[str]:
+    completed = subprocess.run(
+        ["git", "ls-files", "-z", "--", *PUBLIC_SOURCE_ROOTS],
+        cwd=ROOT,
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if completed.returncode != 0:
+        stderr = completed.stderr.decode("utf-8", errors="replace").strip()
+        raise PrivacyStorageError(f"git ls-files failed while inspecting Pages sources: {stderr}")
+    paths = [item.decode("utf-8") for item in completed.stdout.split(b"\0") if item]
+    if not paths:
+        raise PrivacyStorageError("no tracked files found under canonical GitHub Pages source roots")
+    return paths
 
 
 def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
@@ -309,6 +382,9 @@ def validate_repository_surfaces() -> None:
         if fragment not in pages:
             raise PrivacyStorageError(f"Pages workflow no longer proves deployment mapping: {fragment}")
 
+    tracked = tracked_public_files()
+    validate_public_tracked_paths(tracked)
+
     guide = GUIDE_PATH.read_text(encoding="utf-8")
     for phrase in (
         "Prompt Canon",
@@ -320,6 +396,7 @@ def validate_repository_surfaces() -> None:
         "web/prompt-kit-mobile/",
         "/afk-agent-flow/index.html",
         "raw Local Journal history stays on the device",
+        "git ls-files",
     ):
         if phrase not in guide:
             raise PrivacyStorageError(f"privacy/storage guide is missing required text: {phrase}")
