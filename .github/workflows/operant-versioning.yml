@@ -11,6 +11,7 @@ on:
       - docs/reference.json
       - harness/contracts/operant-product-identity.v1.json
       - scripts/build_prompt_kit_registry.py
+      - scripts/operant_release_pr_request.py
       - scripts/operant_version.py
       - scripts/validate_operant_product_identity.py
       - tests/test_operant_product_identity.py
@@ -146,7 +147,8 @@ jobs:
           echo "release_type=${release_type}" >> "$GITHUB_OUTPUT"
           echo "next_version=${next_version}" >> "$GITHUB_OUTPUT"
 
-      - name: Prepare or refresh one reviewable release PR when a bump is earned
+      - name: Prepare or refresh one reviewable release PR candidate when a bump is earned
+        id: prepare_release
         if: ${{ steps.plan.outputs.release_type != '' }}
         shell: bash
         run: |
@@ -195,35 +197,43 @@ jobs:
           fi
           git push origin HEAD:"$branch"
 
-          NEXT_VERSION="$next_version" SOURCE_SHA="$main_sha" python - <<'PY'
-          import os
-          from pathlib import Path
-
-          version = os.environ["NEXT_VERSION"]
-          source_sha = os.environ["SOURCE_SHA"]
-          body = f"""## Operant deterministic release
-
-          This PR was derived AFK from accepted mainline development by `scripts/operant_version.py`.
-
-          - next version: `{version}`
-          - source mainline: `{source_sha}`
-          - plan: `Outputs/operant-version-plan.json` in the workflow run
-          - authority: `OPERANT_VERSION`
-          - validation: Operant version + identity tests, generated-site parity, stale-candidate rejection, and `git diff --check`
-
-          Merge is the explicit release gate. After this exact version change reaches `main`, the mainline owner validates it again and creates `operant-v{version}` plus the GitHub Release at the exact merged commit.
-          """
-          Path("Outputs/operant-release-pr.md").write_text(body, encoding="utf-8")
-          PY
+          python scripts/operant_release_pr_request.py \
+            --version "$next_version" \
+            --source-sha "$main_sha" \
+            --head "$branch" \
+            --base main \
+            --existing-pr-url "$existing_url" \
+            --output Outputs/operant-release-pr-request.json \
+            --body-output Outputs/operant-release-pr.md
 
           if [[ -n "$existing_url" ]]; then
             gh pr edit "$existing_url" \
               --title "chore(operant): release v${next_version}" \
               --body-file Outputs/operant-release-pr.md
+            echo "publication_required=false" >> "$GITHUB_OUTPUT"
+            echo "pr_url=$existing_url" >> "$GITHUB_OUTPUT"
           else
-            gh pr create \
-              --base main \
-              --head "$branch" \
-              --title "chore(operant): release v${next_version}" \
-              --body-file Outputs/operant-release-pr.md
+            echo "publication_required=true" >> "$GITHUB_OUTPUT"
+            echo "candidate_branch=$branch" >> "$GITHUB_OUTPUT"
+            echo "request_path=Outputs/operant-release-pr-request.json" >> "$GITHUB_OUTPUT"
+            {
+              echo "## Operant release PR publication required"
+              echo
+              echo "The release candidate was generated, validated, committed, and pushed successfully."
+              echo "Repository Actions settings prohibit the workflow token from creating the first pull request, so PR creation is deliberately owned by an external provider/agent."
+              echo
+              echo "- candidate branch: \`$branch\`"
+              echo "- base: \`main\`"
+              echo "- request artifact: \`Outputs/operant-release-pr-request.json\`"
+              echo "- body artifact: \`Outputs/operant-release-pr.md\`"
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
+
+      - name: Upload Operant release PR publication request
+        if: ${{ steps.plan.outputs.release_type != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: operant-release-pr-request-${{ github.sha }}
+          path: |
+            Outputs/operant-release-pr-request.json
+            Outputs/operant-release-pr.md
