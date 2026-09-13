@@ -1,0 +1,106 @@
+name: Repository plan fallback review fix
+
+on:
+  push:
+    branches: [fix/repository-plan-durability-20260912]
+    paths:
+      - '.github/workflows/repository-plan-fallback-review-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/repository-plan-durability-20260912
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Refresh main and require current ancestry
+        run: |
+          git fetch origin main --prune --tags
+          git merge-base --is-ancestor origin/main HEAD
+      - name: Repair missing plan-owner fallback
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          policy_path = Path('registry/prompts/actionable-next-step-policy.v1.json')
+          policy = json.loads(policy_path.read_text(encoding='utf-8'))
+          old = '- Chat may carry a provisional sketch, critique, or orientation note. Before the plan becomes an execution dependency, is called approved/ready, or is handed to another agent, persist the complete plan in the existing canonical tracked plan/spec/handoff path or active pull request. Reuse an existing plan owner before creating another plan file.'
+          new = '- Chat may carry a provisional sketch, critique, or orientation note. Before the plan becomes an execution dependency, is called approved/ready, or is handed to another agent, persist the complete plan in the existing canonical tracked plan/spec/handoff path or active pull request. Reuse an existing plan owner before creating another plan file. If no canonical plan owner or active pull request exists, create the smallest tracked plan artifact that follows the repository existing plan/docs/harness convention, make that path the canonical owner for this work, and then carry or reference it in the PR when one is opened.'
+          if old not in policy['copy_content_appendix']:
+              raise SystemExit('shared plan-owner sentence not found')
+          policy['copy_content_appendix'] = policy['copy_content_appendix'].replace(old, new, 1)
+          policy_path.write_text(json.dumps(policy, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          prompts_path = Path('docs/prompts.json')
+          prompts = json.loads(prompts_path.read_text(encoding='utf-8'))
+          by_id = {p['id']: p for p in prompts}
+
+          p02 = by_id['P02']
+          p02['nextStep'] = ('Prototype and validate the launch pack; resolve and reuse the canonical plan/handoff owner. '
+              'If no canonical plan owner or active PR exists, create the smallest tracked plan artifact following existing '
+              'repository plan/docs/harness conventions. Persist the actionable plan there, update the work ledger to '
+              'reference it when one exists, then present concise chat-facing panels and launch from that durable state.')
+          marker = '- When P66 or another repository work ledger exists, update it to point at the canonical plan/PR, proof, owner, and next action; do not turn the ledger or chat into a duplicate implementation specification.'
+          fallback = '- If no canonical plan/handoff owner or active PR exists, create the smallest tracked plan artifact that follows the repository existing plan/docs/harness convention; that new tracked artifact becomes the canonical plan owner before handoff.'
+          if fallback not in p02['copyContent']:
+              p02['copyContent'] = p02['copyContent'].replace(marker, fallback + '\n' + marker, 1)
+
+          p04 = by_id['P04']
+          p04['nextStep'] = ('Resolve and reuse the canonical repository plan/handoff owner. If none exists and there is no '
+              'active PR, create the smallest tracked plan artifact following existing repository plan/docs/harness conventions; '
+              'persist the complete accepted factoring plan there, index it from P66/the repository work ledger when present, '
+              'then use P05 or P07 from that durable revision.')
+          marker = '- When P66 or another repository work ledger exists, use it to index the canonical plan, current proof, owner, and next action; a terse ledger row is not a substitute for the complete plan.'
+          fallback = '- If no canonical plan/spec/handoff owner or active PR exists, create the smallest tracked plan artifact following the repository existing plan/docs/harness convention and make it the canonical owner before routing to execution.'
+          if fallback not in p04['copyContent']:
+              p04['copyContent'] = p04['copyContent'].replace(marker, fallback + '\n' + marker, 1)
+
+          prompts_path.write_text(json.dumps(prompts, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          test_path = Path('tests/test_repository_plan_durability.py')
+          test = test_path.read_text(encoding='utf-8')
+          needle = '        self.assertIn("active PR", self.raw["P04"]["proofGate"])\n'
+          addition = ('        self.assertIn("no canonical plan owner or active PR exists", self.raw["P02"]["nextStep"])\n'
+                      '        self.assertIn("If none exists and there is no active PR", self.raw["P04"]["nextStep"])\n'
+                      '        self.assertIn("smallest tracked plan artifact", self.policy["copy_content_appendix"])\n')
+          if addition not in test:
+              if needle not in test:
+                  raise SystemExit('plan durability test insertion point missing')
+              test = test.replace(needle, needle + addition, 1)
+          test_path.write_text(test, encoding='utf-8')
+          PY
+      - name: Regenerate and validate
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python -m unittest -v \
+            tests.test_repository_plan_durability \
+            tests.test_actionable_prompt_registry \
+            tests.test_p02_p07_autonomous_iteration \
+            tests.test_p07_phase_continuity \
+            tests.test_operational_closeout_contract \
+            tests.test_ai_engineering_level_up \
+            tests.test_spec_architecture_prompt_registry
+          python scripts/prompt_registry_ops.py validate
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit repair and remove carrier
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/prompts.json registry/prompts/actionable-next-step-policy.v1.json tests/test_repository_plan_durability.py web/prompt-kit/index.html
+          git commit -m "fix(prompt-kit): create durable plan owner when missing"
+          git rm -f .github/workflows/repository-plan-fallback-review-fix.yml
+          git commit -m "chore(prompt-kit): remove plan fallback review carrier"
+          git push origin HEAD:fix/repository-plan-durability-20260912
