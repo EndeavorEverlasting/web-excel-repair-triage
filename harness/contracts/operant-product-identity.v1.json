@@ -2,7 +2,7 @@
   "schema_version": "operant-product-identity/v1",
   "product_id": "afk-agent-flow",
   "product_name": "AFK Agent Flow",
-  "product_version": "0.6.0",
+  "product_version": "0.7.0",
   "status": "transition",
   "tagline": "Go AFK. Work keeps moving.",
   "purpose": "Route intent through prompts, skills, implementations, agents, hooks, and evidence so validated work can continue without constant workstation supervision.",
@@ -46,7 +46,7 @@
   },
   "compatibility": {
     "visible_brand": "AFK Agent Flow",
-    "visible_version": "0.6.0",
+    "visible_version": "0.7.0",
     "canonical_public_route": "/afk-agent-flow/",
     "legacy_public_routes": [
       "/operant/",

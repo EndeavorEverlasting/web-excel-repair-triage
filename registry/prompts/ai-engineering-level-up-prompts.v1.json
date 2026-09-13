@@ -172,7 +172,7 @@
       "inspectFirst": "The exact failed claim/output; authoritative truth; relevant generation-time prompt/context when recoverable; retrieved sources and tool results; system/user instructions; context size/composition; validation failures; whether the disputed fact or constraint was actually available before generation; and, for transcript-wide review, the correction chronology, evidence/capabilities available at each decision, unfinished safe work, and resulting rework or risk.",
       "expectedOutput": "An evidence-linked causal classification of FACTUALITY_MISSING_CONTEXT, FAITHFULNESS_CONTEXT_IGNORED, ATTENTION_SATURATION, MIXED, or UNKNOWN; matched remediation; a rerun of the same bounded case; and a proof ceiling that does not infer internal attention from output alone. For transcript recurrence, also produce a second operational failure-family axis, recurrence clusters by wrong decision rule, prevention contracts, counterfactual replay, and canonical downstream owners without replacing the causal taxonomy.",
       "nextStep": "Pin one concrete false claim or representative correction, recover what evidence and capability were actually available at that decision, classify the causal failure, then—when recurrence is alleged—sweep the related transcript for the same decision rule, replay one nearby counterexample, and route the smallest durable prevention to its existing owner.",
-      "proofGate": "The diagnosis proves whether the needed truth was absent or present in recoverable context; remediation matches that classification; UNKNOWN remains explicit when historical context cannot be recovered; a counterexample prevents labeling every error as one class; and the repaired case passes without claiming access to hidden model reasoning. Transcript-wide claims additionally distinguish an implementation defect from the upstream judgment that failed to anticipate/test/classify/continue through it, preserve causal taxonomy separately from operational failure families, and reject false blockers or operator delegation when the agent still has the evidence and authority to continue. Runtime/UI PASS claims require an exact-head observed-outcome receipt; absent observation remains UNKNOWN/UNPROVEN.",
+      "proofGate": "The diagnosis proves whether the needed truth was absent or present in recoverable context; remediation matches that classification; UNKNOWN remains explicit when historical context cannot be recovered; a counterexample prevents labeling every error as one class; and the repaired case passes without claiming access to hidden model reasoning. Transcript-wide claims additionally distinguish an implementation defect from the upstream judgment that failed to anticipate/test/classify/continue through it, preserve causal taxonomy separately from operational failure families, and reject false blockers or operator delegation when the agent still has the evidence and authority to continue. Runtime/UI PASS claims require an exact-head observed-outcome receipt; absent observation remains UNKNOWN/UNPROVEN; for progress-state failures, DESIGNED is not WIRED and concurrent chat/branch/PR activity is not COMPLETED until refreshed exact evidence proves the stronger state.",
       "color": "Teal",
       "copySheet": "P100_COPY_SAFE",
       "category": "standard",
@@ -195,7 +195,11 @@
         "delegation leakage",
         "artifactization failure",
         "false blocker",
-        "counterfactual replay"
+        "counterfactual replay",
+        "evidence-state promotion",
+        "designed vs implemented",
+        "wired vs planned",
+        "concurrent chat false completion"
       ]
     },
     {
