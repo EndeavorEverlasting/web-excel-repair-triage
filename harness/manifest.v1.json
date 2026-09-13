@@ -159,6 +159,20 @@
       "provider_hook": ".github/workflows/prompt-kit-feedback-hook.yml",
       "promotion_contract": "harness/contracts/pr-merge-gate.v1.json"
     },
+    "prompt_outcome_receipts": {
+      "contract": "harness/contracts/prompt-outcome-classification.v1.json",
+      "receipt_schema": "harness/contracts/prompt-outcome-receipt.schema.v1.json",
+      "fixtures": "harness/evals/fixtures/prompt-outcome-classification-cases.v1.json",
+      "validator": "scripts/validate_prompt_outcome_receipts.py",
+      "classifier": "scripts/prompt_outcome_classifier.py",
+      "shared_primitives": "scripts/prompt_outcome_contract.py",
+      "contract_tests": "tests/test_prompt_outcome_receipt_prompt.py",
+      "workflow": "WORKFLOW.md#i-prompt-kit-feedback-afk-routing",
+      "harness_gate": "python scripts/validate_prompt_outcome_receipts.py --summary",
+      "coordination_owner": "P115",
+      "semantic_owner": "P99",
+      "promotion_contract": "harness/contracts/pr-merge-gate.v1.json"
+    },
     "operant_product_identity": {
       "contract": "harness/contracts/operant-product-identity.v1.json",
       "contract_tests": "tests/test_operant_product_identity.py",
@@ -211,7 +225,6 @@
       "docs/prompt-kit-favorites-portability.js",
       "harness/contracts/prompt-kit-portability.v1.json",
       "scripts/serve_prompt_kit_portable.py",
-      "scripts/validate_prompt_kit_portability.py",
       "Run-PromptKitGenerator.cmd",
       "Build-PromptKitWebsite.cmd",
       "configs/prompt_kit/generators.v1.json",
@@ -241,6 +254,8 @@
     "python -m unittest tests.test_skill_prompt_registry -v",
     "python scripts/validate_prompt_kit_feedback_afk_routing.py --summary",
     "python -m unittest tests.test_prompt_kit_feedback_afk_routing -v",
+    "python scripts/validate_prompt_outcome_receipts.py --summary",
+    "python -m unittest tests.test_prompt_outcome_receipt_prompt -v",
     "python scripts/validate_prompt_kit_layout_harness.py --summary",
     "python -m unittest tests.test_prompt_kit_layout_harness -v",
     "python scripts/validate_operant_external_resources.py --summary",

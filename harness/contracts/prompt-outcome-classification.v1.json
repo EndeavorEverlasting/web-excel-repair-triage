@@ -1,0 +1,191 @@
+{
+  "schema_version": "prompt-outcome-classification/v1",
+  "receipt_schema": "harness/contracts/prompt-outcome-receipt.schema.v1.json",
+  "semantic_owner": "P99",
+  "coordination_owner": "P115",
+  "upstream_contract": "harness/contracts/prompt-kit-feedback-afk-routing.v1.json",
+  "mission": "Derive privacy-bounded outcome evidence, separate observed symptoms from candidate agent causes, quantify correction burden inside one grounding episode, and select bounded recovery without treating ordinary prompt reuse or legitimate sprint iteration as failure.",
+  "outcome_classes": {
+    "routing": "The wrong prompt, owner, workflow, lane, or mutation surface was selected.",
+    "interpretation": "The correct prompt/owner was selected but an explicit instruction, invariant, scope, or authority boundary was misunderstood or ignored.",
+    "execution": "The intended operation was understood and attempted, but implementation/action failed under otherwise available conditions.",
+    "progression": "Work repeats on the same mission without advancing durable evidence state.",
+    "durability": "Required state exists transiently/conversationally but not in the durable owner that should preserve it.",
+    "premature-terminal": "Work was classified terminal while safe actionable continuation remained.",
+    "evidence-promotion": "A stronger evidence state was claimed than current evidence proves.",
+    "regression": "Behavior previously proven against the same intended requirement later violates it.",
+    "environment": "External provider, permission, credential, runtime, network, hardware, quota, or tooling conditions prevented otherwise-correct execution.",
+    "unknown": "Available evidence cannot safely distinguish success, failure, abandonment, or environmental effects."
+  },
+  "cause_families": {
+    "grounding": "The task model starts from the wrong context, owner, source, or framing.",
+    "intent-fidelity": "The response/action drifts away from the user's request on a one-to-one basis.",
+    "decomposition": "The mission is not compiled into a complete executable work graph.",
+    "contract-fidelity": "The agent proceeds confidently while violating an explicit invariant, scope, authority, or evidence contract.",
+    "action-space": "The agent prematurely narrows available actions, claims capability is unavailable, or misses an authorized workaround.",
+    "recovery": "Correction evidence is received but the underlying task model is not sufficiently rebased.",
+    "unknown": "Evidence is insufficient to name a candidate cause family."
+  },
+  "symptom_to_cause_candidates": {
+    "routing": ["grounding"],
+    "interpretation": ["grounding", "intent-fidelity", "contract-fidelity"],
+    "execution": ["action-space", "contract-fidelity"],
+    "progression": ["decomposition", "intent-fidelity", "recovery"],
+    "durability": ["decomposition", "recovery"],
+    "premature-terminal": ["decomposition", "contract-fidelity", "action-space"],
+    "evidence-promotion": ["contract-fidelity"],
+    "regression": ["contract-fidelity", "recovery"],
+    "environment": [],
+    "unknown": ["unknown"]
+  },
+  "evidence_state_order": ["PLANNED_DESIGNED", "TRACKED", "IMPLEMENTED", "WIRED_REACHABLE", "VALIDATED", "INTEGRATED", "DEPLOYED", "OBSERVED"],
+  "signal_policy": {
+    "ordinary_usage_signals": ["prompt_opened", "prompt_viewed", "prompt_copied", "prompt_invoked", "prompt_favorited"],
+    "ordinary_usage_is_failure": false,
+    "ordinary_usage_is_success": false,
+    "single_dislike_without_reason_is_failure": false,
+    "deterministic_contradiction_minimum_occurrences": 1,
+    "repeated_local_pattern_minimum_occurrences": 3,
+    "manual_context_transfer_minimum_occurrences": 2,
+    "correction_not_integrated_minimum_occurrences": 2,
+    "unknown_is_valid_terminal_observation": true,
+    "environment_does_not_count_as_prompt_failure_without_independent_prompt_defect": true,
+    "multiple_receipts_per_invocation": true,
+    "receipts_are_append_only_evidence": true
+  },
+  "rules": [
+    {"id": "evidence-promotion", "primary": "evidence-promotion", "when": "claimed evidence-state rank is stronger than observed rank, or success is claimed across a proven blocker", "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"},
+    {"id": "premature-terminal", "primary": "premature-terminal", "when": "terminal_claim and safe_successor_observed are both present for the same mission", "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"},
+    {"id": "durability", "primary": "durability", "when": "required durable artifact is deterministically absent, or repeated manual context transfer reaches threshold", "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"},
+    {"id": "regression", "primary": "regression", "when": "same intended requirement had prior validation and later broken/reverted evidence", "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"},
+    {"id": "routing-proven", "primary": "routing", "when": "wrong_owner_or_route is proven", "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"},
+    {"id": "routing-correlated", "primary": "routing", "when": "replacement canonical owner advances the same task after original route did not", "result": "FAILURE", "confidence": "MEDIUM", "attribution": "CORRELATED", "actionability": "CONDITIONAL_ACTIONABLE_REPAIR"},
+    {"id": "interpretation", "primary": "interpretation", "when": "explicit invariant or requirement is later violated", "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"},
+    {"id": "execution", "primary": "execution", "when": "deterministic action failure, false unavailable claim, or ignored available capability occurs without external cause", "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"},
+    {"id": "progression", "primary": "progression", "when": "same prompt/mission repeats at threshold without durable advance, or repeated correction is not integrated", "result": "FAILURE", "confidence": "HIGH", "attribution": "CORRELATED", "actionability": "CONDITIONAL_ACTIONABLE_REPAIR"},
+    {"id": "environment", "primary": "environment", "when": "external environment failure is independently observed and no stronger prompt defect is proven", "result": "BLOCKED", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "INFORMATION_ONLY"},
+    {"id": "unknown", "primary": "unknown", "when": "only ordinary usage, unreasoned dislike, healthy reuse/iteration, or unobservable external execution is available", "result": "UNKNOWN", "confidence": "NONE", "attribution": "UNOBSERVED", "actionability": "INFORMATION_ONLY"}
+  ],
+  "primary_precedence": ["evidence-promotion", "premature-terminal", "durability", "regression", "routing", "interpretation", "execution", "progression", "environment", "unknown"],
+  "grounding_episode_policy": {
+    "unit": "grounding_episode",
+    "episode_starts_when": ["a task/sprint anchor is established", "a successful REGROUND or REBOOTSTRAP creates a clean task model"],
+    "episode_closes_when": ["the anchored task reaches terminal evidence", "a post-recovery durable evidence advance establishes a clean successor episode", "the operator explicitly starts a distinct sprint/task anchor"],
+    "prompt_reuse_cross_episode_is_neutral": true,
+    "legitimate_iteration_with_evidence_advance_is_neutral": true,
+    "correction_burden_never_accumulates_across_episode_ids": true,
+    "ordinary_prompt_usage_can_create_correction_event": false
+  },
+  "interaction_divergence_policy": {
+    "status": "HEURISTIC_V2_EPISODE_SCOPED_NOT_A_PROBABILITY_MODEL",
+    "semantic_owner": "P99",
+    "recovery_owner": "P115",
+    "response_relevance": {"minimum": 0.0, "maximum": 1.0, "source": "bounded local evaluator or explicit structured evaluation; ordinary usage cannot manufacture this score"},
+    "correction_event_contract": {
+      "each_event_is_one_observed_operator_correction": true,
+      "event_count_field_forbidden": true,
+      "corrective_must_be_true": true,
+      "all_events_must_match_interaction_grounding_episode_id": true,
+      "prompt_invocations_are_not_correction_events": true,
+      "task_iterations_are_not_correction_events": true
+    },
+    "correction_action_weights": {
+      "corrective_repeat_request": 0.2,
+      "explicit_correction": 0.25,
+      "restate_context": 0.35,
+      "restate_constraint": 0.35,
+      "reroute_owner": 0.45,
+      "reenumerate_work": 0.4,
+      "manual_workaround": 0.5,
+      "manual_context_transfer": 0.5,
+      "restart_conversation": 1.0,
+      "abandon": 1.25
+    },
+    "correction_action_causes": {
+      "corrective_repeat_request": ["intent-fidelity"],
+      "explicit_correction": ["intent-fidelity"],
+      "restate_context": ["grounding"],
+      "restate_constraint": ["contract-fidelity"],
+      "reroute_owner": ["grounding"],
+      "reenumerate_work": ["decomposition"],
+      "manual_workaround": ["action-space"],
+      "manual_context_transfer": ["recovery"],
+      "restart_conversation": ["recovery"],
+      "abandon": ["recovery"]
+    },
+    "signal_cause_candidates": {
+      "wrong_owner_or_route": ["grounding"],
+      "prompt_replaced_by_canonical_owner": ["grounding"],
+      "explicit_invariant_violation": ["contract-fidelity"],
+      "review_requirement_miss": ["contract-fidelity"],
+      "same_prompt_same_mission_repeat": ["decomposition"],
+      "expected_durable_artifact_missing": ["decomposition"],
+      "false_unavailable_claim": ["action-space"],
+      "available_capability_ignored": ["action-space"],
+      "manual_context_transfer": ["recovery"],
+      "correction_not_integrated": ["recovery"]
+    },
+    "formula": {
+      "correction_event_set": "C_e = {a | a.grounding_episode_id = e AND a.corrective = true}",
+      "correction_burden": "B_e = sum(weight[a.kind] for a in C_e)",
+      "interaction_yield": "Y_e = response_relevance_e / (1 + B_e)",
+      "divergence_pressure": "D_e = 1 - Y_e",
+      "ordinary_usage_exclusion": "prompt usage count and legitimate sprint/task iteration count do not appear in B_e",
+      "rounding_decimals": 6
+    },
+    "thresholds": [
+      {"intervention": "CONTINUE", "minimum": 0.0, "maximum_exclusive": 0.25},
+      {"intervention": "CRITIQUE", "minimum": 0.25, "maximum_exclusive": 0.5},
+      {"intervention": "REGROUND", "minimum": 0.5, "maximum_exclusive": 0.75},
+      {"intervention": "REBOOTSTRAP", "minimum": 0.75, "maximum_exclusive": 1.000001}
+    ],
+    "minimum_intervention_by_symptom": {
+      "routing": "REGROUND",
+      "interpretation": "CRITIQUE",
+      "execution": "CRITIQUE",
+      "progression": "REGROUND",
+      "durability": "REGROUND",
+      "premature-terminal": "CRITIQUE",
+      "evidence-promotion": "CRITIQUE",
+      "regression": "REGROUND",
+      "environment": "CONTINUE",
+      "unknown": "CONTINUE"
+    },
+    "force_rebootstrap_actions": ["restart_conversation", "abandon"],
+    "raw_user_text_required": false,
+    "raw_prompt_or_response_required": false
+  },
+  "grounding_recovery_protocol": {
+    "protocol_id": "agentic-task-state-reground/v1",
+    "owner": "P115",
+    "fresh_session_is_last_resort": true,
+    "steps": [
+      "FREEZE_UNPROVEN_MUTATION: stop compounding the current inference path while preserving verified evidence.",
+      "REFRESH_DURABLE_TRUTH: reload canonical repository/provider/runtime state and current constraints from authorized sources.",
+      "REBUILD_TASK_MODEL: reconstruct requested outcome, contracts, scope, complete work graph, available action surfaces, and evidence state.",
+      "DIFF_ASSUMPTIONS: compare the prior task model with refreshed evidence; discard unsupported assumptions.",
+      "REANCHOR_ONE_TO_ONE: bind the next response/action to the exact current request and completion gate.",
+      "RESUME_SMALLEST_SAFE_ACTION: execute one dependency-ready action and require durable evidence advance.",
+      "CLOSE_OR_ESCALATE_EPISODE: successful post-recovery evidence advance closes the correction episode; recurrence escalates one intervention level."
+    ],
+    "completion_gate": "A post-recovery pass advances durable evidence without repeating the triggering correction pattern; otherwise escalate one level."
+  },
+  "routing_boundary": {
+    "outcome_receipt_is_evidence_not_mutation_authority": true,
+    "P99_derives_semantics": true,
+    "P115_consumes_actionable_or_conditional_receipts": true,
+    "P115_owns_reground_protocol": true,
+    "P07_or_P32_owns_repair": true,
+    "P105_owns_promotion": true
+  },
+  "privacy_boundary": {
+    "raw_prompt_body": false,
+    "raw_response_body": false,
+    "raw_clipboard_content": false,
+    "raw_search_or_typed_content": false,
+    "credentials_or_secrets": false,
+    "user_identity_required": false,
+    "correction_events_are_bounded_enums_not_text": true,
+    "evidence_refs_are_bounded_references_not_raw_payloads": true
+  }
+}

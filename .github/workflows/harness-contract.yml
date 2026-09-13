@@ -20,6 +20,9 @@ on:
       - .gitignore
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
+      - scripts/prompt_outcome_contract.py
+      - scripts/prompt_outcome_classifier.py
+      - scripts/validate_prompt_outcome_receipts.py
       - scripts/validate_context_architecture.py
       - scripts/validate_operator_command_envelope.py
       - scripts/validate_pr_merge_gate.py
@@ -41,6 +44,7 @@ on:
       - tests/test_operant_product_identity.py
       - tests/test_operator_command_envelope.py
       - tests/test_pr_merge_gate.py
+      - tests/test_prompt_outcome_receipt_prompt.py
       - tests/test_prompt_kit_cross_device_access.py
       - tests/test_prompt_kit_freshness_guidance.py
       - tests/test_prompt_kit_release_identity.py
@@ -62,14 +66,17 @@ on:
       - TRIGGERS.md
       - PROMPT_KIT_ACCESS.md
       - OPEN_PROMPT_KIT_ON_PHONE.md
-      - Acquire-Latest-PromptKit.cmd
-      - Open-Latest-PromptKit.cmd
+      - Acquire-LatestPromptKit.cmd
+      - Open-LatestPromptKit.cmd
       - harness/**
       - .ai/skills/**
       - .githooks/**
       - .gitignore
       - scripts/Acquire-LatestPromptKit.ps1
       - scripts/evaluate_prompt_language.py
+      - scripts/prompt_outcome_contract.py
+      - scripts/prompt_outcome_classifier.py
+      - scripts/validate_prompt_outcome_receipts.py
       - scripts/validate_context_architecture.py
       - scripts/validate_operator_command_envelope.py
       - scripts/validate_pr_merge_gate.py
@@ -91,6 +98,7 @@ on:
       - tests/test_operant_product_identity.py
       - tests/test_operator_command_envelope.py
       - tests/test_pr_merge_gate.py
+      - tests/test_prompt_outcome_receipt_prompt.py
       - tests/test_prompt_kit_cross_device_access.py
       - tests/test_prompt_kit_freshness_guidance.py
       - tests/test_prompt_kit_release_identity.py
@@ -120,6 +128,9 @@ jobs:
           python -m py_compile \
             scripts/validate_harness.py \
             scripts/validate_operant_product_identity.py \
+            scripts/prompt_outcome_contract.py \
+            scripts/prompt_outcome_classifier.py \
+            scripts/validate_prompt_outcome_receipts.py \
             scripts/validate_context_architecture.py \
             scripts/validate_operator_command_envelope.py \
             scripts/validate_pr_merge_gate.py \
@@ -140,6 +151,7 @@ jobs:
             tests/test_operant_product_identity.py \
             tests/test_operator_command_envelope.py \
             tests/test_pr_merge_gate.py \
+            tests/test_prompt_outcome_receipt_prompt.py \
             tests/test_prompt_kit_cross_device_access.py \
             tests/test_prompt_kit_freshness_guidance.py \
             tests/test_prompt_kit_release_identity.py \
@@ -195,6 +207,10 @@ jobs:
         run: |
           python scripts/validate_operator_command_envelope.py --summary
           python -m unittest tests.test_operator_command_envelope -v
+      - name: Validate Prompt outcome receipts and divergence recovery
+        run: |
+          python scripts/validate_prompt_outcome_receipts.py --summary
+          python -m unittest tests.test_prompt_outcome_receipt_prompt -v
       - name: Validate harness completeness
         run: python scripts/validate_harness.py --report "$RUNNER_TEMP/harness-completeness-report.json"
       - name: Upload harness completeness report
