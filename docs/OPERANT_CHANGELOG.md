@@ -2,6 +2,21 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.8.0 - 2026-09-13
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): expand compute authority and contract horizon (`a583b333`)
+- feat(prompt-kit): require exhaustive available compute globally (#458) (`2f258b09`)
+- feat(prompt-kit): harden correspondence context and exhaustive compute (#401) (`dde4091f`)
+- feat(prompt-kit): define privacy and storage boundaries (#460) (`3e371272`)
+
+### Fixes / performance
+
+- fix(prompt-kit): enforce evidence-spine admission dependency (`e8d2de99`)
+- fix(prompt-kit): harden lifecycle review gates (`9b1a8ca6`)
+- fix(prompt-kit): follow current Phase C closeout evidence (`d4663f9d`)
+
 ## 0.7.0 - 2026-09-13
 
 ### Features / breaking pre-1.0 changes
