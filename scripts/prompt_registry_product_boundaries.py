@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Validate and expose prompt-registry product ownership boundaries.
+"""Canonical prompt-registry product ownership and composition.
 
-This module answers one maintenance question: which canonical prompt-registry
-inputs belong to AFK Agent Flow, and which remain WebExcel Triage-local?
-It deliberately does not change the legacy combined Prompt Kit build.
+The contract answers two separate questions without mixing them:
+- which prompt registries belong to each product; and
+- which product inputs the legacy combined Prompt Kit still composes.
+
+The legacy builder consumes this module, so registry paths have one canonical
+change site while the current combined output remains a compatibility surface.
 """
 from __future__ import annotations
 
@@ -14,11 +17,6 @@ from pathlib import Path
 from typing import Any, Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
-from scripts import build_prompt_kit_registry  # noqa: E402
-
 CONTRACT = ROOT / "registry" / "prompts" / "product-boundaries.v1.json"
 SCHEMA_VERSION = "prompt-registry-product-boundaries/v1"
 AFK_PRODUCT = "afk-agent-flow"
@@ -27,7 +25,7 @@ MANAGEMENT_REGISTRY = "registry/prompts/management-operations-prompts.v1.json"
 
 
 class ProductBoundaryError(ValueError):
-    """Raised when prompt-registry ownership becomes ambiguous or drifts."""
+    """Raised when prompt-registry ownership becomes ambiguous or incomplete."""
 
 
 def _load_json(path: Path) -> Any:
@@ -39,13 +37,6 @@ def _load_json(path: Path) -> Any:
         raise ProductBoundaryError(f"invalid JSON in {path}: {exc}") from exc
 
 
-def _repo_relative(path: Path) -> str:
-    try:
-        return path.resolve().relative_to(ROOT).as_posix()
-    except ValueError as exc:
-        raise ProductBoundaryError(f"path escapes repository root: {path}") from exc
-
-
 def _require_string_list(value: Any, label: str) -> list[str]:
     if not isinstance(value, list) or not value:
         raise ProductBoundaryError(f"{label} must be a non-empty list")
@@ -55,8 +46,19 @@ def _require_string_list(value: Any, label: str) -> list[str]:
             raise ProductBoundaryError(f"{label} entries must be non-empty strings")
         normalized.append(item.strip().replace("\\", "/"))
     if len(normalized) != len(set(normalized)):
-        raise ProductBoundaryError(f"{label} contains duplicate paths")
+        raise ProductBoundaryError(f"{label} contains duplicate entries")
     return normalized
+
+
+def _paths(values: Iterable[str]) -> tuple[Path, ...]:
+    return tuple((ROOT / value).resolve() for value in values)
+
+
+def _repo_relative(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(ROOT).as_posix()
+    except ValueError as exc:
+        raise ProductBoundaryError(f"path escapes repository root: {path}") from exc
 
 
 def load_contract(path: Path = CONTRACT) -> dict[str, Any]:
@@ -82,40 +84,69 @@ def _product(payload: dict[str, Any], product_id: str) -> dict[str, Any]:
     return product
 
 
+def _shared(payload: dict[str, Any]) -> dict[str, Any]:
+    shared = payload.get("shared_inputs")
+    if not isinstance(shared, dict):
+        raise ProductBoundaryError("shared_inputs must be an object")
+    return shared
+
+
+def base_registry(payload: dict[str, Any] | None = None) -> Path:
+    """Return the one shared base prompt registry."""
+    payload = payload or load_contract()
+    value = _shared(payload).get("base_registry")
+    if not isinstance(value, str) or not value.strip():
+        raise ProductBoundaryError("shared_inputs.base_registry must be a non-empty path")
+    return (ROOT / value.strip()).resolve()
+
+
+def content_registries(payload: dict[str, Any] | None = None) -> tuple[Path, ...]:
+    """Return shared content-only registries in declared order."""
+    payload = payload or load_contract()
+    values = _require_string_list(
+        _shared(payload).get("content_registries"), "shared_inputs.content_registries"
+    )
+    return _paths(values)
+
+
 def extension_registries_for_product(
     product_id: str, payload: dict[str, Any] | None = None
 ) -> tuple[Path, ...]:
-    """Return canonical extension registries owned by one declared product."""
+    """Return extension registries owned by one declared product."""
     payload = payload or load_contract()
-    raw_paths = _require_string_list(
+    values = _require_string_list(
         _product(payload, product_id).get("extension_registries"),
         f"products.{product_id}.extension_registries",
     )
-    return tuple((ROOT / path).resolve() for path in raw_paths)
+    return _paths(values)
 
 
-def _legacy_extension_paths() -> tuple[str, ...]:
-    return tuple(
-        _repo_relative(Path(path)) for path in build_prompt_kit_registry.EXTENSION_REGISTRIES
+def legacy_extension_registries(
+    payload: dict[str, Any] | None = None,
+) -> tuple[Path, ...]:
+    """Compose legacy extension registries from declared product owners."""
+    payload = payload or load_contract()
+    legacy = payload.get("legacy_combined_surface")
+    if not isinstance(legacy, dict):
+        raise ProductBoundaryError("legacy_combined_surface must be an object")
+    composition = _require_string_list(
+        legacy.get("composition"), "legacy_combined_surface.composition"
     )
+    registries: list[Path] = []
+    for product_id in composition:
+        registries.extend(extension_registries_for_product(product_id, payload))
+    return tuple(registries)
 
 
-def _legacy_content_paths() -> tuple[str, ...]:
-    return tuple(
-        _repo_relative(Path(path)) for path in build_prompt_kit_registry.CONTENT_REGISTRIES
-    )
-
-
-def _validate_declared_paths_exist(paths: Iterable[str], label: str) -> None:
-    missing = [path for path in paths if not (ROOT / path).is_file()]
+def _validate_paths_exist(paths: Iterable[Path], label: str) -> None:
+    missing = [_repo_relative(path) for path in paths if not path.is_file()]
     if missing:
         raise ProductBoundaryError(f"{label} references missing files: {missing}")
 
 
 def validate_product_boundaries(payload: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Fail closed when registry ownership no longer matches the legacy builder."""
+    """Fail closed when ownership, compatibility composition, or NTH locality drifts."""
     payload = payload or load_contract()
-
     legacy = payload.get("legacy_combined_surface")
     if not isinstance(legacy, dict):
         raise ProductBoundaryError("legacy_combined_surface must be an object")
@@ -125,6 +156,7 @@ def validate_product_boundaries(payload: dict[str, Any] | None = None) -> dict[s
         raise ProductBoundaryError("legacy builder identity changed without contract update")
     if legacy.get("site") != "web/prompt-kit/index.html":
         raise ProductBoundaryError("legacy site identity changed without contract update")
+
     composition = _require_string_list(
         legacy.get("composition"), "legacy_combined_surface.composition"
     )
@@ -133,63 +165,40 @@ def validate_product_boundaries(payload: dict[str, Any] | None = None) -> dict[s
             "legacy composition must explicitly preserve AFK + Triage-local inputs"
         )
 
-    shared = payload.get("shared_inputs")
-    if not isinstance(shared, dict):
-        raise ProductBoundaryError("shared_inputs must be an object")
-    base_registry = shared.get("base_registry")
-    if not isinstance(base_registry, str) or not base_registry.strip():
-        raise ProductBoundaryError("shared_inputs.base_registry must be a non-empty path")
-    base_registry = base_registry.strip().replace("\\", "/")
-    actual_base = _repo_relative(build_prompt_kit_registry.BASE_REGISTRY)
-    if base_registry != actual_base:
-        raise ProductBoundaryError(
-            f"base registry ownership drift: contract={base_registry} builder={actual_base}"
-        )
-    content_registries = _require_string_list(
-        shared.get("content_registries"), "shared_inputs.content_registries"
-    )
-    if tuple(content_registries) != _legacy_content_paths():
-        raise ProductBoundaryError(
-            "shared content registry set no longer matches the canonical builder"
-        )
-
-    afk_paths = tuple(
-        _repo_relative(path) for path in extension_registries_for_product(AFK_PRODUCT, payload)
-    )
-    triage_paths = tuple(
-        _repo_relative(path)
-        for path in extension_registries_for_product(TRIAGE_PRODUCT, payload)
-    )
-    all_owned = afk_paths + triage_paths
-    if len(all_owned) != len(set(all_owned)):
+    afk_paths = extension_registries_for_product(AFK_PRODUCT, payload)
+    triage_paths = extension_registries_for_product(TRIAGE_PRODUCT, payload)
+    all_owned = (*afk_paths, *triage_paths)
+    relative_owned = tuple(_repo_relative(path) for path in all_owned)
+    if len(relative_owned) != len(set(relative_owned)):
         raise ProductBoundaryError("an extension registry has more than one product owner")
-
-    legacy_paths = _legacy_extension_paths()
-    if set(all_owned) != set(legacy_paths):
-        missing = sorted(set(legacy_paths) - set(all_owned))
-        extra = sorted(set(all_owned) - set(legacy_paths))
-        raise ProductBoundaryError(
-            f"product ownership does not cover the legacy builder exactly; missing={missing}, extra={extra}"
-        )
-
-    _validate_declared_paths_exist((base_registry, *content_registries, *all_owned), "contract")
 
     afk = _product(payload, AFK_PRODUCT)
     afk_forbidden = _require_string_list(
         afk.get("must_not_include"), f"products.{AFK_PRODUCT}.must_not_include"
     )
+    afk_relative = {_repo_relative(path) for path in afk_paths}
     if MANAGEMENT_REGISTRY not in afk_forbidden:
         raise ProductBoundaryError("AFK boundary must explicitly reject the Triage management registry")
-    if MANAGEMENT_REGISTRY in afk_paths:
+    if MANAGEMENT_REGISTRY in afk_relative:
         raise ProductBoundaryError("AFK Agent Flow may not own the Triage management registry")
 
     triage = _product(payload, TRIAGE_PRODUCT)
     if triage.get("target_repository") != "EndeavorEverlasting/web-excel-repair-triage":
         raise ProductBoundaryError("Triage-local owner must remain this repository")
-    if triage_paths != (MANAGEMENT_REGISTRY,):
+    triage_relative = tuple(_repo_relative(path) for path in triage_paths)
+    if triage_relative != (MANAGEMENT_REGISTRY,):
         raise ProductBoundaryError(
-            "first product-boundary slice keeps management operations as one explicit Triage-local owner"
+            "first product-boundary slice keeps management operations as one Triage-local owner"
         )
+
+    legacy_paths = legacy_extension_registries(payload)
+    if MANAGEMENT_REGISTRY not in {_repo_relative(path) for path in legacy_paths}:
+        raise ProductBoundaryError(
+            "legacy compatibility composition dropped Triage-local management prompts"
+        )
+
+    shared_paths = (base_registry(payload), *content_registries(payload))
+    _validate_paths_exist((*shared_paths, *all_owned), "product-boundary contract")
 
     management_payload = _load_json(ROOT / MANAGEMENT_REGISTRY)
     if not isinstance(management_payload, dict):
@@ -199,23 +208,20 @@ def validate_product_boundaries(payload: dict[str, Any] | None = None) -> dict[s
     prompts = management_payload.get("prompts")
     if not isinstance(prompts, list):
         raise ProductBoundaryError("management operations registry must define prompts")
-    by_id = {
-        str(prompt.get("id")): prompt
-        for prompt in prompts
-        if isinstance(prompt, dict) and prompt.get("id")
-    }
-    p74 = by_id.get("P74")
+    p74 = next(
+        (
+            prompt
+            for prompt in prompts
+            if isinstance(prompt, dict) and str(prompt.get("id")) == "P74"
+        ),
+        None,
+    )
     if not isinstance(p74, dict):
         raise ProductBoundaryError("Triage-local management registry lost P74")
     if "Neuron Track Hours" not in str(p74.get("name", "")):
-        raise ProductBoundaryError("P74 no longer characterizes the NTH-local ownership boundary")
+        raise ProductBoundaryError("P74 no longer characterizes the NTH-local boundary")
     if p74.get("profile") != "billing-management":
         raise ProductBoundaryError("P74 billing-management profile changed unexpectedly")
-
-    if MANAGEMENT_REGISTRY not in legacy_paths:
-        raise ProductBoundaryError(
-            "legacy builder stopped composing Triage-local management prompts; that is a behavior change"
-        )
 
     return {
         "schema_version": SCHEMA_VERSION,
@@ -224,8 +230,8 @@ def validate_product_boundaries(payload: dict[str, Any] | None = None) -> dict[s
         "legacy_extension_count": len(legacy_paths),
         "afk_extension_count": len(afk_paths),
         "triage_local_extension_count": len(triage_paths),
-        "afk_extension_registries": list(afk_paths),
-        "triage_local_extension_registries": list(triage_paths),
+        "afk_extension_registries": [_repo_relative(path) for path in afk_paths],
+        "triage_local_extension_registries": [_repo_relative(path) for path in triage_paths],
         "legacy_behavior_preserved": True,
     }
 
