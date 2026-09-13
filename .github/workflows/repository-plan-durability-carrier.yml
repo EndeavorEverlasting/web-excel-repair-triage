@@ -44,6 +44,22 @@ jobs:
             git add web/prompt-kit/index.html
             git commit --no-edit
           fi
+      - name: Keep P100 direct prompt within established budget
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/_repository_plan_durability_patch_temp.py')
+          text = p.read_text(encoding='utf-8')
+          start = text.index('    # Keep P100\'s established <8000-character raw prompt budget.')
+          end = text.index('    AI_PROMPTS.write_text', start)
+          text = text[:start] + '    # Full evidence-state law is injected globally; P100 carries only keywords/proof metadata so its raw copy budget stays intact.\n' + text[end:]
+          old = '''    def test_p100_names_state_promotion_without_breaking_prompt_budget(self) -> None:\n        p100 = self.ai_raw["P100"]\n        self.assertIn("EVIDENCE-STATE CHECK", p100["copyContent"])\n        self.assertIn("DESIGN->WIRED", p100["copyContent"])\n        self.assertIn("CONCURRENT->COMPLETE", p100["copyContent"])\n        self.assertIn("DESIGNED is not WIRED", p100["proofGate"])\n        self.assertIn("evidence-state promotion", p100["keywords"])\n        self.assertLess(len(p100["copyContent"]), 8000)\n'''
+          new = '''    def test_p100_names_state_promotion_without_breaking_prompt_budget(self) -> None:\n        p100 = self.ai_raw["P100"]\n        self.assertIn("DESIGNED is not WIRED", p100["proofGate"])\n        self.assertIn("concurrent chat/branch/PR activity", p100["proofGate"])\n        self.assertIn("evidence-state promotion", p100["keywords"])\n        self.assertIn("designed vs implemented", p100["keywords"])\n        self.assertLess(len(p100["copyContent"]), 8000)\n'''
+          if old not in text:
+              raise SystemExit('P100 regression template not found')
+          p.write_text(text.replace(old, new), encoding='utf-8')
+          PY
       - name: Patch canonical owners and remove bad assumption artifact
         run: python scripts/_repository_plan_durability_patch_temp.py
       - name: Regenerate canonical Prompt Kit
