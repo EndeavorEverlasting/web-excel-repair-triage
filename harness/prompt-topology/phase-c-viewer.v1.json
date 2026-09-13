@@ -27,7 +27,8 @@
     "prompt_point_parity_exact": true,
     "cluster_membership_source": "Phase A topology only",
     "relationship_source": "Phase A edge channels only",
-    "opportunity_source": "Phase A opportunity records only"
+    "opportunity_source": "Phase A opportunity records only",
+    "duplicate_prompt_ids_rejected": true
   },
   "interaction_baseline": [
     "drag-to-rotate",
@@ -37,7 +38,10 @@
     "prompt-search-and-focus",
     "cluster-focus",
     "relationship-detail-panel",
-    "opportunity-state-detail"
+    "opportunity-state-detail",
+    "shift-drag-to-pan",
+    "keyboard-view-controls",
+    "static-text-index-fallback"
   ],
   "privacy": {
     "network_requests_after_document_load": false,
@@ -66,5 +70,11 @@
     "headless-chromium-interaction-proof",
     "git-diff-check"
   ],
-  "proof_ceiling": "Repository/static and headless Chromium proof for the deterministic Phase C viewer. This does not prove GitHub Pages publication, arbitrary browser/GPU behavior, human usability acceptance, production telemetry, or any semantic change to topology truth."
+  "proof_ceiling": "Repository/static and headless Chromium proof for the deterministic Phase C viewer. This does not prove GitHub Pages publication, arbitrary browser/GPU behavior, human usability acceptance, production telemetry, or any semantic change to topology truth.",
+  "accessibility": {
+    "canvas_keyboard_focusable": true,
+    "keyboard_view_controls": true,
+    "static_text_index_for_non_3d_reading": true,
+    "selection_detail_semantic_html": true
+  }
 }
