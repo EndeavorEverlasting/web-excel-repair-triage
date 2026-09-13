@@ -82,38 +82,28 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version_changed=false
-          if [[ "${GITHUB_EVENT_NAME}" == "push" ]] && git rev-parse HEAD^ >/dev/null 2>&1; then
-            if ! git diff --quiet HEAD^ HEAD -- OPERANT_VERSION; then
-              version_changed=true
-            fi
-          fi
+          python scripts/operant_version.py validate
+          version="$(python scripts/operant_version.py current)"
+          tag="operant-v${version}"
+          anchor="$(python scripts/operant_version.py release-anchor)"
 
-          if [[ "$version_changed" == "true" ]]; then
-            python scripts/operant_version.py validate
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            target="$(git rev-list -n 1 "$tag")"
+            if [[ "$target" != "$anchor" ]]; then
+              echo "Released version reuse/drift: ${tag} -> ${target}; expected anchor=${anchor}" >&2
+              exit 1
+            fi
+          else
             python scripts/validate_operant_product_identity.py --summary
-            python -m unittest tests.test_operant_product_identity -v
+            python -m unittest tests.test_operant_product_identity tests.test_operant_release_anchor -v
             python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-
-            version="$(python scripts/operant_version.py current)"
-            tag="operant-v${version}"
-            if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
-              target="$(git rev-list -n 1 "$tag")"
-              head="$(git rev-parse HEAD)"
-              if [[ "$target" != "$head" ]]; then
-                echo "Released version reuse/drift: ${tag} -> ${target}; HEAD=${head}" >&2
-                exit 1
-              fi
-            else
-              head_sha="$(git rev-parse HEAD)"
-              gh release create "$tag" \
-                --target "$head_sha" \
-                --title "Operant v${version}" \
-                --generate-notes
-            fi
-            git fetch --tags
-            python scripts/operant_version.py validate --require-tag
+            gh release create "$tag" \
+              --target "$anchor" \
+              --title "Operant v${version}" \
+              --generate-notes
           fi
+          git fetch --tags
+          python scripts/operant_version.py validate --require-tag
 
       - name: Derive next release from natural mainline development
         id: plan
