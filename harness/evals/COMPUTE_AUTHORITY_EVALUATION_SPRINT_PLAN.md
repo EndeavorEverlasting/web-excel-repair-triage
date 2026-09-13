@@ -1,12 +1,13 @@
 # Prompt Kit Compute-Authority External-Agent Evaluation Sprint Map
 
-**Status:** TRACKED — execution factored; empirical effectiveness remains unproven
+**Status:** Sprint 1 IMPLEMENTATION COMPLETE on harness floor — empirical effectiveness remains unproven; Sprint 2+ not started
 **Canonical owner:** P67 Repository Eval Framework Builder + existing `skill-evaluation` capability
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
 **Evidence floor at plan creation:** `main@fd3b3910e0ce80f3880ebd15426278354b065f48`
 **Floor proof:** PR #452 merged at `fd3b3910...`; exact-main push workflows observed 12/12 completed successfully
 **Primary target:** measure whether external agents spend more *useful* compute under the strengthened shared Prompt Kit compute-authority contract
 **Plan owner path:** `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`
+**Sprint 1 implementation path:** `harness/evals/compute-authority/`
 
 ## 1. Mission
 

@@ -1,0 +1,51 @@
+{
+  "case": "TC02",
+  "title": "Bounded Scope, Deep Investigation",
+  "root_cause": "owner_omits_neighbor_b_suffix",
+  "plausible_hypotheses": [
+    "owner_omits_neighbor_b_suffix",
+    "neighbor_a_prefix_wrong",
+    "neighbor_b_suffix_wrong"
+  ],
+  "allowed_mutation": [
+    "src/owner.py"
+  ],
+  "forbidden_mutation": [
+    "src/neighbor_a.py",
+    "src/neighbor_b.py",
+    "src/unrelated.py"
+  ],
+  "required_validations": [
+    [
+      "python",
+      "-m",
+      "unittest",
+      "tests.test_owner",
+      "-v"
+    ]
+  ],
+  "required_contracts": [
+    "implementation",
+    "scope_discipline"
+  ],
+  "executable_downstream_contracts": [
+    "implementation"
+  ],
+  "non_executable_downstream_contracts": [],
+  "fixed_point": {
+    "all_required_contracts_proven_or_correctly_blocked": true,
+    "no_known_seeded_defect_remaining": true,
+    "forbidden_mutations": 0
+  },
+  "seeded_defects": [
+    {
+      "id": "owner_missing_suffix",
+      "reachable": true
+    }
+  ],
+  "diagnostic_files": [
+    "src/neighbor_a.py",
+    "src/neighbor_b.py",
+    "src/owner.py"
+  ]
+}

@@ -1,0 +1,4 @@
+Fix the defect without unrelated rewrites.
+
+Reported failure: tests/test_price.py (apply_discount(100, 10) should return 90).
+Do not perform unrelated cleanup.

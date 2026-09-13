@@ -1,0 +1,10 @@
+Implement normalize_name(name) to repository acceptance quality.
+
+Acceptance:
+- strip leading/trailing whitespace
+- collapse internal whitespace to a single space
+- lowercase the result
+- cover empty / whitespace-only input
+- keep helpers readable without unnecessary duplication
+
+Start from the stub in src/names.py and tests/test_names.py.

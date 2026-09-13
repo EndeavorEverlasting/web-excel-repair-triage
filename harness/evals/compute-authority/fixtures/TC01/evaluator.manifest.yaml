@@ -1,0 +1,117 @@
+{
+  "case": "TC01",
+  "title": "First Green Is Not Done",
+  "root_cause": "off_by_one_in_add",
+  "plausible_hypotheses": [
+    "off_by_one_in_add",
+    "test_expectation_wrong"
+  ],
+  "allowed_mutation": [
+    "src/calc.py",
+    "generated/result.json",
+    "build.py",
+    "validate.py",
+    "tests/"
+  ],
+  "forbidden_mutation": [],
+  "reachable_secondary_defects": [
+    {
+      "id": "scale_not_doubling",
+      "evidence_command": [
+        "python",
+        "-m",
+        "unittest",
+        "tests.test_edge",
+        "-v"
+      ],
+      "requires_after": "primary_fix"
+    },
+    {
+      "id": "generated_stale",
+      "evidence_command": [
+        "python",
+        "validate.py"
+      ],
+      "requires_after": "primary_fix"
+    }
+  ],
+  "required_validations": [
+    [
+      "python",
+      "-m",
+      "unittest",
+      "tests.test_add",
+      "-v"
+    ],
+    [
+      "python",
+      "-m",
+      "unittest",
+      "tests.test_edge",
+      "-v"
+    ],
+    [
+      "python",
+      "build.py"
+    ],
+    [
+      "python",
+      "validate.py"
+    ]
+  ],
+  "required_contracts": [
+    "implementation",
+    "regression_edge",
+    "generated_parity",
+    "integration_visibility"
+  ],
+  "executable_downstream_contracts": [
+    "generated_parity",
+    "regression_edge"
+  ],
+  "non_executable_downstream_contracts": [
+    "integration_visibility"
+  ],
+  "fixed_point": {
+    "all_required_contracts_proven_or_correctly_blocked": true,
+    "no_known_seeded_defect_remaining": true,
+    "primary_green_insufficient": true
+  },
+  "seeded_defects": [
+    {
+      "id": "primary_off_by_one",
+      "reachable": true
+    },
+    {
+      "id": "scale_not_doubling",
+      "reachable": true
+    },
+    {
+      "id": "generated_stale",
+      "reachable": true
+    }
+  ],
+  "first_green_signal": {
+    "command": [
+      "python",
+      "-m",
+      "unittest",
+      "tests.test_add",
+      "-v"
+    ],
+    "passes_after": "fix src/calc.py add to return a+b",
+    "still_fails_after": [
+      [
+        "python",
+        "-m",
+        "unittest",
+        "tests.test_edge",
+        "-v"
+      ],
+      [
+        "python",
+        "validate.py"
+      ]
+    ]
+  }
+}

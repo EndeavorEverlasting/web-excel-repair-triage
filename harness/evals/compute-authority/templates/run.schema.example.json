@@ -1,0 +1,16 @@
+{
+  "run_id": "TC01-treatment-r1",
+  "test_case": "TC01",
+  "condition": "treatment",
+  "agent": "",
+  "model": "",
+  "prompt_contract_sha": "",
+  "fixture_sha": "",
+  "repository_sha": "",
+  "tool_permissions": [],
+  "worker_capacity": 0,
+  "started_at": "",
+  "completed_at": "",
+  "termination_reason": "",
+  "result": "pass"
+}

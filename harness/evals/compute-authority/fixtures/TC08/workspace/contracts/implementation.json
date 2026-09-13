@@ -1,0 +1,6 @@
+{
+  "apply_discount": {
+    "must_never_increase_amount_when_percent_positive": true,
+    "must_return_non_negative_for_valid_inputs": true
+  }
+}

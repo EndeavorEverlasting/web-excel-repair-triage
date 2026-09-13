@@ -1,0 +1,36 @@
+name: Compute Authority Eval Fixtures
+run-name: Compute Authority Eval Fixtures | ${{ github.event_name }} | ${{ github.sha }}
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'harness/evals/compute-authority/**'
+      - 'tests/test_compute_authority_eval_harness.py'
+      - '.github/workflows/compute-authority-eval-fixtures.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'harness/evals/compute-authority/**'
+      - 'tests/test_compute_authority_eval_harness.py'
+      - '.github/workflows/compute-authority-eval-fixtures.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compute-authority-fixtures:
+    name: Compute-Authority Phase A Fixtures
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Materialize and validate fixtures
+        run: |
+          python harness/evals/compute-authority/scripts/materialize_fixtures.py
+          python harness/evals/compute-authority/scripts/validate_fixtures.py --summary --output Outputs/repository-ai-evals/compute-authority-fixtures.json
+      - name: Focused harness unit tests
+        run: python -m unittest tests.test_compute_authority_eval_harness -v
