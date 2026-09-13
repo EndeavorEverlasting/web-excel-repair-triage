@@ -98,6 +98,23 @@ class PromptKitServerlessRuntimeLifecycleTests(unittest.TestCase):
         with self.assertRaisesRegex(lifecycle.LifecycleError, "telemetry writes must require a cleanup pass"):
             lifecycle.validate_contract(payload)
 
+    def test_collective_learning_cannot_skip_evidence_spine_gate(self) -> None:
+        payload = copy.deepcopy(self.load_contract())
+        payload["phase_map"]["phase-4-local-collective-learning"]["dependency"] = "phase-1-local-lifecycle"
+        with self.assertRaisesRegex(lifecycle.LifecycleError, "Phase 4 dependency drifted"):
+            lifecycle.validate_contract(payload)
+
+    def test_collective_learning_cannot_introduce_duplicate_event_model(self) -> None:
+        payload = copy.deepcopy(self.load_contract())
+        payload["phase_map"]["phase-4-local-collective-learning"]["forbidden_scope"].remove(
+            "new route/usage/outcome event model before evidence-spine ownership is resolved"
+        )
+        with self.assertRaisesRegex(lifecycle.LifecycleError, "duplicate evidence event model"):
+            lifecycle.validate_contract(payload)
+
+    def test_strategy_dependency_is_present_on_current_floor(self) -> None:
+        lifecycle.validate_strategy_dependency()
+
     def test_plan_has_required_headings_and_runtime_capabilities(self) -> None:
         lifecycle.validate_plan()
 
