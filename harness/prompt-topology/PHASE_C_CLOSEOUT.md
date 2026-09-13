@@ -59,7 +59,6 @@ Companion continuity documents (not viewer code):
 Observed proof for the integrated Phase C slice includes:
 
 - `python scripts/validate_prompt_topology.py --summary` — PASS (Phase A/B contracts; script does not load `phase-c-viewer.v1.json`);
-- Phase C focused gates — `python -m unittest tests.test_prompt_topology_phase_c -v`, `node --check docs/prompt-topology-viewer.js`, builder byte-parity/`--check`, and `python tests/prompt_topology_viewer_browser_proof.py` — PASS;
 - `python -m unittest tests.test_prompt_topology_phase_a tests.test_prompt_topology_phase_b tests.test_prompt_topology_phase_c -v` — PASS;
 - `node --check docs/prompt-topology-viewer.js` — PASS;
 - live Phase A topology rebuild + Phase B projection rebuild + Phase C viewer build with repeated-build byte parity — PASS;
@@ -69,6 +68,8 @@ Observed proof for the integrated Phase C slice includes:
 - PR #456 and PR #459 exact-head Phase C workflow — green before merge;
 - post-merge `main` Phase C workflow — PASS after #456, #459, and later containing commits including #461;
 - Phase C viewer commit `358e1eea` and hardening commit `b9cd839c` are contained in refreshed `main`.
+
+Phase C contract gates are the focused unit tests, JS syntax check, builder parity/`--check`, browser proof, and `.github/workflows/prompt-topology-phase-c.yml` — not `validate_prompt_topology.py` alone.
 
 Historical accepted examples from the Phase C sprint included:
 
