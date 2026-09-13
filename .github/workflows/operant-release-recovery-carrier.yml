@@ -1,4 +1,4 @@
-name: Operant v0.6.0 release recovery carrier
+name: Operant release-anchor hardening carrier
 
 on:
   push:
@@ -10,49 +10,91 @@ permissions:
   contents: write
 
 jobs:
-  recover-release-identity:
+  harden-release-anchor:
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ github.token }}
-      RELEASE_SHA: d17636ddbd7be656e00ee0bc82e3bddc74f29622
-      PR_HEAD_SHA: b882c0d27af80ce4a070efa0f29c15403d84cb06
-      RELEASE_TAG: operant-v0.6.0
     steps:
-      - name: Checkout recovery branch with history
+      - name: Checkout exact recovery branch
         uses: actions/checkout@v7
         with:
+          ref: fix/operant-release-anchor-recovery-20260912
           fetch-depth: 0
           fetch-tags: true
-      - name: Prove exact historical release anchor
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Patch deterministic release-anchor owner
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin +refs/heads/main:refs/remotes/origin/main +refs/pull/439/head:refs/remotes/origin/pr-439
-          test "$(git rev-parse refs/remotes/origin/pr-439)" = "$PR_HEAD_SHA"
-          git merge-base --is-ancestor "$RELEASE_SHA" refs/remotes/origin/main
-          test "$(git rev-parse "$RELEASE_SHA^{tree}")" = "$(git rev-parse "$PR_HEAD_SHA^{tree}")"
-          test "$(git show "$RELEASE_SHA:OPERANT_VERSION" | tr -d '\r\n')" = "0.6.0"
-          test "$(git show "$RELEASE_SHA:harness/contracts/operant-product-identity.v1.json" | python -c 'import json,sys; print(json.load(sys.stdin)["product_version"])')" = "0.6.0"
-      - name: Restore missing release identity
+          python - <<'PY'
+          from pathlib import Path
+
+          script = Path('scripts/operant_version.py')
+          text = script.read_text(encoding='utf-8')
+          marker = '\n\ndef validate_release_candidate(base: str = "origin/main", head: str = "HEAD") -> list[str]:\n'
+          if marker not in text:
+              raise SystemExit('release-candidate insertion marker missing')
+          helper = '''\n\ndef release_anchor(version: SemVer | str, head: str = "HEAD") -> str:\n    """Resolve the integrated commit that owns a released version boundary.\n\n    Release PRs may land as more than one commit. The release identity belongs to\n    the latest exact release commit carrying the requested canonical version, not\n    necessarily to the commit whose diff first changed OPERANT_VERSION.\n    """\n    resolved = version if isinstance(version, SemVer) else SemVer.parse(str(version))\n    expected_subject = f"chore(operant): release v{resolved}"\n    history = _run_git("log", "--format=%H%x09%s", head)\n    for line in history.splitlines():\n        sha, separator, subject = line.partition("\\t")\n        if separator and subject == expected_subject and _version_at_ref(sha) == resolved:\n            return sha\n    raise VersioningError(\n        f"cannot resolve integrated release anchor for Operant v{resolved} from {head}"\n    )\n'''
+          if 'def release_anchor(' not in text:
+              text = text.replace(marker, helper + marker, 1)
+
+          old_tag = '''    if require_tag:\n        tag = f"{TAG_PREFIX_DEFAULT}{version}"\n        try:\n            target = _run_git("rev-list", "-n", "1", tag)\n            head = _run_git("rev-parse", "HEAD")\n            if target != head:\n                findings.append(f"release tag {tag} points to {target}, expected exact HEAD {head}")\n        except VersioningError as exc:\n            findings.append(str(exc))\n'''
+          new_tag = '''    if require_tag:\n        tag = f"{TAG_PREFIX_DEFAULT}{version}"\n        try:\n            target = _run_git("rev-list", "-n", "1", tag)\n            expected_target = release_anchor(version)\n            if target != expected_target:\n                findings.append(\n                    f"release tag {tag} points to {target}, expected release anchor {expected_target}"\n                )\n        except VersioningError as exc:\n            findings.append(str(exc))\n'''
+          if old_tag not in text:
+              raise SystemExit('require-tag block drifted')
+          text = text.replace(old_tag, new_tag, 1)
+
+          old_parser = '''    candidate_parser.add_argument("--base", default="origin/main")\n    candidate_parser.add_argument("--head", default="HEAD")\n    sub.add_parser("current", help="print the canonical Operant version")\n'''
+          new_parser = '''    candidate_parser.add_argument("--base", default="origin/main")\n    candidate_parser.add_argument("--head", default="HEAD")\n    anchor_parser = sub.add_parser(\n        "release-anchor",\n        help="print the integrated commit that owns the current release boundary",\n    )\n    anchor_parser.add_argument("--head", default="HEAD")\n    sub.add_parser("current", help="print the canonical Operant version")\n'''
+          if old_parser not in text:
+              raise SystemExit('CLI parser block drifted')
+          text = text.replace(old_parser, new_parser, 1)
+
+          old_dispatch = '''        if args.command == "current":\n            print(current_version())\n            return 0\n'''
+          new_dispatch = '''        if args.command == "current":\n            print(current_version())\n            return 0\n        if args.command == "release-anchor":\n            print(release_anchor(current_version(), head=args.head))\n            return 0\n'''
+          if old_dispatch not in text:
+              raise SystemExit('CLI dispatch block drifted')
+          text = text.replace(old_dispatch, new_dispatch, 1)
+          script.write_text(text, encoding='utf-8')
+
+          workflow = Path('.github/workflows/operant-versioning.yml')
+          wf = workflow.read_text(encoding='utf-8')
+          old = '''          version_changed=false\n          if [[ "${GITHUB_EVENT_NAME}" == "push" ]] && git rev-parse HEAD^ >/dev/null 2>&1; then\n            if ! git diff --quiet HEAD^ HEAD -- OPERANT_VERSION; then\n              version_changed=true\n            fi\n          fi\n\n          if [[ "$version_changed" == "true" ]]; then\n            python scripts/operant_version.py validate\n            python scripts/validate_operant_product_identity.py --summary\n            python -m unittest tests.test_operant_product_identity -v\n            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check\n\n            version="$(python scripts/operant_version.py current)"\n            tag="operant-v${version}"\n            if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then\n              target="$(git rev-list -n 1 "$tag")"\n              head="$(git rev-parse HEAD)"\n              if [[ "$target" != "$head" ]]; then\n                echo "Released version reuse/drift: ${tag} -> ${target}; HEAD=${head}" >&2\n                exit 1\n              fi\n            else\n              head_sha="$(git rev-parse HEAD)"\n              gh release create "$tag" \\\n                --target "$head_sha" \\\n                --title "Operant v${version}" \\\n                --generate-notes\n            fi\n            git fetch --tags\n            python scripts/operant_version.py validate --require-tag\n          fi\n'''
+          new = '''          python scripts/operant_version.py validate\n          version="$(python scripts/operant_version.py current)"\n          tag="operant-v${version}"\n          anchor="$(python scripts/operant_version.py release-anchor)"\n\n          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then\n            target="$(git rev-list -n 1 "$tag")"\n            if [[ "$target" != "$anchor" ]]; then\n              echo "Released version reuse/drift: ${tag} -> ${target}; expected anchor=${anchor}" >&2\n              exit 1\n            fi\n          else\n            python scripts/validate_operant_product_identity.py --summary\n            python -m unittest tests.test_operant_product_identity tests.test_operant_release_anchor -v\n            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check\n            gh release create "$tag" \\\n              --target "$anchor" \\\n              --title "Operant v${version}" \\\n              --generate-notes\n          fi\n          git fetch --tags\n          python scripts/operant_version.py validate --require-tag\n'''
+          if old not in wf:
+              raise SystemExit('mainline tag owner block drifted')
+          workflow.write_text(wf.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Prove release-anchor recovery and recurrence protection
         shell: bash
         run: |
           set -euo pipefail
-          git fetch --tags --force
-          if git rev-parse -q --verify "refs/tags/$RELEASE_TAG" >/dev/null; then
-            target="$(git rev-list -n 1 "$RELEASE_TAG")"
-            test "$target" = "$RELEASE_SHA"
-          else
-            gh release create "$RELEASE_TAG" \
-              --repo "$GITHUB_REPOSITORY" \
-              --target "$RELEASE_SHA" \
-              --title "Operant v0.6.0" \
-              --generate-notes
-          fi
-      - name: Verify restored tag and release
+          python -m py_compile scripts/operant_version.py tests/test_operant_release_anchor.py
+          test "$(python scripts/operant_version.py release-anchor)" = "d17636ddbd7be656e00ee0bc82e3bddc74f29622"
+          python scripts/operant_version.py validate --require-tag
+          python -m unittest tests.test_operant_release_anchor tests.test_operant_product_identity -v
+          python scripts/validate_operant_product_identity.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          mkdir -p Outputs
+          python scripts/operant_version.py plan --output Outputs/operant-version-plan.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          plan = json.loads(Path('Outputs/operant-version-plan.json').read_text(encoding='utf-8'))
+          assert plan['current_version'] == '0.6.0', plan
+          assert plan['release_type'] == 'patch', plan
+          assert plan['next_version'] == '0.6.1', plan
+          assert plan['baseline_sha'] == 'd17636ddbd7be656e00ee0bc82e3bddc74f29622', plan
+          print('OPERANT_RELEASE_ANCHOR_PLAN_PASS', plan['next_version'])
+          PY
+          git diff --check
+      - name: Commit durable hardening and remove carrier
         shell: bash
         run: |
           set -euo pipefail
-          git fetch --tags --force
-          test "$(git rev-list -n 1 "$RELEASE_TAG")" = "$RELEASE_SHA"
-          test "$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)" = "$RELEASE_TAG"
-          echo "OPERANT_RELEASE_RECOVERY_PASS tag=$RELEASE_TAG target=$RELEASE_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm .github/workflows/operant-release-recovery-carrier.yml
+          git add .github/workflows/operant-versioning.yml scripts/operant_version.py tests/test_operant_release_anchor.py .github/workflows/operant-release-recovery-carrier.yml
+          git commit -m 'fix(operant): recover deterministic release anchors'
+          git push origin HEAD:fix/operant-release-anchor-recovery-20260912
