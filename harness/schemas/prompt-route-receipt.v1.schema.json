@@ -1,0 +1,1431 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:endeavoreverlasting:afk-agent-flow:prompt-route-receipt:v1",
+  "title": "Prompt Route Receipt v1",
+  "description": "Actor-neutral evidence receipt for canonical prompt routing by humans, agents, classifiers, scripts, and workflows.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "created_at",
+    "repository",
+    "request",
+    "actor",
+    "source",
+    "target",
+    "decision",
+    "precedence",
+    "gates",
+    "route",
+    "presentation",
+    "idempotency",
+    "autonomy",
+    "evidence",
+    "outcome"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "prompt-route-receipt/v1"
+    },
+    "receipt_id": {
+      "$ref": "#/$defs/receiptId"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "repository": {
+      "$ref": "#/$defs/repository"
+    },
+    "request": {
+      "$ref": "#/$defs/request"
+    },
+    "actor": {
+      "$ref": "#/$defs/actor"
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "target": {
+      "$ref": "#/$defs/target"
+    },
+    "decision": {
+      "$ref": "#/$defs/decision"
+    },
+    "precedence": {
+      "$ref": "#/$defs/precedence"
+    },
+    "gates": {
+      "$ref": "#/$defs/gates"
+    },
+    "route": {
+      "$ref": "#/$defs/route"
+    },
+    "presentation": {
+      "$ref": "#/$defs/presentation"
+    },
+    "idempotency": {
+      "$ref": "#/$defs/idempotency"
+    },
+    "autonomy": {
+      "$ref": "#/$defs/autonomy"
+    },
+    "evidence": {
+      "$ref": "#/$defs/evidence"
+    },
+    "outcome": {
+      "$ref": "#/$defs/outcome"
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "promptId": {
+      "type": "string",
+      "pattern": "^P[0-9]+$"
+    },
+    "sha40": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "receiptId": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9._:-]+$"
+    },
+    "nullableReceiptId": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/receiptId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository_id",
+        "revision",
+        "registry_version",
+        "registry_digest"
+      ],
+      "properties": {
+        "repository_id": {
+          "type": "string",
+          "minLength": 3
+        },
+        "revision": {
+          "$ref": "#/$defs/sha40"
+        },
+        "registry_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "registry_digest": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "route_id",
+        "idempotency_key",
+        "request_fingerprint",
+        "attempt",
+        "caused_by_receipt_id"
+      ],
+      "properties": {
+        "route_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "idempotency_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "request_fingerprint": {
+          "$ref": "#/$defs/sha256"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "caused_by_receipt_id": {
+          "$ref": "#/$defs/nullableReceiptId"
+        }
+      }
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "actor_id",
+        "run_id",
+        "session_id",
+        "authority_class",
+        "human_present"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "human",
+            "agent",
+            "classifier",
+            "script",
+            "workflow"
+          ]
+        },
+        "actor_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "run_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "session_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "authority_class": {
+          "enum": [
+            "interactive-navigation",
+            "operator-override",
+            "authorized-agent",
+            "classifier-recommendation",
+            "classifier-auto-route",
+            "deterministic-script",
+            "deterministic-workflow",
+            "policy-safety-recovery"
+          ]
+        },
+        "human_present": {
+          "type": "boolean"
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "prompt_id",
+        "state_version",
+        "surface",
+        "intent"
+      ],
+      "properties": {
+        "prompt_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/promptId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state_version": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "surface": {
+          "type": "string",
+          "minLength": 1
+        },
+        "intent": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requested_prompt_id",
+        "resolved_prompt_id",
+        "canonical",
+        "active",
+        "resolution",
+        "prompt_digest"
+      ],
+      "properties": {
+        "requested_prompt_id": {
+          "$ref": "#/$defs/promptId"
+        },
+        "resolved_prompt_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/promptId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "canonical": {
+          "type": "boolean"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "resolution": {
+          "enum": [
+            "exact_id",
+            "normalized_id",
+            "compatibility_alias",
+            "unresolved"
+          ]
+        },
+        "prompt_digest": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "classifierEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "classifier_id",
+        "classifier_version",
+        "input_digest",
+        "rank",
+        "candidate_prompt_ids",
+        "auto_route_authorized"
+      ],
+      "properties": {
+        "classifier_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "classifier_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input_digest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "rank": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "candidate_prompt_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/promptId"
+          }
+        },
+        "auto_route_authorized": {
+          "type": "boolean"
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reason_code",
+        "reason",
+        "decision_source",
+        "priority",
+        "confidence",
+        "classifier"
+      ],
+      "properties": {
+        "reason_code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decision_source": {
+          "enum": [
+            "human",
+            "agent",
+            "classifier",
+            "script",
+            "workflow-contract",
+            "policy",
+            "recovery",
+            "manual-override"
+          ]
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "confidence": {
+          "oneOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "classifier": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/classifierEvidence"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "precedence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_id",
+        "authority_rank",
+        "expected_state_version",
+        "observed_state_version",
+        "compare_and_set",
+        "supersedes_receipt_id",
+        "superseded_by_receipt_id"
+      ],
+      "properties": {
+        "policy_id": {
+          "const": "prompt-routing-precedence/v1"
+        },
+        "authority_rank": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "expected_state_version": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "observed_state_version": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "compare_and_set": {
+          "enum": [
+            "MATCH",
+            "STALE",
+            "NOT_REQUIRED"
+          ]
+        },
+        "supersedes_receipt_id": {
+          "$ref": "#/$defs/nullableReceiptId"
+        },
+        "superseded_by_receipt_id": {
+          "$ref": "#/$defs/nullableReceiptId"
+        }
+      }
+    },
+    "gateResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gate_id",
+        "classification",
+        "outcome",
+        "evidence_ref",
+        "dependency_class",
+        "remediation_prompt_id"
+      ],
+      "properties": {
+        "gate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "classification": {
+          "enum": [
+            "REQUIRED",
+            "OPTIONAL",
+            "INAPPLICABLE"
+          ]
+        },
+        "outcome": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "BLOCKED",
+            "HUMAN_REQUIRED",
+            "ENVIRONMENT_BLOCKED",
+            "SKIPPED",
+            "UNKNOWN"
+          ]
+        },
+        "evidence_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dependency_class": {
+          "enum": [
+            "NONE",
+            "UNIMPLEMENTED_AUTOMATION",
+            "IRREDUCIBLE_EXTERNAL_AUTHORITY",
+            "ENVIRONMENT",
+            "UNKNOWN"
+          ]
+        },
+        "remediation_prompt_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/promptId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "aggregate",
+        "mutation_allowed",
+        "results"
+      ],
+      "properties": {
+        "aggregate": {
+          "enum": [
+            "PASS",
+            "BLOCKED",
+            "HUMAN_REQUIRED",
+            "ENVIRONMENT_BLOCKED",
+            "PARTIAL_TRUTH",
+            "UNKNOWN"
+          ]
+        },
+        "mutation_allowed": {
+          "type": "boolean"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/gateResult"
+          }
+        }
+      }
+    },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requested_transition",
+        "status",
+        "route_version_before",
+        "route_version_after",
+        "changed"
+      ],
+      "properties": {
+        "requested_transition": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 100
+        },
+        "status": {
+          "enum": [
+            "ROUTED",
+            "IDEMPOTENT_NOOP",
+            "ALREADY_AT_TARGET",
+            "BLOCKED",
+            "HUMAN_GATE_REQUIRED",
+            "AUTONOMY_GAP",
+            "PROMPT_NOT_FOUND",
+            "PROMPT_INACTIVE",
+            "STALE_REJECTED",
+            "PRECEDENCE_REJECTED",
+            "SUPERSEDED",
+            "POLICY_REJECTED",
+            "PARTIAL_TRUTH",
+            "ERROR"
+          ]
+        },
+        "route_version_before": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "route_version_after": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "changed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requested_mode",
+        "applied_mode",
+        "surface",
+        "device_class",
+        "navigator_state_ref",
+        "prompt_visible",
+        "prompt_opened",
+        "prompt_snapped",
+        "focus_applied",
+        "return_token",
+        "failure_code"
+      ],
+      "properties": {
+        "requested_mode": {
+          "enum": [
+            "none",
+            "select",
+            "open",
+            "snap"
+          ]
+        },
+        "applied_mode": {
+          "enum": [
+            "none",
+            "select",
+            "open",
+            "snap"
+          ]
+        },
+        "surface": {
+          "enum": [
+            "headless",
+            "navigator-desktop",
+            "navigator-mobile",
+            "prompt-kit-desktop",
+            "prompt-kit-mobile",
+            "workflow-console",
+            "agent-runtime",
+            "script-runtime",
+            "other"
+          ]
+        },
+        "device_class": {
+          "enum": [
+            "desktop",
+            "mobile",
+            "tablet",
+            "headless",
+            "other",
+            null
+          ]
+        },
+        "navigator_state_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "prompt_visible": {
+          "type": "boolean"
+        },
+        "prompt_opened": {
+          "type": "boolean"
+        },
+        "prompt_snapped": {
+          "type": "boolean"
+        },
+        "focus_applied": {
+          "type": "boolean"
+        },
+        "return_token": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "failure_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "idempotency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope",
+        "duplicate",
+        "original_receipt_id",
+        "replay_result"
+      ],
+      "properties": {
+        "scope": {
+          "enum": [
+            "request",
+            "session",
+            "run",
+            "candidate",
+            "global"
+          ]
+        },
+        "duplicate": {
+          "type": "boolean"
+        },
+        "original_receipt_id": {
+          "$ref": "#/$defs/nullableReceiptId"
+        },
+        "replay_result": {
+          "enum": [
+            "NOOP_ALREADY_APPLIED",
+            "ALREADY_AT_TARGET",
+            "ORIGINAL_BLOCKED",
+            "ORIGINAL_FAILED",
+            "SUPERSEDED",
+            null
+          ]
+        }
+      }
+    },
+    "autonomy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "human_dependency",
+        "failure_class",
+        "remediation_prompt_id"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "PASS",
+            "DEGRADED",
+            "FAIL"
+          ]
+        },
+        "human_dependency": {
+          "type": "boolean"
+        },
+        "failure_class": {
+          "enum": [
+            "UNIMPLEMENTED_AUTOMATION",
+            "IRREDUCIBLE_EXTERNAL_AUTHORITY",
+            "VALIDATION_REPAIR_REQUIRED",
+            "ROUTING_CONTRACT_VIOLATION",
+            "REGISTRY_RESOLUTION_FAILURE",
+            "INACTIVE_ROUTE_TARGET",
+            "PRIOR_ROUTE_BLOCKED",
+            null
+          ]
+        },
+        "remediation_prompt_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/promptId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_eval_eligible",
+        "gold_eval_authority",
+        "health_signal_eligible",
+        "privacy_class",
+        "raw_user_content_stored"
+      ],
+      "properties": {
+        "candidate_eval_eligible": {
+          "type": "boolean"
+        },
+        "gold_eval_authority": {
+          "const": false
+        },
+        "health_signal_eligible": {
+          "type": "boolean"
+        },
+        "privacy_class": {
+          "enum": [
+            "sanitized-routing-metadata",
+            "local-private"
+          ]
+        },
+        "raw_user_content_stored": {
+          "const": false
+        }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "message",
+        "blocking",
+        "next_action"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "ROUTED",
+            "IDEMPOTENT_NOOP",
+            "ALREADY_AT_TARGET",
+            "BLOCKED",
+            "HUMAN_GATE_REQUIRED",
+            "AUTONOMY_GAP",
+            "PROMPT_NOT_FOUND",
+            "PROMPT_INACTIVE",
+            "STALE_REJECTED",
+            "PRECEDENCE_REJECTED",
+            "SUPERSEDED",
+            "POLICY_REJECTED",
+            "PARTIAL_TRUTH",
+            "ERROR"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "blocking": {
+          "type": "boolean"
+        },
+        "next_action": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "actor": {
+            "properties": {
+              "type": {
+                "const": "human"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "actor": {
+            "properties": {
+              "human_present": {
+                "const": true
+              },
+              "authority_class": {
+                "enum": [
+                  "interactive-navigation",
+                  "operator-override"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "actor": {
+            "properties": {
+              "type": {
+                "const": "agent"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "actor": {
+            "properties": {
+              "authority_class": {
+                "const": "authorized-agent"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "actor": {
+            "properties": {
+              "type": {
+                "const": "script"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "actor": {
+            "properties": {
+              "authority_class": {
+                "const": "deterministic-script"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "actor": {
+            "properties": {
+              "type": {
+                "const": "workflow"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "actor": {
+            "properties": {
+              "authority_class": {
+                "enum": [
+                  "deterministic-workflow",
+                  "policy-safety-recovery"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "actor": {
+            "properties": {
+              "type": {
+                "const": "classifier"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "actor": {
+            "properties": {
+              "authority_class": {
+                "enum": [
+                  "classifier-recommendation",
+                  "classifier-auto-route"
+                ]
+              }
+            }
+          },
+          "decision": {
+            "properties": {
+              "decision_source": {
+                "const": "classifier"
+              },
+              "classifier": {
+                "$ref": "#/$defs/classifierEvidence"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "presentation": {
+            "properties": {
+              "applied_mode": {
+                "const": "none"
+              }
+            },
+            "required": [
+              "applied_mode"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "presentation": {
+            "properties": {
+              "prompt_visible": {
+                "const": false
+              },
+              "prompt_opened": {
+                "const": false
+              },
+              "prompt_snapped": {
+                "const": false
+              },
+              "focus_applied": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "presentation": {
+            "properties": {
+              "surface": {
+                "const": "headless"
+              }
+            },
+            "required": [
+              "surface"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "presentation": {
+            "properties": {
+              "requested_mode": {
+                "const": "none"
+              },
+              "applied_mode": {
+                "const": "none"
+              },
+              "device_class": {
+                "const": "headless"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "properties": {
+              "status": {
+                "const": "ROUTED"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "target": {
+            "properties": {
+              "resolved_prompt_id": {
+                "$ref": "#/$defs/promptId"
+              },
+              "canonical": {
+                "const": true
+              },
+              "active": {
+                "const": true
+              },
+              "resolution": {
+                "enum": [
+                  "exact_id",
+                  "normalized_id",
+                  "compatibility_alias"
+                ]
+              },
+              "prompt_digest": {
+                "$ref": "#/$defs/sha256"
+              }
+            }
+          },
+          "gates": {
+            "properties": {
+              "aggregate": {
+                "const": "PASS"
+              },
+              "mutation_allowed": {
+                "const": true
+              }
+            }
+          },
+          "route": {
+            "properties": {
+              "changed": {
+                "const": true
+              }
+            }
+          },
+          "idempotency": {
+            "properties": {
+              "duplicate": {
+                "const": false
+              }
+            }
+          },
+          "autonomy": {
+            "properties": {
+              "status": {
+                "const": "PASS"
+              },
+              "human_dependency": {
+                "const": false
+              }
+            }
+          },
+          "outcome": {
+            "properties": {
+              "code": {
+                "const": "ROUTED"
+              },
+              "blocking": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "properties": {
+              "status": {
+                "const": "STALE_REJECTED"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "precedence": {
+            "properties": {
+              "compare_and_set": {
+                "const": "STALE"
+              }
+            }
+          },
+          "gates": {
+            "properties": {
+              "mutation_allowed": {
+                "const": false
+              }
+            }
+          },
+          "route": {
+            "properties": {
+              "changed": {
+                "const": false
+              }
+            }
+          },
+          "outcome": {
+            "properties": {
+              "code": {
+                "const": "STALE_REJECTED"
+              },
+              "blocking": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "properties": {
+              "status": {
+                "const": "IDEMPOTENT_NOOP"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "gates": {
+            "properties": {
+              "mutation_allowed": {
+                "const": false
+              }
+            }
+          },
+          "route": {
+            "properties": {
+              "changed": {
+                "const": false
+              }
+            }
+          },
+          "idempotency": {
+            "properties": {
+              "duplicate": {
+                "const": true
+              },
+              "original_receipt_id": {
+                "$ref": "#/$defs/receiptId"
+              },
+              "replay_result": {
+                "enum": [
+                  "NOOP_ALREADY_APPLIED",
+                  "ALREADY_AT_TARGET",
+                  "ORIGINAL_BLOCKED",
+                  "ORIGINAL_FAILED",
+                  "SUPERSEDED"
+                ]
+              }
+            }
+          },
+          "outcome": {
+            "properties": {
+              "code": {
+                "const": "IDEMPOTENT_NOOP"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "HUMAN_GATE_REQUIRED",
+                  "AUTONOMY_GAP"
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "gates": {
+            "properties": {
+              "aggregate": {
+                "const": "HUMAN_REQUIRED"
+              },
+              "mutation_allowed": {
+                "const": false
+              }
+            }
+          },
+          "route": {
+            "properties": {
+              "changed": {
+                "const": false
+              }
+            }
+          },
+          "autonomy": {
+            "properties": {
+              "status": {
+                "const": "FAIL"
+              },
+              "human_dependency": {
+                "const": true
+              },
+              "remediation_prompt_id": {
+                "$ref": "#/$defs/promptId"
+              }
+            }
+          },
+          "outcome": {
+            "properties": {
+              "blocking": {
+                "const": true
+              },
+              "next_action": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "properties": {
+              "status": {
+                "const": "PRECEDENCE_REJECTED"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "precedence": {
+            "properties": {
+              "superseded_by_receipt_id": {
+                "$ref": "#/$defs/receiptId"
+              }
+            }
+          },
+          "gates": {
+            "properties": {
+              "mutation_allowed": {
+                "const": false
+              }
+            }
+          },
+          "route": {
+            "properties": {
+              "changed": {
+                "const": false
+              }
+            }
+          },
+          "outcome": {
+            "properties": {
+              "code": {
+                "const": "PRECEDENCE_REJECTED"
+              },
+              "blocking": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "target": {
+            "properties": {
+              "resolution": {
+                "const": "unresolved"
+              }
+            },
+            "required": [
+              "resolution"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "target": {
+            "properties": {
+              "resolved_prompt_id": {
+                "type": "null"
+              },
+              "canonical": {
+                "const": false
+              },
+              "active": {
+                "const": false
+              },
+              "prompt_digest": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
