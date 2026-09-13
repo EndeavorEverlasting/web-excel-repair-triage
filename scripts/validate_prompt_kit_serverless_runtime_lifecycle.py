@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "harness" / "contracts" / "prompt-kit-serverless-runtime-lifecycle.v1.json"
 PLAN_PATH = ROOT / "docs" / "PROMPT_KIT_SERVERLESS_RUNTIME_PHASE_PLAN.md"
 PARENT_CONTRACT_PATH = ROOT / "harness" / "contracts" / "prompt-kit-cross-device-access.v1.json"
+SCOUT_PATH = ROOT / "harness" / "prompt-topology" / "POST_PHASE_C_STRATEGIC_SCOUT.md"
 GAMEPLAY_PATH = ROOT / "docs" / "prompt-kit-preference-gameplay.js"
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "prompt-kit-serverless-runtime-lifecycle.yml"
 
@@ -63,6 +64,14 @@ EXPECTED_LIMITS = {
     "privacy_reducer_buffer": {"max_age_days": 30, "max_bytes": 524288, "max_aggregate_keys": 2048},
     "sync_retry_queue": {"max_age_days": 7, "max_bytes": 262144, "max_items": 64},
 }
+EXPECTED_PHASE4_DEPENDENCY = (
+    "phase-1-local-lifecycle plus Prompt Topology Phase C closeout plus resolved P95 "
+    "evidence-spine/state-ownership investigation"
+)
+EXPECTED_STRATEGIC_GATE = (
+    "Prompt Topology Phase C closeout integrated and P95 Prompt Execution Evidence Spine/"
+    "state-ownership investigation resolved"
+)
 
 
 class LifecycleError(RuntimeError):
@@ -103,6 +112,14 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
         raise LifecycleError("parent contract drifted")
     if payload.get("phase_plan") != "docs/PROMPT_KIT_SERVERLESS_RUNTIME_PHASE_PLAN.md":
         raise LifecycleError("phase plan ownership drifted")
+
+    strategic = payload.get("strategic_dependencies")
+    if not isinstance(strategic, dict):
+        raise LifecycleError("strategic_dependencies must be an object")
+    if strategic.get("post_phase_c_scout") != "harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md":
+        raise LifecycleError("post-Phase-C strategic scout ownership drifted")
+    if strategic.get("required_before_phase_4") != EXPECTED_STRATEGIC_GATE:
+        raise LifecycleError("Phase 4 strategic admission gate drifted")
 
     architecture = payload.get("architecture")
     if not isinstance(architecture, dict):
@@ -192,8 +209,11 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
         raise LifecycleError("Phase 2 dependency drifted")
     if phases["phase-3-serverless-sync-transport"].get("dependency") != "phase-2-portable-private-sync":
         raise LifecycleError("Phase 3 dependency drifted")
-    if phases["phase-4-local-collective-learning"].get("dependency") != "phase-1-local-lifecycle":
+    if phases["phase-4-local-collective-learning"].get("dependency") != EXPECTED_PHASE4_DEPENDENCY:
         raise LifecycleError("Phase 4 dependency drifted")
+    forbidden_phase4 = set(phases["phase-4-local-collective-learning"].get("forbidden_scope", []))
+    if "new route/usage/outcome event model before evidence-spine ownership is resolved" not in forbidden_phase4:
+        raise LifecycleError("Phase 4 must forbid a duplicate evidence event model before P95 resolution")
 
     collision = payload.get("known_runtime_collision")
     if not isinstance(collision, dict) or collision.get("pull_request") != 242:
@@ -233,6 +253,8 @@ def validate_plan() -> None:
         "stop telemetry/sync writes",
         "promptKit.usage.v1",
         "No separate documentation PR is required",
+        "P95 evidence-spine/state-ownership",
+        "Phase C closeout",
     )
     for phrase in required_phrases:
         if phrase not in text:
@@ -248,6 +270,20 @@ def validate_parent_contract() -> None:
     backend = parent.get("v1_backend_policy")
     if not isinstance(backend, dict) or backend.get("prompt_kit_owned_backend_required") is not False:
         raise LifecycleError("parent contract no-backend-required invariant drifted")
+
+
+def validate_strategy_dependency() -> None:
+    try:
+        text = SCOUT_PATH.read_text(encoding="utf-8")
+    except FileNotFoundError as exc:
+        raise LifecycleError("missing post-Phase-C strategic scout required by current main") from exc
+    for phrase in (
+        "Recommended next owner:** P95",
+        "Prompt execution evidence-spine/state-ownership architecture before Phase D Passive Learning",
+        "Phase C closeout integration is a prerequisite",
+    ):
+        if phrase not in text:
+            raise LifecycleError(f"post-Phase-C strategic dependency drifted: {phrase}")
 
 
 def validate_gameplay_if_present() -> None:
@@ -282,6 +318,7 @@ def validate_workflow() -> None:
     required = (
         "harness/contracts/prompt-kit-serverless-runtime-lifecycle.v1.json",
         "docs/PROMPT_KIT_SERVERLESS_RUNTIME_PHASE_PLAN.md",
+        "harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md",
         "docs/prompt-kit-preference-gameplay.js",
         "scripts/validate_prompt_kit_serverless_runtime_lifecycle.py",
         "tests/test_prompt_kit_serverless_runtime_lifecycle.py",
@@ -297,6 +334,7 @@ def validate() -> dict[str, Any]:
     report = validate_contract(_load_json(CONTRACT_PATH))
     validate_parent_contract()
     validate_plan()
+    validate_strategy_dependency()
     validate_gameplay_if_present()
     validate_workflow()
     return {"status": "PASS", **report}
