@@ -55,6 +55,33 @@ class ActionablePromptRegistryTests(unittest.TestCase):
         ):
             self.assertIn(phrase, self.policy["copy_content_appendix"])
 
+    def test_compute_authority_and_end_state_contract_horizon_are_global_policy(self) -> None:
+        appendix = self.policy["copy_content_appendix"]
+        for phrase in (
+            "COMPUTE AUTHORITY / SCOPE-BOUNDARY CONTRACT",
+            "bounded sprint limits mutation ownership and blast radius",
+            "use as much safe available compute as is materially useful",
+            "first PASS as a checkpoint",
+            "Broad compute authority never expands safety or mutation authority",
+            "END-STATE CONTRACT HORIZON",
+            "implementation/behavior",
+            "operator/user acceptance",
+            "durability/automation/observability",
+            "The contract horizon is broader than mutation authority",
+            "LOCAL PROMPT CONTRACT CLOSED",
+            "WHOLE OUTCOME CONTRACT CLOSED",
+            "CONTRACT HORIZON",
+        ):
+            self.assertIn(phrase, appendix)
+
+        self.assertIn(
+            "A bounded sprint limits mutation scope, not useful compute volume",
+            self.policy["next_step_suffix"],
+        )
+        by_id = {prompt["id"]: prompt for prompt in self.prompts}
+        self.assertIn("COMPUTE AUTHORITY / SCOPE-BOUNDARY CONTRACT", by_id["P08"]["copyContent"])
+        self.assertIn("END-STATE CONTRACT HORIZON", by_id["P08"]["copyContent"])
+
     def test_existing_work_and_pr_reuse_is_global_policy(self) -> None:
         reuse = self.policy["existing_work_reuse"]
         self.assertIn(

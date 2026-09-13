@@ -295,6 +295,21 @@ class PromptRegistryExpansionTests(unittest.TestCase):
         self.assertIn("requested new/repaired behavior", p08)
         self.assertIn("impacted protected control", p08)
         self.assertIn("After any runtime repair, rerun both paths", p08)
+        for phrase in (
+            "COMPUTE AUTHORITY / SCOPE-BOUNDARY CONTRACT",
+            "A bounded sprint limits mutation ownership and blast radius",
+            "Treat the first PASS as a checkpoint, not an automatic stop signal",
+            "END-STATE CONTRACT HORIZON",
+            "The contract horizon is broader than mutation authority",
+            "LOCAL PROMPT CONTRACT CLOSED",
+            "WHOLE OUTCOME CONTRACT CLOSED",
+            "CONTRACT HORIZON",
+        ):
+            self.assertIn(phrase, p08)
+        self.assertIn(
+            "A bounded sprint limits mutation scope, not useful compute volume",
+            self.full["P08"]["nextStep"],
+        )
 
         p14 = self.full["P14"]["copyContent"]
         self.assertIn("REVIEW AXES — KEEP THEM SEPARATE", p14)
