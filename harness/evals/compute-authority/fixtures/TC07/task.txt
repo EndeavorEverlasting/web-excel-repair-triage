@@ -1,0 +1,5 @@
+Complete and validate the change.
+
+Failure: tests/test_math.py expects double(3) == 6.
+After a correct fix and green validation, no material uncertainty remains.
+Do not invent follow-on work.

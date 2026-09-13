@@ -1,0 +1,26 @@
+{
+  "schema_version": "compute-authority-eval/v1",
+  "id": "prompt-kit-compute-authority",
+  "owner": "prompt-operations",
+  "purpose": "Paired A/B evaluation of external-agent useful-compute behavior under Control vs Treatment Prompt Kit contracts.",
+  "evaluation_question": "Does the strengthened compute-authority contract convert additional compute into additional relevant evidence rather than longer transcripts?",
+  "phase": "A_fixture_validation",
+  "sample_design": {
+    "recommended": {"cases": 8, "repetitions": 3, "conditions": 2, "total_runs": 48},
+    "pilot": {"cases": 8, "repetitions": 1, "conditions": 2, "total_runs": 16}
+  },
+  "prompt_identities": "harness/evals/compute-authority/prompts/identities.json",
+  "fixtures_root": "harness/evals/compute-authority/fixtures",
+  "runs_root": "harness/evals/compute-authority/runs",
+  "aggregate_root": "harness/evals/compute-authority/aggregate",
+  "scripts": {
+    "materialize": "python harness/evals/compute-authority/scripts/materialize_fixtures.py",
+    "reset": "python harness/evals/compute-authority/scripts/reset_fixture.py --case TC01",
+    "validate_fixtures": "python harness/evals/compute-authority/scripts/validate_fixtures.py --summary",
+    "grade_run": "python harness/evals/compute-authority/scripts/grade_run.py --run-dir harness/evals/compute-authority/runs/<run-id> --summary",
+    "aggregate": "python harness/evals/compute-authority/scripts/aggregate.py --summary"
+  },
+  "cases": ["TC01", "TC02", "TC03", "TC04", "TC05", "TC06", "TC07", "TC08"],
+  "proof_ceiling": "Phase A proves fixture reachability and prompt-identity freeze only. External-agent effectiveness remains empirically under evaluation.",
+  "promotion_gate": "OBSERVED EFFECTIVE only after overall pass criteria in the evaluation plan are met."
+}

@@ -186,6 +186,22 @@
       "proof_ceiling": "Executable one-shot classification, dedupe, work-request, and routing-boundary regression proof."
     },
     {
+      "id": "prompt-outcome-receipt-audit",
+      "class": "contract",
+      "command": "python scripts/validate_prompt_outcome_receipts.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static and fixture proof for outcome classification, grounding-episode correction events, divergence math, privacy bounds, and P99/P115 ownership."
+    },
+    {
+      "id": "prompt-outcome-receipt-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_prompt_outcome_receipt_prompt -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable regression proof that ordinary prompt reuse is neutral while episode-scoped corrective actions drive bounded intervention."
+    },
+    {
       "id": "operant-product-identity-audit",
       "class": "contract",
       "command": "python scripts/validate_operant_product_identity.py --summary",
@@ -233,6 +249,8 @@
       "skill-prompt-registry-tests",
       "prompt-kit-feedback-afk-routing-audit",
       "prompt-kit-feedback-afk-routing-tests",
+      "prompt-outcome-receipt-audit",
+      "prompt-outcome-receipt-tests",
       "prompt-kit-responsive-layout-audit",
       "prompt-kit-responsive-layout-tests",
       "operant-external-resource-audit",
@@ -272,6 +290,8 @@
       "skill-prompt-registry-tests",
       "prompt-kit-feedback-afk-routing-audit",
       "prompt-kit-feedback-afk-routing-tests",
+      "prompt-outcome-receipt-audit",
+      "prompt-outcome-receipt-tests",
       "prompt-kit-responsive-layout-audit",
       "prompt-kit-responsive-layout-tests",
       "operant-external-resource-audit",

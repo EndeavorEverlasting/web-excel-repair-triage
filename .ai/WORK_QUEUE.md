@@ -106,3 +106,19 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** commit:0805b511e46f46c44c2ab84cbebe8b25f6c79e04 created the requested operational harness infrastructure; commit:ba5f2297d1c53d18ae74e6523d3ed57592272d01 registered canonical discovery and durable receipt retention; workflow:31429055030 passed the dedicated browser-proof cleanup harness on final head; workflow:31429054930 passed operational harness contracts; workflow:31429054925 passed Prompt Kit web contracts; workflow:31429055021 passed Lua embedding-readiness harness; workflow:31429054944 passed artifact engine tests; merge:a2d59efafe951350428eac880c8203ecfc7c9eef merged PR #171; operator-proof:harness/browser-proof-cleanup/reports/P_TOP_ACCEPTANCE_20260810.md records native P-Top apply with candidate=1 eligible=1 deleted=1 failed=0 and target absent after cleanup
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-08-10T18:20:00-04:00
+
+## TRQ-007 — Measure Prompt Kit compute-authority effectiveness on external agents
+
+- **Status:** TRACKED
+- **Priority:** P1
+- **Owner:** P67 / skill-evaluation
+- **Branch / PR:** main planning floor; successor implementation branches/PRs are defined by the canonical sprint map
+- **Scope:** build and execute the bounded paired A/B evaluation that measures whether the strengthened Prompt Kit compute-authority contract increases decision-relevant useful compute, defect/contract discovery, evidence honesty, parallelism when available, and fixed-point quality without widening mutation scope or rewarding endless churn
+- **Forbidden:** changing Prompt Kit treatment behavior inside the frozen study; duplicating the P67 eval framework or skill-evaluation identity; modifying separately owned #450/#431/#462/#242 surfaces outside an explicit reconciliation; secrets/private transcripts/personal data; promoting static proof to observed external-agent effectiveness
+- **Dependencies:** PR #452 merged at `fd3b3910e0ce80f3880ebd15426278354b065f48`; Sprint 1 must land before runtime pilot; Sprint 3 must reconcile open PR #450 before touching its shared P67 registry/test files
+- **References:** `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`, `harness/evals/repository-ai-evals.v1.json`, `.ai/skills/skill-evaluation/SKILL.md`, `harness/contracts/prompt-outcome-receipt.schema.v1.json`, `harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md`
+- **Acceptance gate:** three-sprint program completes its deterministic gold-fixture floor, 16-run paired pilot, shared-registry reconciliation, 48 valid-run main study, blinded scoring and mechanical thresholds; observed effectiveness is promoted only when exact runtime evidence satisfies the canonical plan
+- **Gate:** Sprint 1 is SAFE & EXECUTABLE; model-runtime credentials/provider availability may later bound Sprints 2–3 but do not block the deterministic floor
+- **Last proof:** plan commit `6aa8f6b07c45697fb61a1782c13b105fa40a1d80` persisted the complete dependency map on current main after #452; exact #452 main floor had 12/12 observed push workflows successful
+- **Next action:** P67/skill-evaluation — implement Sprint 1 under `harness/evals/compute-authority/`: versioned eval contract, schemas, eight hidden gold fixtures, deterministic fixture/metric validator and focused tests; keep #450-shared repository-AI registry/test files read-only until convergence
+- **Updated:** 2026-09-13T04:45:00-04:00

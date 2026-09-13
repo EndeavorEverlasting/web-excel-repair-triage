@@ -1,12 +1,16 @@
 # Prompt Topology Phase C — Execution Handoff
 
-**Status:** READY FOR EXECUTION — successor to completed Phase B  
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Required floor:** refreshed `main` containing Phase A PR #440 and Phase B PR #451  
-**Phase B integration commit:** `3bab155714fbd13aa7bdbf0692fc6c7e518756b6`  
+**Status:** COMPLETE / INTEGRATED — see [`PHASE_C_CLOSEOUT.md`](./PHASE_C_CLOSEOUT.md)
+**Repository:** `EndeavorEverlasting/web-excel-repair-triage`
+**Required floor:** refreshed `main` containing Phase A PR #440, Phase B PR #451, Phase C PRs #456/#459, and this closeout/handoff pair
+**Phase B integration commit:** `3bab155714fbd13aa7bdbf0692fc6c7e518756b6`
 **Phase B closeout:** [`PHASE_B_CLOSEOUT.md`](./PHASE_B_CLOSEOUT.md)
+**Phase C closeout:** [`PHASE_C_CLOSEOUT.md`](./PHASE_C_CLOSEOUT.md)
+**Phase C viewer integration:** PR #456 / `358e1eea7806b421297e1e0b9aaf911ea078e0e0`
+**Phase C hardening integration:** PR #459 / `b9cd839c4910402073e9e84476fb1b8d5e3060ef`
+**Next approved owner:** P95 — Evidence Spine architecture (`harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md`); strategic route in [`POST_PHASE_C_STRATEGIC_SCOUT.md`](./POST_PHASE_C_STRATEGIC_SCOUT.md)
 
-This handoff is durable repository state. A future agent should refresh provider/repository truth first, then reconcile this handoff against current `main`. Do not make an old chat or stale worktree a prerequisite for execution.
+This handoff remains durable repository state for Phase C mission, scope, acceptance gates, and successor admission rules. Phase C execution itself is closed. A future agent should refresh provider/repository truth first, read the closeout for integrated identity and strongest proof, then continue from the next approved owner. Do not make an old chat or stale worktree a prerequisite for recovery.
 
 ## Phase C mission
 
@@ -105,12 +109,14 @@ The first implementation slice should then render and inspect real current artif
 
 ## Successor sequence after Phase C
 
-Only **Phase C** is an explicit approved successor at this handoff. Earlier discussion also proposed the following conceptual sequence:
+Phase C is complete. The next **approved** owner is **P95 — Program Design & Call-Stack Prototype Architect** (Evidence Spine / lifecycle ownership). See [`PHASE_C_CLOSEOUT.md`](./PHASE_C_CLOSEOUT.md) and [`POST_PHASE_C_STRATEGIC_SCOUT.md`](./POST_PHASE_C_STRATEGIC_SCOUT.md).
 
-- **Phase D candidate — Passive Learning**: behavioral/co-usage/transition evidence could enrich topology recommendations.
-- **Phase E candidate — Historical Intelligence**: compare accepted topology/projection epochs over time to expose durable evolution, drift, splits, merges, and recurring opportunity patterns.
+Earlier discussion also preserved the following conceptual sequence as candidates:
 
-These are **CANDIDATES, NOT AUTHORIZED EXECUTION PHASES**. Their names preserve prior design intent so the idea is not lost; they do not grant scope.
+- **Phase D candidate — Passive Learning**: behavioral/co-usage/transition evidence could enrich topology recommendations. Strategically deferred until evidence-lifecycle ownership is resolved.
+- **Phase E candidate — Historical Intelligence**: compare accepted topology/projection epochs over time to expose durable evolution, drift, splits, merges, and recurring opportunity patterns. Deferred until an authoritative retained accepted-epoch corpus exists.
+
+Phase D and Phase E remain **CANDIDATES with admission gates below**, not automatic next implementation phases. Their names preserve prior design intent so the idea is not lost; this handoff does not grant them execution scope merely because Phase C closed.
 
 ### Admission gate for a Phase D candidate
 
