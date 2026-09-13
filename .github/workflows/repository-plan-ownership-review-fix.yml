@@ -90,6 +90,14 @@ jobs:
 
           test_path = Path('tests/test_repository_plan_durability.py')
           test = test_path.read_text(encoding='utf-8')
+          test = test.replace(
+              '        self.assertIn("no canonical plan owner or active PR exists", self.raw["P02"]["nextStep"])\n',
+              '        self.assertIn("If neither exists and repository mutation is authorized", self.raw["P02"]["nextStep"])\n',
+          )
+          test = test.replace(
+              '        self.assertIn("If none exists and there is no active PR", self.raw["P04"]["nextStep"])\n',
+              '        self.assertIn("If none exists and repository mutation is authorized", self.raw["P04"]["nextStep"])\n',
+          )
           needle = '        self.assertIn("smallest tracked plan artifact", self.policy["copy_content_appendix"])\n'
           addition = ('        self.assertIn("relevant active pull request is the canonical owner", self.policy["copy_content_appendix"])\n'
                       '        self.assertIn("do not modify it", self.policy["copy_content_appendix"])\n'
