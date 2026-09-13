@@ -64,6 +64,9 @@ class RepositoryPlanDurabilityTests(unittest.TestCase):
         self.assertIn("P66", self.raw["P04"]["copyContent"])
         self.assertIn("canonical tracked plan", self.raw["P02"]["expectedOutput"])
         self.assertIn("active PR", self.raw["P04"]["proofGate"])
+        self.assertIn("no canonical plan owner or active PR exists", self.raw["P02"]["nextStep"])
+        self.assertIn("If none exists and there is no active PR", self.raw["P04"]["nextStep"])
+        self.assertIn("smallest tracked plan artifact", self.policy["copy_content_appendix"])
 
     def test_p12_refuses_chat_only_or_state_promoted_closeout(self) -> None:
         p12 = self.raw["P12"]
