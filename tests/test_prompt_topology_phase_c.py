@@ -6,7 +6,8 @@ SPEC=importlib.util.spec_from_file_location('phase_c_builder',ROOT/'scripts/buil
 
 def ch(payload): return hashlib.sha256(json.dumps(payload,sort_keys=True,separators=(',',':')).encode()).hexdigest()
 def fixture():
-    topology={'schema_version':'prompt-topology-artifact/v1','content_hash_sha256':'a'*64,'nodes':[{'prompt_id':'P00','seq':'00','title':'Alpha','prompt_type':'DISCOVER','prompt_class':'TEST','family_declared':'Foundation','family_declared_id':'foundation','keywords':['alpha'],'category':'standard'},{'prompt_id':'P01','seq':'01','title':'Beta','prompt_type':'BUILD','prompt_class':'TEST','family_declared':'Build','family_declared_id':'build-repair','keywords':['beta'],'category':'standard'}],'edges':[{'source':'P00','target':'P01','strength_micros':900000,'channels':[{'type':'SEMANTIC_NEIGHBOR'}]}],'clusters':[{'cluster_id':'C-TEST','member_count':2,'member_prompt_ids':['P00','P01'],'representative_prompt_id':'P00','family_candidate_id':'foundation','lineage':'NEW'}],'opportunities':[{'cluster_id':'C-TEST','prompt_ids':['P00','P01'],'recommended_action':'INVESTIGATE','score':12,'sector_id':'C-TEST','state':'UNDERDEVELOPED'}],'outlier_prompt_ids':[]}
+    topology={'schema_version':'prompt-topology-artifact/v1','nodes':[{'prompt_id':'P00','seq':'00','title':'Alpha','prompt_type':'DISCOVER','prompt_class':'TEST','family_declared':'Foundation','family_declared_id':'foundation','keywords':['alpha'],'category':'standard'},{'prompt_id':'P01','seq':'01','title':'Beta','prompt_type':'BUILD','prompt_class':'TEST','family_declared':'Build','family_declared_id':'build-repair','keywords':['beta'],'category':'standard'}],'edges':[{'source':'P00','target':'P01','strength_micros':900000,'channels':[{'type':'SEMANTIC_NEIGHBOR'}]}],'clusters':[{'cluster_id':'C-TEST','member_count':2,'member_prompt_ids':['P00','P01'],'representative_prompt_id':'P00','family_candidate_id':'foundation','lineage':'NEW'}],'opportunities':[{'cluster_id':'C-TEST','prompt_ids':['P00','P01'],'recommended_action':'INVESTIGATE','score':12,'sector_id':'C-TEST','state':'UNDERDEVELOPED'}],'outlier_prompt_ids':[]}
+    topology['content_hash_sha256']=ch({k: topology[k] for k in topology if k != 'content_hash_sha256'})
     projection={'schema_version':'1.0.0','algorithm':'umap','parameters':{'n_components':3},'points':{'P00':{'x':0.1,'y':0.2,'z':0.3},'P01':{'x':-0.1,'y':-0.2,'z':-0.3}}}
     state={'schema_version':'prompt-topology-projection-state/v1','epoch_id':'E-TEST','parent_epoch_id':None,'topology_content_hash_sha256':topology['content_hash_sha256'],'projection_sha256':ch(projection),'prompt_count':2,'content_hash_sha256':'b'*64,'alignment':{},'provenance':{}}
     return topology,projection,state
@@ -23,6 +24,8 @@ class PhaseCViewerTests(unittest.TestCase):
         with self.assertRaisesRegex(mod.ViewerBuildError,'parity'):mod.validate_inputs(t,badp,bads)
     def test_duplicate_prompt_ids_fail_closed(self):
         t,p,s=fixture();t['nodes'].append(dict(t['nodes'][0]))
+        t['content_hash_sha256']=ch({k: t[k] for k in t if k != 'content_hash_sha256'})
+        s['topology_content_hash_sha256']=t['content_hash_sha256']
         with self.assertRaisesRegex(mod.ViewerBuildError,'duplicate'):mod.validate_inputs(t,p,s)
     def test_projection_hash_tamper_fails_closed(self):
         t,p,s=fixture();bad=json.loads(json.dumps(p));bad['points']['P00']['x']=0.9
