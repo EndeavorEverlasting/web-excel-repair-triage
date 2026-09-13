@@ -59,6 +59,14 @@ class PromptParallelExecutionContractTests(unittest.TestCase):
         self.assertIn("parallel proof remains UNPROVEN", p07)
         self.assertIn("serial progress may continue only to avoid deadlock", p07)
 
+    def test_parallel_strengthening_preserves_p07_freshness_and_fixed_point_contracts(self) -> None:
+        p07 = self.raw["P07"]
+        self.assertIn("refreshed and reconciled remote/default-branch floor", p07["expectedOutput"])
+        self.assertIn("refreshed before implementation", p07["proofGate"])
+        self.assertIn("fixed point", p07["proofGate"])
+        self.assertIn("branch or PR alone is insufficient completion evidence", p07["proofGate"])
+        self.assertIn("Strategic follow-on discovery never authorizes unfinished owned work", p07["proofGate"])
+
 
 if __name__ == "__main__":
     unittest.main()
