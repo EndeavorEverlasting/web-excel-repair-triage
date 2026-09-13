@@ -298,6 +298,10 @@ class PromptRegistryExpansionTests(unittest.TestCase):
         for phrase in (
             "COMPUTE AUTHORITY / SCOPE-BOUNDARY CONTRACT",
             "A bounded sprint limits mutation ownership and blast radius",
+            "EXHAUSTIVE AVAILABLE COMPUTE RULE",
+            "Exhaust the decision-relevant safe compute available",
+            "dispatch them immediately and execute them concurrently",
+            "fixed point is evidence-defined, not attempt-count-defined",
             "Treat the first PASS as a checkpoint, not an automatic stop signal",
             "END-STATE CONTRACT HORIZON",
             "The contract horizon is broader than mutation authority",
