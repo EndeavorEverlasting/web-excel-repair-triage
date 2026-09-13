@@ -54,6 +54,17 @@ class PromptKitServerlessRuntimeLifecycleTests(unittest.TestCase):
         with self.assertRaisesRegex(lifecycle.LifecycleError, "must never be automatically purged"):
             lifecycle.validate_contract(payload)
 
+    def test_secrets_are_a_distinct_protected_store(self) -> None:
+        payload = copy.deepcopy(self.load_contract())
+        del payload["local_storage_lifecycle"]["stores"]["secrets"]
+        with self.assertRaisesRegex(lifecycle.LifecycleError, "stores.*keys drifted"):
+            lifecycle.validate_contract(payload)
+
+        payload = copy.deepcopy(self.load_contract())
+        payload["local_storage_lifecycle"]["stores"]["secrets"]["telemetry_cleanup_may_delete"] = True
+        with self.assertRaisesRegex(lifecycle.LifecycleError, "outside telemetry auto-cleanup"):
+            lifecycle.validate_contract(payload)
+
     def test_local_journal_age_and_size_limits_are_enforced(self) -> None:
         payload = copy.deepcopy(self.load_contract())
         payload["local_storage_lifecycle"]["stores"]["local_journal"]["max_age_days"] = 3650
@@ -80,10 +91,26 @@ class PromptKitServerlessRuntimeLifecycleTests(unittest.TestCase):
         with self.assertRaisesRegex(lifecycle.LifecycleError, "persistent_cycle_log_allowed must remain false"):
             lifecycle.validate_contract(payload)
 
-    def test_polling_cursor_state_is_tightly_bounded(self) -> None:
+    def test_polling_cursor_state_has_time_and_count_bounds(self) -> None:
         payload = copy.deepcopy(self.load_contract())
         payload["local_storage_lifecycle"]["stores"]["polling_state"]["max_persistent_cursor_records"] = 20
         with self.assertRaisesRegex(lifecycle.LifecycleError, "at most one cursor"):
+            lifecycle.validate_contract(payload)
+
+        payload = copy.deepcopy(self.load_contract())
+        payload["local_storage_lifecycle"]["stores"]["polling_state"]["max_age_hours"] = 720
+        with self.assertRaisesRegex(lifecycle.LifecycleError, "max age must remain 24 hours"):
+            lifecycle.validate_contract(payload)
+
+        payload = copy.deepcopy(self.load_contract())
+        payload["local_storage_lifecycle"]["stores"]["polling_state"]["delete_on"].remove("age-expiry")
+        with self.assertRaisesRegex(lifecycle.LifecycleError, "must delete on age expiry"):
+            lifecycle.validate_contract(payload)
+
+    def test_user_controls_cannot_disappear_via_empty_all(self) -> None:
+        payload = copy.deepcopy(self.load_contract())
+        payload["local_storage_lifecycle"]["user_controls"] = {}
+        with self.assertRaisesRegex(lifecycle.LifecycleError, "user_controls.*keys drifted"):
             lifecycle.validate_contract(payload)
 
     def test_acknowledged_collective_batches_must_be_deleted(self) -> None:
@@ -112,33 +139,96 @@ class PromptKitServerlessRuntimeLifecycleTests(unittest.TestCase):
         with self.assertRaisesRegex(lifecycle.LifecycleError, "duplicate evidence event model"):
             lifecycle.validate_contract(payload)
 
+    def test_phase5_cannot_skip_anonymity_investigation(self) -> None:
+        payload = copy.deepcopy(self.load_contract())
+        payload["phase_map"]["phase-5-serverless-collective-ingestion"]["dependency"] = "phase-4-local-collective-learning"
+        with self.assertRaisesRegex(lifecycle.LifecycleError, "Phase 5 dependency drifted"):
+            lifecycle.validate_contract(payload)
+
     def test_strategy_dependency_is_present_on_current_floor(self) -> None:
         lifecycle.validate_strategy_dependency()
 
     def test_plan_has_required_headings_and_runtime_capabilities(self) -> None:
         lifecycle.validate_plan()
 
-    def test_known_gameplay_usage_store_must_have_clear_delete_path(self) -> None:
+    def _validate_gameplay_source(self, source: str) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "prompt-kit-preference-gameplay.js"
-            path.write_text(
-                "var STORAGE_KEY='promptKit.usage.v1'; var recent=[]; recent.slice(0,12); localStorage.setItem(STORAGE_KEY,'{}');",
-                encoding="utf-8",
-            )
-            with mock.patch.object(lifecycle, "GAMEPLAY_PATH", path):
-                with self.assertRaisesRegex(lifecycle.LifecycleError, "lacks a reachable lifecycle clear/delete path"):
-                    lifecycle.validate_gameplay_if_present()
-
-    def test_known_gameplay_usage_store_accepts_reachable_clear_delete_path(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "prompt-kit-preference-gameplay.js"
-            path.write_text(
-                "var STORAGE_KEY='promptKit.usage.v1'; var recent=[]; recent.slice(0,12); "
-                "function clearUsageData(){localStorage.removeItem(STORAGE_KEY)}",
-                encoding="utf-8",
-            )
+            path.write_text(source, encoding="utf-8")
             with mock.patch.object(lifecycle, "GAMEPLAY_PATH", path):
                 lifecycle.validate_gameplay_if_present()
+
+    def test_gameplay_dead_clear_text_does_not_satisfy_reachability(self) -> None:
+        source = """
+var STORAGE_KEY='promptKit.usage.v1';
+var state={recent:[]}; var next={recent:[]};
+next.recent=next.recent.slice(0,12);
+state.recent=["P1"].concat(state.recent).slice(0,12);
+// function clearUsageData(){localStorage.removeItem(STORAGE_KEY);state=emptyState()}
+// data-clear-usage addEventListener('click',clearUsageData)
+"""
+        with self.assertRaisesRegex(lifecycle.LifecycleError, "lacks clearUsageData"):
+            self._validate_gameplay_source(source)
+
+    def test_gameplay_unused_slice_does_not_prove_bounded_storage(self) -> None:
+        source = """
+var STORAGE_KEY='promptKit.usage.v1';
+var state={recent:[]}; var next={recent:[]};
+next.recent.slice(0,12);
+state.recent.slice(0,12);
+function clearUsageData(){localStorage.removeItem(STORAGE_KEY);state=emptyState()}
+var clearButton=document.querySelector('[data-clear-usage]');clearButton.addEventListener('click',clearUsageData);
+root.PromptKitPreferenceGameplay={clearUsageData:clearUsageData};
+"""
+        with self.assertRaisesRegex(lifecycle.LifecycleError, "assign the 12-item slice"):
+            self._validate_gameplay_source(source)
+
+    def test_gameplay_clear_function_must_delete_and_reset_state(self) -> None:
+        source = """
+var STORAGE_KEY='promptKit.usage.v1';
+var state={recent:[]}; var next={recent:[]};
+next.recent=next.recent.slice(0,12);
+state.recent=state.recent.slice(0,12);
+function clearUsageData(){state=emptyState()}
+document.querySelector('[data-clear-usage]').addEventListener('click',clearUsageData);
+root.PromptKitPreferenceGameplay={clearUsageData:clearUsageData};
+"""
+        with self.assertRaisesRegex(lifecycle.LifecycleError, "must delete"):
+            self._validate_gameplay_source(source)
+
+    def test_gameplay_usage_store_accepts_exported_user_wired_clear(self) -> None:
+        source = """
+var STORAGE_KEY='promptKit.usage.v1';
+var state={recent:[]}; var next={recent:[]};
+next.recent=next.recent.filter(Boolean).slice(0,12);
+state.recent=['P1'].concat(state.recent).slice(0,12);
+function emptyState(){return{recent:[]}}
+function clearUsageData(){root.localStorage.removeItem(STORAGE_KEY);state=emptyState();renderDashboard()}
+document.querySelector('[data-clear-usage]').addEventListener('click',clearUsageData);
+root.PromptKitPreferenceGameplay={clearUsageData:clearUsageData};
+"""
+        self._validate_gameplay_source(source)
+
+    def test_workflow_comments_do_not_satisfy_active_commands(self) -> None:
+        workflow = """
+on:
+  pull_request:
+    paths:
+      - harness/contracts/prompt-kit-serverless-runtime-lifecycle.v1.json
+  push:
+    paths:
+      - harness/contracts/prompt-kit-serverless-runtime-lifecycle.v1.json
+jobs:
+  validate:
+    steps:
+      - run: |
+          # python scripts/validate_prompt_kit_serverless_runtime_lifecycle.py --summary
+          echo nope
+"""
+        self.assertNotIn(
+            "python scripts/validate_prompt_kit_serverless_runtime_lifecycle.py --summary",
+            lifecycle._workflow_run_commands(workflow),
+        )
 
 
 if __name__ == "__main__":
