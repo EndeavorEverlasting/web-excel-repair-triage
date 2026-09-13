@@ -39,7 +39,7 @@
       "extension_registries": [
         "registry/prompts/management-operations-prompts.v1.json"
       ],
-      "must_not_ship_with": [
+      "must_not_export_to": [
         "afk-agent-flow"
       ],
       "reason": "This registry contains repository-specific operational prompts including Neuron Track Hours billing, FUN/Triage synchronization, and other local management workflows."
