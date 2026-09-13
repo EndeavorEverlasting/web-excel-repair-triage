@@ -2,6 +2,12 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.8.0 - 2026-09-13
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): expand compute authority and contract horizon (`a583b333`)
+
 ## 0.7.0 - 2026-09-13
 
 ### Features / breaking pre-1.0 changes
