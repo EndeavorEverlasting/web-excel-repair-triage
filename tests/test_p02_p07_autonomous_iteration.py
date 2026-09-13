@@ -78,48 +78,32 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
         self.assertIn("genuinely user-only dependency", prompt["proofGate"])
         self.assertIn("branch or PR alone is insufficient", prompt["proofGate"])
 
-    def test_p07_parallel_execution_is_binary_and_requires_actual_dispatch_proof(self) -> None:
+    def test_p07_parallel_execution_uses_capability_ladder_and_actual_dispatch_proof(self) -> None:
         prompt = self.effective["P07"]
         content = prompt["copyContent"]
         self.assertEqual("BUILD", prompt["type"])
-        self.assertEqual("PLAN", self.raw["P04"]["type"])
-        self.assertIn("[PARALLEL]", self.raw["P04"]["name"])
-        self.assertIn("parallel-safe sub-agent orchestration", prompt["sprintRole"])
-        self.assertIn("Parallel-execution proof requires", prompt["proofGate"])
-        dispatch_condition = (
-            "a usable sub-agent mechanism, at least two concurrent worker slots, and at least two meaningful "
-            "non-conflicting lanes"
-        )
-        for field in ("expectedOutput", "nextStep", "proofGate"):
-            self.assertIn(dispatch_condition, prompt[field])
-            self.assertIn("dispatch", prompt[field].lower())
-        self.assertIn("parallel sub-agents", prompt["expectedOutput"])
-        self.assertIn("dispatch those lanes immediately", prompt["nextStep"])
-        self.assertIn("leaves the sprint incomplete", prompt["expectedOutput"])
-        self.assertIn("the sprint is incomplete", prompt["proofGate"])
+        self.assertIn("dependency graph", prompt["expectedOutput"].lower())
+        self.assertIn("capability ladder", prompt["expectedOutput"].lower())
+        self.assertIn("graph width >= 2", content)
         for phrase in (
-            "PARALLEL EXECUTION IS AN EXECUTION REQUIREMENT, NOT A PLANNING OR REPORTING TOPIC.",
-            "Before substantial serial work, probe whether the environment exposes a usable sub-agent",
-            "at least two concurrent worker slots are available",
-            "dispatch them immediately",
-            "Do not merely describe, propose, consider, recommend, or defer parallelization",
-            "If these conditions are met and no workers are dispatched, the sprint is incomplete",
-            "Evidence of parallel execution must identify each dispatched worker/lane",
-            "returned artifact, diff/head, test result, finding",
+            "PARALLEL CAPABILITY LADDER / AUTONOMY GATE",
+            "native sub-agent/child-agent/delegated-agent/task-worker APIs",
+            "repository/local agent runners and orchestrators",
+            "connected remote/provider/MCP execution surfaces",
+            "CI/job/matrix fan-out",
+            "genuinely concurrent local processes/tool jobs",
+            "no connected self-hosted workers",
+            "continue down the capability ladder",
+            "dispatch immediately",
             "one writer per mutation surface",
             "The coordinator owns synthesis and integration",
-            "Treat worker completion claims as hypotheses",
-            "combined validation after rejoin",
-            "Do not idle while dispatched workers run",
-            "Final closeout must report only parallel lanes actually dispatched",
+            "Do not make the user manually create chats",
         ):
             self.assertIn(phrase, content)
-        for field in ("copyContent", "expectedOutput", "nextStep", "proofGate"):
-            self.assertNotIn("parallelization disposition", prompt[field])
-            self.assertNotIn("lanes considered", prompt[field])
-        self.assertIn("readability/editability regression", prompt["proofGate"])
-        self.assertIn("P128", prompt["proofGate"])
-        self.assertIn("Generated-surface proof", prompt["proofGate"])
+        self.assertIn("returned artifacts/results", prompt["proofGate"])
+        self.assertIn("parallel proof remains UNPROVEN", prompt["proofGate"])
+        self.assertIn("readability/P124", prompt["proofGate"])
+        self.assertIn("paradigm/P128", prompt["proofGate"])
 
     def test_p07_coordinates_repository_generated_mutation_lanes(self) -> None:
         prompt = self.effective["P07"]
@@ -134,36 +118,19 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
         ):
             self.assertIn(phrase, content)
 
-    def test_p07_unavailable_parallelism_is_one_binary_capability_report(self) -> None:
+    def test_p07_missing_one_worker_class_cannot_authorize_clean_serial_fallback(self) -> None:
         prompt = self.effective["P07"]
         content = prompt["copyContent"]
-        for phrase in (
-            "If no usable mechanism exists or fewer than two concurrent worker slots are available",
-            "proceed serially without enumerating hypothetical parallel lanes",
-            "`PARALLEL EXECUTION: unavailable — <exact capability limitation>.`",
-            'Do not call serial use of multiple tools, connectors, commands, tabs, or repository reads "parallel execution."',
-            "state that capability blocker once without describing hypothetical lanes",
-            "Do not make the user manually create chats",
-            "act as the parallel-work scheduler",
-        ):
-            self.assertIn(phrase, content)
-        self.assertEqual(
-            content.count("PARALLEL EXECUTION: unavailable — <exact capability limitation>."),
-            1,
-        )
-        self.assertIn("PARALLEL EXECUTION: unavailable", prompt["nextStep"])
-        self.assertIn("without hypothetical lanes", prompt["nextStep"])
-        for field in ("expectedOutput", "nextStep", "proofGate"):
-            self.assertNotIn("parallelization disposition", prompt[field])
-            self.assertNotIn("lanes considered", prompt[field])
-        self.assertIn(
-            "if those conditions held and no workers were dispatched, the sprint is incomplete",
-            prompt["proofGate"].lower(),
-        )
-        self.assertIn(
-            "serial use of multiple tools/connectors does not satisfy parallel proof",
-            prompt["proofGate"].lower(),
-        )
+        self.assertNotIn("proceed serially without enumerating hypothetical parallel lanes", content)
+        self.assertNotIn("PARALLEL EXECUTION: unavailable — <exact capability limitation>.", content)
+        self.assertIn("Absence of one adapter class is not global absence", content)
+        self.assertIn("no connected self-hosted workers", content)
+        self.assertIn("PARALLEL EXECUTION: DEGRADED", content)
+        self.assertIn("AUTONOMY_GAP:", content)
+        self.assertIn("parallel proof remains UNPROVEN", prompt["proofGate"])
+        self.assertIn("PARALLEL EXECUTION: NOT_APPLICABLE", content)
+        self.assertIn("dependency graph width is 1", content)
+        self.assertIn("User scheduling is never the fallback", prompt["expectedOutput"])
 
     def test_p07_strategic_follow_on_captures_leverage_without_expanding_scope(self) -> None:
         prompt = self.effective["P07"]

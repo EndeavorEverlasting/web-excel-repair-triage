@@ -162,12 +162,14 @@ class SkillPromptRegistryTests(unittest.TestCase):
             "AMBIGUOUS_EXECUTION_POSTURE",
             "PARALLEL EXECUTION — P07 OWNS ACTUAL DISPATCH",
             "P07 owns the execution/coordinator contract",
-            "PARALLEL EXECUTION: unavailable — <exact capability limitation>",
-            "Do not emit a hypothetical lane list or copy-paste worker packet merely because dispatch is unavailable",
+            "PARALLEL EXECUTION: DEGRADED — <exhausted capability-ladder evidence>",
+            "AUTONOMY_GAP: <smallest executable adapter/bootstrap/repair route>",
+            "no connected self-hosted workers",
+            "Do not emit a copy-paste worker packet as the primary path",
             "INSTALL THE SMALLEST DURABLE PREVENTION",
             "REGRESSION SCENARIO",
             "no stopping at plan/status while safe action remains",
-            "actual P07 dispatch evidence when worker capacity and collision-safe lanes exist",
+            "P07 dependency-graph width plus capability-ladder evidence",
         ):
             self.assertIn(phrase, content)
         self.assertNotIn("explicit Sub-Part Agent plan or serialized-dependency reason", content)

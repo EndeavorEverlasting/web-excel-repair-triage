@@ -42,6 +42,14 @@ A prompt panel is a transport container; a chat is an execution instance. One pa
 
 Parallel execution does not weaken ownership or proof. Units that write the same file, schema, registry, generated artifact, branch, PR, deployment target, or mutable runtime must be serialized or assigned one writer. Every parallel group needs explicit dependencies/collision ownership and one convergence unit that validates the combined result.
 
+### Parallel capability ladder and autonomy
+
+Parallelism is derived from the work graph, not from the presence of one favorite worker product. First determine whether at least two meaningful dependency-ready lanes can proceed without conflicting writes. When graph width is at least two, probe available execution adapters in this order and dispatch at the first safe rung with sufficient capacity: native sub-agent/child-agent/delegated-agent APIs; repository/local agent runners; connected remote/provider/MCP execution surfaces; CI/job/matrix fan-out; then genuinely concurrent local processes or tool jobs for deterministic non-LLM lanes. A missing rung never proves later rungs absent. In particular, `no connected self-hosted workers` is one capability fact, not proof that parallel execution is globally unavailable.
+
+Serial multi-tool use is not parallel execution. The local-process/tool rung counts only when independent jobs are actually launched concurrently and rejoined. Graph width one is `PARALLEL EXECUTION: NOT_APPLICABLE`. When graph width is at least two and every safe rung is evidenced unavailable or blocked, useful work may continue serially only as degraded execution: report `PARALLEL EXECUTION: DEGRADED` and an `AUTONOMY_GAP` naming the smallest executable adapter/bootstrap/repair route. Parallel proof remains UNPROVEN until a real dispatch occurs.
+
+Planning surfaces must produce a machine-executable `PARALLEL DISPATCH MANIFEST` as the primary orchestration artifact. Each ready lane names its dependencies, mutation owner, forbidden surfaces, branch/worktree or read-only posture, chosen adapter/rung, exact launch action, return artifact/contract, validator, convergence owner, and status. Copyable chat panels are portability/recovery fallback only. Do not make the operator create chats, paste prompts, shuttle context, or act as the scheduler when any autonomous adapter can carry the lane.
+
 ## Validation boundary
 
 Use the specific registry, Prompt Kit web, discovery, language, ordering, portability, or release-identity validators owned by the changed surface. Static/CI proof never becomes browser/device/production proof without observation.
