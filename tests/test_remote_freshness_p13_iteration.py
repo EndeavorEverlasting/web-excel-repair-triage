@@ -40,12 +40,46 @@ class RemoteFreshnessAndP13IterationTests(unittest.TestCase):
         self.assertIn("Do not fail merely because the default branch advanced", appendix)
         self.assertIn("not an ancestor of the refreshed default head", appendix)
 
+        # A repo-backed command is itself freshness-sensitive operator guidance.
+        self.assertIn(
+            "Before emitting, executing, or asking the operator to run any repository-backed command",
+            appendix,
+        )
+        self.assertIn(
+            "verify the intended command/launcher still exists at the refreshed head before invoking it",
+            appendix,
+        )
+        self.assertIn(
+            "A remembered path or command from an older head is not safe operator guidance",
+            appendix,
+        )
+        self.assertIn(
+            "If remote/default-branch truth moves while the agent is preparing guidance or work",
+            appendix,
+        )
+        self.assertIn(
+            "do not create a duplicate repair from stale evidence",
+            appendix,
+        )
+        self.assertIn(
+            "ask the operator to run a repository-backed command or launcher from an unrefreshed or unreconciled checkout",
+            self.policy["forbidden_solo_actions"],
+        )
+        self.assertIn(
+            "Before emitting, executing, or asking the operator to run any repository-backed command",
+            self.policy["next_step_suffix"],
+        )
+
         # Representative build/repair executors must inherit freshness from one shared owner.
         for prompt_id in ("P01", "P03", "P07", "P14", "P17", "P18", "P83"):
             with self.subTest(prompt_id=prompt_id):
                 content = self.effective[prompt_id]["copyContent"]
                 self.assertIn(marker, content)
                 self.assertIn("git fetch --all --prune --tags", content)
+                self.assertIn(
+                    "Before emitting, executing, or asking the operator to run any repository-backed command",
+                    content,
+                )
 
     def test_builder_upgrades_old_appendix_that_lacks_freshness(self) -> None:
         base = dict(self.raw["P07"])
@@ -91,7 +125,6 @@ class RemoteFreshnessAndP13IterationTests(unittest.TestCase):
         self.assertIn("Do not ask the user to compare rule wording", content)
         self.assertIn("Stale branch state is ruled out before inventing doctrine", p13["proofGate"])
         self.assertIn("smallest enforceable repo doctrine", p13["sprintRole"])
-
 
     def test_every_build_repair_or_artifact_prompt_inherits_fresh_evidence_floor(self) -> None:
         build_like = [
