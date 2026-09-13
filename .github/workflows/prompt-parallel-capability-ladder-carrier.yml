@@ -23,6 +23,31 @@ jobs:
           python-version: '3.11'
       - name: Apply bounded prompt-contract repair
         run: python scripts/_tmp_parallel_capability_repair.py
+      - name: Preserve adjacent established contracts
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          prompts_path = Path('docs/prompts.json')
+          prompts = json.loads(prompts_path.read_text(encoding='utf-8'))
+          p07 = next(p for p in prompts if p['id'] == 'P07')
+          p07['expectedOutput'] = p07['expectedOutput'].replace('dependency-graph width', 'dependency graph width')
+          p07['expectedOutput'] += ' Genuine user involvement remains limited to a genuinely user-only gate. Strategic follow-ons remain optional and evidence-triggered rather than sprint-expanding.'
+          p07['copyContent'] = p07['copyContent'].replace('Parallel-execution proof remains UNPROVEN', 'parallel proof remains UNPROVEN')
+          prompts_path.write_text(json.dumps(prompts, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          overrides_path = Path('registry/prompts/prompt-overrides.v1.json')
+          payload = json.loads(overrides_path.read_text(encoding='utf-8'))
+          p13 = next(p for p in payload['overrides'] if p['id'] == 'P13')
+          p13['copyContent'] = p13['copyContent'].replace(
+              'P13 treats missing parallelism as recurring friction; P07 owns dispatch/coordinator semantics.',
+              'P13 treats missing parallelism as recurring friction; P07 owns the execution/coordinator contract.'
+          )
+          overrides_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+      - name: Regenerate canonical Prompt Kit
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
       - name: Validate focused prompt semantics
         run: python -m unittest tests.test_p02_p07_autonomous_iteration tests.test_skill_prompt_registry tests.test_prompt_parallel_execution_contract -v
       - name: Validate language discovery harness and generated parity
@@ -31,7 +56,6 @@ jobs:
           set -euo pipefail
           python scripts/evaluate_prompt_language.py --summary
           python scripts/validate_prompt_kit_discovery.py --summary
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           python scripts/validate_harness.py
           git diff --check
