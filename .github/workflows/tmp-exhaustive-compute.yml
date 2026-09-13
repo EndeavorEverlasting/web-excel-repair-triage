@@ -1,0 +1,115 @@
+name: Temporary global exhaustive compute carrier
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-exhaustive-compute-20260913
+    paths:
+      - '.github/workflows/tmp-exhaustive-compute.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-global-exhaustive-compute
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-kit-exhaustive-compute-20260913
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Refresh exact floor and reject stale base
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/prompt-kit-exhaustive-compute-20260913 --prune
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/feat/prompt-kit-exhaustive-compute-20260913)"
+          git merge-base --is-ancestor origin/main HEAD
+          test -f scripts/tmp_apply_global_exhaustive_compute.py
+
+      - name: Apply canonical shared-policy strengthening
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/tmp_apply_global_exhaustive_compute.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+      - name: Focused proof pass one
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          python -m unittest tests.test_actionable_prompt_registry tests.test_prompt_registry_expansion_regression_design_teach tests.test_p02_p07_autonomous_iteration -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Exhaustive inheritance falsification pass two
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          python - <<'PY'
+          from scripts import build_prompt_kit_registry
+          prompts = build_prompt_kit_registry.load_prompt_registry()
+          required_content = (
+              'EXHAUSTIVE AVAILABLE COMPUTE RULE',
+              'Exhaust the decision-relevant safe compute available',
+              'Do not conserve tokens, tool calls, context windows',
+              'dispatch them immediately and execute them concurrently',
+              'fixed point is evidence-defined, not attempt-count-defined',
+              'residual-compute sweep',
+              'END-STATE CONTRACT HORIZON',
+          )
+          required_next = (
+              'Treat exhaustive available compute as authorized by default',
+              'stop only at an evidence-defined fixed point or exact ceiling/blocker',
+          )
+          failures = []
+          for prompt in prompts:
+              for phrase in required_content:
+                  if phrase not in prompt['copyContent']:
+                      failures.append(f"{prompt['id']} copyContent missing {phrase}")
+              for phrase in required_next:
+                  if phrase not in prompt['nextStep']:
+                      failures.append(f"{prompt['id']} nextStep missing {phrase}")
+          if failures:
+              raise SystemExit('\n'.join(failures[:40]))
+          if any(p['copyContent'].count('EXHAUSTIVE AVAILABLE COMPUTE RULE') != 1 for p in prompts):
+              raise SystemExit('shared exhaustive-compute rule duplicated or missing')
+          print(f'GLOBAL EXHAUSTIVE COMPUTE: PASS | prompts={len(prompts)} | all inherited exactly once')
+          PY
+          python -m unittest tests.test_actionable_prompt_registry tests.test_prompt_registry_expansion_regression_design_teach -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Self-remove transport and commit durable contribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/tmp-exhaustive-compute.yml scripts/tmp_apply_global_exhaustive_compute.py
+          git add \
+            registry/prompts/actionable-next-step-policy.v1.json \
+            tests/test_actionable_prompt_registry.py \
+            tests/test_prompt_registry_expansion_regression_design_teach.py \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          echo '--- durable staged paths ---'
+          git diff --cached --name-only
+          git commit -m "feat(prompt-kit): require exhaustive available compute globally"
+          git fetch origin main --prune
+          git merge-base --is-ancestor origin/main HEAD^
+          git push origin HEAD:feat/prompt-kit-exhaustive-compute-20260913
