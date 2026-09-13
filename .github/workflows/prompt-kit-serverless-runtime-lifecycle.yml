@@ -1,0 +1,97 @@
+name: Prompt Kit serverless runtime lifecycle
+
+on:
+  pull_request:
+    paths:
+      - harness/contracts/prompt-kit-serverless-runtime-lifecycle.v1.json
+      - harness/contracts/prompt-kit-cross-device-access.v1.json
+      - docs/PROMPT_KIT_SERVERLESS_RUNTIME_PHASE_PLAN.md
+      - docs/PROMPT_KIT_PRIVACY_STORAGE.md
+      - docs/prompt-kit*.js
+      - scripts/validate_prompt_kit_serverless_runtime_lifecycle.py
+      - tests/test_prompt_kit_serverless_runtime_lifecycle.py
+      - scripts/validate_prompt_kit_privacy_storage.py
+      - tests/test_prompt_kit_privacy_storage.py
+      - scripts/validate_prompt_kit_cross_device_access.py
+      - tests/test_prompt_kit_cross_device_access.py
+      - scripts/build_prompt_kit_registry.py
+      - web/prompt-kit/**
+      - .github/workflows/prompt-kit-serverless-runtime-lifecycle.yml
+  push:
+    branches: [main]
+    paths:
+      - harness/contracts/prompt-kit-serverless-runtime-lifecycle.v1.json
+      - harness/contracts/prompt-kit-cross-device-access.v1.json
+      - docs/PROMPT_KIT_SERVERLESS_RUNTIME_PHASE_PLAN.md
+      - docs/PROMPT_KIT_PRIVACY_STORAGE.md
+      - docs/prompt-kit*.js
+      - scripts/validate_prompt_kit_serverless_runtime_lifecycle.py
+      - tests/test_prompt_kit_serverless_runtime_lifecycle.py
+      - scripts/validate_prompt_kit_privacy_storage.py
+      - tests/test_prompt_kit_privacy_storage.py
+      - scripts/validate_prompt_kit_cross_device_access.py
+      - tests/test_prompt_kit_cross_device_access.py
+      - scripts/build_prompt_kit_registry.py
+      - web/prompt-kit/**
+      - .github/workflows/prompt-kit-serverless-runtime-lifecycle.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Verify candidate and current main floor
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          test -n "$(git rev-parse origin/main)"
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            git merge-base --is-ancestor origin/main HEAD
+          fi
+          echo "candidate sha=$(git rev-parse HEAD)"
+          echo "main floor=$(git rev-parse origin/main)"
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Validate serverless runtime lifecycle
+        run: |
+          python scripts/validate_prompt_kit_serverless_runtime_lifecycle.py --summary
+          python -m unittest tests.test_prompt_kit_serverless_runtime_lifecycle -v
+
+      - name: Validate parent privacy and cross-device contracts
+        run: |
+          python scripts/validate_prompt_kit_privacy_storage.py --summary
+          python -m unittest tests.test_prompt_kit_privacy_storage -v
+          python scripts/validate_prompt_kit_cross_device_access.py --summary
+          python -m unittest tests.test_prompt_kit_cross_device_access -v
+
+      - name: Validate canonical Prompt Kit parity
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+
+      - name: Validate patch hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            git diff --check "origin/$GITHUB_BASE_REF...HEAD"
+          elif [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            git diff --check "${{ github.event.before }}..HEAD"
+          else
+            git diff --check HEAD^..HEAD
+          fi
