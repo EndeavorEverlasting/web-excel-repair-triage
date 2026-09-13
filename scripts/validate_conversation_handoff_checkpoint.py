@@ -9,6 +9,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from jsonschema import Draft202012Validator, FormatChecker
+from jsonschema.exceptions import SchemaError
+
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "harness" / "conversation-continuity" / "checkpoint.schema.v1.json"
 SCHEMA_VERSION = "live-thread-p02-checkpoint/v1"
@@ -80,8 +83,12 @@ def load_json(path: Path) -> dict[str, Any]:
 
 
 def validate_schema_contract(schema: dict[str, Any] | None = None) -> None:
-    """Verify that the tracked JSON Schema still matches validator-owned invariants."""
+    """Verify that the canonical schema is valid and matches semantic constants."""
     schema = schema or load_json(SCHEMA_PATH)
+    try:
+        Draft202012Validator.check_schema(schema)
+    except SchemaError as exc:
+        raise ContractError(f"checkpoint schema is invalid: {exc.message}") from exc
     _require(schema.get("$schema") == "https://json-schema.org/draft/2020-12/schema", "checkpoint schema must use JSON Schema 2020-12")
     _require(schema.get("$id") == SCHEMA_VERSION, "checkpoint schema $id drift")
     _require(schema.get("schema_version") == SCHEMA_VERSION, "checkpoint schema version drift")
@@ -97,6 +104,25 @@ def validate_schema_contract(schema: dict[str, Any] | None = None) -> None:
     _require(routes == ROUTES, "checkpoint route enum drift")
     evidence_types = set(schema.get("$defs", {}).get("evidence", {}).get("properties", {}).get("type", {}).get("enum", []))
     _require(evidence_types == EVIDENCE_TYPES, "checkpoint evidence-type enum drift")
+
+
+def _schema_error_path(error: Any) -> str:
+    """Render a JSON Schema error path in a compact checkpoint-oriented form."""
+    parts = [str(part) for part in error.absolute_path]
+    return "$" if not parts else "$." + ".".join(parts)
+
+
+def validate_schema_instance(payload: dict[str, Any], schema: dict[str, Any] | None = None) -> None:
+    """Validate one checkpoint instance against the canonical Draft 2020-12 schema."""
+    schema = schema or load_json(SCHEMA_PATH)
+    validator = Draft202012Validator(schema, format_checker=FormatChecker())
+    errors = sorted(
+        validator.iter_errors(payload),
+        key=lambda error: (tuple(str(part) for part in error.absolute_path), error.message),
+    )
+    if errors:
+        first = errors[0]
+        raise ContractError(f"schema validation failed at {_schema_error_path(first)}: {first.message}")
 
 
 def _validate_decisions(items: Any, prefix: str) -> None:
@@ -169,7 +195,11 @@ def _validate_repository_state(value: Any, prefix: str) -> None:
 
 
 def validate_checkpoint(payload: dict[str, Any]) -> None:
-    """Enforce cross-field resumability rules for every checkpoint thread."""
+    """Enforce canonical structure plus cross-field resumability rules."""
+    schema = load_json(SCHEMA_PATH)
+    validate_schema_contract(schema)
+    validate_schema_instance(payload, schema)
+
     _require(isinstance(payload, dict), "checkpoint must be an object")
     _no_extra_keys(payload, {"handoff_version", "source_controller", "source_conversation_state", "created_at", "threads"}, "checkpoint")
     _require(payload.get("handoff_version") == SCHEMA_VERSION, "unsupported handoff_version")
@@ -232,8 +262,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--schema-only", action="store_true", help="Validate the repository-owned schema contract without an instance")
     args = parser.parse_args(argv)
     try:
-        validate_schema_contract()
         if args.schema_only:
+            validate_schema_contract()
             print(json.dumps({"status": "PASS", "schema": SCHEMA_VERSION}, indent=2))
             return 0
         if args.checkpoint is None:
