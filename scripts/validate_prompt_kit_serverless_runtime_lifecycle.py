@@ -13,6 +13,7 @@ CONTRACT_PATH = ROOT / "harness" / "contracts" / "prompt-kit-serverless-runtime-
 PLAN_PATH = ROOT / "docs" / "PROMPT_KIT_SERVERLESS_RUNTIME_PHASE_PLAN.md"
 PARENT_CONTRACT_PATH = ROOT / "harness" / "contracts" / "prompt-kit-cross-device-access.v1.json"
 SCOUT_PATH = ROOT / "harness" / "prompt-topology" / "POST_PHASE_C_STRATEGIC_SCOUT.md"
+PHASE_C_CLOSEOUT_PATH = ROOT / "harness" / "prompt-topology" / "PHASE_C_CLOSEOUT.md"
 GAMEPLAY_PATH = ROOT / "docs" / "prompt-kit-preference-gameplay.js"
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "prompt-kit-serverless-runtime-lifecycle.yml"
 
@@ -85,6 +86,7 @@ REQUIRED_WORKFLOW_PATHS = {
     "harness/contracts/prompt-kit-serverless-runtime-lifecycle.v1.json",
     "harness/contracts/prompt-kit-cross-device-access.v1.json",
     "harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md",
+    "harness/prompt-topology/PHASE_C_CLOSEOUT.md",
     "docs/PROMPT_KIT_SERVERLESS_RUNTIME_PHASE_PLAN.md",
     "docs/prompt-kit-preference-gameplay.js",
     "scripts/validate_prompt_kit_serverless_runtime_lifecycle.py",
@@ -122,7 +124,9 @@ def _require_exact_keys(value: Any, expected: set[str], field: str) -> dict[str,
         raise LifecycleError(f"{field} must be an object")
     actual = set(value)
     if actual != expected:
-        raise LifecycleError(f"{field} keys drifted; missing={sorted(expected-actual)}, unexpected={sorted(actual-expected)}")
+        raise LifecycleError(
+            f"{field} keys drifted; missing={sorted(expected-actual)}, unexpected={sorted(actual-expected)}"
+        )
     return value
 
 
@@ -179,7 +183,6 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
     if run_points != EXPECTED_CLEANUP_RUN_POINTS:
         raise LifecycleError("cleanup run points drifted")
 
-    stores = lifecycle.get("stores")
     required_stores = {
         "personal_state",
         "local_journal",
@@ -188,7 +191,7 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
         "polling_state",
         "secrets",
     }
-    stores = _require_exact_keys(stores, required_stores, "local_storage_lifecycle.stores")
+    stores = _require_exact_keys(lifecycle.get("stores"), required_stores, "local_storage_lifecycle.stores")
     personal = stores["personal_state"]
     if personal.get("automatic_purge") is not False or personal.get("retention") != "until-user-delete":
         raise LifecycleError("Personal State must never be automatically purged")
@@ -211,7 +214,11 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
     polling = stores["polling_state"]
     if polling.get("max_age_hours") != 24:
         raise LifecycleError("polling state max age must remain 24 hours")
-    for field in ("persistent_request_history_allowed", "persistent_response_history_allowed", "persistent_cycle_log_allowed"):
+    for field in (
+        "persistent_request_history_allowed",
+        "persistent_response_history_allowed",
+        "persistent_cycle_log_allowed",
+    ):
         if polling.get(field) is not False:
             raise LifecycleError(f"polling_state.{field} must remain false")
     if polling.get("max_persistent_cursor_records") != 1:
@@ -223,11 +230,20 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
     pressure = lifecycle.get("storage_pressure_policy")
     if not isinstance(pressure, dict):
         raise LifecycleError("storage_pressure_policy must be an object")
-    must_never = set(_require_nonempty_list(pressure.get("must_never_auto_delete"), "storage_pressure_policy.must_never_auto_delete"))
+    must_never = set(
+        _require_nonempty_list(
+            pressure.get("must_never_auto_delete"),
+            "storage_pressure_policy.must_never_auto_delete",
+        )
+    )
     if "Personal State" not in must_never:
         raise LifecycleError("storage pressure policy must protect Personal State")
 
-    controls = _require_exact_keys(lifecycle.get("user_controls"), REQUIRED_USER_CONTROLS, "local_storage_lifecycle.user_controls")
+    controls = _require_exact_keys(
+        lifecycle.get("user_controls"),
+        REQUIRED_USER_CONTROLS,
+        "local_storage_lifecycle.user_controls",
+    )
     if not all(value is True for value in controls.values()):
         raise LifecycleError("all lifecycle user-clear controls must remain required")
 
@@ -245,8 +261,7 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
     if telemetry.get("persist_exact_poll_timestamps") is not False:
         raise LifecycleError("exact poll timestamps must not be persisted")
 
-    phases = payload.get("phase_map")
-    phases = _require_exact_keys(phases, REQUIRED_PHASES, "phase_map")
+    phases = _require_exact_keys(payload.get("phase_map"), REQUIRED_PHASES, "phase_map")
     if phases["phase-1-local-lifecycle"].get("status") != "planned":
         raise LifecycleError("Phase 1 must remain the immediate planned implementation")
     if phases["phase-2-portable-private-sync"].get("dependency") != "phase-1-local-lifecycle":
@@ -320,17 +335,30 @@ def validate_parent_contract() -> None:
 
 
 def validate_strategy_dependency() -> None:
+    """Bind Phase 4 to current closeout evidence plus the surviving P95 gate."""
     try:
-        text = SCOUT_PATH.read_text(encoding="utf-8")
+        scout = SCOUT_PATH.read_text(encoding="utf-8")
     except FileNotFoundError as exc:
         raise LifecycleError("missing post-Phase-C strategic scout required by current main") from exc
     for phrase in (
         "Recommended next owner:** P95",
         "Prompt execution evidence-spine/state-ownership architecture before Phase D Passive Learning",
-        "Phase C closeout integration is a prerequisite",
     ):
-        if phrase not in text:
+        if phrase not in scout:
             raise LifecycleError(f"post-Phase-C strategic dependency drifted: {phrase}")
+
+    try:
+        closeout = PHASE_C_CLOSEOUT_PATH.read_text(encoding="utf-8")
+    except FileNotFoundError as exc:
+        raise LifecycleError("Phase C closeout is not integrated on the current evidence floor") from exc
+    for phrase in (
+        "**Status:** COMPLETE / INTEGRATED / POST-MERGE VALIDATED",
+        "The next **approved** owner is **P95",
+        "EVIDENCE_SPINE_ARCHITECTURE.md",
+        "deferred until evidence-lifecycle ownership is resolved",
+    ):
+        if phrase not in closeout:
+            raise LifecycleError(f"Phase C closeout/P95 admission evidence drifted: {phrase}")
 
 
 def _strip_js_comments(text: str) -> str:
@@ -446,7 +474,11 @@ def validate_gameplay_if_present() -> None:
     if "state=emptyState()" not in compact_body:
         raise LifecycleError("clearUsageData() must clear the in-memory usage state")
 
-    exported = re.search(r"PromptKitPreferenceGameplay\s*=\s*\{[^}]*clearUsageData\s*:\s*clearUsageData", text, re.S)
+    exported = re.search(
+        r"PromptKitPreferenceGameplay\s*=\s*\{[^}]*clearUsageData\s*:\s*clearUsageData",
+        text,
+        re.S,
+    )
     direct_binding = re.search(
         r"querySelector\([^)]*data-clear-usage[^)]*\)\.addEventListener\(\s*['\"]click['\"]\s*,\s*clearUsageData\s*\)",
         text,
@@ -456,9 +488,7 @@ def validate_gameplay_if_present() -> None:
         text,
     )
     if not exported or not (direct_binding or wrapper_binding):
-        raise LifecycleError(
-            "clearUsageData() must be exported and wired to a data-clear-usage user control"
-        )
+        raise LifecycleError("clearUsageData() must be exported and wired to a data-clear-usage user control")
 
 
 def _workflow_event_paths(text: str, event: str) -> set[str]:
