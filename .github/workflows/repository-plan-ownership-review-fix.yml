@@ -1,0 +1,130 @@
+name: Repository plan ownership review fix
+
+on:
+  push:
+    branches: [fix/repository-plan-durability-20260912]
+    paths:
+      - '.github/workflows/repository-plan-ownership-review-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/repository-plan-durability-20260912
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Refresh main and require current ancestry
+        run: |
+          git fetch origin main --prune --tags
+          git merge-base --is-ancestor origin/main HEAD
+      - name: Repair active-PR ownership and read-only semantics
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          policy_path = Path('registry/prompts/actionable-next-step-policy.v1.json')
+          policy = json.loads(policy_path.read_text(encoding='utf-8'))
+
+          old = 'If an active pull request exists, the approved plan must be present there directly or by an explicit canonical tracked-plan reference.'
+          new = ('If a relevant active pull request is the canonical owner for this work and this lane has mutation authority, '
+                 'the approved plan must be present there directly or by an explicit canonical tracked-plan reference. '
+                 'An unrelated or separately owned pull request is evidence to inspect, not a write target; do not modify another lane to satisfy plan durability.')
+          if old not in policy['next_step_suffix']:
+              raise SystemExit('next_step active-PR sentence not found')
+          policy['next_step_suffix'] = policy['next_step_suffix'].replace(old, new, 1)
+
+          old = '- If an active pull request exists, approval must be reflected there immediately: include the complete plan or the exact committed canonical plan path and revision. A plan approved in chat triggers synchronization, not closure.'
+          new = ('- If a relevant active pull request is the canonical owner for this work and this lane has mutation authority, '
+                 'approval must be reflected there immediately: include the complete plan or the exact committed canonical plan path/revision. '
+                 'If the active PR is unrelated, separately owned, or not writable by this lane, do not modify it; use/create an owned tracked plan/handoff artifact instead and reference the foreign PR only as evidence/dependency. '
+                 'If the task is explicitly read-only or repository mutation is forbidden, do not violate that boundary: keep the chat plan PROVISIONAL, name durable-plan synchronization as BLOCKED by the explicit scope/authority gate, and do not claim the planning state durable or complete. A plan approved in chat triggers synchronization when authorized, not closure by itself.')
+          if old not in policy['copy_content_appendix']:
+              raise SystemExit('shared active-PR bullet not found')
+          policy['copy_content_appendix'] = policy['copy_content_appendix'].replace(old, new, 1)
+
+          forbidden = policy['forbidden_solo_actions']
+          item = 'modify an unrelated, separately owned, or non-writable active pull request merely to satisfy repository-plan durability'
+          if item not in forbidden:
+              forbidden.append(item)
+          policy_path.write_text(json.dumps(policy, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          prompts_path = Path('docs/prompts.json')
+          prompts = json.loads(prompts_path.read_text(encoding='utf-8'))
+          by_id = {p['id']: p for p in prompts}
+
+          p02 = by_id['P02']
+          p02['nextStep'] = ('Prototype and validate the launch pack; resolve and reuse the canonical plan/handoff owner or a relevant writable active PR owned by this lane. '
+              'If neither exists and repository mutation is authorized, create the smallest tracked plan artifact following existing repository plan/docs/harness conventions. '
+              'If planning is explicitly read-only or mutation is forbidden, keep the chat plan provisional and report durable synchronization as BLOCKED rather than writing into another lane. '
+              'When durable ownership exists, persist the actionable plan, update the work ledger to reference it when present, then present concise chat-facing panels and launch from that state.')
+          p02_marker = '- If an active PR exists, synchronize approval there immediately: include the complete plan or exact committed canonical plan path/revision. Approval in chat triggers repository/PR synchronization in the same execution thread.'
+          p02_new = ('- Synchronize approval into an active PR only when that PR is the relevant canonical owner and this lane has mutation authority. '
+                     'Do not modify an unrelated or separately owned PR; use/create an owned tracked plan artifact instead. '
+                     'If explicit read-only scope forbids repository mutation, leave the chat plan provisional and report the durable-plan write as BLOCKED rather than claiming completion.')
+          if p02_marker not in p02['copyContent']:
+              raise SystemExit('P02 active-PR marker not found')
+          p02['copyContent'] = p02['copyContent'].replace(p02_marker, p02_new, 1)
+
+          p04 = by_id['P04']
+          p04['nextStep'] = ('Resolve and reuse the canonical repository plan/handoff owner or a relevant writable active PR owned by this lane. '
+              'If none exists and repository mutation is authorized, create the smallest tracked plan artifact following existing repository plan/docs/harness conventions; persist the complete accepted factoring plan there and index it from P66/the work ledger when present. '
+              'If the planning task is explicitly read-only or mutation is forbidden, do not write into another lane: keep the plan provisional and report durable synchronization as BLOCKED. '
+              'Then route to P05/P07 only from a durable revision or after the named authority gate is cleared.')
+          p04_marker = '- Approval or material plan change in chat triggers synchronization to the tracked plan/PR before P05/P07 or another agent takes over.'
+          p04_new = ('- Approval or material plan change in chat triggers synchronization to the owned canonical plan or relevant writable PR before P05/P07 or another agent takes over. '
+                     'An unrelated/separately owned PR is never a substitute write target; read-only scope makes durability a named BLOCKED gate, not permission to mutate.')
+          if p04_marker not in p04['copyContent']:
+              raise SystemExit('P04 approval marker not found')
+          p04['copyContent'] = p04['copyContent'].replace(p04_marker, p04_new, 1)
+
+          prompts_path.write_text(json.dumps(prompts, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          test_path = Path('tests/test_repository_plan_durability.py')
+          test = test_path.read_text(encoding='utf-8')
+          needle = '        self.assertIn("smallest tracked plan artifact", self.policy["copy_content_appendix"])\n'
+          addition = ('        self.assertIn("relevant active pull request is the canonical owner", self.policy["copy_content_appendix"])\n'
+                      '        self.assertIn("do not modify it", self.policy["copy_content_appendix"])\n'
+                      '        self.assertIn("explicitly read-only", self.policy["copy_content_appendix"])\n'
+                      '        self.assertIn("relevant writable active PR owned by this lane", self.raw["P02"]["nextStep"])\n'
+                      '        self.assertIn("relevant writable active PR owned by this lane", self.raw["P04"]["nextStep"])\n')
+          if addition not in test:
+              if needle not in test:
+                  raise SystemExit('ownership regression insertion point missing')
+              test = test.replace(needle, needle + addition, 1)
+          test_path.write_text(test, encoding='utf-8')
+          PY
+      - name: Regenerate and validate
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python -m unittest -v \
+            tests.test_repository_plan_durability \
+            tests.test_actionable_prompt_registry \
+            tests.test_p02_p07_autonomous_iteration \
+            tests.test_p07_phase_continuity \
+            tests.test_operational_closeout_contract \
+            tests.test_ai_engineering_level_up \
+            tests.test_spec_architecture_prompt_registry
+          python scripts/prompt_registry_ops.py validate
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit repair and remove carrier
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/prompts.json registry/prompts/actionable-next-step-policy.v1.json tests/test_repository_plan_durability.py web/prompt-kit/index.html
+          git commit -m "fix(prompt-kit): respect plan-owner mutation authority"
+          git rm -f .github/workflows/repository-plan-ownership-review-fix.yml
+          git commit -m "chore(prompt-kit): remove plan ownership review carrier"
+          git push origin HEAD:fix/repository-plan-durability-20260912
