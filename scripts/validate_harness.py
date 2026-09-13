@@ -116,6 +116,8 @@ REQUIRED_VALIDATOR_IDS = {
     "app-harness-validation",
     "prompt-kit-feedback-afk-routing-audit",
     "prompt-kit-feedback-afk-routing-tests",
+    "prompt-outcome-receipt-audit",
+    "prompt-outcome-receipt-tests",
     "operant-product-identity-audit",
     "operant-product-identity-tests",
     "operant-external-resource-audit",

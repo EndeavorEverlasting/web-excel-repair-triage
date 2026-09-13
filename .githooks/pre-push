@@ -38,6 +38,8 @@ python scripts/evaluate_prompt_language.py --output "$PROMPT_REPORT" --summary
 python -m unittest tests.test_skill_prompt_registry -v
 python scripts/validate_prompt_kit_feedback_afk_routing.py --summary
 python -m unittest tests.test_prompt_kit_feedback_afk_routing -v
+python scripts/validate_prompt_outcome_receipts.py --summary
+python -m unittest tests.test_prompt_outcome_receipt_prompt -v
 python scripts/validate_prompt_kit_layout_harness.py --summary
 python -m unittest tests.test_prompt_kit_layout_harness -v
 python tests/test_prompt_kit_header_contract.py
