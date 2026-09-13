@@ -64,9 +64,14 @@ class RepositoryPlanDurabilityTests(unittest.TestCase):
         self.assertIn("P66", self.raw["P04"]["copyContent"])
         self.assertIn("canonical tracked plan", self.raw["P02"]["expectedOutput"])
         self.assertIn("active PR", self.raw["P04"]["proofGate"])
-        self.assertIn("no canonical plan owner or active PR exists", self.raw["P02"]["nextStep"])
-        self.assertIn("If none exists and there is no active PR", self.raw["P04"]["nextStep"])
+        self.assertIn("If neither exists and repository mutation is authorized", self.raw["P02"]["nextStep"])
+        self.assertIn("If none exists and repository mutation is authorized", self.raw["P04"]["nextStep"])
         self.assertIn("smallest tracked plan artifact", self.policy["copy_content_appendix"])
+        self.assertIn("relevant active pull request is the canonical owner", self.policy["copy_content_appendix"])
+        self.assertIn("do not modify it", self.policy["copy_content_appendix"])
+        self.assertIn("explicitly read-only", self.policy["copy_content_appendix"])
+        self.assertIn("relevant writable active PR owned by this lane", self.raw["P02"]["nextStep"])
+        self.assertIn("relevant writable active PR owned by this lane", self.raw["P04"]["nextStep"])
 
     def test_p12_refuses_chat_only_or_state_promoted_closeout(self) -> None:
         p12 = self.raw["P12"]
