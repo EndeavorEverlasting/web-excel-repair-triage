@@ -221,6 +221,19 @@ def validate_output_path(output: Path, inputs: tuple[Path, Path, Path]) -> None:
             raise ViewerBuildError(f'output path must not equal input path: {output}')
 
 
+def prepare_inputs(
+    topology: Path,
+    projection: Path,
+    state: Path,
+    output: Path,
+) -> tuple[Path, Path, Path, tempfile.TemporaryDirectory[str] | None]:
+    requested_inputs = (topology, projection, state)
+    validate_output_path(output, requested_inputs)
+    resolved = resolve_inputs(topology, projection, state)
+    validate_output_path(output, resolved[:3])
+    return resolved
+
+
 def backup_existing_external_output(
     output: Path,
     *,
@@ -287,11 +300,10 @@ def main() -> int:
     args = parser.parse_args()
     temp = None
     try:
-        topology_path, projection_path, state_path, temp = resolve_inputs(
-            args.topology, args.projection, args.state
+        topology_path, projection_path, state_path, temp = prepare_inputs(
+            args.topology, args.projection, args.state, args.output
         )
         inputs = (topology_path, projection_path, state_path)
-        validate_output_path(args.output, inputs)
         rendered = build(*inputs)
         if args.check:
             if not args.output.exists():

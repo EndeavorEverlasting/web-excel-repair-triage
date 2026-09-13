@@ -6,6 +6,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location('phase_c_builder', ROOT / 'scripts/build_prompt_topology_viewer.py')
@@ -173,6 +174,17 @@ class PhaseCViewerTests(unittest.TestCase):
                 path.write_text('{}', encoding='utf-8')
             with self.assertRaisesRegex(mod.ViewerBuildError, 'must not equal input'):
                 mod.validate_output_path(topology, (topology, projection, state))
+
+    def test_requested_output_alias_is_rejected_before_input_rebuild(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            topology = root / 'missing-topology.json'
+            projection = root / 'missing-projection.json'
+            state = root / 'missing-state.json'
+            with mock.patch.object(mod, 'resolve_inputs') as resolver:
+                with self.assertRaisesRegex(mod.ViewerBuildError, 'must not equal input'):
+                    mod.prepare_inputs(topology, projection, state, topology)
+                resolver.assert_not_called()
 
     def test_symlink_output_path_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
