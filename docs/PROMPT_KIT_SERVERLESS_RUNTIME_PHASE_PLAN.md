@@ -20,6 +20,16 @@ The immediate Phase 1 implementation must satisfy these observable outcomes:
 
 This phase does **not** implement `.pkenc` encryption, cross-device pairing, automatic cloud transport, hosted/serverless ingestion, or network-anonymity claims.
 
+The durable capability IDs are deliberately explicit so future refactors cannot silently drop a use case:
+
+- `local-storage-separation-and-lifecycle`
+- `encrypted-pkenc-export-import`
+- `cross-device-pairing`
+- `serverless-sync-transport`
+- `privacy-reducer-runtime`
+- `collective-learning-ingestion`
+- `network-anonymity`
+
 ## SOURCE PROMPT DISPOSITION
 
 | ID | Source requirement | Disposition | Surviving requirement / reason |
@@ -48,6 +58,7 @@ This phase does **not** implement `.pkenc` encryption, cross-device pairing, aut
 | S22 | Existing PR #460 successor phases: local storage separation; `.pkenc`; automatic transport only if warranted; PrivacyReducer runtime then ingestion. | merged | Expanded into five dependency-ordered phases so retention, polling/retry cleanup, pairing, and anonymity investigation cannot fall through the cracks. |
 | S23 | PR #242 may maintain local preference/usage state. | included | It is a known collision/readiness dependency: its bounded usage store must gain a reachable clear/delete path before merge after this contract lands. |
 | S24 | Do not silently claim network anonymity or live ingestion from static contracts. | included | Network anonymity remains `investigate-first`; runtime/deployment/observation evidence is required before promotion. |
+| S25 | Current mainline strategy (#461) requires Prompt execution evidence-spine/state-ownership architecture to be resolved before Phase D Passive Learning / Collective Learning runtime work. | included | Phase 4 now depends on Phase 1 **plus** Prompt Topology Phase C closeout and the routed P95 evidence-spine/state-ownership investigation. Phase 1 local lifecycle and Phase 2/3 private sync remain separately executable because #461 explicitly treats Personal State + Private Sync as already bounded successor execution. |
 
 ## CONFLICT RESOLUTION
 
@@ -57,6 +68,7 @@ This phase does **not** implement `.pkenc` encryption, cross-device pairing, aut
 4. **Telemetry usefulness vs storage pressure.** Storage limits win. When cleanup cannot restore bounds, telemetry/sync writes stop. The product remains usable locally.
 5. **PR #242 runtime ownership vs this lifecycle sprint.** This lifecycle lane does not rewrite #242's gameplay surface. It establishes the contract and gate that #242 must satisfy when reconciled with current main.
 6. **Generic “FINAL HANDOFF” requirement vs avoiding prompt duplication.** The complete durable handoff is this file plus the lifecycle contract. Do not create another long-lived prompt with competing requirements.
+7. **Phase 4 local Collective Learning vs current evidence-spine strategy.** Do not implement `privacy-reducer-runtime` as a new parallel event model merely because storage/privacy bounds now exist. Before Phase 4, integrate Prompt Topology Phase C closeout and resolve the P95 Prompt Execution Evidence Spine/state-ownership investigation so existing route/usage/outcome owners can be adapted rather than duplicated.
 
 ## IMMEDIATE OWNED SCOPE
 
@@ -70,6 +82,7 @@ This phase does **not** implement `.pkenc` encryption, cross-device pairing, aut
 - PR #460 is integrated and validated on `main`.
 - `harness/contracts/prompt-kit-cross-device-access.v1.json` remains the parent privacy/storage authority.
 - `harness/contracts/prompt-kit-serverless-runtime-lifecycle.v1.json` defines the exact lifecycle limits.
+- Phase 1 is independent of the P95 evidence-spine investigation; Phase 4 is not. Phase 4 may begin only after Prompt Topology Phase C closeout is integrated and the P95 evidence-spine/state-ownership investigation is resolved.
 
 **Owned implementation surfaces for Phase 1:**
 - one canonical local lifecycle/storage owner under the existing Prompt Kit source pattern;
@@ -99,6 +112,7 @@ Phase 1 must not mutate or implement:
 - cross-device pairing/recovery UX;
 - automatic cloud/serverless sync transport;
 - Collective Learning network ingestion;
+- Phase 4 PrivacyReducer behavioral-event integration before the Phase C closeout + P95 evidence-spine/state-ownership gate is resolved;
 - claims of network anonymity;
 - identity-backed analytics;
 - raw Local Journal upload;
@@ -116,7 +130,8 @@ Before Phase 1 mutation:
 4. Inspect `docs/PROMPT_KIT_PRIVACY_STORAGE.md`, privacy validators/tests/workflows, canonical Prompt Kit builder, and generated parity checks.
 5. Inspect any current usage-state implementation such as PR #242 rather than assuming its storage shape.
 6. Search for existing clear/reset helpers, storage adapters, IndexedDB/localStorage owners, retention logic, and UI controls before inventing another implementation.
-7. Record the exact base SHA and any separately owned collision surfaces.
+7. Read `harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md` and preserve its P95 admission gate before any Phase 4/Passive Learning mutation.
+8. Record the exact base SHA and any separately owned collision surfaces.
 
 Fresh repository/provider truth outranks this document if filenames or owners move; update this plan and contract in the same owned lane when that happens.
 
@@ -134,9 +149,10 @@ Fresh repository/provider truth outranks this document if filenames or owners mo
 10. If retention cannot restore bounds because the storage API fails or is unavailable, stop telemetry/sync writes and preserve core Prompt Kit use.
 11. Expose user-facing clear controls that distinguish disposable usage/telemetry state from durable Personal State.
 12. Reconcile PR #242 or its successor only after the lifecycle owner is canonical; do not duplicate lifecycle logic inside gameplay code.
-13. Keep capability states typed: planned, implemented, wired, validated, integrated, deployed, observed.
-14. Iterate through implementation → focused validation → diff review → gap repair until no safe in-scope improvement remains.
-15. Commit/push and merge the exact validated head when review/CI/protection gates permit, then prove the current default branch contains it.
+13. Before Phase 4, honor the current P95 evidence-spine/state-ownership admission gate; do not invent a fourth route/usage/outcome event model.
+14. Keep capability states typed: planned, implemented, wired, validated, integrated, deployed, observed.
+15. Iterate through implementation → focused validation → diff review → gap repair until no safe in-scope improvement remains.
+16. Commit/push and merge the exact validated head when review/CI/protection gates permit, then prove the current default branch contains it.
 
 ## VALIDATION
 
@@ -164,7 +180,7 @@ If unrelated explanatory or tutorial material is later useful, derive its branch
 
 ## FINAL HANDOFF
 
-**Proven floor:** PR #460 integrated the four-plane privacy/storage contract. This successor document and `harness/contracts/prompt-kit-serverless-runtime-lifecycle.v1.json` add the durable serverless runtime horizon plus bounded retention/deletion obligations.
+**Proven floor:** PR #460 integrated the four-plane privacy/storage contract. Main later integrated PR #461, which adds the P95 evidence-spine/state-ownership admission gate before Phase D/Collective Learning runtime work. This successor document and `harness/contracts/prompt-kit-serverless-runtime-lifecycle.v1.json` add the durable serverless runtime horizon plus bounded retention/deletion obligations without bypassing that gate.
 
 **First executable successor action after this planning/contract sprint is integrated:** refresh `main`, inspect the current local usage/state owner(s), and implement the Phase 1 canonical lifecycle owner with tests before wiring it into generated Prompt Kit output.
 
