@@ -1,0 +1,90 @@
+name: P07 phase continuity carrier
+
+on:
+  push:
+    branches: [fix/p07-phase-continuity-20260912]
+    paths:
+      - '.github/workflows/p07-phase-continuity-carrier.yml'
+      - 'tests/test_p07_phase_continuity.py'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-build-prove:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/p07-phase-continuity-20260912
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Patch canonical P07 only
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('docs/prompts.json')
+          prompts = json.loads(path.read_text(encoding='utf-8'))
+          p07 = next(prompt for prompt in prompts if prompt['id'] == 'P07')
+
+          marker = 'P07 PHASE CONTINUITY CONTRACT'
+          contract = '''P07 PHASE CONTINUITY CONTRACT
+          - A phase's `Owned scope` and `Forbidden scope` constrain mutation while that phase is active; they do not by themselves forbid a later successor phase.
+          - At a proven phase fixed point, classify excluded work as `PHASE-LOCAL OUT OF SCOPE` or `USER/REPO FORBIDDEN`. Do not collapse phase-local exclusion into a global stop.
+          - When an evidence-backed successor phase exists, its dependencies are satisfied, and it is safe and authorized, refresh current repository/provider truth, preserve the completed phase's proof, issue a new bounded sprint declaration, and continue in the same execution thread without waiting for the operator to restate or re-authorize work already covered by the mission.
+          - Crossing a phase boundary never inherits mutation authority blindly. Before successor mutation, redeclare successor owned scope, successor forbidden scope, dependencies and collision risks, expected artifacts and validation, proof ceiling, and mutation authority.
+          - `none; no safe actionable work remains` is invalid merely because the active phase is complete when safe, dependency-ready successor work is evident and not explicitly prohibited.
+          - Stop at the phase boundary only when the operator explicitly limited the mission to the completed phase, repository or user policy forbids the successor, the successor is unsafe or BLOCKED, a required dependency is unresolved, or no evidence-backed successor exists.
+          - Treat phase names and phase-local forbidden scope as sequencing controls, not artificial conversation walls. Close the proven phase, cross the boundary with a fresh sprint declaration, and keep advancing the mission.'''
+
+          if marker not in p07['copyContent']:
+              p07['copyContent'] = p07['copyContent'].rstrip() + '\n\n' + contract
+
+          next_rule = (
+              ' At a proven phase fixed point, distinguish phase-local exclusions from true user/repo prohibitions; '
+              'when safe dependency-ready successor work remains, refresh truth, declare the successor sprint, and continue '
+              'without requiring another operator nudge.'
+          )
+          if 'phase-local exclusions' not in p07['nextStep']:
+              p07['nextStep'] = p07['nextStep'].rstrip() + next_rule
+
+          proof_rule = (
+              ' Phase-local forbidden scope alone is not a terminal condition: if an evidence-backed successor phase is '
+              'safe, dependency-ready, and not explicitly prohibited, completion proof must include a fresh successor '
+              'sprint declaration and continued execution rather than `none; no safe actionable work remains`.'
+          )
+          if 'Phase-local forbidden scope alone is not a terminal condition' not in p07['proofGate']:
+              p07['proofGate'] = p07['proofGate'].rstrip() + proof_rule
+
+          path.write_text(json.dumps(prompts, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+      - name: Regenerate canonical Prompt Kit
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Run P07 and owning policy regressions
+        run: |
+          python -m unittest tests.test_p07_phase_continuity -v
+          python -m unittest tests.test_actionable_prompt_registry -v
+          python -m unittest tests.test_green_branch_integration_policy -v
+          python -m unittest tests.test_operational_closeout_contract -v
+          git diff --check
+      - name: Commit canonical P07 and generated artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/prompts.json web/prompt-kit/index.html
+          if git diff --cached --quiet; then
+            echo 'No P07/site changes to commit.'
+            exit 1
+          fi
+          git commit -m 'fix(p07): continue across proven phase boundaries'
+          git push origin HEAD:fix/p07-phase-continuity-20260912
