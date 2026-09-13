@@ -371,6 +371,25 @@ def _version_at_ref(ref: str) -> SemVer | None:
     return SemVer.parse(text.strip().splitlines()[0])
 
 
+def release_anchor(version: SemVer | str, head: str = "HEAD") -> str:
+    """Resolve the integrated commit that owns a released version boundary.
+
+    Release PRs may land as more than one commit. The release identity belongs to
+    the latest exact release commit carrying the requested canonical version, not
+    necessarily to the commit whose diff first changed OPERANT_VERSION.
+    """
+    resolved = version if isinstance(version, SemVer) else SemVer.parse(str(version))
+    expected_subject = f"chore(operant): release v{resolved}"
+    history = _run_git("log", "--format=%H%x09%s", head)
+    for line in history.splitlines():
+        sha, separator, subject = line.partition("\t")
+        if separator and subject == expected_subject and _version_at_ref(sha) == resolved:
+            return sha
+    raise VersioningError(
+        f"cannot resolve integrated release anchor for Operant v{resolved} from {head}"
+    )
+
+
 def validate_release_candidate(base: str = "origin/main", head: str = "HEAD") -> list[str]:
     """Reject automation release candidates that no longer match a recomputed mainline plan.
 
@@ -588,9 +607,11 @@ def validate(require_tag: bool = False) -> list[str]:
         tag = f"{TAG_PREFIX_DEFAULT}{version}"
         try:
             target = _run_git("rev-list", "-n", "1", tag)
-            head = _run_git("rev-parse", "HEAD")
-            if target != head:
-                findings.append(f"release tag {tag} points to {target}, expected exact HEAD {head}")
+            expected_target = release_anchor(version)
+            if target != expected_target:
+                findings.append(
+                    f"release tag {tag} points to {target}, expected release anchor {expected_target}"
+                )
         except VersioningError as exc:
             findings.append(str(exc))
     return findings
@@ -620,11 +641,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     candidate_parser.add_argument("--base", default="origin/main")
     candidate_parser.add_argument("--head", default="HEAD")
+    anchor_parser = sub.add_parser(
+        "release-anchor",
+        help="print the integrated commit that owns the current release boundary",
+    )
+    anchor_parser.add_argument("--head", default="HEAD")
     sub.add_parser("current", help="print the canonical Operant version")
     args = parser.parse_args(argv)
     try:
         if args.command == "current":
             print(current_version())
+            return 0
+        if args.command == "release-anchor":
+            print(release_anchor(current_version(), head=args.head))
             return 0
         if args.command == "plan":
             payload = plan(args.base, args.head)
