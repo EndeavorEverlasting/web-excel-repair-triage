@@ -56,21 +56,16 @@ if "P82 admission" not in p141["proofGate"]:
 p82_section = """
 
 P141 -> P82 ADMISSION CONTRACT
-P82 accepts a strategic handoff only when exploration has already selected one thesis and the remaining uncertainty is empirical. Require a P82 Experiment Admission Record, or equivalent evidence, containing a falsifiable hypothesis, baseline/comparator, prototype boundary, measurement plan, and predeclared decision rule. The experiment must be capable of changing the decision; a prototype whose failure would not matter is ceremonial and is not admitted.
+Admit a P141 handoff only with one selected thesis when the remaining uncertainty is empirical. Require a P82 Experiment Admission Record: falsifiable hypothesis; baseline/comparator; prototype boundary; measurement; decision rule. Its result must be able to change the decision.
 
 FAIL-CLOSED ROUTING
-- If multiple strategic theses remain viable, or the unresolved question is still what should the repository build next, return to P141 rather than continuing strategic discovery here.
-- If architecture, module/state ownership, API/data-flow shape, or another design choice is the dominant uncertainty, route to P95.
-- If the thesis is justified and implementation is already bounded with observable completion criteria, route to P07 instead of manufacturing an experiment.
-- If no baseline/comparator, observable metric, bounded representative slice, or falsifier exists, fail admission until the evidence contract is repaired.
-- P82 does not generate competing strategic theses; it tests one already-selected empirical hypothesis.
+- multiple strategic theses or unresolved strategy -> P141.
+- architecture/design dominant -> P95.
+- implementation already bounded -> P07.
+- no baseline/comparator, observable metric, bounded slice, or falsifier -> fail admission.
+P82 tests one selected empirical hypothesis; it does not generate competing strategic theses.
 
-POST-EXPERIMENT ROUTING
-- PROMOTE + design unresolved -> P95.
-- PROMOTE + design already bounded -> P07.
-- WEAKEN or REJECT -> P141 when strategic confidence must be reconsidered.
-- INCONCLUSIVE -> retry P82 only when the same thesis remains justified and the experiment can be repaired; otherwise return the new evidence to P141.
-Do not mechanically advance every experiment toward implementation.
+PROMOTE -> P95 if design remains unresolved, otherwise P07. WEAKEN / REJECT -> P141. INCONCLUSIVE -> retry only if the same thesis and experiment remain repairable; otherwise P141.
 """.rstrip()
 
 p82_marker = "\n\n1. LOCK THE OUTCOME BEFORE ITERATING"
@@ -80,6 +75,30 @@ if "P141 -> P82 ADMISSION CONTRACT" not in p82["copyContent"]:
     p82["copyContent"] = p82["copyContent"].replace(
         p82_marker, p82_section + p82_marker, 1
     )
+
+old_3a = """3A. WHEN USER FLOW IS THE UNKNOWN — MEASURE THE JOURNEY, NOT THE SCREEN
+When the risky assumption is interaction flow, write the actual sequence from entrypoint to terminal user value before changing UI. Track steps/keystrokes, focus changes, search/filter/selection state, intermediate panels, completion feedback, and destructive resets. Do not accept `panel opened` or `detail visible` as success when the user's real goal is to copy, execute, submit, compare, navigate, or otherwise use the object. Prefer the shortest understandable route that preserves safety and discoverability.
+
+Test composed sequences, not only isolated controls. A control that owns visibility must not erase an active query, selection, or unrelated state unless that destructive transition is part of its explicit contract. If the user requests personalization or a most-used surface, measure semantic completion events such as successful copy/execute/export rather than hover, focus, panel-open, or detail-view noise; derive preference views from that canonical event owner instead of hard-coded ordering."""
+new_3a = """3A. WHEN USER FLOW IS THE UNKNOWN — MEASURE THE JOURNEY, NOT THE SCREEN
+Trace entrypoint -> terminal user value before UI changes. Measure steps/keystrokes, focus/search/filter/selection, feedback, and resets. A visibility control must not erase an active query or unrelated state unless it owns that transition. For personalization, count semantic completion events such as successful copy/execute/export, not view/focus noise; derive preferences from that event owner."""
+old_4 = """4. PRESERVE THE LAST KNOWN-GOOD STATE
+Iteration must not destroy evidence. Use branch/worktree isolation, commits, versioned artifacts, fixtures, screenshots, manifests, hashes, or repository-native checkpoints as appropriate. Preserve the last known-good candidate before a risky redesign. Never use destructive cleanup merely to make a prototype floor look clean. Make it possible to compare or roll back candidates."""
+new_4 = """4. PRESERVE THE LAST KNOWN-GOOD STATE
+Preserve the last known-good candidate before risky redesign with repository-native checkpoints. Keep evidence comparable and rollback possible; never destructively clean merely to make a prototype floor look clean."""
+old_5 = """5. COMPARE ALTERNATIVES FAIRLY
+When two approaches are genuinely plausible and the choice matters, build bounded competing prototypes rather than arguing abstractly. Run both through the SAME acceptance rubric and representative data/workload. Compare correctness first, then user experience, complexity, maintainability, performance, cost, security, and reversibility as relevant. Do not keep multiple production paths after the evidence selects one unless redundancy itself is a requirement."""
+new_5 = """5. COMPARE ALTERNATIVES FAIRLY
+Test plausible candidates with the SAME acceptance rubric and representative data/workload. Compare correctness first, then relevant UX, complexity, maintainability, performance, cost, security, and reversibility. Retire redundant paths after evidence selects one unless redundancy is required."""
+for old, new, label in (
+    (old_3a, new_3a, "P82 user-flow section"),
+    (old_4, new_4, "P82 preservation section"),
+    (old_5, new_5, "P82 comparison section"),
+):
+    if old not in p82["copyContent"]:
+        raise SystemExit(f"{label} compression marker not found")
+    p82["copyContent"] = p82["copyContent"].replace(old, new, 1)
+
 if "P82 Experiment Admission Record" not in p82["inspectFirst"]:
     p82["inspectFirst"] += (
         " For a P141 strategic handoff, inspect the P82 Experiment Admission Record first "
