@@ -1,0 +1,77 @@
+name: Prompt parallel provider contract repair
+
+on:
+  push:
+    branches:
+      - fix/prompt-parallel-capability-ladder-20260913
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/prompt-parallel-capability-ladder-20260913
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Restore adjacent P07 literal contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('docs/prompts.json')
+          prompts = json.loads(path.read_text(encoding='utf-8'))
+          p07 = next(prompt for prompt in prompts if prompt['id'] == 'P07')
+          if 'refreshed and reconciled remote/default-branch floor' not in p07['expectedOutput']:
+              p07['expectedOutput'] = p07['expectedOutput'].replace(
+                  'Repository progress executed from a refreshed/reconciled floor',
+                  'Repository progress executed from a refreshed and reconciled remote/default-branch floor',
+                  1,
+              )
+          additions = []
+          if 'refreshed before implementation' not in p07['proofGate']:
+              additions.append('The remote/default-branch floor is refreshed before implementation and re-fetched before final exact-head validation/integration.')
+          if 'fixed point' not in p07['proofGate']:
+              additions.append('The sprint reaches its bounded fixed point before completion unless an exact external or genuinely user-only blocker is proven.')
+          if additions:
+              p07['proofGate'] = p07['proofGate'].rstrip() + ' ' + ' '.join(additions)
+          path.write_text(json.dumps(prompts, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+      - name: Regenerate canonical site
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Run owning and regression suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_actionable_prompt_registry -v
+          python -m unittest tests.test_remote_freshness_p13_iteration -v
+          python -m unittest tests.test_p02_p07_autonomous_iteration tests.test_skill_prompt_registry tests.test_prompt_parallel_execution_contract -v
+      - name: Run product and harness gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/validate_harness.py
+          git diff --check
+      - name: Commit durable repair and remove carrier
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/prompt-parallel-provider-repair.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "fix(prompt-kit): preserve P07 freshness and fixed-point contracts"
+          git push origin HEAD:fix/prompt-parallel-capability-ladder-20260913
