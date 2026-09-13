@@ -208,6 +208,105 @@ console.log(JSON.stringify({afterUsage,denied,afterDenied,deleted,final:s.data})
         self.assertNotIn("promptKit.profileSlots.v1", proof["final"])
         self.assertIn("promptKit.privacyReducerBuffer.v1", proof["final"])
 
+    def test_reducer_accepts_prototype_named_aggregate_ids(self) -> None:
+        proof = node_json(
+            r"""
+const s=storage();const c=lifecycle.create(s);const now=9000;
+const ids=['__proto__','constructor','toString'];
+const writes=ids.map((id,index)=>c.append('privacy_reducer_buffer',{count:index+1},{at:now+index,id}));
+console.log(JSON.stringify({writes,ids:c.inspect('privacy_reducer_buffer',now+ids.length).items.map(item=>item.id).sort()}));
+"""
+        )
+        self.assertTrue(all(item["ok"] for item in proof["writes"]))
+        self.assertEqual(proof["ids"], ["__proto__", "constructor", "toString"])
+
+    def test_oversized_item_is_rejected_without_blocking_other_stores(self) -> None:
+        proof = node_json(
+            r"""
+const s=storage();const c=lifecycle.create(s);
+const tooBig=c.append('local_journal','x'.repeat(3*1024*1024),{at:1000});
+const afterOversize=c.status();
+const valid=c.append('sync_retry_queue',{event:'still-allowed'},{at:1001});
+console.log(JSON.stringify({tooBig,afterOversize,valid,finalStatus:c.status()}));
+"""
+        )
+        self.assertFalse(proof["tooBig"]["ok"])
+        self.assertEqual(proof["tooBig"]["reason"], "item-exceeds-store-bounds")
+        self.assertFalse(proof["afterOversize"]["writesBlocked"])
+        self.assertTrue(proof["valid"]["ok"])
+        self.assertFalse(proof["finalStatus"]["writesBlocked"])
+
+    def test_null_and_empty_timestamp_inputs_use_current_time(self) -> None:
+        proof = node_json(
+            r"""
+const s=storage();const c=lifecycle.create(s);const originalNow=Date.now;
+Date.now=()=>424242;
+const first=c.append('local_journal',{event:'null-time'},{at:null});
+const second=c.append('local_journal',{event:'empty-time'},{at:''});
+const items=c.inspect('local_journal',424242).items;
+Date.now=originalNow;
+console.log(JSON.stringify({first,second,times:items.map(item=>item.at)}));
+"""
+        )
+        self.assertTrue(proof["first"]["ok"])
+        self.assertTrue(proof["second"]["ok"])
+        self.assertEqual(proof["times"], [424242, 424242])
+
+    def test_storage_dialog_moves_focus_and_escape_restores_trigger(self) -> None:
+        proof = node_json(
+            r"""
+function interactive(){
+  return{
+    hidden:false,
+    focused:false,
+    listeners:{},
+    attributes:{},
+    setAttribute(k,v){this.attributes[k]=v},
+    addEventListener(name,fn){this.listeners[name]=fn},
+    focus(){this.focused=true}
+  }
+}
+const trigger=interactive();
+const dialog=interactive();
+const clearUsage=interactive();
+const clearCollective=interactive();
+const clearSync=interactive();
+const clearPersonal=interactive();
+const close=interactive();
+dialog.querySelector=function(selector){
+  return{
+    'button':clearUsage,
+    '[data-clear-usage]':clearUsage,
+    '[data-clear-collective]':clearCollective,
+    '[data-clear-sync]':clearSync,
+    '[data-clear-personal]':clearPersonal,
+    '[data-close-storage]':close
+  }[selector]||null
+};
+const controls={appendChild(node){this.child=node}};
+const body={appendChild(node){this.child=node}};
+const doc={
+  body,
+  getElementById(){return null},
+  querySelector(selector){return selector==='.header-controls'?controls:null},
+  createElement(tag){return tag==='button'?trigger:dialog}
+};
+const c=lifecycle.create(storage(),{document:doc,prompt(){return null}});
+c.ensureControls();
+trigger.listeners.click();
+const opened={hidden:dialog.hidden,firstFocused:clearUsage.focused};
+let stopped=false;
+trigger.focused=false;
+dialog.listeners.keydown({key:'Escape',stopPropagation(){stopped=true}});
+console.log(JSON.stringify({opened,closed:dialog.hidden,triggerFocused:trigger.focused,stopped}));
+"""
+        )
+        self.assertFalse(proof["opened"]["hidden"])
+        self.assertTrue(proof["opened"]["firstFocused"])
+        self.assertTrue(proof["closed"])
+        self.assertTrue(proof["triggerFocused"])
+        self.assertTrue(proof["stopped"])
+
     def test_builder_and_generated_site_wire_lifecycle_before_profile_runtime(self) -> None:
         source = BUILDER.read_text(encoding="utf-8")
         self.assertIn(
