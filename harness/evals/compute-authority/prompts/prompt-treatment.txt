@@ -1,6 +1,6 @@
 # Prompt Kit shared execution contract snapshot
 # condition: treatment
-# source_commit: fd3b3910e0ce80f3880ebd15426278354b065f48
+# source_commit: 741fc565ecc1772d2fcfce43e8c2d071b9d35d81
 # policy_id: actionable-next-command/v1
 # schema_version: prompt-next-action-policy/v1
 
