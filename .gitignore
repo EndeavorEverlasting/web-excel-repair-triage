@@ -170,3 +170,16 @@ secret.json
 tokens.json
 token.json
 auth.json
+
+# ── Prompt Kit private/local state ────────────────────────────────────────────
+# Personal state, raw journals, reducer buffers, encrypted portable saves, and
+# recovery/key material are device-owned runtime data, never repository inputs.
+.promptkit/
+*.pkenc
+promptkit.db
+promptkit.local.db
+promptkit-journal*
+promptkit-reducer-buffer*
+*.promptkit-key
+*.promptkit-recovery
+*.pairing-secret
