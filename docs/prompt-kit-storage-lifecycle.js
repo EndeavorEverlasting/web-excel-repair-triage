@@ -89,7 +89,6 @@ function readDisposable(storage,name,at){
     return emptyEnvelope(name)
   }
 }
-function sameEnvelope(name,left,right){return serializedEnvelope(name,left.items)===serializedEnvelope(name,right.items)}
 
 function create(storage,host){
   var blocked=false;
@@ -137,7 +136,7 @@ function create(storage,host){
     if(policy.uniqueIds&&!item.id)return{ok:false,reason:'aggregate-id-required',store:name};
     var items=policy.replaceOnWrite?[item]:existing.items.concat([item]);
     var candidate=trimEnvelope(name,{items:items},at);
-    if(candidate.items.indexOf(item)===-1)return block('item-exceeds-store-bounds',name);
+    if(!candidate.items.length)return block('item-exceeds-store-bounds',name);
     return persist(name,candidate)
   }
   function clearKeys(keys){
