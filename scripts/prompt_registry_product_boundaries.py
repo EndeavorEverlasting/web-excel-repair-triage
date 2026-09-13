@@ -21,6 +21,8 @@ CONTRACT = ROOT / "registry" / "prompts" / "product-boundaries.v1.json"
 SCHEMA_VERSION = "prompt-registry-product-boundaries/v1"
 AFK_PRODUCT = "afk-agent-flow"
 TRIAGE_PRODUCT = "triage-local-operations"
+AFK_TARGET_REPOSITORY = "UnderDeskDev/AFK-Agent-Flow"
+TRIAGE_TARGET_REPOSITORY = "EndeavorEverlasting/web-excel-repair-triage"
 MANAGEMENT_REGISTRY = "registry/prompts/management-operations-prompts.v1.json"
 
 
@@ -173,18 +175,34 @@ def validate_product_boundaries(payload: dict[str, Any] | None = None) -> dict[s
         raise ProductBoundaryError("an extension registry has more than one product owner")
 
     afk = _product(payload, AFK_PRODUCT)
+    if afk.get("target_repository") != AFK_TARGET_REPOSITORY:
+        raise ProductBoundaryError("AFK Agent Flow target repository changed unexpectedly")
+    if afk.get("ownership") != "product-portable":
+        raise ProductBoundaryError("AFK Agent Flow ownership must remain product-portable")
     afk_forbidden = _require_string_list(
         afk.get("must_not_include"), f"products.{AFK_PRODUCT}.must_not_include"
     )
+    if afk_forbidden != [MANAGEMENT_REGISTRY]:
+        raise ProductBoundaryError(
+            "AFK Agent Flow exclusion metadata must reject exactly the Triage management registry"
+        )
     afk_relative = {_repo_relative(path) for path in afk_paths}
-    if MANAGEMENT_REGISTRY not in afk_forbidden:
-        raise ProductBoundaryError("AFK boundary must explicitly reject the Triage management registry")
     if MANAGEMENT_REGISTRY in afk_relative:
         raise ProductBoundaryError("AFK Agent Flow may not own the Triage management registry")
 
     triage = _product(payload, TRIAGE_PRODUCT)
-    if triage.get("target_repository") != "EndeavorEverlasting/web-excel-repair-triage":
+    if triage.get("target_repository") != TRIAGE_TARGET_REPOSITORY:
         raise ProductBoundaryError("Triage-local owner must remain this repository")
+    if triage.get("ownership") != "repository-local":
+        raise ProductBoundaryError("Triage-local ownership must remain repository-local")
+    triage_exclusions = _require_string_list(
+        triage.get("must_not_ship_with"),
+        f"products.{TRIAGE_PRODUCT}.must_not_ship_with",
+    )
+    if triage_exclusions != [AFK_PRODUCT]:
+        raise ProductBoundaryError(
+            "Triage-local exclusion metadata must reject shipping with AFK Agent Flow"
+        )
     triage_relative = tuple(_repo_relative(path) for path in triage_paths)
     if triage_relative != (MANAGEMENT_REGISTRY,):
         raise ProductBoundaryError(
