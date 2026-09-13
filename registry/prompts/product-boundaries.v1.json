@@ -1,0 +1,48 @@
+{
+  "schema_version": "prompt-registry-product-boundaries/v1",
+  "contract_id": "prompt-registry-product-boundaries",
+  "purpose": "Separate AFK Agent Flow prompt-product inputs from WebExcel Triage-local operational inputs without changing the legacy combined Prompt Kit compatibility surface.",
+  "legacy_combined_surface": {
+    "status": "compatibility_surface",
+    "builder": "scripts/build_prompt_kit_registry.py",
+    "site": "web/prompt-kit/index.html",
+    "composition": [
+      "afk-agent-flow",
+      "triage-local-operations"
+    ],
+    "preserve_until": "Dedicated AFK Agent Flow cutover is proven and repository governance authorizes changing the legacy prompt-kit compatibility surface."
+  },
+  "shared_inputs": {
+    "base_registry": "docs/prompts.json",
+    "content_registries": [
+      "registry/prompts/correspondence-prompts.v1.json"
+    ]
+  },
+  "products": {
+    "afk-agent-flow": {
+      "target_repository": "UnderDeskDev/AFK-Agent-Flow",
+      "ownership": "product-portable",
+      "extension_registries": [
+        "registry/prompts/skill-development-prompts.v1.json",
+        "registry/prompts/tutorial-discovery-prompts.v1.json",
+        "registry/prompts/ai-engineering-level-up-prompts.v1.json",
+        "registry/prompts/repository-work-ledger-prompts.v1.json",
+        "registry/prompts/spec-architecture-prompts.v1.json"
+      ],
+      "must_not_include": [
+        "registry/prompts/management-operations-prompts.v1.json"
+      ]
+    },
+    "triage-local-operations": {
+      "target_repository": "EndeavorEverlasting/web-excel-repair-triage",
+      "ownership": "repository-local",
+      "extension_registries": [
+        "registry/prompts/management-operations-prompts.v1.json"
+      ],
+      "must_not_ship_with": [
+        "afk-agent-flow"
+      ],
+      "reason": "This registry contains repository-specific operational prompts including Neuron Track Hours billing, FUN/Triage synchronization, and other local management workflows."
+    }
+  }
+}
