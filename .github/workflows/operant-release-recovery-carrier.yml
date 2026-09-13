@@ -1,0 +1,58 @@
+name: Operant v0.6.0 release recovery carrier
+
+on:
+  push:
+    branches: [fix/operant-release-anchor-recovery-20260912]
+    paths:
+      - '.github/workflows/operant-release-recovery-carrier.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  recover-release-identity:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_SHA: d17636ddbd7be656e00ee0bc82e3bddc74f29622
+      PR_HEAD_SHA: b882c0d27af80ce4a070efa0f29c15403d84cb06
+      RELEASE_TAG: operant-v0.6.0
+    steps:
+      - name: Checkout recovery branch with history
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Prove exact historical release anchor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin +refs/heads/main:refs/remotes/origin/main +refs/pull/439/head:refs/remotes/origin/pr-439
+          test "$(git rev-parse refs/remotes/origin/pr-439)" = "$PR_HEAD_SHA"
+          git merge-base --is-ancestor "$RELEASE_SHA" refs/remotes/origin/main
+          test "$(git rev-parse "$RELEASE_SHA^{tree}")" = "$(git rev-parse "$PR_HEAD_SHA^{tree}")"
+          test "$(git show "$RELEASE_SHA:OPERANT_VERSION" | tr -d '\r\n')" = "0.6.0"
+          test "$(git show "$RELEASE_SHA:harness/contracts/operant-product-identity.v1.json" | python -c 'import json,sys; print(json.load(sys.stdin)["product_version"])')" = "0.6.0"
+      - name: Restore missing release identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          if git rev-parse -q --verify "refs/tags/$RELEASE_TAG" >/dev/null; then
+            target="$(git rev-list -n 1 "$RELEASE_TAG")"
+            test "$target" = "$RELEASE_SHA"
+          else
+            gh release create "$RELEASE_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$RELEASE_SHA" \
+              --title "Operant v0.6.0" \
+              --generate-notes
+          fi
+      - name: Verify restored tag and release
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          test "$(git rev-list -n 1 "$RELEASE_TAG")" = "$RELEASE_SHA"
+          test "$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)" = "$RELEASE_TAG"
+          echo "OPERANT_RELEASE_RECOVERY_PASS tag=$RELEASE_TAG target=$RELEASE_SHA"
