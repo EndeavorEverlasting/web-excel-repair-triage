@@ -4,9 +4,15 @@ on:
   pull_request:
     paths:
       - 'harness/prompt-topology/**'
+      - 'harness/contracts/prompt-topology-classifier.v1.json'
       - 'scripts/prompt-topology/**'
       - 'scripts/validate_prompt_topology.py'
       - 'scripts/build_prompt_topology_viewer.py'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/prompt_classification.py'
+      - 'scripts/prompt_kit_tutorial_coverage.py'
+      - 'registry/prompts/**'
+      - 'docs/prompts.json'
       - 'docs/prompt-topology-viewer.*'
       - 'tests/test_prompt_topology_phase_a.py'
       - 'tests/test_prompt_topology_phase_b.py'
@@ -18,12 +24,21 @@ on:
     branches: [main]
     paths:
       - 'harness/prompt-topology/**'
+      - 'harness/contracts/prompt-topology-classifier.v1.json'
       - 'scripts/prompt-topology/**'
       - 'scripts/validate_prompt_topology.py'
       - 'scripts/build_prompt_topology_viewer.py'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/prompt_classification.py'
+      - 'scripts/prompt_kit_tutorial_coverage.py'
+      - 'registry/prompts/**'
+      - 'docs/prompts.json'
       - 'docs/prompt-topology-viewer.*'
+      - 'tests/test_prompt_topology_phase_a.py'
+      - 'tests/test_prompt_topology_phase_b.py'
       - 'tests/test_prompt_topology_phase_c.py'
       - 'tests/prompt_topology_viewer_browser_proof.py'
+      - 'requirements-prompt-topology.txt'
       - '.github/workflows/prompt-topology-phase-c.yml'
   workflow_dispatch:
 
