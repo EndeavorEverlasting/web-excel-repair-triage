@@ -14,6 +14,7 @@ on:
       - scripts/operant_version.py
       - scripts/validate_operant_product_identity.py
       - tests/test_operant_product_identity.py
+      - tests/test_operant_versioning_workflow.py
       - tests/test_prompt_kit_order_navigation_product.py
       - web/prompt-kit/index.html
       - .github/workflows/operant-versioning.yml
@@ -53,7 +54,7 @@ jobs:
           python scripts/operant_version.py validate
           python scripts/operant_version.py validate-release-candidate --base origin/main
           python scripts/validate_operant_product_identity.py --summary
-          python -m unittest tests.test_operant_product_identity tests.test_prompt_kit_order_navigation_product -v
+          python -m unittest tests.test_operant_product_identity tests.test_operant_versioning_workflow tests.test_prompt_kit_order_navigation_product -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
@@ -83,16 +84,20 @@ jobs:
         run: |
           set -euo pipefail
           version_changed=false
-          if [[ "${GITHUB_EVENT_NAME}" == "push" ]] && git rev-parse HEAD^ >/dev/null 2>&1; then
-            if ! git diff --quiet HEAD^ HEAD -- OPERANT_VERSION; then
-              version_changed=true
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            before="${{ github.event.before }}"
+            zero_sha="0000000000000000000000000000000000000000"
+            if [[ -n "$before" && "$before" != "$zero_sha" ]] && git cat-file -e "${before}^{commit}" 2>/dev/null; then
+              if ! git diff --quiet "$before" HEAD -- OPERANT_VERSION; then
+                version_changed=true
+              fi
             fi
           fi
 
           if [[ "$version_changed" == "true" ]]; then
             python scripts/operant_version.py validate
             python scripts/validate_operant_product_identity.py --summary
-            python -m unittest tests.test_operant_product_identity -v
+            python -m unittest tests.test_operant_product_identity tests.test_operant_versioning_workflow -v
             python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 
             version="$(python scripts/operant_version.py current)"
@@ -175,7 +180,7 @@ jobs:
           python scripts/operant_version.py validate
           python scripts/operant_version.py validate-release-candidate --base origin/main
           python scripts/validate_operant_product_identity.py --summary
-          python -m unittest tests.test_operant_product_identity tests.test_prompt_kit_order_navigation_product -v
+          python -m unittest tests.test_operant_product_identity tests.test_operant_versioning_workflow tests.test_prompt_kit_order_navigation_product -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
 
