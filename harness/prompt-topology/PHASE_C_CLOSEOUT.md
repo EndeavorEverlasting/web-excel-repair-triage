@@ -12,7 +12,7 @@
 **Phase C hardening integration commit:** `b9cd839c4910402073e9e84476fb1b8d5e3060ef`
 **Strategic scout context:** PR #461, commit `f58c9d47a3a5d281895a1015eb8e429583e58bb5` (`POST_PHASE_C_STRATEGIC_SCOUT.md`)
 **Closeout authoring floor:** `450026a94b288ad0a5ff532b61f77049f0791c77` (`main` when this recovery pair was authored; contains Phase C hardening `b9cd839c`)
-**Closeout integration identity:** the provider merge commit that lands this closeout/handoff pair on refreshed `main` (verify after merge with ancestry + content proof of `PHASE_C_CLOSEOUT.md` and `PHASE_C_HANDOFF.md`; do not confuse with the stale remote branch tip `b9cd839c` historically named `docs/prompt-topology-phase-c-closeout`)
+**Closeout integration identity:** `2c971ad2eee3bb371a73f2d13ea22c709c1c7e9f` (squash merge of PR #463 onto `main`; contains this closeout/handoff pair. Do not confuse with the stale remote branch tip `b9cd839c` historically named `docs/prompt-topology-phase-c-closeout`)
 
 Phase C is closed. Do not reopen or rebuild this phase merely because an older chat, handoff, branch, worktree, or historical hash describes it as unfinished. Refresh `main`, verify containment of `358e1eea` and `b9cd839c`, and treat this document plus [`PHASE_C_HANDOFF.md`](./PHASE_C_HANDOFF.md) and `phase-c-viewer.v1.json` as the durable recovery floor.
 
