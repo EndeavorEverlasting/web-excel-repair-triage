@@ -27,7 +27,7 @@
   const opportunityByPrompt = new Map(nodes.map(n => [n.prompt_id, []]));
   for (const opp of data.opportunities) for (const id of opp.prompt_ids || []) if (opportunityByPrompt.has(id)) opportunityByPrompt.get(id).push(opp);
 
-  const state = { yaw: -0.28, pitch: 0.17, zoom: 1.0, selectedId: null, hoverId: null, activeCluster: null, query: '', dragging: false, dragStart: null };
+  const state = { yaw: -0.28, pitch: 0.17, zoom: 1.0, panX: 0, panY: 0, selectedId: null, hoverId: null, activeCluster: null, query: '', dragging: false, dragStart: null };
   let width = 1, height = 1, dpr = 1, screenPoints = [];
 
   const hashHue = value => {
@@ -54,7 +54,7 @@
     const p = rotatePoint(data.projection.points[id]);
     const perspective = 1.85 / Math.max(.65, 2.4 - p.z*.55);
     const scale = Math.min(width,height)*0.39*state.zoom*perspective;
-    return {id, x:width*.5+p.x*scale, y:height*.5-p.y*scale, z:p.z, perspective};
+    return {id, x:width*.5+state.panX+p.x*scale, y:height*.5+state.panY-p.y*scale, z:p.z, perspective};
   }
   function matches(node) {
     if (!state.query) return true;
@@ -136,16 +136,24 @@
       focusCluster(id);
     }));
   }
-  function resetView(){state.yaw=-.28;state.pitch=.17;state.zoom=1;state.selectedId=null;state.hoverId=null;state.activeCluster=null;state.query='';search.value='';renderDetail(null);renderClusters();}
+  function resetView(){state.yaw=-.28;state.pitch=.17;state.zoom=1;state.panX=0;state.panY=0;state.selectedId=null;state.hoverId=null;state.activeCluster=null;state.query='';search.value='';renderDetail(null);renderClusters();}
 
-  canvas.addEventListener('pointerdown',e=>{state.dragging=true;state.dragStart={x:e.clientX,y:e.clientY,yaw:state.yaw,pitch:state.pitch};canvas.classList.add('dragging');canvas.setPointerCapture(e.pointerId);});
+  canvas.addEventListener('pointerdown',e=>{state.dragging=true;state.dragStart={x:e.clientX,y:e.clientY,yaw:state.yaw,pitch:state.pitch,panX:state.panX,panY:state.panY,mode:e.shiftKey?'pan':'orbit'};canvas.classList.add('dragging');canvas.setPointerCapture(e.pointerId);});
   canvas.addEventListener('pointermove',e=>{
-    if(state.dragging&&state.dragStart){state.yaw=state.dragStart.yaw+(e.clientX-state.dragStart.x)*.006;state.pitch=Math.max(-1.25,Math.min(1.25,state.dragStart.pitch+(e.clientY-state.dragStart.y)*.006));setHover(null,e);return;}
+    if(state.dragging&&state.dragStart){if(state.dragStart.mode==='pan'){state.panX=state.dragStart.panX+(e.clientX-state.dragStart.x);state.panY=state.dragStart.panY+(e.clientY-state.dragStart.y);}else{state.yaw=state.dragStart.yaw+(e.clientX-state.dragStart.x)*.006;state.pitch=Math.max(-1.25,Math.min(1.25,state.dragStart.pitch+(e.clientY-state.dragStart.y)*.006));}setHover(null,e);return;}
     const p=nearest(e.clientX,e.clientY);setHover(p&&p.id,e);if(!state.selectedId)renderDetail(p&&p.id);
   });
   canvas.addEventListener('pointerup',e=>{const moved=state.dragStart?Math.hypot(e.clientX-state.dragStart.x,e.clientY-state.dragStart.y):999;state.dragging=false;canvas.classList.remove('dragging');if(moved<5){const p=nearest(e.clientX,e.clientY);selectPrompt(p&&p.id);}state.dragStart=null;});
   canvas.addEventListener('pointerleave',e=>{if(!state.dragging){setHover(null,e);if(!state.selectedId)renderDetail(null);}});
   canvas.addEventListener('wheel',e=>{e.preventDefault();state.zoom=Math.max(.45,Math.min(2.8,state.zoom*Math.exp(-e.deltaY*.001)));},{passive:false});
+
+  canvas.addEventListener('keydown',e=>{
+    const step=e.shiftKey?18:.08; let handled=true;
+    if(e.shiftKey&&e.key==='ArrowLeft')state.panX-=step;else if(e.shiftKey&&e.key==='ArrowRight')state.panX+=step;else if(e.shiftKey&&e.key==='ArrowUp')state.panY-=step;else if(e.shiftKey&&e.key==='ArrowDown')state.panY+=step;
+    else if(e.key==='ArrowLeft')state.yaw-=step;else if(e.key==='ArrowRight')state.yaw+=step;else if(e.key==='ArrowUp')state.pitch=Math.max(-1.25,state.pitch-step);else if(e.key==='ArrowDown')state.pitch=Math.min(1.25,state.pitch+step);
+    else if(e.key==='+'||e.key==='=')state.zoom=Math.min(2.8,state.zoom*1.12);else if(e.key==='-'||e.key==='_')state.zoom=Math.max(.45,state.zoom/1.12);else handled=false;
+    if(handled)e.preventDefault();
+  });
   search.addEventListener('input',()=>{
     state.query=search.value.trim().toLowerCase(); state.activeCluster=null;
     if(!state.query){state.selectedId=null;renderDetail(null);return;}
@@ -161,7 +169,7 @@
   renderClusters();renderDetail(null);resize();requestAnimationFrame(draw);
 
   window.PromptTopologyViewer = Object.freeze({
-    snapshot: () => ({yaw:state.yaw,pitch:state.pitch,zoom:state.zoom,selectedId:state.selectedId,hoverId:state.hoverId,activeCluster:state.activeCluster,query:state.query,nodeCount:nodes.length,edgeCount:data.edges.length,projectionPointCount:Object.keys(data.projection.points).length,topologyHash:data.topology_hash,projectionHash:data.projection_hash,epochId:data.projection_state.epoch_id}),
+    snapshot: () => ({yaw:state.yaw,pitch:state.pitch,zoom:state.zoom,panX:state.panX,panY:state.panY,selectedId:state.selectedId,hoverId:state.hoverId,activeCluster:state.activeCluster,query:state.query,nodeCount:nodes.length,edgeCount:data.edges.length,projectionPointCount:Object.keys(data.projection.points).length,topologyHash:data.topology_hash,projectionHash:data.projection_hash,epochId:data.projection_state.epoch_id}),
     selectPrompt: id => selectPrompt(id),
     focusCluster: id => focusCluster(id),
     resetView
