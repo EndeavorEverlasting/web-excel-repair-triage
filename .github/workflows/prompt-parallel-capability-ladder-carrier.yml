@@ -29,11 +29,14 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
+
           prompts_path = Path('docs/prompts.json')
           prompts = json.loads(prompts_path.read_text(encoding='utf-8'))
           p07 = next(p for p in prompts if p['id'] == 'P07')
           p07['expectedOutput'] = p07['expectedOutput'].replace('dependency-graph width', 'dependency graph width')
           p07['expectedOutput'] += ' Genuine user involvement remains limited to a genuinely user-only gate. Strategic follow-ons remain optional and evidence-triggered rather than sprint-expanding.'
+          p07['proofGate'] += ' A terminal human gate must name a genuinely user-only dependency; agent-capable scheduling, lane launch, context shuttling, and ordinary repository operations are never such a dependency.'
+          p07['nextStep'] += ' The optional evidence-triggered strategic follow-on does not replace bounded fixed-point execution, validation, integration, or the active critical path.'
           p07['copyContent'] = p07['copyContent'].replace('Parallel-execution proof remains UNPROVEN', 'parallel proof remains UNPROVEN')
           prompts_path.write_text(json.dumps(prompts, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 
@@ -45,6 +48,14 @@ jobs:
               'P13 treats missing parallelism as recurring friction; P07 owns the execution/coordinator contract.'
           )
           overrides_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          skill_test = Path('tests/test_skill_prompt_registry.py')
+          text = skill_test.read_text(encoding='utf-8')
+          old = 'actual P07 dispatch evidence when worker capacity and collision-safe lanes exist'
+          new = 'P07 dependency-graph width plus capability-ladder evidence'
+          if old not in text:
+              raise SystemExit('expected obsolete P13 parallelism test phrase not found')
+          skill_test.write_text(text.replace(old, new, 1), encoding='utf-8')
           PY
       - name: Regenerate canonical Prompt Kit
         run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
