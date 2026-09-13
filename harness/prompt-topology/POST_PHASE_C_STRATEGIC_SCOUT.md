@@ -1,13 +1,13 @@
 # Post-Phase-C Repository Strategic Scout
 
-**Status:** STRATEGIC SCOUT COMPLETE — recommendation only; selected investigation is not implemented here  
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Scout owner:** P141 — Repository Strategic Opportunity Scout  
-**Evidence floor:** refreshed `main@3e37127253c753a2e861f6171b4fa8aede43098e`  
-**Phase C hardened floor:** `b9cd839c4910402073e9e84476fb1b8d5e3060ef` via PR #459  
-**Latest strategic dependency:** PR #460, Prompt Kit privacy/storage planes, merged at `3e37127253c753a2e861f6171b4fa8aede43098e`  
-**Recommended next owner:** P95 — Program Design & Call-Stack Prototype Architect  
-**Recommended investigation:** Prompt execution evidence-spine/state-ownership architecture before Phase D Passive Learning  
+**Status:** STRATEGIC SCOUT COMPLETE — recommendation only; selected investigation is not implemented here
+**Repository:** `EndeavorEverlasting/web-excel-repair-triage`
+**Scout owner:** P141 — Repository Strategic Opportunity Scout
+**Evidence floor:** refreshed `main@3e37127253c753a2e861f6171b4fa8aede43098e`
+**Phase C hardened floor:** `b9cd839c4910402073e9e84476fb1b8d5e3060ef` via PR #459
+**Latest strategic dependency:** PR #460, Prompt Kit privacy/storage planes, merged at `3e37127253c753a2e861f6171b4fa8aede43098e`
+**Recommended next owner:** P95 — Program Design & Call-Stack Prototype Architect
+**Recommended investigation:** Prompt execution evidence-spine/state-ownership architecture before Phase D Passive Learning
 
 This document is the durable result of a repository-wide strategic scouting pass. It does **not** authorize implementation of Phase D, Phase E, Collective Learning ingestion, a shared event bus, AFK product extraction, Personal State runtime, Private Sync, or any other candidate described here. The operator has granted authority for future phases, but each successor still enters through its owning contract and proof boundary.
 
@@ -59,132 +59,132 @@ A minimal, privacy-respecting **Prompt Execution Evidence Spine** may be the mis
 
 ### Thesis A — Resolve a Prompt Execution Evidence Spine before Phase D
 
-**THESIS**  
+**THESIS**
 Investigate whether routing, usage, outcome, recovery/eval, privacy reduction, and topology behavioral evidence need one minimal lifecycle identity/provenance seam with owner-specific payload adapters.
 
-**EVIDENCE**  
+**EVIDENCE**
 Three substantial open PRs independently define route, usage, and outcome evidence; current main defines Local Journal/PrivacyReducer ownership; topology reserves behavioral channels; repository AI evals have an explicit live-evidence ceiling.
 
-**LEVERAGE**  
+**LEVERAGE**
 Phase D, runtime evals, P99/P115 recovery, correction-burden analysis, candidate evals, future Collective Learning, and potentially Phase E provenance.
 
-**TIMING**  
+**TIMING**
 Now. The privacy boundary just landed, but the event-producing lanes have not yet converged into main. Architecture can still be corrected before those contracts become harder to reconcile.
 
-**COST / COMPLEXITY**  
+**COST / COMPLEXITY**
 Medium architecture cost; potentially high downstream implementation cost. Main risk is inventing a central bus/authority that duplicates existing owners.
 
-**UNLOCKS**  
+**UNLOCKS**
 A principled Phase D contract, truthful end-to-end runtime evidence, cleaner integration order for #431/#450/#452, and a stable basis for privacy reduction.
 
-**ALTERNATIVE EXPLANATION**  
+**ALTERNATIVE EXPLANATION**
 The separate schemas may already be correctly isolated. Simple adapters might be sufficient and any common envelope could add coupling with no benefit.
 
-**IMMEDIATE REJECTION EVIDENCE**  
+**IMMEDIATE REJECTION EVIDENCE**
 Reject a shared-spine investment if an end-to-end trace shows every required lifecycle relationship can be expressed by existing owner-specific identifiers/adapters with no ambiguous causality, duplicate persistence, conflicting retention, or additional canonical truth.
 
 ### Thesis B — Execute Phase D Passive Learning directly
 
-**THESIS**  
+**THESIS**
 Implement privacy-bounded behavioral channels (`CO_USAGE`, `TRANSITION`, `SUBSTITUTION`, `COMPLEMENT`) so observed use can enrich topology recommendations.
 
-**EVIDENCE**  
+**EVIDENCE**
 Channels are already reserved; PR #460 defines a reducer output allowlist including prompt behavior and prompt-to-prompt transitions; #431 and #452 demonstrate bounded observation/outcome designs.
 
-**LEVERAGE**  
+**LEVERAGE**
 Could improve topology relationships, surface complementary/substitute prompts, and provide product-learning signals unavailable to semantic similarity alone.
 
-**TIMING**  
+**TIMING**
 Newly feasible, but not yet cleanly owned.
 
-**COST / COMPLEXITY**  
+**COST / COMPLEXITY**
 High. Behavioral inference is noisy; privacy, retention, identity, causal interpretation, feedback loops, and recommendation quality all become live concerns.
 
-**UNLOCKS**  
+**UNLOCKS**
 Behavior-aware topology and potentially better recommendation/eval candidate generation.
 
-**ALTERNATIVE EXPLANATION**  
+**ALTERNATIVE EXPLANATION**
 Static semantic/workflow relationships may already provide most useful topology value; real usage may be sparse, biased, or too context-dependent to justify this complexity.
 
-**IMMEDIATE REJECTION EVIDENCE**  
+**IMMEDIATE REJECTION EVIDENCE**
 Reject or substantially narrow Phase D if an offline, privacy-safe replay cannot show incremental decision value over the existing static topology, or if useful signal requires fields forbidden by the privacy contract.
 
 ### Thesis C — Advance Phase E Historical Intelligence before behavioral learning
 
-**THESIS**  
+**THESIS**
 Retain accepted topology/projection epochs and compare them for drift, split/merge behavior, lineage, and recurring opportunity patterns.
 
-**EVIDENCE**  
+**EVIDENCE**
 Phase B already has deterministic epoch IDs, parent lineage, topology/projection hashes, rigid alignment, and displacement bounds. Registry evolution already causes legitimate topology/projection changes.
 
-**LEVERAGE**  
+**LEVERAGE**
 Topology governance, regression diagnosis, visualization of system evolution, evidence for prompt consolidation/splitting, and later behavior-vs-semantics comparison.
 
-**TIMING**  
+**TIMING**
 Conceptually attractive after A/B/C, but the required retained accepted-epoch corpus is not yet proven.
 
-**COST / COMPLEXITY**  
+**COST / COMPLEXITY**
 Medium. Requires authoritative retention semantics and reproducible reconstruction; storage itself is likely modest at current scale.
 
-**UNLOCKS**  
+**UNLOCKS**
 Historical drift dashboards, lineage explanations, and evidence-backed long-term prompt-system evolution.
 
-**ALTERNATIVE EXPLANATION**  
+**ALTERNATIVE EXPLANATION**
 Git history plus deterministic rebuilds may be sufficient for occasional retrospective analysis; a permanent historical subsystem could be unnecessary at current scale.
 
-**IMMEDIATE REJECTION EVIDENCE**  
+**IMMEDIATE REJECTION EVIDENCE**
 Reject present-tense implementation if fewer than two authoritative accepted epochs can be identified/reconstructed with stable ownership, or if the desired questions can be answered cheaply from existing Git/rebuild evidence without retained snapshots.
 
 ### Thesis D — Perform the dedicated AFK Agent Flow product cutover
 
-**THESIS**  
+**THESIS**
 Use the now-explicit product-boundary contract to extract/build the dedicated AFK Agent Flow artifact/repository and stop relying on the combined Triage compatibility surface as the long-term product home.
 
-**EVIDENCE**  
+**EVIDENCE**
 PR #454 already made AFK vs Triage-local ownership machine-readable, identifies a target AFK repository, and explicitly names a governed AFK cutover as a successor.
 
-**LEVERAGE**  
+**LEVERAGE**
 Cleaner product identity, independent release/deployment lifecycle, reduced risk of shipping NTH/Triage-local behavior, easier portability and external reuse.
 
-**TIMING**  
+**TIMING**
 Technically more feasible now than before #454.
 
-**COST / COMPLEXITY**  
+**COST / COMPLEXITY**
 High migration and release-governance cost. Dual-repo coordination, compatibility, release/versioning, documentation, Pages, and generated artifact parity all become migration surfaces.
 
-**UNLOCKS**  
+**UNLOCKS**
 A true standalone AFK product and cleaner repository responsibilities.
 
-**ALTERNATIVE EXPLANATION**  
+**ALTERNATIVE EXPLANATION**
 The new product-boundary contract may already capture most maintenance benefit while the combined compatibility surface continues to work; extraction could create more coordination overhead than it removes.
 
-**IMMEDIATE REJECTION EVIDENCE**  
+**IMMEDIATE REJECTION EVIDENCE**
 Reject near-term cutover if representative AFK changes now have one clear canonical owner and do not repeatedly collide with Triage-local surfaces, or if the target repository cannot preserve generated/runtime/release parity without duplicating authority.
 
 ### Thesis E — Prioritize Personal State + Private Sync runtime
 
-**THESIS**  
+**THESIS**
 Implement local Personal State separation followed by encrypted `.pkenc` export/import to give Prompt Kit durable, portable user state before deeper learning/intelligence work.
 
-**EVIDENCE**  
+**EVIDENCE**
 PR #460 already defines logical stores, allowlisted Sync Capsule fields, transport rules, and an explicit successor sequence.
 
-**LEVERAGE**  
+**LEVERAGE**
 Favorites/collections/saved variants/preferences can become robust across local use and user-selected transfer without requiring a hosted backend.
 
-**TIMING**  
+**TIMING**
 The governing privacy contract is already present on main.
 
-**COST / COMPLEXITY**  
+**COST / COMPLEXITY**
 Medium, with cryptographic UX/recovery and migration concerns.
 
-**UNLOCKS**  
+**UNLOCKS**
 Stronger personal product utility and a device-local substrate that later Local Journal/PrivacyReducer work can coexist with cleanly.
 
-**ALTERNATIVE EXPLANATION**  
+**ALTERNATIVE EXPLANATION**
 This is important product execution but no longer a strategic uncertainty: #460 already selected and sequenced it. It may deserve P07 execution when prioritized rather than another repository-strategy investigation.
 
-**IMMEDIATE REJECTION EVIDENCE**  
+**IMMEDIATE REJECTION EVIDENCE**
 Reject it as the *next strategic investigation* if existing contracts already make the next slice observable and bounded—which current evidence does. That does not reject the feature itself.
 
 ## 4. Falsification results
@@ -353,8 +353,8 @@ Those unknowns belong to later owners and must not be promoted from this strateg
 
 ## 11. Continuation contract
 
-**NEXT OWNER:** P95 — Program Design & Call-Stack Prototype Architect.  
-**DEPENDENCY:** refresh current main and the three open evidence lanes before the investigation; do not assume their current heads remain unchanged.  
-**FIRST EXECUTABLE ACTION:** trace the Recommendation Path across the current-main Prompt Finder/eval/privacy owners and the exact #431/#450/#452 schemas, then write the first state-owner/identity compatibility matrix in `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md`.  
-**EXPECTED PROOF:** each lifecycle field has one semantic owner, one persistence/privacy plane, and explicit adapters or an explicit non-composition boundary; all three required traces are resolved; alternatives are dispositioned; no runtime feature implementation is present in the diff.  
+**NEXT OWNER:** P95 — Program Design & Call-Stack Prototype Architect.
+**DEPENDENCY:** refresh current main and the three open evidence lanes before the investigation; do not assume their current heads remain unchanged.
+**FIRST EXECUTABLE ACTION:** trace the Recommendation Path across the current-main Prompt Finder/eval/privacy owners and the exact #431/#450/#452 schemas, then write the first state-owner/identity compatibility matrix in `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md`.
+**EXPECTED PROOF:** each lifecycle field has one semantic owner, one persistence/privacy plane, and explicit adapters or an explicit non-composition boundary; all three required traces are resolved; alternatives are dispositioned; no runtime feature implementation is present in the diff.
 **P95 COMPLETION GATE:** architecture recommendation is durable, falsification-friendly, compatible with current privacy/topology/eval contracts, and specific enough to route the next bounded owner without reopening repository-wide strategy.
