@@ -1,1 +1,0 @@
-Trigger only. Do not merge. This branch exists to activate the self-removing P08 compute-authority and end-state-contract carrier against refreshed main.
