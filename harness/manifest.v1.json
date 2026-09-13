@@ -56,7 +56,7 @@
   },
   "validation_order": [
     "python scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
-    "python -m unittest tests.test_harness_contract -v",
+    "python scripts/validate_prompt_outcome_receipts.py --summary && python -m unittest tests.test_harness_contract tests.test_prompt_outcome_receipt_prompt -v",
     "python scripts/validate_operant_product_identity.py --summary",
     "python -m unittest tests.test_operant_product_identity -v",
     "python -m unittest tests.test_prompt_kit_interactions_contract -v",
@@ -68,8 +68,6 @@
     "python -m unittest tests.test_skill_prompt_registry -v",
     "python scripts/validate_prompt_kit_feedback_afk_routing.py --summary",
     "python -m unittest tests.test_prompt_kit_feedback_afk_routing -v",
-    "python scripts/validate_prompt_outcome_receipts.py --summary",
-    "python -m unittest tests.test_prompt_outcome_receipt_prompt -v",
     "python scripts/validate_prompt_kit_layout_harness.py --summary",
     "python -m unittest tests.test_prompt_kit_layout_harness -v",
     "python scripts/validate_operant_external_resources.py --summary",
