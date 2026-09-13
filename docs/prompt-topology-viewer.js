@@ -24,6 +24,7 @@
   }
   const clusterByPrompt = new Map();
   for (const cluster of data.clusters) for (const id of cluster.member_prompt_ids) clusterByPrompt.set(id, cluster.cluster_id);
+  const outlierIds = new Set(data.outlier_prompt_ids || []);
   const opportunityByPrompt = new Map(nodes.map(n => [n.prompt_id, []]));
   for (const opp of data.opportunities) for (const id of opp.prompt_ids || []) if (opportunityByPrompt.has(id)) opportunityByPrompt.get(id).push(opp);
 
@@ -37,6 +38,7 @@
   };
   const colorFor = node => `hsl(${hashHue(node.family_declared_id || clusterByPrompt.get(node.prompt_id) || node.prompt_id)} 72% 67%)`;
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const inActiveGroup = id => !state.activeCluster || (state.activeCluster==='OUTLIER' ? outlierIds.has(id) : clusterByPrompt.get(id)===state.activeCluster);
 
   function resize() {
     const rect = canvas.getBoundingClientRect();
@@ -77,17 +79,14 @@
     for (const edge of data.edges) {
       const a=byId.get(edge.source), b=byId.get(edge.target); if(!a||!b) continue;
       const related = state.selectedId && (edge.source===state.selectedId || edge.target===state.selectedId);
-      if (state.activeCluster) {
-        const ac=clusterByPrompt.get(edge.source)===state.activeCluster, bc=clusterByPrompt.get(edge.target)===state.activeCluster;
-        if(!ac&&!bc) continue;
-      }
+      if (state.activeCluster && !inActiveGroup(edge.source) && !inActiveGroup(edge.target)) continue;
       ctx.globalAlpha = related ? .42 : .045;
       ctx.strokeStyle = related ? '#8fd1ff' : '#8aa0b7';
       ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
     }
     for (const p of screenPoints) {
       const n=nodesById.get(p.id); const queryHit=matches(n);
-      const clusterHit=!state.activeCluster || clusterByPrompt.get(p.id)===state.activeCluster;
+      const clusterHit=inActiveGroup(p.id);
       const relationHit=!selectedRelations.size || selectedRelations.has(p.id);
       let alpha=.88;
       if(!queryHit) alpha*=.13; if(!clusterHit) alpha*=.16; if(!relationHit) alpha*=.19;
@@ -125,16 +124,12 @@
     renderDetail(id); renderClusters(); return true;
   }
   function focusCluster(id) {
-    if(id && !data.clusters.some(c=>c.cluster_id===id)) return false;
+    if(id && id!=='OUTLIER' && !data.clusters.some(c=>c.cluster_id===id)) return false;
     state.activeCluster = state.activeCluster===id?null:id; state.selectedId=null; renderDetail(null); renderClusters(); return true;
   }
   function renderClusters() {
     clustersEl.innerHTML = data.clusters.map(c=>`<button class="cluster-btn${state.activeCluster===c.cluster_id?' active':''}" type="button" data-cluster="${escapeHtml(c.cluster_id)}">${escapeHtml(c.cluster_id)} · ${c.member_count}</button>`).join('') + `<button class="cluster-btn${state.activeCluster==='OUTLIER'?' active':''}" type="button" data-cluster="OUTLIER">OUTLIERS · ${data.outlier_prompt_ids.length}</button>`;
-    clustersEl.querySelectorAll('[data-cluster]').forEach(btn=>btn.addEventListener('click',()=>{
-      const id=btn.dataset.cluster;
-      if(id==='OUTLIER'){state.activeCluster=state.activeCluster==='OUTLIER'?null:'OUTLIER';state.selectedId=null;renderDetail(null);renderClusters();return;}
-      focusCluster(id);
-    }));
+    clustersEl.querySelectorAll('[data-cluster]').forEach(btn=>btn.addEventListener('click',()=>focusCluster(btn.dataset.cluster)));
   }
   function resetView(){state.yaw=-.28;state.pitch=.17;state.zoom=1;state.panX=0;state.panY=0;state.selectedId=null;state.hoverId=null;state.activeCluster=null;state.query='';search.value='';renderDetail(null);renderClusters();}
 
@@ -169,7 +164,7 @@
   renderClusters();renderDetail(null);resize();requestAnimationFrame(draw);
 
   window.PromptTopologyViewer = Object.freeze({
-    snapshot: () => ({yaw:state.yaw,pitch:state.pitch,zoom:state.zoom,panX:state.panX,panY:state.panY,selectedId:state.selectedId,hoverId:state.hoverId,activeCluster:state.activeCluster,query:state.query,nodeCount:nodes.length,edgeCount:data.edges.length,projectionPointCount:Object.keys(data.projection.points).length,topologyHash:data.topology_hash,projectionHash:data.projection_hash,epochId:data.projection_state.epoch_id}),
+    snapshot: () => ({yaw:state.yaw,pitch:state.pitch,zoom:state.zoom,panX:state.panX,panY:state.panY,selectedId:state.selectedId,hoverId:state.hoverId,activeCluster:state.activeCluster,query:state.query,nodeCount:nodes.length,edgeCount:data.edges.length,projectionPointCount:Object.keys(data.projection.points).length,outlierCount:outlierIds.size,groupMemberCount:state.activeCluster?nodes.filter(n=>inActiveGroup(n.prompt_id)).length:nodes.length,topologyHash:data.topology_hash,projectionHash:data.projection_hash,epochId:data.projection_state.epoch_id}),
     selectPrompt: id => selectPrompt(id),
     focusCluster: id => focusCluster(id),
     resetView
