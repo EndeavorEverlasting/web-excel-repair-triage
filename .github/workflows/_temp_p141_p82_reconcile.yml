@@ -1,0 +1,53 @@
+name: Temporary P141 P82 reconcile
+
+on:
+  push:
+    branches:
+      - feat/p141-p82-experiment-admission-20260912
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Merge current main and revalidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          set +e
+          git merge --no-ff --no-commit origin/main
+          merge_rc=$?
+          set -e
+          if [ "$merge_rc" -ne 0 ]; then
+            conflicts="$(git diff --name-only --diff-filter=U)"
+            if [ "$conflicts" != "web/prompt-kit/index.html" ]; then
+              echo "Unexpected merge conflicts: $conflicts" >&2
+              exit 1
+            fi
+          fi
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          git add web/prompt-kit/index.html OPERANT_VERSION docs/OPERANT_CHANGELOG.md harness/contracts/operant-product-identity.v1.json
+          if git diff --name-only --diff-filter=U | grep -q .; then
+            echo "Unresolved merge conflicts remain" >&2
+            git diff --name-only --diff-filter=U >&2
+            exit 1
+          fi
+          python -m unittest tests.test_spec_architecture_prompt_registry -v
+          python -m unittest tests.test_ux_design_prompt_suite -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm .github/workflows/_temp_p141_p82_reconcile.yml
+          git add .github/workflows/_temp_p141_p82_reconcile.yml web/prompt-kit/index.html
+          git commit -m 'merge: reconcile P141 P82 seam with current main'
+          git push origin HEAD:${GITHUB_REF_NAME}
