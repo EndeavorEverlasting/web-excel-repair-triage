@@ -9,6 +9,10 @@
     "main_sha": "3e37127253c753a2e861f6171b4fa8aede43098e",
     "state": "integrated-and-validated"
   },
+  "strategic_dependencies": {
+    "post_phase_c_scout": "harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md",
+    "required_before_phase_4": "Prompt Topology Phase C closeout integrated and P95 Prompt Execution Evidence Spine/state-ownership investigation resolved"
+  },
   "architecture": {
     "deployment_model": "serverless-local-first",
     "private_plaintext_authority": "user-device",
@@ -256,14 +260,15 @@
     },
     "phase-4-local-collective-learning": {
       "status": "planned",
-      "dependency": "phase-1-local-lifecycle",
+      "dependency": "phase-1-local-lifecycle plus Prompt Topology Phase C closeout plus resolved P95 evidence-spine/state-ownership investigation",
       "owned_scope": [
         "PrivacyReducer runtime",
         "bounded local aggregate buffer",
         "privacy-reduced batch export"
       ],
       "forbidden_scope": [
-        "network ingestion before local privacy/runtime proof"
+        "network ingestion before local privacy/runtime proof",
+        "new route/usage/outcome event model before evidence-spine ownership is resolved"
       ]
     },
     "phase-5-serverless-collective-ingestion": {
