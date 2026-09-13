@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "prompt-outcome-receipt/v1",
+  "title": "Prompt Outcome Receipt",
+  "description": "Append-only evidence receipt for an observed outcome after a Prompt Kit invocation. One invocation may accumulate multiple independent receipts. Ordinary usage is not success or failure by itself; scripts/validate_prompt_outcome_receipts.py owns cross-field semantic validation and classification invariants.",
+  "schema_version": "prompt-outcome-receipt/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "invocation",
+    "observer",
+    "observation",
+    "result",
+    "classification",
+    "evidence",
+    "occurred_at"
+  ],
+  "properties": {
+    "schema_version": {"const": "prompt-outcome-receipt/v1"},
+    "receipt_id": {"$ref": "#/$defs/id"},
+    "supersedes_receipt_id": {"type": ["string", "null"]},
+    "related_receipt_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+    "invocation": {"$ref": "#/$defs/invocation"},
+    "observer": {"$ref": "#/$defs/observer"},
+    "observation": {"$ref": "#/$defs/observation"},
+    "result": {"type": "string", "enum": ["SUCCESS", "PARTIAL", "FAILURE", "BLOCKED", "UNKNOWN"]},
+    "classification": {"$ref": "#/$defs/classification"},
+    "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+    "state_transition": {"oneOf": [{"$ref": "#/$defs/state_transition"}, {"type": "null"}]},
+    "next_state": {"oneOf": [{"$ref": "#/$defs/next_state"}, {"type": "null"}]},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "retrospective": {"type": "boolean", "default": false}
+  },
+  "$defs": {
+    "nonempty": {"type": "string", "minLength": 1},
+    "id": {"type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[A-Za-z0-9._:/-]+$"},
+    "prompt_id": {"type": "string", "pattern": "^P[0-9]{2,4}$"},
+    "evidence_state": {"type": "string", "enum": ["PLANNED_DESIGNED", "TRACKED", "IMPLEMENTED", "WIRED_REACHABLE", "VALIDATED", "INTEGRATED", "DEPLOYED", "OBSERVED"]},
+    "failure_class": {"type": "string", "enum": ["routing", "interpretation", "execution", "progression", "durability", "premature-terminal", "evidence-promotion", "regression", "environment", "unknown"]},
+    "invocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["invocation_id", "prompt_id", "prompt_revision", "surface_id"],
+      "properties": {
+        "invocation_id": {"$ref": "#/$defs/id"},
+        "prompt_id": {"$ref": "#/$defs/prompt_id"},
+        "prompt_revision": {"$ref": "#/$defs/nonempty"},
+        "surface_id": {"$ref": "#/$defs/nonempty"},
+        "mission_id": {"type": ["string", "null"]},
+        "target_runtime": {"type": ["string", "null"]},
+        "repository": {"type": ["string", "null"]}
+      }
+    },
+    "observer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observer_id", "kind", "surface_id"],
+      "properties": {
+        "observer_id": {"$ref": "#/$defs/id"},
+        "kind": {"type": "string", "enum": ["user", "agent", "repository", "provider", "runtime", "validator", "reviewer", "system"]},
+        "surface_id": {"$ref": "#/$defs/nonempty"}
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "summary"],
+      "properties": {
+        "type": {"type": "string", "enum": ["natural_usage", "repository", "provider", "runtime", "explicit_feedback", "derived"]},
+        "summary": {"$ref": "#/$defs/nonempty"},
+        "expected_state": {"type": ["string", "null"]},
+        "observed_state": {"type": ["string", "null"]},
+        "claimed_state": {"type": ["string", "null"]},
+        "signal_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+      }
+    },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primary", "secondary", "confidence", "attribution", "actionability", "rationale"],
+      "properties": {
+        "primary": {"oneOf": [{"$ref": "#/$defs/failure_class"}, {"type": "null"}]},
+        "secondary": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/failure_class"}},
+        "confidence": {"type": "string", "enum": ["HIGH", "MEDIUM", "LOW", "NONE"]},
+        "attribution": {"type": "string", "enum": ["PROVEN", "CORRELATED", "UNOBSERVED"]},
+        "actionability": {"type": "string", "enum": ["INFORMATION_ONLY", "REVIEW_CANDIDATE", "CONDITIONAL_ACTIONABLE_REPAIR", "ACTIONABLE_REPAIR"]},
+        "rationale": {"$ref": "#/$defs/nonempty"}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "ref", "supports"],
+      "properties": {
+        "kind": {"type": "string", "enum": ["repository", "validator", "runtime", "provider", "user_feedback", "usage_pattern", "artifact", "other"]},
+        "ref": {"$ref": "#/$defs/nonempty"},
+        "supports": {"$ref": "#/$defs/nonempty"}
+      }
+    },
+    "state_transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": {"$ref": "#/$defs/evidence_state"},
+        "to": {"$ref": "#/$defs/evidence_state"}
+      }
+    },
+    "next_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner", "action", "completion_gate"],
+      "properties": {
+        "owner": {"$ref": "#/$defs/nonempty"},
+        "action": {"$ref": "#/$defs/nonempty"},
+        "completion_gate": {"$ref": "#/$defs/nonempty"}
+      }
+    }
+  }
+}

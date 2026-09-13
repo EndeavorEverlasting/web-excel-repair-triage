@@ -1,0 +1,163 @@
+{
+  "schema_version": "prompt-outcome-classification-cases/v1",
+  "description": "Deterministic natural-usage and repository/provider classification cases. Unknown is intentional when observability is insufficient; ordinary usage is never converted directly into repair work.",
+  "cases": [
+    {
+      "id": "routing-canonical-replacement-advances",
+      "kind": "positive",
+      "purpose": "Replacing the original route with the canonical owner that advances the same task is correlated routing failure evidence.",
+      "signals": [{"type": "prompt_invoked"}, {"type": "prompt_replaced_by_canonical_owner", "replacement_advanced_task": true}],
+      "evidence": [{"kind": "repository", "ref": "fixture://routing/canonical-owner", "supports": "canonical replacement owner advanced the same task"}],
+      "expected": {"primary": "routing", "secondary": [], "result": "FAILURE", "confidence": "MEDIUM", "attribution": "CORRELATED", "actionability": "CONDITIONAL_ACTIONABLE_REPAIR"}
+    },
+    {
+      "id": "routing-review-proves-wrong-owner",
+      "kind": "deterministic",
+      "purpose": "A review finding that proves the wrong owner or lane was selected is deterministic routing evidence.",
+      "signals": [{"type": "wrong_owner_or_route"}],
+      "evidence": [{"kind": "repository", "ref": "fixture://routing/review", "supports": "review proves the selected mutation owner was wrong"}],
+      "expected": {"primary": "routing", "secondary": [], "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"}
+    },
+    {
+      "id": "interpretation-explicit-invariant-violated",
+      "kind": "deterministic",
+      "purpose": "Correct routing followed by violation of an explicit invariant is interpretation failure.",
+      "signals": [{"type": "prompt_invoked"}, {"type": "explicit_invariant_violation"}],
+      "evidence": [{"kind": "validator", "ref": "fixture://interpretation/invariant", "supports": "explicit prompt invariant was present and violated"}],
+      "expected": {"primary": "interpretation", "secondary": [], "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"}
+    },
+    {
+      "id": "execution-deterministic-action-failure",
+      "kind": "deterministic",
+      "purpose": "A deterministic implementation failure without external cause is execution failure.",
+      "signals": [{"type": "prompt_invoked"}, {"type": "deterministic_action_failure", "check": "validator"}],
+      "evidence": [{"kind": "validator", "ref": "fixture://execution/validator", "supports": "intended operation was attempted and validator failed"}],
+      "expected": {"primary": "execution", "secondary": [], "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"}
+    },
+    {
+      "id": "progression-recovery-loop-three-repeats",
+      "kind": "repeated_pattern",
+      "purpose": "Three same-prompt same-mission invocations without durable state advance form a recovery loop.",
+      "signals": [{"type": "same_prompt_same_mission_repeat", "occurrence_count": 3}],
+      "evidence": [{"kind": "usage_pattern", "ref": "fixture://progression/repeat-3", "supports": "same prompt and mission repeated three times with no durable state advance"}],
+      "expected": {"primary": "progression", "secondary": [], "result": "FAILURE", "confidence": "HIGH", "attribution": "CORRELATED", "actionability": "CONDITIONAL_ACTIONABLE_REPAIR"}
+    },
+    {
+      "id": "progression-two-repeats-not-enough",
+      "kind": "boundary",
+      "purpose": "Two repeats do not cross the repository's repeated-local-pattern threshold.",
+      "signals": [{"type": "same_prompt_same_mission_repeat", "occurrence_count": 2}],
+      "evidence": [],
+      "expected": {"primary": "unknown", "secondary": [], "result": "UNKNOWN", "confidence": "NONE", "attribution": "UNOBSERVED", "actionability": "INFORMATION_ONLY"}
+    },
+    {
+      "id": "progression-repeat-with-state-advance-is-not-failure",
+      "kind": "near_miss",
+      "purpose": "Repeated use with durable evidence progression must not be mislabeled as a recovery loop.",
+      "signals": [{"type": "same_prompt_same_mission_repeat", "occurrence_count": 4}, {"type": "durable_state_advance"}],
+      "evidence": [],
+      "expected": {"primary": "unknown", "secondary": [], "result": "UNKNOWN", "confidence": "NONE", "attribution": "UNOBSERVED", "actionability": "INFORMATION_ONLY"}
+    },
+    {
+      "id": "durability-required-plan-absent",
+      "kind": "deterministic",
+      "purpose": "A required canonical durable plan artifact that is absent is a durability failure.",
+      "signals": [{"type": "expected_durable_artifact_missing", "artifact": "canonical plan"}],
+      "evidence": [{"kind": "repository", "ref": "fixture://durability/missing-plan", "supports": "required tracked plan artifact is absent"}],
+      "expected": {"primary": "durability", "secondary": [], "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"}
+    },
+    {
+      "id": "durability-repeated-manual-context-transfer",
+      "kind": "repeated_pattern",
+      "purpose": "Repeated manual transfer of the same recoverable context is correlated durability failure evidence.",
+      "signals": [{"type": "manual_context_transfer", "occurrence_count": 2}],
+      "evidence": [{"kind": "usage_pattern", "ref": "fixture://durability/manual-transfer", "supports": "same repository context had to be manually re-carried twice"}],
+      "expected": {"primary": "durability", "secondary": [], "result": "FAILURE", "confidence": "MEDIUM", "attribution": "CORRELATED", "actionability": "CONDITIONAL_ACTIONABLE_REPAIR"}
+    },
+    {
+      "id": "premature-terminal-safe-successor-remains",
+      "kind": "deterministic",
+      "purpose": "A terminal claim contradicted by a safe executable successor is premature terminality.",
+      "signals": [{"type": "terminal_claim"}, {"type": "safe_successor_observed"}],
+      "evidence": [{"kind": "repository", "ref": "fixture://terminal/safe-successor", "supports": "durable plan contains a safe dependency-ready successor"}],
+      "expected": {"primary": "premature-terminal", "secondary": [], "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"}
+    },
+    {
+      "id": "evidence-promotion-wired-claimed-from-design",
+      "kind": "deterministic",
+      "purpose": "Claiming WIRED_REACHABLE when only PLANNED_DESIGNED is observed is evidence promotion.",
+      "signals": [{"type": "state_claim", "state": "WIRED_REACHABLE"}, {"type": "state_observation", "state": "PLANNED_DESIGNED"}],
+      "claimed_state": "WIRED_REACHABLE",
+      "observed_state": "PLANNED_DESIGNED",
+      "evidence": [{"kind": "repository", "ref": "fixture://evidence/design-only", "supports": "design exists but wiring evidence does not"}],
+      "expected": {"primary": "evidence-promotion", "secondary": [], "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"}
+    },
+    {
+      "id": "evidence-promotion-environment-blocker-does-not-excuse-success-claim",
+      "kind": "compound",
+      "purpose": "An external blocker explains missing progress but a success claim across it is still evidence promotion.",
+      "signals": [{"type": "environment_failure", "cause": "provider unavailable"}, {"type": "success_claim_with_unresolved_blocker"}],
+      "evidence": [{"kind": "provider", "ref": "fixture://environment/outage", "supports": "provider outage is independently observed"}, {"kind": "other", "ref": "fixture://claim/success", "supports": "agent claimed success despite unresolved blocker"}],
+      "expected": {"primary": "evidence-promotion", "secondary": ["environment"], "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"}
+    },
+    {
+      "id": "regression-prior-validated-now-broken",
+      "kind": "deterministic",
+      "purpose": "Previously validated behavior that breaks under the same intended requirement is a regression.",
+      "signals": [{"type": "prior_validated_state"}, {"type": "same_requirement_broken"}],
+      "retrospective": true,
+      "evidence": [{"kind": "validator", "ref": "fixture://regression/before", "supports": "same requirement previously passed validation"}, {"kind": "validator", "ref": "fixture://regression/after", "supports": "same requirement now fails"}],
+      "expected": {"primary": "regression", "secondary": [], "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"}
+    },
+    {
+      "id": "regression-provider-revert",
+      "kind": "deterministic",
+      "purpose": "A provider revert explicitly caused by broken intended behavior is regression evidence.",
+      "signals": [{"type": "provider_revert_for_behavior"}],
+      "retrospective": true,
+      "evidence": [{"kind": "provider", "ref": "fixture://regression/revert", "supports": "provider revert cites broken intended behavior"}],
+      "expected": {"primary": "regression", "secondary": [], "result": "FAILURE", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "ACTIONABLE_REPAIR"}
+    },
+    {
+      "id": "environment-provider-outage",
+      "kind": "deterministic",
+      "purpose": "A provider outage without an independent prompt defect is an environment outcome, not prompt failure.",
+      "signals": [{"type": "environment_failure", "cause": "provider outage"}],
+      "evidence": [{"kind": "provider", "ref": "fixture://environment/provider-outage", "supports": "provider outage blocked execution"}],
+      "expected": {"primary": "environment", "secondary": [], "result": "BLOCKED", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "INFORMATION_ONLY"}
+    },
+    {
+      "id": "environment-execution-failure-with-external-cause",
+      "kind": "near_miss",
+      "purpose": "A failed action caused by an independently observed environment problem must not be charged as execution failure.",
+      "signals": [{"type": "deterministic_action_failure"}, {"type": "environment_failure", "cause": "credential denied"}],
+      "evidence": [{"kind": "provider", "ref": "fixture://environment/credential-denied", "supports": "required external credential was unavailable"}],
+      "expected": {"primary": "environment", "secondary": [], "result": "BLOCKED", "confidence": "HIGH", "attribution": "PROVEN", "actionability": "INFORMATION_ONLY"}
+    },
+    {
+      "id": "unknown-single-ordinary-invocation",
+      "kind": "boundary",
+      "purpose": "One ordinary invocation proves interest only.",
+      "signals": [{"type": "prompt_invoked"}],
+      "evidence": [],
+      "expected": {"primary": "unknown", "secondary": [], "result": "UNKNOWN", "confidence": "NONE", "attribution": "UNOBSERVED", "actionability": "INFORMATION_ONLY"}
+    },
+    {
+      "id": "unknown-unreasoned-dislike",
+      "kind": "boundary",
+      "purpose": "A dislike without explanatory evidence may trigger review elsewhere but cannot safely name a failure class.",
+      "signals": [{"type": "prompt_dislike"}],
+      "evidence": [],
+      "expected": {"primary": "unknown", "secondary": [], "result": "UNKNOWN", "confidence": "NONE", "attribution": "UNOBSERVED", "actionability": "INFORMATION_ONLY"}
+    },
+    {
+      "id": "unknown-external-runtime-unobserved",
+      "kind": "boundary",
+      "purpose": "A prompt copied into an external agent with no downstream receipt remains unobserved.",
+      "signals": [{"type": "prompt_copied"}, {"type": "external_runtime_unobserved"}],
+      "target_runtime": "OpenCode",
+      "evidence": [],
+      "expected": {"primary": "unknown", "secondary": [], "result": "UNKNOWN", "confidence": "NONE", "attribution": "UNOBSERVED", "actionability": "INFORMATION_ONLY"}
+    }
+  ]
+}
