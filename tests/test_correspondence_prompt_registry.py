@@ -60,6 +60,92 @@ class CorrespondencePromptRegistryTests(unittest.TestCase):
         self.assertIn("Never turn an unresolved issue into `complete`", content)
         self.assertNotIn("ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT", content)
 
+    def test_correspondence_prompts_gate_self_inflicted_disclosure(self) -> None:
+        p72 = self.prompts["P72"]["copyContent"]
+        p73 = self.prompts["P73"]["copyContent"]
+
+        for phrase in (
+            "MINIMUM SUFFICIENT CONTEXT",
+            "QUESTION-SURFACE CONTROL",
+            "self-inflicted disclosure",
+            "reporting expectation",
+            "smallest sufficient external question",
+        ):
+            with self.subTest(prompt="P72", phrase=phrase):
+                self.assertIn(phrase, p72)
+
+        for phrase in (
+            "RECIPIENT-NEED GATE / MINIMUM SUFFICIENT CONTEXT",
+            "QUESTION-SURFACE CONTROL / SELF-INFLICTED DISCLOSURE",
+            "private tracker",
+            "daily",
+            "hourly",
+            "same-day",
+            "reporting expectations",
+            "smallest sufficient external question",
+            "EXTERNAL-MATERIAL EXCEPTION",
+            "audience selection, not concealment",
+            "queue/view/report",
+        ):
+            with self.subTest(prompt="P73", phrase=phrase):
+                self.assertIn(phrase, p73)
+
+        self.assertIn(
+            "Do not hide a detail the recipient genuinely needs",
+            p72,
+        )
+        self.assertIn(
+            "Evidence that convinced the sender is not automatically evidence the recipient needs",
+            p73,
+        )
+        self.assertIn(
+            "minimum sufficient recipient context",
+            self.prompts["P72"]["proofGate"],
+        )
+        self.assertIn(
+            "self-inflicted disclosure",
+            self.prompts["P73"]["proofGate"],
+        )
+        self.assertIn(
+            "answer, decide, authorize, or act",
+            self.prompts["P73"]["proofGate"],
+        )
+
+    def test_content_only_prompts_exhaust_editing_compute_without_repo_contract(self) -> None:
+        for prompt_id in ("P72", "P73"):
+            prompt = self.prompts[prompt_id]
+            content = prompt["copyContent"]
+            with self.subTest(prompt=prompt_id):
+                for phrase in (
+                    "EXHAUSTIVE AVAILABLE EDITING COMPUTE",
+                    "Brevity constrains the final output, not internal editing effort",
+                    "Treat the first sendable draft as a checkpoint, not an automatic stop",
+                    "editing fixed point is evidence-defined, not pass-count-defined",
+                    "Do not reveal scratch work, candidate variants, chain-of-thought",
+                    "Extra compute never authorizes invented facts",
+                ):
+                    self.assertIn(phrase, content)
+                self.assertIn(
+                    "silently exhaust materially useful editing passes",
+                    prompt["nextStep"],
+                )
+                self.assertIn(
+                    "exhaustive editing has reached an evidence-defined fixed point",
+                    prompt["proofGate"],
+                )
+                self.assertEqual(
+                    prompt["actionabilityPolicy"],
+                    "not-applicable:content-only",
+                )
+                self.assertNotIn(
+                    "ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT",
+                    content,
+                )
+                self.assertNotIn(
+                    "GREEN BRANCH INTEGRATION CONTRACT",
+                    content,
+                )
+
     def test_render_includes_correspondence_runtime_and_profile_tokens(self) -> None:
         html = build_prompt_kit_registry.render()
         self.assertIn("prompt-kit-correspondence-styles", html)

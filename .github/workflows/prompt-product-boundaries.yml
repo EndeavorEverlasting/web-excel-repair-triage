@@ -1,0 +1,53 @@
+name: Prompt product boundaries
+
+on:
+  pull_request:
+    paths:
+      - 'docs/prompts.json'
+      - 'registry/prompts/product-boundaries.v1.json'
+      - 'registry/prompts/*-prompts.v1.json'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/prompt_registry_product_boundaries.py'
+      - 'tests/test_prompt_registry_product_boundaries.py'
+      - '.github/workflows/prompt-product-boundaries.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/prompts.json'
+      - 'registry/prompts/product-boundaries.v1.json'
+      - 'registry/prompts/*-prompts.v1.json'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/prompt_registry_product_boundaries.py'
+      - 'tests/test_prompt_registry_product_boundaries.py'
+      - '.github/workflows/prompt-product-boundaries.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  product-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Refresh main and check owned diff hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          git diff --check origin/main...HEAD
+
+      - name: Validate prompt product ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_product_boundaries.py --summary
+          python -m unittest tests.test_prompt_registry_product_boundaries -v

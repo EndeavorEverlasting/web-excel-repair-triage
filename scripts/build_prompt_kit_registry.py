@@ -15,18 +15,15 @@ if str(REPO_ROOT) not in sys.path:
 
 import build_prompt_kit  # noqa: E402
 from scripts import prompt_classification  # noqa: E402
+from scripts import prompt_registry_product_boundaries  # noqa: E402
 
-BASE_REGISTRY = REPO_ROOT / "docs" / "prompts.json"
-EXTENSION_REGISTRIES = (
-    REPO_ROOT / "registry" / "prompts" / "skill-development-prompts.v1.json",
-    REPO_ROOT / "registry" / "prompts" / "tutorial-discovery-prompts.v1.json",
-    REPO_ROOT / "registry" / "prompts" / "ai-engineering-level-up-prompts.v1.json",
-    REPO_ROOT / "registry" / "prompts" / "repository-work-ledger-prompts.v1.json",
-    REPO_ROOT / "registry" / "prompts" / "management-operations-prompts.v1.json",
-    REPO_ROOT / "registry" / "prompts" / "spec-architecture-prompts.v1.json",
+PRODUCT_BOUNDARIES = prompt_registry_product_boundaries.load_contract()
+BASE_REGISTRY = prompt_registry_product_boundaries.base_registry(PRODUCT_BOUNDARIES)
+EXTENSION_REGISTRIES = prompt_registry_product_boundaries.legacy_extension_registries(
+    PRODUCT_BOUNDARIES
 )
-CONTENT_REGISTRIES = (
-    REPO_ROOT / "registry" / "prompts" / "correspondence-prompts.v1.json",
+CONTENT_REGISTRIES = prompt_registry_product_boundaries.content_registries(
+    PRODUCT_BOUNDARIES
 )
 PROMPT_OVERRIDES = REPO_ROOT / "registry" / "prompts" / "prompt-overrides.v1.json"
 DISPLAY_ORDER_POLICY = (

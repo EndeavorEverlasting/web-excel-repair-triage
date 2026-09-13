@@ -18,6 +18,7 @@
     "PROMPT_KIT_ACCESS.md",
     "OPEN_PROMPT_KIT_ON_PHONE.md"
   ],
+  "privacy_storage_guide": "docs/PROMPT_KIT_PRIVACY_STORAGE.md",
   "routing_priority": [
     "browser-use",
     "phone-install",
@@ -28,71 +29,32 @@
   "modes": [
     {
       "id": "browser-use",
-      "intent": [
-        "open",
-        "use",
-        "try",
-        "share"
-      ],
-      "devices": [
-        "android",
-        "ios",
-        "windows",
-        "macos",
-        "linux",
-        "tablet"
-      ],
+      "intent": ["open", "use", "try", "share"],
+      "devices": ["android", "ios", "windows", "macos", "linux", "tablet"],
       "manual_clone_required": false,
       "entry_point": "https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/",
       "operator_message": "Open the public AFK Agent Flow surface directly. Do not require Git, ZIP extraction, PowerShell, Python, or Termux for normal use."
     },
     {
       "id": "phone-install",
-      "intent": [
-        "install",
-        "add to home screen",
-        "phone",
-        "tablet"
-      ],
-      "devices": [
-        "android",
-        "ios",
-        "tablet"
-      ],
+      "intent": ["install", "add to home screen", "phone", "tablet"],
+      "devices": ["android", "ios", "tablet"],
       "manual_clone_required": false,
       "entry_point": "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
       "operator_message": "Open the phone launcher in the system browser, then use the install or Add to Home Screen surface."
     },
     {
       "id": "windows-local-app",
-      "intent": [
-        "windows local app",
-        "favorites preserving",
-        "offline-ish local launch",
-        "stable local origin"
-      ],
-      "devices": [
-        "windows"
-      ],
+      "intent": ["windows local app", "favorites preserving", "offline-ish local launch", "stable local origin"],
+      "devices": ["windows"],
       "manual_clone_required": false,
       "entry_point": "Open-Latest-PromptKit.cmd",
       "operator_message": "Use the repository-owned CMD. It owns safe clone or fast-forward behavior, resolves the single canonical Desktop\\dev checkout independently of where the CMD was downloaded, and serves the validated portable Prompt Kit on the stable loopback origin."
     },
     {
       "id": "editable-checkout",
-      "intent": [
-        "edit",
-        "commit",
-        "push",
-        "develop",
-        "local source checkout"
-      ],
-      "devices": [
-        "android",
-        "windows",
-        "macos",
-        "linux"
-      ],
+      "intent": ["edit", "commit", "push", "develop", "local source checkout"],
+      "devices": ["android", "windows", "macos", "linux"],
       "manual_clone_required": true,
       "entry_point": "git clone --branch main --single-branch https://github.com/EndeavorEverlasting/web-excel-repair-triage.git",
       "android_prerequisites": [
@@ -118,23 +80,226 @@
     },
     {
       "id": "zip-snapshot",
-      "intent": [
-        "download snapshot",
-        "no git client"
-      ],
-      "devices": [
-        "android",
-        "ios",
-        "windows",
-        "macos",
-        "linux",
-        "tablet"
-      ],
+      "intent": ["download snapshot", "no git client"],
+      "devices": ["android", "ios", "windows", "macos", "linux", "tablet"],
       "manual_clone_required": false,
       "entry_point": "https://github.com/EndeavorEverlasting/web-excel-repair-triage/archive/refs/heads/main.zip",
       "operator_message": "Treat ZIP as a point-in-time snapshot. It is not the preferred normal-use or Favorites-preserving update path."
     }
   ],
+  "data_plane_architecture": {
+    "invariant": "GitHub contains product truth; static hosting contains public distributable truth; a user's device contains personal truth. No private user state belongs in GitHub or the public Pages bundle.",
+    "planes": {
+      "prompt_canon": {
+        "authority": "repository-and-public-static-release",
+        "repository_owners": [
+          "docs/prompts.json",
+          "registry/prompts/",
+          "registry/prompts/product-boundaries.v1.json",
+          "scripts/build_prompt_kit_registry.py"
+        ],
+        "may_store": [
+          "prompt identifiers, definitions and versions",
+          "public classifications, topology and relationships",
+          "public schemas, validators and eval definitions",
+          "release manifests and hashes"
+        ],
+        "must_never_receive": [
+          "user identity or contact data",
+          "private sync vault or recovery identifiers",
+          "persistent device, browser, installation or analytics identifiers",
+          "session or conversation identifiers",
+          "personal favorites, collections, annotations or raw usage history",
+          "private project, repository, file path or customer context",
+          "raw user, agent or clipboard content from usage"
+        ]
+      },
+      "personal_state": {
+        "authority": "user-device",
+        "plaintext_location": "device-only",
+        "may_store": [
+          "favorites",
+          "collections",
+          "saved user-created prompt variants",
+          "preferences and personal tags",
+          "explicitly saved notes and workflows",
+          "local aggregate counters"
+        ],
+        "must_never_receive": [
+          "server-assigned account identity",
+          "mandatory persistent device identity"
+        ],
+        "egress": [
+          "allowlisted Sync Capsule encrypted before user-selected transport",
+          "PrivacyReducer-derived collective evidence only"
+        ]
+      },
+      "private_sync": {
+        "authority": "portable-encrypted-save-protocol",
+        "v1_transport": "user-selected storage or file transfer",
+        "prompt_kit_owned_backend_required": false,
+        "may_store_outside_device": [
+          "encrypted promptkit-save.pkenc bytes",
+          "non-secret public envelope version and cryptographic algorithm metadata"
+        ],
+        "must_never_receive_plaintext": [
+          "personal state",
+          "raw prompt or execution history",
+          "local journal",
+          "project, repository or file path context",
+          "user identity, account identity or persistent device identity",
+          "encryption keys, recovery material or pairing secrets"
+        ]
+      },
+      "collective_learning": {
+        "authority": "privacy-reduced-aggregate-evidence",
+        "v1_network_ingestion_required": false,
+        "may_store": [
+          "allowlisted aggregate prompt behavior fields from PrivacyReducer"
+        ],
+        "must_never_receive": [
+          "user, account, installation, device, browser, vault or persistent pseudonymous identifiers",
+          "session, conversation, trace or correlation identifiers",
+          "project, repository, branch, customer, URL or file path context",
+          "raw user, prompt, agent, feedback, error or clipboard text",
+          "exact activity timestamps"
+        ]
+      }
+    }
+  },
+  "deployment_surfaces": {
+    "repository_authority": {
+      "role": "source, governance, validation and build factory",
+      "owned_paths": [
+        "docs/prompts.json",
+        "registry/prompts/",
+        "harness/contracts/prompt-kit-cross-device-access.v1.json",
+        "scripts/build_prompt_kit_registry.py",
+        "scripts/validate_prompt_kit_privacy_storage.py",
+        "tests/test_prompt_kit_privacy_storage.py",
+        ".github/workflows/prompt-kit-pages.yml",
+        ".github/workflows/prompt-kit-privacy-storage.yml",
+        "docs/PROMPT_KIT_PRIVACY_STORAGE.md"
+      ],
+      "private_user_data_allowed": false
+    },
+    "github_pages": {
+      "role": "public read-only distribution",
+      "source_workflow": ".github/workflows/prompt-kit-pages.yml",
+      "bundle": [
+        {"public_path": "/", "source": "web/prompt-kit-mobile/", "kind": "launcher-pwa"},
+        {"public_path": "/afk-agent-flow/index.html", "source": "scripts/build_prompt_kit_registry.py -> web/prompt-kit/index.html", "kind": "generated-canonical-app"},
+        {"public_path": "/afk-agent-flow/resources.v1.json", "source": "web/prompt-kit/resources.v1.json", "kind": "public-resource-index"},
+        {"public_path": "/prompt-kit/index.html", "source": "web/prompt-kit-legacy-redirect/index.html", "kind": "legacy-redirect"},
+        {"public_path": "/operant/index.html", "source": "web/operant-legacy-redirect/index.html", "kind": "legacy-redirect"},
+        {"public_path": "/roster-log-v2/", "source": "web/roster-log-v2/", "kind": "separate-static-app"}
+      ],
+      "publication_rule": "A file may be published only when anonymous worldwide download is acceptable.",
+      "must_never_publish": [
+        "personal state or favorites",
+        "local journal or raw usage history",
+        "encrypted save files",
+        "vault, session, device or user identifiers",
+        "private project context",
+        "encryption keys, recovery phrases or pairing secrets",
+        "PrivacyReducer local buffers"
+      ]
+    },
+    "user_device": {
+      "role": "only plaintext authority for personal use data",
+      "logical_stores": {
+        "public_cache": "re-creatable Prompt Canon and static assets",
+        "personal_state": "favorites, collections, saved variants, preferences, tags and explicitly saved notes/workflows",
+        "local_journal": "raw usage, execution, correction, project and task context; never automatically synchronized",
+        "privacy_reducer_buffer": "local reduced aggregates awaiting threshold or export",
+        "sync_state": "last local capsule/base and encrypted portable save metadata",
+        "secrets": "encryption/recovery material in platform-protected storage where available"
+      },
+      "portable_export": "promptkit-save.pkenc"
+    }
+  },
+  "sync_capsule_contract": {
+    "schema": "promptkit-sync-capsule/v1",
+    "serialization": "positive-allowlist-only",
+    "portable_export": "promptkit-save.pkenc",
+    "encryption_required_before_transport": true,
+    "allowed_fields": [
+      "schema_version",
+      "canon_version",
+      "favorites",
+      "collections",
+      "saved_variants",
+      "preferences",
+      "personal_tags",
+      "explicitly_saved_notes",
+      "saved_workflows"
+    ],
+    "forbidden_pre_encryption": [
+      "raw prompt or execution history",
+      "raw user requests or agent responses",
+      "local journal",
+      "repository, project, customer, branch, URL or file path context",
+      "session, conversation, trace or correlation identifiers",
+      "persistent user, account, installation, browser, device or vault identifiers",
+      "PrivacyReducer local buffer",
+      "Collective Learning upload state",
+      "encryption keys, recovery phrases or pairing secrets"
+    ],
+    "transport_policy": [
+      "The encrypted artifact may be copied through user-selected storage such as OneDrive, Google Drive, iCloud, Dropbox, Syncthing, NAS, USB or ordinary file transfer.",
+      "Prompt Kit v1 does not require a Prompt Kit-owned sync server or cloud account.",
+      "A future automatic transport must preserve this capsule boundary rather than expanding it to raw local history."
+    ]
+  },
+  "privacy_reducer_contract": {
+    "schema": "collective-evidence/v1",
+    "network_access": "forbidden",
+    "input_authority": "device-local personal state and local journal",
+    "output_allowlist": [
+      "schema_version",
+      "canon_version",
+      "prompt.prompt_id",
+      "prompt.prompt_version",
+      "behavior.action",
+      "behavior.outcome",
+      "behavior.correction_bucket",
+      "behavior.retry_bucket",
+      "behavior.duration_bucket",
+      "transition.from_prompt",
+      "transition.to_prompt",
+      "count"
+    ],
+    "forbidden_output_classes": {
+      "identity": ["user_id", "username", "name", "email", "phone", "account_id", "github_user", "employee_id"],
+      "persistent_pseudonym": ["anonymous_user_id", "installation_id", "client_id", "tracking_id", "analytics_id", "persistent_uuid", "hashed_email", "hashed_user_id"],
+      "private_sync": ["vault_id", "sync_account_id", "device_slot_id", "recovery_id"],
+      "device": ["device_id", "hostname", "machine_name", "hardware_id", "browser_profile", "browser_fingerprint", "advertising_id"],
+      "session": ["session_id", "conversation_id", "chat_id", "execution_id", "trace_id", "correlation_id", "request_id", "workflow_instance_id"],
+      "project": ["repository", "repository_url", "repository_owner", "branch", "project_name", "customer_name", "workspace", "organization", "company", "file_path", "directory", "ticket_id", "issue_id", "pull_request_id", "domain", "url"],
+      "raw_text": ["task_text", "prompt_text", "user_message", "assistant_message", "agent_output", "notes", "comments", "error_text", "stack_trace"],
+      "exact_time": ["timestamp", "started_at", "ended_at", "timezone", "local_time", "exact_duration"]
+    },
+    "batching": {
+      "minimum_local_count": 5,
+      "minimum_distinct_aggregates": 3,
+      "minimum_batch_age_hours": 6,
+      "randomized_flush_window_hours": [12, 24],
+      "aggregate_buffer_max_days": 90
+    },
+    "invariants": [
+      "Unknown output fields fail closed.",
+      "Forbidden values may not be hashed, encoded, encrypted or renamed into correlation fields.",
+      "Equivalent allowed behavior with different identity, project, device and session context must reduce to identical collective evidence.",
+      "The reducer may write only a local aggregate buffer; a separate uploader is required for any future network transport."
+    ]
+  },
+  "v1_backend_policy": {
+    "prompt_kit_owned_backend_required": false,
+    "required_remote_infrastructure": ["GitHub repository", "GitHub Pages static hosting"],
+    "optional_user_managed_transports": ["OneDrive", "Google Drive", "iCloud", "Dropbox", "Syncthing", "NAS", "USB or ordinary file transfer"],
+    "future_hosted_sync_status": "not implemented by this contract",
+    "future_collective_ingestion_status": "not implemented by this contract"
+  },
   "guardrails": [
     "Do not tell a normal phone or browser user to clone the repository merely to use the Prompt Kit.",
     "Do not tell a mobile GitHub-app user to hunt for or download web/prompt-kit/index.html as the primary access path.",
@@ -143,7 +308,9 @@
     "Do not leave persistent local browser-proof copies of the Prompt Kit under arbitrary Temp or download directories; use the canonical checkout, repository-owned Outputs, or CI-owned ephemeral runner storage.",
     "For existing editable checkouts, verify canonical origin, clean worktree, current branch main, and zero local-only commits before fetching and fast-forwarding; never reset, clean, force-push, or discard local work.",
     "Do not claim Add to Home Screen, PWA installation, Termux, Git authentication, browser storage, or clipboard behavior succeeded without device observation.",
-    "Resolve the canonical website through this contract and harness/artifacts.v1.json instead of guessing an index.html path."
+    "Resolve the canonical website through this contract and harness/artifacts.v1.json instead of guessing an index.html path.",
+    "Do not put plaintext personal state, local journals, raw prompt history, recovery material, or PrivacyReducer buffers in the repository or GitHub Pages bundle.",
+    "Do not require a Prompt Kit-owned backend for v1 private state portability; encrypted save transport remains user-selected."
   ],
-  "proof_ceiling": "Static repository routing, canonical Windows checkout-path discipline, and documentation contract proof only. Device browser behavior, PWA installation, Termux/F-Droid availability, Git credentials, network reachability, local storage, clipboard behavior, and successful push require observed runtime proof."
+  "proof_ceiling": "Repository/static architecture and contract proof only. This contract defines and validates ownership boundaries, current GitHub Pages bundle mapping, local-only data classes, portable encrypted-save requirements, and PrivacyReducer output/batching policy. It does not prove browser IndexedDB/local persistence, encryption implementation, .pkenc export/import runtime, cross-device pairing, hosted sync, network anonymity, Collective Learning ingestion, or physical device behavior."
 }
