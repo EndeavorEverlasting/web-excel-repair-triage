@@ -66,6 +66,8 @@ GitHub Pages site root
     └── source: web/roster-log-v2/
 ```
 
+The generated canonical app is therefore published at `/afk-agent-flow/index.html`; it is not a separately edited public copy.
+
 The public AFK Agent Flow URL is:
 
 ```text
