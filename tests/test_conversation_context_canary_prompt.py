@@ -187,6 +187,24 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
             content.index("AUTHORITATIVE CONTEXT RULE"),
         )
 
+    def test_account_qualified_access_route_map_is_conditional_and_fail_closed(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "ACCOUNT-QUALIFIED ACCESS ROUTE MAP",
+            "emit a compact ACCESS ROUTE MAP after the Canary",
+            "PURPOSE | RESOURCE / CONTAINER | CANONICAL URL OR ENTRY POINT | ACCOUNT / PROFILE ALIAS | OWNER / AUTHORITY | CURRENT ROLE | REQUIRED ROLE | DECISION",
+            "CONTINUE when the active identity already has sufficient role even if another account owns the resource",
+            "ACCOUNT SWITCH GATE when a stronger identity is required",
+            "UNKNOWN when material account/role/route evidence is unresolved",
+            "Dynamic post-action routes",
+            "UNKNOWN / RESOLVE AFTER <owning gate>",
+            "Do not add the route inventory to the mandatory Canary first line",
+            "Never invent a deep link merely because its URL pattern is guessable",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("access route map", [keyword.lower() for keyword in self.target["keywords"]])
+        self.assertIn("relevant sprint urls", [keyword.lower() for keyword in self.target["keywords"]])
+
     def test_route_convergence_is_diagnostic_not_operator_error(self) -> None:
         content = self.target["copyContent"]
         for phrase in (
