@@ -158,6 +158,20 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
         self.assertNotIn("git push --force", workflow)
         self.assertNotIn("git push -f", workflow)
 
+    def test_mainline_release_owners_are_serialized_across_push_and_dispatch(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn("'mainline-owner'", workflow)
+        self.assertIn("format('pr-{0}', github.event.pull_request.number)", workflow)
+        self.assertIn("cancel-in-progress: false", workflow)
+        self.assertNotIn(
+            "operant-versioning-${{ github.event_name }}-${{ github.ref }}",
+            workflow,
+        )
+        self.assertIn('git push origin HEAD:"$branch"', workflow)
+        self.assertNotIn("git push --force", workflow)
+        self.assertNotIn("git push -f", workflow)
+
     def test_existing_release_pr_refresh_remains_actions_owned(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn('gh pr edit "$existing_url"', workflow)
