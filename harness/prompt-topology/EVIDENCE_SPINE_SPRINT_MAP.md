@@ -1,10 +1,10 @@
 # Prompt Execution Evidence Spine — Canonical Sprint Map
 
-**Status:** TRACKED / ACTIONABLE / NOT YET IMPLEMENTED
+**Status:** TRACKED / WAVES 0–2 INTEGRATED ON MAIN / PLANNING PR #471 RECONCILING
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
-**Planning floor:** `main@6718d3f8e41ada544a46de903bc85a22725de0fa` (provider refresh 2026-09-13)
+**Planning floor:** refreshed `main@d8ef87ebb0f98fb49061429f9561ed3781556f44` (provider refresh 2026-09-14)
 **Canonical strategic predecessor:** `harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md`
-**Required P95 architecture output:** `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md`
+**Required P95 architecture output:** `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md` (INTEGRATED via #473)
 
 This file is the durable dependency map for the Prompt Execution Evidence Spine and frictionless Prompt Kit continuation work. It does not replace the P95 architecture decision.
 
@@ -29,15 +29,17 @@ Current `main` already contains:
 - bounded local storage lifecycle implementation from PR #466;
 - the Operant v0.8.0 release merge from PR #469;
 - existing feedback-to-AFK routing capability and trigger surfaces;
-- current operational prompt contracts and generated Prompt Kit.
+- current operational prompt contracts and generated Prompt Kit;
+- **Wave 0 / Panel 1:** autonomous parallel dispatch floor from PR #467 (`a1e9caa1`) plus observed-interval repair PR #477 (`d8ef87eb`);
+- **Wave 1 / Panel 2:** `EVIDENCE_SPINE_ARCHITECTURE.md` from PR #473;
+- **Wave 2 / Panel 3:** runtime collision matrix (#474) and minimal Evidence Spine runtime adapters (#475).
 
-Provider refresh also identified three overlapping open lanes that are evidence/dependencies, not invitations to reimplement from memory:
+Provider refresh also identifies two remaining donor lanes that stay evidence/dependencies until architecture-bounded salvage:
 
-1. **PR #467 — autonomous parallel dispatch.** Directly relevant to frictionless agent dispatch, but not green on the inspected head `fff31c61e84282df2177107257829de0473f5ff5`. CI exposes bounded P07 contract regressions, and current review threads require executable dispatch consumption and contradiction-resistant tests. Its exact head/base MUST be refreshed again before mutation because `main` moved after the initial inspection.
-2. **PR #450 — routing control plane.** Valuable route/receipt semantics, but substantially behind the inspected `main`; reconcile only after P95 decides lifecycle ownership.
-3. **PR #431 — Prompt Finder observation corpus / usage-feedback lane.** Valuable bounded observation semantics, but substantially behind the inspected `main` and unmergeable on the planning floor; reconcile only after P95 decides lifecycle ownership.
+1. **PR #450 — routing control plane.** Valuable route/receipt semantics; reconcile only where P95 preserves ownership.
+2. **PR #431 — Prompt Finder observation corpus / usage-feedback lane.** Valuable bounded observation semantics; reconcile only where P95 preserves ownership.
 
-`harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md` did not exist on the planning floor. Phase C names P95 as the next approved owner and forbids substituting Phase D, a new event bus, hosted telemetry, or another competing evidence model for that investigation.
+`harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md` is present on current `main`. Phase D, a new event bus, hosted telemetry, and competing evidence models remain forbidden.
 
 ## Proof typing
 
@@ -49,10 +51,10 @@ A branch, PR, schema, passing local unit test, or static artifact never proves a
 
 ## Collision ownership
 
-- **PR #467 owns its current parallel-dispatch branch/files until merged or explicitly superseded.** Do not duplicate its prompt-parallel-dispatch contract, launcher/adapter, tests, or generated Prompt Kit changes in another lane.
-- **P95 architecture owns the state-owner/identity decision.** Until it lands, no successor may create a fourth route/usage/outcome event model or assert that one universal lifecycle envelope is required.
-- **PR #450 remains the donor/owner for routing-control-plane concepts.** Do not independently recreate its route receipt/schema before P95 decides how it adapts.
-- **PR #431 remains the donor/owner for Prompt Finder observation concepts.** Do not independently recreate its observation corpus before P95 decides how it adapts.
+- **PR #467/#477 own the integrated parallel-dispatch floor on `main`.** Do not duplicate its prompt-parallel-dispatch contract, launcher/adapter, tests, or generated Prompt Kit changes in another lane.
+- **P95 architecture owns the state-owner/identity decision** via integrated `EVIDENCE_SPINE_ARCHITECTURE.md`. Successors must not create a fourth route/usage/outcome event model or assert that one universal lifecycle envelope is required.
+- **PR #450 remains the donor/owner for routing-control-plane concepts.** Do not independently recreate its route receipt/schema before adapting only P95-preserved concepts.
+- **PR #431 remains the donor/owner for Prompt Finder observation concepts.** Do not independently recreate its observation corpus before adapting only P95-preserved concepts.
 - **Merged outcome semantics remain authoritative on `main`.** Do not fork P99/P115 outcome and recovery classification into a competing classifier.
 - **PR #466/current `main` owns local retention/cleanup.** Evidence/feedback work must use the canonical bounded lifecycle rather than create unbounded local history.
 - **Generated `web/prompt-kit/index.html` is builder-owned.** Never hand-edit it.
@@ -60,6 +62,8 @@ A branch, PR, schema, passing local unit test, or static artifact never proves a
 ## Launch order
 
 ### Wave 0 — Panel 1: Autonomous Dispatch Floor Repair & Mainline Convergence
+
+**Status:** INTEGRATED on `main` via #467 (`a1e9caa1`) and post-merge review repair #477 (`d8ef87eb`).
 
 **Goal:** repair PR #467's remaining regressions/review gaps, prove its dispatch artifact is actually consumed by a deterministic adapter/validator path, preserve pre-existing P07 metadata contracts, and integrate the exact green head into current `main` when gates allow.
 
@@ -71,14 +75,17 @@ A branch, PR, schema, passing local unit test, or static artifact never proves a
 
 **Proof ceiling:** repository/CI/mainline integration. No claim that a third-party agent actually consumes Prompt Kit autonomously in production.
 
-Known repair gates from provider evidence:
+Proven repair gates:
 
-- raw P07 `expectedOutput` must preserve explicit current-default-branch integration language;
-- raw P07 `proofGate` must preserve the exact readability/editability-regression guarantee;
-- the current “machine-executable dispatch” review finding requires an actual schema/launcher/validator consumer rather than prose-only compliance;
-- autonomous iteration regression tests must reject contradictory/no-dispatch instructions rather than only assert substring presence.
+- raw P07 `expectedOutput` preserves explicit current-default-branch integration language;
+- raw P07 `proofGate` preserves the exact readability/editability-regression guarantee;
+- machine-executable dispatch is consumed by `harness/contracts/prompt-parallel-dispatch.v1.json` + `scripts/prompt_parallel_dispatch.py` (`validate|run|verify-receipt`);
+- autonomous iteration regressions reject contradictory/no-dispatch instructions;
+- `observed_parallelism` is derived from overlapping lane wall-clock intervals, not submission intent.
 
 ### Wave 1 — Panel 2: P95 Evidence Spine Architecture & Lifecycle Ownership
+
+**Status:** INTEGRATED on `main` via #473.
 
 **Goal:** execute the already-approved P95 investigation on the refreshed post-Panel-1 floor and write `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md`.
 
@@ -101,6 +108,8 @@ The P95 design must explicitly cover the human and agent paths without adding wo
 - repeated corrective behavior reuses outcome/recovery evidence and privacy bounds rather than raw transcript surveillance.
 
 ### Wave 2 — Panel 3: Evidence Spine Runtime & Feedback-to-Ticket Convergence
+
+**Status:** INTEGRATED minimal runtime on `main` via #474 (collision matrix) and #475 (runtime adapters). Remaining #450/#431 donor salvage stays architecture-bounded.
 
 **Goal:** execute only runtime/integration work admitted by P95, reconcile stale donor PRs instead of duplicating them, and deliver the smallest end-to-end flow from bounded prompt execution evidence to deterministic continuation/recovery and git-friendly recurring-defect work.
 
