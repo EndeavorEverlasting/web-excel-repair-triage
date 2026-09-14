@@ -23,6 +23,8 @@ REQUIRED_REQUIREMENT_IDS = {
     "outside_click_collapse_restore",
     "escape_close_preserved",
     "copy_button_compatibility",
+    "detail_surface_click_copy",
+    "detail_local_edge_navigation",
 }
 
 
@@ -180,6 +182,21 @@ def evaluate_source(js: str) -> dict[str, bool]:
         ),
         "escape_close_preserved": bool(escape_match),
         "copy_button_compatibility": bool(button_body and "copyPrompt(" in button_body and "stopPropagation" in button_body),
+        "detail_surface_click_copy": bool(
+            "function handlePromptDetailSurfaceCopy" in js
+            and "isPromptDetailCopyConflict" in js
+            and "promptDetailHasTextSelection" in js
+            and "copyPrompt(openPromptId)" in js
+            and "[data-prompt-detail-no-copy]" in js
+        ),
+        "detail_local_edge_navigation": bool(
+            "function scrollPromptDetailTo(edge)" in js
+            and "function handlePromptDetailKeydown" in js
+            and "e.key==='Home'||e.key==='End'" in js
+            and "scrollPromptDetailTo(e.key==='Home'?'top':'bottom')" in js
+            and "promptDetailTop" in js
+            and "promptDetailBottom" in js
+        ),
     }
 
 

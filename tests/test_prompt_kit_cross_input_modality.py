@@ -115,6 +115,16 @@ class PromptKitCrossInputModalityTests(unittest.TestCase):
         convergence = next(rule for rule in rules if "terminal copy converges on copyPrompt" in rule)
         self.assertIn("Go to P# must not auto-open detail", convergence)
 
+    def test_detail_copy_and_edge_navigation_converge_across_modes(self) -> None:
+        payload = json.loads(CONTRACT.read_text(encoding="utf-8"))
+        by_id = {item["id"]: item for item in payload["capabilities"]}
+        self.assertIn("open detail panel", by_id["copy_act"]["mouse"])
+        self.assertIn("non-conflicting", by_id["copy_act"]["mouse"])
+        self.assertIn("panel-local Top/Bottom", by_id["scroll_edges"]["mouse"])
+        self.assertIn("active surface", by_id["scroll_edges"]["keyboard"])
+        self.assertIn("prompt detail container", by_id["scroll_edges"]["keyboard"])
+        self.assertEqual(by_id["scroll_edges"]["semantic_action"], "scrollPromptKitTo / scrollPromptDetailTo")
+
     def test_generated_site_embeds_converged_reference_route(self) -> None:
         generated = (ROOT / "web" / "prompt-kit" / "index.html").read_text(encoding="utf-8")
         self.assertIn("if(typeof toggleRef==='function'){toggleRef();return true}", generated)

@@ -49,6 +49,18 @@
       "event": "activate the explicit Copy control on a prompt card or detail panel",
       "expected": "Continue copying the selected prompt content without propagating an unintended card expansion action.",
       "forbidden": "Breaking the explicit Copy control while adding card-level click behavior."
+    },
+    {
+      "id": "detail_surface_click_copy",
+      "event": "single pointer click or touch tap on a non-conflicting, non-control area inside an open prompt detail panel",
+      "expected": "Copy the open prompt exact copyContent through the canonical copyPrompt path. Ignore buttons, links, form/editable controls, explicit no-copy regions, active text selection, and multi-click gestures so reading, feedback, navigation, selection, and other controls retain their own behavior.",
+      "forbidden": "Copying from backdrop clicks, button/link/form activation, text selection, double-click gestures, or any interaction that already owns another action."
+    },
+    {
+      "id": "detail_local_edge_navigation",
+      "event": "activate Top/Bottom inside an open prompt detail panel or press Home/End while the detail surface owns keyboard context",
+      "expected": "Scroll the prompt detail container itself to its top or bottom while keeping the modal open. Home/End are panel-local while detail is open, and text-editing controls retain native Home/End behavior.",
+      "forbidden": "Scrolling the underlying page, moving prompt-list selection, closing the detail, or hijacking Home/End inside an input, textarea, select, or editable field."
     }
   ],
   "validation": {
@@ -56,7 +68,7 @@
     "implementation_gate": "python scripts/validate_prompt_kit_interactions.py --require-implementation --output Outputs/prompt-kit-interaction-audit.json --summary",
     "contract_tests": "python -m unittest tests.test_prompt_kit_interactions_contract -v",
     "exact_site_parity": "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
-    "browser_field_gate": "Observe single-click copy, double-click expansion, backdrop/main-page dismissal, focus restoration, Escape close, and explicit Copy behavior in the canonical Prompt Kit website."
+    "browser_field_gate": "Observe detail non-control click-to-copy conflict guards, detail Top/Bottom controls, modal-local Home/End, text-editing Home/End preservation, plus existing card copy/open/backdrop/focus/Escape behavior in the canonical Prompt Kit website."
   },
   "artifact": {
     "schema_version": "prompt-kit-interaction-audit-result/v1",
