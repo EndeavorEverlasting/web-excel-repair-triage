@@ -1,8 +1,8 @@
 # Prompt Execution Evidence Spine — Canonical Sprint Map
 
-**Status:** TRACKED / WAVES 0–2 INTEGRATED ON MAIN / PLANNING PR #471 RECONCILING
+**Status:** TRACKED / WAVES 0–2 INTEGRATED ON MAIN / PLANNING MAP INTEGRATED VIA #471
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
-**Planning floor:** refreshed `main@d8ef87ebb0f98fb49061429f9561ed3781556f44` (provider refresh 2026-09-14)
+**Planning floor:** refreshed `main@86edababd71117afbaffad92b7ef2ee4ae9426a7` (provider refresh 2026-09-14)
 **Canonical strategic predecessor:** `harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md`
 **Required P95 architecture output:** `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md` (INTEGRATED via #473)
 

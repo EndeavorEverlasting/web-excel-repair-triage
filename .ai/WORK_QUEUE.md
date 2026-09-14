@@ -125,16 +125,16 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-008 — Execute Prompt Execution Evidence Spine sprint map
 
-- **Status:** VERIFY
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** Prompt Topology / P95 lifecycle architecture coordinator
-- **Branch / PR:** `docs/evidence-spine-sprint-map-current-20260913` / #471; Waves 0–2 landed via #467/#477, #473, #474/#475
+- **Branch / PR:** main / #471 merged; Waves 0–2 landed via #467/#477, #473, #474/#475
 - **Scope:** index the canonical three-wave Evidence Spine execution map covering PR #467 autonomous-dispatch floor repair and convergence, P95 lifecycle/state-owner architecture, then only the runtime routing/observation/recurrence-to-work/agent-continuation seams admitted by P95
 - **Forbidden:** replacing the canonical sprint map with this row; duplicating PR #467/#450/#431 owners; production Phase D; generic event bus; raw prompt/response/clipboard/transcript telemetry; hosted telemetry/vector DB; hand-editing generated Prompt Kit output; promoting static design to runtime adoption proof
 - **Dependencies:** current `main`; PR #467/#477 dispatch floor; `harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md`; merged P99/P115 outcome semantics; merged PR #466 local retention/privacy lifecycle; integrated P95 architecture #473; runtime collision/runtime PRs #474/#475
 - **References:** `harness/prompt-topology/EVIDENCE_SPINE_SPRINT_MAP.md`, `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md`, `harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md`, `harness/contracts/prompt-outcome-classification.v1.json`, `.ai/skills/prompt-kit-feedback-afk-routing/SKILL.md`
 - **Acceptance gate:** Panel 1 repairs and integrates the exact validated #467 owner; Panel 2 integrates `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md` with explicit lifecycle ownership and donor dispositions; Panel 3 implements only admitted seams, reconciles/retire donor work without duplicate ownership, proves privacy-bounded recurrence/next-action behavior with fixtures/validators/runtime evidence actually available, and converges validated authorized work onto refreshed default branch
-- **Gate:** integrate this planning PR onto refreshed `main` after ledger/Pages ancestor gates pass; remaining donor reconciliation for #450/#431 stays architecture-bounded
-- **Last proof:** merge:a1e9caa17c6a979a3747edb71632a66c9406af00 integrated #467; merge:d8ef87ebb0f98fb49061429f9561ed3781556f44 integrated #477 observed-parallelism repair; merge evidence for #473/#474/#475 on current `main@d8ef87eb`; artifact:harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md present on main
-- **Next action:** merge PR #471 into refreshed `main` after reconcile, then verify containment of `harness/prompt-topology/EVIDENCE_SPINE_SPRINT_MAP.md` and ledger validator green on the resulting default-branch head
-- **Updated:** 2026-09-14T12:55:00-04:00
+- **Gate:** none
+- **Last proof:** merge:86edababd71117afbaffad92b7ef2ee4ae9426a7 integrated planning PR #471; merge:a1e9caa17c6a979a3747edb71632a66c9406af00 integrated #467; merge:d8ef87ebb0f98fb49061429f9561ed3781556f44 integrated #477; architecture/runtime merges #473/#474/#475 on main; artifact:harness/prompt-topology/EVIDENCE_SPINE_SPRINT_MAP.md and artifact:harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md present on refreshed default branch
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-14T13:00:00-04:00
