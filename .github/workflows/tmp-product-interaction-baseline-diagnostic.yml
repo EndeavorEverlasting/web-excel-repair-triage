@@ -1,0 +1,51 @@
+name: TEMP Prompt Kit interaction baseline diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/tmp-product-interaction-baseline-diagnostic.yml'
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+      - name: contract status
+        continue-on-error: true
+        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_interaction_contract_is_marked_implemented -v
+      - name: strict static markers
+        continue-on-error: true
+        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_strict_static_interaction_gate_is_green -v
+      - name: click versus double-click
+        continue-on-error: true
+        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_single_click_copy_is_disambiguated_from_double_click_expand -v
+      - name: outside click collapse
+        continue-on-error: true
+        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_outside_click_collapses_detail_and_restores_origin_focus -v
+      - name: repeated section headers
+        continue-on-error: true
+        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_repeated_section_headers_have_top_left_and_bottom_right_links -v
+      - name: category divider accessibility
+        continue-on-error: true
+        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_category_dividers_are_accessible_expand_collapse_controls -v
+      - name: collapse state persistence
+        continue-on-error: true
+        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_collapse_state_survives_rerenders_and_home_reset_expands_all -v
+      - name: stable page anchors
+        continue-on-error: true
+        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_page_targets_are_stable_unique_runtime_anchors -v
+      - name: keyboard accessible cards
+        continue-on-error: true
+        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_prompt_cards_remain_keyboard_accessible_without_nested_button_semantics -v
+      - name: escaped prompt fields
+        continue-on-error: true
+        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_prompt_fields_are_escaped_before_card_or_detail_html -v
+      - name: checked-in generated site parity
+        continue-on-error: true
+        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_checked_in_site_contains_current_interaction_and_navigation_source -v
