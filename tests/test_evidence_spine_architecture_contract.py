@@ -18,8 +18,9 @@ class EvidenceSpineArchitectureContractTests(unittest.TestCase):
     def test_decision_prefers_adapter_only(self) -> None:
         self.assertIn("PREFER ADAPTER-ONLY / NO NEW SPINE", self.text)
         self.assertIn("Rejected", self.text)
-        self.assertNotIn("generic event bus", self.text.lower().split("non-goals")[0] if False else self.text)
+        self.assertIn("Accepted", self.text)
         self.assertIn("No generic analytics/event bus", self.text)
+        self.assertIn("Do **not** introduce a universal lifecycle envelope", self.text)
 
     def test_required_sections_and_traces(self) -> None:
         for phrase in (
