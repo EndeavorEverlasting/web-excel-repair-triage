@@ -2,6 +2,16 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.8.2 - 2026-09-14
+
+### Fixes / performance
+
+- fix(prompt-kit): enforce autonomous parallel dispatch (`ff824e6e`)
+- fix(prompt-kit): preserve P07 freshness and fixed-point contracts (`fe016975`)
+- fix(prompt-kit): make parallel dispatch manifest executable (`c78a47b7`)
+- fix(prompt-kit): restore P07 mainline/readability contracts with parallel dispatch (`cb934bb1`)
+- fix(prompt-kit): restore P07 closeout and phase-continuity nextStep gates (`8d7eff77`)
+
 ## 0.8.1 - 2026-09-14
 
 ### Fixes / performance
