@@ -157,5 +157,25 @@ class RepositoryWorkLedgerTests(unittest.TestCase):
         self.assertIn(str(path), result.stdout)
 
 
+    def test_active_program_continuity_matches_integrated_floor(self):
+        ledger = (ROOT / '.ai' / 'WORK_QUEUE.md').read_text(encoding='utf-8')
+        self.assertIn('merge:43b1953092b518fe3a76b5fe0bfab179f730e849', ledger)
+        self.assertIn('Next action:** Build Sprint 2', ledger)
+        self.assertNotIn('implement Sprint 1 under `harness/evals/compute-authority/`', ledger)
+
+    def test_evidence_spine_sprint_map_tracks_current_integrated_floor(self):
+        sprint_map = (ROOT / 'harness' / 'prompt-topology' / 'EVIDENCE_SPINE_SPRINT_MAP.md').read_text(encoding='utf-8')
+        for proof in (
+            'PR #467 → `a1e9caa17c6a979a3747edb71632a66c9406af00`',
+            'PR #473 → `1583882c386ae41d3db87388a1f8e0c4026d0a81`',
+            'PR #474 → `eaa35ef3e940aca229bd8a82a3f7ceebd9c44182`',
+            'PR #475 → `edb42410941f67285e5cda1e5b5b462a5da90578`',
+        ):
+            self.assertIn(proof, sprint_map)
+        self.assertIn('Wave 3 — Donor reconciliation and retirement — READY', sprint_map)
+        self.assertIn('PR #450', sprint_map)
+        self.assertIn('PR #431', sprint_map)
+        self.assertNotIn('Panel 1 is SAFE & EXECUTABLE', sprint_map)
+
 if __name__ == '__main__':
     unittest.main()

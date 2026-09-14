@@ -109,16 +109,32 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-007 — Measure Prompt Kit compute-authority effectiveness on external agents
 
-- **Status:** TRACKED
+- **Status:** READY
 - **Priority:** P1
 - **Owner:** P67 / skill-evaluation
-- **Branch / PR:** main planning floor; successor implementation branches/PRs are defined by the canonical sprint map
+- **Branch / PR:** main; Sprint 1 integrated by PR #464; Sprint 2 runtime-harness implementation not yet integrated
 - **Scope:** build and execute the bounded paired A/B evaluation that measures whether the strengthened Prompt Kit compute-authority contract increases decision-relevant useful compute, defect/contract discovery, evidence honesty, parallelism when available, and fixed-point quality without widening mutation scope or rewarding endless churn
-- **Forbidden:** changing Prompt Kit treatment behavior inside the frozen study; duplicating the P67 eval framework or skill-evaluation identity; modifying separately owned #450/#431/#462/#242 surfaces outside an explicit reconciliation; secrets/private transcripts/personal data; promoting static proof to observed external-agent effectiveness
-- **Dependencies:** PR #452 merged at `fd3b3910e0ce80f3880ebd15426278354b065f48`; Sprint 1 must land before runtime pilot; Sprint 3 must reconcile open PR #450 before touching its shared P67 registry/test files
-- **References:** `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`, `harness/evals/repository-ai-evals.v1.json`, `.ai/skills/skill-evaluation/SKILL.md`, `harness/contracts/prompt-outcome-receipt.schema.v1.json`, `harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md`
-- **Acceptance gate:** three-sprint program completes its deterministic gold-fixture floor, 16-run paired pilot, shared-registry reconciliation, 48 valid-run main study, blinded scoring and mechanical thresholds; observed effectiveness is promoted only when exact runtime evidence satisfies the canonical plan
-- **Gate:** Sprint 1 is SAFE & EXECUTABLE; model-runtime credentials/provider availability may later bound Sprints 2–3 but do not block the deterministic floor
-- **Last proof:** plan commit `6aa8f6b07c45697fb61a1782c13b105fa40a1d80` persisted the complete dependency map on current main after #452; exact #452 main floor had 12/12 observed push workflows successful
-- **Next action:** P67/skill-evaluation — implement Sprint 1 under `harness/evals/compute-authority/`: versioned eval contract, schemas, eight hidden gold fixtures, deterministic fixture/metric validator and focused tests; keep #450-shared repository-AI registry/test files read-only until convergence
-- **Updated:** 2026-09-13T04:45:00-04:00
+- **Forbidden:** changing Prompt Kit treatment behavior inside the frozen study; duplicating the P67 eval framework or skill-evaluation identity; modifying separately owned #450/#431 surfaces outside explicit reconciliation; secrets/private transcripts/personal data; promoting static proof to observed external-agent effectiveness
+- **Dependencies:** Sprint 1 merged via PR #464 / merge `43b1953092b518fe3a76b5fe0bfab179f730e849`; Sprint 2 consumes that immutable fixture floor; Sprint 3 must reconcile open PR #450 before touching its shared P67 registry/test files
+- **References:** `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`, `harness/evals/compute-authority/manifest.json`, `harness/evals/compute-authority/README.md`, `harness/evals/repository-ai-evals.v1.json`, `.ai/skills/skill-evaluation/SKILL.md`, `harness/contracts/prompt-outcome-receipt.schema.v1.json`
+- **Acceptance gate:** Sprint 2 installs the exact control/treatment snapshot resolver, disposable-run isolation, generic provider/agent adapter seam, sanitized capture, metric extraction, paired-order randomization, pilot runner, and invalid-run classification; then a 16-run paired pilot executes only when an authorized model runtime is available; Sprint 3 later reconciles shared P67 registry ownership and reaches 48 valid runs before any observed-effectiveness verdict
+- **Gate:** Sprint 2 repository/runtime-harness implementation is SAFE & EXECUTABLE; provider credentials or an accessible external-agent runtime may block only the 16-run observed pilot and must remain `UNPROVEN_RUNTIME` rather than a synthetic PASS
+- **Last proof:** merge:43b1953092b518fe3a76b5fe0bfab179f730e849 integrated PR #464 Phase-A fixture harness; artifact:harness/evals/compute-authority/manifest.json artifact:harness/evals/compute-authority/fixtures/index.v1.json artifact:harness/evals/compute-authority/scripts/validate_fixtures.py
+- **Next action:** Build Sprint 2 from `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`: add the immutable condition resolver, disposable-run isolation, provider-neutral adapter/capture seam, paired-order pilot runner, invalid-run receipts, and focused tests without editing #450-owned shared P67 registry files; validate and integrate the deterministic harness before attempting external runs
+- **Updated:** 2026-09-14T12:49:00-04:00
+
+## TRQ-008 — Converge Prompt Execution Evidence Spine runtime and donor lanes
+
+- **Status:** READY
+- **Priority:** P1
+- **Owner:** Prompt Topology / P95 runtime convergence coordinator
+- **Branch / PR:** main; stale planning PR #471 is superseded by integrated #467/#473/#474/#475/#477 and the canonical current-floor map
+- **Scope:** preserve the integrated adapter-only Evidence Spine architecture and minimal runtime, reconcile stale donor PR #450 routing concepts and PR #431 observation concepts against current main, salvage only missing architecture-admitted semantics under existing owners, and retire donor work that is already contained or superseded
+- **Forbidden:** universal lifecycle envelope or event bus; raw prompt/response/clipboard/transcript telemetry; hosted telemetry/vector DB; Phase D behavioral ingestion; wholesale stale-branch merges; duplicate P99/P115 classifiers; hand-editing generated `web/prompt-kit/index.html`; treating static runtime tests as provider-wide observed adoption
+- **Dependencies:** PR #467 merge `a1e9caa17c6a979a3747edb71632a66c9406af00`; PR #473 merge `1583882c386ae41d3db87388a1f8e0c4026d0a81`; PR #474 merge `eaa35ef3e940aca229bd8a82a3f7ceebd9c44182`; PR #475 merge `edb42410941f67285e5cda1e5b5b462a5da90578`; PR #477 merge `d8ef87ebb0f98fb49061429f9561ed3781556f44`
+- **References:** `harness/prompt-topology/EVIDENCE_SPINE_SPRINT_MAP.md`, `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md`, `harness/prompt-topology/EVIDENCE_SPINE_RUNTIME_COLLISION_MATRIX.md`, `harness/contracts/evidence-spine-continuation.v1.json`, `scripts/evidence_spine_runtime.py`, `tests/test_evidence_spine_runtime.py`
+- **Acceptance gate:** #450 and #431 are each dispositioned concept-by-concept as already-contained, salvage, or retire; any salvage uses the current adapter-only owner boundaries and privacy rules; focused Evidence Spine contracts/runtime tests plus affected repository gates pass; superseded donor PRs are closed only after containment/disposition evidence; validated changes converge onto refreshed main
+- **Gate:** current-floor donor reconciliation is SAFE & EXECUTABLE after this continuity repair; live provider adoption and authoritative destination observation remain separate runtime proof gates
+- **Last proof:** merge:a1e9caa17c6a979a3747edb71632a66c9406af00 integrated autonomous dispatch; merge:1583882c386ae41d3db87388a1f8e0c4026d0a81 integrated P95 architecture; merge:eaa35ef3e940aca229bd8a82a3f7ceebd9c44182 integrated collision matrix; merge:edb42410941f67285e5cda1e5b5b462a5da90578 integrated minimal runtime; merge:d8ef87ebb0f98fb49061429f9561ed3781556f44 integrated observed-parallelism repair
+- **Next action:** Inspect PR #450 and PR #431 against refreshed main and the integrated architecture/runtime; classify every architecture-admitted concept as already-contained, salvage, or retire, implement only missing bounded semantics under current owners, run focused and affected repository gates, then close superseded donor PRs and integrate any validated salvage
+- **Updated:** 2026-09-14T12:49:00-04:00
