@@ -1,0 +1,17 @@
+{
+  "schema_version": "evidence-spine-continuation-disposition/v1",
+  "title": "Evidence Spine continuation disposition",
+  "description": "Typed output of the deterministic continuation resolver. Not an event log.",
+  "required_fields": [
+    "schema_version",
+    "disposition",
+    "rationale",
+    "input_fingerprint"
+  ],
+  "dispositions": ["continue", "recover", "complete", "blocked"],
+  "rules": {
+    "completion_candidate_superseded_by_recovery": true,
+    "unknown_preferred_to_fabricated_attribution": true,
+    "does_not_store_raw_content": true
+  }
+}

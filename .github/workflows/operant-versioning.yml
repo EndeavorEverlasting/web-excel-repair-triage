@@ -29,7 +29,10 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: operant-versioning-${{ github.event_name }}-${{ github.ref }}
+  # Push and manual-dispatch mainline owners share one serialized queue. PR policy
+  # checks stay isolated per PR; any unexpected external branch writer still
+  # fails closed because candidate publication uses an ordinary non-force push.
+  group: operant-versioning-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'mainline-owner' }}
   cancel-in-progress: false
 
 jobs:
@@ -155,6 +158,7 @@ jobs:
           set -euo pipefail
           next_version="${{ steps.plan.outputs.next_version }}"
           main_sha="$(git rev-parse origin/main)"
+          pending_branch="automation/operant-release-v${next_version}"
           existing_branch="$(gh pr list --state open --base main --json headRefName,url,number --jq '[.[] | select(.headRefName | startswith("automation/operant-release-"))] | first | .headRefName // empty')"
           existing_url="$(gh pr list --state open --base main --json headRefName,url --jq '[.[] | select(.headRefName | startswith("automation/operant-release-"))] | first | .url // empty')"
 
@@ -172,8 +176,19 @@ jobs:
               docs/OPERANT_CHANGELOG.md \
               web/prompt-kit/index.html
             branch="$existing_branch"
+          elif git ls-remote --exit-code --heads origin "refs/heads/${pending_branch}" >/dev/null 2>&1; then
+            echo "Refreshing unpublished Operant release candidate branch in place: $pending_branch"
+            git fetch origin "$pending_branch"
+            git checkout -B "$pending_branch" "origin/$pending_branch"
+            git merge --no-edit origin/main
+            git checkout origin/main -- \
+              OPERANT_VERSION \
+              harness/contracts/operant-product-identity.v1.json \
+              docs/OPERANT_CHANGELOG.md \
+              web/prompt-kit/index.html
+            branch="$pending_branch"
           else
-            branch="automation/operant-release-v${next_version}-${main_sha:0:8}"
+            branch="$pending_branch"
             git checkout -B "$branch" origin/main
           fi
 
