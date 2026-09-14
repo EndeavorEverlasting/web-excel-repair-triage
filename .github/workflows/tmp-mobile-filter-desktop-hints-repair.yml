@@ -99,19 +99,25 @@ jobs:
         run: |
           set -euo pipefail
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
-      - name: Focused contract and static validation
+      - name: Syntax validation
         run: |
           set -euo pipefail
           node --check docs/prompt-kit.js
           node --check docs/prompt-kit-polish.js
-          python -m unittest \
-            tests.test_prompt_kit_mobile \
-            tests.test_prompt_kit_mobile_quick_controls \
-            tests.test_prompt_kit_product_interactions \
-            tests.test_prompt_kit_filtering_access \
-            tests.test_prompt_kit_cross_input_modality -v
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-          git diff --check
+      - name: Mobile contract unit validation
+        run: python -m unittest tests.test_prompt_kit_mobile -v
+      - name: Mobile quick-controls unit validation
+        run: python -m unittest tests.test_prompt_kit_mobile_quick_controls -v
+      - name: Product interactions unit validation
+        run: python -m unittest tests.test_prompt_kit_product_interactions -v
+      - name: Filtering-access unit validation
+        run: python -m unittest tests.test_prompt_kit_filtering_access -v
+      - name: Cross-input unit validation
+        run: python -m unittest tests.test_prompt_kit_cross_input_modality -v
+      - name: Generated-site parity validation
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Diff validation
+        run: git diff --check
       - name: Install Chromium proof dependency
         run: |
           set -euo pipefail
