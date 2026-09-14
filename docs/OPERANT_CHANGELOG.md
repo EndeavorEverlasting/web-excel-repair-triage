@@ -2,6 +2,13 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.8.1 - 2026-09-14
+
+### Fixes / performance
+
+- fix(operant): converge unpublished release candidates (`5a4582da`)
+- fix(operant): serialize all mainline release owners (`4cc7d1b0`)
+
 ## 0.8.0 - 2026-09-13
 
 ### Features / breaking pre-1.0 changes
