@@ -112,16 +112,16 @@ Canonical terminal action: none; no safe actionable work remains
 - **Status:** READY
 - **Priority:** P1
 - **Owner:** P67 / skill-evaluation
-- **Branch / PR:** main planning floor; successor implementation branches/PRs are defined by the canonical sprint map
+- **Branch / PR:** main; Sprint 1 integrated by PR #464; Sprint 2 runtime-harness implementation not yet integrated
 - **Scope:** build and execute the bounded paired A/B evaluation that measures whether the strengthened Prompt Kit compute-authority contract increases decision-relevant useful compute, defect/contract discovery, evidence honesty, parallelism when available, and fixed-point quality without widening mutation scope or rewarding endless churn
 - **Forbidden:** changing Prompt Kit treatment behavior inside the frozen study; duplicating the P67 eval framework or skill-evaluation identity; modifying separately owned #450/#431/#462/#242 surfaces outside an explicit reconciliation; secrets/private transcripts/personal data; promoting static proof to observed external-agent effectiveness
-- **Dependencies:** PR #452 merged at `fd3b3910e0ce80f3880ebd15426278354b065f48`; Sprint 1 must land before runtime pilot; Sprint 3 must reconcile open PR #450 before touching its shared P67 registry/test files
-- **References:** `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`, `harness/evals/repository-ai-evals.v1.json`, `.ai/skills/skill-evaluation/SKILL.md`, `harness/contracts/prompt-outcome-receipt.schema.v1.json`, `harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md`
+- **Dependencies:** Sprint 1 integrated by PR #464 / merge `43b1953092b518fe3a76b5fe0bfab179f730e849`; Sprint 2 consumes that immutable fixture floor; Sprint 3 must reconcile open PR #450 before touching shared P67 registry/test files
+- **References:** `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`, `harness/evals/compute-authority/manifest.json`, `harness/evals/compute-authority/README.md`, `harness/evals/repository-ai-evals.v1.json`, `.ai/skills/skill-evaluation/SKILL.md`, `harness/contracts/prompt-outcome-receipt.schema.v1.json`
 - **Acceptance gate:** three-sprint program completes its deterministic gold-fixture floor, 16-run paired pilot, shared-registry reconciliation, 48 valid-run main study, blinded scoring and mechanical thresholds; observed effectiveness is promoted only when exact runtime evidence satisfies the canonical plan
-- **Gate:** Sprint 1 is SAFE & EXECUTABLE; model-runtime credentials/provider availability may later bound Sprints 2–3 but do not block the deterministic floor
-- **Last proof:** plan commit `6aa8f6b07c45697fb61a1782c13b105fa40a1d80` persisted the complete dependency map on current main after #452; exact #452 main floor had 12/12 observed push workflows successful
-- **Next action:** build Sprint 1 under `harness/evals/compute-authority/`: versioned eval contract, schemas, eight hidden gold fixtures, deterministic fixture/metric validator and focused tests; keep #450-shared repository-AI registry/test files read-only until convergence
-- **Updated:** 2026-09-14T12:55:00-04:00
+- **Gate:** Sprint 2 repository/runtime-harness implementation is SAFE & EXECUTABLE; provider credentials or an accessible external-agent runtime may block only the observed pilot and must remain `UNPROVEN_RUNTIME` rather than a synthetic PASS
+- **Last proof:** merge:43b1953092b518fe3a76b5fe0bfab179f730e849 integrated PR #464 Compute-Authority Sprint 1; artifact:harness/evals/compute-authority/manifest.json artifact:harness/evals/compute-authority/fixtures/index.v1.json artifact:harness/evals/compute-authority/scripts/validate_fixtures.py
+- **Next action:** Build Sprint 2 from `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`: add the immutable condition resolver, disposable-run isolation, provider-neutral adapter/capture seam, paired-order pilot runner, invalid-run receipts, and focused tests without editing #450-owned shared P67 registry files; validate and integrate the deterministic harness before attempting external runs
+- **Updated:** 2026-09-14T13:06:00-04:00
 
 ## TRQ-008 — Execute Prompt Execution Evidence Spine sprint map
 
