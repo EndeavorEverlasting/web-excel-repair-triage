@@ -55,6 +55,10 @@ class PromptParallelExecutionContractTests(unittest.TestCase):
             self.assertLess(text.index("PARALLEL DISPATCH MANIFEST"), text.index("PORTABILITY FALLBACK") if "PORTABILITY FALLBACK" in text else len(text))
         self.assertIn("machine-executable PARALLEL DISPATCH MANIFEST", self.raw["P59"]["nextStep"])
         self.assertIn("do not make the operator launch chats", self.raw["P04"]["nextStep"].lower())
+        self.assertIn("smallest tracked plan artifact", self.raw["P04"]["nextStep"])
+        self.assertIn("separately owned", self.raw["P04"]["nextStep"])
+        self.assertIn("read-only", self.raw["P04"]["nextStep"].lower())
+        self.assertIn("2. PARALLEL DISPATCH MANIFEST", self.raw["P04"]["copyContent"])
 
     def test_cursor_regression_must_continue_past_missing_self_hosted_workers_before_fallback(self) -> None:
         p07 = self.raw["P07"]
@@ -115,10 +119,14 @@ class PromptParallelExecutionContractTests(unittest.TestCase):
     def test_parallel_strengthening_preserves_p07_freshness_and_fixed_point_contracts(self) -> None:
         p07 = self.raw["P07"]
         self.assertIn("refreshed and reconciled remote/default-branch floor", p07["expectedOutput"])
+        self.assertIn("integrated into the current default branch", p07["expectedOutput"])
+        self.assertIn("capability ladder", p07["expectedOutput"].lower())
         self.assertIn("refreshed before implementation", p07["proofGate"])
         self.assertIn("fixed point", p07["proofGate"])
+        self.assertIn("readability/editability regression", p07["proofGate"])
         self.assertIn("branch or PR alone is insufficient completion evidence", p07["proofGate"])
         self.assertIn("Strategic follow-on discovery never authorizes unfinished owned work", p07["proofGate"])
+        self.assertIn("prompt-parallel-dispatch-receipt/v1", p07["proofGate"])
 
 
 if __name__ == "__main__":

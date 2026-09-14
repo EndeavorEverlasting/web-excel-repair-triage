@@ -102,8 +102,9 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
             self.assertIn(phrase, content)
         self.assertIn("returned artifacts/results", prompt["proofGate"])
         self.assertIn("parallel proof remains UNPROVEN", prompt["proofGate"])
-        self.assertIn("readability/P124", prompt["proofGate"])
-        self.assertIn("paradigm/P128", prompt["proofGate"])
+        self.assertIn("readability/editability regression", prompt["proofGate"])
+        self.assertIn("routed to P124", prompt["proofGate"])
+        self.assertIn("routed to P128", prompt["proofGate"])
         probe = content.index("Probe execution adapters in order")
         missing_one = content.index("no connected self-hosted workers")
         dispatch = content.index("At the first safe rung")
@@ -116,6 +117,18 @@ class P02P07AutonomousIterationTests(unittest.TestCase):
         self.assertIn("scripts/prompt_parallel_dispatch.py validate", content)
         self.assertIn("scripts/prompt_parallel_dispatch.py run", content)
         self.assertIn("observed_parallelism=true", content)
+
+    def test_p07_parallel_strengthening_preserves_mainline_and_readability_contracts(self) -> None:
+        prompt = self.raw["P07"]
+        self.assertIn("integrated into the current default branch", prompt["expectedOutput"])
+        self.assertIn("readability/editability regression", prompt["proofGate"])
+        self.assertIn("capability ladder", prompt["expectedOutput"].lower())
+        self.assertIn("prompt-parallel-dispatch-receipt/v1", prompt["proofGate"])
+        content = prompt["copyContent"]
+        # Contradictory no-dispatch wording must not coexist with required dispatch semantics.
+        self.assertNotIn("If no usable mechanism exists", content)
+        self.assertNotIn("PARALLEL EXECUTION: unavailable", content)
+        self.assertIn("dispatch immediately", content)
 
     def test_p07_coordinates_repository_generated_mutation_lanes(self) -> None:
         prompt = self.effective["P07"]
