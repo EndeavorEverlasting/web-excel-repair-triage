@@ -122,3 +122,19 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** plan commit `6aa8f6b07c45697fb61a1782c13b105fa40a1d80` persisted the complete dependency map on current main after #452; exact #452 main floor had 12/12 observed push workflows successful
 - **Next action:** P67/skill-evaluation — implement Sprint 1 under `harness/evals/compute-authority/`: versioned eval contract, schemas, eight hidden gold fixtures, deterministic fixture/metric validator and focused tests; keep #450-shared repository-AI registry/test files read-only until convergence
 - **Updated:** 2026-09-13T04:45:00-04:00
+
+## TRQ-008 — Execute Prompt Execution Evidence Spine sprint map
+
+- **Status:** TRACKED
+- **Priority:** P1
+- **Owner:** Prompt Topology / P95 lifecycle architecture coordinator
+- **Branch / PR:** `docs/evidence-spine-sprint-map-20260913` / #468 planning owner; successor implementation reuses existing owners before creating new lanes
+- **Scope:** index the canonical three-wave Evidence Spine execution map covering PR #467 autonomous-dispatch floor repair and convergence, P95 lifecycle/state-owner architecture, then only the runtime routing/observation/recurrence-to-work/agent-continuation seams admitted by P95
+- **Forbidden:** replacing the canonical sprint map with this row; duplicating PR #467/#450/#431 owners; production Phase D; generic event bus; raw prompt/response/clipboard/transcript telemetry; hosted telemetry/vector DB; hand-editing generated Prompt Kit output; promoting static design to runtime adoption proof
+- **Dependencies:** current `main`; PR #467 repair/integration gate; `harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md`; merged P99/P115 outcome semantics; merged PR #466 local retention/privacy lifecycle; P95 architecture before #450/#431/runtime convergence
+- **References:** `harness/prompt-topology/EVIDENCE_SPINE_SPRINT_MAP.md`, `harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md`, `harness/contracts/prompt-outcome-classification.v1.json`, `.ai/skills/prompt-kit-feedback-afk-routing/SKILL.md`, PR #468, PR #467, PR #450, PR #431
+- **Acceptance gate:** Panel 1 repairs and integrates the exact validated #467 owner; Panel 2 integrates `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md` with explicit lifecycle ownership and donor dispositions; Panel 3 implements only admitted seams, reconciles/retire donor work without duplicate ownership, proves privacy-bounded recurrence/next-action behavior with fixtures/validators/runtime evidence actually available, and converges validated authorized work onto refreshed default branch
+- **Gate:** Panel 1 is SAFE & EXECUTABLE; Panel 2 waits on Panel 1 integration or exact blocked-head evidence; Panel 3 waits on integrated P95 ownership/interfaces
+- **Last proof:** canonical plan tracked on PR #468 branch; planning floor `main@182cde18bf7fdc46f305039b5793eb33698cafa2`; PR #467 head `fff31c61e84282df2177107257829de0473f5ff5` had bounded P07 regressions and current review gaps during provider inspection; #450/#431 are stale donor lanes pending P95
+- **Next action:** PR #467 owner — refresh provider/local truth, preserve dirty/separately owned work, reproduce and repair current P07 metadata and autonomous-dispatch review failures, run focused plus required repository gates, push the exact repaired head, disposition current review threads, and integrate/verify on refreshed `main` when safe and authorized
+- **Updated:** 2026-09-13T20:20:00-04:00
