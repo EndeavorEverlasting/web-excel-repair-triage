@@ -11,6 +11,7 @@ on:
       - 'scripts/prompt_parallel_dispatch.py'
       - 'tests/test_prompt_parallel_execution_contract.py'
       - 'tests/test_prompt_parallel_dispatch.py'
+      - 'tests/test_p02_p07_autonomous_iteration.py'
       - '.github/workflows/prompt-parallel-dispatch.yml'
   push:
     branches: [main]
@@ -23,6 +24,7 @@ on:
       - 'scripts/prompt_parallel_dispatch.py'
       - 'tests/test_prompt_parallel_execution_contract.py'
       - 'tests/test_prompt_parallel_dispatch.py'
+      - 'tests/test_p02_p07_autonomous_iteration.py'
       - '.github/workflows/prompt-parallel-dispatch.yml'
 
 permissions:
@@ -36,13 +38,14 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
       - name: Compile dispatcher
-        run: python -m py_compile scripts/prompt_parallel_dispatch.py tests/test_prompt_parallel_dispatch.py tests/test_prompt_parallel_execution_contract.py
+        run: python -m py_compile scripts/prompt_parallel_dispatch.py tests/test_prompt_parallel_dispatch.py tests/test_prompt_parallel_execution_contract.py tests/test_p02_p07_autonomous_iteration.py
       - name: Run deterministic dispatch contracts
-        run: python -m unittest tests.test_prompt_parallel_dispatch tests.test_prompt_parallel_execution_contract -v
+        run: python -m unittest tests.test_prompt_parallel_dispatch tests.test_prompt_parallel_execution_contract tests.test_p02_p07_autonomous_iteration -v
       - name: Validate and execute real two-lane fixture
         shell: bash
         run: |

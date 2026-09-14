@@ -269,6 +269,33 @@ def _run_argv_lane(lane: dict[str, Any]) -> dict[str, Any]:
         }
 
 
+def _observed_overlap(results: list[dict[str, Any]]) -> bool:
+    """Return True only when at least two lane intervals share an open time overlap."""
+    spans = [
+        (item["started_ns"], item["ended_ns"])
+        for item in results
+        if isinstance(item.get("started_ns"), int) and isinstance(item.get("ended_ns"), int)
+    ]
+    for index, (start_left, end_left) in enumerate(spans):
+        for start_right, end_right in spans[index + 1 :]:
+            # Half-open style: touching endpoints alone do not prove concurrency.
+            if start_left < end_right and start_right < end_left:
+                return True
+    return False
+
+
+def _lane_runner_failure(lane: dict[str, Any], exc: BaseException) -> dict[str, Any]:
+    ended_ns = time.time_ns()
+    return {
+        "lane_id": lane["lane_id"],
+        "status": "FAIL",
+        "adapter_kind": lane["adapter"]["kind"],
+        "started_ns": ended_ns,
+        "ended_ns": ended_ns,
+        "evidence": [{"type": "runner_error", "error": f"{type(exc).__name__}: {exc}"}],
+    }
+
+
 def dispatch_manifest(
     manifest: dict[str, Any],
     *,
@@ -301,15 +328,30 @@ def dispatch_manifest(
         if not runnable:
             continue
         if disposition == "REQUIRED" and len(runnable) > 1:
-            observed_parallelism = True
+            wave_results: list[dict[str, Any]] = []
             with ThreadPoolExecutor(max_workers=len(runnable)) as pool:
                 futures = {pool.submit(runner, lanes[lane_id]): lane_id for lane_id in sorted(runnable)}
                 for future in as_completed(futures):
-                    result = future.result()
-                    results[result["lane_id"]] = result
+                    lane_id = futures[future]
+                    try:
+                        result = future.result()
+                    except Exception as exc:  # runner contract violation
+                        result = _lane_runner_failure(lanes[lane_id], exc)
+                    if not isinstance(result, dict) or result.get("lane_id") != lane_id:
+                        result = _lane_runner_failure(
+                            lanes[lane_id],
+                            DispatchError("runner returned invalid lane result"),
+                        )
+                    results[lane_id] = result
+                    wave_results.append(result)
+            if _observed_overlap(wave_results):
+                observed_parallelism = True
         else:
             for lane_id in sorted(runnable):
-                results[lane_id] = runner(lanes[lane_id])
+                try:
+                    results[lane_id] = runner(lanes[lane_id])
+                except Exception as exc:  # runner contract violation
+                    results[lane_id] = _lane_runner_failure(lanes[lane_id], exc)
 
     ordered = [results[lane_id] for lane_id in sorted(results)]
     status = "PASS" if ordered and all(item["status"] == "PASS" for item in ordered) else "FAIL"
