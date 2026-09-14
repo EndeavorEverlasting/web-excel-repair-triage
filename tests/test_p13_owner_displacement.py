@@ -31,6 +31,8 @@ class P13OwnerDisplacementTests(unittest.TestCase):
             "OWNER DISPLACEMENT / STALE-LANE CONVERGENCE",
             "SUPERSEDED WRITER",
             "stop competing writes",
+            "Do not rebase, spawn sidecars",
+            "because authority remains",
             "retire the stale integration vehicle",
             "Rejoin the surviving owner",
             "Exhaustive compute/full authority apply there",
