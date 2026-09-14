@@ -1,9 +1,9 @@
 # Prompt Compilation & Adaptive Language Architecture
 
-**Status:** DESIGNED / TRACKED / SPRINT 1 INTEGRATED ON MAIN
+**Status:** DESIGNED / TRACKED / SPRINTS 1–2 INTEGRATED ON MAIN
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
 **Owner:** Prompt Compilation subsystem (Prompt Kit / P79 strengthening lane)
-**Evidence floor:** refreshed `main@04e4a77d261d0bd0388daa6d56f38e113cdf79fa` (contains PR #483 Sprint 1)
+**Evidence floor:** refreshed `main@86044bfb27de95fbf60d29adf2ce54689b09c303` (contains PR #483/#485)
 **Predecessor:** P95 Evidence Spine adapter-only architecture (`harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md`); TRQ-008 DONE
 **Sibling (separate program):** TRQ-007 Compute Authority evaluation (`harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`)
 **Canonical sprint map:** `harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md`
