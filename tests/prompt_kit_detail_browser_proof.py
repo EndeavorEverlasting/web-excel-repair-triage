@@ -118,23 +118,31 @@ def observe(port: int, screenshot: Path):
             underlying_page_stable = abs(page_scroll_after - page_scroll_before) <= 1
 
             # Home/End remain native inside editable fields rather than hijacking modal scroll.
-            editable_before = page.evaluate("""() => {
+            page.evaluate("""() => {
               const detail=document.getElementById('promptDetail');
               const probe=document.createElement('textarea');
               probe.id='detailEditableProbe';
               probe.value='alpha beta gamma';
               probe.setAttribute('data-prompt-detail-no-copy','');
-              detail.appendChild(probe);
+              detail.insertBefore(probe,detail.firstChild);
+              window.__detailEdgeCalls=0;
+              window.__pageEdgeCalls=0;
+              window.__detailEdgeOriginal=window.scrollPromptDetailTo;
+              window.__pageEdgeOriginal=window.scrollPromptKitTo;
+              window.scrollPromptDetailTo=function(edge){window.__detailEdgeCalls++;return window.__detailEdgeOriginal(edge)};
+              window.scrollPromptKitTo=function(edge){window.__pageEdgeCalls++;return window.__pageEdgeOriginal(edge)};
               probe.focus({preventScroll:true});
-              detail.scrollTop=Math.min(120,Math.max(0,detail.scrollHeight-detail.clientHeight));
-              return detail.scrollTop;
             }""")
             page.keyboard.press('Home')
             page.keyboard.press('End')
             page.wait_for_timeout(30)
-            editable_after = page.evaluate("document.getElementById('promptDetail').scrollTop")
-            editable_native = abs(editable_after - editable_before) <= 1
-            page.evaluate("document.getElementById('detailEditableProbe').remove()")
+            editable_calls = page.evaluate("({detail:window.__detailEdgeCalls,page:window.__pageEdgeCalls})")
+            editable_native = editable_calls['detail'] == 0 and editable_calls['page'] == 0
+            page.evaluate("""() => {
+              window.scrollPromptDetailTo=window.__detailEdgeOriginal;
+              window.scrollPromptKitTo=window.__pageEdgeOriginal;
+              document.getElementById('detailEditableProbe').remove();
+            }""")
 
             # Escape remains the close owner after dialog semantics are installed and focus returns to origin.
             page.locator('#promptDetailTop').focus()
@@ -156,7 +164,7 @@ def observe(port: int, screenshot: Path):
                 {"id":"detail_double_click_guard","event":"Double-click text gesture cancels delayed detail-surface copy","occurred":True,"passed":bool(double_click_guard)},
                 {"id":"detail_text_selection_guard","event":"Active detail text selection blocks whole-prompt surface copy","occurred":True,"passed":bool(selection_guard)},
                 {"id":"detail_local_edges","event":"Bottom control plus Home/End navigate the detail container without moving the underlying page","occurred":True,"passed":bool(bottom_button and home_local and end_local and underlying_page_stable),"bottom_button":bool(bottom_button),"home_local":bool(home_local),"end_local":bool(end_local),"underlying_page_stable":bool(underlying_page_stable)},
-                {"id":"detail_editable_home_end_native","event":"Home/End inside a textarea leave prompt-detail scroll position unchanged","occurred":True,"passed":bool(editable_native)},
+                {"id":"detail_editable_home_end_native","event":"Home/End inside a textarea invoke neither Prompt Kit detail-edge nor page-edge handler","occurred":True,"passed":bool(editable_native),"detail_edge_calls":editable_calls["detail"],"page_edge_calls":editable_calls["page"]},
                 {"id":"detail_escape_focus_restore","event":"Escape closes detail and restores focus to originating P08 card","occurred":True,"passed":bool(escape_closed and focus_returned)},
             ])
             context.close()

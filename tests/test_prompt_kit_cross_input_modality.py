@@ -124,6 +124,11 @@ class PromptKitCrossInputModalityTests(unittest.TestCase):
         self.assertIn("active surface", by_id["scroll_edges"]["keyboard"])
         self.assertIn("prompt detail container", by_id["scroll_edges"]["keyboard"])
         self.assertEqual(by_id["scroll_edges"]["semantic_action"], "scrollPromptKitTo / scrollPromptDetailTo")
+        polish = POLISH.read_text(encoding="utf-8")
+        self.assertIn("var detailOwnsEdges=!!(detailOverlay&&detailOverlay.classList.contains('open'))", polish)
+        self.assertIn("detailOwnsEdges&&(key==='home'||key==='end')", polish)
+        self.assertIn("scrollPromptDetailTo(key==='home'?'top':'bottom')", polish)
+        self.assertLess(polish.index("if(editable)return"), polish.index("detailOwnsEdges&&(key==='home'||key==='end')"))
 
     def test_generated_site_embeds_converged_reference_route(self) -> None:
         generated = (ROOT / "web" / "prompt-kit" / "index.html").read_text(encoding="utf-8")
