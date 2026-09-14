@@ -157,5 +157,14 @@ class RepositoryWorkLedgerTests(unittest.TestCase):
         self.assertIn(str(path), result.stdout)
 
 
+    def test_trq007_continuation_tracks_integrated_compute_authority_floor(self):
+        ledger = (ROOT / '.ai' / 'WORK_QUEUE.md').read_text(encoding='utf-8')
+        self.assertIn('merge:43b1953092b518fe3a76b5fe0bfab179f730e849', ledger)
+        self.assertIn('Next action:** Build Sprint 2', ledger)
+        self.assertIn('Sprint 2 repository/runtime-harness implementation is SAFE & EXECUTABLE', ledger)
+        self.assertNotIn('Sprint 1 is SAFE & EXECUTABLE', ledger)
+        self.assertNotIn('build Sprint 1 under `harness/evals/compute-authority/`', ledger)
+
+
 if __name__ == '__main__':
     unittest.main()
