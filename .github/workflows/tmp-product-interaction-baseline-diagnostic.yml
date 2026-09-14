@@ -1,4 +1,4 @@
-name: TEMP Prompt Kit interaction patched diagnostic
+name: TEMP Prompt Kit mainline mobile repair diagnostic
 
 on:
   pull_request:
@@ -7,57 +7,82 @@ on:
       - '.github/workflows/tmp-product-interaction-baseline-diagnostic.yml'
 
 jobs:
-  patched:
+  focused:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref }}
+          fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
           python-version: '3.x'
-      - name: Apply only runtime CSS repair and rebuild site
+      - name: Reconcile current main floor
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git merge --no-edit origin/main
+      - name: Apply mainline carrier pre-validation patch
         run: |
           python - <<'PY'
           from pathlib import Path
-          p = Path('docs/prompt-kit.js')
-          s = p.read_text(encoding='utf-8')
-          old = '@media (hover:none), (pointer:coarse){.prompt-open-btn'
-          new = '@media (hover:none), (pointer:coarse){.header .search-kbd,.header .cat-tab .kbd{display:none}.prompt-open-btn'
-          assert s.count(old) == 1
-          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          import json
+
+          def replace_once(text, old, new):
+              if new in text:
+                  return text
+              assert text.count(old) == 1, (old, text.count(old))
+              return text.replace(old, new, 1)
+
+          polish_path = Path('docs/prompt-kit-polish.js')
+          polish = polish_path.read_text(encoding='utf-8')
+          for old, new in (
+              ('.filter-panel-toggle{min-height:40px;justify-self:end}', '.filter-panel-toggle{display:none!important}'),
+              ('.header-top>.search-container{grid-column:1/-1;width:100%}', '.header-top>.search-container{grid-column:1/-1;width:100%}.header-top>.search-container .search-kbd{display:none!important}'),
+              ('.header-top>.header-controls{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr);width:100%;justify-items:stretch;gap:8px}', '.header-top>.header-controls{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr);width:100%;justify-items:stretch;gap:8px}.header-top>.header-controls>:not(.cat-tabs){display:none!important}'),
+              ('.header-top>.header-controls .cat-tab{min-height:42px}', '.header-top>.header-controls .cat-tab{min-height:42px}.header-top>.header-controls .cat-tab .kbd{display:none!important}'),
+          ):
+              polish = replace_once(polish, old, new)
+          polish_path.write_text(polish, encoding='utf-8')
+
+          contract_path = Path('harness/contracts/prompt-kit-mobile.v1.json')
+          contract = json.loads(contract_path.read_text(encoding='utf-8'))
+          req = next(item for item in contract['requirements'] if item['id'] == 'mobile_medium_orientation_invariant')
+          sentence = ' Expanding Filters from More on a mobile medium exposes only the shared filter surfaces; the standalone desktop filter toggle, search/profile keyboard-hint badges, and non-filter header controls stay hidden in portrait and landscape.'
+          if sentence.strip() not in req['expected']:
+              req['expected'] = req['expected'].rstrip() + sentence
+          contract_path.write_text(json.dumps(contract, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          test_path = Path('tests/test_prompt_kit_mobile_quick_controls.py')
+          test = test_path.read_text(encoding='utf-8')
+          if 'def test_mobile_filter_expansion_hides_desktop_only_chrome' not in test:
+              anchor = '    def test_contract_and_phone_guide_define_fast_p111_route(self) -> None:\n'
+              addition = '''    def test_mobile_filter_expansion_hides_desktop_only_chrome(self) -> None:\n        source = POLISH.read_text(encoding="utf-8")\n        for marker in (\n            ".filter-panel-toggle{display:none!important}",\n            ".header-top>.search-container .search-kbd{display:none!important}",\n            ".header-top>.header-controls>:not(.cat-tabs){display:none!important}",\n            ".header-top>.header-controls .cat-tab .kbd{display:none!important}",\n        ):\n            self.assertIn(marker, source)\n\n        contract = json.loads(CONTRACT.read_text(encoding="utf-8"))\n        requirement = next(item for item in contract["requirements"] if item["id"] == "mobile_medium_orientation_invariant")\n        for phrase in (\n            "Expanding Filters from More",\n            "standalone desktop filter toggle",\n            "keyboard-hint badges",\n            "non-filter header controls",\n            "portrait and landscape",\n        ):\n            self.assertIn(phrase, requirement["expected"])\n\n'''
+              assert anchor in test
+              test = test.replace(anchor, addition + anchor, 1)
+          test_path.write_text(test, encoding='utf-8')
           PY
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
-      - name: contract status
+      - name: polish syntax
         continue-on-error: true
-        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_interaction_contract_is_marked_implemented -v
-      - name: strict static markers
+        run: node --check docs/prompt-kit-polish.js
+      - name: quick-controls tests
         continue-on-error: true
-        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_strict_static_interaction_gate_is_green -v
-      - name: click versus double-click
+        run: python -m unittest tests.test_prompt_kit_mobile_quick_controls -v
+      - name: layout validator
         continue-on-error: true
-        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_single_click_copy_is_disambiguated_from_double_click_expand -v
-      - name: outside click collapse
+        run: python scripts/validate_prompt_kit_layout_harness.py --summary
+      - name: layout harness tests
         continue-on-error: true
-        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_outside_click_collapses_detail_and_restores_origin_focus -v
-      - name: repeated section headers
+        run: python -m unittest tests.test_prompt_kit_layout_harness -v
+      - name: header contract tests
         continue-on-error: true
-        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_repeated_section_headers_have_top_left_and_bottom_right_links -v
-      - name: category divider accessibility
+        run: python -m unittest tests.test_prompt_kit_header_contract -v
+      - name: filtering access tests
         continue-on-error: true
-        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_category_dividers_are_accessible_expand_collapse_controls -v
-      - name: collapse state persistence
+        run: python -m unittest tests.test_prompt_kit_filtering_access -v
+      - name: mobile tests
         continue-on-error: true
-        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_collapse_state_survives_rerenders_and_home_reset_expands_all -v
-      - name: stable page anchors
+        run: python -m unittest tests.test_prompt_kit_mobile -v
+      - name: order-navigation tests
         continue-on-error: true
-        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_page_targets_are_stable_unique_runtime_anchors -v
-      - name: keyboard accessible cards
-        continue-on-error: true
-        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_prompt_cards_remain_keyboard_accessible_without_nested_button_semantics -v
-      - name: escaped prompt fields
-        continue-on-error: true
-        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_prompt_fields_are_escaped_before_card_or_detail_html -v
-      - name: checked-in generated site parity
-        continue-on-error: true
-        run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_checked_in_site_contains_current_interaction_and_navigation_source -v
+        run: python -m unittest tests.test_prompt_kit_order_navigation_product -v
