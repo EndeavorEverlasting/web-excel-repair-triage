@@ -48,6 +48,17 @@ class P13OwnerDisplacementTests(unittest.TestCase):
         self.assertIn("If it supersedes this lane", copy)
         self.assertIn("Rejoin the surviving owner", copy)
 
+    def test_p13_handoff_preserves_actionable_evidence(self) -> None:
+        copy = self.p13["copyContent"]
+        for phrase in (
+            "branch/PR/SHA",
+            "reusable findings/tests",
+            "passed/failed proof",
+            "unsafe work",
+            "existing PR/ledger/handoff",
+        ):
+            self.assertIn(phrase, copy)
+
     def test_p13_metadata_makes_owner_displacement_part_of_completion(self) -> None:
         self.assertIn("retire the stale writer", self.p13["sprintRole"])
         self.assertIn("prior agent lane continuing", self.p13["useWhen"])
