@@ -1,0 +1,68 @@
+name: Repository Promotion Executor
+run-name: Repository Promotion Executor | ${{ github.event_name }}
+
+on:
+  workflow_run:
+    workflows: ["Promotion Candidate Validation"]
+    types: [completed]
+  pull_request_target:
+    types: [opened, reopened, ready_for_review, synchronize, closed]
+  pull_request_review:
+    types: [submitted, dismissed]
+  pull_request_review_comment:
+    types: [created, edited, deleted]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Exact PR number to reconstruct and re-evaluate
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  checks: read
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: repository-promotion-main
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: Promotion / Provider Adapter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout trusted promotion adapter from default branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Reconstruct provider truth and attempt bounded promotion
+        id: promote
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set +e
+          python scripts/github_promotion_adapter.py \
+            --event-path "$GITHUB_EVENT_PATH" \
+            --output "$RUNNER_TEMP/repository-promotion-receipt.json"
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Upload provider promotion receipt
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: repository-promotion-receipt
+          path: ${{ runner.temp }}/repository-promotion-receipt.json
+          if-no-files-found: error
+      - name: Propagate promotion result
+        if: always()
+        shell: bash
+        run: exit "${{ steps.promote.outputs.exit_code || '3' }}"
