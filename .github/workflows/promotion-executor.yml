@@ -6,7 +6,7 @@ on:
     workflows: ["Promotion Candidate Validation"]
     types: [completed]
   pull_request_target:
-    types: [opened, reopened, ready_for_review, synchronize, closed]
+    types: [closed]
   pull_request_review:
     types: [submitted, dismissed]
   pull_request_review_comment:
@@ -31,6 +31,18 @@ concurrency:
 jobs:
   promote:
     name: Promotion / Provider Adapter
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'workflow_run' &&
+        startsWith(github.event.workflow_run.head_branch, 'promote/')
+      ) ||
+      (
+        github.event_name != 'workflow_run' &&
+        github.event_name != 'workflow_dispatch' &&
+        startsWith(github.event.pull_request.head.ref, 'promote/') &&
+        contains(github.event.pull_request.body, '[promotion:auto-main]')
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Checkout trusted promotion adapter from default branch
