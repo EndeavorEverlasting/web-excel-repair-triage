@@ -68,7 +68,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **Scope:** build a tracked Lua embedding-readiness harness with codebase map, workflow, artifact/validator/capability/trigger registries, explicit host-controlled design contract, scoped skill, focused hook fragments, operator report, fail-closed validator/tests, CI report artifact, and root harness registration while preserving the concurrent Prompt Kit release-identity harness dependency
 - **Forbidden:** changing `AGENTS.md`; implementing a Lua interpreter, host binding, native module, or `.lua` product behavior; selecting a product host runtime without a product lane; secrets; destructive cleanup; force-push; claiming runtime proof from static harness evidence
 - **Dependencies:** PR #166 / merge:aadf9765ba3f5a8b5df30d7d40232cff8dc646f4
-- **References:** `harness/lua/manifest.v1.json`, `harness/lua/contracts/lua-embedding-readiness.v1.json`, `harness/lua/WORKFLOW.md`, `harness/lua/ARTIFACT_REGISTRY.md`, `harness/lua/reports/CURRENT_STATE.md`, `.ai/skills/lua-embedding-readiness/SKILL.md`, `scripts/validate_lua_harness.py`, `tests/test_lua_harness_contract.py`, `.github/workflows/lua-harness-contract.yml`, `harness/manifest.v1.json`
+- **References:** `harness/lua/manifest.v1.json`, `harness/lua/contracts/lua-embedding-readiness.v1.json`, `harness/lua/WORKFLOW.md`, `harness/lua/ARTIFACT_REGISTRY.md`, `harness/lua/reports/CURRENT_STATE.md`, `harness/lua/reports/P_TOP_ACCEPTANCE_20260810.md`, `.ai/skills/lua-embedding-readiness/SKILL.md`, `scripts/validate_lua_harness.py`, `tests/test_lua_harness_contract.py`, `.github/workflows/lua-harness-contract.yml`, `harness/manifest.v1.json`
 - **Acceptance gate:** every Lua harness component is tracked and registered; host-owned execution, independent VM states, explicit state release, host-caught errors/rollback, runtime type discipline, optional JIT, default-deny OS/IO/native loading, allow-listed host APIs, 1-based Lua semantics, conceptual minimalism, and AI auditability are fail-closed contract requirements; focused validator/tests, root harness, artifact hygiene, and patch hygiene pass; PR is merged without product/runtime Lua changes; runtime remains explicitly `not_implemented`
 - **Gate:** none
 - **Last proof:** commit:4747efe470c10b9a2f240eb71d9e838d25f82651 built the operational Lua harness; workflow:31420050622 passed the dedicated Lua embedding-readiness harness and uploaded the machine report; workflow:31420050626 passed operational harness contracts; workflow:31420050714 passed Prompt Kit web contracts; workflow:31420050637 passed artifact engine tests; merge:8a29a34f445c4ddf0a5b2d71af6bca57f767fa40 merged PR #167
@@ -109,7 +109,7 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-007 — Measure Prompt Kit compute-authority effectiveness on external agents
 
-- **Status:** TRACKED
+- **Status:** READY
 - **Priority:** P1
 - **Owner:** P67 / skill-evaluation
 - **Branch / PR:** main planning floor; successor implementation branches/PRs are defined by the canonical sprint map
@@ -120,12 +120,12 @@ Canonical terminal action: none; no safe actionable work remains
 - **Acceptance gate:** three-sprint program completes its deterministic gold-fixture floor, 16-run paired pilot, shared-registry reconciliation, 48 valid-run main study, blinded scoring and mechanical thresholds; observed effectiveness is promoted only when exact runtime evidence satisfies the canonical plan
 - **Gate:** Sprint 1 is SAFE & EXECUTABLE; model-runtime credentials/provider availability may later bound Sprints 2–3 but do not block the deterministic floor
 - **Last proof:** plan commit `6aa8f6b07c45697fb61a1782c13b105fa40a1d80` persisted the complete dependency map on current main after #452; exact #452 main floor had 12/12 observed push workflows successful
-- **Next action:** P67/skill-evaluation — implement Sprint 1 under `harness/evals/compute-authority/`: versioned eval contract, schemas, eight hidden gold fixtures, deterministic fixture/metric validator and focused tests; keep #450-shared repository-AI registry/test files read-only until convergence
+- **Next action:** implement Sprint 1 under `harness/evals/compute-authority/`: versioned eval contract, schemas, eight hidden gold fixtures, deterministic fixture/metric validator and focused tests; keep #450-shared repository-AI registry/test files read-only until convergence
 - **Updated:** 2026-09-13T04:45:00-04:00
 
 ## TRQ-008 — Execute Prompt Execution Evidence Spine sprint map
 
-- **Status:** TRACKED
+- **Status:** READY
 - **Priority:** P1
 - **Owner:** Prompt Topology / P95 lifecycle architecture coordinator
 - **Branch / PR:** `docs/evidence-spine-sprint-map-20260913` / #468 planning owner; successor implementation reuses existing owners before creating new lanes
@@ -135,6 +135,6 @@ Canonical terminal action: none; no safe actionable work remains
 - **References:** `harness/prompt-topology/EVIDENCE_SPINE_SPRINT_MAP.md`, `harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md`, `harness/contracts/prompt-outcome-classification.v1.json`, `.ai/skills/prompt-kit-feedback-afk-routing/SKILL.md`, PR #468, PR #467, PR #450, PR #431
 - **Acceptance gate:** Panel 1 repairs and integrates the exact validated #467 owner; Panel 2 integrates `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md` with explicit lifecycle ownership and donor dispositions; Panel 3 implements only admitted seams, reconciles/retire donor work without duplicate ownership, proves privacy-bounded recurrence/next-action behavior with fixtures/validators/runtime evidence actually available, and converges validated authorized work onto refreshed default branch
 - **Gate:** Panel 1 is SAFE & EXECUTABLE; Panel 2 waits on Panel 1 integration or exact blocked-head evidence; Panel 3 waits on integrated P95 ownership/interfaces
-- **Last proof:** canonical plan tracked on PR #468 branch; planning floor `main@182cde18bf7fdc46f305039b5793eb33698cafa2`; PR #467 head `fff31c61e84282df2177107257829de0473f5ff5` had bounded P07 regressions and current review gaps during provider inspection; #450/#431 are stale donor lanes pending P95
-- **Next action:** PR #467 owner — refresh provider/local truth, preserve dirty/separately owned work, reproduce and repair current P07 metadata and autonomous-dispatch review failures, run focused plus required repository gates, push the exact repaired head, disposition current review threads, and integrate/verify on refreshed `main` when safe and authorized
-- **Updated:** 2026-09-13T20:20:00-04:00
+- **Last proof:** canonical plan tracked on PR #468 branch; planning floor `main@6718d3f8e41ada544a46de903bc85a22725de0fa`; PR #467 head `fff31c61e84282df2177107257829de0473f5ff5` had bounded P07 regressions and current review gaps during provider inspection; #450/#431 are stale donor lanes pending P95
+- **Next action:** repair PR #467 from refreshed provider/local truth: preserve dirty or separately owned work, reproduce and fix the current P07 metadata and autonomous-dispatch review failures, run focused plus required repository gates, push the exact repaired head, disposition current review threads, and integrate/verify on refreshed `main` when safe and authorized
+- **Updated:** 2026-09-13T20:36:00-04:00
