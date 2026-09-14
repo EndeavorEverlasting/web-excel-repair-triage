@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import threading
+import time
 import unittest
 from pathlib import Path
 
@@ -96,16 +97,21 @@ class PromptParallelDispatchTests(unittest.TestCase):
 
         def fake_runner(item: dict) -> dict:
             nonlocal active, max_active
+            started_ns = time.time_ns()
             with lock:
                 active += 1
                 max_active = max(max_active, active)
             barrier.wait(timeout=2)
+            # Hold the concurrent window long enough for wall-clock overlap proof.
+            time.sleep(0.05)
             with lock:
                 active -= 1
             return {
                 "lane_id": item["lane_id"],
                 "status": "PASS",
                 "adapter_kind": item["adapter"]["kind"],
+                "started_ns": started_ns,
+                "ended_ns": time.time_ns(),
                 "evidence": [{"type": "test", "proof": "barrier-reached"}],
             }
 
@@ -114,6 +120,43 @@ class PromptParallelDispatchTests(unittest.TestCase):
         self.assertTrue(receipt["observed_parallelism"])
         self.assertGreaterEqual(max_active, 2)
         self.assertEqual([item["lane_id"] for item in receipt["lanes"]], ["lane-a", "lane-b"])
+
+    def test_required_parallelism_requires_overlapping_lane_intervals(self) -> None:
+        payload = manifest(lane("lane-a"), lane("lane-b"))
+        gate = threading.Lock()
+
+        def serial_runner(item: dict) -> dict:
+            with gate:
+                started_ns = time.time_ns()
+                time.sleep(0.02)
+                ended_ns = time.time_ns()
+            return {
+                "lane_id": item["lane_id"],
+                "status": "PASS",
+                "adapter_kind": item["adapter"]["kind"],
+                "started_ns": started_ns,
+                "ended_ns": ended_ns,
+                "evidence": [{"type": "test", "proof": "non-overlapping"}],
+            }
+
+        receipt = MOD.dispatch_manifest(payload, runner=serial_runner)
+        self.assertFalse(receipt["observed_parallelism"])
+        self.assertEqual(receipt["status"], "FAIL")
+
+    def test_unexpected_runner_exceptions_become_lane_failures(self) -> None:
+        payload = manifest(lane("lane-a"), lane("lane-b"))
+
+        def exploding_runner(item: dict) -> dict:
+            raise RuntimeError(f"boom-{item['lane_id']}")
+
+        receipt = MOD.dispatch_manifest(payload, runner=exploding_runner)
+        self.assertEqual(receipt["status"], "FAIL")
+        self.assertFalse(receipt["observed_parallelism"])
+        self.assertEqual({item["lane_id"] for item in receipt["lanes"]}, {"lane-a", "lane-b"})
+        for item in receipt["lanes"]:
+            self.assertEqual(item["status"], "FAIL")
+            self.assertEqual(item["evidence"][0]["type"], "runner_error")
+            self.assertIn("boom-", item["evidence"][0]["error"])
 
     def test_degraded_serial_execution_requires_explicit_opt_in_and_stays_unproven(self) -> None:
         payload = manifest(
