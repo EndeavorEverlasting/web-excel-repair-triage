@@ -52,6 +52,9 @@ class PrMergeGateTests(unittest.TestCase):
             "startsWith(github.event.workflow_run.head_branch, 'promote/')", text
         )
         self.assertIn(
+            "github.event.workflow_run.pull_requests[0].number != null", text
+        )
+        self.assertIn(
             "startsWith(github.event.pull_request.head.ref, 'promote/')", text
         )
         self.assertIn(
