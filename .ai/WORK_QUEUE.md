@@ -154,3 +154,19 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** commit:36f31a987048829824a7759189a28609e55fe695; merge:04e4a77d261d0bd0388daa6d56f38e113cdf79fa integrated PR #483; local:python -m unittest tests.test_prompt_compilation (13 OK); local:python scripts/prompt_language_compiler.py validate-fixtures --summary; workflow deterministic-test-floor + operational-harness + ledger contract green on PR head; artifact:harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md present on refreshed default branch
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-14T14:40:00-04:00
+
+## TRQ-010 — Prompt Compilation Sprint 2 context adapters + profile precedence
+
+- **Status:** VERIFY
+- **Priority:** P1
+- **Owner:** prompt-compilation-sprint2-20260914
+- **Branch / PR:** feat/prompt-compilation-sprint2-adapters-20260914
+- **Scope:** implement thin read-only Context Engine adapters that project dispatch receipts, continuation dispositions, P99 outcome receipts, and recurrence findings into `prompt-context/v1`, plus deterministic execution-profile precedence (`run > prompt > user > product`) and focused tests, without owning lifecycle events
+- **Forbidden:** UI Compute Mode toggle; PR #450/#431 donor work; raw conversation ingestion; new Evidence Spine event types; universal event bus; automatic source mutation; automatic PR merge; model-generated policy promotion; hand-editing generated Prompt Kit output
+- **Dependencies:** TRQ-009 DONE; main@602df5086c61d81382eb2835dcb119eaa71d4ae5
+- **References:** `harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md`, `scripts/prompt_context_engine.py`, `tests/test_prompt_context_engine.py`, `scripts/prompt_language_compiler.py`
+- **Acceptance gate:** adapters produce valid `prompt-context/v1`; precedence resolver is deterministic; projected context compiles through Language Engine for TC06 parallel MUST; no event-bus fields; exact validated head integrates to current default branch
+- **Gate:** none
+- **Last proof:** local:python -m unittest tests.test_prompt_compilation tests.test_prompt_context_engine (20 OK); local:python scripts/prompt_context_engine.py resolve-profile --run-override efficient --summary; local:python scripts/validate_repository_work_ledger.py PASS
+- **Next action:** Commit/push/open PR and merge exact validated head into current main, then mark TRQ-010 DONE
+- **Updated:** 2026-09-14T14:55:00-04:00
