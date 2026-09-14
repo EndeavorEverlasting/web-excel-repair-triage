@@ -26,9 +26,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "bb4041a7ed940daf81bf4a194b679ecee8d89d9d"
           git fetch origin main --prune
           test "$(git rev-parse origin/main)" = "bb4041a7ed940daf81bf4a194b679ecee8d89d9d"
+          test "$(git merge-base HEAD origin/main)" = "$(git rev-parse origin/main)"
           test "$(git status --porcelain)" = ""
 
       - name: Harden P13 and add focused regression
@@ -48,30 +48,12 @@ jobs:
               if sentence not in value:
                   p13[field] = value.rstrip() + ' ' + sentence
 
-          append_once(
-              'sprintRole',
-              'When refreshed truth establishes a newer overlapping canonical owner, retire the stale writer, preserve reusable evidence, and continue through the surviving owner instead of competing with it.'
-          )
-          append_once(
-              'useWhen',
-              'This also applies when repeated friction is caused by a prior agent lane continuing after newer overlapping repository work has displaced it.'
-          )
-          append_once(
-              'inspectFirst',
-              'Resolve the current canonical owner for every overlapping write surface and whether the present lane has been displaced since its last proof.'
-          )
-          append_once(
-              'expectedOutput',
-              'If ownership moved, explicitly retire the superseded writer, publish an actionable evidence handoff, and continue from the current canonical owner without making the operator shuttle context.'
-          )
-          append_once(
-              'nextStep',
-              'After every material refresh, re-check write ownership; when a newer overlapping owner supersedes the lane, stop competing writes, hand off reusable evidence, and resume at the first unproven gate in the surviving owner.'
-          )
-          append_once(
-              'proofGate',
-              'Owner displacement is proven convergent: no superseded writer continues mutation, reusable findings are preserved in an actionable handoff, and execution resumes from the refreshed canonical owner when safe work remains.'
-          )
+          append_once('sprintRole', 'When refreshed truth establishes a newer overlapping canonical owner, retire the stale writer, preserve reusable evidence, and continue through the surviving owner instead of competing with it.')
+          append_once('useWhen', 'This also applies when repeated friction is caused by a prior agent lane continuing after newer overlapping repository work has displaced it.')
+          append_once('inspectFirst', 'Resolve the current canonical owner for every overlapping write surface and whether the present lane has been displaced since its last proof.')
+          append_once('expectedOutput', 'If ownership moved, explicitly retire the superseded writer, publish an actionable evidence handoff, and continue from the current canonical owner without making the operator shuttle context.')
+          append_once('nextStep', 'After every material refresh, re-check write ownership; when a newer overlapping owner supersedes the lane, stop competing writes, hand off reusable evidence, and resume at the first unproven gate in the surviving owner.')
+          append_once('proofGate', 'Owner displacement is proven convergent: no superseded writer continues mutation, reusable findings are preserved in an actionable handoff, and execution resumes from the refreshed canonical owner when safe work remains.')
 
           content = p13['copyContent']
           anchor = (
@@ -79,14 +61,14 @@ jobs:
               "For every blocked lane name the exact missing capability or user-only gate. If any safe lane is executable, continue immediately instead of stopping for a global permission question.\n\n\n"
               "1. RECOVER THE RECURRENCE WITHOUT MAKING THE OPERATOR RETYPE IT"
           )
-          section = '''Partition candidate work into `EXECUTABLE NOW`, `BLOCKED BY ACCESS/AUTHORITY`, and `SERIALIZED BY DEPENDENCY`. For every blocked lane name the exact missing capability or user-only gate. If any safe lane is executable, continue immediately instead of stopping for a global permission question.\n\n0B. OWNER DISPLACEMENT / STALE-LANE CONVERGENCE\n- After every material repository/provider refresh and before each overlapping write, resolve the current canonical owner for that surface. Treat a newer overlapping PR/branch/mainline implementation, explicit ownership claim, or merged replacement as a state transition to evaluate, not background noise.\n- If refreshed truth establishes a newer overlapping canonical owner that supersedes the present lane, classify the old lane `SUPERSEDED WRITER` and stop competing writes immediately. Do not keep rebasing, spawning sidecar carriers, or modifying the shared surface merely because the old lane still has authority.\n- Preserve useful work instead of discarding it: update the existing PR/ledger/handoff surface with exact branch/PR/SHA identity, reusable findings/tests, failed and passed proof, and a clear distinction between actionable evidence and unsafe patches/temporary carriers. Close, draft, or otherwise retire the stale integration vehicle when authorized so another agent cannot mistake it for merge-ready work.\n- Owner displacement is not a stopping condition. Rejoin the surviving canonical owner, refresh its exact floor, and continue the first unproven critical-path gate there whenever safe executable work remains. Do not make the operator create a new chat or manually shuttle the handoff.\n- Exhaustive compute and broad execution authority apply inside the surviving authorized lane: use all materially useful safe reasoning, tools, retries, validation passes, worker capacity, integration, deployment, and observation available there. They do not authorize a superseded lane to keep mutating an overlapping surface after ownership has moved.\n\n\n1. RECOVER THE RECURRENCE WITHOUT MAKING THE OPERATOR RETYPE IT'''
+          section = '''Partition candidate work into `EXECUTABLE NOW`, `BLOCKED BY ACCESS/AUTHORITY`, and `SERIALIZED BY DEPENDENCY`. For every blocked lane name the exact missing capability or user-only gate. If any safe lane is executable, continue immediately instead of stopping for a global permission question.\n\n0B. OWNER DISPLACEMENT / STALE-LANE CONVERGENCE\n- After each material refresh and before an overlapping write, resolve the canonical owner; newer overlapping work/ownership is a state transition.\n- If it supersedes this lane, mark `SUPERSEDED WRITER` and stop competing writes. Do not rebase, spawn sidecars, or keep mutating because authority remains.\n- Hand off branch/PR/SHA, reusable findings/tests, passed/failed proof, and unsafe work in the existing PR/ledger/handoff; retire the stale integration vehicle when authorized.\n- Rejoin the surviving owner at its first unproven gate. Exhaustive compute/full authority apply there, never as permission for a superseded writer to continue.\n\n\n1. RECOVER THE RECURRENCE WITHOUT MAKING THE OPERATOR RETYPE IT'''
           if '0B. OWNER DISPLACEMENT / STALE-LANE CONVERGENCE' not in content:
               if content.count(anchor) != 1:
                   raise SystemExit(f'P13 owner-displacement anchor count was {content.count(anchor)}, expected 1')
               content = content.replace(anchor, section, 1)
 
           class_anchor = '- SAFETY_OR_SCOPE_REWORK — preventable unsafe or out-of-scope behavior keeps returning.\n'
-          class_line = '- STALE_OWNER_COMPETITION — refreshed truth establishes a newer overlapping canonical owner, but the old lane keeps mutating, rebasing, or creating sidecar work instead of retiring and converging.\n'
+          class_line = '- STALE_OWNER_COMPETITION — a displaced writer keeps mutating instead of handing off and converging.\n'
           if class_line not in content:
               if content.count(class_anchor) != 1:
                   raise SystemExit('P13 failure-class anchor missing or duplicated')
@@ -94,8 +76,8 @@ jobs:
 
           regression_anchor = '- no stopping at plan/status while safe action remains.\n'
           regression_lines = (
-              '- owner displacement retires the stale writer, preserves reusable evidence in an actionable handoff, and continues through the refreshed canonical owner;\n'
-              '- exhaustive compute/full authority deepen the surviving authorized lane and never override stale-writer retirement.\n'
+              '- owner displacement retires stale writers, preserves evidence, and resumes through the current owner;\n'
+              '- exhaustive compute/full authority never overrides stale-writer retirement.\n'
           )
           if regression_lines not in content:
               if content.count(regression_anchor) != 1:
@@ -103,10 +85,12 @@ jobs:
               content = content.replace(regression_anchor, regression_anchor + regression_lines, 1)
 
           p13['copyContent'] = content
+          if len(content) >= 18000:
+              raise SystemExit(f'P13 copyContent grew to {len(content)} chars; must remain <18000')
+          print(f'P13 copyContent chars={len(content)}')
           registry_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
-          test_path = Path('tests/test_p13_owner_displacement.py')
-          test_path.write_text('''from __future__ import annotations\n\nimport json\nimport unittest\nfrom pathlib import Path\n\nROOT = Path(__file__).resolve().parents[1]\n\n\nclass P13OwnerDisplacementTests(unittest.TestCase):\n    @classmethod\n    def setUpClass(cls) -> None:\n        payload = json.loads((ROOT / "registry/prompts/prompt-overrides.v1.json").read_text(encoding="utf-8"))\n        cls.p13 = next(item for item in payload["overrides"] if item["id"] == "P13")\n\n    def test_p13_retires_superseded_writer_and_continues_from_current_owner(self) -> None:\n        copy = self.p13["copyContent"]\n        for phrase in (\n            "OWNER DISPLACEMENT / STALE-LANE CONVERGENCE",\n            "SUPERSEDED WRITER",\n            "stop competing writes immediately",\n            "actionable evidence and unsafe patches/temporary carriers",\n            "Owner displacement is not a stopping condition",\n            "Rejoin the surviving canonical owner",\n            "Exhaustive compute and broad execution authority apply inside the surviving authorized lane",\n            "do not authorize a superseded lane to keep mutating",\n            "STALE_OWNER_COMPETITION",\n            "owner displacement retires the stale writer",\n        ):\n            self.assertIn(phrase, copy)\n\n    def test_p13_metadata_makes_owner_displacement_part_of_completion(self) -> None:\n        self.assertIn("retire the stale writer", self.p13["sprintRole"] )\n        self.assertIn("prior agent lane continuing", self.p13["useWhen"] )\n        self.assertIn("current canonical owner", self.p13["inspectFirst"] )\n        self.assertIn("actionable evidence handoff", self.p13["expectedOutput"] )\n        self.assertIn("stop competing writes", self.p13["nextStep"] )\n        self.assertIn("no superseded writer continues mutation", self.p13["proofGate"] )\n\n    def test_p13_keeps_prompt_bounded(self) -> None:\n        self.assertLess(len(self.p13["copyContent"]), 18000)\n\n\nif __name__ == "__main__":\n    unittest.main()\n''', encoding='utf-8')
+          Path('tests/test_p13_owner_displacement.py').write_text('''from __future__ import annotations\n\nimport json\nimport unittest\nfrom pathlib import Path\n\nROOT = Path(__file__).resolve().parents[1]\n\n\nclass P13OwnerDisplacementTests(unittest.TestCase):\n    @classmethod\n    def setUpClass(cls) -> None:\n        payload = json.loads((ROOT / "registry/prompts/prompt-overrides.v1.json").read_text(encoding="utf-8"))\n        cls.p13 = next(item for item in payload["overrides"] if item["id"] == "P13")\n\n    def test_p13_retires_superseded_writer_and_continues_from_current_owner(self) -> None:\n        copy = self.p13["copyContent"]\n        for phrase in (\n            "OWNER DISPLACEMENT / STALE-LANE CONVERGENCE",\n            "SUPERSEDED WRITER",\n            "stop competing writes",\n            "retire the stale integration vehicle",\n            "Rejoin the surviving owner",\n            "Exhaustive compute/full authority apply there",\n            "never as permission for a superseded writer to continue",\n            "STALE_OWNER_COMPETITION",\n            "owner displacement retires stale writers",\n        ):\n            self.assertIn(phrase, copy)\n\n    def test_p13_metadata_makes_owner_displacement_part_of_completion(self) -> None:\n        self.assertIn("retire the stale writer", self.p13["sprintRole"])\n        self.assertIn("prior agent lane continuing", self.p13["useWhen"])\n        self.assertIn("current canonical owner", self.p13["inspectFirst"])\n        self.assertIn("actionable evidence handoff", self.p13["expectedOutput"])\n        self.assertIn("stop competing writes", self.p13["nextStep"])\n        self.assertIn("no superseded writer continues mutation", self.p13["proofGate"])\n\n    def test_p13_keeps_prompt_bounded(self) -> None:\n        self.assertLess(len(self.p13["copyContent"]), 18000)\n\n\nif __name__ == "__main__":\n    unittest.main()\n''', encoding='utf-8')
           PY
 
       - name: Rebuild canonical Prompt Kit
