@@ -40,6 +40,12 @@ class P13OwnerDisplacementTests(unittest.TestCase):
         ):
             self.assertIn(phrase, copy)
 
+    def test_p13_owner_displacement_requires_overlapping_supersession(self) -> None:
+        copy = self.p13["copyContent"]
+        self.assertIn("newer overlapping work/ownership is a state transition", copy)
+        self.assertIn("If it supersedes this lane", copy)
+        self.assertIn("Rejoin the surviving owner", copy)
+
     def test_p13_metadata_makes_owner_displacement_part_of_completion(self) -> None:
         self.assertIn("retire the stale writer", self.p13["sprintRole"])
         self.assertIn("prior agent lane continuing", self.p13["useWhen"])
