@@ -1,12 +1,12 @@
 # Prompt Execution Evidence Spine — Architecture Decision
 
-**Status:** DESIGNED / TRACKED (architecture decision; runtime not implemented here)  
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Owner:** P95 — Program Design & Call-Stack Prototype Architect  
-**Evidence floor:** refreshed `main@a1e9caa17c6a979a3747edb71632a66c9406af00` (contains integrated Panel 1 / PR #467)  
-**Predecessor scout:** [`POST_PHASE_C_STRATEGIC_SCOUT.md`](./POST_PHASE_C_STRATEGIC_SCOUT.md)  
-**Phase C recovery floor:** [`PHASE_C_CLOSEOUT.md`](./PHASE_C_CLOSEOUT.md) + [`PHASE_C_HANDOFF.md`](./PHASE_C_HANDOFF.md)  
-**Canonical sprint map:** [`EVIDENCE_SPINE_SPRINT_MAP.md`](./EVIDENCE_SPINE_SPRINT_MAP.md) (planning PR #471 until mainline-integrated)  
+**Status:** DESIGNED / TRACKED (architecture decision; runtime not implemented here)
+**Repository:** `EndeavorEverlasting/web-excel-repair-triage`
+**Owner:** P95 — Program Design & Call-Stack Prototype Architect
+**Evidence floor:** refreshed `main@a1e9caa17c6a979a3747edb71632a66c9406af00` (contains integrated Panel 1 / PR #467)
+**Predecessor scout:** [`POST_PHASE_C_STRATEGIC_SCOUT.md`](./POST_PHASE_C_STRATEGIC_SCOUT.md)
+**Phase C recovery floor:** [`PHASE_C_CLOSEOUT.md`](./PHASE_C_CLOSEOUT.md) + [`PHASE_C_HANDOFF.md`](./PHASE_C_HANDOFF.md)
+**Canonical sprint map:** `harness/prompt-topology/EVIDENCE_SPINE_SPRINT_MAP.md` via planning PR #471 (TRACKED; not yet on this branch floor)
 **Decision date:** 2026-09-14
 
 ## 1. Decision (one line)
@@ -86,27 +86,27 @@ Human clipboard/hotkey path: **zero mandatory destination or metadata**. Destina
 
 ### Trace 1 — Recommendation path
 
-1. Finder recommends prompts (topology/guidance) → advisory only.  
-2. User selects/open/copies → local selection event; clipboard content never stored.  
-3. Optional route decision → authoritative route receipt only if route owner observed destination; else destination `unknown`.  
-4. Invocation → assign `invocation_id` when a launcher/runtime actually invokes.  
-5. Outcome → P99 receipt keyed by `invocation_id`.  
+1. Finder recommends prompts (topology/guidance) → advisory only.
+2. User selects/open/copies → local selection event; clipboard content never stored.
+3. Optional route decision → authoritative route receipt only if route owner observed destination; else destination `unknown`.
+4. Invocation → assign `invocation_id` when a launcher/runtime actually invokes.
+5. Outcome → P99 receipt keyed by `invocation_id`.
 6. Eval/recovery candidate → only if classification.actionability warrants; P115 owns recovery work requests.
 
 **Falsifier:** if any step’s artifact is treated as proof of a later step, the adapter is wrong.
 
 ### Trace 2 — Autonomous repair path
 
-1. Deterministic repository failure observed → P99 FAILURE receipt (`attribution=PROVEN` when validator-backed).  
-2. P115 recovery selects repair owner / work request.  
-3. Reroute or repair runs → new invocation + new receipt; link via `related_receipt_ids` / supersession, **do not double-count** the original failure as a second independent defect.  
+1. Deterministic repository failure observed → P99 FAILURE receipt (`attribution=PROVEN` when validator-backed).
+2. P115 recovery selects repair owner / work request.
+3. Reroute or repair runs → new invocation + new receipt; link via `related_receipt_ids` / supersession, **do not double-count** the original failure as a second independent defect.
 4. Dispatch (#467) may parallelize independent repair lanes; dispatch receipt proves parallelism only when `observed_parallelism=true`.
 
 ### Trace 3 — Phase D candidate path (design only; not implemented)
 
-1. Repeated local transition/co-use events accumulate in device-local journal.  
-2. PrivacyReducer emits allowlisted aggregates only.  
-3. Aggregate may *candidate* a topology behavioral channel (`CO_USAGE` / `TRANSITION` / …).  
+1. Repeated local transition/co-use events accumulate in device-local journal.
+2. PrivacyReducer emits allowlisted aggregates only.
+3. Aggregate may *candidate* a topology behavioral channel (`CO_USAGE` / `TRANSITION` / …).
 4. No identity escape; no production topology mutation in this architecture sprint; empirical value gate remains future P82.
 
 ## 7. Continuation resolver (agent-native seam)
@@ -128,11 +128,11 @@ Human clipboard/hotkey path: **zero mandatory destination or metadata**. Destina
 
 ## 8. Recurrence → finding boundary (design freeze for Lane C)
 
-- One ordinary correction = evidence, not an automatic engineering ticket.  
-- Recurrence grouping keys on **underlying contract failure identity**, not similar free text.  
-- Generic threshold: three materially equivalent occurrences across multiple executions confirm recurrence, unless an owner-specific P99 threshold overrides (deterministic contradiction min 1; repeated local pattern min 3; manual context transfer min 2; correction-not-integrated min 2; premature terminal = terminal claim + safe successor observed).  
-- Duplicate findings accumulate evidence; they do not spam tickets.  
-- Post-fix recurrence reopens/escalates monitoring.  
+- One ordinary correction = evidence, not an automatic engineering ticket.
+- Recurrence grouping keys on **underlying contract failure identity**, not similar free text.
+- Generic threshold: three materially equivalent occurrences across multiple executions confirm recurrence, unless an owner-specific P99 threshold overrides (deterministic contradiction min 1; repeated local pattern min 3; manual context transfer min 2; correction-not-integrated min 2; premature terminal = terminal claim + safe successor observed).
+- Duplicate findings accumulate evidence; they do not spam tickets.
+- Post-fix recurrence reopens/escalates monitoring.
 - Ticket/work-request compilation reuses **P115-compatible** coordination only when remediation owner, observed/expected behavior, linked evidence ids, acceptance criteria, and proof requirements exist.
 
 ## 9. Donor dispositions
@@ -143,14 +143,14 @@ Human clipboard/hotkey path: **zero mandatory destination or metadata**. Destina
 
 Keep/adapt:
 
-- Actor-neutral route receipts  
-- Authoritative vs inferred destination semantics  
-- Idempotency / compare-and-set route-state ideas where still compatible with current main  
+- Actor-neutral route receipts
+- Authoritative vs inferred destination semantics
+- Idempotency / compare-and-set route-state ideas where still compatible with current main
 
 Retire/supersede:
 
-- Any overlap that redefines outcome/success (P99 owns outcome)  
-- Any telemetry or identity fields forbidden by #460  
+- Any overlap that redefines outcome/success (P99 owns outcome)
+- Any telemetry or identity fields forbidden by #460
 
 **Connection point:** route-receipt adapter → correlation keys → continuation resolver; never writes P99 classification.
 
@@ -160,14 +160,14 @@ Retire/supersede:
 
 Keep/adapt:
 
-- Privacy-bounded selection/usage observation  
-- Explicit non-equivalence of selection intent to terminal success  
-- Session-identity stripping before any eval candidate export  
+- Privacy-bounded selection/usage observation
+- Explicit non-equivalence of selection intent to terminal success
+- Session-identity stripping before any eval candidate export
 
 Retire/supersede:
 
-- Anything that stores raw query/prompt/clipboard/transcript  
-- Anything that creates a parallel outcome classifier  
+- Anything that stores raw query/prompt/clipboard/transcript
+- Anything that creates a parallel outcome classifier
 
 **Connection point:** local observation adapter → Local Journal / bounded events; feeds Phase D *candidates* only through PrivacyReducer later.
 
@@ -185,26 +185,26 @@ Unchanged semantic authority. Architecture adds adapters and a resolver; it does
 
 Post-P95 implementation may add **thin** schemas only if needed:
 
-1. `evidence-correlation/v1` — optional bag of foreign keys + provenance class (not a state machine).  
-2. `continuation-disposition/v1` — resolver input snapshot hash + typed disposition (not an event log).  
+1. `evidence-correlation/v1` — optional bag of foreign keys + provenance class (not a state machine).
+2. `continuation-disposition/v1` — resolver input snapshot hash + typed disposition (not an event log).
 3. Finding schema — only if Lane C cannot reuse an existing P115 work-request shape.
 
 If static mapping + fixtures prove correlation keys suffice without (1), omit (1).
 
 ## 11. Thin prototype / falsification notes
 
-Static mapping already discriminates alternatives for Traces 1–2 using existing contracts on `main` (`prompt-outcome-receipt/v1`, `prompt-parallel-dispatch/v1`, privacy planes).  
+Static mapping already discriminates alternatives for Traces 1–2 using existing contracts on `main` (`prompt-outcome-receipt/v1`, `prompt-parallel-dispatch/v1`, privacy planes).
 
 Executable seam prototypes for failure propagation belong to Panel 3 once this decision is integrated; this architecture sprint does not ship production listeners.
 
 Representative failure fixtures Panel 3 MUST cover (acceptance handoff):
 
-- ordinary copy with `unknown` destination  
-- inferred destination not promoted  
-- premature terminal superseded by recovery  
-- duplicate evidence accumulation  
-- post-fix recurrence reopen  
-- privacy-rejected raw content  
+- ordinary copy with `unknown` destination
+- inferred destination not promoted
+- premature terminal superseded by recovery
+- duplicate evidence accumulation
+- post-fix recurrence reopen
+- privacy-rejected raw content
 
 ## 12. Proof ceiling
 
@@ -212,24 +212,24 @@ This document proves an **architecture decision** and ownership matrix against r
 
 It does **not** prove:
 
-- Evidence Spine runtime integration  
-- provider-wide agent adoption  
-- live destination observation  
-- Phase D value  
-- #450/#431 mainline merge  
+- Evidence Spine runtime integration
+- provider-wide agent adoption
+- live destination observation
+- Phase D value
+- #450/#431 mainline merge
 
 ## 13. Successor acceptance gates (Panel 3)
 
-1. Collision matrix proves disjoint writers for lanes A/B/C vs coordinator-shared surfaces.  
-2. Lane A adapts only #450 concepts admitted here.  
-3. Lane B adapts only #431 concepts admitted here.  
-4. Lane C implements recurrence/finding/ticket per §8.  
-5. Continuation resolver implements §7 with fixtures.  
-6. Generated Prompt Kit remains builder-owned if UI consumers change.  
+1. Collision matrix proves disjoint writers for lanes A/B/C vs coordinator-shared surfaces.
+2. Lane A adapts only #450 concepts admitted here.
+3. Lane B adapts only #431 concepts admitted here.
+4. Lane C implements recurrence/finding/ticket per §8.
+5. Continuation resolver implements §7 with fixtures.
+6. Generated Prompt Kit remains builder-owned if UI consumers change.
 7. Integrate dependency-first onto refreshed `main` with containment proof.
 
 ## 14. Sprint-map synchronization
 
-Wave order remains: **#467 floor (done on this evidence floor) → P95 architecture (this artifact) → runtime convergence A/B/C**.  
+Wave order remains: **#467 floor (done on this evidence floor) → P95 architecture (this artifact) → runtime convergence A/B/C**.
 
 No sequencing change that would allow Phase D or donor wholesale merges before architecture integration. When PR #471’s sprint map lands on main, update its “architecture artifact absent” / P95 status rows to point at this file’s merged revision.
