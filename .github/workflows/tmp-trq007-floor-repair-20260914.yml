@@ -1,0 +1,98 @@
+name: Temporary TRQ-007 current-floor repair
+
+on:
+  push:
+    branches:
+      - fix/trq007-compute-authority-floor-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Repair TRQ-007 to the integrated Sprint-1 floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          root = Path('.')
+          ledger = root / '.ai' / 'WORK_QUEUE.md'
+          text = ledger.read_text(encoding='utf-8')
+          start_marker = '## TRQ-007 — Measure Prompt Kit compute-authority effectiveness on external agents\n'
+          end_marker = '\n## TRQ-008 — Execute Prompt Execution Evidence Spine sprint map\n'
+          if start_marker not in text or end_marker not in text:
+              raise SystemExit('TRQ-007/TRQ-008 boundary missing')
+          before, rest = text.split(start_marker, 1)
+          _, after = rest.split(end_marker, 1)
+          replacement = '''## TRQ-007 — Measure Prompt Kit compute-authority effectiveness on external agents
+
+- **Status:** READY
+- **Priority:** P1
+- **Owner:** P67 / skill-evaluation
+- **Branch / PR:** main; Sprint 1 integrated by PR #464; Sprint 2 runtime-harness implementation not yet integrated
+- **Scope:** build and execute the bounded paired A/B evaluation that measures whether the strengthened Prompt Kit compute-authority contract increases decision-relevant useful compute, defect/contract discovery, evidence honesty, parallelism when available, and fixed-point quality without widening mutation scope or rewarding endless churn
+- **Forbidden:** changing Prompt Kit treatment behavior inside the frozen study; duplicating the P67 eval framework or skill-evaluation identity; modifying separately owned #450/#431/#462/#242 surfaces outside explicit reconciliation; secrets/private transcripts/personal data; promoting static proof to observed external-agent effectiveness
+- **Dependencies:** Sprint 1 integrated by PR #464 / merge `43b1953092b518fe3a76b5fe0bfab179f730e849`; Sprint 2 consumes that immutable fixture floor; Sprint 3 must reconcile open PR #450 before touching shared P67 registry/test files
+- **References:** `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`, `harness/evals/compute-authority/manifest.json`, `harness/evals/compute-authority/README.md`, `harness/evals/repository-ai-evals.v1.json`, `.ai/skills/skill-evaluation/SKILL.md`, `harness/contracts/prompt-outcome-receipt.schema.v1.json`
+- **Acceptance gate:** the three-sprint program completes its deterministic gold-fixture floor, Sprint 2 provider-neutral paired runtime harness and 16-run pilot when an authorized runtime is available, Sprint 3 shared-registry reconciliation and 48 valid-run main study, blinded scoring, and mechanical thresholds; observed effectiveness is promoted only when exact runtime evidence satisfies the canonical plan
+- **Gate:** Sprint 2 repository/runtime-harness implementation is SAFE & EXECUTABLE; provider credentials or an accessible external-agent runtime may block only the observed pilot and must remain `UNPROVEN_RUNTIME` rather than a synthetic PASS
+- **Last proof:** merge:43b1953092b518fe3a76b5fe0bfab179f730e849 integrated PR #464 Compute-Authority Sprint 1; artifact:harness/evals/compute-authority/manifest.json artifact:harness/evals/compute-authority/fixtures/index.v1.json artifact:harness/evals/compute-authority/scripts/validate_fixtures.py
+- **Next action:** Build Sprint 2 from `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`: add the immutable condition resolver, disposable-run isolation, provider-neutral adapter/capture seam, paired-order pilot runner, invalid-run receipts, and focused tests without editing #450-owned shared P67 registry files; validate and integrate the deterministic harness before attempting external runs
+- **Updated:** 2026-09-14T13:04:00-04:00
+'''
+          ledger.write_text(before + replacement + end_marker + after, encoding='utf-8')
+
+          tests = root / 'tests' / 'test_repository_work_ledger.py'
+          source = tests.read_text(encoding='utf-8')
+          test_name = 'test_trq007_continuation_tracks_integrated_compute_authority_floor'
+          if test_name not in source:
+              anchor = "\n\nif __name__ == '__main__':\n"
+              if anchor not in source:
+                  raise SystemExit('ledger unittest anchor missing')
+              addition = '''
+
+    def test_trq007_continuation_tracks_integrated_compute_authority_floor(self):
+        ledger = (ROOT / '.ai' / 'WORK_QUEUE.md').read_text(encoding='utf-8')
+        self.assertIn('merge:43b1953092b518fe3a76b5fe0bfab179f730e849', ledger)
+        self.assertIn('Next action:** Build Sprint 2', ledger)
+        self.assertIn('Sprint 2 repository/runtime-harness implementation is SAFE & EXECUTABLE', ledger)
+        self.assertNotIn('Sprint 1 is SAFE & EXECUTABLE', ledger)
+        self.assertNotIn('build Sprint 1 under `harness/evals/compute-authority/`', ledger)
+'''
+              tests.write_text(source.replace(anchor, addition + anchor), encoding='utf-8')
+          PY
+      - name: Validate current-floor repair and owning eval floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/validate_repository_work_ledger.py --summary
+          python -m unittest tests.test_repository_work_ledger -v
+          python harness/evals/compute-authority/scripts/validate_fixtures.py --summary
+          python -m unittest tests.test_compute_authority_eval_harness -v
+          python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
+          git diff --check
+          git status --short
+          git diff --stat
+      - name: Commit durable repair and remove temporary carrier
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/tmp-trq007-floor-repair-20260914.yml
+          git add .ai/WORK_QUEUE.md tests/test_repository_work_ledger.py
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m 'fix(ledger): advance compute-authority to Sprint 2'
+          git push origin HEAD:fix/trq007-compute-authority-floor-20260914
