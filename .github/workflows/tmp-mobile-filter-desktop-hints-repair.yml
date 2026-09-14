@@ -1,4 +1,4 @@
-name: TEMP mobile filter desktop-hints repair
+name: TEMP mobile expanded-filter chrome repair
 
 on:
   pull_request:
@@ -9,132 +9,243 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: prompt-kit-mobile-expanded-filter-chrome-repair
+  cancel-in-progress: false
+
 jobs:
   repair:
     if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/mobile-filter-desktop-hints-20260914'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout owned repair branch
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
+
       - uses: actions/setup-python@v7
         with:
-          python-version: '3.x'
-      - name: Reconcile current main without discarding owned work
+          python-version: '3.12'
+
+      - name: Reconcile refreshed main without discarding owned work
+        shell: bash
         run: |
           set -euo pipefail
-          git fetch origin main
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
           git merge --no-edit origin/main
-      - name: Repair touch-medium filter chrome and strengthen recurrence gates
+          git status --short
+
+      - name: Repair composed mobile Filters state and strengthen recurrence gates
+        shell: bash
         run: |
+          set -euo pipefail
           python - <<'PY'
-          from pathlib import Path
+          from __future__ import annotations
           import json
+          from pathlib import Path
 
-          js_path = Path('docs/prompt-kit.js')
-          js = js_path.read_text(encoding='utf-8')
-          old = '@media (hover:none), (pointer:coarse){.prompt-open-btn'
-          new = '@media (hover:none), (pointer:coarse){.header .search-kbd,.header .cat-tab .kbd{display:none}.prompt-open-btn'
-          if js.count(old) != 1:
-              raise SystemExit(f'expected one touch-medium CSS seam, found {js.count(old)}')
-          js_path.write_text(js.replace(old, new, 1), encoding='utf-8')
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              if new in text:
+                  return text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly one anchor, found {count}")
+              return text.replace(old, new, 1)
 
+          polish_path = Path('docs/prompt-kit-polish.js')
           contract_path = Path('harness/contracts/prompt-kit-mobile.v1.json')
+          static_test_path = Path('tests/test_prompt_kit_mobile_quick_controls.py')
+          browser_test_path = Path('tests/prompt_kit_medium_stability_browser_proof.py')
+
+          polish = polish_path.read_text(encoding='utf-8')
+          polish = replace_once(
+              polish,
+              '.filter-panel-toggle{min-height:40px;justify-self:end}',
+              '.filter-panel-toggle{display:none!important}',
+              'mobile standalone filter toggle',
+          )
+          polish = replace_once(
+              polish,
+              '.header-top>.search-container{grid-column:1/-1;width:100%}',
+              '.header-top>.search-container{grid-column:1/-1;width:100%}.header-top>.search-container .search-kbd{display:none!important}',
+              'mobile search keyboard hint',
+          )
+          polish = replace_once(
+              polish,
+              '.header-top>.header-controls{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr);width:100%;justify-items:stretch;gap:8px}',
+              '.header-top>.header-controls{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr);width:100%;justify-items:stretch;gap:8px}.header-top>.header-controls>:not(.cat-tabs){display:none!important}',
+              'mobile non-filter header chrome',
+          )
+          polish = replace_once(
+              polish,
+              '.header-top>.header-controls .cat-tab{min-height:42px}',
+              '.header-top>.header-controls .cat-tab{min-height:42px}.header-top>.header-controls .cat-tab .kbd{display:none!important}',
+              'mobile profile keyboard badges',
+          )
+          polish_path.write_text(polish, encoding='utf-8')
+
           contract = json.loads(contract_path.read_text(encoding='utf-8'))
-          req = next(item for item in contract['requirements'] if item['id'] == 'mobile_medium_orientation_invariant')
-          sentence = ' Desktop-only keyboard shortcut hint chrome inside Search and filter/profile tabs stays hidden whenever the touch/coarse-pointer mobile medium is active, including while Filters are expanded in landscape.'
-          if sentence.strip() in req['expected']:
-              raise SystemExit('mobile contract strengthening already present; refusing duplicate patch')
-          req['expected'] += sentence
-          contract_path.write_text(json.dumps(contract, indent=2) + '\n', encoding='utf-8')
+          requirement = next((item for item in contract['requirements'] if item['id'] == 'mobile_medium_orientation_invariant'), None)
+          if requirement is None:
+              raise SystemExit('mobile_medium_orientation_invariant contract owner missing')
+          sentence = ' Expanding Filters from More on a mobile medium exposes only the shared filter surfaces; the standalone desktop filter toggle, search/profile keyboard-hint badges, and non-filter header controls stay hidden in portrait and landscape.'
+          if sentence.strip() not in requirement['expected']:
+              requirement['expected'] = requirement['expected'].rstrip() + sentence
+          contract_path.write_text(json.dumps(contract, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
-          unit_path = Path('tests/test_prompt_kit_mobile.py')
-          unit = unit_path.read_text(encoding='utf-8')
-          unit_needle = '            ".ref-sidebar{width:100vw;max-width:100vw",\n            "touch-action:manipulation",\n'
-          unit_replacement = '            ".ref-sidebar{width:100vw;max-width:100vw",\n            ".header .search-kbd,.header .cat-tab .kbd{display:none}",\n            "touch-action:manipulation",\n'
-          if unit.count(unit_needle) != 1:
-              raise SystemExit(f'expected one mobile static marker seam, found {unit.count(unit_needle)}')
-          unit_path.write_text(unit.replace(unit_needle, unit_replacement, 1), encoding='utf-8')
+          static_test = static_test_path.read_text(encoding='utf-8')
+          if 'def test_mobile_filter_expansion_hides_desktop_only_chrome' not in static_test:
+              anchor = '    def test_contract_and_phone_guide_define_fast_p111_route(self) -> None:\n'
+              addition = '''    def test_mobile_filter_expansion_hides_desktop_only_chrome(self) -> None:\n        source = POLISH.read_text(encoding="utf-8")\n        for marker in (\n            ".filter-panel-toggle{display:none!important}",\n            ".header-top>.search-container .search-kbd{display:none!important}",\n            ".header-top>.header-controls>:not(.cat-tabs){display:none!important}",\n            ".header-top>.header-controls .cat-tab .kbd{display:none!important}",\n        ):\n            self.assertIn(marker, source)\n\n        contract = json.loads(CONTRACT.read_text(encoding="utf-8"))\n        requirement = next(item for item in contract["requirements"] if item["id"] == "mobile_medium_orientation_invariant")\n        for phrase in (\n            "Expanding Filters from More",\n            "standalone desktop filter toggle",\n            "keyboard-hint badges",\n            "non-filter header controls",\n            "portrait and landscape",\n        ):\n            self.assertIn(phrase, requirement["expected"])\n\n'''
+              if anchor not in static_test:
+                  raise SystemExit('static mobile regression insertion anchor missing')
+              static_test = static_test.replace(anchor, addition + anchor, 1)
+          static_test_path.write_text(static_test, encoding='utf-8')
 
-          proof_path = Path('tests/prompt_kit_medium_stability_browser_proof.py')
-          proof = proof_path.read_text(encoding='utf-8')
-          mobile_needle = '    assert not visible(page, ".hotkey-desktop-label"), f"{label}: desktop Hotkeys label leaked into mobile mode"\n'
-          mobile_addition = mobile_needle + '''    filter_toggle = page.locator("#filterPanelToggle")\n    if filter_toggle.get_attribute("aria-expanded") != "true":\n        filter_toggle.click()\n    assert filter_toggle.get_attribute("aria-expanded") == "true", f"{label}: Filters could not be expanded"\n    search_hint_display = page.locator(".search-kbd").evaluate("el => getComputedStyle(el).display")\n    assert search_hint_display == "none", f"{label}: desktop Search shortcut hint leaked into mobile filters"\n    visible_filter_hints = page.locator(".cat-tabs .kbd").evaluate_all("els => els.filter(el => getComputedStyle(el).display !== 'none').length")\n    assert visible_filter_hints == 0, f"{label}: {visible_filter_hints} desktop filter shortcut hints leaked into mobile filters"\n'''
-          if proof.count(mobile_needle) != 1:
-              raise SystemExit(f'expected one mobile identity seam, found {proof.count(mobile_needle)}')
-          proof = proof.replace(mobile_needle, mobile_addition, 1)
+          browser_test = browser_test_path.read_text(encoding='utf-8')
+          if 'def assert_mobile_expanded_filter_chrome' not in browser_test:
+              anchor = '\n\ndef assert_desktop_identity(page: Page, label: str) -> None:\n'
+              addition = '''\n\ndef assert_mobile_expanded_filter_chrome(page: Page, label: str) -> None:\n    assert not page.locator('.header').evaluate("el=>el.classList.contains('filters-collapsed')"), f"{label}: filters unexpectedly collapsed"\n    assert visible(page, "#search"), f"{label}: shared search filter disappeared"\n    assert visible(page, ".header-controls .cat-tabs"), f"{label}: shared category/profile rail disappeared"\n    assert not visible(page, "#filterPanelToggle"), f"{label}: standalone desktop filter toggle leaked into mobile mode"\n    assert not visible(page, ".search-kbd"), f"{label}: desktop search shortcut hint leaked into mobile mode"\n    assert page.locator(".header-controls .cat-tab .kbd:visible").count() == 0, f"{label}: desktop A-E shortcut badges leaked into mobile mode"\n    assert page.locator(".header-controls > :not(.cat-tabs):visible").count() == 0, f"{label}: non-filter desktop header controls leaked into mobile mode"\n\n\ndef expand_mobile_filters_via_more(page: Page, label: str) -> None:\n    page.evaluate("hideCompactFilters()")\n    assert page.locator('.header').evaluate("el=>el.classList.contains('filters-collapsed')"), f"{label}: precondition did not collapse filters"\n    page.locator("#hotkeyHelpToggle").click()\n    filters = page.locator('[data-mobile-quick-action="filters"]')\n    assert filters.is_visible(), f"{label}: More -> Filters action is not reachable"\n    filters.click()\n    page.wait_for_timeout(80)\n    assert_mobile_expanded_filter_chrome(page, label)\n'''
+              if anchor not in browser_test:
+                  raise SystemExit('browser helper insertion anchor missing')
+              browser_test = browser_test.replace(anchor, addition + anchor, 1)
 
-          desktop_needle = '    assert not visible(page, ".mobile-quick-label"), f"{label}: mobile More label leaked into desktop mode"\n'
-          desktop_addition = desktop_needle + '''    search_hint_display = page.locator(".search-kbd").evaluate("el => getComputedStyle(el).display")\n    assert search_hint_display != "none", f"{label}: desktop Search shortcut hint was incorrectly hidden"\n    visible_filter_hints = page.locator(".cat-tabs .kbd").evaluate_all("els => els.filter(el => getComputedStyle(el).display !== 'none').length")\n    assert visible_filter_hints > 0, f"{label}: desktop filter shortcut hints were incorrectly hidden"\n'''
-          if proof.count(desktop_needle) != 1:
-              raise SystemExit(f'expected one desktop identity seam, found {proof.count(desktop_needle)}')
-          proof = proof.replace(desktop_needle, desktop_addition, 1)
+          if 'def assert_wide_desktop_filter_chrome' not in browser_test:
+              anchor = '\n\ndef main() -> int:\n'
+              addition = '''\n\ndef assert_wide_desktop_filter_chrome(page: Page, label: str) -> None:\n    assert visible(page, "#filterPanelToggle"), f"{label}: desktop Filters toggle was incorrectly hidden"\n    assert visible(page, ".search-kbd"), f"{label}: desktop search shortcut hint was incorrectly hidden"\n    assert page.locator(".header-controls .cat-tab .kbd:visible").count() > 0, f"{label}: desktop A-E shortcut badges were incorrectly hidden"\n    assert page.locator(".header-controls > :not(.cat-tabs):visible").count() > 0, f"{label}: desktop header controls were incorrectly hidden"\n'''
+              if anchor not in browser_test:
+                  raise SystemExit('wide desktop helper insertion anchor missing')
+              browser_test = browser_test.replace(anchor, addition + anchor, 1)
 
-          portrait_needle = '                search = page.locator("#search")\n                search.fill("P110 orientation sentinel")\n                navigation_count = page.evaluate("performance.getEntriesByType(\'navigation\').length")\n                assert_mobile_identity(page, "portrait")\n'
-          portrait_replacement = '                search = page.locator("#search")\n                assert_mobile_identity(page, "portrait-expanded-filters")\n                search.fill("P110 orientation sentinel")\n                navigation_count = page.evaluate("performance.getEntriesByType(\'navigation\').length")\n                assert_mobile_identity(page, "portrait")\n'
-          if proof.count(portrait_needle) != 1:
-              raise SystemExit(f'expected one portrait journey seam, found {proof.count(portrait_needle)}')
-          proof = proof.replace(portrait_needle, portrait_replacement, 1)
+          old_portrait = '''                navigation_count = page.evaluate("performance.getEntriesByType('navigation').length")\n                assert_mobile_identity(page, "portrait")\n\n                page.set_viewport_size({"width": 844, "height": 390})'''
+          new_portrait = '''                navigation_count = page.evaluate("performance.getEntriesByType('navigation').length")\n                assert_mobile_identity(page, "portrait")\n                expand_mobile_filters_via_more(page, "portrait-expanded-filters")\n\n                page.set_viewport_size({"width": 844, "height": 390})'''
+          browser_test = replace_once(browser_test, old_portrait, new_portrait, 'portrait expanded-filter browser path')
 
-          landscape_needle = '                page.wait_for_timeout(80)\n                assert_mobile_identity(page, "landscape")\n                assert search.input_value() == "P110 orientation sentinel", "phone rotation reset search state"\n'
-          landscape_replacement = '''                page.wait_for_timeout(80)\n                filter_toggle = page.locator("#filterPanelToggle")\n                if filter_toggle.get_attribute("aria-expanded") != "true":\n                    filter_toggle.click()\n                filter_toggle.click()\n                assert filter_toggle.get_attribute("aria-expanded") == "false", "landscape: Filters did not collapse before regression toggle"\n                filter_toggle.click()\n                assert filter_toggle.get_attribute("aria-expanded") == "true", "landscape: Filters did not re-expand for regression check"\n                page.wait_for_timeout(40)\n                assert_mobile_identity(page, "landscape-expanded-filters")\n                assert search.input_value() == "P110 orientation sentinel", "phone rotation reset search state"\n'''
-          if proof.count(landscape_needle) != 1:
-              raise SystemExit(f'expected one landscape journey seam, found {proof.count(landscape_needle)}')
-          proof_path.write_text(proof.replace(landscape_needle, landscape_replacement, 1), encoding='utf-8')
+          old_landscape = '''                assert_mobile_identity(page, "landscape")\n                assert search.input_value() == "P110 orientation sentinel", "phone rotation reset search state"'''
+          new_landscape = '''                assert_mobile_identity(page, "landscape")\n                assert_mobile_expanded_filter_chrome(page, "landscape-expanded-filters")\n                assert search.input_value() == "P110 orientation sentinel", "phone rotation reset search state"'''
+          browser_test = replace_once(browser_test, old_landscape, new_landscape, 'landscape expanded-filter browser path')
 
-          workflow_path = Path('.github/workflows/prompt-kit-mobile-quick-controls.yml')
-          workflow = workflow_path.read_text(encoding='utf-8')
-          path_needle = "      - 'docs/prompt-kit-polish.js'\n"
-          if workflow.count(path_needle) != 2:
-              raise SystemExit(f'expected two mobile workflow path seams, found {workflow.count(path_needle)}')
-          workflow = workflow.replace(path_needle, "      - 'docs/prompt-kit.js'\n" + path_needle)
-          syntax_needle = '          node --check docs/prompt-kit-polish.js\n'
-          if workflow.count(syntax_needle) != 1:
-              raise SystemExit(f'expected one mobile syntax-check seam, found {workflow.count(syntax_needle)}')
-          workflow = workflow.replace(syntax_needle, '          node --check docs/prompt-kit.js\n' + syntax_needle, 1)
-          workflow_path.write_text(workflow, encoding='utf-8')
+          old_return = '''                assert_mobile_identity(page, "portrait-return")\n                assert search.input_value() == "P110 orientation sentinel", "return rotation reset search state"'''
+          new_return = '''                assert_mobile_identity(page, "portrait-return")\n                assert_mobile_expanded_filter_chrome(page, "portrait-return-expanded-filters")\n                assert search.input_value() == "P110 orientation sentinel", "return rotation reset search state"'''
+          browser_test = replace_once(browser_test, old_return, new_return, 'portrait-return expanded-filter browser path')
+
+          old_wide_desktop = '''                assert_desktop_identity(page, "wide-short-desktop")\n\n            browser.close()'''
+          new_wide_desktop = '''                assert_desktop_identity(page, "wide-short-desktop")\n                assert_wide_desktop_filter_chrome(page, "wide-short-desktop")\n\n            browser.close()'''
+          browser_test = replace_once(browser_test, old_wide_desktop, new_wide_desktop, 'wide desktop preservation path')
+
+          old_receipt = '''                "mobile_state_preserved": True,\n                "desktop_cycle": ["560x1100", "1100x560"],'''
+          new_receipt = '''                "mobile_state_preserved": True,\n                "mobile_expanded_filter_desktop_chrome_hidden": True,\n                "desktop_cycle": ["560x1100", "1100x560"],'''
+          browser_test = replace_once(browser_test, old_receipt, new_receipt, 'browser receipt marker')
+          browser_test_path.write_text(browser_test, encoding='utf-8')
           PY
-      - name: Rebuild canonical generated Prompt Kit
+
+      - name: Rebuild canonical generated Prompt Kit before strict parity gates
+        shell: bash
         run: |
           set -euo pipefail
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
-      - name: Syntax validation
+
+      - name: Focused source contract and layout validation
+        shell: bash
         run: |
           set -euo pipefail
-          node --check docs/prompt-kit.js
           node --check docs/prompt-kit-polish.js
-      - name: Mobile contract unit validation
-        run: python -m unittest tests.test_prompt_kit_mobile -v
-      - name: Mobile quick-controls unit validation
-        run: python -m unittest tests.test_prompt_kit_mobile_quick_controls -v
-      - name: Product interactions unit validation
-        run: python -m unittest tests.test_prompt_kit_product_interactions -v
-      - name: Filtering-access unit validation
-        run: python -m unittest tests.test_prompt_kit_filtering_access -v
-      - name: Cross-input unit validation
-        run: python -m unittest tests.test_prompt_kit_cross_input_modality -v
-      - name: Generated-site parity validation
-        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-      - name: Diff validation
-        run: git diff --check
-      - name: Install Chromium proof dependency
+          python -m unittest tests.test_prompt_kit_mobile_quick_controls -v
+          python scripts/validate_prompt_kit_layout_harness.py --summary
+          python -m unittest tests.test_prompt_kit_layout_harness -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Nearby protected-behavior validation
+        shell: bash
         run: |
           set -euo pipefail
-          python -m pip install --disable-pip-version-check playwright
+          python -m unittest \
+            tests.test_prompt_kit_header_contract \
+            tests.test_prompt_kit_filtering_access \
+            tests.test_prompt_kit_mobile \
+            tests.test_prompt_kit_order_navigation_product \
+            tests.test_prompt_kit_product_interactions \
+            tests.test_prompt_kit_cross_input_modality \
+            -v
+
+      - name: Install Chromium proof runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check playwright==1.55.0
           python -m playwright install --with-deps chromium
-      - name: Browser regression proof
+
+      - name: Observe exact mobile More to Filters regression and desktop preservation
+        shell: bash
         run: |
           set -euo pipefail
           python tests/prompt_kit_mobile_quick_controls_browser_proof.py
           python tests/prompt_kit_medium_stability_browser_proof.py
-      - name: Commit durable repair and self-remove carrier
+
+      - name: Deliberate second-pass falsification
+        shell: bash
         run: |
           set -euo pipefail
-          rm .github/workflows/tmp-mobile-filter-desktop-hints-repair.yml
-          git add -A
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          polish = Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
+          generated = Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
+          contract = json.loads(Path('harness/contracts/prompt-kit-mobile.v1.json').read_text(encoding='utf-8'))
+          static_test = Path('tests/test_prompt_kit_mobile_quick_controls.py').read_text(encoding='utf-8')
+          browser_test = Path('tests/prompt_kit_medium_stability_browser_proof.py').read_text(encoding='utf-8')
+          markers = (
+              '.filter-panel-toggle{display:none!important}',
+              '.header-top>.search-container .search-kbd{display:none!important}',
+              '.header-top>.header-controls>:not(.cat-tabs){display:none!important}',
+              '.header-top>.header-controls .cat-tab .kbd{display:none!important}',
+          )
+          for marker in markers:
+              if marker not in polish:
+                  raise SystemExit(f'canonical source marker missing: {marker}')
+              if marker not in generated:
+                  raise SystemExit(f'generated artifact marker missing: {marker}')
+          expected = next(item['expected'] for item in contract['requirements'] if item['id'] == 'mobile_medium_orientation_invariant')
+          if expected.count('Expanding Filters from More') != 1:
+              raise SystemExit('mobile composed-state contract must exist exactly once')
+          if 'test_mobile_filter_expansion_hides_desktop_only_chrome' not in static_test:
+              raise SystemExit('focused static recurrence regression missing')
+          for marker in ('expand_mobile_filters_via_more', 'assert_mobile_expanded_filter_chrome', 'assert_wide_desktop_filter_chrome', 'mobile_expanded_filter_desktop_chrome_hidden'):
+              if marker not in browser_test:
+                  raise SystemExit(f'observed browser regression marker missing: {marker}')
+          PY
+          node --check docs/prompt-kit-polish.js
+          python -m unittest tests.test_prompt_kit_mobile_quick_controls tests.test_prompt_kit_product_interactions -v
+          python tests/prompt_kit_medium_stability_browser_proof.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Commit durable repair clean temporary carriers and push owned branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            echo 'main moved after validation; refusing stale-head promotion' >&2
+            exit 42
+          fi
+          git rm -f --ignore-unmatch \
+            .github/workflows/tmp-mobile-filter-desktop-hints-repair.yml \
+            .github/workflows/tmp-product-interaction-baseline-diagnostic.yml \
+            .github/workflows/tmp-mobile-expanded-filter-chrome-repair.yml
+          git add \
+            docs/prompt-kit-polish.js \
+            harness/contracts/prompt-kit-mobile.v1.json \
+            tests/test_prompt_kit_mobile_quick_controls.py \
+            tests/prompt_kit_medium_stability_browser_proof.py \
+            web/prompt-kit/index.html
           git diff --cached --check
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'fix(prompt-kit): hide desktop shortcut hints on mobile filters'
+          echo '--- staged files ---'
+          git diff --cached --name-only
+          git commit -m 'fix(prompt-kit): keep desktop filter chrome out of mobile'
           git push origin HEAD:${{ github.head_ref }}
