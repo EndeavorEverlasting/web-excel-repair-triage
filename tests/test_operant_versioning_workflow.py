@@ -117,7 +117,7 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
                     "--source-sha",
                     "abc123",
                     "--head",
-                    "automation/operant-release-v0.6.1-abc123",
+                    "automation/operant-release-v0.6.1",
                     "--base",
                     "main",
                     "--output",
@@ -136,9 +136,27 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
             self.assertEqual(payload["publication_mode"], "external-create")
             self.assertTrue(payload["requires_external_pr_creation"])
             self.assertEqual(payload["base"], "main")
-            self.assertEqual(payload["head"], "automation/operant-release-v0.6.1-abc123")
+            self.assertEqual(payload["head"], "automation/operant-release-v0.6.1")
             self.assertEqual(payload["title"], "chore(operant): release v0.6.1")
             self.assertIn("external provider/agent", body_path.read_text(encoding="utf-8"))
+
+    def test_unpublished_candidate_converges_on_one_stable_branch(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn('pending_branch="automation/operant-release-v${next_version}"', workflow)
+        self.assertIn(
+            'git ls-remote --exit-code --heads origin "refs/heads/${pending_branch}"',
+            workflow,
+        )
+        self.assertIn(
+            'echo "Refreshing unpublished Operant release candidate branch in place: $pending_branch"',
+            workflow,
+        )
+        self.assertIn('git fetch origin "$pending_branch"', workflow)
+        self.assertIn('git merge --no-edit origin/main', workflow)
+        self.assertNotIn('branch="automation/operant-release-v${next_version}-${main_sha:0:8}"', workflow)
+        self.assertNotIn("git push --force", workflow)
+        self.assertNotIn("git push -f", workflow)
 
     def test_existing_release_pr_refresh_remains_actions_owned(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
@@ -158,7 +176,7 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
                     "--source-sha",
                     "abc123",
                     "--head",
-                    "automation/operant-release-v0.6.1-abc123",
+                    "automation/operant-release-v0.6.1",
                     "--existing-pr-url",
                     existing_pr_url,
                     "--output",
