@@ -40,6 +40,24 @@ class PrMergeGateTests(unittest.TestCase):
     def test_repository_promotion_contract_runs_under_pr_floor_owner(self) -> None:
         self.assertEqual(validate_repository_promotion.main(["--summary"]), 0)
 
+    def test_promotion_executor_filters_non_candidates_before_privileged_adapter(self) -> None:
+        text = (ROOT / ".github/workflows/promotion-executor.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("types: [closed]", text)
+        self.assertNotIn(
+            "types: [opened, reopened, ready_for_review, synchronize, closed]", text
+        )
+        self.assertIn(
+            "startsWith(github.event.workflow_run.head_branch, 'promote/')", text
+        )
+        self.assertIn(
+            "startsWith(github.event.pull_request.head.ref, 'promote/')", text
+        )
+        self.assertIn(
+            "contains(github.event.pull_request.body, '[promotion:auto-main]')", text
+        )
+
     def test_green_mergeable_authorized_pr_is_merge_now_not_blocker(self) -> None:
         result = validate_pr_merge_gate.classify_pr_state(
             self.case("green-authorized-pr-merges-now")["state"], self.contract
