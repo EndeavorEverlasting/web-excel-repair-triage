@@ -11,6 +11,8 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(prompt-kit): make parallel dispatch manifest executable (`c78a47b7`)
 - fix(prompt-kit): restore P07 mainline/readability contracts with parallel dispatch (`cb934bb1`)
 - fix(prompt-kit): restore P07 closeout and phase-continuity nextStep gates (`8d7eff77`)
+- fix(prompt-kit): correct P04 OUTPUT ORDER numbering and CLI path refs (`4ccc5b9d`)
+- fix(prompt-kit): avoid nested backticks in P04 dispatch CLI examples (`17be3de9`)
 
 ## 0.8.1 - 2026-09-14
 
