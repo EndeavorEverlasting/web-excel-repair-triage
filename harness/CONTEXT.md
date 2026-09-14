@@ -21,6 +21,7 @@ Then choose one domain. Do not eagerly read every root contract, every skill, th
 | Prompt Kit use/acquisition | `PROMPT_KIT_ACCESS.md` | `.ai/skills/technician-prompt-kit-acquisition/SKILL.md` |
 | Ad campaign prompts, workflow or measurement | `harness/ad-campaign/CODEBASE_MAP.md` | Selected campaign contract, CLI or prompt |
 | Prompt authoring/repair/language | `harness/specs/prompt-operations.md` | selected registry, prompt skill, builder, validator |
+| Settled-decision durable-contract prompt candidate / P79 admission | `harness/prompt-topology/DURABLE_CONTRACT_FORMALIZER_CANDIDATE.md` | `harness/specs/prompt-operations.md`; run registered P79 prior-art/helper gates before any Prompt Kit identity mutation |
 | Workbook/Web Excel artifact behavior | `CODEBASE_MAP.md` → artifact-engine route | selected workflow/contract/engine/test |
 | Billing/NTH/operator evidence | `harness/specs/billing-artifact-safety.md` | selected NTH contract/skill/validator |
 | Technician delivery/live certification | `harness/specs/operator-delivery.md` | selected launcher/workflow/validator |
@@ -32,8 +33,8 @@ For create/generate/build/produce/make/draft/export work, an existing matching a
 ## Zoom rules
 
 - **50,000 ft:** identify ownership, canonical entry point, and proof gate. Soft target: <= 1,000 approximate repo-specific tokens.
-- **30,000 ft:** load one selected domain/capability. Soft target: <= 2,000 additional approximate tokens.
-- **15,000 ft:** load one selected workflow/spec/skill plus the exact implementation evidence needed. Soft target: <= 4,000 additional approximate tokens.
+- **30,000 ft:** load one selected domain/capability. Soft target: <= 2,000 additional approximate tokens for the selected domain. Do not load unrelated domains.
+- **15,000 ft:** load one selected workflow/spec/skill plus the exact implementation evidence needed. Soft target: <= 4,000 additional approximate tokens for that selected workflow.
 - Code, full schemas, fixtures, old reports, historical plans, generated files, and unrelated skills are demand-loaded.
 
 If a safety or correctness dependency exceeds a soft target, load it and record why. Token economy never outranks correctness.
