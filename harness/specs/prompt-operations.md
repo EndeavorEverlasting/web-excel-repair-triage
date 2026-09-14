@@ -10,6 +10,10 @@ Binding for Prompt Kit prompt addition/repair, language audit, generated Prompt 
 - Reuse registered builders, schemas, skills, capabilities, triggers, and validators. Product behavior belongs in code/schemas/registries/contracts, not only in prompt prose.
 - Regenerate the canonical website/artifact deterministically and require exact parity before merge.
 
+### Current P79 admission candidate
+
+`harness/prompt-topology/DURABLE_CONTRACT_FORMALIZER_CANDIDATE.md` is a **PROVISIONAL / P79 ADMISSION PENDING** contract candidate for the `DESIGNED / DECIDED -> CONTRACTED` transition. It is not prompt-registry authority. Before any identity mutation, run the registered P79 prior-art/overlap helper path recorded in that candidate and either STRENGTHEN an existing owner or ADD only through `scripts/prompt_registry_ops.py` if the distinct residual survives.
+
 ## Copy-safe and reference surfaces
 
 Canonical Prompt Kit records live in registered sources such as `docs/prompts.json` and extension registries. Reference metadata belongs in the registered reference surface. Copy-safe content must follow the repository allowlist/registry contract; index-only or reference-only material must not be silently promoted into copyable prompt bodies.
