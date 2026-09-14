@@ -1,0 +1,49 @@
+{
+  "schema_version": "prompt-language-compiler-policy/v1",
+  "language_engine_revision": "prompt-language-compiler/v1.0.0",
+  "title": "Prompt Language Compiler Policy",
+  "description": "Deterministic Language Engine rules for compiling semantic IR + execution profile + context into effective prompt text with non-weakening validation.",
+  "forbidden_event_ownership": true,
+  "non_weakenable_constraints": [
+    "safety",
+    "evidence_truth",
+    "destructive_operation_rules",
+    "privacy",
+    "explicit_user_scope",
+    "required_acceptance_gates"
+  ],
+  "must_weakening_patterns": [
+    "\\bconsider\\b",
+    "\\bwhere useful\\b",
+    "\\bif appropriate\\b",
+    "\\bcould\\b",
+    "\\bmay\\b",
+    "\\bmight\\b",
+    "\\boptional(?:ly)?\\b",
+    "\\bwhen convenient\\b"
+  ],
+  "action_renderers": {
+    "dispatch_independent_lanes": {
+      "imperative_required_phrases": [
+        "MUST dispatch independent lanes in parallel"
+      ],
+      "failure_state_required": true,
+      "proof_required": true
+    }
+  },
+  "when_predicates": {
+    "dependency_ready_width >= 2 && safe_capacity >= 2": {
+      "requires": {
+        "min_dependency_ready_width": 2,
+        "min_safe_capacity": 2
+      }
+    }
+  },
+  "profile_precedence": [
+    "explicit_run_override",
+    "prompt_override",
+    "user_default",
+    "product_default"
+  ],
+  "promotion_authority": "reviewed_pr_only"
+}
