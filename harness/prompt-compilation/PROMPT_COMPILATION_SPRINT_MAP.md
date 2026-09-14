@@ -1,8 +1,8 @@
 # Prompt Compilation & Adaptive Language — Canonical Sprint Map
 
-**Status:** TRACKED / SPRINT 1 INTEGRATED ON MAIN VIA #483
+**Status:** TRACKED / SPRINTS 1–2 INTEGRATED ON MAIN VIA #483/#485
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
-**Planning floor:** refreshed `main@04e4a77d261d0bd0388daa6d56f38e113cdf79fa` (provider refresh 2026-09-14)
+**Planning floor:** refreshed `main@86044bfb27de95fbf60d29adf2ce54689b09c303` (provider refresh 2026-09-14)
 **Architecture authority:** `harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md`
 **P95 constraint floor:** `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md` (adapter-only; no universal envelope/bus)
 **Ledger index:** TRQ-009
@@ -75,7 +75,7 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 
 ### Sprint 2 — Thin read-only context adapters + profile resolution
 
-**Status:** ACTIVE (this execution)
+**Status:** INTEGRATED on `main` via #485 (`86044bfb`)
 
 **Owned:** adapters that project dispatch receipts, continuation dispositions, P99 outcome receipts, and recurrence findings into `prompt-context/v1`; profile precedence resolver (`run > prompt > user > product`); focused tests; ledger index TRQ-010.
 
