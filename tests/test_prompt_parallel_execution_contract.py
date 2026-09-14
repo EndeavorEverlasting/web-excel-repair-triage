@@ -59,6 +59,12 @@ class PromptParallelExecutionContractTests(unittest.TestCase):
         self.assertIn("separately owned", self.raw["P04"]["nextStep"])
         self.assertIn("read-only", self.raw["P04"]["nextStep"].lower())
         self.assertIn("2. PARALLEL DISPATCH MANIFEST", self.raw["P04"]["copyContent"])
+        self.assertIn("3. COMPACT COORDINATION PREAMBLE", self.raw["P04"]["copyContent"])
+        order = self.raw["P04"]["copyContent"].split("OUTPUT ORDER", 1)[-1][:2500]
+        self.assertIn("4. PORTABILITY FALLBACK", order)
+        self.assertNotIn("3. PORTABILITY FALLBACK", order)
+        self.assertNotIn("\\scripts/prompt_parallel_dispatch.py", self.raw["P04"]["nextStep"])
+        self.assertIn("`scripts/prompt_parallel_dispatch.py`", self.raw["P04"]["nextStep"])
 
     def test_cursor_regression_must_continue_past_missing_self_hosted_workers_before_fallback(self) -> None:
         p07 = self.raw["P07"]
