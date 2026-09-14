@@ -1,8 +1,8 @@
 # Prompt Compilation & Adaptive Language — Canonical Sprint Map
 
-**Status:** TRACKED / SPRINT 1 IMPLEMENTED — awaiting mainline integration
+**Status:** TRACKED / SPRINT 1 INTEGRATED ON MAIN VIA #483
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
-**Planning floor:** refreshed `main@d3accd1835a097a51a850ad9909672167f96ffdd` (provider refresh 2026-09-14)
+**Planning floor:** refreshed `main@04e4a77d261d0bd0388daa6d56f38e113cdf79fa` (provider refresh 2026-09-14)
 **Architecture authority:** `harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md`
 **P95 constraint floor:** `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md` (adapter-only; no universal envelope/bus)
 **Ledger index:** TRQ-009
@@ -30,7 +30,7 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 
 ### Sprint 1 — Contracts, compiler, non-weakening gate, fixtures
 
-**Status:** IMPLEMENTED / VALIDATED locally (integration pending)
+**Status:** INTEGRATED on `main` via #483 (`04e4a77d`)
 
 **Owned scope:**
 
