@@ -141,16 +141,16 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-009 — Prompt Compilation & Adaptive Language Architecture Sprint 1
 
-- **Status:** VERIFY
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** prompt-compilation-sprint1-20260914
-- **Branch / PR:** feat/prompt-compilation-adaptive-language-20260914
+- **Branch / PR:** main / #483 merged
 - **Scope:** formalize Prompt Compilation as a bounded prompt-compilation subsystem with `prompt-semantics/v1`, `prompt-context/v1`, `prompt-execution-profile/v1`, language compiler contract, effective-prompt build receipt, modality/non-weakening validator, deterministic improvement-candidate format, TC06 parallelism-modality fixtures, durable architecture/sprint map, and focused tests while preserving P95 adapter-only Evidence Spine boundaries
 - **Forbidden:** UI Compute Mode toggle; PR #450/#431 donor work; raw conversation/transcript ingestion; new Evidence Spine event types; universal event bus; automatic source mutation; automatic PR merge; model-generated policy promotion; mutating TRQ-007 frozen prompt identities; hand-editing generated Prompt Kit output
-- **Dependencies:** TRQ-008 DONE; P95 Evidence Spine architecture on main; current main floor `d3accd1835a097a51a850ad9909672167f96ffdd`
+- **Dependencies:** TRQ-008 DONE; P95 Evidence Spine architecture on main; Sprint 1 base floor `d3accd1835a097a51a850ad9909672167f96ffdd`
 - **References:** `harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md`, `harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md`, `harness/contracts/prompt-semantics.v1.json`, `harness/contracts/prompt-execution-profile.v1.json`, `harness/contracts/prompt-context.v1.json`, `harness/contracts/prompt-build-receipt.v1.json`, `harness/contracts/prompt-improvement-candidate.v1.json`, `harness/contracts/prompt-language-compiler-policy.v1.json`, `scripts/prompt_language_compiler.py`, `tests/test_prompt_compilation.py`
 - **Acceptance gate:** Sprint 1 contracts/compiler/fixtures/tests validate; architecture and sprint map persist P95 separation from Evidence Spine and TRQ-007; non-weakening validator rejects permissive MUST regressions; improvement candidates require `reviewed_pr_only`; exact validated head integrates to current default branch
 - **Gate:** none
-- **Last proof:** local:python -m unittest tests.test_prompt_compilation (13 OK); local:python scripts/prompt_language_compiler.py validate-fixtures --summary; local:python scripts/validate_repository_work_ledger.py PASS; artifact:harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md
-- **Next action:** Push feat/prompt-compilation-adaptive-language-20260914, open PR to main, merge the exact validated head when gates permit, then mark TRQ-009 DONE with merge SHA
-- **Updated:** 2026-09-14T14:30:00-04:00
+- **Last proof:** commit:36f31a987048829824a7759189a28609e55fe695; merge:04e4a77d261d0bd0388daa6d56f38e113cdf79fa integrated PR #483; local:python -m unittest tests.test_prompt_compilation (13 OK); local:python scripts/prompt_language_compiler.py validate-fixtures --summary; workflow deterministic-test-floor + operational-harness + ledger contract green on PR head; artifact:harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md present on refreshed default branch
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-14T14:40:00-04:00
