@@ -1,0 +1,220 @@
+name: Temporary mobile expanded-filter chrome repair
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/tmp-mobile-expanded-filter-chrome-repair.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-kit-mobile-expanded-filter-chrome-repair
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact repair carrier
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Refresh exact main floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+          git status --short
+
+      - name: Repair mobile expanded-filter composition and regression contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+          import json
+          from pathlib import Path
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              if new in text:
+                  return text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly one anchor, found {count}")
+              return text.replace(old, new, 1)
+
+          polish_path = Path('docs/prompt-kit-polish.js')
+          contract_path = Path('harness/contracts/prompt-kit-mobile.v1.json')
+          static_test_path = Path('tests/test_prompt_kit_mobile_quick_controls.py')
+          browser_test_path = Path('tests/prompt_kit_medium_stability_browser_proof.py')
+
+          polish = polish_path.read_text(encoding='utf-8')
+          polish = replace_once(
+              polish,
+              '.filter-panel-toggle{min-height:40px;justify-self:end}',
+              '.filter-panel-toggle{display:none!important}',
+              'mobile standalone filter toggle',
+          )
+          polish = replace_once(
+              polish,
+              '.header-top>.search-container{grid-column:1/-1;width:100%}',
+              '.header-top>.search-container{grid-column:1/-1;width:100%}.header-top>.search-container .search-kbd{display:none!important}',
+              'mobile search keyboard hint',
+          )
+          polish = replace_once(
+              polish,
+              '.header-top>.header-controls{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr);width:100%;justify-items:stretch;gap:8px}',
+              '.header-top>.header-controls{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr);width:100%;justify-items:stretch;gap:8px}.header-top>.header-controls>:not(.cat-tabs){display:none!important}',
+              'mobile non-filter header chrome',
+          )
+          polish = replace_once(
+              polish,
+              '.header-top>.header-controls .cat-tab{min-height:42px}',
+              '.header-top>.header-controls .cat-tab{min-height:42px}.header-top>.header-controls .cat-tab .kbd{display:none!important}',
+              'mobile profile keyboard badges',
+          )
+          polish_path.write_text(polish, encoding='utf-8')
+
+          contract = json.loads(contract_path.read_text(encoding='utf-8'))
+          requirement = next((item for item in contract['requirements'] if item['id'] == 'mobile_medium_orientation_invariant'), None)
+          if requirement is None:
+              raise SystemExit('mobile_medium_orientation_invariant contract owner missing')
+          sentence = ' Expanding Filters from More on a mobile medium exposes only the shared filter surfaces; the standalone desktop filter toggle, search/profile keyboard-hint badges, and non-filter header controls stay hidden in portrait and landscape.'
+          if sentence.strip() not in requirement['expected']:
+              requirement['expected'] = requirement['expected'].rstrip() + sentence
+          contract_path.write_text(json.dumps(contract, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          static_test = static_test_path.read_text(encoding='utf-8')
+          if 'def test_mobile_filter_expansion_hides_desktop_only_chrome' not in static_test:
+              anchor = '    def test_contract_and_phone_guide_define_fast_p111_route(self) -> None:\n'
+              addition = '''    def test_mobile_filter_expansion_hides_desktop_only_chrome(self) -> None:\n        source = POLISH.read_text(encoding="utf-8")\n        for marker in (\n            ".filter-panel-toggle{display:none!important}",\n            ".header-top>.search-container .search-kbd{display:none!important}",\n            ".header-top>.header-controls>:not(.cat-tabs){display:none!important}",\n            ".header-top>.header-controls .cat-tab .kbd{display:none!important}",\n        ):\n            self.assertIn(marker, source)\n\n        contract = json.loads(CONTRACT.read_text(encoding="utf-8"))\n        requirement = next(item for item in contract["requirements"] if item["id"] == "mobile_medium_orientation_invariant")\n        for phrase in (\n            "Expanding Filters from More",\n            "standalone desktop filter toggle",\n            "keyboard-hint badges",\n            "non-filter header controls",\n            "portrait and landscape",\n        ):\n            self.assertIn(phrase, requirement["expected"])\n\n'''
+              if anchor not in static_test:
+                  raise SystemExit('static mobile regression insertion anchor missing')
+              static_test = static_test.replace(anchor, addition + anchor, 1)
+          static_test_path.write_text(static_test, encoding='utf-8')
+
+          browser_test = browser_test_path.read_text(encoding='utf-8')
+          if 'def assert_mobile_expanded_filter_chrome' not in browser_test:
+              anchor = '\n\ndef assert_desktop_identity(page: Page, label: str) -> None:\n'
+              addition = '''\n\ndef assert_mobile_expanded_filter_chrome(page: Page, label: str) -> None:\n    assert not page.locator('.header').evaluate("el=>el.classList.contains('filters-collapsed')"), f"{label}: filters unexpectedly collapsed"\n    assert visible(page, "#search"), f"{label}: shared search filter disappeared"\n    assert visible(page, ".header-controls .cat-tabs"), f"{label}: shared category/profile rail disappeared"\n    assert not visible(page, "#filterPanelToggle"), f"{label}: standalone desktop filter toggle leaked into mobile mode"\n    assert not visible(page, ".search-kbd"), f"{label}: desktop search shortcut hint leaked into mobile mode"\n    assert page.locator(".header-controls .cat-tab .kbd:visible").count() == 0, f"{label}: desktop A-E shortcut badges leaked into mobile mode"\n    assert page.locator(".header-controls > :not(.cat-tabs):visible").count() == 0, f"{label}: non-filter desktop header controls leaked into mobile mode"\n\n\ndef expand_mobile_filters_via_more(page: Page, label: str) -> None:\n    page.evaluate("hideCompactFilters()")\n    assert page.locator('.header').evaluate("el=>el.classList.contains('filters-collapsed')"), f"{label}: precondition did not collapse filters"\n    page.locator("#hotkeyHelpToggle").click()\n    filters = page.locator('[data-mobile-quick-action="filters"]')\n    assert filters.is_visible(), f"{label}: More -> Filters action is not reachable"\n    filters.click()\n    page.wait_for_timeout(80)\n    assert_mobile_expanded_filter_chrome(page, label)\n'''
+              if anchor not in browser_test:
+                  raise SystemExit('browser helper insertion anchor missing')
+              browser_test = browser_test.replace(anchor, addition + anchor, 1)
+
+          old_portrait = '''                navigation_count = page.evaluate("performance.getEntriesByType('navigation').length")\n                assert_mobile_identity(page, "portrait")\n\n                page.set_viewport_size({"width": 844, "height": 390})'''
+          new_portrait = '''                navigation_count = page.evaluate("performance.getEntriesByType('navigation').length")\n                assert_mobile_identity(page, "portrait")\n                expand_mobile_filters_via_more(page, "portrait-expanded-filters")\n\n                page.set_viewport_size({"width": 844, "height": 390})'''
+          browser_test = replace_once(browser_test, old_portrait, new_portrait, 'portrait expanded-filter browser path')
+
+          old_landscape = '''                assert_mobile_identity(page, "landscape")\n                assert search.input_value() == "P110 orientation sentinel", "phone rotation reset search state"'''
+          new_landscape = '''                assert_mobile_identity(page, "landscape")\n                assert_mobile_expanded_filter_chrome(page, "landscape-expanded-filters")\n                assert search.input_value() == "P110 orientation sentinel", "phone rotation reset search state"'''
+          browser_test = replace_once(browser_test, old_landscape, new_landscape, 'landscape expanded-filter browser path')
+
+          old_return = '''                assert_mobile_identity(page, "portrait-return")\n                assert search.input_value() == "P110 orientation sentinel", "return rotation reset search state"'''
+          new_return = '''                assert_mobile_identity(page, "portrait-return")\n                assert_mobile_expanded_filter_chrome(page, "portrait-return-expanded-filters")\n                assert search.input_value() == "P110 orientation sentinel", "return rotation reset search state"'''
+          browser_test = replace_once(browser_test, old_return, new_return, 'portrait-return expanded-filter browser path')
+
+          old_receipt = '''                "mobile_state_preserved": True,\n                "desktop_cycle": ["560x1100", "1100x560"],'''
+          new_receipt = '''                "mobile_state_preserved": True,\n                "mobile_expanded_filter_desktop_chrome_hidden": True,\n                "desktop_cycle": ["560x1100", "1100x560"],'''
+          browser_test = replace_once(browser_test, old_receipt, new_receipt, 'browser receipt marker')
+          browser_test_path.write_text(browser_test, encoding='utf-8')
+          PY
+
+      - name: Validate focused source and contract repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check docs/prompt-kit-polish.js
+          python -m unittest tests.test_prompt_kit_mobile_quick_controls -v
+          python scripts/validate_prompt_kit_layout_harness.py --summary
+          python -m unittest tests.test_prompt_kit_layout_harness -v
+          python -m unittest tests.test_prompt_kit_header_contract tests.test_prompt_kit_filtering_access tests.test_prompt_kit_mobile tests.test_prompt_kit_order_navigation_product -v
+
+      - name: Rebuild canonical Prompt Kit artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Install Chromium proof runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check playwright==1.55.0
+          python -m playwright install --with-deps chromium
+
+      - name: Observe composed mobile filter state across orientation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tests/prompt_kit_medium_stability_browser_proof.py
+
+      - name: Deliberate second-pass falsification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          polish = Path('docs/prompt-kit-polish.js').read_text(encoding='utf-8')
+          generated = Path('web/prompt-kit/index.html').read_text(encoding='utf-8')
+          contract = json.loads(Path('harness/contracts/prompt-kit-mobile.v1.json').read_text(encoding='utf-8'))
+          static_test = Path('tests/test_prompt_kit_mobile_quick_controls.py').read_text(encoding='utf-8')
+          browser_test = Path('tests/prompt_kit_medium_stability_browser_proof.py').read_text(encoding='utf-8')
+          markers = (
+              '.filter-panel-toggle{display:none!important}',
+              '.header-top>.search-container .search-kbd{display:none!important}',
+              '.header-top>.header-controls>:not(.cat-tabs){display:none!important}',
+              '.header-top>.header-controls .cat-tab .kbd{display:none!important}',
+          )
+          for marker in markers:
+              if marker not in polish:
+                  raise SystemExit(f'canonical source marker missing: {marker}')
+              if marker not in generated:
+                  raise SystemExit(f'generated artifact marker missing: {marker}')
+          expected = next(item['expected'] for item in contract['requirements'] if item['id'] == 'mobile_medium_orientation_invariant')
+          if 'Expanding Filters from More' not in expected:
+              raise SystemExit('mobile composed-state contract sentence missing')
+          if 'test_mobile_filter_expansion_hides_desktop_only_chrome' not in static_test:
+              raise SystemExit('focused static regression missing')
+          if 'mobile_expanded_filter_desktop_chrome_hidden' not in browser_test:
+              raise SystemExit('observed browser receipt marker missing')
+          PY
+          node --check docs/prompt-kit-polish.js
+          python -m unittest tests.test_prompt_kit_mobile_quick_controls tests.test_prompt_kit_product_interactions -v
+          python tests/prompt_kit_medium_stability_browser_proof.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+      - name: Commit durable repair and self-remove carrier
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+          git rm .github/workflows/tmp-mobile-expanded-filter-chrome-repair.yml
+          git add \
+            docs/prompt-kit-polish.js \
+            harness/contracts/prompt-kit-mobile.v1.json \
+            tests/test_prompt_kit_mobile_quick_controls.py \
+            tests/prompt_kit_medium_stability_browser_proof.py \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          echo '--- staged files ---'
+          git diff --cached --name-only
+          git commit -m "fix(prompt-kit): keep desktop filter chrome out of mobile"
+          git push origin HEAD:main
