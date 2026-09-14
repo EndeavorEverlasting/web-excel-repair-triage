@@ -29,7 +29,10 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: operant-versioning-${{ github.event_name }}-${{ github.ref }}
+  # Push and manual-dispatch mainline owners share one serialized queue. PR policy
+  # checks stay isolated per PR; any unexpected external branch writer still
+  # fails closed because candidate publication uses an ordinary non-force push.
+  group: operant-versioning-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'mainline-owner' }}
   cancel-in-progress: false
 
 jobs:
