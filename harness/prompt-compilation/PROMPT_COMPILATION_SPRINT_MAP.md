@@ -75,11 +75,11 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 
 ### Sprint 2 — Thin read-only context adapters + profile resolution
 
-**Status:** PLANNED (dependency: Sprint 1 integrated)
+**Status:** ACTIVE (this execution)
 
-**Owned:** adapters that project dispatch receipts, continuation dispositions, P99/P115/eval/recurrence artifacts into `prompt-context/v1`; profile precedence resolver (`run > prompt > user > product`).
+**Owned:** adapters that project dispatch receipts, continuation dispositions, P99 outcome receipts, and recurrence findings into `prompt-context/v1`; profile precedence resolver (`run > prompt > user > product`); focused tests; ledger index TRQ-010.
 
-**Forbidden:** event ownership; UI product surface; auto-promotion.
+**Forbidden:** event ownership; UI product surface; auto-promotion; #450/#431 donor salvage; new Evidence Spine event types.
 
 ### Sprint 3 — Prompt Kit wiring + Compute Mode product surface
 
