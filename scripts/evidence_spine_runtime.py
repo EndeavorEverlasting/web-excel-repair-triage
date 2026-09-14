@@ -168,12 +168,12 @@ def aggregate_recurrence(occurrences: list[dict[str, Any]]) -> dict[str, Any]:
         count = len(items)
         if count < 1:
             continue
-        if count == 1:
-            state = "evidence_only"
-        elif count < threshold:
-            state = "suspected_recurrence"
-        else:
+        if count >= threshold:
             state = "confirmed_recurrence"
+        elif count == 1:
+            state = "evidence_only"
+        else:
+            state = "suspected_recurrence"
         if any(bool(i.get("post_fix")) for i in items) and state != "evidence_only":
             state = "monitoring_reopened"
         findings.append(
