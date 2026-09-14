@@ -1,4 +1,4 @@
-name: TEMP Prompt Kit interaction baseline diagnostic
+name: TEMP Prompt Kit interaction patched diagnostic
 
 on:
   pull_request:
@@ -7,7 +7,7 @@ on:
       - '.github/workflows/tmp-product-interaction-baseline-diagnostic.yml'
 
 jobs:
-  baseline:
+  patched:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -16,6 +16,18 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.x'
+      - name: Apply only runtime CSS repair and rebuild site
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('docs/prompt-kit.js')
+          s = p.read_text(encoding='utf-8')
+          old = '@media (hover:none), (pointer:coarse){.prompt-open-btn'
+          new = '@media (hover:none), (pointer:coarse){.header .search-kbd,.header .cat-tab .kbd{display:none}.prompt-open-btn'
+          assert s.count(old) == 1
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
       - name: contract status
         continue-on-error: true
         run: python -m unittest tests.test_prompt_kit_product_interactions.PromptKitProductInteractionTests.test_interaction_contract_is_marked_implemented -v
