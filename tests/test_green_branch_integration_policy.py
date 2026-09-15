@@ -17,7 +17,7 @@ POLICY_PATH = ROOT / "registry" / "prompts" / "actionable-next-step-policy.v1.js
 BASE_PROMPTS = ROOT / "docs" / "prompts.json"
 
 EXPECTED_GREEN_MERGE_CONDITIONS = [
-    "the exact current head is the head that was validated",
+    "the exact current head is the head that was validated, or intervening head movement is proven proof-irrelevant by an unchanged proof-relevance fingerprint",
     "all required repository checks are passing",
     "the owning harness validators and focused validators are passing",
     "declared dependencies are satisfied or already included in the merge target",
@@ -28,7 +28,7 @@ EXPECTED_GREEN_MERGE_CONDITIONS = [
 EXPECTED_MERGE_EXCEPTIONS = [
     "the user explicitly requested that the branch remain unmerged",
     "a required check, owning validator, dependency, review, conflict, branch-protection rule, or approval is pending or failing",
-    "the branch head moved after the evidence used to declare it green",
+    "the branch head moved after the evidence used to declare it green and proof-relevant inputs changed or proof relevance cannot be established",
     "the merge would include unrelated, unreviewed, unsafe, secret, private, or forbidden-scope work",
     "the repository or provider denies merge authority",
 ]
@@ -69,6 +69,30 @@ class GreenBranchIntegrationPolicyTests(unittest.TestCase):
             len(self.policy["merge_exceptions"]),
             len(set(self.policy["merge_exceptions"])),
         )
+
+    def test_proof_irrelevant_head_movement_does_not_reopen_validation(self) -> None:
+        green = "\n".join(self.policy["green_merge_conditions"])
+        exceptions = "\n".join(self.policy["merge_exceptions"])
+        suffix = self.policy["next_step_suffix"]
+        appendix = self.policy["copy_content_appendix"]
+
+        self.assertIn("proof-irrelevant by an unchanged proof-relevance fingerprint", green)
+        self.assertNotIn("the exact current head is the head that was validated\n", green + "\n")
+        self.assertIn("proof-relevant inputs changed or proof relevance cannot be established", exceptions)
+        self.assertNotIn("the branch head moved after the evidence used to declare it green\n", exceptions + "\n")
+        self.assertNotIn("the head moved after validation,", appendix)
+        self.assertIn("the branch head moved after validation and proof-relevant inputs changed or proof relevance cannot be established", appendix)
+        self.assertIn("current head is the validated head, or intervening head movement is proven proof-irrelevant", suffix)
+        for phrase in (
+            "PROOF-RELEVANCE FINGERPRINT",
+            "canonical ordered set of identity/revision pairs",
+            "Persist that set in the proof, receipt, or ledger",
+            "any added, removed, or changed entry invalidates the affected proof",
+            "repository HEAD movement with an unchanged set does not",
+            "freshness is UNKNOWN",
+            "must be rerun or fail closed",
+        ):
+            self.assertIn(phrase, appendix)
 
     def test_production_loader_rejects_malformed_integration_lists(self) -> None:
         original_policy_path = build_prompt_kit_registry.ACTIONABILITY_POLICY

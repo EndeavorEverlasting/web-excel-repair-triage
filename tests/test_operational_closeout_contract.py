@@ -46,7 +46,8 @@ class OperationalCloseoutContractTests(unittest.TestCase):
             self.assertIn(phrase, appendix)
         suffix = self.policy["next_step_suffix"]
         for phrase in (
-            "exact current head is the head that was validated",
+            "current head is the validated head, or intervening head movement is proven proof-irrelevant",
+            "unchanged proof-relevance fingerprint",
             "no blocking review, conflict, branch-protection, or required-approval gate remains",
             "acting agent has merge authority",
             "user has not prohibited merge",
@@ -98,13 +99,13 @@ class OperationalCloseoutContractTests(unittest.TestCase):
         self.assertEqual(upgraded["copyContent"].count(MARKER), 1)
         self.assertIn("EVIDENCE-BEARING CLOSEOUT", upgraded["copyContent"])
 
-
     def test_scope_exhaustion_requires_supported_residual_classification(self) -> None:
         appendix = self.policy["copy_content_appendix"]
         for phrase in (
             "Reconstruct the original request, owned scope",
             "PROVEN DONE, SAFE & EXECUTABLE, BLOCKED, UNSAFE, or OUT OF SCOPE",
-            "SAFE & EXECUTABLE means work remains",
+            "SAFE & EXECUTABLE means progress-bearing work remains",
+            "A merely runnable bookkeeping action is not SAFE & EXECUTABLE for continuation",
             "Missing access is not evidence that the work is unsafe",
             "UNSAFE is a narrow evidence-bearing classification",
             "OUT OF SCOPE requires an explicit scope boundary",
@@ -112,6 +113,7 @@ class OperationalCloseoutContractTests(unittest.TestCase):
             "no SAFE & EXECUTABLE item remains",
         ):
             self.assertIn(phrase, appendix)
+        self.assertNotIn("SAFE & EXECUTABLE means work remains", appendix)
 
         p83 = self.ledger["P83"]
         for phrase in (
