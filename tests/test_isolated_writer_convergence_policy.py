@@ -29,12 +29,19 @@ class IsolatedWriterConvergencePolicyTests(unittest.TestCase):
         self.assertIn("dependency order", contract["local_convergence_rule"])
         self.assertIn("local convergence", contract["remote_only_rule"].lower())
         self.assertIn("unique commits", contract["cleanup_rule"].lower())
+        self.assertIn("git merge-base --is-ancestor", contract["required_slice_floor_rule"])
+        self.assertIn("owning validator", contract["required_slice_floor_rule"].lower())
+        self.assertIn("revert", contract["required_slice_floor_rule"].lower())
 
     def test_compiled_contract_covers_writer_safety_lifecycle(self) -> None:
         appendix = self.policy["copy_content_appendix"]
         for phrase in (
             MARKER,
             "each independent writer one isolated lane",
+            "git merge-base --is-ancestor <required-sha> <refreshed-default>",
+            "ancestry alone cannot prove current behavior after a revert",
+            "owning-validator check requires reconciliation and fresh proof",
+            "repeat required-slice ancestry plus current-content/owning-validator proof",
             "Never reuse or modify another writer's branch/worktree/workspace",
             "Git worktrees do not automatically isolate shared ports, databases, caches, lockfiles",
             "The first finisher",
