@@ -97,6 +97,43 @@ class ActionablePromptRegistryTests(unittest.TestCase):
         self.assertIn("COMPUTE AUTHORITY / SCOPE-BOUNDARY CONTRACT", by_id["P08"]["copyContent"])
         self.assertIn("END-STATE CONTRACT HORIZON", by_id["P08"]["copyContent"])
 
+    def test_non_progress_quiescence_contract_prevents_proof_treadmills(self) -> None:
+        appendix = self.policy["copy_content_appendix"]
+        for phrase in (
+            "NON-PROGRESS / QUIESCENCE CONTRACT",
+            "Safe and executable is necessary but not sufficient for continuation",
+            "Remaining work must also be progress-bearing",
+            "Repository HEAD movement alone does not invalidate evidence",
+            "proof-relevant implementation, contract, schema, dependency, launcher, validator, environment assumption, or target",
+            "documentation, ledger, citation, timestamp, or proof-SHA-only mutation",
+            "MUST NOT trigger another runtime proof",
+            "quiescent BLOCKED state",
+            "proof-relevance fingerprint",
+            "Two consecutive materially identical blocker observations",
+            "must not create work merely to satisfy a continuation rule",
+            "not bookkeeping churn",
+        ):
+            self.assertIn(phrase, appendix)
+
+        suffix = self.policy["next_step_suffix"]
+        for phrase in (
+            "the next action must be progress-bearing",
+            "Repository HEAD movement alone does not invalidate proof",
+            "unchanged proof-relevance fingerprint",
+            "quiesce rather than creating citation-only, ledger-only, or bookkeeping work",
+        ):
+            self.assertIn(phrase, suffix)
+
+        forbidden = "\n".join(self.policy["forbidden_solo_actions"])
+        self.assertIn("only purpose is to refresh an otherwise-valid proof citation", forbidden)
+        self.assertIn("repeat the same external blocker or runtime proof", forbidden)
+
+        by_id = {prompt["id"]: prompt for prompt in self.prompts}
+        for prompt_id in ("P07", "P08", "P100"):
+            with self.subTest(prompt=prompt_id):
+                self.assertIn("NON-PROGRESS / QUIESCENCE CONTRACT", by_id[prompt_id]["copyContent"])
+                self.assertIn("progress-bearing", by_id[prompt_id]["nextStep"])
+
     def test_existing_work_and_pr_reuse_is_global_policy(self) -> None:
         reuse = self.policy["existing_work_reuse"]
         self.assertIn(
