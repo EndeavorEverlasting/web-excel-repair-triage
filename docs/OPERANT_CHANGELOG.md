@@ -20,6 +20,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(prompt-kit): make continuation explicitly progress-bearing (`1731d94b`)
 - fix(prompt-kit): scope proof freshness to relevant inputs (`5d8eb2bc`)
 - fix(prompt-kit): scope appendix head movement to proof relevance (`6e06182e`)
+- fix(prompt-kit): align Storage UI and add format-alignment ledger (`3a288914`)
 
 ## 0.8.1 - 2026-09-14
 
