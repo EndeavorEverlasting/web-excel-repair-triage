@@ -79,32 +79,30 @@ jobs:
           from pathlib import Path
           path = Path('.github/carriers/prompt_snap_header_first_carrier.py')
           text = path.read_text(encoding='utf-8')
-          prompt_line = '        prompt_id = str(candidate["id"])\n'
-          prompt_block = '\n'.join([
-              '        prompt_id = "P126"',
-              '        candidate = page.evaluate("""() => {',
-              '          const card=document.querySelector(\'[data-prompt-id="P126"]\');',
-              '          if(!card)return null;',
-              '          const r=card.getBoundingClientRect();',
-              "          return {id:'P126',height:r.height,top:r.top+scrollY};",
-              '        }""")',
-              '        if not candidate:',
-              '            raise AssertionError("P126 is unavailable for snap probe")',
-              '',
-          ])
+
+          cards_line = "              const cards=Array.from(document.querySelectorAll('[data-prompt-id]'));\n"
+          cards_with_ids = cards_line + "              const ids=cards.map(card=>card.getAttribute('data-prompt-id')).filter(Boolean);\n"
+          rank_line = "              }).filter(item => item.top>700 && item.top<pageHeight-700)\n"
+          tall_rank_line = "              }).filter(item => item.top>700 && item.top<pageHeight-700 && item.height>innerHeight && !ids.some(other => other!==item.id && other.startsWith(item.id)))\n"
           call_line = '        page.evaluate("id => centerRenderedPromptCard(id,\'instant\')", prompt_id)\n'
           call_block = '\n'.join([
               '        page.evaluate("() => { if(document.activeElement && document.activeElement.blur)document.activeElement.blur(); window.scrollTo(0,0); }")',
-              '        page.keyboard.type("126")',
+              '        if not prompt_id.startswith("P") or not prompt_id[1:].isdigit():',
+              '            raise AssertionError(f"Unexpected prompt id for numeric keyboard route: {prompt_id}")',
+              '        page.keyboard.type(prompt_id[1:])',
               '        page.wait_for_timeout(900)',
               '',
           ])
-          if text.count(prompt_line) != 1:
-              raise SystemExit(f'carrier prompt-id patch target count={text.count(prompt_line)}')
-          text = text.replace(prompt_line, prompt_block, 1)
-          if text.count(call_line) != 1:
-              raise SystemExit(f'carrier direct-call patch target count={text.count(call_line)}')
-          text = text.replace(call_line, call_block, 1)
+
+          for old, new, label in (
+              (cards_line, cards_with_ids, 'candidate-id inventory'),
+              (rank_line, tall_rank_line, 'tall unambiguous candidate filter'),
+              (call_line, call_block, 'real numeric shortcut route'),
+          ):
+              if text.count(old) != 1:
+                  raise SystemExit(f'carrier {label} patch target count={text.count(old)}')
+              text = text.replace(old, new, 1)
+
           path.write_text(text, encoding='utf-8')
           PY
           python .github/carriers/prompt_snap_header_first_carrier.py
