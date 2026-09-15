@@ -79,11 +79,8 @@ jobs:
           from pathlib import Path
           path = Path('.github/carriers/prompt_snap_header_first_carrier.py')
           text = path.read_text(encoding='utf-8')
-          old = '''        prompt_id = str(candidate["id"])
-          page.evaluate("id => centerRenderedPromptCard(id,'instant')", prompt_id)
-          page.wait_for_timeout(120)
-          '''
-          new = '''        prompt_id = "P126"
+          prompt_line = '        prompt_id = str(candidate["id"])\n'
+          prompt_block = '''        prompt_id = "P126"
           candidate = page.evaluate("""() => {
             const card=document.querySelector('[data-prompt-id="P126"]');
             if(!card)return null;
@@ -92,12 +89,18 @@ jobs:
           }""")
           if not candidate:
               raise AssertionError("P126 is unavailable for snap probe")
-          page.evaluate("() => { if(document.activeElement && document.activeElement.blur)document.activeElement.blur(); window.scrollTo(0,0); }")
+          '''
+          call_line = '        page.evaluate("id => centerRenderedPromptCard(id,\'instant\')", prompt_id)\n'
+          call_block = '''        page.evaluate("() => { if(document.activeElement && document.activeElement.blur)document.activeElement.blur(); window.scrollTo(0,0); }")
           page.keyboard.type("126")
           page.wait_for_timeout(900)
           '''
-          if text.count(old) != 1:
-              raise SystemExit(f'carrier keyboard-probe patch target count={text.count(old)}')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          if text.count(prompt_line) != 1:
+              raise SystemExit(f'carrier prompt-id patch target count={text.count(prompt_line)}')
+          text = text.replace(prompt_line, prompt_block, 1)
+          if text.count(call_line) != 1:
+              raise SystemExit(f'carrier direct-call patch target count={text.count(call_line)}')
+          text = text.replace(call_line, call_block, 1)
+          path.write_text(text, encoding='utf-8')
           PY
           python .github/carriers/prompt_snap_header_first_carrier.py
