@@ -17,6 +17,9 @@ Isolation covers filesystem/dependency state as well as Git refs. Shared ports, 
 
 Finishing a lane is not permission to destroy siblings. Each writer commits only owned scope; unfinished lanes remain intact. Completed lanes converge in dependency order into a dedicated local convergence worktree/branch based on refreshed default, and combined validators/build/tests run against that integrated candidate before the normal local-default and remote-default gates advance.
 
+## Required dependency floor
+A fresh default branch is necessary but not sufficient when a writer depends on a specific previously integrated slice. Before creating or advancing that lane, prove the required SHA is still an ancestor of the refreshed default with `git merge-base --is-ancestor <required-sha> <refreshed-default>`, then prove the expected contract/content is still materially present with its owning validator. A revert can preserve ancestry while removing the behavior that later work depends on, so either failed check blocks mutation or integration until the dependency is reconciled and freshly proven. Repeat this proof before convergence whenever the default floor or another proof-relevant dependency moves.
+
 ## Environment modes
 ### Local Git available
 Prefer one worktree plus one branch per independent writer and a separate convergence worktree/branch. Do not use the shared default checkout as a scratch integration surface while sibling writers are active.
