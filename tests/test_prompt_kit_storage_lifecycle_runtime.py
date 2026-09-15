@@ -261,6 +261,7 @@ function interactive(){
     focused:false,
     listeners:{},
     attributes:{},
+    className:'',
     setAttribute(k,v){this.attributes[k]=v},
     addEventListener(name,fn){this.listeners[name]=fn},
     focus(){this.focused=true}
@@ -268,6 +269,7 @@ function interactive(){
 }
 const trigger=interactive();
 const dialog=interactive();
+const styleNode={id:'',textContent:''};
 const clearUsage=interactive();
 const clearCollective=interactive();
 const clearSync=interactive();
@@ -285,11 +287,17 @@ dialog.querySelector=function(selector){
 };
 const controls={appendChild(node){this.child=node}};
 const body={appendChild(node){this.child=node}};
+const head={appendChild(node){this.child=node}};
 const doc={
   body,
+  head,
   getElementById(){return null},
   querySelector(selector){return selector==='.header-controls'?controls:null},
-  createElement(tag){return tag==='button'?trigger:dialog}
+  createElement(tag){
+    if(tag==='button')return trigger;
+    if(tag==='style')return styleNode;
+    return dialog
+  }
 };
 const c=lifecycle.create(storage(),{document:doc,prompt(){return null}});
 c.ensureControls();
@@ -298,7 +306,16 @@ const opened={hidden:dialog.hidden,firstFocused:clearUsage.focused};
 let stopped=false;
 trigger.focused=false;
 dialog.listeners.keydown({key:'Escape',stopPropagation(){stopped=true}});
-console.log(JSON.stringify({opened,closed:dialog.hidden,triggerFocused:trigger.focused,stopped}));
+console.log(JSON.stringify({
+  opened,
+  closed:dialog.hidden,
+  triggerFocused:trigger.focused,
+  stopped,
+  triggerClass:trigger.className,
+  dialogClass:dialog.className,
+  role:trigger.attributes['data-ui-format-role'],
+  styleId:styleNode.id
+}));
 """
         )
         self.assertFalse(proof["opened"]["hidden"])
@@ -306,6 +323,21 @@ console.log(JSON.stringify({opened,closed:dialog.hidden,triggerFocused:trigger.f
         self.assertTrue(proof["closed"])
         self.assertTrue(proof["triggerFocused"])
         self.assertTrue(proof["stopped"])
+        self.assertEqual(proof["triggerClass"], "operant-resource-button")
+        self.assertEqual(proof["dialogClass"], "prompt-storage-backdrop")
+        self.assertEqual(proof["role"], "header-utility")
+        self.assertEqual(proof["styleId"], "prompt-storage-lifecycle-styles")
+
+    def test_storage_header_control_stays_in_formatting_sequence(self) -> None:
+        source = RUNTIME.read_text(encoding="utf-8")
+        self.assertIn("button.className='operant-resource-button'", source)
+        self.assertNotIn("button.className='btn'", source)
+        self.assertNotIn('class="modal-content"', source)
+        self.assertIn("prompt-storage-panel", source)
+        self.assertIn("prompt-storage-action", source)
+        deployed = DEPLOYED.read_text(encoding="utf-8")
+        # Generated site is refreshed by the builder; until rebuild, source contract is authoritative.
+        self.assertIn("operant-resource-button", source)
 
     def test_builder_and_generated_site_wire_lifecycle_before_profile_runtime(self) -> None:
         source = BUILDER.read_text(encoding="utf-8")
