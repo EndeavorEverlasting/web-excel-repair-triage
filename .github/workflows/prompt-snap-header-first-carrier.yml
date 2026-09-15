@@ -76,6 +76,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           python - <<'PY'
+          import base64
           from pathlib import Path
           path = Path('.github/carriers/prompt_snap_header_first_carrier.py')
           text = path.read_text(encoding='utf-8')
@@ -105,25 +106,7 @@ jobs:
               '',
           ])
           activate_anchor = '    replace_once("docs/prompt-kit-polish.js", old_center, new_center)\n'
-          activate_patch = r'''    old_activate = """function activatePromptShortcutTarget(promptId){
-  var prompt=PROMPTS.find(function(item){return item.id===promptId});
-  if(!prompt)return false;
-  if(!revealPromptShortcutTarget(promptId,'instant')){showToast(promptId+' could not be revealed');return false}
-  try{if(typeof selectPrompt==='function')selectPrompt(promptId,'keyboard')}catch(e){}
-  copyPrompt(promptId);
-  return true
-}
-"""
-    new_activate = """function activatePromptShortcutTarget(promptId){
-  var prompt=PROMPTS.find(function(item){return item.id===promptId});
-  if(!prompt)return false;
-  if(!revealPromptShortcutTarget(promptId,'instant')){showToast(promptId+' could not be revealed');return false}
-  copyPrompt(promptId);
-  return true
-}
-"""
-    replace_once("docs/prompt-kit-polish.js", old_activate, new_activate)
-'''
+          activate_patch = base64.b64decode('ICAgIG9sZF9hY3RpdmF0ZSA9ICIiImZ1bmN0aW9uIGFjdGl2YXRlUHJvbXB0U2hvcnRjdXRUYXJnZXQocHJvbXB0SWQpewogIHZhciBwcm9tcHQ9UFJPTVBUUy5maW5kKGZ1bmN0aW9uKGl0ZW0pe3JldHVybiBpdGVtLmlkPT09cHJvbXB0SWR9KTsKICBpZighcHJvbXB0KXJldHVybiBmYWxzZTsKICBpZighcmV2ZWFsUHJvbXB0U2hvcnRjdXRUYXJnZXQocHJvbXB0SWQsJ2luc3RhbnQnKSl7c2hvd1RvYXN0KHByb21wdElkKycgY291bGQgbm90IGJlIHJldmVhbGVkJyk7cmV0dXJuIGZhbHNlfQogIHRyeXtpZih0eXBlb2Ygc2VsZWN0UHJvbXB0PT09J2Z1bmN0aW9uJylzZWxlY3RQcm9tcHQocHJvbXB0SWQsJ2tleWJvYXJkJyl9Y2F0Y2goZSl7fQogIGNvcHlQcm9tcHQocHJvbXB0SWQpOwogIHJldHVybiB0cnVlCn0KIiIiCiAgICBuZXdfYWN0aXZhdGUgPSAiIiJmdW5jdGlvbiBhY3RpdmF0ZVByb21wdFNob3J0Y3V0VGFyZ2V0KHByb21wdElkKXsKICB2YXIgcHJvbXB0PVBST01QVFMuZmluZChmdW5jdGlvbihpdGVtKXtyZXR1cm4gaXRlbS5pZD09PXByb21wdElkfSk7CiAgaWYoIXByb21wdClyZXR1cm4gZmFsc2U7CiAgaWYoIXJldmVhbFByb21wdFNob3J0Y3V0VGFyZ2V0KHByb21wdElkLCdpbnN0YW50Jykpe3Nob3dUb2FzdChwcm9tcHRJZCsnIGNvdWxkIG5vdCBiZSByZXZlYWxlZCcpO3JldHVybiBmYWxzZX0KICBjb3B5UHJvbXB0KHByb21wdElkKTsKICByZXR1cm4gdHJ1ZQp9CiIiIgogICAgcmVwbGFjZV9vbmNlKCJkb2NzL3Byb21wdC1raXQtcG9saXNoLmpzIiwgb2xkX2FjdGl2YXRlLCBuZXdfYWN0aXZhdGUpCg==').decode('utf-8')
 
           for old, new, label in (
               (viewport_line, short_viewport_line, 'short desktop viewport'),
