@@ -80,21 +80,25 @@ jobs:
           path = Path('.github/carriers/prompt_snap_header_first_carrier.py')
           text = path.read_text(encoding='utf-8')
           prompt_line = '        prompt_id = str(candidate["id"])\n'
-          prompt_block = '''        prompt_id = "P126"
-          candidate = page.evaluate("""() => {
-            const card=document.querySelector('[data-prompt-id="P126"]');
-            if(!card)return null;
-            const r=card.getBoundingClientRect();
-            return {id:'P126',height:r.height,top:r.top+scrollY};
-          }""")
-          if not candidate:
-              raise AssertionError("P126 is unavailable for snap probe")
-          '''
+          prompt_block = '\n'.join([
+              '        prompt_id = "P126"',
+              '        candidate = page.evaluate("""() => {',
+              '          const card=document.querySelector(\'[data-prompt-id="P126"]\');',
+              '          if(!card)return null;',
+              '          const r=card.getBoundingClientRect();',
+              "          return {id:'P126',height:r.height,top:r.top+scrollY};",
+              '        }""")',
+              '        if not candidate:',
+              '            raise AssertionError("P126 is unavailable for snap probe")',
+              '',
+          ])
           call_line = '        page.evaluate("id => centerRenderedPromptCard(id,\'instant\')", prompt_id)\n'
-          call_block = '''        page.evaluate("() => { if(document.activeElement && document.activeElement.blur)document.activeElement.blur(); window.scrollTo(0,0); }")
-          page.keyboard.type("126")
-          page.wait_for_timeout(900)
-          '''
+          call_block = '\n'.join([
+              '        page.evaluate("() => { if(document.activeElement && document.activeElement.blur)document.activeElement.blur(); window.scrollTo(0,0); }")',
+              '        page.keyboard.type("126")',
+              '        page.wait_for_timeout(900)',
+              '',
+          ])
           if text.count(prompt_line) != 1:
               raise SystemExit(f'carrier prompt-id patch target count={text.count(prompt_line)}')
           text = text.replace(prompt_line, prompt_block, 1)
