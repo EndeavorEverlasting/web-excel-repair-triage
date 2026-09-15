@@ -25,7 +25,7 @@ Prefer one worktree plus one branch per independent writer and a separate conver
 If worktrees are unavailable, use an environment-provided isolated workspace pinned to the same refreshed base and preserve the same ownership, collision, convergence, and cleanup semantics.
 
 ### Provider-only / remote execution
-Use one isolated remote branch/PR per writer. Exact-head provider CI can prove the remote candidate; local convergence remains unavailable/unproven and must not be relabeled as local-main/workstation proof.
+Use one isolated remote branch/PR per writer. Exact-head provider CI can prove the remote candidate; local convergence remains unavailable/unproven and must not be relabeled as local-main/workstation proof. If an automation-authored convergence commit cannot trigger the repository's normal validation suite, use a separately authorized exact-head update or validation gate; changing event provenance must never weaken the proof requirements.
 
 ## Cleanup gate
 Cleanup happens after integration, never because another lane finished first. Before removing a lane, prove no unique unmerged commit, untracked artifact, evidence file, or operator-owned work would disappear. Prune stale metadata and delete task branches only after that preservation gate.
