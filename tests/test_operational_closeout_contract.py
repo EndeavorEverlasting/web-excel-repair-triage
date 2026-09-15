@@ -46,7 +46,8 @@ class OperationalCloseoutContractTests(unittest.TestCase):
             self.assertIn(phrase, appendix)
         suffix = self.policy["next_step_suffix"]
         for phrase in (
-            "exact current head is the head that was validated",
+            "current head is the validated head, or intervening head movement is proven proof-irrelevant",
+            "unchanged proof-relevance fingerprint",
             "no blocking review, conflict, branch-protection, or required-approval gate remains",
             "acting agent has merge authority",
             "user has not prohibited merge",
