@@ -47,6 +47,20 @@ jobs:
           python -m pip install --disable-pip-version-check playwright==1.55.0
           python -m playwright install --with-deps chromium
 
+      - name: Materialize exact current-source browser baseline
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          echo 'BASELINE_RUNTIME_SITE=regenerated from accepted source because tracked main artifact was stale'
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git add web/prompt-kit/index.html
+          if ! git diff --cached --quiet; then
+            git commit -m 'chore(carrier): materialize current-source baseline projection'
+          fi
+          test -z "$(git status --porcelain=v1 --untracked-files=no)"
+
       - name: Baseline protected browser journeys
         run: |
           set -euo pipefail
