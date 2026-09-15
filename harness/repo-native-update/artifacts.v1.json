@@ -1,0 +1,34 @@
+{
+  "schema_version": "web-excel-repo-native-update-artifacts/v1",
+  "artifacts": [
+    {
+      "id": "canary-constants-input",
+      "kind": "canonical_input",
+      "role": "authoritative_source",
+      "path": "harness/repo-native-update/inputs/canary-constants.v1.json",
+      "surface_id": "canary-constants",
+      "tracking_policy": "tracked",
+      "mutation_policy": "humans and agents edit input; generator reads only"
+    },
+    {
+      "id": "canary-constants-generated",
+      "kind": "generated_output",
+      "role": "owned_generated_surface",
+      "path": "harness/repo-native-update/generated/canary_constants.py",
+      "surface_id": "canary-constants",
+      "producer": "python scripts/run_repo_native_update.py generate --surface canary-constants",
+      "tracking_policy": "tracked",
+      "mutation_policy": "generator only — do not hand-edit"
+    },
+    {
+      "id": "repo-native-update-receipt",
+      "kind": "runtime",
+      "role": "generation_receipt",
+      "path": "Outputs/repo-native-update/receipt.json",
+      "schema": "repo-native-update-receipt/v1",
+      "producer": "python scripts/run_repo_native_update.py generate --surface <surface>",
+      "tracking_policy": "gitignored ephemeral proof",
+      "proof_ceiling": "records input identity, generator identity, outputs, and validation result for local runs only"
+    }
+  ]
+}

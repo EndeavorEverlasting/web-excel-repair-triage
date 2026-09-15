@@ -124,6 +124,9 @@ REQUIRED_VALIDATOR_IDS = {
     "operant-product-identity-tests",
     "operant-external-resource-audit",
     "operant-external-resource-tests",
+    "repo-native-update-audit",
+    "repo-native-update-tests",
+    "repo-native-update-parity",
 }
 REQUIRED_CAPABILITY_IDS = {
     "harness-infrastructure-maintenance",
@@ -136,6 +139,7 @@ REQUIRED_CAPABILITY_IDS = {
     "prompt-kit-feedback-afk-routing",
     "repository-hook-integration",
     "operant-external-resource-intake",
+    "repo-native-update",
 }
 REQUIRED_TRIGGER_IDS = {
     "harness-infrastructure-change",
@@ -149,6 +153,7 @@ REQUIRED_TRIGGER_IDS = {
     "prompt-kit-actionable-feedback",
     "repository-hook-installation-needed",
     "operant-external-resource-refresh-needed",
+    "repo-native-generated-surface-drift",
 }
 PROTECTED_PATHS = ("Candidates/", "Active/")
 

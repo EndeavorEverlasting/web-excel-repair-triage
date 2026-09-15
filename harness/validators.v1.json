@@ -248,6 +248,30 @@
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable deterministic resource projection and lazy-loading regression proof."
+    },
+    {
+      "id": "repo-native-update-audit",
+      "class": "contract",
+      "command": "python scripts/validate_repo_native_update_harness.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static completeness for the repository-native update harness, owned canary surface, and local CLI entrypoints."
+    },
+    {
+      "id": "repo-native-update-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_repo_native_update -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable fail-closed path ownership, malformed-input rejection, drift detection, and idempotent generate/--check proof."
+    },
+    {
+      "id": "repo-native-update-parity",
+      "class": "contract",
+      "command": "python scripts/run_repo_native_update.py generate --surface canary-constants --check",
+      "blocking": true,
+      "output": "Outputs/repo-native-update/receipt.json",
+      "proof_ceiling": "Generated canary surface matches canonical input with a reviewable receipt; local CLI only."
     }
   ],
   "profiles": {
@@ -273,6 +297,9 @@
       "prompt-kit-ui-format-alignment-tests",
       "operant-external-resource-audit",
       "operant-external-resource-tests",
+      "repo-native-update-audit",
+      "repo-native-update-tests",
+      "repo-native-update-parity",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",
@@ -316,6 +343,9 @@
       "prompt-kit-ui-format-alignment-tests",
       "operant-external-resource-audit",
       "operant-external-resource-tests",
+      "repo-native-update-audit",
+      "repo-native-update-tests",
+      "repo-native-update-parity",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",
