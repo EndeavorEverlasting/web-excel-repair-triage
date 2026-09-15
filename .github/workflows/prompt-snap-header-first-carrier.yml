@@ -75,4 +75,29 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/carriers/prompt_snap_header_first_carrier.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''        prompt_id = str(candidate["id"])
+          page.evaluate("id => centerRenderedPromptCard(id,'instant')", prompt_id)
+          page.wait_for_timeout(120)
+          '''
+          new = '''        prompt_id = "P126"
+          candidate = page.evaluate("""() => {
+            const card=document.querySelector('[data-prompt-id="P126"]');
+            if(!card)return null;
+            const r=card.getBoundingClientRect();
+            return {id:'P126',height:r.height,top:r.top+scrollY};
+          }""")
+          if not candidate:
+              raise AssertionError("P126 is unavailable for snap probe")
+          page.evaluate("() => { if(document.activeElement && document.activeElement.blur)document.activeElement.blur(); window.scrollTo(0,0); }")
+          page.keyboard.type("126")
+          page.wait_for_timeout(900)
+          '''
+          if text.count(old) != 1:
+              raise SystemExit(f'carrier keyboard-probe patch target count={text.count(old)}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
           python .github/carriers/prompt_snap_header_first_carrier.py
