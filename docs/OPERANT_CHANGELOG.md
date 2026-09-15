@@ -7,6 +7,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 ### Features / breaking pre-1.0 changes
 
 - feat(prompt-kit): require progress-bearing execution and quiescence (`45fc40de`)
+- feat(prompt-kit): add isolated writer convergence contract (`017f7836`)
 
 ### Fixes / performance
 
