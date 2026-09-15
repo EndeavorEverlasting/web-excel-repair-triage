@@ -116,6 +116,11 @@ class ActionablePromptRegistryTests(unittest.TestCase):
             self.assertIn(phrase, appendix)
 
         suffix = self.policy["next_step_suffix"]
+        self.assertNotIn("when safe executable work remains", suffix)
+        self.assertNotIn("Any SAFE & EXECUTABLE item disproves", suffix)
+        self.assertIn("safe, executable, progress-bearing work remains", suffix)
+        self.assertIn("SAFE & EXECUTABLE item that is progress-bearing", suffix)
+
         for phrase in (
             "the next action must be progress-bearing",
             "Repository HEAD movement alone does not invalidate proof",
