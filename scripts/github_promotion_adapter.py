@@ -20,6 +20,52 @@ ROOT = Path(__file__).resolve().parents[1]
 POLICY_PATH = ROOT / "harness/promotion/required-checks.v1.json"
 CONTRACT_PATH = ROOT / "harness/contracts/repository-promotion.v1.json"
 SHA = re.compile(r"^[0-9a-f]{40}$")
+RUN_NAME_RE = re.compile(
+    r"Promotion Candidate Validation \| PR #(\d+) \| head=([0-9a-f]{40}) \| base=([0-9a-f]{40})"
+)
+
+
+def _parse_run_identity(
+    run: dict[str, Any],
+) -> tuple[int | None, str | None, str | None]:
+    """Extract immutable PR/head/base from the canonical run name.
+
+    GitHub's mutable `pull_requests` association is cleared after the PR merges,
+    but the workflow's `run-name` (`Promotion Candidate Validation | PR #… |
+    head=… | base=…`) remains immutable and is available as `display_title`
+    (preferred) or `name`. This provides the durable validation identity that
+    survives post-merge provider transitions.
+    """
+    for key in ("display_title", "name"):
+        value = run.get(key)
+        if isinstance(value, str):
+            match = RUN_NAME_RE.search(value)
+            if match:
+                try:
+                    pr_number = int(match.group(1))
+                    if pr_number > 0:
+                        return pr_number, match.group(2), match.group(3)
+                except ValueError:
+                    continue
+    return None, None, None
+
+
+def _run_attributable(run: dict[str, Any], number: int, head_sha: str) -> bool:
+    """Return True when the run is attributable via mutable or immutable identity."""
+    if run.get("head_sha") != head_sha:
+        return False
+    for pr in (run.get("pull_requests") or []):
+        if isinstance(pr, dict) and pr.get("number") == number:
+            return True
+    parsed_pr, parsed_head, parsed_base = _parse_run_identity(run)
+    if (
+        parsed_pr == number
+        and parsed_head == head_sha
+        and isinstance(parsed_base, str)
+        and SHA.fullmatch(parsed_base)
+    ):
+        return True
+    return False
 
 
 class ProviderError(RuntimeError):
@@ -213,10 +259,17 @@ def event_target(
             return None, None
         run_id = _positive_int(run.get("id"))
         prs = run.get("pull_requests")
+        if isinstance(prs, list) and len(prs) == 1 and isinstance(prs[0], dict):
+            number = _positive_int(prs[0].get("number"))
+            if number is not None:
+                return number, run_id
+        # Mutable `pull_requests` is cleared by GitHub after the PR merges.
+        # Fall back to the immutable run-name identity which survives that transition.
+        parsed_pr, _, _ = _parse_run_identity(run)
+        if parsed_pr is not None:
+            return parsed_pr, run_id
         if not isinstance(prs, list):
             return None, run_id
-        if len(prs) == 1 and isinstance(prs[0], dict):
-            return _positive_int(prs[0].get("number")), run_id
         return None, run_id
     if event_name == "workflow_dispatch":
         inputs = event.get("inputs")
@@ -341,15 +394,7 @@ def validation_run(
             item for item in payload["workflow_runs"] if isinstance(item, dict)
         ]
         has_more = int(payload.get("total_count", len(candidates))) > len(candidates)
-    matches = [
-        run
-        for run in candidates
-        if run.get("head_sha") == head_sha
-        and any(
-            isinstance(pr, dict) and pr.get("number") == number
-            for pr in (run.get("pull_requests") or [])
-        )
-    ]
+    matches = [run for run in candidates if _run_attributable(run, number, head_sha)]
     if matches:
         return sorted(
             matches, key=lambda item: str(item.get("created_at", "")), reverse=True
@@ -371,6 +416,11 @@ def run_base_sha(run: dict[str, Any], number: int) -> str:
             value = str((pr.get("base") or {}).get("sha") or "")
             if SHA.fullmatch(value):
                 return value
+    # Fall back to the immutable run-name identity when GitHub has cleared
+    # the mutable pull_requests association post-merge.
+    parsed_pr, _, parsed_base = _parse_run_identity(run)
+    if parsed_pr == number and isinstance(parsed_base, str) and SHA.fullmatch(parsed_base):
+        return parsed_base
     raise ProviderError(
         "PROVIDER_PARTIAL_TRUTH", "validation run lacks its tested base SHA"
     )
