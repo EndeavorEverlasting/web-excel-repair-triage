@@ -1,0 +1,109 @@
+name: Temporary isolated-writer required-slice repair
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-isolated-writer-convergence-20260915
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify refreshed floor and repair shared contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_main=8825e7c0bc3c3ab6e2a980396ac5cc55196ccffa
+          git fetch origin main --prune
+          actual_main="$(git rev-parse origin/main)"
+          if [ "$actual_main" != "$expected_main" ]; then
+            echo "main moved: expected $expected_main got $actual_main" >&2
+            exit 42
+          fi
+          git merge-base --is-ancestor "$expected_main" HEAD
+          python - <<'PY'
+          from __future__ import annotations
+          import json
+          from pathlib import Path
+
+          root = Path.cwd()
+          policy_path = root / "registry/prompts/actionable-next-step-policy.v1.json"
+          policy = json.loads(policy_path.read_text(encoding="utf-8"))
+          wi = policy["writer_isolation"]
+          wi["required_slice_floor_rule"] = (
+              "Before creating or advancing a writer lane or convergence candidate that depends on a previously integrated slice, "
+              "prove `git merge-base --is-ancestor <required-sha> <refreshed-default>` and then prove the required contract/content "
+              "is still materially present with its owning validator. Ancestry alone is insufficient after a revert; any failed "
+              "ancestry, content, or validator check blocks mutation/integration until reconciled and freshly proven."
+          )
+
+          appendix = policy["copy_content_appendix"]
+          old_before = "- Before writing, refresh the default branch/provider floor and inspect current/open/recent pull requests, branches, worktrees, commits, and expected changed files for ownership collision. Reuse the canonical owner when safe. Otherwise give each independent writer one isolated lane pinned to the refreshed base: prefer a Git worktree + dedicated branch; when worktrees are unavailable, use an environment-provided isolated clone/workspace pinned to the same base. Never reuse or modify another writer's branch/worktree/workspace."
+          new_before = "- Before writing, refresh the default branch/provider floor and inspect current/open/recent pull requests, branches, worktrees, commits, and expected changed files for ownership collision. For every declared required integrated slice or dependency, prove `git merge-base --is-ancestor <required-sha> <refreshed-default>` and then prove its governing contract/content is still materially present using current content plus its owning validator; ancestry alone cannot prove current behavior after a revert. Any failed ancestry, content, or owning-validator check requires reconciliation and fresh proof before lane creation, mutation, or integration. Reuse the canonical owner when safe. Otherwise give each independent writer one isolated lane pinned to the refreshed base: prefer a Git worktree + dedicated branch; when worktrees are unavailable, use an environment-provided isolated clone/workspace pinned to the same base. Never reuse or modify another writer's branch/worktree/workspace."
+          if appendix.count(old_before) != 1:
+              raise SystemExit(f"expected one before-writing clause, found {appendix.count(old_before)}")
+          appendix = appendix.replace(old_before, new_before)
+
+          old_converge = "- CONVERGE LOCALLY BEFORE REMOTE DEFAULT when local Git is available: use a dedicated convergence worktree/branch based on the refreshed default, integrate completed lanes in dependency order, resolve collisions explicitly, keep unfinished lanes untouched, and rerun the combined owning validators/build/tests on the integrated candidate. Update the local default only when repository policy permits and the candidate is proven; then push/open/merge through the normal remote gates. Do not mutate a shared default checkout while independent writers are active unless governing repository policy explicitly requires a singular default-branch writer."
+          new_converge = "- CONVERGE LOCALLY BEFORE REMOTE DEFAULT when local Git is available: use a dedicated convergence worktree/branch based on the refreshed default, integrate completed lanes in dependency order, resolve collisions explicitly, keep unfinished lanes untouched, and rerun the combined owning validators/build/tests on the integrated candidate. Before integration, refresh the default again and repeat required-slice ancestry plus current-content/owning-validator proof whenever the floor moved or a proof-relevant dependency changed. Update the local default only when repository policy permits and the candidate is proven; then push/open/merge through the normal remote gates. Do not mutate a shared default checkout while independent writers are active unless governing repository policy explicitly requires a singular default-branch writer."
+          if appendix.count(old_converge) != 1:
+              raise SystemExit(f"expected one convergence clause, found {appendix.count(old_converge)}")
+          policy["copy_content_appendix"] = appendix.replace(old_converge, new_converge)
+          policy_path.write_text(json.dumps(policy, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+          test_path = root / "tests/test_isolated_writer_convergence_policy.py"
+          test = test_path.read_text(encoding="utf-8")
+          anchor = '        self.assertIn("unique commits", contract["cleanup_rule"].lower())\n'
+          addition = (
+              anchor
+              + '        self.assertIn("git merge-base --is-ancestor", contract["required_slice_floor_rule"])\n'
+              + '        self.assertIn("owning validator", contract["required_slice_floor_rule"].lower())\n'
+              + '        self.assertIn("revert", contract["required_slice_floor_rule"].lower())\n'
+          )
+          if test.count(anchor) != 1:
+              raise SystemExit("policy test anchor missing or duplicated")
+          test = test.replace(anchor, addition)
+          phrase_anchor = '            "each independent writer one isolated lane",\n'
+          phrase_add = (
+              '            "git merge-base --is-ancestor <required-sha> <refreshed-default>",\n'
+              '            "ancestry alone cannot prove current behavior after a revert",\n'
+              '            "owning-validator check requires reconciliation and fresh proof",\n'
+              '            "repeat required-slice ancestry plus current-content/owning-validator proof",\n'
+          )
+          if test.count(phrase_anchor) != 1:
+              raise SystemExit("appendix phrase anchor missing or duplicated")
+          test = test.replace(phrase_anchor, phrase_anchor + "".join(phrase_add))
+          test_path.write_text(test, encoding="utf-8")
+          PY
+      - name: Rebuild and prove repaired contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python -m unittest tests.test_isolated_writer_convergence_policy -v
+          python -m unittest tests.test_actionable_prompt_registry tests.test_remote_freshness_p13_iteration tests.test_green_branch_integration_policy -v
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
+          git diff --check
+      - name: Commit repair and self-remove carrier
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/tmp-isolated-writer-required-slice-repair.yml
+          git add registry/prompts/actionable-next-step-policy.v1.json tests/test_isolated_writer_convergence_policy.py web/prompt-kit/index.html
+          git diff --cached --check
+          git status --short
+          git diff --cached --stat
+          git commit -m "fix(prompt-kit): verify required slices before isolation"
+          git push origin HEAD:feat/prompt-kit-isolated-writer-convergence-20260915
