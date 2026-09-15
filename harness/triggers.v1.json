@@ -190,6 +190,23 @@
         "private or credentialed donor access is required",
         "prompt addition would occur without P79 strategic strengthen-before-add review"
       ]
+    },
+    {
+      "id": "repo-native-generated-surface-drift",
+      "capability_id": "repo-native-update",
+      "skill": ".ai/skills/repo-native-update/SKILL.md",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "conditions": [
+        "canonical repo-native-update input or contract changed",
+        "generated canary surface needs refresh from pinned JSON",
+        "operator needs local Actions-free codegen proof"
+      ],
+      "forbidden_conditions": [
+        "hand-editing harness/repo-native-update/generated/ instead of regenerating",
+        "adding a new GitHub Actions workflow solely to run this generator",
+        "writing undeclared paths or forbidden prefixes",
+        "auto-committing generated output in a recursive bot loop"
+      ]
     }
   ]
 }
