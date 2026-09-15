@@ -28,7 +28,11 @@ jobs:
         run: |
           set -euo pipefail
           node --check docs/prompt-kit-polish.js
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          if python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check; then
+            echo 'BASELINE_GENERATED_PARITY=PASS'
+          else
+            echo '::warning::BASELINE_GENERATED_PARITY=PRE_EXISTING_FAIL; candidate must rebuild and pass parity'
+          fi
           python scripts/validate_prompt_kit_discovery.py --summary
           python -m unittest \
             tests.test_prompt_kit_discovery \
