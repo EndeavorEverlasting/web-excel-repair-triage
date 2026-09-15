@@ -130,6 +130,102 @@ class RepositoryPromotionTests(unittest.TestCase):
         with self.assertRaisesRegex(github_adapter.ProviderError, "older provider pages remain"):
             github_adapter.validation_run(FakeGitHub(), 42, "a" * 40, None)
 
+    def test_post_merge_duplicate_recovers_via_immutable_run_name(self) -> None:
+        """Regression for seq4 run 34901989725: post-merge pull_requests cleared."""
+        head = "a" * 40
+        base = "b" * 40
+        # Explicit fetch: GitHub clears pull_requests after merge but display_title retains identity.
+        explicit_run = {
+            "id": 34901989725,
+            "head_sha": head,
+            "display_title": f"Promotion Candidate Validation | PR #496 | head={head} | base={base}",
+            "name": "Promotion Candidate Validation | PR #496 | head=xxx | base=xxx",
+            "pull_requests": [],
+            "created_at": "2026-09-14T22:05:00Z",
+        }
+
+        class FakeGitHubExplicit:
+            repo = "EndeavorEverlasting/web-excel-repair-triage"
+
+            def rest(self, method: str, path: str, body=None):
+                self.last_path = path
+                if "/actions/runs/34901989725" in path:
+                    return explicit_run
+                raise AssertionError(path)
+
+        result = github_adapter.validation_run(FakeGitHubExplicit(), 496, head, 34901989725)
+        self.assertEqual(result["id"], 34901989725)
+        # base SHA must be recoverable via immutable identity as well
+        self.assertEqual(github_adapter.run_base_sha(result, 496), base)
+
+        # Listing fallback: provider listing for the same SHA with empty PR association
+        listed_run = {
+            "id": 99,
+            "head_sha": head,
+            "display_title": f"Promotion Candidate Validation | PR #496 | head={head} | base={base}",
+            "pull_requests": [],
+            "created_at": "2026-09-14T22:06:00Z",
+        }
+
+        class FakeGitHubList:
+            repo = "EndeavorEverlasting/web-excel-repair-triage"
+
+            def rest(self, method: str, path: str, body=None):
+                return {"total_count": 1, "workflow_runs": [listed_run]}
+
+        result2 = github_adapter.validation_run(FakeGitHubList(), 496, head, None)
+        self.assertEqual(result2["id"], 99)
+
+        # event_target must also fall back to display_title when pull_requests is []
+        event = {
+            "workflow_run": {
+                "id": 34901989725,
+                "display_title": f"Promotion Candidate Validation | PR #496 | head={head} | base={base}",
+                "pull_requests": [],
+            }
+        }
+        pr_number, run_id = github_adapter.event_target(event, "workflow_run")
+        self.assertEqual(pr_number, 496)
+        self.assertEqual(run_id, 34901989725)
+
+    def test_run_base_sha_requires_matching_pr_number_in_immutable_identity(self) -> None:
+        head = "a" * 40
+        base = "b" * 40
+        run = {
+            "id": 1,
+            "head_sha": head,
+            "display_title": f"Promotion Candidate Validation | PR #42 | head={head} | base={base}",
+            "pull_requests": [],
+        }
+        # wrong PR number must not be returned
+        with self.assertRaisesRegex(github_adapter.ProviderError, "tested base SHA"):
+            github_adapter.run_base_sha(run, 999)
+        # correct PR must succeed
+        self.assertEqual(github_adapter.run_base_sha(run, 42), base)
+
+    def test_immutable_identity_mismatch_fails_closed(self) -> None:
+        head = "a" * 40
+        base = "b" * 40
+        wrong_head = "c" * 40
+        # head mismatch between run.head_sha and parsed identity must not be attributable
+        run = {
+            "id": 2,
+            "head_sha": head,
+            "display_title": f"Promotion Candidate Validation | PR #496 | head={wrong_head} | base={base}",
+            "pull_requests": [],
+        }
+
+        class FakeGitHub:
+            repo = "EndeavorEverlasting/web-excel-repair-triage"
+
+            def rest(self, method: str, path: str, body=None):
+                if path.endswith("/actions/runs/2"):
+                    return run
+                raise AssertionError(path)
+
+        with self.assertRaisesRegex(github_adapter.ProviderError, "attributable"):
+            github_adapter.validation_run(FakeGitHub(), 496, head, 2)
+
     def test_direct_merge_reconciles_ambiguous_provider_response(self) -> None:
         head = "a" * 40
         integration = "c" * 40
