@@ -104,11 +104,32 @@ jobs:
               '        page.wait_for_timeout(900)',
               '',
           ])
+          activate_anchor = '    replace_once("docs/prompt-kit-polish.js", old_center, new_center)\n'
+          activate_patch = r'''    old_activate = """function activatePromptShortcutTarget(promptId){
+  var prompt=PROMPTS.find(function(item){return item.id===promptId});
+  if(!prompt)return false;
+  if(!revealPromptShortcutTarget(promptId,'instant')){showToast(promptId+' could not be revealed');return false}
+  try{if(typeof selectPrompt==='function')selectPrompt(promptId,'keyboard')}catch(e){}
+  copyPrompt(promptId);
+  return true
+}
+"""
+    new_activate = """function activatePromptShortcutTarget(promptId){
+  var prompt=PROMPTS.find(function(item){return item.id===promptId});
+  if(!prompt)return false;
+  if(!revealPromptShortcutTarget(promptId,'instant')){showToast(promptId+' could not be revealed');return false}
+  copyPrompt(promptId);
+  return true
+}
+"""
+    replace_once("docs/prompt-kit-polish.js", old_activate, new_activate)
+'''
 
           for old, new, label in (
               (viewport_line, short_viewport_line, 'short desktop viewport'),
               (prompt_line, prompt_block, 'P126 geometry target'),
               (call_line, call_block, 'real numeric shortcut route'),
+              (activate_anchor, activate_anchor + activate_patch, 'post-snap reselection removal'),
           ):
               if text.count(old) != 1:
                   raise SystemExit(f'carrier {label} patch target count={text.count(old)}')
