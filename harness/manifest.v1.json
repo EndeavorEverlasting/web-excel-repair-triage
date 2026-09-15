@@ -147,6 +147,17 @@
       "artifact_registry": "harness/prompt-kit-layout/artifacts.v1.json",
       "operator_report": "harness/prompt-kit-layout/reports/CURRENT_STATE.md"
     },
+    "prompt_kit_ui_format_alignment": {
+      "contract": "harness/contracts/prompt-kit-ui-format-alignment.v1.json",
+      "ledger": "harness/prompt-kit-ui-format-alignment/ledger.v1.json",
+      "plan": "docs/PROMPT_KIT_UI_FORMAT_ALIGNMENT_PLAN.md",
+      "validator": "scripts/validate_prompt_kit_ui_format_alignment.py",
+      "contract_tests": "tests/test_prompt_kit_ui_format_alignment.py",
+      "workflow": "WORKFLOW.md#b-prompt-registry-or-website-change",
+      "harness_gate": "python scripts/validate_prompt_kit_ui_format_alignment.py --summary",
+      "strict_product_gate": "python scripts/validate_prompt_kit_ui_format_alignment.py --require-implementation --summary",
+      "protected_storage_runtime": "python -m unittest tests.test_prompt_kit_storage_lifecycle_runtime -v"
+    },
     "prompt_kit_feedback_afk_routing": {
       "contract": "harness/contracts/prompt-kit-feedback-afk-routing.v1.json",
       "validator": "scripts/validate_prompt_kit_feedback_afk_routing.py",
@@ -258,6 +269,8 @@
     "python -m unittest tests.test_prompt_outcome_receipt_prompt -v",
     "python scripts/validate_prompt_kit_layout_harness.py --summary",
     "python -m unittest tests.test_prompt_kit_layout_harness -v",
+    "python scripts/validate_prompt_kit_ui_format_alignment.py --summary",
+    "python -m unittest tests.test_prompt_kit_ui_format_alignment -v",
     "python scripts/validate_operant_external_resources.py --summary",
     "python -m unittest tests.test_operant_external_resources -v",
     "python tests/test_prompt_kit_header_contract.py",

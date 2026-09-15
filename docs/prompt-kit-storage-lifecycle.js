@@ -162,17 +162,38 @@ function create(storage,host){
   function storageKey(name){if(!POLICIES[name])throw new Error('Unknown Prompt Kit lifecycle store: '+name);return POLICIES[name].key}
 
   function toast(message){if(typeof host.showToast==='function')host.showToast(message)}
+  function ensureStorageStyles(doc){
+    if(!doc||!doc.getElementById||doc.getElementById('prompt-storage-lifecycle-styles'))return;
+    if(typeof doc.createElement!=='function'||!doc.head||typeof doc.head.appendChild!=='function')return;
+    var style=doc.createElement('style');
+    style.id='prompt-storage-lifecycle-styles';
+    style.textContent=[
+      '.prompt-storage-backdrop{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.58);display:flex;align-items:flex-start;justify-content:center;padding:7vh 16px}',
+      '.prompt-storage-backdrop[hidden]{display:none!important}',
+      '.prompt-storage-panel{width:min(520px,100%);max-height:86vh;overflow:auto;display:grid;gap:12px;padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--bg-surface);box-shadow:0 20px 60px rgba(0,0,0,.45);color:var(--text-primary)}',
+      '.prompt-storage-panel h2{margin:0;font-size:16px}',
+      '.prompt-storage-panel p{margin:0;color:var(--text-secondary);font-size:12px;line-height:1.45}',
+      '.prompt-storage-actions{display:flex;flex-wrap:wrap;gap:8px}',
+      '.prompt-storage-action{min-height:34px;padding:6px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text-secondary);font:600 11px/1.2 inherit;cursor:pointer}',
+      '.prompt-storage-action:hover,.prompt-storage-action:focus-visible{outline:none;border-color:var(--accent);color:var(--text-primary)}',
+      '@media(max-width:640px){.prompt-storage-backdrop{padding:3vh 8px}.prompt-storage-panel{max-height:94vh;padding:12px}}'
+    ].join('');
+    doc.head.appendChild(style)
+  }
   function ensureControls(){
     var doc=host.document;
     if(!doc||typeof doc.createElement!=='function'||doc.getElementById('promptStorageLifecycleBtn'))return;
     var controls=doc.querySelector&&doc.querySelector('.header-controls');
     if(!controls)return;
+    ensureStorageStyles(doc);
     var button=doc.createElement('button');
-    button.type='button';button.id='promptStorageLifecycleBtn';button.className='btn';button.textContent='Storage';
+    button.type='button';button.id='promptStorageLifecycleBtn';button.className='operant-resource-button';button.textContent='Storage';
+    button.setAttribute('data-ui-format-role','header-utility');
     button.setAttribute('aria-controls','promptStorageLifecycleDialog');button.setAttribute('aria-haspopup','dialog');
     var dialog=doc.createElement('div');
-    dialog.id='promptStorageLifecycleDialog';dialog.hidden=true;dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-label','Prompt Kit storage controls');
-    dialog.innerHTML='<div class="modal-content"><h2>Storage controls</h2><p>Temporary Prompt Kit data clears independently from saved Favorites and profiles.</p><div class="modal-actions"><button type="button" data-clear-usage>Clear temporary usage</button><button type="button" data-clear-collective>Clear collective buffer</button><button type="button" data-clear-sync>Clear sync queue</button><button type="button" data-clear-personal>Delete personal settings</button><button type="button" data-close-storage>Close</button></div></div>';
+    dialog.id='promptStorageLifecycleDialog';dialog.className='prompt-storage-backdrop';dialog.hidden=true;dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-label','Prompt Kit storage controls');
+    dialog.setAttribute('data-ui-format-role','modal-surface');
+    dialog.innerHTML='<div class="prompt-storage-panel"><h2>Storage controls</h2><p>Temporary Prompt Kit data clears independently from saved Favorites and profiles.</p><div class="prompt-storage-actions"><button type="button" class="prompt-storage-action" data-clear-usage data-ui-format-role="modal-action">Clear temporary usage</button><button type="button" class="prompt-storage-action" data-clear-collective data-ui-format-role="modal-action">Clear collective buffer</button><button type="button" class="prompt-storage-action" data-clear-sync data-ui-format-role="modal-action">Clear sync queue</button><button type="button" class="prompt-storage-action" data-clear-personal data-ui-format-role="modal-action">Delete personal settings</button><button type="button" class="prompt-storage-action" data-close-storage data-ui-format-role="modal-action">Close</button></div></div>';
     function bind(selector,fn,message){var node=dialog.querySelector(selector);if(node)node.addEventListener('click',function(){var result=fn();toast(result.ok?message:'Storage action could not complete')})}
     bind('[data-clear-usage]',clearUsageAndJournal,'Temporary usage cleared');
     bind('[data-clear-collective]',clearCollectiveBuffer,'Collective buffer cleared');
@@ -186,6 +207,7 @@ function create(storage,host){
     function closeDialog(){dialog.hidden=true;if(typeof button.focus==='function')button.focus()}
     var close=dialog.querySelector('[data-close-storage]');if(close)close.addEventListener('click',closeDialog);
     dialog.addEventListener('keydown',function(event){if(event.key==='Escape'){event.stopPropagation();closeDialog()}});
+    dialog.addEventListener('click',function(event){if(event.target===dialog)closeDialog()});
     button.addEventListener('click',function(){
       dialog.hidden=false;
       var first=dialog.querySelector('button');

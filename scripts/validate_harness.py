@@ -113,6 +113,8 @@ REQUIRED_VALIDATOR_IDS = {
     "prompt-kit-browser-proof-cleanup-powershell-smoke",
     "prompt-kit-responsive-layout-audit",
     "prompt-kit-responsive-layout-tests",
+    "prompt-kit-ui-format-alignment-audit",
+    "prompt-kit-ui-format-alignment-tests",
     "app-harness-validation",
     "prompt-kit-feedback-afk-routing-audit",
     "prompt-kit-feedback-afk-routing-tests",

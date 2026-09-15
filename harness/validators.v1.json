@@ -98,6 +98,22 @@
       "proof_ceiling": "Checked-in Prompt Kit header contract proof."
     },
     {
+      "id": "prompt-kit-ui-format-alignment-audit",
+      "class": "contract",
+      "command": "python scripts/validate_prompt_kit_ui_format_alignment.py --summary",
+      "blocking": true,
+      "output": "Outputs/prompt-kit-ui-format-alignment.json",
+      "proof_ceiling": "Static catalog/deferred-ledger proof that Prompt Kit controls stay in the formatting sequence."
+    },
+    {
+      "id": "prompt-kit-ui-format-alignment-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_prompt_kit_ui_format_alignment -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable regression for alignment gate, forbidden-class fail-closed, and deferred coercion."
+    },
+    {
       "id": "prompt-kit-parity",
       "class": "build",
       "command": "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
@@ -253,6 +269,8 @@
       "prompt-outcome-receipt-tests",
       "prompt-kit-responsive-layout-audit",
       "prompt-kit-responsive-layout-tests",
+      "prompt-kit-ui-format-alignment-audit",
+      "prompt-kit-ui-format-alignment-tests",
       "operant-external-resource-audit",
       "operant-external-resource-tests",
       "prompt-kit-header-contract",
@@ -294,6 +312,8 @@
       "prompt-outcome-receipt-tests",
       "prompt-kit-responsive-layout-audit",
       "prompt-kit-responsive-layout-tests",
+      "prompt-kit-ui-format-alignment-audit",
+      "prompt-kit-ui-format-alignment-tests",
       "operant-external-resource-audit",
       "operant-external-resource-tests",
       "prompt-kit-header-contract",
