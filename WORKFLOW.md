@@ -103,7 +103,17 @@ Static success does not prove a specific browser menu, PWA installation, Termux/
    ```
 
    The operator command must not assume a remembered `C:\Users\<name>\...` path, must not contain Markdown hyperlink syntax as command data, and must not use top-level `exit` in an interactive PowerShell envelope. When the exact local repo root has not been proven in the current shell, use the environment-derived isolated checkout template rather than guessing.
-9. Run the root harness checks:
+9. When a declared repo-native generated surface drifted, edit canonical input/contract/generator only, then run the local CLI (no new GitHub Actions required while minutes are exhausted):
+
+   ```bash
+   python scripts/run_repo_native_update.py generate --surface canary-constants
+   python scripts/run_repo_native_update.py generate --surface canary-constants --check
+   python scripts/validate_repo_native_update_harness.py --summary
+   python -m unittest tests.test_repo_native_update -v
+   ```
+
+   Do not hand-edit `harness/repo-native-update/generated/`. Any later provider workflow must delegate to the same CLI.
+10. Run the root harness checks:
 
    ```bash
    python -m py_compile scripts/validate_harness.py tests/test_harness_contract.py
@@ -111,9 +121,9 @@ Static success does not prove a specific browser menu, PWA installation, Termux/
    python -m unittest tests.test_harness_contract -v
    ```
 
-10. Run the remaining `harness` validator profile from `harness/validators.v1.json`, followed by affected broader tests and `git diff --check`.
-11. Commit coherent owned files, push normally, and open or update the existing focused PR.
-12. Hand off the component list, report path, validator results, commit SHA, push/PR evidence, blockers, skipped checks, proof ceiling, and an executable next command.
+11. Run the remaining `harness` validator profile from `harness/validators.v1.json`, followed by affected broader tests and `git diff --check`.
+12. Commit coherent owned files, push normally, and open or update the existing focused PR.
+13. Hand off the component list, report path, validator results, commit SHA, push/PR evidence, blockers, skipped checks, proof ceiling, and an executable next command.
 
 ### D. Workbook or artifact engine change
 

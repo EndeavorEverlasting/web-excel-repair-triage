@@ -1,0 +1,46 @@
+{
+  "schema_version": "repo-native-update-contract/v1",
+  "contract_id": "repo-native-update",
+  "generator_id": "repo-native-update",
+  "generator_version": "1.0.0",
+  "generator_entrypoint": "scripts/run_repo_native_update.py",
+  "trigger": {
+    "primary": "cli",
+    "forbidden_auto_commit_loop": true,
+    "provider_workflows_must_delegate_to_cli": true,
+    "no_github_actions_required": true,
+    "actions_minutes_workaround": "local CLI plus unittest; do not add new Actions workflows for this harness"
+  },
+  "fail_closed": [
+    "path_traversal",
+    "undeclared_output",
+    "malformed_input",
+    "symlink_escape",
+    "partial_write"
+  ],
+  "idempotency": {
+    "same_inputs_byte_identical_output": true,
+    "check_must_pass_after_generate": true
+  },
+  "collision_policy": "one writer per owned output; reconcile at canonical input; never hand-edit generated output",
+  "forbidden_output_prefixes": [
+    ".github/",
+    "AGENTS.md",
+    "Candidates/",
+    "Active/"
+  ],
+  "surfaces": [
+    {
+      "id": "canary-constants",
+      "input_path": "harness/repo-native-update/inputs/canary-constants.v1.json",
+      "owned_outputs": [
+        "harness/repo-native-update/generated/canary_constants.py"
+      ],
+      "committed": true,
+      "trigger": "cli",
+      "proof_ceiling": "Local deterministic canary module generation from pinned JSON; no Actions/provider runtime claim."
+    }
+  ],
+  "receipt_schema": "repo-native-update-receipt/v1",
+  "proof_ceiling": "Local CLI generation, path ownership, idempotent --check, and focused unittest proof. GitHub Actions runtime is out of ceiling while Actions minutes are exhausted."
+}
