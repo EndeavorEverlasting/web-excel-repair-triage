@@ -1,0 +1,72 @@
+name: Temporary isolated-writer current-main convergence
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-isolated-writer-convergence-20260915
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Merge refreshed main without touching sibling lanes
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_main=8825e7c0bc3c3ab6e2a980396ac5cc55196ccffa
+          branch=feat/prompt-kit-isolated-writer-convergence-20260915
+          git fetch origin main "$branch" --prune
+          actual_main="$(git rev-parse origin/main)"
+          if [ "$actual_main" != "$expected_main" ]; then
+            echo "main moved again: expected $expected_main got $actual_main" >&2
+            exit 42
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          set +e
+          git merge --no-commit --no-ff origin/main
+          merge_rc=$?
+          set -e
+          conflicts="$(git diff --name-only --diff-filter=U || true)"
+          if [ -n "$conflicts" ]; then
+            if [ "$conflicts" != "web/prompt-kit/index.html" ]; then
+              echo "unexpected source collision(s):" >&2
+              printf '%s\n' "$conflicts" >&2
+              exit 43
+            fi
+            git checkout --theirs -- web/prompt-kit/index.html
+            git add web/prompt-kit/index.html
+          elif [ "$merge_rc" -ne 0 ]; then
+            echo "merge failed without a recognized generated-file conflict" >&2
+            exit "$merge_rc"
+          fi
+      - name: Rebuild combined generated artifact and prove contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python -m unittest tests.test_isolated_writer_convergence_policy -v
+          python -m unittest tests.test_actionable_prompt_registry tests.test_remote_freshness_p13_iteration tests.test_green_branch_integration_policy -v
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
+          git diff --check
+      - name: Commit converged candidate and self-remove carrier
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/tmp-isolated-writer-reconcile.yml
+          git add web/prompt-kit/index.html
+          git diff --cached --check
+          git status --short
+          git diff --cached --stat
+          git commit -m "merge: converge isolated-writer contract with current main"
+          git push origin HEAD:feat/prompt-kit-isolated-writer-convergence-20260915
