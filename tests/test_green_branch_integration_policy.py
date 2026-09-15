@@ -80,6 +80,8 @@ class GreenBranchIntegrationPolicyTests(unittest.TestCase):
         self.assertNotIn("the exact current head is the head that was validated\n", green + "\n")
         self.assertIn("proof-relevant inputs changed or proof relevance cannot be established", exceptions)
         self.assertNotIn("the branch head moved after the evidence used to declare it green\n", exceptions + "\n")
+        self.assertNotIn("the head moved after validation,", appendix)
+        self.assertIn("the branch head moved after validation and proof-relevant inputs changed or proof relevance cannot be established", appendix)
         self.assertIn("current head is the validated head, or intervening head movement is proven proof-irrelevant", suffix)
         for phrase in (
             "PROOF-RELEVANCE FINGERPRINT",
