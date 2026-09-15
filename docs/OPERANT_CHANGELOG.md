@@ -2,6 +2,25 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.9.0 - 2026-09-15
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): require progress-bearing execution and quiescence (`45fc40de`)
+
+### Fixes / performance
+
+- fix(prompt-kit): enforce autonomous parallel dispatch (`ff824e6e`)
+- fix(prompt-kit): preserve P07 freshness and fixed-point contracts (`fe016975`)
+- fix(prompt-kit): make parallel dispatch manifest executable (`c78a47b7`)
+- fix(prompt-kit): restore P07 mainline/readability contracts with parallel dispatch (`cb934bb1`)
+- fix(prompt-kit): restore P07 closeout and phase-continuity nextStep gates (`8d7eff77`)
+- fix(prompt-kit): correct P04 OUTPUT ORDER numbering and CLI path refs (`4ccc5b9d`)
+- fix(prompt-kit): avoid nested backticks in P04 dispatch CLI examples (`17be3de9`)
+- fix(prompt-kit): make continuation explicitly progress-bearing (`1731d94b`)
+- fix(prompt-kit): scope proof freshness to relevant inputs (`5d8eb2bc`)
+- fix(prompt-kit): scope appendix head movement to proof relevance (`6e06182e`)
+
 ## 0.8.1 - 2026-09-14
 
 ### Fixes / performance
