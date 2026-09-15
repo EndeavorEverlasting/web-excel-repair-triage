@@ -89,7 +89,7 @@ class PromptKitOrderNavigationProductTests(unittest.TestCase):
     def test_dynamic_prompt_id_is_not_embedded_in_inline_copy_javascript(self) -> None:
         source = (ROOT / "docs" / "prompt-kit.js").read_text(encoding="utf-8")
         self.assertIn("id=\"promptDetailCopy\"", source)
-        self.assertIn("detailCopy.onclick=function(){copyPrompt(p.id)", source)
+        self.assertIn("detailCopy.onclick=function(e){e.stopPropagation();copyPrompt(p.id)", source)
         self.assertNotIn("onclick=\"copyPrompt('\\''+safeId", source)
         self.assertIn("/^P\\d+$/.test(rawId)", source)
         self.assertIn("var sequence=Number(rawId.slice(1))", source)

@@ -166,9 +166,11 @@ class PromptKitSelectedPromptContractTests(unittest.TestCase):
     def test_responsive_regression_preservation(self) -> None:
         base = BASE.read_text(encoding="utf-8")
         polish = POLISH.read_text(encoding="utf-8")
-        # No clearing on orientation change
+        # No selection clearing on orientation changes. matchMedia is allowed only
+        # for non-destructive preferences such as reduced-motion scroll behavior.
         self.assertNotIn("orientationchange", base.lower())
-        self.assertNotIn("matchMedia", base) or True  # allowed but not clearing
+        self.assertNotIn("matchMedia('(orientation", base)
+        self.assertIn("prefers-reduced-motion: reduce", base)
         # polish preserves interaction mode across orientation (existing)
         self.assertIn("hideCompactFilters", polish)
         # selection CSS is not viewport-specific destructive

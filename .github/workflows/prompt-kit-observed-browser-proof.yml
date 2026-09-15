@@ -3,15 +3,21 @@ name: Prompt Kit observed browser proof
 on:
   pull_request:
     paths:
+      - build_prompt_kit.py
+      - docs/prompt-kit.js
       - docs/prompt-kit-polish.js
       - docs/prompt-kit-hotkey-prototype.js
       - docs/prompt-kit-external-resources.js
       - docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md
       - docs/prompts.json
       - registry/prompts/ai-engineering-level-up-prompts.v1.json
+      - harness/contracts/prompt-kit-interactions.v1.json
+      - harness/contracts/prompt-kit-cross-input-modality.v1.json
       - harness/observed-proof/**
       - scripts/validate_observed_behavior_receipt.py
+      - scripts/validate_prompt_kit_interactions.py
       - scripts/prepare_observed_behavior_subject.py
+      - tests/prompt_kit_detail_browser_proof.py
       - tests/prompt_kit_favorite_browser_proof.py
       - tests/prompt_kit_hotkey_identity_browser_proof.py
       - tests/prompt_kit_external_resources_browser_proof.py
@@ -23,15 +29,21 @@ on:
   push:
     branches: [main]
     paths:
+      - build_prompt_kit.py
+      - docs/prompt-kit.js
       - docs/prompt-kit-polish.js
       - docs/prompt-kit-hotkey-prototype.js
       - docs/prompt-kit-external-resources.js
       - docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md
       - docs/prompts.json
       - registry/prompts/ai-engineering-level-up-prompts.v1.json
+      - harness/contracts/prompt-kit-interactions.v1.json
+      - harness/contracts/prompt-kit-cross-input-modality.v1.json
       - harness/observed-proof/**
       - scripts/validate_observed_behavior_receipt.py
+      - scripts/validate_prompt_kit_interactions.py
       - scripts/prepare_observed_behavior_subject.py
+      - tests/prompt_kit_detail_browser_proof.py
       - tests/prompt_kit_favorite_browser_proof.py
       - tests/prompt_kit_hotkey_identity_browser_proof.py
       - tests/prompt_kit_external_resources_browser_proof.py
@@ -57,14 +69,21 @@ jobs:
       - name: Validate harness and deterministic contracts
         run: |
           python -m unittest tests.test_observed_behavior_proof_harness tests.test_prompt_kit_hotkey_completion tests.test_ai_engineering_level_up -v
+          node --check docs/prompt-kit.js
           node --check docs/prompt-kit-polish.js
           node --check docs/prompt-kit-hotkey-prototype.js
           if [ -f docs/prompt-kit-external-resources.js ]; then node --check docs/prompt-kit-external-resources.js; fi
+          python scripts/validate_prompt_kit_interactions.py --require-implementation --summary
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
       - name: Install browser proof runtime
         run: |
           python -m pip install --disable-pip-version-check playwright==1.55.0
           python -m playwright install --with-deps chromium
+      - name: Observe prompt detail quick actions
+        run: |
+          mkdir -p Outputs/observed-proof
+          python tests/prompt_kit_detail_browser_proof.py --receipt Outputs/observed-proof/prompt-detail-quick-actions-receipt.json --screenshot Outputs/observed-proof/prompt-detail-quick-actions.png
+          python scripts/validate_observed_behavior_receipt.py Outputs/observed-proof/prompt-detail-quick-actions-receipt.json --expected-sha "$(git rev-parse HEAD)" --summary
       - name: Observe Favorite copy scroll and Enter behavior
         run: |
           mkdir -p Outputs/observed-proof
