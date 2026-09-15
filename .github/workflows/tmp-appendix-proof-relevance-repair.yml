@@ -1,0 +1,50 @@
+name: Temporary Prompt Kit appendix proof-relevance repair
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-progress-quiescence-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Scope appendix head-movement gate
+        run: python scripts/_tmp_scope_appendix_head_movement.py
+      - name: Rebuild canonical Prompt Kit
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Validate registry helper contract
+        run: python scripts/prompt_registry_ops.py validate
+      - name: Actionability regression
+        run: python -m unittest tests.test_actionable_prompt_registry -v
+      - name: Merge-gate regression
+        run: python -m unittest tests.test_green_branch_integration_policy -v
+      - name: Operational closeout regression
+        run: python -m unittest tests.test_operational_closeout_contract -v
+      - name: Freshness regression
+        run: python -m unittest tests.test_remote_freshness_p13_iteration -v
+      - name: Generated-site parity
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Remove transport-only repair
+        run: git rm scripts/_tmp_scope_appendix_head_movement.py .github/workflows/tmp-appendix-proof-relevance-repair.yml
+      - name: Patch hygiene
+        run: git diff --check
+      - name: Commit durable repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add registry/prompts/actionable-next-step-policy.v1.json tests/test_green_branch_integration_policy.py web/prompt-kit/index.html
+          git commit -m 'fix(prompt-kit): scope appendix head movement to proof relevance'
+          git push origin HEAD:feat/prompt-kit-progress-quiescence-20260914
