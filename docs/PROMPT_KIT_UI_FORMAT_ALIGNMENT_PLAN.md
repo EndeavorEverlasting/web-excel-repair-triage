@@ -1,9 +1,9 @@
 # Prompt Kit UI Format Alignment Plan
 
-**Status:** ACTIVE execution plan  
-**Branch:** `feat/prompt-kit-ui-format-alignment-20260915`  
-**Base floor:** `origin/main` @ `84e93779bb87ccd959bc82614785b4d61a960d14`  
-**Owner lane:** Prompt Kit UI format alignment  
+**Status:** ACTIVE execution plan
+**Branch:** `feat/prompt-kit-ui-format-alignment-20260915`
+**Base floor:** `origin/main` @ `84e93779bb87ccd959bc82614785b4d61a960d14`
+**Owner lane:** Prompt Kit UI format alignment
 **Updated:** 2026-09-15
 
 ## Mission
