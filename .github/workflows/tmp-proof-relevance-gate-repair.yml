@@ -1,0 +1,60 @@
+name: Temporary Prompt Kit proof-relevance merge-gate repair
+
+on:
+  push:
+    branches:
+      - feat/prompt-kit-progress-quiescence-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reconcile proof relevance and merge gate
+        run: python scripts/_tmp_reconcile_proof_relevance_gate.py
+      - name: Rebuild canonical Prompt Kit
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Validate registry helper contract
+        run: python scripts/prompt_registry_ops.py validate
+      - name: Actionability regression
+        run: python -m unittest tests.test_actionable_prompt_registry -v
+      - name: Merge-gate regression
+        run: python -m unittest tests.test_green_branch_integration_policy -v
+      - name: Operational closeout regression
+        run: python -m unittest tests.test_operational_closeout_contract -v
+      - name: Freshness regression
+        run: python -m unittest tests.test_remote_freshness_p13_iteration -v
+      - name: Skill registry regression
+        run: python -m unittest tests.test_skill_prompt_registry -v
+      - name: Language audit
+        run: python scripts/evaluate_prompt_language.py --summary
+      - name: Discovery validation
+        run: python scripts/validate_prompt_kit_discovery.py --summary
+      - name: Order and navigation regression
+        run: python -m unittest tests.test_prompt_kit_order_navigation_contract -v
+      - name: Order and navigation validation
+        run: python scripts/validate_prompt_kit_order_navigation.py --require-implementation --output Outputs/prompt-kit-order-navigation-audit.json --summary
+      - name: Generated-site parity
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Remove transport-only repair
+        run: git rm scripts/_tmp_reconcile_proof_relevance_gate.py .github/workflows/tmp-proof-relevance-gate-repair.yml
+      - name: Patch hygiene
+        run: git diff --check
+      - name: Commit durable repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add registry/prompts/actionable-next-step-policy.v1.json tests/test_actionable_prompt_registry.py tests/test_green_branch_integration_policy.py tests/test_operational_closeout_contract.py web/prompt-kit/index.html
+          git commit -m 'fix(prompt-kit): scope proof freshness to relevant inputs'
+          git push origin HEAD:feat/prompt-kit-progress-quiescence-20260914
