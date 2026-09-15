@@ -80,23 +80,34 @@ jobs:
           path = Path('.github/carriers/prompt_snap_header_first_carrier.py')
           text = path.read_text(encoding='utf-8')
 
-          cards_line = "              const cards=Array.from(document.querySelectorAll('[data-prompt-id]'));\n"
-          cards_with_ids = cards_line + "              const ids=cards.map(card=>card.getAttribute('data-prompt-id')).filter(Boolean);\n"
-          rank_line = "              }).filter(item => item.top>700 && item.top<pageHeight-700)\n"
-          tall_rank_line = "              }).filter(item => item.top>700 && item.top<pageHeight-700 && item.height>innerHeight && !ids.some(other => other!==item.id && other.startsWith(item.id)))\n"
+          viewport_line = '        context = browser.new_context(viewport={"width": 1440, "height": 620}, reduced_motion="reduce")\n'
+          short_viewport_line = '        context = browser.new_context(viewport={"width": 1440, "height": 360}, reduced_motion="reduce")\n'
+          prompt_line = '        prompt_id = str(candidate["id"])\n'
+          prompt_block = '\n'.join([
+              '        prompt_id = "P126"',
+              '        candidate = page.evaluate("""() => {',
+              '          const card=document.querySelector(\'[data-prompt-id="P126"]\');',
+              '          if(!card)return null;',
+              '          const r=card.getBoundingClientRect();',
+              "          return {id:'P126',height:r.height,top:r.top+scrollY};",
+              '        }""")',
+              '        if not candidate:',
+              '            raise AssertionError("P126 is unavailable for snap probe")',
+              '        if candidate["height"] <= 360:',
+              '            raise AssertionError(f"P126 must be taller than the short regression viewport: {candidate}")',
+              '',
+          ])
           call_line = '        page.evaluate("id => centerRenderedPromptCard(id,\'instant\')", prompt_id)\n'
           call_block = '\n'.join([
               '        page.evaluate("() => { if(document.activeElement && document.activeElement.blur)document.activeElement.blur(); window.scrollTo(0,0); }")',
-              '        if not prompt_id.startswith("P") or not prompt_id[1:].isdigit():',
-              '            raise AssertionError(f"Unexpected prompt id for numeric keyboard route: {prompt_id}")',
-              '        page.keyboard.type(prompt_id[1:])',
+              '        page.keyboard.type("126")',
               '        page.wait_for_timeout(900)',
               '',
           ])
 
           for old, new, label in (
-              (cards_line, cards_with_ids, 'candidate-id inventory'),
-              (rank_line, tall_rank_line, 'tall unambiguous candidate filter'),
+              (viewport_line, short_viewport_line, 'short desktop viewport'),
+              (prompt_line, prompt_block, 'P126 geometry target'),
               (call_line, call_block, 'real numeric shortcut route'),
           ):
               if text.count(old) != 1:
