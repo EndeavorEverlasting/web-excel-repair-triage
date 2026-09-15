@@ -29,6 +29,35 @@
   },
   "suites": [
     {
+      "id": "prompt-route-control-plane",
+      "owner": "AFK Agent Flow/P67",
+      "surface": "Canonical prompt routing across human, agent, classifier, script, and workflow actors",
+      "layer": "deterministic",
+      "blocking": true,
+      "command": [
+        "python",
+        "scripts/evaluate_prompt_route_receipts.py",
+        "--output",
+        "Outputs/repository-ai-evals/prompt-route-receipts.json",
+        "--summary"
+      ],
+      "artifact": "Outputs/repository-ai-evals/prompt-route-receipts.json",
+      "case_source": "harness/evals/fixtures/prompt-route-receipt-cases.v1.json",
+      "contract": "harness/contracts/operant-prompt-routing.v1.json",
+      "failure_classes": [
+        "precedence_conflict",
+        "arrival_order_dependence",
+        "tie_break_nondeterminism",
+        "stale_route_mutation",
+        "duplicate_second_mutation",
+        "idempotency_key_collision",
+        "human_dependency_accepted",
+        "validation_repair_unrouted",
+        "dom_dependency"
+      ],
+      "proof_ceiling": "Deterministic route-state semantics, canonical registry resolution, autonomy-gap classification, CAS, precedence, idempotency, and headless routing at one exact repository head."
+    },
+    {
       "id": "prompt-finder-routing",
       "owner": "P67",
       "surface": "Prompt Finder recommendation routing",
