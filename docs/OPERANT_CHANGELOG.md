@@ -6,6 +6,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 
 ### Features / breaking pre-1.0 changes
 
+- feat(prompt-kit): add prompt detail quick actions (`e8da5377`)
 - feat(prompt-kit): require progress-bearing execution and quiescence (`45fc40de`)
 - feat(prompt-kit): add isolated writer convergence contract (`017f7836`)
 - feat(prompt-kit): enforce Drive-primary artifact handoff (`5a295e0a`)
@@ -19,6 +20,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(prompt-kit): restore P07 closeout and phase-continuity nextStep gates (`8d7eff77`)
 - fix(prompt-kit): correct P04 OUTPUT ORDER numbering and CLI path refs (`4ccc5b9d`)
 - fix(prompt-kit): avoid nested backticks in P04 dispatch CLI examples (`17be3de9`)
+- fix(prompt-kit): route detail Home End before page hotkeys (`ebf6461a`)
 - fix(prompt-kit): make continuation explicitly progress-bearing (`1731d94b`)
 - fix(prompt-kit): scope proof freshness to relevant inputs (`5d8eb2bc`)
 - fix(prompt-kit): scope appendix head movement to proof relevance (`6e06182e`)
