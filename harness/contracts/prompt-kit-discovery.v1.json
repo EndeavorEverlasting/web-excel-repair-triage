@@ -83,7 +83,11 @@
     },
     {
       "id": "snap_hides_filters",
-      "expected": "Any snap-to-prompt path that centers a rendered prompt card (centerRenderedPromptCard, including reveal/activate shortcut targets and detail open) automatically collapses the compact filter chrome via hideCompactFilters so the filter menu cannot obscure the snapped prompt."
+      "expected": "Any snap-to-prompt path that reveals a rendered prompt card (centerRenderedPromptCard, including reveal/activate shortcut targets and detail open) automatically collapses the compact filter chrome via hideCompactFilters so the filter menu cannot obscure the snapped prompt."
+    },
+    {
+      "id": "snap_prioritizes_prompt_header",
+      "expected": "Every snap-to-prompt path gives snap navigation sole scroll ownership, makes requested instant snaps independent of page-level smooth-scroll CSS, suppresses selection's ordinary smooth-scroll side effect for that composed journey, and places the target prompt header immediately below visible fixed/sticky page chrome or near the viewport top when that chrome is not occupying the viewport; tall prompt cards must not clip prompt identity above the viewport."
     },
     {
       "id": "stable_identity_resequence",

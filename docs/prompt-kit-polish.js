@@ -716,14 +716,50 @@ function promptShortcutHasLongerPrefix(candidate,gestures){
   return gestures.some(function(gesture){return gesture!==candidate&&gesture.indexOf(candidate)===0})
 }
 
+function promptSnapViewportOffset(){
+  var gap=12;
+  var header=document.querySelector('.header');
+  if(!header)return gap;
+  try{
+    var position=window.getComputedStyle(header).position;
+    if(position!=='sticky'&&position!=='fixed')return gap;
+    var rect=header.getBoundingClientRect();
+    var viewportHeight=window.innerHeight||document.documentElement.clientHeight||0;
+    var bottom=Number(rect&&rect.bottom)||0;
+    var visibleBottom=Math.max(0,Math.min(viewportHeight,bottom));
+    return Math.max(gap,Math.ceil(visibleBottom+gap))
+  }catch(e){return gap}
+}
+
+function snapRenderedPromptCardHeader(card,behavior){
+  if(!card)return false;
+  var scrollBehavior=behavior||hotkeyScrollBehavior();
+  try{
+    var rect=card.getBoundingClientRect();
+    var pageTop=window.scrollY||window.pageYOffset||0;
+    var top=Math.max(0,pageTop+rect.top-promptSnapViewportOffset());
+    if(scrollBehavior==='instant'){
+      var root=document.documentElement;
+      var previousScrollBehavior=root&&root.style?root.style.scrollBehavior:'';
+      if(root&&root.style)root.style.scrollBehavior='auto';
+      try{window.scrollTo(0,top)}
+      finally{if(root&&root.style)root.style.scrollBehavior=previousScrollBehavior}
+    }else{
+      window.scrollTo({top:top,behavior:scrollBehavior})
+    }
+  }catch(e){
+    try{card.scrollIntoView({behavior:scrollBehavior,block:'start',inline:'nearest'});window.scrollBy(0,-promptSnapViewportOffset())}
+    catch(ignore){try{card.scrollIntoView()}catch(ignore2){}}
+  }
+  return true
+}
+
 function centerRenderedPromptCard(promptId,behavior){
   hideCompactFilters();
   var selector='[data-prompt-id="'+String(promptId||'').replace(/"/g,'')+'"]';
   var card=document.querySelector(selector);
   if(!card)return false;
-  var scrollBehavior=behavior||hotkeyScrollBehavior();
-  try{card.scrollIntoView({behavior:scrollBehavior,block:'center',inline:'nearest'})}catch(e){try{card.scrollIntoView()}catch(ignore){}}
-  return true
+  return snapRenderedPromptCardHeader(card,behavior||hotkeyScrollBehavior())
 }
 
 function revealPromptShortcutTarget(promptId,behavior){
@@ -737,7 +773,7 @@ function revealPromptShortcutTarget(promptId,behavior){
   document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__all__')});
   renderTypes();
   render();
-  try{if(typeof selectPrompt==='function')selectPrompt(promptId,'keyboard')}catch(e){}
+  try{if(typeof selectPrompt==='function')selectPrompt(promptId,{source:'keyboard',scroll:false})}catch(e){}
   return centerRenderedPromptCard(promptId,behavior||hotkeyScrollBehavior())
 }
 
@@ -745,7 +781,6 @@ function activatePromptShortcutTarget(promptId){
   var prompt=PROMPTS.find(function(item){return item.id===promptId});
   if(!prompt)return false;
   if(!revealPromptShortcutTarget(promptId,'instant')){showToast(promptId+' could not be revealed');return false}
-  try{if(typeof selectPrompt==='function')selectPrompt(promptId,'keyboard')}catch(e){}
   copyPrompt(promptId);
   return true
 }
