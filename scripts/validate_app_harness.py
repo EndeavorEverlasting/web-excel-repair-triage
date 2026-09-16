@@ -32,6 +32,8 @@ REQUIRED_FILES = (
     "harness/artifacts.v1.json",
     "harness/validators.v1.json",
     "scripts/validate_harness.py",
+    "harness/artifact-handoff/manifest.v1.json",
+    "scripts/validate_artifact_handoff_harness.py",
     ".githooks/pre-commit",
     ".githooks/pre-push",
 )
@@ -83,6 +85,7 @@ def safe_runner(command: Sequence[str], root: Path) -> subprocess.CompletedProce
             str(root / "Outputs" / "harness-completeness-report.json"),
         ),
         command == (sys.executable, "-m", "triage.gitignore_hygiene"),
+        command == (sys.executable, str(root / "scripts" / "validate_artifact_handoff_harness.py"), "--summary"),
     )
     if not any(allowed):
         raise RuntimeError(f"command is not in the offline allowlist: {' '.join(command)}")
@@ -185,6 +188,15 @@ def check_report_renderer(root: Path) -> Check:
     )
 
 
+def check_artifact_handoff_contract(root: Path, runner: Runner) -> Check:
+    command = [sys.executable, str(root / "scripts" / "validate_artifact_handoff_harness.py"), "--summary"]
+    completed = runner(command, root)
+    if completed.returncode:
+        detail = (completed.stderr or completed.stdout).strip()
+        return result("artifact_handoff_contract", "artifact handoff contract", False, "artifact_handoff_harness_failed", [detail][:1])
+    return result("artifact_handoff_contract", "artifact handoff contract", True, "drive_primary_handoff_contract_passed")
+
+
 def check_optional_mcp(root: Path, env: Mapping[str, str]) -> Check:
     if env.get("HARNESS_LSP_PROJECT_LOADED") != "1":
         return Check("optional_mcp_symbol_smoke", "optional MCP symbol smoke", "OPTIONAL", "SKIP", "lsp_project_not_loaded", [])
@@ -252,6 +264,7 @@ def validate(root: Path, runner: Runner = safe_runner, env: Mapping[str, str] | 
         run_context,
         check_artifact_registry(root),
         check_report_renderer(root),
+        check_artifact_handoff_contract(root, runner),
         check_optional_mcp(root, environment),
         check_hook_hygiene(root, runner),
     ]
