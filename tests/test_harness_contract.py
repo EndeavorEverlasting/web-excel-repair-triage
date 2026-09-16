@@ -271,39 +271,32 @@ class HarnessContractTests(unittest.TestCase):
         ):
             self.assertIn(phrase, pre_commit)
 
+        self.assertEqual(
+            validators["hooks"]["pre_push"]["profile"],
+            "pre_push",
+        )
+        self.assertEqual(
+            validators["hooks"]["pre_push"]["index_mode"],
+            "working-tree",
+        )
         pre_push = (ROOT / ".githooks" / "pre-push").read_text(
             encoding="utf-8"
         )
-        self.assertIn(
-            "python scripts/validate_prompt_kit_cross_device_access.py --summary",
-            pre_push,
-        )
-        self.assertIn(
-            "python -m unittest tests.test_prompt_kit_cross_device_access -v",
-            pre_push,
-        )
+        for command in validate_harness.PRE_PUSH_PRESERVED_COMMANDS:
+            self.assertIn(command, pre_push)
+
+        self.assertIn(validate_harness.PRE_PUSH_PROFILE_RUNNER, pre_push)
+        self.assertIn(validate_harness.PRE_PUSH_PROFILE_REPORT, pre_push)
+
+        validator_by_id = {
+            item["id"]: item for item in validators["validators"]
+        }
         for validator_id in validators["profiles"]["pre_push"]:
-            command = {
-                item["id"]: item["command"]
-                for item in validators["validators"]
-            }[validator_id]
-            if validator_id == "harness-completeness":
-                self.assertIn(
-                    'python scripts/validate_harness.py --report "$HARNESS_REPORT"',
-                    pre_push,
-                )
-            elif validator_id == "prompt-kit-interaction-audit":
-                self.assertIn(
-                    "python scripts/validate_prompt_kit_interactions.py",
-                    pre_push,
-                )
-            elif validator_id == "prompt-language-audit":
-                self.assertIn(
-                    "python scripts/evaluate_prompt_language.py",
-                    pre_push,
-                )
-            else:
-                self.assertIn(command, pre_push)
+            self.assertNotIn(
+                validator_by_id[validator_id]["command"],
+                pre_push,
+                f"registered pre-push validator duplicated in hook: {validator_id}",
+            )
 
     def test_tracked_file_probe_is_bounded_noninteractive_and_byte_mode(self) -> None:
         fake = SimpleNamespace(
