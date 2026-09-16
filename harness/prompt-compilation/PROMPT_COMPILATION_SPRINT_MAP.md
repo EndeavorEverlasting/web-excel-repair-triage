@@ -1,11 +1,11 @@
 # Prompt Compilation & Adaptive Language — Canonical Sprint Map
 
-**Status:** TRACKED / SPRINTS 1–2 INTEGRATED ON MAIN VIA #483/#485
+**Status:** TRACKED / SPRINTS 1–2 INTEGRATED ON MAIN; SPRINT 3 DESIGN+PROTOTYPE REVISION ACTIVE
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
-**Planning floor:** refreshed `main@86044bfb27de95fbf60d29adf2ce54689b09c303` (provider refresh 2026-09-14)
+**Planning floor:** refreshed `main@de42daf148a2f09754b3eb2f7fd88799162d1e05` (provider refresh 2026-09-16)
 **Architecture authority:** `harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md`
 **P95 constraint floor:** `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md` (adapter-only; no universal envelope/bus)
-**Ledger index:** TRQ-009
+**Ledger index:** TRQ-009 (Sprint 1), TRQ-010 (Sprint 2), TRQ-012 (Sprint 3 design/prototypes)
 
 This file is the durable phase map for Prompt Compilation. Chat is not the canonical plan surface.
 
@@ -23,7 +23,7 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 
 - **Evidence Spine / P95 owns lifecycle state owners and continuation.** Prompt Compilation must not add event types or a bus.
 - **TRQ-007 owns compute-authority A/B measurement.** Do not mutate frozen control/treatment identities inside that study from this lane.
-- **PR #450 / #431 remain separately owned donors.** Forbidden in Sprint 1.
+- **PR #450 / #431 remain separately owned donors.** Forbidden until a later authorized reconciliation.
 - **Generated `web/prompt-kit/index.html` is builder-owned.** Do not hand-edit.
 
 ## Phase map
@@ -55,15 +55,6 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 - model-generated policy promotion
 - universal event bus
 
-**Expected artifacts:**
-
-- architecture + sprint map under `harness/prompt-compilation/`
-- schemas under `harness/contracts/`
-- compiler/validator under `scripts/prompt_language_compiler.py`
-- gold fixture `TC06-parallelism-modality`
-- focused unit tests
-- TRQ-009 ledger row
-
 **Validation:**
 
 1. `python -m unittest tests.test_prompt_compilation -v`
@@ -81,27 +72,76 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 
 **Forbidden:** event ownership; UI product surface; auto-promotion; #450/#431 donor salvage; new Evidence Spine event types.
 
-### Sprint 3 — Prompt Kit wiring + Compute Mode product surface
+### Sprint 3 — Improvement-Candidate Compiler call-stack prototypes
 
-**Status:** PLANNED (dependency: Sprint 2)
+**Status:** DESIGNED / PROTOTYPED in lane `design/prompt-compilation-program-20260916` (this revision); integrate via TRQ-012
 
-**Owned:** wire compiler into effective-prompt generation path; user-facing Compute Mode (Exhaustive/Efficient) with per-prompt overrides.
+**Dependency:** Sprint 2 INTEGRATED; P95 adapter-only floor present on main.
 
-**Forbidden:** weakening safety gates; bypassing builder-owned generation.
+**Owned:**
 
-### Sprint 4 — Improvement-candidate eval loop
+- program-design sections in architecture (vocabulary, module map, ownership, call stacks, alternatives)
+- phase reorder: Improvement Compiler before UI
+- `scripts/prompt_improvement_compiler.py` executable journey
+- deterministic hypothesis catalog
+- IJ01 success + IJ02 failure journey fixtures
+- focused tests for success and consequential failure stacks
+- ledger index TRQ-012
 
-**Status:** PLANNED (dependency: Sprint 1 fixtures + recurrence evidence owners)
+**Forbidden:**
 
-**Owned:** recurrence → candidate → gold fixture → deterministic eval → PR draft path; still reviewed_pr_only.
+- UI Compute Mode toggle / product surface
+- #450 / #431 donor work
+- raw conversation ingestion
+- new Evidence Spine event types / universal event bus
+- automatic source mutation
+- automatic PR merge
+- model-generated policy promotion
+- mutating TRQ-007 frozen prompt identities
+- hand-editing generated Prompt Kit output
 
-**Forbidden:** auto-merge; model-only policy promotion.
+**Expected artifacts:**
 
-## Acceptance for Sprint 1
+- updated `PROMPT_COMPILATION_ARCHITECTURE.md` + this sprint map
+- `scripts/prompt_improvement_compiler.py`
+- `harness/prompt-compilation/improvement-hypothesis-catalog.v1.json`
+- `harness/prompt-compilation/improvement-journeys/IJ01-*`, `IJ02-*`
+- `tests/test_prompt_improvement_compiler.py`
+- TRQ-012 ledger row
 
-- Architecture and sprint map are tracked and reference P95 constraints.
-- Three IRs + build receipt + improvement-candidate schemas validate examples.
-- Language Engine rejects weakening language for MUST + exhaustive + parallel-ready context.
-- Language Engine accepts imperative dispatch semantics with typed failure + proof requirement.
-- Improvement candidate format requires evidence refs, affected authority, required regressions, and `reviewed_pr_only`.
-- No forbidden-scope mutations appear in the Sprint 1 diff.
+**Validation:**
+
+1. `python -m unittest tests.test_prompt_compilation tests.test_prompt_context_engine tests.test_prompt_improvement_compiler -v`
+2. `python scripts/prompt_language_compiler.py validate-fixtures --summary`
+3. `python scripts/prompt_improvement_compiler.py run-journey --finding harness/prompt-compilation/improvement-journeys/IJ01-modality-recurrence/finding.json --summary`
+4. `python scripts/validate_repository_work_ledger.py`
+5. `git diff --check`
+
+**Proof ceiling:** DESIGNED/TRACKED + locally VALIDATED prototypes; INTEGRATED when merged to default branch. No production UI wiring; no auto-PR creation; no claim of observed self-improvement in the field.
+
+**UI Compute Mode remains deferred** to Sprint 4.
+
+### Sprint 4 — Prompt Kit wiring + Compute Mode product surface
+
+**Status:** PLANNED (dependency: Sprint 3 integrated)
+
+**Owned:** wire compiler into effective-prompt generation path; user-facing Compute Mode (Exhaustive/Efficient) with per-prompt overrides; preserve builder-owned generation.
+
+**Forbidden:** weakening safety gates; bypassing builder-owned generation; auto-promotion of improvement candidates.
+
+### Sprint 5 — Improvement-candidate production eval loop hardening
+
+**Status:** PLANNED (dependency: Sprint 3 prototypes + recurrence evidence owners)
+
+**Owned:** broaden fingerprint catalog; optional `Outputs/` draft retention; tighter P115 work-request handoff without absorbing P115 ownership; still `reviewed_pr_only`.
+
+**Forbidden:** auto-merge; model-only policy promotion; Evidence Spine event invention.
+
+## Acceptance for Sprint 3
+
+- Architecture records module map, ownership, SUCCESS CALL STACK, FAILURE CALL STACK, and alternatives compared.
+- Sprint map places Improvement Compiler before UI and keeps UI forbidden for Sprint 3.
+- IJ01 journey emits candidate + TC06 eval pass + PR draft with `auto_merge=false`.
+- IJ02 / missing-evidence / self-authorizing promotion failures fail closed.
+- Existing Sprint 1–2 tests remain green.
+- Exact validated head integrates to current default branch when gates allow.
