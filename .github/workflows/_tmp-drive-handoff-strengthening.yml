@@ -22,6 +22,8 @@ jobs:
           python-version: '3.12'
       - name: Apply P79 strengthen-first disposition
         run: python scripts/_tmp_apply_drive_handoff_strengthening.py
+      - name: Preserve root harness registry ownership
+        run: git checkout HEAD -- harness/manifest.v1.json harness/validators.v1.json
       - name: Remove temporary carrier sources before proof
         run: |
           rm scripts/_tmp_apply_drive_handoff_strengthening.py
