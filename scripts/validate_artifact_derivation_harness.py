@@ -57,6 +57,16 @@ def require_file(relative: str) -> Path:
     return path
 
 
+def _pre_commit_snapshot_owns(validator_id: str) -> bool:
+    """Accept durable snapshot-profile delegation in place of a copied hook marker."""
+    hook = require_file(".githooks/pre-commit").read_text(encoding="utf-8")
+    if "run_validator_profile.py --profile pre_commit_snapshot" not in hook:
+        return False
+    registry = load_json(ROOT / "harness" / "validators.v1.json")
+    profile = registry.get("profiles", {}).get("pre_commit_snapshot")
+    return isinstance(profile, list) and validator_id in profile
+
+
 def _split_identity(value: str) -> tuple[str | None, str]:
     raw = str(value or "").strip().replace("\\", "/")
     if not raw:
@@ -261,10 +271,15 @@ def validate_static_harness() -> dict[str, Any]:
     }
     for relative, marker in markers.items():
         text = require_file(relative).read_text(encoding="utf-8")
-        if marker not in text:
-            raise ValidationError(
-                f"{relative} missing integration marker: {marker}"
-            )
+        if marker in text:
+            continue
+        if relative == ".githooks/pre-commit" and _pre_commit_snapshot_owns(
+            "artifact-derivation-harness-audit"
+        ):
+            continue
+        raise ValidationError(
+            f"{relative} missing integration marker: {marker}"
+        )
     skill = require_file(str(components["skill"])).read_text(encoding="utf-8")
     for heading in (
         "## Trigger",
