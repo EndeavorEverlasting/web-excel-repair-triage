@@ -18,35 +18,120 @@ jobs:
         with:
           ref: feat/prompt-compilation-sprint3-compute-mode-20260916
           fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
       - name: Install Chromium proof runtime
         run: |
           set -euo pipefail
           python -m pip install --disable-pip-version-check playwright==1.55.0
           python -m playwright install --with-deps chromium
-      - name: Implement, validate, generate, and push exact candidate
+
+      - name: Patch owned Sprint 3 sources
         run: |
           set -euo pipefail
           python - <<'PY'
           import importlib.util
           from pathlib import Path
-
           carrier = Path('.github/carriers/prompt_compilation_sprint3_compute_mode.py')
           spec = importlib.util.spec_from_file_location('prompt_compilation_sprint3_compute_mode', carrier)
           if spec is None or spec.loader is None:
               raise RuntimeError('unable to load Sprint 3 carrier')
           module = importlib.util.module_from_spec(spec)
           spec.loader.exec_module(module)
-          original_validation = module.deterministic_validation
-
-          def ordered_validation():
-              # Generated-site assertions are part of the focused suite, so build first.
-              module.run('python', 'scripts/build_prompt_kit_registry.py', '--output', 'web/prompt-kit/index.html')
-              original_validation()
-
-          module.deterministic_validation = ordered_validation
-          raise SystemExit(module.main())
+          module.patch_product()
           PY
+
+      - name: Build canonical Prompt Kit before generated-site assertions
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+      - name: Focused deterministic tests
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_prompt_compilation tests.test_prompt_context_engine tests.test_prompt_kit_compute_mode tests.test_prompt_kit_profiles tests.test_prompt_kit_storage_lifecycle_runtime tests.test_prompt_kit_ui_format_alignment -v
+
+      - name: Compiler fixture regression
+        run: |
+          set -euo pipefail
+          python scripts/prompt_language_compiler.py validate-fixtures --summary
+
+      - name: UI format alignment gate
+        run: |
+          set -euo pipefail
+          python scripts/validate_prompt_kit_ui_format_alignment.py --require-implementation --summary
+
+      - name: Repository work ledger gate
+        run: |
+          set -euo pipefail
+          python scripts/validate_repository_work_ledger.py
+
+      - name: Runtime syntax gate
+        run: |
+          set -euo pipefail
+          node --check docs/prompt-kit-profiles.js
+
+      - name: Generated artifact parity gate
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+
+      - name: Diff hygiene gate
+        run: |
+          set -euo pipefail
+          git diff --check
+
+      - name: Chromium product proof
+        run: |
+          set -euo pipefail
+          python tests/prompt_kit_compute_mode_browser_proof.py
+
+      - name: Commit exact Sprint 3 candidate
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            .ai/WORK_QUEUE.md \
+            docs/prompt-kit-profiles.js \
+            docs/prompt-kit-storage-lifecycle.js \
+            harness/contracts/prompt-kit-compute-mode.v1.json \
+            harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md \
+            harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md \
+            scripts/prompt_language_compiler.py \
+            tests/test_prompt_kit_compute_mode.py \
+            tests/prompt_kit_compute_mode_browser_proof.py \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'feat(prompt-compilation): wire Compute Mode into Prompt Kit'
+          echo "CANDIDATE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Exact-candidate deterministic revalidation
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python -m unittest tests.test_prompt_compilation tests.test_prompt_context_engine tests.test_prompt_kit_compute_mode tests.test_prompt_kit_profiles tests.test_prompt_kit_storage_lifecycle_runtime tests.test_prompt_kit_ui_format_alignment -v
+          python scripts/prompt_language_compiler.py validate-fixtures --summary
+          python scripts/validate_prompt_kit_ui_format_alignment.py --require-implementation --summary
+          python scripts/validate_repository_work_ledger.py
+          node --check docs/prompt-kit-profiles.js
+          git diff --check
+
+      - name: Exact-candidate Chromium revalidation
+        run: |
+          set -euo pipefail
+          python tests/prompt_kit_compute_mode_browser_proof.py
+
+      - name: Retire carrier and push validated lane
+        run: |
+          set -euo pipefail
+          test -n "${CANDIDATE_SHA:-}"
+          git rm .github/workflows/prompt-compilation-sprint3-compute-mode.yml .github/carriers/prompt_compilation_sprint3_compute_mode.py
+          git commit -m 'chore(carrier): retire Prompt Compilation Sprint 3 executor'
+          echo "FINAL_SHA=$(git rev-parse HEAD)"
+          git push origin HEAD:feat/prompt-compilation-sprint3-compute-mode-20260916
+          git status --short --untracked-files=no
