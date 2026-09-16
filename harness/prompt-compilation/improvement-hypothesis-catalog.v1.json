@@ -1,0 +1,25 @@
+{
+  "schema_version": "prompt-improvement-hypothesis-catalog/v1",
+  "promotion_authority": "reviewed_pr_only",
+  "notes": "Deterministic hypothesis lookup only. No model-generated policy promotion.",
+  "hypotheses": {
+    "parallel_dispatch.modality_weakened": {
+      "id": "H-parallel-dispatch-modality",
+      "affected_authority": "language-engine",
+      "rule": "MUST obligations may not compile through permissive modal verbs",
+      "required_regressions": ["TC06-parallelism-modality"]
+    },
+    "parallel_dispatch": {
+      "id": "H-parallel-dispatch-family",
+      "affected_authority": "language-engine",
+      "rule": "MUST obligations may not compile through permissive modal verbs",
+      "required_regressions": ["TC06-parallelism-modality"]
+    },
+    "generic": {
+      "id": "H-generic-language-non-weakening",
+      "affected_authority": "language-engine",
+      "rule": "Language Engine must fail closed on MUST-weakening constructs",
+      "required_regressions": ["TC06-parallelism-modality"]
+    }
+  }
+}
