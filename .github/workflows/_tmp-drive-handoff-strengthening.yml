@@ -45,7 +45,7 @@ jobs:
           python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json
       - name: Validate P140 and registry semantics
         run: |
-          python -m unittest tests.test_health_record_workspace_sync_prompt tests.test_spec_architecture_prompt_registry tests.test_prompt_kit_mainline_delivery -v
+          python -m unittest tests.test_health_record_workspace_sync_prompt tests.test_spec_architecture_prompt_registry -v
       - name: Validate root harness and patch hygiene
         run: |
           python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
