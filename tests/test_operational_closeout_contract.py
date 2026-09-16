@@ -127,6 +127,24 @@ class OperationalCloseoutContractTests(unittest.TestCase):
         self.assertIn("scope exhaustion", p83["keywords"])
         self.assertLess(len(p83["copyContent"]), 8000)
 
+    def test_phase_or_lane_boundary_cannot_erase_required_outcome_work(self) -> None:
+        appendix = self.policy["copy_content_appendix"]
+        suffix = self.policy["next_step_suffix"]
+        required = (
+            "REQUIRED SUCCESSOR WORK",
+            "still required for the whole requested outcome",
+            "phase, sprint, lane, prompt, or agent boundary",
+            "does not make required whole-outcome work OUT OF SCOPE",
+            "owner, dependency, first executable action, and completion gate",
+        )
+        for phrase in required:
+            self.assertIn(phrase, appendix)
+        self.assertIn("REQUIRED SUCCESSOR WORK", suffix)
+        self.assertNotIn("OUT OF CURRENT SCOPE", appendix)
+        self.assertNotIn("OUT OF CURRENT DESIGN SCOPE", appendix)
+        self.assertNotIn("OUT OF CURRENT SCOPE", suffix)
+        self.assertNotIn("OUT OF CURRENT DESIGN SCOPE", suffix)
+
     def test_live_cert_domain_law_requires_actionable_closeout(self) -> None:
         text = (ROOT / "harness" / "specs" / "operator-delivery.md").read_text(encoding="utf-8")
         self.assertIn("## Actionable runtime / live-cert closeout", text)
