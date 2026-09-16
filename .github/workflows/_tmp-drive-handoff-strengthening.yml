@@ -1,0 +1,64 @@
+name: Temporary Drive Primary Handoff Strengthening
+
+on:
+  push:
+    branches:
+      - fix/prompt-kit-drive-primary-handoff-20260916
+
+permissions:
+  contents: write
+
+jobs:
+  strengthen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/prompt-kit-drive-primary-handoff-20260916
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply P79 strengthen-first disposition
+        run: python scripts/_tmp_apply_drive_handoff_strengthening.py
+      - name: Remove temporary carrier sources before proof
+        run: |
+          rm scripts/_tmp_apply_drive_handoff_strengthening.py
+          rm .github/workflows/_tmp-drive-handoff-strengthening.yml
+      - name: Rebuild canonical Prompt Kit
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Validate prompt registry and generated parity
+        run: |
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Validate strengthened artifact handoff harness
+        run: |
+          python -m py_compile scripts/validate_artifact_handoff_harness.py tests/test_artifact_handoff_harness.py tests/test_google_drive_handoff_prompt_strengthening.py
+          python scripts/validate_artifact_handoff_harness.py --summary
+          python -m unittest tests.test_artifact_handoff_harness tests.test_google_drive_handoff_prompt_strengthening -v
+      - name: Validate P11 aggregate harness integration
+        run: |
+          python -m unittest tests.test_app_harness_validator -v
+          python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json
+      - name: Validate P140 and registry semantics
+        run: |
+          python -m unittest tests.test_health_record_workspace_sync_prompt tests.test_spec_architecture_prompt_registry tests.test_prompt_kit_mainline_delivery -v
+      - name: Validate root harness and patch hygiene
+        run: |
+          python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
+          python -m unittest tests.test_harness_contract -v
+          git diff --check
+      - name: Commit proven strengthening
+        env:
+          BRANCH: fix/prompt-kit-drive-primary-handoff-20260916
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 1
+          fi
+          git commit -m "feat(prompt-kit): enforce Drive-primary artifact handoff [carrier-applied]"
+          git push origin "HEAD:${BRANCH}"
