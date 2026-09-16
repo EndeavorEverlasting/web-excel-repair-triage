@@ -1,8 +1,8 @@
 # Harness Local-First Required Checks — Reference Architecture
 
-Status: executable phase map; implementation owner is the root harness validator registry.
+Status: Phase 1 integrated on `main@5c39382c693cac4eb61df375e0128f63ff9d5698`; Phase 2 implementation active; root harness validator registry remains the canonical owner.
 
-Fresh evidence floor: `main@017f78369f22e13a54f5992c683c30b1b6013a9f` (2026-09-15 research pass).
+Fresh evidence floor: `main@5c39382c693cac4eb61df375e0128f63ff9d5698` (2026-09-15 local-first continuation).
 
 ## Capability slice
 
@@ -12,20 +12,21 @@ This is not a request to replace the existing validator registry, introduce a ta
 
 ## Current repository floor
 
-Already solved internally:
+Already solved internally and now integrated:
 
-- `harness/validators.v1.json` is the declared validator authority and already records validator IDs, commands, blocking behavior, outputs, proof ceilings, named profiles, and hook bindings.
-- `harness/test-floor.v1.json` already selects a named validator profile (`pre_push`).
-- `scripts/run_deterministic_test_floor.py` already resolves that profile, executes its registered commands locally, fails closed, and emits structured evidence for the deterministic floor.
-- `.github/workflows/deterministic-test-floor.yml` already demonstrates the desired ownership direction: Actions performs provider setup/canaries/artifact upload while invoking the repository-owned deterministic runner for the actual clean floor.
+- `harness/validators.v1.json` is the declared validator authority and records validator IDs, commands, blocking behavior, outputs, proof ceilings, named profiles, and hook bindings.
+- `harness/test-floor.v1.json` selects the named `pre_push` validator profile.
+- `scripts/run_deterministic_test_floor.py` resolves that profile, executes its registered commands locally, fails closed, and emits structured deterministic-floor evidence.
+- `scripts/run_validator_profile.py` now provides the dependency-free generic `run <profile>` seam, preserves registry order/blocking/output/proof-ceiling metadata, emits a proof-relevance fingerprint, and requires no Actions runtime.
+- `.github/workflows/validator-profile-runner.yml` is an Actions-optional thin consumer: provider setup and artifact transport wrap the same repository-owned profile runner rather than redefining the profile.
+- `.github/workflows/deterministic-test-floor.yml` already demonstrates the same ownership direction for its specialized floor.
 - Hooks are explicitly optional per-worktree local gates.
 
-Gap observed on the fresh floor:
+Remaining duplication on the current floor:
 
-- no general CLI executes an arbitrary profile from `harness/validators.v1.json`;
-- `.githooks/pre-push` duplicates every command in the registered `pre_push` tail instead of delegating to the registry;
-- `.github/workflows/harness-contract.yml` separately spells out overlapping harness checks and report transport;
-- `tests/test_harness_contract.py` currently protects the duplicated pre-push command strings, so migration must change the contract deliberately rather than silently deleting checks.
+- `.githooks/pre-push` historically duplicated every command in the registered `pre_push` tail; Phase 2 removes only that duplicated tail while preserving out-of-profile coordination/safety checks.
+- `.github/workflows/harness-contract.yml` still separately spells out overlapping harness checks and report transport.
+- staged-tree `pre-commit` semantics remain intentionally separate until a profile runner can be proven against the staged checkout without weakening index isolation.
 
 ## External reference set
 
@@ -34,10 +35,10 @@ Evidence date: 2026-09-15. No external source code is copied by this work.
 | Reference | Evidence identity | License | Observed implementation mechanism | Disposition |
 | --- | --- | --- | --- | --- |
 | `pre-commit/pre-commit` | `main@a9bba55a3f74068b53f4bd4d831d7e05e34eae6c` | MIT | Repository config owns hook definitions; local execution and CI invoke the same configuration. Local hooks can delegate to repository scripts. | ADAPT |
-| `tox-dev/tox` | `main@a5a7ce622566ba4f018fb5d243483baca91a499a` | MIT | `tox.toml` owns named environments/tasks (`fast`, `fix`, `type`, release, Python matrices); Actions installs tox and invokes those environments instead of redefining the test commands. | ADAPT |
-| `kubernetes/kubernetes` | `master@c028ba348dbaea5e8b0df94b2581e70d687a77c8` | Apache-2.0 | `hack/verify-all.sh` explicitly contains no real verification logic and redirects to the canonical `make verify` owner. Compatibility entrypoints stay thin. | ADOPT mechanism |
+| `tox-dev/tox` | `main@a5a7ce622566ba4f018fb5d243483baca91a499a` | MIT | `tox.toml` owns named environments/tasks; Actions installs tox and invokes those environments instead of redefining the test commands. | ADAPT |
+| `kubernetes/kubernetes` | `master@c028ba348dbaea5e8b0df94b2581e70d687a77c8` | Apache-2.0 | `hack/verify-all.sh` contains no real verification logic and redirects to the canonical `make verify` owner. Compatibility entrypoints stay thin. | ADOPT mechanism |
 | `rust-lang/rust-analyzer` | `master@fa88768e772857f332bc8383e3a1c5a4212f9a6e` | Apache-2.0 repository metadata | Repo-owned `xtask` provides typed local developer/build tasks; CI and developer guidance point back to the same local commands, with actionable regeneration failures. | ADAPT |
-| `nektos/act` | `master@4f411281417e88660bea1c1a1749aa71ae0bd60f` | MIT | Reads `.github/workflows` and emulates Actions locally via Docker. This deliberately makes Actions YAML the task graph. | REJECT as canonical owner |
+| `nektos/act` | `master@4f411281417e88660bea1c1a1749aa71ae0bd60f` | MIT | Reads `.github/workflows` and emulates Actions locally via Docker, deliberately making Actions YAML the task graph. | REJECT as canonical owner |
 
 ### Evidence classification
 
@@ -56,15 +57,15 @@ Evidence date: 2026-09-15. No external source code is copied by this work.
 ### ADAPT
 
 1. Preserve `harness/validators.v1.json` rather than adding tox, pre-commit, Make, or another task registry.
-2. Preserve validator metadata (`blocking`, `output`, `proof_ceiling`) in the execution receipt.
+2. Preserve validator metadata (`blocking`, `output`, `proof_ceiling`) and proof-relevance inputs in execution receipts.
 3. Keep provider setup, negative canaries, protected/private-input behavior, and CI artifact upload outside the portable profile when they depend on provider/runtime context.
-4. Keep pre-commit staged-tree semantics separate from working-tree profile execution.
+4. Keep pre-commit staged-tree semantics separate from working-tree profile execution until staged-tree parity is proven.
 
 ### REJECT
 
 1. **Actions-as-source-of-truth / local emulation (`act`)** — conflicts with Actions-optional ownership and introduces Docker/provider emulation as a prerequisite for local harness checks.
 2. **Wholesale framework adoption** — duplicates an existing registry, adds dependencies, and weakens local proof metadata.
-3. **Immediate full hook/workflow replacement** — unsafe until every existing out-of-profile check and CI artifact behavior is dispositioned.
+3. **Whole-hook/workflow replacement without parity proof** — unsafe when out-of-profile safety checks or provider-only artifact behavior would disappear.
 
 ## Solved baseline vs prioritized gap
 
@@ -72,44 +73,70 @@ Evidence date: 2026-09-15. No external source code is copied by this work.
 | --- | --- | --- |
 | Versioned validator definitions | ALREADY_SOLVED_INTERNALLY | `harness/validators.v1.json` |
 | Named profiles | ALREADY_SOLVED_INTERNALLY | `harness`, `pre_commit`, `pre_push`, `target-repository`, `artifact-engine` |
-| Local profile resolution/execution inside deterministic floor | ALREADY_SOLVED_INTERNALLY | `scripts/run_deterministic_test_floor.py` |
-| Structured deterministic-floor receipt | ALREADY_SOLVED_INTERNALLY | `Outputs/deterministic-test-floor-report.json` contract |
-| Generic `run <profile>` CLI | AVAILABLE_TO_EMULATE_EXTERNALLY | tox/xtask/pre-commit mechanism; missing generic local entrypoint here |
-| Thin hook delegation | AVAILABLE_TO_EMULATE_EXTERNALLY | Kubernetes redirect/pre-commit pattern; current pre-push duplicates commands |
-| Thin Actions delegation | AVAILABLE_TO_EMULATE_EXTERNALLY | tox GitHub workflow pattern; current harness workflow duplicates commands and provider transport |
-| Proof-ceiling-aware profile receipt | PROJECT_SPECIFIC_GAP | external references do not carry this repo's evidence semantics |
+| Generic `run <profile>` CLI | ALREADY_SOLVED_INTERNALLY | Phase 1 merged via PR #504; `scripts/run_validator_profile.py` |
+| Proof-ceiling-aware profile receipt | ALREADY_SOLVED_INTERNALLY | Phase 1 receipt carries validator metadata and proof-relevance fingerprint |
+| Thin optional Actions consumer | ALREADY_SOLVED_INTERNALLY | `.github/workflows/validator-profile-runner.yml` |
+| Thin pre-push delegation | AVAILABLE_TO_EMULATE_EXTERNALLY / ACTIVE | Kubernetes redirect + pre-commit delegation pattern; Phase 2 replaces only the duplicated registered tail |
+| Thin harness-contract Actions delegation | AVAILABLE_TO_EMULATE_EXTERNALLY | tox-style CI wrapper; provider-specific setup/artifacts still require mapping |
 | Staged-tree pre-commit parity | PROJECT_SPECIFIC_GAP | must preserve repository-specific staged checkout/index policy |
-| CI canary/artifact parity during migration | PROJECT_SPECIFIC_GAP | provider-specific evidence transport must survive thin-wrapper conversion |
+| CI canary/artifact parity during harness-workflow migration | PROJECT_SPECIFIC_GAP | provider-specific evidence transport must survive thin-wrapper conversion |
 
-## Selected development target
+## Development phase map
 
-Owner: root harness validator control plane (`harness/validators.v1.json` plus a repository-owned runner under `scripts/`).
+Owner: root harness validator control plane (`harness/validators.v1.json` plus `scripts/run_validator_profile.py`).
 
-Phase 1 — **implement now**:
+### Phase 1 — INTEGRATED
 
-- add a dependency-free `scripts/run_validator_profile.py`;
-- resolve profiles exclusively from `harness/validators.v1.json`;
-- preserve declared ordering, blocking behavior, outputs, and proof ceilings;
-- rewrite `python`/`python3`/`py` entrypoints to the current interpreter as the deterministic floor already does;
-- use argument-vector execution rather than a shell;
-- optionally emit a bounded structured receipt to `Outputs/` or an explicit external/temp path;
-- add focused tests for ordering, fail-closed contract errors, blocking failure, non-blocking continuation, command parsing, and report-path safety.
+Integrated via PR #504 at `main@5c39382c693cac4eb61df375e0128f63ff9d5698`.
 
-Phase 2 — **successor**:
+Delivered:
+
+- dependency-free `scripts/run_validator_profile.py`;
+- profile resolution exclusively from `harness/validators.v1.json`;
+- declared ordering, blocking behavior, outputs, and proof ceilings preserved;
+- Python entrypoints normalized to the active interpreter;
+- argument-vector execution without a shell;
+- bounded structured receipt to `Outputs/` or explicit external/temp paths;
+- registry/profile/validator proof-relevance fingerprint;
+- focused fail-closed and execution regression tests;
+- thin Actions consumer proving the repository-owned `target-repository` profile and transporting its receipt.
+
+Observed Phase-1 proof at exact head `5a506766dabad73e5bb4963a6a6322bbd485af6f`:
+
+- 10 focused runner tests PASS;
+- `target-repository` profile PASS 3/3;
+- validator-profile receipt artifact ID `10427380461`, digest `sha256:5d028df68ba537d889be84a8ea5c0273a0c7a020f0d6ba7fb3ebbefbeeffcf8b`;
+- App harness, Artifact engine, Prompt Kit Pages, and deterministic repository floor all PASS before merge.
+
+### Phase 2 — ACTIVE
+
+Owned scope:
 
 - convert only the duplicated registered tail of `.githooks/pre-push` to `run_validator_profile.py --profile pre_push`;
-- preserve repository-work-ledger, cross-device, freshness, merge-gate, release-identity, order-navigation, artifact-handoff, and artifact-derivation checks until each is deliberately registered or explicitly kept outside the profile;
-- replace command-string duplication assertions with profile-delegation/parity assertions.
+- preserve repository-work-ledger, cross-device, freshness, merge-gate, release-identity, order-navigation, artifact-handoff, and artifact-derivation checks verbatim because they are currently outside the profile;
+- replace command-string duplication assertions with profile-delegation/parity assertions;
+- fail the contract if any registered `pre_push` command is copied back into the hook.
 
-Phase 3 — **successor**:
+Acceptance:
+
+- harness contract tests prove all 16 out-of-profile commands remain;
+- hook contains one `pre_push` profile invocation and a bounded temp receipt path;
+- every registry-owned `pre_push` command is absent from hook source;
+- executing the `pre_push` profile on the exact candidate remains green;
+- deterministic repository floor remains green;
+- merge only after refreshed main and review/check state preserve the proof-relevance fingerprint.
+
+### Phase 3 — SUCCESSOR
 
 - make `.github/workflows/harness-contract.yml` a thin consumer of the harness profile while retaining provider-only setup, PowerShell syntax proof, canaries, report uploads, and exact-candidate/patch evidence that cannot be expressed as portable validator commands;
-- require profile identity and profile receipt in CI evidence.
+- require profile identity and profile receipt in CI evidence;
+- do not delete provider-only workflow logic merely to make YAML shorter.
 
-Phase 4 — **optional convergence**:
+### Phase 4 — OPTIONAL CONVERGENCE
 
 - decide whether the out-of-profile pre-push checks belong in the root validator registry or are intentionally separate coordination/provider gates;
-- only then consider making one required-check profile the complete pre-push/harness contract.
+- only then consider making one required-check profile the complete pre-push/harness contract;
+- separately evaluate staged-tree `pre_commit` delegation using its isolated checkout semantics.
 
 ## Non-goals
 
@@ -121,10 +148,12 @@ Phase 4 — **optional convergence**:
 
 ## Validation and invalidation criteria
 
-Phase 1 is proven when focused unit tests pass, the real registry can resolve at least one existing profile without shell interpretation, a generated receipt preserves validator identity/order/blocking/proof ceilings, and patch hygiene is clean.
+Phase 1 is proven by the integrated exact-head evidence above.
 
-The choice is invalidated if current repository truth reveals an existing generic profile runner with equivalent behavior, if registered commands require shell semantics that cannot be represented safely as argv, or if the validator registry is no longer the authoritative owner.
+Phase 2 is invalidated if fresh registry truth changes the `pre_push` profile so it no longer corresponds to the duplicated tail, if a preserved out-of-profile check becomes profile-owned without the hook/test contract being reconciled, or if delegation changes working-tree semantics.
+
+The overall choice is invalidated if the validator registry ceases to be authoritative, registered commands require shell semantics that cannot be represented safely as argv, or a competing canonical generic profile runner supersedes `scripts/run_validator_profile.py`.
 
 ## Proof ceiling
 
-Repository-local execution can prove deterministic command selection/execution and receipt semantics for the checked-out source and available local dependencies. It cannot prove GitHub branch protection, provider check attribution, CI artifact retention, unavailable private inputs, platform-specific commands absent on the host, browser/device behavior, deployment, or production acceptance.
+Repository-local execution can prove deterministic profile selection/execution and receipt semantics for the checked-out source and available local dependencies. Hook static/CI proof can prove command preservation and delegation wiring. Neither proves GitHub branch protection, unavailable private inputs, browser/device behavior, deployment, or production acceptance. Phase 3 is still required before the legacy harness-contract workflow itself is thin-wrapper converged.
