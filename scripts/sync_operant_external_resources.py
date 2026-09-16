@@ -98,6 +98,11 @@ def display_title(slug: str) -> str:
     return " ".join(piece.capitalize() for piece in re.split(r"[-_]+", slug) if piece)
 
 
+def normalize_resource_root(value: object) -> str:
+    root = str(value).strip().strip("/")
+    return "" if root in {"", "."} else root
+
+
 def skill_titles() -> list[tuple[str, str, set[str]]]:
     rows: list[tuple[str, str, set[str]]] = []
     for path in sorted(SKILLS_ROOT.glob("*/SKILL.md")):
@@ -133,8 +138,8 @@ def best_match(query: set[str], candidates: list[tuple[str, str, set[str]]]) -> 
     for candidate_id, candidate_title, candidate_tokens in candidates:
         score = coverage_score(query, candidate_tokens)
         if score > best or (score == best and score > 0 and (best_id is None or candidate_id < best_id)):
-            best_id, best_title, best = candidate_id, candidate_title, score
-    return best_id, best_title, round(best, 3)
+            best_id, best_title, best = candidate_id, candidate_title, round(score, 3)
+    return best_id, best_title, best
 
 
 def resolve_github_floor(source: dict[str, Any]) -> tuple[str, str, dict[str, Any]]:
@@ -171,16 +176,18 @@ def enumerate_git_skill_tree(
     if tree.get("truncated"):
         raise ValueError(f"{repo} recursive Git tree was truncated")
 
-    root = str(source["resource_root"]).rstrip("/")
+    root = normalize_resource_root(source["resource_root"])
     filename = str(source["resource_filename"])
-    prefix = root + "/"
+    prefix = f"{root}/" if root else ""
     suffix = "/" + filename
     max_depth = int(source.get("max_depth", 1))
     exclude = {str(item) for item in source.get("exclude_root_segments", [])}
     resources: list[dict[str, Any]] = []
     for item in tree.get("tree", []):
         path = str(item.get("path", ""))
-        if item.get("type") != "blob" or not path.startswith(prefix) or not path.endswith(suffix):
+        if item.get("type") != "blob" or not path.endswith(suffix):
+            continue
+        if prefix and not path.startswith(prefix):
             continue
         relative = path[len(prefix) : -len(suffix)]
         parts = [part for part in relative.split("/") if part]
@@ -257,7 +264,7 @@ def enumerate_source(source: dict[str, Any]) -> tuple[dict[str, Any], list[dict[
     repo = str(source["repository"])
     default_branch, sha, branch = resolve_github_floor(source)
     enumeration = str(source.get("enumeration", "git_skill_tree"))
-    root = str(source["resource_root"]).rstrip("/")
+    root = normalize_resource_root(source["resource_root"])
     if enumeration == "git_skill_tree":
         resources = enumerate_git_skill_tree(source, repo=repo, sha=sha, branch=branch)
         receipt = {
@@ -265,7 +272,7 @@ def enumerate_source(source: dict[str, Any]) -> tuple[dict[str, Any], list[dict[
             "repository": repo,
             "default_branch": default_branch,
             "resolved_sha": sha,
-            "resource_root": root,
+            "resource_root": root if root else ".",
             "resource_count": len(resources),
             "enumeration": enumeration,
         }
