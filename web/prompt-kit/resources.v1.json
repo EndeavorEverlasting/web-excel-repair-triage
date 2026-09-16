@@ -35,15 +35,24 @@
       "resource_root": "skills",
       "resource_count": 37,
       "enumeration": "git_skill_tree"
+    },
+    {
+      "id": "michaelshimeles-skills",
+      "repository": "michaelshimeles/skills",
+      "default_branch": "main",
+      "resolved_sha": "513f8a24aae6383b00356fa285144b1bc3730dc1",
+      "resource_root": ".",
+      "resource_count": 7,
+      "enumeration": "git_skill_tree"
     }
   ],
   "summary": {
-    "source_count": 3,
-    "resource_count": 49,
-    "point_to_existing_prompt": 8,
+    "source_count": 4,
+    "resource_count": 56,
+    "point_to_existing_prompt": 10,
     "point_to_existing_skill": 0,
-    "point_to_external": 41,
-    "review_add_prompt": 41,
+    "point_to_external": 46,
+    "review_add_prompt": 46,
     "catalog_sources": 1,
     "catalog_entries_indexed": 0
   },
@@ -1158,6 +1167,159 @@
         "target_id": null,
         "target_title": null,
         "score": 0.333,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "michaelshimeles-skills:before-and-after",
+      "source_id": "michaelshimeles-skills",
+      "source_repo": "michaelshimeles/skills",
+      "source_sha": "513f8a24aae6383b00356fa285144b1bc3730dc1",
+      "kind": "agent-skill",
+      "slug": "before-and-after",
+      "title": "Before And After",
+      "path": "before-and-after/SKILL.md",
+      "url": "https://github.com/michaelshimeles/skills/blob/513f8a24aae6383b00356fa285144b1bc3730dc1/before-and-after/SKILL.md",
+      "search_terms": [
+        "after",
+        "before"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXISTING_PROMPT",
+        "target_id": "P94",
+        "target_title": "Regression Test & Live Behavior Guard",
+        "score": 1.0,
+        "prompt_action": "NO_NEW_PROMPT"
+      }
+    },
+    {
+      "id": "michaelshimeles-skills:code-structure",
+      "source_id": "michaelshimeles-skills",
+      "source_repo": "michaelshimeles/skills",
+      "source_sha": "513f8a24aae6383b00356fa285144b1bc3730dc1",
+      "kind": "agent-skill",
+      "slug": "code-structure",
+      "title": "Code Structure",
+      "path": "code-structure/SKILL.md",
+      "url": "https://github.com/michaelshimeles/skills/blob/513f8a24aae6383b00356fa285144b1bc3730dc1/code-structure/SKILL.md",
+      "search_terms": [
+        "code",
+        "structure"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "michaelshimeles-skills:evidence-driven-testing",
+      "source_id": "michaelshimeles-skills",
+      "source_repo": "michaelshimeles/skills",
+      "source_sha": "513f8a24aae6383b00356fa285144b1bc3730dc1",
+      "kind": "agent-skill",
+      "slug": "evidence-driven-testing",
+      "title": "Evidence Driven Testing",
+      "path": "evidence-driven-testing/SKILL.md",
+      "url": "https://github.com/michaelshimeles/skills/blob/513f8a24aae6383b00356fa285144b1bc3730dc1/evidence-driven-testing/SKILL.md",
+      "search_terms": [
+        "driven",
+        "evidence",
+        "testing"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXISTING_PROMPT",
+        "target_id": "P113",
+        "target_title": "Risk-Driven Test Floor Evolution Executor",
+        "score": 0.667,
+        "prompt_action": "NO_NEW_PROMPT"
+      }
+    },
+    {
+      "id": "michaelshimeles-skills:greploop",
+      "source_id": "michaelshimeles-skills",
+      "source_repo": "michaelshimeles/skills",
+      "source_sha": "513f8a24aae6383b00356fa285144b1bc3730dc1",
+      "kind": "agent-skill",
+      "slug": "greploop",
+      "title": "Greploop",
+      "path": "greploop/SKILL.md",
+      "url": "https://github.com/michaelshimeles/skills/blob/513f8a24aae6383b00356fa285144b1bc3730dc1/greploop/SKILL.md",
+      "search_terms": [
+        "greploop"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.0,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "michaelshimeles-skills:greploop-apps",
+      "source_id": "michaelshimeles-skills",
+      "source_repo": "michaelshimeles/skills",
+      "source_sha": "513f8a24aae6383b00356fa285144b1bc3730dc1",
+      "kind": "agent-skill",
+      "slug": "greploop-apps",
+      "title": "Greploop Apps",
+      "path": "greploop-apps/SKILL.md",
+      "url": "https://github.com/michaelshimeles/skills/blob/513f8a24aae6383b00356fa285144b1bc3730dc1/greploop-apps/SKILL.md",
+      "search_terms": [
+        "apps",
+        "greploop"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.0,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "michaelshimeles-skills:new-feature",
+      "source_id": "michaelshimeles-skills",
+      "source_repo": "michaelshimeles/skills",
+      "source_sha": "513f8a24aae6383b00356fa285144b1bc3730dc1",
+      "kind": "agent-skill",
+      "slug": "new-feature",
+      "title": "New Feature",
+      "path": "new-feature/SKILL.md",
+      "url": "https://github.com/michaelshimeles/skills/blob/513f8a24aae6383b00356fa285144b1bc3730dc1/new-feature/SKILL.md",
+      "search_terms": [
+        "feature",
+        "new"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.5,
+        "prompt_action": "REVIEW_ADD_PROMPT"
+      }
+    },
+    {
+      "id": "michaelshimeles-skills:unslop",
+      "source_id": "michaelshimeles-skills",
+      "source_repo": "michaelshimeles/skills",
+      "source_sha": "513f8a24aae6383b00356fa285144b1bc3730dc1",
+      "kind": "agent-skill",
+      "slug": "unslop",
+      "title": "Unslop",
+      "path": "unslop/SKILL.md",
+      "url": "https://github.com/michaelshimeles/skills/blob/513f8a24aae6383b00356fa285144b1bc3730dc1/unslop/SKILL.md",
+      "search_terms": [
+        "unslop"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXTERNAL",
+        "target_id": null,
+        "target_title": null,
+        "score": 0.0,
         "prompt_action": "REVIEW_ADD_PROMPT"
       }
     }
