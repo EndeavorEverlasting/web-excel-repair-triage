@@ -1,157 +1,103 @@
 # Harness Local-First Required Checks — Reference Architecture and Program Design
 
-Status: Phase 1 and Phase 2 integrated; Phase 3 design/prototype active on `feat/harness-actions-profile-delegation-20260915`.
+Status: Phases 1–3 are integrated. Phase 4 is the next bounded build seam; it must preserve staged-index isolation while moving the snapshot-safe inner pre-commit checks behind the repository-owned profile executor.
 
-Fresh evidence floor: `main@29bbf707974d43bfbd966855a3cc5b9172988db3` (2026-09-16). Phase 2 integration commit `e2c077ebaa438cdde0d4942f97bfee8d5bf2a6a2` is contained by this floor. The active Phase 3 branch was reconciled non-destructively onto that floor before further design work.
+Fresh integrated floor: `main@dc9099f8e9442567439d3cb2d85808d981cb0f67` (2026-09-16). Phase 3 merged through PR #507. The exact validated Phase 3 head was `3ea443fde432d5453f486ec6727aeb6cf369b635`; the merge commit has that tested head as a parent and the same tree `746b9c4a0938b963e2d693751a9bfb2182060b57`.
 
 ## User outcomes and invariants
 
 Primary user outcomes:
 
 1. A developer can run a named required-check profile locally without GitHub Actions and receive a deterministic pass/fail decision plus bounded evidence.
-2. Git hooks and CI consume the same repository-owned profile rather than becoming second semantic owners of the command list.
-3. A failing blocking validator stops the profile, identifies the failing validator, propagates a nonzero exit, and preserves enough evidence to diagnose the failure.
-4. Provider-only proof such as exact PR diff checks, PowerShell syntax checks, checkout identity, and artifact upload remains owned by the provider adapter; a local profile pass must never be promoted into provider proof.
-5. Staged pre-commit validation must continue to validate the staged index snapshot rather than accidentally validating unstaged working-tree content.
+2. Git hooks and CI consume repository-owned profiles rather than becoming second semantic owners of portable command lists.
+3. A failing blocking validator stops the profile, identifies the failing validator, propagates a nonzero exit, and preserves bounded diagnostic evidence.
+4. Provider-only proof such as exact PR diff checks, PowerShell syntax checks, checkout identity, and artifact upload remains owned by the provider adapter; a local profile pass is never promoted into provider proof.
+5. Staged pre-commit validation validates the staged index snapshot rather than unstaged working-tree content.
 
 Program invariants:
 
-- `harness/validators.v1.json` is the semantic authority for validator definitions and portable profile membership/order.
+- `harness/validators.v1.json` is the semantic authority for ValidatorSpecs and portable ProfileSpecs.
 - `scripts/run_validator_profile.py` is the generic local execution seam; Actions is optional.
 - registered commands execute as argument vectors without a shell;
 - Python commands use the active interpreter;
 - blocking failures fail fast; nonblocking failures may only produce `PASS_WITH_WARNINGS`;
-- repository-local profile receipts live under `Outputs/`; explicit external/temp receipt paths are allowed for adapters;
-- proof state is versioned by registry/profile/validator fingerprint rather than by repository HEAD alone;
-- provider artifacts and diagnostics are evidence, not durable business state;
-- staged-index and working-tree state are distinct execution contexts and must not share ownership implicitly.
+- repository-local receipts live under `Outputs/`; adapters may use explicit external/temp receipt paths;
+- proof state is versioned by registry/profile/validator fingerprint rather than repository HEAD alone;
+- provider artifacts and diagnostics are evidence, not durable product state;
+- working-tree, staged-index, materialized-snapshot, and provider-checkout state have separate owners.
 
-## Governance vs harness vs program
+## Governance vs harness vs program vs implementation
 
-- **Governance**: `AGENTS.md`, workflow doctrine, integration/freshness rules, and proof-state language define how repository work is performed.
-- **Harness**: registries, validators, hooks, workflows, artifact metadata, CI, reports, and tests provide control/evidence infrastructure.
-- **Program design**: the required-check runtime described below owns profile resolution, execution policy, adapter boundaries, state transitions, and failure propagation.
-- **Implementation**: broad convergence of every hook/workflow onto the program is intentionally deferred until the executable seams are proven.
-
-The harness is therefore an input and execution environment for this program, not a substitute for its runtime architecture.
+- **Governance**: `AGENTS.md`, workflow doctrine, integration/freshness rules, and evidence-state language define how work is performed.
+- **Harness**: registries, validators, hooks, workflows, artifacts, reports, tests, and CI provide control/evidence infrastructure.
+- **Program design**: the required-check runtime owns profile resolution, execution policy, state transitions, adapter boundaries, and failure propagation.
+- **Implementation**: consumers are converged onto those seams in bounded phases; no harness document substitutes for runtime ownership.
 
 ## External reference baseline
 
-Evidence date: 2026-09-15. No external source code is copied.
+Evidence date: 2026-09-15. No external source code was copied.
 
-| Reference | Evidence identity | License | Mechanism | Disposition |
+| Reference | Evidence identity | License | Relevant mechanism | Disposition |
 | --- | --- | --- | --- | --- |
 | `pre-commit/pre-commit` | `main@a9bba55a3f74068b53f4bd4d831d7e05e34eae6c` | MIT | Repository config owns hook definitions; local and CI consumers share it. | ADAPT |
 | `tox-dev/tox` | `main@a5a7ce622566ba4f018fb5d243483baca91a499a` | MIT | Named repo-owned task environments; CI invokes rather than restates them. | ADAPT |
-| `kubernetes/kubernetes` | `master@c028ba348dbaea5e8b0df94b2581e70d687a77c8` | Apache-2.0 | Thin compatibility entrypoint redirects to canonical local verification owner. | ADOPT mechanism |
+| `kubernetes/kubernetes` | `master@c028ba348dbaea5e8b0df94b2581e70d687a77c8` | Apache-2.0 | Thin compatibility entrypoint redirects to canonical local verification. | ADOPT mechanism |
 | `rust-lang/rust-analyzer` | `master@fa88768e772857f332bc8383e3a1c5a4212f9a6e` | Apache-2.0 metadata | Repo-owned typed task entrypoint reused by developers and CI. | ADAPT |
-| `nektos/act` | `master@4f411281417e88660bea1c1a1749aa71ae0bd60f` | MIT | Actions YAML is the task graph and is emulated locally. | REJECT as owner |
+| `nektos/act` | `master@4f411281417e88660bea1c1a1749aa71ae0bd60f` | MIT | Actions YAML becomes the task graph and is emulated locally. | REJECT as owner |
 
-## Design-space comparison
-
-### Candidate A — shell/YAML orchestration owns commands
-
-Hooks and workflows spell out required commands directly.
-
-- correctness: currently works but ownership is duplicated;
-- change leverage: poor; one command change can require several consumers to move together;
-- failure ownership: fragmented;
-- testability: mostly string/parity assertions;
-- disposition: **REJECT** as canonical design.
-
-### Candidate B — registry + deep profile executor + thin adapters
-
-The registry owns semantic profile state. One executor resolves and runs it. CLI, hooks, staged-snapshot orchestration, and Actions are adapters that add only context-specific behavior.
-
-- correctness: one command/profile authority;
-- interface: small (`profile`, optional registry, optional report path -> exit/result receipt);
-- state locality: strong;
-- failure handling: explicit contract failure vs validator failure;
-- change leverage: high;
-- dependency cost: none beyond stdlib/Git already present;
-- disposition: **SELECTED**.
-
-### Candidate C — new task/plugin framework
-
-Introduce tox/pre-commit/Make/Task or a new typed plugin framework as the runtime owner.
-
-- interface could be clean, but duplicates the existing registry;
-- adds dependency and migration cost before a demonstrated need;
-- would weaken repository-specific proof-ceiling/fingerprint vocabulary unless reimplemented;
-- disposition: **REJECT FOR NOW**. Revisit only if command heterogeneity or extension pressure exceeds the present executor.
-
-### Candidate D — Actions-centric local emulation
-
-Use workflow YAML as canonical state and emulate GitHub locally.
-
-- violates Actions-optional requirement;
-- makes Docker/provider semantics a local prerequisite;
-- confuses portable validation with provider evidence;
-- disposition: **REJECT**.
+Selected pattern: **registry + deep profile executor + thin context adapters**. A new task framework or Actions emulator would duplicate existing ownership and add dependencies without proven need.
 
 ## Domain vocabulary
 
 - **ValidatorSpec** — one registered check: identity, class, command, blocking policy, declared output, proof ceiling.
-- **ProfileSpec** — ordered validator identities defining one portable required-check contract.
-- **ProfileRun** — one execution of a ProfileSpec against one repository/snapshot state.
-- **ProfileReceipt** — structured result for a ProfileRun: profile identity, source/fingerprint, observed steps, exit status, failure identity, bounded stdout/stderr tails.
-- **ExecutionContext** — the state against which commands run: working tree, materialized staged snapshot, or provider checkout.
-- **ConsumerAdapter** — CLI, pre-push, pre-commit, or Actions surface that selects an execution context/profile and propagates the result.
-- **ProviderEvidence** — CI-only evidence such as exact candidate diff, checkout identity, syntax checks, and uploaded artifacts.
-- **IndexGate** — check whose truth depends on Git index metadata (`validate_staged_artifacts.py`, `git diff --cached --check`).
-- **SnapshotGate** — check that can execute against a materialized staged-tree filesystem without Git index metadata.
+- **ProfileSpec** — ordered ValidatorSpec identities defining a portable required-check contract.
+- **ProfileRun** — one execution of a ProfileSpec against one execution context.
+- **ProfileReceipt** — structured result containing profile identity, fingerprint, observed steps, status, failure identity, bounded output, and timing.
+- **ExecutionContext** — working tree, materialized staged snapshot, or provider checkout.
+- **ConsumerAdapter** — CLI, hook, or Actions surface selecting an execution context/profile and propagating the result.
+- **ProviderEvidence** — provider-only exact-candidate, syntax, or artifact-transport proof.
+- **IndexGate** — check whose truth depends on Git index metadata.
+- **SnapshotGate** — check that can execute against the materialized staged filesystem without owning Git index metadata.
 
-## Program module / interface map
+## Program module and interface map
 
-### Validator registry — canonical durable state owner
+### Validator registry — durable semantic state owner
 
-Path: `harness/validators.v1.json`
+Path: `harness/validators.v1.json`.
 
-Owns validator definitions, portable profile ordering, blocking policy, declared outputs/proof ceilings, and hook/profile bindings. It does not own provider setup, staged materialization, artifact upload, retries, or process execution.
+Owns validator definitions, portable profile order, blocking policy, declared outputs/proof ceilings, and hook/profile bindings. It does not own subprocess execution, staged materialization, provider setup, or artifact upload.
 
-### Profile contract compiler — pure-ish domain seam
+### Profile contract compiler — domain seam
 
 Current functions in `scripts/run_validator_profile.py`:
 
 - `read_registry(path)` -> validated payload + registry digest;
 - `resolve_profile(payload, profile_name)` -> ordered ValidatorSpecs;
 - `command_argv(command)` -> executable argv;
-- `profile_fingerprint(...)` -> canonical proof-relevance identities/revisions.
+- `profile_fingerprint(...)` -> proof-relevance identities/revisions.
 
-Failure contract: raises `ProfileContractError`; no validator process is started.
+Contract errors are classified as `ProfileContractError` before validator execution.
 
 ### Profile orchestrator — application owner
 
-Current interface: `execute_profile(profile_name, registry_path, report_path) -> (exit_code, report)`.
+Interface: `execute_profile(profile_name, registry_path, report_path) -> (exit_code, report)`.
 
-Hidden behavior: contract compilation, step ordering, fail-fast policy, warning accounting, Git metadata observation, receipt assembly/persistence.
-
-This is intentionally the deep module boundary. Consumers should not learn individual validator commands.
+It hides profile compilation, step ordering, fail-fast/warning policy, Git metadata observation, receipt assembly, and receipt persistence. Consumers must not learn portable validator commands.
 
 ### Process adapter — external side-effect boundary
 
-Current function: `run_command(validator)`.
+`run_command(validator)` owns subprocess invocation, repository working directory, bounded stdout/stderr capture, return code, and duration. It returns observed step data to the orchestrator; it does not own profile-level state.
 
-Owns subprocess invocation, working directory, stdout/stderr capture, return code, and duration observation. It does not classify profile-level success beyond returning the observed step result.
+### Evidence persistence
 
-### Evidence adapter
-
-Current receipt writing remains inside `execute_profile` because the interface is small and there is no demonstrated second persistence implementation. Extract only if another evidence sink appears.
-
-Runtime receipts are diagnostics/evidence, not durable product state. Retention/upload is consumer/provider policy.
-
-### Git metadata adapter
-
-Current function: `git_value(...)`.
-
-Provides optional commit/branch observation. Its failure does not redefine validator truth. Exact PR candidate/base truth remains provider-owned.
+Receipt persistence remains inside the orchestrator because no second persistence implementation has been demonstrated. Provider adapters may transport receipts but do not redefine them.
 
 ### Consumer adapters
 
-- CLI: `scripts/run_validator_profile.py` argument parsing and exit propagation.
-- Pre-push: `.githooks/pre-push`; working-tree coordination checks plus one `pre_push` profile call.
-- Actions: `.github/workflows/harness-contract.yml`; exact checkout/provider proof + one `harness` profile call + evidence transport.
-- Pre-commit: `.githooks/pre-commit`; currently owns staged index gates, snapshot materialization, and snapshot-safe checks. Broad convergence is deferred until prototype evidence selects the exact boundary.
+- CLI: argument parsing and exit propagation in `scripts/run_validator_profile.py`.
+- Pre-push: `.githooks/pre-push`; separate safety/coordination gates plus one `pre_push` profile invocation.
+- Actions: `.github/workflows/harness-contract.yml`; exact checkout/provider proof + one `harness` profile invocation + artifact transport.
+- Pre-commit: `.githooks/pre-commit`; owns Git-index gates and snapshot materialization. Its snapshot-safe inner sequence is the Phase 4 convergence target.
 
 ## Dependency direction
 
@@ -159,290 +105,203 @@ Provides optional commit/branch observation. Its failure does not redefine valid
 -> `execute_profile`
 -> `read_registry + resolve_profile + profile_fingerprint`
 -> `run_command`
--> `subprocess / filesystem / Git process`
+-> `subprocess / filesystem / optional Git observation`
 -> `step result`
 -> `profile state transition`
 -> `ProfileReceipt`
 -> `adapter exit / upload / Git allow-block decision`
 
-Allowed dependencies point inward toward the profile program. The registry never depends on hooks or CI. The executor never imports workflow/provider logic. Provider wrappers may consume a receipt but may not rewrite the profile command list.
+Dependencies point inward toward the profile program. Registry and executor never depend on workflow/provider logic.
 
 ## State and ownership
 
 | State | Canonical owner | Mutation boundary | Invalidation / lifecycle |
 | --- | --- | --- | --- |
-| Validator definitions/profile order | `harness/validators.v1.json` | tracked review/merge | any semantic registry change invalidates affected profile proof |
-| Working-tree source | Git checkout/operator | ordinary repository mutation | current local state |
-| Staged index | Git | `git add`/index mutation | commit/reset/index change |
-| Materialized staged snapshot | pre-commit adapter | temp directory only | destroyed after hook/prototype run |
-| Profile execution state | `execute_profile` | in-memory per run | ends at PASS/WARN/FAIL |
-| Profile receipt | profile executor | temp/`Outputs/` | per-run evidence; may be uploaded by CI |
-| Provider artifact | Actions adapter | GitHub run artifact store | provider retention policy |
-| Provider exact-candidate identity/diff | Actions/provider checkout | read-only observation | invalid when PR head/base changes |
+| Validator definitions/profile order | `harness/validators.v1.json` | tracked review/merge | semantic registry change invalidates affected proof |
+| Working tree | Git checkout/operator | ordinary repository mutation | current local state |
+| Staged index | Git | index mutation | `git add`, reset, commit, index change |
+| Materialized staged snapshot | pre-commit adapter | temporary directory | destroyed after run |
+| Profile execution state | `execute_profile` | in-memory | terminates PASS/WARN/FAIL |
+| Profile receipt | profile executor | temp/`Outputs/` | per-run evidence |
+| Provider artifact | Actions adapter | provider artifact store | provider retention policy |
+| Provider candidate identity/diff | Actions/provider checkout | read-only | invalidated by PR head/base movement |
 
-No cache, queue, database, daemon, server, container runtime, or deployment tier is required. This subsystem is a repo-local CLI/hook program plus ephemeral CI consumers, so managed PaaS/container/Kubernetes selection is **not applicable** on current evidence.
+No database, queue, daemon, service, container runtime, PaaS, or Kubernetes tier is needed. This subsystem is repository-local CLI/hook code plus ephemeral CI consumers.
 
 ## Profile-run state machine
 
-`REQUESTED`
--> `CONTRACT_RESOLVED`
--> `RUNNING(step n)`
--> one of:
+`REQUESTED -> CONTRACT_RESOLVED -> RUNNING(step n)` then:
 
-- `PASS` when all required steps succeed;
-- `PASS_WITH_WARNINGS` when only explicitly nonblocking steps fail;
-- `FAIL_VALIDATOR` when a blocking step fails; remaining steps are not started;
-- `FAIL_CONTRACT` when registry/profile/report-path compilation fails before execution.
+- `PASS`: all required steps pass;
+- `PASS_WITH_WARNINGS`: only explicitly nonblocking steps fail;
+- `FAIL_VALIDATOR`: a blocking validator fails and successors are not started;
+- `FAIL_CONTRACT`: registry/profile/report-path contract fails before execution.
 
-Exit mapping:
+Exit mapping: `0` = PASS/WARN, `1` = blocking validator failure, `2` = contract failure.
 
-- `0`: PASS or PASS_WITH_WARNINGS;
-- `1`: blocking validator failure;
-- `2`: profile/registry/report contract failure.
+Provider adapters may fail after local PASS (artifact upload, exact candidate diff, provider syntax). That does not rewrite the local receipt.
 
-Provider/adapters may fail independently after a local PASS (for example exact candidate diff or artifact upload). That produces provider failure, not retroactive mutation of the local receipt.
+## Representative call stacks
 
-## Representative executable call stacks
+### Local profile execution
 
-### Journey A — local required-check execution
+`developer command -> CLI -> execute_profile -> registry/profile resolution -> validator subprocesses -> profile policy -> receipt -> exit/terminal feedback`
 
-Terminal user value: developer gets a trustworthy allow/block result and a diagnostic receipt without Actions.
+Failure: malformed/unknown profile -> contract error -> exit 2 without validator execution. Blocking validator -> nonzero step -> failed-validator receipt -> exit 1 -> no successor validator.
 
-`developer command`
--> CLI parser
--> `execute_profile(profile)`
--> `read_registry`
--> `resolve_profile`
--> `profile_fingerprint`
--> `run_command` for each validator
--> validator subprocesses
--> step results
--> fail-fast/warning policy
--> ProfileReceipt write
--> process exit code
--> terminal feedback.
+### Pre-push
 
-Failure stack:
+`git push -> pre-push adapter -> preserved safety/coordination checks -> run pre_push profile -> receipt -> hook exit -> Git allow/block`
 
-unknown/malformed profile
--> `resolve_profile` / report-path validation
--> `ProfileContractError`
--> FAIL contract receipt when the destination itself is valid
--> exit 2
--> no validator starts.
+Phase 2 proved and integrated this seam.
 
-Blocking validator failure
--> `run_command`
--> nonzero return
--> orchestrator classifies validator as blocking
--> remaining validators are not started
--> failed validator recorded
--> exit 1.
+### Actions provider wrapper
 
-### Journey B — pre-push working-tree gate
+`PR/push event -> exact-head checkout -> provider-only setup/checks -> call-stack prototype -> run harness profile -> upload receipt/reports -> exact candidate diff -> job conclusion`
 
-Terminal user value: push proceeds only after coordination/safety gates and the canonical `pre_push` profile pass.
+Phase 3 proved the wrapper can stay thin without losing provider-only evidence.
 
-`git push`
--> `.githooks/pre-push`
--> separately owned coordination/safety checks
--> `run_validator_profile.py --profile pre_push`
--> ProfileRun
--> temp receipt
--> hook exit
--> Git push allow/block.
+### Staged pre-commit
 
-Phase 2 proved this design and integrated it on main.
+`git commit -> index path gate -> materialize index snapshot -> snapshot-safe profile -> leave snapshot -> cached-diff gate -> Git allow/block`
 
-### Journey C — Actions provider wrapper
+Git/pre-commit owns the staged index and materialization; the generic executor owns only the snapshot-safe profile. This is the selected Phase 4 seam.
 
-Terminal user value: exact candidate gets one provider-visible CI decision plus preserved evidence artifacts without Actions becoming profile owner.
+## Executable prototype and observed proof
 
-`pull_request/push event`
--> exact-head checkout
--> provider/runtime setup
--> provider-only syntax/coordination checks
--> focused required-check program call-stack prototype
--> `run_validator_profile.py --profile harness`
--> local ProfileReceipt
--> artifact upload of receipt + registered reports
--> provider-only staged-artifact regression
--> `git diff --check origin/main...HEAD`
--> Actions job conclusion.
+Prototype owner: `tests/test_required_check_program_call_stacks.py`.
 
-Failure ownership:
+Exact tested head: `3ea443fde432d5453f486ec6727aeb6cf369b635`.
 
-- profile failure: runner exits nonzero; CI step/job fails; receipt upload uses `always()`;
-- upload failure/missing artifact: provider adapter fails even if profile passed;
-- exact-candidate diff failure: provider adapter fails; local working-tree receipt remains truth only for its own context.
+Observed in Operational harness run `35103556125`:
 
-### Journey D — staged pre-commit snapshot candidate
+- Actions delegation prototype: PASS;
+- real staged-index materialization + real snapshot executor success path: PASS;
+- snapshot manifest corruption failure path: PASS, failed at `harness-completeness`, one observed step of two, exit 1;
+- full canonical `harness` profile: PASS, 29/29 steps observed;
+- exact candidate `git diff --check origin/main...HEAD`: PASS;
+- staged artifact contract: PASS;
+- expected provider report uploads: PASS.
 
-Terminal user value: commit decision is based on staged content, not unstaged working-tree content.
+Selected receipt artifacts include:
 
-Current production hook:
+- `harness-validator-profile` artifact `10449301845`, digest `sha256:f1d9ab6b49e55622f194e552dfb60bc64d657edf5ad8d20b11cbfe74dcc62a78`;
+- `harness-completeness-report` artifact `10449455989`, digest `sha256:6f60a72025683ad53d5351becdd83789e6681103cec61467da9d2b64fe8b15fd`.
 
-`git commit`
--> index-aware artifact gate
--> `git checkout-index` materializes isolated snapshot
--> snapshot-safe checks execute inside snapshot
--> return to source checkout
--> `git diff --cached --check`
--> commit allow/block.
+All six exact-head PR workflows completed successfully: Operational harness, Deterministic repository floor, Validator profile runner, App harness, Artifact engine, and Prompt Kit Pages.
 
-Prototype candidate:
+## Second-pass architecture critique
 
-`git commit / prototype test`
--> materialize real Git index snapshot
--> build a temporary prototype ProfileSpec from the **canonical ValidatorSpecs** `harness-completeness` + `harness-contract-tests`
--> execute the snapshot copy of `run_validator_profile.py` against that snapshot
--> receipt outside snapshot
--> PASS.
+Prototype evidence selected candidate S3: keep index phases in the pre-commit adapter and execute snapshot-safe checks through the existing generic runner.
 
-Failure prototype:
+Findings:
 
-same staged snapshot
--> mutate only snapshot `harness/manifest.v1.json` to an invalid `default_branch`
--> same real runner + same prototype profile
--> `harness-completeness` fails
--> orchestrator stops before `harness-contract-tests`
--> failed validator receipt
--> exit 1.
+- **Interface leakage:** none observed. The runner needed no Git-index or Actions-specific arguments.
+- **State ownership:** singular. Git/pre-commit owns index/snapshot; registry owns portable profile state; executor owns ProfileRun; Actions owns provider transport/proof.
+- **Failure ownership:** sound. Invalid snapshot state failed at the first blocking validator and stopped the next validator with a precise receipt.
+- **Mock pressure:** none at the evaluated seam. Git index materialization, runner, validators, and subprocesses were real. Only the temporary prototype profile grouping was synthetic.
+- **Adapter value:** justified. Actions preserves provider proof; the staged adapter preserves index isolation.
+- **Core depth:** sufficient. Splitting `run_validator_profile.py` now would add ceremony without another implementation owner.
 
-This prototype deliberately does **not** replace the production pre-commit hook. It tests whether a snapshot-safe profile seam is viable before assigning permanent profile state.
+Decision: **keep the core executor unchanged**.
 
-## Executable prototype owner
+## Solved baseline and remaining gap
 
-`tests/test_required_check_program_call_stacks.py`
-
-Prototype acceptance:
-
-1. Actions wrapper contains exactly one portable `harness` profile invocation.
-2. Provider-only checkout, PowerShell, artifact upload, profile artifact, and exact-candidate diff markers remain.
-3. No harness-profile command is copied into workflow YAML except the intentionally different provider exact-candidate patch check.
-4. A real Git index snapshot can execute the snapshot-safe validator pair through the real snapshot copy of `run_validator_profile.py`.
-5. The staged-snapshot success receipt observes both expected validators.
-6. Corrupting the snapshot manifest fails at `harness-completeness`, records one observed step of two, and returns exit 1.
-
-The prototype fakes no executor seam and no validator behavior. The only synthetic element is the temporary prototype profile grouping; it reuses the actual canonical validator definitions and is intentionally not persisted into the production registry until evidence selects it.
-
-## Alternatives for staged pre-commit convergence
-
-### S1 — delegate the existing `pre_commit` profile unchanged
-
-**Rejected by design inspection.** The current profile mixes index-aware commands (`validate_staged_artifacts.py`, `git diff --cached --check`) with snapshot-safe commands. A materialized snapshot has no canonical Git index owner, so whole-profile execution inside it would collapse two execution contexts.
-
-### S2 — teach the generic runner about Git-index phases
-
-Possible, but adds index orchestration and phase semantics to a currently portable executor. This makes the core know too much about one adapter.
-
-Disposition: **DEFER / likely reject** unless prototypes prove a genuine cross-consumer need.
-
-### S3 — keep index gates in the pre-commit adapter and introduce one snapshot-safe profile
-
-Smallest coherent boundary. The hook remains owner of materialization/index state; the existing generic executor owns snapshot-safe portable checks.
-
-Disposition: **PREFERRED CANDIDATE**, pending executable prototype proof.
-
-## Testability and observability
-
-Unit/contract proof:
-
-- `tests/test_validator_profile_runner.py` verifies profile compilation, exit/fail-fast policy, report containment, warning handling, and fingerprints.
-- `tests/test_harness_contract.py` verifies hook/registry ownership and anti-duplication.
-
-Integration/prototype proof:
-
-- `tests/test_required_check_program_call_stacks.py` crosses real Git snapshot materialization -> real runner -> real validator subprocesses -> real receipt and exercises both success/failure stacks.
-- Phase 3 Actions job runs the same prototype test before running the full canonical harness profile.
-
-Observability owner:
-
-- profile executor: bounded step stdout/stderr tails, duration, return code, validator/proof metadata, observed/required step counts, fingerprint;
-- provider adapter: workflow step conclusion and uploaded artifacts.
-
-No semantic product telemetry is needed; these are operational developer checks. Diagnostic volume remains bounded by receipt tail limits and CI retention policy.
-
-## Second-pass architecture critique gate
-
-After the executable prototype runs, reassess:
-
-1. Did staged snapshot execution require the executor to know Git-index details? If yes, the seam is wrong.
-2. Did the snapshot need copied validator logic rather than canonical ValidatorSpecs? If yes, the profile-state design is wrong.
-3. Did Actions need to know individual portable validator commands? If yes, the wrapper is still too thick.
-4. Did provider evidence disappear or become falsely represented as local proof? If yes, Phase 3 is invalid.
-5. Does `execute_profile` now expose too many caller-specific arguments? If no, keep the current single-file deep module; do not split it for aesthetics.
-6. Is the temporary snapshot profile grouping sufficient? If proven, broad implementation may persist a named snapshot-safe profile; otherwise retire the prototype without changing production pre-commit.
+| Capability | Status / owner |
+| --- | --- |
+| Versioned validator definitions | INTEGRATED — `harness/validators.v1.json` |
+| Generic local profile execution | INTEGRATED — `scripts/run_validator_profile.py` |
+| Thin optional Actions consumer | INTEGRATED — validator-profile workflow |
+| Thin pre-push profile consumer | INTEGRATED — `.githooks/pre-push` |
+| Canonical anti-duplication for pre-push | INTEGRATED — `validate_harness.py` + tests |
+| Operational Actions harness delegation | INTEGRATED — PR #507 / `main@dc9099f8...` |
+| Staged snapshot seam | PROTOTYPE PROVEN — production convergence remains Phase 4 |
+| Browser/device/deployment runtime | OUT OF SCOPE for this subsystem |
 
 ## Development phase map
 
-Owner: `harness/validators.v1.json` + `scripts/run_validator_profile.py`.
-
 ### Phase 1 — INTEGRATED
 
-PR #504 introduced and proved the generic local-first profile runner and thin optional Actions consumer. Mainline integration occurred at `5c39382c693cac4eb61df375e0128f63ff9d5698`.
+PR #504 introduced the generic local-first profile runner and thin optional Actions consumer. Integration commit: `5c39382c693cac4eb61df375e0128f63ff9d5698`.
 
 ### Phase 2 — INTEGRATED
 
-PR #505 converged the duplicated registered pre-push tail onto the `pre_push` profile, preserved separately owned safety/coordination gates, and moved anti-duplication enforcement into the canonical harness validator. Integration commit: `e2c077ebaa438cdde0d4942f97bfee8d5bf2a6a2`.
+PR #505 converged the registered pre-push tail onto the profile runner and moved anti-duplication ownership into the canonical harness validator. Integration commit: `e2c077ebaa438cdde0d4942f97bfee8d5bf2a6a2`.
 
-### Phase 3 — DESIGN / PROTOTYPE ACTIVE
+### Phase 3 — INTEGRATED
 
-Owned scope:
+PR #507 integrated the program design, provider-wrapper delegation, success/failure call-stack prototypes, and preserved provider proof. Exact tested head `3ea443fde432d5453f486ec6727aeb6cf369b635`; mainline merge `dc9099f8e9442567439d3cb2d85808d981cb0f67`.
 
-- `.github/workflows/harness-contract.yml`: portable profile delegation plus preserved provider-only behavior;
-- `tests/test_required_check_program_call_stacks.py`: provider-wrapper and staged-snapshot executable prototypes;
-- this document: canonical program design, phase map, proof boundary.
+### Phase 4 — NEXT BOUNDED BUILD: staged pre-commit convergence
 
-Forbidden scope:
+Current `.githooks/pre-commit` has two **index-aware adapter gates** that must remain outside the snapshot profile:
 
-- changing validator membership/order merely to satisfy CI;
-- production pre-commit convergence before prototype evidence;
-- weakening provider exact-candidate/artifact proof;
-- provider/promotion policy outside the operational harness workflow;
-- unrelated Prompt Kit/application behavior.
+1. before materialization: `python scripts/validate_staged_artifacts.py`;
+2. after snapshot validation: `git diff --cached --check`.
 
-Phase 3 acceptance:
+The hook materializes the index with `git checkout-index --all --prefix="$staged_tree/"`. Inside that snapshot it currently executes **14 snapshot-safe commands**:
 
-- prototype tests PASS on exact branch head;
-- full `harness` profile PASS on exact branch head;
-- Operational harness workflow uploads profile/harness/interaction/language artifacts and preserves exact-candidate diff proof;
-- deterministic repository floor remains green;
-- second-pass critique records any seam change before merge;
-- refreshed default branch contains the exact validated implementation after merge.
+1. `python scripts/validate_repository_work_ledger.py --summary`
+2. `python -m unittest tests.test_repository_work_ledger -v`
+3. `python scripts/validate_prompt_kit_cross_device_access.py --summary`
+4. `python -m unittest tests.test_prompt_kit_cross_device_access -v`
+5. `python scripts/validate_prompt_kit_freshness_guidance.py --summary`
+6. `python -m unittest tests.test_prompt_kit_freshness_guidance -v`
+7. `python scripts/validate_pr_merge_gate.py --summary`
+8. `python -m unittest tests.test_pr_merge_gate -v`
+9. `python scripts/validate_artifact_handoff_harness.py --summary`
+10. `python -m unittest tests.test_artifact_handoff_harness -v`
+11. `python scripts/validate_artifact_derivation_harness.py --summary`
+12. `python -m unittest tests.test_artifact_derivation_harness -v`
+13. `python scripts/validate_harness.py --report "$HARNESS_REPORT"`
+14. `python -m unittest tests.test_harness_contract -v`
 
-### Phase 4 — BOUNDED BUILD, only after Phase 3 evidence
+Commands 13–14 already map to canonical ValidatorSpecs `harness-completeness` and `harness-contract-tests`. Commands 1–12 are intentionally preserved by current hooks but are not yet ValidatorSpecs in `harness/validators.v1.json`; they are the exact registry gap to close before replacing the inner sequence.
 
-If staged snapshot prototype succeeds without core leakage:
+#### Phase 4 owned surfaces
 
-- add one durable snapshot-safe profile using the proven validator set/boundary;
-- change only the staged-tree inner portion of `.githooks/pre-commit` to delegate to it;
-- retain index artifact/path gate before materialization and `git diff --cached --check` after snapshot validation;
-- preserve currently out-of-profile coordination checks unless separately dispositioned;
-- add anti-duplication regression analogous to pre-push.
+- `harness/validators.v1.json`: register the 12 missing snapshot-safe audit/test commands with explicit class, output, blocking policy, and proof ceiling; define one named snapshot-safe profile containing those 12 plus `harness-completeness` and `harness-contract-tests` in existing hook order.
+- `.githooks/pre-commit`: keep the outer index path gate, `git checkout-index`, temp cleanup, and final cached-diff gate; replace only the 14-command inner block with one profile-runner call from inside the staged snapshot.
+- `scripts/validate_harness.py`: update required validator/profile ownership and enforce the pre-commit delegation boundary; reject reintroduction of profile-owned command copies while requiring the two index-aware adapter gates.
+- `tests/test_harness_contract.py`: prove registry/hook ownership, order, delegation, and anti-duplication.
+- `tests/test_staged_artifact_hygiene.py`: preserve the ordering invariant that the path-only index gate runs before materialization and cached-diff proof remains after snapshot validation.
+- `tests/test_required_check_program_call_stacks.py`: replace the temporary prototype grouping with the durable snapshot profile and retain success + corrupted-snapshot fail-fast journeys.
 
-If the prototype fails or requires index semantics inside the core runner, do not implement Phase 4 from this design; revise the seam first.
+#### Phase 4 acceptance
+
+- every current inner pre-commit command is dispositioned exactly once; none is silently dropped;
+- the durable snapshot profile executes all 14 snapshot-safe checks in existing order against a real materialized Git index;
+- the two index-aware gates remain adapter-owned and are not moved into the generic executor;
+- corrupted staged snapshot fails at the responsible blocking validator and stops successors;
+- working-tree-only unstaged mutations cannot change the staged-snapshot decision;
+- canonical harness validation rejects copied profile commands in `.githooks/pre-commit`;
+- focused staged-hook tests, the relevant named profile, Operational harness, and deterministic repository floor pass on exact head;
+- validated work is integrated to refreshed default branch before closeout.
+
+#### Phase 4 naming decision
+
+The semantic boundary should be named for the execution context, not the Git lifecycle event. Preferred profile ID: `pre_commit_snapshot`.
+
+Before mutation, search current consumers of the existing `pre_commit` profile. Current evidence shows the root validator and root harness tests depend on that identity, so the build lane must migrate or preserve compatibility deliberately rather than silently renaming it. Do not teach the generic executor phased/index semantics merely to preserve the old name.
 
 ## Non-goals
 
 - no Actions emulator;
 - no new task framework dependency;
 - no daemon/API/database/container/Kubernetes service;
-- no production pre-commit rewrite during design/prototype phase;
-- no deletion of provider-only proof to shorten YAML;
-- no claim that local/CI repository proof equals browser, device, deployment, protected-runtime, or production proof.
+- no deletion of provider-only evidence to shorten YAML;
+- no Git-index phase logic inside the generic profile executor unless future evidence proves a cross-consumer requirement;
+- no claim that repository/CI proof equals browser, device, deployment, protected-runtime, or production proof.
 
 ## Proof ceiling and invalidation
 
-Repository/local/CI prototypes can prove profile selection/execution, staged snapshot viability, fail-fast behavior, consumer delegation, receipt semantics, and provider workflow wiring for the exact tested commit.
+Current repository/CI proof establishes profile selection/execution, Actions delegation, receipt semantics, staged-snapshot seam viability, and failure propagation for the tested tree. It does not prove branch-protection configuration, unavailable private inputs, browser/device behavior, deployment, or production acceptance.
 
-They do not prove branch-protection configuration, unavailable private inputs, browser/device behavior, deployment, or production acceptance.
-
-The selected architecture is invalidated if:
+The architecture must be revisited if:
 
 - the validator registry ceases to be authoritative;
-- required commands need shell semantics the argv executor cannot represent safely;
+- required commands need unsafe/unrepresentable shell semantics;
 - staged snapshot execution requires the generic executor to own Git-index state;
-- provider-only evidence cannot survive thin-wrapper conversion;
-- a competing canonical generic profile executor is integrated;
-- the prototype reveals split ownership or failure classification that cannot be repaired without caller-specific knowledge in the core.
+- provider-only evidence cannot survive thin-wrapper ownership;
+- a competing canonical generic executor is integrated;
+- Phase 4 reveals a current inner check cannot actually execute as a snapshot-safe ValidatorSpec without caller-specific knowledge leaking into the core.
