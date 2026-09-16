@@ -218,10 +218,11 @@ def execute_profile(
     registry_path: Path = DEFAULT_REGISTRY,
     report_path: Path | None = None,
 ) -> tuple[int, dict[str, Any]]:
+    report_target: Path | None = None
     try:
+        report_target = resolve_report_path(report_path)
         registry, registry_sha256 = read_registry(registry_path)
         validators = resolve_profile(registry, profile_name)
-        report_target = resolve_report_path(report_path)
     except ProfileContractError as exc:
         report = {
             "schema_version": REPORT_SCHEMA_VERSION,
@@ -231,10 +232,11 @@ def execute_profile(
             "profile": profile_name,
             "steps": [],
         }
-        target = resolve_report_path(report_path) if report_path is not None else None
-        if target is not None:
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        if report_target is not None:
+            report_target.parent.mkdir(parents=True, exist_ok=True)
+            report_target.write_text(
+                json.dumps(report, indent=2) + "\n", encoding="utf-8"
+            )
         print(f"VALIDATOR PROFILE CONTRACT FAIL: {exc}", file=sys.stderr)
         return 2, report
 
