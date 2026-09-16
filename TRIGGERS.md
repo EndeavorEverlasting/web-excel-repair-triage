@@ -56,3 +56,5 @@ One writer owns each shared registry, workflow, generated artifact, branch, PR, 
 ## Operant external resource refresh
 
 `operant-external-resource-refresh-needed` routes scheduled donor drift, open-source resource lookup, and donor-backed prompt-gap maintenance to `.ai/skills/operant-external-resource-intake/SKILL.md`. Existing Operant coverage wins; external-only resources remain directly usable; prompt publication stays behind P79 strategic review.
+
+`repo-native-generated-surface-drift` routes declared generated-surface refresh to `.ai/skills/repo-native-update/SKILL.md` through the local CLI. Do not hand-edit generated output or add Actions-only generator workflows while minutes are exhausted.

@@ -1,11 +1,9 @@
 #!/bin/sh
 set -eu
 
-HARNESS_REPORT="${TMPDIR:-/tmp}/web-excel-harness-completeness.json"
-PROMPT_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-language-audit.json"
-INTERACTION_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-kit-interaction-audit.json"
 ORDER_NAV_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-kit-order-navigation-audit.json"
 RELEASE_IDENTITY_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-kit-release-identity.json"
+PROFILE_REPORT="${TMPDIR:-/tmp}/web-excel-pre-push-validator-profile.json"
 
 python scripts/validate_repository_work_ledger.py --summary
 python -m unittest tests.test_repository_work_ledger -v
@@ -23,28 +21,5 @@ python scripts/validate_artifact_handoff_harness.py --summary
 python -m unittest tests.test_artifact_handoff_harness -v
 python scripts/validate_artifact_derivation_harness.py --summary
 python -m unittest tests.test_artifact_derivation_harness -v
-python scripts/validate_harness.py --report "$HARNESS_REPORT"
-python -m unittest tests.test_harness_contract -v
-python scripts/validate_operant_product_identity.py --summary
-python -m unittest tests.test_operant_product_identity -v
-python scripts/validate_operant_external_resources.py --summary
-python -m unittest tests.test_operant_external_resources -v
-python -m unittest tests.test_prompt_kit_interactions_contract -v
-python scripts/validate_prompt_kit_interactions.py --output "$INTERACTION_REPORT" --summary
-python scripts/validate_prompt_kit_discovery.py --summary
-python -m unittest tests.test_prompt_kit_discovery -v
-python -m unittest tests.test_prompt_language_audit -v
-python scripts/evaluate_prompt_language.py --output "$PROMPT_REPORT" --summary
-python -m unittest tests.test_skill_prompt_registry -v
-python scripts/validate_prompt_kit_feedback_afk_routing.py --summary
-python -m unittest tests.test_prompt_kit_feedback_afk_routing -v
-python scripts/validate_prompt_outcome_receipts.py --summary
-python -m unittest tests.test_prompt_outcome_receipt_prompt -v
-python scripts/validate_prompt_kit_layout_harness.py --summary
-python -m unittest tests.test_prompt_kit_layout_harness -v
-python tests/test_prompt_kit_header_contract.py
-python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-python -m triage.gitignore_hygiene
-python -m unittest tests.test_staged_artifact_hygiene -v
-python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json
-git diff --check
+
+python scripts/run_validator_profile.py --profile pre_push --report "$PROFILE_REPORT"

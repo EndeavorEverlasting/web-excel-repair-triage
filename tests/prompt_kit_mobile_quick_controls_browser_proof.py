@@ -68,8 +68,20 @@ def main() -> int:
                 assert form.is_hidden(), 'exact P111 should close the jump form after snapping'
                 target = page.locator('[data-prompt-id="P111"]')
                 assert target.is_visible(), 'P111 card was not revealed'
-                target_box, target_mid = card_midpoint(page, 'P111')
-                assert abs(target_mid - 844 / 2) <= 150, (target_box, target_mid)
+                target_box = target.bounding_box() or {}
+                snap_geometry = page.evaluate("""() => {
+                  const header=document.querySelector('.header');
+                  const card=document.querySelector('[data-prompt-id=\"P111\"]');
+                  const title=card && card.querySelector('.prompt-header');
+                  const hr=header.getBoundingClientRect(),cr=card.getBoundingClientRect(),tr=title.getBoundingClientRect();
+                  const position=getComputedStyle(header).position;
+                  const chromeBottom=(position==='sticky'||position==='fixed')?Math.max(0,Math.min(innerHeight,hr.bottom)):0;
+                  return {headerPosition:position,chromeBottom:chromeBottom,cardTop:cr.top,titleTop:tr.top,titleBottom:tr.bottom,viewportHeight:innerHeight};
+                }""")
+                assert snap_geometry['cardTop'] >= snap_geometry['chromeBottom'] + 6, snap_geometry
+                assert snap_geometry['cardTop'] <= snap_geometry['chromeBottom'] + 24, snap_geometry
+                assert snap_geometry['titleTop'] >= snap_geometry['chromeBottom'] + 6, snap_geometry
+                assert snap_geometry['titleBottom'] <= snap_geometry['viewportHeight'], snap_geometry
                 assert page.evaluate("document.activeElement && document.activeElement.getAttribute('data-prompt-id')") == 'P111'
                 toast = page.locator('#toast').inner_text()
                 assert 'P111 ready' in toast and 'tap the prompt card to copy' in toast, toast
@@ -166,7 +178,7 @@ def main() -> int:
                     'detail_auto_open': False,
                     'card_tap_copy': True,
                     'explicit_open_preserved': True,
-                    'underlying_prompt_centered': True,
+                    'underlying_prompt_header_first': True,
                     'collision_ids': collision_ids,
                     'edge_cases': ['all-exact-prefix-collisions', 'P1-prefix-enter', 'P01-leading-zero', 'paste-P111', 'P999999-missing-enter'],
                     'more_panel_required': False,

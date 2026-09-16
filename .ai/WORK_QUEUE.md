@@ -170,3 +170,19 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** commit:05fb419d6da7344a562f654385132f3c54dd4116; merge:86044bfb27de95fbf60d29adf2ce54689b09c303 integrated PR #485; local:python -m unittest tests.test_prompt_compilation tests.test_prompt_context_engine (20 OK); CI deterministic-test-floor + ledger contract green on PR head; artifact:scripts/prompt_context_engine.py present on refreshed default branch
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-14T14:50:00-04:00
+
+## TRQ-011 — Prompt Kit UI format alignment ledger and Storage repair
+
+- **Status:** DONE
+- **Priority:** P1
+- **Owner:** cursor-ui-format-alignment-20260915
+- **Branch / PR:** main / #498 merged
+- **Scope:** repair Storage header control to the Resources formatting sequence; install UI format-alignment contract, aligned/deferred ledger, fail-closed validator, focused tests, regenerate Prompt Kit site; coerce lazy unclassed UI into deferred ledger fodder
+- **Forbidden:** unrelated redesign; privacy/storage policy mutation; force-push; hand-editing generated HTML without builder; weakening storage lifecycle or header protected contracts
+- **Dependencies:** origin/main floor containing Storage lifecycle runtime
+- **References:** `docs/PROMPT_KIT_UI_FORMAT_ALIGNMENT_PLAN.md`, `harness/contracts/prompt-kit-ui-format-alignment.v1.json`, `harness/prompt-kit-ui-format-alignment/ledger.v1.json`, `scripts/validate_prompt_kit_ui_format_alignment.py`, `docs/prompt-kit-storage-lifecycle.js`
+- **Acceptance gate:** Storage uses `operant-resource-button` + styled `prompt-storage-*` surface; validator PASS; deferred coercion test PASS; storage lifecycle + header protected tests PASS; generated site parity; PR integrated to current default branch when gates allow
+- **Gate:** none
+- **Last proof:** merge:c385735fa1b44f96392d6e07c67cf69a0b909a4e integrated PR #498; local:python scripts/validate_prompt_kit_ui_format_alignment.py --summary PASS; local:python -m unittest tests.test_prompt_kit_ui_format_alignment tests.test_prompt_kit_storage_lifecycle_runtime PASS; workflow:ui-format-alignment green on PR head; artifact:docs/prompt-kit-storage-lifecycle.js uses operant-resource-button on refreshed default branch
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-15T06:45:00Z

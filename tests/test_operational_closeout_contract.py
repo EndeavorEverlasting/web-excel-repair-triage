@@ -46,7 +46,8 @@ class OperationalCloseoutContractTests(unittest.TestCase):
             self.assertIn(phrase, appendix)
         suffix = self.policy["next_step_suffix"]
         for phrase in (
-            "exact current head is the head that was validated",
+            "current head is the validated head, or intervening head movement is proven proof-irrelevant",
+            "unchanged proof-relevance fingerprint",
             "no blocking review, conflict, branch-protection, or required-approval gate remains",
             "acting agent has merge authority",
             "user has not prohibited merge",
@@ -98,13 +99,13 @@ class OperationalCloseoutContractTests(unittest.TestCase):
         self.assertEqual(upgraded["copyContent"].count(MARKER), 1)
         self.assertIn("EVIDENCE-BEARING CLOSEOUT", upgraded["copyContent"])
 
-
     def test_scope_exhaustion_requires_supported_residual_classification(self) -> None:
         appendix = self.policy["copy_content_appendix"]
         for phrase in (
             "Reconstruct the original request, owned scope",
-            "PROVEN DONE, SAFE & EXECUTABLE, BLOCKED, UNSAFE, or OUT OF SCOPE",
-            "SAFE & EXECUTABLE means work remains",
+            "PROVEN DONE, SAFE & EXECUTABLE, BLOCKED, UNSAFE, OUT OF SCOPE, or REQUIRED SUCCESSOR WORK",
+            "SAFE & EXECUTABLE means progress-bearing work remains",
+            "A merely runnable bookkeeping action is not SAFE & EXECUTABLE for continuation",
             "Missing access is not evidence that the work is unsafe",
             "UNSAFE is a narrow evidence-bearing classification",
             "OUT OF SCOPE requires an explicit scope boundary",
@@ -112,6 +113,7 @@ class OperationalCloseoutContractTests(unittest.TestCase):
             "no SAFE & EXECUTABLE item remains",
         ):
             self.assertIn(phrase, appendix)
+        self.assertNotIn("SAFE & EXECUTABLE means work remains", appendix)
 
         p83 = self.ledger["P83"]
         for phrase in (
@@ -119,11 +121,40 @@ class OperationalCloseoutContractTests(unittest.TestCase):
             "Any SAFE & EXECUTABLE item disproves closure",
             "Missing tools, credentials, approval, or access is BLOCKED—not unsafe",
             "OUT OF SCOPE requires an explicit boundary",
+            "REQUIRED SUCCESSOR WORK",
+            "phase, sprint, lane, prompt, or agent boundary",
         ):
             self.assertIn(phrase, p83["copyContent"])
+        self.assertIn("REQUIRED SUCCESSOR WORK", p83["expectedOutput"])
+        self.assertIn("REQUIRED SUCCESSOR WORK", p83["nextStep"])
+        self.assertIn("REQUIRED SUCCESSOR WORK", p83["proofGate"])
         self.assertIn("no safe actionable work remains", p83["keywords"])
         self.assertIn("scope exhaustion", p83["keywords"])
         self.assertLess(len(p83["copyContent"]), 8000)
+
+    def test_phase_or_lane_boundary_cannot_erase_required_outcome_work(self) -> None:
+        appendix = self.policy["copy_content_appendix"]
+        suffix = self.policy["next_step_suffix"]
+        required = (
+            "REQUIRED SUCCESSOR WORK",
+            "still required for the whole requested outcome",
+            "phase, sprint, lane, prompt, or agent boundary",
+            "does not make required whole-outcome work OUT OF SCOPE",
+            "owner, dependency, first executable action, and completion gate",
+        )
+        for phrase in required:
+            self.assertIn(phrase, appendix)
+        self.assertIn("REQUIRED SUCCESSOR WORK", suffix)
+        # The ambiguous wording may appear only inside an explicit prohibition;
+        # banning the token itself would prevent the contract from naming the error it rejects.
+        self.assertIn(
+            "Never use `OUT OF CURRENT SCOPE` or `OUT OF CURRENT DESIGN SCOPE`",
+            appendix,
+        )
+        self.assertIn(
+            "A phase, sprint, lane, prompt, or agent boundary does not make required whole-outcome work OUT OF SCOPE",
+            suffix,
+        )
 
     def test_live_cert_domain_law_requires_actionable_closeout(self) -> None:
         text = (ROOT / "harness" / "specs" / "operator-delivery.md").read_text(encoding="utf-8")

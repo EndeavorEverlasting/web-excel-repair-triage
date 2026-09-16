@@ -95,6 +95,18 @@ REQUIRED_ARTIFACT_IDS = {
 REQUIRED_VALIDATOR_IDS = {
     "harness-completeness",
     "harness-contract-tests",
+    "repository-work-ledger-audit",
+    "repository-work-ledger-tests",
+    "prompt-kit-cross-device-access-audit",
+    "prompt-kit-cross-device-access-tests",
+    "prompt-kit-freshness-guidance-audit",
+    "prompt-kit-freshness-guidance-tests",
+    "pr-merge-gate-audit",
+    "pr-merge-gate-tests",
+    "artifact-handoff-harness-audit",
+    "artifact-handoff-harness-tests",
+    "artifact-derivation-harness-audit",
+    "artifact-derivation-harness-tests",
     "prompt-kit-interaction-contract-tests",
     "prompt-kit-interaction-audit",
     "prompt-kit-discovery-audit",
@@ -113,6 +125,8 @@ REQUIRED_VALIDATOR_IDS = {
     "prompt-kit-browser-proof-cleanup-powershell-smoke",
     "prompt-kit-responsive-layout-audit",
     "prompt-kit-responsive-layout-tests",
+    "prompt-kit-ui-format-alignment-audit",
+    "prompt-kit-ui-format-alignment-tests",
     "app-harness-validation",
     "prompt-kit-feedback-afk-routing-audit",
     "prompt-kit-feedback-afk-routing-tests",
@@ -122,7 +136,35 @@ REQUIRED_VALIDATOR_IDS = {
     "operant-product-identity-tests",
     "operant-external-resource-audit",
     "operant-external-resource-tests",
+    "repo-native-update-audit",
+    "repo-native-update-tests",
+    "repo-native-update-parity",
 }
+PRE_COMMIT_SNAPSHOT_PROFILE = "pre_commit_snapshot"
+PRE_COMMIT_SNAPSHOT_VALIDATOR_IDS = (
+    "repository-work-ledger-audit",
+    "repository-work-ledger-tests",
+    "prompt-kit-cross-device-access-audit",
+    "prompt-kit-cross-device-access-tests",
+    "prompt-kit-freshness-guidance-audit",
+    "prompt-kit-freshness-guidance-tests",
+    "pr-merge-gate-audit",
+    "pr-merge-gate-tests",
+    "artifact-handoff-harness-audit",
+    "artifact-handoff-harness-tests",
+    "artifact-derivation-harness-audit",
+    "artifact-derivation-harness-tests",
+    "harness-completeness",
+    "harness-contract-tests",
+)
+PRE_COMMIT_ADAPTER_GATES = (
+    "python scripts/validate_staged_artifacts.py",
+    "git diff --cached --check",
+)
+PRE_COMMIT_PROFILE_RUNNER = (
+    "python scripts/run_validator_profile.py --profile pre_commit_snapshot"
+)
+PRE_COMMIT_PROFILE_REPORT = '--report "$PROFILE_REPORT"'
 REQUIRED_CAPABILITY_IDS = {
     "harness-infrastructure-maintenance",
     "prompt-language-audit",
@@ -134,6 +176,7 @@ REQUIRED_CAPABILITY_IDS = {
     "prompt-kit-feedback-afk-routing",
     "repository-hook-integration",
     "operant-external-resource-intake",
+    "repo-native-update",
 }
 REQUIRED_TRIGGER_IDS = {
     "harness-infrastructure-change",
@@ -147,8 +190,29 @@ REQUIRED_TRIGGER_IDS = {
     "prompt-kit-actionable-feedback",
     "repository-hook-installation-needed",
     "operant-external-resource-refresh-needed",
+    "repo-native-generated-surface-drift",
 }
 PROTECTED_PATHS = ("Candidates/", "Active/")
+PRE_PUSH_PROFILE_RUNNER = "python scripts/run_validator_profile.py --profile pre_push"
+PRE_PUSH_PROFILE_REPORT = '--report "$PROFILE_REPORT"'
+PRE_PUSH_PRESERVED_COMMANDS = (
+    "python scripts/validate_repository_work_ledger.py --summary",
+    "python -m unittest tests.test_repository_work_ledger -v",
+    "python scripts/validate_prompt_kit_cross_device_access.py --summary",
+    "python -m unittest tests.test_prompt_kit_cross_device_access -v",
+    "python scripts/validate_prompt_kit_freshness_guidance.py --summary",
+    "python -m unittest tests.test_prompt_kit_freshness_guidance -v",
+    "python scripts/validate_pr_merge_gate.py --summary",
+    "python -m unittest tests.test_pr_merge_gate -v",
+    "python scripts/validate_prompt_kit_release_identity.py",
+    "python -m unittest tests.test_prompt_kit_release_identity -v",
+    "python scripts/validate_prompt_kit_order_navigation.py",
+    "python -m unittest tests.test_prompt_kit_order_navigation_contract -v",
+    "python scripts/validate_artifact_handoff_harness.py --summary",
+    "python -m unittest tests.test_artifact_handoff_harness -v",
+    "python scripts/validate_artifact_derivation_harness.py --summary",
+    "python -m unittest tests.test_artifact_derivation_harness -v",
+)
 
 
 class HarnessValidationError(RuntimeError):
@@ -517,7 +581,7 @@ def validate_validator_registry(manifest: dict[str, Any]) -> dict[str, Any]:
     profiles = payload.get("profiles")
     if not isinstance(profiles, dict):
         raise HarnessValidationError("validator profiles must be an object")
-    for profile_id in ("harness", "pre_commit", "pre_push"):
+    for profile_id in ("harness", "pre_commit", "pre_commit_snapshot", "pre_push"):
         ids = require_string_list(profiles.get(profile_id), f"validators.profiles.{profile_id}")
         unknown = sorted(set(ids) - set(by_id))
         if unknown:
@@ -531,8 +595,25 @@ def validate_validator_registry(manifest: dict[str, Any]) -> dict[str, Any]:
         )
     if profiles["pre_push"] != profiles["harness"]:
         raise HarnessValidationError("pre_push profile must equal the full harness profile")
+    if profiles[PRE_COMMIT_SNAPSHOT_PROFILE] != list(PRE_COMMIT_SNAPSHOT_VALIDATOR_IDS):
+        raise HarnessValidationError(
+            "pre_commit_snapshot profile drifted from the staged-hook snapshot sequence"
+        )
+    expected_pre_commit = (
+        ["staged-artifact-hygiene"]
+        + list(PRE_COMMIT_SNAPSHOT_VALIDATOR_IDS)
+        + ["patch-hygiene-staged"]
+    )
+    if profiles["pre_commit"] != expected_pre_commit:
+        raise HarnessValidationError(
+            "pre_commit compatibility profile drifted from adapter gates plus snapshot sequence"
+        )
     expected_hooks = {
-        "pre_commit": (".githooks/pre-commit", "pre_commit", "staged-tree"),
+        "pre_commit": (
+            ".githooks/pre-commit",
+            PRE_COMMIT_SNAPSHOT_PROFILE,
+            "staged-tree",
+        ),
         "pre_push": (".githooks/pre-push", "pre_push", "working-tree"),
     }
     hooks = payload.get("hooks")
@@ -721,34 +802,66 @@ def validate_acquisition_surface() -> None:
 def validate_hooks() -> None:
     pre_commit = require_file(".githooks/pre-commit").read_text(encoding="utf-8")
     for phrase in (
+        PRE_COMMIT_ADAPTER_GATES[0],
         "git checkout-index --all --prefix=",
-        'python scripts/validate_harness.py --report "$HARNESS_REPORT"',
-        "python -m unittest tests.test_harness_contract -v",
-        "git diff --cached --check",
+        'cd "$staged_tree"',
+        PRE_COMMIT_PROFILE_RUNNER,
+        PRE_COMMIT_PROFILE_REPORT,
+        PRE_COMMIT_ADAPTER_GATES[1],
     ):
         if phrase not in pre_commit:
             raise HarnessValidationError(f"pre-commit hook is missing: {phrase}")
-    if 'cd "$staged_tree"' not in pre_commit:
-        raise HarnessValidationError("pre-commit hook does not validate the isolated staged tree")
-    pre_push = require_file(".githooks/pre-push").read_text(encoding="utf-8")
-    for phrase in (
-        'python scripts/validate_harness.py --report "$HARNESS_REPORT"',
-        "python -m unittest tests.test_harness_contract -v",
-        "python -m unittest tests.test_prompt_kit_interactions_contract -v",
-        "python scripts/validate_prompt_kit_interactions.py",
-        "python scripts/validate_prompt_kit_discovery.py --summary",
-        "python -m unittest tests.test_prompt_kit_discovery -v",
-        "python -m unittest tests.test_prompt_language_audit -v",
-        "python scripts/evaluate_prompt_language.py",
-        "python -m unittest tests.test_skill_prompt_registry -v",
-        "python tests/test_prompt_kit_header_contract.py",
-        "python scripts/build_prompt_kit_registry.py "
-        "--output web/prompt-kit/index.html --check",
-        "python -m triage.gitignore_hygiene",
-        "git diff --check",
+    path_gate = PRE_COMMIT_ADAPTER_GATES[0]
+    checkout = "git checkout-index --all --prefix="
+    if pre_commit.index(path_gate) >= pre_commit.index(checkout):
+        raise HarnessValidationError(
+            "pre-commit path gate must precede staged-tree materialization"
+        )
+    if pre_commit.index(PRE_COMMIT_PROFILE_RUNNER) >= pre_commit.index(
+        PRE_COMMIT_ADAPTER_GATES[1]
     ):
+        raise HarnessValidationError(
+            "pre-commit snapshot profile must precede cached-diff adapter gate"
+        )
+
+    pre_push = require_file(".githooks/pre-push").read_text(encoding="utf-8")
+    for phrase in PRE_PUSH_PRESERVED_COMMANDS:
         if phrase not in pre_push:
-            raise HarnessValidationError(f"pre-push hook is missing: {phrase}")
+            raise HarnessValidationError(
+                f"pre-push hook is missing preserved external check: {phrase}"
+            )
+    for phrase in (PRE_PUSH_PROFILE_RUNNER, PRE_PUSH_PROFILE_REPORT):
+        if phrase not in pre_push:
+            raise HarnessValidationError(f"pre-push hook is missing profile delegation: {phrase}")
+
+    payload = load_json(VALIDATORS_PATH)
+    validators = payload.get("validators")
+    profiles = payload.get("profiles")
+    if not isinstance(validators, list) or not isinstance(profiles, dict):
+        raise HarnessValidationError("validator registry cannot prove hook delegation")
+    by_id = {
+        str(item.get("id")): item
+        for item in validators
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    for profile_name, hook_text, label in (
+        (PRE_COMMIT_SNAPSHOT_PROFILE, pre_commit, "pre-commit"),
+        ("pre_push", pre_push, "pre-push"),
+    ):
+        profile_ids = profiles.get(profile_name)
+        if not isinstance(profile_ids, list) or not profile_ids:
+            raise HarnessValidationError(f"{profile_name} profile is missing or empty")
+        for validator_id in profile_ids:
+            item = by_id.get(str(validator_id))
+            command = item.get("command") if isinstance(item, dict) else None
+            if not isinstance(command, str) or not command.strip():
+                raise HarnessValidationError(
+                    f"{profile_name} profile cannot resolve validator command: {validator_id}"
+                )
+            if command in hook_text:
+                raise HarnessValidationError(
+                    f"{label} hook duplicates registry-owned command: {validator_id}"
+                )
 
 
 def validate_generator_manifest() -> None:

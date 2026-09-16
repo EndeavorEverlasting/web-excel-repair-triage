@@ -258,52 +258,71 @@ class HarnessContractTests(unittest.TestCase):
             validators["hooks"]["pre_commit"]["index_mode"],
             "staged-tree",
         )
+        self.assertEqual(
+            validators["hooks"]["pre_commit"]["profile"],
+            validate_harness.PRE_COMMIT_SNAPSHOT_PROFILE,
+        )
+        self.assertEqual(
+            validators["profiles"][validate_harness.PRE_COMMIT_SNAPSHOT_PROFILE],
+            list(validate_harness.PRE_COMMIT_SNAPSHOT_VALIDATOR_IDS),
+        )
+        self.assertEqual(
+            validators["profiles"]["pre_commit"],
+            ["staged-artifact-hygiene"]
+            + list(validate_harness.PRE_COMMIT_SNAPSHOT_VALIDATOR_IDS)
+            + ["patch-hygiene-staged"],
+        )
         pre_commit = (ROOT / ".githooks" / "pre-commit").read_text(
             encoding="utf-8"
         )
         for phrase in (
+            validate_harness.PRE_COMMIT_ADAPTER_GATES[0],
             "git checkout-index --all --prefix=",
             'cd "$staged_tree"',
-            "python scripts/validate_prompt_kit_cross_device_access.py --summary",
-            "python -m unittest tests.test_prompt_kit_cross_device_access -v",
-            'python scripts/validate_harness.py --report "$HARNESS_REPORT"',
-            "git diff --cached --check",
+            validate_harness.PRE_COMMIT_PROFILE_RUNNER,
+            validate_harness.PRE_COMMIT_PROFILE_REPORT,
+            validate_harness.PRE_COMMIT_ADAPTER_GATES[1],
         ):
             self.assertIn(phrase, pre_commit)
+        self.assertLess(
+            pre_commit.index(validate_harness.PRE_COMMIT_ADAPTER_GATES[0]),
+            pre_commit.index("git checkout-index --all --prefix="),
+        )
+        self.assertLess(
+            pre_commit.index(validate_harness.PRE_COMMIT_PROFILE_RUNNER),
+            pre_commit.index(validate_harness.PRE_COMMIT_ADAPTER_GATES[1]),
+        )
 
+        self.assertEqual(
+            validators["hooks"]["pre_push"]["profile"],
+            "pre_push",
+        )
+        self.assertEqual(
+            validators["hooks"]["pre_push"]["index_mode"],
+            "working-tree",
+        )
         pre_push = (ROOT / ".githooks" / "pre-push").read_text(
             encoding="utf-8"
         )
-        self.assertIn(
-            "python scripts/validate_prompt_kit_cross_device_access.py --summary",
-            pre_push,
-        )
-        self.assertIn(
-            "python -m unittest tests.test_prompt_kit_cross_device_access -v",
-            pre_push,
-        )
-        for validator_id in validators["profiles"]["pre_push"]:
-            command = {
-                item["id"]: item["command"]
-                for item in validators["validators"]
-            }[validator_id]
-            if validator_id == "harness-completeness":
-                self.assertIn(
-                    'python scripts/validate_harness.py --report "$HARNESS_REPORT"',
-                    pre_push,
+        for command in validate_harness.PRE_PUSH_PRESERVED_COMMANDS:
+            self.assertIn(command, pre_push)
+
+        self.assertIn(validate_harness.PRE_PUSH_PROFILE_RUNNER, pre_push)
+        self.assertIn(validate_harness.PRE_PUSH_PROFILE_REPORT, pre_push)
+
+        validator_by_id = {
+            item["id"]: item for item in validators["validators"]
+        }
+        for profile_name, hook_text in (
+            (validate_harness.PRE_COMMIT_SNAPSHOT_PROFILE, pre_commit),
+            ("pre_push", pre_push),
+        ):
+            for validator_id in validators["profiles"][profile_name]:
+                self.assertNotIn(
+                    validator_by_id[validator_id]["command"],
+                    hook_text,
+                    f"registered {profile_name} validator duplicated in hook: {validator_id}",
                 )
-            elif validator_id == "prompt-kit-interaction-audit":
-                self.assertIn(
-                    "python scripts/validate_prompt_kit_interactions.py",
-                    pre_push,
-                )
-            elif validator_id == "prompt-language-audit":
-                self.assertIn(
-                    "python scripts/evaluate_prompt_language.py",
-                    pre_push,
-                )
-            else:
-                self.assertIn(command, pre_push)
 
     def test_tracked_file_probe_is_bounded_noninteractive_and_byte_mode(self) -> None:
         fake = SimpleNamespace(

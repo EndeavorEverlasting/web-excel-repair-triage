@@ -294,6 +294,29 @@
         "path": "scripts/sync_operant_external_resources.py"
       },
       "proof_ceiling": "Live public donor source-SHA resolution plus repository metadata projection, catalog floor-only receipts, fixture/on-demand catalog search, deterministic coverage routing, size-budget, lazy-load, CI drift, and generated-site proof; no donor quality, license-adaptation, browser-network, MCP, or automatic prompt-quality proof."
+    },
+    {
+      "id": "repo-native-update",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/repo-native-update/SKILL.md",
+      "trigger_ids": [
+        "repo-native-generated-surface-drift"
+      ],
+      "operation": "Generate only declared owned code surfaces from pinned canonical JSON inputs through the repository-native update CLI, emit a generation receipt, reject undeclared/forbidden paths, and prove local idempotent --check without requiring GitHub Actions.",
+      "inputs": [
+        "harness/repo-native-update/contracts/repo-native-update.v1.json",
+        "harness/repo-native-update/inputs/canary-constants.v1.json"
+      ],
+      "outputs": [
+        "harness/repo-native-update/generated/canary_constants.py",
+        "Outputs/repo-native-update/receipt.json"
+      ],
+      "implementation": {
+        "kind": "script",
+        "path": "scripts/run_repo_native_update.py"
+      },
+      "proof_ceiling": "Local CLI generation, static harness completeness, focused unittest, and --check parity for declared surfaces only; no Actions/provider bot runtime claim."
     }
   ]
 }

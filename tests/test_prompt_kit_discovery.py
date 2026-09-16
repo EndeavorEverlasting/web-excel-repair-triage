@@ -55,6 +55,7 @@ class PromptKitDiscoveryTests(unittest.TestCase):
                 "card_action_rail",
                 "clipboard_confirmation",
                 "snap_hides_filters",
+                "snap_prioritizes_prompt_header",
                 "stable_identity_resequence",
                 "registry_prompt_fallback",
                 "distribution_front_door",
@@ -66,6 +67,7 @@ class PromptKitDiscoveryTests(unittest.TestCase):
         self.assertIn("canonical library defaults to ascending numeric sequence", expected["stable_identity_resequence"])
         self.assertIn("formatCopyConfirmationPreview", expected["clipboard_confirmation"])
         self.assertIn("hideCompactFilters", expected["snap_hides_filters"])
+        self.assertIn("sole scroll ownership", expected["snap_prioritizes_prompt_header"])
 
     def test_section_button_has_explicit_dark_surface_contrast(self) -> None:
         js = JS.read_text(encoding="utf-8")
@@ -261,16 +263,33 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         self.assertIn("copyContent", confirmation)
         self.assertIn("data-prompt-id", confirmation)
 
-    def test_snap_to_prompt_hides_compact_filters(self) -> None:
+    def test_snap_to_prompt_hides_filters_and_prioritizes_prompt_header(self) -> None:
+        base = JS.read_text(encoding="utf-8")
         polish = POLISH_JS.read_text(encoding="utf-8")
         center = polish[
-            polish.index("function centerRenderedPromptCard") : polish.index("function revealPromptShortcutTarget")
+            polish.index("function promptSnapViewportOffset") : polish.index("function revealPromptShortcutTarget")
         ]
-        self.assertIn("hideCompactFilters();", center)
+        for marker in (
+            "hideCompactFilters();",
+            "function promptSnapViewportOffset()",
+            "function snapRenderedPromptCardHeader(card,behavior)",
+            "window.getComputedStyle(header).position",
+            "window.scrollTo({top:top,behavior:scrollBehavior})",
+            "root.style.scrollBehavior='auto'",
+            "return snapRenderedPromptCardHeader(card,behavior||hotkeyScrollBehavior())",
+        ):
+            self.assertIn(marker, center)
+        self.assertNotIn("block:'center'", center)
+        self.assertIn("var shouldScroll=!(opts&&typeof opts==='object'&&opts.scroll===false)", base)
         reveal = polish[
             polish.index("function revealPromptShortcutTarget") : polish.index("function activatePromptShortcutTarget")
         ]
+        self.assertIn("selectPrompt(promptId,{source:'keyboard',scroll:false})", reveal)
         self.assertIn("return centerRenderedPromptCard(promptId,behavior||hotkeyScrollBehavior())", reveal)
+        activation = polish[
+            polish.index("function activatePromptShortcutTarget") : polish.index("function handleConfiguredPromptShortcutKey")
+        ]
+        self.assertNotIn("selectPrompt(promptId", activation)
 
     def test_display_order_keeps_recommendation_priority_metadata_without_changing_ids(self) -> None:
         payload = json.loads(DISPLAY_ORDER.read_text(encoding="utf-8"))
