@@ -189,16 +189,16 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-012 — Prompt Compilation Sprint 3 Improvement Compiler program design
 
-- **Status:** VERIFY
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** design/prompt-compilation-program-20260916
-- **Branch / PR:** design/prompt-compilation-program-20260916 (unmerged)
+- **Branch / PR:** main / #515 merged
 - **Scope:** revise Prompt Compilation program design so Sprint 3 owns Improvement-Candidate Compiler call-stack prototypes (success + failure) before UI; persist architecture module/ownership/call-stack/alternatives evidence; add hypothesis catalog, journey fixtures, `scripts/prompt_improvement_compiler.py`, focused tests; reorder sprint map so UI Compute Mode is Sprint 4; preserve P95 adapter-only and `reviewed_pr_only` boundaries
 - **Forbidden:** UI Compute Mode toggle; PR #450/#431 donor work; raw conversation ingestion; new Evidence Spine event types; universal event bus; automatic source mutation; automatic PR merge; model-generated policy promotion; mutating TRQ-007 frozen prompt identities; hand-editing generated Prompt Kit output
 - **Dependencies:** TRQ-010 DONE; P95 Evidence Spine architecture on main; planning floor `de42daf148a2f09754b3eb2f7fd88799162d1e05`
 - **References:** `harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md`, `harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md`, `scripts/prompt_improvement_compiler.py`, `harness/prompt-compilation/improvement-hypothesis-catalog.v1.json`, `tests/test_prompt_improvement_compiler.py`
 - **Acceptance gate:** architecture records SUCCESS/FAILURE call stacks and alternatives; sprint map places Improvement Compiler before UI; IJ01 journey emits reviewed_pr_only candidate with TC06 eval; failure gates fail closed; Sprint 1–2 tests remain green; exact validated head integrates to current default branch
 - **Gate:** none
-- **Last proof:** local:python -m unittest tests.test_prompt_compilation tests.test_prompt_context_engine tests.test_prompt_improvement_compiler (29 OK); local:python scripts/prompt_language_compiler.py validate-fixtures --summary PASS; local:python scripts/prompt_improvement_compiler.py run-journey IJ01 PASS; local:python scripts/validate_repository_work_ledger.py PASS; local:git diff --check PASS; artifact:scripts/prompt_improvement_compiler.py
-- **Next action:** commit the design/prototype lane, push the branch, and open a PR targeting main for integration
-- **Updated:** 2026-09-16T18:45:00-04:00
+- **Last proof:** commit:4d98a77369fe64f42a7be6cb79ea71dd6bbbeea1; merge:50229c36e21a32d8541ddfe2c957cf9095ce3546 integrated PR #515; local:python -m unittest tests.test_prompt_compilation tests.test_prompt_context_engine tests.test_prompt_improvement_compiler (29 OK); workflow:deterministic-test-floor + operational-harness + ledger contract green on PR head; artifact:scripts/prompt_improvement_compiler.py present on refreshed default branch
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-16T19:10:00-04:00

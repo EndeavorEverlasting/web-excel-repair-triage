@@ -1,8 +1,8 @@
 # Prompt Compilation & Adaptive Language — Canonical Sprint Map
 
-**Status:** TRACKED / SPRINTS 1–2 INTEGRATED ON MAIN; SPRINT 3 DESIGN+PROTOTYPE REVISION ACTIVE
+**Status:** TRACKED / SPRINTS 1–3 INTEGRATED ON MAIN VIA #483/#485/#515
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
-**Planning floor:** refreshed `main@de42daf148a2f09754b3eb2f7fd88799162d1e05` (provider refresh 2026-09-16)
+**Planning floor:** refreshed `main@50229c36e21a32d8541ddfe2c957cf9095ce3546` (provider refresh 2026-09-16)
 **Architecture authority:** `harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md`
 **P95 constraint floor:** `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md` (adapter-only; no universal envelope/bus)
 **Ledger index:** TRQ-009 (Sprint 1), TRQ-010 (Sprint 2), TRQ-012 (Sprint 3 design/prototypes)
@@ -74,7 +74,7 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 
 ### Sprint 3 — Improvement-Candidate Compiler call-stack prototypes
 
-**Status:** DESIGNED / PROTOTYPED in lane `design/prompt-compilation-program-20260916` (this revision); integrate via TRQ-012
+**Status:** INTEGRATED on `main` via #515 (`50229c36`)
 
 **Dependency:** Sprint 2 INTEGRATED; P95 adapter-only floor present on main.
 
