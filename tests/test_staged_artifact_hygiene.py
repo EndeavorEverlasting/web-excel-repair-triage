@@ -141,9 +141,14 @@ class HookAndRegistrySafetyTests(unittest.TestCase):
         hook = (ROOT / ".githooks" / "pre-commit").read_text(encoding="utf-8")
         gate = "python scripts/validate_staged_artifacts.py"
         checkout = "git checkout-index"
+        profile = "python scripts/run_validator_profile.py --profile pre_commit_snapshot"
+        cached_diff = "git diff --cached --check"
         self.assertIn(gate, hook)
         self.assertIn(checkout, hook)
+        self.assertIn(profile, hook)
+        self.assertIn(cached_diff, hook)
         self.assertLess(hook.index(gate), hook.index(checkout))
+        self.assertLess(hook.index(profile), hook.index(cached_diff))
 
     def test_pre_commit_profile_registers_the_staged_gate(self) -> None:
         registry = json.loads(
@@ -158,6 +163,22 @@ class HookAndRegistrySafetyTests(unittest.TestCase):
         self.assertIn(
             "staged-artifact-hygiene",
             registry["profiles"]["pre_commit"],
+        )
+        self.assertEqual(
+            registry["profiles"]["pre_commit"][0],
+            "staged-artifact-hygiene",
+        )
+        self.assertEqual(
+            registry["profiles"]["pre_commit"][-1],
+            "patch-hygiene-staged",
+        )
+        self.assertNotIn(
+            "staged-artifact-hygiene",
+            registry["profiles"]["pre_commit_snapshot"],
+        )
+        self.assertNotIn(
+            "patch-hygiene-staged",
+            registry["profiles"]["pre_commit_snapshot"],
         )
 
     def test_validator_never_reads_staged_file_contents(self) -> None:
