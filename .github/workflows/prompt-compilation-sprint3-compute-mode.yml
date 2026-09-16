@@ -30,4 +30,23 @@ jobs:
       - name: Implement, validate, generate, and push exact candidate
         run: |
           set -euo pipefail
-          python .github/carriers/prompt_compilation_sprint3_compute_mode.py
+          python - <<'PY'
+          import importlib.util
+          from pathlib import Path
+
+          carrier = Path('.github/carriers/prompt_compilation_sprint3_compute_mode.py')
+          spec = importlib.util.spec_from_file_location('prompt_compilation_sprint3_compute_mode', carrier)
+          if spec is None or spec.loader is None:
+              raise RuntimeError('unable to load Sprint 3 carrier')
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          original_validation = module.deterministic_validation
+
+          def ordered_validation():
+              # Generated-site assertions are part of the focused suite, so build first.
+              module.run('python', 'scripts/build_prompt_kit_registry.py', '--output', 'web/prompt-kit/index.html')
+              original_validation()
+
+          module.deterministic_validation = ordered_validation
+          raise SystemExit(module.main())
+          PY
