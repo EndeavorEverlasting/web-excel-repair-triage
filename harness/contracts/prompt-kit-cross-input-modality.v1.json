@@ -75,12 +75,12 @@
     {
       "id": "copy_act",
       "capability": "Copy prompt content (terminal clipboard act)",
-      "mouse": "Copy button; single-click card",
-      "keyboard": "Space on focused card; configured/recommended prompt sequences (copy + reveal)",
-      "phone": "Tap/click any non-control prompt-card surface; explicit Copy remains available; detail Copy exists only after deliberate Open",
+      "mouse": "Copy button; single-click card; inside an open detail panel, click any non-conflicting non-control surface",
+      "keyboard": "Space on focused card; configured/recommended prompt sequences (copy + reveal); explicit Copy remains available in detail",
+      "phone": "Tap/click any non-control prompt-card surface; inside deliberate detail Open, tap a non-conflicting non-control panel surface or explicit Copy",
       "semantic_action": "copyPrompt",
       "state_owner": "clipboard adapter + copy acknowledgement UI",
-      "proof": "prompt-kit-interactions whole-card touch copy + mobile browser proof"
+      "proof": "prompt-kit-interactions whole-card/detail safe-surface copy + mobile browser proof"
     },
     {
       "id": "locate_known_id",
@@ -126,12 +126,12 @@
     {
       "id": "scroll_edges",
       "capability": "Scroll to top/bottom",
-      "mouse": "Top/Bottom links",
-      "keyboard": "Home / End",
-      "phone": "More → Top / Bottom",
-      "semantic_action": "scrollPromptKitTo",
-      "state_owner": "window scroll position",
-      "proof": "mobile quick controls shared action markers"
+      "mouse": "Page Top/Bottom links; open detail has sticky panel-local Top/Bottom controls",
+      "keyboard": "Home / End target the active surface: prompt detail container while detail is open, otherwise the page/list context",
+      "phone": "More → page Top / Bottom; open detail has visible panel-local Top/Bottom controls",
+      "semantic_action": "scrollPromptKitTo / scrollPromptDetailTo",
+      "state_owner": "window scroll position / #promptDetail scroll position",
+      "proof": "mobile quick controls page markers + prompt-kit-interactions detail edge-navigation markers"
     },
     {
       "id": "reset_recover",

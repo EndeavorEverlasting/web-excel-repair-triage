@@ -21,8 +21,12 @@ def canonical(text: str) -> str:
     return str(text or '').replace('\r\n', '\n')
 
 
+def prompt_card(page, prompt_id: str):
+    return page.locator(f'.prompt-card[data-prompt-id="{prompt_id}"]')
+
+
 def card_midpoint(page, prompt_id: str) -> tuple[dict, float]:
-    box = page.locator(f'[data-prompt-id="{prompt_id}"]').bounding_box() or {}
+    box = prompt_card(page, prompt_id).bounding_box() or {}
     return box, box.get('y', 0) + box.get('height', 0) / 2
 
 
@@ -66,7 +70,7 @@ def main() -> int:
                 page.wait_for_timeout(80)
                 assert_detail_closed(page, 'Go to P# must not auto-open the space-heavy detail panel')
                 assert form.is_hidden(), 'exact P111 should close the jump form after snapping'
-                target = page.locator('[data-prompt-id="P111"]')
+                target = prompt_card(page, 'P111')
                 assert target.is_visible(), 'P111 card was not revealed'
                 target_box = target.bounding_box() or {}
                 snap_geometry = page.evaluate("""() => {
@@ -128,7 +132,7 @@ def main() -> int:
                     inp.press('Enter'); page.wait_for_timeout(60)
                     assert_detail_closed(page, f'Enter on {prompt_id} opened detail')
                     assert form.is_hidden()
-                    card = page.locator(f'[data-prompt-id="{prompt_id}"]')
+                    card = prompt_card(page, prompt_id)
                     assert card.is_visible()
                     assert page.evaluate("document.activeElement && document.activeElement.getAttribute('data-prompt-id')") == prompt_id
 
@@ -144,12 +148,12 @@ def main() -> int:
                 inp.fill('01'); page.wait_for_timeout(60)
                 assert_detail_closed(page, 'P01 auto-opened detail')
                 assert form.is_hidden()
-                assert page.locator('[data-prompt-id="P01"]').is_visible()
+                assert prompt_card(page, 'P01').is_visible()
 
                 # Pasted P111 normalizes and snaps without detail.
                 jump.click(); inp.fill('P111'); page.wait_for_timeout(60)
                 assert_detail_closed(page, 'pasted P111 auto-opened detail')
-                assert page.locator('[data-prompt-id="P111"]').is_visible()
+                assert prompt_card(page, 'P111').is_visible()
 
                 # Missing ID stays fail-closed.
                 jump.click(); inp.fill('999999'); page.wait_for_timeout(40)

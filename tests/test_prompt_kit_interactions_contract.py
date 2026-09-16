@@ -28,6 +28,11 @@ class PromptKitInteractionHarnessTests(unittest.TestCase):
         self.assertIn("touch tap", single["event"])
         self.assertIn("whole non-control prompt-card surface", single["expected"])
         self.assertIn("must not have to scroll through a detail modal", single["expected"])
+        detail_copy = next(item for item in contract["requirements"] if item["id"] == "detail_surface_click_copy")
+        self.assertIn("non-conflicting", detail_copy["event"])
+        self.assertIn("active text selection", detail_copy["expected"])
+        detail_edges = next(item for item in contract["requirements"] if item["id"] == "detail_local_edge_navigation")
+        self.assertIn("Home/End are panel-local", detail_edges["expected"])
 
     def test_current_source_audit_is_structured_without_inflating_proof(self) -> None:
         report = interactions.audit_implementation()
@@ -48,6 +53,12 @@ class PromptKitInteractionHarnessTests(unittest.TestCase):
           if(e.target===this){closePromptDetail();document.getElementById('grid').focus()}
         });
         btn.onclick=function(e){e.stopPropagation();copyPrompt(p.id)};
+        function promptDetailHasTextSelection(){return false}
+        function isPromptDetailCopyConflict(target){return target.closest('[data-prompt-detail-no-copy]')}
+        function handlePromptDetailSurfaceCopy(e){if(isPromptDetailCopyConflict(e.target))return;copyPrompt(openPromptId)}
+        function scrollPromptDetailTo(edge){return true}
+        function handlePromptDetailKeydown(e){if(e.key==='Home'||e.key==='End'){scrollPromptDetailTo(e.key==='Home'?'top':'bottom')}}
+        var promptDetailTop=true,promptDetailBottom=true;
         document.addEventListener('keydown',function(e){
           switch(e.key){case'Escape':if(document.getElementById('promptDetailOverlay').classList.contains('open')){closePromptDetail();return}}
         });

@@ -965,6 +965,11 @@ function installCompactBrowsingHotkeys(){
       e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();exitFocusedSearch(search);return
     }
     if(editable)return;
+    var detailOverlay=document.getElementById('promptDetailOverlay');
+    var detailOwnsEdges=!!(detailOverlay&&detailOverlay.classList.contains('open'));
+    if(detailOwnsEdges&&(key==='home'||key==='end')&&typeof scrollPromptDetailTo==='function'){
+      e.preventDefault();e.stopImmediatePropagation();resetPromptShortcutBuffer();scrollPromptDetailTo(key==='home'?'top':'bottom');return
+    }
     if(key==='`'){
       e.preventDefault();e.stopImmediatePropagation();
       var helpPanel=document.getElementById('hotkeyHelpPanel');
