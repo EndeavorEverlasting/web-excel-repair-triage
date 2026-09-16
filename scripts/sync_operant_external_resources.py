@@ -138,8 +138,8 @@ def best_match(query: set[str], candidates: list[tuple[str, str, set[str]]]) -> 
     for candidate_id, candidate_title, candidate_tokens in candidates:
         score = coverage_score(query, candidate_tokens)
         if score > best or (score == best and score > 0 and (best_id is None or candidate_id < best_id)):
-            best_id, best_title, best = candidate_id, candidate_title, round(score, 3)
-    return best_id, best_title, best
+            best_id, best_title, best = candidate_id, candidate_title, score
+    return best_id, best_title, round(best, 3)
 
 
 def resolve_github_floor(source: dict[str, Any]) -> tuple[str, str, dict[str, Any]]:
