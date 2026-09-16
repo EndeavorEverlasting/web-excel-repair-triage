@@ -48,3 +48,7 @@ python scripts/validate_artifact_handoff_harness.py \
   --output Outputs/share-artifact-alias-handoff.json \
   --summary
 ```
+
+## Drive-primary handoff seam
+
+`contracts/share-alias-download.v1.json` also owns provider-allocation precedence for Google Drive: stable mapped Drive identity -> publication/readback proof -> Drive-primary user-facing link. `scripts/validate_artifact_handoff_harness.py` supplies the executable regression so a healthy Drive allocation cannot silently collapse back to a local/sandbox/CI/external-only handoff.

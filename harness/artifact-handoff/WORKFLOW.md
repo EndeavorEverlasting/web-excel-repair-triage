@@ -45,3 +45,7 @@ The validator fails closed on encoded literal filenames, basename drift, extensi
 ## Handoff
 
 Report the canonical identity, alias basename, extension, byte-equality result, validated transport target, receipt path/ID, and the exact download/open target. The operator should receive a file that is ready to use without manual filename repair.
+
+## Google Drive allocation precedence
+
+When a repository artifact has an explicit mapped Google Drive allocation/stable identity, the handoff workflow resolves that identity before any local fallback. After publication/update plus readback succeed, the Google Drive URL is the primary operator-facing link. Local paths, repo outputs, CI artifacts, `sandbox:/...` downloads, and unrelated external mirrors may be supplemental only. If Drive is blocked, name the exact identity/access/write/readback gate before falling back; never claim Drive synchronization from a local artifact alone. This changes handoff precedence, not per-artifact source authority.

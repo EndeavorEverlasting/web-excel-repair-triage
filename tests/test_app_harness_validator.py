@@ -24,14 +24,14 @@ class AppHarnessValidatorTests(unittest.TestCase):
         self.assertEqual("offline_synthetic", report["proof_level"])
         self.assertFalse(report["runtime_proof"])
         self.assertEqual("a" * 40, report["head_sha"])
-        self.assertEqual({"passed": 5, "skipped": 1, "failed": 0}, report["summary"])
+        self.assertEqual({"passed": 6, "skipped": 1, "failed": 0}, report["summary"])
         self.assertEqual("PASS", report["final_status"])
         checks = [validator.Check(**item) for item in report["checks"]]
         text = validator.render_matrix(checks, report["branch"], report["head_sha"])
         self.assertIn("APP HARNESS VALIDATION", text)
         self.assertIn("[PASS] required files", text)
         self.assertIn("[SKIP] optional MCP symbol smoke: lsp_project_not_loaded", text)
-        self.assertIn("Result: 5 passed / 1 skipped / 0 failed", text)
+        self.assertIn("Result: 6 passed / 1 skipped / 0 failed", text)
         self.assertIn("Gate: PASS", text)
         self.assertIn("no live runtime, browser, launcher", text)
 
@@ -61,6 +61,12 @@ class AppHarnessValidatorTests(unittest.TestCase):
         checks = [validator.Check("required_probe", "required probe", "REQUIRED", "SKIP", "environment_missing", [])]
         self.assertEqual("FAIL", validator.final_status(checks))
 
+    def test_drive_primary_handoff_is_required_in_p11_gate(self):
+        check = validator.check_artifact_handoff_contract(ROOT, self.fake_runner)
+        self.assertEqual("REQUIRED", check.requirement)
+        self.assertEqual("PASS", check.status)
+        self.assertEqual("drive_primary_handoff_contract_passed", check.reason)
+
     def test_optional_missing_dependency_is_honest_skip(self):
         check = validator.check_optional_mcp(ROOT, {})
         self.assertEqual("OPTIONAL", check.requirement)
@@ -72,7 +78,7 @@ class AppHarnessValidatorTests(unittest.TestCase):
         encoded = json.dumps(report)
         decoded = json.loads(encoded)
         self.assertEqual(".", decoded["repository_root"])
-        self.assertEqual(6, len(decoded["validator_set"]))
+        self.assertEqual(7, len(decoded["validator_set"]))
         self.assertIn("required_files", decoded["required_checks"])
         self.assertEqual("optional_mcp_symbol_smoke", decoded["skipped_checks"][0]["id"])
         self.assertNotIn(str(ROOT), encoded)

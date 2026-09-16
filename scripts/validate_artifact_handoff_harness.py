@@ -22,6 +22,10 @@ REQUIRED_RULE_KEYS = {
     "byte_identity",
     "transport_boundary",
     "operator_zero_rename",
+    "drive_allocation_primary_handoff",
+    "drive_blocked_fallback",
+    "drive_authority_preservation",
+    "explicit_download_is_supplemental",
 }
 REQUIRED_FIXTURE_FIELDS = {
     "id",
@@ -106,6 +110,47 @@ def validate_alias_metadata(
     if transport_href:
         if decoded_transport_basename(transport_href) != alias_name:
             errors.append("transport href does not decode to the intended alias basename")
+    return errors
+
+
+def is_google_drive_url(value: str | None) -> bool:
+    if not value:
+        return False
+    parsed = urlparse(value)
+    return parsed.scheme == "https" and parsed.netloc.casefold() in {
+        "drive.google.com",
+        "docs.google.com",
+    }
+
+
+def validate_drive_allocated_handoff(
+    *,
+    drive_allocated: bool,
+    drive_published_readback: bool,
+    primary_href: str,
+    drive_url: str | None = None,
+    supplemental_hrefs: list[str] | None = None,
+    drive_blocker: str | None = None,
+    download_explicitly_requested: bool = False,
+) -> list[str]:
+    """Validate user-facing handoff precedence for a mapped Drive artifact."""
+    del download_explicitly_requested  # explicit download changes supplementation, never primary precedence
+    supplemental_hrefs = supplemental_hrefs or []
+    if not drive_allocated:
+        return []
+    errors: list[str] = []
+    if drive_published_readback:
+        if not is_google_drive_url(drive_url):
+            errors.append("verified Drive handoff requires a canonical Google Drive URL")
+        if not drive_url or primary_href != drive_url:
+            errors.append("verified mapped Google Drive URL must be the primary handoff")
+        if not is_google_drive_url(primary_href):
+            errors.append("local, sandbox, CI, repo-output, download, or external mirror cannot be primary while Drive is healthy")
+    else:
+        if not is_google_drive_url(primary_href) and not (drive_blocker or "").strip():
+            errors.append("non-Drive fallback requires the exact Drive blocker")
+    if drive_url and drive_url in supplemental_hrefs and primary_href != drive_url and drive_published_readback:
+        errors.append("healthy Drive identity may not be demoted to supplemental handoff")
     return errors
 
 
@@ -242,6 +287,19 @@ def validate_static_harness() -> dict:
             raise ValidationError(f"artifact handoff skill missing heading: {heading}")
 
     fixture_results = validate_contract_payload(load_json(CONTRACT))
+
+    prompt_sources = {
+        "P11": ROOT / "docs" / "prompts.json",
+        "P140": ROOT / "registry" / "prompts" / "repository-work-ledger-prompts.v1.json",
+    }
+    p11_items = load_json(prompt_sources["P11"])
+    p140_items = load_json(prompt_sources["P140"]).get("prompts", [])
+    p11 = next((item for item in p11_items if item.get("id") == "P11"), None)
+    p140 = next((item for item in p140_items if item.get("id") == "P140"), None)
+    if not p11 or "GOOGLE DRIVE ALLOCATION / PRIMARY HANDOFF CONTRACT" not in str(p11.get("copyContent", "")):
+        raise ValidationError("P11 is missing the Google Drive primary-handoff harness contract")
+    if not p140 or "GOOGLE DRIVE ALLOCATION / PRIMARY HANDOFF" not in str(p140.get("copyContent", "")):
+        raise ValidationError("P140 is missing the Google Drive primary-handoff specialization")
 
     integration_markers = {
         "harness/CONTEXT.md": "harness/artifact-handoff/CODEBASE_MAP.md",
