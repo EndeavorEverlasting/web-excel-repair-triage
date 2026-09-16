@@ -121,8 +121,12 @@ class OperationalCloseoutContractTests(unittest.TestCase):
             "Any SAFE & EXECUTABLE item disproves closure",
             "Missing tools, credentials, approval, or access is BLOCKED—not unsafe",
             "OUT OF SCOPE requires an explicit boundary",
+            "REQUIRED SUCCESSOR WORK",
+            "phase, sprint, lane, prompt, or agent boundary",
         ):
             self.assertIn(phrase, p83["copyContent"])
+        self.assertIn("REQUIRED SUCCESSOR WORK", p83["expectedOutput"])
+        self.assertIn("REQUIRED SUCCESSOR WORK", p83["proofGate"])
         self.assertIn("no safe actionable work remains", p83["keywords"])
         self.assertIn("scope exhaustion", p83["keywords"])
         self.assertLess(len(p83["copyContent"]), 8000)
