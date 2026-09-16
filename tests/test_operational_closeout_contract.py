@@ -140,6 +140,8 @@ class OperationalCloseoutContractTests(unittest.TestCase):
         for phrase in required:
             self.assertIn(phrase, appendix)
         self.assertIn("REQUIRED SUCCESSOR WORK", suffix)
+        # The ambiguous wording may appear only inside an explicit prohibition;
+        # banning the token itself would prevent the contract from naming the error it rejects.
         self.assertIn(
             "Never use `OUT OF CURRENT SCOPE` or `OUT OF CURRENT DESIGN SCOPE`",
             appendix,
