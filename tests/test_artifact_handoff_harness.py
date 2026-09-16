@@ -132,6 +132,54 @@ class ArtifactHandoffHarnessTests(unittest.TestCase):
         )
         self.assertEqual("git diff --check", manifest["validation_order"][-1])
 
+    def test_drive_allocated_artifact_requires_drive_primary_when_readback_is_green(self) -> None:
+        drive_url = "https://docs.google.com/spreadsheets/d/abc/edit"
+        errors = validator.validate_drive_allocated_handoff(
+            drive_allocated=True,
+            drive_published_readback=True,
+            primary_href="sandbox:/mnt/data/report.xlsx",
+            drive_url=drive_url,
+            supplemental_hrefs=["sandbox:/mnt/data/report.xlsx"],
+        )
+        self.assertTrue(any("primary" in error for error in errors))
+
+    def test_drive_allocated_artifact_accepts_drive_primary_and_local_supplement(self) -> None:
+        drive_url = "https://drive.google.com/file/d/abc/view"
+        errors = validator.validate_drive_allocated_handoff(
+            drive_allocated=True,
+            drive_published_readback=True,
+            primary_href=drive_url,
+            drive_url=drive_url,
+            supplemental_hrefs=["sandbox:/mnt/data/report.xlsx"],
+            download_explicitly_requested=True,
+        )
+        self.assertEqual([], errors)
+
+    def test_drive_blocked_fallback_requires_exact_gate(self) -> None:
+        errors = validator.validate_drive_allocated_handoff(
+            drive_allocated=True,
+            drive_published_readback=False,
+            primary_href="sandbox:/mnt/data/report.xlsx",
+        )
+        self.assertTrue(any("blocker" in error for error in errors))
+        allowed = validator.validate_drive_allocated_handoff(
+            drive_allocated=True,
+            drive_published_readback=False,
+            primary_href="sandbox:/mnt/data/report.xlsx",
+            drive_blocker="Drive connector lacks write permission for mapped file ID",
+        )
+        self.assertEqual([], allowed)
+
+    def test_drive_healthy_rejects_unrelated_external_primary(self) -> None:
+        drive_url = "https://docs.google.com/document/d/abc/edit"
+        errors = validator.validate_drive_allocated_handoff(
+            drive_allocated=True,
+            drive_published_readback=True,
+            primary_href="https://example.invalid/report.xlsx",
+            drive_url=drive_url,
+        )
+        self.assertTrue(any("primary" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,17 @@
+{
+  "schema_version": "prompt-execution-profile/v1",
+  "profile": "exhaustive",
+  "compute_policy": "maximize_useful_compute_until_fixed_point",
+  "parallel_policy": "dispatch_when_safe_parallel_width_exists",
+  "hypothesis_policy": "falsify_material_alternatives",
+  "validation_policy": "advance_all_executable_contracts",
+  "stop_policy": "evidence_defined_fixed_point",
+  "non_weakenable_constraints": [
+    "safety",
+    "evidence_truth",
+    "destructive_operation_rules",
+    "privacy",
+    "explicit_user_scope",
+    "required_acceptance_gates"
+  ]
+}

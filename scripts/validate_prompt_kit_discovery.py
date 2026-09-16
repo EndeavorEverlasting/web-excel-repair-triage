@@ -36,6 +36,7 @@ REQUIRED_IDS = {
     "card_action_rail",
     "clipboard_confirmation",
     "snap_hides_filters",
+    "snap_prioritizes_prompt_header",
     "stable_identity_resequence",
     "registry_prompt_fallback",
     "distribution_front_door",
@@ -179,6 +180,15 @@ def audit() -> dict[str, object]:
             "hideCompactFilters();",
             "function revealPromptShortcutTarget(promptId,behavior)",
             "return centerRenderedPromptCard(promptId,behavior||hotkeyScrollBehavior())",
+        ),
+        "snap_prioritizes_prompt_header": (
+            "function promptSnapViewportOffset()",
+            "function snapRenderedPromptCardHeader(card,behavior)",
+            "window.getComputedStyle(header).position",
+            "window.scrollTo({top:top,behavior:scrollBehavior})",
+            "root.style.scrollBehavior='auto'",
+            "selectPrompt(promptId,{source:'keyboard',scroll:false})",
+            "return snapRenderedPromptCardHeader(card,behavior||hotkeyScrollBehavior())",
         ),
     }
     for requirement_id, markers in polish_markers.items():

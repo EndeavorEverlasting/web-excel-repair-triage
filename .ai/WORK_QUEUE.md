@@ -138,3 +138,51 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** merge:86edababd71117afbaffad92b7ef2ee4ae9426a7 integrated planning PR #471; merge:a1e9caa17c6a979a3747edb71632a66c9406af00 integrated #467; merge:d8ef87ebb0f98fb49061429f9561ed3781556f44 integrated #477; architecture/runtime merges #473/#474/#475 on main; artifact:harness/prompt-topology/EVIDENCE_SPINE_SPRINT_MAP.md and artifact:harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md present on refreshed default branch
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-14T13:00:00-04:00
+
+## TRQ-009 — Prompt Compilation & Adaptive Language Architecture Sprint 1
+
+- **Status:** DONE
+- **Priority:** P1
+- **Owner:** prompt-compilation-sprint1-20260914
+- **Branch / PR:** main / #483 merged
+- **Scope:** formalize Prompt Compilation as a bounded prompt-compilation subsystem with `prompt-semantics/v1`, `prompt-context/v1`, `prompt-execution-profile/v1`, language compiler contract, effective-prompt build receipt, modality/non-weakening validator, deterministic improvement-candidate format, TC06 parallelism-modality fixtures, durable architecture/sprint map, and focused tests while preserving P95 adapter-only Evidence Spine boundaries
+- **Forbidden:** UI Compute Mode toggle; PR #450/#431 donor work; raw conversation/transcript ingestion; new Evidence Spine event types; universal event bus; automatic source mutation; automatic PR merge; model-generated policy promotion; mutating TRQ-007 frozen prompt identities; hand-editing generated Prompt Kit output
+- **Dependencies:** TRQ-008 DONE; P95 Evidence Spine architecture on main; Sprint 1 base floor `d3accd1835a097a51a850ad9909672167f96ffdd`
+- **References:** `harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md`, `harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md`, `harness/contracts/prompt-semantics.v1.json`, `harness/contracts/prompt-execution-profile.v1.json`, `harness/contracts/prompt-context.v1.json`, `harness/contracts/prompt-build-receipt.v1.json`, `harness/contracts/prompt-improvement-candidate.v1.json`, `harness/contracts/prompt-language-compiler-policy.v1.json`, `scripts/prompt_language_compiler.py`, `tests/test_prompt_compilation.py`
+- **Acceptance gate:** Sprint 1 contracts/compiler/fixtures/tests validate; architecture and sprint map persist P95 separation from Evidence Spine and TRQ-007; non-weakening validator rejects permissive MUST regressions; improvement candidates require `reviewed_pr_only`; exact validated head integrates to current default branch
+- **Gate:** none
+- **Last proof:** commit:36f31a987048829824a7759189a28609e55fe695; merge:04e4a77d261d0bd0388daa6d56f38e113cdf79fa integrated PR #483; local:python -m unittest tests.test_prompt_compilation (13 OK); local:python scripts/prompt_language_compiler.py validate-fixtures --summary; workflow deterministic-test-floor + operational-harness + ledger contract green on PR head; artifact:harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md present on refreshed default branch
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-14T14:40:00-04:00
+
+## TRQ-010 — Prompt Compilation Sprint 2 context adapters + profile precedence
+
+- **Status:** DONE
+- **Priority:** P1
+- **Owner:** prompt-compilation-sprint2-20260914
+- **Branch / PR:** main / #485 merged
+- **Scope:** implement thin read-only Context Engine adapters that project dispatch receipts, continuation dispositions, P99 outcome receipts, and recurrence findings into `prompt-context/v1`, plus deterministic execution-profile precedence (`run > prompt > user > product`) and focused tests, without owning lifecycle events
+- **Forbidden:** UI Compute Mode toggle; PR #450/#431 donor work; raw conversation ingestion; new Evidence Spine event types; universal event bus; automatic source mutation; automatic PR merge; model-generated policy promotion; hand-editing generated Prompt Kit output
+- **Dependencies:** TRQ-009 DONE; Sprint 2 base floor `602df5086c61d81382eb2835dcb119eaa71d4ae5`
+- **References:** `harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md`, `scripts/prompt_context_engine.py`, `tests/test_prompt_context_engine.py`, `scripts/prompt_language_compiler.py`
+- **Acceptance gate:** adapters produce valid `prompt-context/v1`; precedence resolver is deterministic; projected context compiles through Language Engine for TC06 parallel MUST; no event-bus fields; exact validated head integrates to current default branch
+- **Gate:** none
+- **Last proof:** commit:05fb419d6da7344a562f654385132f3c54dd4116; merge:86044bfb27de95fbf60d29adf2ce54689b09c303 integrated PR #485; local:python -m unittest tests.test_prompt_compilation tests.test_prompt_context_engine (20 OK); CI deterministic-test-floor + ledger contract green on PR head; artifact:scripts/prompt_context_engine.py present on refreshed default branch
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-14T14:50:00-04:00
+
+## TRQ-011 — Prompt Kit UI format alignment ledger and Storage repair
+
+- **Status:** DONE
+- **Priority:** P1
+- **Owner:** cursor-ui-format-alignment-20260915
+- **Branch / PR:** main / #498 merged
+- **Scope:** repair Storage header control to the Resources formatting sequence; install UI format-alignment contract, aligned/deferred ledger, fail-closed validator, focused tests, regenerate Prompt Kit site; coerce lazy unclassed UI into deferred ledger fodder
+- **Forbidden:** unrelated redesign; privacy/storage policy mutation; force-push; hand-editing generated HTML without builder; weakening storage lifecycle or header protected contracts
+- **Dependencies:** origin/main floor containing Storage lifecycle runtime
+- **References:** `docs/PROMPT_KIT_UI_FORMAT_ALIGNMENT_PLAN.md`, `harness/contracts/prompt-kit-ui-format-alignment.v1.json`, `harness/prompt-kit-ui-format-alignment/ledger.v1.json`, `scripts/validate_prompt_kit_ui_format_alignment.py`, `docs/prompt-kit-storage-lifecycle.js`
+- **Acceptance gate:** Storage uses `operant-resource-button` + styled `prompt-storage-*` surface; validator PASS; deferred coercion test PASS; storage lifecycle + header protected tests PASS; generated site parity; PR integrated to current default branch when gates allow
+- **Gate:** none
+- **Last proof:** merge:c385735fa1b44f96392d6e07c67cf69a0b909a4e integrated PR #498; local:python scripts/validate_prompt_kit_ui_format_alignment.py --summary PASS; local:python -m unittest tests.test_prompt_kit_ui_format_alignment tests.test_prompt_kit_storage_lifecycle_runtime PASS; workflow:ui-format-alignment green on PR head; artifact:docs/prompt-kit-storage-lifecycle.js uses operant-resource-button on refreshed default branch
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-15T06:45:00Z

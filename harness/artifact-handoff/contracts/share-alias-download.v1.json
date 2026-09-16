@@ -6,7 +6,11 @@
     "extension_preservation": "A rename/copy-only alias must preserve the canonical file extension.",
     "byte_identity": "A rename/copy-only alias must be byte-identical to the canonical source.",
     "transport_boundary": "A transport href may percent-encode spaces, but decoding only its final encoded path segment must equal the literal alias basename.",
-    "operator_zero_rename": "The operator-facing download should already have the intended alias name; manual rename is a harness failure when the agent can create the alias copy itself."
+    "operator_zero_rename": "The operator-facing download should already have the intended alias name; manual rename is a harness failure when the agent can create the alias copy itself.",
+    "drive_allocation_primary_handoff": "When an artifact has an explicit Google Drive allocation/stable identity and publication plus readback succeed, the verified Google Drive URL is the primary user-facing handoff; local, sandbox, CI, repo-output, downloadable, or unrelated external resources are supplemental only.",
+    "drive_blocked_fallback": "When the allocated Drive identity cannot be resolved, published, permitted, or read back, the handoff must name the exact Drive gate before a local/download fallback is used and must not claim synchronization succeeded.",
+    "drive_authority_preservation": "Drive-primary handoff does not change per-artifact authority, make Drive source control, authorize lossy Google-native round trips, or permit creation of a competing CURRENT identity.",
+    "explicit_download_is_supplemental": "An explicit operator request for a downloadable copy allows a supplemental download but does not demote a healthy verified mapped Google Drive artifact from primary handoff."
   },
   "fixtures": [
     {

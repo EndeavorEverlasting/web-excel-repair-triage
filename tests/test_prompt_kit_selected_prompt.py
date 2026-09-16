@@ -66,6 +66,7 @@ class PromptKitSelectedPromptContractTests(unittest.TestCase):
         self.assertIn("selectedPromptId=normalized", base)
         self.assertIn("rovingPromptId=normalized", base)
         self.assertIn("scrollIntoView", base)
+        self.assertIn("var shouldScroll=!(opts&&typeof opts==='object'&&opts.scroll===false)", base)
         self.assertIn("announceStatus", base)
         # open uses canonical open
         self.assertIn("canonicalOpenPrompt", base)
@@ -125,7 +126,7 @@ class PromptKitSelectedPromptContractTests(unittest.TestCase):
         self.assertIn("selectPrompt(p.id,'pointer')", polish)
         # polish reveal selects
         self.assertIn("revealPromptShortcutTarget", polish)
-        self.assertIn("selectPrompt(promptId,'keyboard')", polish)
+        self.assertIn("selectPrompt(promptId,{source:'keyboard',scroll:false})", polish)
         # polish activate copies and selects
         self.assertIn("activatePromptShortcutTarget", polish)
         # mobile Go to P# uses reveal which now selects
