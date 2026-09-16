@@ -282,32 +282,11 @@ class HarnessContractTests(unittest.TestCase):
         pre_push = (ROOT / ".githooks" / "pre-push").read_text(
             encoding="utf-8"
         )
-        preserved_pre_push_checks = (
-            "python scripts/validate_repository_work_ledger.py --summary",
-            "python -m unittest tests.test_repository_work_ledger -v",
-            "python scripts/validate_prompt_kit_cross_device_access.py --summary",
-            "python -m unittest tests.test_prompt_kit_cross_device_access -v",
-            "python scripts/validate_prompt_kit_freshness_guidance.py --summary",
-            "python -m unittest tests.test_prompt_kit_freshness_guidance -v",
-            "python scripts/validate_pr_merge_gate.py --summary",
-            "python -m unittest tests.test_pr_merge_gate -v",
-            "python scripts/validate_prompt_kit_release_identity.py",
-            "python -m unittest tests.test_prompt_kit_release_identity -v",
-            "python scripts/validate_prompt_kit_order_navigation.py",
-            "python -m unittest tests.test_prompt_kit_order_navigation_contract -v",
-            "python scripts/validate_artifact_handoff_harness.py --summary",
-            "python -m unittest tests.test_artifact_handoff_harness -v",
-            "python scripts/validate_artifact_derivation_harness.py --summary",
-            "python -m unittest tests.test_artifact_derivation_harness -v",
-        )
-        for command in preserved_pre_push_checks:
+        for command in validate_harness.PRE_PUSH_PRESERVED_COMMANDS:
             self.assertIn(command, pre_push)
 
-        self.assertIn(
-            "python scripts/run_validator_profile.py --profile pre_push",
-            pre_push,
-        )
-        self.assertIn('--report "$PROFILE_REPORT"', pre_push)
+        self.assertIn(validate_harness.PRE_PUSH_PROFILE_RUNNER, pre_push)
+        self.assertIn(validate_harness.PRE_PUSH_PROFILE_REPORT, pre_push)
 
         validator_by_id = {
             item["id"]: item for item in validators["validators"]
