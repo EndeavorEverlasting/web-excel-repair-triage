@@ -126,6 +126,7 @@ class OperationalCloseoutContractTests(unittest.TestCase):
         ):
             self.assertIn(phrase, p83["copyContent"])
         self.assertIn("REQUIRED SUCCESSOR WORK", p83["expectedOutput"])
+        self.assertIn("REQUIRED SUCCESSOR WORK", p83["nextStep"])
         self.assertIn("REQUIRED SUCCESSOR WORK", p83["proofGate"])
         self.assertIn("no safe actionable work remains", p83["keywords"])
         self.assertIn("scope exhaustion", p83["keywords"])
