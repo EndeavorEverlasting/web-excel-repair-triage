@@ -34,16 +34,11 @@ class PromptKitProductInteractionTests(unittest.TestCase):
 
     def test_single_click_copy_is_disambiguated_from_double_click_expand(self) -> None:
         js = JS.read_text(encoding="utf-8")
-        self.assertRegex(
-            js,
-            re.compile(
-                r"card\.onclick=function\(e\)\{cancelPromptCardCopy\(card\);"
-                r"card\._copyTimer=setTimeout\(function\(\)\{copyPrompt\(p\.id\);"
-                r"card\._copyTimer=null\},300\)\};"
-            ),
-        )
+        self.assertIn("if(e.target.closest&&e.target.closest('button'))return", js)
+        self.assertIn("selectPrompt(p.id,'pointer');cancelPromptCardCopy(card)", js)
+        self.assertIn("card._copyTimer=setTimeout(function(){copyPrompt(p.id);card._copyTimer=null},160)", js)
         self.assertIn(
-            "card.ondblclick=function(e){cancelPromptCardCopy(card);e.preventDefault();showPromptDetail(p.id,card)};",
+            "card.ondblclick=function(e){cancelPromptCardCopy(card);e.preventDefault();selectPrompt(p.id,'pointer');showPromptDetail(p.id,card)};",
             js,
         )
         self.assertIn("function cancelPromptCardCopy(card)", js)
@@ -106,20 +101,17 @@ class PromptKitProductInteractionTests(unittest.TestCase):
 
     def test_prompt_cards_remain_keyboard_accessible_without_nested_button_semantics(self) -> None:
         js = JS.read_text(encoding="utf-8")
-        self.assertIn("card.tabIndex=0", js)
-        self.assertIn("card.setAttribute('role','group')", js)
+        self.assertIn("card.tabIndex=isRoving?0:-1", js)
+        self.assertIn("card.setAttribute('role','option')", js)
+        self.assertIn("card.setAttribute('aria-selected',String(isSelected))", js)
         self.assertNotIn("card.setAttribute('role','button')", js)
-        self.assertIn("Double-click or press Enter to expand", js)
-        handler = (
-            "card.onkeydown=function(e){if(e.target!==card)return;"
-            "if(e.key==='Enter'){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();"
-            "showPromptDetail(p.id,card)}else if(e.key===' '){cancelPromptCardCopy(card);"
-            "e.preventDefault();e.stopPropagation();copyPrompt(p.id)}};"
-        )
-        self.assertIn(handler, js)
+        self.assertIn("Double-click or press Enter to inspect", js)
+        self.assertIn("if(e.key==='Enter')", js)
+        self.assertIn("showPromptDetail(p.id,card)", js)
+        self.assertIn("else if(e.key===' ')", js)
+        self.assertIn("copyPrompt(p.id)", js)
         self.assertIn("openBtn.className='prompt-open-btn'", js)
         self.assertIn("btn.className='prompt-copy-btn'", js)
-        self.assertIn("return;default:return}", js)
 
     def test_prompt_fields_are_escaped_before_card_or_detail_html(self) -> None:
         js = JS.read_text(encoding="utf-8")
@@ -130,6 +122,41 @@ class PromptKitProductInteractionTests(unittest.TestCase):
         self.assertIn("safeProofGate=escapePromptHtml(p.proofGate)", js)
         self.assertIn("safeName+'</span>", js)
         self.assertIn("safeUseWhen+'</pre>", js)
+
+    def test_detail_panel_click_copy_is_safe_and_conflict_aware(self) -> None:
+        js = JS.read_text(encoding="utf-8")
+        for marker in (
+            "function handlePromptDetailSurfaceCopy(e)",
+            "function isPromptDetailCopyConflict(target)",
+            "function promptDetailHasTextSelection()",
+            "function cancelPromptDetailSurfaceCopy()",
+            "copyPrompt(openPromptId)",
+            "[data-prompt-detail-no-copy]",
+            "if(e.detail&&e.detail>1)return",
+            "el.onclick=handlePromptDetailSurfaceCopy",
+            "el.ondblclick=cancelPromptDetailSurfaceCopy",
+            "el.setAttribute('role','dialog')",
+            "el.setAttribute('aria-modal','true')",
+        ):
+            self.assertIn(marker, js)
+
+    def test_detail_panel_has_local_edge_controls_and_home_end_hotkeys(self) -> None:
+        js = JS.read_text(encoding="utf-8")
+        for marker in (
+            "function scrollPromptDetailTo(edge)",
+            "id=\"promptDetailTop\"",
+            "id=\"promptDetailBottom\"",
+            "Home/End jump",
+            "aria-keyshortcuts=\"Home\"",
+            "aria-keyshortcuts=\"End\"",
+            "function handlePromptDetailKeydown(e)",
+            "e.key==='Home'||e.key==='End'",
+            "scrollPromptDetailTo(e.key==='Home'?'top':'bottom')",
+            "el.onkeydown=handlePromptDetailKeydown",
+        ):
+            self.assertIn(marker, js)
+        self.assertIn("tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'", js)
+        self.assertIn("if(e.key==='Escape')", js)
 
     def test_checked_in_site_contains_current_interaction_and_navigation_source(self) -> None:
         deployed = DEPLOYED.read_text(encoding="utf-8")
