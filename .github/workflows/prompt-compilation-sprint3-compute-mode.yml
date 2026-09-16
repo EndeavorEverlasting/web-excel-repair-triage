@@ -50,10 +50,35 @@ jobs:
           set -euo pipefail
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 
-      - name: Focused deterministic tests
+      - name: Existing compiler tests
         run: |
           set -euo pipefail
-          python -m unittest tests.test_prompt_compilation tests.test_prompt_context_engine tests.test_prompt_kit_compute_mode tests.test_prompt_kit_profiles tests.test_prompt_kit_storage_lifecycle_runtime tests.test_prompt_kit_ui_format_alignment -v
+          python -m unittest tests.test_prompt_compilation -v
+
+      - name: Existing context engine tests
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_prompt_context_engine -v
+
+      - name: Compute Mode tests
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_prompt_kit_compute_mode -v
+
+      - name: Existing profile runtime tests
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_prompt_kit_profiles -v
+
+      - name: Existing storage lifecycle runtime tests
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_prompt_kit_storage_lifecycle_runtime -v
+
+      - name: Existing UI alignment tests
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_prompt_kit_ui_format_alignment -v
 
       - name: Compiler fixture regression
         run: |
