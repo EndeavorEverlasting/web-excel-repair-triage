@@ -297,7 +297,7 @@ function announceStatus(message){var el=ensureSelectionStatusElement();if(el)el.
 function announceCopyStatus(message){var el=ensureCopyStatusElement();if(el)el.textContent=message}
 function ensureSelectionStyles(){if(document.getElementById('prompt-selection-styles'))return;var style=document.createElement('style');style.id='prompt-selection-styles';style.textContent='.prompt-card[data-selected="true"]{border-color:var(--accent)!important;background:linear-gradient(145deg,rgba(59,130,246,0.12),rgba(59,130,246,0.06))!important;box-shadow:0 0 0 1px var(--accent),0 0 18px rgba(59,130,246,0.22),0 4px 18px rgba(0,0,0,0.28)!important}.prompt-card.is-selected{border-color:var(--accent)!important}.prompt-card[data-selected="true"] .glow-bar{opacity:1!important;height:4px!important}.prompt-card[data-selected="true"][data-copy-state="success"]{border-color:var(--success)!important;box-shadow:0 0 0 1px var(--success),0 0 20px rgba(34,197,94,0.28)!important}.prompt-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}#prompt-list:focus{outline:none}#prompt-list .prompt-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}';document.head.appendChild(style)}
 function syncPromptListDOM(){var grid=document.getElementById('grid');if(grid){grid.setAttribute('role','listbox');grid.setAttribute('aria-label','Prompts');grid.setAttribute('aria-orientation','vertical')}var options=document.querySelectorAll('[data-prompt-id]');for(var i=0;i<options.length;i++){var option=options[i];var id=String(option.getAttribute('data-prompt-id')||'').toUpperCase();var selected=id===String(selectedPromptId||'').toUpperCase()&&selectedPromptId!=null;var roving=id===String(rovingPromptId||'').toUpperCase()&&rovingPromptId!=null;var open=id===String(openPromptId||'').toUpperCase()&&openPromptId!=null;option.dataset.selected=String(selected);option.dataset.open=String(open);if(!option.dataset.copyState)option.dataset.copyState='idle';if(selected){option.classList.add('is-selected')}else{option.classList.remove('is-selected')}if(option.getAttribute('role')==='option'){option.setAttribute('aria-selected',String(selected))}option.tabIndex=roving?0:-1;if(open){option.classList.add('is-open')}else{option.classList.remove('is-open')}}ensureSelectionStyles()}
-function selectPrompt(id,opts){var source=typeof opts==='string'?opts:((opts&&opts.source)||'pointer');var normalized=String(id||'').trim().toUpperCase();if(!normalized||!isActivePrompt(normalized))return false;selectedPromptId=normalized;rovingPromptId=normalized;syncPromptListDOM();var el=getPromptElement(normalized);if(el){try{el.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){try{el.scrollIntoView()}catch(ignore){}}if(source==='keyboard'){try{el.focus({preventScroll:true})}catch(err){try{el.focus()}catch(ignore2){}}}}announceStatus(normalized+' selected');return true}
+function selectPrompt(id,opts){var source=typeof opts==='string'?opts:((opts&&opts.source)||'pointer');var shouldScroll=!(opts&&typeof opts==='object'&&opts.scroll===false);var normalized=String(id||'').trim().toUpperCase();if(!normalized||!isActivePrompt(normalized))return false;selectedPromptId=normalized;rovingPromptId=normalized;syncPromptListDOM();var el=getPromptElement(normalized);if(el){if(shouldScroll){try{el.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){try{el.scrollIntoView()}catch(ignore){}}}if(source==='keyboard'){try{el.focus({preventScroll:true})}catch(err){try{el.focus()}catch(ignore2){}}}}announceStatus(normalized+' selected');return true}
 function clearSelectionState(){selectedPromptId=null}
 function clearPromptSelection(){clearSelectionState();if(!isActivePrompt(rovingPromptId)){rovingPromptId=getFirstActivePromptId()||null}syncPromptListDOM();var el=ensureSelectionStatusElement();if(el)el.textContent=''}
 function openSelectedPrompt(){var id=selectedPromptId;if(!isActivePrompt(id))return false;openPromptId=id;if(typeof window.showPromptDetail==='function'){var origin=getPromptElement(id);window.showPromptDetail(id,origin)}syncPromptListDOM();return true}
@@ -2116,14 +2116,50 @@ function promptShortcutHasLongerPrefix(candidate,gestures){
   return gestures.some(function(gesture){return gesture!==candidate&&gesture.indexOf(candidate)===0})
 }
 
+function promptSnapViewportOffset(){
+  var gap=12;
+  var header=document.querySelector('.header');
+  if(!header)return gap;
+  try{
+    var position=window.getComputedStyle(header).position;
+    if(position!=='sticky'&&position!=='fixed')return gap;
+    var rect=header.getBoundingClientRect();
+    var viewportHeight=window.innerHeight||document.documentElement.clientHeight||0;
+    var bottom=Number(rect&&rect.bottom)||0;
+    var visibleBottom=Math.max(0,Math.min(viewportHeight,bottom));
+    return Math.max(gap,Math.ceil(visibleBottom+gap))
+  }catch(e){return gap}
+}
+
+function snapRenderedPromptCardHeader(card,behavior){
+  if(!card)return false;
+  var scrollBehavior=behavior||hotkeyScrollBehavior();
+  try{
+    var rect=card.getBoundingClientRect();
+    var pageTop=window.scrollY||window.pageYOffset||0;
+    var top=Math.max(0,pageTop+rect.top-promptSnapViewportOffset());
+    if(scrollBehavior==='instant'){
+      var root=document.documentElement;
+      var previousScrollBehavior=root&&root.style?root.style.scrollBehavior:'';
+      if(root&&root.style)root.style.scrollBehavior='auto';
+      try{window.scrollTo(0,top)}
+      finally{if(root&&root.style)root.style.scrollBehavior=previousScrollBehavior}
+    }else{
+      window.scrollTo({top:top,behavior:scrollBehavior})
+    }
+  }catch(e){
+    try{card.scrollIntoView({behavior:scrollBehavior,block:'start',inline:'nearest'});window.scrollBy(0,-promptSnapViewportOffset())}
+    catch(ignore){try{card.scrollIntoView()}catch(ignore2){}}
+  }
+  return true
+}
+
 function centerRenderedPromptCard(promptId,behavior){
   hideCompactFilters();
   var selector='[data-prompt-id="'+String(promptId||'').replace(/"/g,'')+'"]';
   var card=document.querySelector(selector);
   if(!card)return false;
-  var scrollBehavior=behavior||hotkeyScrollBehavior();
-  try{card.scrollIntoView({behavior:scrollBehavior,block:'center',inline:'nearest'})}catch(e){try{card.scrollIntoView()}catch(ignore){}}
-  return true
+  return snapRenderedPromptCardHeader(card,behavior||hotkeyScrollBehavior())
 }
 
 function revealPromptShortcutTarget(promptId,behavior){
@@ -2137,7 +2173,7 @@ function revealPromptShortcutTarget(promptId,behavior){
   document.querySelectorAll('.section-tab').forEach(function(button){button.classList.toggle('active',button.dataset.section==='__all__')});
   renderTypes();
   render();
-  try{if(typeof selectPrompt==='function')selectPrompt(promptId,'keyboard')}catch(e){}
+  try{if(typeof selectPrompt==='function')selectPrompt(promptId,{source:'keyboard',scroll:false})}catch(e){}
   return centerRenderedPromptCard(promptId,behavior||hotkeyScrollBehavior())
 }
 
@@ -2145,7 +2181,6 @@ function activatePromptShortcutTarget(promptId){
   var prompt=PROMPTS.find(function(item){return item.id===promptId});
   if(!prompt)return false;
   if(!revealPromptShortcutTarget(promptId,'instant')){showToast(promptId+' could not be revealed');return false}
-  try{if(typeof selectPrompt==='function')selectPrompt(promptId,'keyboard')}catch(e){}
   copyPrompt(promptId);
   return true
 }
