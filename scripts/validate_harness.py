@@ -156,6 +156,26 @@ REQUIRED_TRIGGER_IDS = {
     "repo-native-generated-surface-drift",
 }
 PROTECTED_PATHS = ("Candidates/", "Active/")
+PRE_PUSH_PROFILE_RUNNER = "python scripts/run_validator_profile.py --profile pre_push"
+PRE_PUSH_PROFILE_REPORT = '--report "$PROFILE_REPORT"'
+PRE_PUSH_PRESERVED_COMMANDS = (
+    "python scripts/validate_repository_work_ledger.py --summary",
+    "python -m unittest tests.test_repository_work_ledger -v",
+    "python scripts/validate_prompt_kit_cross_device_access.py --summary",
+    "python -m unittest tests.test_prompt_kit_cross_device_access -v",
+    "python scripts/validate_prompt_kit_freshness_guidance.py --summary",
+    "python -m unittest tests.test_prompt_kit_freshness_guidance -v",
+    "python scripts/validate_pr_merge_gate.py --summary",
+    "python -m unittest tests.test_pr_merge_gate -v",
+    "python scripts/validate_prompt_kit_release_identity.py",
+    "python -m unittest tests.test_prompt_kit_release_identity -v",
+    "python scripts/validate_prompt_kit_order_navigation.py",
+    "python -m unittest tests.test_prompt_kit_order_navigation_contract -v",
+    "python scripts/validate_artifact_handoff_harness.py --summary",
+    "python -m unittest tests.test_artifact_handoff_harness -v",
+    "python scripts/validate_artifact_derivation_harness.py --summary",
+    "python -m unittest tests.test_artifact_derivation_harness -v",
+)
 
 
 class HarnessValidationError(RuntimeError):
@@ -737,25 +757,41 @@ def validate_hooks() -> None:
             raise HarnessValidationError(f"pre-commit hook is missing: {phrase}")
     if 'cd "$staged_tree"' not in pre_commit:
         raise HarnessValidationError("pre-commit hook does not validate the isolated staged tree")
+
     pre_push = require_file(".githooks/pre-push").read_text(encoding="utf-8")
-    for phrase in (
-        'python scripts/validate_harness.py --report "$HARNESS_REPORT"',
-        "python -m unittest tests.test_harness_contract -v",
-        "python -m unittest tests.test_prompt_kit_interactions_contract -v",
-        "python scripts/validate_prompt_kit_interactions.py",
-        "python scripts/validate_prompt_kit_discovery.py --summary",
-        "python -m unittest tests.test_prompt_kit_discovery -v",
-        "python -m unittest tests.test_prompt_language_audit -v",
-        "python scripts/evaluate_prompt_language.py",
-        "python -m unittest tests.test_skill_prompt_registry -v",
-        "python tests/test_prompt_kit_header_contract.py",
-        "python scripts/build_prompt_kit_registry.py "
-        "--output web/prompt-kit/index.html --check",
-        "python -m triage.gitignore_hygiene",
-        "git diff --check",
-    ):
+    for phrase in PRE_PUSH_PRESERVED_COMMANDS:
         if phrase not in pre_push:
-            raise HarnessValidationError(f"pre-push hook is missing: {phrase}")
+            raise HarnessValidationError(
+                f"pre-push hook is missing preserved external check: {phrase}"
+            )
+    for phrase in (PRE_PUSH_PROFILE_RUNNER, PRE_PUSH_PROFILE_REPORT):
+        if phrase not in pre_push:
+            raise HarnessValidationError(f"pre-push hook is missing profile delegation: {phrase}")
+
+    payload = load_json(VALIDATORS_PATH)
+    validators = payload.get("validators")
+    profiles = payload.get("profiles")
+    if not isinstance(validators, list) or not isinstance(profiles, dict):
+        raise HarnessValidationError("validator registry cannot prove pre-push delegation")
+    by_id = {
+        str(item.get("id")): item
+        for item in validators
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    profile_ids = profiles.get("pre_push")
+    if not isinstance(profile_ids, list) or not profile_ids:
+        raise HarnessValidationError("pre_push profile is missing or empty")
+    for validator_id in profile_ids:
+        item = by_id.get(str(validator_id))
+        command = item.get("command") if isinstance(item, dict) else None
+        if not isinstance(command, str) or not command.strip():
+            raise HarnessValidationError(
+                f"pre_push profile cannot resolve validator command: {validator_id}"
+            )
+        if command in pre_push:
+            raise HarnessValidationError(
+                f"pre-push hook duplicates registry-owned command: {validator_id}"
+            )
 
 
 def validate_generator_manifest() -> None:
