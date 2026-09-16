@@ -1,0 +1,33 @@
+name: Prompt Compilation Sprint 3 Compute Mode
+
+on:
+  push:
+    branches:
+      - feat/prompt-compilation-sprint3-compute-mode-20260916
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout isolated Sprint 3 lane
+        uses: actions/checkout@v4
+        with:
+          ref: feat/prompt-compilation-sprint3-compute-mode-20260916
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Chromium proof runtime
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Implement, validate, generate, and push exact candidate
+        run: |
+          set -euo pipefail
+          python .github/carriers/prompt_compilation_sprint3_compute_mode.py
