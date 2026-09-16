@@ -60,10 +60,30 @@ jobs:
           set -euo pipefail
           python -m unittest tests.test_prompt_context_engine -v
 
-      - name: Compute Mode tests
+      - name: Compute Mode parity lock
         run: |
           set -euo pipefail
-          python -m unittest tests.test_prompt_kit_compute_mode -v
+          python -m unittest tests.test_prompt_kit_compute_mode.PromptKitComputeModeTests.test_runtime_profiles_are_parity_locked_to_python_compiler -v
+
+      - name: Compute Mode precedence
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_prompt_kit_compute_mode.PromptKitComputeModeTests.test_precedence_is_run_then_prompt_then_user_then_product -v
+
+      - name: Compute Mode effective prompt composition
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_prompt_kit_compute_mode.PromptKitComputeModeTests.test_effective_prompt_preserves_canonical_body_and_changes_profile_only -v
+
+      - name: Compute Mode storage ownership
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_prompt_kit_compute_mode.PromptKitComputeModeTests.test_storage_delete_personal_state_owns_compute_preferences -v
+
+      - name: Compute Mode contract and generated site
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_prompt_kit_compute_mode.PromptKitComputeModeTests.test_contract_and_generated_site_expose_compute_mode -v
 
       - name: Existing profile runtime tests
         run: |
