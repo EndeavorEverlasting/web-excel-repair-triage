@@ -140,10 +140,14 @@ class OperationalCloseoutContractTests(unittest.TestCase):
         for phrase in required:
             self.assertIn(phrase, appendix)
         self.assertIn("REQUIRED SUCCESSOR WORK", suffix)
-        self.assertNotIn("OUT OF CURRENT SCOPE", appendix)
-        self.assertNotIn("OUT OF CURRENT DESIGN SCOPE", appendix)
-        self.assertNotIn("OUT OF CURRENT SCOPE", suffix)
-        self.assertNotIn("OUT OF CURRENT DESIGN SCOPE", suffix)
+        self.assertIn(
+            "Never use `OUT OF CURRENT SCOPE` or `OUT OF CURRENT DESIGN SCOPE`",
+            appendix,
+        )
+        self.assertIn(
+            "A phase, sprint, lane, prompt, or agent boundary does not make required whole-outcome work OUT OF SCOPE",
+            suffix,
+        )
 
     def test_live_cert_domain_law_requires_actionable_closeout(self) -> None:
         text = (ROOT / "harness" / "specs" / "operator-delivery.md").read_text(encoding="utf-8")
