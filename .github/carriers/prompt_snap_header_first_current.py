@@ -151,12 +151,19 @@ def patch_product() -> None:
 function snapRenderedPromptCardHeader(card,behavior){
   if(!card)return false;
   var scrollBehavior=behavior||hotkeyScrollBehavior();
-  if(scrollBehavior==='instant')scrollBehavior='auto';
   try{
     var rect=card.getBoundingClientRect();
     var pageTop=window.scrollY||window.pageYOffset||0;
     var top=Math.max(0,pageTop+rect.top-promptSnapViewportOffset());
-    window.scrollTo({top:top,behavior:scrollBehavior})
+    if(scrollBehavior==='instant'){
+      var root=document.documentElement;
+      var previousScrollBehavior=root&&root.style?root.style.scrollBehavior:'';
+      if(root&&root.style)root.style.scrollBehavior='auto';
+      try{window.scrollTo(0,top)}
+      finally{if(root&&root.style)root.style.scrollBehavior=previousScrollBehavior}
+    }else{
+      window.scrollTo({top:top,behavior:scrollBehavior})
+    }
   }catch(e){
     try{card.scrollIntoView({behavior:scrollBehavior,block:'start',inline:'nearest'});window.scrollBy(0,-promptSnapViewportOffset())}
     catch(ignore){try{card.scrollIntoView()}catch(ignore2){}}
@@ -209,7 +216,7 @@ function centerRenderedPromptCard(promptId,behavior){
     },
     {
       \"id\": \"snap_prioritizes_prompt_header\",
-      \"expected\": \"Every snap-to-prompt path gives snap navigation sole scroll ownership, suppresses selection's ordinary smooth-scroll side effect for that composed journey, and places the target prompt header immediately below visible fixed/sticky page chrome or near the viewport top when that chrome is not occupying the viewport; tall prompt cards must not clip prompt identity above the viewport.\"
+      \"expected\": \"Every snap-to-prompt path gives snap navigation sole scroll ownership, makes requested instant snaps independent of page-level smooth-scroll CSS, suppresses selection's ordinary smooth-scroll side effect for that composed journey, and places the target prompt header immediately below visible fixed/sticky page chrome or near the viewport top when that chrome is not occupying the viewport; tall prompt cards must not clip prompt identity above the viewport.\"
     },
 """
     replace_once("harness/contracts/prompt-kit-discovery.v1.json", old_contract, new_contract)
@@ -237,6 +244,7 @@ function centerRenderedPromptCard(promptId,behavior){
             \"function snapRenderedPromptCardHeader(card,behavior)\",
             \"window.getComputedStyle(header).position\",
             \"window.scrollTo({top:top,behavior:scrollBehavior})\",
+            \"root.style.scrollBehavior='auto'\",
             \"selectPrompt(promptId,{source:'keyboard',scroll:false})\",
             \"return snapRenderedPromptCardHeader(card,behavior||hotkeyScrollBehavior())\",
         ),
@@ -276,6 +284,7 @@ function centerRenderedPromptCard(promptId,behavior){
             \"function snapRenderedPromptCardHeader(card,behavior)\",
             \"window.getComputedStyle(header).position\",
             \"window.scrollTo({top:top,behavior:scrollBehavior})\",
+            \"root.style.scrollBehavior='auto'\",
             \"return snapRenderedPromptCardHeader(card,behavior||hotkeyScrollBehavior())\",
         ):
             self.assertIn(marker, center)
