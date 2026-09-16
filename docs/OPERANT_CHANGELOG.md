@@ -10,6 +10,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - feat(prompt-kit): require progress-bearing execution and quiescence (`45fc40de`)
 - feat(prompt-kit): add isolated writer convergence contract (`017f7836`)
 - feat(prompt-kit): enforce Drive-primary artifact handoff (`5a295e0a`)
+- feat(prompt-kit): add Drive organizer and harden P123 export titles (`9788d35f`)
 
 ### Fixes / performance
 
