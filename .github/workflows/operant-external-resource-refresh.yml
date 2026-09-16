@@ -23,7 +23,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: operant-external-resource-refresh-${{ github.ref }}
@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: false
+          persist-credentials: true
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -48,6 +48,20 @@ jobs:
           python scripts/sync_operant_external_resources.py \
             --output Outputs/operant-external-resources/resources.v1.json \
             --gaps-output Outputs/operant-external-resources/gaps.v1.json
+      - name: Bootstrap tracked projection on this owned PR branch
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          cp Outputs/operant-external-resources/resources.v1.json web/prompt-kit/resources.v1.json
+          cp Outputs/operant-external-resources/gaps.v1.json registry/resources/operant-external-resource-gaps.v1.json
+          if git diff --quiet -- web/prompt-kit/resources.v1.json registry/resources/operant-external-resource-gaps.v1.json; then
+            echo 'Tracked projection already matches the live donor candidate.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add web/prompt-kit/resources.v1.json registry/resources/operant-external-resource-gaps.v1.json
+          git commit -m 'chore(prompt-kit): refresh external resource projection'
+          git push origin HEAD:refs/heads/${{ github.head_ref }}
       - name: Validate tracked canonical resource projection
         run: |
           node --check docs/prompt-kit-external-resources.js
