@@ -20,6 +20,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Configure merge identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
       - name: Refresh floor and prove required isolation slice
         shell: bash
         run: |
@@ -39,6 +45,10 @@ jobs:
           if [ "$rc" -ne 0 ]; then
             conflicts="$(git diff --name-only --diff-filter=U)"
             printf 'Conflicts:\n%s\n' "$conflicts"
+            if [ -z "$conflicts" ]; then
+              echo "Merge failed without unresolved paths; fail closed."
+              exit "$rc"
+            fi
             unexpected="$(printf '%s\n' "$conflicts" | grep -v '^web/prompt-kit/index.html$' || true)"
             if [ -n "$unexpected" ]; then
               echo "Unexpected source conflict; fail closed."
@@ -72,8 +82,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           git diff --cached --check
           if git diff --cached --quiet; then
