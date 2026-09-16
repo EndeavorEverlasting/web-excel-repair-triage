@@ -103,7 +103,7 @@ class OperationalCloseoutContractTests(unittest.TestCase):
         appendix = self.policy["copy_content_appendix"]
         for phrase in (
             "Reconstruct the original request, owned scope",
-            "PROVEN DONE, SAFE & EXECUTABLE, BLOCKED, UNSAFE, or OUT OF SCOPE",
+            "PROVEN DONE, SAFE & EXECUTABLE, BLOCKED, UNSAFE, OUT OF SCOPE, or REQUIRED SUCCESSOR WORK",
             "SAFE & EXECUTABLE means progress-bearing work remains",
             "A merely runnable bookkeeping action is not SAFE & EXECUTABLE for continuation",
             "Missing access is not evidence that the work is unsafe",
