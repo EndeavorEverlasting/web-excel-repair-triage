@@ -27,6 +27,60 @@ jobs:
           set -euo pipefail
           python -m pip install --disable-pip-version-check playwright==1.55.0
           python -m playwright install --with-deps chromium
+      - name: Repair carrier after smooth-scroll race finding
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/carriers/prompt_snap_header_first_current.py')
+          text = path.read_text(encoding='utf-8')
+
+          old = """  var scrollBehavior=behavior||hotkeyScrollBehavior();
+            if(scrollBehavior==='instant')scrollBehavior='auto';
+            try{
+              var rect=card.getBoundingClientRect();
+              var pageTop=window.scrollY||window.pageYOffset||0;
+              var top=Math.max(0,pageTop+rect.top-promptSnapViewportOffset());
+              window.scrollTo({top:top,behavior:scrollBehavior})
+          """
+          new = """  var scrollBehavior=behavior||hotkeyScrollBehavior();
+            try{
+              var rect=card.getBoundingClientRect();
+              var pageTop=window.scrollY||window.pageYOffset||0;
+              var top=Math.max(0,pageTop+rect.top-promptSnapViewportOffset());
+              if(scrollBehavior==='instant'){
+                var root=document.documentElement;
+                var previousScrollBehavior=root&&root.style?root.style.scrollBehavior:'';
+                if(root&&root.style)root.style.scrollBehavior='auto';
+                try{window.scrollTo(0,top)}
+                finally{if(root&&root.style)root.style.scrollBehavior=previousScrollBehavior}
+              }else{
+                window.scrollTo({top:top,behavior:scrollBehavior})
+              }
+          """
+          if text.count(old) != 1:
+              raise SystemExit(f'instant-scroll patch target count={text.count(old)}')
+          text = text.replace(old, new, 1)
+
+          old_phrase = "gives snap navigation sole scroll ownership, suppresses selection's ordinary smooth-scroll side effect"
+          new_phrase = "gives snap navigation sole scroll ownership, makes requested instant snaps independent of page-level smooth-scroll CSS, suppresses selection's ordinary smooth-scroll side effect"
+          if text.count(old_phrase) != 1:
+              raise SystemExit(f'contract phrase target count={text.count(old_phrase)}')
+          text = text.replace(old_phrase, new_phrase, 1)
+
+          marker = '            \\"window.scrollTo({top:top,behavior:scrollBehavior})\\",\n'
+          strengthened = marker + '            \\"root.style.scrollBehavior=\'auto\'\\",\n'
+          if text.count(marker) != 2:
+              raise SystemExit(f'CSS-independence marker target count={text.count(marker)}')
+          text = text.replace(marker, strengthened)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+          git add .github/carriers/prompt_snap_header_first_current.py
+          git commit -m 'chore(carrier): account for page smooth-scroll CSS'
       - name: Repair, regression-test, and push exact candidate
         run: |
           set -euo pipefail
