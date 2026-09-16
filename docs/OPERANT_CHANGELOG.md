@@ -23,6 +23,8 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(prompt-kit): scope appendix head movement to proof relevance (`6e06182e`)
 - fix(prompt-kit): align Storage UI and add format-alignment ledger (`3a288914`)
 - fix(prompt-kit): keep prompt headers visible when snapping (`d660c056`)
+- fix(prompt): preserve required successor obligations (`7e93b4fa`)
+- fix(prompt): harden raw verifier successor semantics (`72f55265`)
 
 ## 0.8.1 - 2026-09-14
 
