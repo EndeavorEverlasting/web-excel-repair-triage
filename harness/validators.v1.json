@@ -18,6 +18,102 @@
       "proof_ceiling": "Executable regression proof for registered harness contracts."
     },
     {
+      "id": "repository-work-ledger-audit",
+      "class": "contract",
+      "command": "python scripts/validate_repository_work_ledger.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static/current repository work-ledger continuity and disposition proof."
+    },
+    {
+      "id": "repository-work-ledger-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_repository_work_ledger -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable repository work-ledger regression proof."
+    },
+    {
+      "id": "prompt-kit-cross-device-access-audit",
+      "class": "contract",
+      "command": "python scripts/validate_prompt_kit_cross_device_access.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static Prompt Kit cross-device access contract proof."
+    },
+    {
+      "id": "prompt-kit-cross-device-access-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_prompt_kit_cross_device_access -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable Prompt Kit cross-device access regression proof."
+    },
+    {
+      "id": "prompt-kit-freshness-guidance-audit",
+      "class": "contract",
+      "command": "python scripts/validate_prompt_kit_freshness_guidance.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static Prompt Kit freshness guidance contract proof."
+    },
+    {
+      "id": "prompt-kit-freshness-guidance-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_prompt_kit_freshness_guidance -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable Prompt Kit freshness guidance regression proof."
+    },
+    {
+      "id": "pr-merge-gate-audit",
+      "class": "contract",
+      "command": "python scripts/validate_pr_merge_gate.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static PR merge-gate contract proof."
+    },
+    {
+      "id": "pr-merge-gate-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_pr_merge_gate -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable PR merge-gate regression proof."
+    },
+    {
+      "id": "artifact-handoff-harness-audit",
+      "class": "contract",
+      "command": "python scripts/validate_artifact_handoff_harness.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static artifact handoff harness completeness proof."
+    },
+    {
+      "id": "artifact-handoff-harness-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_artifact_handoff_harness -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable artifact handoff harness regression proof."
+    },
+    {
+      "id": "artifact-derivation-harness-audit",
+      "class": "contract",
+      "command": "python scripts/validate_artifact_derivation_harness.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static artifact derivation harness completeness proof."
+    },
+    {
+      "id": "artifact-derivation-harness-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_artifact_derivation_harness -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable artifact derivation harness regression proof."
+    },
+    {
       "id": "prompt-kit-interaction-contract-tests",
       "class": "test",
       "command": "python -m unittest tests.test_prompt_kit_interactions_contract -v",
@@ -317,6 +413,18 @@
     ],
     "pre_commit": [
       "staged-artifact-hygiene",
+      "repository-work-ledger-audit",
+      "repository-work-ledger-tests",
+      "prompt-kit-cross-device-access-audit",
+      "prompt-kit-cross-device-access-tests",
+      "prompt-kit-freshness-guidance-audit",
+      "prompt-kit-freshness-guidance-tests",
+      "pr-merge-gate-audit",
+      "pr-merge-gate-tests",
+      "artifact-handoff-harness-audit",
+      "artifact-handoff-harness-tests",
+      "artifact-derivation-harness-audit",
+      "artifact-derivation-harness-tests",
       "harness-completeness",
       "harness-contract-tests",
       "patch-hygiene-staged"
@@ -351,12 +459,28 @@
       "artifact-hygiene",
       "app-harness-validation",
       "patch-hygiene"
+    ],
+    "pre_commit_snapshot": [
+      "repository-work-ledger-audit",
+      "repository-work-ledger-tests",
+      "prompt-kit-cross-device-access-audit",
+      "prompt-kit-cross-device-access-tests",
+      "prompt-kit-freshness-guidance-audit",
+      "prompt-kit-freshness-guidance-tests",
+      "pr-merge-gate-audit",
+      "pr-merge-gate-tests",
+      "artifact-handoff-harness-audit",
+      "artifact-handoff-harness-tests",
+      "artifact-derivation-harness-audit",
+      "artifact-derivation-harness-tests",
+      "harness-completeness",
+      "harness-contract-tests"
     ]
   },
   "hooks": {
     "pre_commit": {
       "path": ".githooks/pre-commit",
-      "profile": "pre_commit",
+      "profile": "pre_commit_snapshot",
       "index_mode": "staged-tree"
     },
     "pre_push": {

@@ -74,6 +74,16 @@ def require_file(relative: str) -> Path:
     return path
 
 
+def _pre_commit_snapshot_owns(validator_id: str) -> bool:
+    """Accept durable snapshot-profile delegation in place of a copied hook marker."""
+    hook = require_file(".githooks/pre-commit").read_text(encoding="utf-8")
+    if "run_validator_profile.py --profile pre_commit_snapshot" not in hook:
+        return False
+    registry = load_json(ROOT / "harness" / "validators.v1.json")
+    profile = registry.get("profiles", {}).get("pre_commit_snapshot")
+    return isinstance(profile, list) and validator_id in profile
+
+
 def suffix(name: str) -> str:
     return Path(name).suffix.lower()
 
@@ -311,8 +321,15 @@ def validate_static_harness() -> dict:
     }
     for relative, marker in integration_markers.items():
         text = require_file(relative).read_text(encoding="utf-8")
-        if marker not in text:
-            raise ValidationError(f"{relative} is missing artifact-handoff integration marker: {marker}")
+        if marker in text:
+            continue
+        if relative == ".githooks/pre-commit" and _pre_commit_snapshot_owns(
+            "artifact-handoff-harness-audit"
+        ):
+            continue
+        raise ValidationError(
+            f"{relative} is missing artifact-handoff integration marker: {marker}"
+        )
 
     return {
         "schema_version": "artifact-handoff-harness-validation/v1",

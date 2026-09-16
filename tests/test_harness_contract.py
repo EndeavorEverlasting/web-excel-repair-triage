@@ -258,18 +258,40 @@ class HarnessContractTests(unittest.TestCase):
             validators["hooks"]["pre_commit"]["index_mode"],
             "staged-tree",
         )
+        self.assertEqual(
+            validators["hooks"]["pre_commit"]["profile"],
+            validate_harness.PRE_COMMIT_SNAPSHOT_PROFILE,
+        )
+        self.assertEqual(
+            validators["profiles"][validate_harness.PRE_COMMIT_SNAPSHOT_PROFILE],
+            list(validate_harness.PRE_COMMIT_SNAPSHOT_VALIDATOR_IDS),
+        )
+        self.assertEqual(
+            validators["profiles"]["pre_commit"],
+            ["staged-artifact-hygiene"]
+            + list(validate_harness.PRE_COMMIT_SNAPSHOT_VALIDATOR_IDS)
+            + ["patch-hygiene-staged"],
+        )
         pre_commit = (ROOT / ".githooks" / "pre-commit").read_text(
             encoding="utf-8"
         )
         for phrase in (
+            validate_harness.PRE_COMMIT_ADAPTER_GATES[0],
             "git checkout-index --all --prefix=",
             'cd "$staged_tree"',
-            "python scripts/validate_prompt_kit_cross_device_access.py --summary",
-            "python -m unittest tests.test_prompt_kit_cross_device_access -v",
-            'python scripts/validate_harness.py --report "$HARNESS_REPORT"',
-            "git diff --cached --check",
+            validate_harness.PRE_COMMIT_PROFILE_RUNNER,
+            validate_harness.PRE_COMMIT_PROFILE_REPORT,
+            validate_harness.PRE_COMMIT_ADAPTER_GATES[1],
         ):
             self.assertIn(phrase, pre_commit)
+        self.assertLess(
+            pre_commit.index(validate_harness.PRE_COMMIT_ADAPTER_GATES[0]),
+            pre_commit.index("git checkout-index --all --prefix="),
+        )
+        self.assertLess(
+            pre_commit.index(validate_harness.PRE_COMMIT_PROFILE_RUNNER),
+            pre_commit.index(validate_harness.PRE_COMMIT_ADAPTER_GATES[1]),
+        )
 
         self.assertEqual(
             validators["hooks"]["pre_push"]["profile"],
@@ -291,12 +313,16 @@ class HarnessContractTests(unittest.TestCase):
         validator_by_id = {
             item["id"]: item for item in validators["validators"]
         }
-        for validator_id in validators["profiles"]["pre_push"]:
-            self.assertNotIn(
-                validator_by_id[validator_id]["command"],
-                pre_push,
-                f"registered pre-push validator duplicated in hook: {validator_id}",
-            )
+        for profile_name, hook_text in (
+            (validate_harness.PRE_COMMIT_SNAPSHOT_PROFILE, pre_commit),
+            ("pre_push", pre_push),
+        ):
+            for validator_id in validators["profiles"][profile_name]:
+                self.assertNotIn(
+                    validator_by_id[validator_id]["command"],
+                    hook_text,
+                    f"registered {profile_name} validator duplicated in hook: {validator_id}",
+                )
 
     def test_tracked_file_probe_is_bounded_noninteractive_and_byte_mode(self) -> None:
         fake = SimpleNamespace(

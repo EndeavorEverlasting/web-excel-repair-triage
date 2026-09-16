@@ -10,29 +10,28 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github" / "workflows" / "harness-contract.yml"
 REGISTRY = ROOT / "harness" / "validators.v1.json"
-SNAPSHOT_PROFILE = "pre_commit_snapshot_prototype"
-SNAPSHOT_VALIDATORS = ("harness-completeness", "harness-contract-tests")
+SNAPSHOT_PROFILE = "pre_commit_snapshot"
+SNAPSHOT_VALIDATORS = (
+    "repository-work-ledger-audit",
+    "repository-work-ledger-tests",
+    "prompt-kit-cross-device-access-audit",
+    "prompt-kit-cross-device-access-tests",
+    "prompt-kit-freshness-guidance-audit",
+    "prompt-kit-freshness-guidance-tests",
+    "pr-merge-gate-audit",
+    "pr-merge-gate-tests",
+    "artifact-handoff-harness-audit",
+    "artifact-handoff-harness-tests",
+    "artifact-derivation-harness-audit",
+    "artifact-derivation-harness-tests",
+    "harness-completeness",
+    "harness-contract-tests",
+)
 
 
 class RequiredCheckProgramCallStackTests(unittest.TestCase):
     def load_registry(self) -> dict:
         return json.loads(REGISTRY.read_text(encoding="utf-8"))
-
-    def prototype_snapshot_registry(self, directory: Path) -> Path:
-        canonical = self.load_registry()
-        validator_by_id = {
-            item["id"]: item for item in canonical["validators"]
-        }
-        selected = [validator_by_id[item] for item in SNAPSHOT_VALIDATORS]
-        payload = {
-            "schema_version": canonical["schema_version"],
-            "validators": selected,
-            "profiles": {SNAPSHOT_PROFILE: list(SNAPSHOT_VALIDATORS)},
-            "hooks": {},
-        }
-        path = directory / "prototype-validators.json"
-        path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-        return path
 
     def materialize_index(self, destination: Path) -> None:
         prefix = destination.as_posix().rstrip("/") + "/"
@@ -52,15 +51,12 @@ class RequiredCheckProgramCallStackTests(unittest.TestCase):
     def run_snapshot_profile(
         self,
         snapshot: Path,
-        prototype_registry: Path,
         report: Path,
     ) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [
                 sys.executable,
                 "scripts/run_validator_profile.py",
-                "--registry",
-                str(prototype_registry),
                 "--profile",
                 SNAPSHOT_PROFILE,
                 "--report",
@@ -104,23 +100,42 @@ class RequiredCheckProgramCallStackTests(unittest.TestCase):
                 f"portable harness command duplicated in Actions wrapper: {validator_id}",
             )
 
+    def test_durable_snapshot_profile_membership_and_hook_delegation(self) -> None:
+        registry = self.load_registry()
+        hook = (ROOT / ".githooks" / "pre-commit").read_text(encoding="utf-8")
+
+        self.assertEqual(
+            registry["profiles"][SNAPSHOT_PROFILE],
+            list(SNAPSHOT_VALIDATORS),
+        )
+        self.assertEqual(
+            registry["hooks"]["pre_commit"]["profile"],
+            SNAPSHOT_PROFILE,
+        )
+        self.assertIn(
+            f"python scripts/run_validator_profile.py --profile {SNAPSHOT_PROFILE}",
+            hook,
+        )
+        validators = {item["id"]: item for item in registry["validators"]}
+        for validator_id in SNAPSHOT_VALIDATORS:
+            self.assertNotIn(
+                validators[validator_id]["command"],
+                hook,
+                f"snapshot validator duplicated in pre-commit hook: {validator_id}",
+            )
+
     def test_staged_snapshot_success_and_domain_failure_use_same_real_runner(self) -> None:
         if not (ROOT / ".git").exists():
-            self.skipTest("staged-index prototype requires a Git checkout")
+            self.skipTest("staged-index proof requires a Git checkout")
 
         with tempfile.TemporaryDirectory() as temporary:
             temp = Path(temporary)
             snapshot = temp / "snapshot"
             snapshot.mkdir()
-            prototype_registry = self.prototype_snapshot_registry(temp)
             self.materialize_index(snapshot)
 
             success_report = temp / "snapshot-success.json"
-            success = self.run_snapshot_profile(
-                snapshot,
-                prototype_registry,
-                success_report,
-            )
+            success = self.run_snapshot_profile(snapshot, success_report)
             self.assertEqual(
                 success.returncode,
                 0,
@@ -129,8 +144,8 @@ class RequiredCheckProgramCallStackTests(unittest.TestCase):
             success_payload = json.loads(success_report.read_text(encoding="utf-8"))
             self.assertEqual(success_payload["status"], "PASS")
             self.assertEqual(success_payload["profile"], SNAPSHOT_PROFILE)
-            self.assertEqual(success_payload["observed_step_count"], 2)
-            self.assertEqual(success_payload["required_step_count"], 2)
+            self.assertEqual(success_payload["observed_step_count"], 14)
+            self.assertEqual(success_payload["required_step_count"], 14)
             self.assertEqual(
                 [step["id"] for step in success_payload["steps"]],
                 list(SNAPSHOT_VALIDATORS),
@@ -145,11 +160,7 @@ class RequiredCheckProgramCallStackTests(unittest.TestCase):
             )
 
             failure_report = temp / "snapshot-failure.json"
-            failure = self.run_snapshot_profile(
-                snapshot,
-                prototype_registry,
-                failure_report,
-            )
+            failure = self.run_snapshot_profile(snapshot, failure_report)
             self.assertEqual(
                 failure.returncode,
                 1,
@@ -161,12 +172,49 @@ class RequiredCheckProgramCallStackTests(unittest.TestCase):
                 failure_payload["failed_validator"],
                 "harness-completeness",
             )
-            self.assertEqual(failure_payload["observed_step_count"], 1)
-            self.assertEqual(failure_payload["required_step_count"], 2)
+            # The 12 leading snapshot-safe validators still pass; fail-fast stops
+            # at the corrupted harness completeness gate and skips the successor.
+            self.assertEqual(failure_payload["observed_step_count"], 13)
+            self.assertEqual(failure_payload["required_step_count"], 14)
             self.assertEqual(
-                failure_payload["steps"][0]["returncode"],
+                failure_payload["steps"][-1]["returncode"],
                 1,
             )
+            self.assertEqual(
+                failure_payload["steps"][-1]["id"],
+                "harness-completeness",
+            )
+
+    def test_unstaged_working_tree_mutation_does_not_enter_staged_snapshot(self) -> None:
+        if not (ROOT / ".git").exists():
+            self.skipTest("staged-index proof requires a Git checkout")
+
+        target = ROOT / "harness" / "manifest.v1.json"
+        original = target.read_text(encoding="utf-8")
+        try:
+            mutated = json.loads(original)
+            mutated["default_branch"] = "unstaged-working-tree-only"
+            target.write_text(json.dumps(mutated, indent=2) + "\n", encoding="utf-8")
+
+            with tempfile.TemporaryDirectory() as temporary:
+                snapshot = Path(temporary) / "snapshot"
+                snapshot.mkdir()
+                self.materialize_index(snapshot)
+                snap_manifest = json.loads(
+                    (snapshot / "harness" / "manifest.v1.json").read_text(
+                        encoding="utf-8"
+                    )
+                )
+                self.assertEqual(
+                    snap_manifest.get("default_branch"),
+                    json.loads(original).get("default_branch"),
+                )
+                self.assertNotEqual(
+                    snap_manifest.get("default_branch"),
+                    "unstaged-working-tree-only",
+                )
+        finally:
+            target.write_text(original, encoding="utf-8")
 
 
 if __name__ == "__main__":
