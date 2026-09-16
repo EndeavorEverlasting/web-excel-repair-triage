@@ -141,6 +141,19 @@ class ValidatorProfileRunnerTests(unittest.TestCase):
         target = runner.resolve_report_path(Path("Outputs/profile-report.json"))
         self.assertEqual(target, (ROOT / "Outputs" / "profile-report.json").resolve())
 
+    def test_execute_profile_invalid_report_path_fails_closed_without_rethrow(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            registry = self.write_registry(directory, self.registry_payload())
+            invalid_report = ROOT / "harness" / "invalid-profile-report.json"
+            code, report = runner.execute_profile(
+                "sample", registry, invalid_report
+            )
+        self.assertEqual(code, 2)
+        self.assertEqual(report["status"], "FAIL")
+        self.assertEqual(report["failed_validator"], "contract")
+        self.assertIn("under Outputs", report["error"])
+        self.assertFalse(invalid_report.exists())
+
     def test_profile_with_unknown_validator_fails_closed(self) -> None:
         payload = self.registry_payload()
         payload["profiles"]["sample"].append("missing")
