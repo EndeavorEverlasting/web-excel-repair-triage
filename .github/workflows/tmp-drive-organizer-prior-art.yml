@@ -1,0 +1,40 @@
+name: Temporary Drive organizer prior-art gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  prior-art:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/google-drive-organizer-prompt-20260916'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/google-drive-organizer-prompt-20260916
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run all-registered-source prior-art gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          python scripts/prompt_registry_ops.py prior-art --query "organize a user's existing Google Drive workspace folder hierarchy file placement duplicate identities naming conventions archive boundaries safe moves renames deduplication preserve links permissions and existing authority without requiring a repository" | tee /tmp/drive-organizer-prior-art.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          receipt=json.loads(Path('/tmp/drive-organizer-prior-art.json').read_text(encoding='utf-8'))
+          assert receipt.get('all_registered_sources_searched') is True, receipt
+          sources={item.get('source_id') or item.get('id') for item in receipt.get('sources', [])}
+          print(json.dumps({'all_registered_sources_searched': True, 'source_count': len(sources), 'sources': sorted(x for x in sources if x)}, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: drive-organizer-prior-art
+          path: /tmp/drive-organizer-prior-art.json
+          if-no-files-found: error
