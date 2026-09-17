@@ -82,28 +82,29 @@ def signal_names(text: str) -> list[str]:
     return sorted(name for name, terms in SIGNAL_TERMS.items() if any(term in lower for term in terms))
 
 
-def _flush_paragraph(
+def _append_candidate(
     candidates: list[dict[str, Any]],
-    paragraph: list[str],
     *,
+    structure: str,
     section: str | None,
-    start_line: int | None,
+    start_line: int,
     end_line: int,
+    pieces: list[str],
+    require_directive_language: bool,
 ) -> None:
-    if not paragraph or start_line is None:
+    text = " ".join(piece.strip() for piece in pieces if piece.strip()).strip()
+    if not text or (require_directive_language and not DIRECTIVE_RE.search(text)):
         return
-    text = " ".join(piece.strip() for piece in paragraph if piece.strip()).strip()
-    if text and DIRECTIVE_RE.search(text):
-        candidates.append(
-            {
-                "structure": "policy_paragraph",
-                "section": section,
-                "line_start": start_line,
-                "line_end": end_line,
-                "text": text,
-                "signals": signal_names(text),
-            }
-        )
+    candidates.append(
+        {
+            "structure": structure,
+            "section": section,
+            "line_start": start_line,
+            "line_end": end_line,
+            "text": text,
+            "signals": signal_names(text),
+        }
+    )
 
 
 def extract_directive_candidates(body: str) -> tuple[dict[str, str], list[dict[str, Any]]]:
@@ -114,57 +115,78 @@ def extract_directive_candidates(body: str) -> tuple[dict[str, str], list[dict[s
     fenced = False
     paragraph: list[str] = []
     paragraph_start: int | None = None
+    list_item: list[str] = []
+    list_start: int | None = None
 
-    def flush(before_line: int) -> None:
+    def flush_paragraph(before_line: int) -> None:
         nonlocal paragraph, paragraph_start
-        _flush_paragraph(
-            candidates,
-            paragraph,
-            section=section,
-            start_line=paragraph_start,
-            end_line=max(before_line, paragraph_start or before_line),
-        )
+        if paragraph and paragraph_start is not None:
+            _append_candidate(
+                candidates,
+                structure="policy_paragraph",
+                section=section,
+                start_line=paragraph_start,
+                end_line=max(before_line, paragraph_start),
+                pieces=paragraph,
+                require_directive_language=True,
+            )
         paragraph = []
         paragraph_start = None
+
+    def flush_list(before_line: int) -> None:
+        nonlocal list_item, list_start
+        if list_item and list_start is not None:
+            _append_candidate(
+                candidates,
+                structure="list_item",
+                section=section,
+                start_line=list_start,
+                end_line=max(before_line, list_start),
+                pieces=list_item,
+                require_directive_language=False,
+            )
+        list_item = []
+        list_start = None
 
     for zero_idx in range(body_start, len(lines)):
         line_no = zero_idx + 1
         raw = lines[zero_idx]
         stripped = raw.strip()
         if stripped.startswith("```"):
-            flush(line_no - 1)
+            flush_list(line_no - 1)
+            flush_paragraph(line_no - 1)
             fenced = not fenced
             continue
         if fenced:
             continue
         heading = HEADING_RE.match(stripped)
         if heading:
-            flush(line_no - 1)
+            flush_list(line_no - 1)
+            flush_paragraph(line_no - 1)
             section = heading.group(2).strip()
             continue
-        list_item = LIST_RE.match(raw)
-        if list_item:
-            flush(line_no - 1)
-            text = list_item.group(1).strip()
-            if text:
-                candidates.append(
-                    {
-                        "structure": "list_item",
-                        "section": section,
-                        "line_start": line_no,
-                        "line_end": line_no,
-                        "text": text,
-                        "signals": signal_names(text),
-                    }
-                )
+        matched_list = LIST_RE.match(raw)
+        if matched_list:
+            flush_list(line_no - 1)
+            flush_paragraph(line_no - 1)
+            list_start = line_no
+            list_item = [matched_list.group(1).strip()]
             continue
         if not stripped:
-            flush(line_no - 1)
+            flush_list(line_no - 1)
+            flush_paragraph(line_no - 1)
             continue
+        if list_item and raw.startswith((" ", "\t")):
+            list_item.append(stripped)
+            continue
+        if list_item:
+            flush_list(line_no - 1)
         if paragraph_start is None:
             paragraph_start = line_no
         paragraph.append(stripped)
-    flush(len(lines))
+
+    flush_list(len(lines))
+    flush_paragraph(len(lines))
 
     for idx, candidate in enumerate(candidates, start=1):
         candidate["candidate_id"] = f"D{idx:03d}"
