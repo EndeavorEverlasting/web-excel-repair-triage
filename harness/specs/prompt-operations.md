@@ -20,6 +20,7 @@ Binding for Prompt Kit prompt addition/repair, language audit, generated Prompt 
 - If no trustworthy local proof owner exists and creating one belongs to the active scope, build the smallest durable repository-native validator/launcher rather than a per-PR workaround. If another owner controls that seam, preserve the exact successor/autonomy gap while continuing independent executable work.
 - Local PASS never promotes to hosted-runner, deployed, live-runtime, device, or operator-acceptance proof. Proof receipts must identify the candidate/base, validator or launcher, proof-relevant inputs, result, and proof ceiling.
 - P07's Prompt Semantic IR carries the executable MUST obligation. P112/P113 remain the specialized deterministic test-floor bootstrap/evolution owners; P32 remains the established failing-CI repair owner. This contract does not merge those responsibilities.
+- The executable repository action seam is `harness/repository-actions.v1.json` + `scripts/run_repository_action.py`. Planning/build prompts should name or add the smallest reviewed action id instead of inventing ad hoc shell; `.github/workflows/repository-local-action.yml` is only a thin optional provider adapter.
 
 ### Current P79 admission candidate
 

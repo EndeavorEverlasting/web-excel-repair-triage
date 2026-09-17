@@ -55,5 +55,10 @@
     "Inventing a local PASS without executing the repository-owned validator/build/test path.",
     "Promoting local proof to hosted, deployed, live-runtime, or operator-acceptance proof."
   ],
-  "proof_ceiling": "This contract can require and type repository-local continuity proof. It cannot by itself prove hosted-runner execution, deployment, live runtime behavior, external credentials, or operator acceptance."
+  "proof_ceiling": "This contract can require and type repository-local continuity proof. It cannot by itself prove hosted-runner execution, deployment, live runtime behavior, external credentials, or operator acceptance.",
+  "canonical_local_action_registry": "harness/repository-actions.v1.json",
+  "canonical_local_action_runner": "scripts/run_repository_action.py",
+  "provider_adapter": ".github/workflows/repository-local-action.yml",
+  "provider_adapter_rule": "The provider workflow is a thin optional delegate to a reviewed local action id; it is never the sole proof owner and accepts no arbitrary shell input.",
+  "local_action_bootstrap_rule": "Planning/build lanes must establish or reuse the smallest reviewed repository-local action before hosted provider quota becomes a single point of failure."
 }
