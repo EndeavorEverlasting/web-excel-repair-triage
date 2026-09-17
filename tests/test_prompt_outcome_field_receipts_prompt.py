@@ -37,6 +37,7 @@ class PromptOutcomeFieldReceiptTests(unittest.TestCase):
         self.assertEqual(receipt["result"], "BLOCKED")
         self.assertEqual(receipt["classification"]["primary"], "environment")
         self.assertNotIn("state_transition", receipt)
+        self.assertNotIn("claimed_state", receipt["observation"])
         self.assertIn("Gemini export stage itself was not executed", receipt["observation"]["observed_state"])
         self.assertIn("Gemini", receipt["next_state"]["completion_gate"])
 
