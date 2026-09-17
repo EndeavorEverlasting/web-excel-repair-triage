@@ -35,7 +35,8 @@ echo "never parse me as a directive"
 
 ## Remember
 
-- Resolve lockfile conflicts by regenerating, never by hand-merging.
+- Resolve lockfile conflicts by regenerating,
+  never by hand-merging them when regeneration is canonical.
 - Cleanup after merge and remove the disposable worktree.
 """
 
@@ -64,6 +65,14 @@ class ExternalSkillSemanticPrototypeTests(unittest.TestCase):
         self.assertFalse(any("parse me" in row["text"] for row in directives))
         self.assertTrue(all(row["line_start"] <= row["line_end"] for row in directives))
         self.assertIn("lexical hints", receipt["proof_ceiling"])
+
+    def test_multiline_list_item_remains_one_candidate(self) -> None:
+        _, directives = prototype.extract_directive_candidates(FIXTURE)
+        lockfile = [row for row in directives if "lockfile conflicts" in row["text"]]
+        self.assertEqual(len(lockfile), 1)
+        self.assertIn("never by hand-merging", lockfile[0]["text"])
+        self.assertEqual(lockfile[0]["structure"], "list_item")
+        self.assertGreater(lockfile[0]["line_end"], lockfile[0]["line_start"])
 
     def test_failure_stack_rejects_stale_body_identity(self) -> None:
         with self.assertRaisesRegex(ValueError, "body sha256 mismatch"):
