@@ -1,6 +1,6 @@
 # Upstream semantic extraction program design
 
-**Status:** design + executable prototype, critique passes complete
+**Status:** design + executable prototype, critique/review passes complete
 
 **Repository floor:** `main@c0090aa285fe0580ff19c26c1e1de0d7e95506bc`
 
@@ -16,21 +16,21 @@ The terminal value is **a normalized comparison input**, not automatic prompt au
 
 1. `harness/contracts/operant-external-resource-intake.v1.json` remains the canonical owner of donor discovery and source-floor pinning.
 2. `web/prompt-kit/resources.v1.json` remains metadata-only; semantic extraction must not add upstream bodies to it.
-3. Every extraction is bound to `source_id + resource_id + repository + source_sha + path + body_sha256`.
+3. Every extraction is bound to a validated `ResourceIdentity` plus a digest-checked `PinnedBody`.
 4. Raw upstream bodies are transient inputs. Durable receipts contain extracted candidates and provenance, not a mirrored full body.
 5. Deterministic parsing may identify structure and lexical signals. It must not claim semantic equivalence, adoption fitness, license compatibility, or Operant authority.
-6. Body acquisition is an adapter seam. The extraction core accepts text and is testable without network access.
-7. Stale or mismatched body identity fails closed.
+6. Body acquisition is an adapter seam. The extraction core consumes `PinnedBody` and is testable without network access.
+7. Stale, movable, escaping, or internally inconsistent identity/body state fails closed.
 8. Production sync and semantic extraction remain separate stages until a later build proves a safe orchestration contract.
 
 ## Domain vocabulary
 
-- **ResourceIdentity** — source, repository, commit SHA, path, and resource ID already established by the intake plane.
-- **PinnedBody** — transient UTF-8 body paired with ResourceIdentity and its SHA-256 digest.
-- **DirectiveCandidate** — one source-located policy/procedure statement extracted from prose or a list item.
+- **ResourceIdentity** — validated source, repository, 40-character commit SHA, relative path, and resource ID established by the intake plane.
+- **PinnedBody** — transient UTF-8 body paired with ResourceIdentity, its verified SHA-256 digest, and acquisition proof.
+- **DirectiveCandidate** — one source-located policy/procedure statement extracted from directive-bearing prose or a list item.
 - **LexicalSignal** — deterministic hint such as `isolation`, `freshness`, `evidence`, or `retry`; never a semantic verdict.
-- **ExtractionReceipt** — durable normalized output containing identity, body digest, document metadata, candidate records, counts, and proof ceiling.
-- **BodyPort** — adapter interface that obtains a body matching an exact ResourceIdentity.
+- **ExtractionReceipt** — durable normalized output containing identity, body digest, acquisition mode, document metadata, candidate records, counts, and proof ceiling.
+- **BodyPort** — adapter interface that obtains a PinnedBody matching an exact ResourceIdentity.
 - **ComparisonOwner** — downstream P97/P79/domain owner that decides commonality, residual, adoption, strengthening, reference-only, rejection, or unknown.
 
 ## Candidate architectures compared
@@ -38,7 +38,7 @@ The terminal value is **a normalized comparison input**, not automatic prompt au
 | Candidate | Shape | Advantages | Failure / cost | Decision |
 | --- | --- | --- | --- | --- |
 | A. Extend `sync_operant_external_resources.py` | discovery + body fetch + extraction + coverage in one producer | one command | couples metadata refresh to body parsing; increases network/copyright/latency blast radius; muddies public projection ownership | **Reject** |
-| B. Separate semantic stage after intake | registered ResourceIdentity -> BodyPort -> extraction core -> receipt -> comparison owner | narrow ownership, independently testable, transient bodies, reusable across donors | requires a second orchestration stage | **Select** |
+| B. Separate semantic stage after intake | ResourceIdentity -> BodyPort -> PinnedBody -> extraction core -> receipt -> comparison owner | narrow ownership, independently testable, transient bodies, reusable across donors | requires a second orchestration stage | **Select** |
 | C. Mirror upstream skill bodies locally | sync full bodies into repo/cache then parse offline | easy replay | duplicates external content, creates stale cache ownership, expands repository/provenance surface | **Reject** |
 | D. Runtime model reads raw repo and returns conclusions directly | agent fetch -> free-form semantic answer | flexible | nondeterministic shape, weak provenance, no stable regression seam, easy evidence promotion | **Reject as canonical stage**; model reasoning may consume normalized receipts later |
 
@@ -54,31 +54,34 @@ Owns source registration, default-branch verification, source-SHA resolution, en
 
 `scripts/prototype_external_skill_semantics.py`
 
-Public seam:
+Public semantic seam:
 
 ```text
-build_receipt(
-  source_id,
-  resource_id,
-  repository,
-  source_sha,
-  path,
-  body,
-  expected_body_sha256=None,
-) -> ExtractionReceipt
+build_receipt(pinned: PinnedBody) -> ExtractionReceipt
 ```
 
-Hidden complexity: front-matter parsing; Markdown heading/list/prose traversal; fenced-code and table exclusion; multiline list-item ownership; directive detection; lexical signals; line provenance; digest verification.
+The trust-boundary helpers are deliberately separate:
 
-Failure contract: malformed front matter, stale body digest, no extractable directives, or invalid pinned URL returns a nonzero CLI result / `ValueError` at the library seam.
+```text
+ResourceIdentity(...)
+fetch_pinned_body(url, identity) -> PinnedBody
+verify_body(identity, body, expected_body_sha256, acquisition) -> PinnedBody
+load_verified_body(path, identity, expected_body_sha256) -> PinnedBody
+```
 
-Side effects: none in the core. The CLI may read one body file or fetch one exact pinned raw GitHub URL and may write one receipt.
+Hidden complexity: identity validation; body digest verification; front-matter parsing; Markdown heading/list/prose traversal; backtick/tilde fence exclusion; reference-table exclusion; multiline list-item ownership; directive-language filtering; lexical signals; line provenance.
+
+Failure contract: malformed identity/front matter, stale or self-inconsistent body digest, no extractable directives, or invalid pinned URL returns a nonzero CLI result / `ValueError` at the library seam.
+
+Side effects: none in the semantic core. The CLI may read one digest-verified body file or fetch one exact pinned raw GitHub URL and may write one receipt.
 
 ### Body adapter
 
-Prototype adapter: `fetch_pinned_body(...)`.
+Prototype network adapter: `fetch_pinned_body(...)`.
 
-It accepts only an exact `https://raw.githubusercontent.com/<repository>/<source_sha>/<path>` URL. Network acquisition is outside extraction logic and exact-revision bound. A production GitHub API/blob adapter may be added later, but it must return the same PinnedBody contract instead of leaking provider response shapes into the core.
+It accepts only an exact `https://raw.githubusercontent.com/<repository>/<source_sha>/<path>` URL and creates a PinnedBody with `acquisition=pinned_raw_url`. Local body files require an explicit expected SHA-256 before a PinnedBody can be constructed.
+
+A production GitHub API/blob adapter may be added later, but it must return the same PinnedBody contract instead of leaking provider response shapes into the core.
 
 ### Downstream comparison owner
 
@@ -93,7 +96,10 @@ external-resource intake contract
 ResourceIdentity (existing metadata index)
         |
         v
-BodyPort / pinned body adapter
+BodyPort / acquisition adapter
+        |
+        v
+PinnedBody
         |
         v
 semantic extraction core
@@ -113,13 +119,16 @@ Dependency direction is one-way. The extractor does not mutate the donor registr
 REGISTERED
   -> BODY_ACQUIRED
   -> IDENTITY_VERIFIED
+  -> BODY_VERIFIED
   -> STRUCTURE_PARSED
   -> CANDIDATES_EXTRACTED
   -> RECEIPT_EMITTED
 
 Failure states:
   BODY_UNAVAILABLE
+  IDENTITY_INVALID
   IDENTITY_MISMATCH
+  BODY_DIGEST_MISMATCH
   MALFORMED_DOCUMENT
   NO_CANDIDATES
 ```
@@ -134,16 +143,18 @@ Terminal user value: a machine-readable candidate set that can be compared witho
 
 ```text
 CLI/event
+  -> construct validated ResourceIdentity
   -> validate exact repository/SHA/path URL
   -> BodyPort fetches pinned UTF-8 body
-  -> build_receipt
-  -> verify body SHA-256 (when expected digest exists)
+  -> construct digest-consistent PinnedBody
+  -> build_receipt(PinnedBody)
   -> parse front matter + Markdown structure
-  -> exclude fenced code and reference tables
+  -> exclude backtick/tilde fenced code and reference tables
   -> preserve multiline directive/list boundaries
+  -> reject descriptive list/prose structures without directive language
   -> extract directive candidates + line ranges
   -> attach deterministic lexical signals
-  -> emit ExtractionReceipt
+  -> emit ExtractionReceipt with acquisition proof
 ```
 
 Live prototype coverage uses three structurally different resources from `michaelshimeles/skills@513f8a24aae6383b00356fa285144b1bc3730dc1`:
@@ -156,14 +167,15 @@ Live prototype coverage uses three structurally different resources from `michae
 
 ```text
 body/file/network adapter
-  -> build_receipt(expected_body_sha256=<wrong digest>)
+  -> verify_body(expected_body_sha256=<wrong digest>)
   -> digest comparison
-  -> IDENTITY_MISMATCH
+  -> BODY_DIGEST_MISMATCH
+  -> no PinnedBody
   -> no receipt
   -> exit 2 / ValueError
 ```
 
-This prevents a body fetched from a moved branch or mutated cache from inheriting proof attached to a different source identity.
+This prevents a moved branch, mutated cache, or unverified local body from inheriting proof attached to a different source identity.
 
 ### Journey 3 — malformed or semantically empty document -> fail closed
 
@@ -173,8 +185,9 @@ Unterminated front matter is `MALFORMED_DOCUMENT`; a document with no determinis
 
 ExtractionReceipt is the proof artifact. It contains:
 
-- exact source identity;
+- exact validated source identity;
 - body SHA-256;
+- acquisition proof label;
 - document name/description when structurally available;
 - ordered candidate IDs;
 - source section + line range;
@@ -192,50 +205,70 @@ Focused proof command:
 python -m unittest tests.test_external_skill_semantics_prototype -v
 ```
 
-The temporary PR proof workflow exercised live pinned bodies and an adversarial stale-digest failure path. The final live proof was bound to prototype head `bd58a74bdc62cb81de55a95e68a15ac5586b9524` and uploaded artifact **10500154065**, digest **`sha256:da03104524a5485da221d6ef672409a3c2b1ca72c476aa90b2848ed20bb26a18`**.
+The temporary PR proof workflow exercised three live pinned bodies and an adversarial stale-digest failure path. After the final review-driven behavioral repairs, the live proof was bound to prototype head `03b4f17c55b8f7ec7aca2d03c3f8c9407e01cb38` and uploaded artifact **10500179872**, digest **`sha256:dae2d1929e92add854007a59a3769f214487f822e8e4b66d12333e444ae77266`**.
 
-Final live receipt observations after repairs:
+Final live receipt observations:
 
-| Resource | Directive candidates | Relevant signals observed | Structural-noise check |
+| Resource | Directive candidates | Relevant signals observed | Structural/trust check |
 | --- | ---: | --- | --- |
-| `new-feature` | 13 | isolation, freshness, collision, dependency, cleanup, ownership | fenced code excluded; multiline mechanics preserved |
-| `evidence-driven-testing` | 60 | evidence, freshness, retry, ownership | Markdown platform table excluded |
-| `greploop` | 42 | review, retry, freshness | fenced code/reference structures do not become provider truth |
+| `new-feature` | 13 | isolation, freshness, collision, dependency, cleanup, ownership | multiline mechanics preserved; fenced code excluded; pinned URL acquisition recorded |
+| `evidence-driven-testing` | 47 | evidence, freshness, retry, ownership | Markdown table excluded; descriptive bullets filtered |
+| `greploop` | 37 | review, retry, freshness | reference/descriptive bullets filtered; bounded-loop mechanics retained |
 
 All three live success stacks passed. The stale-digest stack returned exit 2 and emitted no success receipt.
 
-## Second-pass architecture critique and repairs
+## Architecture critique, review findings, and repairs
 
 ### Finding 1 — candidate fragmentation
 
-The first live `new-feature` receipt emitted 18 records because continuation lines under Markdown list items became separate paragraph candidates. That would force the comparison owner to reconstruct one upstream mechanic from multiple records.
+The first live `new-feature` receipt emitted 18 records because continuation lines under Markdown list items became separate paragraph candidates.
 
-**Repair:** list-item ownership now includes indented continuation lines until the next structural boundary. A focused regression asserts that the lockfile-regeneration mechanic remains one `list_item` with a multi-line source range. After repair the live `new-feature` receipt contains 13 coherent candidates.
+**Repair:** list-item ownership includes indented continuation lines until the next structural boundary. Regression: the lockfile-regeneration mechanic remains one `list_item` with a multi-line source range. Live `new-feature` now contains 13 coherent candidates.
 
 ### Finding 2 — reference-table noise
 
-The breadth pass against `evidence-driven-testing` flattened its Markdown platform table into a policy paragraph because cells contained directive-like words such as `must` and `verify`.
+The first breadth pass flattened the `evidence-driven-testing` platform table into a policy paragraph because cells contained words such as `must` and `verify`.
 
-**Repair:** Markdown table rows are explicitly treated as non-directive reference structure. A regression proves a table containing directive language yields no table candidate while a following prose directive still does. The final live receipt contains zero table-shaped candidates.
+**Repair:** Markdown table rows are non-directive reference structure. Regression proves a directive-bearing table yields no table candidate while following prose still does.
+
+### Finding 3 — incomplete fence recognition
+
+Code review identified that only backtick fences were excluded, so `~~~` fenced code could leak into comparison input.
+
+**Repair:** `FENCE_RE` recognizes both backtick and tilde fences and tracks the opening marker type until a matching close. Regression: `test_tilde_fenced_code_is_not_extracted`.
+
+### Finding 4 — descriptive list overcapture
+
+Code review identified that every list item was previously accepted even without directive language.
+
+**Repair:** list and prose candidates now share the directive-language gate. Regression: `test_descriptive_list_items_are_not_directives`. Live candidate counts tightened from 60 to 47 for `evidence-driven-testing` and 42 to 37 for `greploop` while required evidence/review/retry signals remained present.
+
+### Finding 5 — weak body trust boundary
+
+Code review identified that the original `build_receipt(...)` accepted arbitrary identity fields plus arbitrary local body text, allowing accidental false binding to an upstream SHA.
+
+**Repair:** `ResourceIdentity` validates repository/SHA/path shape; `PinnedBody` validates its body digest and acquisition proof; `build_receipt` accepts only PinnedBody; local files require an expected SHA-256; exact raw URLs are repository/SHA/path pinned. Regressions cover movable SHA, path escape, self-inconsistent digest, stale digest, and URL mismatch.
+
+All three review threads were replied to and resolved after the repaired three-skill live proof.
 
 ### Critique outcome
 
-The selected seam stands after both repairs:
+The selected seam stands after five concrete repairs:
 
-- provider/network state did not leak into the extraction core;
-- exact body identity remains fail-closed;
+- provider/network state does not leak into the extraction core;
+- exact body identity is represented explicitly and fails closed;
 - raw upstream bodies remain transient;
 - the receipt does not claim semantic equivalence or adoption fitness;
-- adding another BodyPort adapter would not change the core interface;
-- deterministic structure extraction is useful across three substantially different skill documents without modifying the production metadata sync.
+- adding another BodyPort adapter would not change the semantic core interface;
+- deterministic structure extraction is useful across three substantially different skill documents without modifying production metadata sync.
 
-No further core split/refactor is justified by current evidence. The next uncertainty is downstream semantic comparison, not body parsing ownership.
+No further core split/refactor is justified by current evidence. The next material uncertainty is downstream semantic comparison, not body parsing ownership.
 
 ## Required successor implementation
 
 After this design/prototype lane integrates, broad implementation remains required for the whole extraction-engine outcome. The successor build must:
 
-1. graduate the prototype receipt shape into a versioned canonical schema;
+1. graduate the prototype receipt/value-object shape into a versioned canonical schema/interface;
 2. add a production BodyPort/orchestrator consuming registered ResourceIdentity records;
 3. define bounded transient-fetch/retry/cache rules without mirroring full bodies;
 4. add the comparison stage against canonical Prompt Kit owners;
@@ -247,4 +280,4 @@ This is **REQUIRED SUCCESSOR WORK**, not an optional idea and not `OUT OF SCOPE`
 
 ## Proof ceiling
 
-This design/prototype lane proves deterministic structure parsing, provenance, exact-body binding, live pinned-body acquisition for three upstream skills, candidate receipt shape, structural-noise rejection for fenced code/tables, multiline directive ownership, and failure propagation. It does not prove that lexical signals equal semantic meaning, that a downstream comparison/model will make correct adoption decisions, that every upstream Markdown dialect is supported, or that production scheduling/retry/storage policy is complete.
+This design/prototype lane proves deterministic structure parsing, validated ResourceIdentity/PinnedBody seams, exact-body binding, live pinned-body acquisition for three upstream skills, candidate receipt shape, structural-noise rejection for fenced code/tables/descriptive bullets, multiline directive ownership, and failure propagation. It does not prove that lexical signals equal semantic meaning, that a downstream comparison/model will make correct adoption decisions, that every upstream Markdown dialect is supported, or that production scheduling/retry/storage policy is complete.
