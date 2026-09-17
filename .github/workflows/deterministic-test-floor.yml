@@ -56,35 +56,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements-test-floor.txt
 
-      - name: Negative generated-site canary must fail closed
+      - name: Negative generated-site canary must prove declared failure
         shell: bash
         run: |
           set -euo pipefail
-          cp web/prompt-kit/index.html "$RUNNER_TEMP/prompt-kit-index.clean.html"
-          printf '\n<!-- deterministic-test-floor-negative-canary -->\n' >> web/prompt-kit/index.html
-          set +e
-          python scripts/run_deterministic_test_floor.py \
-            --report "$RUNNER_TEMP/negative-canary-report.json"
-          status=$?
-          set -e
-          mv "$RUNNER_TEMP/prompt-kit-index.clean.html" web/prompt-kit/index.html
-          if [ "$status" -eq 0 ]; then
-            echo "Negative canary unexpectedly passed" >&2
-            exit 1
-          fi
-          python - "$RUNNER_TEMP/negative-canary-report.json" harness/test-floor.v1.json <<'PY'
-          import json
-          import sys
-          from pathlib import Path
-          report = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
-          manifest = json.loads(Path(sys.argv[2]).read_text(encoding='utf-8'))
-          expected = manifest['required_canary_failure']
-          if report.get('status') != 'FAIL' or report.get('failed_step') != expected:
-              raise SystemExit(
-                  f"negative canary failed at {report.get('failed_step')!r}; expected {expected!r}"
-              )
-          print(f"negative canary proved earliest registered failure gate: {expected}")
-          PY
+          python scripts/run_deterministic_test_floor_canary.py \
+            --contract harness/contracts/deterministic-test-floor-canary.v1.json \
+            --report "$RUNNER_TEMP/negative-canary-report.json" \
+            --floor-report "$RUNNER_TEMP/negative-canary-floor-report.json"
 
       - name: Private-input gate must block on clean public runner
         shell: bash
@@ -126,6 +105,7 @@ jobs:
           name: deterministic-test-floor-reports
           path: |
             ${{ runner.temp }}/negative-canary-report.json
+            ${{ runner.temp }}/negative-canary-floor-report.json
             ${{ runner.temp }}/private-input-blocked-report.json
             ${{ runner.temp }}/deterministic-test-floor-report.json
           if-no-files-found: error

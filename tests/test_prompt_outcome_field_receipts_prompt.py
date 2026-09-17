@@ -31,15 +31,17 @@ class PromptOutcomeFieldReceiptTests(unittest.TestCase):
         self.assertEqual(receipt["state_transition"], {"from": "INTEGRATED", "to": "OBSERVED"})
         self.assertIn("Same file IDs and URLs", receipt["observation"]["observed_state"])
 
-    def test_p123_receipt_keeps_unobserved_gemini_export_blocked(self) -> None:
+    def test_p123_receipt_observes_export_identity_without_promoting_tail_coverage(self) -> None:
         receipt = self.by_id["field/20260916/p123-gemini-drive-title"]
         self.assertEqual(receipt["invocation"]["prompt_id"], "P123")
-        self.assertEqual(receipt["result"], "BLOCKED")
-        self.assertEqual(receipt["classification"]["primary"], "environment")
-        self.assertNotIn("state_transition", receipt)
-        self.assertNotIn("claimed_state", receipt["observation"])
-        self.assertIn("Gemini export stage itself was not executed", receipt["observation"]["observed_state"])
-        self.assertIn("Gemini", receipt["next_state"]["completion_gate"])
+        self.assertEqual(receipt["result"], "SUCCESS")
+        self.assertIsNone(receipt["classification"]["primary"])
+        self.assertEqual(receipt["observation"]["claimed_state"], "OBSERVED")
+        self.assertEqual(receipt["state_transition"], {"from": "INTEGRATED", "to": "OBSERVED"})
+        self.assertIn("Gemini execution/output", receipt["observation"]["observed_state"])
+        self.assertIn("How WhatsApp Video Sharing Works?", receipt["observation"]["observed_state"])
+        self.assertIn("does not promote", receipt["classification"]["rationale"])
+        self.assertNotIn("next_state", receipt)
 
     def test_field_receipts_are_bounded_references_not_raw_provider_payloads(self) -> None:
         serialized = "\n".join(json.dumps(receipt, sort_keys=True) for receipt in self.receipts)
