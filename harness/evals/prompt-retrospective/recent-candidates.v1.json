@@ -1,0 +1,138 @@
+{
+  "schema_version": "prompt-retrospective-register/v1",
+  "contract": "harness/contracts/prompt-retrospective-evaluation.v1.json",
+  "evaluation_id": "recent-prompt-review-20260917",
+  "evaluation_time": "2026-09-17T15:08:00Z",
+  "authority": "REVIEW_ONLY",
+  "priority_policy": "UNCOMPUTED_UNTIL_WEIGHTING_APPROVED",
+  "records": [
+    {
+      "candidate_id": "retrospective/governance-doctrine",
+      "status": "PROVISIONAL",
+      "project": "web-excel-repair-triage",
+      "prompt_anchor": "INSTALL GOVERNANCE DOCTRINE NOW",
+      "prompt_event_date": null,
+      "prompt_event_window": "2026-09-14/2026-09-17",
+      "work_outcome": "Current Prompt Kit evidence proves this anchor is now owned by P00; exact historical invocation-to-output attribution remains unresolved.",
+      "ratings": {
+        "use_case_relevance": {
+          "score": null,
+          "confidence": "NONE",
+          "rationale": "No exact prompt-event evidence is attached yet.",
+          "evidence_refs": []
+        },
+        "productivity": {
+          "score": null,
+          "confidence": "NONE",
+          "rationale": "Repository outcomes have not yet been causally bound to the exact historical invocation.",
+          "evidence_refs": []
+        },
+        "prompt_kit_gap": {
+          "score": 1,
+          "confidence": "HIGH",
+          "rationale": "The current canonical Prompt Kit contains P00 Governance Doctrine Installer with this anchor.",
+          "evidence_refs": [
+            "ev-p00-current"
+          ]
+        },
+        "authorship_origin": {
+          "score": null,
+          "confidence": "NONE",
+          "rationale": "Current P00 coverage cannot prove whether the earlier prompt was reused, hybridized, or manually authored before promotion.",
+          "evidence_refs": [
+            "ev-p00-current"
+          ]
+        }
+      },
+      "authorship_profile": {
+        "origin_label": "UNRESOLVED",
+        "comparison_basis": "CURRENT_ONLY",
+        "contemporaneous_prompt_kit_ref": null,
+        "current_prompt_kit_ref": "main@300d949fdcf79bbac018440a85052302d575bd2c",
+        "matched_prompt_ids": [
+          "P00"
+        ],
+        "match_kind": "EXACT",
+        "manual_novelty_signals": [],
+        "historical_origin_status": "NEEDS_CONTEMPORANEOUS_KIT_REF"
+      },
+      "kit_assessment": {
+        "evaluation_basis": "CURRENT",
+        "prior_art_complete": false,
+        "topology_ref": null,
+        "matched_prompt_ids": [
+          "P00"
+        ],
+        "disposition": "NO_KIT_CHANGE"
+      },
+      "evidence": [
+        {
+          "id": "ev-p00-current",
+          "kind": "current_registry",
+          "ref": "docs/prompts.json@300d949fdcf79bbac018440a85052302d575bd2c#P00",
+          "supports": [
+            "prompt_kit_gap",
+            "authorship_origin"
+          ],
+          "summary": "Current canonical registry identifies P00 Governance Doctrine Installer and the recovered anchor."
+        }
+      ]
+    },
+    {
+      "candidate_id": "retrospective/cross-repository-authority-factoring",
+      "status": "PROVISIONAL",
+      "project": "web-excel-repair-triage",
+      "prompt_anchor": "FACTOR THE REUSABLE INSIGHT INTO THE CORRECT REPOSITORIES",
+      "prompt_event_date": null,
+      "prompt_event_window": "2026-09-14/2026-09-17",
+      "work_outcome": "Candidate insight: move portable mechanisms without duplicating canonical authority; exact prompt-event and current-owner evidence still need binding.",
+      "ratings": {
+        "use_case_relevance": {
+          "score": null,
+          "confidence": "NONE",
+          "rationale": "Awaiting exact prompt-event evidence.",
+          "evidence_refs": []
+        },
+        "productivity": {
+          "score": null,
+          "confidence": "NONE",
+          "rationale": "Awaiting causal binding to implementation evidence.",
+          "evidence_refs": []
+        },
+        "prompt_kit_gap": {
+          "score": null,
+          "confidence": "NONE",
+          "rationale": "A full P79/topology comparison has not yet established whether this is a distinct gap or strengthening candidate.",
+          "evidence_refs": []
+        },
+        "authorship_origin": {
+          "score": null,
+          "confidence": "NONE",
+          "rationale": "No contemporaneous Prompt Kit comparison has been attached.",
+          "evidence_refs": []
+        }
+      },
+      "authorship_profile": {
+        "origin_label": "UNRESOLVED",
+        "comparison_basis": "UNKNOWN",
+        "contemporaneous_prompt_kit_ref": null,
+        "current_prompt_kit_ref": "main@300d949fdcf79bbac018440a85052302d575bd2c",
+        "matched_prompt_ids": [],
+        "match_kind": "UNKNOWN",
+        "manual_novelty_signals": [
+          "cross-repository authority factoring",
+          "portable-mechanism versus domain-doctrine separation"
+        ],
+        "historical_origin_status": "NEEDS_PROMPT_EVENT_AND_KIT_COMPARISON"
+      },
+      "kit_assessment": {
+        "evaluation_basis": "CURRENT",
+        "prior_art_complete": false,
+        "topology_ref": null,
+        "matched_prompt_ids": [],
+        "disposition": "NEEDS_EVIDENCE"
+      },
+      "evidence": []
+    }
+  ]
+}
