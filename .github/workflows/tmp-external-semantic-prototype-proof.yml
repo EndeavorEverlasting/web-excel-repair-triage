@@ -25,27 +25,40 @@ jobs:
           python-version: '3.11'
       - name: Run focused prototype tests
         run: python -m unittest tests.test_external_skill_semantics_prototype -v
-      - name: Execute live pinned-body success stack
+      - name: Execute live pinned-body success stacks
         run: |
           mkdir -p Outputs/external-semantic-prototype
-          python scripts/prototype_external_skill_semantics.py \
-            --source-id michaelshimeles-skills \
-            --resource-id michaelshimeles-skills:new-feature \
-            --repository michaelshimeles/skills \
-            --source-sha 513f8a24aae6383b00356fa285144b1bc3730dc1 \
-            --path new-feature/SKILL.md \
-            --url https://raw.githubusercontent.com/michaelshimeles/skills/513f8a24aae6383b00356fa285144b1bc3730dc1/new-feature/SKILL.md \
-            --output Outputs/external-semantic-prototype/new-feature.json
+          SHA=513f8a24aae6383b00356fa285144b1bc3730dc1
+          for skill in new-feature evidence-driven-testing greploop; do
+            python scripts/prototype_external_skill_semantics.py \
+              --source-id michaelshimeles-skills \
+              --resource-id michaelshimeles-skills:$skill \
+              --repository michaelshimeles/skills \
+              --source-sha "$SHA" \
+              --path "$skill/SKILL.md" \
+              --url "https://raw.githubusercontent.com/michaelshimeles/skills/$SHA/$skill/SKILL.md" \
+              --output "Outputs/external-semantic-prototype/$skill.json"
+          done
           python - <<'PY'
           import json
           from pathlib import Path
-          receipt = json.loads(Path('Outputs/external-semantic-prototype/new-feature.json').read_text())
-          assert receipt['schema_version'] == 'operant-external-skill-semantic-prototype/v1'
-          assert receipt['source']['source_sha'] == '513f8a24aae6383b00356fa285144b1bc3730dc1'
-          assert receipt['summary']['directive_count'] >= 8
-          assert receipt['summary']['signal_counts']['isolation'] >= 1
-          assert receipt['summary']['signal_counts']['freshness'] >= 1
-          assert receipt['summary']['signal_counts']['cleanup'] >= 1
+
+          root = Path('Outputs/external-semantic-prototype')
+          new_feature = json.loads((root / 'new-feature.json').read_text())
+          evidence = json.loads((root / 'evidence-driven-testing.json').read_text())
+          greploop = json.loads((root / 'greploop.json').read_text())
+
+          for receipt in (new_feature, evidence, greploop):
+              assert receipt['schema_version'] == 'operant-external-skill-semantic-prototype/v1'
+              assert receipt['source']['source_sha'] == '513f8a24aae6383b00356fa285144b1bc3730dc1'
+              assert receipt['summary']['directive_count'] >= 8
+
+          assert new_feature['summary']['signal_counts']['isolation'] >= 1
+          assert new_feature['summary']['signal_counts']['freshness'] >= 1
+          assert new_feature['summary']['signal_counts']['cleanup'] >= 1
+          assert evidence['summary']['signal_counts']['evidence'] >= 3
+          assert greploop['summary']['signal_counts']['review'] >= 3
+          assert greploop['summary']['signal_counts']['retry'] >= 1
           PY
       - name: Execute stale-body failure stack
         shell: bash
@@ -64,10 +77,10 @@ jobs:
           set -e
           test "$rc" -eq 2
           test ! -e Outputs/external-semantic-prototype/should-not-exist.json
-      - name: Upload prototype receipt
+      - name: Upload prototype receipts
         uses: actions/upload-artifact@v4
         with:
           name: external-semantic-prototype-${{ github.sha }}
-          path: Outputs/external-semantic-prototype/new-feature.json
+          path: Outputs/external-semantic-prototype/*.json
           if-no-files-found: error
           retention-days: 14
