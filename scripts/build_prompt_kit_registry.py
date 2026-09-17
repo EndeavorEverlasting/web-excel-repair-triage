@@ -32,6 +32,7 @@ DISPLAY_ORDER_POLICY = (
 GUIDED_RECOMMENDATIONS = REPO_ROOT / "docs" / "prompt-kit-guided-recommendations.js"
 PROMPT_JOURNEY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-journey.js"
 STORAGE_LIFECYCLE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-storage-lifecycle.js"
+COMPUTE_MODE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-compute-mode.js"
 PROFILE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-profiles.js"
 POLISH_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-polish.js"
 CORRESPONDENCE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-correspondence.js"
@@ -40,6 +41,10 @@ SPEC_ARCHITECTURE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-spec-architecture.j
 FEEDBACK_PRODUCTION_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-feedback-production.js"
 ONTOLOGY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-ontology.js"
 EXTERNAL_RESOURCES_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-external-resources.js"
+PROMPT_SEMANTICS_ROOT = REPO_ROOT / "harness" / "prompt-compilation" / "semantics"
+PROMPT_BUILD_CONTEXT = (
+    REPO_ROOT / "harness" / "prompt-compilation" / "build-context" / "default.v1.json"
+)
 CAPABILITIES_REGISTRY = REPO_ROOT / "harness" / "capabilities.v1.json"
 ONTOLOGY_EVIDENCE_CONTRACT = (
     REPO_ROOT / "harness" / "contracts" / "prompt-kit-ontology-evidence.v1.json"
@@ -454,10 +459,51 @@ def load_prompt_kit_registry() -> list[dict[str, Any]]:
     _validate_unique_prompt_identity(prompts, "Prompt Kit")
     prompt_classification.validate_prompt_classification(prompts, "Prompt Kit")
     annotated_prompts = apply_display_order(prompts, load_display_order_policy())
+    annotated_prompts = attach_compiled_effective_prompts(annotated_prompts)
     return sorted(
         annotated_prompts,
         key=lambda prompt: (int(str(prompt["seq"])), str(prompt["id"])),
     )
+
+
+def attach_compiled_effective_prompts(
+    prompts: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Attach Language Engine compiled prompts for semantics-backed prompt IDs."""
+    if not PROMPT_SEMANTICS_ROOT.is_dir():
+        return prompts
+    if not PROMPT_BUILD_CONTEXT.is_file():
+        raise SystemExit(f"Missing prompt compilation build context: {PROMPT_BUILD_CONTEXT}")
+
+    from scripts import prompt_context_engine as context_engine
+    from scripts import prompt_language_compiler as language_compiler
+
+    context = language_compiler.load_json(PROMPT_BUILD_CONTEXT)
+    language_compiler.validate_context(context)
+    policy = language_compiler.load_policy()
+    enriched: list[dict[str, Any]] = []
+    for prompt in prompts:
+        item = dict(prompt)
+        prompt_id = str(item.get("id") or "").strip().upper()
+        semantics_path = PROMPT_SEMANTICS_ROOT / f"{prompt_id}.json"
+        if not semantics_path.is_file():
+            enriched.append(item)
+            continue
+        semantics = language_compiler.load_json(semantics_path)
+        language_compiler.validate_semantics(semantics)
+        compiled: dict[str, str] = {}
+        for profile_name in ("exhaustive", "efficient"):
+            profile = context_engine.PROFILE_LIBRARY[profile_name]
+            result = language_compiler.render(
+                semantics,
+                profile,
+                context,
+                policy=policy,
+            )
+            compiled[profile_name] = result["effective_prompt"]
+        item["compiledEffectivePrompts"] = compiled
+        enriched.append(item)
+    return enriched
 
 
 def _read_runtime(path: Path, label: str) -> str:
@@ -643,6 +689,9 @@ def render() -> str:
     storage_lifecycle_script = _read_runtime(
         STORAGE_LIFECYCLE_RUNTIME, "Prompt Kit local storage lifecycle behavior"
     )
+    compute_mode_script = _read_runtime(
+        COMPUTE_MODE_RUNTIME, "Prompt Kit Compute Mode behavior"
+    )
     profile_script = _read_runtime(PROFILE_RUNTIME, "Prompt Kit named profile behavior")
     polish_script = _read_runtime(POLISH_RUNTIME, "Prompt Kit polish behavior")
     correspondence_script = _read_runtime(
@@ -671,6 +720,7 @@ def render() -> str:
         f"<script>\n{guided_script}\n</script>\n"
         f"<script>\n{journey_script}\n</script>\n"
         f"<script>\n{storage_lifecycle_script}\n</script>\n"
+        f"<script>\n{compute_mode_script}\n</script>\n"
         f"<script>\n{profile_script}\n</script>\n"
         f"<script>\n{polish_script}\n</script>\n"
         f"<script>\n{correspondence_script}\n</script>\n"
