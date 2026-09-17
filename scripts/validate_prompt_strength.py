@@ -12,11 +12,7 @@ DEFAULT_CONTRACT = ROOT / "harness/contracts/prompt-strength.v1.json"
 DEFAULT_MATRIX = ROOT / "harness/evals/prompt-strength/adversarial-regression-matrix.v1.json"
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 PROFILE_NAMES = {"exhaustive", "efficient"}
-DEPENDENCY_KEYS = {
-    "quality_history_dependency",
-    "local_proof_dependency",
-    "p07_identity_dependency",
-}
+DEPENDENCY_KEYS = {"quality_history_dependency", "local_proof_dependency", "p07_identity_dependency"}
 
 
 class PromptStrengthError(ValueError):
@@ -47,7 +43,7 @@ def _validate_dependency_snapshots(contract: dict[str, Any]) -> None:
         item = owners.get(key)
         if not isinstance(item, dict):
             raise PromptStrengthError(f"dependency snapshot missing or untyped: {key}")
-        if not isinstance(item.get("pr"), int) or item["pr"] < 1:
+        if not isinstance(item.get("pr"), int) or isinstance(item.get("pr"), bool) or item["pr"] < 1:
             raise PromptStrengthError(f"dependency PR invalid: {key}")
         sha = item.get("head_sha_at_reconciliation")
         if not isinstance(sha, str) or not SHA_RE.fullmatch(sha):
@@ -77,7 +73,7 @@ def validate_documents(contract: dict[str, Any], matrix: dict[str, Any]) -> dict
         raise PromptStrengthError("contract dimensions must be a non-empty list")
 
     by_id: dict[str, dict[str, Any]] = {}
-    required_dimension_fields = {"id", "class", "summary", "required_in", "weakening_forbidden"}
+    required_dimension_fields = {"id", "class", "summary", "required_in", "weakening_forbidden", "evidence_terms"}
     for item in dimensions:
         if not isinstance(item, dict):
             raise PromptStrengthError("dimension must be an object")
@@ -100,6 +96,12 @@ def validate_documents(contract: dict[str, Any], matrix: dict[str, Any]) -> dict
             raise PromptStrengthError(f"dimension required_in missing: {dim_id}")
         if len(set(required_in)) != len(required_in) or any(profile not in PROFILE_NAMES for profile in required_in):
             raise PromptStrengthError(f"invalid profile on dimension: {dim_id}")
+        evidence_terms = item["evidence_terms"]
+        if not _string_list(evidence_terms):
+            raise PromptStrengthError(f"dimension evidence_terms missing: {dim_id}")
+        normalized_terms = [term.strip().lower() for term in evidence_terms]
+        if len(set(normalized_terms)) != len(normalized_terms):
+            raise PromptStrengthError(f"duplicate dimension evidence_terms: {dim_id}")
         by_id[dim_id] = item
 
     profiles = contract.get("profiles")
@@ -152,14 +154,13 @@ def validate_documents(contract: dict[str, Any], matrix: dict[str, Any]) -> dict
     if not isinstance(observed_main, str) or not SHA_RE.fullmatch(observed_main):
         raise PromptStrengthError("matrix reconciliation head must be an exact SHA")
     dependencies = source_floor.get("active_dependencies")
-    if not isinstance(dependencies, dict) or set(dependencies) != {
-        "p07_effective_identity", "local_proof_continuity", "quality_history"
-    }:
+    expected_dependency_keys = {"p07_effective_identity", "local_proof_continuity", "quality_history"}
+    if not isinstance(dependencies, dict) or set(dependencies) != expected_dependency_keys:
         raise PromptStrengthError("matrix dependency snapshots incomplete")
     for key, item in dependencies.items():
         if not isinstance(item, dict):
             raise PromptStrengthError(f"matrix dependency snapshot untyped: {key}")
-        if not isinstance(item.get("pr"), int) or item["pr"] < 1:
+        if not isinstance(item.get("pr"), int) or isinstance(item.get("pr"), bool) or item["pr"] < 1:
             raise PromptStrengthError(f"matrix dependency PR invalid: {key}")
         sha = item.get("head_sha_at_reconciliation")
         if not isinstance(sha, str) or not SHA_RE.fullmatch(sha):
@@ -210,25 +211,33 @@ def validate_documents(contract: dict[str, Any], matrix: dict[str, Any]) -> dict
             raise PromptStrengthError(f"case dimensions malformed: {case_id}")
         if len(set(case["dimensions"])) != len(case["dimensions"]):
             raise PromptStrengthError(f"case has duplicate dimensions: {case_id}")
+        if not _string_list(case["canonical_owners"]):
+            raise PromptStrengthError(f"case canonical_owners malformed: {case_id}")
+        if not _string_list(case["proof_surfaces"]):
+            raise PromptStrengthError(f"case proof_surfaces malformed: {case_id}")
+        if not _nonempty_string(case["stimulus"]):
+            raise PromptStrengthError(f"case stimulus missing: {case_id}")
+
+        case_corpus = " ".join(
+            [case["title"], case["stimulus"]]
+            + case["positive_assertions"]
+            + case["negative_assertions"]
+        ).lower()
         for dim_id in case["dimensions"]:
             if dim_id not in all_ids:
                 raise PromptStrengthError(f"unknown dimension {dim_id} in {case_id}")
+            evidence_terms = [term.lower() for term in by_id[dim_id]["evidence_terms"]]
+            if not any(term in case_corpus for term in evidence_terms):
+                raise PromptStrengthError(
+                    f"case dimension lacks semantic evidence: {case_id} -> {dim_id}"
+                )
             coverage[dim_id] += 1
-        for field in ("canonical_owners", "proof_surfaces"):
-            if not _string_list(case[field]):
-                raise PromptStrengthError(f"case {field} malformed: {case_id}")
-        if not _nonempty_string(case["stimulus"]):
-            raise PromptStrengthError(f"case stimulus missing: {case_id}")
+
         ceiling = case.get("proof_ceiling", "").lower()
         if "model obedience" not in ceiling or "unproven" not in ceiling:
             raise PromptStrengthError(f"case proof ceiling must preserve model-obedience boundary: {case_id}")
         if case_id == "PSA-031":
-            corpus = " ".join(
-                [case["title"], case["stimulus"]]
-                + case["positive_assertions"]
-                + case["negative_assertions"]
-            ).lower()
-            silent_stop_case_seen = all(term in corpus for term in ("stop", "boundary", "silent"))
+            silent_stop_case_seen = all(term in case_corpus for term in ("stop", "boundary", "silent"))
 
     uncovered = sorted(dim_id for dim_id, count in coverage.items() if count == 0)
     if uncovered:
