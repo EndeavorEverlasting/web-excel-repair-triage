@@ -237,7 +237,7 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-015 — Define and prove P123 source-coverage scoring harness
 
-- **Status:** CLAIMED
+- **Status:** VERIFY
 - **Priority:** P1
 - **Owner:** feat/p123-source-coverage-proof-20260917
 - **Branch / PR:** feat/p123-source-coverage-proof-20260917 / unopened
@@ -247,6 +247,6 @@ Canonical terminal action: none; no safe actionable work remains
 - **References:** `harness/evals/P123_SOURCE_COVERAGE_PROOF_PLAN.md`, `harness/contracts/p123-source-coverage-proof.v1.json`, `scripts/evaluate_p123_source_coverage.py`, `tests/fixtures/p123_source_coverage/drive_7UyhyhxdFsQ_20260910.v1.json`, `tests/test_p123_source_coverage_eval_prompt.py`
 - **Acceptance gate:** baseline partial FAIL with declared classes; synthetic COMPLETE PASS only when accounting agrees; overclaim/fabrication/extent mismatch fail closed; focused unittest green; plan remains canonical for Phase B/C successors
 - **Gate:** none
-- **Last proof:** commit:pending
-- **Next action:** run the focused coverage unittest suite and record the exact commit plus validator receipt
-- **Updated:** 2026-09-17T13:50:00Z
+- **Last proof:** commit:29053a0910b772dcec1b540a83dc42ed67329000; local:python -m unittest tests.test_p123_source_coverage_eval_prompt (11 OK); local:python scripts/evaluate_p123_source_coverage.py --summary PASS; local:python scripts/validate_repository_work_ledger.py PASS
+- **Next action:** push the branch, open the PR, and verify required CI checks on the exact head
+- **Updated:** 2026-09-17T13:55:00Z
