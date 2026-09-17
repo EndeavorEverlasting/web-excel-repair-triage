@@ -2,7 +2,7 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
-## 0.9.0 - 2026-09-16
+## 0.9.0 - 2026-09-17
 
 ### Features / breaking pre-1.0 changes
 
@@ -11,6 +11,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - feat(prompt-kit): add isolated writer convergence contract (`017f7836`)
 - feat(prompt-kit): enforce Drive-primary artifact handoff (`5a295e0a`)
 - feat(prompt-kit): add Drive organizer and harden P123 export titles (`9788d35f`)
+- feat(prompt-compilation): wire Compute Mode and Language Engine into Prompt Kit (`10167b30`)
 
 ### Fixes / performance
 
