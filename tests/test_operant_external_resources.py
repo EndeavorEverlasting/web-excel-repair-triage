@@ -68,7 +68,10 @@ class OperantExternalResourceTests(unittest.TestCase):
 
     def test_registered_donors_and_roots_are_explicit(self) -> None:
         sources = {item["id"]: item for item in self.contract["sources"]}
-        self.assertEqual(set(sources), {"deepseek-harness", "prompts-chat", "mattpocock-skills"})
+        self.assertEqual(
+            set(sources),
+            {"deepseek-harness", "prompts-chat", "mattpocock-skills", "michaelshimeles-skills"},
+        )
         self.assertEqual(sources["deepseek-harness"]["repository"], "deepseek-ai/deepseek-harness")
         self.assertEqual(sources["deepseek-harness"]["enumeration"], "git_skill_tree")
         self.assertEqual(sources["prompts-chat"]["repository"], "f/prompts.chat")
@@ -77,6 +80,9 @@ class OperantExternalResourceTests(unittest.TestCase):
         self.assertEqual(sources["prompts-chat"]["license"]["prompt_data"], "CC0-1.0")
         self.assertEqual(sources["mattpocock-skills"]["repository"], "mattpocock/skills")
         self.assertEqual(sources["mattpocock-skills"]["max_depth"], 2)
+        self.assertEqual(sources["michaelshimeles-skills"]["repository"], "michaelshimeles/skills")
+        self.assertEqual(sources["michaelshimeles-skills"]["resource_root"], ".")
+        self.assertEqual(sources["michaelshimeles-skills"]["max_depth"], 1)
         self.assertFalse(self.contract["projection"]["catalog_csv_projects_rows_into_index"])
         self.assertIn(
             "registered_external_source_or_catalog_search",
@@ -87,12 +93,17 @@ class OperantExternalResourceTests(unittest.TestCase):
         self.assertTrue(self.contract["projection"]["metadata_only"])
         self.assertFalse(self.contract["projection"]["copy_upstream_skill_body"])
         floors = {row["id"]: row for row in self.index["source_floor"]}
-        self.assertEqual(set(floors), {"deepseek-harness", "prompts-chat", "mattpocock-skills"})
+        self.assertEqual(
+            set(floors),
+            {"deepseek-harness", "prompts-chat", "mattpocock-skills", "michaelshimeles-skills"},
+        )
         self.assertEqual(floors["prompts-chat"]["enumeration"], "catalog_csv")
         self.assertEqual(floors["prompts-chat"]["catalog_path"], "prompts.csv")
         self.assertGreaterEqual(int(floors["prompts-chat"]["catalog_entry_count"]), 1)
         self.assertEqual(int(floors["prompts-chat"]["resource_count"]), 0)
         self.assertEqual(floors["prompts-chat"]["search_mode"], "on_demand")
+        self.assertEqual(floors["michaelshimeles-skills"]["resource_root"], ".")
+        self.assertGreaterEqual(int(floors["michaelshimeles-skills"]["resource_count"]), 7)
         self.assertEqual(int(self.index["summary"]["catalog_entries_indexed"]), 0)
         self.assertLessEqual(len(self.index["resources"]), self.contract["projection"]["maximum_entries"])
         self.assertLessEqual(INDEX.stat().st_size, self.contract["projection"]["maximum_index_bytes"])
@@ -165,6 +176,36 @@ class OperantExternalResourceTests(unittest.TestCase):
             ("P2", "Code Review", sync.tokens("Code Review")),
         ]
         self.assertEqual(sync.best_match(query, candidates)[0], "P2")
+
+    def test_root_level_skill_tree_enumeration_is_supported(self) -> None:
+        source = {
+            "id": "root-skills",
+            "resource_root": ".",
+            "resource_filename": "SKILL.md",
+            "resource_kind": "agent-skill",
+            "max_depth": 1,
+            "url_mode": "github_blob",
+        }
+        branch = {"commit": {"commit": {"tree": {"sha": "tree-sha"}}}}
+        tree = {
+            "truncated": False,
+            "tree": [
+                {"type": "blob", "path": "before-and-after/SKILL.md"},
+                {"type": "blob", "path": "new-feature/SKILL.md"},
+                {"type": "blob", "path": "nested/child/SKILL.md"},
+                {"type": "blob", "path": "README.md"},
+            ],
+        }
+        with mock.patch.object(sync, "github_json", return_value=tree):
+            resources = sync.enumerate_git_skill_tree(
+                source,
+                repo="fixture/root-skills",
+                sha="a" * 40,
+                branch=branch,
+            )
+        self.assertEqual([row["slug"] for row in resources], ["before-and-after", "new-feature"])
+        self.assertEqual(sync.normalize_resource_root("."), "")
+        self.assertEqual(sync.normalize_resource_root("/skills/"), "skills")
 
     def test_catalog_search_fixture_is_deterministic_and_non_authoring(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -317,7 +358,6 @@ class OperantExternalResourceTests(unittest.TestCase):
             ])
             self.assertEqual(over_budget, 1)
 
-
     def test_prompt_adder_exposes_predraft_all_registered_source_review(self) -> None:
         query = "prompt registry upstream synthesis zeta"
         configured = {item["id"] for item in self.contract["sources"]}
@@ -405,6 +445,7 @@ class OperantExternalResourceTests(unittest.TestCase):
         self.assertEqual(modes["prompts-chat"], "pinned_catalog_live_fetch")
         self.assertEqual(modes["deepseek-harness"], "pinned_metadata_projection")
         self.assertEqual(modes["mattpocock-skills"], "pinned_metadata_projection")
+        self.assertEqual(modes["michaelshimeles-skills"], "pinned_metadata_projection")
         self.assertTrue(receipt["all_registered_sources_searched"])
         self.assertFalse(receipt["automatic_prompt_authoring"])
         self.assertTrue(receipt["distinct_residual_terms"])
