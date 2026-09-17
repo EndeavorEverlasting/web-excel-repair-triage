@@ -45,7 +45,7 @@ class PromptRetrospectiveEvaluationTests(unittest.TestCase):
         record["evidence"].append({
             "id": "ev-hybrid",
             "kind": "historical_registry",
-            "ref": "synthetic:historical-kit@abc123",
+            "ref": "synthetic:historical-kit@abc123#P79",
             "supports": ["authorship_origin"],
             "summary": "Synthetic fixture proves both canonical doctrine and manual additions.",
         })
@@ -102,7 +102,11 @@ class PromptRetrospectiveEvaluationTests(unittest.TestCase):
         }
         record["authorship_profile"]["origin_label"] = "MANUAL_ORIGINAL"
         record["authorship_profile"]["manual_novelty_signals"] = ["synthetic manual structure"]
-        with self.assertRaisesRegex(retrospective.RetrospectiveValidationError, "no material contemporaneous match"):
+        # Retained matched Prompt Kit IDs fail closed before the no-match proof gate.
+        with self.assertRaisesRegex(
+            retrospective.RetrospectiveValidationError,
+            "MANUAL_ORIGINAL cannot retain matched Prompt Kit IDs",
+        ):
             retrospective.validate_register(register, self.contract)
 
     def test_gap_five_requires_completed_topology_review(self) -> None:
@@ -110,10 +114,10 @@ class PromptRetrospectiveEvaluationTests(unittest.TestCase):
         record = register["records"][1]
         record["evidence"].append({
             "id": "ev-gap",
-            "kind": "repository",
-            "ref": "synthetic:gap-observation",
+            "kind": "topology",
+            "ref": "synthetic:topology-review",
             "supports": ["prompt_kit_gap"],
-            "summary": "Synthetic evidence that is insufficient for a create-new decision.",
+            "summary": "Synthetic topology evidence that is still incomplete for create-new.",
         })
         record["ratings"]["prompt_kit_gap"] = {
             "score": 5,
@@ -122,6 +126,8 @@ class PromptRetrospectiveEvaluationTests(unittest.TestCase):
             "evidence_refs": ["ev-gap"],
         }
         record["kit_assessment"]["disposition"] = "CREATE_NEW_REVIEW"
+        record["kit_assessment"]["prior_art_complete"] = False
+        record["kit_assessment"]["topology_ref"] = None
         with self.assertRaisesRegex(retrospective.RetrospectiveValidationError, "completed prior-art/topology review"):
             retrospective.validate_register(register, self.contract)
 
@@ -166,7 +172,11 @@ class PromptRetrospectiveEvaluationTests(unittest.TestCase):
             "evidence_refs": ["ev-p03-historical"],
         }
         record["authorship_profile"]["origin_label"] = "CANONICAL_REUSE"
-        with self.assertRaisesRegex(retrospective.RetrospectiveValidationError, "exact/material"):
+        # Anchor-only matches are insufficient for CANONICAL_REUSE (requires EXACT).
+        with self.assertRaisesRegex(
+            retrospective.RetrospectiveValidationError,
+            "CANONICAL_REUSE requires matched Prompt Kit ID and exact full-prompt match",
+        ):
             retrospective.validate_register(register, self.contract)
 
     def test_no_composite_priority_is_defined(self) -> None:
