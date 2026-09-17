@@ -10,6 +10,17 @@ Binding for Prompt Kit prompt addition/repair, language audit, generated Prompt 
 - Reuse registered builders, schemas, skills, capabilities, triggers, and validators. Product behavior belongs in code/schemas/registries/contracts, not only in prompt prose.
 - Regenerate the canonical website/artifact deterministically and require exact parity before merge.
 
+### Hosted CI / local proof continuity
+
+`harness/contracts/repository-local-proof-continuity.v1.json` is the canonical cross-cutting contract for repository planning, build/repair, validation, and integration prompts.
+
+- Planning prompts that schedule repository implementation or validation must make local proof continuity explicit before hosted CI becomes a dependency: name the repository-native local validator/build/launcher owner, exact command or entrypoint, required base/input identity, expected receipt or observable result, nonzero-exit behavior, and the hosted-only proof gates that remain outside local authority.
+- Build/repair/execution prompts must establish or reuse that local proof path early. Hosted CI quota exhaustion, rate limits, runner unavailability, or permission failures are execution-posture evidence, not automatic whole-sprint blockers when local proof can still advance the requested gate.
+- Known non-transient provider limits suppress blind workflow retries. Continue useful local proof and integration preparation; keep genuinely hosted-only gates typed as BLOCKED until observed.
+- If no trustworthy local proof owner exists and creating one belongs to the active scope, build the smallest durable repository-native validator/launcher rather than a per-PR workaround. If another owner controls that seam, preserve the exact successor/autonomy gap while continuing independent executable work.
+- Local PASS never promotes to hosted-runner, deployed, live-runtime, device, or operator-acceptance proof. Proof receipts must identify the candidate/base, validator or launcher, proof-relevant inputs, result, and proof ceiling.
+- P07's Prompt Semantic IR carries the executable MUST obligation. P112/P113 remain the specialized deterministic test-floor bootstrap/evolution owners; P32 remains the established failing-CI repair owner. This contract does not merge those responsibilities.
+
 ### Current P79 admission candidate
 
 `harness/prompt-topology/DURABLE_CONTRACT_FORMALIZER_CANDIDATE.md` is a **PROVISIONAL / P79 ADMISSION PENDING** contract candidate for the `DESIGNED / DECIDED -> CONTRACTED` transition. It is not prompt-registry authority. Before any identity mutation, run the registered P79 prior-art/overlap helper path recorded in that candidate and either STRENGTHEN an existing owner or ADD only through `scripts/prompt_registry_ops.py` if the distinct residual survives.
